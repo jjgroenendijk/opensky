@@ -64,4 +64,18 @@ struct SceneCameraTests {
         #expect(camera.sunColor == DemoScene.sunColor)
         #expect(camera.ambientColor == DemoScene.ambientColor)
     }
+
+    @Test
+    func framingFromADirectionPutsTheEyeOnThatSide() {
+        let center = (bounds.min + bounds.max) * 0.5
+        let camera = SceneCamera.framing(bounds: bounds, from: SIMD3(0, 1, 0), distance: 500)
+        #expect(camera.target == center)
+        #expect(camera.eye == center + SIMD3(0, 500, 0))
+    }
+
+    @Test
+    func framingFromADirectionKeepsTheMinimumDistance() {
+        let camera = SceneCamera.framing(bounds: bounds, from: SIMD3(1, 0, 0), distance: 1)
+        #expect(simd_distance(camera.eye, camera.target) == 64)
+    }
 }

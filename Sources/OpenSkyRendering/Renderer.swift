@@ -60,6 +60,8 @@ public final class Renderer: NSObject {
     /// screenshots and bench runs render the shipping frame however the dev
     /// shell is currently set; the device-gated debug-view tests turn it on.
     public var renderDebugAppliesOffscreen = false
+    /// The colour an offscreen frame clears to; the sky, when drawn, covers it.
+    public var offscreenBackground = SIMD3<Double>(0, 0, 0)
     /// The scene's own depth state: test and write.
     public var depthState: MTLDepthStencilState {
         materialDepthStates.state(test: true, write: true)
