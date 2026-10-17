@@ -14,13 +14,24 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyRendering
 
+/// What `InventoryMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol InventoryMenuHost: MenuInputConsumer {
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var swfMovies: SWFMovieSource { get }
+}
+
 /// Holds the inventory menu's row list and movie state for `game`.
 final class InventoryMenuController {
     static let identifier: MenuIdentifier = "InventoryMenu"
     /// Frames the movie's own fade needs to settle, measured on the install.
     static let activationTicks = 20
 
-    unowned let game: GameViewController
+    unowned let game: any InventoryMenuHost
     private(set) var isOpen = false
     private(set) var model = InventoryMenuModel.empty
     /// On by default, so play mode draws the menu. The HUD is suspended while
@@ -29,7 +40,7 @@ final class InventoryMenuController {
     private(set) var lastActionText: String?
     let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any InventoryMenuHost) {
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "inventory menu movie",
@@ -189,17 +200,17 @@ final class InventoryMenuController {
     func activateSelection() {
         perform { entry in
             entry.isEquipped
-                ? game.inventory.unequipItem(entry.item, on: .player)
-                : game.inventory.equipItem(entry.item, on: .player)
+                ? game.inventory.unequipItem(entry.item, on: .player).text
+                : game.inventory.equipItem(entry.item, on: .player).text
         }
     }
 
     func dropSelection() {
-        perform { game.inventory.dropPlayerItem($0.item, count: 1) }
+        perform { game.inventory.dropPlayerItem($0.item, count: 1).text }
     }
 
     func consumeSelection() {
-        perform { game.magic.consumeMagicItem($0.item) }
+        perform { game.magic.consumeMagicItem($0.item).text }
     }
 
     private func perform(_ action: (InventoryMenuEntry) -> String) {

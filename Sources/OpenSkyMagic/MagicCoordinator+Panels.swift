@@ -32,7 +32,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
             unimplementedLines: tally.unimplementedArchetypes.map { entry in
                 "\(entry.archetype.description) x\(entry.count)"
             },
-            lastActionText: effectActionText
+            lastActionText: lastEffectAction.text
         )
         snapshot.playerInfluence = runtime.influence(on: .player)
         snapshot.nearestActorInfluence = nearest.map { runtime.influence(on: $0) } ?? .none
@@ -40,28 +40,20 @@ extension MagicCoordinator: MagicEffectControlProviding {
     }
 
     @discardableResult
-    public func consumeFirstCarriedMagicItem() -> String {
-        guard effects != nil else {
-            effectActionText = MagicCore.effectsUnavailableText
-            return effectActionText
-        }
+    public func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
+        guard effects != nil else { return recordEffect(.unavailable) }
         let item = carriedItems { items, item in items.magicItemUse(item) == nil ? nil : item }
             .first
-        guard let item else {
-            effectActionText = "The player carries nothing to eat or drink."
-            return effectActionText
-        }
+        guard let item else { return recordEffect(.nothingToConsume) }
         return consumeMagicItem(item)
     }
 
     @discardableResult
-    public func dispelPlayerMagicEffects() -> String {
+    public func dispelPlayerMagicEffects() -> MagicEffectActionOutcome {
         guard let removed = withEffects({ $0.dispelAll(on: .player) }) else {
-            effectActionText = MagicCore.effectsUnavailableText
-            return effectActionText
+            return recordEffect(.unavailable)
         }
-        effectActionText = MagicCore.dispelText(removed: removed)
-        return effectActionText
+        return recordEffect(.dispelled(removed: removed))
     }
 
     private func readout(
@@ -133,90 +125,76 @@ extension MagicCoordinator: CastingControlProviding {
             lastHitTargets: lastHit?.targetCount ?? 0,
             lastHitAdjustments: lastHit?.adjustments.map(\.line) ?? [],
             conditionLines: magicConditionLines(),
-            lastActionText: castingActionText
+            lastActionText: lastCastingAction.text
         )
     }
 
     @discardableResult
-    public func grantPlayerStartSpells() -> String {
-        guard let caster else { return castingUnavailable() }
+    public func grantPlayerStartSpells() -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
         let race = caster.spellbook.resolve(world?.playerRaceSpells() ?? [], fromPlugin: pluginName)
         let granted = caster.spellbook.grantStartSpells(to: .player, additional: race)
         let held = caster.applyAbilities(on: .player)
-        castingActionText = MagicCore.startSpellsText(granted: granted, held: held)
-        return castingActionText
+        return recordCasting(.learnedStartSpells(granted: granted, held: held))
     }
 
     @discardableResult
-    public func readFirstCarriedSpellTome() -> String {
-        guard let caster else { return castingUnavailable() }
-        guard let tome = carriedSpellTomes().first else {
-            castingActionText = "The player carries no spell tome."
-            return castingActionText
-        }
+    public func readFirstCarriedSpellTome() -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
+        guard let tome = carriedSpellTomes().first else { return recordCasting(.noTome) }
         let spells = caster.spellbook.spells
         let bookKey = spells.resolvedID(tome.item, fromPlugin: pluginName)
             .map(ReferenceKey.init(resolved:))
         let spellKey = spells.resolvedID(tome.spell, fromPlugin: pluginName)
             .map(ReferenceKey.init(resolved:))
         guard let bookKey else {
-            castingActionText = "Could not resolve \(itemName(tome.item)) in \(pluginName)."
-            return castingActionText
+            return recordCasting(.unresolvedTome(book: itemName(tome.item), plugin: pluginName))
         }
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
-        castingActionText = MagicCore.readingText(reading, book: itemName(tome.item))
-        return castingActionText
+        return recordCasting(.readTome(reading, book: itemName(tome.item)))
     }
 
     @discardableResult
-    public func selectNextKnownSpell() -> String {
+    public func selectNextKnownSpell() -> CastingActionOutcome {
         let known = playerKnownSpells()
-        guard !known.isEmpty else {
-            castingActionText = "The player knows no spells to select."
-            return castingActionText
-        }
+        guard !known.isEmpty else { return recordCasting(.noSpellsKnown) }
         selection = MagicCore.nextSelection(after: selection, count: known.count)
-        castingActionText = "Selected \(known[selection].displayName)."
-        return castingActionText
+        return recordCasting(.selected(spell: known[selection].displayName))
     }
 
     @discardableResult
-    public func readySelectedSpell(in hand: SpellHand) -> String {
-        guard let caster else { return castingUnavailable() }
-        guard let spell = selectedKnownSpell() else {
-            castingActionText = "No spell selected to ready."
-            return castingActionText
-        }
+    public func readySelectedSpell(in hand: SpellHand) -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
+        guard let spell = selectedKnownSpell() else { return recordCasting(.noSpellSelected) }
         do {
             let change = try caster.spellbook.equip(
                 spell.key, in: hand, on: .player, inventory: world?.inventory == nil ? nil : .player
             )
-            castingActionText = MagicCore.readyText(
-                change, name: spell.displayName, itemNames: change.unequippedItems.map(itemName)
-            )
+            return recordCasting(.readied(
+                change, spell: spell.displayName, unequipped: change.unequippedItems.map(itemName)
+            ))
         } catch {
-            castingActionText = "Could not ready \(spell.displayName): " + String(describing: error)
+            return recordCasting(.readyFailed(
+                spell: spell.displayName, reason: String(describing: error)
+            ))
         }
-        return castingActionText
     }
 
     /// Fast-forwards the charge, then the maintenance floor, so one press is
     /// one whole cast. Held buttons reach the same states over real frames.
     @discardableResult
-    public func castReadiedSpell(in hand: SpellHand) -> String {
-        guard let caster else { return castingUnavailable() }
+    public func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
         let outcome = caster.begin(hand, on: .player)
         if let failure = outcome.failure {
-            castingActionText = "Cast refused: \(failure.describedReason)"
-            return castingActionText
+            return recordCasting(.cast(.failed(failure)))
         }
         let charge = caster.state(of: hand).phase == .charging ? MagicCore.panelChargeStep : 0
         caster.advance(delta: charge, on: .player)
         if caster.phase(of: hand) == .concentrating {
             caster.advance(delta: 1, on: .player)
         }
-        castingActionText = MagicCore.castText(caster.release(hand, on: .player))
-        return castingActionText
+        return recordCasting(.cast(caster.release(hand, on: .player)))
     }
 
     // MARK: - Reads
@@ -237,11 +215,6 @@ extension MagicCoordinator: CastingControlProviding {
 
     private func itemName(_ item: FormID) -> String {
         world?.itemName(item) ?? item.description
-    }
-
-    private func castingUnavailable() -> String {
-        castingActionText = MagicCore.castingUnavailableText
-        return castingActionText
     }
 
     private func readout(_ spell: ResolvedSpell, book: SpellbookState) -> KnownSpellReadout {

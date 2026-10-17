@@ -34,9 +34,9 @@ struct InventoryCoreTests {
     @Test func aGrantNeedsAPositiveCountAndAKnownItem() {
         let item = FormID(0x40)
         #expect(InventoryCore.grantRefusal(item: item, count: 0, isKnown: true)?
-            .contains("is not a stack") == true)
+            .text.contains("is not a stack") == true)
         #expect(InventoryCore.grantRefusal(item: item, count: 1, isKnown: false)?
-            .contains("no loaded plugin describes") == true)
+            .text.contains("no loaded plugin describes") == true)
         #expect(InventoryCore.grantRefusal(item: item, count: 1, isKnown: true) == nil)
     }
 

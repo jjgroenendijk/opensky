@@ -76,7 +76,7 @@ extension MessageCoordinator: MessageControlProviding {
     }
 
     public func showMessage(editorID: String, asBox: Bool) {
-        lastPanelOutcome = show(editorID: editorID, asBox: asBox)
+        lastPanelOutcome = show(editorID: editorID, asBox: asBox).text
     }
 
     public func resetHelpMessages() {

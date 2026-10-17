@@ -37,7 +37,7 @@ extension CrimeCoordinator: CrimeArrestSession {
             reportArrest(settlement)
             serve(settlement)
         case let .failure(refusal):
-            lastGuardText = "Arrest with \(factionName(faction)) refused: \(refusal)."
+            lastGuard = .arrestRefused(faction: factionName(faction), refusal)
         }
         return result
     }
@@ -80,9 +80,7 @@ extension CrimeCoordinator: CrimeArrestSession {
             world?.resumePackage(for: guardKey)
         }
         refreshGuardHostility()
-        lastGuardText = CrimeCore.settlementText(
-            settlement, factionName: factionName(settlement.faction), moved: moved
-        )
+        lastGuard = .settled(settlement, faction: factionName(settlement.faction), moved: moved)
     }
 
     /// `ARRT`, and `JAIL` when the player serves time. The location is left for

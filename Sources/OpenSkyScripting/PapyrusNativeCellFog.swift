@@ -43,7 +43,10 @@ extension PapyrusNativeFunctions {
         change: @escaping @MainActor (PapyrusNativeCall) -> PapyrusFogChange?
     ) {
         scriptState("Cell", name, into: &registry) { call, bridge, key in
-            guard let apply = bridge.cellFog, let word = bridge.loadOrderWord(of: key) else {
+            guard
+                let apply = bridge.sessionNatives.cellFog,
+                let word = bridge.loadOrderWord(of: key)
+            else {
                 return failure(call, "\(name) needs the renderer and a cell")
             }
             guard let fog = change(call) else {

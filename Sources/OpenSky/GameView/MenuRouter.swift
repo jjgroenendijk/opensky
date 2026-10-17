@@ -2,15 +2,42 @@
 // the settings, menu text, sounds, and frame tick that every menu movie shares.
 
 import AppKit
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 
-final class MenuRouter {
-    unowned let game: GameViewController
+/// What `MenuRouter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
+    var containerMenu: ContainerMenuController { get }
+    var controlMapLoader: (() throws -> ControlMapFile)? { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var hud: HUDCoordinator { get }
+    var inventoryMenu: InventoryMenuController { get }
+    var journalMenu: JournalMenuController { get }
+    var lockpickingMenu: LockpickingMenuController { get }
+    var mapMenu: MapMenuCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuMode: MenuModeController { get }
+    var menuTextLoader: (() -> LocalizedLabels)? { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var raceMenu: RaceMenuCoordinator { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var skillsMenu: SkillsMenuCoordinator { get }
+    var swfMovies: SWFMovieSource { get }
+    var systemMenu: SystemMenuCoordinator { get }
+    var titleMenu: TitleMenuCoordinator { get }
+    var hostView: NSView { get }
+}
 
-    init(game: GameViewController) {
+final class MenuRouter {
+    unowned let game: any MenuRouterHost
+
+    init(game: any MenuRouterHost) {
         self.game = game
     }
 
@@ -149,7 +176,7 @@ final class MenuRouter {
     /// A script opens the race menu during play, while look holds the cursor.
     func modeChanged(to route: InputRoute) {
         let free = route == .menu && game.menuMode.topMenu.map(Self.cursorMenus.contains) == true
-        (game.view as? GameMetalView)?.setMenuCursorFree(free)
+        (game.hostView as? GameMetalView)?.setMenuCursorFree(free)
     }
 
     /// The main menu movie hit tests the cursor. The other menus still take a

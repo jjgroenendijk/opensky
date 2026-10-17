@@ -44,7 +44,8 @@ struct TrainingTests {
     @Test func noTrainerNearbySaysSo() throws {
         let world = FakeProgressionWorld()
         let coordinator = try ProgressionCoordinatorFixture.make(world: world)
-        #expect(coordinator.trainWithNearestTrainer().hasPrefix("No trainer nearby"))
+        #expect(coordinator.trainWithNearestTrainer().text(training: .vanilla)
+            .hasPrefix("No trainer nearby"))
     }
 
     @Test func aLevelUpResetsTheSessions() {

@@ -78,7 +78,7 @@ struct PapyrusLineOfSightTests {
         }
         #expect(register("RegisterForSingleLOSGain") == .returned(.none))
         var sees = false
-        fixture.session.bridge.seesTarget = { _, _ in sees }
+        fixture.session.bridge.perceptionNatives.seesTarget = { _, _ in sees }
         #expect(fixture.session.bridge.queueLineOfSightEvents() == 0)
         sees = true
         #expect(fixture.session.bridge.queueLineOfSightEvents() == 1)

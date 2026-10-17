@@ -14,9 +14,21 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `DialogueCameraController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol DialogueCameraHost: AnyObject {
+    var dialogue: DialogueCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var raceMenu: RaceMenuCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+}
+
 /// Holds the panel's force toggle and target for `game`.
 final class DialogueCameraController {
-    unowned let game: GameViewController
+    unowned let game: any DialogueCameraHost
     /// Frames the selected actor with no conversation open.
     private(set) var isForced = false
     private(set) var target: DialogueCameraTarget = .crosshair
@@ -29,7 +41,7 @@ final class DialogueCameraController {
     private var portraitZoom: Float = 1
     private var lastPortraitTime: Double?
 
-    init(game: GameViewController) {
+    init(game: any DialogueCameraHost) {
         self.game = game
     }
 

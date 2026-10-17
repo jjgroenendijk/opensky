@@ -16,13 +16,16 @@ extension PapyrusNativeFunctions {
         scriptState("Cell", "IsInterior", into: &registry) { call, bridge, key in
             guard
                 let word = bridge.loadOrderWord(of: key),
-                let interior = bridge.conditionData?().isInterior(cell: FormID(word))
+                let interior = bridge.sessionNatives.conditionData?().isInterior(cell: FormID(word))
             else { return failure(call, "IsInterior needs a loaded cell") }
             return .returned(.boolean(interior))
         }
         // Only the player's conversation is modelled; the game returns None on the player.
         scriptState("Actor", "GetDialogueTarget", into: &registry) { call, bridge, key in
-            guard let world = bridge.world, let evaluator = bridge.conditionEvaluator?() else {
+            guard
+                let world = bridge.world,
+                let evaluator = bridge.sessionNatives.conditionEvaluator?()
+            else {
                 return needsWorld(call)
             }
             guard key != .player, evaluator.context.dialogue.speakerInDialogue == key else {
@@ -46,13 +49,16 @@ extension PapyrusNativeFunctions {
         }
         // "The object has to be controlled by Havok ... or this function will always return 0."
         scriptState("ObjectReference", "GetMass", into: &registry) { call, bridge, key in
-            guard let mass = bridge.havokMass else {
+            guard let mass = bridge.sessionNatives.havokMass else {
                 return failure(call, "GetMass needs the physics world")
             }
             return .returned(.float(mass(key) ?? 0))
         }
         scriptState("Actor", "GetBribeAmount", into: &registry) { call, bridge, key in
-            guard let amount = bridge.conditionEvaluator?().context.bribeAmount(of: key) else {
+            guard
+                let amount = bridge.sessionNatives.conditionEvaluator?().context
+                    .bribeAmount(of: key)
+            else {
                 return failure(call, "GetBribeAmount needs both actors' values and the settings")
             }
             return .returned(.integer(Int32(min(max(amount, 0), 1_000_000_000))))

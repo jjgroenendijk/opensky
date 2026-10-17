@@ -44,7 +44,7 @@ extension PapyrusNativeFunctions {
                         owner = scripted
                     } else if
                         script == "ObjectReference",
-                        let world = bridge.crimeReporter?()?.world
+                        let world = bridge.crimeNatives.crimeReporter?()?.world
                     {
                         owner = world.crimeOwner(of: key)
                     } else {

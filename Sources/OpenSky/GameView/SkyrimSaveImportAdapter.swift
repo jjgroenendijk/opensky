@@ -11,6 +11,15 @@ import OpenSkyInventory
 import OpenSkyMenus
 import OpenSkySave
 
+/// What `SkyrimSaveImportAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol SkyrimSaveImportHost: AnyObject {
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+}
+
 @MainActor
 enum SkyrimSaveImportAdapter {
     nonisolated static let slotPrefix = "ess:"
@@ -49,7 +58,7 @@ enum SkyrimSaveImportAdapter {
     }
 
     /// The written slot is named for the save, so importing it again replaces it.
-    static func load(slot: String, game: GameViewController) async throws {
+    static func load(slot: String, game: any SkyrimSaveImportHost) async throws {
         let url = URL(filePath: String(slot.dropFirst(slotPrefix.count)))
         let file = try await ESSSaveFolder.readFile(at: url)
         let index = try await ESSPluginIndex.load(for: file, root: GameDataLocator.locate())

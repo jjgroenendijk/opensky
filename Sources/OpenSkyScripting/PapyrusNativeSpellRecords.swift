@@ -11,7 +11,8 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions {
     static func installSpellRecords(into registry: inout PapyrusNativeRegistry) {
         scriptState("Spell", "IsHostile", into: &registry) { call, bridge, spell in
-            guard let record = bridge.casterRuntime?()?.spellbookAccess.record(spell) else {
+            guard let record = bridge.magicNatives.casterRuntime?()?.spellbookAccess.record(spell)
+            else {
                 return failure(call, "IsHostile needs a resolved spell")
             }
             return .returned(.boolean(record.payload(caster: .player).isHostile))

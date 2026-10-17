@@ -18,44 +18,44 @@ final class FakeItemProvider: ItemControlProviding {
     private(set) var actions: [String] = []
 
     @discardableResult
-    func takeInteractionTarget() -> String {
+    func takeInteractionTarget() -> ItemActionOutcome {
         record("take")
     }
 
     @discardableResult
-    func openInteractionTargetContainer() -> String {
+    func openInteractionTargetContainer() -> ItemActionOutcome {
         record("search")
     }
 
     @discardableResult
-    func takeAllFromOpenContainer() -> String {
+    func takeAllFromOpenContainer() -> ItemActionOutcome {
         record("takeAll")
     }
 
     @discardableResult
-    func closeOpenContainer() -> String {
+    func closeOpenContainer() -> ItemActionOutcome {
         record("close")
     }
 
     @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
+    func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome {
         record("drop \(item?.description ?? "first")×\(count)")
     }
 
     @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         record("equip \(item?.description ?? "first") on \(target)")
     }
 
     @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         record("unequip \(item?.description ?? "first") on \(target)")
     }
 
     @discardableResult
-    private func record(_ action: String) -> String {
+    private func record(_ action: String) -> ItemActionOutcome {
         actions.append(action)
-        return action
+        return .idle
     }
 }
 
@@ -68,37 +68,37 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func takeInteractionTarget() -> String {
+    func takeInteractionTarget() -> ItemActionOutcome {
         items.takeInteractionTarget()
     }
 
     @discardableResult
-    func openInteractionTargetContainer() -> String {
+    func openInteractionTargetContainer() -> ItemActionOutcome {
         items.openInteractionTargetContainer()
     }
 
     @discardableResult
-    func takeAllFromOpenContainer() -> String {
+    func takeAllFromOpenContainer() -> ItemActionOutcome {
         items.takeAllFromOpenContainer()
     }
 
     @discardableResult
-    func closeOpenContainer() -> String {
+    func closeOpenContainer() -> ItemActionOutcome {
         items.closeOpenContainer()
     }
 
     @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
+    func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome {
         items.dropPlayerItem(item, count: count)
     }
 
     @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         items.equipItem(item, on: target)
     }
 
     @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         items.unequipItem(item, on: target)
     }
 }

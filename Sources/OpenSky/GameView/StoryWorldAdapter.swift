@@ -24,8 +24,36 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `StoryWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol StoryWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var faceMorphs: FaceMorphCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var subtitles: SubtitleCoordinator { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class StoryWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any StoryWorldHost
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
     private var sessionStartLists: [PluginQuestList] = []
@@ -54,7 +82,7 @@ final class StoryWorldAdapter {
         return storyManager
     }()
 
-    init(game: GameViewController) {
+    init(game: any StoryWorldHost) {
         self.game = game
     }
 
@@ -85,7 +113,7 @@ final class StoryWorldAdapter {
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
         game.scripts.bridge?.trapWorld = game.effectsWorld
-        game.scripts.bridge?.conditionEvaluator = { [weak self] in
+        game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard
             )

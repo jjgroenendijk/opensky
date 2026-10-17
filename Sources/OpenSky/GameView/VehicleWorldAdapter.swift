@@ -14,8 +14,21 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `VehicleWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol VehicleWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var idleWorld: IdleWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class VehicleWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any VehicleWorldHost
     let vehicles = VehicleCoordinator()
     /// True after `SetPlayerAIDriven(true)`: the player's packages move the player.
     private(set) var isPlayerAIDriven = false
@@ -26,7 +39,7 @@ final class VehicleWorldAdapter {
     /// Wheel contacts by model path, read off the main actor.
     private var wheels: AssetLoader<String, [SIMD2<Float>]>?
 
-    init(game: GameViewController) {
+    init(game: any VehicleWorldHost) {
         self.game = game
         vehicles.attach(world: self)
     }

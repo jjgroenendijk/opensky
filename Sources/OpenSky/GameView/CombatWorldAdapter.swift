@@ -2,23 +2,64 @@
 // them from the renderer's frame hooks, and plays reaction clips. The rules live
 // in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyCrime
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
+import OpenSkyMenus
+import OpenSkyPerception
+import OpenSkyProgression
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
+import OpenSkyWorldState
+
+/// What `CombatWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol CombatWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var effects: EffectsCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var sessionWiring: WorldSessionWiring { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
 
 /// Answers `CombatWorld` from the session systems `game` owns.
 final class CombatWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any CombatWorldHost
     /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
     private var warmedSkeletons: Set<String> = []
 
-    init(game: GameViewController) {
+    init(game: any CombatWorldHost) {
         self.game = game
     }
 

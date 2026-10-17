@@ -41,32 +41,33 @@ extension CombatCoordinator: MeleeCombatControlProviding {
     }
 
     @discardableResult
-    public func requestMeleeAttack() -> String {
-        guard let melee else { return "Melee unavailable: no game data loaded." }
-        guard melee.state.drawState.canAttack else {
-            meleeActionText = "Cannot attack: weapon is \(melee.state.drawState.rawValue)."
-            return meleeActionText
-        }
-        melee.requestAttack()
-        meleeActionText = "Requested one swing."
-        return meleeActionText
+    public func requestMeleeAttack() -> MeleeActionOutcome {
+        requestMelee(power: false)
     }
 
     @discardableResult
-    public func requestMeleePowerAttack() -> String {
-        guard let melee else { return "Melee unavailable: no game data loaded." }
-        guard melee.state.drawState.canAttack else {
-            meleeActionText = "Cannot attack: weapon is \(melee.state.drawState.rawValue)."
-            return meleeActionText
-        }
-        melee.requestPowerAttack()
-        meleeActionText = "Requested one power attack."
-        return meleeActionText
+    public func requestMeleePowerAttack() -> MeleeActionOutcome {
+        requestMelee(power: true)
     }
 
     public func clearMeleeTrace() {
         melee?.clearTrace()
-        meleeActionText = "Cleared the hit trace."
+        lastMeleeAction = .clearedTrace
+    }
+
+    private func requestMelee(power: Bool) -> MeleeActionOutcome {
+        guard let melee else { return .unavailable }
+        guard melee.state.drawState.canAttack else {
+            lastMeleeAction = .cannotAttack(melee.state.drawState)
+            return lastMeleeAction
+        }
+        if power {
+            melee.requestPowerAttack()
+        } else {
+            melee.requestAttack()
+        }
+        lastMeleeAction = .requested(power: power)
+        return lastMeleeAction
     }
 
     /// The arrow settings, and what they did this session.
@@ -171,38 +172,36 @@ extension CombatCoordinator: ArcheryControlProviding {
     /// Fires through the same `loose` the graph's `arrowRelease` uses, so a
     /// sidebar shot is the same downstream as a player shot.
     @discardableResult
-    public func spawnDevProjectile() -> String {
-        guard let archery else { return "Archery unavailable: no game data loaded." }
+    public func spawnDevProjectile() -> ArcheryActionOutcome {
+        guard let archery else { return .unavailable }
         archery.arrow = selectedArrow()
         guard archery.arrow != nil else {
-            archeryActionText = "Cannot fire: no ammunition with a flyable PROJ carried."
-            return archeryActionText
+            lastArcheryAction = .noAmmunition
+            return lastArcheryAction
         }
         guard let projectile = archery.loose(consumesArrow: false) else {
-            archeryActionText = "Cannot fire: the projectile has no launch speed."
-            return archeryActionText
+            lastArcheryAction = .noLaunchSpeed
+            return lastArcheryAction
         }
-        archeryActionText = String(
-            format: "Fired projectile #%d at %.0f units/s.",
-            projectile.id,
-            simd_length(projectile.state.velocity)
+        lastArcheryAction = .fired(
+            id: projectile.id, speed: simd_length(projectile.state.velocity)
         )
-        return archeryActionText
+        return lastArcheryAction
     }
 
     public func despawnProjectiles() {
         archery?.projectiles.despawnAll()
-        archeryActionText = "Despawned everything in flight."
+        lastArcheryAction = .despawned
     }
 
     public func clearStuckProjectiles() {
         archery?.projectiles.clearStuckArrows()
-        archeryActionText = "Pulled every stuck arrow back out."
+        lastArcheryAction = .clearedStuck
     }
 
     public func clearProjectileTrace() {
         archery?.projectiles.clearTrace()
-        archeryActionText = "Cleared the shot trace."
+        lastArcheryAction = .clearedTrace
     }
 
     /// The editor ID when the item index resolves one, else the FormID.
@@ -256,7 +255,7 @@ extension CombatCoordinator: CombatLoopControlProviding {
             trimmedTransients: loop.trimmedTransients,
             isActorCastingEnabled: allowsActorCasting,
             actorCastCount: actorCastCount,
-            lastActionText: loop.lastActionText
+            lastActionText: loop.lastAction.text
         )
     }
 

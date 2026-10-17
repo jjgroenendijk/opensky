@@ -18,7 +18,7 @@ public final class ActorValueCoordinator {
     public var target = ActorValueTargetSelector.player
     /// Which actor value they act on, by vanilla table index. Health first.
     public var selection: Int32 = 24
-    public internal(set) var lastActionText = "No actor-value action yet."
+    public internal(set) var lastAction = ActorValueActionOutcome.idle
     /// Kept here, not in the runtime: the runtime is a struct over a shared
     /// store, and a per-copy accumulator would split the simulation.
     private var regenAccumulator: Double = 0

@@ -55,7 +55,7 @@ extension MapMenuCoordinator {
         guard let world, sites.indices.contains(inspection.marker) else { return }
         let site = sites[inspection.marker]
         world.storeMarkerState(action.state, for: site.key)
-        lastResultText = "\(site.name): \(action.rawValue)"
+        lastOutcome = .markerSet(site.name, action)
     }
 
     /// "Name (worldspace): state", or nil without markers.

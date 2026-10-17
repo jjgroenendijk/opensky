@@ -14,15 +14,27 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `ObjectAnimationWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ObjectAnimationWorldHost: AnyObject {
+    var audioFileSystem: (any GameFileSource)? { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var playerSettingsStore: PlayerSettingsStore { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class ObjectAnimationWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ObjectAnimationWorldHost
     let objects: ObjectBehaviorCoordinator
     let doors = SequenceDoorCoordinator()
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
 
-    init(game: GameViewController) {
+    init(game: any ObjectAnimationWorldHost) {
         self.game = game
         objects = ObjectBehaviorCoordinator(settings: game.playerSettings.store)
         doors.isEnabled = objects.isEnabled

@@ -13,13 +13,54 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `WorldSessionWiring` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol WorldSessionWiringHost: AnimationEventWorldHost {
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var audioWorld: AudioWorldAdapter { get }
+    var cameraInput: CameraInputState { get }
+    var cinematicWorld: CinematicCameraWorldAdapter { get }
+    var combatWorld: CombatWorldAdapter { get }
+    var crimeWorld: CrimeWorldAdapter { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var factionWorld: FactionWorldAdapter { get }
+    var hazardWorld: HazardWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
+    var loadingWorld: LoadingScreenWorldAdapter { get }
+    var lockWorld: LockWorldAdapter { get }
+    var magicWorld: MagicWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messageWorld: MessageWorldAdapter { get }
+    var npcAnimation: NPCAnimationCoordinator { get }
+    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var perception: PerceptionCoordinator { get }
+    var playerWorld: PlayerWorldAdapter { get }
+    var progressionWorld: ProgressionWorldAdapter { get }
+    var ragdollWorld: RagdollWorldAdapter { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scriptWorld: ScriptWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get set }
+    var swfMovies: SWFMovieSource { get }
+    var trapControl: TrapControlAdapter { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class WorldSessionWiring {
-    unowned let game: GameViewController
+    unowned let game: any WorldSessionWiringHost
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
     private(set) var animationClips: ActorClipLoader?
     private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game)
 
-    init(game: GameViewController) {
+    init(game: any WorldSessionWiringHost) {
         self.game = game
     }
 

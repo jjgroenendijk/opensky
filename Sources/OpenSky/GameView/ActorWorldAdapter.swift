@@ -22,9 +22,24 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `ActorWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ActorWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 final class ActorWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ActorWorldHost
     /// Change gate in front of the HUD meter contract.
     private var meters = HUDMeterBinding()
     /// What the enemy health bar last showed; nil when it is hidden.
@@ -32,7 +47,7 @@ final class ActorWorldAdapter {
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     private var baseNames: [UInt32: String?] = [:]
 
-    init(game: GameViewController) {
+    init(game: any ActorWorldHost) {
         self.game = game
     }
 

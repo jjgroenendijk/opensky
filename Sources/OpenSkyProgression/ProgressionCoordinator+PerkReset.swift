@@ -57,7 +57,7 @@ extension ProgressionCoordinator {
         }
         leveling.noteLegendary(skill: index)
         let report = finish(index, refunded: refunded)
-        lastActionText = "\(skillName(index)) is legendary; refunded \(refunded) perk point(s)."
+        record(.madeLegendary(skill: skillName(index), refunded: refunded))
         return .success(report)
     }
 
@@ -73,7 +73,7 @@ extension ProgressionCoordinator {
         else { return .failure(.noDragonSoul) }
         leveling.values.addModifier(-1, to: .permanent, at: souls, on: .player)
         let refunded = clearTree(ofSkill: index)
-        lastActionText = "Reset the \(skillName(index)) tree; refunded \(refunded) perk point(s)."
+        record(.treeReset(skill: skillName(index), refunded: refunded))
         return .success(finish(index, refunded: refunded))
     }
 

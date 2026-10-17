@@ -29,7 +29,7 @@ final class TrapControlAdapter {
 
     private let dependencies: TrapControlDependencies
     private(set) var selected: ReferenceKey?
-    private(set) var lastText = "No trap action yet."
+    private(set) var lastAction = TrapActionOutcome.idle
 
     init(_ dependencies: TrapControlDependencies) {
         self.dependencies = dependencies
@@ -62,7 +62,7 @@ final class TrapControlAdapter {
             chain: chain(streamer: streamer, resolver: resolver),
             hazards: dependencies.hazards.hazardRows,
             hazardHits: dependencies.hazards.hitTotal,
-            lastText: lastText
+            lastText: lastAction.text
         )
     }
 
@@ -70,30 +70,30 @@ final class TrapControlAdapter {
         selected = key
     }
 
-    func fire() -> String {
+    func fire() -> TrapActionOutcome {
         guard let streamer = dependencies.streamer(), let entry = selectedEntry else {
-            return note("No trap selected.")
+            return note(.noSelection)
         }
         streamer.onTriggerTransition(TriggerTransitionEvent(reference: entry.key, phase: .enter))
         streamer.onTriggerTransition(TriggerTransitionEvent(reference: entry.key, phase: .leave))
-        return note("Stepped into and out of \(name(of: entry)).")
+        return note(.fired(trap: name(of: entry)))
     }
 
-    func disarm() -> String {
+    func disarm() -> TrapActionOutcome {
         guard let bridge = dependencies.scripts.bridge, let entry = selectedEntry else {
-            return note("No trap selected.")
+            return note(.noSelection)
         }
         let outcome = bridge.activate(entry.key, by: .player, togglesOpen: false)
-        return note("Activated \(name(of: entry)): \(outcome.queuedEvents) script events.")
+        return note(.activated(trap: name(of: entry), queuedEvents: outcome.queuedEvents))
     }
 
     private var selectedEntry: RuntimeReferenceEntry? {
         selected.flatMap { dependencies.streamer()?.referenceEntry(key: $0) }
     }
 
-    private func note(_ text: String) -> String {
-        lastText = text
-        return text
+    private func note(_ outcome: TrapActionOutcome) -> TrapActionOutcome {
+        lastAction = outcome
+        return outcome
     }
 
     private func enableResolver(_ streamer: CellStreamer) -> EnableParentResolver {

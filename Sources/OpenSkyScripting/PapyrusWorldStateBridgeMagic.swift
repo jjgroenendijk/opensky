@@ -15,7 +15,7 @@ extension PapyrusWorldStateBridge {
 
     public func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
         guard
-            let caster = casterRuntime?(),
+            let caster = magicNatives.casterRuntime?(),
             let holder = actorHolder(for: key)
         else { return nil }
         let spellbook = caster.spellbookAccess.state(of: holder)
@@ -35,7 +35,10 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
-        guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
+        guard
+            let caster = magicNatives.casterRuntime?(),
+            let holder = actorHolder(for: actor)
+        else {
             return false
         }
         return caster.spellbookAccess.learn(spell, on: holder)
@@ -43,7 +46,10 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
-        guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
+        guard
+            let caster = magicNatives.casterRuntime?(),
+            let holder = actorHolder(for: actor)
+        else {
             return false
         }
         return caster.spellbookAccess.forget(spell, on: holder)
@@ -56,7 +62,7 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
-            let caster = casterRuntime?(),
+            let caster = magicNatives.casterRuntime?(),
             let holder = actorHolder(for: actor),
             let hand = source.hand
         else { return false }
@@ -72,7 +78,7 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
-            let caster = casterRuntime?(),
+            let caster = magicNatives.casterRuntime?(),
             let holder = actorHolder(for: actor),
             let hand = source.hand,
             caster.spellbookAccess.state(of: holder).spell(in: hand) == spell
@@ -85,14 +91,14 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
         guard let holder = actorHolder(for: actor) else { return 0 }
-        return dispelEffects?(holder) { $0.source.record == spell } ?? 0
+        return magicNatives.dispelEffects?(holder) { $0.source.record == spell } ?? 0
     }
 
     @discardableResult
     public func dispelAllSpells(on actor: ReferenceKey) -> Int {
         guard let holder = actorHolder(for: actor) else { return 0 }
-        let spells = casterRuntime?()?.spellbookAccess.spells
-        return dispelEffects?(holder) { effect in
+        let spells = magicNatives.casterRuntime?()?.spellbookAccess.spells
+        return magicNatives.dispelEffects?(holder) { effect in
             Self.isDispellable(effect, spells: spells)
         } ?? 0
     }
@@ -117,7 +123,7 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
     ) -> Bool {
         guard
-            let caster = casterRuntime?(),
+            let caster = magicNatives.casterRuntime?(),
             let record = caster.spellbookAccess.record(spell),
             let holder = actorHolder(for: source)
         else { return false }
@@ -141,7 +147,7 @@ extension PapyrusWorldStateBridge {
         caster holder: ActorValueHolder,
         target: ReferenceKey
     ) -> Bool {
-        guard let apply = applySpellHit else { return false }
+        guard let apply = magicNatives.applySpellHit else { return false }
         let payload = record.payload(caster: holder.key)
         _ = apply(SpellHit(
             payload: payload,

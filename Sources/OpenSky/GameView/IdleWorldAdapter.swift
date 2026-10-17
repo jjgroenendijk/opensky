@@ -5,19 +5,36 @@
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `IdleWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol IdleWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var packages: PackageCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var sessionWiring: WorldSessionWiring { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class IdleWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any IdleWorldHost
     /// Ambient idles at idle markers, with their props.
     let idles = IdleCoordinator()
     /// The per-actor switch between the baked and the assembled head.
     let headAssembly = HeadAssemblyCoordinator()
 
-    init(game: GameViewController) {
+    init(game: any IdleWorldHost) {
         self.game = game
         idles.attach(world: self)
         headAssembly.attach(world: self)

@@ -15,13 +15,26 @@ import OpenSkyRendering
 import OpenSkyWorld
 import simd
 
+/// What `CinematicCameraWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol CinematicCameraWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var effects: EffectsCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var worldData: WorldDataStores? { get }
+}
+
 final class CinematicCameraWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any CinematicCameraWorldHost
     /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
     private var tracks: AssetLoader<String, NIFCameraTrack>?
     private var lastFrame: Date?
 
-    init(game: GameViewController) {
+    init(game: any CinematicCameraWorldHost) {
         self.game = game
     }
 

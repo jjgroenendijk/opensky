@@ -58,7 +58,7 @@ extension PapyrusNativeFunctions {
 extension PapyrusWorldStateBridge {
     /// Nil without a combat runtime. A dead actor is not fighting.
     func combatActivity(of key: ReferenceKey) -> ActorCombatActivity? {
-        guard let combat = combatRuntime?() else { return nil }
+        guard let combat = actorNatives.combatRuntime?() else { return nil }
         guard worldState.component(ActorDeathState.self, for: key)?.isDead != true else {
             return .notFighting
         }

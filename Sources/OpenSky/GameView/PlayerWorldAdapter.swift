@@ -16,11 +16,25 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `PlayerWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol PlayerWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var inventory: InventoryCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
 final class PlayerWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any PlayerWorldHost
 
-    init(game: GameViewController) {
+    init(game: any PlayerWorldHost) {
         self.game = game
     }
 

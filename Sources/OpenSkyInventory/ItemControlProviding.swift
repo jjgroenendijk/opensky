@@ -119,38 +119,35 @@ public protocol ItemControlProviding: AnyObject {
     var itemControlSnapshot: ItemControlSnapshot { get }
 
     /// Takes the crosshair target into the player's inventory.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func takeInteractionTarget() -> String
+    func takeInteractionTarget() -> ItemActionOutcome
 
     /// Opens a container session on the crosshair target, replacing any
     /// session already open.
     @discardableResult
-    func openInteractionTargetContainer() -> String
+    func openInteractionTargetContainer() -> ItemActionOutcome
 
     /// Moves everything in the open container to the player.
     @discardableResult
-    func takeAllFromOpenContainer() -> String
+    func takeAllFromOpenContainer() -> ItemActionOutcome
 
     /// Ends the open container session.
     @discardableResult
-    func closeOpenContainer() -> String
+    func closeOpenContainer() -> ItemActionOutcome
 
     /// Drops `count` of `item` in front of the player. A nil `item` drops from
     /// the player's first stack, which is what makes the control usable without
     /// knowing a FormID.
     @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> String
+    func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome
 
     /// Equips `item` on `target`, unequipping its conflicts. A nil `item` equips the
     /// target's first equippable unequipped stack.
-    /// - Returns: a human-readable outcome naming what was displaced.
     @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome
 
     /// Unequips `item` on `target`. A nil `item` unequips the first thing the
     /// target is wearing.
     @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome
 }

@@ -29,37 +29,37 @@ extension GameViewController: ItemControlProviding {
     }
 
     @discardableResult
-    func takeInteractionTarget() -> String {
+    func takeInteractionTarget() -> ItemActionOutcome {
         inventory.takeInteractionTarget()
     }
 
     @discardableResult
-    func openInteractionTargetContainer() -> String {
+    func openInteractionTargetContainer() -> ItemActionOutcome {
         inventory.openInteractionTargetContainer()
     }
 
     @discardableResult
-    func takeAllFromOpenContainer() -> String {
+    func takeAllFromOpenContainer() -> ItemActionOutcome {
         inventory.takeAllFromOpenContainer()
     }
 
     @discardableResult
-    func closeOpenContainer() -> String {
+    func closeOpenContainer() -> ItemActionOutcome {
         inventory.closeOpenContainer()
     }
 
     @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
+    func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome {
         inventory.dropPlayerItem(item, count: count)
     }
 
     @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         inventory.equipItem(item, on: target)
     }
 
     @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
         inventory.unequipItem(item, on: target)
     }
 }
@@ -75,7 +75,11 @@ extension GameViewController: InventoryEquipmentControlProviding {
     }
 
     @discardableResult
-    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String {
+    func grantItem(
+        _ item: FormID,
+        count: Int32,
+        to target: InventoryGrantTarget
+    ) -> GrantActionOutcome {
         inventory.grantItem(item, count: count, to: target)
     }
 }
@@ -85,23 +89,23 @@ extension GameViewController: CraftingControlProviding {
         inventory.craftingSnapshot
     }
 
-    func openCraftingStation(_ editorID: String) -> String {
+    func openCraftingStation(_ editorID: String) -> CraftingActionOutcome {
         inventory.openCraftingStation(editorID)
     }
 
-    func craftRecipe(_ id: ResolvedFormID) -> String {
+    func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome {
         inventory.craftRecipe(id)
     }
 
-    func closeCraftingStation() -> String {
+    func closeCraftingStation() -> CraftingActionOutcome {
         inventory.closeCraftingStation()
     }
 
-    func forceHarvest() -> String {
+    func forceHarvest() -> ItemActionOutcome {
         inventory.forceHarvest()
     }
 
-    func resetHarvest() -> String {
+    func resetHarvest() -> ItemActionOutcome {
         inventory.resetHarvest()
     }
 }
@@ -137,11 +141,11 @@ extension GameViewController: TrapControlProviding {
         trapControl.select(key)
     }
 
-    func fireSelectedTrap() -> String {
+    func fireSelectedTrap() -> TrapActionOutcome {
         trapControl.fire()
     }
 
-    func disarmSelectedTrap() -> String {
+    func disarmSelectedTrap() -> TrapActionOutcome {
         trapControl.disarm()
     }
 }
@@ -229,12 +233,12 @@ extension GameViewController: ContainerMenuControlProviding {
     }
 
     @discardableResult
-    func selectContainerMenuMerchant(_ reference: FormID) -> String {
+    func selectContainerMenuMerchant(_ reference: FormID) -> MerchantNomination {
         containerMenu.selectMerchant(reference)
     }
 
     @discardableResult
-    func selectContainerMenuMerchantFromInteraction() -> String {
+    func selectContainerMenuMerchantFromInteraction() -> MerchantNomination {
         containerMenu.selectMerchantFromInteraction()
     }
 }
@@ -260,47 +264,47 @@ extension GameViewController: CrimeFactionControlProviding {
     }
 
     @discardableResult
-    func modifySelectedBounty(by gold: Int32, violent: Bool) -> String {
+    func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
         crime.modifySelectedBounty(by: gold, violent: violent)
     }
 
     @discardableResult
-    func clearSelectedBounty() -> String {
+    func clearSelectedBounty() -> CrimeFactionActionOutcome {
         crime.clearSelectedBounty()
     }
 
     @discardableResult
-    func checkGuardConfrontation() -> String {
+    func checkGuardConfrontation() -> CrimeFactionActionOutcome {
         crime.checkGuardConfrontation()
     }
 
     @discardableResult
-    func resistArrestWithSelectedFaction() -> String {
+    func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
         crime.resistArrestWithSelectedFaction()
     }
 
     @discardableResult
-    func selectSocialSubjectFromCrosshair() -> String {
+    func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         crime.selectSocialSubjectFromCrosshair()
     }
 
     @discardableResult
-    func selectPlayerAsSocialSubject() -> String {
+    func selectPlayerAsSocialSubject() -> CrimeFactionActionOutcome {
         crime.selectPlayerAsSocialSubject()
     }
 
     @discardableResult
-    func joinSelectedFaction(rank: Int8) -> String {
+    func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
         crime.joinSelectedFaction(rank: rank)
     }
 
     @discardableResult
-    func leaveSelectedFaction() -> String {
+    func leaveSelectedFaction() -> CrimeFactionActionOutcome {
         crime.leaveSelectedFaction()
     }
 
     @discardableResult
-    func barterWithSocialSubject() -> String {
+    func barterWithSocialSubject() -> CrimeFactionActionOutcome {
         crime.barterWithSocialSubject()
     }
 }
@@ -362,32 +366,32 @@ extension GameViewController: ActorValueControlProviding {
     }
 
     @discardableResult
-    func damageSelectedActor(by amount: Float) -> String {
+    func damageSelectedActor(by amount: Float) -> ActorValueActionOutcome {
         actorValues.damageSelected(by: amount)
     }
 
     @discardableResult
-    func restoreSelectedActor(by amount: Float) -> String {
+    func restoreSelectedActor(by amount: Float) -> ActorValueActionOutcome {
         actorValues.restoreSelected(by: amount)
     }
 
     @discardableResult
-    func setSelectedActorValue(to value: Float) -> String {
+    func setSelectedActorValue(to value: Float) -> ActorValueActionOutcome {
         actorValues.setSelectedValue(to: value)
     }
 
     @discardableResult
-    func setSelectedActorBase(to value: Float) -> String {
+    func setSelectedActorBase(to value: Float) -> ActorValueActionOutcome {
         actorValues.setSelectedBase(to: value)
     }
 
     @discardableResult
-    func restoreSelectedActorFully() -> String {
+    func restoreSelectedActorFully() -> ActorValueActionOutcome {
         actorValues.restoreSelectedFully()
     }
 
     @discardableResult
-    func resetSelectedActorValues() -> String {
+    func resetSelectedActorValues() -> ActorValueActionOutcome {
         actorValues.resetSelected()
     }
 }
@@ -408,57 +412,57 @@ extension GameViewController: ProgressionControlProviding {
     }
 
     @discardableResult
-    func advanceSelectedSkill(byUse amount: Float) -> String {
+    func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome {
         progression.advanceSelectedSkill(byUse: amount)
     }
 
     @discardableResult
-    func incrementSelectedSkill() -> String {
+    func incrementSelectedSkill() -> ProgressionActionOutcome {
         progression.incrementSelectedSkill()
     }
 
     @discardableResult
-    func awardCharacterExperience(_ amount: Float) -> String {
+    func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome {
         progression.awardCharacterExperience(amount)
     }
 
     @discardableResult
-    func chooseAttributePick(_ kind: ActorValueKind) -> String {
+    func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
         progression.chooseAttributePick(kind)
     }
 
     @discardableResult
-    func changePerkPoints(by delta: Int) -> String {
+    func changePerkPoints(by delta: Int) -> ProgressionActionOutcome {
         progression.changePerkPoints(by: delta)
     }
 
     @discardableResult
-    func spendPointOnSelectedPerk() -> String {
+    func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
         progression.spendPointOnSelectedPerk()
     }
 
     @discardableResult
-    func makeSelectedSkillLegendary() -> String {
+    func makeSelectedSkillLegendary() -> ProgressionActionOutcome {
         progression.makeSelectedSkillLegendary()
     }
 
     @discardableResult
-    func resetSelectedPerkTree() -> String {
+    func resetSelectedPerkTree() -> ProgressionActionOutcome {
         progression.resetSelectedPerkTree()
     }
 
     @discardableResult
-    func trainWithNearestTrainer() -> String {
+    func trainWithNearestTrainer() -> ProgressionActionOutcome {
         progression.trainWithNearestTrainer()
     }
 
     @discardableResult
-    func grantSelectedPerk() -> String {
+    func grantSelectedPerk() -> ProgressionActionOutcome {
         progression.grantSelectedPerk()
     }
 
     @discardableResult
-    func revokeSelectedPerk() -> String {
+    func revokeSelectedPerk() -> ProgressionActionOutcome {
         progression.revokeSelectedPerk()
     }
 }

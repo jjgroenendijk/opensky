@@ -49,7 +49,7 @@ struct PapyrusNativeActorAwarenessTests {
             state.state = entry.detected ? .detected : .suspicious
             map[DetectionPairKey(observer: entry.observer, target: entry.target)] = state
         }
-        fixture.session.bridge.detection = { DetectionResolution(pairs: map) }
+        fixture.session.bridge.perceptionNatives.detection = { DetectionResolution(pairs: map) }
     }
 
     @Test func hasLOSAsksThisActorAboutTheOther() throws {
@@ -81,12 +81,12 @@ struct PapyrusNativeActorAwarenessTests {
     @Test func getCurrentPackageNamesThePackageOrNone() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let package = FormID(0x0000_0123)
-        fixture.session.bridge.currentPackage = { $0 == fixture.key ? package : nil }
+        fixture.session.bridge.sessionNatives.currentPackage = { $0 == fixture.key ? package : nil }
         let expected = fixture.session.world.objectHandle(
             for: .plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x123)
         )
         #expect(call(fixture, "GetCurrentPackage") == .returned(.object(expected)))
-        fixture.session.bridge.currentPackage = { _ in nil }
+        fixture.session.bridge.sessionNatives.currentPackage = { _ in nil }
         #expect(call(fixture, "GetCurrentPackage") == .returned(.none))
     }
 
@@ -106,7 +106,7 @@ struct PapyrusNativeActorAwarenessTests {
             return
         }
         var sampled: SIMD3<Float>?
-        fixture.session.bridge.lightLevel = { feet in
+        fixture.session.bridge.perceptionNatives.lightLevel = { feet in
             sampled = feet
             return 0.25
         }

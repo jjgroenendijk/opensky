@@ -121,7 +121,7 @@ struct PapyrusNativeTranslationTests {
 
     @Test func aLoadedGameDropsRunningMoves() {
         var published: [[ReferenceKey: ReferenceTransformOverride]] = []
-        session.bridge.publishTranslationPoses = { published.append($0) }
+        session.bridge.sessionNatives.publishTranslationPoses = { published.append($0) }
         _ = translate(toX: 100)
         session.bridge.clearTranslations()
         #expect(published.map(\.count) == [1, 0])

@@ -20,7 +20,7 @@ public struct CrimeFactionPanelState {
     public var vendorOverride: ReferenceKey?
     /// The actor the membership and vendor controls act on; nil is the player.
     public var subject: ReferenceKey?
-    public var lastActionText = "No crime or faction action yet."
+    public var lastAction = CrimeFactionActionOutcome.idle
     /// Built once per load order.
     var options: CrimeFactionOptions?
 }
@@ -61,10 +61,10 @@ public final class CrimeCoordinator {
         !pursuitTargets.isEmpty || guards.active != nil
     }
 
-    public internal(set) var lastActionText = "No crime recorded yet."
+    public internal(set) var lastCrime = CrimeNote.idle
     /// The crime names the bounty readout uses.
     public var crimeTexts = CrimeTexts.vanilla
-    public internal(set) var lastGuardText = "No guard has acted yet."
+    public internal(set) var lastGuard = GuardNote.idle
     public var panel = CrimeFactionPanelState()
 
     weak var world: (any CrimeSessionWorld)?
@@ -185,9 +185,7 @@ public final class CrimeCoordinator {
     }
 
     private func note(_ outcome: CrimeOutcome, as label: String) {
-        lastActionText = CrimeCore.outcomeText(
-            outcome, label: label, factionName: outcome.faction.map(factionName)
-        )
+        lastCrime = .recorded(outcome, label: label, faction: outcome.faction.map(factionName))
     }
 
     private func cellOwner(at location: CellSceneLocation?) -> ReferenceOwner? {

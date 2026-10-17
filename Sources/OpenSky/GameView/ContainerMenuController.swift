@@ -13,7 +13,22 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
+
+/// What `ContainerMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ContainerMenuHost: MenuInputConsumer {
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var ragdoll: RagdollCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var swfMovies: SWFMovieSource { get }
+}
 
 /// Holds the container menu's target, list and movie state for `game`.
 final class ContainerMenuController {
@@ -22,7 +37,7 @@ final class ContainerMenuController {
     /// Frames the movie's fade needs to settle, the same as `inventorymenu.swf`.
     static let activationTicks = 20
 
-    unowned let game: GameViewController
+    unowned let game: any ContainerMenuHost
     private(set) var isOpen = false
     private(set) var mode = ContainerMenuModel.Mode.container
     private(set) var model = ContainerMenuModel.empty
@@ -42,7 +57,7 @@ final class ContainerMenuController {
     private(set) var lastActionText: String?
     let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any ContainerMenuHost) {
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "container menu movie",
@@ -256,8 +271,8 @@ final class ContainerMenuController {
     private func equipSelection() {
         guard let entry = model.selectedEntry else { return }
         lastActionText = entry.isEquipped
-            ? game.inventory.unequipItem(entry.item, on: .player)
-            : game.inventory.equipItem(entry.item, on: .player)
+            ? game.inventory.unequipItem(entry.item, on: .player).text
+            : game.inventory.equipItem(entry.item, on: .player).text
         refreshModel()
     }
 

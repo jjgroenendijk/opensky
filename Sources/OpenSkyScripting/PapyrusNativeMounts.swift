@@ -8,7 +8,7 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions {
     static func installMounts(into registry: inout PapyrusNativeRegistry) {
         scriptState("Game", "GetPlayersLastRiddenHorse", into: &registry) { call, bridge, _ in
-            guard let lastMount = bridge.playersLastMount else {
+            guard let lastMount = bridge.playerNatives.playersLastMount else {
                 return failure(call, "GetPlayersLastRiddenHorse needs the vehicle runtime")
             }
             let horse = lastMount().flatMap(bridge.objectHandle(for:))

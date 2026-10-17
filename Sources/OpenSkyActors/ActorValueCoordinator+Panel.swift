@@ -22,78 +22,69 @@ extension ActorValueCoordinator {
             runtimeActorCount: store.snapshot().entries.count { entry in
                 entry.delta.component(ActorValueState.self) != nil
             },
-            lastActionText: lastActionText
+            lastActionText: lastAction.text
         )
     }
 
     @discardableResult
-    public func damageSelected(by amount: Float) -> String {
+    public func damageSelected(by amount: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Damaged") { runtime, holder, index in
             runtime.damage(at: index, by: amount, on: holder)
         }
     }
 
     @discardableResult
-    public func restoreSelected(by amount: Float) -> String {
+    public func restoreSelected(by amount: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Restored") { runtime, holder, index in
             runtime.restore(at: index, by: amount, on: holder)
         }
     }
 
     @discardableResult
-    public func setSelectedValue(to value: Float) -> String {
+    public func setSelectedValue(to value: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Set") { runtime, holder, index in
             runtime.setValue(at: index, to: value, on: holder)
         }
     }
 
     @discardableResult
-    public func setSelectedBase(to value: Float) -> String {
+    public func setSelectedBase(to value: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Set the base of") { runtime, holder, index in
             runtime.setBase(at: index, to: value, on: holder)
         }
     }
 
     @discardableResult
-    public func restoreSelectedFully() -> String {
-        guard let runtime else { return Self.noActorValueText }
-        guard let holder = selectedHolder() else { return noTargetText() }
+    public func restoreSelectedFully() -> ActorValueActionOutcome {
+        guard let runtime else { return .unavailable }
+        guard let holder = selectedHolder() else { return .noTarget(target) }
         let state = runtime.restoreAll(on: holder)
-        lastActionText = String(
-            format: "Refilled %@: %.1f / %.1f / %.1f.",
-            Self.name(of: holder),
-            state.current.health,
-            state.current.magicka,
-            state.current.stamina
-        )
-        return lastActionText
+        return record(.refilled(
+            actor: Self.name(of: holder),
+            health: state.current.health,
+            magicka: state.current.magicka,
+            stamina: state.current.stamina
+        ))
     }
 
     @discardableResult
-    public func resetSelected() -> String {
-        guard let runtime else { return Self.noActorValueText }
-        guard let holder = selectedHolder() else { return noTargetText() }
-        lastActionText = runtime.reset(holder)
-            ? "Reset \(Self.name(of: holder)) to derived values."
-            : "\(Self.name(of: holder)) already reads from records."
-        return lastActionText
+    public func resetSelected() -> ActorValueActionOutcome {
+        guard let runtime else { return .unavailable }
+        guard let holder = selectedHolder() else { return .noTarget(target) }
+        return record(.reset(actor: Self.name(of: holder), changed: runtime.reset(holder)))
     }
 
     // MARK: - Private
 
-    private static let noActorValueText = "Actor values unavailable: no game data loaded."
+    private func record(_ outcome: ActorValueActionOutcome) -> ActorValueActionOutcome {
+        lastAction = outcome
+        return outcome
+    }
 
     private func selectedHolder() -> ActorValueHolder? {
         switch target {
         case .player: .player
         case .nearestActor: world?.nearestActorValueHolder()
-        }
-    }
-
-    private func noTargetText() -> String {
-        switch target {
-        case .player: "No player actor values."
-        case .nearestActor: "No resident actor to act on."
         }
     }
 
@@ -155,21 +146,16 @@ extension ActorValueCoordinator {
     private func applyToSelection(
         verb: String,
         _ change: (ActorValueRuntime, ActorValueHolder, Int32) -> Bool
-    ) -> String {
-        guard let runtime else { return Self.noActorValueText }
-        guard let holder = selectedHolder() else { return noTargetText() }
+    ) -> ActorValueActionOutcome {
+        guard let runtime else { return .unavailable }
+        guard let holder = selectedHolder() else { return .noTarget(target) }
         let index = selection
-        guard change(runtime, holder, index) else {
-            lastActionText = "\(ActorValueIdentity.description(of: index)) is not an actor value."
-            return lastActionText
-        }
-        lastActionText = String(
-            format: "%@ %@ %@: now %.1f.",
-            verb,
-            Self.name(of: holder),
-            ActorValueIdentity.description(of: index),
-            runtime.value(at: index, on: holder) ?? 0
-        )
-        return lastActionText
+        guard change(runtime, holder, index) else { return record(.notAnActorValue(index)) }
+        return record(.changed(
+            verb: verb,
+            actor: Self.name(of: holder),
+            index: index,
+            value: runtime.value(at: index, on: holder) ?? 0
+        ))
     }
 }

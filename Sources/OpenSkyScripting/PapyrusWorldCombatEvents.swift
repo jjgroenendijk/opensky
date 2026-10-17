@@ -13,7 +13,7 @@ extension PapyrusWorldStateBridge {
     /// call. Returns the count.
     @discardableResult
     public func queueCombatStateEvents() -> Int {
-        guard let world, combatRuntime?() != nil else { return 0 }
+        guard let world, actorNatives.combatRuntime?() != nil else { return 0 }
         let name = PapyrusEngineEvents.onCombatStateChanged
         let keys = world.instancesByKey.keys.filter { world.handlesEvent(name, key: $0) }
         var activities: [ReferenceKey: ActorCombatActivity] = [:]

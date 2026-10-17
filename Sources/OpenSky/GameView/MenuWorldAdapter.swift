@@ -20,8 +20,35 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `MenuWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MenuWorldHost: MenuInputConsumer {
+    var agentWorld: AgentWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var cameraInput: CameraInputState { get }
+    var combat: CombatCoordinator { get }
+    var containerMenu: ContainerMenuController { get }
+    var hud: HUDCoordinator { get }
+    var loadingScreens: LoadingScreenCoordinator { get }
+    var mapMenu: MapMenuCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var raceMenu: RaceMenuCoordinator { get }
+    var renderer: Renderer? { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var subtitles: SubtitleCoordinator { get }
+    var hostView: NSView { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class MenuWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MenuWorldHost
     /// Built on first use, because it walks the install.
     var titleMeshes: MeshLibrary?
     var perkSky: PerkSkySource?
@@ -36,7 +63,7 @@ final class MenuWorldAdapter {
     /// The camera the logo was placed for, while the title backdrop shows.
     var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 
-    init(game: GameViewController) {
+    init(game: any MenuWorldHost) {
         self.game = game
     }
 
@@ -101,7 +128,7 @@ extension MenuWorldAdapter: PlayerSettingsWorld {
     }
 
     func applyBindings(_ bindings: InputBindings) {
-        (game.view as? GameMetalView)?.bindings = bindings
+        (game.hostView as? GameMetalView)?.bindings = bindings
     }
 }
 

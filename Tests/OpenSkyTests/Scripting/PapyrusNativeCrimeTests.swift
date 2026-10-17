@@ -80,7 +80,7 @@ struct PapyrusNativeCrimeTests {
             world: world
         )
         if wireReporter {
-            session.bridge.crimeReporter = { reporter }
+            session.bridge.crimeNatives.crimeReporter = { reporter }
         }
         return try Fixture(
             session: session,

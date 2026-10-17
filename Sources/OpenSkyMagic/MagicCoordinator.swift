@@ -54,8 +54,8 @@ public final class MagicCoordinator {
     var grantedActors: Set<ReferenceKey> = []
     /// An index into the player's known spells. Clamped on read.
     var selection = 0
-    var effectActionText = "No magic action yet."
-    var castingActionText = "No casting action yet."
+    public internal(set) var lastEffectAction = MagicEffectActionOutcome.idle
+    public internal(set) var lastCastingAction = CastingActionOutcome.idle
 
     public init() {}
 
@@ -157,12 +157,11 @@ public final class MagicCoordinator {
     }
 
     /// Consumes `item` from the player and applies it to the player. The menu
-    /// and the panel both call this, and show the sentence it returns.
+    /// and the panel both call this, and show the line of the outcome it returns.
     @discardableResult
-    public func consumeMagicItem(_ item: FormID) -> String {
+    public func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome {
         guard effects != nil, let inventory = world?.inventory else {
-            effectActionText = MagicCore.effectsUnavailableText
-            return effectActionText
+            return recordEffect(.unavailable)
         }
         let name = inventory.baselines.items.definition(item)?.editorID ?? item.description
         do {
@@ -176,11 +175,22 @@ public final class MagicCoordinator {
                     )
                 }
             }
-            effectActionText = MagicCore.consumeText(name: name, outcome: outcome)
+            return recordEffect(.consumed(item: name, outcome))
         } catch {
-            effectActionText = "Could not consume \(name): " + String(describing: error)
+            return recordEffect(.consumeFailed(item: name, reason: String(describing: error)))
         }
-        return effectActionText
+    }
+
+    @discardableResult
+    func recordEffect(_ outcome: MagicEffectActionOutcome) -> MagicEffectActionOutcome {
+        lastEffectAction = outcome
+        return outcome
+    }
+
+    @discardableResult
+    func recordCasting(_ outcome: CastingActionOutcome) -> CastingActionOutcome {
+        lastCastingAction = outcome
+        return outcome
     }
 
     /// Grants `holder`'s authored spell list on first ask, so townsfolk who

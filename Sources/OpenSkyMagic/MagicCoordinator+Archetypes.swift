@@ -96,7 +96,7 @@ extension MagicCoordinator {
             try inventory.add(weapon, count: 1, to: holder)
             try equipment.equip(weapon, on: holder)
         } catch {
-            effectActionText = "Bound weapon failed: " + String(describing: error)
+            recordEffect(.boundWeaponFailed(reason: String(describing: error)))
         }
     }
 
@@ -112,7 +112,7 @@ extension MagicCoordinator {
         do {
             try inventory.remove(weapon, count: 1, from: holder)
         } catch {
-            effectActionText = "Bound weapon stayed: " + String(describing: error)
+            recordEffect(.boundWeaponStayed(reason: String(describing: error)))
         }
     }
 

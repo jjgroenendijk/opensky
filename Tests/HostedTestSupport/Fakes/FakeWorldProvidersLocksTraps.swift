@@ -81,16 +81,16 @@ extension FakeWorldProviders {
         locksTraps.selectedTrap = key
     }
 
-    func fireSelectedTrap() -> String {
+    func fireSelectedTrap() -> TrapActionOutcome {
         locksTraps.fired += 1
-        locksTraps.lastTrap = "Stepped into and out of Plate."
-        return locksTraps.lastTrap
+        locksTraps.lastTrap = TrapActionOutcome.fired(trap: "Plate").text
+        return .fired(trap: "Plate")
     }
 
-    func disarmSelectedTrap() -> String {
+    func disarmSelectedTrap() -> TrapActionOutcome {
         locksTraps.disarmed = true
-        locksTraps.lastTrap = "Activated Plate: 1 script events."
-        return locksTraps.lastTrap
+        locksTraps.lastTrap = TrapActionOutcome.activated(trap: "Plate", queuedEvents: 1).text
+        return .activated(trap: "Plate", queuedEvents: 1)
     }
 }
 

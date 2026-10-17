@@ -32,7 +32,7 @@ extension PapyrusWorldStateBridge {
             queueTranslationEvent(PapyrusEngineEvents.onTranslationFailed, on: key)
         }
         translations[key] = move
-        publishTranslationPoses?(translationPoses)
+        sessionNatives.publishTranslationPoses?(translationPoses)
         return true
     }
 
@@ -64,14 +64,14 @@ extension PapyrusWorldStateBridge {
                 queueTranslationEvent(PapyrusEngineEvents.onTranslationComplete, on: key)
             }
         }
-        publishTranslationPoses?(translationPoses)
+        sessionNatives.publishTranslationPoses?(translationPoses)
     }
 
     /// A loaded game starts with no move running: the save holds none.
     public func clearTranslations() {
         guard !translations.isEmpty else { return }
         translations = [:]
-        publishTranslationPoses?(translationPoses)
+        sessionNatives.publishTranslationPoses?(translationPoses)
     }
 
     /// Where each moving reference is drawn this frame, without scale.
@@ -81,7 +81,7 @@ extension PapyrusWorldStateBridge {
 
     func endTranslation(of key: ReferenceKey) {
         guard translations.removeValue(forKey: key) != nil else { return }
-        publishTranslationPoses?(translationPoses)
+        sessionNatives.publishTranslationPoses?(translationPoses)
     }
 
     private func settle(_ key: ReferenceKey, at move: PapyrusTranslation) {

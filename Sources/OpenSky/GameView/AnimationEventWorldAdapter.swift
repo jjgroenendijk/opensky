@@ -7,10 +7,19 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
-final class AnimationEventWorldAdapter {
-    unowned let game: GameViewController
+/// What `AnimationEventWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AnimationEventWorldHost: AnyObject {
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+}
 
-    init(game: GameViewController) {
+final class AnimationEventWorldAdapter {
+    unowned let game: any AnimationEventWorldHost
+
+    init(game: any AnimationEventWorldHost) {
         self.game = game
     }
 

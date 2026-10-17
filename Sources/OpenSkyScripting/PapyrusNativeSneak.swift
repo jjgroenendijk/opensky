@@ -10,7 +10,7 @@ extension PapyrusNativeFunctions {
     static func installSneak(into registry: inout PapyrusNativeRegistry) {
         scriptState("Actor", "StartSneaking", into: &registry) { call, bridge, key in
             guard key == .player else { return .returned(.none) }
-            guard let toggleSneaking = bridge.togglePlayerSneaking else {
+            guard let toggleSneaking = bridge.playerNatives.togglePlayerSneaking else {
                 return failure(call, "StartSneaking needs the player controller")
             }
             toggleSneaking()

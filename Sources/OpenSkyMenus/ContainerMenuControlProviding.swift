@@ -160,14 +160,36 @@ public protocol ContainerMenuControlProviding: AnyObject {
 
     // MARK: - Merchant nomination
 
-    /// Nominates one as the active merchant. The returned text is what the
-    /// readout shows, including the reason a nomination was refused.
+    /// Nominates one as the active merchant, or says why it refused.
     @discardableResult
-    func selectContainerMenuMerchant(_ reference: FormID) -> String
+    func selectContainerMenuMerchant(_ reference: FormID) -> MerchantNomination
     /// Nominates whatever container the crosshair is on, which is the path a
     /// developer standing in front of a chest actually uses.
     @discardableResult
-    func selectContainerMenuMerchantFromInteraction() -> String
+    func selectContainerMenuMerchantFromInteraction() -> MerchantNomination
 
     var containerMenuSnapshot: ContainerMenuControlSnapshot { get }
+}
+
+/// One merchant nomination. Only `text` builds the readout line.
+nonisolated public enum MerchantNomination: Equatable, Sendable {
+    case nominated(String)
+    case noCell
+    case notResident(FormID)
+    case crosshairNotOnContainer
+    case noHolder
+
+    public var text: String {
+        switch self {
+        case let .nominated(name): "Merchant: \(name)."
+        case .noCell: refusal("no cell is loaded")
+        case let .notResident(reference): refusal("\(reference) is not a resident container")
+        case .crosshairNotOnContainer: refusal("the crosshair is not on a container")
+        case .noHolder: refusal("world items are unavailable, or nothing resident holds it")
+        }
+    }
+
+    private func refusal(_ reason: String) -> String {
+        "Cannot nominate a merchant: \(reason)."
+    }
 }

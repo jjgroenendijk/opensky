@@ -2,15 +2,19 @@
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
+import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDiagnostics
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
@@ -24,10 +28,42 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-final class AIWorldAdapter {
-    unowned let game: GameViewController
+/// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AIWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var factions: FactionCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var npcAnimation: NPCAnimationCoordinator { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var sessionWiring: WorldSessionWiring { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
 
-    init(game: GameViewController) {
+final class AIWorldAdapter {
+    unowned let game: any AIWorldHost
+
+    init(game: any AIWorldHost) {
         self.game = game
     }
 

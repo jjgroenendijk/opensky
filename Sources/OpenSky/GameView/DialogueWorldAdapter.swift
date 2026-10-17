@@ -26,13 +26,38 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `DialogueWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol DialogueWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
+    var dialogue: DialogueCoordinator { get }
+    var dialogueCamera: DialogueCameraController { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var faceMorphs: FaceMorphCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var mapWorld: MapWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `DialogueWorld` from the session systems `game` owns.
 final class DialogueWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any DialogueWorldHost
     /// `VTCK` by actor base. A template walk per actor per condition context costs too much.
     private var voiceTypesByBase: [FormID: FormID?] = [:]
 
-    init(game: GameViewController) {
+    init(game: any DialogueWorldHost) {
         self.game = game
     }
 

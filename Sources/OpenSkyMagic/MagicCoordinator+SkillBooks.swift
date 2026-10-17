@@ -12,30 +12,25 @@ import OpenSkyProgressionInterface
 extension MagicCoordinator {
     /// Reads the first skill book the player carries and has not read.
     @discardableResult
-    public func readFirstUnreadSkillBook() -> String {
-        guard let caster else { return MagicCore.castingUnavailableText }
+    public func readFirstUnreadSkillBook() -> CastingActionOutcome {
+        guard let caster else { return .unavailable }
         let book = caster.spellbook.state(of: .player)
         let unread = carriedItems { items, item in
             items.teachesSkill(item).map { (item: item, skill: $0) }
         }.first { bookKey($0.item).map { !book.hasRead($0) } ?? false }
-        guard let unread else {
-            castingActionText = "The player carries no unread skill book."
-            return castingActionText
-        }
+        guard let unread else { return recordCasting(.noUnreadSkillBook) }
         return readSkillBook(unread.item, skill: unread.skill)
     }
 
     /// Marks `item` read and raises `skill`. A book read before raises nothing.
     @discardableResult
-    func readSkillBook(_ item: FormID, skill: Int32) -> String {
+    func readSkillBook(_ item: FormID, skill: Int32) -> CastingActionOutcome {
         let name = world?.itemName(item) ?? item.description
         guard let caster, let key = bookKey(item) else {
-            castingActionText = "Could not resolve \(name)."
-            return castingActionText
+            return recordCasting(.unresolvedBook(name))
         }
         guard !caster.spellbook.read(book: key, teaching: nil, on: .player).alreadyRead else {
-            castingActionText = "\(name) was already read."
-            return castingActionText
+            return recordCasting(.bookAlreadyRead(name))
         }
         let subject = world?.inventory?.baselines.items.conditionSubject(of: item)
         let points = world?.perkModified(
@@ -48,8 +43,7 @@ extension MagicCoordinator {
         let raised = world?.raiseSkillFromBook(
             skill, points: points.isFinite ? Int(max(0, points.rounded(.down))) : 1
         ) ?? 0
-        castingActionText = "Read \(name): the skill rose \(raised) level(s)."
-        return castingActionText
+        return recordCasting(.readSkillBook(name, levelsRaised: raised))
     }
 
     private func bookKey(_ item: FormID) -> ReferenceKey? {

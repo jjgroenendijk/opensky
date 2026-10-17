@@ -24,8 +24,8 @@ public final class CombatCoordinator {
     public private(set) var allowsActorCasting = true
     public internal(set) var actorCastCount = 0
     weak var world: (any CombatWorld)?
-    var meleeActionText = "No melee action yet."
-    var archeryActionText = "No shot taken yet."
+    public internal(set) var lastMeleeAction = MeleeActionOutcome.idle
+    public internal(set) var lastArcheryAction = ArcheryActionOutcome.idle
     /// The stuck arrows this coordinator spawned, so a reset removes only those.
     var stuckKeys: Set<ReferenceKey> = []
     /// The Difficulty setting; the app sets it from the settings store.
@@ -137,18 +137,18 @@ public final class CombatCoordinator {
         for key in loop.behaviors.keys.sorted() {
             world?.cancelCast(by: key)
         }
-        loop.record("Combat: fighters may not cast their spells.")
+        loop.record(.castingDisallowed)
     }
 
     /// Sets hostility on the panel's selected actor and records the outcome.
     public func setSelectedActorHostile(_ hostile: Bool) {
         guard let loop else { return }
         guard let key = world?.selectedActor() else {
-            loop.record("Hostility: no resident actor to act on.")
+            loop.record(.noHostilityTarget)
             return
         }
         loop.setHostility(hostile ? .hostile : .neutral, on: key)
-        loop.record("Hostility: \(actorName(key)) is now \(hostile ? "hostile" : "neutral").")
+        loop.record(.hostility(actor: actorName(key), hostile: hostile))
     }
 
     func noteHits(_ targets: [ReferenceKey]) {

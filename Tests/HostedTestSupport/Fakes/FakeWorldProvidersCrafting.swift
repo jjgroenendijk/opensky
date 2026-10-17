@@ -42,38 +42,42 @@ extension FakeWorldProviders {
         )
     }
 
-    func openCraftingStation(_ editorID: String) -> String {
+    func openCraftingStation(_ editorID: String) -> CraftingActionOutcome {
         crafting.isOpen = editorID == Self.forgeEditorID
-        crafting.lastCraft = crafting.isOpen
-            ? "Opened \(editorID): 2 recipes." : "No station named \(editorID)."
-        return crafting.lastCraft
+        return noteCraft(crafting.isOpen
+            ? .opened(station: editorID, recipes: 2) : .noStationNamed(editorID))
     }
 
-    func craftRecipe(_ id: ResolvedFormID) -> String {
+    func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome {
         guard id == Self.daggerRecipe else {
-            crafting.lastCraft = "Craft failed: not eligible"
-            return crafting.lastCraft
+            return noteCraft(.craftFailed(reason: "not eligible"))
         }
         crafting.crafted += 1
-        crafting.lastCraft = "Crafted 1 × Iron Dagger."
-        return crafting.lastCraft
+        return noteCraft(.crafted(count: 1, item: "Iron Dagger"))
     }
 
-    func closeCraftingStation() -> String {
+    func closeCraftingStation() -> CraftingActionOutcome {
         crafting.isOpen = false
-        crafting.lastCraft = "Closed the crafting station."
-        return crafting.lastCraft
+        return noteCraft(.closed)
     }
 
-    func forceHarvest() -> String {
+    func forceHarvest() -> ItemActionOutcome {
         crafting.harvested = true
-        crafting.lastAction = "Harvested Mountain Flower: 1 × Blue Mountain Flower."
-        return crafting.lastAction
+        return noteItem(.harvested(plant: "Mountain Flower", items: ["1 × Blue Mountain Flower"]))
     }
 
-    func resetHarvest() -> String {
+    func resetHarvest() -> ItemActionOutcome {
         crafting.harvested = false
-        crafting.lastAction = "Reset the harvest of Mountain Flower."
-        return crafting.lastAction
+        return noteItem(.grewBack("Mountain Flower"))
+    }
+
+    private func noteCraft(_ outcome: CraftingActionOutcome) -> CraftingActionOutcome {
+        crafting.lastCraft = outcome.text
+        return outcome
+    }
+
+    private func noteItem(_ outcome: ItemActionOutcome) -> ItemActionOutcome {
+        crafting.lastAction = outcome.text
+        return outcome
     }
 }

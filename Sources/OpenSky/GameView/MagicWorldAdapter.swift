@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -19,11 +20,30 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MagicWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var factions: FactionCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `MagicWorld` from the session systems `game` owns.
 final class MagicWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MagicWorldHost
 
-    init(game: GameViewController) {
+    init(game: any MagicWorldHost) {
         self.game = game
     }
 

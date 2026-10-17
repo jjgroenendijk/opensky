@@ -119,27 +119,36 @@ references or the game hour. A test passes a fake that returns plain values. The
 itself or a small adapter. The coordinator holds the port `weak`, because the app owns the
 coordinator.
 
-An adapter takes a dependency struct that names only what it reads, such as
-`HazardWorldDependencies` with the hazard, combat, and magic coordinators. A value that a
-Settings reload replaces, such as the renderer or the streamer, is a closure in the struct,
-so the adapter always reads the live one. The view controller builds the struct; the adapter
-never holds the view controller. `FactionWorldAdapter`, `HazardWorldAdapter`,
-`TrapControlAdapter`, and `MenuSoundPlayer` work this way. An adapter keeps no game state of
-its own: the furniture seat holders and the last package moves live in `PackageCoordinator`,
-where a unit test reaches them.
+An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
+protocol lists only the coordinators and values that adapter reads. `GameViewController`
+conforms to every host protocol in one file, and an adapter holds `unowned let game: any
+CombatWorldHost`, never the view controller itself. The lint rule `adapter_holds_controller`
+fails a stored property of type `GameViewController` in an adapter. A value that a Settings
+reload replaces, such as the renderer or the streamer, is a get-only requirement, so the
+adapter always reads the live one. A small adapter that reads two or three parts takes a
+dependency struct instead, such as `HazardWorldDependencies`, with a closure for each
+replaceable value. `FactionWorldAdapter`, `HazardWorldAdapter`, `TrapControlAdapter`, and
+`MenuSoundPlayer` work this way. An adapter keeps no game state of its own: the furniture
+seat holders and the last package moves live in `PackageCoordinator`, where a unit test
+reaches them.
 
-The Papyrus bridge gets its collaborators as one value per native family, such as
-`PapyrusFactionNatives`. Each member of the value is a closure that is never nil. The default
-value answers nothing, which matches a load without that data, so a native refuses rather
-than reading a half-wired family.
+The Papyrus bridge gets its collaborators as one value per native family:
+`actorNatives`, `magicNatives`, `progressionNatives`, `crimeNatives`, `playerNatives`,
+`perceptionNatives`, `sessionNatives`, and `factionNatives`. Each member is an optional
+closure. The default value answers nothing, which matches a load without that data, so a
+native refuses rather than reading a half-wired family.
 
 The coordinator returns values, not text. The app turns a value into a readout line and runs
 the menu or camera change. Example: `counterparty(for:vendorFaction:)` returns
 `.failure(.chestNotResident(factionName:))`, and the app writes "... merchant chest is not
 streamed in."
-The lock domain keeps its last action as a `LockActionOutcome`, and its snapshot carries that
-value with the `LockTexts` of the load order. `LockTexts.text(for:)` writes the readout line,
-so a test compares outcomes, not English sentences.
+
+Every panel action returns a typed outcome, such as `ItemActionOutcome` or
+`LockActionOutcome`, and the coordinator keeps the last one. The outcome's `text` writes the
+readout line. An outcome whose words come from the load order takes them as an argument,
+such as `text(training:)` or `text(texts:)`. A test compares outcomes, not English
+sentences. The lint rule `action_returns_text` fails a `@discardableResult` function that
+returns `String` in a package module.
 
 ## Pure core, thin shell
 

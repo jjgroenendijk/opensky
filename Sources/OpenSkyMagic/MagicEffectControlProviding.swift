@@ -160,11 +160,9 @@ public protocol MagicEffectControlProviding: AnyObject {
     /// Consumes the first ALCH or INGR the player carries, without opening a menu.
     /// Returns a readable outcome the panel shows verbatim.
     @discardableResult
-    func consumeFirstCarriedMagicItem() -> String
+    func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome
 
     /// Removes every effect currently acting on the player.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func dispelPlayerMagicEffects() -> String
+    func dispelPlayerMagicEffects() -> MagicEffectActionOutcome
 }

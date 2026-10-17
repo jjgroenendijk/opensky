@@ -114,7 +114,7 @@ struct PapyrusNativeGuardTests {
                     crimeFaction: crimeFaction.map(CrimeFixture.key)
                 )
             }
-            session.bridge.arrestSession = { arrests }
+            session.bridge.crimeNatives.arrestSession = { arrests }
         }
         return try Fixture(
             session: session,

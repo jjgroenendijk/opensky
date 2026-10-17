@@ -61,51 +61,51 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func grantPlayerStartSpells() -> String {
+    func grantPlayerStartSpells() -> CastingActionOutcome {
         casting.learnCount += 1
-        return "Learned the start spells."
+        return .learnedStartSpells(granted: 1, held: 0)
     }
 
     @discardableResult
-    func readFirstCarriedSpellTome() -> String {
+    func readFirstCarriedSpellTome() -> CastingActionOutcome {
         casting.readTomeCount += 1
-        return "Read the first carried tome."
+        return .noTome
     }
 
     @discardableResult
-    func readFirstUnreadSkillBook() -> String {
+    func readFirstUnreadSkillBook() -> CastingActionOutcome {
         casting.readSkillBookCount += 1
-        return "Read the first unread skill book."
+        return .noUnreadSkillBook
     }
 
     @discardableResult
-    func selectNextKnownSpell() -> String {
+    func selectNextKnownSpell() -> CastingActionOutcome {
         casting.selectCount += 1
-        return "Selected the next spell."
+        return .selected(spell: "the next spell")
     }
 
     @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> String {
+    func readySelectedSpell(in hand: SpellHand) -> CastingActionOutcome {
         casting.readied.append(hand)
-        return "Readied the selected spell in the \(hand.describedName)."
+        return .noSpellSelected
     }
 
     @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> String {
+    func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
         casting.cast.append(hand)
-        return "Cast with the \(hand.describedName)."
+        return .cast(.ignored)
     }
 
     @discardableResult
-    func consumeFirstCarriedMagicItem() -> String {
+    func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
         magicEffects.consumeCount += 1
-        return "Consumed the first carried item."
+        return .nothingToConsume
     }
 
     @discardableResult
-    func dispelPlayerMagicEffects() -> String {
+    func dispelPlayerMagicEffects() -> MagicEffectActionOutcome {
         magicEffects.dispelCount += 1
-        return "Dispelled every effect on the player."
+        return .dispelled(removed: 0)
     }
 
     var actorValueControlSnapshot: ActorValueControlSnapshot {
@@ -131,43 +131,43 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func damageSelectedActor(by amount: Float) -> String {
+    func damageSelectedActor(by amount: Float) -> ActorValueActionOutcome {
         actorValues.damages.append((kind: selectedKind, amount: amount))
-        return "Damaged \(ActorValueIdentity.description(of: actorValues.selection))"
-            + " by \(amount)."
+        return changed("Damaged", to: amount)
     }
 
     @discardableResult
-    func restoreSelectedActor(by amount: Float) -> String {
+    func restoreSelectedActor(by amount: Float) -> ActorValueActionOutcome {
         actorValues.restores.append((kind: selectedKind, amount: amount))
-        return "Restored \(ActorValueIdentity.description(of: actorValues.selection))"
-            + " by \(amount)."
+        return changed("Restored", to: amount)
     }
 
     @discardableResult
-    func setSelectedActorValue(to value: Float) -> String {
+    func setSelectedActorValue(to value: Float) -> ActorValueActionOutcome {
         actorValues.sets.append((index: actorValues.selection, value: value))
-        return "Set \(ActorValueIdentity.description(of: actorValues.selection))"
-            + " to \(value)."
+        return changed("Set", to: value)
     }
 
     @discardableResult
-    func setSelectedActorBase(to value: Float) -> String {
+    func setSelectedActorBase(to value: Float) -> ActorValueActionOutcome {
         actorValues.baseSets.append((index: actorValues.selection, value: value))
-        return "Set the base of \(ActorValueIdentity.description(of: actorValues.selection))"
-            + " to \(value)."
+        return changed("Set the base of", to: value)
     }
 
     @discardableResult
-    func restoreSelectedActorFully() -> String {
+    func restoreSelectedActorFully() -> ActorValueActionOutcome {
         actorValues.refillCount += 1
-        return "Refilled every bar."
+        return .refilled(actor: "Player", health: 0, magicka: 0, stamina: 0)
     }
 
     @discardableResult
-    func resetSelectedActorValues() -> String {
+    func resetSelectedActorValues() -> ActorValueActionOutcome {
         actorValues.resetCount += 1
-        return "Reset to derived values."
+        return .reset(actor: "Player", changed: true)
+    }
+
+    private func changed(_ verb: String, to value: Float) -> ActorValueActionOutcome {
+        .changed(verb: verb, actor: "Player", index: actorValues.selection, value: value)
     }
 }
 

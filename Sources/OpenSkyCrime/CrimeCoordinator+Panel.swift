@@ -36,9 +36,9 @@ extension CrimeCoordinator {
             vendorOverride: override,
             effectiveVendor: override.flatMap { world.vendor(faction: $0) } ?? subject.vendor,
             hour: world.hourOfDay,
-            lastCrimeText: lastActionText,
-            lastGuardText: lastGuardText,
-            lastActionText: panel.lastActionText
+            lastCrimeText: lastCrime.text,
+            lastGuardText: lastGuard.text,
+            lastActionText: panel.lastAction.text
         )
     }
 

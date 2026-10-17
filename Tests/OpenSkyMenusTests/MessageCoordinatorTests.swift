@@ -150,9 +150,9 @@ struct MessageCoordinatorTests {
         let messages = MessageCoordinator(menuMode: menuMode)
         messages.attach(world: world)
 
-        #expect(messages.show(editorID: "Note", asBox: false) == "Posted Note")
-        #expect(messages.show(editorID: "Missing", asBox: false) == "No message Missing")
-        #expect(messages.show(editorID: "Question", asBox: true) == "Opened Question")
+        #expect(messages.show(editorID: "Note", asBox: false).text == "Posted Note")
+        #expect(messages.show(editorID: "Missing", asBox: false).text == "No message Missing")
+        #expect(messages.show(editorID: "Question", asBox: true).text == "Opened Question")
         messages.tick(time: 0)
         let text = MessageReadout.text(for: messages.snapshot(lastOutcome: nil))
         #expect(text.contains("Notifications: 1 shown, 0 waiting"))

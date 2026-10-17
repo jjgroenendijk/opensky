@@ -67,7 +67,7 @@ struct ActorValueCoordinatorTests {
 
         #expect(coordinator.snapshot == .unavailable)
         #expect(coordinator
-            .damageSelected(by: 10) == "Actor values unavailable: no game data loaded.")
+            .damageSelected(by: 10).text == "Actor values unavailable: no game data loaded.")
     }
 
     @Test func aCasterRegeneratesHealthButNotMagicka() throws {
@@ -124,10 +124,10 @@ struct ActorValueCoordinatorTests {
         let coordinator = coordinator(world: FakeActorValueWorld())
         coordinator.selection = Self.health
 
-        let text = coordinator.damageSelected(by: 30)
+        let text = coordinator.damageSelected(by: 30).text
 
         #expect(text == "Damaged Player Health: now 70.0.")
-        #expect(coordinator.lastActionText == text)
+        #expect(coordinator.lastAction.text == text)
         #expect(coordinator.snapshot.runtimeActorCount == 1)
     }
 
@@ -135,7 +135,7 @@ struct ActorValueCoordinatorTests {
         let coordinator = coordinator(world: FakeActorValueWorld())
         coordinator.selection = 9999
 
-        #expect(coordinator.setSelectedValue(to: 5).hasSuffix("is not an actor value."))
+        #expect(coordinator.setSelectedValue(to: 5).text.hasSuffix("is not an actor value."))
     }
 
     @Test func theNearestTargetNeedsAResidentActor() {
@@ -143,18 +143,19 @@ struct ActorValueCoordinatorTests {
         let coordinator = coordinator(world: world)
         coordinator.target = .nearestActor
 
-        #expect(coordinator.restoreSelectedFully() == "No resident actor to act on.")
+        #expect(coordinator.restoreSelectedFully().text == "No resident actor to act on.")
 
         world.nearest = actor
         #expect(coordinator.snapshot.nearestActor?.name == ActorValueCoordinator.name(of: actor))
-        #expect(coordinator.restoreSelectedFully().hasPrefix("Refilled \(actor.key.description)"))
+        #expect(coordinator.restoreSelectedFully().text
+            .hasPrefix("Refilled \(actor.key.description)"))
     }
 
     @Test func resetDropsTheStoredValuesOnce() {
         let coordinator = coordinator(world: FakeActorValueWorld())
         coordinator.damageSelected(by: 10)
 
-        #expect(coordinator.resetSelected() == "Reset Player to derived values.")
-        #expect(coordinator.resetSelected() == "Player already reads from records.")
+        #expect(coordinator.resetSelected().text == "Reset Player to derived values.")
+        #expect(coordinator.resetSelected().text == "Player already reads from records.")
     }
 }

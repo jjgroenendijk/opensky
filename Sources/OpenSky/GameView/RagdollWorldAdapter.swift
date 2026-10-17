@@ -19,11 +19,29 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `RagdollWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol RagdollWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorValues: ActorValueCoordinator { get }
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
+    var audioFileSystem: (any GameFileSource)? { get }
+    var cinematicWorld: CinematicCameraWorldAdapter { get }
+    var containerMenu: ContainerMenuController { get }
+    var crime: CrimeCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+}
+
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
 final class RagdollWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any RagdollWorldHost
 
-    init(game: GameViewController) {
+    init(game: any RagdollWorldHost) {
         self.game = game
     }
 

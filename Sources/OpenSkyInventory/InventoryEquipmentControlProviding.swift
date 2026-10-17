@@ -157,5 +157,7 @@ public protocol InventoryEquipmentControlProviding: AnyObject {
     /// is not checked, but an unknown form or a non-positive count is refused.
     /// - Returns: a readable outcome, with the reason for a refusal.
     @discardableResult
-    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String
+    func grantItem(
+        _ item: FormID, count: Int32, to target: InventoryGrantTarget
+    ) -> GrantActionOutcome
 }

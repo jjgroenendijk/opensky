@@ -118,7 +118,7 @@ extension AgentWorldAdapter {
         guard game.menuMode.isMenuMode else {
             throw AgentFailure(.invalidArgument, "no menu is open")
         }
-        let bounds = game.view.bounds
+        let bounds = game.hostView.bounds
         let size = SIMD2(Float(bounds.width), Float(bounds.height))
         let location = SIMD2(x, y) * size
         let phases: [MenuPointerEvent.Phase] = click ? [.moved, .pressed, .released] : [.moved]

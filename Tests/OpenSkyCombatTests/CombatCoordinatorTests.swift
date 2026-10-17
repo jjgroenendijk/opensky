@@ -30,8 +30,9 @@ struct CombatCoordinatorTests {
         #expect(coordinator.meleeCombatSnapshot == .unavailable)
         #expect(coordinator.archerySnapshot == .unavailable)
         #expect(coordinator.combatLoopSnapshot == .unavailable)
-        #expect(coordinator.requestMeleeAttack() == "Melee unavailable: no game data loaded.")
-        #expect(coordinator.spawnDevProjectile() == "Archery unavailable: no game data loaded.")
+        #expect(coordinator.requestMeleeAttack().text == "Melee unavailable: no game data loaded.")
+        #expect(coordinator.spawnDevProjectile()
+            .text == "Archery unavailable: no game data loaded.")
     }
 
     @Test func theLoopReadsTheStyleTheWorldResolves() {

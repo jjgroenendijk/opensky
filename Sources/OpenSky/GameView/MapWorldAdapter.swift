@@ -22,14 +22,34 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `MapWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MapWorldHost: MenuInputConsumer {
+    var actorValues: ActorValueCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class MapWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MapWorldHost
     /// Marker names and places are fixed for a session, so they resolve once.
     /// Marker sites per map worldspace, read once each.
     private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
     private var strings: LocalizedStrings?
 
-    init(game: GameViewController) {
+    init(game: any MapWorldHost) {
         self.game = game
     }
 

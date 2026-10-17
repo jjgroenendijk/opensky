@@ -51,14 +51,14 @@ struct PapyrusNativePerkTests {
         let (runtime, _) = try PerkRuntimeFixture.runtime(store: session.worldState)
         let box = Fixture.Box(runtime)
         let holder = ActorValueHolder(key: entry.key, subject: .actor(base: FormID(0x0004_0002)))
-        session.bridge.mutatePerks = { mutation, perk, actor in
+        session.bridge.progressionNatives.mutatePerks = { mutation, perk, actor in
             guard actor == entry.key else { return false }
             return switch mutation {
             case .add: box.runtime.add(perk, to: holder)
             case .remove: box.runtime.remove(perk, from: holder)
             }
         }
-        session.bridge.perkOwnership = { actor in
+        session.bridge.progressionNatives.perkOwnership = { actor in
             guard actor == entry.key else { return nil }
             return Set(box.runtime.state(of: holder).owned)
         }
@@ -136,7 +136,7 @@ struct PapyrusNativePerkTests {
     /// "this actor has not taken it".
     @Test func hasPerkWithoutAPerkRuntimeReportsTheGap() throws {
         let fixture = try Self.fixture()
-        fixture.session.bridge.perkOwnership = nil
+        fixture.session.bridge.progressionNatives.perkOwnership = nil
 
         let result = call(
             "HasPerk", fixture, perk: PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.blocking)

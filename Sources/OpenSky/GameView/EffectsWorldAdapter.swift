@@ -18,20 +18,36 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `EffectsWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol EffectsWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var effects: EffectsCoordinator { get }
+    var hazardWorld: HazardWorldAdapter { get }
+    var hazards: HazardCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+}
+
 final class EffectsWorldAdapter {
     /// A long frame steps as this, as for hazards.
     static let longestStep: Float = 0.25
     /// Base plugin of the streamed cells and the item and sound indexes.
     static let basePlugin = "Skyrim.esm"
 
-    unowned let game: GameViewController
+    unowned let game: any EffectsWorldHost
     private(set) var cameraPosition: SIMD3<Float>?
     /// Actors whose race abilities were looked at, so each is resolved once.
     private var raceChecked: Set<ReferenceKey> = []
     private var spawnedHazards: UInt64 = 0
     private var lastFrame: Date?
 
-    init(game: GameViewController) {
+    init(game: any EffectsWorldHost) {
         self.game = game
     }
 

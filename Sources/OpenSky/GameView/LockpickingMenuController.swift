@@ -11,20 +11,30 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
+/// What `LockpickingMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+}
+
 /// Holds the open lockpicking session's input and overlay for `game`.
 final class LockpickingMenuController {
     static let identifier: MenuIdentifier = "LockpickingMenu"
     /// A long frame steps as this, so a stall does not snap a pick.
     static let longestStep: Float = 0.1
 
-    unowned let game: GameViewController
+    unowned let game: any LockpickingMenuHost
     private(set) var controls = LockpickingMenuControls()
     private(set) var presentation: LockpickingMenuPresentation?
     private var lastFrame: Date?
     private var wasTurning = false
     private let sounds: MenuSoundPlayer
 
-    init(game: GameViewController) {
+    init(game: any LockpickingMenuHost) {
         self.game = game
         sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }

@@ -15,7 +15,10 @@ extension PapyrusWorldStateBridge {
     // MARK: - Reading
 
     public func actorState(for key: ReferenceKey) -> PapyrusActorState? {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return nil
         }
         let baseline = values.baseline(of: holder)
@@ -24,7 +27,7 @@ extension PapyrusWorldStateBridge {
             maximums: values.maximums(of: holder),
             isDead: worldState.component(ActorDeathState.self, for: key)?.isDead ?? false,
             isInCombat: isActorInCombat(key),
-            weaponDrawState: weaponDrawState?(key),
+            weaponDrawState: actorNatives.weaponDrawState?(key),
             general: values.resolvedEntries(of: holder),
             generalBaseline: baseline.basesByIndex,
             level: baseline.level
@@ -37,7 +40,10 @@ extension PapyrusWorldStateBridge {
     public func damageActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return nil
         }
         guard values.damage(at: index, by: amount, on: holder) else { return nil }
@@ -49,7 +55,7 @@ extension PapyrusWorldStateBridge {
             ActorValueIdentity.kind(at: index) == .health,
             values.hasZeroHealth(holder)
         {
-            ragdollRuntime?()?.noteZeroHealth(of: key)
+            actorNatives.ragdollRuntime?()?.noteZeroHealth(of: key)
         }
         return actorState(for: key)
     }
@@ -58,7 +64,10 @@ extension PapyrusWorldStateBridge {
     public func restoreActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return nil
         }
         guard values.restore(at: index, by: amount, on: holder) else { return nil }
@@ -72,7 +81,10 @@ extension PapyrusWorldStateBridge {
         to value: Float,
         on key: ReferenceKey
     ) -> PapyrusActorState? {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return nil
         }
         let written = switch write {
@@ -88,24 +100,27 @@ extension PapyrusWorldStateBridge {
             ActorValueIdentity.kind(at: index) == .health,
             values.hasZeroHealth(holder)
         {
-            ragdollRuntime?()?.noteZeroHealth(of: key)
+            actorNatives.ragdollRuntime?()?.noteZeroHealth(of: key)
         }
         return actorState(for: key)
     }
 
     @discardableResult
     public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
-        combatRuntime?()?.startCombat(key, with: target) ?? false
+        actorNatives.combatRuntime?()?.startCombat(key, with: target) ?? false
     }
 
     @discardableResult
     public func stopActorCombat(_ key: ReferenceKey) -> Bool {
-        combatRuntime?()?.stopCombat(key) ?? false
+        actorNatives.combatRuntime?()?.stopCombat(key) ?? false
     }
 
     @discardableResult
     public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return false
         }
         // Health first, then the death, in that order and through the same two
@@ -113,7 +128,7 @@ extension PapyrusWorldStateBridge {
         // `GetActorValue("Health")` and `IsDead()` disagree about the same
         // actor, and the HUD meter would show a live bar over a body.
         values.set(.health, to: 0, on: holder)
-        guard let ragdoll = ragdollRuntime?() else { return false }
+        guard let ragdoll = actorNatives.ragdollRuntime?() else { return false }
         return ragdoll.noteZeroHealth(of: key, killer: killer)
     }
 
@@ -129,7 +144,10 @@ extension PapyrusWorldStateBridge {
     /// its pose until the cell reloads.
     @discardableResult
     public func resurrectActor(_ key: ReferenceKey) -> Bool {
-        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+        guard
+            let values = actorNatives.actorValueRuntime?(),
+            let holder = actorHolder(for: key)
+        else {
             return false
         }
         _ = worldState.reset(ActorDeathState.componentKind, for: key)
@@ -141,16 +159,16 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
-        mutatePerks?(.add, perk, key) ?? false
+        progressionNatives.mutatePerks?(.add, perk, key) ?? false
     }
 
     @discardableResult
     public func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
-        mutatePerks?(.remove, perk, key) ?? false
+        progressionNatives.mutatePerks?(.remove, perk, key) ?? false
     }
 
     public func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
-        guard let owned = perkOwnership?(key) else { return nil }
+        guard let owned = progressionNatives.perkOwnership?(key) else { return nil }
         return owned.contains(perk)
     }
 
@@ -160,18 +178,18 @@ extension PapyrusWorldStateBridge {
     public func advancePlayerSkill(
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool {
-        advanceSkill?(advance, index, magnitude) ?? false
+        progressionNatives.advanceSkill?(advance, index, magnitude) ?? false
     }
 
     // MARK: - Perk points
 
     public func playerPerkPoints() -> Int? {
-        modifyPerkPoints.flatMap { $0(0) }
+        progressionNatives.modifyPerkPoints.flatMap { $0(0) }
     }
 
     @discardableResult
     public func modifyPlayerPerkPoints(by delta: Int) -> Int? {
-        modifyPerkPoints.flatMap { $0(delta) }
+        progressionNatives.modifyPerkPoints.flatMap { $0(delta) }
     }
 
     // MARK: - Private
@@ -183,7 +201,7 @@ extension PapyrusWorldStateBridge {
     private func isActorInCombat(_ key: ReferenceKey) -> Bool {
         guard worldState.component(ActorDeathState.self, for: key)?.isDead != true
         else { return false }
-        return (combatRuntime?()?.activity(of: key) ?? .notFighting) != .notFighting
+        return (actorNatives.combatRuntime?()?.activity(of: key) ?? .notFighting) != .notFighting
     }
 
     /// The actor-value holder behind a reference: the player, or a resident

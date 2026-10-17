@@ -32,7 +32,7 @@ public final class ProgressionCoordinator {
     public private(set) var skillSelection = ActorValueIdentity.firstSkillIndex
     /// The selected box of that skill's tree, by `INAM`.
     public var nodeSelection: UInt32 = 0
-    public internal(set) var lastActionText = "No leveling action yet."
+    public internal(set) var lastAction = ProgressionActionOutcome.idle
     /// Cost, per-level cap, and refusal notices; the app sets them from the load order.
     public var training = TrainingSettings.vanilla
     public var texts = ProgressionTexts.vanilla

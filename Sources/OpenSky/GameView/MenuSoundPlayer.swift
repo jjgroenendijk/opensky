@@ -7,6 +7,14 @@ import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyWorld
 
+/// What `MenuSoundPlayer` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MenuSoundHost: AnyObject {
+    var audio: AudioCoordinator { get }
+    var renderer: Renderer? { get }
+    var worldData: WorldDataStores? { get }
+}
+
 /// What a menu sound needs. Closures, because a reload replaces the renderer and
 /// the data.
 struct MenuSoundDependencies {
@@ -16,7 +24,7 @@ struct MenuSoundDependencies {
 }
 
 extension MenuSoundDependencies {
-    init(game: GameViewController) {
+    init(game: any MenuSoundHost) {
         self.init(
             audio: game.audio,
             renderer: { [unowned game] in game.renderer },

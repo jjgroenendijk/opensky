@@ -10,16 +10,38 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `ProgressionWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ProgressionWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
 final class ProgressionWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ProgressionWorldHost
 
-    init(game: GameViewController) {
+    init(game: any ProgressionWorldHost) {
         self.game = game
     }
 

@@ -23,11 +23,31 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
+/// What `InventoryWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol InventoryWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var crime: CrimeCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `InventoryWorld` and `VendorWorld` from the session systems `game` owns.
 final class InventoryWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any InventoryWorldHost
 
-    init(game: GameViewController) {
+    init(game: any InventoryWorldHost) {
         self.game = game
     }
 

@@ -16,6 +16,24 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `DialogueMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol DialogueMenuHost: MenuInputConsumer {
+    var audio: AudioCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueCamera: DialogueCameraController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var faceMorphs: FaceMorphCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var subtitles: SubtitleCoordinator { get }
+    var swfMovies: SWFMovieSource { get }
+}
+
 /// Holds the conversation's menu model and movie state for `game`.
 final class DialogueMenuController {
     static let identifier: MenuIdentifier = "Dialogue Menu"
@@ -28,12 +46,12 @@ final class DialogueMenuController {
         category: "Dialogue"
     )
 
-    unowned let game: GameViewController
+    unowned let game: any DialogueMenuHost
     private(set) var model = DialogueMenuModel.empty
     private(set) var isOpen = false
     let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any DialogueMenuHost) {
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "dialogue movie", logger: Self.logger

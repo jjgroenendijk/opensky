@@ -29,12 +29,12 @@ extension GameViewController: MeleeCombatControlProviding {
     }
 
     @discardableResult
-    func requestMeleeAttack() -> String {
+    func requestMeleeAttack() -> MeleeActionOutcome {
         combat.requestMeleeAttack()
     }
 
     @discardableResult
-    func requestMeleePowerAttack() -> String {
+    func requestMeleePowerAttack() -> MeleeActionOutcome {
         combat.requestMeleePowerAttack()
     }
 
@@ -49,7 +49,7 @@ extension GameViewController: ArcheryControlProviding {
     }
 
     @discardableResult
-    func spawnDevProjectile() -> String {
+    func spawnDevProjectile() -> ArcheryActionOutcome {
         combat.spawnDevProjectile()
     }
 
@@ -96,12 +96,12 @@ extension GameViewController: MagicEffectControlProviding {
     }
 
     @discardableResult
-    func consumeFirstCarriedMagicItem() -> String {
+    func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
         magic.consumeFirstCarriedMagicItem()
     }
 
     @discardableResult
-    func dispelPlayerMagicEffects() -> String {
+    func dispelPlayerMagicEffects() -> MagicEffectActionOutcome {
         magic.dispelPlayerMagicEffects()
     }
 }
@@ -112,32 +112,32 @@ extension GameViewController: CastingControlProviding {
     }
 
     @discardableResult
-    func grantPlayerStartSpells() -> String {
+    func grantPlayerStartSpells() -> CastingActionOutcome {
         magic.grantPlayerStartSpells()
     }
 
     @discardableResult
-    func readFirstCarriedSpellTome() -> String {
+    func readFirstCarriedSpellTome() -> CastingActionOutcome {
         magic.readFirstCarriedSpellTome()
     }
 
     @discardableResult
-    func readFirstUnreadSkillBook() -> String {
+    func readFirstUnreadSkillBook() -> CastingActionOutcome {
         magic.readFirstUnreadSkillBook()
     }
 
     @discardableResult
-    func selectNextKnownSpell() -> String {
+    func selectNextKnownSpell() -> CastingActionOutcome {
         magic.selectNextKnownSpell()
     }
 
     @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> String {
+    func readySelectedSpell(in hand: SpellHand) -> CastingActionOutcome {
         magic.readySelectedSpell(in: hand)
     }
 
     @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> String {
+    func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
         magic.castReadiedSpell(in: hand)
     }
 }

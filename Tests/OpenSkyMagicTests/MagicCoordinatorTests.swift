@@ -46,9 +46,9 @@ struct MagicCoordinatorTests {
         let coordinator = MagicCoordinator()
         #expect(coordinator.magicEffectControlSnapshot == .unavailable)
         #expect(coordinator.castingControlSnapshot == .unavailable)
-        #expect(coordinator.dispelPlayerMagicEffects() == MagicCore.effectsUnavailableText)
-        #expect(coordinator.consumeFirstCarriedMagicItem() == MagicCore.effectsUnavailableText)
-        #expect(coordinator.castReadiedSpell(in: .right) == MagicCore.castingUnavailableText)
+        #expect(coordinator.dispelPlayerMagicEffects().text == MagicCore.effectsUnavailableText)
+        #expect(coordinator.consumeFirstCarriedMagicItem().text == MagicCore.effectsUnavailableText)
+        #expect(coordinator.castReadiedSpell(in: .right).text == MagicCore.castingUnavailableText)
         #expect(!coordinator.hasReadiedSpell(in: .right))
         #expect(coordinator.magicConditionResolution().state(of: .player) == nil)
         #expect(coordinator.withEffects { _ in true } == nil)
@@ -75,13 +75,14 @@ struct MagicCoordinatorTests {
 
     @Test func dispellingAnUntouchedPlayerSaysSo() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        #expect(coordinator.dispelPlayerMagicEffects() == "No effect was acting on the player.")
+        #expect(coordinator.dispelPlayerMagicEffects()
+            .text == "No effect was acting on the player.")
         #expect(coordinator.magicEffectControlSnapshot.isAvailable)
     }
 
     @Test func consumingWithoutAnInventoryIsRefused() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        #expect(coordinator.consumeMagicItem(FormID(1))
+        #expect(coordinator.consumeMagicItem(FormID(1)).text
             == MagicCore.effectsUnavailableText)
     }
 
@@ -115,7 +116,7 @@ struct MagicCoordinatorTests {
 
     @Test func selectionCyclesOverTheKnownSpells() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
-        #expect(coordinator.selectNextKnownSpell() == "The player knows no spells to select.")
+        #expect(coordinator.selectNextKnownSpell().text == "The player knows no spells to select.")
         let spells = [SpellbookFixture.Spell.healing, SpellbookFixture.Spell.flames]
         let caster = try #require(coordinator.caster)
         caster.spellbook.grant(spells.map(SpellbookFixture.key), to: .player)
@@ -218,7 +219,7 @@ struct MagicCoordinatorTests {
         let book = FormID(0x0700)
 
         coordinator.readSkillBook(book, skill: 12)
-        #expect(coordinator.readSkillBook(book, skill: 12).hasSuffix("was already read."))
+        #expect(coordinator.readSkillBook(book, skill: 12).text.hasSuffix("was already read."))
 
         #expect(world.bookRaises.map(\.skill) == [12])
         #expect(world.bookRaises.map(\.points) == [2])

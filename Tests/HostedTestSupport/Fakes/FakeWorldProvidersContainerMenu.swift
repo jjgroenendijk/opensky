@@ -76,14 +76,15 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func selectContainerMenuMerchant(_ reference: FormID) -> String {
+    func selectContainerMenuMerchant(_ reference: FormID) -> MerchantNomination {
         containerMenuMerchant = reference
-        containerMenuLastAction = "Merchant: \(reference)."
-        return containerMenuLastAction ?? ""
+        let nomination = MerchantNomination.nominated("\(reference)")
+        containerMenuLastAction = nomination.text
+        return nomination
     }
 
     @discardableResult
-    func selectContainerMenuMerchantFromInteraction() -> String {
+    func selectContainerMenuMerchantFromInteraction() -> MerchantNomination {
         selectContainerMenuMerchant(FormID(0x0301))
     }
 

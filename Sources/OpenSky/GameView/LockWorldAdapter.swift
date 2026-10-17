@@ -16,11 +16,25 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
+/// What `LockWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol LockWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
+    var lockpickingMenu: LockpickingMenuController { get }
+    var mapWorld: MapWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var streamer: CellStreamer? { get }
+}
+
 /// Answers `LockWorld` from the session systems `game` owns.
 final class LockWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any LockWorldHost
 
-    init(game: GameViewController) {
+    init(game: any LockWorldHost) {
         self.game = game
     }
 

@@ -14,11 +14,29 @@ import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MessageWorldHost: MenuInputConsumer {
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var cinematicWorld: CinematicCameraWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var journalMenu: JournalMenuController { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var subtitles: SubtitleCoordinator { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class MessageWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MessageWorldHost
     private var cachedEditorIDs: [String]?
 
-    init(game: GameViewController) {
+    init(game: any MessageWorldHost) {
         self.game = game
     }
 

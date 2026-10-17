@@ -37,7 +37,7 @@ struct PapyrusNativeFindReferenceTests {
             plugins: [("Skyrim.esm", file)], recordTypes: RecordIndex.referenceRecordTypes
         ))
         session.bridge.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
-        session.bridge.livePosition = { $0 == .player ? SIMD3(1000, 0, 0) : nil }
+        session.bridge.perceptionNatives.livePosition = { $0 == .player ? SIMD3(1000, 0, 0) : nil }
         return session
     }
 

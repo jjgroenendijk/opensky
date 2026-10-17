@@ -23,7 +23,7 @@ struct PapyrusNativeMountTests {
             return
         }
         var horse: ReferenceKey?
-        fixture.session.bridge.playersLastMount = { horse }
+        fixture.session.bridge.playerNatives.playersLastMount = { horse }
         #expect(read() == .returned(.none))
         horse = fixture.key
         #expect(read() == .returned(.object(fixture.receiver)))

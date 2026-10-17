@@ -103,10 +103,27 @@ public protocol TrapControlProviding: AnyObject {
     func selectTrap(_ key: ReferenceKey?)
     /// The player steps into the selected trigger and out again.
     @discardableResult
-    func fireSelectedTrap() -> String
+    func fireSelectedTrap() -> TrapActionOutcome
     /// The player presses the use key on the selected trap.
     @discardableResult
-    func disarmSelectedTrap() -> String
+    func disarmSelectedTrap() -> TrapActionOutcome
+}
+
+/// What the last Traps control did. Only `text` builds the line.
+nonisolated public enum TrapActionOutcome: Equatable, Sendable {
+    case idle
+    case noSelection
+    case fired(trap: String)
+    case activated(trap: String, queuedEvents: Int)
+
+    public var text: String {
+        switch self {
+        case .idle: "No trap action yet."
+        case .noSelection: "No trap selected."
+        case let .fired(trap): "Stepped into and out of \(trap)."
+        case let .activated(trap, events): "Activated \(trap): \(events) script events."
+        }
+    }
 }
 
 /// The section readout, kept here so a package test can pin it.

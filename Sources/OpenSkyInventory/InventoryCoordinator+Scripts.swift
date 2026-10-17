@@ -235,6 +235,6 @@ extension InventoryCoordinator {
     }
 
     private func scriptNote(_ text: String) {
-        _ = note(text)
+        _ = note(.script(text))
     }
 }

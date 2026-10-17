@@ -56,13 +56,13 @@ extension PapyrusWorldStateBridge {
     }
 
     public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
-        arrestSession?()?.canPayCrimeGold(to: faction)
+        crimeNatives.arrestSession?()?.canPayCrimeGold(to: faction)
     }
 
     public func settleArrest(
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
-        arrestSession?()?.settleArrest(with: faction, outcome)
+        crimeNatives.arrestSession?()?.settleArrest(with: faction, outcome)
     }
 }

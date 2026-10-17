@@ -9,9 +9,11 @@ import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -25,8 +27,35 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
+/// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol RuntimeStateWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var renderer: Renderer? { get }
+    var scenes: SceneCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class RuntimeStateWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any RuntimeStateWorldHost
     /// Resolved once: retrying an unwritable Application Support on every
     /// readout tick would hit the disk for the same answer.
     private var saveStore: OpenSkySaveStore?
@@ -37,7 +66,7 @@ final class RuntimeStateWorldAdapter {
     /// Reference places for one set of resident cells, rebuilt when the set changes.
     private var referencePlaces: ResidentReferencePlaces?
 
-    init(game: GameViewController) {
+    init(game: any RuntimeStateWorldHost) {
         self.game = game
     }
 

@@ -92,15 +92,15 @@ nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
 public protocol CraftingControlProviding: AnyObject {
     var craftingSnapshot: CraftingControlSnapshot { get }
     @discardableResult
-    func openCraftingStation(_ editorID: String) -> String
+    func openCraftingStation(_ editorID: String) -> CraftingActionOutcome
     @discardableResult
-    func craftRecipe(_ id: ResolvedFormID) -> String
+    func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome
     @discardableResult
-    func closeCraftingStation() -> String
+    func closeCraftingStation() -> CraftingActionOutcome
     @discardableResult
-    func forceHarvest() -> String
+    func forceHarvest() -> ItemActionOutcome
     @discardableResult
-    func resetHarvest() -> String
+    func resetHarvest() -> ItemActionOutcome
 }
 
 extension InventoryCoordinator: CraftingControlProviding {
@@ -113,28 +113,28 @@ extension InventoryCoordinator: CraftingControlProviding {
             recipes: crafting?.statuses.map(recipeReadout) ?? [],
             stations: craftingCatalog?.stations.map(\.editorID) ?? [],
             harvestTarget: harvestTarget(),
-            lastCraftText: lastCraftText,
-            lastActionText: lastActionText
+            lastCraftText: lastCraft.text,
+            lastActionText: lastAction.text
         )
     }
 
-    public func openCraftingStation(_ editorID: String) -> String {
+    public func openCraftingStation(_ editorID: String) -> CraftingActionOutcome {
         openCraftingSession(station: editorID)
     }
 
-    public func craftRecipe(_ id: ResolvedFormID) -> String {
+    public func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome {
         craft(id)
     }
 
-    public func closeCraftingStation() -> String {
+    public func closeCraftingStation() -> CraftingActionOutcome {
         closeCraftingSession()
     }
 
-    public func forceHarvest() -> String {
+    public func forceHarvest() -> ItemActionOutcome {
         harvestInteractionTarget()
     }
 
-    public func resetHarvest() -> String {
+    public func resetHarvest() -> ItemActionOutcome {
         resetHarvestOfInteractionTarget()
     }
 

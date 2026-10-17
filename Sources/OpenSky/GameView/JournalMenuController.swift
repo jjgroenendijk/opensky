@@ -16,6 +16,21 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `JournalMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol JournalMenuHost: MenuInputConsumer {
+    var hud: HUDCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var mapMenu: MapMenuCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var swfMovies: SWFMovieSource { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Holds the journal's page model and movie state for `game`.
 final class JournalMenuController {
     static let identifier: MenuIdentifier = "Journal"
@@ -25,12 +40,12 @@ final class JournalMenuController {
         category: "Journal"
     )
 
-    unowned let game: GameViewController
+    unowned let game: any JournalMenuHost
     private(set) var model = JournalMenuModel.empty
     private(set) var isOpen = false
     let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any JournalMenuHost) {
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "journal movie", logger: Self.logger
