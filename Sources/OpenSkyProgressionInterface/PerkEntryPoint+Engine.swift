@@ -7,9 +7,13 @@ import OpenSkyFormatsESM
 
 nonisolated extension PerkEntryPoint {
     public static let calculateWeaponDamage = PerkEntryPoint(rawValue: 0)
+    public static let modBuyPrices = PerkEntryPoint(rawValue: 8)
     public static let calculateCriticalChance = PerkEntryPoint(rawValue: 1)
     public static let calculateCriticalDamage = PerkEntryPoint(rawValue: 2)
     public static let modSneakAttackMult = PerkEntryPoint(rawValue: 18)
+    public static let modSpellMagnitude = PerkEntryPoint(rawValue: 29)
+    public static let modSpellDuration = PerkEntryPoint(rawValue: 30)
+    public static let modIncomingSpellMagnitude = PerkEntryPoint(rawValue: 41)
     public static let modBashingDamage = PerkEntryPoint(rawValue: 26)
     public static let modPowerAttackStamina = PerkEntryPoint(rawValue: 27)
     public static let modPowerAttackDamage = PerkEntryPoint(rawValue: 28)
@@ -28,6 +32,7 @@ nonisolated extension PerkEntryPoint {
     public static let modAttackDamage = PerkEntryPoint(rawValue: 35)
     public static let modSpellCost = PerkEntryPoint(rawValue: 38)
     public static let modPercentBlocked = PerkEntryPoint(rawValue: 39)
+    public static let modSellPrices = PerkEntryPoint(rawValue: 60)
     public static let modPlayerIntimidation = PerkEntryPoint(rawValue: 43)
     public static let modBribeAmount = PerkEntryPoint(rawValue: 46)
     public static let modLockpickSweetSpot = PerkEntryPoint(rawValue: 59)
@@ -42,6 +47,8 @@ nonisolated extension PerkEntryPoint {
         modIncomingStagger, modTargetStagger, modIncomingDamage, modTargetDamageResistance,
         modShieldDeflectArrowChance, setSweepAttack, applyCombatHitSpell, applyBashingSpell,
         applyWeaponSwingSpell, modArmorRating,
+        modSpellMagnitude, modSpellDuration, modIncomingSpellMagnitude,
+        modBuyPrices, modSellPrices,
         modRecoverArrowChance, modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked,
         modPlayerIntimidation,
         modBribeAmount, modLockpickSweetSpot,

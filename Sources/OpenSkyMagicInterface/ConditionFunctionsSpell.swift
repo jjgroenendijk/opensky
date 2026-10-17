@@ -14,9 +14,12 @@ nonisolated public struct SpellEvaluationResolution: ConditionResolution, Sendab
     public static let empty = SpellEvaluationResolution(spell: nil)
 
     public let spell: ResolvedSpell?
+    /// The effect keywords of a potion being drunk, which is no `SPEL`.
+    public let potionKeywords: Set<ReferenceKey>?
 
-    public init(spell: ResolvedSpell?) {
+    public init(spell: ResolvedSpell?, potionKeywords: Set<ReferenceKey>? = nil) {
         self.spell = spell
+        self.potionKeywords = potionKeywords
     }
 }
 
@@ -75,7 +78,12 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 693, name: "EPMagic_SpellHasKeyword", parameter1: .formID
         ) { call in
-            evaluatedSpell(call) { spell in
+            if let potion = call.context.spellEvaluation.potionKeywords {
+                return call.parameter1.flatMap { call.context.magic.key(of: $0.asFormID) }
+                    .map { .success(Self.isTrue(potion.contains($0))) }
+                    ?? .failure(.unavailableMagic(.record))
+            }
+            return evaluatedSpell(call) { spell in
                 spellKeyword(call, spell: spell, parameter: call.parameter1)
             }
         })

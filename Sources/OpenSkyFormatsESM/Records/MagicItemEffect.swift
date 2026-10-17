@@ -32,6 +32,22 @@ nonisolated public struct MagicItemEffect: Equatable, Sendable {
             conditions: conditions
         )
     }
+
+    /// A copy with a new magnitude and duration, for one perk-scaled application.
+    public func with(
+        magnitude newMagnitude: Float,
+        duration newDuration: Float
+    ) -> MagicItemEffect {
+        let seconds = newDuration
+            .isFinite ? min(max(newDuration.rounded(), 0), Float(UInt32.max)) : 0
+        return MagicItemEffect(
+            effect: effect,
+            magnitude: newMagnitude.isFinite ? max(0, newMagnitude) : magnitude,
+            area: area,
+            duration: newDuration.isFinite ? UInt32(seconds) : duration,
+            conditions: conditions
+        )
+    }
 }
 
 /// Mutable accumulator that folds the EFID/EFIT/CTDA run into entries. A

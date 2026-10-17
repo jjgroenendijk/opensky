@@ -53,4 +53,26 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     /// above this module, so the app runs the probe.
     func conditionText(of function: UInt16, parameter: UInt32, in context: ConditionContext)
         -> String
+    /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
+    /// the live conditions.
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float
+}
+
+extension MagicWorld {
+    /// A session with no perks leaves every value as authored.
+    public func perkModified(
+        _ value: Float,
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> Float {
+        value
+    }
 }

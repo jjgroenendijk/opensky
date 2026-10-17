@@ -24,6 +24,9 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var skillUses: [SkillUseEvent] = []
     private(set) var probedFunctions: [UInt16] = []
     var nearbyHostiles: [ReferenceKey] = []
+    /// Every actor's perks at an entry point, as a factor on the value.
+    var perkFactors: [PerkEntryPoint: Float] = [:]
+    private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
     var undead: Set<ReferenceKey> = []
     private(set) var staggered: [ReferenceKey] = []
     private(set) var hazards: [(hazard: ReferenceKey, target: ReferenceKey)] = []
@@ -102,5 +105,16 @@ final class FakeMagicWorld: MagicWorld {
 
     func actorHasKeyword(_: String, on holder: ActorValueHolder) -> Bool {
         undead.contains(holder.key)
+    }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> Float {
+        perkOwners[entryPoint] = key
+        return value * (perkFactors[entryPoint] ?? 1)
     }
 }

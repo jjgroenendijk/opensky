@@ -170,7 +170,11 @@ public final class MagicCoordinator {
             let outcome = try withEffects { runtime in
                 try runtime.consume(
                     item, from: .player, on: .player, inventory: inventory, fromPlugin: plugin
-                )
+                ) { entries, source in
+                    self.perkScaledPotion(
+                        entries, of: source, fromPlugin: plugin, drinker: .player
+                    )
+                }
             }
             effectActionText = MagicCore.consumeText(name: name, outcome: outcome)
         } catch {
@@ -225,9 +229,12 @@ extension MagicCoordinator: CasterWorld {
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int {
+        let scaled = source.kind == .spell
+            ? perkScaled(entries, of: source.record, caster: caster, on: target.key)
+            : entries
         let stored = withEffects { runtime in
             runtime.apply(
-                entries, fromPlugin: pluginName, source: source, caster: caster, on: target
+                scaled, fromPlugin: pluginName, source: source, caster: caster, on: target
             )
         }
         return stored?.count ?? 0
@@ -263,7 +270,12 @@ extension MagicCoordinator: CasterWorld {
         let holders = residentHolders(of: hit.targets)
         guard
             let report = withEffects({ runtime in
-                SpellHitApplication.apply(hit, holders: holders, using: &runtime)
+                SpellHitApplication
+                    .apply(hit, holders: holders, using: &runtime) { entries, target in
+                        self.perkScaled(
+                            entries, of: hit.payload.spell, caster: hit.payload.caster, on: target
+                        )
+                    }
             })
         else { return .none }
         lastHit = report

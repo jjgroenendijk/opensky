@@ -38,7 +38,8 @@ nonisolated public struct MagicItemConsumeOutcome: Equatable, Sendable {
 }
 
 extension ActiveEffectRuntime {
-    /// Removes one unit of `item` from `holder` and applies its effects to `target`.
+    /// Removes one unit of `item` from `holder` and applies its effects, after
+    /// `scaling`, to `target`.
     /// A consume that applies nothing still costs the unit, as in the game.
     /// - Throws: `MagicItemConsumeError`, plus `InventoryRuntime` removal errors.
     @discardableResult
@@ -47,7 +48,8 @@ extension ActiveEffectRuntime {
         from holder: InventoryHolder,
         on target: ActorValueHolder,
         inventory: any InventoryAccess,
-        fromPlugin pluginName: String
+        fromPlugin pluginName: String,
+        scaling: ([MagicItemEffect], ReferenceKey) -> [MagicItemEffect] = { entries, _ in entries }
     ) throws -> MagicItemConsumeOutcome {
         guard let use = inventory.baselines.items.magicItemUse(item) else {
             throw MagicItemConsumeError.notConsumable(item)
@@ -56,12 +58,13 @@ extension ActiveEffectRuntime {
             throw MagicItemConsumeError.noneCarried(item)
         }
         try inventory.remove(item, count: 1, from: holder)
+        let source = ActiveEffectSource(
+            kind: use.kind, record: sourceKey(of: item, fallbackPlugin: pluginName)
+        )
         let stored = apply(
-            use.effects,
+            scaling(use.effects, source.record),
             fromPlugin: pluginName,
-            source: ActiveEffectSource(
-                kind: use.kind, record: sourceKey(of: item, fallbackPlugin: pluginName)
-            ),
+            source: source,
             on: target
         )
         return MagicItemConsumeOutcome(

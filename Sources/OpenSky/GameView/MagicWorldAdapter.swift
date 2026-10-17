@@ -158,4 +158,20 @@ extension MagicWorldAdapter: MagicWorld {
     ) -> String {
         ConditionProbe.text(of: function, parameter1: parameter, in: context)
     }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float {
+        game.perks.modified(
+            value,
+            at: entryPoint,
+            on: key,
+            subjects: { _ in subjects },
+            seams: seams
+        )
+    }
 }

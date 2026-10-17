@@ -61,3 +61,33 @@ Rules that are a reading of the wiki, not a measured fact:
   keyword from the race's attack data; OpenSky has none, so the names stand in for it.
 - A deflected arrow does no damage and reports no hit. OpenSky has no bounce, so the arrow
   still sticks where it struck.
+
+## Spells
+
+A spell the player or an NPC casts lands its effects scaled by the caster's and the target's
+perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Spell Magnitude | 29 | each effect's magnitude, caster's perk, target bound |
+| Mod Spell Duration | 30 | each effect's duration, caster's perk, target bound |
+| Mod Incoming Spell Magnitude | 41 | each effect's magnitude, target's perk |
+| Mod Spell Cost | 38 | the magicka cost |
+
+The scaling applies to a cast spell or scroll, on a projectile hit and on a self cast. A drunk
+potion takes Mod Spell Magnitude and Mod Spell Duration from the drinker's perks, with the potion
+bound as the spell. Its `HasKeyword` reads the keywords of its effects, so Catalyst's test of
+`MagicAlchBeneficial` and `MagicAlchDurationBased` works. A potion skips Mod Incoming Spell
+Magnitude: the Atronach Stone's perk halves it with no condition, which would halve every drink.
+`EPMagic_SpellHasKeyword` reads the same keywords; the other `EPMagic_*` conditions fail on a
+potion. A worn or weapon
+enchantment and a perk ability apply as authored.
+
+## Barter
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Buy Prices | 8 | the buy modifier, merchant bound as the target |
+| Mod Sell Prices | 60 | the sell modifier, merchant bound as the target |
+| Mod Player Intimidation | 43 | the intimidation check |
+| Mod Bribe Amount | 46 | the bribe price |
