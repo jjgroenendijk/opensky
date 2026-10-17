@@ -25,7 +25,9 @@ struct AppSidebarModelTests {
         #expect(
             groups[1].destinations.map(\.id) == ["uiLab", "renderingPerformance", "agentControl"]
         )
-        #expect(groups[2].destinations.map(\.id) == ["assetBrowser", "loadOrder", "skyrimSaves"])
+        #expect(groups[2].destinations.map(\.id) == [
+            "assetBrowser", "loadOrder", "skyrimSaves", "renderPreview"
+        ])
     }
 
     @Test
