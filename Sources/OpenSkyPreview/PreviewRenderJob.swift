@@ -57,17 +57,18 @@ public enum PreviewRenderJob {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let first = camera(for: request.views[0], scene: scene)
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view, scene: scene.renderScene, camera: first,
             timeOfDay: request.timeOfDay, shaderLibrary: sources.shaderLibrary
         )
-        try configure(renderer, scene: scene, request: request, sources: sources)
+        let renderer = gameSession.renderer
+        try configure(gameSession, scene: scene, request: request, sources: sources)
         adjust(renderer)
         let triangles = triangleCount(scene.renderScene)
         return try request.views.map { previewView in
             let camera = camera(for: previewView, scene: scene)
             renderer.camera = camera
-            renderer.freeFlyCamera = FreeFlyCamera(framing: camera)
+            gameSession.freeFlyCamera = FreeFlyCamera(framing: camera)
             let texture = try renderer.renderOffscreen(
                 width: size.width, height: size.height, animationTime: 0
             )
@@ -99,11 +100,12 @@ public enum PreviewRenderJob {
     }
 
     private static func configure(
-        _ renderer: Renderer,
+        _ gameSession: GameSession,
         scene: PreviewScene,
         request: PreviewRequest,
         sources: PreviewRenderSources
     ) throws {
+        let renderer = gameSession.renderer
         if scene.stage == .studio {
             renderer.offscreenBackground = PreviewStudio.background
             renderer.sunShadowsEnabled = false
@@ -114,7 +116,7 @@ public enum PreviewRenderJob {
                 loadOrder: sources.loadOrder, worldspaceEditorID: worldspace
             )
         else { return }
-        renderer.weather = weather
+        gameSession.weather = weather
         if let name = request.weather {
             guard let found = weather.store.weathers.values.first(where: { $0.editorID == name })
             else { throw PreviewError.notFound(name) }

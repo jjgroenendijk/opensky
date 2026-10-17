@@ -13,6 +13,7 @@ protocol AnimationEventWorldHost: AnyObject {
     var cinematicCamera: CinematicCameraCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
 }
 
@@ -25,14 +26,14 @@ final class AnimationEventWorldAdapter {
 
     /// The player graph's events, read once per frame. The idle and object graph
     /// callbacks send theirs to the coordinator directly.
-    func wire(renderer: Renderer) {
+    func wire(gameSession: GameSession) {
         let events = AnimationEventCoordinator(world: self)
-        renderer.session.animationEvents = events
-        renderer.session.frameSteps.register(.animationEvents) { [weak renderer, weak events] _ in
-            guard let renderer else { return }
-            let locomotion = renderer.locomotion
+        gameSession.animationEvents = events
+        gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak events] _ in
+            guard let gameSession else { return }
+            let locomotion = gameSession.locomotion
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
-            guard renderer.movementMode.isPlayerControlled else { return }
+            guard gameSession.movementMode.isPlayerControlled else { return }
             for name in names {
                 events?.handle(name, from: .player)
             }
@@ -42,9 +43,9 @@ final class AnimationEventWorldAdapter {
 
 extension AnimationEventWorldAdapter: AnimationEventWorld {
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>? {
-        guard let renderer = game.renderer else { return nil }
+        guard let gameSession = game.gameSession else { return nil }
         if source == .player {
-            return renderer.locomotion.status.feetPosition
+            return gameSession.locomotion.status.feetPosition
         }
         guard let streamer = game.streamer else { return nil }
         if let moved = streamer.npcTransform(for: source) {
@@ -57,12 +58,12 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
     func playAnimationSound(
         editorID: String, source: ReferenceKey, at position: SIMD3<Float>
     ) -> Bool {
-        guard let director = game.renderer?.soundDirector else { return true }
+        guard let director = game.gameSession?.soundDirector else { return true }
         return director.playAnimationSound(editorID: editorID, source: source, at: position)
     }
 
     func stopAnimationSound(editorID: String, source: ReferenceKey) {
-        game.renderer?.soundDirector?.stopAnimationSound(editorID: editorID, source: source)
+        game.gameSession?.soundDirector?.stopAnimationSound(editorID: editorID, source: source)
     }
 
     func shakeCamera(from position: SIMD3<Float>, strength: Float) {

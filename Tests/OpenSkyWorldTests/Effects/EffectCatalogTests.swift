@@ -80,7 +80,7 @@ struct EffectCatalogTests {
     @Test func theImageSpaceReadoutNamesTheBaseline() {
         var state = ImageSpaceState()
         state.passEnabled = false
-        let text = EffectsReadout.imageSpace(state)
+        let text = EffectsReadout.imageSpace(state, eye: EyeAdaptation())
         #expect(text.hasPrefix("Baseline: none"))
         #expect(text.contains("Saturation 1.00 · brightness 1.00 · contrast 1.00"))
         #expect(text.contains("Pass: off"))

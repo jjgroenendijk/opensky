@@ -37,6 +37,7 @@ protocol CrimeWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
 }
@@ -193,33 +194,33 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     // MARK: - Clock and player
 
     var gameSeconds: Double? {
-        game.renderer?.gameClock.totalGameSeconds
+        game.gameSession?.gameClock.totalGameSeconds
     }
 
     var hourOfDay: Float? {
-        game.renderer?.gameClock.hourOfDay
+        game.gameSession?.gameClock.hourOfDay
     }
 
     func passGameTime(days: Int) {
-        guard let renderer = game.renderer else { return }
-        renderer.gameClock = GameClock(
-            totalGameSeconds: renderer.gameClock.totalGameSeconds
+        guard let gameSession = game.gameSession else { return }
+        gameSession.gameClock = GameClock(
+            totalGameSeconds: gameSession.gameClock.totalGameSeconds
                 + Double(days) * GameClock.secondsPerDay
         )
     }
 
     var playerFeet: SIMD3<Float>? {
-        game.renderer?.locomotion.status.feetPosition
+        game.gameSession?.locomotion.status.feetPosition
     }
 
     func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard
-            let renderer = game.renderer,
+            let renderer = game.renderer, let gameSession = game.gameSession,
             let placement = game.streamer?.referenceEntry(key: marker)?.placedReference?.placement
         else { return false }
         let camera = SceneCamera.teleport(placement: placement)
         renderer.camera = camera
-        renderer.reseedMovement(camera: camera)
+        gameSession.reseedMovement(camera: camera)
         return true
     }
 

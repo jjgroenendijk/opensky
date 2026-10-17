@@ -85,7 +85,7 @@ extension Renderer {
 
     /// The use of each texture the scene draws that needs the most texels per pixel.
     func nearestUses() -> [ObjectIdentifier: TextureUse] {
-        let camera = freeFlyCamera.position
+        let camera = frameInput.view.position
         var nearest: [ObjectIdentifier: TextureUse] = [:]
         func note(_ texture: MTLTexture, bounds: ModelBounds, uvPerUnit: Float) {
             let use = TextureUse(bounds: bounds, camera: camera, uvPerUnit: uvPerUnit)
@@ -127,7 +127,7 @@ extension Renderer {
 extension Renderer {
     /// The arm groups drawn this frame, which are not in `frameDrawGroups`.
     var firstPersonArmGroups: [DrawGroup] {
-        guard areFirstPersonArmsVisible, let rig = frameDriver?.firstPersonRig else { return [] }
+        guard areFirstPersonArmsVisible, let rig = frameInput.rigs.arms else { return [] }
         return rig.render.opaque + rig.render.alphaTested
     }
 }

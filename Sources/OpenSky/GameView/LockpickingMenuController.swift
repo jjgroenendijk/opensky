@@ -19,6 +19,7 @@ protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var inventoryWorld: InventoryWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
 }
 
@@ -99,7 +100,7 @@ final class LockpickingMenuController {
         let opened = locks.lastOutcome?.opened == true && locks.session?.isFinished == true
         locks.closeLockpicking()
         presentation = nil
-        game.renderer?.uiScene = .empty
+        game.gameSession?.uiScene = .empty
         game.menuMode.dismiss(Self.identifier)
         // The press that met the lock goes through now that it is open.
         if opened, let target {
@@ -159,7 +160,7 @@ final class LockpickingMenuController {
         )
         guard next != presentation else { return }
         presentation = next
-        game.renderer?.uiScene = next.scene
+        game.gameSession?.uiScene = next.scene
     }
 
     private func play(_ sound: LockpickingSound) {

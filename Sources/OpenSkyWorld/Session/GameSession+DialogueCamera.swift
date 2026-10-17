@@ -42,7 +42,7 @@ public struct RendererDialogueCameraState {
     public var restorePose: FreeFlyCamera?
 }
 
-extension Renderer {
+extension GameSession {
     /// True while a conversation owns the view.
     public var isDialogueCameraEngaged: Bool {
         dialogueCameraState.focus != nil
@@ -85,7 +85,6 @@ extension Renderer {
         }
         applyDialogueCamera()
         guard wasEngaged != isDialogueCameraEngaged else { return }
-        rebuildProjection()
     }
 
     /// Puts the player's own pose back. Safe to call when nothing is applied,

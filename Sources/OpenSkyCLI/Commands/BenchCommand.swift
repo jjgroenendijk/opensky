@@ -112,10 +112,9 @@ enum BenchCommand {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: cellScene.renderScene,
-            camera: SceneCamera.framing(bounds: bounds),
-            movementConfiguration: .synthetic
+            camera: SceneCamera.framing(bounds: bounds)
         )
         let result = try renderer.renderOffscreenSustained(
             width: options.size.width,
@@ -163,10 +162,10 @@ enum BenchCommand {
             builder: builder,
             worldspaceEditorID: options.worldspace
         )
-        let renderer = try makeStreamRenderer(device: device, size: options.size)
-        wireBenchScriptRuntime(to: renderer)
+        let gameSession = try makeStreamSession(device: device, size: options.size)
+        wireBenchScriptRuntime(to: gameSession)
         let result = try CellStreamingFlyBenchmark.run(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: provider,
             lodPrebuild: lodPrebuild,
             weather: weather,
@@ -218,9 +217,10 @@ enum BenchCommand {
             builder: builder,
             worldspaceEditorID: options.worldspace
         )
-        let renderer = try makeStreamRenderer(device: device, size: options.size)
+        let gameSession = try makeStreamSession(device: device, size: options.size)
+        let renderer = gameSession.renderer
         let result = try CellStreamingWalkBenchmark.run(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: provider,
             configuration: CellStreamingWalkBenchmarkConfiguration(
                 size: options.size,
@@ -261,33 +261,34 @@ enum BenchCommand {
 }
 
 extension BenchCommand {
-    /// A paused offscreen renderer with the bench audio engine, for the stream routes.
-    private static func makeStreamRenderer(
+    /// A session over a paused offscreen renderer with the bench audio engine, for the
+    /// stream routes.
+    private static func makeStreamSession(
         device: MTLDevice, size: (width: Int, height: Int)
-    ) throws -> Renderer {
+    ) throws -> GameSession {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
             device: device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view,
             scene: RenderScene(instances: []),
             movementConfiguration: .synthetic
         )
-        renderer.worldAudio = benchAudioEngine()
-        return renderer
+        gameSession.worldAudio = benchAudioEngine()
+        return gameSession
     }
 
     /// Attaches an empty VM so the fly path measures the fixed engine-loop
     /// floor. The callback retains the runtime for the complete render run.
-    private static func wireBenchScriptRuntime(to renderer: Renderer) {
+    private static func wireBenchScriptRuntime(to gameSession: GameSession) {
         let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [], nativeDispatch: PapyrusNativeRegistry.standard
         ))
-        renderer.session.worldTick.register(.scripts) { [runtime, weak renderer] delta in
-            _ = runtime.advance(delta: delta, gameClock: renderer?.gameClock)
+        gameSession.worldTick.register(.scripts) { [runtime, weak gameSession] delta in
+            _ = runtime.advance(delta: delta, gameClock: gameSession?.gameClock)
         }
     }
 

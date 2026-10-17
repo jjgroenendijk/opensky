@@ -146,50 +146,22 @@ public final class Renderer: NSObject {
     /// Injected framing camera — source of the sun/ambient light and the
     /// free-fly camera's starting pose. setScene may replace it.
     public var camera: SceneCamera
-    /// Live view pose, seeded from `camera`, advanced each frame from `input`.
-    public var freeFlyCamera: FreeFlyCamera
-    /// Fly is the default dev mode. `G` cycles fly -> first-person walk -> third person.
-    public var movementMode = CameraMovementMode.fly
-    /// Resident static collision broadphase, wired beside terrain by
-    /// GameViewController. Empty in renderer-only paths. Walk mode, the
-    /// cameras and precipitation all query it.
-    public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    /// The game state this frame draws from, replaced once per frame by `frameDriver`.
+    /// A renderer without a driver keeps what its caller sets here.
+    public var frameInput: RenderFrameInput
     /// Draws the dialogue camera's pivot, sightline and eye through the world-overlay
     /// registry. Off by default like every other overlay.
     public var dialogueCameraOverlayEnabled = false
-    /// How far simulated bodies moved since their cells were built, by REFR FormID.
-    /// Published once per frame by the physics tick; empty without physics.
-    public var dynamicInstanceDeltas: [UInt32: float4x4] = [:] {
-        didSet { mergeInstanceDeltas() }
-    }
-
-    public var npcInstanceDeltas: [UInt32: float4x4] = [:] {
-        didSet { mergeInstanceDeltas() }
-    }
-
-    /// Where carts and their riders are now, as placements without scale. The delta
-    /// comes from the placement the scene was built with.
-    public var vehicleInstancePoses: [UInt32: float4x4] = [:] {
-        didSet { mergeInstanceDeltas() }
-    }
-
-    /// Where scripted moves (`TranslateTo`) have carried references, as placements
-    /// without scale.
-    public var scriptedInstancePoses: [UInt32: float4x4] = [:] {
-        didSet { mergeInstanceDeltas() }
-    }
-
-    /// All maps in one, so a drawn instance costs one lookup.
+    /// The input's pose maps in one, so a drawn instance costs one lookup.
     var instanceDeltas: [UInt32: float4x4] = [:]
-    /// A script's fog for the loaded interior; ignored once the scene's lighting changes.
-    public var interiorFogOverride: InteriorFogOverride?
-    /// This frame's resolved weather (exterior only). nil -> no weather active.
-    public var currentResolvedWeather: ResolvedWeather?
+    /// What the last adopted input held, so a change re-projects or re-merges once.
+    var adoptedFOVYRadians = FirstPersonCamera.defaultFOVYRadians
+    var adoptedPoseRevision = 0
     /// The weather's cloud layers; nil keeps the plain sky gradient.
     public var skyClouds: SkyClouds?
     public var cloudsEnabled = true
-    /// The post-process values and running modifiers the composite pass applies.
-    public var imageSpace = ImageSpaceState()
+    /// The exposure the eye has adapted to, fed back from the GPU each frame.
+    public var eyeAdaptation = EyeAdaptation()
     public let precipitation: PrecipitationVolume
     public var precipitationEnabled = true
     public var particlesEnabled = true
@@ -217,18 +189,12 @@ public final class Renderer: NSObject {
     /// Screen-space UI A/B toggle. Off -> the UI pass encodes zero draws and
     /// the frame matches a never-enabled baseline exactly.
     public var uiEnabled = true
-    /// Resolved to a draw list each frame against the framebuffer pixel size +
-    /// uiScale. Default empty -> zero draws.
-    public var uiScene = UIScene.empty
     /// UI points -> framebuffer pixels multiplier (user preset x backing
     /// scale, supplied by the app). Clamped to UIScale.range at encode.
     public var uiScale: Float = 1
-    /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
-    /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
-    public var worldSimPaused = false
-    /// The simulation side of each frame (`RenderFrameDriver.swift`). The
-    /// renderer holds it strongly; the driver holds the renderer unowned.
-    public var frameDriver: (any RenderFrameDriver)?
+    /// The simulation side of each frame (`RenderFrameDriver.swift`). The driver
+    /// owns the renderer, so the renderer holds it weakly.
+    public weak var frameDriver: (any RenderFrameDriver)?
     /// UI culling/draw accounting from the most recently encoded frame.
     /// Written only by encodeUI (RendererUIPass.swift), like the other
     /// last-frame stat mirrors.
@@ -244,8 +210,6 @@ public final class Renderer: NSObject {
     public let wallClock: any WallClock
     /// Wall-clock delta source for the animation clock, paused in menu mode.
     public var animationClock = FrameSimClock()
-    /// Slows animation, particles, and the world sim, not the camera. A kill cam sets it below 1.
-    public var worldTimeScale: Float = 1
     public var lastAnimationUpdateMS = 0.0
     public var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
@@ -281,7 +245,7 @@ public final class Renderer: NSObject {
     public var retired: [RetiredAllocations] = []
     public let residencySet: MTLResidencySet
     public let endFrameEvent: MTLSharedEvent
-    public let frameStats: FrameStats
+    public let frameStats = FrameStats()
 
     public var frameIndex: Int
     public var projectionMatrix = matrix_identity_float4x4
@@ -331,8 +295,8 @@ public final class Renderer: NSObject {
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
     /// `shaderLibrary` nil -> the `default.metallib` of the app or openskycli
     /// bundle. A package test passes the library its fixture loads instead.
-    /// This builds the GPU half only; `Renderer(view:)` in the engine also
-    /// attaches the game session that drives each frame.
+    /// This builds the GPU half only; `GameSession(view:)` in the engine builds
+    /// a renderer and drives its frames.
     public init(
         rendering view: MTKView,
         scene: RenderScene? = nil,
@@ -381,7 +345,8 @@ public final class Renderer: NSObject {
         meshGrass = MeshShaderGrassState(library: library, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
-        (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))
+        let framing = camera ?? .demo
+        (self.camera, frameInput) = (framing, RenderFrameInput(view: .init(framing: framing)))
         (frameUniformBuffer, blackCube) = try Self.makeFrameResources(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         (drawUniformBuffer, pointLightBuffer) = (rings.drawBuffer, rings.pointLightBuffer)
@@ -404,8 +369,6 @@ public final class Renderer: NSObject {
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
-
-        frameStats = FrameStats()
 
         super.init()
         // A failed save only costs the next launch a compile.

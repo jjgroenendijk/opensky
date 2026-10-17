@@ -54,7 +54,7 @@ extension Renderer {
             return
         }
         roomCulling.visibility = rooms.visibleRooms(
-            eye: freeFlyCamera.position, viewProjection: viewProjection
+            eye: frameInput.view.position, viewProjection: viewProjection
         )
     }
 }

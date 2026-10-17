@@ -8,7 +8,7 @@ extension Renderer {
     /// The layers this frame draws: exterior weather only, and only under a sky.
     var frameCloudLayers: [ResolvedCloudLayer] {
         guard cloudsEnabled, scene.sky != nil, scene.lighting == nil else { return [] }
-        return currentResolvedWeather?.clouds ?? []
+        return frameInput.weather?.clouds ?? []
     }
 
     /// Drains finished cloud loads and requests the layers the weather needs now.

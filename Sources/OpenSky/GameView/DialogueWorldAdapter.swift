@@ -43,6 +43,7 @@ protocol DialogueWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var perks: PerkCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
@@ -77,15 +78,16 @@ final class DialogueWorldAdapter {
 
     /// Runs after the actor systems in the world tick, so the camera reads
     /// this frame's pose.
-    func wireDialogueCamera(renderer: Renderer) {
-        renderer.session.worldTick.register(.dialogueCamera) { [weak self] delta in
+    func wireDialogueCamera(gameSession: GameSession) {
+        let renderer = gameSession.renderer
+        gameSession.worldTick.register(.dialogueCamera) { [weak self] delta in
             self?.game.dialogueCamera.refreshFocus()
             self?.game.faceMorphs.tick(now: self?.game.renderer?.animationTime ?? 0)
             self?.game.headTracking.tick(deltaTime: delta)
         }
         renderer.worldOverlaySources
-            .register(identifier: "dialogue-camera") { [weak renderer] context, list in
-                renderer?.appendDialogueCameraOverlay(context: context, to: &list)
+            .register(identifier: "dialogue-camera") { [weak gameSession] context, list in
+                gameSession?.appendDialogueCameraOverlay(context: context, to: &list)
             }
     }
 

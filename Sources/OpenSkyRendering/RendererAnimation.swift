@@ -14,8 +14,8 @@ extension Renderer {
         // The simulation steps the player's animation; this only publishes the pose and
         // honours the same A/B toggle (PlayerAnimationPlayback.swift).
         lastAnimationUpdatedBoneCount = sceneBones
-            + (frameDriver?.playerBodyRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
-            + (frameDriver?.firstPersonRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
+            + (frameInput.rigs.body?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
+            + (frameInput.rigs.arms?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
         lastAnimationUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }
@@ -25,7 +25,7 @@ extension Renderer {
         // Returned delta also drives particles + precipitation this frame, so a
         // paused (zero) delta freezes all three together.
         let delta = animationClock
-            .advance(to: wallClock.now, paused: worldSimPaused) * worldTimeScale
+            .advance(to: wallClock.now, paused: frameInput.isPaused) * frameInput.timeScale
         updateAnimations(deltaTime: delta)
         return delta
     }
@@ -35,7 +35,7 @@ extension Renderer {
         for playback in scene.particles + effects.particles {
             playback.advance(
                 deltaTime: deltaTime,
-                wind: currentWind,
+                wind: frameInput.wind,
                 emissionScale: particleEmissionScale
             )
         }
@@ -46,7 +46,7 @@ extension Renderer {
         for playback in scene.particles {
             playback.seek(
                 to: time,
-                wind: currentWind,
+                wind: frameInput.wind,
                 emissionScale: particleEmissionScale
             )
         }

@@ -77,12 +77,13 @@ struct RendererMeshGrassTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view, scene: scene(device: device), camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
+        let renderer = gameSession.renderer
         renderer.shadowQuality = .off
-        renderer.worldSimPaused = true
+        gameSession.worldSimPaused = true
         return renderer
     }
 

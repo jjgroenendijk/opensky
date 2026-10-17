@@ -40,24 +40,25 @@ struct FirstPersonRenderRealDataTests {
         let bounds = try #require(scene.bounds, "no world bounds — nothing drew")
         let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
         let feet = LocomotionRealTerrain.startPosition(on: terrain)
-        let renderer = try Self.renderer(device: device, scene: scene, bounds: bounds)
+        let gameSession = try Self.makeSession(device: device, scene: scene, bounds: bounds)
+        let renderer = gameSession.renderer
         var report: [String] = []
 
         Self.assertRigIsUsable(assembled.arms, report: &report)
 
-        Self.frameFirstPerson(renderer, feet: feet)
+        Self.frameFirstPerson(gameSession, feet: feet)
         let empty = try Self.frame(renderer)
 
-        try renderer.setPlayerBody(assembled.body)
-        try renderer.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.setPlayerBody(assembled.body)
+        try gameSession.setPlayerFirstPersonRig(assembled.arms)
         Self.drive(assembled, feet: feet, input: CameraInput(dt: 1.0 / 120))
-        Self.place(assembled, renderer: renderer, feet: feet)
+        Self.place(assembled, gameSession: gameSession, feet: feet)
         // Sheathed, the first-person idle keeps the hands below the view, as in the game.
         let sheathed = try Self.changedPixels(empty, Self.frame(renderer))
         report.append("first person sheathed vs no arms: \(sheathed) changed pixels")
 
         Self.drawWeapon(assembled, feet: feet, handType: Self.swordHandType)
-        Self.place(assembled, renderer: renderer, feet: feet)
+        Self.place(assembled, gameSession: gameSession, feet: feet)
         let idle = try Self.frame(renderer)
         let armPixels = Self.changedPixels(empty, idle)
         report.append("first person drawn vs no arms: \(armPixels) changed pixels")
@@ -65,19 +66,19 @@ struct FirstPersonRenderRealDataTests {
 
         try Self.assertStatesDiffer(
             assembled,
-            renderer: renderer,
+            gameSession: gameSession,
             feet: feet,
             idle: idle,
             report: &report
         )
         try Self.assertModeSwitchCrossCheck(
             assembled,
-            renderer: renderer,
+            gameSession: gameSession,
             feet: feet,
             report: &report
         )
         try Self.assertEquipmentReachesTheArms(
-            device: device, root: root, renderer: renderer, feet: feet, report: &report
+            device: device, root: root, gameSession: gameSession, feet: feet, report: &report
         )
 
         try PlayerBodyFixture.write(
@@ -119,11 +120,12 @@ struct FirstPersonRenderRealDataTests {
     @MainActor
     private static func assertStatesDiffer(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>,
         idle: [UInt8],
         report: inout [String]
     ) throws {
+        let renderer = gameSession.renderer
         var frames: [String: [UInt8]] = ["idle": idle]
         for (name, input) in [
             ("walk", CameraInput(moveForward: 1, dt: 1.0 / 120)),
@@ -132,7 +134,7 @@ struct FirstPersonRenderRealDataTests {
             for _ in 0 ..< LocomotionDriveHarness.secondOfSteps {
                 drive(assembled, feet: feet, input: input)
             }
-            place(assembled, renderer: renderer, feet: feet)
+            place(assembled, gameSession: gameSession, feet: feet)
             frames[name] = try frame(renderer)
             report.append(
                 "\(name) vs idle: \(changedPixels(idle, frames[name] ?? [])) changed pixels"
@@ -148,16 +150,17 @@ struct FirstPersonRenderRealDataTests {
     @MainActor
     private static func assertModeSwitchCrossCheck(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>,
         report: inout [String]
     ) throws {
-        place(assembled, renderer: renderer, feet: feet)
+        let renderer = gameSession.renderer
+        place(assembled, gameSession: gameSession, feet: feet)
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
         let firstPerson = try frame(renderer)
 
-        renderer.setMovementMode(.thirdPerson)
+        gameSession.setMovementMode(.thirdPerson)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
         let thirdPerson = try frame(renderer)
@@ -167,7 +170,7 @@ struct FirstPersonRenderRealDataTests {
         )
         #expect(thirdPerson != firstPerson, "the camera mode changed nothing")
 
-        renderer.setMovementMode(.walk)
+        gameSession.setMovementMode(.walk)
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
         let returned = try frame(renderer)
@@ -176,10 +179,10 @@ struct FirstPersonRenderRealDataTests {
 
         // Fly shows the body too, so a developer can look at the character; it
         // never shows the arms.
-        renderer.setMovementMode(.fly)
+        gameSession.setMovementMode(.fly)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
-        renderer.setMovementMode(.walk)
+        gameSession.setMovementMode(.walk)
     }
 
     /// Equipping reaches both rigs: two rigs assembled from the same install, one
@@ -191,10 +194,11 @@ struct FirstPersonRenderRealDataTests {
     private static func assertEquipmentReachesTheArms(
         device: MTLDevice,
         root: GameDataRoot,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>,
         report: inout [String]
     ) throws {
+        let renderer = gameSession.renderer
         var frames: [[UInt8]] = []
         for (equipped, handType) in [
             ([Self.ironCuirass, Self.ironSword], Self.swordHandType),
@@ -204,9 +208,9 @@ struct FirstPersonRenderRealDataTests {
                 device: device, root: root, equipped: equipped
             )
             drawWeapon(fresh, feet: feet, handType: handType)
-            try renderer.setPlayerBody(fresh.body)
-            try renderer.setPlayerFirstPersonRig(fresh.arms)
-            place(fresh, renderer: renderer, feet: feet)
+            try gameSession.setPlayerBody(fresh.body)
+            try gameSession.setPlayerFirstPersonRig(fresh.arms)
+            place(fresh, gameSession: gameSession, feet: feet)
             try frames.append(frame(renderer))
             report.append(
                 "equipped \(equipped.count) item(s): "

@@ -11,22 +11,15 @@ extension Renderer {
     /// Whether the arms are drawn to the camera this frame. First person only:
     /// fly and third person show the body instead.
     public var areFirstPersonArmsVisible: Bool {
-        rigVisibility.drawsArms && effects.loadingCover == nil
-    }
-
-    /// The vertical field of view this frame projects with, from the driver:
-    /// the first-person setting in first person, the dialogue camera's angle
-    /// in a conversation, the shared world value everywhere else.
-    public var activeFOVYRadians: Float {
-        frameDriver?.projectionFOVYRadians ?? FirstPersonCamera.defaultFOVYRadians
+        frameInput.rigs.visibility.drawsArms && effects.loadingCover == nil
     }
 
     /// Rebuilds `projectionMatrix` for the current mode, field of view, and
-    /// drawable size. Called on resize, on a camera-mode change, and when the
-    /// field-of-view control moves, so the three cannot disagree.
+    /// drawable size. Called on resize and when the frame input's field of view
+    /// changes, so the two cannot disagree.
     public func rebuildProjection() {
         projectionMatrix = MatrixMath.perspective(
-            fovYRadians: activeFOVYRadians,
+            fovYRadians: frameInput.fovYRadians,
             aspectRatio: drawableAspectRatio,
             nearZ: Self.nearPlane,
             farZ: Self.farPlane
@@ -42,7 +35,7 @@ extension Renderer {
     ) {
         guard
             areFirstPersonArmsVisible,
-            let rig = frameDriver?.firstPersonRig,
+            let rig = frameInput.rigs.arms,
             let target = descriptor.colorAttachments[0].texture
         else { return }
         let width = Double(target.width)

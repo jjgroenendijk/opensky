@@ -4,7 +4,7 @@
 import Metal
 import OpenSkyRendering
 
-extension Renderer {
+extension GameSession {
     /// Attaches the assembled arms, sizing the draw rings for their groups and
     /// making their buffers resident, exactly as `setPlayerBody` does.
     public func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig?) throws {
@@ -12,16 +12,17 @@ extension Renderer {
         playerFirstPersonRig = rig
         updatePlayerFirstPersonPose()
         if let rig {
-            try growRings(
-                drawCount: scene.drawCount + (playerBody?.render.drawCount ?? 0)
+            try renderer.growRings(
+                drawCount: renderer.scene.drawCount + (playerBody?.render.drawCount ?? 0)
                     + rig.render.drawCount,
-                instanceCount: scene.instanceCount + (playerBody?.render.instanceCount ?? 0)
+                instanceCount: renderer.scene
+                    .instanceCount + (playerBody?.render.instanceCount ?? 0)
                     + rig.render.instanceCount
             )
-            residencySet.addAllocations(rig.residencyAllocations)
-            residencySet.commit()
+            renderer.residencySet.addAllocations(rig.residencyAllocations)
+            renderer.residencySet.commit()
         }
-        retireAllocations(retiring)
+        renderer.retireAllocations(retiring)
     }
 
     /// Hangs the arms off this frame's eye.
@@ -51,6 +52,5 @@ extension Renderer {
     /// Sets the first-person field of view and re-projects.
     public func setFirstPersonFOVY(radians: Float) {
         firstPersonCamera.setFOVY(radians: radians)
-        rebuildProjection()
     }
 }

@@ -28,6 +28,7 @@ protocol PlayerWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var player: PlayerCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
 }
@@ -41,26 +42,26 @@ final class PlayerWorldAdapter {
     }
 
     /// The graph and the body outlive every cell, so this is not streaming.
-    func wirePlayerBody(session: CellSession, renderer: Renderer) {
+    func wirePlayerBody(session: CellSession, gameSession: GameSession) {
         let player = game.player
         let source = PlayerRigQueue(
             runner: session.runner,
             fileSystem: session.data.scriptFileSystem
         )
         guard player.wireBody(source: source) else { return }
-        renderer.session.assetDrains.register(.playerBody) { [weak player] _ in
+        gameSession.assetDrains.register(.playerBody) { [weak player] _ in
             player?.drainClipLoads()
         }
-        renderer.session.frameSteps.register(.playerBody) { [weak player] _ in
+        gameSession.frameSteps.register(.playerBody) { [weak player] _ in
             player?.refreshBody()
         }
     }
 
     /// Copies what combat, magic, and the head tracking setting report into the
     /// actor-state graph inputs.
-    func wireActorState(renderer: Renderer) {
-        renderer.session.frameSteps.register(.actorState) { [weak game, weak renderer] _ in
-            guard let game, let locomotion = renderer?.locomotion else { return }
+    func wireActorState(gameSession: GameSession) {
+        gameSession.frameSteps.register(.actorState) { [weak game, weak gameSession] _ in
+            guard let game, let locomotion = gameSession?.locomotion else { return }
             var inputs = locomotion.actorState
             if let melee = game.combat.melee {
                 inputs.weaponDrawn = melee.state.drawState.isWeaponInHand
@@ -99,15 +100,15 @@ final class PlayerRigQueue: PlayerRigSource {
 
 extension PlayerWorldAdapter: PlayerWorld {
     var playerLocomotion: LocomotionBridge? {
-        game.renderer?.locomotion
+        game.gameSession?.locomotion
     }
 
     var isWalkModeActive: Bool {
-        game.renderer?.movementMode.isPlayerControlled ?? false
+        game.gameSession?.movementMode.isPlayerControlled ?? false
     }
 
     var isPlayerGrounded: Bool {
-        game.renderer?.walkController.isGrounded ?? true
+        game.gameSession?.walkController.isGrounded ?? true
     }
 
     var playerEquippedSet: [FormID]? {
@@ -146,15 +147,15 @@ extension PlayerWorldAdapter: PlayerWorld {
     /// The footstep set follows the boots of the assembly just built.
     func showPlayerBody(_ body: PlayerBody) throws {
         game.audio.updateFootstepSet(feetArmatures: body.feetArmatures)
-        try game.renderer?.setPlayerBody(body)
+        try game.gameSession?.setPlayerBody(body)
     }
 
     func showFirstPersonRig(_ rig: PlayerFirstPersonRig) throws {
-        try game.renderer?.setPlayerFirstPersonRig(rig)
+        try game.gameSession?.setPlayerFirstPersonRig(rig)
     }
 
     var playerFirstPersonRig: PlayerFirstPersonRig? {
-        game.renderer?.playerFirstPersonRig
+        game.gameSession?.playerFirstPersonRig
     }
 
     var areFirstPersonArmsVisible: Bool {
@@ -162,19 +163,19 @@ extension PlayerWorldAdapter: PlayerWorld {
     }
 
     var firstPersonFOVYRadians: Float? {
-        game.renderer?.firstPersonCamera.fovYRadians
+        game.gameSession?.firstPersonCamera.fovYRadians
     }
 
     func setFirstPersonFOVY(radians: Float) {
-        game.renderer?.setFirstPersonFOVY(radians: radians)
+        game.gameSession?.setFirstPersonFOVY(radians: radians)
     }
 
     var firstPersonArmsEnabled: Bool? {
-        game.renderer?.firstPersonArmsEnabled
+        game.gameSession?.firstPersonArmsEnabled
     }
 
     func setFirstPersonArmsEnabled(_ enabled: Bool) {
-        game.renderer?.firstPersonArmsEnabled = enabled
+        game.gameSession?.firstPersonArmsEnabled = enabled
     }
 }
 
@@ -195,8 +196,10 @@ extension PlayerWorldAdapter: FaceMorphWorld {
 
 extension PlayerWorldAdapter: HeadTrackingWorld {
     var headTrackingSubjects: [HeadTrackingSubject] {
-        guard let renderer = game.renderer, let streamer = game.streamer else { return [] }
-        let deltas = renderer.npcInstanceDeltas
+        guard
+            let renderer = game.renderer, let gameSession = game.gameSession,
+            let streamer = game.streamer else { return [] }
+        let deltas = gameSession.instancePoses.npcDeltas
         return game.actorWorld.combatActors().compactMap { actor in
             guard
                 !actor.isDead,
@@ -212,7 +215,7 @@ extension PlayerWorldAdapter: HeadTrackingWorld {
 
     func headPosition(of key: ReferenceKey) -> SIMD3<Float>? {
         if key == .player {
-            return game.renderer.map {
+            return game.gameSession.map {
                 $0.walkController.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
             }
         }

@@ -17,10 +17,10 @@ extension RuntimeStateWorldAdapter {
                 rotation: moved?.rotation ?? state.transform.rotation
             )
         }
-        if let renderer = game.renderer {
-            let status = renderer.locomotion.status
+        if let gameSession = game.gameSession {
+            let status = gameSession.locomotion.status
             facts[.player] = ReferenceMotionFacts(
-                position: renderer.walkController.feetPosition,
+                position: gameSession.walkController.feetPosition,
                 rotation: SIMD3(0, 0, NPCYawMath.heading(fromYaw: status.yaw)),
                 velocity: SIMD3(
                     status.horizontalVelocity.x, status.horizontalVelocity.y,

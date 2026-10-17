@@ -33,7 +33,8 @@ struct RendererMenuModeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func gameplayAdvancesAnimationClock() throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         #expect(renderer.animationTime == 0)
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         let afterFirst = renderer.animationTime
@@ -46,8 +47,9 @@ struct RendererMenuModeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func menuModeFreezesAnimationClockButStillRenders() throws {
-        let renderer = try Self.makeRenderer()
-        renderer.worldSimPaused = true
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
+        gameSession.worldSimPaused = true
         let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         // Frozen: the sim clock never advanced.
         #expect(renderer.animationTime == 0)
@@ -61,8 +63,9 @@ struct RendererMenuModeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func pausedFrameIsByteIdenticalThenResumeDiffers() throws {
-        let renderer = try Self.makeRenderer()
-        renderer.worldSimPaused = true
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
+        gameSession.worldSimPaused = true
         let firstPaused = try Self.pixels(renderer)
         let secondPaused = try Self.pixels(renderer)
         // Sim frozen -> two paused frames match exactly.
@@ -70,7 +73,7 @@ struct RendererMenuModeTests {
         #expect(renderer.animationTime == 0)
         // Resume: the clock advances again by one frame step, no accumulated
         // jump from the paused span.
-        renderer.worldSimPaused = false
+        gameSession.worldSimPaused = false
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         #expect(abs(renderer.animationTime - Float(1.0 / 30)) < 1e-4)
     }
@@ -78,14 +81,17 @@ struct RendererMenuModeTests {
     // MARK: - Helpers
 
     @MainActor
-    private static func makeRenderer() throws -> Renderer {
+    private static func makeSession() throws -> GameSession {
         let device = try #require(self.device)
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height), device: device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, shaderLibrary: ShaderLibraryFixture.library(device: device))
+        return try GameSession(
+            view: view,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     @MainActor

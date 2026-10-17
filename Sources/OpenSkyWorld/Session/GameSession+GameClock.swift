@@ -22,7 +22,7 @@ nonisolated public struct RendererGameTime: Sendable {
     public var weatherGameSecondsMark: Double?
 }
 
-extension Renderer {
+extension GameSession {
     /// Authoritative game clock. Setting it wholesale (save load, tests)
     /// resets the weather's elapsed-hours mark so a restored date does not
     /// register as months of weather time.
@@ -48,7 +48,7 @@ extension Renderer {
     /// this, so a fixed clock renders deterministically.
     public func advanceGameClockFromWallClock() {
         let delta = gameTime.frameClock.advance(
-            to: wallClock.now, paused: worldSimPaused
+            to: renderer.wallClock.now, paused: worldSimPaused
         )
         gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
     }
@@ -57,7 +57,7 @@ extension Renderer {
     /// frame's time. While paused `worldSimClock` returns zero, which is no advance.
     public func updateWorldSimFromWallClock() {
         let delta = worldSimClock.advance(
-            to: wallClock.now, paused: worldSimPaused
+            to: renderer.wallClock.now, paused: worldSimPaused
         )
         updateWorldSim(deltaTime: delta * worldTimeScale)
     }
@@ -66,13 +66,13 @@ extension Renderer {
     /// Both the live and offscreen loops use this seam so the fly benchmark
     /// measures the same Papyrus VM work the shipping frame loop performs.
     public func updateWorldSim(deltaTime: Float) {
-        session.assetDrains(())
-        guard !session.worldTick.isEmpty else {
+        assetDrains(())
+        guard !worldTick.isEmpty else {
             lastScriptUpdateMS = 0
             return
         }
         let started = DispatchTime.now().uptimeNanoseconds
-        session.worldTick(deltaTime)
+        worldTick(deltaTime)
         lastScriptUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

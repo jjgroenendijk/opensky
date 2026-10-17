@@ -164,11 +164,14 @@ extension Renderer {
         return descriptor
     }
 
-    /// The offscreen projection, from the same `activeFOVYRadians` as the live view, so a
+    /// One offscreen frame of simulated time.
+    static let offscreenStep: Float = 1 / 30
+
+    /// The offscreen projection, from the same field of view as the live view, so a
     /// capture frames what the window frames.
     private func offscreenProjection(width: Int, height: Int) -> float4x4 {
         MatrixMath.perspective(
-            fovYRadians: activeFOVYRadians,
+            fovYRadians: frameInput.fovYRadians,
             aspectRatio: Float(width) / Float(height),
             nearZ: Self.nearPlane,
             farZ: Self.farPlane
@@ -182,7 +185,6 @@ extension Renderer {
     @discardableResult
     private func renderOffscreenFrame(
         descriptor: MTL4RenderPassDescriptor,
-        projection: float4x4,
         advanceAnimation: Bool = true
     ) throws -> FrameStatsWindow? {
         let cpuStart = frameStats.beginFrame()
@@ -193,26 +195,26 @@ extension Renderer {
             renderDebug = .production
         }
         defer { renderDebug = requestedDebug }
+        // The world runs on a fixed step, so the Papyrus VM is deterministic offscreen,
+        // in the live frame's order: world and weather, then animation, then audio.
+        adoptFrameInput(frameDriver?.prepareOffscreenFrame(
+            deltaTime: Self.offscreenStep, advancesWorld: advanceAnimation
+        ) ?? frameInput)
         // A paused frame advances every clock by zero, so frames are byte-identical,
         // yet the pass below still encodes and presents.
-        let simDelta: Float = worldSimPaused ? 0 : 1 / 30
+        let simDelta = frameInput.isPaused ? 0 : Self.offscreenStep
         if advanceAnimation {
             updateAnimations(deltaTime: simDelta)
-            // The world simulation runs on the same fixed step, so the Papyrus VM is
-            // deterministic offscreen. The game clock never advances here.
-            frameDriver?.updateWorldSim(deltaTime: simDelta)
-        }
-        // Weather resolves from the time of day each frame. Offscreen the game clock never
-        // advances, so forced weather never rerolls.
-        frameDriver?.updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
-        if advanceAnimation {
             updateParticles(deltaTime: simDelta)
             updatePrecipitation(deltaTime: simDelta)
             // Same per-frame audio work draw(in:) does, so the benchmark's audio
-            // budget measures the shipping tick. A no-op (and unmeasured) while
-            // no WorldAudioEngine is attached, which is every render test.
-            frameDriver?.updateAudio(deltaTime: simDelta)
+            // budget measures the shipping tick.
+            frameDriver?.finishOffscreenFrame(deltaTime: simDelta)
         }
+        let projection = offscreenProjection(
+            width: descriptor.colorAttachments[0].texture?.width ?? 1,
+            height: descriptor.colorAttachments[0].texture?.height ?? 1
+        )
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
         let allocator = commandAllocators[slot]
@@ -263,8 +265,7 @@ extension Renderer {
         try renderOffscreenFrame(
             descriptor: Self.offscreenPassDescriptor(
                 color: color, depth: depth, background: offscreenBackground
-            ),
-            projection: offscreenProjection(width: width, height: height)
+            )
         )
         return color
     }
@@ -276,8 +277,10 @@ extension Renderer {
         animationTime: Float
     ) throws -> MTLTexture {
         self.animationTime = animationTime
+        adoptFrameInput(
+            frameDriver?.prepareOffscreenFrame(deltaTime: 0, advancesWorld: false) ?? frameInput
+        )
         updateAnimations(deltaTime: 0)
-        frameDriver?.updateWeather(deltaTime: 0)
         seekParticles(to: animationTime)
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocation(color)
@@ -290,7 +293,6 @@ extension Renderer {
             descriptor: Self.offscreenPassDescriptor(
                 color: color, depth: depth, background: offscreenBackground
             ),
-            projection: offscreenProjection(width: width, height: height),
             advanceAnimation: false
         )
         return color
@@ -319,7 +321,6 @@ extension Renderer {
         let descriptor = Self.offscreenPassDescriptor(
             color: color, depth: depth, background: offscreenBackground
         )
-        let projection = offscreenProjection(width: width, height: height)
         var frameMS: [Double] = []
         frameMS.reserveCapacity(maxFrames)
         var summaries: [String] = []
@@ -337,10 +338,7 @@ extension Renderer {
             }
             let start = DispatchTime.now().uptimeNanoseconds
             let settled = try step()
-            let summary = try renderOffscreenFrame(
-                descriptor: descriptor,
-                projection: projection
-            )
+            let summary = try renderOffscreenFrame(descriptor: descriptor)
             if let summary {
                 summaries.append(summary.text)
             }
@@ -386,7 +384,6 @@ extension Renderer {
         let descriptor = Self.offscreenPassDescriptor(
             color: color, depth: depth, background: offscreenBackground
         )
-        let projection = offscreenProjection(width: width, height: height)
 
         var frameMS: [Double] = []
         frameMS.reserveCapacity(frames)
@@ -401,10 +398,7 @@ extension Renderer {
         defer { gpuFrameLog = nil }
         for frame in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
-            let summary = try renderOffscreenFrame(
-                descriptor: descriptor,
-                projection: projection
-            )
+            let summary = try renderOffscreenFrame(descriptor: descriptor)
             if let summary {
                 summaries.append(summary.text)
             }

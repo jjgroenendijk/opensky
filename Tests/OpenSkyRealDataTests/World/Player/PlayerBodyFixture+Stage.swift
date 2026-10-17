@@ -21,8 +21,8 @@ extension PlayerBodyFixture {
         }
 
         @MainActor
-        func renderer() throws -> Renderer {
-            try FirstPersonRenderRealDataTests.renderer(
+        func makeSession() throws -> GameSession {
+            try FirstPersonRenderRealDataTests.makeSession(
                 device: device, scene: scene, bounds: bounds
             )
         }

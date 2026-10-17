@@ -48,8 +48,8 @@ extension RenderCommand {
         navigationOverlayGraph: RuntimeNavigationGraph? = nil,
         detectionOverlay: PerceptionRuntime? = nil,
         frames: Int = 1,
-        configure: (Renderer) throws -> Void = { _ in },
-        inspect: (Renderer) -> Void = { _ in }
+        configure: (GameSession) throws -> Void = { _ in },
+        inspect: (GameSession) -> Void = { _ in }
     ) throws -> OffscreenFrame {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
@@ -57,13 +57,14 @@ extension RenderCommand {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view,
             scene: scene,
             camera: camera,
             timeOfDay: timeOfDay
         )
-        renderer.uiScene = uiScene
+        let renderer = gameSession.renderer
+        gameSession.uiScene = uiScene
         if let navigationOverlayGraph {
             renderer.navmeshOverlayEnabled = true
             renderer.worldOverlaySources.register(identifier: "cli-navigation") { context, list in
@@ -80,12 +81,12 @@ extension RenderCommand {
                 detectionOverlay.appendWorldOverlay(context: context, to: &list)
             }
         }
-        try configure(renderer)
+        try configure(gameSession)
         var texture = try renderer.renderOffscreen(width: size.width, height: size.height)
         for _ in 1 ..< max(frames, 1) {
             texture = try renderer.renderOffscreen(width: size.width, height: size.height)
         }
-        inspect(renderer)
+        inspect(gameSession)
         return OffscreenFrame(
             texture: texture,
             stats: renderer.combinedDrawStats(gpu: renderer.lastFrameGPUCullCounts()),

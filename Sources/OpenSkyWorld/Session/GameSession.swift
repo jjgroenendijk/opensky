@@ -1,15 +1,44 @@
 // The simulation half of a frame: player, camera policy, game clock, weather, audio and
-// per-frame hooks. It drives the renderer through `RenderFrameDriver` and holds it
-// unowned, because the renderer owns it. The work lives in the `Renderer+*.swift`
-// extensions, through `Renderer+Session.swift`.
+// per-frame hooks. It owns the renderer and drives it through `RenderFrameDriver`: each
+// frame it fills one `RenderFrameInput`, which is all the game state the renderer reads.
+// The work lives in the `GameSession+*.swift` extensions.
 
+import MetalKit
 import OpenSkyAudio
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
 import simd
 
 public final class GameSession: RenderFrameDriver {
-    public unowned let renderer: Renderer
+    public let renderer: Renderer
+
+    /// Live view pose, seeded from the renderer's framing camera, advanced each frame from `input`.
+    public var freeFlyCamera: FreeFlyCamera
+    /// Fly is the default dev mode. `G` cycles fly -> first-person walk -> third person.
+    public var movementMode = CameraMovementMode.fly
+    /// Resident static collision broadphase, wired beside terrain by
+    /// GameViewController. Empty in renderer-only paths. Walk mode, the
+    /// cameras and precipitation all query it.
+    public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    /// Where physics, NPCs, vehicles, and scripts have moved references. Published
+    /// once per frame by their ticks; empty without them.
+    public var instancePoses = RenderInstancePoses()
+    /// A script's fog for the loaded interior; ignored once the scene's lighting changes.
+    public var interiorFogOverride: InteriorFogOverride?
+    /// This frame's resolved weather (exterior only). nil -> no weather active.
+    public internal(set) var currentResolvedWeather: ResolvedWeather?
+    /// The weather's rain or snow particles; nil until the weather links are wired.
+    public internal(set) var precipitationTuning: PrecipitationTuning?
+    /// The post-process values and running modifiers the composite pass applies.
+    public var imageSpace = ImageSpaceState()
+    /// The HUD, menus, and dev overlays the UI pass draws. Default empty -> zero draws.
+    public var uiScene = UIScene.empty
+    /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
+    /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
+    public var worldSimPaused = false
+    /// Slows animation, particles, and the world sim, not the camera. A kill cam sets it below 1.
+    public var worldTimeScale: Float = 1
 
     public var walkController: WalkController
     /// Current resident terrain lookup, wired by GameViewController. nil in
@@ -20,13 +49,13 @@ public final class GameSession: RenderFrameDriver {
     /// Orbit framing and collision zoom for `.thirdPerson`. Pure math; holds no pose.
     public var thirdPersonCamera = ThirdPersonCamera()
     /// The conversation camera's focus, framing and saved player pose. An override on top
-    /// of `movementMode`, never a mode (Renderer+DialogueCamera.swift).
+    /// of `movementMode`, never a mode (GameSession+DialogueCamera.swift).
     public var dialogueCameraState = RendererDialogueCameraState()
     /// The kill-cam pose and camera shake, applied over the dialogue camera.
     public var cinematicCameraState = RendererCinematicCameraState()
     /// The player's rendered body, attached once the app has assembled it and
     /// deliberately not part of the scene: it survives every cell swap
-    /// (Renderer+PlayerBody.swift). nil in offscreen/CLI paths and until the
+    /// (GameSession+PlayerBody.swift). nil in offscreen/CLI paths and until the
     /// assembly succeeds. Set through `setPlayerBody`, which also sizes the
     /// rings and manages residency; assigning it directly would draw from
     /// buffers the GPU has not been told about.
@@ -50,7 +79,7 @@ public final class GameSession: RenderFrameDriver {
     /// Toggle for the arms, so a capture can tell an arm fault from a world fault.
     public var firstPersonArmsEnabled = true
     /// Game clock, its pause-aware delta source and the TimeScale seam. `timeOfDay` is a
-    /// projection of it (Renderer+GameClock.swift).
+    /// projection of it (GameSession+GameClock.swift).
     public var gameTime: RendererGameTime
     /// Data-driven weather runtime; nil -> procedural sky + camera lighting.
     public var weather: WeatherSystem?
@@ -61,7 +90,7 @@ public final class GameSession: RenderFrameDriver {
     /// Where the baseline image space comes from; nil leaves the frame ungraded.
     public var imageSpaceLinks: ImageSpaceLinks?
     /// World audio playback graph; nil until the app wires one (offscreen and
-    /// CLI paths stay silent). Ticked by Renderer+Audio.swift.
+    /// CLI paths stay silent). Ticked by GameSession+Audio.swift.
     public var worldAudio: WorldAudioEngine?
     /// Region sound director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var soundDirector: WorldAudioSoundDirector?
@@ -104,51 +133,105 @@ public final class GameSession: RenderFrameDriver {
     /// which is every frame while no `WorldAudioEngine` is attached.
     public var lastAudioUpdateMS = 0.0
 
-    /// Seeds the walk controller from the renderer's camera pose.
+    /// Takes over `renderer`: the player starts at its view pose, and the session
+    /// drives its frames from now on.
     public init(
         renderer: Renderer,
-        input: CameraInputState?,
-        timeOfDay: Float,
-        movementConfiguration: PlayerMovementConfiguration
+        input: CameraInputState? = nil,
+        timeOfDay: Float = RenderFrameInput.defaultTimeOfDay,
+        movementConfiguration: PlayerMovementConfiguration = .synthetic
     ) {
         self.renderer = renderer
-        (walkController, locomotion) = Renderer.makeMovement(
-            renderer.freeFlyCamera,
-            movementConfiguration
-        )
+        freeFlyCamera = renderer.frameInput.view
+        (walkController, locomotion) = Self.makeMovement(freeFlyCamera, movementConfiguration)
         gameTime = RendererGameTime(clock: GameClock(hour: timeOfDay))
         self.input = input
+        renderer.frameDriver = self
+    }
+
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera; `input` nil ->
+    /// static pose (offscreen, tests); `shaderLibrary` nil -> bundled `default.metallib`.
+    /// The app passes a cell scene, `SceneCamera.framing(bounds:)` and `CameraInputState`.
+    public convenience init(
+        view: MTKView,
+        scene: RenderScene? = nil,
+        camera: SceneCamera? = nil,
+        input: CameraInputState? = nil,
+        timeOfDay: Float = RenderFrameInput.defaultTimeOfDay,
+        movementConfiguration: PlayerMovementConfiguration = .synthetic,
+        shaderLibrary: MTLLibrary? = nil,
+        pipelineCache: PipelineCache? = nil,
+        wallClock: any WallClock = MediaWallClock()
+    ) throws {
+        try self.init(
+            renderer: Renderer(
+                rendering: view,
+                scene: scene,
+                camera: camera,
+                shaderLibrary: shaderLibrary,
+                pipelineCache: pipelineCache,
+                wallClock: wallClock
+            ),
+            input: input,
+            timeOfDay: timeOfDay,
+            movementConfiguration: movementConfiguration
+        )
     }
 
     // MARK: - RenderFrameDriver
 
-    public func prepareLiveFrame() {
-        renderer.advanceCamera()
+    public func prepareLiveFrame() -> RenderFrameInput {
+        advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
-        frameSteps(renderer.freeFlyCamera.position)
-        renderer.advanceGameClockFromWallClock()
-        renderer.updateWorldSimFromWallClock()
-        renderer.updateWeatherFromWallClock()
+        frameSteps(freeFlyCamera.position)
+        advanceGameClockFromWallClock()
+        updateWorldSimFromWallClock()
+        updateWeatherFromWallClock()
+        return frameInput
     }
 
     public func finishLiveFrame() {
-        renderer.updateAudioFromWallClock()
+        updateAudioFromWallClock()
     }
 
-    public func updateWorldSim(deltaTime: Float) {
-        renderer.updateWorldSim(deltaTime: deltaTime)
+    public func prepareOffscreenFrame(deltaTime: Float, advancesWorld: Bool) -> RenderFrameInput {
+        let delta = worldSimPaused ? 0 : deltaTime
+        if advancesWorld {
+            updateWorldSim(deltaTime: delta)
+        }
+        // Offscreen the game clock never advances, so forced weather never rerolls.
+        updateWeather(deltaTime: advancesWorld ? delta : 0)
+        return frameInput
     }
 
-    public func updateWeather(deltaTime: Float) {
-        renderer.updateWeather(deltaTime: deltaTime)
-    }
-
-    public func updateAudio(deltaTime: Float) {
-        renderer.updateAudio(deltaTime: deltaTime)
+    public func finishOffscreenFrame(deltaTime: Float) {
+        updateAudio(deltaTime: deltaTime)
     }
 
     public func didReplaceCamera(_ camera: SceneCamera) {
-        renderer.reseedMovement(camera: camera)
+        reseedMovement(camera: camera)
+    }
+
+    /// Everything the renderer draws this frame, read after every system has run.
+    public var frameInput: RenderFrameInput {
+        var input = RenderFrameInput(view: freeFlyCamera)
+        input.movementMode = movementMode
+        input.fovYRadians = sessionFOVYRadians
+        input.timeOfDay = timeOfDay
+        input.wind = wind
+        input.weather = currentResolvedWeather
+        input.precipitationTuning = precipitationTuning
+        input.interiorFog = interiorFogOverride
+        input.imageSpace = imageSpace
+        input.instancePoses = instancePoses
+        input.rigs = RenderRigs(
+            body: playerBody, arms: playerFirstPersonRig, visibility: rigVisibility
+        )
+        input.ui = uiScene
+        input.isPaused = worldSimPaused
+        input.timeScale = worldTimeScale
+        input.collisionQuery = collisionQuery
+        return input
     }
 
     /// Fractional hour of day in [0, 24), projected from the game clock.
@@ -164,28 +247,16 @@ public final class GameSession: RenderFrameDriver {
         weatherEnabled ? weather?.currentWind ?? .calm : .calm
     }
 
-    public var projectionFOVYRadians: Float {
-        renderer.sessionFOVYRadians
-    }
-
     /// What this frame draws and casts, from `PlayerRigVisibility`.
     public var rigVisibility: PlayerRigVisibility {
         PlayerRigVisibility.resolve(
-            mode: renderer.movementMode,
+            mode: movementMode,
             hasBody: playerBody != nil,
             hasArms: playerFirstPersonRig != nil,
             armsEnabled: firstPersonArmsEnabled,
-            dialogueCamera: renderer.isDialogueCameraEngaged,
-            framesPlayer: renderer.isDialogueCameraFramingPlayer
+            dialogueCamera: isDialogueCameraEngaged,
+            framesPlayer: isDialogueCameraFramingPlayer
         )
-    }
-
-    public var playerBodyRig: (any RenderRig)? {
-        playerBody
-    }
-
-    public var firstPersonRig: (any RenderRig)? {
-        playerFirstPersonRig
     }
 }
 

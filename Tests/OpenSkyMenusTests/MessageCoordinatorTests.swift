@@ -14,6 +14,11 @@ final class FakeMessageWorld: MessageWorld, MenuInputConsumer {
         nil
     }
 
+    var viewCamera: FreeFlyCamera? {
+        nil
+    }
+
+    var uiScene = UIScene.empty
     var messages: [ReferenceKey: BuiltMessage] = [:]
     var answers: [(UInt64, Int)] = []
     var helpMessageRecords: [String: HelpMessageRecord] = [:]

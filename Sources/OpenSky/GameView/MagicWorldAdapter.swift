@@ -34,6 +34,7 @@ protocol MagicWorldHost: AnyObject {
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -49,7 +50,7 @@ final class MagicWorldAdapter {
 
     /// After `wireActorValues`, because every effect writes an actor value. A
     /// provider without an MGEF index leaves the runtime nil.
-    func wireEffects(provider: WorldDataStores, renderer: Renderer) {
+    func wireEffects(provider: WorldDataStores, gameSession: GameSession) {
         guard
             let values = game.actorValues.runtime,
             let store = provider.magicEffectStore,
@@ -60,16 +61,16 @@ final class MagicWorldAdapter {
             values: values, store: store, pluginName: pluginName, conditionRegistry: .standard
         )
         // Chained after regeneration and the Papyrus VM, on the same delta.
-        let worldTick = renderer.session.worldTick
-        worldTick.register(.magicEffects) { [weak self, weak coordinator, weak renderer] delta in
+        let worldTick = gameSession.worldTick
+        worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
-            renderer?.session.isPlayerParalysed = coordinator?.influence(of: .player)
+            gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
         }
     }
 
     /// After `wireEffects`, because a cast applies its effects through it.
-    func wireCasting(provider: WorldDataStores, renderer: Renderer) {
+    func wireCasting(provider: WorldDataStores, gameSession: GameSession) {
         guard
             let values = game.actorValues.runtime,
             let spells = provider.spellStore,
@@ -89,17 +90,17 @@ final class MagicWorldAdapter {
                 .map { ActorSpellBaselineResolver(actorValues: $0) }
         )
         // A frame step, beside melee: a cast is timed against the rendered frame.
-        let frameSteps = renderer.session.frameSteps
-        frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak renderer] _ in
-            guard let coordinator, let renderer else { return }
-            let locomotion = renderer.locomotion
+        let frameSteps = gameSession.frameSteps
+        frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
+            guard let coordinator, let gameSession else { return }
+            let locomotion = gameSession.locomotion
             let commands = coordinator.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
                     deltaTime: locomotion.archeryIntent.deltaTime
                 ),
-                isPlayerControlled: renderer.movementMode.isPlayerControlled
+                isPlayerControlled: gameSession.movementMode.isPlayerControlled
             )
             self?.run(commands)
         }
@@ -115,7 +116,7 @@ final class MagicWorldAdapter {
 
 extension MagicWorldAdapter: MagicWorld {
     var gameDaysPassed: Float {
-        game.renderer?.gameClock.daysPassed ?? 0
+        game.gameSession?.gameClock.daysPassed ?? 0
     }
 
     var inventory: (any InventoryAccess)? {

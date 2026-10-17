@@ -7,13 +7,13 @@ import OpenSkyRendering
 
 /// Where the session finds effect records (`IMGS`, `SPGD`), and the cell link an
 /// interior names.
-extension Renderer {
+extension GameSession {
     /// The session's weather and its cloud layers. Without weather data the renderer
     /// keeps its procedural sky.
     public func attachWeather(from provider: WorldDataStores?) throws {
         weather = provider?.weatherSystem
         if let files = provider?.scriptFileSystem {
-            skyClouds = try SkyClouds(fileSystem: files, device: device)
+            renderer.skyClouds = try SkyClouds(fileSystem: files, device: renderer.device)
         }
     }
 }
@@ -47,14 +47,11 @@ nonisolated public struct InteriorImageSpace: Equatable, Sendable {
     }
 }
 
-extension Renderer {
+extension GameSession {
     /// Advances weather and caches this frame's resolve; nil without a weather system.
     /// Rerolls count real game hours, so a fixed clock (offscreen, CLI) never rerolls.
     public func updateWeather(deltaTime: Float) {
-        defer {
-            updateImageSpace(deltaTime: deltaTime)
-            prepareClouds()
-        }
+        defer { updateImageSpace(deltaTime: deltaTime) }
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return
@@ -65,18 +62,15 @@ extension Renderer {
             elapsedGameHours: consumeElapsedGameHours()
         )
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
-        if let links = session.imageSpaceLinks {
-            let tuning = PrecipitationTuning(record: weather.precipitationParticles(
+        if let links = imageSpaceLinks {
+            precipitationTuning = PrecipitationTuning(record: weather.precipitationParticles(
                 in: links.records, plugin: links.weatherPlugin
             ))
-            if tuning != precipitation.tuning {
-                precipitation.tuning = tuning
-            }
         }
     }
 
     public func updateWeatherFromWallClock() {
-        let delta = weatherClock.advance(to: wallClock.now, paused: worldSimPaused)
+        let delta = weatherClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
         updateWeather(deltaTime: delta)
     }
 
@@ -84,7 +78,7 @@ extension Renderer {
     /// the weather blend (docs/rendering/image-space.md).
     public func updateImageSpace(deltaTime: Float) {
         imageSpace.modifiers.advance(deltaTime)
-        guard let links = session.imageSpaceLinks else {
+        guard let links = imageSpaceLinks else {
             imageSpace.baseline = .none
             return
         }

@@ -53,7 +53,7 @@ extension AgentWorldAdapter {
     }
 
     private func forceWeather(_ editorID: String?) throws(AgentFailure) -> AgentJSON {
-        guard game.renderer?.weather != nil else {
+        guard game.gameSession?.weather != nil else {
             throw AgentFailure(.notReady, "no weather data is loaded")
         }
         guard let editorID else {

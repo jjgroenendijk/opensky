@@ -22,15 +22,17 @@ struct RendererRetiredRigTests {
             scene: RenderScene(instances: [shared]),
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-        let driver = RigOnlyFrameDriver(rig: StaticRig(render: RenderScene(instances: [shared])))
-        renderer.frameDriver = driver
+        let rig = StaticRig(render: RenderScene(instances: [shared]))
+        renderer.frameInput.rigs = RenderRigs(
+            body: rig, arms: nil, visibility: .resolve(mode: .fly, hasBody: true, hasArms: false)
+        )
         _ = try renderer.renderOffscreen(width: 64, height: 64)
 
         try renderer.setScene(RenderScene(instances: []))
         _ = try renderer.renderOffscreen(width: 64, height: 64)
         _ = try renderer.renderOffscreen(width: 64, height: 64)
 
-        let rigAllocations = driver.rig.render.residencyAllocations
+        let rigAllocations = rig.render.residencyAllocations
         #expect(!rigAllocations.isEmpty)
         for allocation in rigAllocations {
             #expect(renderer.residencySet.containsAllocation(allocation))
@@ -63,49 +65,4 @@ private final class StaticRig: RenderRig {
     func publishAnimation(enabled _: Bool) -> Int {
         0
     }
-}
-
-@MainActor
-private final class RigOnlyFrameDriver: RenderFrameDriver {
-    let rig: StaticRig
-    var timeOfDay = Renderer.defaultTimeOfDay
-
-    init(rig: StaticRig) {
-        self.rig = rig
-    }
-
-    var wind: WindState {
-        .calm
-    }
-
-    var projectionFOVYRadians: Float {
-        FirstPersonCamera.defaultFOVYRadians
-    }
-
-    var rigVisibility: PlayerRigVisibility {
-        .resolve(mode: .fly, hasBody: true, hasArms: false)
-    }
-
-    var playerBodyRig: (any RenderRig)? {
-        rig
-    }
-
-    var firstPersonRig: (any RenderRig)? {
-        nil
-    }
-
-    var lastScriptUpdateMS: Double {
-        0
-    }
-
-    var lastAudioUpdateMS: Double {
-        0
-    }
-
-    func prepareLiveFrame() {}
-    func finishLiveFrame() {}
-    func updateWorldSim(deltaTime _: Float) {}
-    func updateWeather(deltaTime _: Float) {}
-    func updateAudio(deltaTime _: Float) {}
-    func didReplaceCamera(_: SceneCamera) {}
 }

@@ -9,16 +9,16 @@ import simd
 
 extension WorldRenderControls: WeatherControlProviding {
     public var weatherEnabled: Bool {
-        get { renderer?.weatherEnabled ?? true }
-        set { renderer?.weatherEnabled = newValue }
+        get { gameSession?.weatherEnabled ?? true }
+        set { gameSession?.weatherEnabled = newValue }
     }
 
     public var selectableWeatherNames: [String] {
-        (renderer?.weather?.store.selectableWeathers() ?? []).compactMap(\.editorID)
+        (gameSession?.weather?.store.selectableWeathers() ?? []).compactMap(\.editorID)
     }
 
     public func forceWeather(named name: String?) {
-        guard let weather = renderer?.weather else { return }
+        guard let weather = gameSession?.weather else { return }
         guard let name else {
             weather.forceWeather(nil, transition: .timed)
             return
@@ -29,36 +29,36 @@ extension WorldRenderControls: WeatherControlProviding {
 
     public func forceWeather(_ preset: WeatherPreset) {
         guard
-            let weather = renderer?.weather,
+            let weather = gameSession?.weather,
             let match = weather.store.weather(for: preset)
         else { return }
         weather.forceWeather(match.formID, transition: .timed)
     }
 
     public var currentWeatherName: String? {
-        renderer?.weather?.currentWeatherEditorID
+        gameSession?.weather?.currentWeatherEditorID
     }
 
     public var weatherOverrideActive: Bool {
-        renderer?.weather?.forced != nil
+        gameSession?.weather?.forced != nil
     }
 
     public var weatherTransitionFraction: Float {
-        renderer?.weather?.transitionFraction ?? 1
+        gameSession?.weather?.transitionFraction ?? 1
     }
 
     public var weatherTransitionsPaused: Bool {
-        get { renderer?.weather?.transitionsPaused ?? false }
-        set { renderer?.weather?.transitionsPaused = newValue }
+        get { gameSession?.weather?.transitionsPaused ?? false }
+        set { gameSession?.weather?.transitionsPaused = newValue }
     }
 
     public var windState: WindState {
-        renderer?.currentWind ?? .calm
+        gameSession?.wind ?? .calm
     }
 
     /// The same scrub as the Runtime State panel's hour control.
     public var timeOfDay: Float {
-        get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
+        get { gameSession?.timeOfDay ?? TimeOfDaySettings.load() }
         set { runtimeState.setGameClockHour(newValue) }
     }
 
@@ -91,12 +91,12 @@ extension WorldRenderControls: AnimationControlProviding {
     }
 
     public var animationEventsEnabled: Bool {
-        get { renderer?.session.animationEvents?.isEnabled ?? true }
-        set { renderer?.session.animationEvents?.isEnabled = newValue }
+        get { gameSession?.animationEvents?.isEnabled ?? true }
+        set { gameSession?.animationEvents?.isEnabled = newValue }
     }
 
     public var animationEventReadout: [String] {
-        guard let events = renderer?.session.animationEvents else { return [] }
+        guard let events = gameSession?.animationEvents else { return [] }
         return events.readout + [
             "Last event: \(events.lastEvent ?? "none")",
             "Sounds not found: \(events.missingSounds.count)"
@@ -104,7 +104,7 @@ extension WorldRenderControls: AnimationControlProviding {
     }
 
     public func sendPlayerAnimationEvent(_ name: String) -> Bool {
-        renderer?.session.animationEvents?.handle(name, from: .player) != nil
+        gameSession?.animationEvents?.handle(name, from: .player) != nil
     }
 
     public var animationSnapshot: AnimationControlSnapshot {
@@ -212,11 +212,11 @@ extension WorldRenderControls: PrecipitationControlProviding {
 
     public var weatherVolumetricLighting: String? {
         guard
-            let renderer, let weather = renderer.weather,
-            let links = renderer.session.imageSpaceLinks
+            let gameSession, let weather = gameSession.weather,
+            let links = gameSession.imageSpaceLinks
         else { return nil }
         return weather.volumetricLighting(
-            in: links.records, plugin: links.weatherPlugin, hour: renderer.timeOfDay
+            in: links.records, plugin: links.weatherPlugin, hour: gameSession.timeOfDay
         )
     }
 }

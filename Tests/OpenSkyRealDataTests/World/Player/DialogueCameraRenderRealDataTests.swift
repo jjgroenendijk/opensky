@@ -31,7 +31,8 @@ struct DialogueCameraRenderRealDataTests {
         let cell = try PlayerBodyFixture.stage(
             gridX: WalkPathRoute.farmCell.x, gridY: WalkPathRoute.farmCell.y
         )
-        let renderer = try cell.renderer()
+        let gameSession = try cell.makeSession()
+        let renderer = gameSession.renderer
 
         // Stand in the middle of the cell looking east, in first person, at a
         // field of view that is nobody's default.
@@ -40,30 +41,30 @@ struct DialogueCameraRenderRealDataTests {
             (cell.bounds.min.y + cell.bounds.max.y) / 2,
             cell.bounds.min.z
         )
-        FirstPersonRenderRealDataTests.frameFirstPerson(renderer, feet: feet)
-        renderer.setFirstPersonFOVY(
+        FirstPersonRenderRealDataTests.frameFirstPerson(gameSession, feet: feet)
+        gameSession.setFirstPersonFOVY(
             radians: MatrixMath.radians(fromDegrees: Self.probeFOVYDegrees)
         )
-        let playerPose = renderer.freeFlyCamera
-        let playerFOV = renderer.activeFOVYRadians
+        let playerPose = gameSession.freeFlyCamera
+        let playerFOV = gameSession.frameInput.fovYRadians
         let released = try Self.frame(renderer)
-        #expect(!renderer.isDialogueCameraEngaged)
+        #expect(!gameSession.isDialogueCameraEngaged)
 
         // Somebody standing a conversation's distance ahead of the player.
-        let speaker = renderer.playerEyePosition + renderer.freeFlyCamera.forward * 140
-        renderer.setDialogueCameraFocus(DialogueCameraFocus(
+        let speaker = gameSession.playerEyePosition + gameSession.freeFlyCamera.forward * 140
+        gameSession.setDialogueCameraFocus(DialogueCameraFocus(
             headPosition: speaker
         ))
-        #expect(renderer.isDialogueCameraEngaged)
-        let pose = try #require(renderer.dialogueCameraPose)
+        #expect(gameSession.isDialogueCameraEngaged)
+        let pose = try #require(gameSession.dialogueCameraPose)
         #expect(pose.target == speaker)
         // The eye left the player's head and is looking back at the speaker.
         #expect(simd_distance(pose.eye, playerPose.position) > 1)
         #expect(simd_dot(simd_normalize(pose.target - pose.eye), playerPose.forward) > 0.5)
         // A conversation projects at the shared world angle, not at the
         // first-person setting the player chose.
-        #expect(renderer.activeFOVYRadians == DialogueCamera.fovYRadians)
-        #expect(renderer.activeFOVYRadians != playerFOV)
+        #expect(gameSession.frameInput.fovYRadians == DialogueCamera.fovYRadians)
+        #expect(gameSession.frameInput.fovYRadians != playerFOV)
 
         let engaged = try Self.frame(renderer)
         let delta = FirstPersonRenderRealDataTests.changedPixels(released, engaged)
@@ -72,13 +73,13 @@ struct DialogueCameraRenderRealDataTests {
             "the dialogue camera moved \(delta) pixels"
         )
 
-        renderer.setDialogueCameraFocus(nil)
-        #expect(!renderer.isDialogueCameraEngaged)
-        #expect(renderer.dialogueCameraPose == nil)
-        #expect(renderer.freeFlyCamera.position == playerPose.position)
-        #expect(renderer.freeFlyCamera.yaw == playerPose.yaw)
-        #expect(renderer.freeFlyCamera.pitch == playerPose.pitch)
-        #expect(renderer.activeFOVYRadians == playerFOV)
+        gameSession.setDialogueCameraFocus(nil)
+        #expect(!gameSession.isDialogueCameraEngaged)
+        #expect(gameSession.dialogueCameraPose == nil)
+        #expect(gameSession.freeFlyCamera.position == playerPose.position)
+        #expect(gameSession.freeFlyCamera.yaw == playerPose.yaw)
+        #expect(gameSession.freeFlyCamera.pitch == playerPose.pitch)
+        #expect(gameSession.frameInput.fovYRadians == playerFOV)
         // The view the player had back, pixel for pixel.
         let restored = try Self.frame(renderer)
         let restoredDelta = FirstPersonRenderRealDataTests.changedPixels(released, restored)

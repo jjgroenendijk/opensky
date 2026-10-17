@@ -41,7 +41,8 @@ struct RendererDynamicPoseTests {
     @MainActor
     func aTaggedInstanceIsDrawnAtTheLivePoseRatherThanTheBakedOne() throws {
         let device = try #require(Self.device)
-        let renderer = try Self.makeRenderer(device: device)
+        let gameSession = try Self.makeSession(device: device)
+        let renderer = gameSession.renderer
 
         // Nothing has moved: the crate is where the build put it.
         let atRest = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
@@ -56,7 +57,7 @@ struct RendererDynamicPoseTests {
             Self.shovedPosition
         )))))
 
-        renderer.dynamicInstanceDeltas = [
+        gameSession.instancePoses.dynamicDeltas = [
             Self.reference: MatrixMath.translation(Self.shovedPosition - Self.bakedPosition)
         ]
         let shoved = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
@@ -81,9 +82,10 @@ struct RendererDynamicPoseTests {
     @MainActor
     func aVehiclePoseIsMeasuredFromTheBuiltPlacement() throws {
         let device = try #require(Self.device)
-        let renderer = try Self.makeRenderer(device: device)
-        renderer
-            .vehicleInstancePoses = [Self.reference: MatrixMath.translation(Self.shovedPosition)]
+        let gameSession = try Self.makeSession(device: device)
+        let renderer = gameSession.renderer
+        gameSession.instancePoses
+            .vehiclePoses = [Self.reference: MatrixMath.translation(Self.shovedPosition)]
         let carried = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
             width: Self.width,
             height: Self.height
@@ -105,11 +107,12 @@ struct RendererDynamicPoseTests {
     @MainActor
     func theCullingBoundsFollowTheLivePose() throws {
         let device = try #require(Self.device)
-        let renderer = try Self.makeRenderer(device: device)
+        let gameSession = try Self.makeSession(device: device)
+        let renderer = gameSession.renderer
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         #expect(renderer.lastDrawStats.culledInstances == 0)
 
-        renderer.dynamicInstanceDeltas = [
+        gameSession.instancePoses.dynamicDeltas = [
             Self.reference: MatrixMath.translation(SIMD3(1_000_000, 0, 0))
         ]
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
@@ -122,7 +125,7 @@ struct RendererDynamicPoseTests {
 
     /// One crate, tagged as a reference the dynamic world owns.
     @MainActor
-    private static func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private static func makeSession(device: MTLDevice) throws -> GameSession {
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
             materials: [Material.fallback],
@@ -138,7 +141,7 @@ struct RendererDynamicPoseTests {
             bounds: bounds.transformed(by: transform),
             referenceFormID: reference
         )])
-        return try OffscreenRendererFixture.makeSessionRenderer(
+        return try OffscreenRendererFixture.makeSession(
             device: device, width: width, height: height,
             scene: scene,
             camera: camera,

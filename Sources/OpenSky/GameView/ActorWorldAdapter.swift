@@ -32,6 +32,7 @@ protocol ActorWorldHost: AnyObject {
     var journal: JournalCoordinator { get }
     var magic: MagicCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -53,7 +54,7 @@ final class ActorWorldAdapter {
 
     /// A provider without stat indexes, such as every synthetic scene, leaves
     /// the runtime nil.
-    func wireActorValues(provider: WorldDataStores, renderer: Renderer) {
+    func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
         baseNames = [:]
         guard let baselines = provider.actorValueBaselines
         else { return }
@@ -66,11 +67,11 @@ final class ActorWorldAdapter {
         )
         // Chained after the Papyrus VM, so neither unhooks the other. The
         // renderer gates the delta, so a menu-paused frame regenerates nothing.
-        renderer.session.worldTick.register(.actorValues) { [weak coordinator] delta in
+        gameSession.worldTick.register(.actorValues) { [weak coordinator] delta in
             coordinator?.advance(delta: delta)
         }
-        renderer.session.frameSteps.register(.actorValues) { [weak self, weak renderer] _ in
-            self?.publishHUDMeters(renderer: renderer)
+        gameSession.frameSteps.register(.actorValues) { [weak self, weak gameSession] _ in
+            self?.publishHUDMeters(gameSession: gameSession)
         }
     }
 
@@ -129,17 +130,17 @@ final class ActorWorldAdapter {
         return name
     }
 
-    private func publishHUDMeters(renderer: Renderer?) {
-        guard let renderer, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
+    private func publishHUDMeters(gameSession: GameSession?) {
+        guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
             return
         }
         let meters = meters.publishing(runtime.hudMeters(for: .player))
-        let enemy = engagedEnemyHealth(runtime: runtime, renderer: renderer)
+        let enemy = engagedEnemyHealth(runtime: runtime, gameSession: gameSession)
         let enemyChanged = enemy != publishedEnemy
         guard meters != nil || enemyChanged else { return }
         publishedEnemy = enemy
         do {
-            try renderer.updateSWFRuntime { runtime in
+            try gameSession.renderer.updateSWFRuntime { runtime in
                 if let meters {
                     HUDMovieBridge.setMeters(meters, runtime: runtime)
                 }
@@ -155,10 +156,10 @@ final class ActorWorldAdapter {
     }
 
     private func engagedEnemyHealth(
-        runtime: ActorValueRuntime, renderer: Renderer
+        runtime: ActorValueRuntime, gameSession: GameSession
     ) -> HUDEnemyHealth? {
         guard
-            let actor = game.combat.engagedEnemy(playerFeet: renderer.freeFlyCamera.position),
+            let actor = game.combat.engagedEnemy(playerFeet: gameSession.freeFlyCamera.position),
             let holder = actorValueHolder(for: actor.key)
         else { return nil }
         let name = game.streamer?.residentActorPlacement(key: actor.key)
@@ -190,8 +191,8 @@ extension ActorWorldAdapter: ActorValueWorld {
     func nearestActorValueHolder() -> ActorValueHolder? {
         guard
             let streamer = game.streamer,
-            let renderer = game.renderer,
-            let entry = streamer.nearestActorEntry(to: renderer.freeFlyCamera.position),
+            let gameSession = game.gameSession,
+            let entry = streamer.nearestActorEntry(to: gameSession.freeFlyCamera.position),
             let actor = entry.placedActor
         else { return nil }
         return ActorValueHolder(
@@ -213,7 +214,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     /// Standing still with the sprint key held costs nothing.
     func playerSprintLoad() -> Float? {
         guard
-            let status = game.renderer?.locomotion.status,
+            let status = game.gameSession?.locomotion.status,
             status.gait == .sprint,
             simd_length(status.horizontalVelocity) > 1
         else { return nil }
@@ -225,6 +226,6 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     func setPlayerSprintAllowed(_ allowed: Bool) {
-        game.renderer?.locomotion.isSprintAllowed = allowed
+        game.gameSession?.locomotion.isSprintAllowed = allowed
     }
 }

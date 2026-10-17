@@ -37,14 +37,15 @@ public enum PerformanceBenchmark {
     /// - Parameters:
     ///   - makeBuilder: returns a builder with empty caches whose file source and
     ///     `loadPhases` report into the given recorder. Called once, for the cold pass.
-    ///   - renderer: an offscreen-capable renderer; its scene and camera are replaced.
+    ///   - gameSession: drives an offscreen-capable renderer; its scene and camera are replaced.
     public static func run(
         plan: PerformanceBenchmarkPlan = .standard,
         machine: BenchmarkMachine,
-        renderer: Renderer,
+        gameSession: GameSession,
         launch: BenchmarkLaunchRequest? = nil,
         makeBuilder: (LoadPhaseRecorder) throws -> CellSceneBuilder
     ) throws -> PerformanceBenchmarkResult {
+        let renderer = gameSession.renderer
         var memory = GPUMemoryTracker(renderer: renderer)
         let startedAt = Date()
         let recorder = LoadPhaseRecorder()

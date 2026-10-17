@@ -34,7 +34,7 @@ struct RendererOpaqueAlphaTests {
     @MainActor
     func anOpaqueMeshWithLowVertexAlphaWritesFullAlpha(vertexAlpha: Float) throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.scene(device: device, vertexAlpha: vertexAlpha),
             camera: Self.camera,

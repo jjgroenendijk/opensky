@@ -63,7 +63,7 @@ struct RendererTextureStreamingTests {
         )
         let render = try RenderModel(device: device, model: model) { _, _ in texture }
         let bounds = try #require(ModelBounds.containing(model: model))
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: width, height: height,
             scene: RenderScene(instances: [
                 RenderPlacement(
@@ -121,7 +121,7 @@ struct RendererTextureStreamingTests {
         let far = MatrixMath.translation(SIMD3(50000, 0, 0))
         var moved: Renderer?
         _ = try Self.render(texture: texture, transform: far) { renderer in
-            renderer.dynamicInstanceDeltas[Self.reference] = far.inverse
+            renderer.frameInput.instancePoses.dynamicDeltas[Self.reference] = far.inverse
             moved = renderer
         }
         let use = try #require(moved?.nearestUses()[ObjectIdentifier(texture)])

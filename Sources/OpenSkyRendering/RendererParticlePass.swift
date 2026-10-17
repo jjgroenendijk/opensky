@@ -25,7 +25,7 @@ extension Renderer {
         var boundMode: ParticleBlendMode?
         for item in items {
             let (offset, count) = item.prepareBuffer(
-                slot: state.slot, viewer: sorted ? freeFlyCamera.position : nil
+                slot: state.slot, viewer: sorted ? frameInput.view.position : nil
             )
             guard count >= 1 else { continue }
             if boundMode != item.blendMode {
@@ -60,7 +60,7 @@ extension Renderer {
     func sortedParticles(_ items: [ParticlePlayback]) -> [ParticlePlayback] {
         guard particleSortingEnabled, items.count > 1 else { return items }
         return ParticleDrawOrder.backToFront(
-            items, viewer: freeFlyCamera.position, at: \.origin
+            items, viewer: frameInput.view.position, at: \.origin
         )
     }
 }

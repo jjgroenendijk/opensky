@@ -157,7 +157,7 @@ struct ActorEquipmentRealDataTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: RenderScene(instances: assembly.renderPlacements),
             camera: SceneCamera.framing(bounds: (bounds.min, bounds.max))
         )

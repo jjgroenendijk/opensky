@@ -123,7 +123,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func menuMovieChangesPixelsOverBaseline() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: false))
         let withMovie = try Self.canvas.render(renderer)
@@ -144,7 +144,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func zeroAlphaColorTransformReproducesBaselineExactly() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: true))
         let hidden = try Self.canvas.render(renderer)
@@ -155,7 +155,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func disabledLayerMatchesBaselineExactly() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: false))
         renderer.swfEnabled = false
@@ -173,7 +173,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func clearedMovieMatchesBaselineExactly() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: false))
         _ = try Self.canvas.render(renderer)
@@ -187,7 +187,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func repeatedFramesAreByteIdentical() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: false))
         // Warm the glyph atlas so no upload happens between the compared frames.
         _ = try Self.canvas.render(renderer)
@@ -201,7 +201,7 @@ struct RendererSWFStaticAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func reassigningTheMovieReproducesItsFrame() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFMenuFixture.scene(hidden: false))
         _ = try Self.canvas.render(renderer)
         let first = try Self.canvas.render(renderer)

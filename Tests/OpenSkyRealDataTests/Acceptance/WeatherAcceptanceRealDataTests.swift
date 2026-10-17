@@ -23,14 +23,18 @@ struct WeatherAcceptanceRealDataTests {
     /// Minimum changed pixels for two frames to count as visibly distinct.
     private static let distinctThreshold = 1000
 
-    /// The live renderer + weather runtime plus the three resolved vanilla
+    /// The live session + weather runtime plus the three resolved vanilla
     /// weather FormIDs, built once for the whole acceptance sweep.
     private struct Harness {
-        let renderer: Renderer
+        let gameSession: GameSession
         let weather: WeatherSystem
         let clear: FormID
         let cloudy: FormID
         let fog: FormID
+
+        @MainActor var renderer: Renderer {
+            gameSession.renderer
+        }
     }
 
     @Test(.enabled(if: RealDataEnvironment.canRender))
@@ -134,12 +138,12 @@ struct WeatherAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view, scene: cellScene.renderScene, camera: SceneCamera.framing(bounds: bounds)
         )
-        renderer.weather = weather
+        gameSession.weather = weather
         return try Harness(
-            renderer: renderer, weather: weather,
+            gameSession: gameSession, weather: weather,
             clear: formID("SkyrimClear"),
             cloudy: formID("SkyrimCloudy"),
             fog: formID("SkyrimFog")
@@ -153,7 +157,7 @@ struct WeatherAcceptanceRealDataTests {
     /// accumulate.
     @MainActor
     private func frame(_ harness: Harness, force id: FormID, hour: Float) throws -> [UInt8] {
-        harness.renderer.timeOfDay = hour
+        harness.gameSession.timeOfDay = hour
         harness.weather.forceWeather(id, transition: .instant)
         return try readPixels(
             harness.renderer.renderOffscreen(width: Self.width, height: Self.height)

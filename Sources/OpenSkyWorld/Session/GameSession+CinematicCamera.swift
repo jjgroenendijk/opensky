@@ -16,7 +16,7 @@ public struct RendererCinematicCameraState {
     public var isCollisionLimited = false
 }
 
-extension Renderer {
+extension GameSession {
     public var isCinematicCameraEngaged: Bool {
         cinematicCameraState.pose != nil
     }

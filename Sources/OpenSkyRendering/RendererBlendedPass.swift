@@ -8,7 +8,7 @@ import simd
 extension Renderer {
     func encodeBlendedGroups(state: inout ScenePassState) {
         let groups = frameDrawGroups.alphaTested
-        let order = Self.blendedDrawOrder(groups, eye: freeFlyCamera.position)
+        let order = Self.blendedDrawOrder(groups, eye: frameInput.view.position)
         guard !order.isEmpty else { return }
         let pipelines = GroupPipelines(
             staticMesh: blendedPipeline, skinned: skinnedBlendedPipelines.skinned,

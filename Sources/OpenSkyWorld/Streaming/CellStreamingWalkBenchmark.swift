@@ -96,12 +96,13 @@ nonisolated public struct WalkBenchmarkFrameBudget: Equatable, Sendable {
 @MainActor
 public enum CellStreamingWalkBenchmark {
     public static func run(
-        renderer: Renderer,
+        gameSession: GameSession,
         provider: sending any CellSceneProvider,
         configuration: CellStreamingWalkBenchmarkConfiguration
     ) throws -> CellStreamingWalkBenchmarkResult {
+        let renderer = gameSession.renderer
         let driver = CellStreamingWalkDriver(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: provider,
             configuration: configuration
         )

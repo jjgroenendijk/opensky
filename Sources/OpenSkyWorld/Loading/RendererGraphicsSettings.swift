@@ -17,6 +17,14 @@ extension UpscalerKind {
     }
 }
 
+extension GameSession {
+    /// The renderer's GPU features, and the tone mapping the frame input carries.
+    public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
+        renderer.applyGraphicsSettings(store)
+        imageSpace.toneMapping.enabled = store.bool(.toneMapping)
+    }
+}
+
 extension Renderer {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         gpuCullingEnabled = store.bool(.gpuCulling)
@@ -33,7 +41,6 @@ extension Renderer {
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
         particleSortingEnabled = store.bool(.particleSorting)
-        imageSpace.toneMapping.enabled = store.bool(.toneMapping)
         let caps = PlayerSettingsCatalog.frameRateCapOptions
         frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]
     }

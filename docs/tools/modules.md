@@ -203,7 +203,9 @@ A lower module never imports a higher one. These patterns keep it that way:
   `OpenSkyGameData` store.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
-  to move the camera and run the world. `GameSession` in `OpenSkyWorld` is that driver.
+  to move the camera and run the world. The driver returns one `RenderFrameInput`, the only
+  game state the renderer reads. `GameSession` in `OpenSkyWorld` is that driver, and it owns
+  the renderer.
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
   into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances,
   faction relations, the leveling and skill formulas, the item index, and barter prices.

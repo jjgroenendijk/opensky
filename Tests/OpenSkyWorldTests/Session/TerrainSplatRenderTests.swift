@@ -70,7 +70,7 @@ struct TerrainSplatRenderTests {
     private static func render(normal: SIMD4<UInt8>, normalMapsEnabled: Bool) throws -> [UInt8] {
         let device = try #require(Self.device)
         let scene = try Self.terrainScene(device: device, normal: normal)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: scene,
             camera: Self.camera,

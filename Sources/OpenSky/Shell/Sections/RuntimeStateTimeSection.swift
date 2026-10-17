@@ -1,6 +1,6 @@
 // World > Runtime State > Time section: scrubs the game clock, sets the
 // timescale, and reports whether world simulation is paused. Pause is a readout,
-// because `MenuModeController` owns `Renderer.worldSimPaused`. The `TimeScale`
+// because `MenuModeController` owns `GameSession.worldSimPaused`. The `TimeScale`
 // global is the one setting here, so it is the override; elapsed time is not.
 
 import AppKit

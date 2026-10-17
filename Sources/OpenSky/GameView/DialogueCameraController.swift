@@ -23,6 +23,7 @@ protocol DialogueCameraHost: AnyObject {
     var packages: PackageCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
 }
 
@@ -48,13 +49,13 @@ final class DialogueCameraController {
     /// Points the camera at whoever is being talked to, and lets go when
     /// nobody is.
     func refreshFocus() {
-        guard let renderer = game.renderer else { return }
+        guard let gameSession = game.gameSession else { return }
         if game.raceMenu.isOpen {
-            let yaw = portraitYaw ?? Self.playerYaw(of: renderer)
+            let yaw = portraitYaw ?? Self.playerYaw(of: gameSession)
             portraitYaw = yaw
             easePortraitZoom(towards: game.raceMenu.isZoomedIn ? 1 : 0)
-            renderer.setDialogueCameraFocus(
-                Self.portrait(of: renderer, yaw: yaw, zoom: portraitZoom)
+            gameSession.setDialogueCameraFocus(
+                Self.portrait(of: gameSession, yaw: yaw, zoom: portraitZoom)
             )
             return
         }
@@ -65,23 +66,27 @@ final class DialogueCameraController {
             let speaker = speaker(),
             let head = game.dialogueWorld.headPosition(of: speaker)
         else {
-            renderer.setDialogueCameraFocus(nil)
+            gameSession.setDialogueCameraFocus(nil)
             game.dialogueWorld.run(game.dialogue.releaseSpeakerFocus())
             return
         }
-        renderer.setDialogueCameraFocus(DialogueCameraFocus(headPosition: head))
+        gameSession.setDialogueCameraFocus(DialogueCameraFocus(headPosition: head))
         game.dialogueWorld.run(game.dialogue.focus(
             on: speaker,
-            playerEye: renderer.playerEyePosition
+            playerEye: gameSession.playerEyePosition
         ))
     }
 
     /// The race menu shows the player's face from the front, at the player's eye height.
     /// [WARNING] The game's race menu camera is not documented; this reuses the framing.
     /// Zoomed out, the shot aims at the middle of the body from far enough to fit it.
-    static func portrait(of renderer: Renderer, yaw: Float, zoom: Float) -> DialogueCameraFocus {
-        let eye = renderer.playerEyePosition
-        let capsule = renderer.walkController.capsule
+    static func portrait(
+        of gameSession: GameSession,
+        yaw: Float,
+        zoom: Float
+    ) -> DialogueCameraFocus {
+        let eye = gameSession.playerEyePosition
+        let capsule = gameSession.walkController.capsule
         let forward = SIMD3<Float>(cosf(yaw), sinf(yaw), 0)
         let body = eye - SIMD3<Float>(0, 0, capsule.eyeHeight / 2)
         let target = simd_mix(body, eye, SIMD3(repeating: zoom))
@@ -108,8 +113,8 @@ final class DialogueCameraController {
     }
 
     /// The player's own view yaw, not the framed pose that stands in for it.
-    static func playerYaw(of renderer: Renderer) -> Float {
-        renderer.dialogueCameraState.restorePose?.yaw ?? renderer.freeFlyCamera.yaw
+    static func playerYaw(of gameSession: GameSession) -> Float {
+        gameSession.dialogueCameraState.restorePose?.yaw ?? gameSession.freeFlyCamera.yaw
     }
 
     /// The conversation outranks the force toggle, so forcing the camera and
@@ -123,8 +128,10 @@ final class DialogueCameraController {
         case .crosshair:
             return game.streamer?.talk.speaker
         case .nearestActor:
-            guard let renderer = game.renderer, let streamer = game.streamer else { return nil }
-            return streamer.nearestActorEntry(to: renderer.playerEyePosition)?.key
+            guard
+                let gameSession = game.gameSession,
+                let streamer = game.streamer else { return nil }
+            return streamer.nearestActorEntry(to: gameSession.playerEyePosition)?.key
         }
     }
 
@@ -151,19 +158,19 @@ final class DialogueCameraController {
     // MARK: - Snapshot
 
     var snapshot: DialogueCameraSnapshot {
-        guard let renderer = game.renderer else { return .empty }
+        guard let gameSession = game.gameSession else { return .empty }
         let speaker = speaker()
         return DialogueCameraSnapshot(
             isAvailable: true,
-            isEngaged: renderer.isDialogueCameraEngaged,
+            isEngaged: gameSession.isDialogueCameraEngaged,
             isForced: isForced,
             target: target,
             speakerName: speaker.map { game.dialogueWorld.speakerLabel(for: $0) },
             speakerKey: speaker,
-            pose: renderer.dialogueCameraPose,
-            restoreMode: renderer.dialogueCameraRestoreMode,
+            pose: gameSession.dialogueCameraPose,
+            restoreMode: gameSession.dialogueCameraRestoreMode,
             restoreFOVYDegrees: MatrixMath.degrees(
-                fromRadians: renderer.dialogueCameraRestoreFOVYRadians
+                fromRadians: gameSession.dialogueCameraRestoreFOVYRadians
             ),
             speakerFocus: speakerFocusRow(),
             lastOutcome: lastOutcome

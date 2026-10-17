@@ -62,7 +62,7 @@ struct ParticlePlaybackRealDataTests {
             frame: CGRect(x: 0, y: 0, width: 512, height: 512), device: device
         )
         view.isPaused = true
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(rendering: view, scene: scene, camera: camera)
         renderer.sunShadowsEnabled = false
         let first = try readPixels(renderer.renderOffscreen(
             width: 512, height: 512, animationTime: firstTime

@@ -4,7 +4,7 @@
 import Metal
 import OpenSkyRendering
 
-extension Renderer {
+extension GameSession {
     /// Attaches the assembled body, sizing the draw rings for its groups and
     /// making its buffers resident. Replacing an attached body (a new equipped
     /// set) retires the old one's allocations the same way a scene swap does.
@@ -13,11 +13,11 @@ extension Renderer {
         playerBody = body
         updatePlayerBodyPose()
         if let body {
-            try growRingsForPlayerBody(body)
-            residencySet.addAllocations(body.residencyAllocations)
-            residencySet.commit()
+            try renderer.growRingsForPlayerBody(body)
+            renderer.residencySet.addAllocations(body.residencyAllocations)
+            renderer.residencySet.commit()
         }
-        retireAllocations(retiring)
+        renderer.retireAllocations(retiring)
     }
 
     /// Moves the body onto the capsule and refreshes its palettes.
@@ -29,7 +29,7 @@ extension Renderer {
     public func updatePlayerBodyPose() {
         guard let playerBody, movementMode.isPlayerControlled else { return }
         // A seat clip poses the body from the vehicle's root, as it does a rider's.
-        if let playerSeat = session.playerSeat {
+        if let playerSeat {
             playerBody.place(at: playerSeat)
             return
         }

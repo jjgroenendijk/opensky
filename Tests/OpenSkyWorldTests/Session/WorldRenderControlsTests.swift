@@ -95,6 +95,7 @@ struct WorldRenderControlsTests {
 
 private final class EmptyRenderControlWorld: RenderControlWorld {
     let renderer: Renderer? = nil
+    let gameSession: GameSession? = nil
     let streamer: CellStreamer? = nil
     let terrainLODConfigurationStore = TerrainLODConfigurationStore.fallback()
     let playerSettingsStore = PlayerSettingsStore(persistence: nil)

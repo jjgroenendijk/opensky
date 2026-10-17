@@ -54,22 +54,22 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     var playerAttacker: MeleeAttacker? {
-        guard let renderer = game.renderer else { return nil }
+        guard let gameSession = game.gameSession else { return nil }
         return MeleeAttacker(
             key: .player,
-            feet: renderer.walkController.feetPosition,
-            capsule: renderer.walkController.capsule,
-            facing: renderer.freeFlyCamera.yaw
+            feet: gameSession.walkController.feetPosition,
+            capsule: gameSession.walkController.capsule,
+            facing: gameSession.freeFlyCamera.yaw
         )
     }
 
     var playerShooter: ProjectileShooter? {
-        guard let renderer = game.renderer else { return nil }
+        guard let gameSession = game.gameSession else { return nil }
         return ProjectileShooter(
             key: .player,
-            origin: renderer.freeFlyCamera.position,
-            aim: renderer.freeFlyCamera.forward,
-            isFirstPerson: renderer.movementMode != .thirdPerson,
+            origin: gameSession.freeFlyCamera.position,
+            aim: gameSession.freeFlyCamera.forward,
+            isFirstPerson: gameSession.movementMode != .thirdPerson,
             location: game.streamer?.currentCellLocation
         )
     }
@@ -251,13 +251,13 @@ extension CombatWorldAdapter: CombatWorld {
     /// own answer rather than an assumption.
     @discardableResult
     func raisePlayerGraphEvent(_ name: String) -> Bool {
-        guard let renderer = game.renderer else { return false }
-        renderer.locomotion.raise(name)
-        return renderer.locomotion.status.raisedEvents.contains(name)
+        guard let gameSession = game.gameSession else { return false }
+        gameSession.locomotion.raise(name)
+        return gameSession.locomotion.status.raisedEvents.contains(name)
     }
 
     func writePlayerGraphVariable(_ value: BehaviorVariableValue, named name: String) {
-        game.renderer?.locomotion.write(value, to: name)
+        game.gameSession?.locomotion.write(value, to: name)
     }
 
     /// A playback failure is logged by the engine and leaves the hit silent. The
@@ -265,7 +265,7 @@ extension CombatWorldAdapter: CombatWorld {
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         showImpact(impact, at: position)
         guard
-            let engine = game.renderer?.worldAudio, engine.isRunning,
+            let engine = game.gameSession?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,
             let sounds = game.worldData?.soundStore,
             let sound = try? sounds.resolveAny(impact.sound),

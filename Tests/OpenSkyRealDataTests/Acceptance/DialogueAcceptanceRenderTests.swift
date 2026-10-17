@@ -100,15 +100,16 @@ struct DialogueAcceptanceRenderTests {
         let cell = try PlayerBodyFixture.stage(
             gridX: WalkPathRoute.farmCell.x, gridY: WalkPathRoute.farmCell.y
         )
-        let renderer = try cell.renderer()
-        FirstPersonRenderRealDataTests.frameFirstPerson(renderer, feet: SIMD3(
+        let gameSession = try cell.makeSession()
+        let renderer = gameSession.renderer
+        FirstPersonRenderRealDataTests.frameFirstPerson(gameSession, feet: SIMD3(
             (cell.bounds.min.x + cell.bounds.max.x) / 2,
             (cell.bounds.min.y + cell.bounds.max.y) / 2,
             cell.bounds.min.z
         ))
 
         let world = try FirstPersonRenderRealDataTests.frame(renderer)
-        let engaged = try Self.engageTheDialogueCamera(renderer)
+        let engaged = try Self.engageTheDialogueCamera(gameSession)
         let cameraDelta = FirstPersonRenderRealDataTests.changedPixels(world, engaged)
         #expect(
             cameraDelta >= Self.minimumChangedPixels,
@@ -138,12 +139,13 @@ struct DialogueAcceptanceRenderTests {
     /// Frames a speaker standing a conversation's distance ahead, which is what
     /// a Talk activation does to the view.
     @MainActor
-    private static func engageTheDialogueCamera(_ renderer: Renderer) throws -> [UInt8] {
-        let head = renderer.playerEyePosition + renderer.freeFlyCamera.forward * 140
-        renderer.setDialogueCameraFocus(DialogueCameraFocus(
+    private static func engageTheDialogueCamera(_ gameSession: GameSession) throws -> [UInt8] {
+        let renderer = gameSession.renderer
+        let head = gameSession.playerEyePosition + gameSession.freeFlyCamera.forward * 140
+        gameSession.setDialogueCameraFocus(DialogueCameraFocus(
             headPosition: head
         ))
-        #expect(renderer.isDialogueCameraEngaged)
+        #expect(gameSession.isDialogueCameraEngaged)
         return try FirstPersonRenderRealDataTests.frame(renderer)
     }
 

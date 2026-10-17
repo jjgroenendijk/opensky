@@ -33,17 +33,17 @@ struct RendererWeatherTests {
     func inactiveWeatherMatchesProceduralBaseline() throws {
         let device = try #require(ShadowSceneFixture.device)
 
-        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
+        let baseline = try ShadowSceneFixture.makeSession(device: device)
         let baselinePixels = try ShadowSceneFixture.readPixels(
-            texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
+            texture: baseline.renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
 
         // A weather system pinned to a worldspace with no candidates resolves
         // to nil -> the sky must be byte-identical to the never-weather render.
-        let withInactive = try ShadowSceneFixture.makeRenderer(device: device)
+        let withInactive = try ShadowSceneFixture.makeSession(device: device)
         withInactive.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x999)
         let inactivePixels = try ShadowSceneFixture.readPixels(
-            texture: withInactive.renderOffscreen(width: Self.width, height: Self.height)
+            texture: withInactive.renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
 
         var differences = 0
@@ -58,16 +58,16 @@ struct RendererWeatherTests {
     func forcedWeatherRepaintsSky() throws {
         let device = try #require(ShadowSceneFixture.device)
 
-        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
+        let baseline = try ShadowSceneFixture.makeSession(device: device)
         let baselinePixels = try ShadowSceneFixture.readPixels(
-            texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
+            texture: baseline.renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
 
-        let forced = try ShadowSceneFixture.makeRenderer(device: device)
+        let forced = try ShadowSceneFixture.makeSession(device: device)
         forced.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         forced.weather?.forceWeather(FormID(0x100), transition: .instant)
         let forcedPixels = try ShadowSceneFixture.readPixels(
-            texture: forced.renderOffscreen(width: Self.width, height: Self.height)
+            texture: forced.renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
 
         var skyDifferences = 0
@@ -81,19 +81,20 @@ struct RendererWeatherTests {
     @MainActor
     func disabledWeatherRestoresProceduralSkyAndCalmWind() throws {
         let device = try #require(ShadowSceneFixture.device)
-        let renderer = try ShadowSceneFixture.makeRenderer(device: device)
-        renderer.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
-        renderer.weather?.forceWeather(FormID(0x100), transition: .instant)
+        let gameSession = try ShadowSceneFixture.makeSession(device: device)
+        let renderer = gameSession.renderer
+        gameSession.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+        gameSession.weather?.forceWeather(FormID(0x100), transition: .instant)
         let active = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
-        renderer.weatherEnabled = false
+        gameSession.weatherEnabled = false
         let disabled = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
         #expect(active != disabled)
-        #expect(renderer.currentResolvedWeather == nil)
-        #expect(renderer.currentWind == .calm)
+        #expect(gameSession.currentResolvedWeather == nil)
+        #expect(gameSession.wind == .calm)
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))
@@ -102,9 +103,10 @@ struct RendererWeatherTests {
         let device = try #require(ShadowSceneFixture.device)
 
         func skyPixels(weather: UInt32) throws -> [UInt8] {
-            let renderer = try ShadowSceneFixture.makeRenderer(device: device)
-            renderer.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
-            renderer.weather?.forceWeather(FormID(weather), transition: .instant)
+            let gameSession = try ShadowSceneFixture.makeSession(device: device)
+            let renderer = gameSession.renderer
+            gameSession.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+            gameSession.weather?.forceWeather(FormID(weather), transition: .instant)
             return try ShadowSceneFixture.readPixels(
                 texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
             )

@@ -47,6 +47,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var scenes: SceneCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -180,26 +181,26 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     }
 
     var gameClock: GameClock? {
-        get { game.renderer?.gameClock }
+        get { game.gameSession?.gameClock }
         set {
             // Setting the clock also resets the weather's elapsed-hours mark, so
             // a date jump ages no weather.
             if let newValue {
-                game.renderer?.gameClock = newValue
+                game.gameSession?.gameClock = newValue
             }
         }
     }
 
     var timescale: Float? {
-        game.renderer?.currentTimescale
+        game.gameSession?.currentTimescale
     }
 
     var isWorldSimPaused: Bool {
-        game.renderer?.worldSimPaused ?? false
+        game.gameSession?.worldSimPaused ?? false
     }
 
     func setTimeOfDay(_ hour: Float) {
-        game.renderer?.timeOfDay = hour
+        game.gameSession?.timeOfDay = hour
     }
 
     func persistTimeOfDay(_ hour: Float) {
@@ -207,16 +208,16 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     }
 
     func projectTimeGlobal(_ global: GameClock.TimeGlobal, value: Float) -> Float? {
-        guard let renderer = game.renderer else { return nil }
-        let previous = renderer.gameClock.projectedValue(global)
-        renderer.gameTime.clock.setProjectedValue(value, for: global)
+        guard let gameSession = game.gameSession else { return nil }
+        let previous = gameSession.gameClock.projectedValue(global)
+        gameSession.gameTime.clock.setProjectedValue(value, for: global)
         return previous
     }
 
     func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool) {
-        guard let renderer = game.renderer else { return }
-        renderer.gameTime.globalResolution = resolution
-        renderer.weather?.setGlobalResolution(resolution, reroll: reroll)
+        guard let gameSession = game.gameSession else { return }
+        gameSession.gameTime.globalResolution = resolution
+        gameSession.weather?.setGlobalResolution(resolution, reroll: reroll)
     }
 
     var musicStore: MusicRecordStore? {
@@ -240,7 +241,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             magic: game.magic.magicConditionResolution(),
             crime: game.crime.conditionResolution(owning: references.sortedKeys()),
             factions: game.factions.conditionResolution(),
-            clock: game.renderer?.gameClock,
+            clock: game.gameSession?.gameClock,
             references: references,
             subject: crosshair?.key,
             target: crosshair?.key
@@ -291,7 +292,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
                 creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
                 appVersion: Self.saveAppVersion
             ),
-            clock: game.renderer?.gameClock,
+            clock: game.gameSession?.gameClock,
             scripts: game.scripts.runtime?.instanceStates() ?? [],
             timers: game.scripts.runtime?.timerStates() ?? [],
             summary: summary,
@@ -322,7 +323,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         let file = try await store().read(slot: slot, verifyingAgainst: current)
         game.worldState.restore(from: file.snapshot)
         // A save without a CLOK chunk restores the vanilla-start clock.
-        game.renderer?.gameClock = file.clock ?? GameClock()
+        game.gameSession?.gameClock = file.clock ?? GameClock()
         // After the world state, so the fired `OnInit` set is in place before the
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
@@ -343,16 +344,16 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     private func playerPlace() -> SavePlayerPlace? {
         guard
             let streamer = game.streamer, let cell = streamer.currentCellLocation,
-            let renderer = game.renderer
+            let gameSession = game.gameSession
         else { return nil }
-        let feet = renderer.movementMode.isPlayerControlled
-            ? renderer.walkController.feetPosition : renderer.freeFlyCamera.position
+        let feet = gameSession.movementMode.isPlayerControlled
+            ? gameSession.walkController.feetPosition : gameSession.freeFlyCamera.position
         let worldspace: String? = switch cell {
         case .exterior: streamer.worldspaceEditorID
         case .interior: nil
         }
         return SavePlayerPlace(
-            cell: cell, feet: feet, yaw: renderer.freeFlyCamera.yaw, worldspace: worldspace
+            cell: cell, feet: feet, yaw: gameSession.freeFlyCamera.yaw, worldspace: worldspace
         )
     }
 }

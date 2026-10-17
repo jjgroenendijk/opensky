@@ -91,8 +91,7 @@ public final class HUDCoordinator {
     }
 
     public func updateFrame() {
-        guard isLoaded, let renderer else { return }
-        let camera = renderer.freeFlyCamera
+        guard isLoaded, let renderer, let camera = world?.viewCamera else { return }
         let heading = HUDCore.headingDegrees(camera.yaw)
         let update = HUDCore.frameUpdate(
             sync: sync,
@@ -176,7 +175,7 @@ public final class HUDCoordinator {
 
     public var controlSnapshot: HUDControlSnapshot {
         let target = interactionTarget
-        let cameraPosition = renderer?.freeFlyCamera.position ?? .zero
+        let cameraPosition = world?.viewCamera?.position ?? .zero
         return HUDControlSnapshot(
             isLoaded: isLoaded,
             loadError: loadError,
@@ -190,7 +189,7 @@ public final class HUDCoordinator {
             prompt: effectivePrompt,
             markerHeadings: effectiveMarkers(cameraPosition: cameraPosition)
                 .map(\.headingDegrees),
-            cameraHeading: renderer.map { HUDCore.headingDegrees($0.freeFlyCamera.yaw) },
+            cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },
             scale: settings.scale,
             drawStats: renderer?.lastSWFDrawStats ?? SWFDrawStats()
         )
@@ -218,7 +217,7 @@ public final class HUDCoordinator {
 
     /// `initialize` also fills the meters, so only a fresh movie asks for it.
     private func publish(renderer: Renderer, initialize: Bool) throws {
-        let camera = renderer.freeFlyCamera
+        let camera = world?.viewCamera ?? renderer.frameInput.view
         let heading = HUDCore.headingDegrees(camera.yaw)
         let markers = effectiveMarkers(cameraPosition: camera.position)
         try renderer.updateSWFRuntime { runtime in

@@ -127,16 +127,17 @@ enum BenchmarkCommand {
         }
         let plan = options.plan
         let setupStart = DispatchTime.now().uptimeNanoseconds
-        let renderer = try makeRenderer(
+        let gameSession = try makeSession(
             device: device, plan: plan, coldPipelines: options.coldPipelines
         )
+        let renderer = gameSession.renderer
         let setupMS = Double(DispatchTime.now().uptimeNanoseconds - setupStart) / 1e6
         options.apply(to: renderer)
         var fastLoader: FastTextureLoader?
         var result = try PerformanceBenchmark.run(
             plan: plan,
             machine: .current(gpu: device.name),
-            renderer: renderer,
+            gameSession: gameSession,
             launch: options.launch
         ) { recorder in
             let builder = try RenderCommand.makeBuilder(
@@ -159,7 +160,7 @@ enum BenchmarkCommand {
         }
         if options.route {
             result.route = try runRoute(
-                renderer: renderer, plan: plan,
+                gameSession: gameSession, plan: plan,
                 builder: RenderCommand.makeBuilder(context: context, device: device, assets: assets)
             )
         }
@@ -177,10 +178,10 @@ enum BenchmarkCommand {
 
     /// The walk route. Its cell build worker reads streamed texture levels again.
     private static func runRoute(
-        renderer: Renderer, plan: PerformanceBenchmarkPlan, builder: CellSceneBuilder
+        gameSession: GameSession, plan: PerformanceBenchmarkPlan, builder: CellSceneBuilder
     ) throws -> BenchmarkRoute {
         try PerformanceBenchmarkRoute.run(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: BuilderCellSceneProvider(
                 builder: builder,
                 worldspaceEditorID: plan.worldspace
@@ -190,18 +191,18 @@ enum BenchmarkCommand {
         )
     }
 
-    /// A paused offscreen renderer; the view only carries the pixel formats. Its
-    /// pipelines use the cache the settings ask for; `coldPipelines` clears it first.
-    private static func makeRenderer(
+    /// A session over a paused offscreen renderer; the view only carries the pixel formats.
+    /// Its pipelines use the cache the settings ask for; `coldPipelines` clears it first.
+    private static func makeSession(
         device: MTLDevice,
         plan: PerformanceBenchmarkPlan,
         coldPipelines: Bool
-    ) throws -> Renderer {
+    ) throws -> GameSession {
         let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
         if coldPipelines, let folder = PipelineCache.archiveFolder(store: store) {
             try PipelineCacheFolder.clear(folder: folder)
         }
-        return try StandardBenchmark.makeRenderer(device: device, plan: plan, store: store)
+        return try StandardBenchmark.makeSession(device: device, plan: plan, store: store)
     }
 
     private static func writeView(

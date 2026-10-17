@@ -8,6 +8,7 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
@@ -29,11 +30,15 @@ extension ScriptWorldAdapter {
             return game.perception.perceptionResolution()
                 .pair(observer: viewer, target: target)?.hasLineOfSight
         }
-        guard let renderer = game.renderer, let point = position(of: target, bridge: bridge)
+        guard
+            let renderer = game.renderer, let gameSession = game.gameSession, let point = position(
+                of: target,
+                bridge: bridge
+            )
         else { return nil }
         let projection = renderer.projectionMatrix
         guard projection.columns.0.x > 0, projection.columns.1.y > 0 else { return nil }
-        let camera = renderer.freeFlyCamera
+        let camera = gameSession.freeFlyCamera
         let view = LineOfSightWatch.View(
             forward: camera.forward, right: camera.right,
             up: simd_normalize(simd_cross(camera.right, camera.forward)),

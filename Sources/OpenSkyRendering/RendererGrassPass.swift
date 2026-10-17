@@ -66,7 +66,7 @@ extension Renderer {
                 stats.densityCulledInstances += 1
                 continue
             }
-            let delta = instance.position - freeFlyCamera.position
+            let delta = instance.position - frameInput.view.position
             guard simd_length_squared(delta) <= filter.maximumDistanceSquared else {
                 stats.distanceCulledInstances += 1
                 continue

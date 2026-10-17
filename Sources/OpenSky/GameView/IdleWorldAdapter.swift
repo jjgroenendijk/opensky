@@ -21,6 +21,7 @@ protocol IdleWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var player: PlayerCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var sessionWiring: WorldSessionWiring { get }
     var streamer: CellStreamer? { get }
@@ -39,7 +40,7 @@ final class IdleWorldAdapter {
     }
 
     /// After packages, because the pass reads each actor's current procedure.
-    func wireIdles(provider: WorldDataStores, renderer: Renderer) {
+    func wireIdles(provider: WorldDataStores, gameSession: GameSession) {
         guard
             let store = provider.idleStore,
             let files = game.audioFileSystem,
@@ -47,7 +48,7 @@ final class IdleWorldAdapter {
         else { return }
         idles.wire(store: store, files: files, clips: clips)
         let idles = idles
-        renderer.session.worldTick.register(.idles) { [weak idles] _ in
+        gameSession.worldTick.register(.idles) { [weak idles] _ in
             idles?.advance()
         }
     }
@@ -86,7 +87,7 @@ extension IdleWorldAdapter: IdleWorld {
             )
         }
         // The player has no package, so it takes no marker; a script idle still plays.
-        let player = game.renderer.map {
+        let player = game.gameSession.map {
             IdleActorPresence(
                 key: .player, feet: $0.walkController.feetPosition, procedure: nil, isDead: false
             )
@@ -95,7 +96,7 @@ extension IdleWorldAdapter: IdleWorld {
     }
 
     func idleConditionContext() -> ConditionContext {
-        guard let clock = game.renderer?.gameClock else { return ConditionContext() }
+        guard let clock = game.gameSession?.gameClock else { return ConditionContext() }
         var context = game.aiWorld.packageConditionContext(clock: clock)
         // Idle trees test keywords, such as the chopping block's `isExecutioner`.
         context.data = game.runtimeStateWorld.conditionData()

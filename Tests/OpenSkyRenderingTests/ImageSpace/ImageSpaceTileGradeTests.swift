@@ -27,7 +27,7 @@ struct ImageSpaceTileGradeTests {
             device: device, width: Self.size, height: Self.size,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-        renderer.imageSpace.baseline = BaselineImageSpace(sources: [], parameters: grade)
+        renderer.frameInput.imageSpace.baseline = BaselineImageSpace(sources: [], parameters: grade)
         return renderer
     }
 
@@ -56,15 +56,15 @@ struct ImageSpaceTileGradeTests {
         hdr.hdr.white = 0.5
         hdr.hdr.eyeAdaptStrength = 15
         let renderer = try makeRenderer(grade: hdr)
-        renderer.imageSpace.toneMapping.enabled = false
+        renderer.frameInput.imageSpace.toneMapping.enabled = false
         let off = try render(renderer)
-        renderer.imageSpace.toneMapping.enabled = true
+        renderer.frameInput.imageSpace.toneMapping.enabled = true
         var mapped = off
         for _ in 0 ... Renderer.maxFramesInFlight {
             mapped = try render(renderer)
         }
         #expect(mapped != off, "tone mapping changed no pixel")
-        #expect(renderer.imageSpace.toneMapping.eye.measuredLuminance != nil)
+        #expect(renderer.eyeAdaptation.measuredLuminance != nil)
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
