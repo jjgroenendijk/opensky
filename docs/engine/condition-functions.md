@@ -42,7 +42,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 67 | `GetInCell` | `CELL` | 1 when the reference stands in that cell |
 | 69 | `GetIsRace` | `RACE` | 1 when the actor's race matches |
 | 70 | `GetIsSex` | 0 male, 1 female | 1 when the actor has that sex |
-| 71 | `GetInFaction` | `FACT` | 1 when a member |
+| 71 | `GetInFaction` | `FACT` | 1 when a member at rank 0 or above; rank -1 is a potential member |
 | 72 | `GetIsID` | base object | 1 when the reference's base form matches |
 | 73 | `GetFactionRank` | `FACT` | rank, -1 when not a member |
 | 74 | `GetGlobalValue` | `GLOB` | the global's value |
@@ -88,7 +88,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
 | 402 | `IsBribedbyPlayer` | none | 1 after a script called `SetBribed` |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
-| 426 | `GetIsVoiceType` | `VTYP` | 1 when the actor's `VTCK` matches |
+| 426 | `GetIsVoiceType` | `VTYP` or `FLST` | 1 when the actor's `VTCK` matches or is in the list |
 | 430 | `GetHealthPercentage` | none | health over its maximum, 0 to 1 |
 | 447 | `GetGraphVariableFloat` | variable name (`CIS1`) | the actor's float graph variable |
 | 448 | `HasPerk` | `PERK` | 1 when the actor has the perk |
