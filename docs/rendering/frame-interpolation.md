@@ -46,11 +46,29 @@ The scaler's output texture and a history texture swap each frame, so last frame
 stays intact without a copy. The history resets with the upscaler's history: on a scene
 swap, a camera cut, or a size change.
 
+Metal 4 tracks no hazards between encoders, so the scaler and the interpolator share one
+`MTLFence`: the interpolator waits until the scaler has written the color it reads.
+
 ## Pacing
 
 While it runs, the view asks for half the display's refresh rate
-(`NSScreen.maximumFramesPerSecond`), and each real frame shows two images. Without
-interpolation the view keeps MTKView's default of 60 frames a second.
+(`NSScreen.maximumFramesPerSecond`), and each real frame shows two images, each for one
+display interval. Without interpolation the view keeps MTKView's default of 60 frames a
+second.
+
+Each frame takes two drawables from a pool of three, so a frame can wait for one to come
+off the screen. The frame takes its drawables after the simulation step, so that wait
+overlaps work instead of adding to it.
+
+Even pacing needs every real frame to finish within two display intervals (33 ms at
+60 Hz). A slower frame shows the built image for one interval and the real image for two or
+more, and the camera judders. So interpolation pauses while the smoothed work time of a
+real frame is over that budget, and the panel shows the reason. The work time leaves out
+the wait for a drawable, because interpolation itself causes that wait. It resumes below
+80 percent of the budget, because a paused frame skips the interpolator's own cost.
+
+Measured on an M1 at 60 Hz, moving through the Whiterun exterior: real frames took 45 to
+100 ms, mostly in the simulation step, so interpolation stays paused there.
 
 ## Input lag
 
@@ -69,9 +87,12 @@ display.
 
 `Developer > Rendering Performance > Frame Interpolation` has the switch
 (`FrameInterpolationControl`) and a readout (`FrameInterpolationStatsLabel`): the frames
-built, the real and shown frame rates, and the input-to-screen time. The launcher's Graphics
+built, the real and shown frame rates, the gaps between shown images, and the
+input-to-screen time. A hitch is a gap over 1.5 times the median gap: one image that stayed
+on screen too long. The gaps are measured with interpolation off too, to compare. The launcher's Graphics
 page has the same switch (`GraphicsFrameInterpolationControl`).
-`openskycli game state frame` reports the same numbers under `interpolation`, so the lag can
-be measured from a script.
+`openskycli game state frame` reports the same numbers under `interpolation`
+(`frameGapMS`, `longestFrameGapMS`, `hitches`), so the lag and the pacing can be measured
+from a script.
 `make benchmark ARGS='--render-scale 100 --frame-interpolation'` measures the GPU time of
 both frames ([benchmark](/tools/benchmark.md)).

@@ -154,6 +154,10 @@ final class UpscaleTargets {
                 readUsage.formUnion(
                     interpolator.depthTextureUsage.union(interpolator.motionTextureUsage)
                 )
+                // Metal 4 tracks no hazards: the interpolator reads the scaler's output.
+                let fence = device.makeFence()
+                temporal.fence = fence
+                interpolator.fence = fence
             }
         case let .spatial(spatial):
             usage = (spatial.colorTextureUsage, spatial.outputTextureUsage)

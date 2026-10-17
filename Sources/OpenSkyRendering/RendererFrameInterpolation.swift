@@ -41,7 +41,7 @@ extension Renderer {
         if upscale.isBuildingScaler {
             return "Waiting for MetalFX to build the scaler"
         }
-        return upscale.unavailableReason
+        return upscale.unavailableReason ?? upscale.interpolation.pacingPause
     }
 
     public var isFrameInterpolationRunning: Bool {
@@ -56,13 +56,15 @@ extension Renderer {
     }
 
     public var frameInterpolationStatus: FrameInterpolationStatus {
-        FrameInterpolationStatus(
+        let presents = upscale.interpolation.latency.take()
+        return FrameInterpolationStatus(
             enabled: upscale.interpolation.enabled,
             unsupportedReason: upscale.resources.interpolatorUnavailableReason,
             unavailableReason: frameInterpolationUnavailableReason,
             interpolatedFrames: upscale.interpolation.interpolatedFrames,
             realFPS: frameStats.snapshot().fps,
-            presentLatencyMS: upscale.interpolation.latency.averageMS()
+            presentLatencyMS: presents.latencyMS,
+            pacing: presents.pacing
         )
     }
 
@@ -118,7 +120,11 @@ extension Renderer {
     func interpolatedDrawable(
         layer: CAMetalLayer, matching target: MTL4RenderPassDescriptor
     ) -> InterpolatedDrawable? {
-        guard isFrameInterpolationRunning, let drawable = layer.nextDrawable() else { return nil }
+        guard isFrameInterpolationRunning else { return nil }
+        let waitStart = CACurrentMediaTime()
+        let next = layer.nextDrawable()
+        upscale.interpolation.drawableWait += CACurrentMediaTime() - waitStart
+        guard let drawable = next else { return nil }
         return InterpolatedDrawable(
             drawable: drawable,
             descriptor: Self.passDescriptor(color: drawable.texture, matching: target)
@@ -189,14 +195,39 @@ extension Renderer {
         let latency = upscale.interpolation.latency
         drawable.addPresentedHandler { shown in
             latency.record(frameStart: frameStart, presented: shown.presentedTime)
+            latency.recordShown(shown.presentedTime)
         }
+        let refresh = view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
+        let interval = 1 / CFTimeInterval(max(refresh, 1))
+        updatePacingPause(frameStart: frameStart, displayInterval: interval)
         guard let interpolated, upscale.interpolation.lastFrameInterpolated else {
             drawable.present()
             return
         }
-        let refresh = view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
-        let interval = 1 / CFTimeInterval(max(refresh, 1))
+        interpolated.drawable.addPresentedHandler { shown in
+            latency.recordShown(shown.presentedTime)
+        }
         interpolated.drawable.present(afterMinimumDuration: interval)
         drawable.present(afterMinimumDuration: interval)
+    }
+
+    /// Pauses interpolation while real frames take longer than its two display intervals:
+    /// the real image would then stay on screen far longer than the built one.
+    private func updatePacingPause(frameStart: CFTimeInterval, displayInterval: CFTimeInterval) {
+        var state = upscale.interpolation
+        let work = max(CACurrentMediaTime() - frameStart - state.drawableWait, 0)
+        state.drawableWait = 0
+        let smoothed = FrameInterpolationPacing.smoothed(state.realFrameWork, adding: work)
+        state.realFrameWork = smoothed
+        let pause = state.enabled && FrameInterpolationPacing.shouldPause(
+            realFrameWork: smoothed, displayInterval: displayInterval,
+            paused: state.pacingPause != nil
+        )
+        state.pacingPause = pause
+            ? FrameInterpolationPacing.pauseReason(
+                realFrameWork: smoothed, displayInterval: displayInterval
+            )
+            : nil
+        upscale.interpolation = state
     }
 }

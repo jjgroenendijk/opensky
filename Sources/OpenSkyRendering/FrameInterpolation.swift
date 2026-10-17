@@ -49,11 +49,49 @@ public struct FrameInterpolationState {
     /// Seconds between the last two real frames; offscreen frames use the fixed step.
     var deltaTime: Float = 1 / 30
     var lastLiveFrameTime: CFTimeInterval?
+    /// Smoothed seconds a real frame works, without waiting for a drawable. The frame
+    /// interval would also count the waits that interpolation itself causes.
+    var realFrameWork: CFTimeInterval?
+    /// Seconds this frame waited for a free drawable.
+    var drawableWait: CFTimeInterval = 0
+    /// Set while real frames are too slow to pace; the frame shows without interpolation.
+    var pacingPause: String?
     /// Set when MetalFX refused the interpolator; cleared by switching it again.
     var creationFailure: String?
     /// The offscreen target of the interpolated frame, for tests and the benchmark.
     public internal(set) var offscreenFrame: MTLTexture?
     let latency = PresentLatencyInbox()
+}
+
+nonisolated enum FrameInterpolationPacing {
+    /// Weight of the newest real frame interval in the smoothed one.
+    static let smoothing = 0.1
+
+    static func smoothed(_ previous: CFTimeInterval?, adding sample: CFTimeInterval)
+        -> CFTimeInterval
+    {
+        guard let previous else { return sample }
+        return previous + (sample - previous) * smoothing
+    }
+
+    /// Whether real frames are too slow to pace: each pair of images holds two display
+    /// intervals, so a real frame must finish in two. Resuming needs a margin, because a
+    /// paused frame skips the interpolator's own cost.
+    static func shouldPause(
+        realFrameWork: CFTimeInterval, displayInterval: CFTimeInterval, paused: Bool
+    ) -> Bool {
+        let budget = 2 * displayInterval
+        return realFrameWork > budget * (paused ? 0.8 : 1.05)
+    }
+
+    static func pauseReason(realFrameWork: CFTimeInterval, displayInterval: CFTimeInterval)
+        -> String
+    {
+        String(
+            format: "Paused: real frames take %.0f ms, interpolation needs under %.0f ms",
+            realFrameWork * 1000, 2 * displayInterval * 1000
+        )
+    }
 }
 
 /// What frame interpolation did; the Rendering Performance panel reads it.
@@ -68,11 +106,12 @@ nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
     public var realFPS: Double = 0
     /// Average time from the start of a real frame to its present on screen.
     public var presentLatencyMS: Double?
+    public var pacing: PresentPacing?
 
     public init(
         enabled: Bool = false, unsupportedReason: String? = nil,
         unavailableReason: String? = nil, interpolatedFrames: Int = 0, realFPS: Double = 0,
-        presentLatencyMS: Double? = nil
+        presentLatencyMS: Double? = nil, pacing: PresentPacing? = nil
     ) {
         self.enabled = enabled
         self.unsupportedReason = unsupportedReason
@@ -80,6 +119,7 @@ nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
         self.interpolatedFrames = interpolatedFrames
         self.realFPS = realFPS
         self.presentLatencyMS = presentLatencyMS
+        self.pacing = pacing
     }
 
     public var isRunning: Bool {
@@ -92,14 +132,48 @@ nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
     }
 }
 
-/// Present times reported on a Core Animation thread; the main actor reads the average.
+/// How evenly the drawables showed: the gaps between two presents on screen.
+nonisolated public struct PresentPacing: Equatable, Sendable {
+    public var averageGapMS: Double
+    public var longestGapMS: Double
+    /// Gaps over 1.5 times the median gap: an image that stayed on screen too long.
+    public var hitches: Int
+
+    public init(averageGapMS: Double, longestGapMS: Double, hitches: Int) {
+        self.averageGapMS = averageGapMS
+        self.longestGapMS = longestGapMS
+        self.hitches = hitches
+    }
+
+    /// Nil without a gap. `gapsMS` are in present order.
+    public init?(gapsMS: [Double]) {
+        guard !gapsMS.isEmpty else { return nil }
+        let median = gapsMS.sorted()[gapsMS.count / 2]
+        averageGapMS = gapsMS.reduce(0, +) / Double(gapsMS.count)
+        longestGapMS = gapsMS.max() ?? 0
+        hitches = gapsMS.count { $0 > median * 1.5 }
+    }
+}
+
+/// What the presented handlers measured since the last read.
+nonisolated struct PresentWindow: Equatable {
+    /// Average time from the start of a real frame to its present on screen.
+    var latencyMS: Double?
+    var pacing: PresentPacing?
+}
+
+/// Present times reported on a Core Animation thread; the main actor reads the averages.
 nonisolated final class PresentLatencyInbox: Sendable {
     private struct Window {
         var totalSeconds: Double = 0
         var frames = 0
-        var lastAverageMS: Double?
+        var lastShown: CFTimeInterval?
+        var gapsMS: [Double] = []
+        var last = PresentWindow()
     }
 
+    /// Bounds the gaps kept between two reads.
+    private static let maxGaps = 1024
     private let pending = Mutex(Window())
 
     /// Host times in seconds. A drawable that never showed reports a present time of 0.
@@ -111,13 +185,30 @@ nonisolated final class PresentLatencyInbox: Sendable {
         }
     }
 
-    /// The average since the last call, or the previous average when no frame showed.
-    func averageMS() -> Double? {
+    /// Every drawable that showed, real or interpolated, in present order.
+    func recordShown(_ presented: CFTimeInterval) {
+        guard presented > 0 else { return }
         pending.withLock { window in
-            guard window.frames > 0 else { return window.lastAverageMS }
-            let average = window.totalSeconds / Double(window.frames) * 1000
-            window = Window(lastAverageMS: average)
-            return average
+            if let last = window.lastShown, presented > last, window.gapsMS.count < Self.maxGaps {
+                window.gapsMS.append((presented - last) * 1000)
+            }
+            window.lastShown = presented
+        }
+    }
+
+    /// The window since the last call; a part without new presents keeps its last value.
+    func take() -> PresentWindow {
+        pending.withLock { window in
+            if window.frames > 0 {
+                window.last.latencyMS = window.totalSeconds / Double(window.frames) * 1000
+            }
+            if let pacing = PresentPacing(gapsMS: window.gapsMS) {
+                window.last.pacing = pacing
+            }
+            window.totalSeconds = 0
+            window.frames = 0
+            window.gapsMS.removeAll(keepingCapacity: true)
+            return window.last
         }
     }
 }
@@ -125,9 +216,15 @@ nonisolated final class PresentLatencyInbox: Sendable {
 nonisolated extension RenderPerformanceReadout {
     public static func frameInterpolationText(_ status: FrameInterpolationStatus) -> String {
         let latency = status.presentLatencyMS.map { String(format: "%.1f ms", $0) } ?? "n/a"
-        let rates = String(
+        let shown = String(
             format: "Real: %.0f fps  Shown: %.0f fps", status.realFPS, status.shownFPS
         )
+        let rates = status.pacing.map {
+            shown + String(
+                format: "\nFrame gap: %.1f ms, longest %.1f ms, %d hitches",
+                $0.averageGapMS, $0.longestGapMS, $0.hitches
+            )
+        } ?? shown
         if let reason = status.unsupportedReason {
             return "Frame interpolation: unavailable\n\(reason)"
         }

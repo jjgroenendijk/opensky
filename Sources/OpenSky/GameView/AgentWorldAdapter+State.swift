@@ -273,7 +273,10 @@ extension AgentWorldAdapter {
             "enabled": .bool(status.enabled), "running": .bool(status.isRunning),
             "shownFPS": .number(status.shownFPS),
             "builtFrames": .init(status.interpolatedFrames),
-            "presentLatencyMS": status.presentLatencyMS.map(AgentJSON.number) ?? .null
+            "presentLatencyMS": status.presentLatencyMS.map(AgentJSON.number) ?? .null,
+            "frameGapMS": status.pacing.map { .number($0.averageGapMS) } ?? .null,
+            "longestFrameGapMS": status.pacing.map { .number($0.longestGapMS) } ?? .null,
+            "hitches": status.pacing.map { .init($0.hitches) } ?? .null
         ]
     }
 }
