@@ -226,6 +226,10 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         game.packages.resume(key)
     }
 
+    func showCrimeNotice(_ text: String) {
+        game.hud.showNotification(text)
+    }
+
     var isDialogueOpen: Bool {
         game.dialogueMenu.isOpen
     }

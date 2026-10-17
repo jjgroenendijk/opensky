@@ -77,6 +77,11 @@ The bounty readout names them with the string settings `sCrimeTypeSteal`, `sCrim
 `sCrimeTypeMurder`, and `sCrimeTypeTrespass`. The game also names `sCrimeTypePickpocket`,
 `sCrimeTypeEscape`, and `sCrimeTypeWerewolf`; OpenSky reads those when it counts those crimes.
 
+A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
+"bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared
+bounty with `sRemoveCrimeGold`, "bounty removed from". The settings hold only the words; the order
+of gold, words, and faction is OpenSky's reading.
+
 The prices come from the record, not from game settings. `openskycli gmst list --prefix iCrime`
 on the local install shows two settings, `iCrimeGoldStealHorse` (100) and `iCrimeGoldWerewolf`
 (1000), and neither prices these four. `CrimeFactionWhiterun`'s `CRVA` reads "murder 1000,

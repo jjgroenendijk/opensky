@@ -84,6 +84,9 @@ public final class CrimeCoordinator {
     ) {
         reporter = CrimeReporter(runtime: runtime, world: self)
         reporter?.storyEvents = storyEvents
+        reporter?.onPlayerBounty = { [weak self] faction, gold in
+            self?.showBountyNotice(gold: gold, added: true, faction: faction)
+        }
         self.pluginName = pluginName
         // A new load order carries different factions for the panel to offer.
         panel.options = nil
@@ -172,6 +175,13 @@ public final class CrimeCoordinator {
         guard let reporter, let owner = cellOwner(at: location) else { return }
         guard !crimeActor(.player).mayUse(owner) else { return }
         note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
+    }
+
+    func showBountyNotice(gold: Int32, added: Bool, faction: ReferenceKey) {
+        guard gold > 0 else { return }
+        world?.showCrimeNotice(
+            crimeTexts.bountyNotice(gold: gold, added: added, faction: factionName(faction))
+        )
     }
 
     private func note(_ outcome: CrimeOutcome, as label: String) {

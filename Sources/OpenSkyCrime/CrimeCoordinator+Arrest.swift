@@ -33,6 +33,7 @@ extension CrimeCoordinator: CrimeArrestSession {
         }
         switch result {
         case let .success(settlement):
+            showBountyNotice(gold: settlement.bounty, added: false, faction: faction)
             reportArrest(settlement)
             serve(settlement)
         case let .failure(refusal):

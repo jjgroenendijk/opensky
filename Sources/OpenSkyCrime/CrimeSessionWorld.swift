@@ -73,6 +73,8 @@ public protocol CrimeSessionWorld: AnyObject {
     func stopActor(_ key: ReferenceKey)
     func suspendPackage(for key: ReferenceKey)
     func resumePackage(for key: ReferenceKey)
+    /// A HUD notice, such as a bounty added or cleared.
+    func showCrimeNotice(_ text: String)
     var isDialogueOpen: Bool { get }
     var lastDialogueOutcome: String? { get }
     func beginDialogue(with speaker: ReferenceKey)

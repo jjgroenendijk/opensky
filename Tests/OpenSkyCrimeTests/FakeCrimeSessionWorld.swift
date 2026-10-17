@@ -36,6 +36,7 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var dialogueOpens = false
     var lastDialogueOutcome: String?
     private(set) var spokenTo: [ReferenceKey] = []
+    private(set) var notices: [String] = []
 
     func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
         cellOwners[location]
@@ -128,6 +129,10 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
 
     func resumePackage(for key: ReferenceKey) {
         resumed.append(key)
+    }
+
+    func showCrimeNotice(_ text: String) {
+        notices.append(text)
     }
 
     func beginDialogue(with speaker: ReferenceKey) {

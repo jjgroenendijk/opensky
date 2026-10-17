@@ -1,4 +1,5 @@
-// The names of crime kinds, from the `sCrimeType*` string settings. The game also
+// The names of crime kinds, from the `sCrimeType*` string settings, and the bounty
+// notices from `sAddCrimeGold` and `sRemoveCrimeGold`. The game also
 // names pickpocketing, escaping jail, and werewolf transformation, which OpenSky
 // does not count yet. See docs/engine/crime.md.
 
@@ -7,6 +8,8 @@ import OpenSkyGameData
 
 nonisolated public struct CrimeTexts: Equatable, Sendable {
     public var names: [CrimeKind: String] = [:]
+    public var bountyAdded = "bounty added to"
+    public var bountyRemoved = "bounty removed from"
 
     public static let vanilla = Self()
 
@@ -14,6 +17,11 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
 
     public func name(of kind: CrimeKind) -> String {
         names[kind] ?? kind.rawValue
+    }
+
+    /// "40 bounty added to Whiterun"; the word order is OpenSky's reading.
+    public func bountyNotice(gold: Int32, added: Bool, faction: String) -> String {
+        "\(gold) \(added ? bountyAdded : bountyRemoved) \(faction)"
     }
 
     static func setting(for kind: CrimeKind) -> String {
@@ -34,6 +42,8 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
                 settings.names[kind] = name
             }
         }
+        store.read("sAddCrimeGold", into: &settings, \.bountyAdded, text: text)
+        store.read("sRemoveCrimeGold", into: &settings, \.bountyRemoved, text: text)
         return settings
     }
 }

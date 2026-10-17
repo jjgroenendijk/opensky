@@ -21,6 +21,8 @@ public final class CrimeReporter: CrimeReporting {
     public weak var world: (any CrimeWorld)?
     /// Takes `ADCR` and `ASSU`.
     public weak var storyEvents: (any StoryEventReporting)?
+    /// The crime faction and the gold, each time a crime by the player costs gold.
+    public var onPlayerBounty: ((ReferenceKey, Int32) -> Void)?
 
     public init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
         self.runtime = runtime
@@ -140,6 +142,9 @@ public final class CrimeReporter: CrimeReporting {
             ))
         }
         if outcome.gold > 0, let faction = outcome.faction {
+            if event.perpetrator == .player {
+                onPlayerBounty?(faction, outcome.gold)
+            }
             storyEvents?.reportStoryEvent(.crimeGold(
                 criminal: event.perpetrator,
                 victim: event.victim,
