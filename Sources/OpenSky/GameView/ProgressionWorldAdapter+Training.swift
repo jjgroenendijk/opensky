@@ -43,11 +43,12 @@ extension ProgressionWorldAdapter {
         return true
     }
 
-    func showNotification(_ text: String) {
-        game.hud.showNotification(text)
-    }
-
-    func incrementStat(_ name: String) {
-        game.worldState.incrementMiscStat(name)
+    func run(_ commands: [ProgressionCommand]) {
+        for command in commands {
+            switch command {
+            case let .showNotification(text): game.hud.showNotification(text)
+            case let .incrementStat(name): game.worldState.incrementMiscStat(name)
+            }
+        }
     }
 }

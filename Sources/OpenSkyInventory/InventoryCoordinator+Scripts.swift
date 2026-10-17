@@ -28,15 +28,12 @@ extension InventoryCoordinator {
     /// and moves the items to `other` when one is named.
     public func scriptRemoveItem(
         _ item: FormID, count: Int32, from key: ReferenceKey, to other: ReferenceKey?
-    ) -> Bool {
-        guard let runtime, let holder = scriptHolder(key) else { return false }
+    ) -> InventoryResult<Bool> {
+        guard let runtime, let holder = scriptHolder(key) else { return InventoryResult(false) }
         let taken = min(count, runtime.inventory.count(of: item, in: holder))
-        guard taken > 0 else { return true }
+        guard taken > 0 else { return InventoryResult(true) }
         let changed = move(item, count: taken, from: holder, to: other.flatMap(scriptHolder))
-        if changed {
-            world?.equipmentChanged(on: holder)
-        }
-        return changed
+        return InventoryResult(changed, commands: changed ? [.equipmentChanged(holder)] : [])
     }
 
     /// `ObjectReference.DropObject`: up to `count` land in front of the player as one
@@ -44,32 +41,32 @@ extension InventoryCoordinator {
     /// - Returns: the dropped reference, or nil when nothing was dropped.
     public func scriptDropObject(
         _ item: FormID, count: Int32, from key: ReferenceKey
-    ) -> ReferenceKey? {
-        guard key == .player, let runtime, let placement = world?.dropPlacement() else {
-            return nil
+    ) -> InventoryResult<ReferenceKey?> {
+        guard key == .player, let runtime, let placement = world.dropPlacement() else {
+            return InventoryResult(nil)
         }
         let dropped = min(count, runtime.inventory.count(of: item, in: runtime.player))
         guard dropped > 0, let spawned = try? runtime.drop(item, count: dropped, at: placement)
-        else { return nil }
-        world?.equipmentChanged(on: runtime.player)
+        else { return InventoryResult(nil) }
         storyEvents?.reportStoryEvent(.removeItem(item, reference: nil, owner: nil, how: .dropped))
         scriptNote("Script dropped \(dropped) \(name(of: item)).")
-        return spawned
+        return InventoryResult(spawned, commands: [.equipmentChanged(runtime.player)])
     }
 
     /// `ObjectReference.RemoveAllItems`: empties the holder, worn items too,
     /// into `other` when one is named.
-    public func scriptRemoveAllItems(from key: ReferenceKey, to other: ReferenceKey?) -> Bool {
-        guard let runtime, let holder = scriptHolder(key) else { return false }
+    public func scriptRemoveAllItems(
+        from key: ReferenceKey, to other: ReferenceKey?
+    ) -> InventoryResult<Bool> {
+        guard let runtime, let holder = scriptHolder(key) else { return InventoryResult(false) }
         let destination = other.flatMap(scriptHolder)
         var changed = false
         for stack in runtime.inventory.inventory(of: holder).stacks {
             changed = move(stack.item, count: stack.count, from: holder, to: destination)
                 || changed
         }
-        world?.equipmentChanged(on: holder)
         scriptNote("Script emptied \(holderName(holder)).")
-        return changed
+        return InventoryResult(changed, commands: [.equipmentChanged(holder)])
     }
 
     /// `ObjectReference.GetItemCount`. Nil without a holder.
@@ -79,17 +76,16 @@ extension InventoryCoordinator {
     }
 
     /// `Actor.EquipItem`. An actor that does not hold the item is given one first.
-    public func scriptEquipItem(_ item: FormID, on key: ReferenceKey) -> Bool {
-        guard let equipment, let holder = scriptHolder(key) else { return false }
+    public func scriptEquipItem(_ item: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
+        guard let equipment, let holder = scriptHolder(key) else { return InventoryResult(false) }
         if equipment.inventory.count(of: item, in: holder) == 0 {
             guard (try? equipment.inventory.add(item, count: 1, to: holder)) != nil else {
-                return false
+                return InventoryResult(false)
             }
         }
-        guard (try? equipment.equip(item, on: holder)) != nil else { return false }
-        world?.equipmentChanged(on: holder)
+        guard (try? equipment.equip(item, on: holder)) != nil else { return InventoryResult(false) }
         scriptNote("Script equipped \(name(of: item)) on \(holderName(holder)).")
-        return true
+        return InventoryResult(true, commands: [.equipmentChanged(holder)])
     }
 
     /// `Form.GetGoldValue`: the item's `DATA` value. Nil for a form that is no item.
@@ -126,28 +122,24 @@ extension InventoryCoordinator {
     }
 
     /// `Actor.UnequipAll`. The items stay in the inventory.
-    public func scriptUnequipAll(on key: ReferenceKey) -> Bool {
-        guard let equipment, let holder = scriptHolder(key) else { return false }
-        if equipment.unequipAll(on: holder) {
-            world?.equipmentChanged(on: holder)
-        }
-        return true
+    public func scriptUnequipAll(on key: ReferenceKey) -> InventoryResult<Bool> {
+        guard let equipment, let holder = scriptHolder(key) else { return InventoryResult(false) }
+        let changed = equipment.unequipAll(on: holder)
+        return InventoryResult(true, commands: changed ? [.equipmentChanged(holder)] : [])
     }
 
     /// `Actor.UnequipItem`. Unequipping what is not worn changes nothing.
-    public func scriptUnequipItem(_ item: FormID, on key: ReferenceKey) -> Bool {
-        guard let equipment, let holder = scriptHolder(key) else { return false }
-        if equipment.unequip(item, on: holder) {
-            world?.equipmentChanged(on: holder)
-        }
-        return true
+    public func scriptUnequipItem(_ item: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
+        guard let equipment, let holder = scriptHolder(key) else { return InventoryResult(false) }
+        let changed = equipment.unequip(item, on: holder)
+        return InventoryResult(true, commands: changed ? [.equipmentChanged(holder)] : [])
     }
 
     /// `Actor.UnequipItemSlot(aiSlot)`: takes off every worn item that covers biped slot
     /// `aiSlot`, 30 to 61. The items stay in the inventory.
-    public func scriptUnequipSlot(_ slot: Int32, on key: ReferenceKey) -> Bool {
+    public func scriptUnequipSlot(_ slot: Int32, on key: ReferenceKey) -> InventoryResult<Bool> {
         guard (30 ... 61).contains(slot), let equipment, let holder = scriptHolder(key) else {
-            return false
+            return InventoryResult(false)
         }
         let mask = BodySlots(rawValue: 1 << UInt32(slot - 30))
         let worn = equipment.equipped(on: holder).filter {
@@ -156,19 +148,16 @@ extension InventoryCoordinator {
         for item in worn {
             _ = equipment.unequip(item, on: holder)
         }
-        if !worn.isEmpty {
-            world?.equipmentChanged(on: holder)
-        }
-        return true
+        return InventoryResult(true, commands: worn.isEmpty ? [] : [.equipmentChanged(holder)])
     }
 
     /// `Actor.SetOutfit`: the default outfit's pieces leave, then the new pieces
     /// are given and worn. Slot rules unequip whatever else the new pieces cover.
-    public func scriptSetOutfit(_ outfit: FormID, on key: ReferenceKey) -> Bool {
+    public func scriptSetOutfit(_ outfit: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
         guard
             let equipment, let holder = scriptHolder(key),
             let pieces = equipment.inventory.baselines.outfitStacks(outfit)
-        else { return false }
+        else { return InventoryResult(false) }
         let inventory = equipment.inventory
         let kept = Set(pieces.map(\.item))
         let defaults = inventory.baselines.baseline(for: holder.owner).equipped
@@ -186,9 +175,8 @@ extension InventoryCoordinator {
             }
             _ = try? equipment.equip(piece.item, on: holder)
         }
-        world?.equipmentChanged(on: holder)
         scriptNote("Script set the outfit of \(holderName(holder)).")
-        return true
+        return InventoryResult(true, commands: [.equipmentChanged(holder)])
     }
 
     /// The plugin inventory of a resident holder, for a diff against its first write.

@@ -293,15 +293,14 @@ struct PackageCoordinatorTests {
         )]
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
-        let coordinator = PackageCoordinator()
+        let world = FakePackageWorld()
+        let coordinator = PackageCoordinator(world: world)
         coordinator.wire(store: PackageStore(
             packages: [morning, fallback, walk, ride, patrol, lockUp],
             actorTemplates: ActorTemplateResolver(
                 actors: [0x600: actor, 0x7: player], leveledActors: [:]
             )
         ))
-        let world = FakePackageWorld()
-        coordinator.attach(world: world)
         return (coordinator, world)
     }
 }

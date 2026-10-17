@@ -73,7 +73,6 @@ final class CombatWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
         combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
-        combat.attach(world: self)
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
@@ -81,20 +80,21 @@ final class CombatWorldAdapter {
         )
         // A frame step, not the audio tick: a swing must resolve with audio off.
         let frameSteps = renderer.session.frameSteps
-        frameSteps.register(.melee) { [weak combat, weak renderer, weak game = self.game] _ in
+        frameSteps.register(.melee) { [weak self, weak combat, weak renderer] _ in
             guard let combat, let renderer else { return }
             let locomotion = renderer.locomotion
-            if renderer.movementMode.isPlayerControlled, let game {
+            if renderer.movementMode.isPlayerControlled, let self {
                 combat.notePlayerSneaking(game.player.isSneaking)
             }
             for (name, value) in combat.perkGraphFlagChanges() {
                 locomotion.write(.bool(value), to: name)
             }
-            combat.advanceMelee(
+            let commands = combat.advanceMelee(
                 events: locomotion.graphEvents.drain(locomotion.meleeEventConsumer),
                 intent: locomotion.meleeIntent,
                 isPlayerControlled: renderer.movementMode.isPlayerControlled
             )
+            self?.run(commands)
         }
     }
 
@@ -103,7 +103,6 @@ final class CombatWorldAdapter {
         let combat = game.combat
         combat.arrows = ArrowSettings
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        combat.attach(world: self)
         combat.wireArchery(
             settings: settings,
             items: Self.items(provider),
@@ -111,15 +110,17 @@ final class CombatWorldAdapter {
         )
         // The world tick delivers a zero delta on a menu-paused frame, so an
         // arrow hangs in the air behind an open menu.
-        renderer.session.worldTick.register(.archery) { [weak combat, weak renderer] delta in
+        let worldTick = renderer.session.worldTick
+        worldTick.register(.archery) { [weak self, weak combat, weak renderer] delta in
             guard let combat, let renderer else { return }
             let locomotion = renderer.locomotion
-            combat.advanceArchery(
+            let commands = combat.advanceArchery(
                 events: locomotion.graphEvents.drain(locomotion.archeryEventConsumer),
                 intent: locomotion.archeryIntent,
                 isPlayerControlled: renderer.movementMode.isPlayerControlled,
                 delta: delta
             )
+            self?.run(commands)
         }
     }
 
@@ -128,11 +129,23 @@ final class CombatWorldAdapter {
         let settings = provider.combatSettings
         let combat = game.combat
         combat.difficultySettings = provider.difficultySettings
-        combat.attach(world: self)
         combat.wireLoop(settings: settings)
         renderer.session.worldTick.register(.combatLoop) { [weak combat, weak self] delta in
-            combat?.advanceLoop(by: delta)
+            self?.run(combat?.advanceLoop(by: delta) ?? [])
             self?.updateNPCDrawStates()
+        }
+    }
+
+    /// Runs what a combat step asked of the session.
+    func run(_ commands: [CombatCommand]) {
+        for command in commands {
+            switch command {
+            case let .showNotification(text): game.hud.showNotification(text)
+            case let .playImpact(impact, position): playImpact(impact, at: position)
+            case let .removeReference(key): game.worldState.reset(key)
+            case .resetRagdolls: game.ragdoll.runtime?.reset()
+            case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
+            }
         }
     }
 

@@ -9,10 +9,20 @@ import OpenSkyCombat
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyWorld
 import simd
 
 extension MagicWorldAdapter {
+    func run(_ commands: [MagicCommand]) {
+        for command in commands {
+            switch command {
+            case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
+            case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
+            }
+        }
+    }
+
     /// The player's graph reads the magnitude before the event, as a melee
     /// stagger writes it. An NPC has no graph, so the loop plays its clip.
     @discardableResult

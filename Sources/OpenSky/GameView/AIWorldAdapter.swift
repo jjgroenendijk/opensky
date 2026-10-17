@@ -36,6 +36,7 @@ protocol AIWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var combat: CombatCoordinator { get }
     var crime: CrimeCoordinator { get }
+    var crimeWorld: CrimeWorldAdapter { get }
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var factions: FactionCoordinator { get }
@@ -142,14 +143,14 @@ final class AIWorldAdapter {
     func wirePerception(provider: WorldDataStores, renderer: Renderer) {
         let settings = provider.detectionSettings
         let perception = game.perception
-        let crime = game.crime
         perception.wire(settings: settings)
-        renderer.session.worldTick.register(.perception) { [weak perception, weak crime] delta in
-            perception?.advance(by: delta)
+        renderer.session.worldTick.register(.perception) { [weak self] delta in
+            guard let self else { return }
+            run(game.perception.advance(by: delta))
             // After the pass, so a trespass is judged against this frame's detection.
-            crime?.advanceTrespass()
+            game.crime.advanceTrespass()
             // After the trespass, so the guards see a bounty charged this frame.
-            crime?.advanceGuardResponse()
+            game.crimeWorld.run(game.crime.advanceGuardResponse())
         }
         renderer.worldOverlaySources
             .register(identifier: "detection") { [weak perception] context, list in
@@ -358,7 +359,7 @@ extension AIWorldAdapter: AINavigationWorld {
         if let horse = vehicleCarrier(of: rider) {
             _ = game.streamer?.stopActor(horse)
         }
-        game.vehicleWorld.vehicles.detach(rider)
+        game.vehicleWorld.detach(rider)
         game.npcAnimation.dismount(rider)
     }
 
@@ -478,9 +479,11 @@ extension AIWorldAdapter: PerceptionSessionWorld {
         return InteractionRaycaster.nearestHit(ray: ray, shapes: shapes) == nil
     }
 
-    func reportSneakSkillUse(_ amount: Float, by actor: ReferenceKey) {
-        _ = game.progression.reportSkillUse(
-            SkillUseEvent(actor: actor, action: .hidden, amount: amount)
-        )
+    func run(_ commands: [PerceptionCommand]) {
+        for case let .reportSneakSkillUse(amount, actor) in commands {
+            _ = game.progression.reportSkillUse(
+                SkillUseEvent(actor: actor, action: .hidden, amount: amount)
+            )
+        }
     }
 }

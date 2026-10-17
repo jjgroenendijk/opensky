@@ -15,8 +15,7 @@ struct RuntimeStateCoordinatorTests {
     private let coordinator: RuntimeStateCoordinator
 
     init() {
-        coordinator = RuntimeStateCoordinator(store: store)
-        coordinator.attach(world: world)
+        coordinator = RuntimeStateCoordinator(store: store, world: world)
     }
 
     /// Reference and global writes share one sequence counter, so the merged

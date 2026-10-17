@@ -46,7 +46,6 @@ final class FakeCoordinatorWorld: CombatWorld {
     private(set) var cancelledCasts: [ReferenceKey] = []
     private(set) var raisedEvents: [String] = []
     private(set) var spawned: [ReferenceSpawnState] = []
-    private(set) var resetKeys: [ReferenceKey] = []
     private var nextKey: UInt64 = 100
 
     var playerAttacker: MeleeAttacker? {
@@ -189,13 +188,9 @@ final class FakeCoordinatorWorld: CombatWorld {
         false
     }
 
-    func playImpact(_: ResolvedMeleeImpact, at _: SIMD3<Float>) {}
-
     func impactMaterial(of _: ReferenceKey) -> FormID? {
         nil
     }
-
-    func setCombatMusicActive(_: Bool) {}
 
     func sweep(_: ShapeSweepQuery) -> ShapeSweepHit? {
         nil
@@ -211,15 +206,9 @@ final class FakeCoordinatorWorld: CombatWorld {
         return .generated(nextKey)
     }
 
-    func resetReference(_ key: ReferenceKey) {
-        resetKeys.append(key)
-    }
-
     func trimBodyTransients(to _: CombatTransientLimits) -> CombatTransientCounts {
         trimmedBodies
     }
-
-    func resetRagdolls() {}
 
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         spellHits.append(hit)
@@ -231,14 +220,9 @@ final class FakeCoordinatorWorld: CombatWorld {
     }
 
     private(set) var skillUses: [SkillUseEvent] = []
-    private(set) var notices: [String] = []
 
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
         skillUses.append(use)
         return use.amount
-    }
-
-    func showNotification(_ text: String) {
-        notices.append(text)
     }
 }

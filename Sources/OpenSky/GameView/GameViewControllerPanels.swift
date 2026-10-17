@@ -50,12 +50,12 @@ extension GameViewController: ItemControlProviding {
 
     @discardableResult
     func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
-        inventory.equipItem(item, on: target)
+        inventoryWorld.run(inventory.equipItem(item, on: target))
     }
 
     @discardableResult
     func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome {
-        inventory.unequipItem(item, on: target)
+        inventoryWorld.run(inventory.unequipItem(item, on: target))
     }
 }
 
@@ -97,11 +97,11 @@ extension GameViewController: CraftingControlProviding {
     }
 
     func forceHarvest() -> ItemActionOutcome {
-        inventory.forceHarvest()
+        inventoryWorld.run(inventory.harvestInteractionTarget())
     }
 
     func resetHarvest() -> ItemActionOutcome {
-        inventory.resetHarvest()
+        inventoryWorld.run(inventory.resetHarvestOfInteractionTarget())
     }
 }
 
@@ -115,11 +115,11 @@ extension GameViewController: LockControlProviding {
     }
 
     func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome {
-        inventory.locks.setSelectedLockLocked(locked)
+        inventoryWorld.run(inventory.locks.setSelectedLockLocked(locked))
     }
 
     func setPlayerCarriesEveryKey(_ enabled: Bool) {
-        inventory.locks.setPlayerCarriesEveryKey(enabled)
+        inventoryWorld.run(inventory.locks.setPlayerCarriesEveryKey(enabled))
     }
 
     func pickSelectedLock() -> LockActionOutcome {
@@ -260,22 +260,22 @@ extension GameViewController: CrimeFactionControlProviding {
 
     @discardableResult
     func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
-        crime.modifySelectedBounty(by: gold, violent: violent)
+        ranCrimeCommands(crime.modifySelectedBounty(by: gold, violent: violent))
     }
 
     @discardableResult
     func clearSelectedBounty() -> CrimeFactionActionOutcome {
-        crime.clearSelectedBounty()
+        ranCrimeCommands(crime.clearSelectedBounty())
     }
 
     @discardableResult
     func checkGuardConfrontation() -> CrimeFactionActionOutcome {
-        crime.checkGuardConfrontation()
+        ranCrimeCommands(crime.checkGuardConfrontation())
     }
 
     @discardableResult
     func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
-        crime.resistArrestWithSelectedFaction()
+        ranCrimeCommands(crime.resistArrestWithSelectedFaction())
     }
 
     @discardableResult
@@ -301,6 +301,13 @@ extension GameViewController: CrimeFactionControlProviding {
     @discardableResult
     func barterWithSocialSubject() -> CrimeFactionActionOutcome {
         crime.barterWithSocialSubject()
+    }
+
+    private func ranCrimeCommands(_ outcome: CrimeFactionActionOutcome)
+        -> CrimeFactionActionOutcome
+    {
+        crimeWorld.run(crime.takeCommands())
+        return outcome
     }
 }
 

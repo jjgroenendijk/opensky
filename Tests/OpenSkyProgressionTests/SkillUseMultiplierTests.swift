@@ -23,8 +23,7 @@ struct SkillUseMultiplierTests {
 
     private func coordinator(world: FakeProgressionWorld) throws -> PerkCoordinator {
         let index = try PerkRuntimeFixture.index()
-        let coordinator = PerkCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = PerkCoordinator(world: world)
         coordinator.wire(
             PerkRuntime(
                 store: WorldStateStore(),

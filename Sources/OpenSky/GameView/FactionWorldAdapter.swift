@@ -11,9 +11,9 @@ import OpenSkyScripting
 import OpenSkyWorld
 
 /// What the faction adapter reads. The streamer is a closure, because a reload
-/// replaces it.
+/// replaces it; the coordinator is one, because it is built with this adapter.
 struct FactionWorldDependencies {
-    let factions: FactionCoordinator
+    let factions: () -> FactionCoordinator
     let actors: ActorWorldAdapter
     let streamer: () -> CellStreamer?
 }
@@ -27,7 +27,7 @@ final class FactionWorldAdapter {
     }
 
     var factions: FactionCoordinator {
-        dependencies.factions
+        dependencies.factions()
     }
 
     /// After `wirePerks`: an actor's `SNAM` run resolves through the same
@@ -37,7 +37,6 @@ final class FactionWorldAdapter {
             let factionStore = provider.factionStore,
             let relationshipStore = provider.relationshipStore
         else { return }
-        factions.attach(world: self)
         factions.wire(
             factions: factionStore,
             relationships: relationshipStore,

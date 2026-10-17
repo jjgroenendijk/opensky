@@ -41,13 +41,13 @@ final class LockWorldAdapter {
     /// After `wireWorldItems`, which wires the coordinator's item runtime.
     func wireLocks(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
         let locks = game.inventory.locks
-        locks.world = self
         locks.settings = provider.lockTrapData.lockpicking
         locks.lockpickItem = provider.lockTrapData.lockpickItem
         locks.texts = LockTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        streamer.activationGate.gate = { [weak locks] target in
-            locks?.gate(target)
+        let inventoryWorld = game.inventoryWorld
+        streamer.activationGate.gate = { [weak locks, weak inventoryWorld] target in
+            locks.flatMap { inventoryWorld?.run($0.gate(target)) }
         }
         let menu = game.lockpickingMenu
         streamer.activationGate.refusals.add { [weak menu] refusal in
@@ -70,10 +70,6 @@ final class LockWorldAdapter {
 }
 
 extension LockWorldAdapter: LockWorld {
-    func showLockNotice(_ text: String) {
-        game.hud.showNotification(text)
-    }
-
     var lockpickingSkill: Float {
         guard let index = ActorValueIdentity.index(named: "Lockpicking") else { return 0 }
         return game.actorValues.runtime?.value(at: index, on: .player) ?? 0
@@ -97,10 +93,6 @@ extension LockWorldAdapter: LockWorld {
 
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
         game.progression.reportSkillUse(use)
-    }
-
-    func lockStateChanged() {
-        game.inventoryWorld.refreshInteractionTarget()
     }
 
     func lockables() -> [PlacedInteraction] {

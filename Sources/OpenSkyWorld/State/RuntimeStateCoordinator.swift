@@ -17,7 +17,7 @@ public final class RuntimeStateCoordinator {
     public var calendarTexts = CalendarTexts.vanilla
 
     let worldState: WorldStateStore
-    weak var world: (any RuntimeStateWorld)?
+    weak let world: (any RuntimeStateWorld)?
 
     /// The readout asks twice a second, so these are cached. Globals and music
     /// records do not change while the app runs; slots change only on save or load.
@@ -31,11 +31,8 @@ public final class RuntimeStateCoordinator {
     /// Accumulated across every evaluation, so the readout shows a running total.
     var conditionTally = ConditionTally()
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, world: any RuntimeStateWorld) {
         worldState = store
-    }
-
-    public func attach(world: any RuntimeStateWorld) {
         self.world = world
     }
 

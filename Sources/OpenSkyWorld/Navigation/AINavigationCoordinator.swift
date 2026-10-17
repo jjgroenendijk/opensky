@@ -48,14 +48,11 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
     /// a still camera pays for one 4,096-unit raycast.
     private var pick: AICrosshairPick?
     private let packages: PackageCoordinator
-    weak var world: (any AINavigationWorld)?
+    weak let world: (any AINavigationWorld)?
 
-    public init(packages: PackageCoordinator) {
-        self.packages = packages
-    }
-
-    public func attach(world: any AINavigationWorld) {
+    public init(packages: PackageCoordinator, world: any AINavigationWorld) {
         self.world = world
+        self.packages = packages
     }
 
     public var aiNavigationSnapshot: AINavigationSnapshot {

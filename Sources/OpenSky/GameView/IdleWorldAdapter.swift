@@ -30,14 +30,12 @@ protocol IdleWorldHost: AnyObject {
 final class IdleWorldAdapter {
     unowned let game: any IdleWorldHost
     /// Ambient idles at idle markers, with their props.
-    let idles = IdleCoordinator()
+    private(set) lazy var idles = IdleCoordinator(world: self)
     /// The per-actor switch between the baked and the assembled head.
-    let headAssembly = HeadAssemblyCoordinator()
+    private(set) lazy var headAssembly = HeadAssemblyCoordinator(world: self)
 
     init(game: any IdleWorldHost) {
         self.game = game
-        idles.attach(world: self)
-        headAssembly.attach(world: self)
     }
 
     /// After packages, because the pass reads each actor's current procedure.

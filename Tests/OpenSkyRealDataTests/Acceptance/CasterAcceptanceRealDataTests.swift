@@ -131,8 +131,7 @@ struct CasterAcceptanceRealDataTests {
                 spells: data.spells,
                 equipSlots: EquipSlotStore(index: data.index)
             )
-            caster = CasterRuntime(spellbook: spellbook, values: values)
-            caster.attach(world: world)
+            caster = CasterRuntime(spellbook: spellbook, values: values, world: world)
         }
     }
 

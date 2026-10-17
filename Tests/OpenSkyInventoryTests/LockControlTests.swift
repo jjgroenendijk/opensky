@@ -32,11 +32,11 @@ struct LockControlTests {
         world.placed = [Locks.door(level: .novice).interaction]
         let rig = try Locks.coordinator(world: world)
         let locks = rig.locks
-        #expect(locks.setSelectedLockLocked(false) == .noSelection)
+        #expect(locks.setSelectedLockLocked(false).value == .noSelection)
         locks.selectLock(Locks.door)
-        locks.setSelectedLockLocked(false)
+        _ = locks.setSelectedLockLocked(false)
         #expect(locks.lockSnapshot.selectedRow?.isLocked == false)
-        locks.setSelectedLockLocked(true)
+        _ = locks.setSelectedLockLocked(true)
         #expect(locks.lockSnapshot.selectedRow?.isLocked == true)
         withExtendedLifetime(rig) {}
     }
@@ -46,10 +46,9 @@ struct LockControlTests {
         let rig = try Locks.coordinator(world: world)
         let locks = rig.locks
         let target = Locks.door(level: .requiresKey)
-        #expect(locks.gate(target) != nil)
-        locks.setPlayerCarriesEveryKey(true)
-        #expect(locks.gate(target) == nil)
-        #expect(world.changes > 0)
+        #expect(locks.gate(target).value != nil)
+        #expect(locks.setPlayerCarriesEveryKey(true) == [.refreshInteractionTarget])
+        #expect(locks.gate(target).value == nil)
         withExtendedLifetime(rig) {}
     }
 

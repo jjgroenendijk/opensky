@@ -19,8 +19,7 @@ struct CombatPerkTermsTests {
     private static func coordinator(
         _ world: FakeCoordinatorWorld, items: ItemDefinitionStore? = nil
     ) -> CombatCoordinator {
-        let coordinator = CombatCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = CombatCoordinator(world: world)
         coordinator.wireMelee(settings: .synthetic, items: items, impacts: nil)
         return coordinator
     }

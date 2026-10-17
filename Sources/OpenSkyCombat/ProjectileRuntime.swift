@@ -49,8 +49,8 @@ public final class ProjectileRuntime {
     /// Detonates a PROJ explosion link. Nil in a synthetic session, and then nothing explodes.
     public var explosions: ExplosionRuntime?
 
-    /// `private(set)` rather than `private` so the satellite files can read it
-    /// while only `attach(world:)` in this file can write it.
+    /// `private(set)` rather than `private` so the satellite files can read it.
+    /// Weak, because the world owns this runtime.
     public private(set) weak var world: (any ProjectileWorld)?
     private var nextID = 1
     private var accumulatedTime: Float = 0
@@ -58,12 +58,6 @@ public final class ProjectileRuntime {
     public init(settings: ArcherySettings, world: (any ProjectileWorld)? = nil) {
         self.settings = settings
         self.world = world
-    }
-
-    /// Attaches (or detaches) the world this runtime resolves against.
-    public func attach(world: (any ProjectileWorld)?) {
-        self.world = world
-        reset()
     }
 
     // MARK: - Firing

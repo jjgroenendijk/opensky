@@ -29,7 +29,7 @@ protocol VehicleWorldHost: AnyObject {
 
 final class VehicleWorldAdapter {
     unowned let game: any VehicleWorldHost
-    let vehicles = VehicleCoordinator()
+    private(set) lazy var vehicles = VehicleCoordinator(world: self)
     /// True after `SetPlayerAIDriven(true)`: the player's packages move the player.
     private(set) var isPlayerAIDriven = false
     /// The cell each follower is moving into while its old cell still draws it.
@@ -41,21 +41,20 @@ final class VehicleWorldAdapter {
 
     init(game: any VehicleWorldHost) {
         self.game = game
-        vehicles.attach(world: self)
     }
 
     /// After the idles and packages, so a follower reads where its carrier ended up.
     func wireVehicles(renderer: Renderer) {
         game.scripts.bridge?.actorAI = self
         let scripts = game.scripts
-        let events = renderer.session.animationEvents
-        game.idleWorld.idles.onAnimationEvent = { [weak scripts, weak vehicles] actor, name in
+        let idles = game.idleWorld.idles
+        idles.onAnimationEvent = { [weak self, weak scripts, weak renderer] actor, name in
             // The player's idles run on its graph, whose events arrive through the bridge.
             if actor != .player {
-                events.handle(name, from: actor)
+                renderer?.session.animationEvents?.handle(name, from: actor)
             }
             if name == VehicleCore.exitEvent {
-                vehicles?.detach(actor)
+                self?.detach(actor)
             }
             if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
                 scripts?.bridge?.killActor(actor, killer: nil)
@@ -63,9 +62,10 @@ final class VehicleWorldAdapter {
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
         wireWheels(renderer: renderer)
-        renderer.session.worldTick.register(.vehicles) { [weak vehicles, weak renderer] _ in
-            vehicles?.advance()
-            if vehicles?.lastPoses[.player] == nil {
+        renderer.session.worldTick.register(.vehicles) { [weak self, weak renderer] _ in
+            guard let self else { return }
+            run(vehicles.advance())
+            if vehicles.lastPoses[.player] == nil {
                 renderer?.session.playerSeat = nil
             }
         }
@@ -97,12 +97,23 @@ extension VehicleWorldAdapter: VehicleWorld {
         game.streamer?.referenceEntry(key: key)?.formID.rawValue
     }
 
-    func publishVehiclePoses(_ poses: [UInt32: float4x4]) {
-        game.renderer?.vehicleInstancePoses = poses
+    func run(_ commands: [VehicleCommand]) {
+        for command in commands {
+            switch command {
+            case let .publishVehiclePoses(poses): game.renderer?.vehicleInstancePoses = poses
+            case let .publishCarriedPoses(poses): game.streamer?.npcMovementState.carried = poses
+            case let .publishLinks(linked):
+                game.streamer?.npcMovementState.vehicleLinkedActors = linked
+            case let .placePlayer(pose): placePlayer(at: pose)
+            case let .followerMoved(key, pose): vehicleFollowerMoved(key, to: pose)
+            case let .followerRests(key, pose): vehicleFollowerRests(key, at: pose)
+            case let .spinWheels(key, distance): spinVehicleWheels(of: key, rolled: distance)
+            }
+        }
     }
 
-    func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride]) {
-        game.streamer?.npcMovementState.carried = poses
+    func detach(_ follower: ReferenceKey) {
+        run(vehicles.detach(follower))
     }
 
     /// The player's root sits on the vehicle, as every rider's does. While the player
@@ -216,10 +227,6 @@ extension VehicleWorldAdapter: VehicleWorld {
         vehicle.pose.publish(vehicle.rig.pose(rolled: distance))
     }
 
-    func publishVehicleLinks(_ linked: Set<ReferenceKey>) {
-        game.streamer?.npcMovementState.vehicleLinkedActors = linked
-    }
-
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
         guard key != .player else { return }
         let cell = game.streamer?.cellLocation(of: key)
@@ -236,7 +243,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
 
     func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) {
         guard let vehicle else {
-            vehicles.detach(rider)
+            detach(rider)
             return
         }
         vehicles.board(rider, on: vehicle)

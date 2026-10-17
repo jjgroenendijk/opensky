@@ -70,8 +70,9 @@ public final class GameSession: RenderFrameDriver {
     /// Footstep director, fed from the pause-aware audio hook with the bridge's graph
     /// events. A paused frame fires nothing. Nil until audio is on.
     public var footstepDirector: WorldAudioFootstepDirector?
-    /// Sounds, camera shake, and head tracking that clip annotations ask for.
-    public let animationEvents = AnimationEventCoordinator()
+    /// Sounds, camera shake, and head tracking that clip annotations ask for. Nil until
+    /// the app wires one.
+    public var animationEvents: AnimationEventCoordinator?
     /// Wall-clock delta source for the audio tick, paused in menu mode.
     public var audioClock = FrameSimClock()
     /// Free-fly input, drained once per live frame; nil (offscreen/tests) ->

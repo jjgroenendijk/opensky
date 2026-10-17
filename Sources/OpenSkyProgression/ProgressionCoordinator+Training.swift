@@ -34,7 +34,7 @@ extension ProgressionCoordinator {
     /// raises the skill one point. The notice for a refusal goes to the HUD.
     @discardableResult
     public func train(with offer: TrainerOffer) -> TrainingOutcome {
-        guard let leveling, let skills, let world else { return .unavailable }
+        guard let leveling, let skills else { return .unavailable }
         let level = Int(skills.level(ofSkill: offer.skill, on: skills.player))
         let cost = training.cost(skillLevel: level)
         if
@@ -45,23 +45,23 @@ extension ProgressionCoordinator {
                 gold: world.playerGold()
             )
         {
-            world.showNotification(training.text(for: refusal))
+            pendingCommands.append(.showNotification(training.text(for: refusal)))
             return .refused(refusal)
         }
         guard world.payTrainer(cost, to: offer.trainer) else {
-            world.showNotification(training.insufficientGoldText)
+            pendingCommands.append(.showNotification(training.insufficientGoldText))
             return .refused(.insufficientGold)
         }
         incrementSkill(offer.skill)
         leveling.noteTrainingSession()
-        world.incrementStat("Training Sessions")
+        pendingCommands.append(.incrementStat("Training Sessions"))
         return .trained(skill: offer.skill, level: level + 1, gold: cost)
     }
 
     /// The panel's Train control: one session with the nearest trainer.
     @discardableResult
     public func trainWithNearestTrainer() -> ProgressionActionOutcome {
-        guard let offer = world?.nearestTrainer() else { return record(.noTrainer) }
+        guard let offer = world.nearestTrainer() else { return record(.noTrainer) }
         let skill = ActorValueIdentity.name(at: offer.skill) ?? "skill \(offer.skill)"
         return switch train(with: offer) {
         case let .trained(_, level, gold):

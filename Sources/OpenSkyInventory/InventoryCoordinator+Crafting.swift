@@ -26,25 +26,30 @@ extension InventoryCoordinator {
     /// perk's activate label, which wins.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
         let labelled = locks
-            .labelled(runtime?.labelled(interaction, onDay: world?.gameDaysPassed) ?? interaction)
-        guard let label = world?.perkActivateLabel(for: interaction.reference) else {
+            .labelled(runtime?.labelled(interaction, onDay: world.gameDaysPassed) ?? interaction)
+        guard let label = world.perkActivateLabel(for: interaction.reference) else {
             return labelled
         }
         return labelled.relabelled(label)
     }
 
-    @discardableResult
-    public func harvest(_ interaction: PlacedInteraction) -> ItemActionOutcome {
-        guard let runtime else { return .unavailable }
+    /// Refreshes the prompt, which now reads as harvested.
+    public func harvest(_ interaction: PlacedInteraction) -> InventoryResult<ItemActionOutcome> {
+        guard let runtime else { return InventoryResult(.unavailable) }
         do {
             let outcome = try runtime.harvest(
-                interaction, onDay: world?.gameDaysPassed, count: harvestCount(of: interaction)
+                interaction, onDay: world.gameDaysPassed, count: harvestCount(of: interaction)
             )
-            world?.refreshInteractionTarget()
             let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
-            return note(.harvested(plant: interaction.name, items: items))
+            return InventoryResult(
+                note(.harvested(plant: interaction.name, items: items)),
+                commands: [.refreshInteractionTarget]
+            )
         } catch {
-            return note(.failed(action: "Harvest", reason: String(describing: error)))
+            return InventoryResult(note(.failed(
+                action: "Harvest",
+                reason: String(describing: error)
+            )))
         }
     }
 
@@ -52,36 +57,38 @@ extension InventoryCoordinator {
     func harvestCount(of interaction: PlacedInteraction) -> Int32 {
         let produce = interaction.produce?.ingredient
         let subject = runtime?.inventory.baselines.items.conditionSubject(of: produce)
-        let value = world?.perkModified(
+        let value = world.perkModified(
             1,
             at: .modIngredientsHarvested,
             on: .player,
             subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
             seams: ConditionContext()
-        ) ?? 1
+        )
         return value.isFinite ? Int32(clamping: Int(max(1, value.rounded(.down)))) : 1
     }
 
-    @discardableResult
-    public func harvestInteractionTarget() -> ItemActionOutcome {
-        guard let interaction = world?.crosshairInteraction else {
-            return note(.nothingUnderCrosshair(verb: "harvest"))
+    public func harvestInteractionTarget() -> InventoryResult<ItemActionOutcome> {
+        guard let interaction = world.crosshairInteraction else {
+            return InventoryResult(note(.nothingUnderCrosshair(verb: "harvest")))
         }
         return harvest(interaction)
     }
 
-    @discardableResult
-    public func resetHarvestOfInteractionTarget() -> ItemActionOutcome {
-        guard let runtime else { return .unavailable }
-        guard let interaction = world?.crosshairInteraction else {
-            return note(.nothingUnderCrosshair(verb: "reset"))
+    public func resetHarvestOfInteractionTarget() -> InventoryResult<ItemActionOutcome> {
+        guard let runtime else { return InventoryResult(.unavailable) }
+        guard let interaction = world.crosshairInteraction else {
+            return InventoryResult(note(.nothingUnderCrosshair(verb: "reset")))
         }
         do {
             try runtime.resetHarvest(interaction)
-            world?.refreshInteractionTarget()
-            return note(.grewBack(interaction.name))
+            return InventoryResult(
+                note(.grewBack(interaction.name)), commands: [.refreshInteractionTarget]
+            )
         } catch {
-            return note(.failed(action: "Reset", reason: String(describing: error)))
+            return InventoryResult(note(.failed(
+                action: "Reset",
+                reason: String(describing: error)
+            )))
         }
     }
 

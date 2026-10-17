@@ -63,9 +63,8 @@ struct PapyrusNativeSpellTests {
             spells: SpellStore(index: index, effects: effectStore),
             equipSlots: EquipSlotStore(index: index)
         )
-        let caster = CasterRuntime(spellbook: spellbook, values: values)
         let casterWorld = FakeCasterWorld()
-        caster.attach(world: casterWorld)
+        let caster = CasterRuntime(spellbook: spellbook, values: values, world: casterWorld)
         let effects = EffectBox(
             runtime: ActiveEffectRuntime(
                 values: values,

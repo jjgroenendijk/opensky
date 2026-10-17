@@ -168,7 +168,7 @@ public final class PackageCoordinator {
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
-    weak var world: (any PackageWorld)?
+    weak let world: (any PackageWorld)?
     private var store: PackageStore?
     /// Real seconds until the alias stacks are read again.
     private var aliasRefreshSeconds: Float = 0
@@ -180,14 +180,7 @@ public final class PackageCoordinator {
     static let playerBase = FormID(0x7)
     private var absentSeconds: [ReferenceKey: Float] = [:]
 
-    public init() {}
-
-    public convenience init(world: any PackageWorld) {
-        self.init()
-        attach(world: world)
-    }
-
-    public func attach(world: any PackageWorld) {
+    public init(world: (any PackageWorld)?) {
         self.world = world
     }
 

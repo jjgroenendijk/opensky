@@ -14,8 +14,7 @@ private final class EmptyObjectWorld: ObjectBehaviorWorld {
 struct ObjectBehaviorCoordinatorTests {
     @Test func anObjectWithoutAGraphTakesNoEventAndNoWait() {
         let world = EmptyObjectWorld()
-        let objects = ObjectBehaviorCoordinator()
-        objects.world = world
+        let objects = ObjectBehaviorCoordinator(world: world, files: { nil })
         objects.sync()
         objects.tick(deltaTime: 1 / 60)
         #expect(!objects.send("Trigger", to: 0x10))

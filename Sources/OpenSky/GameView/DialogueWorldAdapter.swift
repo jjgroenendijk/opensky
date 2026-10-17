@@ -220,35 +220,30 @@ extension DialogueWorldAdapter: DialogueWorld {
         game.localizedStringsLoader?()
     }
 
-    func suspendPackage(for actor: ReferenceKey) {
-        game.packages.suspend(actor)
-    }
-
-    func resumePackage(for actor: ReferenceKey) {
-        game.packages.resume(actor)
-    }
-
-    func stopActor(_ actor: ReferenceKey) {
-        game.streamer?.stopActor(actor)
-    }
-
-    func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) {
-        game.streamer?.faceActor(actor, towards: point)
-    }
-
-    func releaseFacing(of actor: ReferenceKey) {
-        game.streamer?.releaseActorFacing(actor)
+    func run(_ commands: [DialogueCommand]) {
+        for command in commands {
+            switch command {
+            case let .suspendPackage(actor): game.packages.suspend(actor)
+            case let .resumePackage(actor): game.packages.resume(actor)
+            case let .stopActor(actor): game.streamer?.stopActor(actor)
+            case let .faceActor(actor, point): game.streamer?.faceActor(actor, towards: point)
+            case let .releaseFacing(actor): game.streamer?.releaseActorFacing(actor)
+            case let .speechChallengeWon(challenge, speaker):
+                speechChallengeWon(challenge, speaker: speaker)
+            case let .spokeToPlayer(speaker): spokeToPlayer(speaker)
+            }
+        }
     }
 
     /// `BRIB`, `INTM`, or `FLAT`, with the actor the player won over as `R1`.
-    func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
+    private func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
         var event = StoryEventData(event: FourCC(stringLiteral: challenge.eventCode))
         event.actor1 = speaker
         game.storyWorld.reportStoryEvent(event)
         game.worldState.incrementMiscStat(challenge.statName)
     }
 
-    func spokeToPlayer(_ speaker: ReferenceKey) {
+    private func spokeToPlayer(_ speaker: ReferenceKey) {
         game.scripts.bridge?.updateScriptedState(of: speaker) {
             $0.setFlag(ScriptedStateName.talkedToPlayer, true)
         }

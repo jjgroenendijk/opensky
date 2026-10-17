@@ -13,8 +13,6 @@ public protocol SceneWorld: SceneHost {
     var sceneFragments: (any SceneFragmentDispatching)? { get }
     /// Game seconds divided by the time scale.
     var sceneSeconds: Double { get }
-    /// A scene actor said a line, which the general subtitles may show.
-    func sceneLineSpoken(_ line: SceneLine)
 }
 
 @MainActor
@@ -37,14 +35,18 @@ public final class SceneCoordinator {
     /// Lines that wait for their voice file, across the per-call runtimes.
     let pendingLines = ScenePendingLines()
     let dialogue: DialogueCoordinator
-    weak var world: (any SceneWorld)?
+    let world: any SceneWorld
+    private var pendingCommands: [SceneCommand] = []
 
-    public init(dialogue: DialogueCoordinator) {
+    public init(dialogue: DialogueCoordinator, world: any SceneWorld) {
         self.dialogue = dialogue
+        self.world = world
     }
 
-    public func attach(world: any SceneWorld) {
-        self.world = world
+    /// Lines said since the last call, also by `start` and `questDidStart`.
+    public func takeCommands() -> [SceneCommand] {
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
     /// Built per call, like the dialogue runtime it wraps.
@@ -53,10 +55,10 @@ public final class SceneCoordinator {
         return SceneRuntime(
             catalog: catalog,
             dialogue: dialogueRuntime,
-            fragments: world?.sceneFragments,
+            fragments: world.sceneFragments,
             host: world,
             pendingLines: pendingLines,
-            now: world?.sceneSeconds ?? 0
+            now: world.sceneSeconds
         )
     }
 
@@ -83,13 +85,16 @@ public final class SceneCoordinator {
     }
 
     /// Advances playing scenes. Builds no runtime while none plays.
-    public func tick() {
+    /// - Returns: the lines said since the last call.
+    public func tick() -> [SceneCommand] {
         ticksSinceScan += 1
         if ticksSinceScan >= Self.rescanInterval {
             rescan()
         }
-        guard !playing.isEmpty, let runtime else { return }
-        record(runtime.tick(scenes: playing))
+        if !playing.isEmpty, let runtime {
+            record(runtime.tick(scenes: playing))
+        }
+        return takeCommands()
     }
 
     /// Starts the quest's begin-on-start scenes.
@@ -126,7 +131,7 @@ public final class SceneCoordinator {
             case .ended: playing.remove(event.scene)
             case let .line(line):
                 lines.append(line)
-                world?.sceneLineSpoken(line)
+                pendingCommands.append(.speak(line))
             default: break
             }
         }

@@ -19,6 +19,7 @@ import OpenSkyRendering
 protocol InventoryMenuHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
@@ -200,8 +201,8 @@ final class InventoryMenuController {
     func activateSelection() {
         perform { entry in
             entry.isEquipped
-                ? game.inventory.unequipItem(entry.item, on: .player).text
-                : game.inventory.equipItem(entry.item, on: .player).text
+                ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
+                : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text
         }
     }
 

@@ -103,7 +103,7 @@ public protocol CraftingControlProviding: AnyObject {
     func resetHarvest() -> ItemActionOutcome
 }
 
-extension InventoryCoordinator: CraftingControlProviding {
+extension InventoryCoordinator {
     public var craftingSnapshot: CraftingControlSnapshot {
         guard runtime != nil else { return .unavailable }
         return CraftingControlSnapshot(
@@ -130,18 +130,10 @@ extension InventoryCoordinator: CraftingControlProviding {
         closeCraftingSession()
     }
 
-    public func forceHarvest() -> ItemActionOutcome {
-        harvestInteractionTarget()
-    }
-
-    public func resetHarvest() -> ItemActionOutcome {
-        resetHarvestOfInteractionTarget()
-    }
-
     private func harvestTarget() -> HarvestTargetReadout? {
-        guard let interaction = world?.crosshairInteraction, interaction.action == .harvest
+        guard let interaction = world.crosshairInteraction, interaction.action == .harvest
         else { return nil }
-        let day = world?.gameDaysPassed
+        let day = world.gameDaysPassed
         let isHarvested = runtime?.isHarvested(interaction, onDay: day) ?? false
         var daysLeft: Float?
         if isHarvested, let day, let regrowth = runtime?.regrowthDay(of: interaction) {

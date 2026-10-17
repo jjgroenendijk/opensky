@@ -16,8 +16,6 @@ import Testing
 private final class FakeDoorWorld: SequenceDoorWorld {
     var doors: [CellSequenceDoor] = []
     var wantsOpen = false
-    var textKeys: [String] = []
-    var leaves: [UInt32: [float4x4]] = [:]
 
     func residentSequenceDoors() -> [CellSequenceDoor] {
         doors
@@ -25,14 +23,6 @@ private final class FakeDoorWorld: SequenceDoorWorld {
 
     func sequenceDoorWantsOpen(_: UInt32) -> Bool {
         wantsOpen
-    }
-
-    func sequenceDoorTextKey(_ name: String, from _: UInt32) {
-        textKeys.append(name)
-    }
-
-    func setSequenceDoorLeaves(_ deltas: [float4x4]?, for reference: UInt32) {
-        leaves[reference] = deltas
     }
 }
 
@@ -92,33 +82,37 @@ struct SequenceDoorTests {
             reference: 0x20, modelPath: "Gate.nif", rig: rig, pose: PlayerPoseBuffer()
         )
         world.doors = [first]
-        let doors = SequenceDoorCoordinator()
-        doors.attach(world: world)
-        doors.sync()
-        doors.tick(deltaTime: 0)
+        let doors = SequenceDoorCoordinator(world: world)
+        #expect(doors.sync().isEmpty)
+        _ = doors.tick(deltaTime: 0)
         #expect(first.pose.bones.first?.translation == SIMD3(10, 0, 0))
         #expect(doors.openStateCode(of: 0x20) == 3)
 
         world.wantsOpen = true
         #expect(doors.openStateCode(of: 0x20) == 2, "a move asked for reads as started")
-        doors.tick(deltaTime: 0.5)
-        #expect(world.textKeys == ["start", "Sound: GateOpen"])
-        #expect(world.leaves[0x20]?.first?.columns.3 == SIMD4(0, 0, 50, 1))
+        let opening = doors.tick(deltaTime: 0.5)
+        #expect(opening.prefix(2) == [
+            .textKey("start", reference: 0x20), .textKey("Sound: GateOpen", reference: 0x20)
+        ])
+        guard case let .setLeaves(leaves, 0x20)? = opening.last else {
+            Issue.record("no leaves for the moving door")
+            return
+        }
+        #expect(leaves?.first?.columns.3 == SIMD4(0, 0, 50, 1))
 
         let rebuilt = CellSequenceDoor(
             reference: 0x20, modelPath: "Gate.nif", rig: rig, pose: PlayerPoseBuffer()
         )
         world.doors = [rebuilt]
-        doors.sync()
-        doors.tick(deltaTime: 1)
+        #expect(doors.sync().isEmpty)
+        _ = doors.tick(deltaTime: 1)
         #expect(doors.rows == [
             SequenceDoorRow(reference: 0x20, modelPath: "Gate.nif", phase: .open)
         ])
         #expect(rebuilt.pose.bones.first?.translation == SIMD3(10, 0, 100))
 
         world.doors = []
-        doors.sync()
-        #expect(world.leaves[0x20] == nil)
+        #expect(doors.sync() == [.setLeaves(nil, reference: 0x20)])
         #expect(doors.openStateCode(of: 0x20) == nil)
     }
 

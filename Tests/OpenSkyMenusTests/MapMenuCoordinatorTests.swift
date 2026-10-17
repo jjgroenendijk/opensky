@@ -114,8 +114,7 @@ struct MapMenuCoordinatorTests {
             Self.site(1, "Riverwood", at: 900),
             Self.site(2, "Whiterun", at: 5000)
         ])
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.tick()
         #expect(world.notifications == ["Discovered Riverwood"])
         #expect(world.experience == 10)
@@ -133,8 +132,7 @@ struct MapMenuCoordinatorTests {
             Self.site(1, "Riverwood", at: 900),
             Self.site(2, "Whiterun", at: 5000)
         ])
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.inspectMarker(offset: -1)
         menu.apply(.reveal)
         #expect(world.sites[1].state == MapMarkerAction.reveal.state)
@@ -155,8 +153,7 @@ struct MapMenuCoordinatorTests {
             Self.site(1, "Riverwood", at: 900),
             Self.site(2, "Whiterun", at: 5000)
         ])
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.tick()
         menu.revealAll()
         #expect(world.sites.allSatisfy { $0.state.isVisible && $0.state.canTravelTo })
@@ -168,8 +165,7 @@ struct MapMenuCoordinatorTests {
     @Test @MainActor
     func scriptsAddMarkersWithOrWithoutTravel() {
         let world = FakeMapWorld(sites: [Self.site(1, "Bleak Falls", at: 90000)])
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.addToMap(Self.key(1), allowFastTravel: false)
         #expect(menu.isVisible(Self.key(1)))
         #expect(!world.sites[0].state.canTravelTo)
@@ -181,8 +177,7 @@ struct MapMenuCoordinatorTests {
     func worldMapOpensTheCameraAndTravelsToTheNearestMarker() {
         let world = FakeMapWorld(sites: [Self.site(1, "Riverwood", at: 900)])
         let menuMode = MenuModeController()
-        let menu = MapMenuCoordinator(menuMode: menuMode)
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: menuMode, world: world)
         menu.tick()
         #expect(menu.open())
         #expect(menuMode.topMenu == MapMenuCoordinator.identifier)
@@ -200,8 +195,7 @@ struct MapMenuCoordinatorTests {
     func refusalKeepsTheMenuOpenAndNamesTheReason() {
         let world = FakeMapWorld(sites: [Self.site(1, "Riverwood", at: 900)])
         world.fastTravelContext.inCombat = true
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.tick()
         menu.open()
         menu.travelToSelected()
@@ -217,8 +211,7 @@ struct MapMenuCoordinatorTests {
     func interiorsOpenTheLocalMap() {
         let world = FakeMapWorld(sites: [])
         world.worldMapLimits = nil
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.open()
         #expect(menu.mode == .local)
         #expect(world.view?.lookAt == SIMD3(0, 0, 0))
@@ -256,8 +249,7 @@ struct MapMenuCoordinatorTests {
             quest: FormID(0x10), objective: 20, text: "Find the claw",
             anchor: Self.key(5), position: SIMD3(4000, -2000, 0)
         )]
-        let menu = MapMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         for _ in 0 ..< MapMenuCoordinator.questMarkerFrames {
             menu.tick()
         }

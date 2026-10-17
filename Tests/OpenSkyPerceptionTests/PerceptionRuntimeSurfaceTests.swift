@@ -151,7 +151,7 @@ extension PerceptionRuntimeTests {
         #expect(PerceptionOverlay.color(for: .suspicious) == PerceptionOverlay.suspiciousColor)
     }
 
-    @Test func detachingTheWorldForgetsEveryPair() {
+    @Test func resettingForgetsEveryPair() {
         let world = FakePerceptionWorld(
             observers: [PerceptionFixture.observer(feet: SIMD3(0, 0, 0))],
             targets: [PerceptionFixture.target(feet: SIMD3(200, 0, 0))]
@@ -159,10 +159,9 @@ extension PerceptionRuntimeTests {
         let runtime = PerceptionRuntime(settings: settings, world: world)
         advance(runtime, steps: 60)
         #expect(!runtime.pairs.isEmpty)
-        runtime.attach(world: nil)
+        runtime.reset()
         #expect(runtime.pairs.isEmpty)
         #expect(runtime.stepCount == 0)
         #expect(runtime.readout() == .empty)
-        #expect(runtime.advance(by: 1) == 0)
     }
 }

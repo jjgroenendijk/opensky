@@ -52,17 +52,30 @@ final class RagdollWorldAdapter {
     func wireRagdoll(renderer: Renderer) {
         let ragdoll = game.ragdoll
         ragdoll.wire(collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init))
-        renderer.session.worldTick.register(.ragdoll) { [weak ragdoll, weak renderer] delta in
+        let worldTick = renderer.session.worldTick
+        worldTick.register(.ragdoll) { [weak self, weak ragdoll, weak renderer] delta in
             guard let ragdoll, let renderer else { return }
             let locomotion = renderer.locomotion
-            ragdoll.advance(
+            self?.run(ragdoll.advance(
                 events: locomotion.graphEvents.drain(locomotion.ragdollEventConsumer),
                 controls: locomotion.ragdollGraphControls,
                 delta: delta
-            )
+            ))
         }
-        renderer.session.frameSteps.register(.ragdoll) { [weak ragdoll] _ in
-            ragdoll?.publishPoses()
+        renderer.session.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
+            self?.run(ragdoll?.publishPoses() ?? [])
+        }
+    }
+
+    func run(_ commands: [RagdollCommand]) {
+        for command in commands {
+            switch command {
+            case let .reportMurder(key):
+                game.crime.reportMurder(of: key)
+                game.cinematicWorld.actorDied(key)
+            case let .publishPoses(poses):
+                game.renderer?.scene.ragdollPoses = poses
+            }
         }
     }
 }
@@ -90,11 +103,6 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         return values.hasZeroHealth(ActorValueHolder(
             key: key, subject: .actor(base: actor.base), cell: streamer.cellLocation(of: key)
         ))
-    }
-
-    func reportMurder(of key: ReferenceKey) {
-        game.crime.reportMurder(of: key)
-        game.cinematicWorld.actorDied(key)
     }
 
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose? {
@@ -181,10 +189,5 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
             reference: actor.formID
         )
         return true
-    }
-
-    var publishedRagdollPoses: [UInt32: [String: float4x4]] {
-        get { game.renderer?.scene.ragdollPoses ?? [:] }
-        set { game.renderer?.scene.ragdollPoses = newValue }
     }
 }

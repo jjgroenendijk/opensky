@@ -68,19 +68,12 @@ final class StoryWorldAdapter {
     private var voiceLocator: VoiceLineLocator?
 
     /// Scene playback over the dialogue runtime.
-    lazy var scenes: SceneCoordinator = {
-        let scenes = SceneCoordinator(dialogue: game.dialogue)
-        scenes.attach(world: self)
-        return scenes
-    }()
+    lazy var scenes = SceneCoordinator(dialogue: game.dialogue, world: self)
 
     /// Story-manager events and the session-start pass.
-    lazy var storyManager: StoryManagerCoordinator = {
-        let storyManager = StoryManagerCoordinator()
-        storyManager.attach(world: self)
-        storyManager.social.attach(world: self)
-        return storyManager
-    }()
+    lazy var storyManager = StoryManagerCoordinator(
+        world: self, social: SocialEventCoordinator(world: self)
+    )
 
     init(game: any StoryWorldHost) {
         self.game = game
@@ -126,8 +119,8 @@ final class StoryWorldAdapter {
         }
         renderer.session.worldTick.register(.story) { [weak self] _ in
             self?.voiceTimer?.drain()
-            self?.scenes.tick()
-            self?.storyManager.social.tick()
+            self?.run(self?.scenes.tick() ?? [])
+            self?.run(self?.storyManager.social.tick() ?? [])
             self?.checkPlayerLocation()
         }
     }
@@ -310,8 +303,15 @@ extension StoryWorldAdapter: SceneWorld {
 
     /// A speaker that is not loaded has no body to speak from, so its line is neither
     /// heard nor subtitled. The scene still times the line.
-    func sceneLineSpoken(_ line: SceneLine) {
-        speak(info: line.info, speaker: line.speaker, lookAt: line.lookAt, seconds: line.seconds)
+    func run(_ commands: [SceneCommand]) {
+        for case let .speak(line) in commands {
+            speak(
+                info: line.info,
+                speaker: line.speaker,
+                lookAt: line.lookAt,
+                seconds: line.seconds
+            )
+        }
     }
 
     /// Voices, subtitles, and shows one dialogue line, as a scene or a Say procedure does.

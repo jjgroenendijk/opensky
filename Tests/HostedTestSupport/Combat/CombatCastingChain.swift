@@ -29,8 +29,10 @@ public final class CombatCastingChain {
 
     public let spellbook: SpellbookRuntime
     public let values: ActorValueRuntime
-    public let caster: CasterRuntime
-    public let combat: CombatLoopRuntime
+    public private(set) lazy var caster = CasterRuntime(
+        spellbook: spellbook, values: values, world: self
+    )
+    public private(set) lazy var combat = CombatLoopRuntime(settings: .synthetic, world: self)
     public var effects: ActiveEffectRuntime
 
     /// Where the two stand. The player never moves in these cases; the caster
@@ -72,11 +74,7 @@ public final class CombatCastingChain {
         self.spellbook = spellbook
         self.values = values
         self.effects = effects
-        caster = CasterRuntime(spellbook: spellbook, values: values)
-        combat = CombatLoopRuntime(settings: .synthetic)
         combat.behaviorSettings = CombatBehaviorSettings(blockChance: 0, castChance: 1)
-        caster.attach(world: self)
-        combat.attach(world: self)
     }
 
     /// The caster's holder, which is an actor rather than the player so the

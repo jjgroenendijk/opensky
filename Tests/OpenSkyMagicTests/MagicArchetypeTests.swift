@@ -15,7 +15,7 @@ import Testing
 struct MagicArchetypeTests {
     private typealias Archetype = ActiveEffectFixture.Archetype
 
-    /// The coordinator holds its world weakly, so the suite keeps it alive.
+    /// One world per suite instance, which the cloak tests configure.
     private let world = FakeMagicWorld()
 
     private static func store() throws -> MagicEffectStore {
@@ -26,8 +26,7 @@ struct MagicArchetypeTests {
     }
 
     private func makeCoordinator() throws -> MagicCoordinator {
-        let coordinator = MagicCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = MagicCoordinator(world: world)
         try coordinator.wireEffects(
             values: FixedActorValues(),
             store: Self.store(),
@@ -201,18 +200,16 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
-        #expect(world.staggered == [.player])
+        #expect(coordinator.takeCommands() == [.stagger(.player, magnitude: 0.5)])
     }
 
     @Test func spawnHazardPlacesTheAssociatedHazard() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.spawnHazard, magnitude: 10, on: coordinator)
-        #expect(world.hazards.map(\.hazard) == [
-            ReferenceKey(resolved: ResolvedFormID(
-                plugin: ActiveEffectFixture.pluginName, objectID: Archetype.hazard
-            ))
-        ])
-        #expect(world.hazards.map(\.target) == [.player])
+        let hazard = ReferenceKey(resolved: ResolvedFormID(
+            plugin: ActiveEffectFixture.pluginName, objectID: Archetype.hazard
+        ))
+        #expect(coordinator.takeCommands() == [.spawnHazard(hazard, at: .player)])
     }
 
     /// "You may only have one cloak spell active at any given time."

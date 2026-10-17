@@ -40,7 +40,7 @@ nonisolated public enum CrimeResponsePolicy: Sendable {
 /// The crime term of the hostility derivation, over a snapshot of the player's
 /// ledger. A guard is hostile when its faction attacks on sight at this bounty or
 /// the player resisted arrest. A snapshot, because the derivation is nonisolated.
-nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Sendable {
+nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Equatable, Sendable {
     public let guardFaction: ReferenceKey?
     /// Bounty per crime faction, which is all the term reads.
     public let bounties: [ReferenceKey: Int32]

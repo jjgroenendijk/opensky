@@ -25,7 +25,6 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var ragdollResidents: [RagdollResident] = []
     var residentRagdollCells: Set<CellSceneLocation> = [FakeRagdollSessionWorld.cell]
     var zeroHealth: Set<ReferenceKey> = []
-    private(set) var murders: [ReferenceKey] = []
     var skeletonMeshPath = "meshes\\actors\\character\\character assets\\skeleton.nif"
     var scale: Float = 1
     var declaredPlayerEvents: Set<String> = []
@@ -33,15 +32,10 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var playerFeetPosition: SIMD3<Float>? = .zero
     var acceptsCorpseSearch = true
     private(set) var searchedCorpses: [ReferenceKey] = []
-    var publishedRagdollPoses: [UInt32: [String: float4x4]] = [:]
     var ragdollStepWorld = DynamicStepWorld()
 
     func hasZeroHealth(_ key: ReferenceKey) -> Bool {
         zeroHealth.contains(key)
-    }
-
-    func reportMurder(of key: ReferenceKey) {
-        murders.append(key)
     }
 
     /// Every resident has a pose; its reference is its object ID.

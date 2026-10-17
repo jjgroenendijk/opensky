@@ -22,7 +22,7 @@ public protocol RenderControlWorld: AnyObject {
 
 @MainActor
 public final class WorldRenderControls {
-    weak var world: (any RenderControlWorld)?
+    weak let world: (any RenderControlWorld)?
     /// The time-of-day control scrubs the clock through the runtime state, so
     /// the scrub is journalled.
     let runtimeState: RuntimeStateCoordinator
@@ -35,11 +35,8 @@ public final class WorldRenderControls {
         world?.streamer
     }
 
-    public init(runtimeState: RuntimeStateCoordinator) {
+    public init(runtimeState: RuntimeStateCoordinator, world: any RenderControlWorld) {
         self.runtimeState = runtimeState
-    }
-
-    public func attach(world: any RenderControlWorld) {
         self.world = world
     }
 }

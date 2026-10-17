@@ -34,6 +34,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }
     var combat: CombatCoordinator { get }
+    var combatWorld: CombatWorldAdapter { get }
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var factions: FactionCoordinator { get }
@@ -283,7 +284,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     /// dropped first: a save that kept them would freeze an arrow in the air.
     func sessionContents(summary: SaveSummary?, thumbnail: SaveThumbnail?) -> OpenSkySaveContents {
         game.streamer?.persistNPCMovementForSave()
-        game.combat.loop?.prepareForPersistence()
+        game.combatWorld.run(game.combat.prepareForPersistence())
         return OpenSkySaveContents(
             snapshot: game.worldState.snapshot(),
             metadata: SaveCreationMetadata(
@@ -326,7 +327,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
         game.scripts.bridge?.publishFactionReactions()
-        game.combat.loop?.prepareForPersistence()
+        game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
         // them. Player only: other actors have no holder until their cells

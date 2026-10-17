@@ -91,8 +91,8 @@ extension WorldRenderControls: AnimationControlProviding {
     }
 
     public var animationEventsEnabled: Bool {
-        get { renderer?.session.animationEvents.isEnabled ?? true }
-        set { renderer?.session.animationEvents.isEnabled = newValue }
+        get { renderer?.session.animationEvents?.isEnabled ?? true }
+        set { renderer?.session.animationEvents?.isEnabled = newValue }
     }
 
     public var animationEventReadout: [String] {
@@ -104,7 +104,7 @@ extension WorldRenderControls: AnimationControlProviding {
     }
 
     public func sendPlayerAnimationEvent(_ name: String) -> Bool {
-        renderer?.session.animationEvents.handle(name, from: .player) != nil
+        renderer?.session.animationEvents?.handle(name, from: .player) != nil
     }
 
     public var animationSnapshot: AnimationControlSnapshot {

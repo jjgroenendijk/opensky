@@ -30,8 +30,7 @@ struct NPCAnimationCoordinatorTests {
 
     @Test func noClipWithoutGameDataOrForAGaitWithoutOne() {
         let world = FakeNPCAnimationWorld()
-        let coordinator = NPCAnimationCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = NPCAnimationCoordinator(world: world)
         #expect(coordinator.gaitClip(.walk, skeletonMeshPath: Self.skeleton, female: false) == nil)
 
         world.useFiles(InMemoryFileSource())
@@ -42,8 +41,7 @@ struct NPCAnimationCoordinatorTests {
     @Test func aFailedLoadIsRememberedPerSkeletonAndPath() throws {
         let world = FakeNPCAnimationWorld()
         world.useFiles(InMemoryFileSource())
-        let coordinator = NPCAnimationCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = NPCAnimationCoordinator(world: world)
 
         #expect(coordinator.gaitClip(.walk, skeletonMeshPath: Self.skeleton, female: false) == nil)
         #expect(coordinator.gaitClip(.run, skeletonMeshPath: Self.skeleton, female: true) == nil)
@@ -65,8 +63,7 @@ struct NPCAnimationCoordinatorTests {
             == ActorAnimationClipLoader.characterRoot + "animations\\horse_rider\\idle.hkx")
         #expect(ActorAnimationClipLoader.riderAnimationPath(.run)
             == ActorAnimationClipLoader.characterRoot + "animations\\horse_rider\\runforward.hkx")
-        let coordinator = NPCAnimationCoordinator()
-        coordinator.attach(world: FakeNPCAnimationWorld())
+        let coordinator = NPCAnimationCoordinator(world: FakeNPCAnimationWorld())
         let rider = ReferenceKey.plugin(name: "ride.esm", objectID: 1)
         let horse = ReferenceKey.plugin(name: "ride.esm", objectID: 2)
         coordinator.ride(rider, on: horse)

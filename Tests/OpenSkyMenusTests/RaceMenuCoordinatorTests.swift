@@ -99,8 +99,7 @@ struct RaceMenuCoordinatorTests {
     func coordinatorTypesTheNameAndAppliesOnClose() {
         let menuMode = MenuModeController()
         let world = FakeRaceMenuWorld()
-        let menu = RaceMenuCoordinator(menuMode: menuMode)
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: menuMode, world: world)
         #expect(menu.open(limited: false))
         #expect(menuMode.topMenu == RaceMenuCoordinator.identifier)
         menu.route(.move(.up))
@@ -121,8 +120,7 @@ struct RaceMenuCoordinatorTests {
     @Test @MainActor
     func aSliderStepReachesTheHeadAtOnce() {
         let world = FakeRaceMenuWorld()
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.open(limited: true)
         menu.route(.move(.down))
         menu.route(.move(.right))
@@ -135,16 +133,14 @@ struct RaceMenuCoordinatorTests {
     func openWithoutAnIdentityFails() {
         let world = FakeRaceMenuWorld()
         world.playerIdentity = nil
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
         #expect(!menu.open(limited: true))
     }
 
     @Test @MainActor
     func resetAppliesTheRecordIdentityOnlyWhileClosed() {
         let world = FakeRaceMenuWorld()
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.open(limited: false)
         menu.resetToRecord()
         #expect(world.applied.isEmpty, "the open menu owns the identity")
@@ -158,8 +154,7 @@ struct RaceMenuCoordinatorTests {
     @Test @MainActor
     func presetsCycleTheRacesFacesAndTheReadoutShowsThem() {
         let world = FakeRaceMenuWorld()
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.applyPreset(offset: 1)
         #expect(world.applied.last?.face.weight == 20)
         #expect(menu.lastResult == "Preset 1 of 2: NordPreset01")
@@ -177,8 +172,7 @@ struct RaceMenuCoordinatorTests {
     @Test @MainActor
     func movieRequestsReachTheHeadAndDoneCloses() throws {
         let world = FakeRaceMenuWorld()
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: world)
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.open(limited: false)
         #expect(menu.snapshot.movie.error == "No game data located.")
         let model = try #require(menu.model)
@@ -194,8 +188,7 @@ struct RaceMenuCoordinatorTests {
 
     @Test @MainActor
     func theDoneKeyCloses() {
-        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
-        menu.attach(world: FakeRaceMenuWorld())
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: FakeRaceMenuWorld())
         menu.open(limited: false)
         menu.route(.button(.xButton))
         #expect(!menu.isOpen)

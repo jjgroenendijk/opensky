@@ -41,14 +41,14 @@ extension InventoryCoordinator {
                 return nil
             }
             let authored = max(0, definition.weight)
-            let worn = world?.perkModified(
+            let worn = world.perkModified(
                 authored,
                 at: .modArmorWeight,
                 on: .player,
                 subjects: PerkEvaluationSubjects(owner: .player)
                     .binding(.item, to: items.conditionSubject(of: item)),
                 seams: ConditionContext()
-            ) ?? authored
+            )
             return WornArmourWeight(authored: authored, worn: max(0, worn))
         }
     }

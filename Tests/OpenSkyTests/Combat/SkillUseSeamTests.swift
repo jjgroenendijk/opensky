@@ -121,9 +121,8 @@ struct SkillUseSeamTests {
         let (spellbook, _) = try SpellbookFixture.runtime(store: store)
         let world = FakeCasterWorld()
         let runtime = CasterRuntime(
-            spellbook: spellbook, values: SpellbookFixture.values(store: store)
+            spellbook: spellbook, values: SpellbookFixture.values(store: store), world: world
         )
-        runtime.attach(world: world)
         let key = SpellbookFixture.key(SpellbookFixture.Spell.firebolt)
         spellbook.learn(key, on: .player)
         try spellbook.equip(key, in: .right, on: .player)

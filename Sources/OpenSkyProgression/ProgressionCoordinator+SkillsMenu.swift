@@ -13,7 +13,7 @@ extension ProgressionCoordinator: SkillsMenuSource {
     public var skillsMenuPlayer: SkillsMenuPlayer {
         guard let leveling else { return .empty }
         let state = leveling.state
-        let identity = world?.playerIdentity() ?? (name: "", race: "")
+        let identity = world.playerIdentity()
         let needed = leveling.experienceForNextLevel
         return SkillsMenuPlayer(
             name: identity.name,

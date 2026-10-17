@@ -11,17 +11,10 @@ import OpenSkyFormatsTesting
 import simd
 import Testing
 
-struct CinematicFrame {
-    let pose: CinematicCameraPose?
-    let shake: SIMD3<Float>
-    let timeScale: Float
-}
-
 final class FakeCinematicWorld: CinematicCameraWorld {
     var cameraPaths: CameraPathStore?
     var anchors: [ReferenceKey: CinematicAnchor] = [:]
     var playerPosition: SIMD3<Float>? = .zero
-    var frames: [CinematicFrame] = []
 
     func cameraConditionContext() -> ConditionContext {
         ConditionContext()
@@ -40,10 +33,6 @@ final class FakeCinematicWorld: CinematicCameraWorld {
 
     func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
         anchors[key]
-    }
-
-    func applyCinematicFrame(pose: CinematicCameraPose?, shake: SIMD3<Float>, timeScale: Float) {
-        frames.append(CinematicFrame(pose: pose, shake: shake, timeScale: timeScale))
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
@@ -85,8 +74,7 @@ struct CinematicCameraCoordinatorTests {
 
     @Test func killCamPlaysEachStageSlowedThenLetsGo() throws {
         let world = try Self.world()
-        let camera = CinematicCameraCoordinator()
-        camera.attach(world: world)
+        let camera = CinematicCameraCoordinator(world: world)
 
         #expect(!camera.playKillCam(
             attacker: Self.attacker,
@@ -100,21 +88,18 @@ struct CinematicCameraCoordinatorTests {
         ))
         #expect(camera.player?.stages.count == 2)
 
-        camera.tick(realSeconds: 0.1)
-        let first = try #require(world.frames.last)
+        let first = camera.tick(realSeconds: 0.1)
         #expect(first.timeScale == 0.5)
         #expect(first.pose?.lookAt.x == 300)
 
-        camera.tick(realSeconds: CinematicShotPlayer.fallbackStageSeconds * 2)
+        let last = camera.tick(realSeconds: CinematicShotPlayer.fallbackStageSeconds * 2)
         #expect(!camera.isPlaying)
-        #expect(world.frames.last?.pose == nil)
-        #expect(world.frames.last?.timeScale == 1)
+        #expect(last == CinematicFrame(pose: nil, shake: .zero, timeScale: 1))
     }
 
     @Test func forcedKillCamSkipsTheOdds() throws {
         let world = try Self.world()
-        let camera = CinematicCameraCoordinator()
-        camera.attach(world: world)
+        let camera = CinematicCameraCoordinator(world: world)
         camera.settings.enabled = false
         #expect(camera.playKillCam(
             attacker: Self.attacker, target: Self.target, remainingHostiles: 3, force: true
@@ -123,8 +108,7 @@ struct CinematicCameraCoordinatorTests {
 
     @Test func shakeFadesWithDistanceAndEnds() throws {
         let world = try Self.world()
-        let camera = CinematicCameraCoordinator()
-        camera.attach(world: world)
+        let camera = CinematicCameraCoordinator(world: world)
 
         #expect(!camera.startShake(
             source: SIMD3(CameraShake.falloffDistance * 2, 0, 0),
@@ -132,10 +116,8 @@ struct CinematicCameraCoordinatorTests {
             duration: 1
         ))
         #expect(camera.startShake(source: nil, strength: 1, duration: 1))
-        camera.tick(realSeconds: 0.25)
-        #expect(simd_length(world.frames.last?.shake ?? .zero) > 0)
-        camera.tick(realSeconds: 1)
+        #expect(simd_length(camera.tick(realSeconds: 0.25).shake) > 0)
+        #expect(camera.tick(realSeconds: 1).shake == .zero)
         #expect(camera.shake == nil)
-        #expect(world.frames.last?.shake == .zero)
     }
 }

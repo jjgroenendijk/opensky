@@ -12,7 +12,6 @@ import OpenSkyProgressionInterface
 extension CombatCoordinator {
     /// The terms of `blow` on `target`, perks of both sides included.
     public func strike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
-        guard let world else { return .plain }
         var strike = WeaponStrike()
         let attack = attackSubjects(blow, on: target)
         if
@@ -42,18 +41,19 @@ extension CombatCoordinator {
         guard strike.isSneakAttack else { return }
         let amount = ranged ? weaponDamage.sneakSkillUseRanged : weaponDamage.sneakSkillUseMelee
         _ = reportSkillUse(SkillUseEvent(actor: .player, action: .sneakAttack, amount: amount))
-        world?.showNotification(weaponDamage.sneakNotice(multiplier: strike.sneakMultiplier))
+        pendingCommands.append(
+            .showNotification(weaponDamage.sneakNotice(multiplier: strike.sneakMultiplier))
+        )
     }
 
     /// The blow before the block, so a stronger hit costs more to stop.
     public func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
         let incoming = damage.strike.damage(base: damage.base, attack: damage.attackMultiplier)
-        world?.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
+        world.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
     }
 
     /// UESP "Skyrim:Combat": a power attack needs at least one point of stamina.
     public func payMeleeStamina(_ cost: Float) -> Bool {
-        guard let world else { return true }
         guard
             let index = ActorValueIdentity.index(named: "Stamina"),
             let stamina = world.actorValues(of: .player)?(index)
@@ -64,12 +64,11 @@ extension CombatCoordinator {
     }
 
     public func canPowerBash() -> Bool {
-        world?.ownsPerk(editorID: "PowerBash", on: .player) ?? false
+        world.ownsPerk(editorID: "PowerBash", on: .player)
     }
 
     /// UESP "Skyrim:Block": a shield bash uses the shield's base rating, without tempering.
     public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
-        guard let world else { return (MeleeDamage.defaultBlockSkill, nil) }
         let skill = ActorValueIdentity.index(named: "Block")
             .flatMap { world.actorValues(of: .player)?($0) } ?? MeleeDamage.defaultBlockSkill
         let shield = world.equippedItems(of: .player).lazy.compactMap { worn -> Float? in
@@ -85,7 +84,7 @@ extension CombatCoordinator {
     /// Only the player sneak attacks: the player has no detection state toward an
     /// NPC. A target already fighting the player knows where the player is.
     func isSneakAttack(by attacker: ReferenceKey, on target: ReferenceKey) -> Bool {
-        guard attacker == .player, target != .player, let world else { return false }
+        guard attacker == .player, target != .player else { return false }
         if let loop, loop.activity(of: target) != .notFighting {
             return false
         }
@@ -95,7 +94,7 @@ extension CombatCoordinator {
     /// The fraction of a blow `target`'s worn armour stops. Each piece passes the
     /// wearer's `Mod Armor Rating`, and the sum the attacker's `Mod Target Damage Resistance`.
     public func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
-        guard let world, let items else { return 0 }
+        guard let items else { return 0 }
         let pieces = world.equippedItems(of: target).compactMap { worn -> WornArmorPiece? in
             guard
                 let armor = items.armor[worn.item.rawValue],

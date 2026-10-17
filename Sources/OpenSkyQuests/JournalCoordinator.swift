@@ -19,23 +19,21 @@ public final class JournalCoordinator {
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false
 
-    weak var world: (any JournalWorld)?
+    let world: any JournalWorld
 
-    public init() {}
-
-    public func attach(world: any JournalWorld) {
+    public init(world: any JournalWorld) {
         self.world = world
     }
 
     public var runtime: QuestRuntime? {
-        world?.questRuntime
+        world.questRuntime
     }
 
     /// Plugin string tables, loaded on first use.
     public var strings: LocalizedStrings? {
         if !stringsResolved {
             stringsResolved = true
-            cachedStrings = world?.loadStrings()
+            cachedStrings = world.loadStrings()
         }
         return cachedStrings
     }

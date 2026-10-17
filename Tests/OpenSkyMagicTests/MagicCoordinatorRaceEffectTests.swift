@@ -19,8 +19,7 @@ struct MagicCoordinatorRaceEffectTests {
     /// Only the race's abilities give a lasting one.
     @Test func onlyTheRacesAbilitiesGiveALastingLook() throws {
         let index = try SpellbookFixture.index()
-        let coordinator = MagicCoordinator()
-        coordinator.attach(world: FakeMagicWorld())
+        let coordinator = MagicCoordinator(world: FakeMagicWorld())
         coordinator.wireEffects(
             values: FixedActorValues(),
             store: SpellbookFixture.effectStore(index: index),

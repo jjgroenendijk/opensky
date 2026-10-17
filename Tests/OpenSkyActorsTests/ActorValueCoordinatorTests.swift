@@ -51,8 +51,7 @@ struct ActorValueCoordinatorTests {
     )
 
     private func coordinator(world: FakeActorValueWorld) -> ActorValueCoordinator {
-        let coordinator = ActorValueCoordinator(store: WorldStateStore())
-        coordinator.attach(world: world)
+        let coordinator = ActorValueCoordinator(store: WorldStateStore(), world: world)
         coordinator.wire(baselines: ActorValueBaselineResolver(
             fallback: ActorValueBaseline(
                 maximums: ActorValues(health: 100, magicka: 80, stamina: 60),
@@ -63,7 +62,7 @@ struct ActorValueCoordinatorTests {
     }
 
     @Test func withoutGameDataThePanelIsUnavailable() {
-        let coordinator = ActorValueCoordinator(store: WorldStateStore())
+        let coordinator = ActorValueCoordinator(store: WorldStateStore(), world: nil)
 
         #expect(coordinator.snapshot == .unavailable)
         #expect(coordinator

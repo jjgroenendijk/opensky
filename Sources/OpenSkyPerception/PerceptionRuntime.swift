@@ -62,12 +62,6 @@ public final class PerceptionRuntime {
         self.world = world
     }
 
-    /// Attaches (or detaches) the world the pass runs over.
-    public func attach(world: (any PerceptionWorld)?) {
-        self.world = world
-        reset()
-    }
-
     // MARK: - Reading
 
     /// `observer`'s regard for `target`, unaware when the pair is not tracked.

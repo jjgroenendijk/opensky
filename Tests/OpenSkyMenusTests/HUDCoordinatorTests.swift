@@ -72,8 +72,7 @@ struct HUDCoordinatorTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device)) @MainActor
     func startWithoutGameDataReportsTheMissingLoader() throws {
         let world = try FakeSWFLayerWorld(renderer: Self.canvas.makeRenderer())
-        let hud = HUDCoordinator(movies: SWFMovieSource())
-        hud.attach(world: world)
+        let hud = HUDCoordinator(movies: SWFMovieSource(), world: world)
         hud.start()
         #expect(!hud.isLoaded)
         #expect(hud.loadError == String(describing: HUDMovieError.movieLoaderUnavailable))

@@ -18,9 +18,7 @@ struct ProjectileSpellTests {
     private static let bystander = ReferenceKey.plugin(name: "base.esm", objectID: 0x0901)
 
     private static func runtime(world: FakeProjectileWorld) -> ProjectileRuntime {
-        let runtime = ProjectileRuntime(settings: .synthetic)
-        runtime.attach(world: world)
-        return runtime
+        ProjectileRuntime(settings: .synthetic, world: world)
     }
 
     /// A flat, fast profile so the impact point is exactly on the aim ray.

@@ -22,11 +22,9 @@ public final class PerkCoordinator {
     /// build, so townsfolk who never fight write no perks into the save.
     private var seededActors: Set<ReferenceKey> = []
 
-    weak var world: (any PerkWorld)?
+    let world: any PerkWorld
 
-    public init() {}
-
-    public func attach(world: any PerkWorld) {
+    public init(world: any PerkWorld) {
         self.world = world
     }
 
@@ -51,7 +49,7 @@ public final class PerkCoordinator {
         let changed = runtime.add(perk, to: holder)
         store(runtime)
         if changed {
-            world?.reconcileAbilities(on: holder, perks: runtime)
+            world.reconcileAbilities(on: holder, perks: runtime)
         }
         return changed
     }
@@ -65,7 +63,7 @@ public final class PerkCoordinator {
         let changed = runtime.remove(perk, from: holder)
         store(runtime)
         if changed {
-            world?.reconcileAbilities(on: holder, perks: runtime)
+            world.reconcileAbilities(on: holder, perks: runtime)
         }
         return changed
     }
@@ -87,7 +85,7 @@ public final class PerkCoordinator {
         )
         store(runtime)
         guard !report.added.isEmpty else { return 0 }
-        world?.reconcileAbilities(on: holder, perks: runtime)
+        world.reconcileAbilities(on: holder, perks: runtime)
         return report.added.count
     }
 
@@ -175,7 +173,7 @@ public final class PerkCoordinator {
         target: ReferenceKey? = nil,
         attacker: ReferenceKey? = nil
     ) -> Float {
-        guard let holder = world?.actorValueHolder(for: key) else { return 1 }
+        guard let holder = world.actorValueHolder(for: key) else { return 1 }
         return modified(1, at: entryPoint, on: holder, target: target, attacker: attacker)
     }
 
@@ -188,7 +186,7 @@ public final class PerkCoordinator {
         subjects: (ReferenceKey) -> PerkEvaluationSubjects,
         seams: ConditionContext = ConditionContext()
     ) -> Float {
-        guard let holder = world?.actorValueHolder(for: key) else { return value }
+        guard let holder = world.actorValueHolder(for: key) else { return value }
         return modified(value, at: entryPoint, on: holder, subjects: subjects(key), seams: seams)
     }
 
@@ -200,7 +198,7 @@ public final class PerkCoordinator {
         subjects: (ReferenceKey) -> PerkEvaluationSubjects,
         seams: ConditionContext = ConditionContext()
     ) -> [PerkEntryPointChoice] {
-        guard let holder = world?.actorValueHolder(for: key) else { return [] }
+        guard let holder = world.actorValueHolder(for: key) else { return [] }
         return evaluate(on: holder, seams: seams) { runtime in
             runtime.choices(at: entryPoint, on: holder, subjects: subjects(key))
         } ?? []
@@ -230,7 +228,7 @@ public final class PerkCoordinator {
     /// Nil without a perk runtime, which is what `Actor.HasPerk` reports
     /// rather than answering false.
     public func ownership(of key: ReferenceKey) -> Set<ReferenceKey>? {
-        guard runtime != nil, let holder = world?.actorValueHolder(for: key) else { return nil }
+        guard runtime != nil, let holder = world.actorValueHolder(for: key) else { return nil }
         seed(holder)
         refreshEffectPerks(on: holder)
         return runtime.map { Set($0.state(of: holder).owned) }
@@ -238,7 +236,7 @@ public final class PerkCoordinator {
 
     /// Effects come and go every frame, so their perks are read when a question is asked.
     private func refreshEffectPerks(on holder: ActorValueHolder) {
-        guard var runtime, let world else { return }
+        guard var runtime else { return }
         let granted = world.perksFromActiveEffects(on: holder)
         guard runtime.effectPerks[holder.key] ?? [] != granted else { return }
         runtime.effectPerks[holder.key] = granted.isEmpty ? nil : granted
@@ -247,6 +245,6 @@ public final class PerkCoordinator {
 
     private func store(_ runtime: PerkRuntime) {
         self.runtime = runtime
-        world?.perksChanged(runtime)
+        world.perksChanged(runtime)
     }
 }

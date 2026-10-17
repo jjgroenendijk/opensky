@@ -19,10 +19,10 @@ extension MagicCoordinator {
     func wireArchetypeLookups() {
         withEffects { runtime in
             runtime.holderResolver = { [weak self] key in
-                self?.world?.actorValueHolder(for: key)
+                self?.world.actorValueHolder(for: key)
             }
             runtime.isUndead = { [weak self] holder in
-                self?.world?.actorHasKeyword(Self.undeadKeyword, on: holder) ?? false
+                self?.world.actorHasKeyword(Self.undeadKeyword, on: holder) ?? false
             }
             runtime.sourceCategory = { [weak self] source in
                 self?.category(of: source) ?? .other
@@ -32,14 +32,14 @@ extension MagicCoordinator {
 
     /// The behaviour `key`'s running effects force on it.
     public func influence(of key: ReferenceKey) -> ActorMagicInfluence {
-        guard let effects, let holder = world?.actorValueHolder(for: key) else { return .none }
+        guard let effects, let holder = world.actorValueHolder(for: key) else { return .none }
         return effects.influence(on: holder)
     }
 
     /// Ends `key`'s invisibility, because it acted. Returns how many effects ended.
     @discardableResult
     public func breakInvisibility(of key: ReferenceKey) -> Int {
-        guard let holder = world?.actorValueHolder(for: key) else { return 0 }
+        guard let holder = world.actorValueHolder(for: key) else { return 0 }
         return withEffects { $0.breakInvisibility(on: holder) } ?? 0
     }
 
@@ -55,10 +55,13 @@ extension MagicCoordinator {
     private func perform(_ action: MagicWorldAction) {
         switch (action.archetype, action.phase) {
         case (.stagger, .began):
-            world?.staggerActor(action.target.key, magnitude: action.magnitude)
+            pendingCommands.append(.stagger(action.target.key, magnitude: action.magnitude))
         case (.spawnHazard, .began):
             guard let hazard = associatedItem(of: action.effect) else { return }
-            world?.spawnHazard(ReferenceKey(resolved: hazard), at: action.target.key)
+            pendingCommands.append(.spawnHazard(
+                ReferenceKey(resolved: hazard),
+                at: action.target.key
+            ))
         case (.boundWeapon, .began):
             conjureBoundWeapon(action)
         case (.boundWeapon, .ended):
@@ -86,8 +89,8 @@ extension MagicCoordinator {
     /// "Creates the specified Weapon": adds one and equips it.
     private func conjureBoundWeapon(_ action: MagicWorldAction) {
         guard
-            let inventory = world?.inventory,
-            let equipment = world?.equipment,
+            let inventory = world.inventory,
+            let equipment = world.equipment,
             let weapon = boundWeapon(of: action.effect)
         else { return }
         let holder = InventoryHolder(actor: action.target)
@@ -102,11 +105,11 @@ extension MagicCoordinator {
     /// "Dispels it when the duration expires": unequips and removes it.
     private func dismissBoundWeapon(_ action: MagicWorldAction) {
         guard
-            let inventory = world?.inventory,
+            let inventory = world.inventory,
             let weapon = boundWeapon(of: action.effect)
         else { return }
         let holder = InventoryHolder(actor: action.target)
-        world?.equipment?.unequip(weapon, on: holder)
+        world.equipment?.unequip(weapon, on: holder)
         guard inventory.count(of: weapon, in: holder) > 0 else { return }
         do {
             try inventory.remove(weapon, count: 1, from: holder)
@@ -118,7 +121,7 @@ extension MagicCoordinator {
     /// Unequips every weapon `target` holds. The weapon stays in the inventory,
     /// because nothing can drop an actor's item to the ground yet.
     private func disarm(_ target: ActorValueHolder) {
-        guard let inventory = world?.inventory, let equipment = world?.equipment else { return }
+        guard let inventory = world.inventory, let equipment = world.equipment else { return }
         let holder = InventoryHolder(actor: target)
         for item in equipment.equipped(on: holder)
             where inventory.baselines.items.weapon(item) != nil
@@ -136,7 +139,7 @@ extension MagicCoordinator {
         cloakClock += delta
         guard cloakClock >= Self.cloakPulseSeconds else { return }
         cloakClock = min(cloakClock - Self.cloakPulseSeconds, Self.cloakPulseSeconds)
-        guard let runtime = effects, let world else { return }
+        guard let runtime = effects else { return }
         for holder in world.regeneratingHolders() {
             for effect in runtime.active(on: holder)
                 where runtime.rule(of: effect) == .world(.cloak)
@@ -183,7 +186,7 @@ extension MagicCoordinator {
     private func isPoison(_ record: ReferenceKey) -> Bool {
         guard
             case let .plugin(plugin, objectID) = record,
-            let items = world?.inventory?.baselines.items,
+            let items = world.inventory?.baselines.items,
             let id = effects?.effects.loadOrderFormID(
                 ResolvedFormID(plugin: plugin, objectID: objectID)
             )

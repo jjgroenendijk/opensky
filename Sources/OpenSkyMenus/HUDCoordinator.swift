@@ -25,13 +25,10 @@ public final class HUDCoordinator {
     private let movies: SWFMovieSource
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
     private var startRequest = 0
-    private weak var world: SWFLayerWorld?
+    private weak let world: SWFLayerWorld?
 
-    public init(movies: SWFMovieSource) {
+    public init(movies: SWFMovieSource, world: SWFLayerWorld? = nil) {
         self.movies = movies
-    }
-
-    public func attach(world: SWFLayerWorld) {
         self.world = world
     }
 

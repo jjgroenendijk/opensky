@@ -28,23 +28,28 @@ protocol ObjectAnimationWorldHost: AnyObject {
 
 final class ObjectAnimationWorldAdapter {
     unowned let game: any ObjectAnimationWorldHost
-    let objects: ObjectBehaviorCoordinator
-    let doors = SequenceDoorCoordinator()
+    private(set) lazy var objects = ObjectBehaviorCoordinator(
+        settings: game.playerSettings.store,
+        world: self,
+        files: { [unowned game] in game.audioFileSystem }
+    )
+    private(set) lazy var doors: SequenceDoorCoordinator = {
+        let doors = SequenceDoorCoordinator(world: self)
+        doors.isEnabled = objects.isEnabled
+        return doors
+    }()
+
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
 
     init(game: any ObjectAnimationWorldHost) {
         self.game = game
-        objects = ObjectBehaviorCoordinator(settings: game.playerSettings.store)
-        doors.isEnabled = objects.isEnabled
     }
 
     /// After the vehicles, so a cart's events and an object's events keep one order.
     func wire(renderer: Renderer) {
-        guard let files = game.audioFileSystem else { return }
-        objects.attach(world: self, files: files)
-        doors.attach(world: self)
+        guard game.audioFileSystem != nil else { return }
         game.scripts.bridge?.objectAnimation = self
         objects.onAnimationEvent = { [weak self] reference, name in
             self?.forward(name, from: reference)
@@ -70,8 +75,8 @@ final class ObjectAnimationWorldAdapter {
     private func advance(_ delta: Float) {
         objects.sync()
         objects.tick(deltaTime: delta)
-        doors.sync()
-        doors.tick(deltaTime: delta)
+        run(doors.sync())
+        run(doors.tick(deltaTime: delta))
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
         for (token, fired) in pendingAnswers
             where scheduler.answer(token, returning: .boolean(fired))
@@ -84,7 +89,7 @@ final class ObjectAnimationWorldAdapter {
         guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
             return
         }
-        game.renderer?.session.animationEvents.handle(name, from: key)
+        game.renderer?.session.animationEvents?.handle(name, from: key)
         game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
     }
 
@@ -150,15 +155,17 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
         return game.worldState.resolvedState(for: entry).activation.isOpen
     }
 
-    func sequenceDoorTextKey(_ name: String, from reference: UInt32) {
-        guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
-            return
+    func run(_ commands: [SequenceDoorCommand]) {
+        for command in commands {
+            switch command {
+            case let .textKey(name, reference):
+                guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key
+                else { continue }
+                game.renderer?.session.animationEvents?.handle(name, from: key)
+            case let .setLeaves(deltas, reference):
+                game.streamer?.sequenceDoorLeaves[reference] = deltas
+            }
         }
-        game.renderer?.session.animationEvents.handle(name, from: key)
-    }
-
-    func setSequenceDoorLeaves(_ deltas: [simd_float4x4]?, for reference: UInt32) {
-        game.streamer?.sequenceDoorLeaves[reference] = deltas
     }
 
     /// The panel's open and close: the same world-state write as `SetOpen`.

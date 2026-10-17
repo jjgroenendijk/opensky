@@ -26,9 +26,7 @@ struct ProjectileRuntimeTests {
         world: FakeProjectileWorld,
         settings: ArcherySettings = .synthetic
     ) -> ProjectileRuntime {
-        let runtime = ProjectileRuntime(settings: settings)
-        runtime.attach(world: world)
-        return runtime
+        ProjectileRuntime(settings: settings, world: world)
     }
 
     private static func shot(

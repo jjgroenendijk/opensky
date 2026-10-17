@@ -17,8 +17,7 @@ struct CombatCoordinatorTests {
     private static let guardKey = ReferenceKey.generated(1)
 
     private static func coordinator(_ world: FakeCoordinatorWorld) -> CombatCoordinator {
-        let coordinator = CombatCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = CombatCoordinator(world: world)
         coordinator.wireMelee(settings: .synthetic, items: nil, impacts: nil)
         coordinator.wireArchery(settings: .synthetic, items: nil, impacts: nil)
         coordinator.wireLoop(settings: .synthetic)
@@ -26,7 +25,7 @@ struct CombatCoordinatorTests {
     }
 
     @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
-        let coordinator = CombatCoordinator()
+        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld())
         #expect(coordinator.meleeCombatSnapshot == .unavailable)
         #expect(coordinator.archerySnapshot == .unavailable)
         #expect(coordinator.combatLoopSnapshot == .unavailable)
@@ -118,7 +117,8 @@ struct CombatCoordinatorTests {
 
         #expect(world.skillUses.map(\.action) == [.sneakAttack, .sneakAttack])
         #expect(world.skillUses.map(\.amount) == [30, 2.5])
-        #expect(world.notices.first == "sSuccessfulSneakAttackMain3.0sSuccessfulSneakAttackEnd")
+        #expect(coordinator.takeCommands().first
+            == .showNotification("sSuccessfulSneakAttackMain3.0sSuccessfulSneakAttackEnd"))
         world.detects[Self.guardKey] = [.player]
         _ = coordinator.meleeStrike(
             CombatBlow(attacker: .player, handType: .dagger),
@@ -218,7 +218,7 @@ struct CombatCoordinatorTests {
         coordinator.removeStuckProjectile(.generated(9999))
         coordinator.removeStuckProjectile(key)
         coordinator.removeStuckProjectile(key)
-        #expect(world.resetKeys == [key])
+        #expect(coordinator.takeCommands() == [.removeReference(key)])
     }
 
     @Test func transientsJoinTheProjectilesAndTheWorldsBodies() {

@@ -17,10 +17,8 @@ struct WorldRenderControlsTests {
     private let controls: WorldRenderControls
 
     init() {
-        let runtimeState = RuntimeStateCoordinator(store: WorldStateStore())
-        runtimeState.attach(world: runtimeWorld)
-        controls = WorldRenderControls(runtimeState: runtimeState)
-        controls.attach(world: world)
+        let runtimeState = RuntimeStateCoordinator(store: WorldStateStore(), world: runtimeWorld)
+        controls = WorldRenderControls(runtimeState: runtimeState, world: world)
     }
 
     @Test func cameraFallsBackWithoutARenderer() {

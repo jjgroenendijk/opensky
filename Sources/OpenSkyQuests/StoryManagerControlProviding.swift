@@ -114,6 +114,6 @@ extension StoryManagerCoordinator: StoryManagerControlProviding {
     }
 
     func questName(_ quest: FormID) -> String {
-        world?.questRuntime?.quests.quest(quest)?.editorID ?? quest.description
+        world.questRuntime?.quests.quest(quest)?.editorID ?? quest.description
     }
 }

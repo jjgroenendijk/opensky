@@ -67,12 +67,19 @@ public final class CrimeCoordinator {
     public internal(set) var lastGuard = GuardNote.idle
     public var panel = CrimeFactionPanelState()
 
-    weak var world: (any CrimeSessionWorld)?
+    let world: any CrimeSessionWorld
+    /// What crime asked of the app. The guard step returns and empties it.
+    var pendingCommands: [CrimeCommand] = []
 
-    public init() {}
-
-    public func attach(world: any CrimeSessionWorld) {
+    public init(world: any CrimeSessionWorld) {
         self.world = world
+    }
+
+    /// Returns and empties what crime asked of the app. A command raised outside
+    /// the guard step, such as by a hit report, also leaves with the next one.
+    public func takeCommands() -> [CrimeCommand] {
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
     /// `locations` is nil when the provider carries no LCTN index; then no
@@ -163,7 +170,7 @@ public final class CrimeCoordinator {
     /// Runs every tick; the ownership lookup runs only when the cell changes.
     /// No warning or 30-second timer (docs/engine/crime.md).
     public func advanceTrespass() {
-        let location = world?.currentCellLocation
+        let location = world.currentCellLocation
         guard lastPlayerCell != location else { return }
         lastPlayerCell = location
         isPlayerTrespassing = cellOwner(at: location).map { !crimeActor(.player).mayUse($0) }
@@ -179,9 +186,9 @@ public final class CrimeCoordinator {
 
     func showBountyNotice(gold: Int32, added: Bool, faction: ReferenceKey) {
         guard gold > 0 else { return }
-        world?.showCrimeNotice(
+        pendingCommands.append(.showNotice(
             crimeTexts.bountyNotice(gold: gold, added: added, faction: factionName(faction))
-        )
+        ))
     }
 
     private func note(_ outcome: CrimeOutcome, as label: String) {
@@ -189,7 +196,7 @@ public final class CrimeCoordinator {
     }
 
     private func cellOwner(at location: CellSceneLocation?) -> ReferenceOwner? {
-        guard let location, let ownership = world?.cellOwnership(at: location) else { return nil }
+        guard let location, let ownership = world.cellOwnership(at: location) else { return nil }
         return self.ownership?.owner(of: ownership)
     }
 }
@@ -202,8 +209,8 @@ extension CrimeCoordinator: CrimeWorld {
             return scripted
         }
         guard let ownership else { return nil }
-        let reference = world?.references?.referenceEntry(key: key)?.placedReference
-        let cell = crimeCell(of: key).flatMap { world?.cellOwnership(at: $0) }
+        let reference = world.references?.referenceEntry(key: key)?.placedReference
+        let cell = crimeCell(of: key).flatMap { world.cellOwnership(at: $0) }
         return ownership.owner(
             reference: reference.flatMap(RecordOwnership.init(reference:)),
             cell: cell
@@ -213,7 +220,7 @@ extension CrimeCoordinator: CrimeWorld {
     public func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey? {
         guard
             let cell,
-            let link = world?.cellLocationLink(at: cell),
+            let link = world.cellLocationLink(at: cell),
             let resolvers = crimeFactions,
             let location = resolvers.locations.resolve(link.link, fromPlugin: link.plugin),
             let faction = resolvers.crimeFaction(of: location)
@@ -222,11 +229,11 @@ extension CrimeCoordinator: CrimeWorld {
     }
 
     public func crimeCell(of key: ReferenceKey) -> CellSceneLocation? {
-        world?.references?.cellLocation(of: key)
+        world.references?.cellLocation(of: key)
     }
 
     public func crimeItemValue(of item: FormID) -> Int64 {
-        world?.itemValue(of: item) ?? 0
+        world.itemValue(of: item)
     }
 
     /// The player has no `NPC_` base here, so a base-owned reference is never
@@ -235,7 +242,7 @@ extension CrimeCoordinator: CrimeWorld {
     public func crimeActor(_ key: ReferenceKey) -> CrimeActor {
         CrimeActor(
             base: actorBaseKey(of: key),
-            memberships: world?.factionMemberships(of: key) ?? ActorFactionState()
+            memberships: world.factionMemberships(of: key) ?? ActorFactionState()
         )
     }
 
@@ -243,7 +250,7 @@ extension CrimeCoordinator: CrimeWorld {
     /// is what an `XOWN` actor link names.
     private func actorBaseKey(of key: ReferenceKey) -> ReferenceKey? {
         guard
-            let base = world?.references?.referenceEntry(key: key)?.placedActor?.base,
+            let base = world.references?.referenceEntry(key: key)?.placedActor?.base,
             let pluginName,
             let resolved = reporter?.runtime.factions.resolvedID(base, fromPlugin: pluginName)
         else { return nil }

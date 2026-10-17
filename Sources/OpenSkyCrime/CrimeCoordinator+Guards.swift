@@ -12,8 +12,14 @@ import simd
 extension CrimeCoordinator {
     /// One tick, run after the perception pass. Costs one ledger read while
     /// the player owes nobody.
-    public func advanceGuardResponse() {
-        guard let runtime = reporter?.runtime, let world, let now = world.gameSeconds else {
+    /// - Returns: what crime asked of the app this frame.
+    public func advanceGuardResponse() -> [CrimeCommand] {
+        stepGuardResponse()
+        return takeCommands()
+    }
+
+    func stepGuardResponse() {
+        guard let runtime = reporter?.runtime, let now = world.gameSeconds else {
             return
         }
         finishConversationIfClosed(runtime: runtime, now: now)
@@ -41,18 +47,18 @@ extension CrimeCoordinator {
     /// Hands the player's bounties to the hostility derivation.
     public func refreshGuardHostility() {
         guard let runtime = reporter?.runtime else { return }
-        world?.applyGuardHostility(CrimeCore.guardHostility(
+        pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
             ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted
-        ))
+        )))
     }
 
     /// Every guard of `faction` turns hostile. The panel's resist control and
     /// a closed arrest conversation both come through here.
     public func resistArrest(with faction: ReferenceKey) {
         if case let .confront(guardKey, _, _) = guards.active {
-            world?.resumePackage(for: guardKey)
+            world.resumePackage(for: guardKey)
         }
-        guards.resist(faction, now: world?.gameSeconds ?? 0)
+        guards.resist(faction, now: world.gameSeconds ?? 0)
         lastGuard = .resisted(faction: factionName(faction))
         refreshGuardHostility()
     }
@@ -62,7 +68,6 @@ extension CrimeCoordinator {
     /// Every detecting observer that polices a faction, with its distance.
     private func guardCandidates() -> [GuardCandidate] {
         guard
-            let world,
             let guardFaction = reporter?.runtime.factions.guardFactionKey,
             let player = world.playerFeet
         else { return [] }
@@ -98,7 +103,6 @@ extension CrimeCoordinator {
         action: GuardAction,
         now: Double
     ) {
-        guard let world else { return }
         world.stopActor(guardKey)
         pursuitTargets[guardKey] = nil
         guards.begin(action)
@@ -115,7 +119,7 @@ extension CrimeCoordinator {
     }
 
     private func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {
-        guard let world, let player = world.playerFeet else { return }
+        guard let player = world.playerFeet else { return }
         guard CrimeCore.needsRepath(lastTarget: pursuitTargets[guardKey], player: player) else {
             return
         }
@@ -129,8 +133,8 @@ extension CrimeCoordinator {
     private func releasePursuers(except kept: ReferenceKey?) {
         for guardKey in pursuitTargets.keys where guardKey != kept {
             pursuitTargets[guardKey] = nil
-            world?.stopActor(guardKey)
-            world?.resumePackage(for: guardKey)
+            world.stopActor(guardKey)
+            world.resumePackage(for: guardKey)
         }
     }
 
@@ -138,14 +142,14 @@ extension CrimeCoordinator {
     /// arrest (<https://en.uesp.net/wiki/Skyrim:Crime>).
     private func finishConversationIfClosed(runtime: CrimeRuntime, now: Double) {
         guard
-            world?.isDialogueOpen == false,
+            world.isDialogueOpen == false,
             case let .confront(guardKey, faction, _) = guards.active
         else { return }
         if runtime.crimeGold(of: faction) > 0 {
             resistArrest(with: faction)
         } else {
             guards.end(settled: true, now: now)
-            world?.resumePackage(for: guardKey)
+            world.resumePackage(for: guardKey)
         }
     }
 }

@@ -95,14 +95,16 @@ public final class RaceMenuCoordinator {
     /// The preset the sidebar applied last, so the next press moves on from it.
     private var presetIndex: Int?
     private let menuMode: MenuModeController
-    private(set) weak var world: (any RaceMenuWorld)?
+    weak let world: (any RaceMenuWorld)?
 
     public init(
-        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil
+        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
+        world: (any RaceMenuWorld)? = nil
     ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+        self.world = world
     }
 
     lazy var movie = MenuMovieSession(
@@ -115,10 +117,6 @@ public final class RaceMenuCoordinator {
 
     public var movieError: String? {
         movie.error
-    }
-
-    public func attach(world: any RaceMenuWorld) {
-        self.world = world
     }
 
     public var isOpen: Bool {

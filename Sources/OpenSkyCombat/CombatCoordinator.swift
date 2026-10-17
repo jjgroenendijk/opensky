@@ -23,7 +23,9 @@ public final class CombatCoordinator {
     /// Fighting actors may cast their spells unless the panel turns it off.
     public private(set) var allowsActorCasting = true
     public internal(set) var actorCastCount = 0
-    weak var world: (any CombatWorld)?
+    let world: any CombatWorld
+    /// What this step asked of the app. A frame step returns and empties it.
+    var pendingCommands: [CombatCommand] = []
     public internal(set) var lastMeleeAction = MeleeActionOutcome.idle
     public internal(set) var lastArcheryAction = ArcheryActionOutcome.idle
     /// The stuck arrows this coordinator spawned, so a reset removes only those.
@@ -48,9 +50,7 @@ public final class CombatCoordinator {
     /// The graph flags the player's perks set true last frame.
     var perkGraphFlags: Set<String> = []
 
-    public init() {}
-
-    public func attach(world: any CombatWorld) {
+    public init(world: any CombatWorld) {
         self.world = world
     }
 
@@ -59,12 +59,11 @@ public final class CombatCoordinator {
         items: ItemDefinitionStore?,
         impacts: MeleeImpactResolver?
     ) {
-        let runtime = MeleeCombatRuntime(settings: settings)
+        let runtime = MeleeCombatRuntime(settings: settings, world: self)
         runtime.impacts = impacts
         runtime.powerAttacks = powerAttacks
         self.items = items ?? self.items
         melee = runtime
-        runtime.attach(world: self)
     }
 
     public func wireArchery(
@@ -72,32 +71,33 @@ public final class CombatCoordinator {
         items: ItemDefinitionStore?,
         impacts: MeleeImpactResolver?
     ) {
-        let projectiles = ProjectileRuntime(settings: settings)
+        let projectiles = ProjectileRuntime(settings: settings, world: self)
         projectiles.impacts = impacts
         projectiles.explosions = explosions
         projectiles.arrows = arrows
-        let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles)
+        let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles, world: self)
         self.items = items ?? self.items
         archery = runtime
-        runtime.attach(world: self)
     }
 
     public func wireLoop(settings: CombatSettings) {
-        let runtime = CombatLoopRuntime(settings: settings)
-        loop = runtime
-        runtime.attach(world: self)
+        loop = CombatLoopRuntime(settings: settings, world: self)
     }
 
     /// One frame of melee. The caller drains `events` every frame, even when
     /// the player is not in control, so no backlog resolves later.
-    public func advanceMelee(events: [String], intent: MeleeIntent, isPlayerControlled: Bool) {
-        guard let melee, isPlayerControlled else { return }
+    public func advanceMelee(
+        events: [String], intent: MeleeIntent, isPlayerControlled: Bool
+    ) -> [CombatCommand] {
+        defer { pendingCommands = [] }
+        guard let melee, isPlayerControlled else { return pendingCommands }
         let readied = readiedHands()
         let hands = CombatCore.hands(worn: wornItems(), readied: readied)
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
         melee.acceptFrame(CombatCore.meleeIntent(intent, readied: readied))
         noteHits(melee.handleGraphEvents(events).map(\.target))
+        return pendingCommands
     }
 
     /// One frame of archery. Projectiles fly on outside player control, so an
@@ -107,8 +107,9 @@ public final class CombatCoordinator {
         intent: ArcheryIntent,
         isPlayerControlled: Bool,
         delta: Float
-    ) {
-        guard let archery else { return }
+    ) -> [CombatCommand] {
+        defer { pendingCommands = [] }
+        guard let archery else { return pendingCommands }
         if isPlayerControlled {
             archery.bow = CombatCore.bow(worn: wornItems())
             archery.arrow = selectedArrow()
@@ -121,12 +122,27 @@ public final class CombatCoordinator {
         // Every arrow provokes, a spell only when its effects are hostile.
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
         noteHits(struck.compactMap(\.target))
+        return pendingCommands
     }
 
     /// Steps the loop after melee, archery and the ragdolls, because it reads
     /// what they did this frame.
-    public func advanceLoop(by delta: Float) {
+    public func advanceLoop(by delta: Float) -> [CombatCommand] {
         loop?.advance(by: delta)
+        return takeCommands()
+    }
+
+    /// Drops what a reload cannot reproduce. Called on both sides of a save.
+    public func prepareForPersistence() -> [CombatCommand] {
+        loop?.prepareForPersistence()
+        return takeCommands()
+    }
+
+    /// Returns and empties what this step asked of the app. A command raised outside
+    /// a frame step, such as by a panel, also leaves with the next frame step.
+    public func takeCommands() -> [CombatCommand] {
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
     /// Turning casting off drops every cast in flight, so no charge is left
@@ -135,7 +151,7 @@ public final class CombatCoordinator {
         allowsActorCasting = allowed
         guard !allowed, let loop else { return }
         for key in loop.behaviors.keys.sorted() {
-            world?.cancelCast(by: key)
+            world.cancelCast(by: key)
         }
         loop.record(.castingDisallowed)
     }
@@ -143,7 +159,7 @@ public final class CombatCoordinator {
     /// Sets hostility on the panel's selected actor and records the outcome.
     public func setSelectedActorHostile(_ hostile: Bool) {
         guard let loop else { return }
-        guard let key = world?.selectedActor() else {
+        guard let key = world.selectedActor() else {
             loop.record(.noHostilityTarget)
             return
         }
@@ -158,18 +174,18 @@ public final class CombatCoordinator {
 
     func readiedHands() -> ReadiedHands {
         ReadiedHands(
-            right: world?.hasReadiedSpell(in: .right) ?? false,
-            left: world?.hasReadiedSpell(in: .left) ?? false
+            right: world.hasReadiedSpell(in: .right),
+            left: world.hasReadiedSpell(in: .left)
         )
     }
 
     func wornItems() -> [CombatWornItem] {
-        guard let equipment = world?.equipment, let items else { return [] }
+        guard let equipment = world.equipment, let items else { return [] }
         return equipment.equipped(on: .player).map { item in
             if let weapon = items.weapon(item) {
-                let enchantment = world?.enchantmentProfile(of: item)
+                let enchantment = world.enchantmentProfile(of: item)
                 return .weapon(MeleeWeaponProfile(weapon: weapon, enchantment: enchantment)
-                    .tempered(level: world?.temperLevel(of: item) ?? 0))
+                    .tempered(level: world.temperLevel(of: item)))
             }
             return equipment.occupancy(of: item).slots.contains(.shield) ? .shield : .other
         }
@@ -177,12 +193,12 @@ public final class CombatCoordinator {
 
     /// The first weapon the player has equipped, or nil when unarmed.
     public func playerWeapon() -> Weapon? {
-        guard let equipment = world?.equipment, let items else { return nil }
+        guard let equipment = world.equipment, let items else { return nil }
         return equipment.equipped(on: .player).lazy.compactMap { items.weapon($0) }.first
     }
 
     func selectedArrow() -> ArcheryAmmunition? {
-        guard let items, let world else { return nil }
+        guard let items else { return nil }
         return CombatCore.arrow(
             carried: world.playerCarriedItems(),
             resolve: items.archeryAmmunition
@@ -190,13 +206,13 @@ public final class CombatCoordinator {
     }
 
     func archeryAttackMultiplier() -> Float {
-        guard let world, let values = world.actorValues(of: .player) else { return 1 }
+        guard let values = world.actorValues(of: .player) else { return 1 }
         return CombatFortifyBonus.archery(reading: values)
     }
 
     /// The name `residentActors()` gives `key`, so the readouts agree.
     func actorName(_ key: ReferenceKey?) -> String {
         guard let key else { return "—" }
-        return world?.residentActors().first { $0.key == key }?.name ?? key.description
+        return world.residentActors().first { $0.key == key }?.name ?? key.description
     }
 }

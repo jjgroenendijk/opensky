@@ -56,14 +56,13 @@ final class MagicWorldAdapter {
             let pluginName = provider.magicItemPluginName
         else { return }
         let coordinator = game.magic
-        coordinator.attach(world: self)
         coordinator.wireEffects(
             values: values, store: store, pluginName: pluginName, conditionRegistry: .standard
         )
         // Chained after regeneration and the Papyrus VM, on the same delta.
         let worldTick = renderer.session.worldTick
-        worldTick.register(.magicEffects) { [weak coordinator, weak renderer] delta in
-            coordinator?.advanceEffects(delta: delta)
+        worldTick.register(.magicEffects) { [weak self, weak coordinator, weak renderer] delta in
+            self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
             renderer?.session.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
         }
@@ -77,7 +76,6 @@ final class MagicWorldAdapter {
             let equipSlots = provider.equipSlotStore
         else { return }
         let coordinator = game.magic
-        coordinator.attach(world: self)
         coordinator.wireCasting(
             spellbook: SpellbookRuntime(
                 store: game.worldState,
@@ -91,10 +89,11 @@ final class MagicWorldAdapter {
                 .map { ActorSpellBaselineResolver(actorValues: $0) }
         )
         // A frame step, beside melee: a cast is timed against the rendered frame.
-        renderer.session.frameSteps.register(.spellCasting) { [weak coordinator, weak renderer] _ in
+        let frameSteps = renderer.session.frameSteps
+        frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak renderer] _ in
             guard let coordinator, let renderer else { return }
             let locomotion = renderer.locomotion
-            coordinator.advanceCasting(
+            let commands = coordinator.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
@@ -102,11 +101,11 @@ final class MagicWorldAdapter {
                 ),
                 isPlayerControlled: renderer.movementMode.isPlayerControlled
             )
+            self?.run(commands)
         }
     }
 
     func wireEnchantments(provider: WorldDataStores) {
-        game.magic.attach(world: self)
         game.magic.magicTexts = MagicTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)

@@ -20,7 +20,9 @@ public final class RagdollCoordinator {
 
     /// Nil until `wire`. The panel then reports itself unavailable.
     public private(set) var runtime: RagdollRuntime?
-    weak var world: (any RagdollSessionWorld)?
+    let world: any RagdollSessionWorld
+    /// Whether the scene holds poses from this coordinator, so an empty frame clears them once.
+    var hasPublishedPoses = false
     let store: WorldStateStore
     private var loadDefinition: DefinitionLoader?
     /// Keyed by path and scale: a definition bakes the scale into every pivot,
@@ -29,11 +31,8 @@ public final class RagdollCoordinator {
     /// Keys that produced no ragdoll, so they are not decoded once per frame.
     private var unresolvableSkeletons: Set<String> = []
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, world: any RagdollSessionWorld) {
         self.store = store
-    }
-
-    public func attach(world: any RagdollSessionWorld) {
         self.world = world
     }
 
@@ -51,12 +50,13 @@ public final class RagdollCoordinator {
 
     /// One frame: zero-health actors die, `events` hand off, live ragdolls step.
     /// The caller drains `events` every frame, so no backlog builds up.
-    public func advance(events: [String], controls: RagdollGraphControls, delta: Float) {
-        guard let runtime else { return }
-        if let world {
-            runtime.retainRagdolls(in: world.residentRagdollCells)
-        }
-        killZeroHealthActors(runtime: runtime)
+    /// - Returns: a murder report for each actor that died.
+    public func advance(
+        events: [String], controls: RagdollGraphControls, delta: Float
+    ) -> [RagdollCommand] {
+        guard let runtime else { return [] }
+        runtime.retainRagdolls(in: world.residentRagdollCells)
+        let murders = killZeroHealthActors(runtime: runtime)
         for key in runtime.pendingHandOffs.sorted() {
             runtime.handleGraphEvents(events, on: key)
         }
@@ -65,15 +65,13 @@ public final class RagdollCoordinator {
         runtime.motor = controls.powered.map(RagdollMotor.init)
         runtime.contactEvent = controls.contactEvent
         runtime.advance(by: delta)
+        return murders
     }
 
     /// Rebuilt each frame, so a corpse whose cell unloaded stops being drawn as
     /// a ragdoll once its instance is gone.
-    public func publishPoses() {
-        guard let runtime, let world else { return }
-        guard !runtime.world.ragdolls.isEmpty || !world.publishedRagdollPoses.isEmpty else {
-            return
-        }
+    public func publishPoses() -> [RagdollCommand] {
+        guard let runtime, !runtime.world.ragdolls.isEmpty || hasPublishedPoses else { return [] }
         var poses: [UInt32: [String: float4x4]] = [:]
         for entry in runtime.world.ragdolls {
             guard
@@ -84,17 +82,18 @@ public final class RagdollCoordinator {
                 animated: animated, worldToActor: actor.actorToWorld.inverse
             )
         }
-        world.publishedRagdollPoses = poses
+        hasPublishedPoses = !poses.isEmpty
+        return [.publishPoses(poses)]
     }
 
     /// A sweep, not a hook, because health reaches zero from several places.
     /// `noteZeroHealth(of:)` is true only for the call that killed the actor,
     /// so each murder is reported once.
-    private func killZeroHealthActors(runtime: RagdollRuntime) {
-        guard let world else { return }
-        for resident in world.ragdollResidents where world.hasZeroHealth(resident.key) {
-            guard runtime.noteZeroHealth(of: resident.key) else { continue }
-            world.reportMurder(of: resident.key)
+    private func killZeroHealthActors(runtime: RagdollRuntime) -> [RagdollCommand] {
+        world.ragdollResidents.compactMap { resident in
+            guard world.hasZeroHealth(resident.key), runtime.noteZeroHealth(of: resident.key)
+            else { return nil }
+            return .reportMurder(resident.key)
         }
     }
 
@@ -132,7 +131,7 @@ public final class RagdollCoordinator {
 extension RagdollCoordinator: RagdollWorldSeam {
     public func ragdollActor(for key: ReferenceKey) -> RagdollActor? {
         guard
-            let pose = world?.ragdollPose(of: key),
+            let pose = world.ragdollPose(of: key),
             let definition = definition(for: pose)
         else { return nil }
         return RagdollActor(
@@ -149,11 +148,11 @@ extension RagdollCoordinator: RagdollWorldSeam {
     @discardableResult
     public func raiseRagdollEvent(_ name: String, on key: ReferenceKey) -> Bool {
         guard key == .player else { return false }
-        return world?.raisePlayerGraphEvent(name) ?? false
+        return world.raisePlayerGraphEvent(name)
     }
 
     public var ragdollStepWorld: DynamicStepWorld {
-        world?.ragdollStepWorld ?? DynamicStepWorld()
+        world.ragdollStepWorld
     }
 
     public func writeDeathState(
@@ -170,6 +169,6 @@ extension RagdollCoordinator: RagdollWorldSeam {
 
     @discardableResult
     public func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
-        world?.queueActorDeathEvents(for: key, killer: killer) ?? 0
+        world.queueActorDeathEvents(for: key, killer: killer)
     }
 }

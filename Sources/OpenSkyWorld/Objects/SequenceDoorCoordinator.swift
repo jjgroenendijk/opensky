@@ -6,16 +6,12 @@
 import OpenSkyFormatsAnimation
 import simd
 
-/// What the door coordinator reads from and writes to the session.
+/// What the door coordinator reads from the session.
 public protocol SequenceDoorWorld: AnyObject {
     func residentSequenceDoors() -> [CellSequenceDoor]
     /// The reference's open state: the plugin's, or the one a save, script, or
     /// activation wrote.
     func sequenceDoorWantsOpen(_ reference: UInt32) -> Bool
-    /// One text key the door's sequence passed, such as `Sound: DRSWoodGateHelgenOpen`.
-    func sequenceDoorTextKey(_ name: String, from reference: UInt32)
-    /// Each leaf's model-frame move from rest, or nil when the door left.
-    func setSequenceDoorLeaves(_ deltas: [float4x4]?, for reference: UInt32)
 }
 
 /// One line of the doors panel.
@@ -43,21 +39,19 @@ public final class SequenceDoorCoordinator {
         }
     }
 
-    weak var world: (any SequenceDoorWorld)?
+    weak let world: (any SequenceDoorWorld)?
     private(set) var running: [UInt32: Running] = [:]
     /// Off holds every door in the pose it has.
     public var isEnabled = true
 
-    public init() {}
-
-    public func attach(world: any SequenceDoorWorld) {
+    public init(world: any SequenceDoorWorld) {
         self.world = world
     }
 
     /// Adopts new doors at their saved state and drops departed ones. A rebuilt cell
     /// brings a new pose buffer, and the door keeps moving into it.
-    public func sync() {
-        guard let world else { return }
+    public func sync() -> [SequenceDoorCommand] {
+        guard let world else { return [] }
         var seen = Set<UInt32>()
         for door in world.residentSequenceDoors() where seen.insert(door.reference).inserted {
             if let current = running[door.reference] {
@@ -72,15 +66,17 @@ public final class SequenceDoorCoordinator {
             )
             running[door.reference] = Running(door: door, motion: motion)
         }
-        for reference in running.keys where !seen.contains(reference) {
+        let departed = running.keys.filter { !seen.contains($0) }.sorted()
+        for reference in departed {
             running.removeValue(forKey: reference)
-            world.setSequenceDoorLeaves(nil, for: reference)
         }
+        return departed.map { .setLeaves(nil, reference: $0) }
     }
 
     /// Steps every door in reference order and publishes the ones that moved.
-    public func tick(deltaTime: Float) {
-        guard let world else { return }
+    public func tick(deltaTime: Float) -> [SequenceDoorCommand] {
+        guard let world else { return [] }
+        var commands: [SequenceDoorCommand] = []
         for reference in running.keys.sorted() {
             guard let entry = running[reference] else { continue }
             if isEnabled {
@@ -89,9 +85,7 @@ public final class SequenceDoorCoordinator {
                     wantsOpen: world.sequenceDoorWantsOpen(reference),
                     deltaTime: deltaTime, rig: entry.door.rig
                 )
-                for key in keys {
-                    world.sequenceDoorTextKey(key, from: reference)
-                }
+                commands += keys.map { .textKey($0, reference: reference) }
                 entry.needsPublish = entry.needsPublish || entry.motion != before
             }
             guard entry.needsPublish else { continue }
@@ -99,8 +93,9 @@ public final class SequenceDoorCoordinator {
             let rig = entry.door.rig
             let leaves = rig.leafTransforms(entry.motion.motion, at: entry.motion.time)
             entry.door.pose.publish(leaves.map { HKABonePose(transform: $0) })
-            world.setSequenceDoorLeaves(rig.leafDeltas(leaves), for: reference)
+            commands.append(.setLeaves(rig.leafDeltas(leaves), reference: reference))
         }
+        return commands
     }
 
     /// The `GetOpenState` code of a resident sequence door, or nil for any other

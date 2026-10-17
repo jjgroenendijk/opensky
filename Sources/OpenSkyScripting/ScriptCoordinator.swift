@@ -32,13 +32,11 @@ public final class ScriptCoordinator {
     public private(set) var bridge: PapyrusWorldStateBridge?
     /// Scripts with their ancestors, loaded off the main actor once play starts.
     private var scripts: AssetLoader<String, [PexFile]>?
-    weak var world: (any ScriptWorld)?
+    weak let world: (any ScriptWorld)?
     /// The player's location at the last frame. The outer nil means no frame has read it.
     private var lastPlayerLocation: ResolvedFormID??
 
-    public init() {}
-
-    public func attach(world: any ScriptWorld) {
+    public init(world: any ScriptWorld) {
         self.world = world
     }
 

@@ -47,7 +47,7 @@ final class MessageWorldAdapter {
             ItemNoticeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
         cachedEditorIDs = nil
-        game.messages.attach(world: self)
+        game.messages.reloadHelpRecords()
         // Frame steps run under a menu too, so notifications keep real time.
         let messages = game.messages
         let subtitles = game.subtitles

@@ -32,7 +32,12 @@ public enum AgentHandling {
 
 @MainActor
 public final class AgentCommandRouter {
-    public weak var world: (any AgentControlWorld)?
+    /// The game the commands drive. Nil while no game window runs.
+    public var world: (any AgentControlWorld)? {
+        currentWorld()
+    }
+
+    private let currentWorld: () -> (any AgentControlWorld)?
     public private(set) var eventLog = AgentEventLog()
     /// Set by `quit`; the host quits once the reply is written.
     public private(set) var quitRequested = false
@@ -46,7 +51,9 @@ public final class AgentCommandRouter {
     /// Seconds per stepped frame unless a step names its own.
     public static let defaultStepSeconds = 1.0 / 60
 
-    public init() {}
+    public init(world: @escaping () -> (any AgentControlWorld)?) {
+        currentWorld = world
+    }
 
     public var context: AgentReplyContext {
         let timeline = world?.agentTimeline

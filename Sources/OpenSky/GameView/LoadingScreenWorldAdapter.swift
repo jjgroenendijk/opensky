@@ -47,8 +47,6 @@ final class LoadingScreenWorldAdapter {
     }
 
     func wire(streamer: CellStreamer, renderer: Renderer) {
-        let loading = game.loadingScreens
-        loading.attach(world: self)
         streamer.onDoorTransitionStarted = { [weak self] in
             guard let self else { return }
             game.loadingScreens.begin(at: now)

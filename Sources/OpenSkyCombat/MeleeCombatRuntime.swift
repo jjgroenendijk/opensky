@@ -77,12 +77,6 @@ public final class MeleeCombatRuntime {
         self.world = world
     }
 
-    /// Attaches (or detaches) the world this runtime resolves against.
-    public func attach(world: (any MeleeCombatWorld)?) {
-        self.world = world
-        reset()
-    }
-
     // MARK: - Intent
 
     /// Takes one frame of melee intent and raises the events its edges imply.

@@ -15,7 +15,7 @@ extension CombatCoordinator: CombatLoopWorld {
     }
 
     public func combatActors() -> [CombatActorObservation] {
-        world?.residentActors() ?? []
+        world.residentActors()
     }
 
     /// The actor the player last hurt, while it lives and stands within
@@ -34,12 +34,12 @@ extension CombatCoordinator: CombatLoopWorld {
     public static let enemyBarRange: Float = 4096
 
     public func combatHostility(of key: ReferenceKey) -> ActorHostility {
-        world?.hostility(of: key) ?? .neutral
+        world.hostility(of: key)
     }
 
     @discardableResult
     public func setCombatHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
-        world?.setHostility(hostility, on: key) ?? false
+        world.setHostility(hostility, on: key)
     }
 
     @discardableResult
@@ -48,7 +48,7 @@ extension CombatCoordinator: CombatLoopWorld {
     }
 
     public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
-        world?.magicInfluence(of: key) ?? .none
+        world.magicInfluence(of: key)
     }
 
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
@@ -80,11 +80,11 @@ extension CombatCoordinator: CombatLoopWorld {
     public func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {
-        world?.awareness(of: observer, toward: target) ?? .unaware
+        world.awareness(of: observer, toward: target)
     }
 
     public func combatHealthFraction(of key: ReferenceKey) -> Float {
-        guard let health = world?.health(of: key) else { return 1 }
+        guard let health = world.health(of: key) else { return 1 }
         return CombatCore.healthFraction(current: health.current, maximum: health.maximum)
     }
 
@@ -93,51 +93,51 @@ extension CombatCoordinator: CombatLoopWorld {
     }
 
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
-        world?.combatStyle(of: key)
+        world.combatStyle(of: key)
     }
 
     public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
-        guard allowsActorCasting, let facts = world?.castingFacts(of: key) else { return .none }
+        guard allowsActorCasting, let facts = world.castingFacts(of: key) else { return .none }
         return CombatCore.castingProfile(facts)
     }
 
     @discardableResult
     public func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        world?.beginCast(option.spell, by: key) ?? false
+        world.beginCast(option.spell, by: key)
     }
 
     @discardableResult
     public func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        let finished = world?.releaseCast(by: key) ?? false
+        let finished = world.releaseCast(by: key)
         actorCastCount += finished ? 1 : 0
         return finished
     }
 
     public func cancelCombatCast(by key: ReferenceKey) {
-        world?.cancelCast(by: key)
+        world.cancelCast(by: key)
     }
 
     @discardableResult
     public func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
-        world?.moveActor(key, to: point) ?? false
+        world.moveActor(key, to: point)
     }
 
     public func stopCombatMovement(of key: ReferenceKey) {
-        world?.stopActor(key)
+        world.stopActor(key)
     }
 
     public func resumeCombatPackage(for key: ReferenceKey) {
-        world?.resumePackage(for: key)
+        world.resumePackage(for: key)
     }
 
     /// Single-clip playback, because NPCs carry no behavior graph.
     @discardableResult
     public func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
-        world?.playReaction(clip, on: key) ?? false
+        world.playReaction(clip, on: key)
     }
 
     public var combatTransients: CombatTransientCounts {
-        var counts = world?.bodyTransients ?? .none
+        var counts = world.bodyTransients
         counts.liveProjectiles = archery?.projectiles.live.count ?? 0
         counts.stuckProjectiles = archery?.projectiles.stuck.count ?? 0
         return counts
@@ -150,7 +150,7 @@ extension CombatCoordinator: CombatLoopWorld {
             removed.liveProjectiles = projectiles.trimLive(to: limits.liveProjectiles)
             removed.stuckProjectiles = projectiles.trimStuck(to: limits.stuckProjectiles)
         }
-        let bodies = world?.trimBodyTransients(to: limits) ?? .none
+        let bodies = world.trimBodyTransients(to: limits)
         removed.activeRagdolls = bodies.activeRagdolls
         removed.awakeBodies = bodies.awakeBodies
         return removed
@@ -158,10 +158,10 @@ extension CombatCoordinator: CombatLoopWorld {
 
     public func despawnCombatTransients() {
         archery?.projectiles.despawnAll()
-        world?.resetRagdolls()
+        pendingCommands.append(.resetRagdolls)
     }
 
     public func setCombatMusicActive(_ active: Bool) {
-        world?.setCombatMusicActive(active)
+        pendingCommands.append(.setCombatMusic(active: active))
     }
 }

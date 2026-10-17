@@ -17,7 +17,7 @@ extension MagicCoordinator {
         guard let caster else { return .empty }
         var states: [ReferenceKey: MagicConditionState] = [:]
         let keys = [ReferenceKey.player]
-            + (world?.residentActorKeys() ?? []).filter { $0 != .player }
+            + world.residentActorKeys().filter { $0 != .player }
         for key in keys {
             states[key] = MagicConditionState(
                 spellbook: caster.spellbook.state(of: conditionHolder(for: key)),
@@ -39,7 +39,7 @@ extension MagicCoordinator {
     /// One line per magic function, run against the player. A function that
     /// cannot answer prints its reason, so a gap is not a zero.
     func magicConditionLines() -> [String] {
-        guard let caster, let world else { return [] }
+        guard let caster else { return [] }
         let book = caster.spellbook.state(of: .player)
         let readied = book.spell(in: .right) ?? book.spell(in: .left)
         var context = ConditionContext()
@@ -57,7 +57,7 @@ extension MagicCoordinator {
     /// An actor the world cannot place reads an empty spellbook rather than
     /// throwing the whole snapshot away.
     private func conditionHolder(for key: ReferenceKey) -> ActorValueHolder {
-        world?.actorValueHolder(for: key)
+        world.actorValueHolder(for: key)
             ?? ActorValueHolder(key: key, subject: .generated, cell: nil)
     }
 }

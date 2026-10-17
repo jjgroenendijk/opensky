@@ -156,8 +156,10 @@ struct AINavigationCoordinatorTests {
             AIActorCandidate(key: far, name: "Far", feet: SIMD3(0, 900, 0), isDead: false),
             AIActorCandidate(key: near, name: "Near", feet: SIMD3(0, 100, 0), isDead: false)
         ]
-        let coordinator = AINavigationCoordinator(packages: PackageCoordinator())
-        coordinator.attach(world: world)
+        let coordinator = AINavigationCoordinator(
+            packages: PackageCoordinator(world: nil),
+            world: world
+        )
         return (coordinator, world)
     }
 

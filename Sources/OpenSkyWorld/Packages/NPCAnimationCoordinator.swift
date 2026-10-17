@@ -24,11 +24,9 @@ public final class NPCAnimationCoordinator {
     /// Each horse's rider, which plays the rider clip of the horse's gait.
     public private(set) var riders: [ReferenceKey: ReferenceKey] = [:]
 
-    weak var world: (any NPCAnimationWorld)?
+    weak let world: (any NPCAnimationWorld)?
 
-    public init() {}
-
-    public func attach(world: any NPCAnimationWorld) {
+    public init(world: any NPCAnimationWorld) {
         self.world = world
     }
 

@@ -39,8 +39,7 @@ struct RagdollCoordinatorTests {
             RagdollResident(key: key, position: SIMD3(Float(index + 1) * 100, 0, 0))
         }
         let loader = Loader()
-        let coordinator = RagdollCoordinator(store: WorldStateStore())
-        coordinator.attach(world: world)
+        let coordinator = RagdollCoordinator(store: WorldStateStore(), world: world)
         coordinator.wire(loadDefinition: loader.load)
         return Session(coordinator: coordinator, world: world, loader: loader)
     }
@@ -51,9 +50,14 @@ struct RagdollCoordinatorTests {
         let coordinator = session.coordinator
         let world = session.world
         world.zeroHealth = [Self.far]
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
-        #expect(world.murders == [Self.far])
+        let first = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
+        let second = coordinator.advance(
+            events: [],
+            controls: RagdollGraphControls(),
+            delta: 1 / 60
+        )
+        #expect(first == [.reportMurder(Self.far)])
+        #expect(second.isEmpty)
         #expect(coordinator.deathState(of: Self.far)?.isDead == true)
         #expect(coordinator.deathState(of: Self.near) == nil)
         let runtime = try #require(coordinator.runtime)
@@ -65,11 +69,11 @@ struct RagdollCoordinatorTests {
     func theBlendFallsBackToTheVanillaDuration() throws {
         let session = Self.session()
         let coordinator = session.coordinator
-        coordinator.advance(
+        _ = coordinator.advance(
             events: [], controls: RagdollGraphControls(blendDuration: 0.25), delta: 0
         )
         #expect(try #require(coordinator.runtime).blendDuration == 0.25)
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 0)
+        _ = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 0)
         #expect(
             try #require(coordinator.runtime).blendDuration
                 == HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
@@ -80,13 +84,13 @@ struct RagdollCoordinatorTests {
     func theContactListenerAndMotorFollowTheGraph() throws {
         let session = Self.session()
         let coordinator = session.coordinator
-        coordinator.advance(
+        _ = coordinator.advance(
             events: [], controls: RagdollGraphControls(contactEvent: "RagdollHit"), delta: 0
         )
         let runtime = try #require(coordinator.runtime)
         #expect(runtime.contactEvent == "RagdollHit")
         #expect(runtime.motor == nil)
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 0)
+        _ = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 0)
         #expect(runtime.contactEvent == nil)
     }
 
@@ -137,12 +141,15 @@ struct RagdollCoordinatorTests {
         #expect(!coordinator.triggerRagdoll())
         world.selectedRagdollActor = Self.near
         #expect(coordinator.triggerRagdoll())
-        coordinator.publishPoses()
         let reference = FakeRagdollSessionWorld.reference(of: Self.near).rawValue
-        #expect(world.publishedRagdollPoses.keys.sorted() == [reference])
+        guard case let .publishPoses(poses)? = coordinator.publishPoses().first else {
+            Issue.record("no poses published")
+            return
+        }
+        #expect(poses.keys.sorted() == [reference])
         #expect(coordinator.ragdollStatsSnapshot.ragdollCount == 1)
-        coordinator.clearRagdolls()
-        #expect(world.publishedRagdollPoses.isEmpty)
+        #expect(coordinator.clearRagdolls() == [.publishPoses([:])])
+        #expect(coordinator.publishPoses().isEmpty)
         #expect(coordinator.ragdollStatsSnapshot.ragdollCount == 0)
         #expect(coordinator.deathState(of: Self.near)?.isDead == true)
     }
@@ -156,11 +163,11 @@ struct RagdollCoordinatorTests {
         world.selectedRagdollActor = Self.near
         #expect(coordinator.triggerRagdoll())
         let runtime = try #require(coordinator.runtime)
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
+        _ = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
         #expect(runtime.world.isRagdolling(Self.near))
 
         world.residentRagdollCells = []
-        coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
+        _ = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)
 
         #expect(!runtime.world.isRagdolling(Self.near))
         #expect(coordinator.ragdollStatsSnapshot.ragdollCount == 0)

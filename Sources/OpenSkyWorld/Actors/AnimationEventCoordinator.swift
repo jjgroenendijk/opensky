@@ -21,7 +21,7 @@ public protocol AnimationEventWorld: AnyObject {
 }
 
 public final class AnimationEventCoordinator {
-    weak var world: (any AnimationEventWorld)?
+    let world: any AnimationEventWorld
     /// Off drops every action, so the graph's own events still run.
     public var isEnabled = true
     /// Actions run, by kind, for the panel.
@@ -31,16 +31,14 @@ public final class AnimationEventCoordinator {
     /// Sound editor IDs a clip named that no `SNDR` has.
     public private(set) var missingSounds: Set<String> = []
 
-    public init() {}
-
-    public func attach(world: any AnimationEventWorld) {
+    public init(world: any AnimationEventWorld) {
         self.world = world
     }
 
     /// Runs the annotation's action. Returns it, or nil when `name` is not one.
     @discardableResult
     public func handle(_ name: String, from source: ReferenceKey) -> AnimationEventAction? {
-        guard isEnabled, let world, let action = AnimationEventAction.parse(name) else {
+        guard isEnabled, let action = AnimationEventAction.parse(name) else {
             return nil
         }
         switch action {
