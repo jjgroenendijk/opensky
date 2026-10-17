@@ -6,6 +6,8 @@
 #   .gpu         when a file of the suite reaches a Metal device,
 #   .parser      when it is declared in a format test target.
 # A `.disabled` trait must name the issue that tracks it ("flaky: #123").
+# A `.gpu` or `.slow` tag outside the real-data bundle carries `.unlessPlanSkips`
+# of the same tag, because Xcode ignores a plan's skippedTags.
 # Acceptance suite names do not start with a milestone number.
 #
 # --fix adds the missing tags to each suite's @Suite attribute.
@@ -35,6 +37,9 @@ DECL = re.compile(
 SUITE_ATTR = re.compile(r"@Suite\b(\()?")
 TAGS_ARG = re.compile(r"\.tags\(([^)]*)\)")
 MILESTONE_NAME = re.compile(r"^M\d+")
+PLAN_SKIPPABLE = ("gpu", "slow")
+# The real-data plans select by tag and set no OPENSKY_SKIPPED_TAGS.
+UNGATED_TARGETS = {"OpenSkyRealDataTests"}
 
 
 class Declaration:
@@ -142,6 +147,27 @@ def disabled_without_issue(path, text):
     return errors
 
 
+def ungated_tags(path, text):
+    """(offset just inside the closing parenthesis, tag) for each gate a trait list misses."""
+    if path.relative_to(TESTS).parts[0] in UNGATED_TARGETS:
+        return []
+    missing = []
+    for match in re.finditer(r"@(?:Test|Suite)\(", text):
+        close = balanced(text, match.end() - 1)
+        args = text[match.end() - 1:close]
+        tags = {tag.strip().lstrip(".") for group in TAGS_ARG.findall(args) for tag in group.split(",")}
+        for tag in PLAN_SKIPPABLE:
+            if tag in tags and f".unlessPlanSkips(.{tag})" not in args:
+                missing.append((close - 1, tag))
+    return missing
+
+
+def add_gates(text, missing):
+    for offset, tag in sorted(missing, reverse=True):
+        text = text[:offset].rstrip() + f", .unlessPlanSkips(.{tag})" + text[offset:]
+    return text
+
+
 def add_tags(text, primary, missing):
     """Return text with `missing` tags added to the primary declaration's @Suite."""
     tags = ", ".join(f".{tag}" for tag in sorted(missing))
@@ -209,6 +235,9 @@ def main():
 
     for path, text in texts.items():
         errors += disabled_without_issue(path, text)
+        for offset, tag in ungated_tags(path, text):
+            line = text[:offset].count("\n") + 1
+            errors.append(f"{path.relative_to(ROOT)}:{line}: .{tag} needs .unlessPlanSkips(.{tag})")
 
     if fix:
         for path, pending in edits.items():
@@ -217,6 +246,10 @@ def main():
             for primary, missing in sorted(pending, key=lambda item: -item[0].start):
                 text = add_tags(text, primary, missing)
             path.write_text(add_import(text))
+        for path in texts:
+            text = path.read_text()
+            if missing := ungated_tags(path, text):
+                path.write_text(add_gates(text, missing))
         print(f"[INFO] tagged {sum(len(p) for p in edits.values())} suites in {len(edits)} files")
         remaining = [error for error in errors if "needs ." not in error]
         for error in remaining:

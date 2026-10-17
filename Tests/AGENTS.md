@@ -67,7 +67,7 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
 | Plan | Bundles |
 | --- | --- |
-| `Quick` (the default) | every package test target, set to skip the `.slow` and `.gpu` tests (Xcode runs them anyway: `docs/tools/environment.md`); builds no app |
+| `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests; builds no app |
 | `Formats` | the `OpenSkyFormats*Tests` targets |
 | `Engine` | game data, behavior, launch, agent control, physics, rendering, audio, world state |
 | `Features` | every feature's tests, save, menus, preview |
@@ -88,8 +88,10 @@ test host while the UI runner waits for it, and the run deadlocks
 ## Tags
 
 `Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags, and every test target
-links it. Put a tag on the suite, `@Suite(.tags(.gpu))`, or on one test when only that
-test needs it.
+links it. Put a tag on the suite, `@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))`, or on one
+test when only that test needs it. A `.gpu` or `.slow` tag outside `OpenSkyRealDataTests`
+always comes with `.unlessPlanSkips` of the same tag: Xcode ignores a plan's `skippedTags`, so
+the `Quick` plan names the tags to skip in `OPENSKY_SKIPPED_TAGS` and this trait reads it.
 
 | Tag | Put it on |
 | --- | --- |
@@ -100,9 +102,10 @@ test needs it.
 | `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test-real PERF=1`) |
 | `.smoke` | A real-data suite in the smoke set that `make test-real` runs by default: one quick suite per format family and subsystem |
 
-`make lint-test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, and
-`make lint-test-tags FIX=1` adds them. A tag narrows a run (`make test-unit PLAN=GPU`) but
-never pulls a real-data test into a unit run: a plan picks bundles, a tag picks tests inside them.
+`make lint-test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, or a
+`.gpu` or `.slow` tag without its `.unlessPlanSkips`, and `make lint-test-tags FIX=1` adds
+them. A tag narrows a run (`make test-unit PLAN=GPU`) but never pulls a real-data test into a
+unit run: a plan picks bundles, a tag picks tests inside them.
 
 ## Flaky tests
 

@@ -12,7 +12,7 @@ import OpenSkyTagsTesting
 import Testing
 
 @MainActor
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ASTCTextureConverterTests {
     nonisolated private static let device: MTLDevice? = {
         guard

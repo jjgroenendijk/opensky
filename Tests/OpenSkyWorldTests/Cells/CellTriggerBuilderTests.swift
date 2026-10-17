@@ -216,7 +216,7 @@ extension CellSceneBuilderTests {
 
 /// Trigger queries across resident cells. No Metal: scenes are built directly
 /// from placed volumes.
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct TriggerVolumeCompositionTests {
     private func volume(_ objectID: UInt32, at center: SIMD3<Float>) throws -> TriggerVolume {
         try #require(TriggerVolume.placed(

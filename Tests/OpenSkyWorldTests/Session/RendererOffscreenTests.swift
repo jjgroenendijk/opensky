@@ -22,7 +22,7 @@ private struct EnvironmentRender {
     let stats: SceneDrawStats
 }
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererOffscreenTests {
     private static let device: MTLDevice? = {
         guard

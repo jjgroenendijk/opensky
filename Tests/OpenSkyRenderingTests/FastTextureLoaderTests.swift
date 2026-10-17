@@ -11,7 +11,7 @@ import OpenSkyTagsTesting
 import Testing
 
 @MainActor
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct FastTextureLoaderTests {
     /// The readback runs on a Metal 4 queue, which the CI runner's virtual GPU lacks.
     nonisolated private static let device: MTLDevice? = {

@@ -12,7 +12,7 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldState
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct RendererWallClockTests {
     private func makeRenderer(clock: ManualWallClock) throws -> Renderer {

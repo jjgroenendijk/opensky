@@ -115,7 +115,7 @@ private enum SWFMenuFixture {
     }
 }
 
-@Suite(.tags(.acceptance, .gpu))
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
 struct RendererSWFStaticAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

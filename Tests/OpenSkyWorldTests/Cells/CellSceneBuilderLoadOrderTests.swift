@@ -15,7 +15,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellSceneBuilderLoadOrderTests {
     private static let interior: UInt32 = 0x0000_1234
     private static let modInterior: UInt32 = 0x0200_1000

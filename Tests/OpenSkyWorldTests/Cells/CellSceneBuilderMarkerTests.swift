@@ -11,7 +11,7 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldInterface
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellSceneBuilderMarkerTests: CellSceneBuilderFixture {
     let dataURL: URL
 

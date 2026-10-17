@@ -14,7 +14,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererShadowTests {
     /// Untagged casters are fixed, so the per-frame merge has nothing left to walk,
     /// and the fixed union still reaches the far tower.

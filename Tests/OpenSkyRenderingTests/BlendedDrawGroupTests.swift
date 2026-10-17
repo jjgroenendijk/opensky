@@ -8,7 +8,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct BlendedDrawGroupTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

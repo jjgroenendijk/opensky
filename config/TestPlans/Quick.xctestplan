@@ -247,6 +247,10 @@
       {
         "key": "OPENSKY_SHADER_LIBRARY",
         "value": "$(BUILD_DIR)/OpenSkyShaders.metallib"
+      },
+      {
+        "key": "OPENSKY_SKIPPED_TAGS",
+        "value": "slow,gpu"
       }
     ],
     "maximumTestExecutionTimeAllowance": 300,
@@ -264,12 +268,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsCoreTests",
         "name": "OpenSkyFormatsCoreTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -278,12 +276,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsESMTests",
         "name": "OpenSkyFormatsESMTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -292,12 +284,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsMeshTests",
         "name": "OpenSkyFormatsMeshTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -306,12 +292,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsAnimationTests",
         "name": "OpenSkyFormatsAnimationTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -320,12 +300,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsAudioTests",
         "name": "OpenSkyFormatsAudioTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -334,12 +308,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsPEXTests",
         "name": "OpenSkyFormatsPEXTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -348,12 +316,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsSWFTests",
         "name": "OpenSkyFormatsSWFTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -362,12 +324,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFormatsESSTests",
         "name": "OpenSkyFormatsESSTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -376,12 +332,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyGameDataTests",
         "name": "OpenSkyGameDataTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -390,12 +340,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyBehaviorTests",
         "name": "OpenSkyBehaviorTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -404,12 +348,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyAgentControlTests",
         "name": "OpenSkyAgentControlTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -418,12 +356,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyLaunchTests",
         "name": "OpenSkyLaunchTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -432,12 +364,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyAssetCacheTests",
         "name": "OpenSkyAssetCacheTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -446,12 +372,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyPhysicsTests",
         "name": "OpenSkyPhysicsTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -460,12 +380,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyRenderingTests",
         "name": "OpenSkyRenderingTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -474,12 +388,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyAudioTests",
         "name": "OpenSkyAudioTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -488,12 +396,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyWorldStateTests",
         "name": "OpenSkyWorldStateTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -502,12 +404,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyPerceptionTests",
         "name": "OpenSkyPerceptionTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -516,12 +412,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyActorsTests",
         "name": "OpenSkyActorsTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -530,12 +420,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyFactionsTests",
         "name": "OpenSkyFactionsTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -544,12 +428,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyProgressionTests",
         "name": "OpenSkyProgressionTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -558,12 +436,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyCrimeTests",
         "name": "OpenSkyCrimeTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -572,12 +444,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyInventoryTests",
         "name": "OpenSkyInventoryTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -586,12 +452,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyMagicTests",
         "name": "OpenSkyMagicTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -600,12 +460,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyCombatTests",
         "name": "OpenSkyCombatTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -614,12 +468,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyQuestsTests",
         "name": "OpenSkyQuestsTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -628,12 +476,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyDialogueTests",
         "name": "OpenSkyDialogueTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -642,12 +484,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyScriptingTests",
         "name": "OpenSkyScriptingTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -656,12 +492,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyPreviewTests",
         "name": "OpenSkyPreviewTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -670,12 +500,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyCLIArgumentsTests",
         "name": "OpenSkyCLIArgumentsTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -684,12 +508,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyWorldTests",
         "name": "OpenSkyWorldTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -698,12 +516,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkySaveTests",
         "name": "OpenSkySaveTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     },
     {
@@ -712,12 +524,6 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyMenusTests",
         "name": "OpenSkyMenusTests"
-      },
-      "skippedTags": {
-        "tags": [
-          "slow",
-          "gpu"
-        ]
       }
     }
   ],

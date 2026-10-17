@@ -19,7 +19,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.acceptance, .gpu))
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct InventoryAcceptanceRenderTests {
     private static let width = 320

@@ -13,7 +13,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererInstancingTests {
     private static let device = OffscreenRendererFixture.device
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device

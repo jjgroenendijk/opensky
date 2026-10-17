@@ -12,7 +12,7 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
 import Testing
 
-@Suite(.tags(.acceptance, .gpu))
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
 struct WorldTimeAcceptanceTests {
     // MARK: Step 1 — the destination carries the time, globals, and conditions sections
 

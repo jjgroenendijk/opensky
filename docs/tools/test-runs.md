@@ -24,7 +24,7 @@ small. The `OpenSky` scheme has these plans, under `config/TestPlans/`:
 | Plan | Test targets | Used by |
 | --- | --- | --- |
 | `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test-unit PLAN=UnitTests`; CI on every push. The scheme default |
-| `Quick.xctestplan` | every package test target, skipping the tests tagged `slow` and `gpu` | `make test-unit`, the default plan. Builds no app |
+| `Quick.xctestplan` | every package test target, skipping the tests tagged `slow` and `gpu` through `OPENSKY_SKIPPED_TAGS` | `make test-unit`, the default plan. Builds no app |
 | `Formats.xctestplan` | the `OpenSkyFormats*Tests` targets | `make test-unit PLAN=Formats` |
 | `Engine.xctestplan` | the engine-layer targets: game data, behavior, launch, agent control, physics, rendering, audio, world state | `make test-unit PLAN=Engine` |
 | `Features.xctestplan` | the feature targets, save, menus, and preview | `make test-unit PLAN=Features` |
@@ -46,9 +46,10 @@ contexts rewrite the same intermediates (Code coverage, below).
 `make lint-test-plans`, part of `make lint`, checks the rules below that a machine can check: every
 plan is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It also
 checks that the Perf plan selects only the `perf` tag with the RealData data root, that the
-`RealData` plan selects only the `smoke` tag and `RealDataAll` the whole target, that `Quick` skips
-`slow` and `gpu`, that the layer plans partition the unit plan, and that the sanitizer and `GPU`
-plans list the unit plan's targets and set its environment, such as the shader library path.
+`RealData` plan selects only the `smoke` tag and `RealDataAll` the whole target, that `Quick` sets
+`OPENSKY_SKIPPED_TAGS` to `slow,gpu`, that no plan sets `skippedTags`, that the layer plans
+partition the unit plan, and that the sanitizer and `GPU` plans list the unit plan's targets and
+set its environment, such as the shader library path.
 
 ## Timeouts
 
@@ -84,6 +85,13 @@ target entry takes `"selectedTags" : { "tags" : [ "perf" ] }`. The Perf plan ran
 tagged tests of `OpenSkyRealDataTests` this way. xcodebuild has no flag that selects a tag, so a tag
 run needs its own plan: `GPU` is the unit plan with every target narrowed to one tag, and `Quick`
 is the package targets with two tags skipped.
+
+A plan's `skippedTags` skips nothing on Xcode 27 ([environment](/tools/environment.md)). So `Quick`
+sets the environment variable `OPENSKY_SKIPPED_TAGS=slow,gpu` instead, and every `.gpu` or `.slow`
+test outside the real-data bundle carries the condition trait `.unlessPlanSkips(.gpu)`. The trait
+turns the test off when the variable names its tag, and the run reports it as skipped. Other plans
+do not set the variable, so the trait changes nothing there. `make lint-test-tags` fails a tag
+without its trait.
 
 A tag cannot replace a plan. A plan chooses the bundles that are built and the environment of the
 host; a tag only chooses tests inside them. So the real-data suites stay in their own bundle.

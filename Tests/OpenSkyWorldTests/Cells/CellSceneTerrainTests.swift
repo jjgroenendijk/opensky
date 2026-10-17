@@ -15,7 +15,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellSceneTerrainTests {
     private static let device = MTLCreateSystemDefaultDevice()
     private static var hasDevice: Bool {

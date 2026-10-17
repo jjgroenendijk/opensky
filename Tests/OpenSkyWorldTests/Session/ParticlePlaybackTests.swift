@@ -12,7 +12,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ParticlePlaybackTests {
     @Test func deterministicSimulationUsesCapacityLifetimeAndWeatherWind() {
         let definition = makeDefinition(windStrength: 80)

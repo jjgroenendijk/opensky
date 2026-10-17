@@ -150,13 +150,14 @@ Retires when a later Xcode matches plan selection against Swift Testing names.
 
 ## A plan's skippedTags skips nothing
 
-Observed 2026-10-13 on Xcode 27.0 (build 27A266a). The `Quick` plan skips the `slow` and `gpu`
-tags on every target, yet its runs still run the `.gpu` suites, such as `RendererUpscaleTests`.
-Both `"gpu"` and the spelling Xcode itself writes, `".gpu"`, behave the same. A plan's
-`selectedTags` works: the `GPU` plan runs only `.gpu` tests. So a `Quick` run builds the
-MetalFX scalers too, and needs the Neural Engine entry below.
+Observed 2026-10-13 on Xcode 27.0 (build 27A266a). A `Quick` plan that skipped the `slow` and
+`gpu` tags on every target still ran the `.gpu` suites, such as `RendererUpscaleTests`. Both
+`"gpu"` and the spelling Xcode itself writes, `".gpu"`, behave the same. A plan's `selectedTags`
+works: the `GPU` plan runs only `.gpu` tests. So `Quick` skips through the environment variable
+`OPENSKY_SKIPPED_TAGS` and a condition trait instead ([test runs](/tools/test-runs.md#tags)).
 
-Retires when a `Quick` run no longer lists a `.gpu` suite in its transcript.
+Retires when a plan with `skippedTags` and no `OPENSKY_SKIPPED_TAGS` lists no `.gpu` suite in its
+transcript.
 
 ## The Neural Engine compiler can stop answering
 

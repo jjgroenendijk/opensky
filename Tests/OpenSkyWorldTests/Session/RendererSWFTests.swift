@@ -15,7 +15,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererSWFTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .packageFixture)
@@ -188,7 +188,7 @@ struct RendererSWFTests {
 
     /// The glyph atlas is shared and fixed-size, so a movie swap must return
     /// the old cells, or the atlas fills and later text draws nothing.
-    @Test(.enabled(if: Self.hasMetal4Device), .tags(.slow))
+    @Test(.enabled(if: Self.hasMetal4Device), .tags(.slow), .unlessPlanSkips(.slow))
     @MainActor
     func swappingMoviesReleasesTheirGlyphCells() throws {
         let renderer = try Self.canvas.makeSessionRenderer()

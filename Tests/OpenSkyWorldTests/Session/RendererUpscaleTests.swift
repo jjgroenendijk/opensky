@@ -13,7 +13,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct RendererUpscaleTests {
     private static let width = 480

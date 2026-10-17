@@ -31,7 +31,9 @@ TAG_PLANS = {"GPU": "gpu"}
 # The layer plans partition the unit plan: every target in exactly one of them.
 LAYER_PLANS = ("Formats", "Engine", "Features", "App")
 # Quick is every package target, skipping the tests that need seconds or a GPU.
-QUICK_SKIPS = ["slow", "gpu"]
+# Xcode ignores a plan's skippedTags, so the plan names them in the environment
+# and each tagged test reads it (Tests/OpenSkyTagsTesting/Tags.swift).
+QUICK_SKIPS = "slow,gpu"
 problems = []
 
 
@@ -85,8 +87,12 @@ if sorted(layered) != sorted(unit if (unit := [e["target"]["name"] for e in plan
 quick = plans.get("Quick", {}).get("testTargets", [])
 if [e["target"]["name"] for e in quick] != [t for t in unit if t != "OpenSkyTests"]:
     problems.append("Quick: must list every UnitTests target but OpenSkyTests, in the same order")
-if any(e.get("skippedTags", {}).get("tags") != QUICK_SKIPS for e in quick):
-    problems.append(f"Quick: every target must skip the tags {QUICK_SKIPS}")
+quick_env = plans.get("Quick", {}).get("defaultOptions", {}).get("environmentVariableEntries", [])
+if [e.get("value") for e in quick_env if e.get("key") == "OPENSKY_SKIPPED_TAGS"] != [QUICK_SKIPS]:
+    problems.append(f"Quick: must set OPENSKY_SKIPPED_TAGS to {QUICK_SKIPS}")
+for name, plan in plans.items():
+    if any(entry.get("skippedTags") for entry in plan.get("testTargets", [])):
+        problems.append(f"{name}: sets skippedTags, which Xcode ignores; use OPENSKY_SKIPPED_TAGS")
 
 perf = plans.get("Perf", {})
 perf_targets = perf.get("testTargets", [])

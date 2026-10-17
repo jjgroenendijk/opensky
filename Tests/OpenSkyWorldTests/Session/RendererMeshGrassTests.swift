@@ -12,7 +12,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct RendererMeshGrassTests {
     private static let width = 320

@@ -103,7 +103,7 @@ private enum SWFInteractiveFixture {
     static let elsewhere = (x: 20.0, y: 20.0)
 }
 
-@Suite(.tags(.acceptance, .gpu))
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
 struct RendererSWFInteractiveAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

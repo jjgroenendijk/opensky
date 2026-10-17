@@ -11,7 +11,7 @@ import OpenSkyFormatsTesting
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct SWFLabCoordinatorTests {
     private let dataURL: URL
 
