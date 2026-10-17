@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
+import OpenSkyMagicInterface
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorld
@@ -122,6 +123,11 @@ struct PerkRuntimeRealDataTests {
             store: store,
             perks: PerkStore(index: index, spells: spells),
             conditionRegistry: .standard
+        )
+        // The entry's spell tab asks `SpellHasCastingPerk`, which reads the spell
+        // store the app's magic seam supplies.
+        perks.conditions.magic = MagicConditionResolution(
+            spells: spells, sourcePlugin: "Skyrim.esm"
         )
         // Flames is the vanilla Novice Destruction spell every character starts
         // with, and its SPIT names the Novice Destruction perk.

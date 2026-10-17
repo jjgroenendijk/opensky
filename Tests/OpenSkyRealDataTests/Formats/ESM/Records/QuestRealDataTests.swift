@@ -80,8 +80,7 @@ struct QuestRealDataTests {
 
         let registry = ConditionFunctionRegistry.standard
         let fraction = census.coverage.coverageFraction(in: registry)
-        #expect(fraction > 0, "the registry answers none of the quest conditions")
-        #expect(fraction < 1, "quest conditions claim a complete registry")
+        #expect(fraction == 1, "a quest condition names a function the registry lacks")
         #expect(!census.shortlist.isEmpty, "no quest is a viable M13 target")
         #expect(quests.count == census.records)
     }
