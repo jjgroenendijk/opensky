@@ -5,6 +5,7 @@
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -50,6 +51,22 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// actor-value runtime or `key` is not resident.
     func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)?
     func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float
+    /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
+    /// the live conditions.
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float
+    /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> [PerkEntryPointChoice]
     /// Current and maximum health. Nil when `key` has no actor values.
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
@@ -136,6 +153,25 @@ extension CombatWorld {
     /// A session with no perks owns none.
     public func ownsPerk(editorID _: String, on _: ReferenceKey) -> Bool {
         false
+    }
+
+    public func perkModified(
+        _ value: Float,
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> Float {
+        value
+    }
+
+    public func perkChoices(
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        []
     }
 
     /// A session with no equipment wears nothing, so no armour stops a blow.

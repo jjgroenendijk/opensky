@@ -4,6 +4,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -40,6 +41,8 @@ public final class CombatCoordinator {
     public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
     public internal(set) var playerStruckTarget: ReferenceKey?
+    /// The critical-hit and arrow-deflect rolls.
+    var strikeRandom = ConditionRandom()
 
     public init() {}
 
@@ -185,7 +188,6 @@ public final class CombatCoordinator {
     func archeryAttackMultiplier() -> Float {
         guard let world, let values = world.actorValues(of: .player) else { return 1 }
         return CombatFortifyBonus.archery(reading: values)
-            * world.perkMultiplier(at: CombatCore.attackDamageEntryPoint, on: .player)
     }
 
     /// The name `residentActors()` gives `key`, so the readouts agree.

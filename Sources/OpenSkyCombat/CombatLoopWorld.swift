@@ -134,10 +134,12 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// `MeleeDamage`'s `bonusMultiplier`. Defaults to 1.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
 
-    /// The skill, sneak-attack, and armour terms of `attacker`'s blow on `target`.
-    func combatStrike(
-        from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
-    ) -> WeaponStrike
+    /// The skill, sneak-attack, armour, and perk terms of `blow` on `target`.
+    func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
+    /// Lands the spell a perk applies when `blow` hits `target`.
+    func applyCombatHitSpell(_ blow: CombatBlow, on target: ReferenceKey)
+    /// Lands the spell `target`'s perk applies when an enemy starts `blow` at it.
+    func applyCombatSwingSpell(_ blow: CombatBlow, at target: ReferenceKey)
 
     /// Charges `blocker` the stamina a blocked blow costs.
     func applyCombatBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
@@ -252,11 +254,13 @@ nonisolated extension CombatLoopWorld {
     }
 
     /// A session with no skills and no armour scales nothing.
-    public func combatStrike(
-        from _: ReferenceKey, handType _: CombatHandType, on _: ReferenceKey
-    ) -> WeaponStrike {
+    public func combatStrike(_: CombatBlow, on _: ReferenceKey) -> WeaponStrike {
         .plain
     }
+
+    public func applyCombatHitSpell(_: CombatBlow, on _: ReferenceKey) {}
+
+    public func applyCombatSwingSpell(_: CombatBlow, at _: ReferenceKey) {}
 
     /// A session with no stamina pays nothing to block.
     public func applyCombatBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}

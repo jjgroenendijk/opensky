@@ -102,18 +102,9 @@ known fact.
 ## Which entry points are covered
 
 Any entry point whose effects use one of the nine number functions can be evaluated. An unknown
-entry point ID evaluates to no change. What differs is whether a formula asks. These ask today:
-
-| Entry point | Id | Asked by |
-| --- | --- | --- |
-| Mod Attack Damage | 35 | melee and bow damage |
-| Mod Percent Blocked | 39 | the blocked fraction, for both sides of a fight |
-| Mod Spell Cost | 38 | the magicka cost of every cast |
-| Mod Skill Use | 22 | the experience of every skill use |
-| Mod Recover Arrow Chance | 21 | the chance an arrow joins the target's inventory |
-
-Nothing asks about lockpicking, prices, detection, tempering, or enchanting yet, because those
-formulas do not exist.
+entry point ID evaluates to no change. What differs is whether a rule asks. The
+[perk entry points](/engine/perk-entry-points.md) page lists each rule that asks, and what it
+binds.
 
 ## Condition tabs and their subjects
 
@@ -167,8 +158,8 @@ Each formula multiplies the perk term in the same place as the fortify term. Thi
 shape on UESP "Skyrim:Weapons":
 `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`.
 
-- Melee and archery: the fortify bonus times the `Mod Attack Damage` result
-  ([melee combat](/engine/melee-combat.md), [archery](/engine/archery.md)).
+- Melee and archery: the strike terms, beside the fortify bonus
+  ([melee damage](/engine/melee-damage.md)).
 - Blocking: the block fortify bonus times the `Mod Percent Blocked` result. A blow from an NPC and
   a blow from the player use the same code.
 - Spell cost: the `SPIT` half-cost perk, if the caster owns it, then `Mod Spell Cost` on what is
@@ -184,10 +175,6 @@ So the header halving applies only when the named perk does not itself hook `Mod
 source says which one the game reads. This rule gives the observed cost either way, and still
 works for a mod that sets only the header field.
 
-The unbound spell subject has a side effect here. `DestructionNovice00`'s condition limits the
-discount to novice Destruction spells. That tab is skipped, so an owner currently pays less for
-every spell. It is counted like every other unbound subject.
-
 ## Abilities
 
 An ability perk effect grants a `SPEL` while the perk is owned. A reconcile step makes the
@@ -201,8 +188,8 @@ Effects from perks are marked with a perk source. So the reconcile can tell a pe
 apart from the same spell the actor knows on its own. Removing by spell alone would remove an
 effect the actor still has the perk for.
 
-A function that selects a spell is not an ability. That spell is cast when the entry point fires,
-for example on a hit, and is not carried. Nothing casts it yet.
+A function that selects a spell is not an ability. That spell lands when the entry point fires,
+for example on a hit, and is not carried.
 
 ## Scripts and conditions
 

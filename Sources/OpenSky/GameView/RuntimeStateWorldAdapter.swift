@@ -107,7 +107,7 @@ final class RuntimeStateWorldAdapter {
     /// standing still when it has none.
     private func actionFacts(of key: ReferenceKey, isDead: Bool) -> ActorActionFacts? {
         if key == .player {
-            return game.combat.melee?.state.actionFacts
+            return game.combat.melee?.actionFacts
         }
         guard let loop = game.combat.loop else { return nil }
         guard !isDead, let phase = loop.phase(of: key) else { return .still }

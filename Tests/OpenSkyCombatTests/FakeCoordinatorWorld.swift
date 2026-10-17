@@ -5,6 +5,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
@@ -21,6 +22,14 @@ final class FakeCoordinatorWorld: CombatWorld {
     var hostilities: [ReferenceKey: ActorHostility] = [:]
     var values: [ReferenceKey: [Int32: Float]] = [:]
     var perkMultipliers: [ReferenceKey: Float] = [:]
+    /// Every actor's perks at an entry point: `value * factor + addend`.
+    var perkFactors: [PerkEntryPoint: Float] = [:]
+    var perkAddends: [PerkEntryPoint: Float] = [:]
+    /// The spell each picking entry point chooses.
+    var perkSpells: [PerkEntryPoint: ResolvedSpell] = [:]
+    /// The owner and subjects of the last question at each entry point.
+    private(set) var perkQuestions: [PerkEntryPoint: PerkEvaluationSubjects] = [:]
+    private(set) var spellHits: [SpellHit] = []
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
     var casting: [ReferenceKey: CombatCastingFacts] = [:]
     var styles: [ReferenceKey: CombatStyleTuning] = [:]
@@ -83,6 +92,28 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func perkMultiplier(at _: PerkEntryPoint, on key: ReferenceKey) -> Float {
         perkMultipliers[key] ?? 1
+    }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> Float {
+        perkQuestions[entryPoint] = subjects
+        return value * (perkFactors[entryPoint] ?? 1) + (perkAddends[entryPoint] ?? 0)
+    }
+
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        perkQuestions[entryPoint] = subjects
+        guard let spell = perkSpells[entryPoint] else { return [] }
+        return [PerkEntryPointChoice(perk: key, sourcePlugin: "Base.esm", spell: spell)]
     }
 
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
@@ -186,8 +217,9 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func resetRagdolls() {}
 
-    func applySpellHit(_: SpellHit) -> SpellHitReport {
-        .none
+    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+        spellHits.append(hit)
+        return .none
     }
 
     func applyWeaponEnchantment(_: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {

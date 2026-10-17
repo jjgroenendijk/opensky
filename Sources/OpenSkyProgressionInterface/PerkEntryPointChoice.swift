@@ -40,6 +40,17 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
         scriptFlags = effect.effect.scriptFlags
     }
 
+    /// A select-spell choice, as a fake world answers one.
+    public init(perk: ReferenceKey, sourcePlugin: String, spell: ResolvedSpell) {
+        self.perk = perk
+        self.sourcePlugin = sourcePlugin
+        function = .selectSpell
+        self.spell = spell
+        text = nil
+        buttonLabel = nil
+        scriptFlags = nil
+    }
+
     /// Whether a choice reader carries out `function`. `Add Leveled List` is not one:
     /// no vanilla entry point uses it.
     public static func carries(_ function: PerkFunction) -> Bool {

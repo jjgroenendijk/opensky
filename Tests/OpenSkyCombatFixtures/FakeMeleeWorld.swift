@@ -22,6 +22,8 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     public var stamina: Float?
     public private(set) var staminaPaid: [Float] = []
     public var ownsPowerBash = false
+    /// Whether the attacker's perks make a swing hit every actor it reaches.
+    public var sweeps = false
     public var shieldRating: Float?
 
     /// Skill uses the runtime reported, recorded rather than
@@ -56,6 +58,10 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
 
     public func meleeTargets() -> [MeleeTarget] {
         targets
+    }
+
+    public func meleeSweeps(_: CombatBlow) -> Bool {
+        sweeps
     }
 
     public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {

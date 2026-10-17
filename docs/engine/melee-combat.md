@@ -124,9 +124,9 @@ roughly where.
    two contact marks in one attack (the census shows `2_HitFrame` beside `HitFrame`), and it still
    lands once. The next swing can hit the same target again.
 
-Every target the swing reaches is hit, not only the nearest. A two-handed sweep through a crowd
-hits the crowd. Picking one would be a rule made up here. Order is nearest first, then the lower
-reference.
+A swing hits the nearest target only. The CK wiki "Perk Entry Point" page says the game's default
+swing is "akin to firing a single invisible bullet". The `Set Sweep Attack` perk entry point (the
+Sweep perk) makes a swing hit every target it reaches, nearest first, then the lower reference.
 
 ## Damage
 

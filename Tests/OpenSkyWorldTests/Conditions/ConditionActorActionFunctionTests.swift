@@ -50,6 +50,32 @@ struct ConditionActorActionFunctionTests {
         #expect(try Self.value(725, equals: 0, action: .still) == .true)
     }
 
+    /// `IsAttackType` names a keyword; the attack in progress carries its editor ID.
+    @Test func theAttackTypeMatchesTheKeywordByEditorID() throws {
+        let file = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x914E8, editorID: "PowerAttackTypeSide")
+        ])
+        var sideways = ActorActionFacts(attackState: .swing)
+        sideways.attackTypeKeyword = "PowerAttackTypeSide"
+        var outcomes: [ConditionOutcome] = []
+        for action in [sideways, ActorActionFacts(attackState: .swing)] {
+            var state = ActorConditionState(
+                current: ActorValues(repeating: 100), maximums: ActorValues(repeating: 100)
+            )
+            state.action = action
+            var context = try ConditionEvaluatorFixture.populatedContext()
+            context.actors = ActorStateResolution(states: [Self.subject: state])
+            context.data = ConditionDataResolution(
+                keywords: KeywordStore(plugins: [("Skyrim.esm", file)]), sourcePlugin: "Skyrim.esm"
+            )
+            var evaluator = ConditionEvaluator(context: context)
+            try outcomes.append(evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+                functionIndex: 697, 0, 1, parameter1: 0x914E8
+            )))
+        }
+        #expect(outcomes == [.true, .false])
+    }
+
     @Test func anUnobservedActionFailsWithAReason() throws {
         #expect(try Self.value(569, equals: 0, action: nil).failures == [.unavailableActorState])
     }

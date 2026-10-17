@@ -1,5 +1,5 @@
 // The combat state as conditions read it (`ActorActionFacts`): the player's melee
-// graph state, and each NPC's behaviour phase. See docs/engine/condition-functions.md.
+// graph state and strike, and each NPC's behaviour phase. See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -11,6 +11,35 @@ nonisolated extension MeleeCombatState {
             isBlocking: isBlocking,
             isStaggered: isStaggering
         )
+    }
+}
+
+extension MeleeCombatRuntime {
+    /// The graph state plus the strike in progress, which `IsPowerAttacking` and
+    /// `IsAttackType` read.
+    public var actionFacts: ActorActionFacts {
+        var facts = state.actionFacts
+        guard state.attackPhase != .idle else { return facts }
+        facts.isPowerAttacking = strikeKind.isPowerAttack
+        facts.attackTypeKeyword = switch strikeKind {
+        case .power: powerDirection?.attackTypeKeyword
+        case .powerBash: "PowerAttackBash"
+        case .normal, .bash: nil
+        }
+        return facts
+    }
+}
+
+nonisolated extension MeleePowerDirection {
+    /// The vanilla attack-type keyword of a power attack this way. A sideways
+    /// attack is one keyword for both sides.
+    public var attackTypeKeyword: String {
+        switch self {
+        case .inPlace: "PowerAttackTypeStanding"
+        case .forward: "PowerAttackTypeForward"
+        case .backward: "PowerAttackTypeBack"
+        case .left, .right: "PowerAttackTypeSide"
+        }
     }
 }
 

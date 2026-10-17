@@ -107,6 +107,9 @@ struct CombatCoreTests {
         #expect(CombatCore.block(of: .player, playerIsBlocking: true, machineBlock: nil) == .weapon)
         #expect(CombatCore
             .block(of: .player, playerIsBlocking: false, machineBlock: .weapon) == nil)
+        #expect(CombatCore.block(
+            of: .player, playerIsBlocking: true, playerShieldRating: 20, machineBlock: nil
+        ) == .shield(baseArmorRating: 20))
         #expect(CombatCore.block(of: npc, playerIsBlocking: true, machineBlock: nil) == nil)
         #expect(CombatCore
             .block(of: npc, playerIsBlocking: false, machineBlock: .weapon) == .weapon)
