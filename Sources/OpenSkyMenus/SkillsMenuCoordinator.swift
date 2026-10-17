@@ -49,12 +49,6 @@ public final class SkillsMenuCoordinator {
     public internal(set) var lastResult: String?
     public private(set) var movieEnabled = true
     public internal(set) var skyEnabled = true
-    public internal(set) var movieLoaded = false
-    public internal(set) var movieError: String?
-    /// The movie on the layer now, because the level-up pick and the ring use two.
-    var moviePath: String?
-    var movieRequest = 0
-    var holdsLayer = false
     var framePacer = MenuMovieFramePacer()
     /// Buttons the level-up movie pressed, applied after it returns.
     var pendingChoices: [ActorValueKind] = []
@@ -70,6 +64,20 @@ public final class SkillsMenuCoordinator {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+    }
+
+    /// Holds the layer across both movies, because the level-up pick and the
+    /// ring use two.
+    lazy var movie = MenuMovieSession(
+        movies: movies, hud: hud, label: "skills menu movie"
+    ) { [weak self] in self?.world?.renderer }
+
+    public var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    public var movieError: String? {
+        movie.error
     }
 
     public func attach(world: any SkillsMenuWorld) {
@@ -192,7 +200,7 @@ public final class SkillsMenuCoordinator {
     private var movieSnapshot: TitleMenuMovieSnapshot {
         TitleMenuMovieSnapshot(
             isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError,
-            state: moviePath.map { ($0 as NSString).lastPathComponent }
+            state: movie.path.map { ($0 as NSString).lastPathComponent }
         )
     }
 
@@ -217,29 +225,24 @@ public protocol SkillsMenuControlProviding: AnyObject {
     func setSkillsMenuSkyEnabled(_ enabled: Bool)
 }
 
-/// Lets the app's provider object stand in for its `SkillsMenuCoordinator`.
-public protocol SkillsMenuControlForwarding: SkillsMenuControlProviding {
-    var skillsMenu: SkillsMenuCoordinator { get }
-}
-
-extension SkillsMenuControlForwarding {
+extension SkillsMenuCoordinator: SkillsMenuControlProviding {
     public var skillsMenuSnapshot: SkillsMenuSnapshot {
-        skillsMenu.snapshot
+        snapshot
     }
 
     public func openSkillsMenu() {
-        skillsMenu.open()
+        open()
     }
 
     public func sendSkillsMenuInput(_ event: MenuInputEvent) {
-        skillsMenu.route(event)
+        route(event)
     }
 
     public func setSkillsMenuMovieEnabled(_ enabled: Bool) {
-        skillsMenu.setMovieEnabled(enabled)
+        setMovieEnabled(enabled)
     }
 
     public func setSkillsMenuSkyEnabled(_ enabled: Bool) {
-        skillsMenu.setSkyEnabled(enabled)
+        setSkyEnabled(enabled)
     }
 }

@@ -47,7 +47,7 @@ final class LoadingScreenWorldAdapter {
             }
             game.loadingScreens.destinationReady(location: location(of: scene), at: now)
         }
-        renderer.onFrame.add { [weak self] _ in
+        renderer.session.frameSteps.register(.loadingScreen) { [weak self] _ in
             guard let self else { return }
             liftStartCoverIfReady()
             game.loadingScreens.tick(time: now)
@@ -86,7 +86,7 @@ final class LoadingScreenWorldAdapter {
             !failedModels.contains(path) else { return [] }
         if
             meshes == nil,
-            let fileSystem = (game.worldData as? ScriptDataProviding)?.scriptFileSystem
+            let fileSystem = game.worldData?.scriptFileSystem
         {
             meshes = (try? TextureLibrary(fileSystem: fileSystem, device: renderer.device)).map {
                 MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
@@ -120,7 +120,7 @@ final class LoadingScreenWorldAdapter {
 
 extension LoadingScreenWorldAdapter: LoadingScreenWorld {
     var presentationRecords: PresentationRecordStore? {
-        (game.worldData as? PresentationDataProviding)?.presentationRecords
+        game.worldData?.presentationRecords
     }
 
     func loadingConditionContext() -> ConditionContext {

@@ -6,6 +6,8 @@
 
 import Foundation
 import OpenSkyCLIArguments
+import OpenSkyGameData
+import OpenSkyRendering
 
 /// CLI failure modes: `usage` prints the command's help and exits 2; `failure`
 /// prints the message and exits 1. Engine errors pass through as exit 1.
@@ -31,8 +33,17 @@ enum OpenSkyCLI {
             }
             exit(code)
         case let .run(command):
+            migrateSettings()
             await run(command)
         }
+    }
+
+    /// Older builds wrote these to the CLI's own domain instead of the shared one.
+    private static func migrateSettings() {
+        SettingsStore.shared.migrate(
+            [TimeOfDaySettings.defaultsKey, ShadowQualitySettings.defaultsKey],
+            from: .standard
+        )
     }
 
     private static func run(_ command: any CLICommandArguments) async {

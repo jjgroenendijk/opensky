@@ -98,26 +98,3 @@ extension SceneCoordinator: SceneControlProviding {
         stop(entry.formID)
     }
 }
-
-/// Lets the app's provider object stand in for its `SceneCoordinator`.
-public protocol SceneControlForwarding: SceneControlProviding {
-    var scenes: SceneCoordinator { get }
-}
-
-extension SceneControlForwarding {
-    public var sceneSnapshot: SceneControlSnapshot {
-        scenes.sceneSnapshot
-    }
-
-    public func sceneRows(matching filter: String) -> [SceneListRow] {
-        scenes.sceneRows(matching: filter)
-    }
-
-    public func startScene(editorID: String) {
-        scenes.startScene(editorID: editorID)
-    }
-
-    public func stopScene(editorID: String) {
-        scenes.stopScene(editorID: editorID)
-    }
-}

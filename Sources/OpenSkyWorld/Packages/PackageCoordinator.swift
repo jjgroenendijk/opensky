@@ -164,6 +164,9 @@ public final class PackageCoordinator {
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
     /// Walks that found no free mover slot, by actor.
     var waitingMoves: [ReferenceKey: SIMD3<Float>] = [:]
+    public var seats = PackageSeatLedger()
+    /// The newest move result per actor, for `state packages`.
+    public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
     weak var world: (any PackageWorld)?
     private var store: PackageStore?
@@ -439,5 +442,11 @@ extension PackageCoordinator {
     /// The `PKCU` template of `package`, or nil for a package built without one.
     public func template(of package: FormID) -> FormID? {
         store?.package(package)?.template
+    }
+}
+
+extension PackageCoordinator {
+    public func recordMove(_ result: NPCMoveCommandResult, for actor: ReferenceKey) {
+        lastMoves[actor] = result
     }
 }

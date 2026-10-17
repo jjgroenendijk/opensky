@@ -155,7 +155,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     var saveTexts: SaveTexts {
-        (game.worldData as? WorldDataStores).map {
+        game.worldData.map {
             SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
     }

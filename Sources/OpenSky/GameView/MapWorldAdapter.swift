@@ -34,7 +34,7 @@ final class MapWorldAdapter {
     }
 
     var records: MenuRecordData? {
-        (game.worldData as? MenuDataProviding)?.menuRecords
+        game.worldData?.menuRecords
     }
 
     /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
@@ -186,7 +186,7 @@ extension MapWorldAdapter: MapMenuWorld {
     func travel(to marker: MapMarkerSite) -> Bool {
         guard let renderer = game.renderer, let streamer = game.streamer else { return false }
         let from = renderer.locomotion.status.feetPosition
-        let walk = (game.worldData as? MovementConfigurationProviding)?
+        let walk = game.worldData?
             .movementConfiguration.travelSpeed.value ?? 80
         let seconds = FastTravelRule.gameSeconds(
             distance: simd_distance(from, marker.position), walkSpeed: walk,

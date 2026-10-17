@@ -13,7 +13,7 @@ extension DestinationRegistry {
             symbolName: "list.bullet.rectangle",
             content: .worldInspector { context in
                 let panel = SystemMenuPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.systemMenu
                 return panel
             },
             overrides: systemMenuOverrides
@@ -25,7 +25,7 @@ extension DestinationRegistry {
             symbolName: "slider.horizontal.3",
             content: .worldInspector { context in
                 let panel = PlayerSettingsPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.playerSettings
                 return panel
             },
             overrides: playerSettingsOverrides
@@ -37,7 +37,9 @@ extension DestinationRegistry {
             symbolName: "person.crop.square",
             content: .worldInspector { context in
                 let panel = CharacterMenuPanelViewController()
-                panel.provider = context.providers
+                panel.titleProvider = context.titleMenu
+                panel.raceProvider = context.raceMenu
+                panel.skillsProvider = context.skillsMenu
                 return panel
             },
             overrides: characterMenuOverrides
@@ -49,7 +51,7 @@ extension DestinationRegistry {
             symbolName: "map",
             content: .worldInspector { context in
                 let panel = MapMenuPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.mapMenu
                 return panel
             },
             overrides: mapMenuOverrides
@@ -61,7 +63,7 @@ extension DestinationRegistry {
             symbolName: "bag",
             content: .worldInspector { context in
                 let panel = InventoryMenuPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.inventoryMenu
                 return panel
             },
             overrides: inventoryMenuOverrides
@@ -73,7 +75,7 @@ extension DestinationRegistry {
             symbolName: "shippingbox",
             content: .worldInspector { context in
                 let panel = ContainerMenuPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.containerMenu
                 return panel
             },
             overrides: containerMenuOverrides

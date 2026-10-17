@@ -50,25 +50,23 @@ final class VehicleWorldAdapter {
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
         wireWheels(renderer: renderer)
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak vehicles, weak renderer] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.vehicles) { [weak vehicles, weak renderer] _ in
             vehicles?.advance()
             if vehicles?.lastPoses[.player] == nil {
-                renderer?.playerSeat = nil
+                renderer?.session.playerSeat = nil
             }
         }
     }
 
     private func wireWheels(renderer: Renderer) {
-        guard let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem else {
+        guard let files = game.worldData?.scriptFileSystem else {
             return
         }
         let wheels = AssetLoader<String, [SIMD2<Float>]> { path in
             try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
         }
         self.wheels = wheels
-        renderer.session.assetDrains.add { _ in wheels.drain() }
+        renderer.session.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
     }
 }
 
@@ -103,12 +101,12 @@ extension VehicleWorldAdapter: VehicleWorld {
                 of: .player, named: DialogueCamera.headBoneName
             )
         else {
-            renderer.playerSeat = nil
+            renderer.session.playerSeat = nil
             renderer.placePlayerFeet(at: pose.position)
             return
         }
         let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
-        renderer.playerSeat = root
+        renderer.session.playerSeat = root
         let eye = root * SIMD4(head, 1)
         let height = renderer.walkController.capsule.eyeHeight
         renderer.placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - height))
@@ -252,7 +250,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     func setPlayerAIDriven(_ driven: Bool) {
         isPlayerAIDriven = driven
         if !driven {
-            game.renderer?.playerWalkPath = []
+            game.renderer?.session.playerWalkPath = []
         }
     }
 }

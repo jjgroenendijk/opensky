@@ -161,10 +161,6 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the World > Scripts panel.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` already
-/// declares it and the panel reaches it through the composed
-/// `WorldControlProviders`.
 @MainActor
 public protocol ScriptControlProviding: AnyObject {
     /// One sample of everything the readout shows. `ScriptsSnapshot.empty`

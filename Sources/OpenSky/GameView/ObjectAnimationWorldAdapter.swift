@@ -40,9 +40,7 @@ final class ObjectAnimationWorldAdapter {
         objects.onWaitFinished = { [weak self] token, fired in
             self?.pendingAnswers[token] = fired
         }
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak self] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.objectAnimation) { [weak self] delta in
             self?.advance(delta)
         }
     }
@@ -164,32 +162,28 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
     }
 }
 
-/// The Animated Objects and Animated Doors sections, forwarded to the adapter.
-protocol ObjectAnimationControlForwarding: ObjectAnimationControlProviding,
+/// The Animated Objects and Animated Doors sections read the adapter.
+extension ObjectAnimationWorldAdapter: ObjectAnimationControlProviding,
     SequenceDoorControlProviding
 {
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
-}
-
-extension ObjectAnimationControlForwarding {
     var objectAnimationEnabled: Bool {
-        get { objectAnimationWorld.isEnabled }
-        set { objectAnimationWorld.isEnabled = newValue }
+        get { isEnabled }
+        set { isEnabled = newValue }
     }
 
     var objectAnimationRows: [ObjectAnimationRow] {
-        objectAnimationWorld.objects.rows
+        objects.rows
     }
 
     func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
-        objectAnimationWorld.objects.send(event, to: reference)
+        objects.send(event, to: reference)
     }
 
     var sequenceDoorRows: [SequenceDoorRow] {
-        objectAnimationWorld.doors.rows
+        doors.rows
     }
 
     func setSequenceDoorOpen(_ open: Bool, reference: UInt32) -> Bool {
-        objectAnimationWorld.setDoorOpen(open, reference: reference)
+        setDoorOpen(open, reference: reference)
     }
 }

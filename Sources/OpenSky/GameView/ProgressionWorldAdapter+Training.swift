@@ -15,7 +15,7 @@ extension ProgressionWorldAdapter {
         guard
             let holder = game.actorWorld.nearestActorValueHolder(),
             case let .actor(base) = holder.subject,
-            let resolver = (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?
+            let resolver = game.worldData?.actorValueBaselines?
                 .resolver,
             let training = resolver.characterClass(ofBase: base)?.training
         else { return nil }

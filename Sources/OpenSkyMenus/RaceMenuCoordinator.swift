@@ -86,15 +86,9 @@ public final class RaceMenuCoordinator {
     public internal(set) var lastResult: String?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
-    public internal(set) var movieLoaded = false
-    public internal(set) var movieError: String?
-    /// Bumped by each open and close, so a movie decoded late opens only the newest.
-    var movieRequest = 0
     /// Movie calls made during input, applied once the movie returns.
     var pendingMovieRequests: [RaceMenuMovieBridge.Request] = []
     var framePacer = MenuMovieFramePacer()
-    /// True from the HUD's suspension until it is started again.
-    var holdsLayer = false
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
     private var typedName = ""
@@ -109,6 +103,18 @@ public final class RaceMenuCoordinator {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+    }
+
+    lazy var movie = MenuMovieSession(
+        movies: movies, hud: hud, label: "race menu movie", logger: nil
+    ) { [weak self] in self?.world?.renderer }
+
+    public var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    public var movieError: String? {
+        movie.error
     }
 
     public func attach(world: any RaceMenuWorld) {
@@ -274,38 +280,33 @@ public final class RaceMenuCoordinator {
     }
 }
 
-/// Lets the app's provider object stand in for its `RaceMenuCoordinator`.
-public protocol RaceMenuControlForwarding: RaceMenuControlProviding {
-    var raceMenu: RaceMenuCoordinator { get }
-}
-
-extension RaceMenuControlForwarding {
+extension RaceMenuCoordinator: RaceMenuControlProviding {
     public var raceMenuSnapshot: RaceMenuSnapshot {
-        raceMenu.snapshot
+        snapshot
     }
 
     public func resetPlayerIdentity() {
-        raceMenu.resetToRecord()
+        resetToRecord()
     }
 
     public func openRaceMenu(limited: Bool) {
-        raceMenu.open(limited: limited)
+        open(limited: limited)
     }
 
     public func sendRaceMenuInput(_ event: MenuInputEvent) {
-        raceMenu.route(event)
+        route(event)
     }
 
     public func setRaceMenuName(_ name: String) {
-        raceMenu.setName(name)
+        setName(name)
     }
 
     public func applyRacePreset(offset: Int) {
-        raceMenu.applyPreset(offset: offset)
+        applyPreset(offset: offset)
     }
 
     public func setRaceMenuMovieEnabled(_ enabled: Bool) {
-        raceMenu.setMovieEnabled(enabled)
+        setMovieEnabled(enabled)
     }
 }
 

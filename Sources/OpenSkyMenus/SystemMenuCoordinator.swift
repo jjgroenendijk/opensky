@@ -63,10 +63,6 @@ public final class SystemMenuCoordinator {
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the one SWF layer.
     public private(set) var movieEnabled = true
-    public private(set) var movieLoaded = false
-    /// Bumped by each open and close, so a movie decoded late opens only the newest.
-    private var movieRequest = 0
-    public internal(set) var movieError: String?
     /// Calls the movie made during the last event or frame, answered after it.
     var pendingMovieCalls: [SystemMenuMovieBridge.Call] = []
     /// The movie's save list in its own order, without the New Save row.
@@ -87,6 +83,18 @@ public final class SystemMenuCoordinator {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+    }
+
+    lazy var movie = MenuMovieSession(
+        movies: movies, hud: hud, label: "system menu movie", logger: Self.logger
+    ) { [weak self] in self?.world?.renderer }
+
+    public var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    public var movieError: String? {
+        movie.error
     }
 
     public func attach(world: SystemMenuWorld) {
@@ -128,9 +136,7 @@ public final class SystemMenuCoordinator {
     /// Resume and cancel close the model first, so this skips the model guard.
     private func dismiss() {
         menuMode.dismiss(Self.identifier)
-        if movieLoaded {
-            stopMovie()
-        }
+        movie.stop()
     }
 
     public func setMovieEnabled(_ enabled: Bool) {
@@ -140,7 +146,7 @@ public final class SystemMenuCoordinator {
         if enabled {
             startMovie()
         } else {
-            stopMovie()
+            movie.stop()
         }
     }
 
@@ -206,38 +212,11 @@ public final class SystemMenuCoordinator {
     /// A missing install or a movie the AS2 subset cannot run degrades to a
     /// readout, never to a thrown error out of a control action.
     private func startMovie() {
-        guard renderer != nil, movies.isAvailable else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        hud.suspend()
-        movieRequest += 1
-        let request = movieRequest
-        movies.request(SystemMenuMovieBridge.moviePath, while: { [weak self] in
-            self?.movieRequest == request
-        }, then: { [weak self] result in
-            self?.showMovie(result)
-        })
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
-        guard let renderer else { return }
-        do {
-            let scene = try result.get()
-            try renderer.setSWFMovie(scene)
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime(
-                prepare: SystemMenuMovieBridge.prepare(runtime:)
-            )
-            guard started != nil else {
-                movieLoaded = false
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            try renderer.updateSWFRuntime { runtime in
+        movie.start(MenuMovie(
+            path: SystemMenuMovieBridge.moviePath,
+            activationTicks: SystemMenuMovieBridge.activationTicks,
+            prepare: SystemMenuMovieBridge.prepare(runtime:),
+            activate: { [weak self] runtime in
                 SystemMenuMovieBridge.activate(runtime: runtime) { [weak self] in
                     self?.close()
                 }
@@ -248,30 +227,11 @@ public final class SystemMenuCoordinator {
                     self?.pendingMovieCalls.append(call)
                 }
             }
-            for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
-                try renderer.advanceSWFRuntime()
-            }
-            movieLoaded = true
-            movieError = nil
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-            Self.logger.error(
-                "[ERROR] system menu movie: \(String(describing: error), privacy: .public)"
-            )
-        }
-    }
-
-    /// Hands the SWF layer back to the HUD.
-    private func stopMovie() {
-        movieRequest += 1
-        movieLoaded = false
-        movieError = nil
-        hud.start()
+        ))
     }
 
     public var snapshot: SystemMenuControlSnapshot {
-        let runtime = movieLoaded ? renderer?.swfRuntime : nil
+        let runtime = movie.runtime
         let diagnostics = renderer?.swfRuntime.map(SystemMenuMovieBridge.diagnostics(runtime:))
         return SystemMenuControlSnapshot(
             isOpen: model.isOpen,
@@ -304,43 +264,38 @@ public final class SystemMenuCoordinator {
     )
 }
 
-/// Lets the app's provider object stand in for its `SystemMenuCoordinator`.
-public protocol SystemMenuControlForwarding: SystemMenuControlProviding {
-    var systemMenu: SystemMenuCoordinator { get }
-}
-
-extension SystemMenuControlForwarding {
+extension SystemMenuCoordinator: SystemMenuControlProviding {
     public var systemMenuIsOpen: Bool {
-        systemMenu.isOpen
+        isOpen
     }
 
     public var systemMenuMovieEnabled: Bool {
-        get { systemMenu.movieEnabled }
-        set { systemMenu.setMovieEnabled(newValue) }
+        get { movieEnabled }
+        set { setMovieEnabled(newValue) }
     }
 
     public var systemMenuMasterVolume: Float {
-        get { systemMenu.masterVolume }
-        set { systemMenu.masterVolume = newValue }
+        get { masterVolume }
+        set { masterVolume = newValue }
     }
 
     public func openSystemMenu() {
-        systemMenu.open()
+        open()
     }
 
     public func closeSystemMenu() {
-        systemMenu.close()
+        close()
     }
 
     public func sendSystemMenuInput(_ event: MenuInputEvent) {
-        systemMenu.route(event)
+        route(event)
     }
 
     public func deleteSelectedSave() {
-        systemMenu.requestDeleteSelectedSave()
+        requestDeleteSelectedSave()
     }
 
     public var systemMenuSnapshot: SystemMenuControlSnapshot {
-        systemMenu.snapshot
+        snapshot
     }
 }

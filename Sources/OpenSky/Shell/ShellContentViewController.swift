@@ -176,7 +176,7 @@ final class ShellContentViewController: NSViewController {
             let descriptor = DestinationRegistry.destination(id: id),
             let overrides = descriptor.overrides
         else { return false }
-        return overrides.isOverridden(WorldPanelContext(providers: gameViewController))
+        return overrides.isOverridden(WorldPanelContext(game: gameViewController))
     }
 
     var hasOverrides: Bool {
@@ -188,7 +188,7 @@ final class ShellContentViewController: NSViewController {
     /// Resets provider state through registry actions, so unopened panels stay
     /// unopened, then resyncs only panels that were already cached.
     func resetAllOverrides() {
-        let context = WorldPanelContext(providers: gameViewController)
+        let context = WorldPanelContext(game: gameViewController)
         for descriptor in DestinationRegistry.worldInspectors {
             descriptor.overrides?.resetToDefaults(context)
         }
@@ -227,7 +227,7 @@ final class ShellContentViewController: NSViewController {
         // Behind the HUD overlay, which stays the frontmost child of the slot
         // across a Settings reload.
         gameSlot.addSubview(gameView, positioned: .below, relativeTo: nil)
-        frameHUD.wire(providers: controller)
+        frameHUD.wire(frameStats: controller.renderControls, sceneStats: controller.renderControls)
         NSLayoutConstraint.activate([
             gameView.topAnchor.constraint(equalTo: gameSlot.topAnchor),
             gameView.bottomAnchor.constraint(equalTo: gameSlot.bottomAnchor),
@@ -248,9 +248,12 @@ final class ShellContentViewController: NSViewController {
             let descriptor = DestinationRegistry.destination(id: id),
             case let .worldInspector(makePanel) = descriptor.content
         else { return nil }
-        let panel = makePanel(WorldPanelContext(providers: gameViewController))
+        let panel = makePanel(WorldPanelContext(game: gameViewController))
         panel.onOverrideStateChange = { [weak self] in
             self?.onOverrideStateChange?()
+        }
+        panel.refocusAction = { [weak self] in
+            self?.refocusGameView()
         }
         panels[id] = panel
         addChild(panel)

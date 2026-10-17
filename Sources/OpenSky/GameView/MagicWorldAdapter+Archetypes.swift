@@ -55,7 +55,7 @@ extension MagicWorldAdapter {
 
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
         guard
-            let keywords = (game.worldData as? LocationDataProviding)?.locationStore?.keywords,
+            let keywords = game.worldData?.locationStore?.keywords,
             let keyword = keywords.keyword(editorID: editorID)?.id,
             let baselines = game.actorValues.runtime
         else { return false }

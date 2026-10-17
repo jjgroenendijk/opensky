@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
@@ -42,8 +43,8 @@ final class EffectsWorldAdapter {
         game.combat.explosions
     }
 
-    func wireEffects(provider: any WorldDataProviding, streamer: CellStreamer, renderer: Renderer) {
-        guard let records = (provider as? EffectDataProviding)?.effectRecords else { return }
+    func wireEffects(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
+        guard let records = provider.effectRecords else { return }
         renderer.session.imageSpaceLinks = ImageSpaceLinks(
             records: records, weatherPlugin: Self.basePlugin
         )
@@ -56,7 +57,8 @@ final class EffectsWorldAdapter {
             guard let self, let renderer else { return }
             effects.handleSpellHit(event, imageSpace: &renderer.imageSpace)
         }
-        renderer.onFrame.add { [weak self, weak renderer, weak streamer] position in
+        let frameSteps = renderer.session.frameSteps
+        frameSteps.register(.effects) { [weak self, weak renderer, weak streamer] position in
             guard let self, let renderer else { return }
             cameraPosition = position
             tick(renderer: renderer, streamer: streamer)
@@ -65,11 +67,11 @@ final class EffectsWorldAdapter {
 
     /// A main-thread library of its own: the cell build queue owns the other one.
     private static func meshes(
-        provider: any WorldDataProviding,
+        provider: WorldDataStores,
         renderer: Renderer
     ) -> MeshLibrary? {
         guard
-            let fileSystem = (provider as? ScriptDataProviding)?.scriptFileSystem,
+            let fileSystem = provider.scriptFileSystem,
             let textures = try? TextureLibrary(fileSystem: fileSystem, device: renderer.device)
         else { return nil }
         return MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: textures)
@@ -248,5 +250,28 @@ extension EffectsWorldAdapter: ExplosionControlWorld {
 
     var hazardRows: [TrapHazardRow] {
         game.hazards.hazardRows
+    }
+}
+
+/// The Effects sections act on the nearest actor and the live settings store.
+extension EffectsWorldAdapter: EffectsControlForwarding, ExplosionControlForwarding {
+    var playerSettingsStore: PlayerSettingsStore {
+        game.playerSettings.store
+    }
+
+    var renderer: Renderer? {
+        game.renderer
+    }
+
+    var effectsSelectedActor: ReferenceKey? {
+        game.actorWorld.nearestActorValueHolder()?.key
+    }
+
+    var combat: CombatCoordinator {
+        game.combat
+    }
+
+    var explosionControlWorld: any ExplosionControlWorld {
+        self
     }
 }

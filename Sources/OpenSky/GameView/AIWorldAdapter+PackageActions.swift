@@ -97,7 +97,7 @@ extension AIWorldAdapter {
     private func shoutSpell(_ selector: Package.Target) -> ReferenceKey? {
         guard
             let key = selectedForm(selector),
-            let shouts = (game.worldData as? MagicDataProviding)?.shoutStore,
+            let shouts = game.worldData?.shoutStore,
             let shout = shouts.shouts.values.first(where: { ReferenceKey(resolved: $0.id) == key }),
             let spell = shout.words.first?.spell
         else { return nil }

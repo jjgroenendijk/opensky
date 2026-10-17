@@ -116,7 +116,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
     }
 
     var perkSkySource: PerkSkySource? {
-        if perkSky == nil, let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem {
+        if perkSky == nil, let files = game.worldData?.scriptFileSystem {
             perkSky = PerkSkySource(fileSystem: files)
         }
         return perkSky
@@ -299,7 +299,7 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
     }
 
     private var identityRecords: ActorIdentityRecords? {
-        (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?.resolver
+        game.worldData?.actorValueBaselines?.resolver
             .map(ActorIdentityRecords.init(resolver:))
     }
 }
@@ -353,7 +353,7 @@ extension MenuWorldAdapter {
         }
         guard !startTickerInstalled, let renderer = game.renderer else { return }
         startTickerInstalled = true
-        renderer.onFrame.add { [weak self] _ in
+        renderer.session.frameSteps.register(.newGameTeleport) { [weak self] _ in
             self?.pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
         }
     }
@@ -381,5 +381,16 @@ extension MenuWorldAdapter {
         guard raceMenuAfterTeleport else { return }
         raceMenuAfterTeleport = false
         game.raceMenu.open(limited: false)
+    }
+}
+
+/// The Settings panel reads the settings coordinator, and combat for difficulty.
+extension MenuWorldAdapter: PlayerSettingsControlForwarding {
+    var playerSettings: PlayerSettingsCoordinator {
+        game.playerSettings
+    }
+
+    var difficultyMultiplierLines: [String] {
+        game.combat.difficultyMultiplierLines
     }
 }

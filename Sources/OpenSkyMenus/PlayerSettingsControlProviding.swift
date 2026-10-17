@@ -26,8 +26,6 @@ nonisolated public struct PlayerSettingsSnapshot: Equatable, Sendable {
 }
 
 public protocol PlayerSettingsControlProviding: AnyObject {
-    /// Gives keyboard focus back to the game view after a panel button.
-    func refocusGameView()
     var playerSettingsSnapshot: PlayerSettingsSnapshot { get }
     func selectPlayerSettingsGroup(offset: Int)
     func resetPlayerSettingsGroup()

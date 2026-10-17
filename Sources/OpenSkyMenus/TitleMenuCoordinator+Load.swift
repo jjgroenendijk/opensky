@@ -23,7 +23,7 @@ extension TitleMenuCoordinator {
             }
             renderer.swfRuntime.map(TitleMenuMovieBridge.followStateFocus(runtime:))
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         answerLoadCalls(renderer: renderer)
         if let request = pendingRequest {

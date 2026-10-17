@@ -13,12 +13,12 @@ extension DestinationRegistry {
             symbolName: "terminal",
             content: .worldInspector { context in
                 let panel = AgentControlPanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.agent
                 return panel
             },
             overrides: DestinationOverrideActions(
-                isOverridden: { AgentControlSection.isOverridden(provider: $0.providers) },
-                resetToDefaults: { AgentControlSection.resetToDefaults(provider: $0.providers) }
+                isOverridden: { AgentControlSection.isOverridden(provider: $0.agent) },
+                resetToDefaults: { AgentControlSection.resetToDefaults(provider: $0.agent) }
             )
         )
     ]

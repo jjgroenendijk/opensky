@@ -27,16 +27,14 @@ final class RagdollWorldAdapter {
         self.game = game
     }
 
-    /// Chained onto `onWorldUpdate`, so the ragdolls see the same simulated
+    /// A world-tick step, so the ragdolls see the same simulated
     /// delta as the other systems, and a menu-paused frame stops a falling
     /// corpse. The pose reaches the scene on the drawn frame, so a paused
     /// corpse stays where it was.
     func wireRagdoll(renderer: Renderer) {
         let ragdoll = game.ragdoll
         ragdoll.wire(collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init))
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak ragdoll, weak renderer] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.ragdoll) { [weak ragdoll, weak renderer] delta in
             guard let ragdoll, let renderer else { return }
             let locomotion = renderer.locomotion
             ragdoll.advance(
@@ -45,7 +43,7 @@ final class RagdollWorldAdapter {
                 delta: delta
             )
         }
-        renderer.onFrame.add { [weak ragdoll] _ in
+        renderer.session.frameSteps.register(.ragdoll) { [weak ragdoll] _ in
             ragdoll?.publishPoses()
         }
     }

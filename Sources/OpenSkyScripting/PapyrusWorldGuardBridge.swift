@@ -40,14 +40,14 @@ public protocol PapyrusWorldGuardBridge {
 
 extension PapyrusWorldStateBridge {
     public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
-        guard let profile = socialProfile?(actor) else { return nil }
+        guard let profile = factionNatives.socialProfile(actor) else { return nil }
         return .some(profile.crimeFaction)
     }
 
     public func isGuard(_ actor: ReferenceKey) -> Bool? {
         guard
-            let profile = socialProfile?(actor),
-            let runtime = factionRuntime?(actor)
+            let profile = factionNatives.socialProfile(actor),
+            let runtime = factionNatives.runtime(actor)
         else { return nil }
         return GuardRecognition.policedFaction(
             of: profile,

@@ -31,18 +31,17 @@ final class CrimeWorldAdapter {
 
     /// After `wireFactions` and `wireWorldItems`: it reads the same FACT store
     /// as the hostility derivation and joins the take path.
-    func wireCrime(provider: any WorldDataProviding) {
+    func wireCrime(provider: WorldDataStores) {
         guard
-            let factionStore = (provider as? FactionDataProviding)?.factionStore,
-            let pluginName = (provider as? MagicDataProviding)?.magicItemPluginName
+            let factionStore = provider.factionStore,
+            let pluginName = provider.magicItemPluginName
         else { return }
         game.crime.attach(world: self)
-        game.crime.crimeTexts = (provider as? WorldDataStores).map {
-            CrimeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        game.crime.crimeTexts = CrimeTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.crime.wire(
             runtime: CrimeRuntime(store: game.worldState, factions: factionStore),
-            locations: (provider as? LocationDataProviding)?.locationStore,
+            locations: provider.locationStore,
             pluginName: pluginName
         )
         game.inventory.runtime?.crime = game.crime.reporter

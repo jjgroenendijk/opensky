@@ -284,37 +284,6 @@ extension ScriptCoordinator: ScriptControlProviding {
     }
 }
 
-/// Lets the app's provider object stand in for its `ScriptCoordinator`.
-public protocol ScriptControlForwarding: ScriptControlProviding {
-    var scripts: ScriptCoordinator { get }
-}
-
-extension ScriptControlForwarding {
-    public var scriptsSnapshot: ScriptsSnapshot {
-        scripts.scriptsSnapshot
-    }
-
-    public var questAliasQuestEditorIDs: [String] {
-        scripts.questAliasQuestEditorIDs
-    }
-
-    public func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        scripts.questAliasTable(editorID: editorID)
-    }
-
-    public func setScriptsPaused(_ paused: Bool) {
-        scripts.setScriptsPaused(paused)
-    }
-
-    public func stepScripts(ticks: Int) {
-        scripts.stepScripts(ticks: ticks)
-    }
-
-    public func setScriptInstructionBudget(_ instructions: Int) {
-        scripts.setScriptInstructionBudget(instructions)
-    }
-}
-
 nonisolated private final class PexParseCache: Sendable {
     let files = Mutex<[String: PexFile]>([:])
 }

@@ -24,17 +24,15 @@ final class IdleWorldAdapter {
     }
 
     /// After packages, because the pass reads each actor's current procedure.
-    func wireIdles(provider: any WorldDataProviding, renderer: Renderer) {
+    func wireIdles(provider: WorldDataStores, renderer: Renderer) {
         guard
-            let store = (provider as? IdleDataProviding)?.idleStore,
+            let store = provider.idleStore,
             let files = game.audioFileSystem,
             let clips = game.sessionWiring.animationClips
         else { return }
         idles.wire(store: store, files: files, clips: clips)
         let idles = idles
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak idles] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.idles) { [weak idles] _ in
             idles?.advance()
         }
     }

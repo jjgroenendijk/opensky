@@ -195,50 +195,45 @@ public final class SWFLabCoordinator {
     }
 }
 
-/// Lets the app's provider object stand in for its `SWFLabCoordinator`.
-public protocol SWFLabControlForwarding: SWFLabControlProviding {
-    var swfLab: SWFLabCoordinator { get }
-}
-
-extension SWFLabControlForwarding {
+extension SWFLabCoordinator: SWFLabControlProviding {
     public var swfMoviePaths: [String] {
-        swfLab.moviePaths
+        moviePaths
     }
 
     public var swfLayerEnabled: Bool {
-        get { swfLab.layerEnabled }
-        set { swfLab.layerEnabled = newValue }
+        get { layerEnabled }
+        set { layerEnabled = newValue }
     }
 
     public var swfLabSnapshot: SWFLabControlSnapshot {
-        swfLab.snapshot
+        snapshot
     }
 
     public func selectSWFMovie(path: String?) {
-        swfLab.select(path: path)
+        select(path: path)
     }
 
     public func startSWFRuntime() {
-        swfLab.startRuntime()
+        startRuntime()
     }
 
     public func advanceSWFRuntime(ticks: Int) {
-        swfLab.advanceRuntime(ticks: ticks)
+        advanceRuntime(ticks: ticks)
     }
 
     public func stopSWFRuntime() {
-        swfLab.stopRuntime()
+        stopRuntime()
     }
 
     public func sendSWFRuntimeInput(_ event: SWFInputEvent) {
-        swfLab.sendRuntimeInput(event)
+        sendRuntimeInput(event)
     }
 
     public func callSWFRuntimeMovie(_ name: String) {
-        swfLab.callRuntimeMovie(name)
+        callRuntimeMovie(name)
     }
 
     public func clearSWFInvokeLog() {
-        swfLab.clearInvokeLog()
+        clearInvokeLog()
     }
 }

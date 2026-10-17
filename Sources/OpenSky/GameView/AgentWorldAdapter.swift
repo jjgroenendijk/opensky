@@ -216,3 +216,10 @@ extension AgentWorldAdapter: AgentControlWorld {
         }
     }
 }
+
+/// The Agent Control section reads the bridge while one runs.
+extension AgentWorldAdapter: AgentControlForwarding {
+    var agentControl: AgentControlCoordinator? {
+        game.agentControl
+    }
+}

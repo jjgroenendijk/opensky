@@ -32,13 +32,18 @@ final class DialogueAcceptanceChain {
     private(set) var activations: [TalkActivationEvent] = []
 
     private let runner = ManualCellBuildRunner()
+    /// No dialogue store, because the chain installs a synthetic one, so the
+    /// chain still calls the app's own `wireDialogue`.
+    private static let emptyData = WorldDataStores(
+        scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: [])
+    )
 
     init() throws {
         session = try DialogueAcceptanceFixture.session(worldState: controller.worldState)
         controller.scripts.install(runtime: session.world, bridge: session.bridge)
         streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
-        controller.dialogueWorld.wireDialogue(provider: DialogueOnlyProvider(), streamer: streamer)
+        controller.dialogueWorld.wireDialogue(provider: Self.emptyData, streamer: streamer)
         // The provider seam carries a store only in a session with game data;
         // this one is synthetic, so the index is installed directly.
         controller.dialogue.index = try DialogueAcceptanceFixture.dialogueStore()
@@ -176,9 +181,3 @@ final class DialogueAcceptanceChain {
         name: DialogueAcceptanceFixture.speakerName
     )
 }
-
-/// A provider that carries no cells, because none are resident, and no dialogue
-/// store, because the chain installs a synthetic one. It exists so the chain
-/// can call the app's own `wireDialogue` rather than repeating the two seam
-/// assignments that function makes.
-nonisolated private struct DialogueOnlyProvider: WorldDataProviding {}

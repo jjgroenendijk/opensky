@@ -16,8 +16,6 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
         didSet {
             elementsSection.provider = provider
             targetSection.provider = provider
-            let provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
         }
     }
 

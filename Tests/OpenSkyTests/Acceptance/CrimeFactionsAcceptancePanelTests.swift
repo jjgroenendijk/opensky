@@ -55,7 +55,7 @@ struct CrimeFactionsAcceptancePanelTests {
     private static func buildPanel(
         providers: GameViewController
     ) throws -> CrimeFactionPanelViewController {
-        try buildWorldPanel("crimeFactions", providers: providers)
+        try buildWorldPanel("crimeFactions", game: providers)
     }
 
     /// Scope points 2 and 3: an empty ledger, no target, no stolen goods, and

@@ -14,9 +14,8 @@ import OpenSkyWorldInterface
 extension DialogueMenuController {
     var snapshot: DialogueControlSnapshot {
         guard let index = dialogue.index else { return .empty }
-        let readback = movieLoaded
-            ? game.renderer.map(DialogueMenuMovieBridge.readback(renderer:)) ?? .empty
-            : .empty
+        let readback = movie.loadedRenderer.map(DialogueMenuMovieBridge.readback(renderer:))
+            ?? .empty
         let rows = model.topics.prefix(DialogueControlSnapshot.rowLimit).map {
             DialogueTopicRow(info: $0.info, text: $0.text, endsConversation: $0.endsConversation)
         }

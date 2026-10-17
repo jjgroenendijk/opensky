@@ -59,16 +59,15 @@ final class StoryWorldAdapter {
     }
 
     /// After `wireDialogue`, because scenes speak through the dialogue index.
-    func wireStory(provider: any WorldDataProviding, renderer: Renderer) {
-        let data = (provider as? StoryDataProviding)?.storyData ?? StoryData()
-        let scripts = provider as? ScriptDataProviding
+    func wireStory(provider: WorldDataStores, renderer: Renderer) {
+        let data = provider.storyData
         // The quest store's space, so a DLC scene names its quest as the runtime does.
-        let questStore = (provider as? QuestDataProviding)?.questStore
+        let questStore = provider.questStore
         if let store = data.scenes, let quests = questStore {
             scenes.catalog = SceneCatalog(store: store, resolver: quests.resolver)
         }
         if
-            let dialogue = (provider as? DialogueDataProviding)?.dialogueStore,
+            let dialogue = provider.dialogueStore,
             let files = game.audioFileSystem
         {
             let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
@@ -91,15 +90,13 @@ final class StoryWorldAdapter {
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard
             )
         }
-        if let files = scripts?.scriptFileSystem {
+        if let files = provider.scriptFileSystem {
             sessionStartLists = data.plugins.map {
                 PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
             }
             runSessionStart(lists: sessionStartLists)
         }
-        let advancePreviousSystems = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak self] delta in
-            advancePreviousSystems?(delta)
+        renderer.session.worldTick.register(.story) { [weak self] _ in
             self?.voiceTimer?.drain()
             self?.scenes.tick()
             self?.storyManager.social.tick()

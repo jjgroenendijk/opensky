@@ -190,7 +190,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     }
 
     var musicStore: MusicRecordStore? {
-        (game.worldData as? AudioDataProviding)?.musicStore
+        game.worldData?.musicStore
     }
 
     /// `aliasQuest` stays nil, because a music condition belongs to no quest.
@@ -345,11 +345,11 @@ private struct ReferencePlaces {
 /// FormIDs into the load-order space, so the stores are read in that space.
 extension RuntimeStateWorldAdapter {
     func conditionData() -> ConditionDataResolution {
-        let locationStore = (game.worldData as? LocationDataProviding)?.locationStore
+        let locationStore = game.worldData?.locationStore
         let places = currentReferencePlaces()
         return ConditionDataResolution(
             keywords: locationStore?.keywords,
-            formLists: (game.worldData as? FactionDataProviding)?.formListStore,
+            formLists: game.worldData?.formListStore,
             locations: locationStore,
             sourcePlugin: FormIDResolver.loadOrderSpaceName,
             currentLocations: places.locations,
@@ -372,7 +372,7 @@ extension RuntimeStateWorldAdapter {
         if let cellLocations {
             return cellLocations
         }
-        let store = (game.worldData as? LocationDataProviding)?.locationStore
+        let store = game.worldData?.locationStore
         cellLocations = store.map { CellLocationResolver(store: $0) }
         return cellLocations
     }

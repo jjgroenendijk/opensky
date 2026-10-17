@@ -15,24 +15,22 @@ extension DestinationRegistry {
             symbolName: "sparkles",
             content: .worldInspector { context in
                 let panel = EffectsPanelViewController()
-                panel.imageSpaceProvider = context.providers
-                panel.visualEffectProvider = context.providers
-                panel.impactProvider = context.providers
-                panel.explosionProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.imageSpaceProvider = context.imageSpace
+                panel.visualEffectProvider = context.visualEffect
+                panel.impactProvider = context.impact
+                panel.explosionProvider = context.explosion
                 return panel
             },
             overrides: DestinationOverrideActions(
                 isOverridden: { context in
-                    ImageSpaceSection.isOverridden(provider: context.providers)
-                        || VisualEffectSection.isOverridden(provider: context.providers)
-                        || ImpactSection.isOverridden(provider: context.providers)
+                    ImageSpaceSection.isOverridden(provider: context.imageSpace)
+                        || VisualEffectSection.isOverridden(provider: context.visualEffect)
+                        || ImpactSection.isOverridden(provider: context.impact)
                 },
                 resetToDefaults: { context in
-                    ImageSpaceSection.resetToDefaults(provider: context.providers)
-                    VisualEffectSection.resetToDefaults(provider: context.providers)
-                    ImpactSection.resetToDefaults(provider: context.providers)
+                    ImageSpaceSection.resetToDefaults(provider: context.imageSpace)
+                    VisualEffectSection.resetToDefaults(provider: context.visualEffect)
+                    ImpactSection.resetToDefaults(provider: context.impact)
                 }
             )
         )

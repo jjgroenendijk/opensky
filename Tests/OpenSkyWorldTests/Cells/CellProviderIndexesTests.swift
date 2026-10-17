@@ -38,7 +38,7 @@ struct CellProviderIndexesTests {
             terrainLODConfigurationStore: .fallback(),
             progress: WorldLoadProgress { event in events.withLock { $0.append(event) } }
         )
-        let provider = try #require(session.data as? WorldDataStores)
+        let provider = session.data
         var timeline = WorldLoadTimeline()
         for event in events.withLock(\.self) {
             timeline.apply(event)

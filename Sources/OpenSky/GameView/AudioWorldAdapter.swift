@@ -42,7 +42,7 @@ final class AudioWorldAdapter {
 }
 
 extension AudioWorldAdapter: AudioWorld {
-    var audioWorldData: (any WorldDataProviding)? {
+    var audioWorldData: WorldDataStores? {
         game.worldData
     }
 
@@ -106,7 +106,7 @@ extension AudioWorldAdapter: AudioWorld {
         game.renderer?.soundDirector = sounds
         game.renderer?.musicDirector = music
         game.renderer?.footstepDirector = footsteps
-        let store = (game.worldData as? AudioDataProviding)?.footstepStore
+        let store = game.worldData?.footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(
                 impact, decal: store?.decal(of: impact), at: position, on: .ground

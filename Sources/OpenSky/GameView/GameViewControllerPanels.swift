@@ -22,13 +22,6 @@ import OpenSkySave
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 
-/// The Settings panel reads the settings coordinator, and combat for difficulty.
-extension GameViewController: PlayerSettingsControlForwarding {
-    var difficultyMultiplierLines: [String] {
-        combat.difficultyMultiplierLines
-    }
-}
-
 /// The Combat & Physics panel reads the coordinator.
 extension GameViewController: ItemControlProviding {
     var itemControlSnapshot: ItemControlSnapshot {
@@ -122,7 +115,7 @@ extension GameViewController: LockControlProviding {
         inventory.locks.selectLock(reference)
     }
 
-    func setSelectedLockLocked(_ locked: Bool) -> String {
+    func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome {
         inventory.locks.setSelectedLockLocked(locked)
     }
 
@@ -130,7 +123,7 @@ extension GameViewController: LockControlProviding {
         inventory.locks.setPlayerCarriesEveryKey(enabled)
     }
 
-    func pickSelectedLock() -> String {
+    func pickSelectedLock() -> LockActionOutcome {
         lockpickingMenu.openSelected()
     }
 }
@@ -567,7 +560,7 @@ extension GameViewController: WorldspaceControlProviding {
     }
 
     var worldspaceNames: [String] {
-        (worldData as? MenuDataProviding)?.menuRecords?.worldspaces.keys.sorted() ?? []
+        worldData?.menuRecords?.worldspaces.keys.sorted() ?? []
     }
 
     func goToExterior(worldspace: String, x: Int32, y: Int32) {

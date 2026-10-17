@@ -14,8 +14,6 @@ final class PlayerSettingsPanelViewController: InspectorPanelViewController {
             settingsSection.provider = provider
             bindingsSection.provider = provider
             difficultySection.provider = provider
-            let provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
         }
     }
 

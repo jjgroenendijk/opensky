@@ -76,13 +76,13 @@ struct RendererWorldSimTickTests {
         let probe = PapyrusWorldProbeDispatch()
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
-        renderer.onWorldUpdate = { delta in
+        renderer.session.worldTick.register(.scripts) { delta in
             _ = world.advance(delta: delta, gameClock: renderer.gameClock)
         }
 
         // One step delivers OnLoad, which suspends; 30 more steps of 1/30 s
         // satisfy Utility.Wait(1.0).
-        let hook = try #require(renderer.onWorldUpdate)
+        let hook = renderer.session.worldTick
         hook(Float(Self.step))
         #expect(probe.notes.isEmpty)
         for _ in 0 ..< 29 {
@@ -109,8 +109,8 @@ struct RendererWorldSimTickTests {
             functionName: "OnLoad",
             arguments: []
         ))
-        renderer.onWorldUpdate = { _ = world.advance(delta: $0) }
-        let hook = try #require(renderer.onWorldUpdate)
+        renderer.session.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
+        let hook = renderer.session.worldTick
 
         hook(Float(Self.step) / 2)
         #expect(probe.notes.isEmpty)
@@ -125,7 +125,7 @@ struct RendererWorldSimTickTests {
     func offscreenFramesDriveTheWorldTickAndAPausedFrameDoesNot() throws {
         let renderer = try Self.makeRenderer()
         var deltas: [Float] = []
-        renderer.onWorldUpdate = { deltas.append($0) }
+        renderer.session.worldTick.register(.scripts) { deltas.append($0) }
 
         _ = try renderer.renderOffscreen(width: 64, height: 64)
         #expect(deltas == [Float(Self.step)])
@@ -142,7 +142,7 @@ struct RendererWorldSimTickTests {
         let probe = PapyrusWorldProbeDispatch()
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
-        renderer.onWorldUpdate = { _ = world.advance(delta: $0) }
+        renderer.session.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
         renderer.worldSimPaused = true
 
         for _ in 0 ..< 60 {

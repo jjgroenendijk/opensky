@@ -24,27 +24,23 @@ final class CombatWorldAdapter {
 
     /// Without combat settings, which is every synthetic scene, the runtime
     /// stays nil and no fight starts with invented numbers.
-    func wireMelee(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let data = provider as? CombatDataProviding else { return }
-        let settings = data.combatSettings
+    func wireMelee(provider: WorldDataStores, renderer: Renderer) {
+        let settings = provider.combatSettings
         let combat = game.combat
-        combat.difficultySettings = data.difficultySettings
-        combat.weaponDamage = (provider as? WorldDataStores).map {
-            WeaponDamageSettings
-                .resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        combat.stamina = (provider as? WorldDataStores)
-            .map { StaminaSettings.resolve(store: $0.gameSettings) } ?? .vanilla
-        combat.powerAttacks = (provider as? WorldDataStores)
-            .map { PowerAttackSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        combat.difficultySettings = provider.difficultySettings
+        combat.weaponDamage = WeaponDamageSettings
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
+        combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
         combat.attach(world: self)
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
             impacts: Self.impacts(provider)
         )
-        // `onFrame`, not the audio tick: a swing must resolve with audio off.
-        renderer.onFrame.add { [weak combat, weak renderer, weak game = self.game] _ in
+        // A frame step, not the audio tick: a swing must resolve with audio off.
+        let frameSteps = renderer.session.frameSteps
+        frameSteps.register(.melee) { [weak combat, weak renderer, weak game = self.game] _ in
             guard let combat, let renderer else { return }
             let locomotion = renderer.locomotion
             if renderer.movementMode.isPlayerControlled, let game {
@@ -61,23 +57,20 @@ final class CombatWorldAdapter {
         }
     }
 
-    func wireArchery(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let settings = (provider as? CombatDataProviding)?.archerySettings else { return }
+    func wireArchery(provider: WorldDataStores, renderer: Renderer) {
+        let settings = provider.archerySettings
         let combat = game.combat
-        combat.arrows = (provider as? WorldDataStores).map {
-            ArrowSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        combat.arrows = ArrowSettings
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         combat.attach(world: self)
         combat.wireArchery(
             settings: settings,
             items: Self.items(provider),
             impacts: Self.impacts(provider)
         )
-        // `onWorldUpdate` delivers a zero delta on a menu-paused frame, so an
+        // The world tick delivers a zero delta on a menu-paused frame, so an
         // arrow hangs in the air behind an open menu.
-        let advanceOthers = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak combat, weak renderer] delta in
-            advanceOthers?(delta)
+        renderer.session.worldTick.register(.archery) { [weak combat, weak renderer] delta in
             guard let combat, let renderer else { return }
             let locomotion = renderer.locomotion
             combat.advanceArchery(
@@ -90,16 +83,13 @@ final class CombatWorldAdapter {
     }
 
     /// Wired after melee, archery and the ragdolls, so the loop steps last.
-    func wireLoop(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let data = provider as? CombatDataProviding else { return }
-        let settings = data.combatSettings
+    func wireLoop(provider: WorldDataStores, renderer: Renderer) {
+        let settings = provider.combatSettings
         let combat = game.combat
-        combat.difficultySettings = data.difficultySettings
+        combat.difficultySettings = provider.difficultySettings
         combat.attach(world: self)
         combat.wireLoop(settings: settings)
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak combat, weak self] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.combatLoop) { [weak combat, weak self] delta in
             combat?.advanceLoop(by: delta)
             self?.updateNPCDrawStates()
         }
@@ -114,12 +104,12 @@ final class CombatWorldAdapter {
         }
     }
 
-    private static func items(_ provider: any WorldDataProviding) -> ItemDefinitionStore? {
-        (provider as? ItemDataProviding)?.inventoryBaselines?.items
+    private static func items(_ provider: WorldDataStores) -> ItemDefinitionStore? {
+        provider.inventoryBaselines?.items
     }
 
-    private static func impacts(_ provider: any WorldDataProviding) -> MeleeImpactResolver? {
-        (provider as? AudioDataProviding)?.footstepStore.map { MeleeImpactResolver(footsteps: $0) }
+    private static func impacts(_ provider: WorldDataStores) -> MeleeImpactResolver? {
+        provider.footstepStore.map { MeleeImpactResolver(footsteps: $0) }
     }
 
     /// Plays one reaction clip on a resident actor. False when the actor has

@@ -12,8 +12,8 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   `RayTracing/` in folders.
 - `OpenSky/` (app only): `Shell/` (app lifecycle, sidebar, panel framework), `Launcher/`
   (the start window and its pages), `Panels/` (one view controller per destination),
-  `GameView/` (`GameViewController`, its panel forwards, the world adapters, and the menu
-  controllers), and `Resources/`.
+  `GameView/` (`GameViewController`, the world adapters, and the menu controllers), and
+  `Resources/`.
 - `OpenSkyFormats*/`: one folder per format (`BSA/`, `NIF/`, `DDS/`, ...), plus `Binary/`,
   `Compression/`, and `Geometry/`. A module named after its one format (`OpenSkyFormatsESM`,
   `OpenSkyFormatsPEX`, `OpenSkyFormatsSWF`) keeps the format at its root, because a folder

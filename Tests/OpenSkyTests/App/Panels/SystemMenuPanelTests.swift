@@ -14,6 +14,7 @@ struct SystemMenuPanelTests {
     ) -> SystemMenuPanelViewController {
         let panel = SystemMenuPanelViewController()
         panel.provider = provider
+        panel.refocusAction = { [weak provider] in provider?.refocusGameView() }
         panel.loadViewIfNeeded()
         return panel
     }

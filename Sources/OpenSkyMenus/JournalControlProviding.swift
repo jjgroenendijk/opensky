@@ -198,10 +198,6 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the World > Quests & Journal panel.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` already
-/// declares it and the panel reaches it through the composed
-/// `WorldControlProviders`.
 @MainActor
 public protocol JournalControlProviding: AnyObject {
     /// One sample of everything the readouts show.

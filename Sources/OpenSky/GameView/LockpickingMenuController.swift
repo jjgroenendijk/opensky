@@ -26,7 +26,7 @@ final class LockpickingMenuController {
 
     init(game: GameViewController) {
         self.game = game
-        sounds = MenuSoundPlayer(game: game)
+        sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }
 
     private var locks: LockCoordinator {
@@ -46,7 +46,7 @@ final class LockpickingMenuController {
         do {
             try locks.beginLockpicking(target)
         } catch {
-            locks.note(Self.describe(error, name: target.interaction.name))
+            locks.record(.pickRefused(error, name: target.interaction.name))
             return
         }
         controls = LockpickingMenuControls()
@@ -60,23 +60,24 @@ final class LockpickingMenuController {
 
     /// Opens the menu on the lock the sidebar selected, as if the player pressed on it.
     @discardableResult
-    func openSelected() -> String {
+    func openSelected() -> LockActionOutcome {
         guard let interaction = locks.selectedInteraction else {
-            return locks.note("No lock selected.")
+            return locks.record(.noSelection)
         }
         open(InteractionTarget(
             interaction: interaction,
             hitPosition: interaction.position,
             distance: 0
         ))
-        return locks.lastText
+        return locks.lastAction
     }
 
     /// Opens the menu for a lock the gate refused, if the lock can be picked.
     func handle(_ refusal: ActivationRefusalEvent) {
         guard case let .locked(level, _) = refusal.refusal else { return }
         if let notice = locks.refusalNotice(level: level) {
-            game.hud.showNotification(locks.note(notice))
+            locks.record(.notice(notice))
+            game.hud.showNotification(locks.texts.text(for: notice))
             return
         }
         open(refusal.target)
@@ -151,14 +152,5 @@ final class LockpickingMenuController {
 
     private func play(_ sound: LockpickingSound) {
         sounds.play(editorID: sound.rawValue)
-    }
-
-    static func describe(_ refusal: any Error, name: String) -> String {
-        switch refusal as? LockpickingRefusal {
-        case .noLockpicks: "\(name) is locked and you have no lockpicks."
-        case .requiresKey: "\(name) requires a key."
-        case .notLocked: "\(name) is not locked."
-        case .noRuntime, .unknownReference, nil: "\(name) cannot be picked."
-        }
     }
 }

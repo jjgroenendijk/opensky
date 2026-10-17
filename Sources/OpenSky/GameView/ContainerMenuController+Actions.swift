@@ -182,7 +182,7 @@ extension ContainerMenuController {
     // MARK: - Readout
 
     var snapshot: ContainerMenuControlSnapshot {
-        let runtime = movieLoaded ? game.renderer?.swfRuntime : nil
+        let runtime = movie.runtime
         let diagnostics = runtime.map(ContainerMenuMovieBridge.diagnostics(runtime:))
         return ContainerMenuControlSnapshot(
             isOpen: isOpen,

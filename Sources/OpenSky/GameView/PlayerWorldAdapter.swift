@@ -29,13 +29,13 @@ final class PlayerWorldAdapter {
         let player = game.player
         let source = PlayerRigQueue(
             runner: session.runner,
-            fileSystem: (session.data as? ScriptDataProviding)?.scriptFileSystem
+            fileSystem: session.data.scriptFileSystem
         )
         guard player.wireBody(source: source) else { return }
-        renderer.session.assetDrains.add { [weak player] _ in
+        renderer.session.assetDrains.register(.playerBody) { [weak player] _ in
             player?.drainClipLoads()
         }
-        renderer.onFrame.add { [weak player] _ in
+        renderer.session.frameSteps.register(.playerBody) { [weak player] _ in
             player?.refreshBody()
         }
     }

@@ -28,7 +28,7 @@ struct PapyrusNativeFactionShoutTests {
     @Test func setEnemyAndSetAllyStoreBothDirections() throws {
         let fixture = try Fixture.make()
         var published: [FactionReactionOverride] = []
-        fixture.session.bridge.factionReactionsChanged = { published = $0 }
+        fixture.session.bridge.factionNatives.reactionsChanged = { published = $0 }
         let door = Fixture.key(Fixture.doorID)
         let other = fixture.handle(Fixture.doorID)
 

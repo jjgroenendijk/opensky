@@ -29,7 +29,7 @@ extension Renderer {
     public func updatePlayerBodyPose() {
         guard let playerBody, movementMode.isPlayerControlled else { return }
         // A seat clip poses the body from the vehicle's root, as it does a rider's.
-        if let playerSeat {
+        if let playerSeat = session.playerSeat {
             playerBody.place(at: playerSeat)
             return
         }

@@ -1,7 +1,6 @@
 // Live-renderer seam for Developer > UI Lab. The panel drives the screen-space
 // UI layer, previews menu mode against the real `MenuModeController`, and reads
-// localized-strings state only through this protocol. `refocusGameView`
-// overlaps `ShadowControlProviding` so one game view satisfies both.
+// localized-strings state only through this protocol.
 
 // UI Lab readout: overlay state plus the last-frame UIDrawStats mirror.
 import OpenSkyRendering
@@ -72,7 +71,6 @@ public protocol UILabControlProviding: AnyObject {
     var uiSampleShown: Bool { get set }
     var uiScale: Float { get set }
     var uiSnapshot: UILabControlSnapshot { get }
-    func refocusGameView()
 
     // Menu-mode preview: drives the real MenuModeController.
     func pushPreviewMenu()

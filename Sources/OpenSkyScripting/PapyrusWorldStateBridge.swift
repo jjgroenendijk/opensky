@@ -91,28 +91,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// The session's crime reporter, as a getter because it is built later. Nil without a
     /// crime runtime, and every crime native then refuses.
     public var crimeReporter: (() -> (any CrimeReporting)?)?
-    /// The faction runtime for membership natives, seeded for the given actor first
-    /// (a mutating call on the controller's value). Nil without faction data, and the
-    /// natives refuse instead of answering "not a member".
-    public var factionRuntime: ((ReferenceKey) -> (any FactionAccess)?)?
-    /// The relationship runtime for the two relationship natives. No actor argument: an
-    /// override exists only once a script writes one.
-    public var relationshipRuntime: (() -> (any RelationshipAccess)?)?
-    /// What one actor makes of another, derived by the session from streamer, records
-    /// and store.
-    public var socialDecision: ((ReferenceKey, ReferenceKey) -> PapyrusSocialDecision?)?
-    /// The `NPC_` identity behind one reference, as a `RELA` record spells it.
-    /// Nil for the player, who has no base record in this engine.
-    public var actorSocialBase: ((ReferenceKey) -> ResolvedFormID?)?
-    /// The load order's flattened `XNAM` table, which `Faction.GetReaction`
-    /// reads. Separate from `factionRuntime` because it is asked about two
-    /// factions rather than about an actor, so there is nothing to seed.
-    public var factionRelationIndex: (() -> FactionRelationIndex?)?
-    /// Receives every scripted faction reaction after one changes.
-    public var factionReactionsChanged: (([FactionReactionOverride]) -> Void)?
-    /// One actor's seeded social profile, for `GetCrimeFaction` and `IsGuard`. Nil
-    /// without faction data.
-    public var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?
+    public var factionNatives = PapyrusFactionNatives()
     /// Arrest outcomes for `CanPayCrimeGold`, `PlayerPayCrimeGold` and `SendPlayerToJail`.
     /// The session owns them, because a sentence moves the clock and the player.
     public var arrestSession: (() -> (any CrimeArrestSession)?)?

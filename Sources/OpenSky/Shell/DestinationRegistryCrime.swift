@@ -15,14 +15,12 @@ extension DestinationRegistry {
             symbolName: "building.columns",
             content: .worldInspector { context in
                 let panel = CrimeFactionPanelViewController()
-                panel.provider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.crimeFaction
                 return panel
             },
             overrides: DestinationOverrideActions(
-                isOverridden: { $0.providers.vendorOverrideSelection != nil },
-                resetToDefaults: { $0.providers.vendorOverrideSelection = nil }
+                isOverridden: { $0.crimeFaction.vendorOverrideSelection != nil },
+                resetToDefaults: { $0.crimeFaction.vendorOverrideSelection = nil }
             )
         )
     ]

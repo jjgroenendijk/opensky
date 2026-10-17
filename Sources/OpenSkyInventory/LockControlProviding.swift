@@ -33,11 +33,13 @@ nonisolated public struct LockControlSnapshot: Equatable, Sendable {
     public let carriesEveryKey: Bool
     public let lockpicks: Int32
     public let lastOutcome: LockpickingOutcome?
-    public let lastText: String
+    public let lastAction: LockActionOutcome
+    /// The names the readout uses, from the load order's game settings.
+    public let texts: LockTexts
 
     public static let unavailable = LockControlSnapshot(
         isAvailable: false, locks: [], selected: nil, carriesEveryKey: false, lockpicks: 0,
-        lastOutcome: nil, lastText: "No item runtime."
+        lastOutcome: nil, lastAction: .noRuntime
     )
 
     public init(
@@ -47,7 +49,8 @@ nonisolated public struct LockControlSnapshot: Equatable, Sendable {
         carriesEveryKey: Bool,
         lockpicks: Int32,
         lastOutcome: LockpickingOutcome?,
-        lastText: String
+        lastAction: LockActionOutcome,
+        texts: LockTexts = .vanilla
     ) {
         self.isAvailable = isAvailable
         self.locks = locks
@@ -55,7 +58,8 @@ nonisolated public struct LockControlSnapshot: Equatable, Sendable {
         self.carriesEveryKey = carriesEveryKey
         self.lockpicks = lockpicks
         self.lastOutcome = lastOutcome
-        self.lastText = lastText
+        self.lastAction = lastAction
+        self.texts = texts
     }
 
     public var selectedRow: LockReadoutRow? {
@@ -68,11 +72,11 @@ public protocol LockControlProviding: AnyObject {
     var lockSnapshot: LockControlSnapshot { get }
     func selectLock(_ reference: FormID?)
     @discardableResult
-    func setSelectedLockLocked(_ locked: Bool) -> String
+    func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome
     func setPlayerCarriesEveryKey(_ enabled: Bool)
     /// Opens the lockpicking menu on the selected lock.
     @discardableResult
-    func pickSelectedLock() -> String
+    func pickSelectedLock() -> LockActionOutcome
 }
 
 extension LockCoordinator {
@@ -88,7 +92,8 @@ extension LockCoordinator {
             carriesEveryKey: playerCarriesEveryKey,
             lockpicks: lockpickCount,
             lastOutcome: lastOutcome,
-            lastText: lastText
+            lastAction: lastAction,
+            texts: texts
         )
     }
 
@@ -103,8 +108,8 @@ extension LockCoordinator {
     }
 
     @discardableResult
-    public func setSelectedLockLocked(_ locked: Bool) -> String {
-        guard let interaction = selectedInteraction else { return note("No lock selected.") }
+    public func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome {
+        guard let interaction = selectedInteraction else { return record(.noSelection) }
         return setLocked(interaction, locked: locked)
     }
 
@@ -131,7 +136,7 @@ nonisolated public enum LockReadout {
     public static let listedLocks = 10
 
     public static func text(for snapshot: LockControlSnapshot) -> String {
-        guard snapshot.isAvailable else { return snapshot.lastText }
+        guard snapshot.isAvailable else { return snapshot.texts.text(for: snapshot.lastAction) }
         let locked = snapshot.locks.count(where: \.isLocked)
         var lines = ["Locks: \(snapshot.locks.count), locked \(locked)"]
         lines += snapshot.locks.prefix(listedLocks).map { "  \(line($0))" }
@@ -143,7 +148,7 @@ nonisolated public enum LockReadout {
             "Lockpicks: \(snapshot.lockpicks)",
             "Carries every key: \(snapshot.carriesEveryKey ? "yes" : "no")",
             "Last session: \(outcomeText(snapshot.lastOutcome))",
-            "Last: \(snapshot.lastText)"
+            "Last: \(snapshot.texts.text(for: snapshot.lastAction))"
         ]
         return lines.joined(separator: "\n")
     }

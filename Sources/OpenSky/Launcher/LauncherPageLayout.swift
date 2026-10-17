@@ -3,6 +3,7 @@
 // shows a symbol and words, never colour alone.
 
 import AppKit
+import OpenSkyGameData
 
 @MainActor
 final class LauncherPageLayout {
@@ -18,7 +19,7 @@ final class LauncherPageLayout {
     private let userDefaults: UserDefaults
 
     /// `pageName` prefixes the ids, such as `Graphics` in `GraphicsShowDetailsControl`.
-    init(pageName: String, userDefaults: UserDefaults = .standard) {
+    init(pageName: String, userDefaults: UserDefaults = GameDataLocator.settingsDefaults) {
         self.pageName = pageName
         self.userDefaults = userDefaults
     }

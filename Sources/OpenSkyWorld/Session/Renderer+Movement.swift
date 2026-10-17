@@ -66,7 +66,7 @@ extension Renderer {
         let dt = cameraClock.advance(to: wallClock.now, paused: worldSimPaused)
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         var frameInput = input.makeInput(dt: dt)
-        if isPlayerParalysed, movementMode.isPlayerControlled {
+        if session.isPlayerParalysed, movementMode.isPlayerControlled {
             frameInput = frameInput.holdingStill
         }
         steerPlayerWalk(&frameInput)
@@ -76,7 +76,7 @@ extension Renderer {
         switch movementMode {
         case .fly:
             freeFlyCamera.update(frameInput)
-        case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
+        case .walk where session.playerSeat != nil, .thirdPerson where session.playerSeat != nil:
             // The vehicle places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
             locomotion.advanceSeated(
@@ -117,7 +117,7 @@ extension Renderer {
     }
 
     private var walkCollisionQuery: CapsuleWorldCollider.CandidateQuery {
-        guard playerWalkIgnoresStatics, !playerWalkPath.isEmpty else {
+        guard session.playerWalkIgnoresStatics, !session.playerWalkPath.isEmpty else {
             return collisionQuery ?? { _ in [] }
         }
         return { _ in [] }
@@ -126,15 +126,15 @@ extension Renderer {
     /// Turns the view to the package walk's next waypoint and holds forward, until
     /// the last one is reached.
     private func steerPlayerWalk(_ frameInput: inout CameraInput) {
-        guard !playerWalkPath.isEmpty, movementMode.isPlayerControlled else { return }
+        guard !session.playerWalkPath.isEmpty, movementMode.isPlayerControlled else { return }
         let feet = walkController.feetPosition
-        let remaining = PlayerPackageWalk.remainingPath(playerWalkPath, feet: feet)
-        playerWalkPath = remaining
+        let remaining = PlayerPackageWalk.remainingPath(session.playerWalkPath, feet: feet)
+        session.playerWalkPath = remaining
         guard
             let next = remaining.first,
             let yaw = PlayerPackageWalk.steeringYaw(feet: feet, target: next)
         else {
-            onPlayerWalkArrived?()
+            session.onPlayerWalkArrived?()
             return
         }
         freeFlyCamera.yaw = yaw

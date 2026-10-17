@@ -34,13 +34,12 @@ final class ScriptWorldAdapter {
     /// The streamer, the renderer, and the provider each feed the VM one way,
     /// so the engine never depends on it. Without compiled scripts there is no VM.
     func wirePapyrus(
-        provider: any WorldDataProviding,
+        provider: WorldDataStores,
         renderer: Renderer,
         streamer: CellStreamer
     ) {
         guard
-            let scriptSource = provider as? ScriptDataProviding,
-            let fileSystem = scriptSource.scriptFileSystem
+            let fileSystem = provider.scriptFileSystem
         else { return }
         let bridge = PapyrusWorldStateBridge(
             worldState: game.worldState, references: streamer,
@@ -50,7 +49,7 @@ final class ScriptWorldAdapter {
         wireActorNatives(bridge: bridge)
         wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
-        let resolver = scriptSource.scriptFormIDResolver
+        let resolver = provider.scriptFormIDResolver
         bridge.formIDResolver = resolver
         bridge.effectPresenter = game.effectsWorld
         bridge.weather = self
@@ -83,19 +82,19 @@ final class ScriptWorldAdapter {
         streamer.onCellDetached = { [weak world] location in
             world?.detach(cell: location)
         }
-        renderer.onWorldUpdate = { [weak self] delta in
+        renderer.session.worldTick.register(.scripts) { [weak self] delta in
             self?.game.scripts.advance(delta: delta)
         }
     }
 
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
-    private func wireQuests(provider: any WorldDataProviding) {
-        guard let store = (provider as? QuestDataProviding)?.questStore else { return }
+    private func wireQuests(provider: WorldDataStores) {
+        guard let store = provider.questStore else { return }
         var runtime = QuestRuntime(
             store: game.worldState,
             quests: store,
-            locations: (provider as? LocationDataProviding)?.locationStore
+            locations: provider.locationStore
         )
         runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
         runtime.referenceCreator = { [weak game] base, anchor in
@@ -155,12 +154,12 @@ final class ScriptWorldAdapter {
 
     private func wireSpellNatives(
         bridge: PapyrusWorldStateBridge,
-        provider: any WorldDataProviding
+        provider: WorldDataStores
     ) {
         bridge.casterRuntime = { [weak game] in game?.magic.caster }
-        bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
-        bridge.formListStore = (provider as? FactionDataProviding)?.formListStore
-        bridge.keywordStore = (provider as? LocationDataProviding)?.locationStore?.keywords
+        bridge.magicEffectStore = provider.magicEffectStore
+        bridge.formListStore = provider.formListStore
+        bridge.keywordStore = provider.locationStore?.keywords
         bridge.dispelEffects = { [weak game] holder, predicate in
             game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }

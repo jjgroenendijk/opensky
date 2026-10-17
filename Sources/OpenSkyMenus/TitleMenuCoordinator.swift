@@ -77,8 +77,6 @@ nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
 }
 
 public protocol TitleMenuControlProviding: AnyObject {
-    /// Gives keyboard focus back to the game view after a panel button.
-    func refocusGameView()
     var titleMenuSnapshot: TitleMenuSnapshot { get }
     func openTitleMenu()
     func closeTitleMenu()
@@ -97,10 +95,6 @@ public final class TitleMenuCoordinator {
     public weak var saves: SaveGameService?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
-    public internal(set) var movieLoaded = false
-    /// Bumped by each open and close, so a movie decoded late opens only the newest.
-    var movieRequest = 0
-    public internal(set) var movieError: String?
     /// A row the movie picked during input, applied once the movie returns.
     var pendingRequest: TitleMenuMovieBridge.Request?
     /// Load list calls from the movie, answered once its input event ends.
@@ -123,6 +117,18 @@ public final class TitleMenuCoordinator {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+    }
+
+    lazy var movie = MenuMovieSession(
+        movies: movies, hud: hud, label: "title movie", logger: Self.movieLogger
+    ) { [weak self] in self?.world?.renderer }
+
+    public var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    public var movieError: String? {
+        movie.error
     }
 
     public func attach(world: any TitleMenuWorld) {
@@ -164,9 +170,7 @@ public final class TitleMenuCoordinator {
         isOpen = false
         loadPage = nil
         menuMode.dismiss(Self.identifier)
-        if movieLoaded {
-            stopMovie()
-        }
+        stopMovie()
     }
 
     public func setMovieEnabled(_ enabled: Bool) {
@@ -261,7 +265,7 @@ public final class TitleMenuCoordinator {
     }
 
     public var snapshot: TitleMenuSnapshot {
-        let runtime = movieLoaded ? world?.renderer?.swfRuntime : nil
+        let runtime = movie.runtime
         return TitleMenuSnapshot(
             isOpen: isOpen,
             rows: loadPage?.titles ?? entries.map(\.rawValue),
@@ -280,34 +284,29 @@ public final class TitleMenuCoordinator {
     }
 }
 
-/// Lets the app's provider object stand in for its `TitleMenuCoordinator`.
-public protocol TitleMenuControlForwarding: TitleMenuControlProviding {
-    var titleMenu: TitleMenuCoordinator { get }
-}
-
-extension TitleMenuControlForwarding {
+extension TitleMenuCoordinator: TitleMenuControlProviding {
     public var titleMenuSnapshot: TitleMenuSnapshot {
-        titleMenu.snapshot
+        snapshot
     }
 
     public func openTitleMenu() {
-        titleMenu.open()
+        open()
     }
 
     public func closeTitleMenu() {
-        titleMenu.close()
+        close()
     }
 
     public func sendTitleMenuInput(_ event: MenuInputEvent) {
-        titleMenu.route(event)
+        route(event)
     }
 
     public func setTitleMenuMovieEnabled(_ enabled: Bool) {
-        titleMenu.setMovieEnabled(enabled)
+        setMovieEnabled(enabled)
     }
 
     public func startNewGame(atCell editorID: String) {
         let trimmed = editorID.trimmingCharacters(in: .whitespaces)
-        titleMenu.newGame(at: trimmed.isEmpty ? .vanilla : .cell(trimmed))
+        newGame(at: trimmed.isEmpty ? .vanilla : .cell(trimmed))
     }
 }

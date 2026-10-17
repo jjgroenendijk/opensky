@@ -16,7 +16,9 @@ struct MenuPanelsTests {
     func characterPanelPinsIdsAndDrivesTheMenus() {
         let provider = FakeWorldProviders()
         let panel = CharacterMenuPanelViewController()
-        panel.provider = provider
+        panel.titleProvider = provider
+        panel.raceProvider = provider
+        panel.skillsProvider = provider
         panel.loadViewIfNeeded()
         #expect(panel.titleSection.sectionIdentifier == "titleMenu")
         #expect(panel.raceSection.sectionIdentifier == "raceMenu")
@@ -70,7 +72,9 @@ struct MenuPanelsTests {
     func skillsMenuSectionPinsIdsAndDrivesTheMenu() {
         let provider = FakeWorldProviders()
         let panel = CharacterMenuPanelViewController()
-        panel.provider = provider
+        panel.titleProvider = provider
+        panel.raceProvider = provider
+        panel.skillsProvider = provider
         panel.loadViewIfNeeded()
         let section = panel.skillsSection
         #expect(section.sectionIdentifier == "skillsMenu")

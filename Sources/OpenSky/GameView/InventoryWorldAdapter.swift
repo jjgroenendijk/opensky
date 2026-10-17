@@ -33,51 +33,46 @@ final class InventoryWorldAdapter {
 
     /// After the audio and Papyrus subscribers, so the activation sound plays
     /// whether or not the take succeeds.
-    func wireWorldItems(provider: any WorldDataProviding, streamer: CellStreamer) {
-        guard let items = provider as? ItemDataProviding, let baselines = items.inventoryBaselines
+    func wireWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
+        guard let baselines = provider.inventoryBaselines
         else { return }
         let coordinator = game.inventory
         coordinator.attach(world: self)
         coordinator.wire(
             inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
             references: streamer,
-            catalog: items.equipmentCatalog,
-            pricing: (provider as? BarterDataProviding)?.barterPricing,
-            harvestRegrowth: items.harvestRegrowth
+            catalog: provider.equipmentCatalog,
+            pricing: provider.barterPricing,
+            harvestRegrowth: provider.harvestRegrowth
         )
         game.scripts.bridge?.inventory = self
         coordinator.wireCrafting(
-            catalog: items.craftingCatalog, conditions: self, skills: game.progression
+            catalog: provider.craftingCatalog, conditions: self, skills: game.progression
         )
-        coordinator.craftingSkillUse = (provider as? WorldDataStores)
-            .map { CraftingSkillUseSettings.resolve(store: $0.gameSettings) } ?? .vanilla
-        coordinator.menuTexts = (provider as? WorldDataStores).map {
-            InventoryMenuTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        coordinator.tradeTexts = (provider as? WorldDataStores).map {
-            TradeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        coordinator.soulTexts = (provider as? WorldDataStores).map {
-            SoulTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        coordinator.temperingTexts = (provider as? WorldDataStores).map {
-            TemperingTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        coordinator.craftingSkillUse = CraftingSkillUseSettings
+            .resolve(store: provider.gameSettings)
+        coordinator.menuTexts = InventoryMenuTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        coordinator.tradeTexts = TradeTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        coordinator.soulTexts = SoulTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        coordinator.temperingTexts = TemperingTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         streamer.onInteraction.add { [weak coordinator] event in
             coordinator?.handleInteraction(event.target.interaction.action)
         }
     }
 
     /// After `wireFactions`, whose runtime answers the memberships.
-    func wireVendors(provider: any WorldDataProviding) {
+    func wireVendors(provider: WorldDataStores) {
         guard
-            let social = provider as? FactionDataProviding,
-            let factionStore = social.factionStore,
-            let formLists = social.formListStore
+            let factionStore = provider.factionStore,
+            let formLists = provider.formListStore
         else { return }
         let core = VendorCore(
             resolver: VendorResolver(factions: factionStore, formLists: formLists),
-            itemPluginName: (provider as? MagicDataProviding)?.magicItemPluginName
+            itemPluginName: provider.magicItemPluginName
         )
         game.inventory.vendors = VendorCoordinator(core: core, world: self)
     }

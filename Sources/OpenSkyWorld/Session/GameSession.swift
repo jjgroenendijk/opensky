@@ -33,6 +33,15 @@ public final class GameSession: RenderFrameDriver {
     public var playerBody: PlayerBody?
     /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
     public var playerSeat: float4x4?
+    /// The waypoints a package walks the player along, empty without a walk
+    /// (`PlayerPackageWalk`).
+    public var playerWalkPath: [SIMD3<Float>] = []
+    /// A straight package walk ignores static collision, as an NPC's straight leg does.
+    public var playerWalkIgnoresStatics = false
+    /// Called once when the player reaches the last waypoint of `playerWalkPath`.
+    public var onPlayerWalkArrived: (() -> Void)?
+    /// Paralysis: the player can look around but not move, jump, or attack.
+    public var isPlayerParalysed = false
     /// The player's first-person arms, held like `playerBody`. Set through
     /// `setPlayerFirstPersonRig`.
     public var playerFirstPersonRig: PlayerFirstPersonRig?
@@ -68,21 +77,18 @@ public final class GameSession: RenderFrameDriver {
     /// Free-fly input, drained once per live frame; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     public let input: CameraInputState?
-    /// Main-thread per-frame hook, invoked after the camera advances with the
-    /// live free-fly position. Cell streaming drives its per-frame `update`
-    /// here (and may call `setScene` back synchronously -- safe, same thread,
-    /// still between frames), and the HUD refreshes beside it. No handlers
-    /// (offscreen/tests) leaves the loop unchanged.
-    public let onFrame = CallbackFanOut<SIMD3<Float>>()
-    /// World simulation tick, invoked once per drawn frame after the game clock
-    /// advances. The delta is seconds, already gated by `worldSimClock`, so a
-    /// paused frame delivers zero.
-    public var onWorldUpdate: ((Float) -> Void)?
-    /// Drains of the off-main asset loaders, run before `onWorldUpdate` each frame,
-    /// paused or not. The one point where loaded assets enter the simulation.
-    public let assetDrains = CallbackFanOut<Void>()
+    /// Steps after the camera advances, with the live free-fly position. Cell
+    /// streaming may call `setScene` here, still between frames. Empty in
+    /// offscreen runs and tests.
+    public let frameSteps = FrameSchedule<FrameStep, SIMD3<Float>>()
+    /// World simulation steps, once per drawn frame after the game clock
+    /// advances. The delta is seconds from `worldSimClock`, zero when paused.
+    public let worldTick = FrameSchedule<WorldTickStep, Float>()
+    /// Off-main loader drains, before `worldTick` each frame, paused or not.
+    /// The one point where loaded assets enter the simulation.
+    public let assetDrains = FrameSchedule<AssetDrain, Void>()
     /// CPU wall time of the world-simulation callback, which currently owns
-    /// the per-frame Papyrus VM advance. Exactly zero when no callback is set.
+    /// the per-frame Papyrus VM advance. Exactly zero when no step is registered.
     public var lastScriptUpdateMS = 0.0
     /// Wall-clock delta source for the world simulation tick (the Papyrus VM),
     /// paused in menu mode.
@@ -118,7 +124,7 @@ public final class GameSession: RenderFrameDriver {
     public func prepareLiveFrame() {
         renderer.advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
-        onFrame(renderer.freeFlyCamera.position)
+        frameSteps(renderer.freeFlyCamera.position)
         renderer.advanceGameClockFromWallClock()
         renderer.updateWorldSimFromWallClock()
         renderer.updateWeatherFromWallClock()

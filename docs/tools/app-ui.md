@@ -173,9 +173,10 @@ Add one `DestinationDescriptor` (id, title, section, SF Symbol, content kind) to
 several arrays kept in the registry file and its satellite files, because one literal passed the
 type length limit. The arrays join in sidebar order.
 
-- A world inspector factory gets a context and wires the panel's providers from
-  `context.providers`. Actions go down: control, provider setter, renderer. Readouts go up: a 2 Hz
-  ticker polls the provider's snapshot into a label. No bindings or Combine.
+- A world inspector factory gets a context and wires each panel provider from its typed
+  field, such as `context.audio`. Actions go down: control, provider setter, renderer.
+  Readouts go up: a 2 Hz ticker polls the provider's snapshot into a label. No bindings or
+  Combine.
 - A mutable destination also stores override actions beside its descriptor, which call the same
   provider-backed helpers as the panel. Do not build a panel to read its state.
 - A full-content factory gets the data root and any startup error. The controller conforms to

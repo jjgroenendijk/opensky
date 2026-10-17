@@ -43,6 +43,7 @@ struct DestinationRegistryInventoryEquipmentTests {
             return
         }
         let panel = try #require(makePanel(context) as? InventoryEquipmentPanelViewController)
+        panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
         panel.loadViewIfNeeded()
 
         #expect(panel.grantsSection.provider === providers)

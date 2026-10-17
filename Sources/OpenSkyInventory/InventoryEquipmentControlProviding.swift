@@ -144,9 +144,6 @@ nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the `World > Inventory & Equipment` panel.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` declares
-/// it and the panel reaches it through the composed `WorldControlProviders`.
 @MainActor
 public protocol InventoryEquipmentControlProviding: AnyObject {
     /// Which owner the equipment inspection reads. Settable because the

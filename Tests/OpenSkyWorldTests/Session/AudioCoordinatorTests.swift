@@ -13,7 +13,7 @@ import Testing
 
 @MainActor
 private final class FakeAudioWorld: AudioWorld {
-    var audioWorldData: (any WorldDataProviding)?
+    var audioWorldData: WorldDataStores?
     var audioFileSystem: (any GameFileSource)?
     var audioListenerPose: (position: SIMD3<Float>, yaw: Float) = (.zero, 0)
     var playerFeetArmatures: [FormID]?

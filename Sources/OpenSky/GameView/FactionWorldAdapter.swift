@@ -10,66 +10,81 @@ import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyWorld
 
-/// Answers `FactionWorld` from the session systems `game` owns.
-final class FactionWorldAdapter {
-    unowned let game: GameViewController
+/// What the faction adapter reads. The streamer is a closure, because a reload
+/// replaces it.
+struct FactionWorldDependencies {
+    let factions: FactionCoordinator
+    let actors: ActorWorldAdapter
+    let streamer: () -> CellStreamer?
+}
 
-    init(game: GameViewController) {
-        self.game = game
+/// Answers `FactionWorld` from the session systems it is given.
+final class FactionWorldAdapter {
+    private let dependencies: FactionWorldDependencies
+
+    init(_ dependencies: FactionWorldDependencies) {
+        self.dependencies = dependencies
+    }
+
+    var factions: FactionCoordinator {
+        dependencies.factions
     }
 
     /// After `wirePerks`: an actor's `SNAM` run resolves through the same
     /// template resolver as its stats.
-    func wireFactions(provider: any WorldDataProviding) {
+    func wireFactions(provider: WorldDataStores) {
         guard
-            let social = provider as? FactionDataProviding,
-            let factionStore = social.factionStore,
-            let relationshipStore = social.relationshipStore
+            let factionStore = provider.factionStore,
+            let relationshipStore = provider.relationshipStore
         else { return }
-        game.factions.attach(world: self)
-        game.factions.wire(
+        factions.attach(world: self)
+        factions.wire(
             factions: factionStore,
             relationships: relationshipStore,
-            baselines: (provider as? ActorValueDataProviding)?
+            baselines: provider
                 .actorValueBaselines?
                 .resolver
                 .map(ActorFactionBaselineResolver.init(actorValues:)),
-            pluginName: (provider as? MagicDataProviding)?.magicItemPluginName
+            pluginName: provider.magicItemPluginName
         )
     }
 
-    /// Closures, because `wireFactions` runs after the Papyrus bridge is built.
+    /// One family value, because `wireFactions` runs after the Papyrus bridge is built.
     func wireNatives(bridge: PapyrusWorldStateBridge) {
-        let factions = game.factions
-        bridge.factionRuntime = { [weak factions] key in factions?.seededRuntime(for: key) }
-        bridge.relationshipRuntime = { [weak factions] in factions?.relationships }
-        bridge.socialDecision = { [weak factions] observer, target in
-            factions?.socialDecision(of: observer, toward: target).map {
-                PapyrusSocialDecision(isHostile: $0.isHostile, factionReaction: $0.factionReaction)
-            }
-        }
-        bridge.actorSocialBase = { [weak factions] key in factions?.relationshipBase(of: key) }
-        bridge.factionRelationIndex = { [weak factions] in factions?.relations }
-        bridge.factionReactionsChanged = { [weak factions] in factions?.setScriptedReactions($0) }
+        let factions = factions
+        bridge.factionNatives = PapyrusFactionNatives(
+            runtime: { [weak factions] key in factions?.seededRuntime(for: key) },
+            relationships: { [weak factions] in factions?.relationships },
+            socialDecision: { [weak factions] observer, target in
+                factions?.socialDecision(of: observer, toward: target).map {
+                    PapyrusSocialDecision(
+                        isHostile: $0.isHostile, factionReaction: $0.factionReaction
+                    )
+                }
+            },
+            socialBase: { [weak factions] key in factions?.relationshipBase(of: key) },
+            relationIndex: { [weak factions] in factions?.relations },
+            reactionsChanged: { [weak factions] in factions?.setScriptedReactions($0) },
+            socialProfile: { [weak factions] key in factions?.profile(of: key) }
+        )
         bridge.publishFactionReactions()
-        bridge.socialProfile = { [weak factions] key in factions?.profile(of: key) }
     }
 }
 
 extension FactionWorldAdapter: FactionWorld {
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
-        game.actorWorld.actorValueHolder(for: key)
+        dependencies.actors.actorValueHolder(for: key)
     }
 
     func residentActorKeys() -> [ReferenceKey] {
-        game.actorWorld.combatActors().map(\.key)
+        dependencies.actors.combatActors().map(\.key)
     }
 
     func placedActorBase(of key: ReferenceKey) -> FormID? {
-        game.streamer?.residentActorPlacement(key: key)?.base
+        dependencies.streamer()?.residentActorPlacement(key: key)?.base
     }
 
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        game.streamer?.cellLocation(of: key)
+        dependencies.streamer()?.cellLocation(of: key)
     }
 }
