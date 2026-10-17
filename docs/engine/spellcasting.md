@@ -133,9 +133,9 @@ Every refusal has a sentence, is counted, and is shown on the panel. Nothing fai
 | `abilityNotCastable` | An ability is carried, not cast |
 | `powerAlreadyUsedToday` | The once-per-day rule |
 
-UESP: "Magicka will not regenerate while you are casting a spell." The player leaves the whole
-regeneration set while either hand is casting. That is wider than the source, which names only
-magicka. No source says health and stamina keep going.
+UESP: "Magicka will not regenerate while you are casting a spell." So a casting player stops only
+magicka; health and stamina keep going. An NPC follows `bRegenNPCMagickaDuringCast`, which is false
+in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#regeneration)).
 
 ## Abilities and powers
 
@@ -196,5 +196,31 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
 - Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
   counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
   = adjusted`), and a Conditions (player) block with one line per magic condition function.
+
+The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
+`sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,
+`sMagicFireAndForget`, `sMagicConcentration`, the five `sMagicDelivery*` settings, and the five
+`sMagicSchool*` settings for the school of the costliest effect. Without a
+string table, the record's own enum names stay.
+
+The school carries the spell's level, such as "Novice Destruction". The level comes from the
+costliest effect's minimum skill: Novice below 25, Apprentice below 50, Adept below 75, Expert below
+100, and Master from 100, as UESP's "Skyrim:Magic" page lists the five levels. The names are the
+`sNoviceDisplayName`, `sApprenticeDisplayName`, `sJourneymanDisplayName` ("Adept"),
+`sExpertDisplayName`, and `sMasterDisplayName` settings.
+
+## Skill and cost
+
+A caster's skill in the spell's school lowers the cost before any perk acts. UESP's
+"Skyrim:Magic Overview" (Spell Cost) gives the player's multiplier as `1 − (skill / 400)^0.65`,
+about 0.5939 at skill 100. The two numbers are `fMagicCasterPCSkillCostBase` (0.0025, so 1/400)
+and `fMagicPCSkillCostScale` (0.65).
+
+For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCasterSkillCostMult ×
+(skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
+`fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
+NPC formula; this is OpenSky's reading of the setting names.
+
+Dual casting is not built, so the `fMagicDualCasting*` settings stay unread.
 
 Casting animations, hand effects, and sounds are not done yet.

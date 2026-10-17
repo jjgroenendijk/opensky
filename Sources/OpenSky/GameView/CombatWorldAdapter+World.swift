@@ -15,6 +15,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
@@ -139,6 +140,22 @@ extension CombatWorldAdapter: CombatWorld {
         return true
     }
 
+    func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool {
+        guard
+            let perk = game.perks.runtime?.perks.perk(editorID: editorID),
+            let owned = game.perks.ownership(of: key)
+        else { return false }
+        return owned.contains(ReferenceKey(resolved: perk.id))
+    }
+
+    func damageStamina(by amount: Float, of key: ReferenceKey) {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return }
+        runtime.damage(.stamina, by: amount, on: holder)
+    }
+
     var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }
@@ -156,6 +173,17 @@ extension CombatWorldAdapter: CombatWorld {
         return runtime.inventory.temperLevel(of: item, in: runtime.player)
     }
 
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        guard
+            let runtime = game.inventory.runtime,
+            let equipment = game.inventory.equipment,
+            let holder = key == .player ? runtime.player : game.streamer?.inventoryHolder(of: key)
+        else { return [] }
+        return equipment.equipped(on: holder).map {
+            ($0, runtime.inventory.temperLevel(of: $0, in: holder))
+        }
+    }
+
     func hasReadiedSpell(in hand: SpellHand) -> Bool {
         game.magic.hasReadiedSpell(in: hand)
     }
@@ -163,6 +191,19 @@ extension CombatWorldAdapter: CombatWorld {
     func playerCarriedItems() -> [FormID] {
         guard let runtime = game.inventory.runtime else { return [] }
         return runtime.inventory.inventory(of: runtime.player).stacks.map(\.item)
+    }
+
+    @discardableResult
+    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool {
+        guard
+            let runtime = game.inventory.runtime,
+            let holder = game.streamer?.inventoryHolder(of: key)
+        else { return false }
+        return (try? runtime.inventory.add(item, count: count, to: holder)) != nil
+    }
+
+    func showNotification(_ text: String) {
+        game.hud.showNotification(text)
     }
 
     @discardableResult

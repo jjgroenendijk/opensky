@@ -13,8 +13,9 @@ import OpenSkyWorldState
 import Testing
 
 @MainActor
-private final class FakeMenuBridge: PapyrusMenuBridge {
+final class FakeMenuBridge: PapyrusMenuBridge {
     var calls: [String] = []
+    var names: [UInt32: String] = [:]
     var races: [ReferenceKey: FormID] = [:]
     var voiceTypes: [FormID: FormID] = [:]
     var giftFilters: [FormID: FormID] = [:]
@@ -69,7 +70,7 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
     }
 
     func name(of form: FormID) -> String? {
-        nil
+        names[form.rawValue]
     }
 
     func movePlayer(to target: ReferenceKey) {

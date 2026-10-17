@@ -12,6 +12,7 @@ import Testing
 private final class FakePerceptionSessionWorld: PerceptionSessionWorld {
     var candidates: [PerceptionCandidate] = []
     var targets: [PerceptionTarget] = []
+    var sneakUses: [Float] = []
 
     func perceptionCandidates() -> [PerceptionCandidate] {
         candidates
@@ -23,6 +24,10 @@ private final class FakePerceptionSessionWorld: PerceptionSessionWorld {
 
     func perceptionHasLineOfSight(from _: SIMD3<Float>, to _: SIMD3<Float>) -> Bool {
         true
+    }
+
+    func reportSneakSkillUse(_ amount: Float, by _: ReferenceKey) {
+        sneakUses.append(amount)
     }
 }
 
@@ -90,5 +95,28 @@ struct PerceptionCoordinatorTests {
         #expect(runtime.observers.map(\.key) == [PerceptionFixture.guardKey])
         #expect(!coordinator.perceptionSnapshot.isUnavailable)
         #expect(!coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
+    }
+
+    /// One second crouched behind a near guard: `fSkillUsageSneakPerSecond` uses.
+    @Test(arguments: [
+        (SIMD3<Float>(-300, 0, 0), true, Float(0.625)),
+        (SIMD3<Float>(-300, 0, 0), false, Float(0)),
+        (SIMD3<Float>(-2000, 0, 0), true, Float(0))
+    ])
+    func hidingNearAnObserverTrainsSneak(
+        feet: SIMD3<Float>, isSneaking: Bool, expected: Float
+    ) {
+        let world = FakePerceptionSessionWorld()
+        world.candidates = [Self.candidate(1, isHostile: true)]
+        world.targets = [
+            PerceptionFixture.target(feet: feet, gait: nil, isSneaking: isSneaking)
+        ]
+        let coordinator = PerceptionCoordinator()
+        coordinator.attach(world: world)
+        coordinator.wire(settings: .synthetic)
+        for _ in 0 ..< 60 {
+            coordinator.advance(by: PerceptionRuntime.fixedStepSeconds)
+        }
+        #expect(abs(world.sneakUses.reduce(0, +) - expected) < 0.02)
     }
 }

@@ -63,7 +63,7 @@ nonisolated public enum DialogueReadout: Sendable {
             return "\(unresolved)\nRejected topics: 0"
         }
         let lines = snapshot.rejections.map { row in
-            "  \(row.topic): " + (row.reasons.isEmpty
+            "  \(row.topic)\(row.subtype.map { " (\($0))" } ?? ""): " + (row.reasons.isEmpty
                 ? "no responses declared"
                 : row.reasons.joined(separator: ", "))
         }

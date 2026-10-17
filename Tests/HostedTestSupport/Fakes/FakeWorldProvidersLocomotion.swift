@@ -152,6 +152,13 @@ extension FakeWorldProviders {
         return melee.lastActionText
     }
 
+    @discardableResult
+    func requestMeleePowerAttack() -> String {
+        melee.attackRequests += 1
+        melee.lastActionText = "Requested one power attack."
+        return melee.lastActionText
+    }
+
     func clearMeleeTrace() {
         melee.traceClearCount += 1
         melee.lastActionText = "Cleared the hit trace."

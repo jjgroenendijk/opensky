@@ -140,6 +140,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
+    public var itemNotices = ItemNoticeTexts.vanilla
     /// Visual effects, effect shaders, and image-space modifiers. Nil in a headless session.
     public weak var effectPresenter: (any PapyrusEffectPresenting)?
     /// The sky, for the `Weather` natives. Nil in a headless session.

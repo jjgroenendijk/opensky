@@ -33,11 +33,16 @@ Three rules are choices, not results:
   really carries it, and hiding it would lose it.
 - Rows sort by name, then FormID. So two items with the same name always have the same order.
 
-Categories group items by record type: All, Weapons (`WEAP` and `AMMO`), Armor, Potions,
-Ingredients, Books, and Misc. Misc also holds keys (`KEYM`), soul gems (`SLGM`), and alchemy
-apparatus (`APPA`). This is OpenSky's own grouping of the [item records](/formats/item-records.md)
-it decodes, not Bethesda's category numbers. An item of unknown type shows under Misc, so All is not
-the only way to find it.
+Categories group items by record type, in the game's tab order: All, Weapons (`WEAP` and `AMMO`),
+Armor, Potions, Food, Ingredients, Books, Keys (`KEYM`), and Misc. Food takes the `ALCH` records with
+the food flag, and Potions takes the rest. Misc also holds soul gems (`SLGM`) and alchemy apparatus
+(`APPA`). This is OpenSky's own grouping of the [item records](/formats/item-records.md) it decodes,
+not Bethesda's category numbers. Scrolls have no tab, because OpenSky does not carry `SCRL` items
+yet. An item of unknown type shows under Misc, so All is not the only way to find it.
+
+Each tab takes its name from a string setting: `sAllItems`, `sWeapons`, `sApparel`, `sPotions`,
+`sFood`, `sIngredients`, `sBooks`, `sKeys`, and `sMisc`. Without a plugin that sets one, the tab
+keeps OpenSky's English name.
 
 ## Imported parts
 

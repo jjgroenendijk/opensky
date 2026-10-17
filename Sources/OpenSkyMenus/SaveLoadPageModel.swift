@@ -2,6 +2,7 @@
 // deleting a file ask first. See docs/engine/system-menu.md.
 
 import Foundation
+import OpenSkyGameData
 
 /// Who a save belongs to, as its summary records it.
 nonisolated public struct SaveSlotCharacter: Equatable, Sendable {
@@ -81,17 +82,17 @@ nonisolated public enum SaveLoadAction: Equatable, Sendable {
 }
 
 nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
-    public static let newSaveTitle = "New Save"
-
     public let mode: SaveLoadMode
+    public let texts: SaveTexts
     public private(set) var rows: [SaveSlotRow]
     public private(set) var selectedIndex = 0
     public private(set) var confirmation: ConfirmationModel?
     private var pending: SaveLoadAction?
 
     /// The Save page leaves imports out, because a Skyrim save is never written.
-    public init(mode: SaveLoadMode, rows: [SaveSlotRow]) {
+    public init(mode: SaveLoadMode, rows: [SaveSlotRow], texts: SaveTexts = .vanilla) {
         self.mode = mode
+        self.texts = texts
         self.rows = Self.sorted(mode == .save ? rows.filter { !$0.isImport } : rows)
     }
 
@@ -101,7 +102,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
 
     /// The Save page starts with a New Save row before the files.
     public var titles: [String] {
-        (mode == .save ? [Self.newSaveTitle] : []) + rows.map(\.listText)
+        (mode == .save ? [texts.newSave] : []) + rows.map(\.listText)
     }
 
     public var selectedRow: SaveSlotRow? {
@@ -119,7 +120,10 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     /// Asks before deleting the selected file. Nothing happens on New Save or an import.
     public mutating func requestDelete() {
         guard let row = selectedRow, !row.isImport else { return }
-        ask("Delete \(row.title)?", then: .delete(slot: row.slot))
+        ask(
+            SettingTextFormat.fill(texts.deleteQuestion, [row.title]),
+            then: .delete(slot: row.slot)
+        )
     }
 
     @discardableResult
@@ -154,7 +158,10 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
         case (.save, nil):
             return .save(slot: nil)
         case let (.save, .some(row)):
-            ask("Save over \(row.title)?", then: .save(slot: row.slot))
+            ask(
+                SettingTextFormat.fill(texts.overwriteQuestion, [row.title]),
+                then: .save(slot: row.slot)
+            )
             return nil
         case let (.load, .some(row)) where row.error == nil:
             return .load(slot: row.slot)

@@ -28,120 +28,6 @@ extension GameViewController: PlayerSettingsControlForwarding {
 }
 
 /// The Combat & Physics panel reads the coordinator.
-extension GameViewController: MeleeCombatControlProviding {
-    var meleeCombatSnapshot: MeleeCombatSnapshot {
-        combat.meleeCombatSnapshot
-    }
-
-    var isWeaponDrawn: Bool {
-        get { combat.isWeaponDrawn }
-        set { combat.isWeaponDrawn = newValue }
-    }
-
-    @discardableResult
-    func requestMeleeAttack() -> String {
-        combat.requestMeleeAttack()
-    }
-
-    func clearMeleeTrace() {
-        combat.clearMeleeTrace()
-    }
-}
-
-extension GameViewController: ArcheryControlProviding {
-    var archerySnapshot: ArcherySnapshot {
-        combat.archerySnapshot
-    }
-
-    @discardableResult
-    func spawnDevProjectile() -> String {
-        combat.spawnDevProjectile()
-    }
-
-    func despawnProjectiles() {
-        combat.despawnProjectiles()
-    }
-
-    func clearStuckProjectiles() {
-        combat.clearStuckProjectiles()
-    }
-
-    func clearProjectileTrace() {
-        combat.clearProjectileTrace()
-    }
-}
-
-extension GameViewController: CombatLoopControlProviding {
-    var combatLoopSnapshot: CombatLoopSnapshot {
-        combat.combatLoopSnapshot
-    }
-
-    var selectedCombatStyle: CombatStyleReadout? {
-        combat.selectedCombatStyle
-    }
-
-    var selectedActorIsHostile: Bool {
-        get { combat.selectedActorIsHostile }
-        set { combat.selectedActorIsHostile = newValue }
-    }
-
-    var isActorCastingEnabled: Bool {
-        get { combat.isActorCastingEnabled }
-        set { combat.isActorCastingEnabled = newValue }
-    }
-
-    func clearCombatTrace() {
-        combat.clearCombatTrace()
-    }
-}
-
-extension GameViewController: MagicEffectControlProviding {
-    var magicEffectControlSnapshot: MagicEffectControlSnapshot {
-        magic.magicEffectControlSnapshot
-    }
-
-    @discardableResult
-    func consumeFirstCarriedMagicItem() -> String {
-        magic.consumeFirstCarriedMagicItem()
-    }
-
-    @discardableResult
-    func dispelPlayerMagicEffects() -> String {
-        magic.dispelPlayerMagicEffects()
-    }
-}
-
-extension GameViewController: CastingControlProviding {
-    var castingControlSnapshot: CastingControlSnapshot {
-        magic.castingControlSnapshot
-    }
-
-    @discardableResult
-    func grantPlayerStartSpells() -> String {
-        magic.grantPlayerStartSpells()
-    }
-
-    @discardableResult
-    func readFirstCarriedSpellTome() -> String {
-        magic.readFirstCarriedSpellTome()
-    }
-
-    @discardableResult
-    func selectNextKnownSpell() -> String {
-        magic.selectNextKnownSpell()
-    }
-
-    @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> String {
-        magic.readySelectedSpell(in: hand)
-    }
-
-    @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> String {
-        magic.castReadiedSpell(in: hand)
-    }
-}
-
 extension GameViewController: ItemControlProviding {
     var itemControlSnapshot: ItemControlSnapshot {
         inventory.itemControlSnapshot
@@ -567,6 +453,11 @@ extension GameViewController: ProgressionControlProviding {
     }
 
     @discardableResult
+    func trainWithNearestTrainer() -> String {
+        progression.trainWithNearestTrainer()
+    }
+
+    @discardableResult
     func grantSelectedPerk() -> String {
         progression.grantSelectedPerk()
     }
@@ -574,29 +465,6 @@ extension GameViewController: ProgressionControlProviding {
     @discardableResult
     func revokeSelectedPerk() -> String {
         progression.revokeSelectedPerk()
-    }
-}
-
-extension GameViewController: RagdollControlProviding {
-    var ragdollStatsSnapshot: RagdollStatsSnapshot {
-        ragdoll.ragdollStatsSnapshot
-    }
-
-    @discardableResult
-    func triggerRagdoll() -> Bool {
-        ragdoll.triggerRagdoll()
-    }
-
-    func setRagdollFrozen(_ frozen: Bool) {
-        ragdoll.setRagdollFrozen(frozen)
-    }
-
-    func setRagdollSelfCollision(_ enabled: Bool) {
-        ragdoll.setRagdollSelfCollision(enabled)
-    }
-
-    func clearRagdolls() {
-        ragdoll.clearRagdolls()
     }
 }
 
@@ -684,73 +552,5 @@ extension GameViewController: FaceMorphControlProviding {
 
     func resetFaceMorphWeights() {
         faceMorphs.resetFaceMorphWeights()
-    }
-}
-
-extension GameViewController: AIOverlayControlProviding {
-    var navmeshOverlayEnabled: Bool {
-        get { renderer?.navmeshOverlayEnabled ?? false }
-        set { renderer?.navmeshOverlayEnabled = newValue }
-    }
-
-    var pathOverlayEnabled: Bool {
-        get { renderer?.pathOverlayEnabled ?? false }
-        set { renderer?.pathOverlayEnabled = newValue }
-    }
-
-    var detectionOverlayEnabled: Bool {
-        get { renderer?.detectionOverlayEnabled ?? false }
-        set { renderer?.detectionOverlayEnabled = newValue }
-    }
-
-    var aiOverlaySnapshot: AIOverlayControlSnapshot {
-        AIOverlayControlSnapshot(
-            navmeshOverlayEnabled: navmeshOverlayEnabled,
-            pathOverlayEnabled: pathOverlayEnabled,
-            detectionOverlayEnabled: detectionOverlayEnabled,
-            stats: renderer?.lastWorldOverlayDrawStats ?? WorldOverlayDrawStats()
-        )
-    }
-}
-
-extension GameViewController: AINavigationControlProviding {
-    var aiNavigationSnapshot: AINavigationSnapshot {
-        aiNavigation.aiNavigationSnapshot
-    }
-
-    var selectedAIActor: ReferenceKey? {
-        get { aiNavigation.selectedAIActor }
-        set { aiNavigation.selectedAIActor = newValue }
-    }
-
-    var selectedAIActorIsHostile: Bool {
-        get { aiNavigation.selectedAIActorIsHostile }
-        set { aiNavigation.selectedAIActorIsHostile = newValue }
-    }
-
-    func selectAIActorFromCrosshair() {
-        aiNavigation.selectAIActorFromCrosshair()
-    }
-
-    func moveSelectedAIActorToCrosshair() {
-        aiNavigation.moveSelectedAIActorToCrosshair()
-    }
-
-    func stopSelectedAIActor() {
-        aiNavigation.stopSelectedAIActor()
-    }
-
-    func reevaluateSelectedAIActorPackage() {
-        aiNavigation.reevaluateSelectedAIActorPackage()
-    }
-}
-
-extension GameViewController: PerceptionControlProviding {
-    var perceptionSnapshot: PerceptionControlSnapshot {
-        perception.perceptionSnapshot
-    }
-
-    func perceptionLines(for actor: ReferenceKey) -> [String] {
-        perception.perceptionLines(for: actor)
     }
 }

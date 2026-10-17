@@ -25,6 +25,7 @@ nonisolated extension ActorValueDerivation {
         values[ActorValueIndex.carryWeight] = finite(inputs.race.baseCarryWeight)
         values[ActorValueIndex.unarmedDamage] = finite(inputs.race.unarmedDamage)
         values[ActorValueIndex.mass] = finite(inputs.race.baseMass)
+        values[ActorValueIndex.bowSpeedBonus] = finite(settings.defaultBowSpeedBonus)
         return values
     }
 
@@ -115,4 +116,5 @@ nonisolated public enum ActorValueIndex: Sendable {
     public static let resistFrost: Int32 = 43
     public static let resistMagic: Int32 = 44
     public static let resistDisease: Int32 = 45
+    public static let bowSpeedBonus: Int32 = 78
 }

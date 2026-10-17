@@ -73,6 +73,9 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var harvestRegrowth = HarvestRegrowth.vanilla
     /// The bribe and intimidation settings; OpenSky's fallbacks on a synthetic scene.
     public var speechCheckSettings = SpeechCheckSettings.fallback
+    /// Every GMST of the load order, which each subsystem resolves its settings from
+    /// when it is wired. Empty on a synthetic scene, so every subsystem reads vanilla.
+    public var gameSettings = GameSettingStore(plugins: [])
     /// The player record, races, and map markers; nil on a synthetic scene.
     public var menuRecords: MenuRecordData?
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic

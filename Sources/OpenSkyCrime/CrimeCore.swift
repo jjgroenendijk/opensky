@@ -65,7 +65,8 @@ nonisolated public enum CrimeCore {
 
     public static func bountyReadouts(
         _ ledger: CrimeLedgerState,
-        factions store: FactionStore
+        factions store: FactionStore,
+        texts: CrimeTexts = .vanilla
     ) -> [BountyReadout] {
         ledger.entries.filter { !$0.isEmpty }.map { entry in
             BountyReadout(
@@ -76,7 +77,8 @@ nonisolated public enum CrimeCore {
                 response: CrimeResponsePolicy.response(
                     bounty: entry.gold,
                     values: store.faction(key: entry.faction)?.faction.crimeValues
-                )
+                ),
+                crimeTexts: texts
             )
         }
     }

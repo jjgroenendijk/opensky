@@ -21,7 +21,8 @@ nonisolated public enum CrimeFactionReadout: Sendable {
         for bounty in snapshot.bounties {
             lines.append("  \(bounty.faction.name): \(bounty.gold) (non-violent "
                 + "\(bounty.nonViolentGold), violent \(bounty.violentGold)) · "
-                + "\(countsText(bounty.counts)) · guards \(responseText(bounty.response))")
+                + countsText(bounty.counts, texts: bounty.crimeTexts)
+                + " · guards \(responseText(bounty.response))")
         }
         lines.append("Crime faction here: \(snapshot.currentCrimeFaction?.name ?? "none")")
         lines.append("Last crime: \(snapshot.lastCrimeText)")
@@ -38,9 +39,9 @@ nonisolated public enum CrimeFactionReadout: Sendable {
         }
     }
 
-    private static func countsText(_ counts: CrimeCounts) -> String {
+    private static func countsText(_ counts: CrimeCounts, texts: CrimeTexts) -> String {
         let parts = CrimeKind.allCases.compactMap { kind -> String? in
-            counts[kind] > 0 ? "\(kind.rawValue) \(counts[kind])" : nil
+            counts[kind] > 0 ? "\(texts.name(of: kind)) \(counts[kind])" : nil
         }
         return parts.isEmpty ? "no crimes counted" : parts.joined(separator: ", ")
     }

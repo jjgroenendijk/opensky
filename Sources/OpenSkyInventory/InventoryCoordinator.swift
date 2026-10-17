@@ -41,6 +41,13 @@ public final class InventoryCoordinator {
     public internal(set) var lastCraftText = "No crafting action yet."
     weak var recipeConditions: (any RecipeConditionChecking)?
     weak var skillUses: (any SkillUseReporting)?
+    /// The experience formulas a crafting session reports with.
+    public var craftingSkillUse = CraftingSkillUseSettings.vanilla
+    public var menuTexts = InventoryMenuTexts.vanilla
+    public var tradeTexts = TradeTexts.vanilla
+    public var soulTexts = SoulTexts.vanilla
+    /// The quality names of an improved item.
+    public var temperingTexts = TemperingTexts.vanilla
 
     weak var world: (any InventoryWorld)?
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.
@@ -191,7 +198,7 @@ public final class InventoryCoordinator {
                 count: $0.count,
                 name: name(of: $0.item),
                 stolen: $0.stolen,
-                detail: runtime?.inventory.baselines.items.familyDetail($0.item)
+                detail: runtime?.inventory.baselines.items.familyDetail($0.item, souls: soulTexts)
             )
         }
     }

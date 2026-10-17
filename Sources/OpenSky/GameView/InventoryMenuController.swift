@@ -76,7 +76,10 @@ final class InventoryMenuController {
             model = .empty
             return
         }
-        var refreshed = InventoryMenuModel.build(holder: .player, runtime: inventory)
+        var refreshed = InventoryMenuModel.build(
+            holder: .player, runtime: inventory,
+            categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
+        )
         refreshed.selectCategory(model.selectedCategoryIndex)
         refreshed.select(model.selectedIndex)
         model = refreshed

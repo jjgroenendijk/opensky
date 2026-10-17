@@ -18,7 +18,9 @@ extension CrimeCoordinator {
         let override = panel.vendorOverride
         return CrimeFactionControlSnapshot(
             isAvailable: true,
-            bounties: CrimeCore.bountyReadouts(reporter.runtime.ledger(), factions: store),
+            bounties: CrimeCore.bountyReadouts(
+                reporter.runtime.ledger(), factions: store, texts: crimeTexts
+            ),
             currentCrimeFaction: crimeFaction(in: world.currentCellLocation)
                 .map { CrimeCore.factionOption($0, in: store) },
             ownership: world.targetOwnership(),

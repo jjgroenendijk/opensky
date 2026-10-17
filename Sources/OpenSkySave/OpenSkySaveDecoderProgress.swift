@@ -68,25 +68,50 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
         return entries
     }
 
-    /// Puts each holder's legendary counts on its `PLVL` progress; a holder with no
-    /// `PLVL` entry gets a fresh progress carrying only the counts.
-    public static func mergeLegendary(
-        _ legendary: [ReferenceKey: [Int32: Int]],
-        into progress: [SavePlayerProgressEntry]
+    /// The `PTRN` chunk: training sessions this level, keyed by holder.
+    public static func decodeTrainingSessions(_ payload: Data) throws -> [ReferenceKey: Int] {
+        var reader = SaveReader(payload)
+        let count = try reader.uint32("PTRN entry count")
+        try OpenSkySaveDecoder.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.minimumTrainingEntrySize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.trainingSessions
+        )
+        var entries: [ReferenceKey: Int] = [:]
+        for _ in 0 ..< count {
+            let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+            entries[key] = try Int(reader.uint32("PTRN sessions"))
+        }
+        return entries
+    }
+
+    /// `PLVL` with its `PLGD` and `PTRN` siblings laid on.
+    static func progress(of body: OpenSkySaveDecoder.Body) -> [SavePlayerProgressEntry] {
+        let progress = merge(body.legendarySkills, into: body.playerProgress) {
+            $0.withLegendaryCounts($1)
+        }
+        return merge(body.trainingSessions, into: progress) { $0.withTrainingSessions($1) }
+    }
+
+    /// Lays a sibling chunk's values onto each holder's `PLVL` progress; a holder
+    /// with no `PLVL` entry gets a fresh progress carrying only that value.
+    public static func merge<Value>(
+        _ values: [ReferenceKey: Value],
+        into progress: [SavePlayerProgressEntry],
+        apply: (PlayerProgressState, Value) -> PlayerProgressState
     ) -> [SavePlayerProgressEntry] {
-        guard !legendary.isEmpty else { return progress }
+        guard !values.isEmpty else { return progress }
         var merged = progress.map { entry in
-            guard let counts = legendary[entry.key] else { return entry }
+            guard let value = values[entry.key] else { return entry }
             return SavePlayerProgressEntry(
-                key: entry.key, cell: entry.cell, state: entry.state.withLegendaryCounts(counts)
+                key: entry.key, cell: entry.cell, state: apply(entry.state, value)
             )
         }
         let covered = Set(progress.map(\.key))
-        for (key, counts) in legendary.sorted(by: { $0.key < $1.key })
-            where !covered.contains(key)
-        {
+        for (key, value) in values.sorted(by: { $0.key < $1.key }) where !covered.contains(key) {
             merged.append(SavePlayerProgressEntry(
-                key: key, cell: nil, state: PlayerProgressState(legendaryCounts: counts)
+                key: key, cell: nil, state: apply(PlayerProgressState(), value)
             ))
         }
         return merged

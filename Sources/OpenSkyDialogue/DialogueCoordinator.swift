@@ -30,6 +30,8 @@ public final class DialogueCoordinator {
     public private(set) var spokenLine: DialogueSpokenLine?
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
+    /// Subtype names the Dialogue panel shows beside a topic.
+    public var topicSubtypes = TopicSubtypeTexts.vanilla
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false
 

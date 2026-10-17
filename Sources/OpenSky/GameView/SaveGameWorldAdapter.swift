@@ -39,7 +39,9 @@ final class SaveGameWorldAdapter: SaveGameService {
     @discardableResult
     func refreshSaveRows() async -> [SaveSlotRow] {
         listings = await (try? game.runtimeStateWorld.saveListings()) ?? []
-        saveRows = await listings.map(Self.row) + SkyrimSaveImportAdapter.rows()
+        let texts = saveTexts
+        saveRows = await listings.map { Self.row($0, texts: texts) }
+            + SkyrimSaveImportAdapter.rows()
         hasListed = true
         return saveRows
     }
@@ -128,14 +130,22 @@ final class SaveGameWorldAdapter: SaveGameService {
         return "Save \(number)"
     }
 
-    static func row(_ listing: OpenSkySaveSlotListing) -> SaveSlotRow {
+    var saveTexts: SaveTexts {
+        (game.worldData as? WorldDataStores).map {
+            SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
+    }
+
+    static func row(
+        _ listing: OpenSkySaveSlotListing, texts: SaveTexts = .vanilla
+    ) -> SaveSlotRow {
         let summary = listing.summary?.summary
         let savedAt = listing.summary.map {
             Date(timeIntervalSince1970: TimeInterval($0.metadata.creationTimestamp))
         } ?? listing.modified
         let title = summary.map { "\(listing.slot) - \($0.characterName)" } ?? listing.slot
         let detail = summary.map {
-            "Level \($0.level), \($0.locationName), \(playTimeText($0.playSeconds))"
+            "\(texts.level) \($0.level), \($0.locationName), \(playTimeText($0.playSeconds))"
         } ?? listing.error ?? ""
         let thumbnail = listing.summary?.thumbnail
         return SaveSlotRow(
@@ -168,10 +178,11 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     private func locationName() -> String {
-        switch game.streamer?.currentCellLocation {
-        case let .exterior(cell): "Exterior \(cell.x), \(cell.y)"
+        let texts = saveTexts
+        return switch game.streamer?.currentCellLocation {
+        case let .exterior(cell): "\(texts.wilderness) \(cell.x), \(cell.y)"
         case let .interior(formID): "Interior \(formID)"
-        case nil: "Unknown"
+        case nil: texts.unknownLocation
         }
     }
 

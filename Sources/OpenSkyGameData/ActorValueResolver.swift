@@ -145,6 +145,13 @@ nonisolated public struct ActorValueResolver: Sendable {
         classes.resolve(id, fromPlugin: pluginName)?.characterClass
     }
 
+    /// The class `base` uses after its templates, or nil when the chain does not resolve.
+    public func characterClass(ofBase base: FormID) -> CharacterClass? {
+        (try? templates.resolveStats(base: base)).flatMap {
+            characterClass($0.stats.value.characterClass)
+        }
+    }
+
     /// The full derived baseline for one NPC_.
     public func resolve(base: FormID) throws -> ResolvedActorValues {
         let resolved = try resolveStats(base: base)

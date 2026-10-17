@@ -29,6 +29,14 @@ public protocol SaveGameService: AnyObject {
     func saveGame(slot: String?) async throws -> String
     func loadGame(slot: String) async throws
     func deleteSave(slot: String) async throws
+    /// The words the save pages and progress lines use.
+    var saveTexts: SaveTexts { get }
+}
+
+extension SaveGameService {
+    public var saveTexts: SaveTexts {
+        .vanilla
+    }
 }
 
 public final class SystemMenuCoordinator {

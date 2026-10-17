@@ -26,7 +26,7 @@ struct DetectionFormulaTests {
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
             "visualBaseValue", "sneakVisualMult", "normalActionSound", "loudActionSound",
             "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
-            "decayPerSecond", "suspiciousLevel", "detectedLevel"
+            "decayPerSecond", "suspiciousLevel", "detectedLevel", "skillUseRange"
         ])
         #expect(settings.silentActionSound.value == 10)
         // The synthetic set labels the load-order half as synthetic rather than

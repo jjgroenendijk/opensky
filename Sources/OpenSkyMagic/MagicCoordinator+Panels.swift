@@ -68,9 +68,9 @@ extension MagicCoordinator: MagicEffectControlProviding {
         of effect: ActiveEffect,
         runtime: ActiveEffectRuntime
     ) -> ActiveEffectReadout {
-        ActiveEffectReadout(
+        var readout = ActiveEffectReadout(
             name: effectName(effect.effect, runtime: runtime),
-            sourceName: effect.source.kind.describedName,
+            sourceName: sourceName(effect.source.kind),
             mode: effect.mode,
             isDetrimental: effect.isDetrimental,
             magnitude: effect.values.first?.magnitude ?? 0,
@@ -82,6 +82,21 @@ extension MagicCoordinator: MagicEffectControlProviding {
             archetype: runtime.effects.effect(key: effect.effect)?.effect.data?
                 .archetype.description ?? "unknown"
         )
+        if effect.duration > 0 {
+            readout.timeLeftText = magicTexts.timeLeft(effect.remaining)
+        }
+        return readout
+    }
+
+    private func sourceName(_ kind: ActiveEffectSourceKind) -> String {
+        let setting: String? = switch kind {
+        case .potion: "sMagicTypePotion"
+        case .ingredient: "sIngredient"
+        case .spell: "sMagicTypeSpell"
+        case .enchantment: "sMagicTypeEnchantment"
+        case .perk: nil
+        }
+        return setting.map { magicTexts.word($0, or: kind.describedName) } ?? kind.describedName
     }
 
     /// Falls back to the key, so a line names something even when the record
@@ -233,14 +248,18 @@ extension MagicCoordinator: CastingControlProviding {
         let hands = book.hands(of: spell.key)
         return KnownSpellReadout(
             name: spell.displayName,
-            typeName: spell.spellType.description,
-            castingName: (spell.data?.castingType).map(String.init(describing:)) ?? "unknown",
-            deliveryName: (spell.data?.delivery).map(String.init(describing:)) ?? "unknown",
+            typeName: magicTexts.name(of: spell.spellType),
+            castingName: (spell.data?.castingType).map(magicTexts.name(of:)) ?? "unknown",
+            deliveryName: (spell.data?.delivery).map(magicTexts.name(of:)) ?? "unknown",
             cost: spell.cost.cost,
             chargeTime: spell.data?.chargeTime ?? 0,
             readiedHands: SpellHand.allCases
                 .filter { hands.contains($0.slots) }
-                .map(\.describedName)
+                .map(\.describedName),
+            schoolName: spell.magicSkill.flatMap(magicTexts.school(of:)).map { school in
+                spell.minimumSkillLevel.map { "\(magicTexts.level(minimumSkill: $0)) \(school)" }
+                    ?? school
+            }
         )
     }
 }

@@ -30,6 +30,9 @@ public final class ProjectileRuntime {
     /// How an EFIT area becomes a radius in world units. Settable, because the
     /// conversion is uncertain; see `MagicAreaSettings`.
     public var areaSettings = MagicAreaSettings.documentedDefaults
+    /// Stick depth, time in an actor, and recovery; the coordinator sets them.
+    public var arrows = ArrowSettings.vanilla
+    public internal(set) var attached = AttachedArrows()
     /// Projectiles in the air, in id order.
     public private(set) var live: [LiveProjectile] = []
     /// The most recent finished shots, oldest first.
@@ -121,6 +124,7 @@ public final class ProjectileRuntime {
     @discardableResult
     public func advance(by frameTime: Float) -> [ProjectileTrace] {
         evictUnloadedStuckArrows()
+        ageAttachedArrows(by: frameTime)
         guard !live.isEmpty else {
             accumulatedTime = 0
             return []
@@ -276,7 +280,7 @@ public final class ProjectileRuntime {
         let arrow = StuckProjectile(
             base: base,
             location: location,
-            position: impact.position,
+            position: stuckPosition(of: projectile, at: impact),
             rotation: ProjectileImpactQuery.stuckRotation(
                 alongFlight: projectile.state.velocity
             ),
@@ -284,6 +288,7 @@ public final class ProjectileRuntime {
         )
         guard let key = world.spawnStuckProjectile(arrow) else { return false }
         stuck.append((arrow, key))
+        trackAttached(key, inActor: impact.isActor)
         if stuck.count > Self.stuckLimit {
             removeStuckArrows(Array(stuck.indices.prefix(stuck.count - Self.stuckLimit)))
         }

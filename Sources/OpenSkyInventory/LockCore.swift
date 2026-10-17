@@ -15,9 +15,6 @@ nonisolated public enum LockGateDecision: Equatable, Sendable {
 }
 
 nonisolated public enum LockCore {
-    /// The prompt word for a locked target. English, like the other action words.
-    public static let unlockLabel = "Unlock"
-
     public static func decide(lock: ReferenceLockState?, carriesKey: Bool) -> LockGateDecision {
         guard let lock, lock.isLocked else { return .proceed }
         if carriesKey, let key = lock.key {
@@ -29,11 +26,25 @@ nonisolated public enum LockCore {
     /// `interaction` as the HUD shows it: "Unlock Chest (Novice)" while locked.
     public static func labelled(
         _ interaction: PlacedInteraction,
-        lock: ReferenceLockState?
+        lock: ReferenceLockState?,
+        texts: LockTexts = .vanilla,
+        noviceMaximum: UInt8 = 1
     ) -> PlacedInteraction {
         guard let lock, lock.isLocked else { return interaction }
+        let band = lock.difficulty(noviceMaximum: noviceMaximum)
         return interaction.relabelled(
-            unlockLabel, name: "\(interaction.name) (\(lock.difficulty.name))"
+            texts.unlock, name: "\(interaction.name) (\(texts.name(of: band)))"
         )
+    }
+
+    /// The notice for a press the gate refused that cannot become a picking
+    /// session, or nil when the minigame opens.
+    public static func refusalNotice(
+        for band: LockDifficulty, lockpicks: Int32, texts: LockTexts
+    ) -> String? {
+        if !band.isPickable {
+            return texts.requiresKey
+        }
+        return lockpicks > 0 ? nil : texts.outOfLockpicks
     }
 }

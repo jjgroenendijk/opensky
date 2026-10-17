@@ -153,6 +153,15 @@ has a place to look.
 With these values, a target at full signal is detected in 1 second. A target that disappears
 from a full level drops below suspicious at 3.75 seconds and is forgotten at 5 seconds.
 
+## Sneak training
+
+A crouched target trains Sneak while it stays hidden. Each frame, the target earns
+`fSkillUsageSneakPerSecond` skill uses (0.625) per second when an observer within 960 units
+tracks it and no observer has detected it. UESP "Skyrim:Leveling" gives the rate and the range
+("within ~45 feet"); 960 units is OpenSky's reading of 45 feet. UESP also lists 2.5 uses for
+becoming hidden. OpenSky does not give those, because no setting holds them and the moment of
+becoming hidden is not defined.
+
 ## Limits and repeatability
 
 Every observer against every target, with a ray per pair, grows fast with the world. Three

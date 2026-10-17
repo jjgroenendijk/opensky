@@ -24,11 +24,14 @@ final class FakeCoordinatorWorld: CombatWorld {
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
     var casting: [ReferenceKey: CombatCastingFacts] = [:]
     var styles: [ReferenceKey: CombatStyleTuning] = [:]
+    /// Who each observer has detected; everyone else is unaware.
+    var detects: [ReferenceKey: Set<ReferenceKey>] = [:]
     var finishesCasts = true
     var bodyTransients = CombatTransientCounts.none
     var trimmedBodies = CombatTransientCounts.none
 
     private(set) var damage: [(key: ReferenceKey, amount: Float)] = []
+    private(set) var staminaDamage: [(key: ReferenceKey, amount: Float)] = []
     private(set) var castingQueries: [ReferenceKey] = []
     private(set) var cancelledCasts: [ReferenceKey] = []
     private(set) var raisedEvents: [String] = []
@@ -69,8 +72,8 @@ final class FakeCoordinatorWorld: CombatWorld {
         return true
     }
 
-    func awareness(of _: ReferenceKey, toward _: ReferenceKey) -> CombatAwareness {
-        .unaware
+    func awareness(of observer: ReferenceKey, toward target: ReferenceKey) -> CombatAwareness {
+        detects[observer]?.contains(target) == true ? .detected(at: SIMD3()) : .unaware
     }
 
     func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)? {
@@ -89,6 +92,10 @@ final class FakeCoordinatorWorld: CombatWorld {
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool {
         damage.append((key, amount))
         return true
+    }
+
+    func damageStamina(by amount: Float, of key: ReferenceKey) {
+        staminaDamage.append((key, amount))
     }
 
     func enchantmentProfile(of _: FormID) -> ItemEnchantmentProfile? {
@@ -185,5 +192,17 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func applyWeaponEnchantment(_: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         nil
+    }
+
+    private(set) var skillUses: [SkillUseEvent] = []
+    private(set) var notices: [String] = []
+
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return use.amount
+    }
+
+    func showNotification(_ text: String) {
+        notices.append(text)
     }
 }

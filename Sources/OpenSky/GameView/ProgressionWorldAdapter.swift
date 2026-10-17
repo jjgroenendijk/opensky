@@ -59,6 +59,12 @@ final class ProgressionWorldAdapter {
     func wireProgression(provider: any WorldDataProviding) {
         guard let values = game.actorValues.runtime else { return }
         let progression = provider as? ProgressionDataProviding
+        game.progression.training = (provider as? WorldDataStores).map {
+            TrainingSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
+        game.progression.texts = (provider as? WorldDataStores).map {
+            ProgressionTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         game.progression.wireLeveling(
             values: values,
             settings: progression?.characterLevelSettings ?? .documentedDefaults,
@@ -67,18 +73,8 @@ final class ProgressionWorldAdapter {
         )
     }
 
-    /// The player's own holder, or a resident actor's.
     private func inventoryHolder(of key: ReferenceKey) -> InventoryHolder? {
-        if key == .player {
-            return .player
-        }
-        guard
-            let streamer = game.streamer,
-            let actor = streamer.referenceEntry(key: key)?.placedActor
-        else { return nil }
-        return InventoryHolder(
-            key: key, owner: .actor(base: actor.base), cell: streamer.cellLocation(of: key)
-        )
+        key == .player ? .player : game.streamer?.inventoryHolder(of: key)
     }
 }
 

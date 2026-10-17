@@ -7,6 +7,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -80,6 +81,57 @@ struct CombatCoordinatorTests {
         world.values[.player] = [oneHanded: 50]
         world.perkMultipliers[.player] = 2
         #expect(coordinator.meleeAttackMultiplier(handType: .sword) == 3)
+    }
+
+    @Test func anUnawareTargetTakesASneakAttack() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        #expect(coordinator.strike(from: .player, handType: .dagger, on: Self.guardKey)
+            .sneakMultiplier == 3)
+        world.detects[Self.guardKey] = [.player]
+        #expect(!coordinator.strike(from: .player, handType: .dagger, on: Self.guardKey)
+            .isSneakAttack)
+        #expect(!coordinator.strike(from: Self.guardKey, handType: .dagger, on: .player)
+            .isSneakAttack)
+    }
+
+    /// UESP "Skyrim:Sneak": a melee sneak attack gives 12 times the ranged experience.
+    @Test func aSneakAttackGivesSneakExperienceAndANotice() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        _ = coordinator.meleeStrike(handType: .dagger, on: Self.guardKey)
+        coordinator.applyProjectileDamage(5, to: Self.guardKey)
+
+        #expect(world.skillUses.map(\.action) == [.sneakAttack, .sneakAttack])
+        #expect(world.skillUses.map(\.amount) == [30, 2.5])
+        #expect(world.notices.first == "sSuccessfulSneakAttackMain3.0sSuccessfulSneakAttackEnd")
+        world.detects[Self.guardKey] = [.player]
+        _ = coordinator.meleeStrike(handType: .dagger, on: Self.guardKey)
+        #expect(world.skillUses.count == 2)
+    }
+
+    @Test func thePlayersWeaponSkillScalesTheStrike() throws {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        world.detects[Self.guardKey] = [.player]
+        let twoHanded = try #require(ActorValueIdentity.index(named: "Two-Handed"))
+        world.values[.player] = [twoHanded: 100]
+        world.values[Self.guardKey] = [twoHanded: 100]
+        #expect(coordinator.strike(from: .player, handType: .battleaxe, on: Self.guardKey)
+            .skillMultiplier == 1.5)
+        #expect(coordinator.strike(from: Self.guardKey, handType: .battleaxe, on: .player)
+            .skillMultiplier == 1)
+    }
+
+    @Test func aBlockCostsAQuarterOfTheIncomingBlow() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        let blocked = MeleeDamageResult(
+            base: 20, blockedFraction: 0.5, applied: 10, attackMultiplier: 2
+        )
+        coordinator.applyBlockStamina(blocked, to: .player)
+        #expect(world.staminaDamage.map(\.amount) == [10])
+        #expect(world.staminaDamage.map(\.key) == [.player])
     }
 
     @Test func zeroDamageNeverReachesTheWorld() {

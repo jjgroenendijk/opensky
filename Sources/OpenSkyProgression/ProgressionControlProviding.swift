@@ -318,4 +318,8 @@ public protocol ProgressionControlProviding: AnyObject {
     /// The Dragonborn altar: one dragon soul refunds the selected skill's tree.
     @discardableResult
     func resetSelectedPerkTree() -> String
+
+    /// Buys one training session from the nearest trainer.
+    @discardableResult
+    func trainWithNearestTrainer() -> String
 }

@@ -42,6 +42,9 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     public let perceptionSkillMax: MovementSetting
     /// `iSoundLevelSilent` — the action sound of a silent weapon or spell.
     public let silentActionSound: MovementSetting
+    /// `fSkillUsageSneakPerSecond` — Sneak skill uses per second spent hidden
+    /// near an observer.
+    public let skillUsePerSecond: MovementSetting
 
     // MARK: - OpenSky's own
 
@@ -91,6 +94,9 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// Level at which an observer has detected the target outright. The top of
     /// the scale, so "detected" and "certain" are the same state.
     public let detectedLevel: MovementSetting
+    /// How near an observer must be for hiding to train Sneak. UESP: "within
+    /// ~45 feet", about 960 units.
+    public let skillUseRange: MovementSetting
 
     /// Values for synthetic scenes and tests: the numbers the install carries
     /// plus OpenSky's own, stated explicitly so a test never depends on an
@@ -160,6 +166,7 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             perceptionSkillMin: vanilla("fSneakPerceptionSkillMin", 0),
             perceptionSkillMax: vanilla("fSneakPerceptionSkillMax", 100),
             silentActionSound: vanilla("iSoundLevelSilent", 10),
+            skillUsePerSecond: vanilla("fSkillUsageSneakPerSecond", 0.625),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),
@@ -176,7 +183,8 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             gainPerSecond: ours(100),
             decayPerSecond: ours(20),
             suspiciousLevel: ours(25),
-            detectedLevel: ours(100)
+            detectedLevel: ours(100),
+            skillUseRange: ours(960)
         )
     }
 }

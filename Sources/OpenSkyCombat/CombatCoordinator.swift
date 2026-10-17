@@ -30,6 +30,14 @@ public final class CombatCoordinator {
     /// The Difficulty setting; the app sets it from the settings store.
     public var difficulty = DifficultyLevel.default
     public var difficultySettings = DifficultySettings.synthetic
+    /// Skill, sneak-attack, and armour settings; the app sets them from the load order.
+    public var weaponDamage = WeaponDamageSettings.vanilla
+    /// What a block costs; the app sets it from the load order.
+    public var stamina = StaminaSettings.vanilla
+    /// Power attacks and bashes; the app sets them before `wireMelee`.
+    public var powerAttacks = PowerAttackSettings.vanilla
+    /// What a landed arrow does; the app sets it before `wireArchery`.
+    public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
     public internal(set) var playerStruckTarget: ReferenceKey?
 
@@ -46,6 +54,7 @@ public final class CombatCoordinator {
     ) {
         let runtime = MeleeCombatRuntime(settings: settings)
         runtime.impacts = impacts
+        runtime.powerAttacks = powerAttacks
         self.items = items ?? self.items
         melee = runtime
         runtime.attach(world: self)
@@ -59,6 +68,7 @@ public final class CombatCoordinator {
         let projectiles = ProjectileRuntime(settings: settings)
         projectiles.impacts = impacts
         projectiles.explosions = explosions
+        projectiles.arrows = arrows
         let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles)
         self.items = items ?? self.items
         archery = runtime

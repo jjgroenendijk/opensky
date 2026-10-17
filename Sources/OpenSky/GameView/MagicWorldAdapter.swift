@@ -89,6 +89,11 @@ final class MagicWorldAdapter {
 
     func wireEnchantments(provider: any WorldDataProviding) {
         game.magic.attach(world: self)
+        game.magic.magicTexts = (provider as? WorldDataStores).map {
+            MagicTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
+        game.magic.spellCostSettings = (provider as? WorldDataStores)
+            .map { SpellCostSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         game.magic.wireEnchantments(store: (provider as? MagicDataProviding)?.enchantmentStore)
     }
 }

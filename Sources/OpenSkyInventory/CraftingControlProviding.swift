@@ -166,7 +166,8 @@ extension InventoryCoordinator: CraftingControlProviding {
                 isEligible: status.isReady
             )
         }
-        let copies = temper.copies.map(Tempering.name(level:)).joined(separator: ", ")
+        let copies = temper.copies.map { qualityName($0, of: temper.item) }
+            .joined(separator: ", ")
         return CraftingRecipeReadout(
             id: recipe.id,
             name: "\(itemName) (\(copies))",
@@ -177,13 +178,20 @@ extension InventoryCoordinator: CraftingControlProviding {
 
     private func temperVerdict(_ status: CraftingRecipeStatus, _ temper: TemperTarget) -> String {
         guard let from = temper.from else {
-            return "best quality for this skill (\(Tempering.name(level: temper.maximum)))"
+            return "best quality for this skill (\(qualityName(temper.maximum, of: temper.item)))"
         }
         guard status.eligibility.isEligible else { return verdict(status.eligibility) }
-        let step = "\(Tempering.name(level: from)) -> \(Tempering.name(level: temper.maximum))"
+        let step = "\(qualityName(from, of: temper.item)) -> "
+            + qualityName(temper.maximum, of: temper.item)
         return temperStat(temper.item, from: from, to: temper.maximum).map {
             "ready: \(step), \($0)"
         } ?? "ready: \(step)"
+    }
+
+    /// The quality name of `level`, from the weapon or the armour list.
+    func qualityName(_ level: Int32, of item: FormID) -> String {
+        let isWeapon = runtime?.inventory.baselines.items.weapon(item) != nil
+        return temperingTexts.name(level: level, isWeapon: isWeapon)
     }
 
     /// Damage for a weapon, armor rating for armor, before and after the temper.

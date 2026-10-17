@@ -71,7 +71,7 @@ complete, so a new reader cannot be missed:
 | --- | --- |
 | `PerkEntryPoint.engineRead` | SwiftLint `perk_entry_point_literal`: no raw entry-point number elsewhere |
 | `PapyrusEngineEvents.sent` | SwiftLint `papyrus_event_literal`: no `"On..."` event name elsewhere in the scripting module |
-| Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` |
+| Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` or declare `resolve(store:)` |
 | `NIFShaderFlag.lightingRead`, `effectRead` | SwiftLint `shader_flag_mask`: flags are read through `has(_:)` and a named constant |
 | `NIFBlockTypes.handled` | `make gap-registries`: the list holds exactly the NIF type names the code names |
 
@@ -149,4 +149,6 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   script without natives.
 - A package tree can hold several procedures, but an actor runs one. The others count as left.
 - A game setting counts as read when a settings reader asks for it, or when the menus read it
-  by prefix (`fStats`, the fast-travel and race menu texts).
+  by prefix (`fStats`, the fast-travel and race menu texts). A setting the game never uses,
+  such as a Fallout leftover, counts as done too
+  ([settings the game never uses](/formats/gmst.md#settings-the-game-never-uses)).

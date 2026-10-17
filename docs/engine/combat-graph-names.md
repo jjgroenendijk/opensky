@@ -26,6 +26,8 @@ split below says which way OpenSky uses each name. It is not a property of the d
 | `weaponDraw`, `weaponSheathe` | Draw and sheath requests |
 | `WeapEquip`, `Magic_Equip`, `Unequip` | The equip events the graph moves on |
 | `attackStart`, `attackRelease`, `attackStop` | Swing start, release of a held power attack, swing end |
+| `attackPowerStartInPlace` and the `Forward`, `Backward`, `Left`, `Right` variants | A power attack, by movement direction |
+| `bashStart`, `bashPowerStart` | A bash and a power bash with the guard up |
 | `blockStart`, `blockStop` | Guard up and down |
 | `staggerStart`, `staggerStop` | The stagger a hit causes, on the target's graph |
 
@@ -36,6 +38,7 @@ split below says which way OpenSky uses each name. It is not a property of the d
 | `weaponSwing` | The audible start of the swing, before contact |
 | `preHitFrame` | The frame before contact |
 | `HitFrame` | The contact frame, which runs the sweep |
+| `bashStop` | A bash ended |
 | `blockHitStart` | A block absorbed a hit |
 
 Variables written: `IsAttacking`, `IsBlocking`, `IsStaggering`, `staggerMagnitude`,

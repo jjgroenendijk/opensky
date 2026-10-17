@@ -60,11 +60,13 @@ extension DialogueMenuController {
         dialogue.selection.rejected
             .prefix(DialogueControlSnapshot.rowLimit)
             .map { offer in
-                DialogueRejectionRow(
+                let subtype = dialogue.index?.topic(offer.topic)?.subtype
+                return DialogueRejectionRow(
                     topic: offer.topic,
                     reasons: offer.considered.map {
                         $0.rejection.map(DialogueReadout.reason) ?? "offered"
-                    }
+                    },
+                    subtype: dialogue.topicSubtypes.name(of: subtype)
                 )
             }
     }

@@ -37,6 +37,12 @@ public final class MagicCoordinator {
     public weak var storyEvents: (any StoryEventReporting)?
     /// Hears every cast, as spell then caster, for the `OnSpellCast` event.
     public var onSpellCast: ((ReferenceKey, ReferenceKey) -> Void)?
+    /// The spell words the spellcasting panel shows.
+    public var magicTexts = MagicTexts.vanilla
+    public var spellCostSettings = SpellCostSettings.vanilla {
+        didSet { caster?.costSettings = spellCostSettings }
+    }
+
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
@@ -79,6 +85,7 @@ public final class MagicCoordinator {
         baselines: ActorSpellBaselineResolver?
     ) {
         let runtime = CasterRuntime(spellbook: spellbook, values: values)
+        runtime.costSettings = spellCostSettings
         caster = runtime
         self.spellPluginName = spellPluginName
         spellBaselines = baselines

@@ -19,6 +19,7 @@ final class CombatMeleeSection: PanelSectionViewController {
         checkboxWithTitle: "Weapon drawn", target: nil, action: nil
     )
     let attackControl = NSButton(title: "Attack", target: nil, action: nil)
+    let powerAttackControl = NSButton(title: "Power attack", target: nil, action: nil)
     let clearTraceControl = NSButton(title: "Clear hit trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
@@ -45,6 +46,12 @@ final class CombatMeleeSection: PanelSectionViewController {
             attackControl, target: self, action: #selector(attack),
             identifier: "MeleeAttackControl"
         )
+        powerAttackControl.toolTip =
+            "One power attack, or a power bash while blocking. Key: hold left mouse button."
+        PanelComponents.configureButton(
+            powerAttackControl, target: self, action: #selector(powerAttack),
+            identifier: "MeleePowerAttackControl"
+        )
         PanelComponents.configureButton(
             clearTraceControl, target: self, action: #selector(clearTrace),
             identifier: "MeleeClearTraceControl"
@@ -52,7 +59,7 @@ final class CombatMeleeSection: PanelSectionViewController {
         return [
             PanelComponents.group([
                 weaponDrawnControl,
-                PanelComponents.buttonRow([attackControl, clearTraceControl])
+                PanelComponents.buttonRow([attackControl, powerAttackControl, clearTraceControl])
             ]),
             statsLabel
         ]
@@ -61,6 +68,7 @@ final class CombatMeleeSection: PanelSectionViewController {
     override func syncControls() {
         weaponDrawnControl.isEnabled = provider != nil
         attackControl.isEnabled = provider != nil
+        powerAttackControl.isEnabled = provider != nil
         clearTraceControl.isEnabled = provider != nil
         guard let provider else { return }
         weaponDrawnControl.state = provider.isWeaponDrawn ? .on : .off
@@ -88,6 +96,11 @@ final class CombatMeleeSection: PanelSectionViewController {
 
     @objc private func attack() {
         provider?.requestMeleeAttack()
+        finishInteraction()
+    }
+
+    @objc private func powerAttack() {
+        provider?.requestMeleePowerAttack()
         finishInteraction()
     }
 

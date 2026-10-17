@@ -71,6 +71,7 @@ public final class CraftingSession {
     let player: InventoryHolder
     weak var conditions: (any RecipeConditionChecking)?
     weak var skills: (any SkillUseReporting)?
+    let skillUse: CraftingSkillUseSettings
 
     public init(
         event: CraftingActivationEvent,
@@ -78,7 +79,8 @@ public final class CraftingSession {
         inventory: InventoryRuntime,
         player: InventoryHolder = .player,
         conditions: (any RecipeConditionChecking)?,
-        skills: (any SkillUseReporting)?
+        skills: (any SkillUseReporting)?,
+        skillUse: CraftingSkillUseSettings = .vanilla
     ) {
         interaction = event.interaction
         station = catalog.station(
@@ -89,6 +91,7 @@ public final class CraftingSession {
         self.player = player
         self.conditions = conditions
         self.skills = skills
+        self.skillUse = skillUse
     }
 
     /// Every offered recipe with its verdict right now.
@@ -139,7 +142,9 @@ public final class CraftingSession {
         return CraftOutcome(
             consumed: consumed,
             created: created,
-            experience: reportSkillUse(amount: Float(value) * Float(created.count)),
+            experience: reportSkillUse(
+                amount: skillUse.constructed(value: Float(value), count: Int(created.count))
+            ),
             improved: nil
         )
     }

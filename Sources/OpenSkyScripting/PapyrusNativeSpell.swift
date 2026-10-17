@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 
@@ -19,8 +20,8 @@ extension PapyrusNativeFunctions {
 
     /// `bool AddSpell(Spell akSpell, bool abVerbose = true)`,
     /// `bool RemoveSpell(Spell akSpell)` and `bool HasSpell(Form akForm)`.
-    /// `abVerbose` is ignored, because there is no spell-added message. A shout is
-    /// never in the spellbook, so `HasSpell` answers false for one.
+    /// `abVerbose` shows the spell-added notice for the player. A shout is never in
+    /// the spellbook, so `HasSpell` answers false for one.
     private static func installSpellKnowledge(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -29,7 +30,12 @@ extension PapyrusNativeFunctions {
             functionName: "AddSpell"
         ) { call, context in
             spellTarget(call, context) { actor, spell in
-                .returned(.boolean(actor.world.addSpell(spell, to: actor.key)))
+                let added = actor.world.addSpell(spell, to: actor.key)
+                if added, boolean(call, at: 1, default: true) {
+                    (actor.world as? PapyrusWorldStateBridge)?
+                        .postItemNotice(spell, to: actor.key, word: \.spellAdded)
+                }
+                return .returned(.boolean(added))
             }
         })
         registry.register(PapyrusNativeFunction(

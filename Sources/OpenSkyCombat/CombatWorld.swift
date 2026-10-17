@@ -54,12 +54,17 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
+    func damageStamina(by amount: Float, of key: ReferenceKey)
+    /// Whether `key` owns the perk with `editorID`.
+    func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
 
     /// The player's equipment. Nil without an equipment runtime.
     var equipment: (any EquipmentAccess)? { get }
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile?
     /// The quality level of the player's best copy of `item`. Zero when plain.
     func temperLevel(of item: FormID) -> Int32
+    /// What `key` wears, each item with its tempering level. Empty when unknown.
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)]
     func hasReadiedSpell(in hand: SpellHand) -> Bool
     /// The items the player carries, in the inventory's stable stack order.
     func playerCarriedItems() -> [FormID]
@@ -106,11 +111,35 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func resetRagdolls()
     /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+    /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
+    @discardableResult
+    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
+    func showNotification(_ text: String)
 }
 
 extension CombatWorld {
     /// A session with no magic forces no behaviour.
     public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
         .none
+    }
+
+    /// A session with no stamina pays nothing to block.
+    public func damageStamina(by _: Float, of _: ReferenceKey) {}
+
+    @discardableResult
+    public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func showNotification(_: String) {}
+
+    /// A session with no perks owns none.
+    public func ownsPerk(editorID _: String, on _: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// A session with no equipment wears nothing, so no armour stops a blow.
+    public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        []
     }
 }

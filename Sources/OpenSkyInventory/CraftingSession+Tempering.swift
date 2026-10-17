@@ -85,7 +85,9 @@ extension CraftingSession {
         return CraftOutcome(
             consumed: consumed,
             created: InventoryStack(item: target.item, count: 1),
-            experience: reportSkillUse(amount: value * gain),
+            experience: reportSkillUse(amount: skillUse.tempered(
+                valueGain: value * gain, levels: Int(target.maximum - from)
+            )),
             improved: TemperStep(from: from, to: target.maximum)
         )
     }

@@ -41,9 +41,33 @@ public protocol ProgressionWorld: AnyObject {
     func playerIdentity() -> (name: String, race: String)
     /// The plugin string tables, for perk and skill names. Nil without them.
     func localizedStrings() -> LocalizedStrings?
+    /// The nearest actor, when its class teaches a skill; nil otherwise.
+    func nearestTrainer() -> TrainerOffer?
+    func playerGold() -> Int
+    /// Moves `gold` from the player to `trainer`. False when the player has too little.
+    func payTrainer(_ gold: Int, to trainer: ReferenceKey) -> Bool
+    func showNotification(_ text: String)
+    /// Adds one to a misc stat, such as "Training Sessions".
+    func incrementStat(_ name: String)
 }
 
 extension ProgressionWorld {
+    public func nearestTrainer() -> TrainerOffer? {
+        nil
+    }
+
+    public func playerGold() -> Int {
+        0
+    }
+
+    public func payTrainer(_: Int, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func showNotification(_: String) {}
+
+    public func incrementStat(_: String) {}
+
     public func playerIdentity() -> (name: String, race: String) {
         (name: "", race: "")
     }

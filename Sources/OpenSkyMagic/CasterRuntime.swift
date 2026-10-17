@@ -119,6 +119,8 @@ public final class CasterRuntime {
     /// The perk runtime a cost is folded through, or nil without perk data. See
     /// `CasterRuntimePerkCost.swift`.
     public var perks: (any PerkAccess)?
+    /// How skill lowers a cost before the perks act. See `CasterRuntimePerkCost.swift`.
+    public var costSettings = SpellCostSettings.vanilla
 
     public init(
         spellbook: SpellbookRuntime,

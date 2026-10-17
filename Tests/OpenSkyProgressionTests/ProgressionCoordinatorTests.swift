@@ -160,4 +160,17 @@ struct ProgressionCoordinatorTests {
         #expect(level > 1)
         #expect(recorder.events("LEVL").last?.value1 == Float(level))
     }
+
+    @Test func aSkillPointAndALevelUpShowTheirNotices() throws {
+        let world = FakeProgressionWorld()
+        let coordinator = try coordinator(world: world)
+        coordinator.texts.skillIncreased = "%s rose to %i"
+
+        #expect(coordinator.incrementSkill(oneHanded))
+        coordinator.awardCharacterExperience(100_000)
+
+        let name = coordinator.skillName(oneHanded)
+        #expect(world.notices.first?.hasPrefix("\(name) rose to ") == true)
+        #expect(world.notices.last == ProgressionTexts.vanilla.levelUpAvailable)
+    }
 }

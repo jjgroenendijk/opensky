@@ -144,7 +144,8 @@ final class ContainerMenuController {
             containerName: containerName ?? "Container",
             mode: mode,
             pricing: game.inventory.barterPricing,
-            runtime: inventory
+            runtime: inventory,
+            categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
         )
         refreshed.restore(from: model)
         model = refreshed

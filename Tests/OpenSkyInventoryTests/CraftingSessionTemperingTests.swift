@@ -6,6 +6,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyProgressionInterface
 import Testing
 
 extension CraftingSessionTests {
@@ -37,6 +38,9 @@ extension CraftingSessionTests {
         #expect(harness.inventory.temperedItems(of: .player).copies(of: Items.sword, held: 2)
             == [1, 1])
         #expect(harness.skills.uses.count == 2)
+        let gain = Tempering.valueMultiplier(level: 1) - Tempering.valueMultiplier(level: 0)
+        let expected = CraftingSkillUseSettings.temperFactor * (25 * gain).squareRoot()
+        #expect(abs((harness.skills.uses.first?.amount ?? 0) - expected) < 0.001)
     }
 
     @Test func aCopyAtTheSkillCapCannotBeImproved() throws {

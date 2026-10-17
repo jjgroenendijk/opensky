@@ -135,6 +135,17 @@ nonisolated public struct GameClock: Equatable, Sendable {
         Float((totalGameSeconds - Self.vanillaStartMidnightSeconds) / Self.secondsPerDay)
     }
 
+    /// The weekday of the vanilla start date, 17th of Last Seed 4E 201: a Sundas
+    /// (<https://en.uesp.net/wiki/Skyrim:Calendar>).
+    public static let vanillaStartWeekday = 0
+
+    /// 0 = Sundas through 6 = Loredas (<https://ck.uesp.net/wiki/GetDayOfWeek>), counted
+    /// from the start date because the epoch's weekday is unknown.
+    public var weekday: Int {
+        let days = Int(daysPassed.rounded(.down))
+        return (((days + Self.vanillaStartWeekday) % 7) + 7) % 7
+    }
+
     // MARK: - Scrubbing
 
     /// Sets the hour of day, keeping the date. 24 wraps to 0 of the same day.

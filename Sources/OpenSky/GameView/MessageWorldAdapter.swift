@@ -25,6 +25,9 @@ final class MessageWorldAdapter {
     /// Gives the Papyrus bridge its presenter, once the VM exists.
     func wire(renderer: Renderer) {
         game.scripts.bridge?.presenter = game.messages
+        game.scripts.bridge?.itemNotices = (game.worldData as? WorldDataStores).map {
+            ItemNoticeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         cachedEditorIDs = nil
         game.messages.attach(world: self)
         // `onFrame` runs under a menu too, so notifications keep real time.

@@ -20,6 +20,7 @@ nonisolated extension DetectionSettings {
             ("fSneakPerceptionSkillMin", perceptionSkillMin),
             ("fSneakPerceptionSkillMax", perceptionSkillMax),
             ("iSoundLevelSilent", silentActionSound),
+            ("fSkillUsageSneakPerSecond", skillUsePerSecond),
             ("distanceAttenuationExponent", distanceAttenuationExponent),
             ("equippedWeightBase", equippedWeightBase),
             ("equippedWeightMult", equippedWeightMult),
@@ -36,7 +37,8 @@ nonisolated extension DetectionSettings {
             ("gainPerSecond", gainPerSecond),
             ("decayPerSecond", decayPerSecond),
             ("suspiciousLevel", suspiciousLevel),
-            ("detectedLevel", detectedLevel)
+            ("detectedLevel", detectedLevel),
+            ("skillUseRange", skillUseRange)
         ]
     }
 }

@@ -30,10 +30,13 @@ nonisolated public struct DialogueRejectionRow: Equatable, Sendable {
     /// One phrase per considered response, in evaluation order: the reason it
     /// was not chosen, worded the way `DialogueRejection` states it.
     public let reasons: [String]
+    /// The topic's subtype name, such as Hello, from the `sTopicSubtypeText*` settings.
+    public let subtype: String?
 
-    public init(topic: FormID, reasons: [String]) {
+    public init(topic: FormID, reasons: [String], subtype: String? = nil) {
         self.topic = topic
         self.reasons = reasons
+        self.subtype = subtype
     }
 }
 

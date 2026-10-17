@@ -36,7 +36,8 @@ nonisolated extension InventoryMenuModel {
                     value: definition?.value ?? 0,
                     isEquipped: inventory.isEquipped(stack.item),
                     family: definition?.family,
-                    stolenCount: inventory.stolenCount(of: stack.item)
+                    stolenCount: inventory.stolenCount(of: stack.item),
+                    isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true
                 )
             )
         }

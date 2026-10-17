@@ -69,9 +69,12 @@ struct ActorValueHUDBindingTests {
         runtime.damage(.stamina, by: 30, on: .player)
         _ = binding.publishing(runtime.hudMeters(for: .player))
         var accumulator = 0.0
-        #expect(runtime.advance(
-            delta: 1, accumulator: &accumulator, over: [.player]
-        ) == ActorValueRuntime.maximumStepsPerAdvance)
+        // Six capped advances sit out the pause after damage, then regenerate.
+        for _ in 0 ..< 6 {
+            #expect(runtime.advance(
+                delta: 1, accumulator: &accumulator, over: [.player]
+            ) == ActorValueRuntime.maximumStepsPerAdvance)
+        }
         let published = binding.publishing(runtime.hudMeters(for: .player))
         #expect(published != nil)
         #expect((published?.stamina ?? 0) > 0.5)

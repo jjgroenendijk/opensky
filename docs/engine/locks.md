@@ -27,9 +27,10 @@ for `XLOC`, and the install's GMSTs for every number a setting names. The `XLOC`
 | 100 | Master | `VeryHard` | Master |
 | 255 | Requires key | `Impossible` | Requires Key |
 
-`iLockLevelMaxVeryEasy` (1) bounds Novice. A value between two rows falls in the higher band,
-so Papyrus `SetLockLevel(30)` is Adept. The names are English: the install's
-`sLockLevelName*` settings are lstrings, and the string tables are not read for them.
+`iLockLevelMaxVeryEasy` (1) bounds Novice; a plugin that raises it widens Novice. A value
+between two rows falls in the higher band, so Papyrus `SetLockLevel(30)` is Adept. The names
+come from the `sLockLevelName*` string settings, and the prompt verb from `sUnlock`. Without
+string tables the English names above stay.
 
 [WARNING] Flag 0x04 marks a leveled lock. No open source says how the game scales it, so
 OpenSky uses the authored level.
@@ -45,7 +46,13 @@ Every press of the use key goes through one gate before any listener hears it
 
 A refused pickable lock opens the lockpicking menu when the player has at least one lockpick
 (the `LKPK` default object). When the lock opens, the original press runs again, so the door
-opens or the container menu appears.
+opens or the container menu appears. Otherwise the HUD shows a notice: `sImpossibleLock` for a
+lock that needs a key, and `sOutOfLockpicks` without lockpicks. `sOutOfLockpicks` also shows
+when the last pick breaks in the menu.
+
+A carried key that opens a lock shows a notice too: `sOpenWithKey`, "Unlocked with %s.", with the
+key's name for a door, and `sOpenedContainer` for a container. Which of the two the game shows for
+which target is OpenSky's reading of their words.
 
 ## Papyrus
 

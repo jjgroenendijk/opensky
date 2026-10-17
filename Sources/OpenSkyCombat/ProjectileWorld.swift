@@ -199,4 +199,25 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
 
     /// Writes one census-named variable on the player's graph.
     func writeArcheryVariable(_ value: BehaviorVariableValue, named name: String)
+
+    @discardableResult
+    func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool
+    func showArcheryNotice(_ text: String)
+    func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float
+}
+
+extension ProjectileWorld {
+    /// Puts one arrow into `target`'s inventory. False where nothing holds items.
+    @discardableResult
+    public func giveRecoveredArrow(_: FormID, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// Shows a HUD notice, such as the empty-quiver message.
+    public func showArcheryNotice(_: String) {}
+
+    /// The shooter's `Mod Recover Arrow Chance` perks, as a factor on the chance.
+    public func arrowRecoveryMultiplier(of _: ReferenceKey) -> Float {
+        1
+    }
 }

@@ -53,6 +53,8 @@ nonisolated public struct MeleeHitRecord: Equatable, Sendable {
     /// What the weapon's enchantment did, or nil when the weapon has none or this
     /// session cannot apply one.
     public let enchantment: WeaponEnchantmentReport?
+    /// A swing, power attack, bash, or power bash.
+    public let kind: MeleeStrikeKind
 
     public init(
         target: ReferenceKey,
@@ -60,7 +62,8 @@ nonisolated public struct MeleeHitRecord: Equatable, Sendable {
         damage: MeleeDamageResult,
         sound: FormID?,
         staggered: Bool,
-        enchantment: WeaponEnchantmentReport? = nil
+        enchantment: WeaponEnchantmentReport? = nil,
+        kind: MeleeStrikeKind = .normal
     ) {
         self.target = target
         self.distance = distance
@@ -68,6 +71,7 @@ nonisolated public struct MeleeHitRecord: Equatable, Sendable {
         self.sound = sound
         self.staggered = staggered
         self.enchantment = enchantment
+        self.kind = kind
     }
 }
 
@@ -100,6 +104,19 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// and no blocking perk.
     func meleeBlockMultiplier(of target: ReferenceKey) -> Float
 
+    /// The skill, sneak-attack, and armour terms of the player's swing on `target`.
+    func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike
+
+    /// Charges `blocker` the stamina a blocked blow costs.
+    func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
+
+    /// Takes `cost` off the player's stamina. False, and nothing taken, below one point.
+    func payMeleeStamina(_ cost: Float) -> Bool
+    /// Whether the player owns the Power Bash perk.
+    func canPowerBash() -> Bool
+    /// The player's Block skill, and the base rating of its shield or nil without one.
+    func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?)
+
     /// Takes `amount` off `target`'s health.
     ///
     /// - Returns: true when the damage was actually applied, so a hit on a
@@ -129,6 +146,28 @@ nonisolated extension MeleeCombatWorld {
     /// formula, which is the value the term had before either existed.
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         1
+    }
+
+    /// A session with no skills and no armour scales nothing.
+    public func meleeStrike(handType _: CombatHandType, on _: ReferenceKey) -> WeaponStrike {
+        .plain
+    }
+
+    /// A session with no stamina pays nothing to block.
+    public func applyBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}
+
+    /// A session with no stamina pays for every power attack.
+    public func payMeleeStamina(_: Float) -> Bool {
+        true
+    }
+
+    /// A session with no perks owns none.
+    public func canPowerBash() -> Bool {
+        false
+    }
+
+    public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
+        (MeleeDamage.defaultBlockSkill, nil)
     }
 }
 

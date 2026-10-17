@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyCombatInterface
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -35,14 +36,18 @@ extension GapsGatherer {
             }
         }
         let read = Self.settingsRead(plugins: plugins)
+        let unused = defined.uses.keys.filter { GameSettingsUnused.reason(for: $0) != nil }
         return GapSection(
             title: "Game settings", unit: "settings", counts: defined,
             handled: {
                 read.contains($0.lowercased()) || $0.hasPrefix(MenuRecordData.statsPrefix)
-                    || MenuRecordData.isMenuText($0)
+                    || MenuRecordData.isMenuText($0) || GameSettingsUnused.reason(for: $0) != nil
             },
             usesUnit: "plugins that set it",
-            notes: ["done means a settings reader asks for it; \(read.count) names asked for"]
+            notes: [
+                "done means a settings reader asks for it; \(read.count) names asked for",
+                "\(unused.count) more are done: the game never uses them (GameSettingsUnused)"
+            ]
         )
     }
 
@@ -71,6 +76,22 @@ extension GapsGatherer {
         store.readLog = log
         _ = ArcherySettings.resolve(store: store)
         _ = CombatSettings.resolve(store: store)
+        _ = WeaponDamageSettings.resolve(store: store)
+        _ = PowerAttackSettings.resolve(store: store)
+        _ = ArrowSettings.resolve(store: store)
+        _ = TrainingSettings.resolve(store: store)
+        _ = CraftingSkillUseSettings.resolve(store: store)
+        _ = CalendarTexts.resolve(store: store)
+        _ = TopicSubtypeTexts.resolve(store: store)
+        _ = MagicTexts.resolve(store: store)
+        _ = CrimeTexts.resolve(store: store)
+        _ = InventoryMenuTexts.resolve(store: store)
+        _ = ProgressionTexts.resolve(store: store)
+        _ = ItemNoticeTexts.resolve(store: store)
+        _ = SaveTexts.resolve(store: store)
+        _ = TradeTexts.resolve(store: store)
+        _ = SoulTexts.resolve(store: store)
+        _ = SpellCostSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)
@@ -81,8 +102,12 @@ extension GapsGatherer {
         _ = SpeechCheckSettings.resolve(store: store)
         _ = HarvestRegrowth.resolve(store: store)
         _ = LockpickingSettings.resolve(store: store)
+        _ = LockTexts.resolve(store: store)
+        _ = TemperingTexts.resolve(store: store)
         _ = DetectionSettings.resolve(store: store)
         _ = PlayerMovementConfiguration.resolve(store: store)
+        _ = RegenerationSettings.resolve(store: store)
+        _ = StaminaSettings.resolve(store: store)
         return log.editorIDs
     }
 }

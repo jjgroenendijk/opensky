@@ -134,6 +134,14 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// `MeleeDamage`'s `bonusMultiplier`. Defaults to 1.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
 
+    /// The skill, sneak-attack, and armour terms of `attacker`'s blow on `target`.
+    func combatStrike(
+        from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
+    ) -> WeaponStrike
+
+    /// Charges `blocker` the stamina a blocked blow costs.
+    func applyCombatBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
+
     /// What `observer` currently makes of `target`, projected from 16.6's
     /// detection pair state.
     ///
@@ -242,6 +250,16 @@ nonisolated extension CombatLoopWorld {
     public func combatBlockMultiplier(of key: ReferenceKey) -> Float {
         1
     }
+
+    /// A session with no skills and no armour scales nothing.
+    public func combatStrike(
+        from _: ReferenceKey, handType _: CombatHandType, on _: ReferenceKey
+    ) -> WeaponStrike {
+        .plain
+    }
+
+    /// A session with no stamina pays nothing to block.
+    public func applyCombatBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}
 
     /// A session that resolves no combat styles fights with the base settings.
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {

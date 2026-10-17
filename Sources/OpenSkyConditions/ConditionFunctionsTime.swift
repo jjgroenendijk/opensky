@@ -37,17 +37,10 @@ nonisolated extension ConditionFunctions {
         return .success(hour)
     }
 
-    /// Weekday of the vanilla start date, 17th of Last Seed 4E 201: a Sundas
-    /// (<https://en.uesp.net/wiki/Skyrim:Calendar>). A weekday carried over from an
-    /// earlier save is not modelled.
-    public static let vanillaStartWeekday = 0
+    public static let vanillaStartWeekday = GameClock.vanillaStartWeekday
 
-    /// Day of the week, 0 = Sundas through 6 = Loredas (<https://ck.uesp.net/wiki/GetDayOfWeek>).
-    /// The 365-day year has no leap day. Counted from the documented start date via
-    /// `GameClock.daysPassed`, because the epoch's weekday is unknown.
     public static func dayOfWeek(of clock: GameClock) -> Int {
-        let days = Int(clock.daysPassed.rounded(.down))
-        return (((days + vanillaStartWeekday) % 7) + 7) % 7
+        clock.weekday
     }
 
     /// The seven day names, in `dayOfWeek(of:)` order (UESP `Lore:Calendar`).

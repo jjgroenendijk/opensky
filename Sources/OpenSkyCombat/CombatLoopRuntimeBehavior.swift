@@ -183,9 +183,13 @@ extension CombatLoopRuntime {
             weapon: weapon,
             block: world.combatBlock(of: player),
             settings: settings,
-            bonusMultiplier: world.combatBlockMultiplier(of: player)
+            bonusMultiplier: world.combatBlockMultiplier(of: player),
+            strike: world.combatStrike(from: actor.key, handType: weapon.handType, on: player)
         )
         let landed = world.applyCombatDamage(damage.applied, to: player)
+        if damage.wasBlocked {
+            world.applyCombatBlockStamina(damage, to: player)
+        }
         noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)
         // The reverse of the player's own swing dispatch: the player's scripts get
         // `OnHit` with this actor as `akAggressor`.

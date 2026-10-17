@@ -78,6 +78,12 @@ extension CombatCoordinator: MeleeCombatWorld {
             * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 
+    public func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike {
+        let strike = strike(from: meleeAttacker.key, handType: handType, on: target)
+        reportSneakAttack(strike, ranged: false)
+        return strike
+    }
+
     /// The player's own swing: the melee runtime only ever swings for the player.
     @discardableResult
     public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
@@ -135,7 +141,10 @@ extension CombatCoordinator: ProjectileWorld {
 
     @discardableResult
     public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: projectileShooter.key)
+        let shooter = projectileShooter.key
+        let strike = strike(from: shooter, handType: .bow, on: target)
+        reportSneakAttack(strike, ranged: true)
+        return applyHealthDamage(amount * strike.factor, to: target, attacker: shooter)
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
@@ -182,5 +191,19 @@ extension CombatCoordinator: ProjectileWorld {
 
     public func writeArcheryVariable(_ value: BehaviorVariableValue, named name: String) {
         writeCombatVariable(value, named: name)
+    }
+
+    @discardableResult
+    public func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool {
+        world?.addItem(ammunition, count: 1, to: target) ?? false
+    }
+
+    public func showArcheryNotice(_ text: String) {
+        world?.showNotification(text)
+    }
+
+    /// Hunter's Discipline doubles the chance through this entry point.
+    public func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
+        world?.perkMultiplier(at: .modRecoverArrowChance, on: shooter) ?? 1
     }
 }

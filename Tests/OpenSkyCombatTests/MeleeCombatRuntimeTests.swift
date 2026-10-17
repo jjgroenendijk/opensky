@@ -227,12 +227,12 @@ struct MeleeCombatRuntimeTests {
     // MARK: - Fixture
 
     /// Draw, then one full swing.
-    private static let drawEvents = [
+    static let drawEvents = [
         CombatGraphNames.weaponDraw,
         CombatGraphNames.beginWeaponDraw
     ]
 
-    private static func runtime(
+    static func runtime(
         world: FakeMeleeWorld,
         damage: Float,
         stagger: Float = 0,

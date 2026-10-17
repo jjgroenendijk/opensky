@@ -28,6 +28,14 @@ final class CombatWorldAdapter {
         let settings = data.combatSettings
         let combat = game.combat
         combat.difficultySettings = data.difficultySettings
+        combat.weaponDamage = (provider as? WorldDataStores).map {
+            WeaponDamageSettings
+                .resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
+        combat.stamina = (provider as? WorldDataStores)
+            .map { StaminaSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        combat.powerAttacks = (provider as? WorldDataStores)
+            .map { PowerAttackSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         combat.attach(world: self)
         combat.wireMelee(
             settings: settings,
@@ -49,6 +57,9 @@ final class CombatWorldAdapter {
     func wireArchery(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.archerySettings else { return }
         let combat = game.combat
+        combat.arrows = (provider as? WorldDataStores).map {
+            ArrowSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         combat.attach(world: self)
         combat.wireArchery(
             settings: settings,

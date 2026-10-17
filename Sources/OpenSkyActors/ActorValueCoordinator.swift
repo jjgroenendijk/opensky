@@ -24,6 +24,8 @@ public final class ActorValueCoordinator {
     private var regenAccumulator: Double = 0
     /// Regeneration walks holders in key order; this keeps that order between frames.
     private var holderOrder = ReferenceKeyOrder()
+    /// What sprinting costs; `wire` sets it from the load order.
+    public private(set) var stamina = StaminaSettings.vanilla
 
     let store: WorldStateStore
     weak var world: (any ActorValueWorld)?
@@ -36,20 +38,37 @@ public final class ActorValueCoordinator {
         self.world = world
     }
 
-    public func wire(baselines: ActorValueBaselineResolver) {
-        runtime = ActorValueRuntime(store: store, baselines: baselines)
+    public func wire(
+        baselines: ActorValueBaselineResolver,
+        regeneration: RegenerationSettings = .vanilla,
+        stamina: StaminaSettings = .vanilla
+    ) {
+        self.stamina = stamina
+        runtime = ActorValueRuntime(
+            store: store, baselines: baselines, regeneration: regeneration
+        )
     }
 
-    /// Runs whole regeneration steps for the delta this frame simulated.
-    ///
-    /// A caster does not regenerate: "Magicka will not regenerate while you
-    /// are casting a spell" (<https://en.uesp.net/wiki/Skyrim:Magicka>). NPCs
-    /// follow the same rule; docs/engine/spellcasting.md records the deviation.
+    /// Runs whole regeneration steps for the delta this frame simulated. Combat
+    /// slows each value, and casting stops magicka (`RegenerationSettings`).
     public func advance(delta: Float) {
         guard let runtime, let world else { return }
+        drainSprint(delta: delta, runtime: runtime, world: world)
         let holders = holderOrder.sorted(world.regeneratingHolders(), by: \.key)
-            .filter { !world.isCasting($0.key) }
-        runtime.advance(delta: delta, accumulator: &regenAccumulator, over: holders)
+        runtime.advance(delta: delta, accumulator: &regenAccumulator, over: holders) {
+            RegenerationSituation(
+                isInCombat: world.isInCombat($0.key), isCasting: world.isCasting($0.key)
+            )
+        }
+    }
+
+    /// Sprinting drains the player's stamina, and an empty bar stops the sprint.
+    private func drainSprint(delta: Float, runtime: ActorValueRuntime, world: any ActorValueWorld) {
+        guard delta.isFinite, delta > 0 else { return }
+        if let worn = world.playerSprintLoad() {
+            runtime.damage(.stamina, by: stamina.sprintDrain(wornWeight: worn) * delta, on: .player)
+        }
+        world.setPlayerSprintAllowed(runtime.current(of: .player).stamina > 0)
     }
 
     /// The NPC_ base FormID, which is what the user types into the record dump.

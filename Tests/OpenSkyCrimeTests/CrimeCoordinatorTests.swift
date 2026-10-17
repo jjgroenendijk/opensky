@@ -51,6 +51,17 @@ struct CrimeCoordinatorTests {
         #expect(coordinator.lastActionText.hasPrefix("Assault: \(first) bounty with"))
     }
 
+    @Test func aBountyShowsItsNotice() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        coordinator.crimeTexts.bountyAdded = "bounty for"
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+        let gold = coordinator.crimeGold(of: Self.hold)
+        let name = coordinator.factionName(Self.hold)
+
+        #expect(world.notices == ["\(gold) bounty for \(name)"])
+    }
+
     @Test func selfDefenseAndAnotherAggressorAreNoCrime() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)

@@ -4,6 +4,7 @@
 // global (docs/engine/game-clock.md).
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 extension RuntimeStateCoordinator {
@@ -11,7 +12,8 @@ extension RuntimeStateCoordinator {
         RuntimeStateClockSnapshot(
             clock: world?.gameClock ?? GameClock(),
             timescale: world?.timescale ?? GameClock.defaultTimescale,
-            isPaused: world?.isWorldSimPaused ?? false
+            isPaused: world?.isWorldSimPaused ?? false,
+            calendar: calendarTexts
         )
     }
 

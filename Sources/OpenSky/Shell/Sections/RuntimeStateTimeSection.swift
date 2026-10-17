@@ -179,6 +179,7 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
         hourValueLabel.stringValue = clock.timeText
         statsLabel.stringValue = [
             "\(clock.timeText)  \(clock.dateText)",
+            clock.gameDateText,
             "Days passed: \(String(format: "%.2f", clock.daysPassed))"
                 + "  Timescale: \(RuntimeStateNumberText.text(clock.timescale))",
             "World simulation: \(clock.pauseText)",

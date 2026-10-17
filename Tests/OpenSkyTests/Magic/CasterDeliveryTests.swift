@@ -74,11 +74,14 @@ struct CasterDeliveryTests {
         let spell = try #require(harness.spellbook.record(
             SpellbookFixture.key(SpellbookFixture.Spell.firebolt)
         ))
+        // The caster's school skill lowers the base cost before it is spent.
+        let expectedCost = harness.runtime.cost(of: spell, caster: .player)
+        #expect(expectedCost < Float(spell.cost.cost))
 
         let outcome = try cast(SpellbookFixture.Spell.firebolt, harness)
 
         #expect(outcome.isCast)
-        #expect(harness.values.current(of: .player).magicka == 100 - Float(spell.cost.cost))
+        #expect(harness.values.current(of: .player).magicka == 100 - expectedCost)
         #expect(harness.world.applications.isEmpty)
         #expect(harness.world.firedProjectiles.count == 1)
         #expect(harness.runtime.tally.projectileCount == 1)
@@ -164,11 +167,12 @@ struct CasterDeliveryTests {
         let spell = try #require(harness.spellbook.record(
             SpellbookFixture.key(SpellbookFixture.Spell.sparkAtTarget)
         ))
+        let expectedCost = harness.runtime.cost(of: spell, caster: .player)
 
         try cast(SpellbookFixture.Spell.sparkAtTarget, harness)
 
         #expect(harness.world.spellHits.isEmpty)
-        #expect(harness.values.current(of: .player).magicka == 100 - Float(spell.cost.cost))
+        #expect(harness.values.current(of: .player).magicka == 100 - expectedCost)
     }
 
     // MARK: - Concentration

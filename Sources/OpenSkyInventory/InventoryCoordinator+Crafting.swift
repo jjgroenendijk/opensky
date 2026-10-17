@@ -76,7 +76,8 @@ extension InventoryCoordinator {
             inventory: runtime.inventory,
             player: runtime.player,
             conditions: recipeConditions,
-            skills: skillUses
+            skills: skillUses,
+            skillUse: craftingSkillUse
         )
         let count = crafting?.recipes.count ?? 0
         return noteCraft("Opened \(event.interaction.name): \(count) recipes.")
@@ -109,8 +110,8 @@ extension InventoryCoordinator {
         do {
             let outcome = try crafting.craft(recipe)
             if let step = outcome.improved {
-                let from = Tempering.name(level: step.from)
-                let to = Tempering.name(level: step.to)
+                let from = qualityName(step.from, of: outcome.created.item)
+                let to = qualityName(step.to, of: outcome.created.item)
                 return noteCraft("Improved \(name(of: outcome.created.item)): \(from) -> \(to).")
             }
             storyEvents?.reportStoryEvent(.craft(

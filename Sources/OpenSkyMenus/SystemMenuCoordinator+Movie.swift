@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 import OpenSkyRendering
 
 extension SystemMenuCoordinator {
@@ -139,19 +140,23 @@ extension SystemMenuCoordinator {
         guard let listIndex else { return }
         let slot = listIndex == 0 ? nil : movieRow(listIndex - 1)?.slot
         guard listIndex == 0 || slot != nil else { return }
-        perform("Saving", done: "Saved") { _ = try await $0.saveGame(slot: slot) }
+        perform("Saving", done: saveTexts.saved) { _ = try await $0.saveGame(slot: slot) }
     }
 
     private func loadFromMovie(row: SaveSlotRow?) {
         guard let row, row.error == nil else { return }
-        perform("Loading", done: "Loaded") { try await $0.loadGame(slot: row.slot) }
+        perform(saveTexts.loading, done: "Loaded", closes: true) {
+            try await $0.loadGame(slot: row.slot)
+        }
     }
 
     /// The movie already took the row out of its list.
     private func deleteFromMovie(index: Int?) {
         guard let row = movieRow(index), !row.isImport else { return }
         movieSaveRows.removeAll { $0.slot == row.slot }
-        perform("Deleting", done: "Deleted") { try await $0.deleteSave(slot: row.slot) }
+        perform("Deleting", done: saveTexts.deleted) {
+            try await $0.deleteSave(slot: row.slot)
+        }
     }
 
     // MARK: - Controls
@@ -213,7 +218,7 @@ extension SystemMenuCoordinator {
         case .save, .load:
             model.show(page)
             let mode: SaveLoadMode = page == .save ? .save : .load
-            saveLoadPage = SaveLoadPageModel(mode: mode, rows: movieSaveRows)
+            saveLoadPage = SaveLoadPageModel(mode: mode, rows: movieSaveRows, texts: saveTexts)
         case .quit:
             model.show(page)
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)

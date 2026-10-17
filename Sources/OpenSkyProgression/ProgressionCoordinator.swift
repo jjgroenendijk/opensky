@@ -33,6 +33,9 @@ public final class ProgressionCoordinator {
     /// The selected box of that skill's tree, by `INAM`.
     public var nodeSelection: UInt32 = 0
     public internal(set) var lastActionText = "No leveling action yet."
+    /// Cost, per-level cap, and refusal notices; the app sets them from the load order.
+    public var training = TrainingSettings.vanilla
+    public var texts = ProgressionTexts.vanilla
 
     weak var world: (any ProgressionWorld)?
     private var cachedStrings: LocalizedStrings??
@@ -187,6 +190,9 @@ public final class ProgressionCoordinator {
         lastAdvance = report
         if report.didAdvance {
             storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
+            world?.showNotification(
+                texts.skillIncreasedText(skill: skillName(report.skill), level: Int(report.level))
+            )
         }
         if let levelUp = report.levelUp {
             reportLevel(levelUp)
@@ -196,6 +202,7 @@ public final class ProgressionCoordinator {
     func reportLevel(_ report: PlayerLevelUpReport) {
         guard report.didLevel else { return }
         storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
+        world?.showNotification(texts.levelUpAvailable)
     }
 }
 
