@@ -203,4 +203,10 @@ The spellbook names each spell's type, casting, and delivery with the magic menu
 `sMagicSchool*` settings for the school of the costliest effect. Without a
 string table, the record's own enum names stay.
 
+The school carries the spell's level, such as "Novice Destruction". The level comes from the
+costliest effect's minimum skill: Novice below 25, Apprentice below 50, Adept below 75, Expert below
+100, and Master from 100, as UESP's "Skyrim:Magic" page lists the five levels. The names are the
+`sNoviceDisplayName`, `sApprenticeDisplayName`, `sJourneymanDisplayName` ("Adept"),
+`sExpertDisplayName`, and `sMasterDisplayName` settings.
+
 Casting animations, hand effects, and sounds are not done yet.

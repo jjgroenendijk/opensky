@@ -22,7 +22,7 @@ struct MagicTextsTests {
         #expect(texts.name(of: MagicEffectCastingType.concentration) == "Held")
         #expect(texts.name(of: MagicEffectDelivery.touch) == "Contact")
         #expect(texts.name(of: MagicEffectDelivery.aimed) == MagicEffectDelivery.aimed.description)
-        #expect(MagicTexts.settings.count == 29)
+        #expect(MagicTexts.settings.count == 34)
         let destruction = try #require(ActorValueIdentity.index(named: "Destruction"))
         let health = try #require(ActorValueIdentity.index(named: "Health"))
         #expect(texts.school(of: destruction) == "Ruin")
@@ -40,5 +40,8 @@ struct MagicTextsTests {
         #expect(texts.timeLeft(61) == "2 minutes")
         #expect(texts.timeLeft(3600) == "1 hour")
         #expect(texts.word("sIngredient", or: "ingredient") == "ingredient")
+        #expect(texts.level(minimumSkill: 0) == "Novice")
+        #expect(texts.level(minimumSkill: 50) == "Adept")
+        #expect(texts.level(minimumSkill: 250) == "Master")
     }
 }

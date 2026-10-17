@@ -58,6 +58,18 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         return word("sMagicSchool\(name)") ?? name
     }
 
+    /// Novice below 25, Apprentice below 50, Adept below 75, Expert below 100, then Master.
+    public func level(minimumSkill: UInt32) -> String {
+        let index = min(Int(minimumSkill) / 25, Self.levels.count - 1)
+        let (setting, fallback) = Self.levels[index]
+        return word("s\(setting)DisplayName") ?? fallback
+    }
+
+    static let levels = [
+        ("Novice", "Novice"), ("Apprentice", "Apprentice"), ("Journeyman", "Adept"),
+        ("Expert", "Expert"), ("Master", "Master")
+    ]
+
     static let schools = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration"]
 
     /// The word a setting resolved to, else `fallback`.
@@ -89,6 +101,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         + schools.map { "sMagicSchool\($0)" }
         + ["Potion", "Enchantment"].map { "sMagicType\($0)" } + ["sIngredient"]
         + ["Sec", "Secs", "Min", "Mins", "Hour", "Hours"].map { "sEffectsListDisplay\($0)" }
+        + levels.map { "s\($0.0)DisplayName" }
 
     public static func resolve(
         store: GameSettingStore, text: (LString) -> String? = { _ in nil }

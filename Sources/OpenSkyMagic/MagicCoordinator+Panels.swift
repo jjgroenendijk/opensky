@@ -256,7 +256,10 @@ extension MagicCoordinator: CastingControlProviding {
             readiedHands: SpellHand.allCases
                 .filter { hands.contains($0.slots) }
                 .map(\.describedName),
-            schoolName: spell.magicSkill.flatMap(magicTexts.school(of:))
+            schoolName: spell.magicSkill.flatMap(magicTexts.school(of:)).map { school in
+                spell.minimumSkillLevel.map { "\(magicTexts.level(minimumSkill: $0)) \(school)" }
+                    ?? school
+            }
         )
     }
 }
