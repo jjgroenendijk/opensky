@@ -50,4 +50,11 @@ struct FrameScheduleTests {
         #expect(streaming < hud)
         #expect(order.firstIndex(of: .melee) ?? 0 < order.firstIndex(of: .ragdoll) ?? 0)
     }
+
+    @Test func meleeRunsBeforeTheActorStateGraphReadsIt() {
+        let order = FrameStep.allCases
+        let melee = order.firstIndex(of: .melee) ?? order.endIndex
+        let actorState = order.firstIndex(of: .actorState) ?? order.startIndex
+        #expect(melee < actorState)
+    }
 }

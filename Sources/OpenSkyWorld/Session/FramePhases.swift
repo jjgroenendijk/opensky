@@ -17,6 +17,8 @@ public enum FrameStep: Int, FramePhase {
     case effects
     /// Melee reads graph events before archery and ragdolls take theirs.
     case melee
+    /// After melee, so a swing that started this frame reaches the actor-state graph.
+    case actorState
     case ragdoll
     case animationEvents
     case cinematicCamera

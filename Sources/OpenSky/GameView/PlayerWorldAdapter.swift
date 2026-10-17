@@ -23,7 +23,9 @@ protocol PlayerWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
+    var headTracking: HeadTrackingCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
     var player: PlayerCoordinator { get }
     var renderer: Renderer? { get }
     var streamer: CellStreamer? { get }
@@ -55,10 +57,9 @@ final class PlayerWorldAdapter {
     }
 
     /// Copies what combat, magic, and the head tracking setting report into the
-    /// actor-state graph inputs. Wired after melee, so a swing that started this
-    /// frame is already in it.
+    /// actor-state graph inputs.
     func wireActorState(renderer: Renderer) {
-        renderer.onFrame.add { [weak game, weak renderer] _ in
+        renderer.session.frameSteps.register(.actorState) { [weak game, weak renderer] _ in
             guard let game, let locomotion = renderer?.locomotion else { return }
             var inputs = locomotion.actorState
             if let melee = game.combat.melee {
