@@ -17,7 +17,6 @@ final class UILabControlsSection: PanelSectionViewController {
     /// and the renderer, so the panel must not retain back into that graph.
     weak var provider: (any UILabControlProviding)? {
         didSet {
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
             guard isViewLoaded else { return }
             syncControls()
             refreshReadout()
@@ -266,8 +265,6 @@ final class UILabPanelViewController: InspectorPanelViewController {
     weak var provider: (any UILabControlProviding)? {
         didSet {
             controlsSection.provider = provider
-            let provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
         }
     }
 

@@ -22,7 +22,7 @@ extension PapyrusNativeFunctions {
         withEffectRun("Dispel", into: &registry) { call, bridge, run in
             guard
                 let holder = bridge.actorHolder(for: run.id.target),
-                let dispel = bridge.dispelEffects
+                let dispel = bridge.magicNatives.dispelEffects
             else { return failure(call, "Dispel needs an effect runtime and an actor target") }
             _ = dispel(holder) { $0.sequence == run.id.sequence }
             return .returned(.none)

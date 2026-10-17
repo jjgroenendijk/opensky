@@ -124,10 +124,10 @@ nonisolated public final class FrameStats {
     }
 
     /// Call after commit. GPU time comes from the spans that reached `gpuSpans`
-    /// since the last call. Returns the logged summary line when this frame
-    /// closed a stats window, so tests can check the instrument.
+    /// since the last call. Returns the logged window when this frame closed
+    /// one, so tests can check the instrument.
     @discardableResult
-    public func endFrame(cpuStartNS: UInt64) -> String? {
+    public func endFrame(cpuStartNS: UInt64) -> FrameStatsWindow? {
         if let state = signpostState {
             Self.signposter.endInterval("frame", state)
             signpostState = nil
@@ -188,7 +188,7 @@ nonisolated public final class FrameStats {
         published.withLock { $0 = snapshot }
     }
 
-    private func flush() -> String? {
+    private func flush() -> FrameStatsWindow? {
         defer {
             frameCount = 0
             encodeTotalNS = 0
@@ -199,28 +199,43 @@ nonisolated public final class FrameStats {
             gpuFrameCount = 0
         }
 
-        let encodeMS = Double(encodeTotalNS) / Double(frameCount) / 1e6
         guard intervalCount > 0 else { return nil }
-        let intervalMS = Double(intervalTotalNS) / Double(intervalCount) / 1e6
-        let maxMS = Double(intervalMaxNS) / 1e6
-        let fps = intervalMS > 0 ? 1000 / intervalMS : 0
-
-        let gpuText = Self.averageMS(gpuTotalNS, count: gpuFrameCount)
-            .map { String(format: "%.2f", $0) } ?? "n/a"
-
-        let summary = String(
-            format: "frame avg %.2f ms (%.0f fps, max %.2f ms) | "
-                + "cpu encode avg %.2f ms | gpu avg %@ ms",
-            intervalMS, fps, maxMS, encodeMS, gpuText
+        let window = FrameStatsWindow(
+            intervalMS: Double(intervalTotalNS) / Double(intervalCount) / 1e6,
+            maxMS: Double(intervalMaxNS) / 1e6,
+            encodeMS: Double(encodeTotalNS) / Double(frameCount) / 1e6,
+            gpuMS: Self.averageMS(gpuTotalNS, count: gpuFrameCount)
         )
         // .notice persists to the log store (`log show`); .info is
         // memory-only and invisible after the fact — this line is the 2.9
         // fps measurement, it must be retrievable.
-        Self.logger.notice("\(summary, privacy: .public)")
-        return summary
+        Self.logger.notice("\(window.text, privacy: .public)")
+        return window
     }
 
     private static func averageMS(_ totalNS: UInt64, count: Int) -> Double? {
         count > 0 ? Double(totalNS) / Double(count) / 1e6 : nil
+    }
+}
+
+/// One closed 120-frame stats window. `text` is the line the log keeps.
+nonisolated public struct FrameStatsWindow: Equatable, Sendable {
+    public var intervalMS: Double
+    public var maxMS: Double
+    public var encodeMS: Double
+    /// Nil when no GPU span reached the window.
+    public var gpuMS: Double?
+
+    public var fps: Double {
+        intervalMS > 0 ? 1000 / intervalMS : 0
+    }
+
+    public var text: String {
+        let gpuText = gpuMS.map { String(format: "%.2f", $0) } ?? "n/a"
+        return String(
+            format: "frame avg %.2f ms (%.0f fps, max %.2f ms) | "
+                + "cpu encode avg %.2f ms | gpu avg %@ ms",
+            intervalMS, fps, maxMS, encodeMS, gpuText
+        )
     }
 }

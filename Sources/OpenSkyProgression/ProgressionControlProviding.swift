@@ -260,66 +260,50 @@ public protocol ProgressionControlProviding: AnyObject {
 
     /// Reports `amount` of skill use on the selected skill, which is
     /// `Game.AdvanceSkill`'s own unit and the same call every swing makes.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func advanceSelectedSkill(byUse amount: Float) -> String
+    func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome
 
     /// Raises the selected skill by a whole point, which is
     /// `Game.IncrementSkill`.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func incrementSelectedSkill() -> String
+    func incrementSelectedSkill() -> ProgressionActionOutcome
 
     /// Banks `amount` of character experience and spends it against the level
     /// curve, which is what a skill point does on the player's behalf.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func awardCharacterExperience(_ amount: Float) -> String
+    func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome
 
     /// Spends one owed attribute pick on `kind`.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func chooseAttributePick(_ kind: ActorValueKind) -> String
+    func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome
 
     /// Adds or removes perk points, which is `Game.ModPerkPoints`.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func changePerkPoints(by delta: Int) -> String
+    func changePerkPoints(by delta: Int) -> ProgressionActionOutcome
 
     /// Spends one perk point on the selected box, after the tree, the rank
     /// order and the perk's own conditions have all agreed.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func spendPointOnSelectedPerk() -> String
+    func spendPointOnSelectedPerk() -> ProgressionActionOutcome
 
     /// Gives the player the selected box's perk outright, bypassing the point
     /// and the tree — the dev control behind reading what a perk does.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func grantSelectedPerk() -> String
+    func grantSelectedPerk() -> ProgressionActionOutcome
 
     /// Takes the selected box's perk away again.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func revokeSelectedPerk() -> String
+    func revokeSelectedPerk() -> ProgressionActionOutcome
 
     /// Makes the selected skill legendary: back to its reset level, its tree refunded.
     @discardableResult
-    func makeSelectedSkillLegendary() -> String
+    func makeSelectedSkillLegendary() -> ProgressionActionOutcome
 
     /// The Dragonborn altar: one dragon soul refunds the selected skill's tree.
     @discardableResult
-    func resetSelectedPerkTree() -> String
+    func resetSelectedPerkTree() -> ProgressionActionOutcome
 
     /// Buys one training session from the nearest trainer.
     @discardableResult
-    func trainWithNearestTrainer() -> String
+    func trainWithNearestTrainer() -> ProgressionActionOutcome
 }

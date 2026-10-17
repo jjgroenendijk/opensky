@@ -70,22 +70,17 @@ nonisolated public enum MessageReadout {
     }
 }
 
-/// Lets the app's provider stand in for its coordinator, one line to conform.
-public protocol MessageControlForwarding: MessageControlProviding {
-    var messages: MessageCoordinator { get }
-}
-
-extension MessageControlForwarding {
+extension MessageCoordinator: MessageControlProviding {
     public var messageSnapshot: MessageControlSnapshot {
-        messages.snapshot(lastOutcome: messages.lastPanelOutcome)
+        snapshot(lastOutcome: lastPanelOutcome)
     }
 
     public func showMessage(editorID: String, asBox: Bool) {
-        messages.lastPanelOutcome = messages.show(editorID: editorID, asBox: asBox)
+        lastPanelOutcome = show(editorID: editorID, asBox: asBox).text
     }
 
     public func resetHelpMessages() {
-        messages.resetAllHelpMessages()
-        messages.lastPanelOutcome = "Reset every help message"
+        resetAllHelpMessages()
+        lastPanelOutcome = "Reset every help message"
     }
 }

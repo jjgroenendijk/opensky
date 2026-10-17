@@ -176,7 +176,7 @@ struct WorldMusicDirectorTests {
         #expect(engine.sources.isEmpty)
         #expect(director.currentMusicDescription == "none")
         #expect(director.selectableMusicTypeNames.isEmpty)
-        #expect(director.forcePlayMusicType(named: "MUSExplore") == "no music data")
+        #expect(director.forcePlayMusicType(named: "MUSExplore") == .noMusicData)
     }
 
     @Test func anUnloadableTrackIsSkippedForTheNextOneInThePlaylist() throws {
@@ -288,6 +288,6 @@ struct WorldMusicDirectorTests {
     @Test func forcePlayReportsAnUnknownName() throws {
         let engine = try MusicDirectorFixture.makeRunningEngine()
         let director = MusicDirectorFixture.makeDirector(engine: engine)
-        #expect(director.forcePlayMusicType(named: "MUSNope") == "unknown music type MUSNope")
+        #expect(director.forcePlayMusicType(named: "MUSNope") == .unknownMusicType("MUSNope"))
     }
 }

@@ -17,7 +17,7 @@ extension ScriptWorldAdapter {
     private static let traceMargin: Float = 32
 
     func wireLineOfSight(bridge: PapyrusWorldStateBridge) {
-        bridge.seesTarget = { [weak self] viewer, target in
+        bridge.perceptionNatives.seesTarget = { [weak self] viewer, target in
             self?.sees(viewer: viewer, target: target, bridge: bridge)
         }
     }
@@ -51,7 +51,7 @@ extension ScriptWorldAdapter {
     private func position(
         of key: ReferenceKey, bridge: PapyrusWorldStateBridge
     ) -> SIMD3<Float>? {
-        if let feet = bridge.livePosition?(key) {
+        if let feet = bridge.perceptionNatives.livePosition?(key) {
             return feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight / 2)
         }
         return bridge.placement(of: key)?.state.transform.position

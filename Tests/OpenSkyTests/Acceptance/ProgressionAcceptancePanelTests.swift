@@ -36,7 +36,7 @@ struct ProgressionAcceptancePanelTests {
     private static func buildPanel(
         providers: GameViewController
     ) throws -> ProgressionPanelViewController {
-        try buildWorldPanel("progression", title: "Progression", providers: providers)
+        try buildWorldPanel("progression", title: "Progression", game: providers)
     }
 
     /// Scope point 2: level, experience, perk points and the eighteen skills

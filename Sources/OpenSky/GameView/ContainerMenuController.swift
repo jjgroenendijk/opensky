@@ -13,7 +13,22 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
+
+/// What `ContainerMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ContainerMenuHost: MenuInputConsumer {
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var ragdoll: RagdollCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var swfMovies: SWFMovieSource { get }
+}
 
 /// Holds the container menu's target, list and movie state for `game`.
 final class ContainerMenuController {
@@ -22,7 +37,7 @@ final class ContainerMenuController {
     /// Frames the movie's fade needs to settle, the same as `inventorymenu.swf`.
     static let activationTicks = 20
 
-    unowned let game: GameViewController
+    unowned let game: any ContainerMenuHost
     private(set) var isOpen = false
     private(set) var mode = ContainerMenuModel.Mode.container
     private(set) var model = ContainerMenuModel.empty
@@ -39,14 +54,23 @@ final class ContainerMenuController {
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
-    private(set) var movieLoaded = false
-    /// Bumped by each open and close, so a movie decoded late opens only the newest.
-    private var movieRequest = 0
-    private(set) var movieError: String?
     private(set) var lastActionText: String?
+    let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any ContainerMenuHost) {
         self.game = game
+        movie = MenuMovieSession(
+            movies: game.swfMovies, hud: game.hud, label: "container menu movie",
+            logger: Self.logger
+        ) { [unowned game] in game.renderer }
+    }
+
+    var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    var movieError: String? {
+        movie.error
     }
 
     /// The two modes are two movies, so each has its own stack identifier.
@@ -77,9 +101,7 @@ final class ContainerMenuController {
         guard isOpen else { return }
         isOpen = false
         game.menuMode.dismiss(activeIdentifier)
-        if movieLoaded {
-            stopMovie()
-        }
+        movie.stop()
     }
 
     /// An open menu closes and reopens, so the stack identifier matches.
@@ -100,7 +122,7 @@ final class ContainerMenuController {
         if enabled {
             startMovie()
         } else {
-            stopMovie()
+            movie.stop()
         }
     }
 
@@ -163,82 +185,26 @@ final class ContainerMenuController {
     }
 
     private func publishModel() {
-        guard movieLoaded, let renderer = game.renderer else { return }
-        do {
-            try renderer.updateSWFRuntime { runtime in
-                ContainerMenuMovieBridge.publish(model, runtime: runtime)
-            }
-        } catch {
-            movieError = String(describing: error)
-        }
+        let model = model
+        movie.publish { ContainerMenuMovieBridge.publish(model, runtime: $0) }
     }
 
     // MARK: - Movie
 
-    /// Brings the mode's vanilla movie up in place of the gameplay HUD. Any
-    /// failure becomes a readout, never a thrown error out of a control action.
+    /// Brings the mode's vanilla movie up in place of the gameplay HUD.
     private func startMovie() {
-        guard game.renderer != nil, game.swfMovies.isAvailable else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        game.hud.suspend()
-        movieRequest += 1
-        let request = movieRequest
-        game.swfMovies.request(
-            ContainerMenuMovieBridge.moviePath(for: mode),
-            while: { [weak self] in
-                self?.movieRequest == request
-            },
-            then: { [weak self] result in
-                self?.showMovie(result)
-            }
-        )
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
-        guard let renderer = game.renderer else { return }
-        do {
-            try renderer.setSWFMovie(result.get())
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime(
-                prepare: ContainerMenuMovieBridge.prepare(runtime:)
-            )
-            guard started != nil else {
-                movieLoaded = false
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            let mode = mode
-            try renderer.updateSWFRuntime { runtime in
+        let mode = mode
+        movie.start(MenuMovie(
+            path: ContainerMenuMovieBridge.moviePath(for: mode),
+            activationTicks: Self.activationTicks,
+            prepare: ContainerMenuMovieBridge.prepare(runtime:),
+            activate: { [weak self] runtime in
                 ContainerMenuMovieBridge.activate(runtime: runtime, mode: mode) { [weak self] in
                     self?.apply($0)
                 }
-            }
-            for _ in 0 ..< Self.activationTicks {
-                try renderer.advanceSWFRuntime()
-            }
-            movieLoaded = true
-            movieError = nil
-            publishModel()
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-            Self.logger.error(
-                "[ERROR] container menu movie: \(String(describing: error), privacy: .public)"
-            )
-        }
-    }
-
-    /// Hands the SWF layer back to the gameplay HUD.
-    private func stopMovie() {
-        movieRequest += 1
-        movieLoaded = false
-        movieError = nil
-        game.hud.start()
+            },
+            didLoad: { [weak self] in self?.publishModel() }
+        ))
     }
 
     // MARK: - Input
@@ -271,7 +237,7 @@ final class ContainerMenuController {
     }
 
     private func driveMovie(_ direction: MenuInputEvent.Direction) -> Bool {
-        guard movieLoaded, let renderer = game.renderer else { return false }
+        guard let renderer = movie.loadedRenderer else { return false }
         do {
             let consumed = try ContainerMenuMovieBridge.send(.move(direction), renderer: renderer)
             guard consumed, let runtime = renderer.swfRuntime else { return false }
@@ -282,7 +248,7 @@ final class ContainerMenuController {
             publishModel()
             return true
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
             return false
         }
     }
@@ -305,8 +271,8 @@ final class ContainerMenuController {
     private func equipSelection() {
         guard let entry = model.selectedEntry else { return }
         lastActionText = entry.isEquipped
-            ? game.inventory.unequipItem(entry.item, on: .player)
-            : game.inventory.equipItem(entry.item, on: .player)
+            ? game.inventory.unequipItem(entry.item, on: .player).text
+            : game.inventory.equipItem(entry.item, on: .player).text
         refreshModel()
     }
 

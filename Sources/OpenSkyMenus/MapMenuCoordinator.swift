@@ -58,10 +58,10 @@ public final class MapMenuCoordinator {
     /// `Game.EnableFastTravel`; scripts turn it off during some quests.
     public var fastTravelEnabled = true
     public var lastResult: String? {
-        lastResultText
+        lastOutcome.map { $0.text(refusal: { world?.refusalText($0) ?? $0.rawValue }) }
     }
 
-    var lastResultText: String?
+    var lastOutcome: MapMenuOutcome?
     var inspection = MapMarkerInspection()
     /// The tracked targets, refreshed every `questMarkerFrames` frames.
     public internal(set) var questMarkers: [QuestTargetMarker] = []
@@ -139,13 +139,13 @@ public final class MapMenuCoordinator {
         for site in sites {
             world.storeMarkerState(open, for: site.key)
         }
-        lastResultText = "Markers revealed: \(sites.count)"
+        lastOutcome = .markersRevealed(sites.count)
     }
 
     /// Forgets every explored square, so the local map shows fog again.
     public func resetFog() {
         world?.localMapFog = LocalMapFogState()
-        lastResultText = "Fog reset"
+        lastOutcome = .fogReset
     }
 
     public func isVisible(_ key: ReferenceKey) -> Bool {
@@ -258,12 +258,12 @@ public final class MapMenuCoordinator {
         context.enabledByScripts = fastTravelEnabled && context.enabledByScripts
         context.destinationCanTravelTo = target.state.canTravelTo
         if let refusal = FastTravelRule.refusal(context) {
-            lastResultText = world.refusalText(refusal)
+            lastOutcome = .travelRefused(refusal)
             world.showNotification(lastResult ?? "")
             return
         }
         close()
-        lastResultText = world.travel(to: target) ? "Travelled to \(target.name)" : "Travel failed"
+        lastOutcome = world.travel(to: target) ? .travelled(target.name) : .travelFailed
     }
 
     /// Selects a marker by reference, for `Game.FastTravel`.

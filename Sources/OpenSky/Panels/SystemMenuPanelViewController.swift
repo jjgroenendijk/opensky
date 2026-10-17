@@ -14,8 +14,6 @@ final class SystemMenuPanelViewController: InspectorPanelViewController {
             menuSection.provider = provider
             pageSection.provider = provider
             settingsSection.provider = provider
-            let provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
         }
     }
 

@@ -12,30 +12,39 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
 
-/// Answers `HazardWorld` from the session systems `game` owns.
+/// What the hazard adapter reads. The renderer is a closure, because a reload
+/// replaces it.
+struct HazardWorldDependencies {
+    let hazards: HazardCoordinator
+    let combat: CombatCoordinator
+    let magic: MagicCoordinator
+    let renderer: () -> Renderer?
+}
+
+/// Answers `HazardWorld` from the session systems it is given.
 final class HazardWorldAdapter {
     /// A long frame steps as this, so a stall does not stack several hits.
     static let longestStep: Float = 0.25
 
-    unowned let game: GameViewController
+    private let dependencies: HazardWorldDependencies
     private(set) var store: HazardStore?
     private var lastFrame: Date?
 
-    init(game: GameViewController) {
-        self.game = game
+    init(_ dependencies: HazardWorldDependencies) {
+        self.dependencies = dependencies
     }
 
     var hazards: HazardCoordinator {
-        game.hazards
+        dependencies.hazards
     }
 
-    func wireHazards(provider: any WorldDataProviding, streamer: CellStreamer, renderer: Renderer) {
-        store = (provider as? LockTrapDataProviding)?.lockTrapData.hazards
+    func wireHazards(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
+        store = provider.lockTrapData.hazards
         hazards.world = self
         streamer.cellHazards.add { [weak self] event in
             self?.load(event)
         }
-        renderer.onFrame.add { [weak self, weak renderer] _ in
+        renderer.session.frameSteps.register(.hazards) { [weak self, weak renderer] _ in
             self?.tick(paused: renderer?.worldSimPaused ?? true)
         }
     }
@@ -59,10 +68,10 @@ final class HazardWorldAdapter {
 
 extension HazardWorldAdapter: HazardWorld {
     func hazardCandidates() -> [MeleeTarget] {
-        var targets = game.combat.projectileTargets()
+        var targets = dependencies.combat.projectileTargets()
         if
             !targets.contains(where: { $0.key == .player }),
-            let feet = game.renderer?.locomotion.status.feetPosition
+            let feet = dependencies.renderer()?.locomotion.status.feetPosition
         {
             targets.append(MeleeTarget(key: .player, feet: feet))
         }
@@ -70,10 +79,10 @@ extension HazardWorldAdapter: HazardWorld {
     }
 
     func hazardPayload(spell: ReferenceKey, hazard: ReferenceKey) -> SpellPayload? {
-        game.magic.caster?.spellbookAccess.record(spell)?.payload(caster: hazard)
+        dependencies.magic.caster?.spellbookAccess.record(spell)?.payload(caster: hazard)
     }
 
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        game.magic.applySpellHit(hit)
+        dependencies.magic.applySpellHit(hit)
     }
 }

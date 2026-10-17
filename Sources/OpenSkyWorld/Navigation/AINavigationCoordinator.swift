@@ -39,7 +39,7 @@ extension AINavigationWorld {
 
 @MainActor
 public final class AINavigationCoordinator: AINavigationControlProviding {
-    public private(set) var lastActionText = "Select an actor, then move it, or watch its schedule."
+    public private(set) var lastAction = AINavigationActionOutcome.idle
 
     /// Nil follows the nearest resident actor. A chosen actor that stops being
     /// resident also falls back to the nearest one.
@@ -74,7 +74,7 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             packagedActorCount: packages.registeredActors.count,
             crosshairPoint: crosshairHit()?.position,
             selectedActorIsHostile: selected.map(world.isHostile) ?? false,
-            lastActionText: lastActionText
+            lastActionText: lastAction.text
         )
         let runner = selected.flatMap { packages.executions[$0]?.runner }
         snapshot.procedure = runner?.primary
@@ -91,7 +91,7 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             let name = AINavigationCore.name(
                 of: AINavigationCore.resolve(chosenActor, in: actors), in: actors
             )
-            lastActionText = "Selected \(name)."
+            lastAction = .selected(name)
         }
     }
 
@@ -103,22 +103,23 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         set {
             let actors = actorOptions()
             guard let world, let key = AINavigationCore.resolve(chosenActor, in: actors) else {
-                lastActionText = "Cannot set hostility: no resident actor."
+                lastAction = .noActor(verb: "set hostility")
                 return
             }
             world.setHostile(newValue, actor: key)
-            let regard = newValue ? "hostile" : "neutral"
-            lastActionText = "\(AINavigationCore.name(of: key, in: actors)) is now \(regard)."
+            lastAction = .regardSet(
+                actor: AINavigationCore.name(of: key, in: actors), hostile: newValue
+            )
         }
     }
 
     public func selectAIActorFromCrosshair() {
         guard let world, world.isStreaming, let reference = crosshairHit()?.reference else {
-            lastActionText = "Cannot select: the crosshair is not on anything."
+            lastAction = .crosshairEmpty(verb: "select")
             return
         }
         guard let key = world.residentActor(for: reference) else {
-            lastActionText = "Cannot select: \(reference) under the crosshair is not an actor."
+            lastAction = .notAnActor(reference)
             return
         }
         selectedAIActor = key
@@ -130,14 +131,14 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             let world, world.isStreaming,
             let key = AINavigationCore.resolve(chosenActor, in: actors)
         else {
-            lastActionText = "Cannot move: no resident actor to act on."
+            lastAction = .noActor(verb: "move")
             return
         }
         guard let point = crosshairHit()?.position else {
-            lastActionText = "Cannot move: the crosshair is not on anything."
+            lastAction = .crosshairEmpty(verb: "move")
             return
         }
-        lastActionText = AINavigationReadout.moveResultText(
+        lastAction = .moved(
             world.moveActor(key, to: point),
             actor: AINavigationCore.name(of: key, in: actors)
         )
@@ -149,29 +150,27 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             let world, world.isStreaming,
             let key = AINavigationCore.resolve(chosenActor, in: actors)
         else {
-            lastActionText = "Cannot stop: no resident actor to act on."
+            lastAction = .noActor(verb: "stop")
             return
         }
         let name = AINavigationCore.name(of: key, in: actors)
-        lastActionText = world.stopActor(key)
-            ? "Stopped \(name) where it stands."
-            : "\(name) had no mover to stop."
+        lastAction = .stopped(actor: name, hadMover: world.stopActor(key))
     }
 
     public func reevaluateSelectedAIActorPackage() {
         let actors = actorOptions()
         guard let key = AINavigationCore.resolve(chosenActor, in: actors) else {
-            lastActionText = "Cannot reevaluate: no resident actor to act on."
+            lastAction = .noActor(verb: "reevaluate")
             return
         }
         let name = AINavigationCore.name(of: key, in: actors)
         guard packages.registeredActors[key] != nil else {
-            lastActionText = "\(name) has no package stack registered."
+            lastAction = .noPackageStack(actor: name)
             return
         }
         packages.resume(key)
         let readout = packages.readout(for: key) ?? AINavigationCore.emptyPackageReadout(key)
-        lastActionText = "Reevaluated \(name): " + AIPackageReadout.selectionText(for: readout)
+        lastAction = .reevaluated(actor: name, readout)
     }
 
     private func actorOptions() -> [AIActorOption] {

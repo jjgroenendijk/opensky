@@ -48,7 +48,7 @@ extension MenuWorldAdapter {
     private func logoPlacements(renderer: Renderer) throws -> [RenderPlacement] {
         if
             titleMeshes == nil,
-            let fileSystem = (game.worldData as? ScriptDataProviding)?.scriptFileSystem
+            let fileSystem = game.worldData?.scriptFileSystem
         {
             let textures = try TextureLibrary(fileSystem: fileSystem, device: renderer.device)
             titleMeshes = MeshLibrary(

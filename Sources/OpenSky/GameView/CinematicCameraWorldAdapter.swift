@@ -15,22 +15,35 @@ import OpenSkyRendering
 import OpenSkyWorld
 import simd
 
+/// What `CinematicCameraWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol CinematicCameraWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var effects: EffectsCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var worldData: WorldDataStores? { get }
+}
+
 final class CinematicCameraWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any CinematicCameraWorldHost
     /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
     private var tracks: AssetLoader<String, NIFCameraTrack>?
     private var lastFrame: Date?
 
-    init(game: GameViewController) {
+    init(game: any CinematicCameraWorldHost) {
         self.game = game
     }
 
     func wire(renderer: Renderer) {
         game.cinematicCamera.attach(world: self)
         wireTracks(renderer: renderer)
-        // `onFrame` runs under a menu too; the shot keeps real time, so a
+        // Frame steps run under a menu too; the shot keeps real time, so a
         // paused frame advances nothing.
-        renderer.onFrame.add { [weak self, weak renderer] _ in
+        renderer.session.frameSteps.register(.cinematicCamera) { [weak self, weak renderer] _ in
             guard let self, let renderer else { return }
             let now = Date()
             let seconds = renderer.worldSimPaused ? 0 : lastFrame
@@ -55,7 +68,7 @@ final class CinematicCameraWorldAdapter {
 
     /// A shot whose track has not arrived plays without one, as a shot with no model does.
     private func wireTracks(renderer: Renderer) {
-        guard let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem else {
+        guard let files = game.worldData?.scriptFileSystem else {
             return
         }
         let tracks = AssetLoader<String, NIFCameraTrack> { model in
@@ -67,7 +80,7 @@ final class CinematicCameraWorldAdapter {
             }
         }
         self.tracks = tracks
-        renderer.session.assetDrains.add { _ in tracks.drain() }
+        renderer.session.assetDrains.register(.cinematicTracks) { _ in tracks.drain() }
     }
 
     func anchorPosition(of key: ReferenceKey) -> SIMD3<Float>? {
@@ -77,7 +90,7 @@ final class CinematicCameraWorldAdapter {
 
 extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     var cameraPaths: CameraPathStore? {
-        (game.worldData as? PresentationDataProviding)?.presentationRecords?.cameras
+        game.worldData?.presentationRecords?.cameras
     }
 
     func cameraConditionContext() -> ConditionContext {
@@ -156,5 +169,20 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
         guard let renderer = game.renderer else { return false }
         return game.effects.startModifier(key, strength: 1, on: &renderer.imageSpace)
+    }
+}
+
+/// The Cinematic Camera section acts on the nearest actor.
+extension CinematicCameraWorldAdapter: CinematicCameraControlForwarding {
+    var cinematicCamera: CinematicCameraCoordinator {
+        game.cinematicCamera
+    }
+
+    var cinematicSelectedActor: ReferenceKey? {
+        game.actorWorld.nearestActorValueHolder()?.key
+    }
+
+    var cinematicRemainingHostiles: Int {
+        game.combat.combatLoopSnapshot.hostileCount
     }
 }

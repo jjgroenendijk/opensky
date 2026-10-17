@@ -226,15 +226,6 @@ public final class Renderer: NSObject {
     /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
     /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
     public var worldSimPaused = false
-    /// The waypoints a package walks the player along, empty without a walk
-    /// (`PlayerPackageWalk`).
-    public var playerWalkPath: [SIMD3<Float>] = []
-    /// A straight package walk ignores static collision, as an NPC's straight leg does.
-    public var playerWalkIgnoresStatics = false
-    /// Paralysis: the player can look around but not move, jump, or attack.
-    public var isPlayerParalysed = false
-    /// Called once when the player reaches the last waypoint of `playerWalkPath`.
-    public var onPlayerWalkArrived: (() -> Void)?
     /// The simulation side of each frame (`RenderFrameDriver.swift`). The
     /// renderer holds it strongly; the driver holds the renderer unowned.
     public var frameDriver: (any RenderFrameDriver)?

@@ -3,6 +3,7 @@
 // view's space only for an arranged subview (docs/tools/app-ui.md).
 
 import AppKit
+import OpenSkyGameData
 
 final class CollapsibleSectionView: NSStackView {
     private let disclosure = NSButton()
@@ -122,18 +123,16 @@ final class CollapsibleSectionView: NSStackView {
 
     // MARK: Persistence
 
-    private static func key(_ sectionID: String) -> String {
-        "panelSection.expanded.\(sectionID)"
+    /// Expanded when unset, so panels open fully revealed.
+    private static func key(_ sectionID: String) -> SettingKey<Bool> {
+        SettingKey("panelSection.expanded.\(sectionID)", default: true)
     }
 
     private static func loadExpanded(_ sectionID: String) -> Bool {
-        let defaults = UserDefaults.standard
-        // Default to expanded when unset so panels open fully revealed.
-        guard defaults.object(forKey: key(sectionID)) != nil else { return true }
-        return defaults.bool(forKey: key(sectionID))
+        SettingsStore.shared.value(key(sectionID))
     }
 
     private static func storeExpanded(_ sectionID: String, expanded: Bool) {
-        UserDefaults.standard.set(expanded, forKey: key(sectionID))
+        SettingsStore.shared.set(expanded, for: key(sectionID))
     }
 }

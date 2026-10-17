@@ -2,6 +2,7 @@
 // in a worldspace. The launcher validates the choice and remembers it.
 
 import Foundation
+import OpenSkyGameData
 
 nonisolated public enum LaunchStart: Equatable, Sendable {
     /// The title screen, as the original game starts.
@@ -148,11 +149,18 @@ nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
 nonisolated extension LaunchPreferences {
     public static let startKey = "OpenSkyLaunchStart"
 
-    public static func savedStart(userDefaults: UserDefaults = .standard) -> LaunchStart {
-        userDefaults.string(forKey: startKey).flatMap(LaunchStart.init(storedValue:)) ?? .normal
+    public static let startSetting = SettingKey(startKey, default: LaunchStart.normal.storedValue)
+
+    public static func savedStart(
+        userDefaults: UserDefaults = GameDataLocator.settingsDefaults
+    ) -> LaunchStart {
+        LaunchStart(storedValue: SettingsStore(defaults: userDefaults).value(startSetting))
+            ?? .normal
     }
 
-    public static func remember(_ start: LaunchStart, userDefaults: UserDefaults = .standard) {
-        userDefaults.set(start.storedValue, forKey: startKey)
+    public static func remember(
+        _ start: LaunchStart, userDefaults: UserDefaults = GameDataLocator.settingsDefaults
+    ) {
+        SettingsStore(defaults: userDefaults).set(start.storedValue, for: startSetting)
     }
 }

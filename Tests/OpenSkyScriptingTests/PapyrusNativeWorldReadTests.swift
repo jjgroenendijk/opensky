@@ -26,14 +26,14 @@ struct PapyrusNativeWorldReadTests {
 
     @Test func editorLocationComesFromThePlaceSnapshot() throws {
         let fixture = try Fixture.make()
-        fixture.session.bridge.conditionData = {
+        fixture.session.bridge.sessionNatives.conditionData = {
             ConditionDataResolution(editorLocations: [
                 fixture.key: ResolvedFormID(plugin: "Skyrim.esm", objectID: Self.townID)
             ])
         }
         #expect(fixture.call("GetEditorLocation", returnType: .object("Location"))
             == .returned(.object(fixture.handle(Self.townID))))
-        fixture.session.bridge.conditionData = { .empty }
+        fixture.session.bridge.sessionNatives.conditionData = { .empty }
         #expect(fixture.call("GetEditorLocation", returnType: .object("Location"))
             == .returned(.none))
     }
@@ -51,7 +51,8 @@ struct PapyrusNativeWorldReadTests {
                 + LocationFixture.recordBytes(Self.caveID, "Cave")
         ))
         let store = LocationStore(plugins: [("Skyrim.esm", file)])
-        fixture.session.bridge.conditionData = { ConditionDataResolution(locations: store) }
+        fixture.session.bridge.sessionNatives
+            .conditionData = { ConditionDataResolution(locations: store) }
         let keyword = PapyrusValue.object(fixture.handle(Self.holdKeywordID))
         let other = PapyrusValue.object(fixture.handle(Self.cellID))
 
@@ -68,14 +69,14 @@ struct PapyrusNativeWorldReadTests {
         let fixture = try Fixture.make()
         fixture.session.bridge.formIDResolver = PapyrusWorldFixture.resolver
         for worldspace in [nil, FormID(0x3C)] {
-            fixture.session.bridge.conditionData = {
+            fixture.session.bridge.sessionNatives.conditionData = {
                 ConditionDataResolution(cells: [
                     fixture.key: ReferenceCell(cell: FormID(Self.cellID), worldspace: worldspace)
                 ])
             }
             #expect(isInterior(fixture) == .returned(.boolean(worldspace == nil)))
         }
-        fixture.session.bridge.conditionData = { .empty }
+        fixture.session.bridge.sessionNatives.conditionData = { .empty }
         #expect(PapyrusWorldFixture.isInvalidArguments(isInterior(fixture)))
     }
 
@@ -84,7 +85,7 @@ struct PapyrusNativeWorldReadTests {
         var context = ConditionContext()
         context.dialogue = DialogueResolution(speakerInDialogue: fixture.key)
         let speaking = context
-        fixture.session.bridge.conditionEvaluator = {
+        fixture.session.bridge.sessionNatives.conditionEvaluator = {
             ConditionEvaluator(context: speaking, registry: ConditionFunctionRegistry())
         }
         let player = fixture.session.world.objectHandle(for: .player)
@@ -101,7 +102,7 @@ struct PapyrusNativeWorldReadTests {
         context.actors = ActorStateResolution(states: [.player: player, fixture.key: npc])
         context.speechChecks = SpeechCheckResolution(settings: .fallback, bribeFactor: 0.5)
         let priced = context
-        fixture.session.bridge.conditionEvaluator = {
+        fixture.session.bridge.sessionNatives.conditionEvaluator = {
             ConditionEvaluator(context: priced, registry: ConditionFunctionRegistry())
         }
         let price = SpeechCheckSettings.fallback.bribeAmount(SpeechCheckActors(

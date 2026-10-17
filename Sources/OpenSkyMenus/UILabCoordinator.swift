@@ -125,53 +125,28 @@ public final class UILabCoordinator {
     }
 }
 
-/// Lets the app's provider object stand in for its `UILabCoordinator`.
-public protocol UILabControlForwarding: UILabControlProviding {
-    var uiLab: UILabCoordinator { get }
-}
-
-extension UILabControlForwarding {
+extension UILabCoordinator: UILabControlProviding {
     public var uiOverlayEnabled: Bool {
-        get { uiLab.overlayEnabled }
-        set { uiLab.overlayEnabled = newValue }
+        get { overlayEnabled }
+        set { overlayEnabled = newValue }
     }
 
     public var uiSampleShown: Bool {
-        get { uiLab.isShown(.lab) }
-        set { uiLab.setShown(newValue, .lab) }
+        get { isShown(.lab) }
+        set { setShown(newValue, .lab) }
     }
 
     public var uiScale: Float {
-        get { uiLab.scale }
-        set { uiLab.scale = newValue }
+        get { scale }
+        set { scale = newValue }
     }
 
     public var uiSnapshot: UILabControlSnapshot {
-        uiLab.snapshot
-    }
-
-    public func pushPreviewMenu() {
-        uiLab.pushPreviewMenu()
-    }
-
-    public func popPreviewMenu() {
-        uiLab.popPreviewMenu()
-    }
-
-    public func clearPreviewMenus() {
-        uiLab.clearPreviewMenus()
-    }
-
-    public var menuModeSnapshot: MenuModeControlSnapshot {
-        uiLab.menuModeSnapshot
+        snapshot
     }
 
     public var uiLocalizedSampleShown: Bool {
-        get { uiLab.isShown(.localized) }
-        set { uiLab.setShown(newValue, .localized) }
-    }
-
-    public var localizedLabelsSnapshot: LocalizedLabelsControlSnapshot {
-        uiLab.localizedLabelsSnapshot
+        get { isShown(.localized) }
+        set { setShown(newValue, .localized) }
     }
 }

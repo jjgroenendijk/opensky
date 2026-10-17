@@ -14,24 +14,44 @@ import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MessageWorldHost: MenuInputConsumer {
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var cinematicWorld: CinematicCameraWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var journalMenu: JournalMenuController { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var subtitles: SubtitleCoordinator { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class MessageWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MessageWorldHost
     private var cachedEditorIDs: [String]?
 
-    init(game: GameViewController) {
+    init(game: any MessageWorldHost) {
         self.game = game
     }
 
     /// Gives the Papyrus bridge its presenter, once the VM exists.
     func wire(renderer: Renderer) {
         game.scripts.bridge?.presenter = game.messages
-        game.scripts.bridge?.itemNotices = (game.worldData as? WorldDataStores).map {
+        game.scripts.bridge?.itemNotices = game.worldData.map {
             ItemNoticeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
         cachedEditorIDs = nil
         game.messages.attach(world: self)
-        // `onFrame` runs under a menu too, so notifications keep real time.
-        renderer.onFrame.add { [weak messages = game.messages, weak subtitles = game.subtitles] _ in
+        // Frame steps run under a menu too, so notifications keep real time.
+        let messages = game.messages
+        let subtitles = game.subtitles
+        renderer.session.frameSteps.register(.messages) { [weak messages, weak subtitles] _ in
             let now = Date().timeIntervalSinceReferenceDate
             messages?.tick(time: now)
             subtitles?.advance(to: now)
@@ -39,7 +59,7 @@ final class MessageWorldAdapter {
     }
 
     private var presentation: PresentationRecordStore? {
-        (game.worldData as? PresentationDataProviding)?.presentationRecords
+        game.worldData?.presentationRecords
     }
 
     /// The MESG's QNAM owner, whose aliases the text's tags name.
@@ -47,7 +67,7 @@ final class MessageWorldAdapter {
         guard
             let store = presentation,
             let link = store.messages.link(message.record.quest, from: message), !link.isDangling,
-            let quests = (game.worldData as? QuestDataProviding)?.questStore,
+            let quests = game.worldData?.questStore,
             let id = quests.formID(for: ReferenceKey(resolved: link.target))
         else { return nil }
         return quests.quest(id)

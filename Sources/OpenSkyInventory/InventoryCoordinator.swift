@@ -24,10 +24,10 @@ public final class InventoryCoordinator {
     /// Captured on open, because the cell holding the container may be evicted
     /// while it is still open.
     public private(set) var sessionName: String?
-    public private(set) var lastActionText = "No item action yet."
-    /// Kept apart from `lastActionText`, so a grant does not overwrite the
+    public private(set) var lastAction = ItemActionOutcome.idle
+    /// Kept apart from `lastAction`, so a grant does not overwrite the
     /// take and drop readout on the other panel.
-    public private(set) var lastGrantText = "No grant yet."
+    public private(set) var lastGrant = GrantActionOutcome.idle
     /// The NPC by default: an equip is only visible on a rendered actor.
     public var inspectionTarget = EquipmentTargetSelector.nearestActor
     /// Nil without a FACT and FLST index.
@@ -38,7 +38,7 @@ public final class InventoryCoordinator {
     public internal(set) var craftingCatalog: CraftingCatalog?
     /// At most one station is in use at a time.
     public internal(set) var crafting: CraftingSession?
-    public internal(set) var lastCraftText = "No crafting action yet."
+    public internal(set) var lastCraft = CraftingActionOutcome.idle
     weak var recipeConditions: (any RecipeConditionChecking)?
     weak var skillUses: (any SkillUseReporting)?
     /// The experience formulas a crafting session reports with.
@@ -85,11 +85,11 @@ public final class InventoryCoordinator {
     public func handleInteraction(_ action: InteractionAction) {
         switch action {
         case .take:
-            lastActionText = takeInteractionTarget()
+            note(takeInteractionTarget())
         case .search:
-            lastActionText = openInteractionTargetContainer()
+            note(openInteractionTargetContainer())
         case .harvest:
-            lastActionText = harvestInteractionTarget()
+            note(harvestInteractionTarget())
         case .use:
             if let station = world?.crosshairInteraction.flatMap(CraftingActivationEvent.init) {
                 openCraftingSession(station)
@@ -102,27 +102,27 @@ public final class InventoryCoordinator {
     // MARK: - Item actions
 
     @discardableResult
-    public func takeInteractionTarget() -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func takeInteractionTarget() -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         guard let interaction = world?.crosshairInteraction else {
-            return "Nothing under the crosshair to take."
+            return .nothingUnderCrosshair(verb: "take")
         }
         do {
             let outcome = try runtime.take(interaction)
             storyEvents?.reportStoryEvent(.addItem(
                 outcome.item, from: nil, owner: nil, how: outcome.stolen ? .steal : .pickUp
             ))
-            return note("Took \(outcome.count) × \(interaction.name).")
+            return note(.took(count: outcome.count, item: interaction.name))
         } catch {
-            return note("Take failed: \(String(describing: error))")
+            return note(.failed(action: "Take", reason: String(describing: error)))
         }
     }
 
     @discardableResult
-    public func openInteractionTargetContainer() -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func openInteractionTargetContainer() -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         guard let interaction = world?.crosshairInteraction else {
-            return "Nothing under the crosshair to search."
+            return .nothingUnderCrosshair(verb: "search")
         }
         // Closing first keeps one session live and leaves the previous
         // container's `isOpen` false.
@@ -131,55 +131,51 @@ public final class InventoryCoordinator {
             let opened = try runtime.openContainer(interaction)
             session = opened
             sessionName = interaction.name
-            return note("Opened \(interaction.name): \(opened.totalCount) items.")
+            return note(.opened(container: interaction.name, items: opened.totalCount))
         } catch {
             session = nil
             sessionName = nil
-            return note("Search failed: \(String(describing: error))")
+            return note(.failed(action: "Search", reason: String(describing: error)))
         }
     }
 
     @discardableResult
-    public func takeAllFromOpenContainer() -> String {
-        guard runtime != nil else { return InventoryCore.noRuntimeText }
-        guard let session else { return InventoryCore.noContainerText }
+    public func takeAllFromOpenContainer() -> ItemActionOutcome {
+        guard runtime != nil else { return .unavailable }
+        guard let session else { return .noContainer }
         do {
             let moved = try session.takeAll()
             reportTaken(moved, from: session)
-            return note(InventoryCore.takeAllSentence(moved))
+            return note(.tookAll(moved))
         } catch {
-            return note("Take all failed: \(String(describing: error))")
+            return note(.failed(action: "Take all", reason: String(describing: error)))
         }
     }
 
     @discardableResult
-    public func closeOpenContainer() -> String {
-        guard let session else { return InventoryCore.noContainerText }
+    public func closeOpenContainer() -> ItemActionOutcome {
+        guard let session else { return .noContainer }
         session.close()
         self.session = nil
         sessionName = nil
-        return note("Closed the container.")
+        return note(.closed)
     }
 
     /// Drops `item`, or the first carried stack when `item` is nil.
     @discardableResult
-    public func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         let carried = runtime.inventory.inventory(of: runtime.player).stacks
-        guard let target = item ?? carried.first?.item else {
-            return "Nothing carried to drop."
-        }
-        guard let placement = world?.dropPlacement() else {
-            return "Drop needs a resident cell; none is loaded."
-        }
+        guard let target = item ?? carried.first?.item else { return .nothingToDrop }
+        guard let placement = world?.dropPlacement() else { return .noDropCell }
         do {
             try runtime.drop(target, count: count, at: placement)
             storyEvents?.reportStoryEvent(.removeItem(
                 target, reference: nil, owner: nil, how: .dropped
             ))
-            return note("Dropped \(count) × \(name(of: target)) in front of the player.")
+            return note(.dropped(count: count, item: name(of: target)))
         } catch {
-            return note("Drop failed: \(String(describing: error))")
+            return note(.failed(action: "Drop", reason: String(describing: error)))
         }
     }
 
@@ -203,13 +199,14 @@ public final class InventoryCoordinator {
         }
     }
 
-    func note(_ text: String) -> String {
-        lastActionText = text
-        return text
+    @discardableResult
+    func note(_ outcome: ItemActionOutcome) -> ItemActionOutcome {
+        lastAction = outcome
+        return outcome
     }
 
-    func noteGrant(_ text: String) -> String {
-        lastGrantText = text
-        return text
+    func noteGrant(_ outcome: GrantActionOutcome) -> GrantActionOutcome {
+        lastGrant = outcome
+        return outcome
     }
 }

@@ -10,6 +10,8 @@ import AppKit
 protocol InspectorPanel: NSViewController {
     /// Reports override changes so shell chrome can update without another timer.
     var onOverrideStateChange: (() -> Void)? { get set }
+    /// Gives key focus back to the game view after a control interaction.
+    var refocusAction: (() -> Void)? { get set }
 
     /// Restores every control in the panel to its documented default.
     func resetToDefaults()

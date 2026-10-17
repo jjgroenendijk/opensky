@@ -286,7 +286,7 @@ extension BenchCommand {
         let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [], nativeDispatch: PapyrusNativeRegistry.standard
         ))
-        renderer.onWorldUpdate = { [runtime, weak renderer] delta in
+        renderer.session.worldTick.register(.scripts) { [runtime, weak renderer] delta in
             _ = runtime.advance(delta: delta, gameClock: renderer?.gameClock)
         }
     }

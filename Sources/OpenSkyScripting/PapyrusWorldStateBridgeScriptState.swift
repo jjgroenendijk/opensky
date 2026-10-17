@@ -39,7 +39,7 @@ extension PapyrusWorldStateBridge {
 
     /// Hands the stored reactions to `factionReactionsChanged`, also after a load.
     public func publishFactionReactions() {
-        factionReactionsChanged?(scriptedFactionReactions())
+        factionNatives.reactionsChanged(scriptedFactionReactions())
     }
 
     public func scriptedFactionReactions() -> [FactionReactionOverride] {

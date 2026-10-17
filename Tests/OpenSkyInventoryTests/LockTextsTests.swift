@@ -37,10 +37,12 @@ struct LockTextsTests {
 
     @Test func aRefusedPressExplainsWhyNoMinigameOpens() {
         let texts = LockTexts.vanilla
-        #expect(LockCore.refusalNotice(for: .requiresKey, lockpicks: 3, texts: texts)
-            == "sImpossibleLock")
-        #expect(LockCore.refusalNotice(for: .adept, lockpicks: 0, texts: texts)
-            == "sOutOfLockpicks")
-        #expect(LockCore.refusalNotice(for: .adept, lockpicks: 1, texts: texts) == nil)
+        #expect(LockCore.refusalNotice(for: .requiresKey, lockpicks: 3) == .requiresKey)
+        #expect(LockCore.refusalNotice(for: .adept, lockpicks: 0) == .outOfLockpicks)
+        #expect(LockCore.refusalNotice(for: .adept, lockpicks: 1) == nil)
+        #expect(texts.text(for: .requiresKey) == "sImpossibleLock")
+        #expect(texts.text(for: LockActionOutcome.notice(.outOfLockpicks)) == "sOutOfLockpicks")
+        #expect(texts
+            .text(for: .refused(name: "Door", difficulty: .adept)) == "Door is locked (Adept).")
     }
 }

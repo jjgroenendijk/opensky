@@ -105,7 +105,7 @@ custom_rules:
   game_view_controller_extension:
     name: "GameViewController extension"
     regex: '\bextension\s+GameViewController\b'
-    excluded: 'Sources/OpenSky/GameView/GameViewController([A-Za-z]*Panels)?\.swift$'
+    excluded: 'Sources/OpenSky/GameView/GameViewController([A-Za-z]*Panels|Hosts)?\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
   perk_entry_point_literal:
@@ -132,6 +132,19 @@ custom_rules:
     regex: '(\.setting\(editorID:|func resolve\(store: GameSettingStore\))'
     excluded: '(Tests/.*|Sources/OpenSky(CrimeInterface/CrimeTexts|CombatInterface/(Archery|Arrow|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemNoticeTexts|MagicTexts|MenuRecordData|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings|LockTexts|TemperingTexts)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
+    severity: error
+  adapter_holds_controller:
+    name: "Adapter holds the controller"
+    regex: '\b(let|var)\s+\w+\s*:\s*GameViewController\b'
+    included: 'Sources/OpenSky/GameView/.*\.swift$'
+    excluded: 'Sources/OpenSky/GameView/GameViewController[A-Za-z]*\.swift$'
+    message: "Store the adapter's own host protocol, not GameViewController (docs/engine/coordinators.md)"
+    severity: error
+  action_returns_text:
+    name: "Action returns text"
+    regex: '@discardableResult\s+(?:(?:public|internal|package)\s+)?func\s+\w+\((?:[^()]|\([^()]*\))*\)\s*->\s*String\b'
+    excluded: '(Sources/OpenSky/|Tests/).*$'
+    message: "Return a typed outcome and build its line in a formatter (docs/engine/coordinators.md)"
     severity: error
 
 reporter: "xcode"

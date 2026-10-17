@@ -112,6 +112,7 @@ struct UILabPanelTests {
         panel.loadViewIfNeeded()
         let fake = FakeUILabProvider()
         panel.provider = fake
+        panel.refocusAction = { [weak fake] in fake?.refocusGameView() }
 
         panel.overlayEnabledControl.state = .off
         panel.overlayEnabledControl.sendAction(
@@ -248,6 +249,7 @@ struct UILabPanelTests {
         panel.loadViewIfNeeded()
         let fake = FakeUILabProvider()
         panel.provider = fake
+        panel.refocusAction = { [weak fake] in fake?.refocusGameView() }
 
         for control in [panel.menuPushControl, panel.menuPopControl, panel.menuClearControl] {
             control.sendAction(control.action, to: control.target)
@@ -318,6 +320,7 @@ struct UILabPanelTests {
         panel.loadViewIfNeeded()
         let fake = FakeUILabProvider()
         panel.provider = fake
+        panel.refocusAction = { [weak fake] in fake?.refocusGameView() }
         panel.refreshStats()
         #expect(panel.stringsReadout.contains("no game data"))
     }

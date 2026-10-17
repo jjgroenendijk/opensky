@@ -2,15 +2,42 @@
 // the settings, menu text, sounds, and frame tick that every menu movie shares.
 
 import AppKit
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 
-final class MenuRouter {
-    unowned let game: GameViewController
+/// What `MenuRouter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
+    var containerMenu: ContainerMenuController { get }
+    var controlMapLoader: (() throws -> ControlMapFile)? { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var hud: HUDCoordinator { get }
+    var inventoryMenu: InventoryMenuController { get }
+    var journalMenu: JournalMenuController { get }
+    var lockpickingMenu: LockpickingMenuController { get }
+    var mapMenu: MapMenuCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuMode: MenuModeController { get }
+    var menuTextLoader: (() -> LocalizedLabels)? { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var raceMenu: RaceMenuCoordinator { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var skillsMenu: SkillsMenuCoordinator { get }
+    var swfMovies: SWFMovieSource { get }
+    var systemMenu: SystemMenuCoordinator { get }
+    var titleMenu: TitleMenuCoordinator { get }
+    var hostView: NSView { get }
+}
 
-    init(game: GameViewController) {
+final class MenuRouter {
+    unowned let game: any MenuRouterHost
+
+    init(game: any MenuRouterHost) {
         self.game = game
     }
 
@@ -91,9 +118,9 @@ final class MenuRouter {
         if let labels = game.menuTextLoader?() {
             renderer.swfTextTranslator = { labels.label(for: $0) }
         }
-        let sounds = MenuSoundPlayer(game: game)
+        let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
-        renderer.onFrame.add { [weak game] _ in
+        renderer.session.frameSteps.register(.menuRouting) { [weak game] _ in
             game?.mapMenu.tick()
             let now = Date().timeIntervalSinceReferenceDate
             game?.titleMenu.tick(now: now)
@@ -107,33 +134,39 @@ final class MenuRouter {
     /// The one menu input consumer routes by the top of the menu stack. Each
     /// route checks that its own menu is open.
     func route(_ event: MenuInputEvent) {
-        switch game.menuMode.topMenu {
-        case InventoryMenuController.identifier:
-            game.inventoryMenu.route(event)
-        case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
-            game.containerMenu.route(event)
-        case JournalMenuController.identifier:
-            game.journalMenu.route(event)
-        case DialogueMenuController.identifier:
-            game.dialogueMenu.route(event)
-        case LockpickingMenuController.identifier:
-            game.lockpickingMenu.route(event)
-        case MessageCoordinator.identifier:
-            game.messages.route(event)
-        case LoadingScreenWorldAdapter.identifier:
-            return
-        case TitleMenuCoordinator.identifier:
-            game.titleMenu.route(event)
-        case RaceMenuCoordinator.identifier:
-            game.raceMenu.route(event)
-        case MapMenuCoordinator.identifier:
-            game.mapMenu.route(event)
-        case SkillsMenuCoordinator.identifier:
-            game.skillsMenu.route(event)
-        default:
-            game.systemMenu.route(event)
-        }
+        routes.route(event, top: game.menuMode.topMenu)
     }
+
+    private lazy var routes: MenuRouteTable = {
+        let table = MenuRouteTable { [unowned game] in game.systemMenu.route($0) }
+        table.register(InventoryMenuController.identifier) { [unowned game] in
+            game.inventoryMenu.route($0)
+        }
+        table.register(
+            ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier
+        ) { [unowned game] in game.containerMenu.route($0) }
+        table.register(JournalMenuController.identifier) { [unowned game] in
+            game.journalMenu.route($0)
+        }
+        table.register(DialogueMenuController.identifier) { [unowned game] in
+            game.dialogueMenu.route($0)
+        }
+        table.register(LockpickingMenuController.identifier) { [unowned game] in
+            game.lockpickingMenu.route($0)
+        }
+        table.register(MessageCoordinator.identifier) { [unowned game] in game.messages.route($0) }
+        table.register(LoadingScreenWorldAdapter.identifier) { _ in }
+        table
+            .register(TitleMenuCoordinator.identifier) { [unowned game] in
+                game.titleMenu.route($0)
+            }
+        table.register(RaceMenuCoordinator.identifier) { [unowned game] in game.raceMenu.route($0) }
+        table.register(MapMenuCoordinator.identifier) { [unowned game] in game.mapMenu.route($0) }
+        table.register(SkillsMenuCoordinator.identifier) { [unowned game] in
+            game.skillsMenu.route($0)
+        }
+        return table
+    }()
 
     /// The menus whose movie hit tests the cursor, so it must be visible.
     static let cursorMenus: [MenuIdentifier] = [
@@ -143,7 +176,7 @@ final class MenuRouter {
     /// A script opens the race menu during play, while look holds the cursor.
     func modeChanged(to route: InputRoute) {
         let free = route == .menu && game.menuMode.topMenu.map(Self.cursorMenus.contains) == true
-        (game.view as? GameMetalView)?.setMenuCursorFree(free)
+        (game.hostView as? GameMetalView)?.setMenuCursorFree(free)
     }
 
     /// The main menu movie hit tests the cursor. The other menus still take a

@@ -144,9 +144,6 @@ nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the `World > Inventory & Equipment` panel.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` declares
-/// it and the panel reaches it through the composed `WorldControlProviders`.
 @MainActor
 public protocol InventoryEquipmentControlProviding: AnyObject {
     /// Which owner the equipment inspection reads. Settable because the
@@ -160,5 +157,7 @@ public protocol InventoryEquipmentControlProviding: AnyObject {
     /// is not checked, but an unknown form or a non-positive count is refused.
     /// - Returns: a readable outcome, with the reason for a refusal.
     @discardableResult
-    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String
+    func grantItem(
+        _ item: FormID, count: Int32, to target: InventoryGrantTarget
+    ) -> GrantActionOutcome
 }

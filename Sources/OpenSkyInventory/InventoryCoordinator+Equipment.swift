@@ -10,49 +10,45 @@ extension InventoryCoordinator {
     /// Equips on `target`, unequipping whatever conflicts. A nil `item` picks
     /// the first equippable stack.
     @discardableResult
-    public func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
-        guard let equipment else { return InventoryCore.noEquipmentText }
-        guard let holder = holder(for: target) else {
-            return note(InventoryCore.noTargetText(target))
-        }
+    public func equipItem(
+        _ item: FormID?, on target: EquipmentTargetSelector
+    ) -> ItemActionOutcome {
+        guard let equipment else { return .noEquipment }
+        guard let holder = holder(for: target) else { return note(.noEquipTarget(target)) }
         let state = equipment.inventory.inventory(of: holder)
         guard
             let chosen = item ?? InventoryCore.firstEquippable(
                 in: state, occupancy: equipment.occupancy(of:)
             )
-        else {
-            return note("Nothing equippable held.")
-        }
+        else { return note(.nothingEquippable) }
         do {
             let change = try equipment.equip(chosen, on: holder)
             // After the write, so the refresh reads this equip's result.
             world?.equipmentChanged(on: holder)
-            return note(InventoryCore.equipSentence(
-                changed: change.changed,
+            return note(.equipped(
                 item: name(of: chosen),
                 target: label(target),
+                changed: change.changed,
                 unequipped: change.unequipped.map { name(of: $0) }
             ))
         } catch {
-            return note("Equip failed: \(String(describing: error))")
+            return note(.failed(action: "Equip", reason: String(describing: error)))
         }
     }
 
     /// Unequips on `target`. A nil `item` picks the first worn item.
     @discardableResult
-    public func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
-        guard let equipment else { return InventoryCore.noEquipmentText }
-        guard let holder = holder(for: target) else {
-            return note(InventoryCore.noTargetText(target))
-        }
+    public func unequipItem(
+        _ item: FormID?, on target: EquipmentTargetSelector
+    ) -> ItemActionOutcome {
+        guard let equipment else { return .noEquipment }
+        guard let holder = holder(for: target) else { return note(.noEquipTarget(target)) }
         guard let chosen = item ?? equipment.equipped(on: holder).first else {
-            return note("\(label(target)) is wearing nothing.")
+            return note(.wearingNothing(target: label(target)))
         }
         let changed = equipment.unequip(chosen, on: holder)
         world?.equipmentChanged(on: holder)
-        return note(changed
-            ? "Unequipped \(name(of: chosen)) on \(label(target))."
-            : "\(name(of: chosen)) was not equipped on \(label(target)).")
+        return note(.unequipped(item: name(of: chosen), target: label(target), changed: changed))
     }
 
     /// What `target` wears. Empty without equipment or without a target.

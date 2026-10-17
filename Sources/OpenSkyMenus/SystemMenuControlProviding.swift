@@ -93,5 +93,4 @@ public protocol SystemMenuControlProviding: AnyObject {
     /// Asks before deleting the save selected on the Save or Load page.
     func deleteSelectedSave()
     var systemMenuSnapshot: SystemMenuControlSnapshot { get }
-    func refocusGameView()
 }

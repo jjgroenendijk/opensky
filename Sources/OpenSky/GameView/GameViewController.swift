@@ -108,7 +108,7 @@ final class GameViewController: NSViewController {
     var audioFileSystem: (any GameFileSource)?
     /// The session stores the audio, crime and faction bridges read. The build
     /// runner holds the builder half, so the two share nothing mutable.
-    var worldData: (any WorldDataProviding)?
+    var worldData: WorldDataStores?
     /// The audio engine, the world directors and the World > Audio lab state.
     lazy var audio: AudioCoordinator = {
         let audio = AudioCoordinator()
@@ -201,10 +201,20 @@ final class GameViewController: NSViewController {
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     lazy var lockWorld = LockWorldAdapter(game: self)
     lazy var hazards = HazardCoordinator()
-    lazy var hazardWorld = HazardWorldAdapter(game: self)
+    lazy var hazardWorld = HazardWorldAdapter(HazardWorldDependencies(
+        hazards: hazards,
+        combat: combat,
+        magic: magic,
+        renderer: { [unowned self] in renderer }
+    ))
     lazy var effects = EffectsCoordinator()
     lazy var effectsWorld = EffectsWorldAdapter(game: self)
-    lazy var trapControl = TrapControlAdapter(game: self)
+    lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
+        hazards: hazards,
+        scripts: scripts,
+        worldState: worldState,
+        streamer: { [unowned self] in streamer }
+    ))
     /// The player graphs, the body, and the locomotion and first-person panels.
     lazy var player: PlayerCoordinator = {
         let player = PlayerCoordinator(input: cameraInput)
@@ -243,7 +253,11 @@ final class GameViewController: NSViewController {
     /// Memberships, relationship ranks and derived hostility. Its runtimes stay nil without
     /// game data.
     lazy var factions = FactionCoordinator(store: worldState)
-    lazy var factionWorld = FactionWorldAdapter(game: self)
+    lazy var factionWorld = FactionWorldAdapter(FactionWorldDependencies(
+        factions: factions,
+        actors: actorWorld,
+        streamer: { [unowned self] in streamer }
+    ))
     /// Bounties, ownership, guard response and the Crime & Factions panel.
     let crime = CrimeCoordinator()
     lazy var crimeWorld = CrimeWorldAdapter(game: self)
@@ -339,8 +353,7 @@ final class GameViewController: NSViewController {
                     scene: provider != nil ? RenderScene(instances: []) : nil,
                     camera: nil,
                     input: cameraInput,
-                    movementConfiguration: (provider as? MovementConfigurationProviding)?
-                        .movementConfiguration ?? .synthetic,
+                    movementConfiguration: provider?.movementConfiguration ?? .synthetic,
                     pipelineCache: makePipelineCache(device: device),
                     wallClock: simulationClock
                 )
@@ -357,11 +370,11 @@ final class GameViewController: NSViewController {
                 wireSystems(session: session, renderer: newRenderer)
             }
             sessionStart.waitForFirstFrame()
-            newRenderer.onFrame.add { [weak sessionStart] _ in
+            newRenderer.session.frameSteps.register(.sessionStartTiming) { [weak sessionStart] _ in
                 sessionStart?.frameDidDraw()
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
-            newRenderer.onFrame.add { [weak self] _ in
+            newRenderer.session.frameSteps.register(.hud) { [weak self] _ in
                 self?.hud.updateFrame()
             }
         } catch {
@@ -495,14 +508,13 @@ extension GameViewController {
     }
 }
 
-extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
-    UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
-    StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
-    HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
-    TitleMenuControlForwarding, MapMenuControlForwarding, SkillsMenuControlForwarding,
-    WorldLoadReportProviding, AssetCacheControlProviding {}
+extension GameViewController: WorldLoadReportProviding, AssetCacheControlProviding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
+    var audioEnabled: Bool {
+        audio.audioEnabled
+    }
+
     func quitApplication() {
         NSApplication.shared.terminate(nil)
     }
@@ -525,33 +537,13 @@ extension GameViewController: @MainActor SystemMenuWorld {
     }
 }
 
-extension GameViewController: AudioControlForwarding, RuntimeStateControlForwarding,
-    ScriptControlForwarding, WorldRenderControlForwarding, RenderControlWorld,
-    EffectsControlForwarding, ExplosionControlForwarding, CinematicCameraControlForwarding,
-    LoadingScreenControlForwarding, MessageControlForwarding
-{
+extension GameViewController: RenderControlWorld {
     var playerSettingsStore: PlayerSettingsStore {
         playerSettings.store
     }
 
     func makePipelineCache(device: MTLDevice) throws -> PipelineCache {
         try PipelineCache.fromSettings(device: device, store: playerSettings.store)
-    }
-
-    var cinematicSelectedActor: ReferenceKey? {
-        actorWorld.nearestActorValueHolder()?.key
-    }
-
-    var cinematicRemainingHostiles: Int {
-        combat.combatLoopSnapshot.hostileCount
-    }
-
-    var effectsSelectedActor: ReferenceKey? {
-        actorWorld.nearestActorValueHolder()?.key
-    }
-
-    var explosionControlWorld: any ExplosionControlWorld {
-        effectsWorld
     }
 
     func refocusGameView() {
@@ -580,5 +572,3 @@ extension GameViewController {
         idleWorld.headAssembly
     }
 }
-
-extension GameViewController: ObjectAnimationControlForwarding {}

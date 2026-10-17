@@ -14,9 +14,7 @@ extension DestinationRegistry {
             symbolName: "chart.line.uptrend.xyaxis",
             content: .worldInspector { context in
                 let panel = ProgressionPanelViewController()
-                panel.provider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.progression
                 return panel
             }
         )

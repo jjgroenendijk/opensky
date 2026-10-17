@@ -2,6 +2,7 @@
 // otherwise the launcher offers the mode the user picked last.
 
 import Foundation
+import OpenSkyGameData
 
 nonisolated public enum LaunchPreferences {
     /// UI tests and scripts set this to start a mode without the launcher.
@@ -22,11 +23,17 @@ nonisolated public enum LaunchPreferences {
         environment[titleScreenKey] == "1"
     }
 
-    public static func lastMode(userDefaults: UserDefaults = .standard) -> LaunchMode {
-        userDefaults.string(forKey: lastModeKey).flatMap(LaunchMode.init(rawValue:)) ?? .play
+    public static let lastModeSetting = SettingKey(lastModeKey, default: LaunchMode.play.rawValue)
+
+    public static func lastMode(
+        userDefaults: UserDefaults = GameDataLocator.settingsDefaults
+    ) -> LaunchMode {
+        LaunchMode(rawValue: SettingsStore(defaults: userDefaults).value(lastModeSetting)) ?? .play
     }
 
-    public static func remember(_ mode: LaunchMode, userDefaults: UserDefaults = .standard) {
-        userDefaults.set(mode.rawValue, forKey: lastModeKey)
+    public static func remember(
+        _ mode: LaunchMode, userDefaults: UserDefaults = GameDataLocator.settingsDefaults
+    ) {
+        SettingsStore(defaults: userDefaults).set(mode.rawValue, for: lastModeSetting)
     }
 }

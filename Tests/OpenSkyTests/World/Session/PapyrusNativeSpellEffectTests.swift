@@ -210,7 +210,7 @@ struct PapyrusNativeSpellEffectTests {
 
     @Test func aSessionWithNoSpellbookFailsRatherThanAnswering() throws {
         let fixture = try PapyrusNativeSpellTests.fixture()
-        fixture.session.bridge.casterRuntime = { nil }
+        fixture.session.bridge.magicNatives.casterRuntime = { nil }
         let spell = spellHandle(SpellbookFixture.Spell.fastHealing, fixture)
         #expect(PapyrusWorldFixture.isInvalidArguments(call(
             "Actor", "HasSpell", fixture, receiver: fixture.receiver,

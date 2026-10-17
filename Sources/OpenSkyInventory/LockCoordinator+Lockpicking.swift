@@ -49,16 +49,16 @@ extension LockCoordinator {
                 _ = try? items.inventory.remove(lockpickItem, count: 1, from: items.player)
             }
             sessionExperience += report(uses: settings.brokenUses, action: .lockpickBroken)
-            lastText = "A lockpick broke."
+            lastAction = .pickBroke
         case .opened:
             open()
         case .outOfPicks:
             finish(opened: false, keyRewarded: false)
-            lastText = texts.outOfLockpicks
+            lastAction = .notice(.outOfLockpicks)
             world?.showLockNotice(texts.outOfLockpicks)
         case .cancelled:
             finish(opened: false, keyRewarded: false)
-            lastText = "Stopped picking."
+            lastAction = .stoppedPicking
         }
     }
 
@@ -73,7 +73,7 @@ extension LockCoordinator {
             storyEvents?.reportStoryEvent(.lockPick(actor: items.player.key, lock: target.key))
         }
         finish(opened: true, keyRewarded: rewarded)
-        lastText = "Picked \(sessionTarget?.interaction.name ?? "the lock")."
+        lastAction = .picked(name: sessionTarget?.interaction.name)
     }
 
     /// `Mod Lockpicking Key Reward Chance` in percent. Wax Key sets 100.

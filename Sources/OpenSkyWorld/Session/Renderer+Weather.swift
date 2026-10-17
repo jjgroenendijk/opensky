@@ -10,9 +10,9 @@ import OpenSkyRendering
 extension Renderer {
     /// The session's weather and its cloud layers. Without weather data the renderer
     /// keeps its procedural sky.
-    public func attachWeather(from provider: Any?) throws {
-        weather = (provider as? WeatherProviding)?.weatherSystem
-        if let files = (provider as? ScriptDataProviding)?.scriptFileSystem {
+    public func attachWeather(from provider: WorldDataStores?) throws {
+        weather = provider?.weatherSystem
+        if let files = provider?.scriptFileSystem {
             skyClouds = try SkyClouds(fileSystem: files, device: device)
         }
     }

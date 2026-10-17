@@ -51,12 +51,6 @@ extension Renderer {
         session.input
     }
 
-    /// Main-thread per-frame hook, invoked after the camera advances with the
-    /// live free-fly position (`GameSession.prepareLiveFrame`).
-    public var onFrame: CallbackFanOut<SIMD3<Float>> {
-        session.onFrame
-    }
-
     public var walkController: WalkController {
         get { session.walkController }
         _modify { yield &session.walkController }
@@ -90,11 +84,6 @@ extension Renderer {
     public var playerBody: PlayerBody? {
         get { session.playerBody }
         _modify { yield &session.playerBody }
-    }
-
-    public var playerSeat: float4x4? {
-        get { session.playerSeat }
-        set { session.playerSeat = newValue }
     }
 
     public var playerFirstPersonRig: PlayerFirstPersonRig? {
@@ -155,11 +144,6 @@ extension Renderer {
     public var audioClock: FrameSimClock {
         get { session.audioClock }
         _modify { yield &session.audioClock }
-    }
-
-    public var onWorldUpdate: ((Float) -> Void)? {
-        get { session.onWorldUpdate }
-        _modify { yield &session.onWorldUpdate }
     }
 
     public var lastScriptUpdateMS: Double {

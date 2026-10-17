@@ -54,8 +54,3 @@ nonisolated public struct StoryData: Sendable {
         )
     }
 }
-
-/// Scene and story-manager data. A synthetic scene answers empty data.
-nonisolated public protocol StoryDataProviding {
-    var storyData: StoryData { get }
-}

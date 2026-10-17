@@ -32,25 +32,24 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String {
-        guard count > 0 else {
-            inventoryEquipment.lastAction = "Grant refused: a count of \(count) is not a stack."
-            return inventoryEquipment.lastAction
-        }
-        guard item != Self.unknownItem else {
-            inventoryEquipment.lastAction = "Grant refused: no loaded plugin describes \(item)."
-            return inventoryEquipment.lastAction
-        }
+    func grantItem(
+        _ item: FormID, count: Int32, to target: InventoryGrantTarget
+    ) -> GrantActionOutcome {
+        guard count > 0 else { return noteGrant(.notAStack(count: count)) }
+        guard item != Self.unknownItem else { return noteGrant(.unknownItem(item)) }
         guard target == .player || inventoryEquipment.containerIsOpen else {
-            inventoryEquipment.lastAction = "Grant refused: no container is open."
-            return inventoryEquipment.lastAction
+            return noteGrant(.noOpenContainer)
         }
         switch target {
         case .player: inventoryEquipment.playerCount += count
         case .openContainer: inventoryEquipment.containerCount += count
         }
-        inventoryEquipment.lastAction = "Granted \(count) × IronSword to \(target.label)."
-        return inventoryEquipment.lastAction
+        return noteGrant(.granted(count: count, item: "IronSword", to: target))
+    }
+
+    private func noteGrant(_ outcome: GrantActionOutcome) -> GrantActionOutcome {
+        inventoryEquipment.lastAction = outcome.text
+        return outcome
     }
 
     var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {

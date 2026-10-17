@@ -8,18 +8,18 @@ import OpenSkyMenus
 extension DestinationRegistry {
     static let audioOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            AudioOutputSection.isOverridden(provider: context.providers)
-                || AudioSfxSection.isOverridden(provider: context.providers)
-                || AudioMusicSection.isOverridden(provider: context.providers)
-                || AudioFootstepsSection.isOverridden(provider: context.providers)
-                || AudioReverbSection.isOverridden(provider: context.providers)
+            AudioOutputSection.isOverridden(provider: context.audio)
+                || AudioSfxSection.isOverridden(provider: context.audio)
+                || AudioMusicSection.isOverridden(provider: context.audio)
+                || AudioFootstepsSection.isOverridden(provider: context.audio)
+                || AudioReverbSection.isOverridden(provider: context.audio)
         },
         resetToDefaults: { context in
-            AudioOutputSection.resetToDefaults(provider: context.providers)
-            AudioSfxSection.resetToDefaults(provider: context.providers)
-            AudioMusicSection.resetToDefaults(provider: context.providers)
-            AudioFootstepsSection.resetToDefaults(provider: context.providers)
-            AudioReverbSection.resetToDefaults(provider: context.providers)
+            AudioOutputSection.resetToDefaults(provider: context.audio)
+            AudioSfxSection.resetToDefaults(provider: context.audio)
+            AudioMusicSection.resetToDefaults(provider: context.audio)
+            AudioFootstepsSection.resetToDefaults(provider: context.audio)
+            AudioReverbSection.resetToDefaults(provider: context.audio)
         }
     )
 
@@ -27,10 +27,10 @@ extension DestinationRegistry {
     /// picked items are world state.
     static let hudInteractionOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            HUDElementsSection.isOverridden(provider: context.providers)
+            HUDElementsSection.isOverridden(provider: context.hud)
         },
         resetToDefaults: { context in
-            HUDElementsSection.resetToDefaults(provider: context.providers)
+            HUDElementsSection.resetToDefaults(provider: context.hud)
         }
     )
 
@@ -39,16 +39,16 @@ extension DestinationRegistry {
     /// Said-state and quest stages from a conversation are not undone.
     static let dialogueVoiceOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            DialogueSection.isOverridden(provider: context.providers)
-                || DialogueCameraSection.isOverridden(provider: context.providers)
-                || AudioVoiceSection.isOverridden(provider: context.providers)
-                || FaceMorphSection.isOverridden(provider: context.providers)
+            DialogueSection.isOverridden(provider: context.dialogue)
+                || DialogueCameraSection.isOverridden(provider: context.dialogueCamera)
+                || AudioVoiceSection.isOverridden(provider: context.audio)
+                || FaceMorphSection.isOverridden(provider: context.faceMorph)
         },
         resetToDefaults: { context in
-            DialogueSection.resetToDefaults(provider: context.providers)
-            DialogueCameraSection.resetToDefaults(provider: context.providers)
-            AudioVoiceSection.resetToDefaults(provider: context.providers)
-            FaceMorphSection.resetToDefaults(provider: context.providers)
+            DialogueSection.resetToDefaults(provider: context.dialogue)
+            DialogueCameraSection.resetToDefaults(provider: context.dialogueCamera)
+            AudioVoiceSection.resetToDefaults(provider: context.audio)
+            FaceMorphSection.resetToDefaults(provider: context.faceMorph)
         }
     )
 
@@ -58,14 +58,14 @@ extension DestinationRegistry {
     /// for — it reads as a rendering bug from anywhere else in the app.
     static let worldOverrides = DestinationOverrideActions(
         isOverridden: {
-            CameraSection.isOverridden(provider: $0.providers)
-                || FirstPersonSection.isOverridden(provider: $0.providers)
-                || RenderDebugSection.isOverridden(provider: $0.providers)
+            CameraSection.isOverridden(provider: $0.camera)
+                || FirstPersonSection.isOverridden(provider: $0.firstPerson)
+                || RenderDebugSection.isOverridden(provider: $0.renderDebug)
         },
         resetToDefaults: {
-            CameraSection.resetToDefaults(provider: $0.providers)
-            FirstPersonSection.resetToDefaults(provider: $0.providers)
-            RenderDebugSection.resetToDefaults(provider: $0.providers)
+            CameraSection.resetToDefaults(provider: $0.camera)
+            FirstPersonSection.resetToDefaults(provider: $0.firstPerson)
+            RenderDebugSection.resetToDefaults(provider: $0.renderDebug)
         }
     )
 
@@ -73,57 +73,57 @@ extension DestinationRegistry {
     /// sneak, jump, and raised events are world actions, not settings.
     static let playerLocomotionOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            LocomotionDevSection.isOverridden(provider: context.providers)
+            LocomotionDevSection.isOverridden(provider: context.playerLocomotion)
         },
         resetToDefaults: { context in
-            LocomotionDevSection.resetToDefaults(provider: context.providers)
+            LocomotionDevSection.resetToDefaults(provider: context.playerLocomotion)
         }
     )
 
     static let playerSettingsOverrides = DestinationOverrideActions(
-        isOverridden: { KeyBindingsSection.isOverridden(provider: $0.providers) },
-        resetToDefaults: { KeyBindingsSection.resetToDefaults(provider: $0.providers) }
+        isOverridden: { KeyBindingsSection.isOverridden(provider: $0.playerSettings) },
+        resetToDefaults: { KeyBindingsSection.resetToDefaults(provider: $0.playerSettings) }
     )
 
     static let systemMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            SystemMenuSection.isOverridden(provider: context.providers)
-                || SystemMenuSettingsSection.isOverridden(provider: context.providers)
+            SystemMenuSection.isOverridden(provider: context.systemMenu)
+                || SystemMenuSettingsSection.isOverridden(provider: context.systemMenu)
         },
         resetToDefaults: { context in
-            SystemMenuSection.resetToDefaults(provider: context.providers)
-            SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
+            SystemMenuSection.resetToDefaults(provider: context.systemMenu)
+            SystemMenuSettingsSection.resetToDefaults(provider: context.systemMenu)
         }
     )
 
     /// An open title or race menu holds the world paused.
     static let characterMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            context.providers.titleMenuSnapshot.isOpen || context.providers.raceMenuSnapshot.isOpen
-                || context.providers.skillsMenuSnapshot.isOpen
+            context.titleMenu.titleMenuSnapshot.isOpen || context.raceMenu.raceMenuSnapshot.isOpen
+                || context.skillsMenu.skillsMenuSnapshot.isOpen
         },
         resetToDefaults: { context in
-            if context.providers.skillsMenuSnapshot.isOpen {
-                context.providers.sendSkillsMenuInput(.button(.cancel))
+            if context.skillsMenu.skillsMenuSnapshot.isOpen {
+                context.skillsMenu.sendSkillsMenuInput(.button(.cancel))
             }
-            if context.providers.raceMenuSnapshot.isOpen {
-                context.providers.sendRaceMenuInput(.button(.cancel))
+            if context.raceMenu.raceMenuSnapshot.isOpen {
+                context.raceMenu.sendRaceMenuInput(.button(.cancel))
             }
-            context.providers.closeTitleMenu()
+            context.titleMenu.closeTitleMenu()
         }
     )
 
     static let mapMenuOverrides = DestinationOverrideActions(
-        isOverridden: { context in context.providers.mapMenuSnapshot.mode != nil },
-        resetToDefaults: { context in context.providers.closeMap() }
+        isOverridden: { context in context.mapMenu.mapMenuSnapshot.mode != nil },
+        resetToDefaults: { context in context.mapMenu.closeMap() }
     )
 
     static let inventoryMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            InventoryMenuSection.isOverridden(provider: context.providers)
+            InventoryMenuSection.isOverridden(provider: context.inventoryMenu)
         },
         resetToDefaults: { context in
-            InventoryMenuSection.resetToDefaults(provider: context.providers)
+            InventoryMenuSection.resetToDefaults(provider: context.inventoryMenu)
         }
     )
 
@@ -131,10 +131,10 @@ extension DestinationRegistry {
     /// change, and `World > Runtime State` already owns resetting it.
     static let inventoryEquipmentOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            EquipmentInspectionSection.isOverridden(provider: context.providers)
+            EquipmentInspectionSection.isOverridden(provider: context.inventoryEquipment)
         },
         resetToDefaults: { context in
-            EquipmentInspectionSection.resetToDefaults(provider: context.providers)
+            EquipmentInspectionSection.resetToDefaults(provider: context.inventoryEquipment)
         }
     )
 
@@ -143,10 +143,10 @@ extension DestinationRegistry {
     /// leaves that nomination alone so reopening lands on the same chest.
     static let containerMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            ContainerMenuSection.isOverridden(provider: context.providers)
+            ContainerMenuSection.isOverridden(provider: context.containerMenu)
         },
         resetToDefaults: { context in
-            ContainerMenuSection.resetToDefaults(provider: context.providers)
+            ContainerMenuSection.resetToDefaults(provider: context.containerMenu)
         }
     )
 
@@ -156,39 +156,37 @@ extension DestinationRegistry {
     /// panel setting, so "Reset all" deliberately leaves it alone.
     static let journalOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            JournalPageSection.isOverridden(provider: context.providers)
+            JournalPageSection.isOverridden(provider: context.journal)
         },
         resetToDefaults: { context in
-            JournalPageSection.resetToDefaults(provider: context.providers)
+            JournalPageSection.resetToDefaults(provider: context.journal)
         }
     )
 
     static let environmentOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            let providers = context.providers
-            return ShadowSection.isOverridden(provider: providers)
-                || AnimationSection.isOverridden(provider: providers)
-                || WeatherSection.isOverridden(provider: providers)
-                || ParticlesSection.isOverridden(provider: providers)
-                || PrecipitationSection.isOverridden(provider: providers)
-                || WaterSection.isOverridden(provider: providers)
-                || TerrainSection.isOverridden(provider: providers)
-                || SurfaceShadingSection.isOverridden(provider: providers)
-                || GrassSection.isOverridden(provider: providers)
-                || TerrainLODSection.isOverridden(provider: providers)
+            ShadowSection.isOverridden(provider: context.shadow)
+                || AnimationSection.isOverridden(provider: context.animation)
+                || WeatherSection.isOverridden(provider: context.weather)
+                || ParticlesSection.isOverridden(provider: context.particle)
+                || PrecipitationSection.isOverridden(provider: context.precipitation)
+                || WaterSection.isOverridden(provider: context.water)
+                || TerrainSection.isOverridden(provider: context.terrainShading)
+                || SurfaceShadingSection.isOverridden(provider: context.surfaceShading)
+                || GrassSection.isOverridden(provider: context.grass)
+                || TerrainLODSection.isOverridden(provider: context.terrainLOD)
         },
         resetToDefaults: { context in
-            let providers = context.providers
-            ShadowSection.resetToDefaults(provider: providers)
-            AnimationSection.resetToDefaults(provider: providers)
-            WeatherSection.resetToDefaults(provider: providers)
-            ParticlesSection.resetToDefaults(provider: providers)
-            PrecipitationSection.resetToDefaults(provider: providers)
-            WaterSection.resetToDefaults(provider: providers)
-            TerrainSection.resetToDefaults(provider: providers)
-            SurfaceShadingSection.resetToDefaults(provider: providers)
-            GrassSection.resetToDefaults(provider: providers)
-            TerrainLODSection.resetToDefaults(provider: providers)
+            ShadowSection.resetToDefaults(provider: context.shadow)
+            AnimationSection.resetToDefaults(provider: context.animation)
+            WeatherSection.resetToDefaults(provider: context.weather)
+            ParticlesSection.resetToDefaults(provider: context.particle)
+            PrecipitationSection.resetToDefaults(provider: context.precipitation)
+            WaterSection.resetToDefaults(provider: context.water)
+            TerrainSection.resetToDefaults(provider: context.terrainShading)
+            SurfaceShadingSection.resetToDefaults(provider: context.surfaceShading)
+            GrassSection.resetToDefaults(provider: context.grass)
+            TerrainLODSection.resetToDefaults(provider: context.terrainLOD)
         }
     )
 
@@ -200,10 +198,10 @@ extension DestinationRegistry {
     /// the fight rather than a setting.
     static let combatPhysicsOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            CombatPhysicsSection.isOverridden(provider: context.providers)
+            CombatPhysicsSection.isOverridden(provider: context.physics)
         },
         resetToDefaults: { context in
-            CombatPhysicsSection.resetToDefaults(provider: context.providers)
+            CombatPhysicsSection.resetToDefaults(provider: context.physics)
         }
     )
 
@@ -212,12 +210,12 @@ extension DestinationRegistry {
     /// on purpose.
     static let aiNavigationOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            AIOverlaySection.isOverridden(provider: context.providers)
-                || AIIdleSection.isOverridden(provider: context.providers)
+            AIOverlaySection.isOverridden(provider: context.aiOverlay)
+                || AIIdleSection.isOverridden(provider: context.idle)
         },
         resetToDefaults: { context in
-            AIOverlaySection.resetToDefaults(provider: context.providers)
-            AIIdleSection.resetToDefaults(provider: context.providers)
+            AIOverlaySection.resetToDefaults(provider: context.aiOverlay)
+            AIIdleSection.resetToDefaults(provider: context.idle)
         }
     )
 
@@ -227,10 +225,10 @@ extension DestinationRegistry {
     /// saving change no setting.
     static let runtimeStateOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            RuntimeStateResetSection.isOverridden(provider: context.providers)
+            RuntimeStateResetSection.isOverridden(provider: context.runtimeState)
         },
         resetToDefaults: { context in
-            RuntimeStateResetSection.resetToDefaults(provider: context.providers)
+            RuntimeStateResetSection.resetToDefaults(provider: context.runtimeState)
         }
     )
 
@@ -240,44 +238,44 @@ extension DestinationRegistry {
     /// and the other three sections are read-only.
     static let scriptsOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            ScriptSchedulerSection.isOverridden(provider: context.providers)
+            ScriptSchedulerSection.isOverridden(provider: context.script)
         },
         resetToDefaults: { context in
-            ScriptSchedulerSection.resetToDefaults(provider: context.providers)
+            ScriptSchedulerSection.resetToDefaults(provider: context.script)
         }
     )
 
     static let uiLabOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            UILabControlsSection.isOverridden(provider: context.providers)
-                || SWFMovieSection.isOverridden(provider: context.providers)
+            UILabControlsSection.isOverridden(provider: context.uiLab)
+                || SWFMovieSection.isOverridden(provider: context.swfLab)
         },
         resetToDefaults: { context in
-            UILabControlsSection.resetToDefaults(provider: context.providers)
-            SWFMovieSection.resetToDefaults(provider: context.providers)
+            UILabControlsSection.resetToDefaults(provider: context.uiLab)
+            SWFMovieSection.resetToDefaults(provider: context.swfLab)
         }
     )
 
     static let renderingPerformanceOverrides = DestinationOverrideActions(
         isOverridden: { context in
-            PipelineCacheSection.isOverridden(provider: context.providers)
-                || GPUCullingSection.isOverridden(provider: context.providers)
-                || RoomCullingSection.isOverridden(provider: context.providers)
-                || TextureStreamingSection.isOverridden(provider: context.providers)
-                || RayTracedShadowsSection.isOverridden(provider: context.providers)
-                || UpscalingSection.isOverridden(provider: context.providers)
-                || FrameInterpolationSection.isOverridden(provider: context.providers)
-                || MeshShaderGrassSection.isOverridden(provider: context.providers)
+            PipelineCacheSection.isOverridden(provider: context.renderPerformance)
+                || GPUCullingSection.isOverridden(provider: context.renderPerformance)
+                || RoomCullingSection.isOverridden(provider: context.renderPerformance)
+                || TextureStreamingSection.isOverridden(provider: context.renderPerformance)
+                || RayTracedShadowsSection.isOverridden(provider: context.renderPerformance)
+                || UpscalingSection.isOverridden(provider: context.renderPerformance)
+                || FrameInterpolationSection.isOverridden(provider: context.renderPerformance)
+                || MeshShaderGrassSection.isOverridden(provider: context.renderPerformance)
         },
         resetToDefaults: { context in
-            PipelineCacheSection.resetToDefaults(provider: context.providers)
-            GPUCullingSection.resetToDefaults(provider: context.providers)
-            RoomCullingSection.resetToDefaults(provider: context.providers)
-            TextureStreamingSection.resetToDefaults(provider: context.providers)
-            RayTracedShadowsSection.resetToDefaults(provider: context.providers)
-            UpscalingSection.resetToDefaults(provider: context.providers)
-            FrameInterpolationSection.resetToDefaults(provider: context.providers)
-            MeshShaderGrassSection.resetToDefaults(provider: context.providers)
+            PipelineCacheSection.resetToDefaults(provider: context.renderPerformance)
+            GPUCullingSection.resetToDefaults(provider: context.renderPerformance)
+            RoomCullingSection.resetToDefaults(provider: context.renderPerformance)
+            TextureStreamingSection.resetToDefaults(provider: context.renderPerformance)
+            RayTracedShadowsSection.resetToDefaults(provider: context.renderPerformance)
+            UpscalingSection.resetToDefaults(provider: context.renderPerformance)
+            FrameInterpolationSection.resetToDefaults(provider: context.renderPerformance)
+            MeshShaderGrassSection.resetToDefaults(provider: context.renderPerformance)
         }
     )
 }

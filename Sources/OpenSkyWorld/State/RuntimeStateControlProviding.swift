@@ -103,10 +103,6 @@ nonisolated public enum RuntimeStateSaveOutcome: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the runtime world-state panel.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` already
-/// declares it and the panel reaches it through the composed
-/// `WorldControlProviders`.
 @MainActor
 public protocol RuntimeStateControlProviding: AnyObject {
     /// One sample of everything the readout shows.

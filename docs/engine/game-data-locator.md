@@ -27,6 +27,13 @@ The setting lives in one shared defaults domain, `nl.jjgroenendijk.opensky`. The
 with `UserDefaults(suiteName:)`. The app uses `.standard`, because its own domain is that
 domain and `suiteName` refuses the app's own bundle ID. Both read the same file.
 
+Every other user setting goes through `SettingsStore.shared`, which uses the same domain. A
+`SettingKey` names the setting, its type, and the value a missing entry reads as, such as
+`SettingKey("TimeOfDaySetting", default: 13.0)`. Code does not call `UserDefaults.standard`:
+from the CLI, `.standard` is a different file. Older CLI builds wrote the time of day and the
+shadow quality to the CLI's own domain, so the CLI moves those two values into the shared
+domain once at start.
+
 ## What counts as an install
 
 A path is an install if `Data/Skyrim.esm` exists under it. A path to the `Data` folder itself is

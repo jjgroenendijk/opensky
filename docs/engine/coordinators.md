@@ -40,7 +40,7 @@ coordinator in a package module is tested with `make test-unit` in seconds.
 
 When a domain's last `GameViewController+X` file goes, the adapter and the wire functions move
 into a small app class that holds the view controller, such as `CombatWorldAdapter`. The view
-controller keeps only the stored coordinator and one-line panel forwards. The combat domain
+controller keeps only the stored coordinator. The combat domain
 works this way: `CombatCore`, `CombatCoordinator`, and its port `CombatWorld` live in
 `Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
 combat-loop runtimes it owns. The magic domain has the same shape: `MagicCore`,
@@ -57,8 +57,8 @@ may not import `OpenSkyFactions`.
 The audio domain has `AudioLabCore` in `Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
 port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
 coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns and
-`LipSyncPlayback` live there. It is also the panel's `AudioControlProviding`. The view
-controller conforms through `AudioControlForwarding`, which forwards every member to it.
+`LipSyncPlayback` live there. It is also the panel's `AudioControlProviding`, so the panel
+reads the coordinator itself.
 The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `Sources/OpenSkyCombat/`,
 answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is the runtime's
 `RagdollWorldSeam`. The player has `PlayerCore`, `PlayerCoordinator`, and `PlayerWorld` in
@@ -93,9 +93,11 @@ the renderer and streamer controls of the World panels. It has no core, because 
 and writes the renderer. `WorldSessionWiring` in the app builds the streamer and runs every wire
 function in order.
 
-A panel protocol with many members uses a forwarding protocol, such as
-`RuntimeStateControlForwarding` or `WorldRenderControlForwarding`. Its extension forwards every
-member to the coordinator, so the view controller conforms in one line.
+A panel reaches the game through `WorldPanelContext`, which has one field per panel protocol.
+`WorldPanelContext(game:)` fills each field with the object that serves it: a coordinator
+when the coordinator conforms, a world adapter when the answer joins several coordinators,
+and the view controller only for the protocols it still answers itself. A panel never sees
+the whole controller, and a test fills the context from one fake.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and
@@ -109,21 +111,44 @@ The HUD, the developer UI Lab, and the system menu have `HUDCoordinator`, `SWFLa
 SWF layer, so a menu that shows a movie calls `HUDCoordinator.suspend()` first and
 `HUDCoordinator.start()` when it closes. The HUD rules are in `HUDCore`. `SystemMenuWorld`
 adds the audio state and quitting. The view controller is the one `MenuInputConsumer`, and it
-routes each event by the top of the menu stack. It conforms to each panel protocol through a
-`...ControlForwarding` protocol, like the audio panel.
-
-The panel forwards live in `GameViewControllerPanels.swift`, so `GameViewController.swift`
-stays under the file length limit.
+routes each event by the top of the menu stack. Each menu coordinator conforms to its panel
+protocol directly. The shell, not a panel protocol, gives key focus back to the game view.
 
 A port is a protocol that names what the coordinator needs from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes
 itself or a small adapter. The coordinator holds the port `weak`, because the app owns the
 coordinator.
 
+An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
+protocol lists only the coordinators and values that adapter reads. `GameViewController`
+conforms to every host protocol in one file, and an adapter holds `unowned let game: any
+CombatWorldHost`, never the view controller itself. The lint rule `adapter_holds_controller`
+fails a stored property of type `GameViewController` in an adapter. A value that a Settings
+reload replaces, such as the renderer or the streamer, is a get-only requirement, so the
+adapter always reads the live one. A small adapter that reads two or three parts takes a
+dependency struct instead, such as `HazardWorldDependencies`, with a closure for each
+replaceable value. `FactionWorldAdapter`, `HazardWorldAdapter`, `TrapControlAdapter`, and
+`MenuSoundPlayer` work this way. An adapter keeps no game state of its own: the furniture
+seat holders and the last package moves live in `PackageCoordinator`, where a unit test
+reaches them.
+
+The Papyrus bridge gets its collaborators as one value per native family:
+`actorNatives`, `magicNatives`, `progressionNatives`, `crimeNatives`, `playerNatives`,
+`perceptionNatives`, `sessionNatives`, and `factionNatives`. Each member is an optional
+closure. The default value answers nothing, which matches a load without that data, so a
+native refuses rather than reading a half-wired family.
+
 The coordinator returns values, not text. The app turns a value into a readout line and runs
 the menu or camera change. Example: `counterparty(for:vendorFaction:)` returns
 `.failure(.chestNotResident(factionName:))`, and the app writes "... merchant chest is not
 streamed in."
+
+Every panel action returns a typed outcome, such as `ItemActionOutcome` or
+`LockActionOutcome`, and the coordinator keeps the last one. The outcome's `text` writes the
+readout line. An outcome whose words come from the load order takes them as an argument,
+such as `text(training:)` or `text(texts:)`. A test compares outcomes, not English
+sentences. The lint rule `action_returns_text` fails a `@discardableResult` function that
+returns `String` in a package module.
 
 ## Pure core, thin shell
 

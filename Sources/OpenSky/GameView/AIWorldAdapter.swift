@@ -2,15 +2,19 @@
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
+import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDiagnostics
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
@@ -24,14 +28,42 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-final class AIWorldAdapter {
-    unowned let game: GameViewController
-    /// The newest package move result per actor, for `state packages`.
-    private(set) var lastPackageMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
-    /// Who holds each furniture seat, so two package actors never share one.
-    var seatHolders: [SeatKey: ReferenceKey] = [:]
+/// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AIWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var factions: FactionCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var npcAnimation: NPCAnimationCoordinator { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var sessionWiring: WorldSessionWiring { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
 
-    init(game: GameViewController) {
+final class AIWorldAdapter {
+    unowned let game: any AIWorldHost
+
+    init(game: any AIWorldHost) {
         self.game = game
     }
 
@@ -73,7 +105,7 @@ final class AIWorldAdapter {
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
             packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
-        renderer.onPlayerWalkArrived = { [weak packages] in
+        renderer.session.onPlayerWalkArrived = { [weak packages] in
             packages?.movementSettled(actor: .player, reason: .arrival)
         }
         streamer.onNPCPosesChanged = { [weak renderer] deltas in
@@ -96,31 +128,23 @@ final class AIWorldAdapter {
         }
     }
 
-    /// Package conditions read the live quest, actor and reference state, so
-    /// selection advances after those runtimes in the same world tick.
-    func wirePackages(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let store = (provider as? PackageDataProviding)?.packageStore else { return }
+    func wirePackages(provider: WorldDataStores, renderer: Renderer) {
+        guard let store = provider.packageStore else { return }
         game.packages.wire(store: store)
         let packages = game.packages
-        let advancePreviousSystems = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak packages] delta in
-            advancePreviousSystems?(delta)
+        renderer.session.worldTick.register(.packages) { [weak packages] delta in
             packages?.advance(by: Float(delta))
         }
     }
 
     /// Runs after NPC movement and the combat loop, because the pass reads
     /// where actors ended up this frame and which of them are hostile.
-    func wirePerception(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let settings = (provider as? CombatDataProviding)?.detectionSettings else {
-            return
-        }
+    func wirePerception(provider: WorldDataStores, renderer: Renderer) {
+        let settings = provider.detectionSettings
         let perception = game.perception
         let crime = game.crime
         perception.wire(settings: settings)
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak perception, weak crime] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.perception) { [weak perception, weak crime] delta in
             perception?.advance(by: delta)
             // After the pass, so a trespass is judged against this frame's detection.
             crime?.advanceTrespass()
@@ -222,7 +246,7 @@ extension AIWorldAdapter {
         }
         let result = game.streamer?.moveActor(actor, to: point, direct: direct, gait: gait)
             ?? .actorNotResident
-        lastPackageMoves[actor] = result
+        game.packages.recordMove(result, for: actor)
         switch result {
         case .started: return .started
         case .moverCapReached: return .busy
@@ -238,16 +262,16 @@ extension AIWorldAdapter {
             start: renderer.walkController.feetPosition, target: point,
             capsuleRadius: PlayerCapsule.standard.radius
         )
-        renderer.playerWalkIgnoresStatics = direct
+        renderer.session.playerWalkIgnoresStatics = direct
         let found = direct ? NavigationPathResult.path(.straight(to: point))
             : game.streamer?.findPath(query) ?? .miss(.disconnected)
         switch found {
         case let .path(path):
-            renderer.playerWalkPath = path.waypoints + [point]
-            lastPackageMoves[.player] = .started
+            renderer.session.playerWalkPath = path.waypoints + [point]
+            game.packages.recordMove(.started, for: .player)
         case let .miss(reason):
-            renderer.playerWalkPath = [point]
-            lastPackageMoves[.player] = .noPath(reason)
+            renderer.session.playerWalkPath = [point]
+            game.packages.recordMove(.noPath(reason), for: .player)
         }
         return true
     }

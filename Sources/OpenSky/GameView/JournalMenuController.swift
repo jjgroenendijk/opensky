@@ -16,6 +16,21 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `JournalMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol JournalMenuHost: MenuInputConsumer {
+    var hud: HUDCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var mapMenu: MapMenuCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var swfMovies: SWFMovieSource { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Holds the journal's page model and movie state for `game`.
 final class JournalMenuController {
     static let identifier: MenuIdentifier = "Journal"
@@ -25,16 +40,24 @@ final class JournalMenuController {
         category: "Journal"
     )
 
-    unowned let game: GameViewController
+    unowned let game: any JournalMenuHost
     private(set) var model = JournalMenuModel.empty
     private(set) var isOpen = false
-    private(set) var movieLoaded = false
-    /// Bumped by each open and close, so a movie decoded late opens only the newest.
-    private var movieRequest = 0
-    private(set) var movieError: String?
+    let movie: MenuMovieSession
 
-    init(game: GameViewController) {
+    init(game: any JournalMenuHost) {
         self.game = game
+        movie = MenuMovieSession(
+            movies: game.swfMovies, hud: game.hud, label: "journal movie", logger: Self.logger
+        ) { [unowned game] in game.renderer }
+    }
+
+    var movieLoaded: Bool {
+        movie.isLoaded
+    }
+
+    var movieError: String? {
+        movie.error
     }
 
     var journal: JournalCoordinator {
@@ -56,9 +79,7 @@ final class JournalMenuController {
         guard isOpen else { return }
         isOpen = false
         game.menuMode.dismiss(Self.identifier)
-        if movieLoaded {
-            stopMovie()
-        }
+        movie.stop()
     }
 
     /// Selects the quest the panel names. The page then shows its objectives.
@@ -136,7 +157,7 @@ final class JournalMenuController {
             close()
             return
         }
-        guard movieLoaded, let renderer = game.renderer else {
+        guard let renderer = movie.loadedRenderer else {
             applyFallback(event)
             return
         }
@@ -154,10 +175,7 @@ final class JournalMenuController {
             }
             publishModel()
         } catch {
-            movieError = String(describing: error)
-            Self.logger.error(
-                "[ERROR] journal input: \(String(describing: error), privacy: .public)"
-            )
+            movie.record(error)
         }
     }
 
@@ -172,58 +190,22 @@ final class JournalMenuController {
 
     // MARK: - Movie
 
-    /// A missing install or a failed movie degrades to a readout, never to a
-    /// thrown error out of a control action.
+    /// The renderer owns one SWF layer; this takes it from the HUD. The fade is
+    /// the one the system menu measured.
     private func startMovie() {
-        guard game.renderer != nil, game.swfMovies.isAvailable else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        // The renderer owns one SWF layer; this takes it from the HUD.
-        game.hud.suspend()
-        movieRequest += 1
-        let request = movieRequest
-        game.swfMovies.request(QuestJournalMovieBridge.moviePath, while: { [weak self] in
-            self?.movieRequest == request
-        }, then: { [weak self] result in
-            self?.showMovie(result)
-        })
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
-        guard let renderer = game.renderer else { return }
-        do {
-            let started = try renderer.startMenuMovie(
-                result.get(), prepare: SystemMenuMovieBridge.prepare(runtime:)
-            )
-            guard started else {
-                movieLoaded = false
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            try renderer.updateSWFRuntime { runtime in
+        movie.start(MenuMovie(
+            path: QuestJournalMovieBridge.moviePath,
+            activationTicks: SystemMenuMovieBridge.activationTicks,
+            prepare: SystemMenuMovieBridge.prepare(runtime:),
+            activate: { [weak self] runtime in
                 SystemMenuMovieBridge.activate(runtime: runtime) { [weak self] in
                     self?.close()
                 }
                 QuestJournalMovieBridge.activate(runtime: runtime)
-                registerMovieCalls(runtime: runtime)
-            }
-            // The same fade the system menu measured.
-            for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
-                try renderer.advanceSWFRuntime()
-            }
-            movieLoaded = true
-            movieError = nil
-            publishModel()
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-            Self.logger.error(
-                "[ERROR] journal movie: \(String(describing: error), privacy: .public)"
-            )
-        }
+                self?.registerMovieCalls(runtime: runtime)
+            },
+            didLoad: { [weak self] in self?.publishModel() }
+        ))
     }
 
     private func registerMovieCalls(runtime: SWFMovieRuntime) {
@@ -243,25 +225,9 @@ final class JournalMenuController {
         QuestJournalMovieBridge.publishStats(stats, runtime: runtime)
     }
 
-    private func stopMovie() {
-        movieRequest += 1
-        movieLoaded = false
-        movieError = nil
-        game.hud.start()
-    }
-
     private func publishModel() {
-        guard movieLoaded, let renderer = game.renderer else { return }
-        do {
-            try renderer.updateSWFRuntime { runtime in
-                QuestJournalMovieBridge.publish(model, runtime: runtime)
-            }
-        } catch {
-            movieError = String(describing: error)
-            Self.logger.error(
-                "[ERROR] journal publish: \(String(describing: error), privacy: .public)"
-            )
-        }
+        let model = model
+        movie.publish { QuestJournalMovieBridge.publish(model, runtime: $0) }
     }
 }
 

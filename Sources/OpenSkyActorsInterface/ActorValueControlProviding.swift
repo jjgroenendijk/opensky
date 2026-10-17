@@ -174,41 +174,31 @@ public protocol ActorValueControlProviding: AnyObject {
     var actorValueSelection: Int32 { get set }
 
     /// Takes `amount` off the selected target's selected value.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func damageSelectedActor(by amount: Float) -> String
+    func damageSelectedActor(by amount: Float) -> ActorValueActionOutcome
 
     /// Adds `amount` to the selected target's selected value.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func restoreSelectedActor(by amount: Float) -> String
+    func restoreSelectedActor(by amount: Float) -> ActorValueActionOutcome
 
     /// Sets the selected value outright: the current value for a primary and
     /// the base value for everything else, which is what makes a resistance
     /// settable from the panel at all.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func setSelectedActorValue(to value: Float) -> String
+    func setSelectedActorValue(to value: Float) -> ActorValueActionOutcome
 
     /// Sets the selected value's base outright, as `SetActorValue` does; for a
     /// primary that moves its maximum. Stored as a delta, so "Reset to records"
     /// still works. Returns a readable outcome the panel shows verbatim.
     @discardableResult
-    func setSelectedActorBase(to value: Float) -> String
+    func setSelectedActorBase(to value: Float) -> ActorValueActionOutcome
 
     /// Refills the selected target to its derived maximums.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func restoreSelectedActorFully() -> String
+    func restoreSelectedActorFully() -> ActorValueActionOutcome
 
     /// Drops the selected target's runtime state, so it re-derives from
     /// records again.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func resetSelectedActorValues() -> String
+    func resetSelectedActorValues() -> ActorValueActionOutcome
 }

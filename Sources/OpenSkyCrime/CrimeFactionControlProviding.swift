@@ -247,41 +247,39 @@ public protocol CrimeFactionControlProviding: AnyObject {
 
     /// Moves one half of the player's bounty with the selected faction, which
     /// is `Faction.ModCrimeGold`.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func modifySelectedBounty(by gold: Int32, violent: Bool) -> String
+    func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome
 
     /// Clears both halves of the bounty with the selected faction.
     @discardableResult
-    func clearSelectedBounty() -> String
+    func clearSelectedBounty() -> CrimeFactionActionOutcome
 
     /// Asks what the subject would do about the player's bounty right now if
     /// it is a guard, and runs one guard-response tick when a world is live.
     @discardableResult
-    func checkGuardConfrontation() -> String
+    func checkGuardConfrontation() -> CrimeFactionActionOutcome
 
     /// Refuses arrest with the selected faction, turning its guards hostile.
     @discardableResult
-    func resistArrestWithSelectedFaction() -> String
+    func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome
 
     /// Makes the actor under the crosshair the subject.
     @discardableResult
-    func selectSocialSubjectFromCrosshair() -> String
+    func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome
 
     /// Makes the player the subject again.
     @discardableResult
-    func selectPlayerAsSocialSubject() -> String
+    func selectPlayerAsSocialSubject() -> CrimeFactionActionOutcome
 
     /// Puts the subject in the selected faction at `rank`, or moves it there.
     @discardableResult
-    func joinSelectedFaction(rank: Int8) -> String
+    func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome
 
     /// Takes the subject out of the selected faction.
     @discardableResult
-    func leaveSelectedFaction() -> String
+    func leaveSelectedFaction() -> CrimeFactionActionOutcome
 
     /// Opens the barter menu against the subject under the effective vendor.
     @discardableResult
-    func barterWithSocialSubject() -> String
+    func barterWithSocialSubject() -> CrimeFactionActionOutcome
 }

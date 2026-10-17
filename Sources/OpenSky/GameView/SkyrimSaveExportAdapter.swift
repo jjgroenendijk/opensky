@@ -22,11 +22,20 @@ nonisolated enum SkyrimSaveExportError: Error, LocalizedError {
     }
 }
 
+/// What `SkyrimSaveExportAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol SkyrimSaveExportHost: AnyObject {
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+}
+
 @MainActor
 enum SkyrimSaveExportAdapter {
     /// Reads the plugins off the main actor, then encodes and writes the file.
     static func export(
-        _ contents: OpenSkySaveContents, game: GameViewController
+        _ contents: OpenSkySaveContents, game: any SkyrimSaveExportHost
     ) async throws -> (url: URL, report: ESSExportReport) {
         guard let directory = ESSSaveFolderSetting.folder() else {
             throw SkyrimSaveExportError.noSavesFolder
@@ -50,7 +59,7 @@ enum SkyrimSaveExportAdapter {
     }
 
     /// The date line the game's own menus show, which the load list prints.
-    private static func gameDate(_ clock: GameClock, game: GameViewController) -> String {
+    private static func gameDate(_ clock: GameClock, game: any SkyrimSaveExportHost) -> String {
         game.runtimeState.calendarTexts.dateLine(
             weekday: clock.weekday, hourOfDay: clock.hourOfDay,
             day: clock.day, month: clock.month, year: clock.year

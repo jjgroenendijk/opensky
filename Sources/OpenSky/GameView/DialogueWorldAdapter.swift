@@ -26,23 +26,47 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `DialogueWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol DialogueWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
+    var dialogue: DialogueCoordinator { get }
+    var dialogueCamera: DialogueCameraController { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var faceMorphs: FaceMorphCoordinator { get }
+    var factions: FactionCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var mapWorld: MapWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `DialogueWorld` from the session systems `game` owns.
 final class DialogueWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any DialogueWorldHost
     /// `VTCK` by actor base. A template walk per actor per condition context costs too much.
     private var voiceTypesByBase: [FormID: FormID?] = [:]
 
-    init(game: GameViewController) {
+    init(game: any DialogueWorldHost) {
         self.game = game
     }
 
     /// Hostility and death decide who is worth talking to, so the candidate
     /// list is built here, not in streaming.
-    func wireDialogue(provider: any WorldDataProviding, streamer: CellStreamer) {
-        game.dialogue.index = (provider as? DialogueDataProviding)?.dialogueStore
-        game.dialogue.topicSubtypes = (provider as? WorldDataStores).map {
-            TopicSubtypeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+    func wireDialogue(provider: WorldDataStores, streamer: CellStreamer) {
+        game.dialogue.index = provider.dialogueStore
+        game.dialogue.topicSubtypes = TopicSubtypeTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         streamer.talk.candidateSource = { [weak self] in
             self?.talkCandidates() ?? []
         }
@@ -51,12 +75,10 @@ final class DialogueWorldAdapter {
         }
     }
 
-    /// Runs after the other `onWorldUpdate` systems, so the camera reads this
-    /// frame's pose.
+    /// Runs after the actor systems in the world tick, so the camera reads
+    /// this frame's pose.
     func wireDialogueCamera(renderer: Renderer) {
-        let advancePreviousSystems = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak self] delta in
-            advancePreviousSystems?(delta)
+        renderer.session.worldTick.register(.dialogueCamera) { [weak self] delta in
             self?.game.dialogueCamera.refreshFocus()
             self?.game.faceMorphs.tick(now: self?.game.renderer?.animationTime ?? 0)
             self?.game.headTracking.tick(deltaTime: delta)
@@ -114,7 +136,7 @@ final class DialogueWorldAdapter {
     func residentVoiceTypes() -> [ReferenceKey: FormID] {
         guard
             let entries = game.streamer?.residentActorEntries(),
-            let resolver = (game.worldData as? ActorValueDataProviding)?
+            let resolver = game.worldData?
                 .actorValueBaselines?.resolver
         else { return [:] }
         let records = ActorIdentityRecords(resolver: resolver)
@@ -177,7 +199,7 @@ extension DialogueWorldAdapter: DialogueWorld {
             Int(runtime.inventory.count(of: runtime.inventory.goldFormID, in: runtime.player))
         }
         return SpeechCheckResolution(
-            settings: (game.worldData as? WorldDataStores)?.speechCheckSettings,
+            settings: game.worldData?.speechCheckSettings,
             playerGold: gold,
             intimidationFactor: game.perks.multiplier(
                 at: .modPlayerIntimidation, on: .player, target: speaker

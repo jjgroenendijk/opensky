@@ -36,8 +36,6 @@ nonisolated public struct MapMenuSnapshot: Equatable, Sendable {
 }
 
 public protocol MapMenuControlProviding: AnyObject {
-    /// Gives keyboard focus back to the game view after a panel button.
-    func refocusGameView()
     var mapMenuSnapshot: MapMenuSnapshot { get }
     func openMap(local: Bool)
     func closeMap()
@@ -51,53 +49,48 @@ public protocol MapMenuControlProviding: AnyObject {
     func applyToInspectedMarker(_ action: MapMarkerAction)
 }
 
-/// Lets the app's provider object stand in for its `MapMenuCoordinator`.
-public protocol MapMenuControlForwarding: MapMenuControlProviding {
-    var mapMenu: MapMenuCoordinator { get }
-}
-
-extension MapMenuControlForwarding {
+extension MapMenuCoordinator: MapMenuControlProviding {
     public var mapMenuSnapshot: MapMenuSnapshot {
-        mapMenu.snapshot
+        snapshot
     }
 
     public func openMap(local: Bool) {
-        mapMenu.open(local ? .local : .world)
+        open(local ? .local : .world)
     }
 
     public func closeMap() {
-        mapMenu.close()
+        close()
     }
 
     public func zoomMap(by amount: Float) {
-        mapMenu.zoom(by: amount)
+        zoom(by: amount)
     }
 
     public func tiltMap(by degrees: Float) {
-        mapMenu.tilt(by: degrees)
+        tilt(by: degrees)
     }
 
     public func sendMapInput(_ event: MenuInputEvent) {
-        mapMenu.route(event)
+        route(event)
     }
 
     public func revealAllMapMarkers() {
-        mapMenu.revealAll()
+        revealAll()
     }
 
     public func resetLocalMapFog() {
-        mapMenu.resetFog()
+        resetFog()
     }
 
     public func inspectMapWorldspace(offset: Int) {
-        mapMenu.inspectWorldspace(offset: offset)
+        inspectWorldspace(offset: offset)
     }
 
     public func inspectMapMarker(offset: Int) {
-        mapMenu.inspectMarker(offset: offset)
+        inspectMarker(offset: offset)
     }
 
     public func applyToInspectedMarker(_ action: MapMarkerAction) {
-        mapMenu.apply(action)
+        apply(action)
     }
 }

@@ -14,16 +14,25 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
+/// What the Traps section reads. The streamer is a closure, because a reload
+/// replaces it.
+struct TrapControlDependencies {
+    let hazards: HazardCoordinator
+    let scripts: ScriptCoordinator
+    let worldState: WorldStateStore
+    let streamer: () -> CellStreamer?
+}
+
 final class TrapControlAdapter {
     static let markerSize: Float = 48
     static let markerColor = SIMD4<Float>(1, 0.3, 0.2, 1)
 
-    unowned let game: GameViewController
+    private let dependencies: TrapControlDependencies
     private(set) var selected: ReferenceKey?
-    private(set) var lastText = "No trap action yet."
+    private(set) var lastAction = TrapActionOutcome.idle
 
-    init(game: GameViewController) {
-        self.game = game
+    init(_ dependencies: TrapControlDependencies) {
+        self.dependencies = dependencies
     }
 
     func wire(renderer: Renderer) {
@@ -36,7 +45,10 @@ final class TrapControlAdapter {
     }
 
     var snapshot: TrapControlSnapshot {
-        guard let streamer = game.streamer, let bridge = game.scripts.bridge else {
+        guard
+            let streamer = dependencies.streamer(),
+            let bridge = dependencies.scripts.bridge
+        else {
             return .unavailable
         }
         let resolver = enableResolver(streamer)
@@ -48,9 +60,9 @@ final class TrapControlAdapter {
             triggers: triggers,
             selected: selected,
             chain: chain(streamer: streamer, resolver: resolver),
-            hazards: game.hazards.hazardRows,
-            hazardHits: game.hazards.hitTotal,
-            lastText: lastText
+            hazards: dependencies.hazards.hazardRows,
+            hazardHits: dependencies.hazards.hitTotal,
+            lastText: lastAction.text
         )
     }
 
@@ -58,34 +70,34 @@ final class TrapControlAdapter {
         selected = key
     }
 
-    func fire() -> String {
-        guard let streamer = game.streamer, let entry = selectedEntry else {
-            return note("No trap selected.")
+    func fire() -> TrapActionOutcome {
+        guard let streamer = dependencies.streamer(), let entry = selectedEntry else {
+            return note(.noSelection)
         }
         streamer.onTriggerTransition(TriggerTransitionEvent(reference: entry.key, phase: .enter))
         streamer.onTriggerTransition(TriggerTransitionEvent(reference: entry.key, phase: .leave))
-        return note("Stepped into and out of \(name(of: entry)).")
+        return note(.fired(trap: name(of: entry)))
     }
 
-    func disarm() -> String {
-        guard let bridge = game.scripts.bridge, let entry = selectedEntry else {
-            return note("No trap selected.")
+    func disarm() -> TrapActionOutcome {
+        guard let bridge = dependencies.scripts.bridge, let entry = selectedEntry else {
+            return note(.noSelection)
         }
         let outcome = bridge.activate(entry.key, by: .player, togglesOpen: false)
-        return note("Activated \(name(of: entry)): \(outcome.queuedEvents) script events.")
+        return note(.activated(trap: name(of: entry), queuedEvents: outcome.queuedEvents))
     }
 
     private var selectedEntry: RuntimeReferenceEntry? {
-        selected.flatMap { game.streamer?.referenceEntry(key: $0) }
+        selected.flatMap { dependencies.streamer()?.referenceEntry(key: $0) }
     }
 
-    private func note(_ text: String) -> String {
-        lastText = text
-        return text
+    private func note(_ outcome: TrapActionOutcome) -> TrapActionOutcome {
+        lastAction = outcome
+        return outcome
     }
 
     private func enableResolver(_ streamer: CellStreamer) -> EnableParentResolver {
-        let store = game.worldState
+        let store = dependencies.worldState
         return EnableParentResolver(
             delta: { store.delta(for: $0) },
             parent: { [weak streamer] in streamer?.referenceEntry(formID: $0) }
@@ -113,7 +125,7 @@ final class TrapControlAdapter {
     /// The Papyrus state name; the empty state reads as `default`.
     private func state(of key: ReferenceKey, script: String) -> String {
         guard
-            let runtime = game.scripts.runtime,
+            let runtime = dependencies.scripts.runtime,
             let handle = runtime.instancesByKey[PapyrusInstanceKey(
                 reference: key,
                 scriptName: script
@@ -138,7 +150,10 @@ final class TrapControlAdapter {
     }
 
     private func name(of entry: RuntimeReferenceEntry) -> String {
-        guard let interaction = game.streamer?.residentInteraction(reference: entry.formID) else {
+        guard
+            let interaction = dependencies.streamer()?
+                .residentInteraction(reference: entry.formID)
+        else {
             return entry.formID.description
         }
         return "\(interaction.name) \(entry.formID)"

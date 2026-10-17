@@ -49,56 +49,56 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func modifySelectedBounty(by gold: Int32, violent: Bool) -> String {
+    func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
         crimeFactions.bountyChanges.append((gold, violent))
-        return "Moved the bounty by \(gold)."
+        return .bountyMoved(faction: "Whiterun", gold: gold, violent: violent, total: gold)
     }
 
     @discardableResult
-    func clearSelectedBounty() -> String {
+    func clearSelectedBounty() -> CrimeFactionActionOutcome {
         crimeFactions.clearCount += 1
-        return "Cleared the bounty."
+        return .bountyCleared(faction: "Whiterun", owed: 0)
     }
 
     @discardableResult
-    func checkGuardConfrontation() -> String {
+    func checkGuardConfrontation() -> CrimeFactionActionOutcome {
         crimeFactions.guardChecks += 1
-        return "Guard check."
+        return .guardCheckNeedsSubject
     }
 
     @discardableResult
-    func resistArrestWithSelectedFaction() -> String {
+    func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
         crimeFactions.resistCount += 1
-        return "Resisted arrest."
+        return .resisted("Resisted arrest.")
     }
 
     @discardableResult
-    func selectSocialSubjectFromCrosshair() -> String {
+    func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         crimeFactions.crosshairPicks += 1
-        return "Subject: crosshair."
+        return .subjectSelected("crosshair")
     }
 
     @discardableResult
-    func selectPlayerAsSocialSubject() -> String {
+    func selectPlayerAsSocialSubject() -> CrimeFactionActionOutcome {
         crimeFactions.playerPicks += 1
-        return "Subject: the player."
+        return .subjectSelected(nil)
     }
 
     @discardableResult
-    func joinSelectedFaction(rank: Int8) -> String {
+    func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
         crimeFactions.joins.append(rank)
-        return "Joined at rank \(rank)."
+        return .joined(actor: "The player", faction: "Whiterun", rank: rank, changed: true)
     }
 
     @discardableResult
-    func leaveSelectedFaction() -> String {
+    func leaveSelectedFaction() -> CrimeFactionActionOutcome {
         crimeFactions.leaveCount += 1
-        return "Left."
+        return .left(actor: "The player", faction: "Whiterun", changed: true)
     }
 
     @discardableResult
-    func barterWithSocialSubject() -> String {
+    func barterWithSocialSubject() -> CrimeFactionActionOutcome {
         crimeFactions.barterCount += 1
-        return "Bartering."
+        return .barter("Bartering.")
     }
 }

@@ -108,7 +108,7 @@ public final class LockCoordinator {
     var sessionLock: LockpickingTarget?
     var sessionExperience: Float = 0
     public internal(set) var lastOutcome: LockpickingOutcome?
-    public internal(set) var lastText = "No lock action yet."
+    public internal(set) var lastAction = LockActionOutcome.idle
     /// The lock the sidebar works on.
     public var selectedLock: FormID?
 
@@ -149,7 +149,7 @@ public final class LockCoordinator {
             let value = world?.activationFilter(of: entry.key),
             value != 0
         {
-            lastText = "A perk blocks activating \(target.interaction.name)."
+            lastAction = .blockedByPerk(name: target.interaction.name)
             return .filteredByPerk
         }
         guard let lock = lock(of: target.interaction) else { return nil }
@@ -158,15 +158,16 @@ public final class LockCoordinator {
             return nil
         case let .unlockWithKey(key):
             write(lock.state, locked: false, for: lock.key)
-            lastText = "Unlocked \(target.interaction.name) with its key."
+            lastAction = .unlockedWithKey(name: target.interaction.name)
             world?.showLockNotice(texts.keyNotice(
                 key: world?.itemName(key) ?? key.description,
                 isContainer: target.interaction.action == .search
             ))
             return nil
         case let .refuse(refusal):
-            let band = texts.name(of: difficulty(of: lock.state))
-            lastText = "\(target.interaction.name) is locked (\(band))."
+            lastAction = .refused(
+                name: target.interaction.name, difficulty: difficulty(of: lock.state)
+            )
             return refusal
         }
     }
@@ -175,10 +176,10 @@ public final class LockCoordinator {
         state.difficulty(noviceMaximum: settings.noviceMaximum)
     }
 
-    /// The notice for a refused press that opens no minigame, or nil.
-    public func refusalNotice(level: UInt8) -> String? {
+    /// Why a refused press opens no minigame, or nil.
+    public func refusalNotice(level: UInt8) -> LockNotice? {
         let band = LockDifficulty(level: level, noviceMaximum: settings.noviceMaximum)
-        return LockCore.refusalNotice(for: band, lockpicks: lockpickCount, texts: texts)
+        return LockCore.refusalNotice(for: band, lockpicks: lockpickCount)
     }
 
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
@@ -190,12 +191,12 @@ public final class LockCoordinator {
 
     /// Forces the lock open or shut. The level and key stay as they are.
     @discardableResult
-    public func setLocked(_ interaction: PlacedInteraction, locked: Bool) -> String {
+    public func setLocked(_ interaction: PlacedInteraction, locked: Bool) -> LockActionOutcome {
         guard let lock = lock(of: interaction) else {
-            return note("\(interaction.name) has no lock.")
+            return record(.noLock(name: interaction.name))
         }
         write(lock.state, locked: locked, for: lock.key)
-        return note("\(locked ? "Locked" : "Unlocked") \(interaction.name).")
+        return record(.lockChanged(name: interaction.name, locked: locked))
     }
 
     func write(_ state: ReferenceLockState, locked: Bool, for key: ReferenceKey) {
@@ -207,9 +208,9 @@ public final class LockCoordinator {
     }
 
     @discardableResult
-    public func note(_ text: String) -> String {
-        lastText = text
-        return text
+    public func record(_ outcome: LockActionOutcome) -> LockActionOutcome {
+        lastAction = outcome
+        return outcome
     }
 
     // MARK: - Lockpicking
@@ -247,7 +248,7 @@ public final class LockCoordinator {
         sessionTarget = target
         sessionLock = LockpickingTarget(key: lock.key, state: lock.state, perks: perks)
         sessionExperience = 0
-        lastText = "Picking \(target.interaction.name) (\(texts.name(of: difficulty)))."
+        lastAction = .picking(name: target.interaction.name, difficulty: difficulty)
     }
 
     private func perkValues(lock: ReferenceKey, level: UInt8) -> LockpickingPerkValues {

@@ -40,8 +40,6 @@ extension InventoryCoordinator {
 
     /// Moves one `item` in the direction `transfer` names. A new session per
     /// call, so a merchant nominated again mid-menu leaves nothing stale.
-    ///
-    /// - Returns: the outcome sentence.
     public func transfer(
         _ transfer: ContainerTransfer,
         item: FormID,
@@ -49,8 +47,8 @@ extension InventoryCoordinator {
         container: InventoryHolder,
         vendor: Vendor?,
         merchant: ReferenceKey? = nil
-    ) throws -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    ) throws -> TradeOutcome {
+        guard let runtime else { return .unavailable }
         switch transfer {
         case .take:
             // Through the session, so a single take marks theft the same way
@@ -58,47 +56,47 @@ extension InventoryCoordinator {
             let session = ContainerSession(runtime: runtime, container: container)
             let bounty = try session.take(item)
             reportTaken([InventoryStack(item: item, count: 1)], from: session)
-            return InventoryCore.takeSentence(item: name, bounty: bounty)
+            return .took(item: name, bounty: bounty)
         case .store:
             try runtime.inventory.transfer(item, count: 1, from: .player, to: container)
             storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: nil, how: .putInContainer
             ))
-            return "Stored \(name)."
+            return .stored(name)
         case .buy:
             let bought: BarterTransaction
             do {
                 bought = try barterSession(runtime, container, vendor, merchant).buy(item)
             } catch BarterError.playerCannotAfford {
-                return tradeTexts.tooExpensive
+                return .tooExpensive
             }
             storyEvents?.reportStoryEvent(.addItem(
                 item, from: container.key, owner: nil, how: .buy
             ))
-            return "Bought \(name) for \(bought.gold) gold."
+            return .bought(item: name, gold: bought.gold)
         case .sell:
             let sold: BarterTransaction
             do {
                 sold = try barterSession(runtime, container, vendor, merchant).sell(item)
             } catch let BarterError.merchantCannotAfford(price, gold) {
-                return tradeTexts.merchantShortText(price: price, gold: gold)
+                return .merchantShort(price: price, gold: gold)
             }
             storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: nil, how: .given
             ))
-            return "Sold \(name) for \(sold.gold) gold."
+            return .sold(item: name, gold: sold.gold)
         }
     }
 
-    public func takeAll(from container: InventoryHolder) -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func takeAll(from container: InventoryHolder) -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         do {
             let session = ContainerSession(runtime: runtime, container: container)
             let moved = try session.takeAll()
             reportTaken(moved, from: session)
-            return InventoryCore.takeAllSentence(moved)
+            return .tookAll(moved)
         } catch {
-            return "Take all failed: \(String(describing: error))"
+            return .failed(action: "Take all", reason: String(describing: error))
         }
     }
 

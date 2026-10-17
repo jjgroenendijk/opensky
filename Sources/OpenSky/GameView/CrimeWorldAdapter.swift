@@ -21,28 +21,47 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `CrimeWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol CrimeWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var containerMenu: ContainerMenuController { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var factions: FactionCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `CrimeSessionWorld` from the session systems `game` owns.
 final class CrimeWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any CrimeWorldHost
 
-    init(game: GameViewController) {
+    init(game: any CrimeWorldHost) {
         self.game = game
     }
 
     /// After `wireFactions` and `wireWorldItems`: it reads the same FACT store
     /// as the hostility derivation and joins the take path.
-    func wireCrime(provider: any WorldDataProviding) {
+    func wireCrime(provider: WorldDataStores) {
         guard
-            let factionStore = (provider as? FactionDataProviding)?.factionStore,
-            let pluginName = (provider as? MagicDataProviding)?.magicItemPluginName
+            let factionStore = provider.factionStore,
+            let pluginName = provider.magicItemPluginName
         else { return }
         game.crime.attach(world: self)
-        game.crime.crimeTexts = (provider as? WorldDataStores).map {
-            CrimeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        game.crime.crimeTexts = CrimeTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.crime.wire(
             runtime: CrimeRuntime(store: game.worldState, factions: factionStore),
-            locations: (provider as? LocationDataProviding)?.locationStore,
+            locations: provider.locationStore,
             pluginName: pluginName
         )
         game.inventory.runtime?.crime = game.crime.reporter

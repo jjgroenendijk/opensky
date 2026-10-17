@@ -47,7 +47,7 @@ extension PapyrusWorldStateBridge {
     /// Queues the line-of-sight events through the `seesTarget` seam. No seam, no events.
     @discardableResult
     public func queueLineOfSightEvents() -> Int {
-        guard let world, let seesTarget else { return 0 }
+        guard let world, let seesTarget = perceptionNatives.seesTarget else { return 0 }
         return world.queueLineOfSightEvents { seesTarget($0.viewer, $0.target) }
     }
 }

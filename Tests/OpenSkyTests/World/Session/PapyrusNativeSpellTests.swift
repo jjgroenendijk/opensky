@@ -73,13 +73,13 @@ struct PapyrusNativeSpellTests {
                 conditionRegistry: .standard
             )
         )
-        session.bridge.actorValueRuntime = { values }
-        session.bridge.casterRuntime = { [weak caster] in caster }
+        session.bridge.actorNatives.actorValueRuntime = { values }
+        session.bridge.magicNatives.casterRuntime = { [weak caster] in caster }
         session.bridge.magicEffectStore = effectStore
-        session.bridge.dispelEffects = { holder, predicate in
+        session.bridge.magicNatives.dispelEffects = { holder, predicate in
             effects.runtime.dispel(on: holder, where: predicate)
         }
-        session.bridge.applySpellHit = { [weak casterWorld] hit in
+        session.bridge.magicNatives.applySpellHit = { [weak casterWorld] hit in
             casterWorld?.applySpellHit(hit) ?? SpellHitReport()
         }
         return Fixture(

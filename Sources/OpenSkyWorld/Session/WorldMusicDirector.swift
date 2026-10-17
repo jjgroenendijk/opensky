@@ -58,8 +58,12 @@ public final class WorldMusicDirector {
     /// delta so it freezes with the world sim.
     public private(set) var currentTrackElapsedSeconds: Float = 0
 
-    /// Most recent failure reason; nil when the last start succeeded.
-    public private(set) var lastMusicError: String?
+    /// Most recent failure; nil when the last start succeeded.
+    public private(set) var lastMusicRefusal: MusicRefusal?
+
+    public var lastMusicError: String? {
+        lastMusicRefusal?.text
+    }
 
     public init(
         engine: WorldAudioEngine,
@@ -161,16 +165,16 @@ public final class WorldMusicDirector {
     /// forced selection becomes the remembered one, so toggling music off and
     /// on restarts it. Returns nil on success or a short failure reason.
     @discardableResult
-    public func forcePlayMusicType(named name: String) -> String? {
+    public func forcePlayMusicType(named name: String) -> MusicRefusal? {
         guard let musicStore else {
-            lastMusicError = "no music data"
-            return lastMusicError
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
         }
         guard
             let match = musicStore.musicTypes.values.first(where: { $0.editorID == name })
         else {
-            lastMusicError = "unknown music type \(name)"
-            return lastMusicError
+            lastMusicRefusal = .unknownMusicType(name)
+            return lastMusicRefusal
         }
         return forcePlayMusicType(formID: match.formID)
     }
@@ -178,18 +182,18 @@ public final class WorldMusicDirector {
     /// Forces a crossfade to a MUSC by FormID. Mirrors
     /// `WorldAudioSoundDirector.forcePlaySound(formID:position:)`.
     @discardableResult
-    public func forcePlayMusicType(formID: FormID) -> String? {
+    public func forcePlayMusicType(formID: FormID) -> MusicRefusal? {
         guard let musicStore else {
-            lastMusicError = "no music data"
-            return lastMusicError
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
         }
         let selection = MusicSelection.resolve(musicType: formID, musicStore: musicStore)
         guard !selection.isSilent else {
-            lastMusicError = "no playable track for \(formID.description)"
-            return lastMusicError
+            lastMusicRefusal = .noPlayableTrack(formID)
+            return lastMusicRefusal
         }
         adopt(selection, force: true)
-        return lastMusicError
+        return lastMusicRefusal
     }
 
     /// Force-stops music by adopting the empty context. The next cell change
@@ -205,27 +209,27 @@ public final class WorldMusicDirector {
     /// With no combat playlist the music stays. See docs/engine/music.md.
     /// - Returns: nil on success, or a short reason the selection did not change.
     @discardableResult
-    public func setCombatActive(_ active: Bool) -> String? {
+    public func setCombatActive(_ active: Bool) -> MusicRefusal? {
         guard active else { return leaveCombat() }
         guard preCombatSelection == nil else { return nil }
         guard let musicStore else {
-            lastMusicError = "no music data"
-            return lastMusicError
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
         }
         guard let combat = Self.combatMusicType(in: musicStore) else {
-            lastMusicError = "no combat music type in the load order"
-            return lastMusicError
+            lastMusicRefusal = .noCombatMusicType
+            return lastMusicRefusal
         }
         let selection = MusicSelection
             .resolve(musicType: combat, musicStore: musicStore)
             .labelled(.combat)
         guard !selection.isSilent else {
-            lastMusicError = "no playable combat track"
-            return lastMusicError
+            lastMusicRefusal = .noPlayableCombatTrack
+            return lastMusicRefusal
         }
         preCombatSelection = desiredSelection
         adopt(selection, force: true)
-        lastMusicError = nil
+        lastMusicRefusal = nil
         return nil
     }
 
@@ -235,7 +239,7 @@ public final class WorldMusicDirector {
     }
 
     /// Restores the selection combat interrupted.
-    private func leaveCombat() -> String? {
+    private func leaveCombat() -> MusicRefusal? {
         guard let previous = preCombatSelection else { return nil }
         preCombatSelection = nil
         adopt(previous, force: true)
@@ -322,7 +326,7 @@ public final class WorldMusicDirector {
             crossfade(incoming: sourceID, overSeconds: duration)
             trackIndex = candidate
             currentTrackElapsedSeconds = 0
-            lastMusicError = nil
+            lastMusicRefusal = nil
             return
         }
         retireMusicSources(overSeconds: duration)
@@ -364,8 +368,11 @@ extension WorldMusicDirector {
             )
             return .started(id)
         } catch {
-            let reason = "\(track.path): \(String(describing: error))"
-            lastMusicError = reason
+            let refusal = MusicRefusal.trackFailed(
+                path: track.path, reason: String(describing: error)
+            )
+            lastMusicRefusal = refusal
+            let reason = refusal.text
             Self.logger.warning(
                 "[WARNING] music start failed: \(reason, privacy: .public)"
             )
@@ -444,15 +451,15 @@ extension WorldMusicDirector {
     /// `MusicType.Add`: the type plays over the cell's music. Adding it again moves it to
     /// the top. Returns nil on success or a short failure reason.
     @discardableResult
-    public func addScriptedMusic(_ id: FormID) -> String? {
+    public func addScriptedMusic(_ id: FormID) -> MusicRefusal? {
         guard let musicStore else {
-            lastMusicError = "no music data"
-            return lastMusicError
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
         }
         let selection = MusicSelection.resolve(musicType: id, musicStore: musicStore)
         guard !selection.isSilent else {
-            lastMusicError = "no playable track for \(id.description)"
-            return lastMusicError
+            lastMusicRefusal = .noPlayableTrack(id)
+            return lastMusicRefusal
         }
         scriptedMusic.removeAll { $0 == id }
         scriptedMusic.append(id)

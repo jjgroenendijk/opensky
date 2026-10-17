@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -19,22 +20,40 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MagicWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var factions: FactionCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `MagicWorld` from the session systems `game` owns.
 final class MagicWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MagicWorldHost
 
-    init(game: GameViewController) {
+    init(game: any MagicWorldHost) {
         self.game = game
     }
 
     /// After `wireActorValues`, because every effect writes an actor value. A
     /// provider without an MGEF index leaves the runtime nil.
-    func wireEffects(provider: any WorldDataProviding, renderer: Renderer) {
+    func wireEffects(provider: WorldDataStores, renderer: Renderer) {
         guard
             let values = game.actorValues.runtime,
-            let magic = provider as? MagicDataProviding,
-            let store = magic.magicEffectStore,
-            let pluginName = magic.magicItemPluginName
+            let store = provider.magicEffectStore,
+            let pluginName = provider.magicItemPluginName
         else { return }
         let coordinator = game.magic
         coordinator.attach(world: self)
@@ -42,21 +61,20 @@ final class MagicWorldAdapter {
             values: values, store: store, pluginName: pluginName, conditionRegistry: .standard
         )
         // Chained after regeneration and the Papyrus VM, on the same delta.
-        let advanceOthers = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak coordinator, weak renderer] delta in
-            advanceOthers?(delta)
+        let worldTick = renderer.session.worldTick
+        worldTick.register(.magicEffects) { [weak coordinator, weak renderer] delta in
             coordinator?.advanceEffects(delta: delta)
-            renderer?.isPlayerParalysed = coordinator?.influence(of: .player).isParalysed ?? false
+            renderer?.session.isPlayerParalysed = coordinator?.influence(of: .player)
+                .isParalysed ?? false
         }
     }
 
     /// After `wireEffects`, because a cast applies its effects through it.
-    func wireCasting(provider: any WorldDataProviding, renderer: Renderer) {
+    func wireCasting(provider: WorldDataStores, renderer: Renderer) {
         guard
             let values = game.actorValues.runtime,
-            let magic = provider as? MagicDataProviding,
-            let spells = magic.spellStore,
-            let equipSlots = magic.equipSlotStore
+            let spells = provider.spellStore,
+            let equipSlots = provider.equipSlotStore
         else { return }
         let coordinator = game.magic
         coordinator.attach(world: self)
@@ -68,12 +86,12 @@ final class MagicWorldAdapter {
                 equipment: game.inventory.equipment
             ),
             values: values,
-            spellPluginName: magic.magicItemPluginName,
-            baselines: (provider as? ActorValueDataProviding)?.actorValueBaselines?.resolver
+            spellPluginName: provider.magicItemPluginName,
+            baselines: provider.actorValueBaselines?.resolver
                 .map { ActorSpellBaselineResolver(actorValues: $0) }
         )
-        // `onFrame`, beside melee: a cast is timed against the rendered frame.
-        renderer.onFrame.add { [weak coordinator, weak renderer] _ in
+        // A frame step, beside melee: a cast is timed against the rendered frame.
+        renderer.session.frameSteps.register(.spellCasting) { [weak coordinator, weak renderer] _ in
             guard let coordinator, let renderer else { return }
             let locomotion = renderer.locomotion
             coordinator.advanceCasting(
@@ -87,14 +105,12 @@ final class MagicWorldAdapter {
         }
     }
 
-    func wireEnchantments(provider: any WorldDataProviding) {
+    func wireEnchantments(provider: WorldDataStores) {
         game.magic.attach(world: self)
-        game.magic.magicTexts = (provider as? WorldDataStores).map {
-            MagicTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        game.magic.spellCostSettings = (provider as? WorldDataStores)
-            .map { SpellCostSettings.resolve(store: $0.gameSettings) } ?? .vanilla
-        game.magic.wireEnchantments(store: (provider as? MagicDataProviding)?.enchantmentStore)
+        game.magic.magicTexts = MagicTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
+        game.magic.wireEnchantments(store: provider.enchantmentStore)
     }
 }
 

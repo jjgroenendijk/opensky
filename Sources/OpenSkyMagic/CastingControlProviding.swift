@@ -182,37 +182,27 @@ public protocol CastingControlProviding: AnyObject {
     var castingControlSnapshot: CastingControlSnapshot { get }
 
     /// Grants every spell the load order flags as a player start spell.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func grantPlayerStartSpells() -> String
+    func grantPlayerStartSpells() -> CastingActionOutcome
 
     /// Opens the first spell tome the player carries.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func readFirstCarriedSpellTome() -> String
+    func readFirstCarriedSpellTome() -> CastingActionOutcome
 
     /// Reads the first skill book the player carries and has not read.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func readFirstUnreadSkillBook() -> String
+    func readFirstUnreadSkillBook() -> CastingActionOutcome
 
     /// Moves the panel's selection to the next known spell, wrapping.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func selectNextKnownSpell() -> String
+    func selectNextKnownSpell() -> CastingActionOutcome
 
     /// Readies the selected spell in one hand.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> String
+    func readySelectedSpell(in hand: SpellHand) -> CastingActionOutcome
 
     /// Runs one whole cast in `hand` with no button: charge, then release, so the panel
     /// alone can verify it. Returns a readable outcome the panel shows verbatim.
     @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> String
+    func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome
 }

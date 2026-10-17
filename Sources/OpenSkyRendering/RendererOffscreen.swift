@@ -178,13 +178,13 @@ extension Renderer {
     /// One synchronous frame through the normal slot/event bookkeeping:
     /// drain in-flight frames, encode, commit, block until the GPU finishes. Feeds FrameStats;
     /// returns the
-    /// summary line when this frame closed a 120-frame stats window.
+    /// stats window when this frame closed one.
     @discardableResult
     private func renderOffscreenFrame(
         descriptor: MTL4RenderPassDescriptor,
         projection: float4x4,
         advanceAnimation: Bool = true
-    ) throws -> String? {
+    ) throws -> FrameStatsWindow? {
         let cpuStart = frameStats.beginFrame()
         // Debug views are dev filters, so captures and tests render the shipping frame.
         // Debug-view tests opt in through `renderDebugAppliesOffscreen`.
@@ -342,7 +342,7 @@ extension Renderer {
                 projection: projection
             )
             if let summary {
-                summaries.append(summary)
+                summaries.append(summary.text)
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
@@ -406,7 +406,7 @@ extension Renderer {
                 projection: projection
             )
             if let summary {
-                summaries.append(summary)
+                summaries.append(summary.text)
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)

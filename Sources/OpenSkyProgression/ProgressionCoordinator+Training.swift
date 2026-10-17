@@ -60,23 +60,21 @@ extension ProgressionCoordinator {
 
     /// The panel's Train control: one session with the nearest trainer.
     @discardableResult
-    public func trainWithNearestTrainer() -> String {
-        guard let offer = world?.nearestTrainer() else {
-            lastActionText = "No trainer nearby: no resident actor's class teaches a skill."
-            return lastActionText
-        }
+    public func trainWithNearestTrainer() -> ProgressionActionOutcome {
+        guard let offer = world?.nearestTrainer() else { return record(.noTrainer) }
         let skill = ActorValueIdentity.name(at: offer.skill) ?? "skill \(offer.skill)"
-        switch train(with: offer) {
+        return switch train(with: offer) {
         case let .trained(_, level, gold):
-            let sessions = leveling?.state.trainingSessions ?? 0
-            lastActionText = "\(offer.name) trained \(skill) to \(level) for \(gold) gold "
-                + "(session \(sessions) of \(TrainingSettings.sessionsPerLevel) this level)."
+            record(.trained(
+                trainer: offer.name, skill: skill, level: level, gold: gold,
+                session: leveling?.state.trainingSessions ?? 0
+            ))
         case let .refused(refusal):
-            lastActionText = "\(offer.name) (\(skill) to \(offer.maximumLevel)): "
-                + training.text(for: refusal)
+            record(.trainingRefused(
+                trainer: offer.name, skill: skill, maximum: offer.maximumLevel, refusal
+            ))
         case .unavailable:
-            lastActionText = Self.noProgressionText
+            record(.unavailable)
         }
-        return lastActionText
     }
 }

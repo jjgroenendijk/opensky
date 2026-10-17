@@ -16,7 +16,7 @@ under them. It is not the in-game Scaleform UI.
 | Shell, registry, panel base classes, components | `Sources/OpenSky/Shell/` |
 | One section (one control group) | `Sources/OpenSky/Shell/Sections/` |
 | One view controller per destination | `Sources/OpenSky/Panels/` |
-| The game view and its one-line panel forwards | `Sources/OpenSky/GameView/` |
+| The game view and the world adapters | `Sources/OpenSky/GameView/` |
 | The logic a panel drives | A coordinator in the feature module (`docs/engine/coordinators.md`) |
 
 The full reference is `docs/tools/app-ui.md`. This skill holds the decisions and points at
@@ -54,13 +54,13 @@ flows like this, with the crime panel as the example:
    snapshot value types for the readout. A seam that another feature also reads goes in the
    feature's `Interface` module. A seam that names several features goes in
    `OpenSkyMenus/` (`Sources/AGENTS.md`, Folder layout).
-3. `GameViewController` conforms with one-line forwards to the coordinator, in
-   `GameView/GameViewControllerPanels.swift`. A seam with many members gets a
-   `...ControlForwarding` protocol beside it whose extension does the forwarding, such as
-   `AudioControlForwarding`; the view controller then conforms in one line.
-4. Add the protocol to `WorldControlProviders` in `Shell/DestinationRegistry.swift`.
-5. The destination's factory assigns `context.providers` to the section's provider
-   property.
+3. The coordinator conforms to the seam itself. A seam that joins several coordinators is
+   answered by a world adapter in `GameView/`.
+4. Add a field for the protocol to `WorldPanelContext` in `Shell/DestinationRegistry.swift`,
+   fill it in `Shell/WorldPanelContext+Game.swift`, and add the protocol to
+   `WorldControlProviders` in the hosted test support, so `FakeWorldProviders` covers it.
+5. The destination's factory assigns that field, such as `context.crimeFaction`, to the
+   section's provider property.
 
 Do not add a `GameViewController+X.swift` file, and do not put rules in a section or a
 panel. A rule there can only be tested by building the app.

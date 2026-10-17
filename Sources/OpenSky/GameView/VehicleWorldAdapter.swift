@@ -14,8 +14,21 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `VehicleWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol VehicleWorldHost: AnyObject {
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var idleWorld: IdleWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class VehicleWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any VehicleWorldHost
     let vehicles = VehicleCoordinator()
     /// True after `SetPlayerAIDriven(true)`: the player's packages move the player.
     private(set) var isPlayerAIDriven = false
@@ -26,7 +39,7 @@ final class VehicleWorldAdapter {
     /// Wheel contacts by model path, read off the main actor.
     private var wheels: AssetLoader<String, [SIMD2<Float>]>?
 
-    init(game: GameViewController) {
+    init(game: any VehicleWorldHost) {
         self.game = game
         vehicles.attach(world: self)
     }
@@ -50,25 +63,23 @@ final class VehicleWorldAdapter {
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
         wireWheels(renderer: renderer)
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak vehicles, weak renderer] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.vehicles) { [weak vehicles, weak renderer] _ in
             vehicles?.advance()
             if vehicles?.lastPoses[.player] == nil {
-                renderer?.playerSeat = nil
+                renderer?.session.playerSeat = nil
             }
         }
     }
 
     private func wireWheels(renderer: Renderer) {
-        guard let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem else {
+        guard let files = game.worldData?.scriptFileSystem else {
             return
         }
         let wheels = AssetLoader<String, [SIMD2<Float>]> { path in
             try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
         }
         self.wheels = wheels
-        renderer.session.assetDrains.add { _ in wheels.drain() }
+        renderer.session.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
     }
 }
 
@@ -103,12 +114,12 @@ extension VehicleWorldAdapter: VehicleWorld {
                 of: .player, named: DialogueCamera.headBoneName
             )
         else {
-            renderer.playerSeat = nil
+            renderer.session.playerSeat = nil
             renderer.placePlayerFeet(at: pose.position)
             return
         }
         let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
-        renderer.playerSeat = root
+        renderer.session.playerSeat = root
         let eye = root * SIMD4(head, 1)
         let height = renderer.walkController.capsule.eyeHeight
         renderer.placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - height))
@@ -252,7 +263,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     func setPlayerAIDriven(_ driven: Bool) {
         isPlayerAIDriven = driven
         if !driven {
-            game.renderer?.playerWalkPath = []
+            game.renderer?.session.playerWalkPath = []
         }
     }
 }

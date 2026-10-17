@@ -24,8 +24,36 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `StoryWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol StoryWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var faceMorphs: FaceMorphCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var packages: PackageCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var subtitles: SubtitleCoordinator { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class StoryWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any StoryWorldHost
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
     private var sessionStartLists: [PluginQuestList] = []
@@ -54,21 +82,20 @@ final class StoryWorldAdapter {
         return storyManager
     }()
 
-    init(game: GameViewController) {
+    init(game: any StoryWorldHost) {
         self.game = game
     }
 
     /// After `wireDialogue`, because scenes speak through the dialogue index.
-    func wireStory(provider: any WorldDataProviding, renderer: Renderer) {
-        let data = (provider as? StoryDataProviding)?.storyData ?? StoryData()
-        let scripts = provider as? ScriptDataProviding
+    func wireStory(provider: WorldDataStores, renderer: Renderer) {
+        let data = provider.storyData
         // The quest store's space, so a DLC scene names its quest as the runtime does.
-        let questStore = (provider as? QuestDataProviding)?.questStore
+        let questStore = provider.questStore
         if let store = data.scenes, let quests = questStore {
             scenes.catalog = SceneCatalog(store: store, resolver: quests.resolver)
         }
         if
-            let dialogue = (provider as? DialogueDataProviding)?.dialogueStore,
+            let dialogue = provider.dialogueStore,
             let files = game.audioFileSystem
         {
             let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
@@ -86,20 +113,18 @@ final class StoryWorldAdapter {
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
         game.scripts.bridge?.trapWorld = game.effectsWorld
-        game.scripts.bridge?.conditionEvaluator = { [weak self] in
+        game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard
             )
         }
-        if let files = scripts?.scriptFileSystem {
+        if let files = provider.scriptFileSystem {
             sessionStartLists = data.plugins.map {
                 PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
             }
             runSessionStart(lists: sessionStartLists)
         }
-        let advancePreviousSystems = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak self] delta in
-            advancePreviousSystems?(delta)
+        renderer.session.worldTick.register(.story) { [weak self] _ in
             self?.voiceTimer?.drain()
             self?.scenes.tick()
             self?.storyManager.social.tick()

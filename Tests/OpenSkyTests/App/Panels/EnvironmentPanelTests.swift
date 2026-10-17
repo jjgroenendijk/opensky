@@ -94,7 +94,9 @@ struct EnvironmentPanelTests {
         panel.loadViewIfNeeded()
         let fake = FakeShadowProvider()
         fake.sunShadowsEnabled = false
-        panel.provider = fake
+        panel.shadowProvider = fake
+        panel.terrainLODProvider = fake
+        panel.refocusAction = { [weak fake] in fake?.refocusGameView() }
 
         #expect(panel.sunShadowsEnabledControl.state == .off)
 

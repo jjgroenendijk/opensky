@@ -24,40 +24,73 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-final class ScriptWorldAdapter {
-    unowned let game: GameViewController
+/// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ScriptWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var containerMenu: ContainerMenuController { get }
+    var crime: CrimeCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var factionWorld: FactionWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var perks: PerkCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldState: WorldStateStore { get }
+}
 
-    init(game: GameViewController) {
+final class ScriptWorldAdapter {
+    unowned let game: any ScriptWorldHost
+
+    init(game: any ScriptWorldHost) {
         self.game = game
     }
 
     /// The streamer, the renderer, and the provider each feed the VM one way,
     /// so the engine never depends on it. Without compiled scripts there is no VM.
     func wirePapyrus(
-        provider: any WorldDataProviding,
+        provider: WorldDataStores,
         renderer: Renderer,
         streamer: CellStreamer
     ) {
         guard
-            let scriptSource = provider as? ScriptDataProviding,
-            let fileSystem = scriptSource.scriptFileSystem
+            let fileSystem = provider.scriptFileSystem
         else { return }
         let bridge = PapyrusWorldStateBridge(
             worldState: game.worldState, references: streamer,
             globals: game.runtimeState.globalStore
         )
-        bridge.clockSource = { [weak renderer] in renderer?.gameClock }
+        bridge.sessionNatives.clockSource = { [weak renderer] in renderer?.gameClock }
         wireActorNatives(bridge: bridge)
         wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
-        let resolver = scriptSource.scriptFormIDResolver
+        let resolver = provider.scriptFormIDResolver
         bridge.formIDResolver = resolver
         bridge.effectPresenter = game.effectsWorld
         bridge.weather = self
         bridge.music = self
-        bridge.playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
-        bridge.togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
-        bridge.toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
+        bridge.playerNatives
+            .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
+        bridge.playerNatives
+            .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
+        bridge.playerNatives
+            .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
         game.magic.onSpellCast = { [weak game] spell, caster in
             game?.scripts.runtime?.queueSpellCast(spell, by: caster)
         }
@@ -83,19 +116,19 @@ final class ScriptWorldAdapter {
         streamer.onCellDetached = { [weak world] location in
             world?.detach(cell: location)
         }
-        renderer.onWorldUpdate = { [weak self] delta in
+        renderer.session.worldTick.register(.scripts) { [weak self] delta in
             self?.game.scripts.advance(delta: delta)
         }
     }
 
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
-    private func wireQuests(provider: any WorldDataProviding) {
-        guard let store = (provider as? QuestDataProviding)?.questStore else { return }
+    private func wireQuests(provider: WorldDataStores) {
+        guard let store = provider.questStore else { return }
         var runtime = QuestRuntime(
             store: game.worldState,
             quests: store,
-            locations: (provider as? LocationDataProviding)?.locationStore
+            locations: provider.locationStore
         )
         runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
         runtime.referenceCreator = { [weak game] base, anchor in
@@ -107,36 +140,40 @@ final class ScriptWorldAdapter {
     /// Getters, not captured values: the runtimes behind them are wired after
     /// this step.
     private func wireActorNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.actorValueRuntime = { [weak game] in game?.actorValues.runtime }
-        bridge.ragdollRuntime = { [weak game] in game?.ragdoll.runtime }
-        bridge.combatRuntime = { [weak game] in game?.combat.loop }
+        bridge.actorNatives.actorValueRuntime = { [weak game] in game?.actorValues.runtime }
+        bridge.actorNatives.ragdollRuntime = { [weak game] in game?.ragdoll.runtime }
+        bridge.actorNatives.combatRuntime = { [weak game] in game?.combat.loop }
         // Only the player tracks a draw state, so `IsWeaponDrawn` fails with a
         // reason for everyone else instead of claiming sheathed.
-        bridge.weaponDrawState = { [weak game] key in
+        bridge.actorNatives.weaponDrawState = { [weak game] key in
             guard key == .player else { return nil }
             return game?.combat.melee?.state.drawState
         }
-        bridge.conditionData = { [weak game] in
+        bridge.sessionNatives.conditionData = { [weak game] in
             game?.runtimeStateWorld.conditionData() ?? .empty
         }
-        bridge.detection = { [weak game] in game?.perception.perceptionResolution() }
-        bridge.currentPackage = { [weak game] actor in
+        bridge.perceptionNatives
+            .detection = { [weak game] in game?.perception.perceptionResolution() }
+        bridge.sessionNatives.currentPackage = { [weak game] actor in
             game?.packages.runtime?.currentPackage(for: actor)?.package.formID
         }
-        bridge.packageTemplate = { [weak game] package in game?.packages.template(of: package) }
-        bridge.lightLevel = { [weak game] feet in
+        bridge.sessionNatives
+            .packageTemplate = { [weak game] package in game?.packages.template(of: package) }
+        bridge.perceptionNatives.lightLevel = { [weak game] feet in
             let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight * 0.5)
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
-        bridge.cellFog = { [weak self] cell, change in self?.changeFog(change, in: cell) ?? false }
-        bridge.havokMass = { [weak game] key in
+        bridge.sessionNatives.cellFog = { [weak self] cell, change in
+            self?.changeFog(change, in: cell) ?? false
+        }
+        bridge.sessionNatives.havokMass = { [weak game] key in
             if let body = game?.streamer?.dynamicBodies.body(for: key) {
                 return body.definition.mass
             }
             return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?
                 .instance.bodies.reduce(0) { $0 + $1.definition.mass }
         }
-        bridge.publishTranslationPoses = { [weak game] poses in
+        bridge.sessionNatives.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
             game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in
                 guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
@@ -146,7 +183,7 @@ final class ScriptWorldAdapter {
                 )
             }
         }
-        bridge.livePosition = { [weak game] key in
+        bridge.perceptionNatives.livePosition = { [weak game] key in
             guard let game else { return nil }
             guard key != .player else { return game.renderer?.locomotion.status.feetPosition }
             return game.actorWorld.combatActors().first { $0.key == key }?.feet
@@ -155,16 +192,16 @@ final class ScriptWorldAdapter {
 
     private func wireSpellNatives(
         bridge: PapyrusWorldStateBridge,
-        provider: any WorldDataProviding
+        provider: WorldDataStores
     ) {
-        bridge.casterRuntime = { [weak game] in game?.magic.caster }
-        bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
-        bridge.formListStore = (provider as? FactionDataProviding)?.formListStore
-        bridge.keywordStore = (provider as? LocationDataProviding)?.locationStore?.keywords
-        bridge.dispelEffects = { [weak game] holder, predicate in
+        bridge.magicNatives.casterRuntime = { [weak game] in game?.magic.caster }
+        bridge.magicEffectStore = provider.magicEffectStore
+        bridge.formListStore = provider.formListStore
+        bridge.keywordStore = provider.locationStore?.keywords
+        bridge.magicNatives.dispelEffects = { [weak game] holder, predicate in
             game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }
-        bridge.applySpellHit = { [weak game] hit in
+        bridge.magicNatives.applySpellHit = { [weak game] hit in
             game?.magic.applySpellHit(hit) ?? .none
         }
         wirePerkNatives(bridge: bridge)
@@ -172,7 +209,7 @@ final class ScriptWorldAdapter {
 
     /// Granting a perk reconciles its abilities in the same call.
     private func wirePerkNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.mutatePerks = { [weak game] mutation, perk, actor in
+        bridge.progressionNatives.mutatePerks = { [weak game] mutation, perk, actor in
             guard let game, let holder = game.actorWorld.actorValueHolder(for: actor) else {
                 return false
             }
@@ -181,10 +218,10 @@ final class ScriptWorldAdapter {
             case .remove: game.perks.remove(perk, from: holder)
             }
         }
-        bridge.perkOwnership = { [weak game] key in
+        bridge.progressionNatives.perkOwnership = { [weak game] key in
             game?.perks.ownership(of: key)
         }
-        bridge.advanceSkill = { [weak game] advance, index, magnitude in
+        bridge.progressionNatives.advanceSkill = { [weak game] advance, index, magnitude in
             guard let progression = game?.progression else { return false }
             return switch advance {
             case .advance: progression.advanceSkill(index, byUse: magnitude)
@@ -192,13 +229,13 @@ final class ScriptWorldAdapter {
             }
         }
         // A zero delta is the read `Game.GetPerkPoints` makes.
-        bridge.modifyPerkPoints = { [weak game] delta in
+        bridge.progressionNatives.modifyPerkPoints = { [weak game] delta in
             game?.progression.modifyPerkPoints(by: delta)
         }
-        bridge.crimeReporter = { [weak game] in game?.crime.reporter }
-        bridge.arrestSession = { [weak game] in game?.crime }
+        bridge.crimeNatives.crimeReporter = { [weak game] in game?.crime.reporter }
+        bridge.crimeNatives.arrestSession = { [weak game] in game?.crime }
         game.crime.scriptedOwner = { [weak bridge] key in bridge?.scriptedOwner(of: key) }
-        bridge.showBarterMenu = { [weak game] actor in
+        bridge.crimeNatives.showBarterMenu = { [weak game] actor in
             guard let game, game.inventory.vendors != nil else { return nil }
             let text = game.containerMenu.openBarter(with: actor)
             return (game.containerMenu.isOpen && game.containerMenu.vendor != nil, text)

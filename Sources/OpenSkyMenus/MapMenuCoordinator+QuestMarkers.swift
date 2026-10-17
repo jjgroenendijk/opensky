@@ -32,14 +32,14 @@ extension MapMenuCoordinator {
                 && (objective == nil || marker.objective == objective)
         }
         guard let target else {
-            lastResultText = "No quest target to show"
+            lastOutcome = .noQuestTarget
             return false
         }
         if isOpen {
             close()
         }
         let opened = open(.world, focus: target.position)
-        lastResultText = opened ? "Showing \(target.text)" : "Map did not open"
+        lastOutcome = opened ? .showingQuestTarget(target.text) : .mapDidNotOpen
         return opened
     }
 

@@ -34,17 +34,17 @@ extension InventoryCoordinator {
     }
 
     @discardableResult
-    public func harvest(_ interaction: PlacedInteraction) -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func harvest(_ interaction: PlacedInteraction) -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         do {
             let outcome = try runtime.harvest(
                 interaction, onDay: world?.gameDaysPassed, count: harvestCount(of: interaction)
             )
             world?.refreshInteractionTarget()
             let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
-            return note("Harvested \(interaction.name): \(items.joined(separator: ", ")).")
+            return note(.harvested(plant: interaction.name, items: items))
         } catch {
-            return note("Harvest failed: \(String(describing: error))")
+            return note(.failed(action: "Harvest", reason: String(describing: error)))
         }
     }
 
@@ -63,25 +63,25 @@ extension InventoryCoordinator {
     }
 
     @discardableResult
-    public func harvestInteractionTarget() -> String {
+    public func harvestInteractionTarget() -> ItemActionOutcome {
         guard let interaction = world?.crosshairInteraction else {
-            return note("Nothing under the crosshair to harvest.")
+            return note(.nothingUnderCrosshair(verb: "harvest"))
         }
         return harvest(interaction)
     }
 
     @discardableResult
-    public func resetHarvestOfInteractionTarget() -> String {
-        guard let runtime else { return InventoryCore.noRuntimeText }
+    public func resetHarvestOfInteractionTarget() -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         guard let interaction = world?.crosshairInteraction else {
-            return note("Nothing under the crosshair to reset.")
+            return note(.nothingUnderCrosshair(verb: "reset"))
         }
         do {
             try runtime.resetHarvest(interaction)
             world?.refreshInteractionTarget()
-            return note("\(interaction.name) grew back.")
+            return note(.grewBack(interaction.name))
         } catch {
-            return note("Reset failed: \(String(describing: error))")
+            return note(.failed(action: "Reset", reason: String(describing: error)))
         }
     }
 
@@ -89,9 +89,9 @@ extension InventoryCoordinator {
 
     /// Opens a session for a station activation, replacing any open one.
     @discardableResult
-    public func openCraftingSession(_ event: CraftingActivationEvent) -> String {
-        guard let runtime else { return noteCraft(InventoryCore.noRuntimeText) }
-        guard let craftingCatalog else { return noteCraft("No recipe data is loaded.") }
+    public func openCraftingSession(_ event: CraftingActivationEvent) -> CraftingActionOutcome {
+        guard let runtime else { return noteCraft(.unavailable) }
+        guard let craftingCatalog else { return noteCraft(.noRecipeData) }
         crafting = CraftingSession(
             event: event,
             catalog: craftingCatalog,
@@ -102,14 +102,14 @@ extension InventoryCoordinator {
             skillUse: craftingSkillUse
         )
         let count = crafting?.recipes.count ?? 0
-        return noteCraft("Opened \(event.interaction.name): \(count) recipes.")
+        return noteCraft(.opened(station: event.interaction.name, recipes: count))
     }
 
     /// The dev control: a session at a station base, without walking to one.
     @discardableResult
-    public func openCraftingSession(station editorID: String) -> String {
+    public func openCraftingSession(station editorID: String) -> CraftingActionOutcome {
         guard let choice = craftingCatalog?.stations.first(where: { $0.editorID == editorID })
-        else { return noteCraft("No station named \(editorID).") }
+        else { return noteCraft(.noStationNamed(editorID)) }
         let interaction = PlacedInteraction(
             reference: choice.base,
             base: choice.base,
@@ -121,20 +121,21 @@ extension InventoryCoordinator {
             station: CraftingStation(workbench: choice.workbench, keywords: choice.keywords)
         )
         guard let event = CraftingActivationEvent(interaction: interaction) else {
-            return noteCraft("\(editorID) is no crafting station.")
+            return noteCraft(.notAStation(editorID))
         }
         return openCraftingSession(event)
     }
 
     @discardableResult
-    public func craft(_ recipe: ResolvedFormID) -> String {
-        guard let crafting else { return noteCraft("No crafting station is open.") }
+    public func craft(_ recipe: ResolvedFormID) -> CraftingActionOutcome {
+        guard let crafting else { return noteCraft(.notOpen) }
         do {
             let outcome = try crafting.craft(recipe)
             if let step = outcome.improved {
                 let from = qualityName(step.from, of: outcome.created.item)
                 let to = qualityName(step.to, of: outcome.created.item)
-                return noteCraft("Improved \(name(of: outcome.created.item)): \(from) -> \(to).")
+                let item = name(of: outcome.created.item)
+                return noteCraft(.improved(item: item, from: from, to: to))
             }
             storyEvents?.reportStoryEvent(.craft(
                 actor: .player,
@@ -143,23 +144,24 @@ extension InventoryCoordinator {
                 location: nil,
                 created: outcome.created.item
             ))
-            return noteCraft(
-                "Crafted \(outcome.created.count) × \(name(of: outcome.created.item))."
-            )
+            return noteCraft(.crafted(
+                count: outcome.created.count, item: name(of: outcome.created.item)
+            ))
         } catch {
-            return noteCraft("Craft failed: \(String(describing: error))")
+            return noteCraft(.craftFailed(reason: String(describing: error)))
         }
     }
 
     @discardableResult
-    public func closeCraftingSession() -> String {
-        guard crafting != nil else { return noteCraft("No crafting station is open.") }
+    public func closeCraftingSession() -> CraftingActionOutcome {
+        guard crafting != nil else { return noteCraft(.notOpen) }
         crafting = nil
-        return noteCraft("Closed the crafting station.")
+        return noteCraft(.closed)
     }
 
-    private func noteCraft(_ text: String) -> String {
-        lastCraftText = text
-        return text
+    @discardableResult
+    private func noteCraft(_ outcome: CraftingActionOutcome) -> CraftingActionOutcome {
+        lastCraft = outcome
+        return outcome
     }
 }

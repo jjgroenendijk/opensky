@@ -22,9 +22,24 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `ActorWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ActorWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 final class ActorWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ActorWorldHost
     /// Change gate in front of the HUD meter contract.
     private var meters = HUDMeterBinding()
     /// What the enemy health bar last showed; nil when it is hidden.
@@ -32,31 +47,29 @@ final class ActorWorldAdapter {
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     private var baseNames: [UInt32: String?] = [:]
 
-    init(game: GameViewController) {
+    init(game: any ActorWorldHost) {
         self.game = game
     }
 
     /// A provider without stat indexes, such as every synthetic scene, leaves
     /// the runtime nil.
-    func wireActorValues(provider: any WorldDataProviding, renderer: Renderer) {
+    func wireActorValues(provider: WorldDataStores, renderer: Renderer) {
         baseNames = [:]
-        guard let baselines = (provider as? ActorValueDataProviding)?.actorValueBaselines
+        guard let baselines = provider.actorValueBaselines
         else { return }
         let coordinator = game.actorValues
-        let settings = (provider as? WorldDataStores)?.gameSettings
+        let settings = provider.gameSettings
         coordinator.wire(
             baselines: baselines,
-            regeneration: settings.map(RegenerationSettings.resolve) ?? .vanilla,
-            stamina: settings.map(StaminaSettings.resolve) ?? .vanilla
+            regeneration: RegenerationSettings.resolve(store: settings),
+            stamina: StaminaSettings.resolve(store: settings)
         )
         // Chained after the Papyrus VM, so neither unhooks the other. The
         // renderer gates the delta, so a menu-paused frame regenerates nothing.
-        let advanceScripts = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak coordinator] delta in
-            advanceScripts?(delta)
+        renderer.session.worldTick.register(.actorValues) { [weak coordinator] delta in
             coordinator?.advance(delta: delta)
         }
-        renderer.onFrame.add { [weak self, weak renderer] _ in
+        renderer.session.frameSteps.register(.actorValues) { [weak self, weak renderer] _ in
             self?.publishHUDMeters(renderer: renderer)
         }
     }
@@ -105,7 +118,7 @@ final class ActorWorldAdapter {
             return cached
         }
         guard
-            let templates = (game.worldData as? ActorValueDataProviding)?
+            let templates = game.worldData?
                 .actorValueBaselines?.resolver?.templates,
             let strings = game.journal.strings
         else { return nil }

@@ -9,8 +9,6 @@ final class MapMenuPanelViewController: InspectorPanelViewController {
     weak var provider: (any MapMenuControlProviding)? {
         didSet {
             mapSection.provider = provider
-            let provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
         }
     }
 

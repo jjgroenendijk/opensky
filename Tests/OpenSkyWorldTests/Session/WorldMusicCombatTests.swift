@@ -128,7 +128,7 @@ struct WorldMusicCombatTests {
 
         let failure = director.setCombatActive(true)
 
-        #expect(failure == "no combat music type in the load order")
+        #expect(failure == .noCombatMusicType)
         #expect(!director.isCombatMusicActive)
         #expect(director.currentTrackName == "music\\explore\\a.xwm")
     }

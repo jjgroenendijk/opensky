@@ -39,51 +39,103 @@ enum SidebarSection: String, CaseIterable {
     }
 }
 
-/// The live-renderer bridges a world inspector panel may consume. The game
-/// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AINavigationControlProviding & AIOverlayControlProviding
-    & ActorValueControlProviding
-    & AgentControlProviding & AnimationControlProviding & ArcheryControlProviding
-    & AssetCacheControlProviding & AudioControlProviding
-    & CameraControlProviding & CastingControlProviding & CinematicCameraControlProviding
-    & CombatLoopControlProviding & ContainerMenuControlProviding
-    & CraftingControlProviding
-    & CrimeFactionControlProviding & DialogueBranchControlProviding
-    & DialogueCameraControlProviding & DialogueControlProviding
-    & ExplosionControlProviding & FaceMorphControlProviding & FirstPersonControlProviding
-    & FrameStatsProviding
-    & GrassControlProviding & HUDControlProviding
-    & HeadAssemblyControlProviding & IdleControlProviding
-    & ImageSpaceControlProviding & ImpactControlProviding & InventoryEquipmentControlProviding
-    &
-    InventoryMenuControlProviding
-    & ItemControlProviding & JournalControlProviding
-    & LoadingScreenControlProviding & LockControlProviding & MagicEffectControlProviding
-    & MapMenuControlProviding
-    & MeleeCombatControlProviding
-    & MessageControlProviding & ObjectAnimationControlProviding
-    & ParticleControlProviding
-    & PerceptionControlProviding
-    & PhysicsControlProviding
-    & PlayerLocomotionControlProviding
-    & PlayerSettingsControlProviding & PrecipitationControlProviding
-    & ProgressionControlProviding & RaceMenuControlProviding & RagdollControlProviding
-    & RenderDebugControlProviding & RenderPerformanceControlProviding
-    & RuntimeStateControlProviding & SWFLabControlProviding
-    & SceneControlProviding
-    & SceneStatsProviding & ScriptControlProviding & SequenceDoorControlProviding
-    & ShadowControlProviding & SkillsMenuControlProviding & StoryManagerControlProviding
-    & SurfaceShadingControlProviding & SystemMenuControlProviding
-    & TerrainLODControlProviding & TerrainShadingControlProviding
-    & TitleMenuControlProviding & TrapControlProviding
-    & TriggerControlProviding
-    & UILabControlProviding & VisualEffectControlProviding & WaterControlProviding
-    & WeatherControlProviding & WorldLoadReportProviding & WorldspaceControlProviding
-
-/// Passed to a world-inspector factory so the panel can wire its providers.
+/// Passed to a world-inspector factory so the panel can wire its providers. A field
+/// reads through to the group that holds it, such as `context.audio`.
 @MainActor
+@dynamicMemberLookup
 struct WorldPanelContext {
-    let providers: any WorldControlProviders
+    let game: GamePanelServices
+    let features: FeaturePanelServices
+
+    subscript<Value>(dynamicMember path: KeyPath<GamePanelServices, Value>) -> Value {
+        game[keyPath: path]
+    }
+
+    subscript<Value>(dynamicMember path: KeyPath<FeaturePanelServices, Value>) -> Value {
+        features[keyPath: path]
+    }
+}
+
+/// The seams the game view controller and its render controls answer.
+@MainActor
+struct GamePanelServices {
+    let aiNavigation: any AINavigationControlProviding
+    let aiOverlay: any AIOverlayControlProviding
+    let actorValue: any ActorValueControlProviding
+    let animation: any AnimationControlProviding
+    let archery: any ArcheryControlProviding
+    let assetCache: any AssetCacheControlProviding
+    let camera: any CameraControlProviding
+    let casting: any CastingControlProviding
+    let combatLoop: any CombatLoopControlProviding
+    let containerMenu: any ContainerMenuControlProviding
+    let crafting: any CraftingControlProviding
+    let crimeFaction: any CrimeFactionControlProviding
+    let dialogueCamera: any DialogueCameraControlProviding
+    let dialogue: any DialogueControlProviding
+    let faceMorph: any FaceMorphControlProviding
+    let firstPerson: any FirstPersonControlProviding
+    let frameStats: any FrameStatsProviding
+    let grass: any GrassControlProviding
+    let inventoryEquipment: any InventoryEquipmentControlProviding
+    let inventoryMenu: any InventoryMenuControlProviding
+    let item: any ItemControlProviding
+    let journal: any JournalControlProviding
+    let lock: any LockControlProviding
+    let magicEffect: any MagicEffectControlProviding
+    let meleeCombat: any MeleeCombatControlProviding
+    let particle: any ParticleControlProviding
+    let perception: any PerceptionControlProviding
+    let physics: any PhysicsControlProviding
+    let playerLocomotion: any PlayerLocomotionControlProviding
+    let precipitation: any PrecipitationControlProviding
+    let progression: any ProgressionControlProviding
+    let ragdoll: any RagdollControlProviding
+    let renderDebug: any RenderDebugControlProviding
+    let renderPerformance: any RenderPerformanceControlProviding
+    let sceneStats: any SceneStatsProviding
+    let shadow: any ShadowControlProviding
+    let surfaceShading: any SurfaceShadingControlProviding
+    let terrainLOD: any TerrainLODControlProviding
+    let terrainShading: any TerrainShadingControlProviding
+    let trap: any TrapControlProviding
+    let trigger: any TriggerControlProviding
+    let water: any WaterControlProviding
+    let weather: any WeatherControlProviding
+    let worldLoadReport: any WorldLoadReportProviding
+    let worldspace: any WorldspaceControlProviding
+}
+
+/// The seams feature coordinators and world adapters answer.
+@MainActor
+struct FeaturePanelServices {
+    let agent: any AgentControlProviding
+    let audio: any AudioControlProviding
+    let cinematicCamera: any CinematicCameraControlProviding
+    let dialogueBranch: any DialogueBranchControlProviding
+    let explosion: any ExplosionControlProviding
+    let hud: any HUDControlProviding
+    let headAssembly: any HeadAssemblyControlProviding
+    let idle: any IdleControlProviding
+    let imageSpace: any ImageSpaceControlProviding
+    let impact: any ImpactControlProviding
+    let loadingScreen: any LoadingScreenControlProviding
+    let mapMenu: any MapMenuControlProviding
+    let message: any MessageControlProviding
+    let objectAnimation: any ObjectAnimationControlProviding
+    let playerSettings: any PlayerSettingsControlProviding
+    let raceMenu: any RaceMenuControlProviding
+    let runtimeState: any RuntimeStateControlProviding
+    let swfLab: any SWFLabControlProviding
+    let scene: any SceneControlProviding
+    let script: any ScriptControlProviding
+    let sequenceDoor: any SequenceDoorControlProviding
+    let skillsMenu: any SkillsMenuControlProviding
+    let storyManager: any StoryManagerControlProviding
+    let systemMenu: any SystemMenuControlProviding
+    let titleMenu: any TitleMenuControlProviding
+    let uiLab: any UILabControlProviding
+    let visualEffect: any VisualEffectControlProviding
 }
 
 /// Passed to a full-content factory (and reload) so the controller can reach
@@ -191,24 +243,20 @@ enum DestinationRegistry {
             symbolName: "cube.transparent",
             content: .worldInspector { context in
                 let panel = WorldPanelViewController()
-                panel.cameraProvider = context.providers
-                panel.worldspaceProvider = context.providers
-                panel.cinematicProvider = context.providers
-                panel.loadingProvider = context.providers
-                panel.firstPersonProvider = context.providers
-                panel.frameStatsProvider = context.providers
-                panel.worldLoadProvider = context.providers
-                panel.assetCacheProvider = context.providers
-                panel.sceneStatsProvider = context.providers
-                panel.triggerProvider = context.providers
-                panel.trapProvider = context.providers
-                panel.objectAnimationProvider = context.providers
-                panel.sequenceDoorProvider = context.providers
-                panel.renderDebugProvider = context.providers
-                // None of the panel's own provider seams carry refocus, so the
-                // factory supplies it from the full provider set.
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.cameraProvider = context.camera
+                panel.worldspaceProvider = context.worldspace
+                panel.cinematicProvider = context.cinematicCamera
+                panel.loadingProvider = context.loadingScreen
+                panel.firstPersonProvider = context.firstPerson
+                panel.frameStatsProvider = context.frameStats
+                panel.worldLoadProvider = context.worldLoadReport
+                panel.assetCacheProvider = context.assetCache
+                panel.sceneStatsProvider = context.sceneStats
+                panel.triggerProvider = context.trigger
+                panel.trapProvider = context.trap
+                panel.objectAnimationProvider = context.objectAnimation
+                panel.sequenceDoorProvider = context.sequenceDoor
+                panel.renderDebugProvider = context.renderDebug
                 return panel
             },
             overrides: worldOverrides
@@ -220,10 +268,8 @@ enum DestinationRegistry {
             symbolName: "figure.walk",
             content: .worldInspector { context in
                 let panel = PlayerLocomotionPanelViewController()
-                panel.provider = context.providers
-                panel.cameraProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.playerLocomotion
+                panel.cameraProvider = context.camera
                 return panel
             },
             overrides: playerLocomotionOverrides
@@ -235,16 +281,14 @@ enum DestinationRegistry {
             symbolName: "shield.lefthalf.filled",
             content: .worldInspector { context in
                 let panel = CombatPhysicsPanelViewController()
-                panel.actorValueProvider = context.providers
-                panel.magicEffectProvider = context.providers
-                panel.castingProvider = context.providers
-                panel.meleeProvider = context.providers
-                panel.archeryProvider = context.providers
-                panel.ragdollProvider = context.providers
-                panel.combatProvider = context.providers
-                panel.physicsProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.actorValueProvider = context.actorValue
+                panel.magicEffectProvider = context.magicEffect
+                panel.castingProvider = context.casting
+                panel.meleeProvider = context.meleeCombat
+                panel.archeryProvider = context.archery
+                panel.ragdollProvider = context.ragdoll
+                panel.combatProvider = context.combatLoop
+                panel.physicsProvider = context.physics
                 return panel
             },
             overrides: combatPhysicsOverrides
@@ -256,14 +300,12 @@ enum DestinationRegistry {
             symbolName: "point.topleft.down.to.point.bottomright.curvepath",
             content: .worldInspector { context in
                 let panel = AINavigationPanelViewController()
-                panel.overlayProvider = context.providers
-                panel.navigationProvider = context.providers
-                panel.perceptionProvider = context.providers
-                panel.combatProvider = context.providers
-                panel.headProvider = context.providers
-                panel.idleProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.overlayProvider = context.aiOverlay
+                panel.navigationProvider = context.aiNavigation
+                panel.perceptionProvider = context.perception
+                panel.combatProvider = context.combatLoop
+                panel.headProvider = context.headAssembly
+                panel.idleProvider = context.idle
                 return panel
             },
             overrides: aiNavigationOverrides
@@ -275,15 +317,16 @@ enum DestinationRegistry {
             symbolName: "mountain.2",
             content: .worldInspector { context in
                 let panel = EnvironmentPanelViewController()
-                panel.provider = context.providers
-                panel.weatherProvider = context.providers
-                panel.animationProvider = context.providers
-                panel.particleProvider = context.providers
-                panel.precipitationProvider = context.providers
-                panel.waterProvider = context.providers
-                panel.terrainProvider = context.providers
-                panel.surfaceShadingProvider = context.providers
-                panel.grassProvider = context.providers
+                panel.shadowProvider = context.shadow
+                panel.terrainLODProvider = context.terrainLOD
+                panel.weatherProvider = context.weather
+                panel.animationProvider = context.animation
+                panel.particleProvider = context.particle
+                panel.precipitationProvider = context.precipitation
+                panel.waterProvider = context.water
+                panel.terrainProvider = context.terrainShading
+                panel.surfaceShadingProvider = context.surfaceShading
+                panel.grassProvider = context.grass
                 return panel
             },
             overrides: environmentOverrides
@@ -295,9 +338,9 @@ enum DestinationRegistry {
             symbolName: "scope",
             content: .worldInspector { context in
                 let panel = HUDInteractionPanelViewController()
-                panel.provider = context.providers
-                panel.itemProvider = context.providers
-                panel.messageProvider = context.providers
+                panel.provider = context.hud
+                panel.itemProvider = context.item
+                panel.messageProvider = context.message
                 return panel
             },
             overrides: hudInteractionOverrides
@@ -309,13 +352,11 @@ enum DestinationRegistry {
             symbolName: "bubble.left.and.bubble.right",
             content: .worldInspector { context in
                 let panel = DialoguePanelViewController()
-                panel.dialogueProvider = context.providers
-                panel.dialogueCameraProvider = context.providers
-                panel.branchProvider = context.providers
-                panel.audioProvider = context.providers
-                panel.faceMorphProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.dialogueProvider = context.dialogue
+                panel.dialogueCameraProvider = context.dialogueCamera
+                panel.branchProvider = context.dialogueBranch
+                panel.audioProvider = context.audio
+                panel.faceMorphProvider = context.faceMorph
                 return panel
             },
             overrides: dialogueVoiceOverrides
@@ -332,11 +373,9 @@ enum DestinationRegistry {
             symbolName: "backpack",
             content: .worldInspector { context in
                 let panel = InventoryEquipmentPanelViewController()
-                panel.provider = context.providers
-                panel.craftingProvider = context.providers
-                panel.lockProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.inventoryEquipment
+                panel.craftingProvider = context.crafting
+                panel.lockProvider = context.lock
                 return panel
             },
             overrides: inventoryEquipmentOverrides
@@ -348,9 +387,7 @@ enum DestinationRegistry {
             symbolName: "speaker.wave.2",
             content: .worldInspector { context in
                 let panel = AudioPanelViewController()
-                panel.provider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.audio
                 return panel
             },
             overrides: audioOverrides
@@ -362,9 +399,7 @@ enum DestinationRegistry {
             symbolName: "clock.arrow.circlepath",
             content: .worldInspector { context in
                 let panel = RuntimeStatePanelViewController()
-                panel.provider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.runtimeState
                 return panel
             },
             overrides: runtimeStateOverrides
@@ -376,9 +411,7 @@ enum DestinationRegistry {
             symbolName: "curlybraces",
             content: .worldInspector { context in
                 let panel = ScriptsPanelViewController()
-                panel.provider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.script
                 return panel
             },
             overrides: scriptsOverrides
@@ -390,11 +423,9 @@ enum DestinationRegistry {
             symbolName: "book.closed",
             content: .worldInspector { context in
                 let panel = JournalPanelViewController()
-                panel.provider = context.providers
-                panel.sceneProvider = context.providers
-                panel.storyProvider = context.providers
-                let providers = context.providers
-                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                panel.provider = context.journal
+                panel.sceneProvider = context.scene
+                panel.storyProvider = context.storyManager
                 return panel
             },
             overrides: journalOverrides
@@ -406,8 +437,8 @@ enum DestinationRegistry {
             symbolName: "rectangle.on.rectangle",
             content: .worldInspector { context in
                 let panel = UILabPanelViewController()
-                panel.provider = context.providers
-                panel.swfProvider = context.providers
+                panel.provider = context.uiLab
+                panel.swfProvider = context.swfLab
                 return panel
             },
             overrides: uiLabOverrides
@@ -419,7 +450,7 @@ enum DestinationRegistry {
             symbolName: "gauge.with.dots.needle.67percent",
             content: .worldInspector { context in
                 let panel = RenderingPerformancePanelViewController()
-                panel.provider = context.providers
+                panel.provider = context.renderPerformance
                 return panel
             },
             overrides: renderingPerformanceOverrides

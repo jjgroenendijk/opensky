@@ -1,5 +1,5 @@
 // The simulation side of a frame, as the renderer sees it. Live frame:
-// `prepareLiveFrame` (camera, `onFrame`, clock, world, weather), then the
+// `prepareLiveFrame` (camera, frame steps, clock, world, weather), then the
 // renderer's own step, then `finishLiveFrame` (audio). Offscreen frames call the
 // update methods directly. Other values are read on demand, never copied.
 

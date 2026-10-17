@@ -11,22 +11,32 @@ import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
+/// What `LockpickingMenuController` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+}
+
 /// Holds the open lockpicking session's input and overlay for `game`.
 final class LockpickingMenuController {
     static let identifier: MenuIdentifier = "LockpickingMenu"
     /// A long frame steps as this, so a stall does not snap a pick.
     static let longestStep: Float = 0.1
 
-    unowned let game: GameViewController
+    unowned let game: any LockpickingMenuHost
     private(set) var controls = LockpickingMenuControls()
     private(set) var presentation: LockpickingMenuPresentation?
     private var lastFrame: Date?
     private var wasTurning = false
     private let sounds: MenuSoundPlayer
 
-    init(game: GameViewController) {
+    init(game: any LockpickingMenuHost) {
         self.game = game
-        sounds = MenuSoundPlayer(game: game)
+        sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }
 
     private var locks: LockCoordinator {
@@ -46,7 +56,7 @@ final class LockpickingMenuController {
         do {
             try locks.beginLockpicking(target)
         } catch {
-            locks.note(Self.describe(error, name: target.interaction.name))
+            locks.record(.pickRefused(error, name: target.interaction.name))
             return
         }
         controls = LockpickingMenuControls()
@@ -60,23 +70,24 @@ final class LockpickingMenuController {
 
     /// Opens the menu on the lock the sidebar selected, as if the player pressed on it.
     @discardableResult
-    func openSelected() -> String {
+    func openSelected() -> LockActionOutcome {
         guard let interaction = locks.selectedInteraction else {
-            return locks.note("No lock selected.")
+            return locks.record(.noSelection)
         }
         open(InteractionTarget(
             interaction: interaction,
             hitPosition: interaction.position,
             distance: 0
         ))
-        return locks.lastText
+        return locks.lastAction
     }
 
     /// Opens the menu for a lock the gate refused, if the lock can be picked.
     func handle(_ refusal: ActivationRefusalEvent) {
         guard case let .locked(level, _) = refusal.refusal else { return }
         if let notice = locks.refusalNotice(level: level) {
-            game.hud.showNotification(locks.note(notice))
+            locks.record(.notice(notice))
+            game.hud.showNotification(locks.texts.text(for: notice))
             return
         }
         open(refusal.target)
@@ -151,14 +162,5 @@ final class LockpickingMenuController {
 
     private func play(_ sound: LockpickingSound) {
         sounds.play(editorID: sound.rawValue)
-    }
-
-    static func describe(_ refusal: any Error, name: String) -> String {
-        switch refusal as? LockpickingRefusal {
-        case .noLockpicks: "\(name) is locked and you have no lockpicks."
-        case .requiresKey: "\(name) requires a key."
-        case .notLocked: "\(name) is not locked."
-        case .noRuntime, .unknownReference, nil: "\(name) cannot be picked."
-        }
     }
 }

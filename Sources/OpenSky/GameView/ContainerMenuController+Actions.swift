@@ -28,26 +28,24 @@ extension ContainerMenuController {
     }
 
     @discardableResult
-    func selectMerchant(_ reference: FormID) -> String {
-        guard let streamer = game.streamer else {
-            return refuseNomination("no cell is loaded")
-        }
+    func selectMerchant(_ reference: FormID) -> MerchantNomination {
+        guard let streamer = game.streamer else { return noteNomination(.noCell) }
         guard
             let interaction = streamer.containerInteractions()
                 .first(where: { $0.reference == reference })
         else {
-            return refuseNomination("\(reference) is not a resident container")
+            return noteNomination(.notResident(reference))
         }
         return nominateAndNote(interaction)
     }
 
     @discardableResult
-    func selectMerchantFromInteraction() -> String {
+    func selectMerchantFromInteraction() -> MerchantNomination {
         guard
             let interaction = game.hud.interactionTarget?.interaction,
             interaction.action == .search
         else {
-            return refuseNomination("the crosshair is not on a container")
+            return noteNomination(.crosshairNotOnContainer)
         }
         return nominateAndNote(interaction)
     }
@@ -61,16 +59,15 @@ extension ContainerMenuController {
         return true
     }
 
-    private func nominateAndNote(_ interaction: PlacedInteraction) -> String {
-        guard nominate(interaction) else {
-            return refuseNomination("world items are unavailable, or nothing resident holds it")
-        }
+    private func nominateAndNote(_ interaction: PlacedInteraction) -> MerchantNomination {
+        guard nominate(interaction) else { return noteNomination(.noHolder) }
         refreshModel()
-        return note("Merchant: \(interaction.name).")
+        return noteNomination(.nominated(interaction.name))
     }
 
-    private func refuseNomination(_ reason: String) -> String {
-        note("Cannot nominate a merchant: \(reason).")
+    private func noteNomination(_ nomination: MerchantNomination) -> MerchantNomination {
+        note(nomination.text)
+        return nomination
     }
 
     // MARK: - Barter
@@ -150,10 +147,11 @@ extension ContainerMenuController {
         case (.barter, .player): .sell
         }
         do {
-            try note(game.inventory.transfer(
+            let outcome = try game.inventory.transfer(
                 transfer, item: entry.item, named: entry.name, container: container,
                 vendor: vendor, merchant: merchant
-            ))
+            )
+            note(outcome.text(texts: game.inventory.tradeTexts))
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
         }
@@ -169,7 +167,7 @@ extension ContainerMenuController {
             note("Take all is a container action, not a barter one.")
             return
         }
-        note(game.inventory.takeAll(from: container))
+        note(game.inventory.takeAll(from: container).text)
         refreshModel()
     }
 
@@ -182,7 +180,7 @@ extension ContainerMenuController {
     // MARK: - Readout
 
     var snapshot: ContainerMenuControlSnapshot {
-        let runtime = movieLoaded ? game.renderer?.swfRuntime : nil
+        let runtime = movie.runtime
         let diagnostics = runtime.map(ContainerMenuMovieBridge.diagnostics(runtime:))
         return ContainerMenuControlSnapshot(
             isOpen: isOpen,

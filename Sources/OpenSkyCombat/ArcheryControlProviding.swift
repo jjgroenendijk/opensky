@@ -173,7 +173,7 @@ public protocol ArcheryControlProviding: AnyObject {
     /// same `ArcheryRuntime.loose` as `arrowRelease`, so it verifies the real binding.
     /// - Returns: a readable outcome the panel shows verbatim.
     @discardableResult
-    func spawnDevProjectile() -> String
+    func spawnDevProjectile() -> ArcheryActionOutcome
 
     /// Removes everything in the air right now, resolving nothing.
     func despawnProjectiles()

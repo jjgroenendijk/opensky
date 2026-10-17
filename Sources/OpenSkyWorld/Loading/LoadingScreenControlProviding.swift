@@ -61,30 +61,25 @@ nonisolated public enum LoadingScreenReadout {
     }
 }
 
-/// Lets the app's provider stand in for its coordinator, one line to conform.
-public protocol LoadingScreenControlForwarding: LoadingScreenControlProviding {
-    var loadingScreens: LoadingScreenCoordinator { get }
-}
-
-extension LoadingScreenControlForwarding {
+extension LoadingScreenCoordinator: LoadingScreenControlProviding {
     private var now: Double {
         Date().timeIntervalSinceReferenceDate
     }
 
     public var loadingScreenSnapshot: LoadingScreenSnapshot {
-        loadingScreens.snapshot
+        snapshot
     }
 
     public var loadingScreensEnabled: Bool {
-        get { loadingScreens.isEnabled }
-        set { loadingScreens.isEnabled = newValue }
+        get { isEnabled }
+        set { isEnabled = newValue }
     }
 
     public func forceLoadingScreen(editorID: String) {
-        loadingScreens.force(editorID: editorID, at: now)
+        force(editorID: editorID, at: now)
     }
 
     public func releaseLoadingScreen() {
-        loadingScreens.releaseForced(at: now)
+        releaseForced(at: now)
     }
 }

@@ -7,10 +7,19 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
-final class AnimationEventWorldAdapter {
-    unowned let game: GameViewController
+/// What `AnimationEventWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AnimationEventWorldHost: AnyObject {
+    var cinematicCamera: CinematicCameraCoordinator { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+}
 
-    init(game: GameViewController) {
+final class AnimationEventWorldAdapter {
+    unowned let game: any AnimationEventWorldHost
+
+    init(game: any AnimationEventWorldHost) {
         self.game = game
     }
 
@@ -18,7 +27,7 @@ final class AnimationEventWorldAdapter {
     /// callbacks send theirs to the coordinator directly.
     func wire(renderer: Renderer) {
         renderer.session.animationEvents.attach(world: self)
-        renderer.onFrame.add { [weak renderer] _ in
+        renderer.session.frameSteps.register(.animationEvents) { [weak renderer] _ in
             guard let renderer else { return }
             let locomotion = renderer.locomotion
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)

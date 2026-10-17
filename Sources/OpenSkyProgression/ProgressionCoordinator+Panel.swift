@@ -38,169 +38,116 @@ extension ProgressionCoordinator {
     // MARK: - Skills
 
     @discardableResult
-    public func advanceSelectedSkill(byUse amount: Float) -> String {
+    public func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome {
         applyToSelectedSkill(verb: "took no use") { advanceSkill($0, byUse: amount) }
     }
 
     @discardableResult
-    public func incrementSelectedSkill() -> String {
+    public func incrementSelectedSkill() -> ProgressionActionOutcome {
         applyToSelectedSkill(verb: "took no point") { incrementSkill($0) }
     }
 
     // MARK: - Character level
 
     @discardableResult
-    public func awardCharacterExperience(_ amount: Float) -> String {
-        guard let leveling else { return Self.noProgressionText }
+    public func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome {
+        guard let leveling else { return .unavailable }
         let report = leveling.award(characterExperience: amount)
         reportLevel(report)
-        lastActionText = report.didLevel
-            ? String(
-                format: "Awarded %.0f character XP: level %d to %d, "
-                    + "%d perk point(s), %d pick(s) owed.",
-                amount,
-                report.previousLevel,
-                report.level,
-                report.perkPoints,
-                report.pendingAttributePicks
-            )
-            : String(
-                format: "Awarded %.0f character XP: still level %d, %.0f/%.0f banked.",
-                amount,
-                report.level,
-                report.carriedExperience,
-                leveling.experienceForNextLevel
-            )
-        return lastActionText
+        return record(.experienceAwarded(
+            amount, report, nextLevelAt: leveling.experienceForNextLevel
+        ))
     }
 
     @discardableResult
-    public func chooseAttributePick(_ kind: ActorValueKind) -> String {
+    public func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
         switch chooseAttribute(kind) {
         case let .success(state):
-            lastActionText = String(
-                format: "Chose %@: %d pick(s) still owed.",
-                kind.rawValue,
-                state.pendingAttributePicks
-            )
+            record(.attributeChosen(kind, picksOwed: state.pendingAttributePicks))
         case let .failure(error):
-            lastActionText = Self.text(for: error)
+            record(.progressRefused(error))
         }
-        return lastActionText
     }
 
     @discardableResult
-    public func changePerkPoints(by delta: Int) -> String {
-        guard let points = modifyPerkPoints(by: delta) else { return Self.noProgressionText }
-        lastActionText = "Changed perk points by \(delta): \(points) unspent."
-        return lastActionText
+    public func changePerkPoints(by delta: Int) -> ProgressionActionOutcome {
+        guard let points = modifyPerkPoints(by: delta) else { return .unavailable }
+        return record(.perkPointsChanged(delta: delta, unspent: points))
     }
 
     // MARK: - Perks
 
     @discardableResult
-    public func spendPointOnSelectedPerk() -> String {
-        guard leveling != nil else { return Self.noProgressionText }
-        guard let key = selectedPerkKey() else {
-            lastActionText = Self.noPerkText
-            return lastActionText
-        }
-        switch spendPerkPoint(on: key) {
+    public func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
+        guard leveling != nil else { return .unavailable }
+        guard let key = selectedPerkKey() else { return record(.noPerk) }
+        return switch spendPerkPoint(on: key) {
         case let .success(state):
-            lastActionText = "Spent a point on \(perkName(key)): \(state.perkPoints) left."
+            record(.perkPointSpent(perk: perkName(key), left: state.perkPoints))
         case let .failure(error):
-            lastActionText = Self.text(for: error)
+            record(.progressRefused(error))
         }
-        return lastActionText
     }
 
     @discardableResult
-    public func grantSelectedPerk() -> String {
+    public func grantSelectedPerk() -> ProgressionActionOutcome {
         changeSelectedPerk(granting: true)
     }
 
     @discardableResult
-    public func revokeSelectedPerk() -> String {
+    public func revokeSelectedPerk() -> ProgressionActionOutcome {
         changeSelectedPerk(granting: false)
     }
 
     @discardableResult
-    public func makeSelectedSkillLegendary() -> String {
+    public func makeSelectedSkillLegendary() -> ProgressionActionOutcome {
         if case let .failure(refusal) = makeSkillLegendary(skillSelection) {
-            lastActionText = Self.text(for: refusal)
+            record(.treeRefused(refusal))
         }
-        return lastActionText
+        return lastAction
     }
 
     @discardableResult
-    public func resetSelectedPerkTree() -> String {
+    public func resetSelectedPerkTree() -> ProgressionActionOutcome {
         if case let .failure(refusal) = resetPerkTree(skillSelection) {
-            lastActionText = Self.text(for: refusal)
+            record(.treeRefused(refusal))
         }
-        return lastActionText
+        return lastAction
+    }
+
+    /// The readout line of `lastAction`, with the load order's training notices.
+    public var lastActionText: String {
+        lastAction.text(training: training)
+    }
+
+    @discardableResult
+    func record(_ outcome: ProgressionActionOutcome) -> ProgressionActionOutcome {
+        lastAction = outcome
+        return outcome
     }
 
     // MARK: - Private
-
-    private static func text(for refusal: PerkTreeResetRefusal) -> String {
-        switch refusal {
-        case .notASkill: "Refused: not a skill."
-        case .noProgression: noProgressionText
-        case let .belowLegendaryLevel(base): String(
-                format: "Refused: the skill is %.0f, not 100.",
-                base
-            )
-        case .noDragonSoul: "Refused: no dragon soul to spend."
-        case .noPerksInTree: "Refused: no perks in this tree."
-        }
-    }
-
-    static let noProgressionText = "Progression unavailable: no game data loaded."
-    private static let noPerkText = "This box grants no perk."
-
-    /// Spelled as the rule that refused.
-    private static func text(for error: PlayerProgressError) -> String {
-        switch error {
-        case .noAttributePickOwed:
-            "No attribute pick is owed: gain a level first."
-        case .noPerkPoints:
-            "No perk points to spend."
-        case let .perkRefused(refusal):
-            "Refused: \(ProgressionControlReadout.description(of: refusal))."
-        }
-    }
 
     private func perkName(_ key: ReferenceKey) -> String {
         perks.runtime?.record(key)?.displayName ?? key.description
     }
 
-    private func applyToSelectedSkill(verb: String, _ change: (Int32) -> Bool) -> String {
-        guard skills != nil else { return Self.noProgressionText }
+    private func applyToSelectedSkill(
+        verb: String, _ change: (Int32) -> Bool
+    ) -> ProgressionActionOutcome {
+        guard skills != nil else { return .unavailable }
         let index = skillSelection
         let name = skillName(index)
         guard change(index), let report = lastAdvance else {
-            lastActionText = "\(name) \(verb):"
-                + " this load order carries no advancement parameters for it."
-            return lastActionText
+            return record(.skillUnchanged(skill: name, verb: verb))
         }
-        lastActionText = ProgressionControlReadout.advanceText(report, skillName: name)
-        return lastActionText
+        return record(.skillAdvanced(report, skill: name))
     }
 
-    private func changeSelectedPerk(granting: Bool) -> String {
-        guard perks.runtime != nil else { return Self.noProgressionText }
-        guard let key = selectedPerkKey() else {
-            lastActionText = Self.noPerkText
-            return lastActionText
-        }
+    private func changeSelectedPerk(granting: Bool) -> ProgressionActionOutcome {
+        guard perks.runtime != nil else { return .unavailable }
+        guard let key = selectedPerkKey() else { return record(.noPerk) }
         let changed = granting ? perks.add(key, to: .player) : perks.remove(key, from: .player)
-        let name = perkName(key)
-        lastActionText = switch (granting, changed) {
-        case (true, true): "Granted \(name)."
-        case (true, false): "\(name) was already owned."
-        case (false, true): "Removed \(name)."
-        case (false, false): "\(name) was not owned."
-        }
-        return lastActionText
+        return record(.perkChanged(perk: perkName(key), granted: granting, changed: changed))
     }
 }

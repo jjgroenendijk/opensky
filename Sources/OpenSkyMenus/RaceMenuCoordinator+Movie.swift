@@ -10,71 +10,37 @@ import OpenSkyRendering
 
 extension RaceMenuCoordinator {
     func startMovie() {
-        guard let hud, world?.renderer != nil, movies?.isAvailable == true else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        hud.suspend()
-        holdsLayer = true
-        movieRequest += 1
-        let request = movieRequest
-        movies?.request(RaceMenuMovieBridge.moviePath, while: { [weak self] in
-            self?.movieRequest == request
-        }, then: { [weak self] result in
-            self?.showMovie(result)
-        })
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
-        guard let renderer = world?.renderer, let model else { return }
-        do {
-            try renderer.setSWFMovie(result.get())
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime { [weak self] runtime in
+        movie.start(MenuMovie(
+            path: RaceMenuMovieBridge.moviePath,
+            prepare: { [weak self] runtime in
                 RaceMenuMovieBridge.prepare(runtime: runtime) { [weak self] request in
                     self?.pendingMovieRequests.append(request)
                 }
+            },
+            activate: { [weak self] runtime in
+                guard RaceMenuMovieBridge.listsBuilt(runtime: runtime) else {
+                    throw MenuMovieRefusal(
+                        "The movie's lists did not build; the engine rows are in charge."
+                    )
+                }
+                RaceMenuMovieBridge.setPlatform(runtime: runtime)
+                if let model = self?.model {
+                    RaceMenuMovieBridge.publish(model, runtime: runtime)
+                }
             }
-            guard let started else {
-                movieLoaded = false
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            guard RaceMenuMovieBridge.listsBuilt(runtime: started) else {
-                stopMovie()
-                movieError = "The movie's lists did not build; the engine rows are in charge."
-                return
-            }
-            try renderer.updateSWFRuntime {
-                RaceMenuMovieBridge.setPlatform(runtime: $0)
-                RaceMenuMovieBridge.publish(model, runtime: $0)
-            }
-            movieLoaded = true
-            movieError = nil
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-        }
+        ), while: { [weak self] in self?.model != nil })
     }
 
     func stopMovie() {
-        movieRequest += 1
+        movie.stop()
         pendingMovieRequests = []
-        movieLoaded = false
-        guard holdsLayer else { return }
-        holdsLayer = false
-        movieError = nil
-        hud?.start()
     }
 
     func routeMovie(_ event: MenuInputEvent, renderer: Renderer) {
         do {
             try renderer.updateSWFRuntime { RaceMenuMovieBridge.handle(event, runtime: $0) }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         applyMovieRequests(renderer: renderer)
     }
@@ -90,7 +56,7 @@ extension RaceMenuCoordinator {
         do {
             try renderer.updateSWFRuntime { TitleMenuMovieBridge.handle(event, runtime: $0) }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         applyMovieRequests(renderer: renderer)
     }
@@ -107,7 +73,7 @@ extension RaceMenuCoordinator {
                 try renderer.advanceSWFRuntime()
             }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         applyMovieRequests(renderer: renderer)
     }

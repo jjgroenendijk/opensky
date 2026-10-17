@@ -148,17 +148,17 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func requestMeleeAttack() -> String {
+    func requestMeleeAttack() -> MeleeActionOutcome {
         melee.attackRequests += 1
-        melee.lastActionText = "Requested one swing."
-        return melee.lastActionText
+        melee.lastActionText = MeleeActionOutcome.requested(power: false).text
+        return .requested(power: false)
     }
 
     @discardableResult
-    func requestMeleePowerAttack() -> String {
+    func requestMeleePowerAttack() -> MeleeActionOutcome {
         melee.attackRequests += 1
-        melee.lastActionText = "Requested one power attack."
-        return melee.lastActionText
+        melee.lastActionText = MeleeActionOutcome.requested(power: true).text
+        return .requested(power: true)
     }
 
     func clearMeleeTrace() {
@@ -185,10 +185,11 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func spawnDevProjectile() -> String {
+    func spawnDevProjectile() -> ArcheryActionOutcome {
         archery.spawnRequests += 1
-        archery.lastActionText = "Fired projectile #\(archery.spawnRequests)."
-        return archery.lastActionText
+        let outcome = ArcheryActionOutcome.fired(id: archery.spawnRequests, speed: 0)
+        archery.lastActionText = outcome.text
+        return outcome
     }
 
     func despawnProjectiles() {

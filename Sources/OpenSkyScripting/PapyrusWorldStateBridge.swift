@@ -46,79 +46,16 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// Seconds since the last `OnTrigger` repeat.
     var triggerRepeatElapsed: Float = 0
-    /// Game clock the five time globals project from, matching how every other
-    /// consumer builds a `GlobalResolution`.
-    public var clockSource: (() -> GameClock?)?
-    /// The runtime condition context: it picks the log entry a stage runs, and answers
-    /// the natives that share a condition function. Nil runs every log entry.
-    public var conditionEvaluator: (() -> ConditionEvaluator)?
-    /// The `Actor` native collaborators, as closures so they can be wired in any order.
-    /// Nil makes every actor native a tallied failure, not a fake zero. See
-    /// `PapyrusWorldStateBridgeActors.swift`.
-    public var actorValueRuntime: (() -> (any ActorValueAccess)?)?
-    public var ragdollRuntime: (() -> (any DeathReporting)?)?
     /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
     public internal(set) var silentDeath: ReferenceKey?
-    /// The combat loop behind `StartCombat`, `StopCombat` and `IsInCombat`. Nil leaves
-    /// them tallied failures.
-    public var combatRuntime: (() -> (any CombatControlling)?)?
-    /// Where one actor's weapon is, or nil when this session observes no draw
-    /// state for it — which is every actor but the player today.
-    public var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?
-    /// The spellbook and cast loop for spell natives, as a closure because it is wired
-    /// later. Nil leaves every spell native a tallied failure.
-    public var casterRuntime: (() -> (any SpellCasting)?)?
-    /// One dispel over the session's `ActiveEffectRuntime`, which is a struct
-    /// the controller owns by value: the closure does the read, the removal and
-    /// the write-back, and answers how many effects went. Nil in a session with
-    /// no effect runtime.
-    public var dispelEffects: ((ActorValueHolder, @escaping (ActiveEffect) -> Bool) -> Int)?
-    /// The one seam a landed spell applies through, shared with projectiles and
-    /// enchantments, so `Spell.Cast` at a named target resists exactly as a
-    /// fireball does. Nil in a session with no effect runtime.
-    public var applySpellHit: ((SpellHit) -> SpellHitReport)?
-    /// One perk grant or removal over the controller's `PerkRuntime` value, including
-    /// the ability reconcile; answers whether the set changed. Nil without perk data.
-    public var mutatePerks: ((PapyrusPerkMutation, ReferenceKey, ReferenceKey) -> Bool)?
-    /// The perks one actor owns, or nil when this session runs no perk runtime.
-    public var perkOwnership: ((ReferenceKey) -> Set<ReferenceKey>?)?
-    /// One scripted skill advance over the controller's `SkillAdvancementRuntime` value;
-    /// answers whether the skill took it. Nil without progression data.
-    public var advanceSkill: ((PapyrusSkillAdvance, Int32, Float) -> Bool)?
-    /// Applies a delta to the player's perk points over `PlayerLevelRuntime` and returns
-    /// the pool; zero reads it. Nil without leveling, and the natives then refuse.
-    public var modifyPerkPoints: ((Int) -> Int?)?
-    /// The session's crime reporter, as a getter because it is built later. Nil without a
-    /// crime runtime, and every crime native then refuses.
-    public var crimeReporter: (() -> (any CrimeReporting)?)?
-    /// The faction runtime for membership natives, seeded for the given actor first
-    /// (a mutating call on the controller's value). Nil without faction data, and the
-    /// natives refuse instead of answering "not a member".
-    public var factionRuntime: ((ReferenceKey) -> (any FactionAccess)?)?
-    /// The relationship runtime for the two relationship natives. No actor argument: an
-    /// override exists only once a script writes one.
-    public var relationshipRuntime: (() -> (any RelationshipAccess)?)?
-    /// What one actor makes of another, derived by the session from streamer, records
-    /// and store.
-    public var socialDecision: ((ReferenceKey, ReferenceKey) -> PapyrusSocialDecision?)?
-    /// The `NPC_` identity behind one reference, as a `RELA` record spells it.
-    /// Nil for the player, who has no base record in this engine.
-    public var actorSocialBase: ((ReferenceKey) -> ResolvedFormID?)?
-    /// The load order's flattened `XNAM` table, which `Faction.GetReaction`
-    /// reads. Separate from `factionRuntime` because it is asked about two
-    /// factions rather than about an actor, so there is nothing to seed.
-    public var factionRelationIndex: (() -> FactionRelationIndex?)?
-    /// Receives every scripted faction reaction after one changes.
-    public var factionReactionsChanged: (([FactionReactionOverride]) -> Void)?
-    /// One actor's seeded social profile, for `GetCrimeFaction` and `IsGuard`. Nil
-    /// without faction data.
-    public var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?
-    /// Arrest outcomes for `CanPayCrimeGold`, `PlayerPayCrimeGold` and `SendPlayerToJail`.
-    /// The session owns them, because a sentence moves the clock and the player.
-    public var arrestSession: (() -> (any CrimeArrestSession)?)?
-    /// Opens the barter menu for `Actor.ShowBarterMenu`, returning the readout line and
-    /// whether it opened. Nil without vendor data.
-    public var showBarterMenu: ((ReferenceKey) -> (opened: Bool, text: String)?)?
+    public var factionNatives = PapyrusFactionNatives()
+    public var actorNatives = PapyrusActorNatives()
+    public var magicNatives = PapyrusMagicNatives()
+    public var progressionNatives = PapyrusProgressionNatives()
+    public var crimeNatives = PapyrusCrimeNatives()
+    public var playerNatives = PapyrusPlayerNatives()
+    public var perceptionNatives = PapyrusPerceptionNatives()
+    public var sessionNatives = PapyrusSessionNatives()
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     public var magicEffectStore: MagicEffectStore?
@@ -146,12 +83,6 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// The sky, for the `Weather` natives. Nil in a headless session.
     public weak var weather: (any PapyrusWeatherControlling)?
     public weak var music: (any PapyrusMusicControlling)?
-    /// The horse the player rode last, for `GetPlayersLastRiddenHorse`. Nil when not wired.
-    public var playersLastMount: (() -> ReferenceKey?)?
-    /// Turns the player's sneak on or off, for `StartSneaking`. Nil when not wired.
-    public var togglePlayerSneaking: (() -> Void)?
-    /// Shows or hides the HUD, for `Debug.ToggleMenus`. Nil when not wired.
-    public var toggleMenus: (() -> Void)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.
@@ -165,32 +96,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var statsJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
-    /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
-    /// `GetParentCell`, and `GetWorldSpace`. Nil without a world.
-    public var conditionData: (() -> ConditionDataResolution)?
-    /// What perception knows about pairs of actors, for `HasLOS` and `IsDetectedBy`. Nil
-    /// without a perception pass.
-    public var detection: (() -> DetectionResolution?)?
-    /// The PACK an actor runs now, as a load-order FormID, for `GetCurrentPackage`. Nil
-    /// without a package runtime.
-    public var currentPackage: ((ReferenceKey) -> FormID?)?
-    /// A PACK's `PKCU` template, for `Package.GetTemplate`. Nil without package records.
-    public var packageTemplate: ((FormID) -> FormID?)?
-    /// The 0...1 light detection reads on an actor whose feet are here. Nil without a renderer.
-    public var lightLevel: ((SIMD3<Float>) -> Float)?
-    /// Changes a cell's fog; false when the cell is not the loaded interior. Nil headless.
-    public var cellFog: ((FormID, PapyrusFogChange) -> Bool)?
-    /// Kilograms of a body Havok moves, or nil when none does. Nil without physics.
-    public var havokMass: ((ReferenceKey) -> Float?)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
-    /// Hands the drawn pose of every moving reference to the renderer, after each change.
-    public var publishTranslationPoses: (([ReferenceKey: ReferenceTransformOverride]) -> Void)?
-    /// Where the player or a moving actor stands now, which its record no longer says.
-    public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
-    /// Whether the viewer sees the target now, for the `RegisterForLOS` family. Nil when
-    /// this session cannot tell. See docs/engine/papyrus-registrations.md#line-of-sight.
-    public var seesTarget: ((ReferenceKey, ReferenceKey) -> Bool?)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
@@ -401,7 +308,7 @@ extension PapyrusWorldStateBridge {
             return worldState.globalValue(for: key)
         }
         return worldState
-            .globalResolution(defaults: globals, clock: clockSource?())
+            .globalResolution(defaults: globals, clock: sessionNatives.clockSource?())
             .value(for: id)
     }
 

@@ -22,7 +22,7 @@ struct PapyrusNativeCellFogTests {
         }
         var changes: [PapyrusFogChange] = []
         var cells: Set<FormID> = []
-        fixture.session.bridge.cellFog = { formID, change in
+        fixture.session.bridge.sessionNatives.cellFog = { formID, change in
             cells.insert(formID)
             changes.append(change)
             return true

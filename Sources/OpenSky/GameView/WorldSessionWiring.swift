@@ -13,13 +13,54 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `WorldSessionWiring` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol WorldSessionWiringHost: AnimationEventWorldHost {
+    var actorWorld: ActorWorldAdapter { get }
+    var aiWorld: AIWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var audioWorld: AudioWorldAdapter { get }
+    var cameraInput: CameraInputState { get }
+    var cinematicWorld: CinematicCameraWorldAdapter { get }
+    var combatWorld: CombatWorldAdapter { get }
+    var crimeWorld: CrimeWorldAdapter { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
+    var factionWorld: FactionWorldAdapter { get }
+    var hazardWorld: HazardWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
+    var loadingWorld: LoadingScreenWorldAdapter { get }
+    var lockWorld: LockWorldAdapter { get }
+    var magicWorld: MagicWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messageWorld: MessageWorldAdapter { get }
+    var npcAnimation: NPCAnimationCoordinator { get }
+    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var perception: PerceptionCoordinator { get }
+    var playerWorld: PlayerWorldAdapter { get }
+    var progressionWorld: ProgressionWorldAdapter { get }
+    var ragdollWorld: RagdollWorldAdapter { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scriptWorld: ScriptWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get set }
+    var swfMovies: SWFMovieSource { get }
+    var trapControl: TrapControlAdapter { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class WorldSessionWiring {
-    unowned let game: GameViewController
+    unowned let game: any WorldSessionWiringHost
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
     private(set) var animationClips: ActorClipLoader?
     private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game)
 
-    init(game: GameViewController) {
+    init(game: any WorldSessionWiringHost) {
         self.game = game
     }
 
@@ -41,15 +82,14 @@ final class WorldSessionWiring {
                 }
             }
         )
-        streamer.placedRecords = (provider as? WorldDataStores)?.placedRecords
+        streamer.placedRecords = provider.placedRecords
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(renderer: renderer)
         wireMenuMovies(renderer: renderer)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
-        game.runtimeState.attach(globals: (provider as? GlobalDataProviding)?.globalStore)
-        game.runtimeState.calendarTexts = (provider as? WorldDataStores).map {
-            CalendarTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        game.runtimeState.attach(globals: provider.globalStore)
+        game.runtimeState.calendarTexts = CalendarTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.aiWorld.wireNPCMovement(renderer: renderer, streamer: streamer)
         streamer.bind(to: game.worldState)
         wireFrame(renderer: renderer, streamer: streamer)
@@ -58,9 +98,10 @@ final class WorldSessionWiring {
         // stays first in the multicast order.
         game.scriptWorld.wirePapyrus(provider: provider, renderer: renderer, streamer: streamer)
         let scripts = game.scripts
-        renderer.session.assetDrains.add { [weak scripts] _ in scripts?.drainLoads() }
+        renderer.session.assetDrains
+            .register(.scripts) { [weak scripts] _ in scripts?.drainLoads() }
         let audio = game.audio
-        renderer.session.assetDrains.add { [weak audio] _ in audio?.drainLoads() }
+        renderer.session.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
         game.messageWorld.wire(renderer: renderer)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
@@ -68,13 +109,10 @@ final class WorldSessionWiring {
         game.lockWorld.wireLocks(provider: provider, streamer: streamer, renderer: renderer)
         // After the item runtime, which owns the equipped set of the body.
         game.playerWorld.wirePlayerBody(session: session, renderer: renderer)
-        // After `wirePapyrus`, whose `onWorldUpdate` closure these chain onto.
         wireActorSystems(provider: provider, renderer: renderer)
         game.hazardWorld.wireHazards(provider: provider, streamer: streamer, renderer: renderer)
         game.effectsWorld.wireEffects(provider: provider, streamer: streamer, renderer: renderer)
         game.trapControl.wire(renderer: renderer)
-        // Melee, archery, then ragdolls: a fixed graph-event cursor order keeps
-        // every runtime's trace reproducible.
         game.combatWorld.wireMelee(provider: provider, renderer: renderer)
         game.combatWorld.wireArchery(provider: provider, renderer: renderer)
         game.ragdollWorld.wireRagdoll(renderer: renderer)
@@ -99,7 +137,7 @@ final class WorldSessionWiring {
     func wireMenuMovies(renderer: Renderer) {
         let movies = game.swfMovies
         movies.prefetch(SWFMovieSource.menuMoviePaths)
-        renderer.session.assetDrains.add { _ in movies.drain() }
+        renderer.session.assetDrains.register(.menuMovies) { _ in movies.drain() }
     }
 
     /// One clip loader for idles, gaits, and combat reactions. Its results enter
@@ -110,7 +148,8 @@ final class WorldSessionWiring {
         animationClips = clips
         let idles = game.idleWorld.idles
         let npcAnimation = game.npcAnimation
-        renderer.session.assetDrains.add { [weak idles, weak npcAnimation] _ in
+        let assetDrains = renderer.session.assetDrains
+        assetDrains.register(.animationClips) { [weak idles, weak npcAnimation] _ in
             clips.drain()
             idles?.drainLoads()
             npcAnimation?.applyArrivedClips()
@@ -124,7 +163,8 @@ final class WorldSessionWiring {
             renderer?.dynamicInstanceDeltas = deltas
         }
         let input = game.cameraInput
-        renderer.onFrame.add { [weak streamer, weak renderer, weak input] position in
+        let frameSteps = renderer.session.frameSteps
+        frameSteps.register(.streaming) { [weak streamer, weak renderer, weak input] position in
             streamer?.update(
                 cameraPosition: position,
                 interactionRay: renderer.flatMap(Self.interactionRay(of:)),
@@ -144,7 +184,7 @@ final class WorldSessionWiring {
     }
 
     /// Magic effects write through the actor-value runtime, so it comes first.
-    private func wireActorSystems(provider: any WorldDataProviding, renderer: Renderer) {
+    private func wireActorSystems(provider: WorldDataStores, renderer: Renderer) {
         game.actorWorld.wireActorValues(provider: provider, renderer: renderer)
         game.magicWorld.wireEffects(provider: provider, renderer: renderer)
         game.magicWorld.wireCasting(provider: provider, renderer: renderer)
@@ -161,14 +201,11 @@ final class WorldSessionWiring {
     }
 
     private func wireLateWorldSystems(
-        provider: any WorldDataProviding,
+        provider: WorldDataStores,
         renderer: Renderer,
         streamer: CellStreamer
     ) {
-        // The loop reads what melee, archery, and the ragdolls did this frame.
         game.combatWorld.wireLoop(provider: provider, renderer: renderer)
-        // Package conditions read the quest, actor, and reference state, so
-        // selection advances after those runtimes.
         game.aiWorld.wirePackages(provider: provider, renderer: renderer)
         game.aiWorld.wirePerception(provider: provider, renderer: renderer)
         game.idleWorld.wireIdles(provider: provider, renderer: renderer)
@@ -179,7 +216,6 @@ final class WorldSessionWiring {
         game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
-        // The camera samples the speaker's head bone in the same world tick.
         game.dialogueWorld.wireDialogueCamera(renderer: renderer)
         // Scenes speak through the dialogue index, so they come after it.
         game.storyWorld.wireStory(provider: provider, renderer: renderer)

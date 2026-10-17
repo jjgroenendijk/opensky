@@ -39,7 +39,7 @@ extension SystemMenuCoordinator {
         do {
             try SystemMenuMovieBridge.send(event, renderer: renderer)
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         answerMovieCalls()
         followMovieState()
@@ -57,7 +57,7 @@ extension SystemMenuCoordinator {
                 try renderer.advanceSWFRuntime()
             }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         answerMovieCalls()
         followMovieState()

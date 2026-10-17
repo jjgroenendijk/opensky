@@ -185,10 +185,6 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
 }
 
 /// Live-renderer seam for the dialogue section.
-///
-/// `refocusGameView()` is deliberately absent: `HUDControlProviding` already
-/// declares it and the panel reaches it through the composed
-/// `WorldControlProviders`.
 @MainActor
 public protocol DialogueControlProviding: AnyObject {
     /// One sample of everything the readouts show.

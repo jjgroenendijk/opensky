@@ -65,5 +65,4 @@ public protocol HUDControlProviding: AnyObject {
     var hudPlaceholderTextEnabled: Bool { get set }
     var hudScale: Float { get set }
     var hudControlSnapshot: HUDControlSnapshot { get }
-    func refocusGameView()
 }

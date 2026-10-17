@@ -8,18 +8,18 @@ import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     public func crimeGold(of faction: ReferenceKey) -> Int? {
-        guard let reporter = crimeReporter?() else { return nil }
+        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
         return Int(reporter.crimeGold(of: faction))
     }
 
     public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
-        guard let reporter = crimeReporter?() else { return nil }
+        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
         return Int(reporter.crimeGold(of: faction, violent: violent))
     }
 
     @discardableResult
     public func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
-        guard let reporter = crimeReporter?() else { return nil }
+        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
         return Int(reporter.modifyCrimeGold(
             by: Int32(clamping: amount), violent: violent, of: faction
         ))
@@ -27,7 +27,7 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
-        guard let reporter = crimeReporter?() else { return nil }
+        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
         return Int(reporter.setCrimeGold(
             Int32(clamping: gold), violent: violent, of: faction
         ))
@@ -46,7 +46,9 @@ extension PapyrusWorldStateBridge {
     /// The thief taking `reference` as a witnessed theft. Zero when the thief may take it.
     @discardableResult
     public func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {
-        guard let reporter = crimeReporter?(), let world = reporter.world else { return nil }
+        guard
+            let reporter = crimeNatives.crimeReporter?(),
+            let world = reporter.world else { return nil }
         guard case let .forbidden(owner) = reporter.verdict(on: reference, by: thief) else {
             return 0
         }
@@ -66,7 +68,9 @@ extension PapyrusWorldStateBridge {
         witness: ReferenceKey,
         criminal: ReferenceKey
     ) -> Int? {
-        guard let reporter = crimeReporter?(), let world = reporter.world else { return nil }
+        guard
+            let reporter = crimeNatives.crimeReporter?(),
+            let world = reporter.world else { return nil }
         let cell = world.crimeCell(of: witness)
         return Int(reporter.report(CrimeEvent(
             kind: kind,

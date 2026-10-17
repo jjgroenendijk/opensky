@@ -46,7 +46,10 @@ extension PapyrusNativeFunctions {
             scriptName: "Debug",
             functionName: "ToggleMenus"
         ) { call, context in
-            guard let toggle = (context.world as? PapyrusWorldStateBridge)?.toggleMenus else {
+            guard
+                let toggle = (context.world as? PapyrusWorldStateBridge)?.playerNatives
+                    .toggleMenus
+            else {
                 return failure(call, "ToggleMenus needs the HUD")
             }
             toggle()

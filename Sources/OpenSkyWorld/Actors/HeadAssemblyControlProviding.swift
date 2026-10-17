@@ -61,18 +61,3 @@ public protocol HeadAssemblyControlProviding: AnyObject {
     /// Rebuilds the actor's cell with the chosen head.
     func setHeadSource(_ source: ActorHeadSource, for actor: ReferenceKey)
 }
-
-/// Lets the app's provider object stand in for its `HeadAssemblyCoordinator`.
-public protocol HeadAssemblyControlForwarding: HeadAssemblyControlProviding {
-    var headAssembly: HeadAssemblyCoordinator { get }
-}
-
-extension HeadAssemblyControlForwarding {
-    public func headAssemblySnapshot(for actor: ReferenceKey?) -> HeadAssemblySnapshot {
-        headAssembly.headAssemblySnapshot(for: actor)
-    }
-
-    public func setHeadSource(_ source: ActorHeadSource, for actor: ReferenceKey) {
-        headAssembly.setHeadSource(source, for: actor)
-    }
-}

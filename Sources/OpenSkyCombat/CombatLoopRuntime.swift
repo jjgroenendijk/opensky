@@ -55,7 +55,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Transients removed by the caps since construction, cumulative.
     public private(set) var trimmedTransients = CombatTransientCounts()
     /// Human-readable result of the last panel or script action.
-    public var lastActionText = "No fight yet."
+    public var lastAction = CombatLoopOutcome.idle
 
     private weak var world: (any CombatLoopWorld)?
     private var accumulator: Double = 0
@@ -149,7 +149,7 @@ public final class CombatLoopRuntime: CombatControlling {
         else { return false }
         forcedTargets[actor] = target
         setHostility(.hostile, on: actor)
-        record("Combat: a script started \(actor.description) fighting the player.")
+        record(.scriptStarted(actor))
         return true
     }
 
@@ -165,7 +165,7 @@ public final class CombatLoopRuntime: CombatControlling {
             return false
         }
         endFight(of: actor, world: world)
-        record("Combat: a script stopped \(actor.description) fighting.")
+        record(.scriptStopped(actor))
         return true
     }
 
@@ -337,11 +337,8 @@ public final class CombatLoopRuntime: CombatControlling {
         return attackID
     }
 
-    /// Stores and returns one panel-facing outcome line.
-    @discardableResult
-    public func record(_ text: String) -> String {
-        lastActionText = text
-        return text
+    public func record(_ outcome: CombatLoopOutcome) {
+        lastAction = outcome
     }
 
     // MARK: - Private

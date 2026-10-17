@@ -37,8 +37,3 @@ nonisolated public struct LockTrapData: Sendable {
         )
     }
 }
-
-/// Lock and trap data. A synthetic scene answers the defaults.
-nonisolated public protocol LockTrapDataProviding {
-    var lockTrapData: LockTrapData { get }
-}

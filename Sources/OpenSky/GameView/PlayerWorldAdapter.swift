@@ -16,11 +16,27 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `PlayerWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol PlayerWorldHost: AnyObject {
+    var actorWorld: ActorWorldAdapter { get }
+    var audio: AudioCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var headTracking: HeadTrackingCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var renderer: Renderer? { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
 final class PlayerWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any PlayerWorldHost
 
-    init(game: GameViewController) {
+    init(game: any PlayerWorldHost) {
         self.game = game
     }
 
@@ -29,22 +45,21 @@ final class PlayerWorldAdapter {
         let player = game.player
         let source = PlayerRigQueue(
             runner: session.runner,
-            fileSystem: (session.data as? ScriptDataProviding)?.scriptFileSystem
+            fileSystem: session.data.scriptFileSystem
         )
         guard player.wireBody(source: source) else { return }
-        renderer.session.assetDrains.add { [weak player] _ in
+        renderer.session.assetDrains.register(.playerBody) { [weak player] _ in
             player?.drainClipLoads()
         }
-        renderer.onFrame.add { [weak player] _ in
+        renderer.session.frameSteps.register(.playerBody) { [weak player] _ in
             player?.refreshBody()
         }
     }
 
     /// Copies what combat, magic, and the head tracking setting report into the
-    /// actor-state graph inputs. Wired after melee, so a swing that started this
-    /// frame is already in it.
+    /// actor-state graph inputs.
     func wireActorState(renderer: Renderer) {
-        renderer.onFrame.add { [weak game, weak renderer] _ in
+        renderer.session.frameSteps.register(.actorState) { [weak game, weak renderer] _ in
             guard let game, let locomotion = renderer?.locomotion else { return }
             var inputs = locomotion.actorState
             if let melee = game.combat.melee {

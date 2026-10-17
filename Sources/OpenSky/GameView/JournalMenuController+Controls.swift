@@ -128,7 +128,7 @@ extension JournalMenuController {
     }
 
     private func movieValue<Value>(_ read: (SWFMovieRuntime) -> Value) -> Value? {
-        guard movieLoaded, let runtime = game.renderer?.swfRuntime else { return nil }
+        guard let runtime = movie.runtime else { return nil }
         return read(runtime)
     }
 

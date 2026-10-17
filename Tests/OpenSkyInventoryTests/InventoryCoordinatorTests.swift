@@ -70,9 +70,9 @@ struct InventoryCoordinatorTests {
 
     @Test func withoutGameDataEveryActionSaysSo() {
         let coordinator = InventoryCoordinator()
-        #expect(coordinator.takeInteractionTarget() == InventoryCore.noRuntimeText)
-        #expect(coordinator.dropPlayerItem(nil, count: 1) == InventoryCore.noRuntimeText)
-        #expect(coordinator.equipItem(nil, on: .player) == InventoryCore.noEquipmentText)
+        #expect(coordinator.takeInteractionTarget().text == InventoryCore.noRuntimeText)
+        #expect(coordinator.dropPlayerItem(nil, count: 1).text == InventoryCore.noRuntimeText)
+        #expect(coordinator.equipItem(nil, on: .player).text == InventoryCore.noEquipmentText)
         #expect(coordinator.itemControlSnapshot == .unavailable)
         #expect(coordinator.inventoryEquipmentSnapshot == .unavailable)
     }
@@ -91,25 +91,25 @@ struct InventoryCoordinatorTests {
     @Test func aSearchOpensOneSessionUntilItCloses() throws {
         let harness = try Self.harness()
         harness.coordinator.handleInteraction(.search)
-        #expect(harness.coordinator.lastActionText == "Nothing under the crosshair to search.")
+        #expect(harness.coordinator.lastAction.text == "Nothing under the crosshair to search.")
         harness.world.crosshairInteraction = Self.chest
         harness.coordinator.handleInteraction(.search)
         #expect(harness.coordinator.itemControlSnapshot.containerName == "Fixture")
-        #expect(harness.coordinator.closeOpenContainer() == "Closed the container.")
+        #expect(harness.coordinator.closeOpenContainer().text == "Closed the container.")
         #expect(harness.coordinator.session == nil)
-        #expect(harness.coordinator.closeOpenContainer() == InventoryCore.noContainerText)
+        #expect(harness.coordinator.closeOpenContainer().text == InventoryCore.noContainerText)
     }
 
     @Test func aDropNeedsAPlacementFromTheWorld() throws {
         let harness = try Self.harness()
         harness.world.crosshairInteraction = Self.looseItem
         harness.coordinator.takeInteractionTarget()
-        #expect(harness.coordinator.dropPlayerItem(nil, count: 1)
+        #expect(harness.coordinator.dropPlayerItem(nil, count: 1).text
             == "Drop needs a resident cell; none is loaded.")
         harness.world.placement = DropPlacement(
             location: Items.cell, position: .zero, rotation: .zero
         )
-        #expect(harness.coordinator.dropPlayerItem(nil, count: 1).hasPrefix("Dropped 1 ×"))
+        #expect(harness.coordinator.dropPlayerItem(nil, count: 1).text.hasPrefix("Dropped 1 ×"))
         let inventory = try #require(harness.coordinator.runtime?.inventory)
         #expect(inventory.count(of: Fixture.lockpick, in: .player) == 2)
     }
@@ -118,11 +118,11 @@ struct InventoryCoordinatorTests {
         let harness = try Self.harness()
         let inventory = try #require(harness.coordinator.runtime?.inventory)
         try inventory.add(Fixture.cuirass, count: 1, to: .player)
-        let text = harness.coordinator.equipItem(nil, on: .player)
+        let text = harness.coordinator.equipItem(nil, on: .player).text
         #expect(text.hasPrefix("Equipped "))
         #expect(harness.world.refreshed == [.player])
         #expect(harness.coordinator.equippedReadout(on: .player).count == 1)
-        #expect(harness.coordinator.unequipItem(nil, on: .player).hasPrefix("Unequipped "))
+        #expect(harness.coordinator.unequipItem(nil, on: .player).text.hasPrefix("Unequipped "))
         #expect(harness.world.refreshed == [.player, .player])
     }
 
@@ -156,12 +156,12 @@ struct InventoryCoordinatorTests {
     @Test func aGrantGoesToTheChosenHolderAndKeepsItsOwnLine() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .openContainer)
+        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .openContainer).text
             == "Grant refused: no container is open.")
-        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .player)
+        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .player).text
             .hasPrefix("Granted 2 ×"))
         #expect(coordinator.runtime?.inventory.count(of: Fixture.sword, in: .player) == 2)
-        #expect(coordinator.lastActionText == "No item action yet.")
+        #expect(coordinator.lastAction.text == "No item action yet.")
     }
 
     @Test func ownershipReadsTheBountyFromTheWorld() throws {
@@ -186,14 +186,14 @@ struct InventoryCoordinatorTests {
         let stored = try coordinator.transfer(
             .store, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
         )
-        #expect(stored == "Stored Sword.")
+        #expect(stored.text(texts: .vanilla) == "Stored Sword.")
         #expect(inventory.count(of: Fixture.sword, in: chest) == 1)
         let taken = try coordinator.transfer(
             .take, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
         )
-        #expect(taken == "Took Sword.")
+        #expect(taken.text(texts: .vanilla) == "Took Sword.")
         #expect(inventory.count(of: Fixture.sword, in: .player) == 1)
-        #expect(coordinator.takeAll(from: chest).hasPrefix("Took all:"))
+        #expect(coordinator.takeAll(from: chest).text.hasPrefix("Took all:"))
         let removed = try #require(recorder.events("REMP").first)
         #expect(removed.form == Fixture.sword && removed.actor1 == chest.key)
         #expect(removed.value1 == Float(StoryRemoveType.putInContainer.rawValue))

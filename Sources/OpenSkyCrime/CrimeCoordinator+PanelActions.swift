@@ -29,127 +29,113 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
     // MARK: - Bounty
 
     @discardableResult
-    public func modifySelectedBounty(by gold: Int32, violent: Bool) -> String {
-        guard let runtime = reporter?.runtime else { return notePanelUnavailable() }
-        guard let faction = effectiveBountyFaction else {
-            return notePanel(CrimeCore.noFactionTracksCrimeText)
-        }
+    public func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
+        guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
+        guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         let total = runtime.modifyCrimeGold(by: gold, violent: violent, of: faction)
         refreshGuardHostility()
-        let half = violent ? "violent" : "non-violent"
-        return notePanel("Moved the \(half) bounty with \(factionName(faction)) by "
-            + "\(gold): now \(total) gold.")
+        return notePanel(.bountyMoved(
+            faction: factionName(faction), gold: gold, violent: violent, total: total
+        ))
     }
 
     @discardableResult
-    public func clearSelectedBounty() -> String {
-        guard let runtime = reporter?.runtime else { return notePanelUnavailable() }
-        guard let faction = effectiveBountyFaction else {
-            return notePanel(CrimeCore.noFactionTracksCrimeText)
-        }
+    public func clearSelectedBounty() -> CrimeFactionActionOutcome {
+        guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
+        guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         let owed = runtime.clearCrimeGold(of: faction)
         refreshGuardHostility()
-        return notePanel("Cleared \(owed) gold owed to \(factionName(faction)).")
+        return notePanel(.bountyCleared(faction: factionName(faction), owed: owed))
     }
 
     /// The same recognition and policy the guard pass uses, then one real
     /// tick of that pass when a world is running.
     @discardableResult
-    public func checkGuardConfrontation() -> String {
-        guard let runtime = reporter?.runtime else { return notePanelUnavailable() }
-        guard let subject = panel.subject else {
-            return notePanel("Guard check: pick an actor with the crosshair first — "
-                + "the player is nobody's guard.")
-        }
+    public func checkGuardConfrontation() -> CrimeFactionActionOutcome {
+        guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
+        guard let subject = panel.subject else { return notePanel(.guardCheckNeedsSubject) }
         let name = world?.actorName(subject) ?? subject.description
         guard
             let profile = world?.socialProfile(of: subject),
             let faction = GuardRecognition.policedFaction(
                 of: profile, guardFaction: runtime.factions.guardFactionKey
             )
-        else { return notePanel("Guard check: \(name) is not a guard.") }
+        else { return notePanel(.notAGuard(name)) }
         let bounty = runtime.crimeGold(of: faction)
         let response = CrimeResponsePolicy.response(
             bounty: bounty,
             values: runtime.factions.faction(key: faction)?.faction.crimeValues
         )
-        var text = "Guard check: \(name) polices \(factionName(faction)); bounty "
-            + "\(bounty) gold → \(CrimeFactionReadout.responseText(response))."
+        var tick: String?
         if world?.gameSeconds != nil {
             advanceGuardResponse()
-            text += " Guard tick: \(lastGuardText)"
-        } else {
-            text += " No world is running, so no guard tick ran."
+            tick = lastGuard.text
         }
-        return notePanel(text)
+        return notePanel(.guardChecked(
+            guardName: name, faction: factionName(faction), bounty: bounty,
+            response: response, tick: tick
+        ))
     }
 
     @discardableResult
-    public func resistArrestWithSelectedFaction() -> String {
-        guard reporter != nil else { return notePanelUnavailable() }
-        guard let faction = effectiveBountyFaction else {
-            return notePanel(CrimeCore.noFactionTracksCrimeText)
-        }
+    public func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
+        guard reporter != nil else { return notePanel(.unavailable) }
+        guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         resistArrest(with: faction)
-        return notePanel(lastGuardText)
+        return notePanel(.resisted(lastGuard.text))
     }
 
     // MARK: - Subject and memberships
 
     @discardableResult
-    public func selectSocialSubjectFromCrosshair() -> String {
+    public func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         guard
             let interaction = world?.crosshairInteraction,
             let entry = world?.references?.referenceEntry(formID: interaction.reference),
             entry.placedActor != nil
-        else { return notePanel("The crosshair is not on an actor.") }
+        else { return notePanel(.crosshairNotOnActor) }
         panel.subject = entry.key
-        return notePanel("Subject: \(world?.actorName(entry.key) ?? entry.key.description).")
+        return notePanel(.subjectSelected(world?.actorName(entry.key) ?? entry.key.description))
     }
 
     @discardableResult
-    public func selectPlayerAsSocialSubject() -> String {
+    public func selectPlayerAsSocialSubject() -> CrimeFactionActionOutcome {
         panel.subject = nil
-        return notePanel("Subject: the player.")
+        return notePanel(.subjectSelected(nil))
     }
 
     @discardableResult
-    public func joinSelectedFaction(rank: Int8) -> String {
-        guard let world, world.hasFactionData else { return notePanelUnavailable() }
-        guard let faction = effectiveMembershipFaction else {
-            return notePanel(CrimeCore.noFactionsText)
-        }
+    public func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
+        guard let world, world.hasFactionData else { return notePanel(.unavailable) }
+        guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player
         let changed = world.joinFaction(faction, actor: key, rank: rank)
-        let who = subjectName(key)
-        let name = factionName(faction)
-        return notePanel(changed
-            ? "\(who) is in \(name) at rank \(rank)."
-            : "\(who) was already in \(name) at rank \(rank), or is not resident.")
+        return notePanel(.joined(
+            actor: subjectName(key), faction: factionName(faction), rank: rank, changed: changed
+        ))
     }
 
     @discardableResult
-    public func leaveSelectedFaction() -> String {
-        guard let world, world.hasFactionData else { return notePanelUnavailable() }
-        guard let faction = effectiveMembershipFaction else {
-            return notePanel(CrimeCore.noFactionsText)
-        }
+    public func leaveSelectedFaction() -> CrimeFactionActionOutcome {
+        guard let world, world.hasFactionData else { return notePanel(.unavailable) }
+        guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player
-        let who = subjectName(key)
-        let name = factionName(faction)
-        return notePanel(world.leaveFaction(faction, actor: key)
-            ? "\(who) left \(name)."
-            : "\(who) was not in \(name).")
+        return notePanel(.left(
+            actor: subjectName(key),
+            faction: factionName(faction),
+            changed: world.leaveFaction(faction, actor: key)
+        ))
     }
 
     // MARK: - Vendor
 
     @discardableResult
-    public func barterWithSocialSubject() -> String {
-        notePanel(world?.openBarter(
+    public func barterWithSocialSubject() -> CrimeFactionActionOutcome {
+        guard let world else { return notePanel(.unavailable) }
+        return notePanel(.barter(world.openBarter(
             with: panel.subject ?? .player,
             vendorFaction: panel.vendorOverride
-        ) ?? CrimeFactionControlSnapshot.unavailable.lastActionText)
+        )))
     }
 
     // MARK: - Private
@@ -158,12 +144,8 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
         key == .player ? "The player" : world?.actorName(key) ?? key.description
     }
 
-    private func notePanelUnavailable() -> String {
-        notePanel(CrimeFactionControlSnapshot.unavailable.lastActionText)
-    }
-
-    private func notePanel(_ text: String) -> String {
-        panel.lastActionText = text
-        return text
+    private func notePanel(_ outcome: CrimeFactionActionOutcome) -> CrimeFactionActionOutcome {
+        panel.lastAction = outcome
+        return outcome
     }
 }

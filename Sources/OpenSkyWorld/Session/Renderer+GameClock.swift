@@ -67,12 +67,12 @@ extension Renderer {
     /// measures the same Papyrus VM work the shipping frame loop performs.
     public func updateWorldSim(deltaTime: Float) {
         session.assetDrains(())
-        guard let onWorldUpdate else {
+        guard !session.worldTick.isEmpty else {
             lastScriptUpdateMS = 0
             return
         }
         let started = DispatchTime.now().uptimeNanoseconds
-        onWorldUpdate(deltaTime)
+        session.worldTick(deltaTime)
         lastScriptUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

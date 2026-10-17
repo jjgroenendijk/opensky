@@ -95,11 +95,11 @@ struct AINavigationCoordinatorTests {
     @Test func selectingAndHostilityActOnTheChosenActor() {
         let (coordinator, world) = Self.coordinator()
         coordinator.selectedAIActor = Self.far
-        #expect(coordinator.lastActionText == "Selected Far.")
+        #expect(coordinator.lastAction.text == "Selected Far.")
 
         coordinator.selectedAIActorIsHostile = true
         #expect(world.hostile == [Self.far])
-        #expect(coordinator.lastActionText == "Far is now hostile.")
+        #expect(coordinator.lastAction.text == "Far is now hostile.")
 
         let snapshot = coordinator.aiNavigationSnapshot
         #expect(snapshot.selectedActor == Self.far)
@@ -119,35 +119,35 @@ struct AINavigationCoordinatorTests {
 
         world.placed = [:]
         coordinator.selectAIActorFromCrosshair()
-        #expect(coordinator.lastActionText.hasSuffix("under the crosshair is not an actor."))
+        #expect(coordinator.lastAction.text.hasSuffix("under the crosshair is not an actor."))
     }
 
     @Test func moveAndStopReportWhatTheMoverAnswered() {
         let (coordinator, world) = Self.coordinator()
         coordinator.moveSelectedAIActorToCrosshair()
-        #expect(coordinator.lastActionText == "Cannot move: the crosshair is not on anything.")
+        #expect(coordinator.lastAction.text == "Cannot move: the crosshair is not on anything.")
 
         world.camera = AICameraPose(position: SIMD3(0, 0, 1), forward: SIMD3(1, 0, 0))
         world.shapes = [Self.wall(reference: 7, atX: 50)]
         coordinator.moveSelectedAIActorToCrosshair()
         #expect(world.moves.first?.0 == Self.near)
-        #expect(coordinator.lastActionText == "Move: Near is pathing to the crosshair point.")
+        #expect(coordinator.lastAction.text == "Move: Near is pathing to the crosshair point.")
 
         coordinator.stopSelectedAIActor()
-        #expect(coordinator.lastActionText == "Near had no mover to stop.")
+        #expect(coordinator.lastAction.text == "Near had no mover to stop.")
         world.hasMover = true
         coordinator.stopSelectedAIActor()
-        #expect(coordinator.lastActionText == "Stopped Near where it stands.")
+        #expect(coordinator.lastAction.text == "Stopped Near where it stands.")
     }
 
     @Test func reevaluateNeedsARegisteredPackageStack() {
         let (coordinator, world) = Self.coordinator()
         coordinator.reevaluateSelectedAIActorPackage()
-        #expect(coordinator.lastActionText == "Near has no package stack registered.")
+        #expect(coordinator.lastAction.text == "Near has no package stack registered.")
 
         world.actors = []
         coordinator.reevaluateSelectedAIActorPackage()
-        #expect(coordinator.lastActionText == "Cannot reevaluate: no resident actor to act on.")
+        #expect(coordinator.lastAction.text == "Cannot reevaluate: no resident actor to act on.")
     }
 
     private static func coordinator() -> (AINavigationCoordinator, FakeAINavigationWorld) {

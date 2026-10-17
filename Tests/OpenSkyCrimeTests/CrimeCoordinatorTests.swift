@@ -48,7 +48,7 @@ struct CrimeCoordinatorTests {
 
         #expect(first > 0)
         #expect(coordinator.crimeGold(of: Self.hold) == first)
-        #expect(coordinator.lastActionText.hasPrefix("Assault: \(first) bounty with"))
+        #expect(coordinator.lastCrime.text.hasPrefix("Assault: \(first) bounty with"))
     }
 
     @Test func aBountyShowsItsNotice() throws {
@@ -80,7 +80,7 @@ struct CrimeCoordinatorTests {
         coordinator.reportMurder(of: Self.victim)
 
         #expect(coordinator.crimeGold(of: Self.hold) > assault)
-        #expect(coordinator.lastActionText.hasPrefix("Murder:"))
+        #expect(coordinator.lastCrime.text.hasPrefix("Murder:"))
     }
 
     @Test func aReportedMurderFiresTheCrimeEventsAndSetsTheKillStatus() throws {
@@ -108,11 +108,11 @@ struct CrimeCoordinatorTests {
         world.cellOwners[Self.shop] = RecordOwnership(owner: FormID(CrimeFixture.Factions.hold))
         let coordinator = try Self.coordinator(world)
         coordinator.advanceTrespass()
-        let charged = coordinator.lastActionText
+        let charged = coordinator.lastCrime.text
         coordinator.advanceTrespass()
 
         #expect(charged.hasPrefix("Trespass:"))
-        #expect(coordinator.lastActionText == charged)
+        #expect(coordinator.lastCrime.text == charged)
     }
 
     @Test func aDetectingGuardWithNoDialogueIsHeldOffAndResumed() throws {
@@ -131,7 +131,7 @@ struct CrimeCoordinatorTests {
 
         #expect(world.spokenTo == [Self.guardKey])
         #expect(world.resumed == [Self.guardKey])
-        #expect(coordinator.lastGuardText.hasPrefix("Guard could not open"))
+        #expect(coordinator.lastGuard.text.hasPrefix("Guard could not open"))
         #expect(world.guardHostility?.bounties == [Self.hold: 100])
     }
 
@@ -153,7 +153,7 @@ struct CrimeCoordinatorTests {
         #expect(coordinator.isPlayerPursued)
         #expect(world.moved[Self.guardKey] == .zero)
         #expect(world.suspended.contains(Self.guardKey))
-        #expect(coordinator.lastGuardText.contains("pursuing"))
+        #expect(coordinator.lastGuard.text.contains("pursuing"))
     }
 
     @Test func thePanelMovesAndClearsTheSelectedBounty() throws {
@@ -164,7 +164,7 @@ struct CrimeCoordinatorTests {
         #expect(coordinator.crimeGold(of: Self.hold) == 1500)
         #expect(world.guardHostility?.bounties == [Self.hold: 1500])
 
-        let text = coordinator.clearSelectedBounty()
+        let text = coordinator.clearSelectedBounty().text
         #expect(text == "Cleared 1500 gold owed to CrimeFactionHold.")
         #expect(coordinator.crimeFactionSnapshot.lastActionText == text)
     }
@@ -172,7 +172,7 @@ struct CrimeCoordinatorTests {
     @Test func resistingTurnsTheHoldsGuardsAgainstThePlayer() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
-        let text = coordinator.resistArrestWithSelectedFaction()
+        let text = coordinator.resistArrestWithSelectedFaction().text
         #expect(text == "Resisted arrest with CrimeFactionHold.")
         #expect(coordinator.guards.resisted == [Self.hold])
         #expect(world.guardHostility?.resisted == [Self.hold])
@@ -182,10 +182,10 @@ struct CrimeCoordinatorTests {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
         coordinator.membershipFactionSelection = Self.guards
-        #expect(coordinator.joinSelectedFaction(rank: 1)
+        #expect(coordinator.joinSelectedFaction(rank: 1).text
             == "The player is in GuardFaction at rank 1.")
         #expect(world.memberships[.player]?.isMember(of: Self.guards) == true)
-        #expect(coordinator.leaveSelectedFaction() == "The player left GuardFaction.")
+        #expect(coordinator.leaveSelectedFaction().text == "The player left GuardFaction.")
     }
 
     @Test func withoutFactionDataThePanelIsUnavailable() throws {
@@ -193,7 +193,7 @@ struct CrimeCoordinatorTests {
         world.hasFactionData = false
         let coordinator = try Self.coordinator(world)
         #expect(!coordinator.crimeFactionSnapshot.isAvailable)
-        #expect(coordinator.joinSelectedFaction(rank: 0)
+        #expect(coordinator.joinSelectedFaction(rank: 0).text
             == CrimeFactionControlSnapshot.unavailable.lastActionText)
     }
 }

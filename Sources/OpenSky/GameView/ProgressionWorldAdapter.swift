@@ -10,23 +10,45 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
+/// What `ProgressionWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ProgressionWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var combat: CombatCoordinator { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var perks: PerkCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
 final class ProgressionWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ProgressionWorldHost
 
-    init(game: GameViewController) {
+    init(game: any ProgressionWorldHost) {
         self.game = game
     }
 
     /// After the caster, which folds the spell-cost entry point through its
     /// own copy of the runtime.
-    func wirePerks(provider: any WorldDataProviding) {
-        guard let store = (provider as? ProgressionDataProviding)?.perkStore else { return }
+    func wirePerks(provider: WorldDataStores) {
+        guard let store = provider.perkStore else { return }
         var runtime = PerkRuntime(
             store: game.worldState, perks: store, conditionRegistry: .standard
         )
@@ -36,43 +58,39 @@ final class ProgressionWorldAdapter {
         }
         game.perks.wire(
             runtime,
-            baselines: (provider as? ActorValueDataProviding)?.actorValueBaselines?.resolver
+            baselines: provider.actorValueBaselines?.resolver
                 .map(ActorPerkBaselineResolver.init(actorValues:)),
-            pluginName: (provider as? MagicDataProviding)?.magicItemPluginName
+            pluginName: provider.magicItemPluginName
         )
     }
 
     /// After `wireActorValues`, which every skill write goes through, and after
     /// the world items, which the worn-armor read uses.
-    func wireSkills(provider: any WorldDataProviding) {
+    func wireSkills(provider: WorldDataStores) {
         guard
             let values = game.actorValues.runtime,
-            let progression = provider as? ProgressionDataProviding,
-            let information = progression.actorValueInformation
+            let information = provider.actorValueInformation
         else { return }
         game.progression.wireSkills(
             values: values,
             information: information,
-            settings: progression.skillAdvancementSettings
+            settings: provider.skillAdvancementSettings
         )
     }
 
     /// After `wirePerks` and `wireSkills`: the spend validator reads the perk
     /// runtime, and the skill runtime banks into this one.
-    func wireProgression(provider: any WorldDataProviding) {
+    func wireProgression(provider: WorldDataStores) {
         guard let values = game.actorValues.runtime else { return }
-        let progression = provider as? ProgressionDataProviding
-        game.progression.training = (provider as? WorldDataStores).map {
-            TrainingSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-        game.progression.texts = (provider as? WorldDataStores).map {
-            ProgressionTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
+        game.progression.training = TrainingSettings
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        game.progression.texts = ProgressionTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.progression.wireLeveling(
             values: values,
-            settings: progression?.characterLevelSettings ?? .documentedDefaults,
-            perkStore: progression?.perkStore,
-            information: progression?.actorValueInformation
+            settings: provider.characterLevelSettings,
+            perkStore: provider.perkStore,
+            information: provider.actorValueInformation
         )
     }
 

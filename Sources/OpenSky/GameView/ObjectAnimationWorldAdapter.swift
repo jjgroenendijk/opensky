@@ -14,15 +14,27 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `ObjectAnimationWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol ObjectAnimationWorldHost: AnyObject {
+    var audioFileSystem: (any GameFileSource)? { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var playerSettingsStore: PlayerSettingsStore { get }
+    var renderer: Renderer? { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class ObjectAnimationWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any ObjectAnimationWorldHost
     let objects: ObjectBehaviorCoordinator
     let doors = SequenceDoorCoordinator()
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
 
-    init(game: GameViewController) {
+    init(game: any ObjectAnimationWorldHost) {
         self.game = game
         objects = ObjectBehaviorCoordinator(settings: game.playerSettings.store)
         doors.isEnabled = objects.isEnabled
@@ -40,9 +52,7 @@ final class ObjectAnimationWorldAdapter {
         objects.onWaitFinished = { [weak self] token, fired in
             self?.pendingAnswers[token] = fired
         }
-        let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak self] delta in
-            advanceWorld?(delta)
+        renderer.session.worldTick.register(.objectAnimation) { [weak self] delta in
             self?.advance(delta)
         }
     }
@@ -164,32 +174,28 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
     }
 }
 
-/// The Animated Objects and Animated Doors sections, forwarded to the adapter.
-protocol ObjectAnimationControlForwarding: ObjectAnimationControlProviding,
+/// The Animated Objects and Animated Doors sections read the adapter.
+extension ObjectAnimationWorldAdapter: ObjectAnimationControlProviding,
     SequenceDoorControlProviding
 {
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
-}
-
-extension ObjectAnimationControlForwarding {
     var objectAnimationEnabled: Bool {
-        get { objectAnimationWorld.isEnabled }
-        set { objectAnimationWorld.isEnabled = newValue }
+        get { isEnabled }
+        set { isEnabled = newValue }
     }
 
     var objectAnimationRows: [ObjectAnimationRow] {
-        objectAnimationWorld.objects.rows
+        objects.rows
     }
 
     func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
-        objectAnimationWorld.objects.send(event, to: reference)
+        objects.send(event, to: reference)
     }
 
     var sequenceDoorRows: [SequenceDoorRow] {
-        objectAnimationWorld.doors.rows
+        doors.rows
     }
 
     func setSequenceDoorOpen(_ open: Bool, reference: UInt32) -> Bool {
-        objectAnimationWorld.setDoorOpen(open, reference: reference)
+        setDoorOpen(open, reference: reference)
     }
 }

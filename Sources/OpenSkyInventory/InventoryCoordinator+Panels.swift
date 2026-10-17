@@ -27,7 +27,7 @@ extension InventoryCoordinator: ItemControlProviding {
             spawnedObjectCount: runtime.store.snapshot().entries.count {
                 $0.delta.component(ReferenceSpawnState.self) != nil
             },
-            lastActionText: lastActionText,
+            lastActionText: lastAction.text,
             playerEquipped: equippedReadout(on: .player),
             nearestActorName: nearestActorHolder().map(InventoryCore.actorName),
             nearestActorEquipped: equippedReadout(on: .nearestActor)
@@ -57,17 +57,17 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
             equipTarget: inspectionTarget,
             equipInspection: equipInspection(),
             enchantmentCache: world?.enchantmentCacheReadout ?? .empty,
-            lastActionText: lastGrantText
+            lastActionText: lastGrant.text
         )
     }
 
     /// Adds the stack on purpose. It lands in the journal and the save exactly
     /// like a take does.
     @discardableResult
-    public func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String {
-        guard let runtime else {
-            return InventoryEquipmentSnapshot.unavailable.lastActionText
-        }
+    public func grantItem(
+        _ item: FormID, count: Int32, to target: InventoryGrantTarget
+    ) -> GrantActionOutcome {
+        guard let runtime else { return .unavailable }
         let isKnown = runtime.inventory.baselines.items.definition(item) != nil
         if let refusal = InventoryCore.grantRefusal(item: item, count: count, isKnown: isKnown) {
             return noteGrant(refusal)
@@ -76,14 +76,12 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
         case .player: runtime.player
         case .openContainer: session?.container
         }
-        guard let holder else {
-            return noteGrant("Grant refused: no container is open.")
-        }
+        guard let holder else { return noteGrant(.noOpenContainer) }
         do {
             try runtime.inventory.add(item, count: count, to: holder)
-            return noteGrant("Granted \(count) × \(name(of: item)) to \(target.label).")
+            return noteGrant(.granted(count: count, item: name(of: item), to: target))
         } catch {
-            return noteGrant("Grant failed: \(String(describing: error))")
+            return noteGrant(.failed(reason: String(describing: error)))
         }
     }
 

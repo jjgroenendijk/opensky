@@ -148,14 +148,12 @@ public protocol MeleeCombatControlProviding: AnyObject {
     var isWeaponDrawn: Bool { get set }
 
     /// Requests exactly one swing, the same latch the left mouse button sets.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func requestMeleeAttack() -> String
+    func requestMeleeAttack() -> MeleeActionOutcome
 
     /// Requests one held press: a power attack, or a power bash with the guard up.
     @discardableResult
-    func requestMeleePowerAttack() -> String
+    func requestMeleePowerAttack() -> MeleeActionOutcome
 
     /// Empties the last-hit trace and both counts, without disturbing anything
     /// the player can feel.

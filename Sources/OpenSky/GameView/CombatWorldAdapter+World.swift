@@ -139,10 +139,10 @@ extension CombatWorldAdapter: CombatWorld {
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         guard
             case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
-            let resolver = (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?
+            let resolver = game.worldData?.actorValueBaselines?
                 .resolver,
             let link = try? resolver.templates.resolveCombatStyle(base: base).value,
-            let style = (game.worldData as? PresentationDataProviding)?.presentationRecords?
+            let style = game.worldData?.presentationRecords?
                 .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
         else { return nil }
         return CombatStyleTuning(style: style.record)
@@ -271,7 +271,7 @@ extension CombatWorldAdapter: CombatWorld {
         guard
             let engine = game.renderer?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,
-            let sounds = (game.worldData as? AudioDataProviding)?.soundStore,
+            let sounds = game.worldData?.soundStore,
             let sound = try? sounds.resolveAny(impact.sound),
             let path = sound.filePaths.first
         else { return }

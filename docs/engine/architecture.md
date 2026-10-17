@@ -64,9 +64,10 @@ type that does it. Code depends on the port. The app, the CLI, or a test picks t
 
 Where it applies:
 
-- Game data. `CombatDataProviding`, `MagicDataProviding`, and the other `*DataProviding`
-  protocols in `Sources/OpenSkyWorld/Cells/CellBuildProviders.swift` hand plugin data to the
-  runtimes. A test passes a small synthetic provider instead of a real install.
+- Game data is a value, not a port. `WorldDataStores` holds every plugin store as a typed
+  field, so a subsystem reads the field it needs and the compiler checks it. A store the load
+  order does not have is `nil`. A test builds a `WorldDataStores` with only the stores it
+  needs; the rest keep their synthetic defaults.
 - The frame loop. `RenderFrameDriver` is what the renderer needs from the simulation. The
   renderer calls it at fixed points in the frame and never imports the game systems.
 - Controls. `AudioControlProviding` is what the audio sidebar section needs.
@@ -125,3 +126,10 @@ Simulation stays on the main actor. Reading and decoding files runs off it.
 [Concurrency](/decisions/concurrency.md) gives the isolation each subsystem uses and how a
 loaded asset reaches the frame loop. Do not add a new
 `@unchecked Sendable` class or `Task.detached`. A new `DispatchQueue` needs a row on that page.
+
+The simulation runs in a declared order. A frame has three hooks, each a `FrameSchedule`: the
+frame steps after the camera moves, the asset drains, and the world tick after the clock. Each
+hook takes one step per case of its phase enum (`FrameStep`, `AssetDrain`, `WorldTickStep`),
+and the enum order is the run order. So moving a wiring statement cannot reorder the
+simulation, and a system wired late still runs in its own slot. A new system adds a case where
+it must run; a unit test pins the world-tick order.

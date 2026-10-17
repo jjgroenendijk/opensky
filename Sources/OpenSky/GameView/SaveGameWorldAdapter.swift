@@ -11,11 +11,24 @@ import OpenSkyRendering
 import OpenSkySave
 import OpenSkyWorld
 
+/// What `SaveGameWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol SaveGameWorldHost: SkyrimSaveExportHost, SkyrimSaveImportHost {
+    var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+}
+
 @MainActor
 final class SaveGameWorldAdapter: SaveGameService {
     static let thumbnailSize = (width: 192, height: 108)
 
-    private unowned let game: GameViewController
+    private unowned let game: any SaveGameWorldHost
     private let autosaves = AutosavePolicy()
     /// When the last save of any kind was written, for Save on Pause.
     private(set) var lastSaveDate: Date?
@@ -27,7 +40,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     private(set) var lastSkyrimExport = SkyrimExportOutcome.none
     private var hasListed = false
 
-    init(game: GameViewController) {
+    init(game: any SaveGameWorldHost) {
         self.game = game
     }
 
@@ -155,7 +168,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     var saveTexts: SaveTexts {
-        (game.worldData as? WorldDataStores).map {
+        game.worldData.map {
             SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
     }

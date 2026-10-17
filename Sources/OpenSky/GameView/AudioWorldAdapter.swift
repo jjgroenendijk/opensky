@@ -11,11 +11,26 @@ import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 
+/// What `AudioWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AudioWorldHost: AnyObject {
+    var audio: AudioCoordinator { get }
+    var audioFileSystem: (any GameFileSource)? { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var effects: EffectsCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+}
+
 /// Answers `AudioWorld` from the session systems `game` owns.
 final class AudioWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any AudioWorldHost
 
-    init(game: GameViewController) {
+    init(game: any AudioWorldHost) {
         self.game = game
     }
 
@@ -42,7 +57,7 @@ final class AudioWorldAdapter {
 }
 
 extension AudioWorldAdapter: AudioWorld {
-    var audioWorldData: (any WorldDataProviding)? {
+    var audioWorldData: WorldDataStores? {
         game.worldData
     }
 
@@ -106,7 +121,7 @@ extension AudioWorldAdapter: AudioWorld {
         game.renderer?.soundDirector = sounds
         game.renderer?.musicDirector = music
         game.renderer?.footstepDirector = footsteps
-        let store = (game.worldData as? AudioDataProviding)?.footstepStore
+        let store = game.worldData?.footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(
                 impact, decal: store?.decal(of: impact), at: position, on: .ground

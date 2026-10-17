@@ -3,6 +3,7 @@
 // the same snapshots as the World inspector, on the shared `InspectionTicker`.
 
 import AppKit
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
 
@@ -35,7 +36,7 @@ final class FrameHUDView: NSView {
     var isEnabled: Bool {
         didSet {
             guard isEnabled != oldValue else { return }
-            UserDefaults.standard.set(isEnabled, forKey: Self.visibilityDefaultsKey)
+            SettingsStore.shared.set(isEnabled, for: Self.visibilitySetting)
             applyVisibility()
         }
     }
@@ -56,9 +57,9 @@ final class FrameHUDView: NSView {
 
     /// Points the HUD at a (new) live controller; a Settings reload swaps the
     /// whole provider graph underneath it.
-    func wire(providers: any WorldControlProviders) {
-        frameStatsProvider = providers
-        sceneStatsProvider = providers
+    func wire(frameStats: any FrameStatsProviding, sceneStats: any SceneStatsProviding) {
+        frameStatsProvider = frameStats
+        sceneStatsProvider = sceneStats
         refresh()
     }
 
@@ -130,10 +131,12 @@ final class FrameHUDView: NSView {
         ticker.start { [weak self] in self?.refresh() }
     }
 
+    private static var visibilitySetting: SettingKey<Bool> {
+        SettingKey(visibilityDefaultsKey, default: true)
+    }
+
     private static func loadEnabled() -> Bool {
-        let defaults = UserDefaults.standard
-        guard defaults.object(forKey: visibilityDefaultsKey) != nil else { return true }
-        return defaults.bool(forKey: visibilityDefaultsKey)
+        SettingsStore.shared.value(visibilitySetting)
     }
 
     // MARK: - Appearance

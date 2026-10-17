@@ -17,14 +17,14 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
     let grassSection = GrassSection()
     let terrainLODSection = TerrainLODSection()
 
-    /// Live shadow + terrain-LOD bridge. Weak: the game controller owns this
-    /// panel's parent and the renderer, so the panel must not retain back.
-    weak var provider: (any ShadowControlProviding & TerrainLODControlProviding)? {
-        didSet {
-            shadowSection.provider = provider
-            terrainLODSection.provider = provider
-            refocusAction = { [weak provider] in provider?.refocusGameView() }
-        }
+    /// Weak: the game controller owns this panel's parent and the renderer, so
+    /// the panel must not retain back.
+    weak var shadowProvider: (any ShadowControlProviding)? {
+        didSet { shadowSection.provider = shadowProvider }
+    }
+
+    weak var terrainLODProvider: (any TerrainLODControlProviding)? {
+        didSet { terrainLODSection.provider = terrainLODProvider }
     }
 
     weak var weatherProvider: (any WeatherControlProviding)? {

@@ -53,7 +53,7 @@ extension CrimeCoordinator {
             world?.resumePackage(for: guardKey)
         }
         guards.resist(faction, now: world?.gameSeconds ?? 0)
-        lastGuardText = "Resisted arrest with \(factionName(faction))."
+        lastGuard = .resisted(faction: factionName(faction))
         refreshGuardHostility()
     }
 
@@ -108,12 +108,10 @@ extension CrimeCoordinator {
             // rather than retrying every frame.
             guards.end(settled: false, now: now)
             world.resumePackage(for: guardKey)
-            lastGuardText = "Guard could not open the arrest conversation "
-                + "(\(world.lastDialogueOutcome ?? "no reason given"))."
+            lastGuard = .conversationFailed(reason: world.lastDialogueOutcome)
             return
         }
-        lastGuardText = "Guard confronted the player over a \(bounty) bounty "
-            + "with \(factionName(faction))."
+        lastGuard = .confronted(bounty: bounty, faction: factionName(faction))
     }
 
     private func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {
@@ -124,7 +122,7 @@ extension CrimeCoordinator {
         world.suspendPackage(for: guardKey)
         guard let result = world.moveActor(guardKey, to: player) else { return }
         pursuitTargets[guardKey] = player
-        lastGuardText = "Guard of \(factionName(faction)) pursuing: \(result)."
+        lastGuard = .pursuing(faction: factionName(faction), move: result)
     }
 
     /// Hands every pursuing guard but `kept` back to its package.

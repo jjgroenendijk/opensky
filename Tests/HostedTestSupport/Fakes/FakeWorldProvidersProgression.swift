@@ -48,75 +48,75 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
-    func advanceSelectedSkill(byUse amount: Float) -> String {
+    func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome {
         progression.uses.append(amount)
-        return record("Granted \(amount) use.")
+        return record(.skillUnchanged(skill: "Granted \(amount) use", verb: "took"))
     }
 
     @discardableResult
-    func incrementSelectedSkill() -> String {
+    func incrementSelectedSkill() -> ProgressionActionOutcome {
         progression.incrementCount += 1
-        return record("Granted a skill point.")
+        return record(.skillUnchanged(skill: "Granted a skill point", verb: "took"))
     }
 
     @discardableResult
-    func awardCharacterExperience(_ amount: Float) -> String {
+    func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome {
         progression.awards.append(amount)
-        return record("Awarded \(amount) character XP.")
+        return record(.perkPointsChanged(delta: Int(amount), unspent: 0))
     }
 
     @discardableResult
-    func chooseAttributePick(_ kind: ActorValueKind) -> String {
+    func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
         progression.picks.append(kind)
-        return record("Chose \(kind.rawValue).")
+        return record(.attributeChosen(kind, picksOwed: 0))
     }
 
     @discardableResult
-    func changePerkPoints(by delta: Int) -> String {
+    func changePerkPoints(by delta: Int) -> ProgressionActionOutcome {
         progression.perkPointDeltas.append(delta)
-        return record("Changed perk points by \(delta).")
+        return record(.perkPointsChanged(delta: delta, unspent: 0))
     }
 
     @discardableResult
-    func spendPointOnSelectedPerk() -> String {
+    func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
         progression.spendCount += 1
-        return record("Spent a perk point.")
+        return record(.perkPointSpent(perk: "the selected perk", left: 0))
     }
 
     @discardableResult
-    func grantSelectedPerk() -> String {
+    func grantSelectedPerk() -> ProgressionActionOutcome {
         progression.grantCount += 1
-        return record("Granted the selected perk.")
+        return record(.perkChanged(perk: "the selected perk", granted: true, changed: true))
     }
 
     @discardableResult
-    func revokeSelectedPerk() -> String {
+    func revokeSelectedPerk() -> ProgressionActionOutcome {
         progression.revokeCount += 1
-        return record("Removed the selected perk.")
+        return record(.perkChanged(perk: "the selected perk", granted: false, changed: true))
     }
 
     @discardableResult
-    func makeSelectedSkillLegendary() -> String {
+    func makeSelectedSkillLegendary() -> ProgressionActionOutcome {
         progression.legendaryCount += 1
-        return record("Made the selected skill legendary.")
+        return record(.madeLegendary(skill: "the selected skill", refunded: 0))
     }
 
     @discardableResult
-    func resetSelectedPerkTree() -> String {
+    func resetSelectedPerkTree() -> ProgressionActionOutcome {
         progression.resetTreeCount += 1
-        return record("Reset the selected tree.")
+        return record(.treeReset(skill: "the selected", refunded: 0))
     }
 
     @discardableResult
-    func trainWithNearestTrainer() -> String {
-        record("Trained with the nearest trainer.")
+    func trainWithNearestTrainer() -> ProgressionActionOutcome {
+        record(.noTrainer)
     }
 
     /// Puts an action's outcome where the readout reads it, so a panel test
     /// sees the same line a session would.
-    private func record(_ text: String) -> String {
-        progression.snapshot = progression.snapshot.reporting(text)
-        return text
+    private func record(_ outcome: ProgressionActionOutcome) -> ProgressionActionOutcome {
+        progression.snapshot = progression.snapshot.reporting(outcome.text(training: .vanilla))
+        return outcome
     }
 }
 

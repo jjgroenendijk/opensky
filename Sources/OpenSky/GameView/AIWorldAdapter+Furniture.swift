@@ -9,12 +9,6 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-/// One marker of one furniture reference.
-struct SeatKey: Hashable {
-    let furniture: ReferenceKey
-    let index: Int
-}
-
 extension AIWorldAdapter {
     func packageSeat(in furniture: ReferenceKey, actor: ReferenceKey) -> PackageSeat? {
         guard
@@ -22,19 +16,9 @@ extension AIWorldAdapter {
             let formID = streamer.referenceEntry(key: furniture)?.formID,
             let seats = streamer.residentInteraction(reference: formID)?.seats
         else { return nil }
-        let free = seats.indices.filter { index in
-            let holder = seatHolders[SeatKey(furniture: furniture, index: index)]
-            return holder == nil || holder == actor
+        return game.packages.seats.reserve(in: furniture, seats: seats, actor: actor) {
+            actorHasKeyword(actor, $0) == true
         }
-        // A seat with a keyword is kept for actors whose base has it, and wins for them.
-        let keyed = free.first { index in
-            seats[index].keyword.map { actorHasKeyword(actor, $0) == true } ?? false
-        }
-        guard let index = keyed ?? free.first(where: { seats[$0].keyword == nil }) else {
-            return nil
-        }
-        seatHolders[SeatKey(furniture: furniture, index: index)] = actor
-        return PackageSeat(furniture: furniture, index: index, seat: seats[index])
     }
 
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat) {
@@ -55,10 +39,7 @@ extension AIWorldAdapter {
     }
 
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat) {
-        let key = SeatKey(furniture: seat.furniture, index: seat.index)
-        if seatHolders[key] == actor {
-            seatHolders[key] = nil
-        }
+        game.packages.seats.release(seat, by: actor)
         game.idleWorld.idles.leaveFurniture(actor)
         game.scripts.runtime?.queueFurnitureEvent(
             sitting: false, actor: actor, furniture: seat.furniture

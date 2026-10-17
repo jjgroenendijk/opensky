@@ -117,26 +117,3 @@ extension StoryManagerCoordinator: StoryManagerControlProviding {
         world?.questRuntime?.quests.quest(quest)?.editorID ?? quest.description
     }
 }
-
-/// Lets the app's provider object stand in for its `StoryManagerCoordinator`.
-public protocol StoryManagerControlForwarding: StoryManagerControlProviding {
-    var storyManager: StoryManagerCoordinator { get }
-}
-
-extension StoryManagerControlForwarding {
-    public var storyManagerSnapshot: StoryManagerSnapshot {
-        storyManager.storyManagerSnapshot
-    }
-
-    public func storyTree(event code: String) -> [String] {
-        storyManager.storyTree(event: code)
-    }
-
-    public func fireStoryEvent(code: String, keyword: FormID?, value1: Float) {
-        storyManager.fireStoryEvent(code: code, keyword: keyword, value1: value1)
-    }
-
-    public func runSocialPass() {
-        storyManager.runSocialPass()
-    }
-}

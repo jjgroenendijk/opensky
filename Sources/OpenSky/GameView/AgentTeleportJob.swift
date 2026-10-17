@@ -38,7 +38,7 @@ final class AgentTeleportJob {
     /// The exterior worldspace to stand in; nil keeps the current one.
     private var worldspace: String?
 
-    private var game: GameViewController {
+    private var game: any AgentWorldHost {
         adapter.game
     }
 
@@ -306,7 +306,7 @@ extension AgentTeleportJob {
     }
 
     /// Next to a loaded actor, where it stands now, or on a loaded reference.
-    private static func standingSpot(of key: ReferenceKey, game: GameViewController)
+    private static func standingSpot(of key: ReferenceKey, game: any AgentWorldHost)
         -> SIMD3<Float>?
     {
         if let actor = game.actorWorld.combatActors().first(where: { $0.key == key }) {

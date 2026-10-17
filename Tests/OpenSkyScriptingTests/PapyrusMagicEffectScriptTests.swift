@@ -139,7 +139,7 @@ struct PapyrusMagicEffectScriptTests {
     @Test func dispelRemovesOnlyThisEffect() {
         write([Self.effect(sequence: 1)])
         var removed: [UInt64] = []
-        session.bridge.dispelEffects = { _, predicate in
+        session.bridge.magicNatives.dispelEffects = { _, predicate in
             let doomed = [Self.effect(sequence: 1), Self.effect(sequence: 7)].filter(predicate)
             removed = doomed.map(\.sequence)
             return doomed.count

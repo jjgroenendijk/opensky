@@ -17,7 +17,7 @@ extension SkillsMenuCoordinator {
     /// Loads the movie the page needs, or sends the model to the one already up.
     func syncMovie() {
         guard let wanted = wantedMoviePath else { return }
-        guard wanted == moviePath else {
+        guard wanted == movie.path else {
             startMovie(wanted)
             return
         }
@@ -26,66 +26,33 @@ extension SkillsMenuCoordinator {
     }
 
     func startMovie(_ path: String) {
-        guard let hud, world?.renderer != nil, movies?.isAvailable == true else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        if !holdsLayer {
-            hud.suspend()
-            holdsLayer = true
-        }
-        moviePath = path
-        movieLoaded = false
-        movieRequest += 1
-        let request = movieRequest
-        movies?.request(path, while: { [weak self] in
-            self?.movieRequest == request
-        }, then: { [weak self] result in
-            self?.showMovie(result, path: path)
-        })
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>, path: String) {
-        guard let renderer = world?.renderer, model != nil else { return }
-        do {
-            let started = try renderer.startMenuMovie(result.get()) { [weak self] runtime in
+        let isLevelUp = path == LevelUpMenuMovieBridge.moviePath
+        movie.start(MenuMovie(
+            path: path,
+            prepare: { [weak self] runtime in
                 Self.prepare(runtime, path: path, onCamera: { alpha in
                     self?.sky.movieAlpha = alpha
                 }, onChoice: { kind in
                     self?.pendingChoices.append(kind)
                 })
-            }
-            guard started else {
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            try renderer.updateSWFRuntime { runtime in
-                if path == LevelUpMenuMovieBridge.moviePath {
+            },
+            activate: { runtime in
+                if isLevelUp {
                     LevelUpMenuMovieBridge.activate(runtime: runtime)
                 } else {
                     StatsMenuMovieBridge.activate(runtime: runtime)
                 }
+            },
+            didLoad: { [weak self] in
+                guard let self, let renderer = world?.renderer else { return }
+                publish(renderer: renderer)
             }
-            movieLoaded = true
-            movieError = nil
-            publish(renderer: renderer)
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-        }
+        ), while: { [weak self] in self?.model != nil })
     }
 
     func stopMovie() {
-        movieRequest += 1
-        moviePath = nil
-        movieLoaded = false
+        movie.stop()
         pendingChoices = []
-        guard holdsLayer else { return }
-        holdsLayer = false
-        movieError = nil
-        hud?.start()
     }
 
     func publish(renderer: Renderer) {
@@ -101,7 +68,7 @@ extension SkillsMenuCoordinator {
                 }
             }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
     }
 
@@ -118,7 +85,7 @@ extension SkillsMenuCoordinator {
                 try renderer.advanceSWFRuntime()
             }
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         applyChoices()
     }

@@ -12,7 +12,7 @@ import simd
 /// What the audio coordinator reads from the running session.
 public protocol AudioWorld: AnyObject {
     /// The stores the directors resolve against; nil without game data.
-    var audioWorldData: (any WorldDataProviding)? { get }
+    var audioWorldData: WorldDataStores? { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var audioListenerPose: (position: SIMD3<Float>, yaw: Float) { get }
     /// Nil before the player body is assembled.
@@ -138,9 +138,8 @@ public final class AudioCoordinator {
     private func buildEngine() {
         let engine = WorldAudioEngine()
         self.engine = engine
-        let provider = world?.audioWorldData
-        let audioData = provider as? AudioDataProviding
-        let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
+        let audioData = world?.audioWorldData
+        let weatherStore = audioData?.weatherSystem?.store
         let fileSystem = world?.audioFileSystem
         let assets = fileSystem.map { AudioAssetLoader(files: $0) }
             ?? AudioAssetLoader(immediate: { throw VFSError.fileNotFound(path: $0) })
@@ -159,7 +158,7 @@ public final class AudioCoordinator {
             aspcStore: audioData?.aspcStore,
             assets: assets
         )
-        if let records = (provider as? EffectDataProviding)?.effectRecords {
+        if let records = audioData?.effectRecords {
             director.wireEffectRecords(records)
         }
         wireRegionSoundGates(director)
@@ -190,7 +189,7 @@ public final class AudioCoordinator {
 extension AudioCoordinator {
     /// Region sounds follow the current weather and their `SNDR` conditions.
     private func wireRegionSoundGates(_ director: WorldAudioSoundDirector) {
-        let weather = (world?.audioWorldData as? WeatherProviding)?.weatherSystem
+        let weather = world?.audioWorldData?.weatherSystem
         director.currentWeather = { [weak weather] in
             guard let weather, let id = weather.currentWeatherID else { return .none }
             return weather.store.weather(id)?.data?.precipitation ?? .none

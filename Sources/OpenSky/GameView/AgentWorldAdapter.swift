@@ -4,14 +4,62 @@
 import AppKit
 import Foundation
 import MetalKit
+import OpenSkyActors
 import OpenSkyAgentControl
+import OpenSkyCombat
+import OpenSkyDialogue
+import OpenSkyFactions
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMenus
+import OpenSkyPerception
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
+import OpenSkyWorldState
+
+/// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol AgentWorldHost: AnyObject {
+    var actorValues: ActorValueCoordinator { get }
+    var actorWorld: ActorWorldAdapter { get }
+    var agentControl: AgentControlCoordinator? { get }
+    var cameraInput: CameraInputState { get }
+    var combat: CombatCoordinator { get }
+    var containerMenuSnapshot: ContainerMenuControlSnapshot { get }
+    var dialogueMenu: DialogueMenuController { get }
+    var dialogueWorld: DialogueWorldAdapter { get }
+    var factions: FactionCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
+    var inventory: InventoryCoordinator { get }
+    var inventoryMenu: InventoryMenuController { get }
+    var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
+    var journalMenu: JournalMenuController { get }
+    var loadingScreens: LoadingScreenCoordinator { get }
+    var meleeCombatSnapshot: MeleeCombatSnapshot { get }
+    var menuMode: MenuModeController { get }
+    var messages: MessageCoordinator { get }
+    var packages: PackageCoordinator { get }
+    var perception: PerceptionCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var raceMenu: RaceMenuCoordinator { get }
+    var renderControls: WorldRenderControls { get }
+    var renderer: Renderer? { get }
+    func runCommand(_ action: GameInputAction)
+    var runtimeState: RuntimeStateCoordinator { get }
+    var scenes: SceneCoordinator { get }
+    var scripts: ScriptCoordinator { get }
+    var simulationClock: SteppedWallClock { get }
+    var skillsMenu: SkillsMenuCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var titleMenu: TitleMenuCoordinator { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var hostView: NSView { get }
+    var worldState: WorldStateStore { get }
+}
 
 final class AgentWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any AgentWorldHost
     /// Set by the host when a mode starts.
     var dataRoot: GameDataRoot?
     var modeName: String?
@@ -21,7 +69,7 @@ final class AgentWorldAdapter {
 
     static let maximumTimeScale = 16.0
 
-    init(game: GameViewController) {
+    init(game: any AgentWorldHost) {
         self.game = game
     }
 
@@ -129,7 +177,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
         -> AgentHandling
     {
-        guard let renderer = game.renderer, let view = game.view as? MTKView else {
+        guard let renderer = game.renderer, let view = game.hostView as? MTKView else {
             throw notReady()
         }
         if request.offscreen {
@@ -214,5 +262,12 @@ extension AgentWorldAdapter: AgentControlWorld {
             try? await Task.sleep(for: .milliseconds(200))
             NSApplication.shared.terminate(nil)
         }
+    }
+}
+
+/// The Agent Control section reads the bridge while one runs.
+extension AgentWorldAdapter: AgentControlForwarding {
+    var agentControl: AgentControlCoordinator? {
+        game.agentControl
     }
 }

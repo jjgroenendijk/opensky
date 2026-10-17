@@ -32,7 +32,7 @@ struct LockControlTests {
         world.placed = [Locks.door(level: .novice).interaction]
         let rig = try Locks.coordinator(world: world)
         let locks = rig.locks
-        #expect(locks.setSelectedLockLocked(false) == "No lock selected.")
+        #expect(locks.setSelectedLockLocked(false) == .noSelection)
         locks.selectLock(Locks.door)
         locks.setSelectedLockLocked(false)
         #expect(locks.lockSnapshot.selectedRow?.isLocked == false)

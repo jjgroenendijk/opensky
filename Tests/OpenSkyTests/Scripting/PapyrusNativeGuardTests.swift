@@ -106,15 +106,15 @@ struct PapyrusNativeGuardTests {
                 )
             )
             let memberships = guardMember ? [(CrimeFixture.Factions.guards, Int8(0))] : []
-            session.bridge.factionRuntime = { _ in factions }
-            session.bridge.socialProfile = { key in
+            session.bridge.factionNatives.runtime = { _ in factions }
+            session.bridge.factionNatives.socialProfile = { key in
                 ActorSocialProfile(
                     key: key,
                     memberships: CrimeFixture.state(memberships),
                     crimeFaction: crimeFaction.map(CrimeFixture.key)
                 )
             }
-            session.bridge.arrestSession = { arrests }
+            session.bridge.crimeNatives.arrestSession = { arrests }
         }
         return try Fixture(
             session: session,

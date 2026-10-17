@@ -115,18 +115,3 @@ public enum DialogueBranchText {
             + "starts \(start); \(topics) topics"
     }
 }
-
-/// Lets the app's provider object stand in for its `DialogueCoordinator`.
-public protocol DialogueBranchControlForwarding: DialogueBranchControlProviding {
-    var dialogue: DialogueCoordinator { get }
-}
-
-extension DialogueBranchControlForwarding {
-    public var dialogueBranchSnapshot: DialogueBranchSnapshot {
-        dialogue.dialogueBranchSnapshot
-    }
-
-    public func branchRows(matching filter: String) -> [String] {
-        dialogue.branchRows(matching: filter)
-    }
-}

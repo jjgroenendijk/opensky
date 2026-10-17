@@ -62,7 +62,7 @@ struct FrameHUDTests {
         providers.frameStatsSnapshot = measuredFrame(gpuMS: 4.2)
         providers.sceneStatsSnapshot = scene()
         let hud = FrameHUDView()
-        hud.wire(providers: providers)
+        hud.wire(frameStats: providers, sceneStats: providers)
         #expect(hud.statsReadout.contains("FPS 60"))
         #expect(hud.statsReadout.contains("Cells 9"))
     }

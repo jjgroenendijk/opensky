@@ -13,10 +13,24 @@ import OpenSkyRendering
 import OpenSkyWorld
 import simd
 
+/// What `LoadingScreenWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol LoadingScreenWorldHost: MenuInputConsumer {
+    var hud: HUDCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var loadingScreens: LoadingScreenCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+}
+
 final class LoadingScreenWorldAdapter {
     static let identifier: MenuIdentifier = "LoadingMenu"
 
-    unowned let game: GameViewController
+    unowned let game: any LoadingScreenWorldHost
     private var meshes: MeshLibrary?
     private var failedModels: Set<String> = []
     /// When the session-start cover went up; nil once it lifted.
@@ -24,7 +38,7 @@ final class LoadingScreenWorldAdapter {
     /// A stuck build must not trap the player behind the cover.
     static let startCoverLimitSeconds = 60.0
 
-    init(game: GameViewController) {
+    init(game: any LoadingScreenWorldHost) {
         self.game = game
     }
 
@@ -47,7 +61,7 @@ final class LoadingScreenWorldAdapter {
             }
             game.loadingScreens.destinationReady(location: location(of: scene), at: now)
         }
-        renderer.onFrame.add { [weak self] _ in
+        renderer.session.frameSteps.register(.loadingScreen) { [weak self] _ in
             guard let self else { return }
             liftStartCoverIfReady()
             game.loadingScreens.tick(time: now)
@@ -86,7 +100,7 @@ final class LoadingScreenWorldAdapter {
             !failedModels.contains(path) else { return [] }
         if
             meshes == nil,
-            let fileSystem = (game.worldData as? ScriptDataProviding)?.scriptFileSystem
+            let fileSystem = game.worldData?.scriptFileSystem
         {
             meshes = (try? TextureLibrary(fileSystem: fileSystem, device: renderer.device)).map {
                 MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
@@ -120,7 +134,7 @@ final class LoadingScreenWorldAdapter {
 
 extension LoadingScreenWorldAdapter: LoadingScreenWorld {
     var presentationRecords: PresentationRecordStore? {
-        (game.worldData as? PresentationDataProviding)?.presentationRecords
+        game.worldData?.presentationRecords
     }
 
     func loadingConditionContext() -> ConditionContext {

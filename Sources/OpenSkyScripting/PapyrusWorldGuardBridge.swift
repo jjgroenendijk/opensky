@@ -40,14 +40,14 @@ public protocol PapyrusWorldGuardBridge {
 
 extension PapyrusWorldStateBridge {
     public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
-        guard let profile = socialProfile?(actor) else { return nil }
+        guard let profile = factionNatives.socialProfile(actor) else { return nil }
         return .some(profile.crimeFaction)
     }
 
     public func isGuard(_ actor: ReferenceKey) -> Bool? {
         guard
-            let profile = socialProfile?(actor),
-            let runtime = factionRuntime?(actor)
+            let profile = factionNatives.socialProfile(actor),
+            let runtime = factionNatives.runtime(actor)
         else { return nil }
         return GuardRecognition.policedFaction(
             of: profile,
@@ -56,13 +56,13 @@ extension PapyrusWorldStateBridge {
     }
 
     public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
-        arrestSession?()?.canPayCrimeGold(to: faction)
+        crimeNatives.arrestSession?()?.canPayCrimeGold(to: faction)
     }
 
     public func settleArrest(
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
-        arrestSession?()?.settleArrest(with: faction, outcome)
+        crimeNatives.arrestSession?()?.settleArrest(with: faction, outcome)
     }
 }

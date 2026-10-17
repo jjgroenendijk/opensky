@@ -7,26 +7,52 @@ import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyWorld
 
+/// What `MenuSoundPlayer` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MenuSoundHost: AnyObject {
+    var audio: AudioCoordinator { get }
+    var renderer: Renderer? { get }
+    var worldData: WorldDataStores? { get }
+}
+
+/// What a menu sound needs. Closures, because a reload replaces the renderer and
+/// the data.
+struct MenuSoundDependencies {
+    let audio: AudioCoordinator
+    let renderer: () -> Renderer?
+    let worldData: () -> WorldDataStores?
+}
+
+extension MenuSoundDependencies {
+    init(game: any MenuSoundHost) {
+        self.init(
+            audio: game.audio,
+            renderer: { [unowned game] in game.renderer },
+            worldData: { [unowned game] in game.worldData }
+        )
+    }
+}
+
 final class MenuSoundPlayer {
     /// The movies' `PlayOKSound` call plays this descriptor.
     static let okSound = "UIMenuOK"
 
-    unowned let game: GameViewController
+    private let dependencies: MenuSoundDependencies
     /// Lowercased SNDR editor ID -> FormID, built on the first sound.
     private var soundIDs: [String: FormID]?
 
-    init(game: GameViewController) {
-        self.game = game
+    init(_ dependencies: MenuSoundDependencies) {
+        self.dependencies = dependencies
     }
 
     /// Plays at the camera. A missing record stays silent. The file loads off the
     /// main actor, so the first play of a sound may start late.
     func play(editorID: String) {
         guard
-            let renderer = game.renderer,
+            let renderer = dependencies.renderer(),
             let engine = renderer.worldAudio, engine.isRunning,
-            let assets = game.audio.assets,
-            let sounds = (game.worldData as? AudioDataProviding)?.soundStore,
+            let assets = dependencies.audio.assets,
+            let sounds = dependencies.worldData()?.soundStore,
             let formID = soundID(editorID, in: sounds),
             let resolved = try? sounds.resolveAny(formID),
             let path = resolved.filePaths.first

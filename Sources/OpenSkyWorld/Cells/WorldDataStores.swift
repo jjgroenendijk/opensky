@@ -11,14 +11,7 @@ import OpenSkyWorldState
 
 /// The data half of a streaming session, split from `BuilderCellSceneProvider`
 /// so the runner can own the builder alone (docs/engine/cell-streaming.md).
-nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
-    AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
-    ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
-    LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
-    PackageDataProviding, MagicDataProviding, ProgressionDataProviding,
-    FactionDataProviding, LockTrapDataProviding, StoryDataProviding,
-    IdleDataProviding, EffectDataProviding, PresentationDataProviding, MenuDataProviding
-{
+nonisolated public struct WorldDataStores {
     /// Compiled-script source for the Papyrus world runtime; nil on synthetic scenes.
     public var scriptFileSystem: (any GameFileSource)?
     /// The same master-list resolver every streamed reference key came from.

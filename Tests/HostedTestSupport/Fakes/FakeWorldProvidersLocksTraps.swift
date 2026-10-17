@@ -3,6 +3,7 @@
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
+import OpenSkyInventoryInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 
@@ -14,7 +15,7 @@ struct FakeLockTrapState {
     var selectedTrap: ReferenceKey?
     var fired = 0
     var disarmed = false
-    var lastLock = "No lock action yet."
+    var lastLock = LockActionOutcome.idle
     var lastTrap = "No trap action yet."
     var objectAnimationEnabled = true
     var objectEvents: [String] = []
@@ -36,7 +37,7 @@ extension FakeWorldProviders {
             carriesEveryKey: locksTraps.carriesEveryKey,
             lockpicks: 3,
             lastOutcome: nil,
-            lastText: locksTraps.lastLock
+            lastAction: locksTraps.lastLock
         )
     }
 
@@ -44,10 +45,10 @@ extension FakeWorldProviders {
         locksTraps.selectedLock = reference
     }
 
-    func setSelectedLockLocked(_ locked: Bool) -> String {
-        guard locksTraps.selectedLock == Self.lockedDoor else { return "No lock selected." }
+    func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome {
+        guard locksTraps.selectedLock == Self.lockedDoor else { return .noSelection }
         locksTraps.doorLocked = locked
-        locksTraps.lastLock = locked ? "Locked Cellar Door." : "Unlocked Cellar Door."
+        locksTraps.lastLock = .lockChanged(name: "Cellar Door", locked: locked)
         return locksTraps.lastLock
     }
 
@@ -55,9 +56,9 @@ extension FakeWorldProviders {
         locksTraps.carriesEveryKey = enabled
     }
 
-    func pickSelectedLock() -> String {
+    func pickSelectedLock() -> LockActionOutcome {
         locksTraps.picked += 1
-        return "Picking Cellar Door (Adept)."
+        return .picking(name: "Cellar Door", difficulty: .adept)
     }
 
     var trapSnapshot: TrapControlSnapshot {
@@ -80,16 +81,16 @@ extension FakeWorldProviders {
         locksTraps.selectedTrap = key
     }
 
-    func fireSelectedTrap() -> String {
+    func fireSelectedTrap() -> TrapActionOutcome {
         locksTraps.fired += 1
-        locksTraps.lastTrap = "Stepped into and out of Plate."
-        return locksTraps.lastTrap
+        locksTraps.lastTrap = TrapActionOutcome.fired(trap: "Plate").text
+        return .fired(trap: "Plate")
     }
 
-    func disarmSelectedTrap() -> String {
+    func disarmSelectedTrap() -> TrapActionOutcome {
         locksTraps.disarmed = true
-        locksTraps.lastTrap = "Activated Plate: 1 script events."
-        return locksTraps.lastTrap
+        locksTraps.lastTrap = TrapActionOutcome.activated(trap: "Plate", queuedEvents: 1).text
+        return .activated(trap: "Plate", queuedEvents: 1)
     }
 }
 

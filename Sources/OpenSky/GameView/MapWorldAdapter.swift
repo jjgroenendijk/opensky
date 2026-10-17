@@ -22,19 +22,39 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+/// What `MapWorldAdapter` reads from the session. `GameViewController` conforms.
+@MainActor
+protocol MapWorldHost: MenuInputConsumer {
+    var actorValues: ActorValueCoordinator { get }
+    var combat: CombatCoordinator { get }
+    var crime: CrimeCoordinator { get }
+    var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
+    var journal: JournalCoordinator { get }
+    var localizedStringsLoader: (() -> LocalizedStrings)? { get }
+    var progression: ProgressionCoordinator { get }
+    var renderer: Renderer? { get }
+    var runtimeState: RuntimeStateCoordinator { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var scripts: ScriptCoordinator { get }
+    var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
+}
+
 final class MapWorldAdapter {
-    unowned let game: GameViewController
+    unowned let game: any MapWorldHost
     /// Marker names and places are fixed for a session, so they resolve once.
     /// Marker sites per map worldspace, read once each.
     private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
     private var strings: LocalizedStrings?
 
-    init(game: GameViewController) {
+    init(game: any MapWorldHost) {
         self.game = game
     }
 
     var records: MenuRecordData? {
-        (game.worldData as? MenuDataProviding)?.menuRecords
+        game.worldData?.menuRecords
     }
 
     /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
@@ -186,7 +206,7 @@ extension MapWorldAdapter: MapMenuWorld {
     func travel(to marker: MapMarkerSite) -> Bool {
         guard let renderer = game.renderer, let streamer = game.streamer else { return false }
         let from = renderer.locomotion.status.feetPosition
-        let walk = (game.worldData as? MovementConfigurationProviding)?
+        let walk = game.worldData?
             .movementConfiguration.travelSpeed.value ?? 80
         let seconds = FastTravelRule.gameSeconds(
             distance: simd_distance(from, marker.position), walkSpeed: walk,

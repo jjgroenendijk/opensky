@@ -118,11 +118,11 @@ public final class MessageCoordinator {
     /// Shows a MESG from the panel as a notification or as a box, as the
     /// panel asks. No script waits on a box opened here.
     @discardableResult
-    public func show(editorID: String, asBox: Bool) -> String {
+    public func show(editorID: String, asBox: Bool) -> MessageShowOutcome {
         guard
             let key = world?.messageKey(editorID: editorID),
             let built = world?.buildMessage(key, arguments: [])
-        else { return "No message \(editorID)" }
+        else { return .notFound(editorID) }
         if asBox {
             open(MessageBoxRequest(
                 title: built.title,
@@ -130,14 +130,14 @@ public final class MessageCoordinator {
                 buttons: built.buttons,
                 token: nil
             ))
-            return "Opened \(editorID)"
+            return .opened(editorID)
         }
         let posted = notifications.post(
             built.text,
             hold: built.displaySeconds.map(Double.init),
             frame: frame
         )
-        return posted ? "Posted \(editorID)" : "\(editorID) has no text"
+        return posted ? .posted(editorID) : .noText(editorID)
     }
 
     private func open(_ request: MessageBoxRequest) {
@@ -229,5 +229,22 @@ extension MessageCoordinator: PapyrusPresenting {
     @discardableResult
     public func forceCameraMode(firstPerson: Bool) -> Bool {
         world?.forceCameraMode(firstPerson: firstPerson) ?? false
+    }
+}
+
+/// What one panel `show` did. Only `text` builds the readout line.
+nonisolated public enum MessageShowOutcome: Equatable, Sendable {
+    case notFound(String)
+    case opened(String)
+    case posted(String)
+    case noText(String)
+
+    public var text: String {
+        switch self {
+        case let .notFound(editorID): "No message \(editorID)"
+        case let .opened(editorID): "Opened \(editorID)"
+        case let .posted(editorID): "Posted \(editorID)"
+        case let .noText(editorID): "\(editorID) has no text"
+        }
     }
 }

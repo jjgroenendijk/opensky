@@ -4,9 +4,9 @@
 /// The runner owns the builder. The main actor reads only `data`.
 nonisolated public struct CellSession {
     public let runner: SerialCellBuildRunner
-    public let data: any WorldDataProviding
+    public let data: WorldDataStores
 
-    public init(runner: SerialCellBuildRunner, data: any WorldDataProviding) {
+    public init(runner: SerialCellBuildRunner, data: WorldDataStores) {
         self.runner = runner
         self.data = data
     }

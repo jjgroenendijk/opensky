@@ -68,14 +68,11 @@ nonisolated public enum InventoryCore {
     }
 
     /// Why a grant is refused, or nil when it may go ahead.
-    public static func grantRefusal(item: FormID, count: Int32, isKnown: Bool) -> String? {
-        guard count > 0 else {
-            return "Grant refused: a count of \(count) is not a stack."
-        }
-        guard isKnown else {
-            return "Grant refused: no loaded plugin describes \(item), so it has no "
-                + "weight, value or name."
-        }
+    public static func grantRefusal(
+        item: FormID, count: Int32, isKnown: Bool
+    ) -> GrantActionOutcome? {
+        guard count > 0 else { return .notAStack(count: count) }
+        guard isKnown else { return .unknownItem(item) }
         return nil
     }
 

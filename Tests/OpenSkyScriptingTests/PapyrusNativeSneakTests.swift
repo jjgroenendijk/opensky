@@ -12,7 +12,7 @@ struct PapyrusNativeSneakTests {
     @Test func startSneakingTogglesOnlyThePlayer() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         var toggles = 0
-        fixture.session.bridge.togglePlayerSneaking = { toggles += 1 }
+        fixture.session.bridge.playerNatives.togglePlayerSneaking = { toggles += 1 }
         let sneak = { (receiver: PapyrusObjectHandle?) in
             fixture.registry.invoke(PapyrusWorldFixture.methodCall(
                 "Actor", "StartSneaking", receiver: receiver

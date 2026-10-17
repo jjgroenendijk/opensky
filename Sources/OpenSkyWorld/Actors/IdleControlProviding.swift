@@ -83,34 +83,3 @@ public protocol IdleControlProviding: AnyObject {
     @discardableResult
     func pickIdle(at marker: ReferenceKey, for actor: ReferenceKey) -> IdleReport?
 }
-
-/// Lets the app's provider object stand in for its `IdleCoordinator`.
-public protocol IdleControlForwarding: IdleControlProviding {
-    var idles: IdleCoordinator { get }
-}
-
-extension IdleControlForwarding {
-    public func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot {
-        idles.idleSnapshot(for: actor)
-    }
-
-    public func setUsesIdleMarkers(_ enabled: Bool) {
-        idles.setUsesIdleMarkers(enabled)
-    }
-
-    public func idleTree(below idle: ResolvedFormID) -> [IdleTreeLine] {
-        idles.idleTree(below: idle)
-    }
-
-    @discardableResult
-    public func fireIdle(
-        _ idle: ResolvedFormID, on actor: ReferenceKey, ignoringConditions: Bool
-    ) -> IdleReport? {
-        idles.fireIdle(idle, on: actor, ignoringConditions: ignoringConditions)
-    }
-
-    @discardableResult
-    public func pickIdle(at marker: ReferenceKey, for actor: ReferenceKey) -> IdleReport? {
-        idles.pickIdle(at: marker, for: actor)
-    }
-}

@@ -11,7 +11,7 @@ import simd
 extension CombatWorldAdapter {
     func showImpact(_ resolved: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         guard let impact = resolved.impact else { return }
-        let store = (game.worldData as? AudioDataProviding)?.footstepStore
+        let store = game.worldData?.footstepStore
         let surface: ImpactSurface = if let target = resolved.target {
             .actor(target)
         } else if let normal = resolved.surfaceNormal {
@@ -28,7 +28,7 @@ extension CombatWorldAdapter {
     func impactMaterial(of actor: ReferenceKey) -> FormID? {
         guard
             let race = game.menuWorld.race(of: actor),
-            let races = (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?
+            let races = game.worldData?.actorValueBaselines?
                 .resolver?.races
         else { return nil }
         return races[race.rawValue]?.details.materialType

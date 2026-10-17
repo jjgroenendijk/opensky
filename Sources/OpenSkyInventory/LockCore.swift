@@ -37,14 +37,12 @@ nonisolated public enum LockCore {
         )
     }
 
-    /// The notice for a press the gate refused that cannot become a picking
-    /// session, or nil when the minigame opens.
-    public static func refusalNotice(
-        for band: LockDifficulty, lockpicks: Int32, texts: LockTexts
-    ) -> String? {
+    /// Why a press the gate refused cannot become a picking session, or nil when
+    /// the minigame opens.
+    public static func refusalNotice(for band: LockDifficulty, lockpicks: Int32) -> LockNotice? {
         if !band.isPickable {
-            return texts.requiresKey
+            return .requiresKey
         }
-        return lockpicks > 0 ? nil : texts.outOfLockpicks
+        return lockpicks > 0 ? nil : .outOfLockpicks
     }
 }

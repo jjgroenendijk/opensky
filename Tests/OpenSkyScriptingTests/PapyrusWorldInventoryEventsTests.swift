@@ -78,7 +78,7 @@ struct PapyrusWorldInventoryEventsTests {
             ("OnCombatStateChanged", PapyrusWorldFixture.probeBody(note: "combat"))
         ])
         let combat = FakeCombat()
-        fixture.session.bridge.combatRuntime = { combat }
+        fixture.session.bridge.actorNatives.combatRuntime = { combat }
         let bridge = fixture.session.bridge
         #expect(bridge.queueCombatStateEvents() == 0)
         combat.activity = .fighting

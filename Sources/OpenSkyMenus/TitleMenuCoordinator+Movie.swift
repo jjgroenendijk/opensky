@@ -8,79 +8,46 @@ import OpenSkyGameData
 import OpenSkyRendering
 
 extension TitleMenuCoordinator {
-    private static let logger = EngineLogger(
+    static let movieLogger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Menus"
     )
     static let version = "OpenSky"
 
     func startMovie() {
-        guard let hud, world?.renderer != nil, movies?.isAvailable == true else {
-            movieLoaded = false
-            movieError = "No game data located."
-            return
-        }
-        hud.suspend()
-        movieRequest += 1
-        let request = movieRequest
-        movies?.request(TitleMenuMovieBridge.moviePath, while: { [weak self] in
-            self?.movieRequest == request
-        }, then: { [weak self] result in
-            self?.showMovie(result)
-        })
-    }
-
-    /// Runs when the movie is decoded, which may be a later frame than the open.
-    func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
-        guard let renderer = world?.renderer else { return }
-        do {
-            try renderer.setSWFMovie(result.get().addingImageSlot(
-                TitleMenuLoadBridge.screenshotSlot,
-                width: TitleMenuLoadBridge.screenshotWidth,
-                height: TitleMenuLoadBridge.screenshotHeight
-            ))
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime { [weak self] runtime in
+        let hasSaves = entries.contains(.resume)
+        movie.start(MenuMovie(
+            path: TitleMenuMovieBridge.moviePath,
+            activationTicks: TitleMenuMovieBridge.activationTicks,
+            adaptScene: { scene in
+                scene.addingImageSlot(
+                    TitleMenuLoadBridge.screenshotSlot,
+                    width: TitleMenuLoadBridge.screenshotWidth,
+                    height: TitleMenuLoadBridge.screenshotHeight
+                )
+            },
+            prepare: { [weak self] runtime in
                 TitleMenuMovieBridge.prepare(runtime: runtime) { [weak self] request in
                     self?.pendingRequest = request
                 }
                 TitleMenuLoadBridge.prepare(runtime: runtime) { [weak self] call in
                     self?.pendingLoadCalls.append(call)
                 }
-            }
-            guard started != nil else {
-                movieLoaded = false
-                movieError = "SWF runtime unavailable."
-                return
-            }
-            let hasSaves = entries.contains(.resume)
-            try renderer.updateSWFRuntime { runtime in
+            },
+            activate: { runtime in
                 TitleMenuMovieBridge.activate(
                     runtime: runtime, hasSaves: hasSaves, version: Self.version
                 )
-            }
-            for _ in 0 ..< TitleMenuMovieBridge.activationTicks {
-                try renderer.advanceSWFRuntime()
-            }
-            world?.showTitleBackdrop(true)
-            movieLoaded = true
-            movieError = nil
-        } catch {
-            movieLoaded = false
-            movieError = String(describing: error)
-            Self.logger.error("[ERROR] title movie: \(String(describing: error), privacy: .public)")
-        }
+            },
+            didLoad: { [weak self] in self?.world?.showTitleBackdrop(true) }
+        ))
     }
 
     func stopMovie() {
-        movieRequest += 1
-        movieLoaded = false
-        movieError = nil
+        movie.stop()
         pendingRequest = nil
         pendingLoadCalls = []
         world?.showTitleBackdrop(false)
-        hud?.start()
     }
 
     func routeMovie(_ event: MenuInputEvent, renderer: Renderer) {
@@ -98,7 +65,7 @@ extension TitleMenuCoordinator {
         do {
             try renderer.updateSWFRuntime(inject)
         } catch {
-            movieError = String(describing: error)
+            movie.record(error)
         }
         answerLoadCalls(renderer: renderer)
         guard let request = pendingRequest else { return }
