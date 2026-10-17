@@ -79,7 +79,7 @@ struct RendererGPUCullingTests {
     @MainActor
     func gpuPathKeepsTheSameInstancesAsTheCPUPath() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateRowScene(device: device),
             camera: Self.camera,
@@ -117,7 +117,7 @@ struct RendererGPUCullingTests {
     @MainActor
     func bothPathsSkipTheSameHiddenRoom() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateRowScene(device: device, rooms: Self.twoRooms()),
             camera: Self.camera,
@@ -151,7 +151,7 @@ struct RendererGPUCullingTests {
     @MainActor
     func turningCullingOffClearsTheGPUCounts() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateRowScene(device: device),
             camera: Self.camera,

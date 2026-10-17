@@ -11,7 +11,7 @@ import OpenSkyWorld
 
 extension ScriptWorldAdapter: PapyrusWeatherControlling {
     private var weatherSystem: WeatherSystem? {
-        game.renderer?.weather
+        game.gameSession?.weather
     }
 
     private var resolver: FormIDResolver? {

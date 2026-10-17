@@ -27,7 +27,11 @@ extension Renderer {
         scene = newScene
         if let newCamera {
             camera = newCamera
-            frameDriver?.didReplaceCamera(newCamera)
+            if let frameDriver {
+                frameDriver.didReplaceCamera(newCamera)
+            } else {
+                frameInput.view = FreeFlyCamera(framing: newCamera)
+            }
         }
         if let newDraw {
             adoptDrawRing(newDraw, retiring: &retiring)
@@ -195,7 +199,7 @@ extension Renderer {
             live.insert(ObjectIdentifier(motion))
         }
         // The player's rigs share meshes and textures with the cell's actors.
-        for rig in [frameDriver?.playerBodyRig, frameDriver?.firstPersonRig].compactMap(\.self) {
+        for rig in frameInput.rigs.all {
             live.formUnion(rig.render.residencyAllocations.map(ObjectIdentifier.init))
         }
         // A drained A entry may share an allocation with undrained B. Keep that

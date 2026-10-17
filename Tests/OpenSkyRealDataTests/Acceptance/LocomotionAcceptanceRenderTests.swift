@@ -21,11 +21,11 @@ private struct LocomotionRenderInstall {
     let root: GameDataRoot
 }
 
-/// The renderer and the spot on the terrain every frame of one run is taken
+/// The session and the spot on the terrain every frame of one run is taken
 /// from, passed as one value for the same reason.
 @MainActor
 private struct LocomotionRenderStage {
-    let renderer: Renderer
+    let gameSession: GameSession
     let feet: SIMD3<Float>
 }
 
@@ -44,14 +44,14 @@ struct LocomotionAcceptanceRenderTests {
         let cell = try PlayerBodyFixture.stage()
         let assembled = cell.assembled
         let feet = try cell.terrainStart()
-        let renderer = try cell.renderer()
+        let gameSession = try cell.makeSession()
         var report: [String] = []
 
-        let empty = try Self.thirdPersonFrame(renderer, feet: feet)
-        try renderer.setPlayerBody(assembled.body)
-        try renderer.setPlayerFirstPersonRig(assembled.arms)
+        let empty = try Self.thirdPersonFrame(gameSession, feet: feet)
+        try gameSession.setPlayerBody(assembled.body)
+        try gameSession.setPlayerFirstPersonRig(assembled.arms)
 
-        let idle = try Self.settle(assembled, renderer: renderer, feet: feet)
+        let idle = try Self.settle(assembled, gameSession: gameSession, feet: feet)
         let bodyPixels = FirstPersonRenderRealDataTests.changedPixels(empty, idle)
         report.append("third person idle vs no body: \(bodyPixels) changed pixels")
         #expect(bodyPixels > Self.minimumChangedPixels, "the body drew nothing in third person")
@@ -59,12 +59,12 @@ struct LocomotionAcceptanceRenderTests {
         try Self.assertStateChangeIsVisibleAndReproducible(
             assembled,
             install: LocomotionRenderInstall(device: cell.device, root: cell.root),
-            stage: LocomotionRenderStage(renderer: renderer, feet: feet),
+            stage: LocomotionRenderStage(gameSession: gameSession, feet: feet),
             idle: idle,
             report: &report
         )
         try Self.assertCameraModeSwitchIsReproducible(
-            assembled, renderer: renderer, feet: feet, report: &report
+            assembled, gameSession: gameSession, feet: feet, report: &report
         )
 
         try PlayerBodyFixture.write(
@@ -86,11 +86,11 @@ struct LocomotionAcceptanceRenderTests {
         idle: [UInt8],
         report: inout [String]
     ) throws {
-        let renderer = stage.renderer
+        let gameSession = stage.gameSession
         let feet = stage.feet
         let sprinting = try Self.drive(
             assembled,
-            renderer: renderer,
+            gameSession: gameSession,
             feet: feet,
             input: CameraInput(moveForward: 1, sprint: true, dt: step)
         )
@@ -105,12 +105,12 @@ struct LocomotionAcceptanceRenderTests {
         let second = try PlayerBodyFixture.assemble(
             device: install.device, root: install.root
         )
-        try renderer.setPlayerBody(second.body)
-        try renderer.setPlayerFirstPersonRig(second.arms)
-        _ = try Self.settle(second, renderer: renderer, feet: feet)
+        try gameSession.setPlayerBody(second.body)
+        try gameSession.setPlayerFirstPersonRig(second.arms)
+        _ = try Self.settle(second, gameSession: gameSession, feet: feet)
         let again = try Self.drive(
             second,
-            renderer: renderer,
+            gameSession: gameSession,
             feet: feet,
             input: CameraInput(moveForward: 1, sprint: true, dt: step)
         )
@@ -120,8 +120,8 @@ struct LocomotionAcceptanceRenderTests {
             residual == 0,
             "the same input from a fresh graph drew a different frame (\(residual) pixels)"
         )
-        try renderer.setPlayerBody(assembled.body)
-        try renderer.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.setPlayerBody(assembled.body)
+        try gameSession.setPlayerFirstPersonRig(assembled.arms)
     }
 
     /// The camera-mode axis: third person draws the body, first person draws
@@ -129,14 +129,15 @@ struct LocomotionAcceptanceRenderTests {
     @MainActor
     private static func assertCameraModeSwitchIsReproducible(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>,
         report: inout [String]
     ) throws {
-        let third = try Self.settle(assembled, renderer: renderer, feet: feet)
+        let renderer = gameSession.renderer
+        let third = try Self.settle(assembled, gameSession: gameSession, feet: feet)
 
-        FirstPersonRenderRealDataTests.frameFirstPerson(renderer, feet: feet)
-        FirstPersonRenderRealDataTests.place(assembled, renderer: renderer, feet: feet)
+        FirstPersonRenderRealDataTests.frameFirstPerson(gameSession, feet: feet)
+        FirstPersonRenderRealDataTests.place(assembled, gameSession: gameSession, feet: feet)
         let first = try FirstPersonRenderRealDataTests.frame(renderer)
         let modeChange = FirstPersonRenderRealDataTests.changedPixels(third, first)
         report.append("first person vs third person: \(modeChange) changed pixels")
@@ -145,7 +146,7 @@ struct LocomotionAcceptanceRenderTests {
             "switching camera mode changed only \(modeChange) pixels"
         )
 
-        let back = try Self.thirdPersonFrame(renderer, feet: feet, place: assembled)
+        let back = try Self.thirdPersonFrame(gameSession, feet: feet, place: assembled)
         let residual = FirstPersonRenderRealDataTests.changedPixels(third, back)
         report.append("third person after a mode round trip: \(residual) changed pixels")
         #expect(residual == 0, "the mode round trip drew a different frame")
@@ -157,28 +158,29 @@ struct LocomotionAcceptanceRenderTests {
     /// Puts the eye where third person puts it and renders one frame.
     @MainActor
     private static func thirdPersonFrame(
-        _ renderer: Renderer,
+        _ gameSession: GameSession,
         feet: SIMD3<Float>,
         place assembled: PlayerBodyFixture.Assembled? = nil
     ) throws -> [UInt8] {
-        renderer.freeFlyCamera = FreeFlyCamera(
+        let renderer = gameSession.renderer
+        gameSession.freeFlyCamera = FreeFlyCamera(
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
             pitch: 0
         )
-        renderer.setMovementMode(.thirdPerson)
+        gameSession.setMovementMode(.thirdPerson)
         // `setMovementMode` seats the capsule under the eye; the orbit pull-back
         // happens in `advancePlayer`, which only a live frame loop runs. Doing
         // it here is what puts the camera behind the player rather than inside
         // them.
-        renderer.freeFlyCamera.position = renderer.thirdPersonCamera.resolve(
+        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
             feetPosition: feet,
-            yaw: renderer.freeFlyCamera.yaw,
-            pitch: renderer.freeFlyCamera.pitch,
+            yaw: gameSession.freeFlyCamera.yaw,
+            pitch: gameSession.freeFlyCamera.pitch,
             collisionQuery: { _ in [] }
         )
         if let assembled {
-            FirstPersonRenderRealDataTests.place(assembled, renderer: renderer, feet: feet)
+            FirstPersonRenderRealDataTests.place(assembled, gameSession: gameSession, feet: feet)
         }
         return try FirstPersonRenderRealDataTests.frame(renderer)
     }
@@ -188,14 +190,14 @@ struct LocomotionAcceptanceRenderTests {
     @MainActor
     private static func drive(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>,
         input: CameraInput
     ) throws -> [UInt8] {
         for _ in 0 ..< LocomotionDriveHarness.secondOfSteps {
             FirstPersonRenderRealDataTests.drive(assembled, feet: feet, input: input)
         }
-        return try thirdPersonFrame(renderer, feet: feet, place: assembled)
+        return try thirdPersonFrame(gameSession, feet: feet, place: assembled)
     }
 
     /// The standing player: no input held, driven long enough for the graph to
@@ -203,9 +205,9 @@ struct LocomotionAcceptanceRenderTests {
     @MainActor
     private static func settle(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>
     ) throws -> [UInt8] {
-        try drive(assembled, renderer: renderer, feet: feet, input: CameraInput(dt: step))
+        try drive(assembled, gameSession: gameSession, feet: feet, input: CameraInput(dt: step))
     }
 }

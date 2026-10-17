@@ -5,7 +5,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 
 public final class UILabCoordinator {
-    /// The two samples share the one `Renderer.uiScene` slot.
+    /// The two samples share the one `SWFLayerWorld.uiScene` slot.
     public enum Sample: Equatable, Sendable {
         case none, lab, localized
     }
@@ -58,9 +58,9 @@ public final class UILabCoordinator {
     private func apply(_ selection: Sample) {
         sample = selection
         switch selection {
-        case .none: renderer?.uiScene = .empty
-        case .lab: renderer?.uiScene = .labSample
-        case .localized: renderer?.uiScene = .localizedSample
+        case .none: world?.uiScene = .empty
+        case .lab: world?.uiScene = .labSample
+        case .localized: world?.uiScene = .localizedSample
         }
     }
 

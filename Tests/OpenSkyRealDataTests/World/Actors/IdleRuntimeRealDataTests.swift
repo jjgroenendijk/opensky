@@ -266,7 +266,7 @@ struct IdleRuntimeRealDataTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 800, height: 800), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, scene: scene, camera: camera)
+        return try Renderer(rendering: view, scene: scene, camera: camera)
     }
 
     private static func distance(_ entry: RuntimeReferenceEntry, _ point: SIMD3<Float>) -> Float {

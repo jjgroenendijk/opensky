@@ -78,7 +78,7 @@ enum SWFRenderSweep {
             )
             view.isPaused = true
             view.enableSetNeedsDisplay = false
-            renderer = try Renderer(view: view)
+            renderer = try Renderer(rendering: view)
             self.size = size
             if let directory = outputDirectory {
                 let url = URL(filePath: directory, directoryHint: .isDirectory)

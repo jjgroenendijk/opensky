@@ -72,39 +72,40 @@ extension WorldTimeAcceptanceTests {
     }
 
     /// The same run through the real renderer seam the app uses:
-    /// `Renderer.consumeElapsedGameHours()` feeding
+    /// `GameSession.consumeElapsedGameHours()` feeding
     /// `WeatherSystem.update(deltaTime:hour:elapsedGameHours:)`, with the
-    /// timescale read through `Renderer.currentTimescale` off the global
+    /// timescale read through `GameSession.currentTimescale` off the global
     /// resolution rather than passed in.
     @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device)) @MainActor
     func theRendererFeedsWeatherTheClocksOwnElapsedGameHours() throws {
         let device = try #require(ShadowSceneFixture.device)
-        let renderer = try ShadowSceneFixture.makeRenderer(device: device)
+        let gameSession = try ShadowSceneFixture.makeSession(device: device)
         let defaults = try Self.weatherTimeGlobals()
-        renderer.gameClock = GameClock(hour: WorldTimeAcceptanceClock.startHour)
-        renderer.gameTime.globalResolution = GlobalResolution(
-            defaults: defaults, clock: renderer.gameClock
+        gameSession.gameClock = GameClock(hour: WorldTimeAcceptanceClock.startHour)
+        gameSession.gameTime.globalResolution = GlobalResolution(
+            defaults: defaults, clock: gameSession.gameClock
         )
-        #expect(renderer.currentTimescale == WorldTimeAcceptanceClock.fastTimescale)
+        #expect(gameSession.currentTimescale == WorldTimeAcceptanceClock.fastTimescale)
 
         // Setting the clock wholesale clears the elapsed-hours mark, so the
         // first read is zero: a restored save must not age months of weather.
-        #expect(renderer.consumeElapsedGameHours() == 0)
+        #expect(gameSession.consumeElapsedGameHours() == 0)
 
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: renderer.timeOfDay)
+        system.update(deltaTime: 100, hour: gameSession.timeOfDay)
         var weather = system.currentWeatherID
         var changePoints: [Float] = []
         var elapsedTotal: Float = 0
         for _ in 0 ..< WorldTimeAcceptanceClock.steps {
-            renderer.gameTime.clock.advance(
-                wallDelta: WorldTimeAcceptanceClock.wallStep, timescale: renderer.currentTimescale
+            gameSession.gameTime.clock.advance(
+                wallDelta: WorldTimeAcceptanceClock.wallStep,
+                timescale: gameSession.currentTimescale
             )
-            let elapsed = renderer.consumeElapsedGameHours()
+            let elapsed = gameSession.consumeElapsedGameHours()
             #expect(elapsed == WorldTimeAcceptanceClock.gameHoursPerStep)
             elapsedTotal += elapsed
             system.update(
-                deltaTime: WorldTimeAcceptanceClock.wallStep, hour: renderer.timeOfDay,
+                deltaTime: WorldTimeAcceptanceClock.wallStep, hour: gameSession.timeOfDay,
                 elapsedGameHours: elapsed
             )
             if system.currentWeatherID != weather {
@@ -120,9 +121,9 @@ extension WorldTimeAcceptanceTests {
         }
         // `timeOfDay` is the projection the sky shader and the weather blend
         // both read, so this is the sky hour agreeing with the clock.
-        #expect(renderer.timeOfDay == renderer.gameClock.hourOfDay)
+        #expect(gameSession.timeOfDay == gameSession.gameClock.hourOfDay)
         try Self.expectClockAgreement(
-            renderer.gameClock, defaults: defaults, resolvedHour: renderer.timeOfDay
+            gameSession.gameClock, defaults: defaults, resolvedHour: gameSession.timeOfDay
         )
     }
 

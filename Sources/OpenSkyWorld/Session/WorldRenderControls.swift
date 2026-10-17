@@ -12,6 +12,7 @@ import OpenSkyRendering
 public protocol RenderControlWorld: AnyObject {
     /// Nil when the GPU lacks Metal 4.
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     /// Nil without game data.
     var streamer: CellStreamer? { get }
     var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
@@ -29,6 +30,10 @@ public final class WorldRenderControls {
 
     var renderer: Renderer? {
         world?.renderer
+    }
+
+    var gameSession: GameSession? {
+        world?.gameSession
     }
 
     var streamer: CellStreamer? {
@@ -278,24 +283,24 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
 
 extension WorldRenderControls: CameraControlProviding {
     public var cameraPose: CameraPoseSnapshot {
-        guard let renderer else { return .unavailable }
-        let camera = renderer.freeFlyCamera
+        guard let gameSession else { return .unavailable }
+        let camera = gameSession.freeFlyCamera
         return CameraPoseSnapshot(
             position: camera.position,
             yaw: camera.yaw,
             pitch: camera.pitch,
             cell: CellGridManager.cellCoordinate(for: camera.position),
-            movementMode: renderer.movementMode
+            movementMode: gameSession.movementMode
         )
     }
 
     public var movementMode: CameraMovementMode {
-        get { renderer?.movementMode ?? .fly }
-        set { renderer?.setMovementMode(newValue) }
+        get { gameSession?.movementMode ?? .fly }
+        set { gameSession?.setMovementMode(newValue) }
     }
 
     public var movementConfiguration: PlayerMovementConfiguration {
-        renderer?.walkController.configuration ?? .synthetic
+        gameSession?.walkController.configuration ?? .synthetic
     }
 }
 
@@ -326,7 +331,7 @@ extension WorldRenderControls: TriggerControlProviding, PhysicsControlProviding 
             streamerAvailable: true,
             stats: streamer.triggerStats(),
             occupiedCount: streamer.occupiedTriggers.count,
-            walkModeActive: renderer?.movementMode.isPlayerControlled ?? false,
+            walkModeActive: gameSession?.movementMode.isPlayerControlled ?? false,
             recentTransitions: streamer.triggerLog.lines,
             recordedTransitionCount: streamer.triggerLog.recordedCount
         )

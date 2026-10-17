@@ -176,7 +176,10 @@ struct WorldOverlayTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 480, height: 320), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, shaderLibrary: ShaderLibraryFixture.library(device: device))
+        return try Renderer(
+            rendering: view,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     private static func pixels(_ texture: MTLTexture) -> [UInt8] {

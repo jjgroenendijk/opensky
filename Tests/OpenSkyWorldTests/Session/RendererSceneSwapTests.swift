@@ -61,7 +61,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapToLargerSceneRegrowsRingAndRenders() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateScene(device: device, count: 1),
             camera: Self.camera,
@@ -96,7 +96,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapToEmptySceneRendersClear() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateScene(device: device, count: 3),
             camera: Self.camera,
@@ -114,7 +114,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapCameraReseedsFreeFlyPose() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let renderer = try OffscreenRendererFixture.makeRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             camera: Self.camera,
@@ -144,21 +144,22 @@ struct RendererSceneSwapTests {
     @MainActor
     func sceneCameraReseedResetsWalkPoseBeforeNextPhysicsStep() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let gameSession = try OffscreenRendererFixture.makeSession(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             camera: Self.camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-        let groundHeight = renderer.walkController.feetPosition.z
-        renderer.walkController.update(
-            camera: &renderer.freeFlyCamera,
+        let renderer = gameSession.renderer
+        let groundHeight = gameSession.walkController.feetPosition.z
+        gameSession.walkController.update(
+            camera: &gameSession.freeFlyCamera,
             input: CameraInput(dt: WalkController.fixedTimeStep),
             sampleGround: { _ in
                 TerrainGroundSample(height: groundHeight, normal: SIMD3(0, 0, 1))
             }
         )
-        #expect(renderer.walkController.isGrounded)
+        #expect(gameSession.walkController.isGrounded)
 
         let destination = SceneCamera(
             eye: SIMD3(100, 200, 300),
@@ -169,21 +170,22 @@ struct RendererSceneSwapTests {
         )
         try renderer.setScene(RenderScene(instances: []), camera: destination)
 
-        #expect(renderer.walkController.cameraPosition == destination.eye)
-        #expect(renderer.walkController.verticalVelocity == 0)
-        #expect(!renderer.walkController.isGrounded)
+        #expect(gameSession.walkController.cameraPosition == destination.eye)
+        #expect(gameSession.walkController.verticalVelocity == 0)
+        #expect(!gameSession.walkController.isGrounded)
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func teleportCameraUsesActorOriginAsWalkFeet() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let gameSession = try OffscreenRendererFixture.makeSession(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-        renderer.movementMode = .walk
+        let renderer = gameSession.renderer
+        gameSession.movementMode = .walk
         let placement = PlacedReference.Placement(
             position: SIMD3(10, 20, 30),
             rotation: SIMD3(0, 0, 0.5)
@@ -193,9 +195,9 @@ struct RendererSceneSwapTests {
             camera: SceneCamera.teleport(placement: placement)
         )
 
-        #expect(renderer.walkController.feetPosition == placement.position)
-        #expect(renderer.freeFlyCamera.position.z == 30 + PlayerCapsule.standard.eyeHeight)
-        #expect(abs(renderer.freeFlyCamera.yaw - 0.5) < 0.001)
+        #expect(gameSession.walkController.feetPosition == placement.position)
+        #expect(gameSession.freeFlyCamera.position.z == 30 + PlayerCapsule.standard.eyeHeight)
+        #expect(abs(gameSession.freeFlyCamera.yaw - 0.5) < 0.001)
     }
 
     // MARK: - Helpers

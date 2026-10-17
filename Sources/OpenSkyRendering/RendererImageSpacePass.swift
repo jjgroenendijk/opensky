@@ -175,25 +175,26 @@ struct ImageSpaceGrade {
 extension Renderer {
     /// The grade this frame draws, or nil when the pass is off or would change nothing.
     func imageSpaceGrade(descriptor: MTL4RenderPassDescriptor, slot: Int) -> ImageSpaceGrade? {
-        let parameters = imageSpace.current.clampedForDisplay
-        let toneMaps = imageSpace.passEnabled && imageSpace.toneMapping.enabled
+        let parameters = frameInput.imageSpace.current.clampedForDisplay
+        let toneMaps = frameInput.imageSpace.passEnabled && frameInput.imageSpace.toneMapping
+            .enabled
             && ToneMappingState.isActive(parameters.hdr)
         let measured = imageSpacePass.takeMeanLuminance(slot: slot)
         let deltaTime = eyeAdaptationClock.advance(to: CACurrentMediaTime(), paused: false)
         if toneMaps, let measured {
-            imageSpace.toneMapping.eye.advance(
+            eyeAdaptation.advance(
                 measured: measured, speed: parameters.hdr.eyeAdaptSpeed, deltaTime: deltaTime
             )
         } else if !toneMaps {
-            imageSpace.toneMapping.eye.reset()
+            eyeAdaptation.reset()
         }
         guard
-            imageSpace.passEnabled, toneMaps || !parameters.isNeutral,
+            frameInput.imageSpace.passEnabled, toneMaps || !parameters.isNeutral,
             let target = descriptor.colorAttachments[0].texture
         else { return nil }
         let toneMapping = toneMaps
             ? SIMD4(
-                imageSpace.toneMapping.eye.exposure(strength: parameters.hdr.eyeAdaptStrength),
+                eyeAdaptation.exposure(strength: parameters.hdr.eyeAdaptStrength),
                 parameters.hdr.white, parameters.hdr.eyeAdaptStrength > 0 ? 1 : 0, 0
             )
             : SIMD4(1, 0, 0, 0)

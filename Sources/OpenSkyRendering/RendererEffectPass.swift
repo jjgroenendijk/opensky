@@ -39,14 +39,14 @@ extension Renderer {
 
     /// Draws and instances the player rigs add on top of the scene.
     var rigDrawCount: Int {
-        (frameDriver?.playerBodyRig?.render.drawCount ?? 0)
-            + (frameDriver?.firstPersonRig?.render.drawCount ?? 0)
+        (frameInput.rigs.body?.render.drawCount ?? 0)
+            + (frameInput.rigs.arms?.render.drawCount ?? 0)
             + (effects.loadingCover?.drawCount ?? 0)
     }
 
     var rigInstanceCount: Int {
-        (frameDriver?.playerBodyRig?.render.instanceCount ?? 0)
-            + (frameDriver?.firstPersonRig?.render.instanceCount ?? 0)
+        (frameInput.rigs.body?.render.instanceCount ?? 0)
+            + (frameInput.rigs.arms?.render.instanceCount ?? 0)
             + (effects.loadingCover?.instanceCount ?? 0)
     }
 
@@ -94,7 +94,7 @@ extension Renderer {
     func membraneGroups(for target: MembraneTarget) -> [DrawGroup] {
         switch target {
         case .player:
-            guard let body = frameDriver?.playerBodyRig, isPlayerBodyVisible else { return [] }
+            guard let body = frameInput.rigs.body, isPlayerBodyVisible else { return [] }
             return body.render.opaque + body.render.alphaTested
         case let .actor(owner):
             return actorGroupsByOwner[owner] ?? []

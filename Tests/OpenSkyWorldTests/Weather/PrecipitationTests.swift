@@ -106,7 +106,7 @@ struct PrecipitationTests {
         let rainy = try ShadowSceneFixture.makeRenderer(device: device)
         for _ in 0 ..< 15 {
             rainy.precipitation.update(update(
-                camera: rainy.freeFlyCamera.position,
+                camera: rainy.frameInput.view.position,
                 state: .init(.rainy)
             ))
         }

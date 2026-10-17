@@ -39,7 +39,7 @@ extension Renderer {
         // Weather is an exterior-only source: interiors keep their own baked
         // CELL/LGTM lighting untouched (weatherLight nil there). The sky
         // palette applies only when the scene actually draws a sky.
-        let weatherLight = interiorLighting == nil ? currentResolvedWeather : nil
+        let weatherLight = interiorLighting == nil ? frameInput.weather : nil
         let weatherSky = scene.sky != nil ? weatherLight : nil
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
@@ -51,7 +51,7 @@ extension Renderer {
         )
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
-            cameraPosition: freeFlyCamera.position,
+            cameraPosition: frameInput.view.position,
             sunDirection: interiorLighting?.directionalDirection ?? camera.sunDirection,
             sunColor: weatherLight?.sunlightColor
                 ?? interiorLighting?.directionalColor ?? camera.sunColor,
@@ -67,13 +67,13 @@ extension Renderer {
             fogFarColor: fog.farColor,
             fogDistances: fog.distances,
             fogEnabled: fog.enabled,
-            timeOfDayHours: timeOfDay,
+            timeOfDayHours: frameInput.timeOfDay,
             animationTime: animationTime,
             shadowViewProjections: (
                 shadowCascadeMatrix(0), shadowCascadeMatrix(1), shadowCascadeMatrix(2)
             ),
             shadowCascadeSplits: shadowCascadeSplitBounds(),
-            cameraForward: freeFlyCamera.forward,
+            cameraForward: frameInput.view.forward,
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
             shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
             shadowSampleRadius: shadowSampleRadius,
@@ -84,9 +84,9 @@ extension Renderer {
             weatherSunColor: weatherSky?.sun ?? .zero,
             weatherGlareColor: weatherSky?.sunGlare ?? .zero,
 
-            cameraRight: freeFlyCamera.right,
-            cameraUp: simd_normalize(simd_cross(freeFlyCamera.right, freeFlyCamera.forward)),
-            grassWind: currentWind.direction * currentWind.speed
+            cameraRight: frameInput.view.right,
+            cameraUp: simd_normalize(simd_cross(frameInput.view.right, frameInput.view.forward)),
+            grassWind: frameInput.wind.direction * frameInput.wind.speed
                 * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale),
             grassFadeDistances: SIMD2(
                 max(grassDistance * 0.7, GrassRenderPolicy.minimumDrawDistance * 0.5),
@@ -460,7 +460,7 @@ extension Renderer {
         projection: float4x4,
         interpolatedTarget: MTL4RenderPassDescriptor? = nil
     ) -> Bool {
-        let view = freeFlyCamera.viewMatrix()
+        let view = frameInput.view.viewMatrix()
         // Upscaling renders the scene smaller with a jittered projection. Culling keeps
         // the unjittered frustum, so both paths cull the same instances.
         let upscaleFrame = beginUpscaleFrame(

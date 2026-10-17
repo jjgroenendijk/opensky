@@ -61,7 +61,7 @@ struct CellRenderRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: cellScene.renderScene, camera: camera)
+        let renderer = try Renderer(rendering: view, scene: cellScene.renderScene, camera: camera)
         let texture = try renderer.renderOffscreen(width: 1280, height: 720)
 
         let pixels = readPixels(texture: texture)
@@ -175,7 +175,7 @@ extension CellRenderRealDataTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 1280, height: 720), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        let renderer = try Renderer(rendering: view, scene: RenderScene(instances: []))
         let errorBox = StreamSceneSwapErrorBox()
         let streamer = CellStreamer(
             center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),

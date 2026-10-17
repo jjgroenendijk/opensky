@@ -16,7 +16,7 @@ import Testing
 
 @MainActor
 private final class RealKillCamWorld: CinematicCameraWorld {
-    let renderer: Renderer
+    let gameSession: GameSession
     let fileSystem: VirtualFileSystem
     let cameraPaths: CameraPathStore?
     let bow: Weapon?
@@ -25,8 +25,13 @@ private final class RealKillCamWorld: CinematicCameraWorld {
     private(set) var posedFrames = 0
     private(set) var tracks: [String: Bool] = [:]
 
-    init(renderer: Renderer, fileSystem: VirtualFileSystem, paths: CameraPathStore, bow: Weapon?) {
-        self.renderer = renderer
+    init(
+        gameSession: GameSession,
+        fileSystem: VirtualFileSystem,
+        paths: CameraPathStore,
+        bow: Weapon?
+    ) {
+        self.gameSession = gameSession
         self.fileSystem = fileSystem
         cameraPaths = paths
         self.bow = bow
@@ -61,8 +66,8 @@ private final class RealKillCamWorld: CinematicCameraWorld {
     func apply(_ frame: CinematicFrame) {
         lowestTimeScale = min(lowestTimeScale, frame.timeScale)
         posedFrames += frame.pose == nil ? 0 : 1
-        renderer.worldTimeScale = frame.timeScale
-        renderer.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
+        gameSession.worldTimeScale = frame.timeScale
+        gameSession.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
@@ -78,11 +83,15 @@ struct KillCamRealDataTests {
         let root = try #require(RealDataEnvironment.dataRoot)
         let device = try #require(RealDataEnvironment.device)
         let plugins = try VanillaMasters.load(root: root)
-        let renderer = try RenderedPixels.offscreenRenderer(device: device, width: 320, height: 180)
-        renderer.freeFlyCamera = FreeFlyCamera(position: SIMD3(0, 0, 120), yaw: 0, pitch: 0)
-        let before = renderer.freeFlyCamera
+        let gameSession = try RenderedPixels.offscreenSession(
+            device: device,
+            width: 320,
+            height: 180
+        )
+        gameSession.freeFlyCamera = FreeFlyCamera(position: SIMD3(0, 0, 120), yaw: 0, pitch: 0)
+        let before = gameSession.freeFlyCamera
         let world = RealKillCamWorld(
-            renderer: renderer,
+            gameSession: gameSession,
             fileSystem: VirtualFileSystem(root: root),
             paths: CameraPathStore(plugins: plugins),
             bow: CameraShotSelectionRealDataTests.firstBow(plugins: plugins)
@@ -100,11 +109,11 @@ struct KillCamRealDataTests {
         var frames = 0
         while camera.isPlaying, frames < 60 * 30 {
             world.apply(camera.tick(realSeconds: 1.0 / 60))
-            moved = moved || simd_distance(renderer.freeFlyCamera.position, before.position) > 1
+            moved = moved || simd_distance(gameSession.freeFlyCamera.position, before.position) > 1
             frames += 1
         }
         world.apply(camera.tick(realSeconds: 1.0 / 60))
-        let after = renderer.freeFlyCamera
+        let after = gameSession.freeFlyCamera
         let lines = [
             "[INFO] bow \(world.bow?.fields.editorID ?? "none"): \(camera.lastOutcome ?? "-")",
             "[INFO] path \(camera.lastSelection.path?.record.editorID ?? "none"), stages \(stages)",
@@ -122,6 +131,6 @@ struct KillCamRealDataTests {
         #expect(moved)
         #expect(!camera.isPlaying)
         #expect(after.position == before.position && after.yaw == before.yaw)
-        #expect(renderer.worldTimeScale == 1)
+        #expect(gameSession.worldTimeScale == 1)
     }
 }

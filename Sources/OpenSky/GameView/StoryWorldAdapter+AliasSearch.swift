@@ -25,9 +25,9 @@ extension StoryWorldAdapter {
         var context = conditionContext()
         context.references = references
         let entries = references.sortedEntries()
-        let feet = game.renderer.map { renderer in
-            renderer.movementMode.isPlayerControlled
-                ? renderer.walkController.feetPosition : renderer.freeFlyCamera.position
+        let feet = game.gameSession.map { gameSession in
+            gameSession.movementMode.isPlayerControlled
+                ? gameSession.walkController.feetPosition : gameSession.freeFlyCamera.position
         }
         return QuestReferenceSearch(
             references: references,

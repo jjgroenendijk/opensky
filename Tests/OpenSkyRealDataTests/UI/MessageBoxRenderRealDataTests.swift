@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
+import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.gpu))
@@ -37,16 +38,18 @@ struct MessageBoxRenderRealDataTests {
             title: question.built.title, text: question.built.text, buttons: question.built.buttons,
             token: 1
         )
-        let renderer = try RenderedPixels.offscreenRenderer(
+        let gameSession = try RenderedPixels.offscreenSession(
             device: device,
             width: Self.width,
             height: Self.height
         )
+        let renderer = gameSession.renderer
         let logs = try RepositoryLogs.directory().appending(path: "message-box")
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         var frames: [[UInt8]] = []
         for selection in 0 ..< 2 {
-            renderer.uiScene = MessageBoxPresentation(request: request, selection: selection).scene
+            gameSession.uiScene = MessageBoxPresentation(request: request, selection: selection)
+                .scene
             let frame = try RenderedPixels.renderFrame(
                 renderer,
                 width: Self.width,

@@ -107,7 +107,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func movieChangesPixelsOverBaseline() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(Self.twoRectMovie())
         let withMovie = try Self.canvas.render(renderer)
@@ -118,7 +118,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func disabledLayerMatchesNoMovieBaselineExactly() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(Self.twoRectMovie())
         renderer.swfEnabled = false
@@ -130,7 +130,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func repeatedRenderIsByteIdentical() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(Self.twoRectMovie())
         // Warm the glyph atlas/pipelines, then compare two settled frames.
         _ = try Self.canvas.render(renderer)
@@ -142,7 +142,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func clipLayerRestrictsCoverage() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(Self.clipMovie(clipped: false))
         let unclipped = try Self.canvas.render(renderer)
@@ -161,7 +161,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func statsCountDrawsAndTriangles() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(Self.twoRectMovie())
         _ = try Self.canvas.render(renderer)
         let stats = renderer.lastSWFDrawStats
@@ -175,7 +175,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func editTextDrawsGlyphsThroughTheAtlas() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(Self.textMovie())
         let withText = try Self.canvas.render(renderer)
@@ -191,7 +191,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device), .tags(.slow), .unlessPlanSkips(.slow))
     @MainActor
     func swappingMoviesReleasesTheirGlyphCells() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(Self.textMovie())
         _ = try Self.canvas.render(renderer)
         let firstOccupancy = renderer.lastUIDrawStats.atlasGlyphs
@@ -207,7 +207,7 @@ struct RendererSWFTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func clearingTheMovieRestoresBaseline() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(Self.twoRectMovie())
         _ = try Self.canvas.render(renderer)

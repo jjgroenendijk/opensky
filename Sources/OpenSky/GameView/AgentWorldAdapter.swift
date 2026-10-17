@@ -45,6 +45,7 @@ protocol AgentWorldHost: AnyObject {
     var raceMenu: RaceMenuCoordinator { get }
     var renderControls: WorldRenderControls { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     func runCommand(_ action: GameInputAction)
     var runtimeState: RuntimeStateCoordinator { get }
     var scenes: SceneCoordinator { get }
@@ -177,12 +178,17 @@ extension AgentWorldAdapter: AgentControlWorld {
     func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
         -> AgentHandling
     {
-        guard let renderer = game.renderer, let view = game.hostView as? MTKView else {
+        guard let gameSession = game.gameSession, let view = game.hostView as? MTKView else {
             throw notReady()
         }
         if request.offscreen {
-            return try .done(.success(captureOffscreen(request, renderer: renderer, view: view)))
+            return try .done(.success(captureOffscreen(
+                request,
+                gameSession: gameSession,
+                view: view
+            )))
         }
+        let renderer = gameSession.renderer
         renderer.requestWindowCapture()
         var deadline: Double?
         return .waiting(AgentWait { [weak renderer] now in
@@ -208,19 +214,20 @@ extension AgentWorldAdapter: AgentControlWorld {
     /// A second render at any size. A paused offscreen frame advances no clock, so
     /// a capture does not move the simulation that a deterministic run depends on.
     private func captureOffscreen(
-        _ request: AgentScreenshotRequest, renderer: Renderer, view: MTKView
+        _ request: AgentScreenshotRequest, gameSession: GameSession, view: MTKView
     ) throws(AgentFailure) -> AgentJSON {
+        let renderer = gameSession.renderer
         let width = request.width ?? Int(view.drawableSize.width.rounded())
         let height = request.height ?? Int(view.drawableSize.height.rounded())
         guard width > 0, height > 0 else { throw notReady() }
-        let saved = (renderer.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled)
-        renderer.worldSimPaused = true
+        let saved = (gameSession.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled)
+        gameSession.worldSimPaused = true
         if request.worldOnly {
             renderer.uiEnabled = false
             renderer.swfEnabled = false
         }
         defer {
-            (renderer.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled) = saved
+            (gameSession.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled) = saved
         }
         let texture: MTLTexture
         do {

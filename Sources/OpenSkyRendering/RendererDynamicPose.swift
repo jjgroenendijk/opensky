@@ -40,10 +40,11 @@ extension Renderer {
     /// A vehicle follower wins over a walking pose, because a rider does not walk. A
     /// scripted move wins over both, because a script placed it on purpose.
     func mergeInstanceDeltas() {
-        var moving = npcInstanceDeltas.isEmpty
-            ? dynamicInstanceDeltas
-            : dynamicInstanceDeltas.merging(npcInstanceDeltas) { _, npc in npc }
-        for poses in [vehicleInstancePoses, scriptedInstancePoses] where !poses.isEmpty {
+        let input = frameInput.instancePoses
+        var moving = input.npcDeltas.isEmpty
+            ? input.dynamicDeltas
+            : input.dynamicDeltas.merging(input.npcDeltas) { _, npc in npc }
+        for poses in [input.vehiclePoses, input.scriptedPoses] where !poses.isEmpty {
             moving.merge(deltas(from: poses)) { _, posed in posed }
         }
         instanceDeltas = moving

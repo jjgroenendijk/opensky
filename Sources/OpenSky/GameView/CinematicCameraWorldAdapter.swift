@@ -24,6 +24,7 @@ protocol CinematicCameraWorldHost: AnyObject {
     var effects: EffectsCoordinator { get }
     var factions: FactionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var worldData: WorldDataStores? { get }
 }
@@ -38,14 +39,14 @@ final class CinematicCameraWorldAdapter {
         self.game = game
     }
 
-    func wire(renderer: Renderer) {
-        wireTracks(renderer: renderer)
+    func wire(gameSession: GameSession) {
+        wireTracks(gameSession: gameSession)
         // Frame steps run under a menu too; the shot keeps real time, so a
         // paused frame advances nothing.
-        renderer.session.frameSteps.register(.cinematicCamera) { [weak self, weak renderer] _ in
-            guard let self, let renderer else { return }
+        gameSession.frameSteps.register(.cinematicCamera) { [weak self, weak gameSession] _ in
+            guard let self, let gameSession else { return }
             let now = Date()
-            let seconds = renderer.worldSimPaused ? 0 : lastFrame
+            let seconds = gameSession.worldSimPaused ? 0 : lastFrame
                 .map { now.timeIntervalSince($0) } ?? 0
             lastFrame = now
             apply(game.cinematicCamera.tick(realSeconds: min(seconds, 0.1)))
@@ -66,7 +67,7 @@ final class CinematicCameraWorldAdapter {
     }
 
     /// A shot whose track has not arrived plays without one, as a shot with no model does.
-    private func wireTracks(renderer: Renderer) {
+    private func wireTracks(gameSession: GameSession) {
         guard let files = game.worldData?.scriptFileSystem else {
             return
         }
@@ -79,7 +80,7 @@ final class CinematicCameraWorldAdapter {
             }
         }
         self.tracks = tracks
-        renderer.session.assetDrains.register(.cinematicTracks) { _ in tracks.drain() }
+        gameSession.assetDrains.register(.cinematicTracks) { _ in tracks.drain() }
     }
 
     func anchorPosition(of key: ReferenceKey) -> SIMD3<Float>? {
@@ -101,10 +102,10 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         target: ReferenceKey?
     ) -> CameraConditionResolution {
         guard
-            let renderer = game.renderer,
+            let gameSession = game.gameSession,
             let anchor = cinematicAnchor(of: attacker) else { return .empty }
         let chest = anchor.focus
-        let query = renderer.collisionQuery ?? { _ in [] }
+        let query = gameSession.collisionQuery ?? { _ in [] }
         var targetBase: FormID?
         if
             let target,
@@ -126,7 +127,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
                 collisionQuery: query
             ).distance
         }
-        facts.playerIsFirstPerson = renderer.movementMode == .walk
+        facts.playerIsFirstPerson = gameSession.movementMode == .walk
         return facts
     }
 
@@ -137,10 +138,13 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     /// The player stands where the capsule is and faces the player's own view,
     /// not the shot's.
     func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
-        guard let renderer = game.renderer else { return nil }
+        guard let gameSession = game.gameSession else { return nil }
         if key == .player {
-            let view = renderer.dialogueCameraState.restorePose ?? renderer.freeFlyCamera
-            return CinematicAnchor(position: renderer.locomotion.status.feetPosition, yaw: view.yaw)
+            let view = gameSession.dialogueCameraState.restorePose ?? gameSession.freeFlyCamera
+            return CinematicAnchor(
+                position: gameSession.locomotion.status.feetPosition,
+                yaw: view.yaw
+            )
         }
         guard let actor = game.actorWorld.combatActors().first(where: { $0.key == key })
         else { return nil }
@@ -152,22 +156,22 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     }
 
     var playerPosition: SIMD3<Float>? {
-        game.renderer?.locomotion.status.feetPosition
+        game.gameSession?.locomotion.status.feetPosition
     }
 
     func apply(_ frame: CinematicFrame) {
-        guard let renderer = game.renderer else { return }
-        renderer.worldTimeScale = frame.timeScale
+        guard let gameSession = game.gameSession else { return }
+        gameSession.worldTimeScale = frame.timeScale
         guard
-            frame.pose != nil || frame.shake != .zero || renderer.isCinematicCameraEngaged
-            || renderer.cinematicCameraState.shakeOffset != .zero
+            frame.pose != nil || frame.shake != .zero || gameSession.isCinematicCameraEngaged
+            || gameSession.cinematicCameraState.shakeOffset != .zero
         else { return }
-        renderer.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
+        gameSession.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
-        guard let renderer = game.renderer else { return false }
-        return game.effects.startModifier(key, strength: 1, on: &renderer.imageSpace)
+        guard let gameSession = game.gameSession else { return false }
+        return game.effects.startModifier(key, strength: 1, on: &gameSession.imageSpace)
     }
 }
 

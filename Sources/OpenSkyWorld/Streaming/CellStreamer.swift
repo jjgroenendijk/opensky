@@ -40,7 +40,7 @@ public final class CellStreamer {
     public let runner: any CellBuildRunning
     public let sink: SceneSink
     /// Fires with the center cell's REGN FormIDs when they change, for region weather.
-    /// The app wires it to `Renderer.weather.setRegions`.
+    /// The app wires it to `GameSession.weather.setRegions`.
     public var onCenterRegionsChanged: (([FormID]) -> Void)?
     /// Last region set pushed through `onCenterRegionsChanged`; nil = never
     /// emitted. Guards against re-firing an unchanged set every frame.
@@ -170,7 +170,7 @@ public final class CellStreamer {
     /// at that pose, so the write rebuilds no cell; a later build bakes it in.
     public var isRecordingSettledBody = false
     /// Where simulated bodies have moved, published each physics tick. The app wires it to
-    /// `Renderer.dynamicInstanceDeltas`.
+    /// `GameSession.instancePoses.dynamicDeltas`.
     public var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
     /// Resident graph, repath backlog and completion sink.
     public var navigationState = CellStreamerNavigationState()

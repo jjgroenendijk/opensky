@@ -23,11 +23,15 @@ struct PrecipitationAcceptanceRealDataTests {
     private static let visibleDeltaThreshold = 250
 
     private struct Harness {
-        let renderer: Renderer
+        let gameSession: GameSession
         let weather: WeatherSystem
         let clear: FormID
         let rain: FormID
         let snow: FormID
+
+        @MainActor var renderer: Renderer {
+            gameSession.renderer
+        }
     }
 
     private struct EvidenceFrames {
@@ -150,13 +154,13 @@ struct PrecipitationAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view, scene: scene.renderScene, camera: SceneCamera.framing(bounds: bounds)
         )
-        renderer.weather = weather
-        renderer.timeOfDay = 13
+        gameSession.weather = weather
+        gameSession.timeOfDay = 13
         return try Harness(
-            renderer: renderer,
+            gameSession: gameSession,
             weather: weather,
             clear: preset(.clear),
             rain: preset(.rain),

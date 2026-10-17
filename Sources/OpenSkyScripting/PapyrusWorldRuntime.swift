@@ -29,7 +29,7 @@ public final class PapyrusWorldRuntime {
     public internal(set) var lastStepInstructions = 0
     /// Freezes the VM's own clock. While true, `advance(delta:gameClock:)` does
     /// nothing, and `stepFixed(gameClock:)` still steps one tick. Separate from
-    /// `Renderer.worldSimPaused`, which pauses the whole simulation.
+    /// `GameSession.worldSimPaused`, which pauses the whole simulation.
     public var isPaused = false
 
     /// The last script-variable snapshot and the generation it was built at.

@@ -32,6 +32,7 @@ protocol RagdollWorldHost: AnyObject {
     var inventory: InventoryCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
@@ -49,20 +50,20 @@ final class RagdollWorldAdapter {
     /// delta as the other systems, and a menu-paused frame stops a falling
     /// corpse. The pose reaches the scene on the drawn frame, so a paused
     /// corpse stays where it was.
-    func wireRagdoll(renderer: Renderer) {
+    func wireRagdoll(gameSession: GameSession) {
         let ragdoll = game.ragdoll
         ragdoll.wire(collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init))
-        let worldTick = renderer.session.worldTick
-        worldTick.register(.ragdoll) { [weak self, weak ragdoll, weak renderer] delta in
-            guard let ragdoll, let renderer else { return }
-            let locomotion = renderer.locomotion
+        let worldTick = gameSession.worldTick
+        worldTick.register(.ragdoll) { [weak self, weak ragdoll, weak gameSession] delta in
+            guard let ragdoll, let gameSession else { return }
+            let locomotion = gameSession.locomotion
             self?.run(ragdoll.advance(
                 events: locomotion.graphEvents.drain(locomotion.ragdollEventConsumer),
                 controls: locomotion.ragdollGraphControls,
                 delta: delta
             ))
         }
-        renderer.session.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
+        gameSession.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
             self?.run(ragdoll?.publishPoses() ?? [])
         }
     }
@@ -134,9 +135,9 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
 
     /// Membership in `raisedEvents` after the raise is the graph's own answer.
     func raisePlayerGraphEvent(_ name: String) -> Bool {
-        guard let renderer = game.renderer else { return false }
-        renderer.locomotion.raise(name)
-        return renderer.locomotion.status.raisedEvents.contains(name)
+        guard let gameSession = game.gameSession else { return false }
+        gameSession.locomotion.raise(name)
+        return gameSession.locomotion.status.raisedEvents.contains(name)
     }
 
     /// The same static broadphase the player capsule queries.
@@ -170,7 +171,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     var playerFeetPosition: SIMD3<Float>? {
-        game.renderer?.walkController.feetPosition
+        game.gameSession?.walkController.feetPosition
     }
 
     /// An ACHR's holder re-derives its baseline from the NPC_'s CNTO list, as

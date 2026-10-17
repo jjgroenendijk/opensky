@@ -67,10 +67,12 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         #expect(scene.renderScene.sky != nil)
         let rain = try #require(weather.store.weather(for: .rain))
         weather.forceWeather(rain.formID, transition: .instant)
-        let renderer = try makeRenderer(scene: scene)
-        renderer.weather = weather
-        renderer.timeOfDay = 13
-        renderer.updateWeather(deltaTime: 0)
+        let gameSession = try makeSession(scene: scene)
+        let renderer = gameSession.renderer
+        gameSession.weather = weather
+        gameSession.timeOfDay = 13
+        gameSession.updateWeather(deltaTime: 0)
+        renderer.adoptFrameInput(gameSession.frameInput)
         renderer.seekParticles(to: 1.25)
         for _ in 0 ..< 45 {
             renderer.updatePrecipitation(deltaTime: 1 / 30)
@@ -86,7 +88,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         #expect(shadow.drawnInstances > 0)
         #expect(grass.drawnInstances > 0)
 
-        let deltas = try exteriorDeltas(renderer, baseline: allOn.pixels)
+        let deltas = try exteriorDeltas(gameSession, baseline: allOn.pixels)
         #expect(deltas.combined > 250)
         try Self.write(allOn.texture, name: "living-exterior-all-on.png")
         try Self.write(deltas.allOff.texture, name: "living-exterior-all-off.png")
@@ -106,9 +108,10 @@ struct LivingEnvironmentAcceptanceRealDataTests {
 
     @MainActor
     private func exteriorDeltas(
-        _ renderer: Renderer,
+        _ gameSession: GameSession,
         baseline: [UInt8]
     ) throws -> ExteriorDeltas {
+        let renderer = gameSession.renderer
         let animation = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
             renderer.actorAnimationsEnabled = false
         } restore: { renderer.actorAnimationsEnabled = true }
@@ -116,8 +119,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
             renderer.shadowQuality = .off
         } restore: { renderer.shadowQuality = .high }
         let weather = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
-            renderer.weatherEnabled = false
-        } restore: { renderer.weatherEnabled = true }
+            gameSession.weatherEnabled = false
+        } restore: { gameSession.weatherEnabled = true }
         let particles = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
             renderer.particlesEnabled = false
         } restore: { renderer.particlesEnabled = true }
@@ -129,7 +132,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         } restore: { renderer.grassEnabled = true }
         renderer.actorAnimationsEnabled = false
         renderer.shadowQuality = .off
-        renderer.weatherEnabled = false
+        gameSession.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false
@@ -151,7 +154,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         #expect(scene.summary.actorAnimatedCount > 0)
         #expect(!scene.renderScene.animations.isEmpty)
         #expect(!scene.renderScene.particles.isEmpty)
-        let renderer = try makeRenderer(scene: scene)
+        let gameSession = try makeSession(scene: scene)
+        let renderer = gameSession.renderer
         let first = try frame(renderer, time: 0.5)
         let second = try frame(renderer, time: 1.0)
         let changed = RenderedPixels.changedCount(first.pixels, second.pixels, tolerance: 8)
@@ -168,7 +172,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
     }
 
     @MainActor
-    private func makeRenderer(scene: CellScene) throws -> Renderer {
+    private func makeSession(scene: CellScene) throws -> GameSession {
         let device = try #require(RealDataEnvironment.device)
         var bounds = try #require(scene.bounds)
         // A default-height water plane sits far below the land and would push the
@@ -182,7 +186,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(
+        return try GameSession(
             view: view,
             scene: scene.renderScene,
             camera: SceneCamera.framing(bounds: bounds)

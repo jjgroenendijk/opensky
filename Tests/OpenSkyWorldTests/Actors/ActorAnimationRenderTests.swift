@@ -74,7 +74,7 @@ struct ActorAnimationRenderTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: animated.scene,
             camera: animated.camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
@@ -100,7 +100,7 @@ struct ActorAnimationRenderTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: scene,
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)

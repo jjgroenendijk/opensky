@@ -8,6 +8,10 @@ import Synchronization
 /// What a menu coordinator reads from the app. nil while Metal 4 is unavailable.
 public protocol SWFLayerWorld: AnyObject {
     var renderer: Renderer? { get }
+    /// The player's view pose; nil without a game session.
+    var viewCamera: FreeFlyCamera? { get }
+    /// The screen-space UI the next frame draws.
+    var uiScene: UIScene { get set }
 }
 
 /// Menu movies, decoded off the main actor and kept for the session, so a menu that

@@ -96,7 +96,7 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func actionScriptRevealsContentHiddenByAnAlphaZeroColorTransform() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
         let hidden = try Self.canvas.render(renderer)
@@ -120,7 +120,7 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aMovieWithoutTheRevealActionStaysBlank() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: false))
         try renderer.startSWFRuntime()
@@ -135,7 +135,7 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func framesAreByteIdenticalWhileTheRuntimeIsNotAdvanced() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
         try renderer.startSWFRuntime()
         _ = try Self.canvas.render(renderer)
@@ -153,7 +153,7 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aGrowingDisplayListGrowsTheRingsInsteadOfDroppingDraws() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFDynamicFixture.growingScene(count: 200))
         try renderer.startSWFRuntime()
         _ = try Self.canvas.render(renderer)
@@ -170,7 +170,7 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func stoppingTheRuntimeRestoresTheStaticFrame() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
         let hidden = try Self.canvas.render(renderer)

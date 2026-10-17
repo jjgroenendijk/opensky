@@ -72,7 +72,7 @@ extension RuntimeStateWorldAdapter {
 
     private func weatherResolution() -> WeatherConditionResolution {
         guard
-            let weather = game.renderer?.weather,
+            let weather = game.gameSession?.weather,
             let current = weather.currentWeatherID
         else { return .empty }
         return WeatherConditionResolution(
@@ -131,7 +131,7 @@ extension RuntimeStateWorldAdapter {
             state.isFemale = identity.isFemale
             state.race = identity.race
         }
-        let gait = game.renderer?.locomotion.status.gait
+        let gait = game.gameSession?.locomotion.status.gait
         state.isSneaking = gait.map { $0 == .sneak }
         state.isSprinting = gait.map { $0 == .sprint }
         state.isSwimming = gait.map { $0 == .swim }

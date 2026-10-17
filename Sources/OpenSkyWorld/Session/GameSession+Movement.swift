@@ -3,10 +3,9 @@
 import OpenSkyPhysics
 import OpenSkyRendering
 
-extension Renderer {
-    /// Seeds the walk controller from the camera pose during `init`, before
-    /// `super.init()` runs, which is why it is a static factory rather than a
-    /// method. Lives here rather than in `Renderer.swift` for the file cap.
+extension GameSession {
+    /// Seeds the walk controller from the camera pose during `init`, before every
+    /// stored property is set, which is why it is a static factory rather than a method.
     public static func makeMovement(
         _ camera: FreeFlyCamera,
         _ configuration: PlayerMovementConfiguration
@@ -63,10 +62,10 @@ extension Renderer {
         restorePlayerCameraPose()
         // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
         // while the clock keeps its mark fresh (resume carries no time jump).
-        let dt = cameraClock.advance(to: wallClock.now, paused: worldSimPaused)
+        let dt = cameraClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         var frameInput = input.makeInput(dt: dt)
-        if session.isPlayerParalysed, movementMode.isPlayerControlled {
+        if isPlayerParalysed, movementMode.isPlayerControlled {
             frameInput = frameInput.holdingStill
         }
         steerPlayerWalk(&frameInput)
@@ -76,7 +75,7 @@ extension Renderer {
         switch movementMode {
         case .fly:
             freeFlyCamera.update(frameInput)
-        case .walk where session.playerSeat != nil, .thirdPerson where session.playerSeat != nil:
+        case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
             // The vehicle places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
             locomotion.advanceSeated(
@@ -104,7 +103,6 @@ extension Renderer {
         movementMode = mode
         thirdPersonCamera.reset()
         // The field of view is per mode, so the projection follows the mode now.
-        rebuildProjection()
         guard mode.isPlayerControlled else { return }
         // Coming from fly, the eye is wherever the developer left it and the
         // capsule has to be placed under it. Switching between the two player
@@ -117,7 +115,7 @@ extension Renderer {
     }
 
     private var walkCollisionQuery: CapsuleWorldCollider.CandidateQuery {
-        guard session.playerWalkIgnoresStatics, !session.playerWalkPath.isEmpty else {
+        guard playerWalkIgnoresStatics, !playerWalkPath.isEmpty else {
             return collisionQuery ?? { _ in [] }
         }
         return { _ in [] }
@@ -126,15 +124,15 @@ extension Renderer {
     /// Turns the view to the package walk's next waypoint and holds forward, until
     /// the last one is reached.
     private func steerPlayerWalk(_ frameInput: inout CameraInput) {
-        guard !session.playerWalkPath.isEmpty, movementMode.isPlayerControlled else { return }
+        guard !playerWalkPath.isEmpty, movementMode.isPlayerControlled else { return }
         let feet = walkController.feetPosition
-        let remaining = PlayerPackageWalk.remainingPath(session.playerWalkPath, feet: feet)
-        session.playerWalkPath = remaining
+        let remaining = PlayerPackageWalk.remainingPath(playerWalkPath, feet: feet)
+        playerWalkPath = remaining
         guard
             let next = remaining.first,
             let yaw = PlayerPackageWalk.steeringYaw(feet: feet, target: next)
         else {
-            session.onPlayerWalkArrived?()
+            onPlayerWalkArrived?()
             return
         }
         freeFlyCamera.yaw = yaw

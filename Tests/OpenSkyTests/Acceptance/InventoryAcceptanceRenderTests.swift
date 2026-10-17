@@ -152,11 +152,12 @@ struct InventoryAcceptanceRenderTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene.renderScene, camera: camera)
+        let gameSession = try GameSession(view: view, scene: scene.renderScene, camera: camera)
+        let renderer = gameSession.renderer
         // Everything that would move between two frames is off, so a pixel that
         // differs differs because the world state did.
         renderer.actorAnimationsEnabled = false
-        renderer.weatherEnabled = false
+        gameSession.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false

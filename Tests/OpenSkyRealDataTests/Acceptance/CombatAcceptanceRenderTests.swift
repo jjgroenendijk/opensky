@@ -27,12 +27,12 @@ private struct CombatRenderPoses {
     let swinging: [UInt8]
 }
 
-/// The renderer, the spot on the terrain, and the install one render run is
+/// The session, the spot on the terrain, and the install one render run is
 /// bound to, passed as one value so the assertion helpers stay inside the
 /// strict-lint parameter cap — the same shape `LocomotionAcceptanceRenderTests` uses.
 @MainActor
 private struct CombatRenderStage {
-    let renderer: Renderer
+    let gameSession: GameSession
     let feet: SIMD3<Float>
     let settings: CombatSettings
 }
@@ -52,14 +52,14 @@ struct CombatAcceptanceRenderTests {
         let cell = try PlayerBodyFixture.stage()
         let assembled = cell.assembled
         let feet = try cell.terrainStart()
-        let renderer = try cell.renderer()
-        try renderer.setPlayerBody(assembled.body)
-        try renderer.setPlayerFirstPersonRig(assembled.arms)
+        let gameSession = try cell.makeSession()
+        try gameSession.setPlayerBody(assembled.body)
+        try gameSession.setPlayerFirstPersonRig(assembled.arms)
         var report: [String] = []
 
         let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: cell.root))
         let stage = CombatRenderStage(
-            renderer: renderer, feet: feet, settings: settings
+            gameSession: gameSession, feet: feet, settings: settings
         )
         let frames = try Self.poses(assembled, stage: stage)
 
@@ -82,8 +82,8 @@ struct CombatAcceptanceRenderTests {
         // available — it says the difference above is the combat state rather
         // than the republish, and that the state is reached deterministically.
         let second = try PlayerBodyFixture.assemble(device: cell.device, root: cell.root)
-        try renderer.setPlayerBody(second.body)
-        try renderer.setPlayerFirstPersonRig(second.arms)
+        try gameSession.setPlayerBody(second.body)
+        try gameSession.setPlayerFirstPersonRig(second.arms)
         let again = try Self.poses(second, stage: stage)
         let residual = FirstPersonRenderRealDataTests.changedPixels(
             frames.swinging, again.swinging
@@ -169,30 +169,31 @@ struct CombatAcceptanceRenderTests {
                 assembled.bridge.graphEvents.drain(assembled.bridge.meleeEventConsumer)
             )
         }
-        return try thirdPersonFrame(stage.renderer, feet: stage.feet, place: assembled)
+        return try thirdPersonFrame(stage.gameSession, feet: stage.feet, place: assembled)
     }
 
     /// Puts the eye where third person puts it and renders one frame, the same
     /// way `LocomotionAcceptanceRenderTests` frames its captures.
     @MainActor
     private static func thirdPersonFrame(
-        _ renderer: Renderer,
+        _ gameSession: GameSession,
         feet: SIMD3<Float>,
         place assembled: PlayerBodyFixture.Assembled
     ) throws -> [UInt8] {
-        renderer.freeFlyCamera = FreeFlyCamera(
+        let renderer = gameSession.renderer
+        gameSession.freeFlyCamera = FreeFlyCamera(
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
             pitch: 0
         )
-        renderer.setMovementMode(.thirdPerson)
-        renderer.freeFlyCamera.position = renderer.thirdPersonCamera.resolve(
+        gameSession.setMovementMode(.thirdPerson)
+        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
             feetPosition: feet,
-            yaw: renderer.freeFlyCamera.yaw,
-            pitch: renderer.freeFlyCamera.pitch,
+            yaw: gameSession.freeFlyCamera.yaw,
+            pitch: gameSession.freeFlyCamera.pitch,
             collisionQuery: { _ in [] }
         )
-        FirstPersonRenderRealDataTests.place(assembled, renderer: renderer, feet: feet)
+        FirstPersonRenderRealDataTests.place(assembled, gameSession: gameSession, feet: feet)
         return try FirstPersonRenderRealDataTests.frame(renderer)
     }
 }

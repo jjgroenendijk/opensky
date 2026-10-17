@@ -38,9 +38,9 @@ struct RendererUpscaleTests {
         return try RenderScene(merging: [DemoScene.build(device: device), moving])
     }
 
-    private static func makeRenderer() throws -> Renderer {
+    private static func makeSession() throws -> GameSession {
         let device = try #require(OffscreenRendererFixture.device)
-        return try OffscreenRendererFixture.makeSessionRenderer(
+        return try OffscreenRendererFixture.makeSession(
             device: device, width: width, height: height, scene: scene(device: device),
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
@@ -70,16 +70,17 @@ struct RendererUpscaleTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func upscaledFramesMatchTheNativeFrameStillAndPanning() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
-        let start = renderer.freeFlyCamera
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
+        let start = gameSession.freeFlyCamera
         var end = start
         end.yaw += 0.12
         let native = try Self.frame(renderer)
-        renderer.freeFlyCamera = end
+        gameSession.freeFlyCamera = end
         let nativeEnd = try Self.frame(renderer)
 
         renderer.renderScale = RenderScale(percent: 67)
-        renderer.freeFlyCamera = start
+        gameSession.freeFlyCamera = start
         try await Self.settle(renderer)
         var upscaled = native
         for _ in 0 ..< 16 {
@@ -89,7 +90,7 @@ struct RendererUpscaleTests {
         #expect(renderer.upscale.sizes?.output == SIMD2(Self.width, Self.height))
         let still = try Self.psnr(native, upscaled)
         for step in 1 ... 12 {
-            renderer.freeFlyCamera.yaw = start.yaw + 0.12 * Float(step) / 12
+            gameSession.freeFlyCamera.yaw = start.yaw + 0.12 * Float(step) / 12
             upscaled = try Self.frame(renderer)
         }
         let pan = try Self.psnr(nativeEnd, upscaled)
@@ -100,7 +101,8 @@ struct RendererUpscaleTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func framesDrawAtFullSizeWhileTheScalerBuilds() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         let native = try Self.frame(renderer)
         renderer.renderScale = RenderScale(percent: 67)
         // Frames in a row never give the main actor a turn, so the build cannot land.
@@ -118,7 +120,8 @@ struct RendererUpscaleTests {
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func spatialUpscalingMatchesTheNativeFrameWithoutJitter() async throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         let native = try Self.frame(renderer)
         renderer.renderScale = RenderScale(percent: 67)
         renderer.upscaler = .spatial
@@ -137,9 +140,10 @@ struct RendererUpscaleTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func aMovingObjectLeavesNoGhost() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         func move(_ step: Int) {
-            renderer.dynamicInstanceDeltas[Self.movingReference] =
+            gameSession.instancePoses.dynamicDeltas[Self.movingReference] =
                 MatrixMath.translation(SIMD3(Float(step) * 20, 0, 0))
         }
         move(0)
@@ -194,16 +198,18 @@ struct RendererUpscaleTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func aCameraCutResetsTheHistory() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         renderer.renderScale = RenderScale(percent: 67)
         try await Self.settle(renderer)
-        let start = renderer.freeFlyCamera
+        let start = gameSession.freeFlyCamera
         var cut = start
         cut.position += SIMD3(2000, 0, 0)
         cut.yaw += .pi
-        let fresh = try Self.makeRenderer()
+        let freshSession = try Self.makeSession()
+        let fresh = freshSession.renderer
         fresh.renderScale = RenderScale(percent: 67)
-        fresh.freeFlyCamera = cut
+        freshSession.freeFlyCamera = cut
         try await Self.settle(fresh)
         let freshCut = try Self.frame(fresh)
 
@@ -211,7 +217,7 @@ struct RendererUpscaleTests {
             _ = try Self.frame(renderer)
         }
         let resets = renderer.upscale.historyResets
-        renderer.freeFlyCamera = cut
+        gameSession.freeFlyCamera = cut
         let afterCut = try Self.frame(renderer)
         #expect(renderer.upscale.historyResets == resets + 1)
         let match = try Self.psnr(freshCut, afterCut)

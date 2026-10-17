@@ -119,7 +119,7 @@ struct RendererInstancingTests {
         device: MTLDevice,
         scene: RenderScene
     ) throws -> Renderer {
-        try OffscreenRendererFixture.makeSessionRenderer(
+        try OffscreenRendererFixture.makeRenderer(
             device: device, width: width, height: height,
             scene: scene,
             camera: camera,

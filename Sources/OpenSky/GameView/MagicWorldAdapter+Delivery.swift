@@ -39,9 +39,9 @@ extension MagicWorldAdapter {
         let origin: SIMD3<Float>
         let direction: SIMD3<Float>
         if caster == .player {
-            guard let renderer = game.renderer else { return .none }
-            origin = renderer.freeFlyCamera.position
-            direction = ProjectileFlight.normalized(renderer.freeFlyCamera.forward)
+            guard let gameSession = game.gameSession else { return .none }
+            origin = gameSession.freeFlyCamera.position
+            direction = ProjectileFlight.normalized(gameSession.freeFlyCamera.forward)
         } else {
             guard let eye = actorCastOrigin(of: caster) else { return .none }
             origin = eye

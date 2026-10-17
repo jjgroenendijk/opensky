@@ -21,10 +21,11 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func localizedSampleChangesPixelsOverBaseline() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
-        renderer.uiScene = .empty
+        let gameSession = try Self.canvas.makeSession()
+        let renderer = gameSession.renderer
+        gameSession.uiScene = .empty
         let base = try Self.canvas.render(renderer)
-        renderer.uiScene = .localizedSample
+        gameSession.uiScene = .localizedSample
         let withSample = try Self.canvas.render(renderer)
         let changed = OffscreenRendererFixture.changedPixels(base, withSample)
         // Filled panel alone covers thousands of pixels.
@@ -34,8 +35,9 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func localizedSampleScaleChangesPixels() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
-        renderer.uiScene = .localizedSample
+        let gameSession = try Self.canvas.makeSession()
+        let renderer = gameSession.renderer
+        gameSession.uiScene = .localizedSample
         renderer.uiScale = 1
         let atOne = try Self.canvas.render(renderer)
         renderer.uiScale = 2
@@ -50,9 +52,10 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func pausedLocalizedFramesRepeatByteIdentical() throws {
-        let renderer = try Self.canvas.makeSessionRenderer()
-        renderer.uiScene = .localizedSample
-        renderer.worldSimPaused = true
+        let gameSession = try Self.canvas.makeSession()
+        let renderer = gameSession.renderer
+        gameSession.uiScene = .localizedSample
+        gameSession.worldSimPaused = true
         // Warm the glyph atlas so no upload happens between the compared frames.
         _ = try Self.renderPaused(renderer)
         let first = try Self.renderPaused(renderer)

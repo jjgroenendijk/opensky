@@ -67,7 +67,8 @@ final class WorldSessionWiring {
     /// Builds run off the main thread on the session's runner; the finished scene
     /// swaps in through `Renderer.setScene`. Every capture is weak, because
     /// `game` owns both the renderer and the streamer.
-    func wireStreaming(session: CellSession, renderer: Renderer) {
+    func wireStreaming(session: CellSession, gameSession: GameSession) {
+        let renderer = gameSession.renderer
         let provider = session.data
         let streamer = CellStreamer(
             center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
@@ -84,71 +85,88 @@ final class WorldSessionWiring {
         )
         streamer.placedRecords = provider.placedRecords
         renderer.attachTextureStreaming(to: session.runner)
-        wireAnimationAssets(renderer: renderer)
-        wireMenuMovies(renderer: renderer)
+        wireAnimationAssets(gameSession: gameSession)
+        wireMenuMovies(gameSession: gameSession)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
         game.runtimeState.attach(globals: provider.globalStore)
         game.runtimeState.calendarTexts = CalendarTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.aiWorld.wireNPCMovement(renderer: renderer, streamer: streamer)
+        game.aiWorld.wireNPCMovement(gameSession: gameSession, streamer: streamer)
         streamer.bind(to: game.worldState)
-        wireFrame(renderer: renderer, streamer: streamer)
+        wireFrame(gameSession: gameSession, streamer: streamer)
         game.audioWorld.wireAudioCallbacks(streamer)
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order.
-        game.scriptWorld.wirePapyrus(provider: provider, renderer: renderer, streamer: streamer)
+        game.scriptWorld.wirePapyrus(
+            provider: provider,
+            gameSession: gameSession,
+            streamer: streamer
+        )
         let scripts = game.scripts
-        renderer.session.assetDrains
+        gameSession.assetDrains
             .register(.scripts) { [weak scripts] _ in scripts?.drainLoads() }
         let audio = game.audio
-        renderer.session.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
-        game.messageWorld.wire(renderer: renderer)
+        gameSession.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
+        game.messageWorld.wire(gameSession: gameSession)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
-        game.lockWorld.wireLocks(provider: provider, streamer: streamer, renderer: renderer)
+        game.lockWorld.wireLocks(provider: provider, streamer: streamer, gameSession: gameSession)
         // After the item runtime, which owns the equipped set of the body.
-        game.playerWorld.wirePlayerBody(session: session, renderer: renderer)
-        wireActorSystems(provider: provider, renderer: renderer)
-        game.hazardWorld.wireHazards(provider: provider, streamer: streamer, renderer: renderer)
-        game.effectsWorld.wireEffects(provider: provider, streamer: streamer, renderer: renderer)
-        game.trapControl.wire(renderer: renderer)
-        game.combatWorld.wireMelee(provider: provider, renderer: renderer)
-        game.combatWorld.wireArchery(provider: provider, renderer: renderer)
-        game.ragdollWorld.wireRagdoll(renderer: renderer)
-        game.playerWorld.wireActorState(renderer: renderer)
-        wireLateWorldSystems(provider: provider, renderer: renderer, streamer: streamer)
-        renderer.terrainSampler = { [weak streamer] position in
-            streamer?.sampleTerrain(at: position)
-        }
-        renderer.collisionQuery = { [weak streamer] bounds in
-            streamer?.collisionCandidates(overlapping: bounds) ?? []
-        }
-        renderer.locomotion.sampleWater = { [weak streamer] position in
-            streamer?.sampleWaterHeight(at: position)
-        }
-        streamer.onWorldspaceChanged.add { [weak renderer] editorID in
-            renderer?.weather?.setWorldspace(editorID: editorID)
-        }
+        game.playerWorld.wirePlayerBody(session: session, gameSession: gameSession)
+        wireActorSystems(provider: provider, gameSession: gameSession)
+        game.hazardWorld.wireHazards(
+            provider: provider,
+            streamer: streamer,
+            gameSession: gameSession
+        )
+        game.effectsWorld.wireEffects(
+            provider: provider,
+            streamer: streamer,
+            gameSession: gameSession
+        )
+        game.trapControl.wire(renderer: gameSession.renderer)
+        game.combatWorld.wireMelee(provider: provider, gameSession: gameSession)
+        game.combatWorld.wireArchery(provider: provider, gameSession: gameSession)
+        game.ragdollWorld.wireRagdoll(gameSession: gameSession)
+        game.playerWorld.wireActorState(gameSession: gameSession)
+        wireLateWorldSystems(provider: provider, gameSession: gameSession, streamer: streamer)
+        wireWorldQueries(gameSession: gameSession, streamer: streamer)
         game.streamer = streamer
     }
 
+    /// The ground, collision, water, and worldspace the session reads from the streamer.
+    private func wireWorldQueries(gameSession: GameSession, streamer: CellStreamer) {
+        gameSession.terrainSampler = { [weak streamer] position in
+            streamer?.sampleTerrain(at: position)
+        }
+        gameSession.collisionQuery = { [weak streamer] bounds in
+            streamer?.collisionCandidates(overlapping: bounds) ?? []
+        }
+        gameSession.locomotion.sampleWater = { [weak streamer] position in
+            streamer?.sampleWaterHeight(at: position)
+        }
+        streamer.onWorldspaceChanged.add { [weak gameSession] editorID in
+            gameSession?.weather?.setWorldspace(editorID: editorID)
+        }
+    }
+
     /// Menu movies decode off the main actor, so a menu opens without a stall.
-    func wireMenuMovies(renderer: Renderer) {
+    func wireMenuMovies(gameSession: GameSession) {
         let movies = game.swfMovies
         movies.prefetch(SWFMovieSource.menuMoviePaths)
-        renderer.session.assetDrains.register(.menuMovies) { _ in movies.drain() }
+        gameSession.assetDrains.register(.menuMovies) { _ in movies.drain() }
     }
 
     /// One clip loader for idles, gaits, and combat reactions. Its results enter
     /// before the world tick, and the coordinators that wait on it go right after.
-    private func wireAnimationAssets(renderer: Renderer) {
+    private func wireAnimationAssets(gameSession: GameSession) {
         guard let files = game.audioFileSystem else { return }
         let clips = ActorClipLoader.clips(files: files)
         animationClips = clips
         let idles = game.idleWorld.idles
         let npcAnimation = game.npcAnimation
-        let assetDrains = renderer.session.assetDrains
+        let assetDrains = gameSession.assetDrains
         assetDrains.register(.animationClips) { [weak idles, weak npcAnimation] _ in
             clips.drain()
             idles?.drainLoads()
@@ -156,27 +174,27 @@ final class WorldSessionWiring {
         }
     }
 
-    private func wireFrame(renderer: Renderer, streamer: CellStreamer) {
+    private func wireFrame(gameSession: GameSession, streamer: CellStreamer) {
         // Published inside the frame's own update, so the poses the pass uploads
         // are the ones this frame simulated.
-        streamer.onDynamicPosesChanged = { [weak renderer] deltas in
-            renderer?.dynamicInstanceDeltas = deltas
+        streamer.onDynamicPosesChanged = { [weak gameSession] deltas in
+            gameSession?.instancePoses.dynamicDeltas = deltas
         }
         let input = game.cameraInput
-        let frameSteps = renderer.session.frameSteps
-        frameSteps.register(.streaming) { [weak streamer, weak renderer, weak input] position in
+        let frameSteps = gameSession.frameSteps
+        frameSteps.register(.streaming) { [weak streamer, weak gameSession, weak input] position in
             streamer?.update(
                 cameraPosition: position,
-                interactionRay: renderer.flatMap(Self.interactionRay(of:)),
+                interactionRay: gameSession.flatMap(Self.interactionRay(of:)),
                 activate: input?.consumeActivation() ?? false,
-                playerCapsule: renderer.flatMap(Self.playerCapsule(of:)),
-                frameTime: renderer?.lastCameraDelta ?? 0
+                playerCapsule: gameSession.flatMap(Self.playerCapsule(of:)),
+                frameTime: gameSession?.lastCameraDelta ?? 0
             )
         }
         // The center cell's regions feed region-weighted weather selection, on
         // the draw loop's thread.
-        streamer.onCenterRegionsChanged = { [weak renderer] regions in
-            renderer?.weather?.setRegions(regions)
+        streamer.onCenterRegionsChanged = { [weak gameSession] regions in
+            gameSession?.weather?.setRegions(regions)
         }
         streamer.onInteractionTargetChanged = { [weak game] target in
             game?.hud.updateTarget(game?.inventoryWorld.labelled(target))
@@ -184,10 +202,10 @@ final class WorldSessionWiring {
     }
 
     /// Magic effects write through the actor-value runtime, so it comes first.
-    private func wireActorSystems(provider: WorldDataStores, renderer: Renderer) {
-        game.actorWorld.wireActorValues(provider: provider, renderer: renderer)
-        game.magicWorld.wireEffects(provider: provider, renderer: renderer)
-        game.magicWorld.wireCasting(provider: provider, renderer: renderer)
+    private func wireActorSystems(provider: WorldDataStores, gameSession: GameSession) {
+        game.actorWorld.wireActorValues(provider: provider, gameSession: gameSession)
+        game.magicWorld.wireEffects(provider: provider, gameSession: gameSession)
+        game.magicWorld.wireCasting(provider: provider, gameSession: gameSession)
         game.magicWorld.wireEnchantments(provider: provider)
         // After the cast loop, which folds spell cost through `Mod Spell Cost`.
         game.progressionWorld.wirePerks(provider: provider)
@@ -202,44 +220,44 @@ final class WorldSessionWiring {
 
     private func wireLateWorldSystems(
         provider: WorldDataStores,
-        renderer: Renderer,
+        gameSession: GameSession,
         streamer: CellStreamer
     ) {
-        game.combatWorld.wireLoop(provider: provider, renderer: renderer)
-        game.aiWorld.wirePackages(provider: provider, renderer: renderer)
-        game.aiWorld.wirePerception(provider: provider, renderer: renderer)
-        game.idleWorld.wireIdles(provider: provider, renderer: renderer)
-        game.vehicleWorld.wireVehicles(renderer: renderer)
-        game.objectAnimationWorld.wire(renderer: renderer)
-        animationEvents.wire(renderer: renderer)
+        game.combatWorld.wireLoop(provider: provider, gameSession: gameSession)
+        game.aiWorld.wirePackages(provider: provider, gameSession: gameSession)
+        game.aiWorld.wirePerception(provider: provider, gameSession: gameSession)
+        game.idleWorld.wireIdles(provider: provider, gameSession: gameSession)
+        game.vehicleWorld.wireVehicles(gameSession: gameSession)
+        game.objectAnimationWorld.wire(gameSession: gameSession)
+        animationEvents.wire(gameSession: gameSession)
         // The perception pass answers "did anybody see it" for every crime.
         game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
-        game.dialogueWorld.wireDialogueCamera(renderer: renderer)
+        game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)
         // Scenes speak through the dialogue index, so they come after it.
-        game.storyWorld.wireStory(provider: provider, renderer: renderer)
-        game.cinematicWorld.wire(renderer: renderer)
-        game.loadingWorld.wire(streamer: streamer, renderer: renderer)
+        game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
+        game.cinematicWorld.wire(gameSession: gameSession)
+        game.loadingWorld.wire(streamer: streamer, gameSession: gameSession)
     }
 
     /// Player-controlled modes only: the fly camera never picks up a target.
     /// Third person aims along the view direction from the orbit position.
-    private static func interactionRay(of renderer: Renderer) -> InteractionRay? {
-        guard renderer.movementMode.isPlayerControlled else { return nil }
+    private static func interactionRay(of gameSession: GameSession) -> InteractionRay? {
+        guard gameSession.movementMode.isPlayerControlled else { return nil }
         return InteractionRay(
-            origin: renderer.freeFlyCamera.position,
-            direction: renderer.freeFlyCamera.forward
+            origin: gameSession.freeFlyCamera.position,
+            direction: gameSession.freeFlyCamera.forward
         )
     }
 
     /// The feet position comes from the walk controller, because the streamer
     /// receives only the eye position.
-    private static func playerCapsule(of renderer: Renderer) -> PlayerCapsuleState? {
-        guard renderer.movementMode.isPlayerControlled else { return nil }
+    private static func playerCapsule(of gameSession: GameSession) -> PlayerCapsuleState? {
+        guard gameSession.movementMode.isPlayerControlled else { return nil }
         return PlayerCapsuleState(
-            capsule: renderer.walkController.capsule,
-            feetPosition: renderer.walkController.feetPosition
+            capsule: gameSession.walkController.capsule,
+            feetPosition: gameSession.walkController.feetPosition
         )
     }
 }

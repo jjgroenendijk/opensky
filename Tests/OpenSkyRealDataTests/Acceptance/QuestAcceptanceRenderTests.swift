@@ -88,7 +88,7 @@ struct QuestAcceptanceRenderTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        return try Renderer(rendering: view)
     }
 
     @MainActor

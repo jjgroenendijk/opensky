@@ -11,14 +11,14 @@ extension Renderer {
     /// Order is for stable grouping only; depth decides visibility. The first-person arms
     /// are drawn separately (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
-        let body = isPlayerBodyVisible ? frameDriver?.playerBodyRig?.render.opaque : nil
+        let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.opaque : nil
         return Self.joined(
             scene.opaque, body ?? [], effects.scene.opaque, effects.loadingCover?.opaque ?? []
         )
     }
 
     public var alphaTestedDrawGroups: [DrawGroup] {
-        let body = isPlayerBodyVisible ? frameDriver?.playerBodyRig?.render.alphaTested : nil
+        let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.alphaTested : nil
         return Self.joined(
             scene.alphaTested, body ?? [], effects.scene.alphaTested,
             effects.loadingCover?.alphaTested ?? []
@@ -29,13 +29,14 @@ extension Renderer {
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
     public var shadowOpaqueDrawGroups: [DrawGroup] {
-        let body = rigVisibility.castsBodyShadow ? frameDriver?.playerBodyRig?.render.opaque : nil
+        let body = frameInput.rigs.visibility.castsBodyShadow ? frameInput.rigs.body?.render
+            .opaque : nil
         return Self.joined(scene.opaque, body ?? [])
     }
 
     public var shadowAlphaTestedDrawGroups: [DrawGroup] {
-        let body = rigVisibility.castsBodyShadow
-            ? frameDriver?.playerBodyRig?.render.alphaTested : nil
+        let body = frameInput.rigs.visibility.castsBodyShadow
+            ? frameInput.rigs.body?.render.alphaTested : nil
         return Self.joined(scene.alphaTested, body ?? [])
     }
 
@@ -63,7 +64,7 @@ extension Renderer {
 
     /// Whether the third-person body is drawn to the camera this frame.
     public var isPlayerBodyVisible: Bool {
-        rigVisibility.drawsBody
+        frameInput.rigs.visibility.drawsBody
     }
 
     /// Grows the draw and instance rings to cover the scene plus the body. The

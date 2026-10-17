@@ -20,11 +20,11 @@ import Testing
 @Suite(.tags(.gpu))
 struct PlayerBodyRenderRealDataTests {
     /// What one assertion needs to re-pose the body and render it again: the
-    /// live renderer, the loaded install, and where the body is standing.
+    /// live session, the loaded install, and where the body is standing.
     /// Bundled so the assertion signatures stay inside the parameter cap.
     @MainActor
     private struct Stage {
-        let renderer: Renderer
+        let gameSession: GameSession
         let assembled: PlayerBodyFixture.Assembled
         let root: GameDataRoot
         let device: MTLDevice
@@ -44,17 +44,18 @@ struct PlayerBodyRenderRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view,
             scene: cell.scene.renderScene,
             camera: SceneCamera.framing(bounds: cell.bounds)
         )
+        let renderer = gameSession.renderer
         var report: [String] = []
 
         // Put the camera exactly where the app puts it: the capsule standing on
         // the launch cell's real ground, the eye orbited back to the resolved
         // third-person position. Nothing here is a test-only framing.
-        Self.frameThirdPerson(renderer, feet: feet)
+        Self.frameThirdPerson(gameSession, feet: feet)
         let empty = try Self.frame(renderer)
 
         // Pose the body from a second of standing still. A second rather than
@@ -64,9 +65,9 @@ struct PlayerBodyRenderRealDataTests {
         for _ in 0 ..< LocomotionDriveHarness.secondOfSteps {
             Self.step(assembled.bridge, feet: feet, input: CameraInput(dt: 1.0 / 120))
         }
-        assembled.body.place(feetPosition: feet, yaw: renderer.freeFlyCamera.yaw)
+        assembled.body.place(feetPosition: feet, yaw: gameSession.freeFlyCamera.yaw)
         assembled.body.animation.update(at: 0)
-        try renderer.setPlayerBody(assembled.body)
+        try gameSession.setPlayerBody(assembled.body)
 
         let thirdPerson = try Self.frame(renderer)
         let bodyPixels = Self.changedPixels(empty, thirdPerson)
@@ -80,7 +81,7 @@ struct PlayerBodyRenderRealDataTests {
         // First person must not draw the body; the camera stays put. The frames
         // still differ a little: the unseen body casts a shadow
         // (`PlayerRigVisibility.castsBodyShadow`). The body itself must be gone.
-        renderer.movementMode = .walk
+        gameSession.movementMode = .walk
         let firstPerson = try Self.frame(renderer)
         let shadowPixels = Self.changedPixels(empty, firstPerson)
         report.append("first person vs no body: \(shadowPixels) changed pixels")
@@ -92,9 +93,9 @@ struct PlayerBodyRenderRealDataTests {
             "first person changed \(shadowPixels) pixels against the body's \(bodyPixels)"
         )
 
-        renderer.movementMode = .thirdPerson
+        gameSession.movementMode = .thirdPerson
         let stage = Stage(
-            renderer: renderer, assembled: assembled, root: cell.root, device: cell.device,
+            gameSession: gameSession, assembled: assembled, root: cell.root, device: cell.device,
             feet: feet
         )
         try Self.assertStateChangeChangesTheFrame(
@@ -155,10 +156,10 @@ struct PlayerBodyRenderRealDataTests {
             step(stage.assembled.bridge, feet: stage.feet, input: walking)
         }
         stage.assembled.body.place(
-            feetPosition: stage.feet, yaw: stage.renderer.freeFlyCamera.yaw
+            feetPosition: stage.feet, yaw: stage.gameSession.freeFlyCamera.yaw
         )
         stage.assembled.body.animation.update(at: 0)
-        let running = try frame(stage.renderer)
+        let running = try frame(stage.gameSession.renderer)
         let changed = changedPixels(reference, running)
         report.append("idle vs running: \(changed) changed pixels")
         #expect(changed > 0, "a locomotion state change moved no pixels")
@@ -180,11 +181,11 @@ struct PlayerBodyRenderRealDataTests {
             step(rebuilt.bridge, feet: stage.feet, input: CameraInput(dt: 1.0 / 120))
         }
         rebuilt.body.place(
-            feetPosition: stage.feet, yaw: stage.renderer.freeFlyCamera.yaw
+            feetPosition: stage.feet, yaw: stage.gameSession.freeFlyCamera.yaw
         )
         rebuilt.body.animation.update(at: 0)
-        try stage.renderer.setPlayerBody(rebuilt.body)
-        let rebuiltFrame = try frame(stage.renderer)
+        try stage.gameSession.setPlayerBody(rebuilt.body)
+        let rebuiltFrame = try frame(stage.gameSession.renderer)
         report.append(
             "reassembled vs original: "
                 + "\(changedPixels(reference, rebuiltFrame)) changed pixels"
@@ -217,20 +218,20 @@ struct PlayerBodyRenderRealDataTests {
 
     /// Stands the capsule at `feet` and puts the eye at the resolved
     /// third-person orbit position, looking slightly down at the body — the
-    /// same path `Renderer.advanceCamera` takes, so what the capture shows is
+    /// same path `GameSession.advanceCamera` takes, so what the capture shows is
     /// what the app shows.
     @MainActor
-    private static func frameThirdPerson(_ renderer: Renderer, feet: SIMD3<Float>) {
-        renderer.freeFlyCamera = FreeFlyCamera(
+    private static func frameThirdPerson(_ gameSession: GameSession, feet: SIMD3<Float>) {
+        gameSession.freeFlyCamera = FreeFlyCamera(
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
             pitch: MatrixMath.radians(fromDegrees: -10)
         )
-        renderer.setMovementMode(.thirdPerson)
-        renderer.freeFlyCamera.position = renderer.thirdPersonCamera.resolve(
+        gameSession.setMovementMode(.thirdPerson)
+        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
             feetPosition: feet,
-            yaw: renderer.freeFlyCamera.yaw,
-            pitch: renderer.freeFlyCamera.pitch,
+            yaw: gameSession.freeFlyCamera.yaw,
+            pitch: gameSession.freeFlyCamera.pitch,
             collisionQuery: { _ in [] }
         )
     }

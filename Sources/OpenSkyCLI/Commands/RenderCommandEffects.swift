@@ -101,11 +101,12 @@ struct EffectCaptureScene {
 extension RenderCommand {
     /// Applies `options` to a renderer built for one capture.
     static func applyEffects(
-        _ options: EffectCaptureOptions, to renderer: Renderer, scene: EffectCaptureScene
+        _ options: EffectCaptureOptions, to gameSession: GameSession, scene: EffectCaptureScene
     ) throws {
+        let renderer = gameSession.renderer
         let file = scene.builder.file
-        renderer.imageSpace.passEnabled = !options.imageSpaceOff
-        renderer.imageSpace.toneMapping.enabled = !options.toneMappingOff
+        gameSession.imageSpace.passEnabled = !options.imageSpaceOff
+        gameSession.imageSpace.toneMapping.enabled = !options.toneMappingOff
         for setting in options.shadingOff {
             renderer.shadingTerms.subtract(setting.term)
         }
@@ -113,12 +114,12 @@ extension RenderCommand {
         let records = EffectRecordStore(
             plugins: ActivePluginFiles.load(root: scene.context.root, baseFile: file)
         )
-        renderer.session.imageSpaceLinks = ImageSpaceLinks(
+        gameSession.imageSpaceLinks = ImageSpaceLinks(
             records: records,
             weatherPlugin: "skyrim.esm"
         )
         try applyWeather(
-            options.weather, to: renderer, loadOrder: scene.builder.pluginLoadOrder,
+            options.weather, to: gameSession, loadOrder: scene.builder.pluginLoadOrder,
             worldspace: scene.worldspace
         )
         renderer.skyClouds = try SkyClouds(
@@ -128,7 +129,7 @@ extension RenderCommand {
             guard let space = records.imageSpaces.record(editorID: name) else {
                 throw CLIError.failure("no IMGS \(name)")
             }
-            renderer.imageSpace.forcedBaseline = ResolvedImageSpace(
+            gameSession.imageSpace.forcedBaseline = ResolvedImageSpace(
                 key: ReferenceKey(resolved: space.id), record: space.record
             )
         }
@@ -136,12 +137,13 @@ extension RenderCommand {
             guard let adapter = records.imageSpaceAdapters.record(editorID: name) else {
                 throw CLIError.failure("no IMAD \(name)")
             }
-            renderer.imageSpace.modifiers.start(
+            gameSession.imageSpace.modifiers.start(
                 adapter.record,
                 key: ReferenceKey(resolved: adapter.id)
             )
             // Each rendered frame ages it by 1/30 s too.
-            renderer.imageSpace.modifiers.advance(options.modifierAt - Float(options.frames) / 30)
+            gameSession.imageSpace.modifiers
+                .advance(options.modifierAt - Float(options.frames) / 30)
         }
         if let name = options.membrane {
             try applyMembrane(name, records: records, owner: scene.membraneOwner, to: renderer)
@@ -149,11 +151,12 @@ extension RenderCommand {
     }
 
     private static func applyWeather(
-        _ name: String?, to renderer: Renderer, loadOrder: LoadOrderPlugins, worldspace: String
+        _ name: String?, to gameSession: GameSession, loadOrder: LoadOrderPlugins,
+        worldspace: String
     ) throws {
         guard let system = WeatherSystem(loadOrder: loadOrder, worldspaceEditorID: worldspace)
         else { return }
-        renderer.weather = system
+        gameSession.weather = system
         guard let name else { return }
         guard let weather = system.store.weathers.values.first(where: { $0.editorID == name })
         else {
@@ -177,8 +180,9 @@ extension RenderCommand {
     }
 
     /// One evidence line per capture, so a log shows what the frame held.
-    static func printEffectState(_ renderer: Renderer) {
-        let state = renderer.imageSpace
+    static func printEffectState(_ gameSession: GameSession) {
+        let renderer = gameSession.renderer
+        let state = gameSession.imageSpace
         let current = state.current
         let modifiers = state.modifiers.instances.map(\.name).joined(separator: ", ")
         let precipitation = renderer.precipitation.snapshot
@@ -189,11 +193,13 @@ extension RenderCommand {
                 + "baseline \(baseline), "
                 + "modifiers [\(modifiers)], saturation \(current.saturation), "
                 + "brightness \(current.brightness), tint \(current.tint), "
-                + EffectsReadout.toneMapping(state.toneMapping, hdr: current.hdr).lowercased()
+                + EffectsReadout.toneMapping(
+                    state.toneMapping, eye: renderer.eyeAdaptation, hdr: current.hdr
+                ).lowercased()
         )
         print(
             "[INFO] effects: membranes drawn \(renderer.effects.lastMembraneDraws), "
-                + "weather \(renderer.weather?.currentWeatherEditorID ?? "none"), "
+                + "weather \(gameSession.weather?.currentWeatherEditorID ?? "none"), "
                 + "rain live \(precipitation.rainLiveCount), "
                 + "snow live \(precipitation.snowLiveCount), "
                 + "spgd \(renderer.precipitation.tuning.source ?? "fallback")"

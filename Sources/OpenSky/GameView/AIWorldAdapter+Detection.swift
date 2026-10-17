@@ -18,6 +18,7 @@ import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 extension AIWorldAdapter {
@@ -123,12 +124,15 @@ extension AIWorldAdapter {
 
     /// The same ambient, directional, and point light the scene pass shades with.
     func lightLevel(at position: SIMD3<Float>) -> Float {
-        guard let renderer = game.renderer, let settings = game.perception.runtime?.settings else {
+        guard
+            let renderer = game.renderer, let gameSession = game.gameSession,
+            let settings = game.perception.runtime?.settings
+        else {
             return 1
         }
         let scene = renderer.scene
         let interior = scene.lighting
-        let weather = interior == nil ? renderer.currentResolvedWeather : nil
+        let weather = interior == nil ? gameSession.currentResolvedWeather : nil
         let sample = DetectionLightSample(
             ambient: weather?.ambientColor ?? interior?.ambientColor
                 ?? renderer.camera.ambientColor,

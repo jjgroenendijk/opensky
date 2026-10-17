@@ -1,5 +1,5 @@
 // Frame-fog resolution: active exterior weather overrides the fog uniforms, not
-// interior lighting. The weather advance runs in the session (`Renderer+Weather.swift`).
+// interior lighting. The weather advance runs in the session (`GameSession+Weather.swift`).
 
 import simd
 
@@ -15,7 +15,7 @@ extension Renderer {
 
     /// The loaded interior's fog, with a script's change when it still applies.
     var interiorFog: FogParameters? {
-        interiorFogOverride?.fog(for: scene.lighting) ?? scene.lighting?.fog
+        frameInput.interiorFog?.fog(for: scene.lighting) ?? scene.lighting?.fog
     }
 
     public static func resolvedFog(

@@ -9,12 +9,12 @@ import OpenSkyAudio
 import OpenSkyRendering
 import simd
 
-extension Renderer {
+extension GameSession {
     /// Advances the audio clock and ticks the engine. A paused frame advances
     /// the clock mark but skips the tick entirely: sources hold their state and
     /// the listener pose stays where it was when the pause began.
     public func updateAudioFromWallClock() {
-        let delta = audioClock.advance(to: wallClock.now, paused: worldSimPaused)
+        let delta = audioClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
         guard !worldSimPaused else {
             // A paused frame does no audio work at all, so the measured cost of
             // this frame's audio update is genuinely zero rather than the stale

@@ -213,7 +213,7 @@ public final class WorldAudioEngine {
         )
     }
 
-    /// Per-frame housekeeping, driven by Renderer.updateAudio: advance gain
+    /// Per-frame housekeeping, driven by GameSession.updateAudio: advance gain
     /// ramps by the frame delta, retire sources whose stream completed, and
     /// stop sources the world streamed away from. `deltaTime` is in seconds and
     /// comes from the renderer's paused-aware audio clock, so fades freeze in

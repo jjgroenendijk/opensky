@@ -39,7 +39,23 @@ public enum ShadowSceneFixture {
         device: MTLDevice,
         scene: RenderScene? = nil
     ) throws -> Renderer {
-        try OffscreenRendererFixture.makeSessionRenderer(
+        try OffscreenRendererFixture.makeRenderer(
+            device: device,
+            width: width,
+            height: height,
+            scene: scene ?? towerScene(device: device, towerOffsets: [.zero]),
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
+    }
+
+    /// The tower scene driven by a `GameSession`, for weather and clock tests.
+    @MainActor
+    public static func makeSession(
+        device: MTLDevice,
+        scene: RenderScene? = nil
+    ) throws -> GameSession {
+        try OffscreenRendererFixture.makeSession(
             device: device,
             width: width,
             height: height,

@@ -148,7 +148,9 @@ final class ImageSpaceSection: PanelSectionViewController {
             statsLabel.stringValue = "Image space: unavailable"
             return
         }
-        statsLabel.stringValue = EffectsReadout.imageSpace(provider.imageSpaceState)
+        statsLabel.stringValue = EffectsReadout.imageSpace(
+            provider.imageSpaceState, eye: provider.eyeAdaptation
+        )
     }
 
     @objc private func passChanged() {

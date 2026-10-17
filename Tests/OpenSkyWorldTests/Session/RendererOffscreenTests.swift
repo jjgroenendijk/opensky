@@ -44,7 +44,7 @@ struct RendererOffscreenTests {
         view.enableSetNeedsDisplay = false
 
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         // Synchronous offscreen frame — no window, no drawable, no timing
@@ -181,13 +181,14 @@ struct RendererOffscreenTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view,
             scene: scene,
             camera: camera,
             timeOfDay: timeOfDay,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
+        let renderer = gameSession.renderer
         renderer.waterDepth.enabled = waterDepth
         let texture = try renderer.renderOffscreen(width: width, height: height)
         var pixels = [UInt8](repeating: 0, count: width * height * 4)

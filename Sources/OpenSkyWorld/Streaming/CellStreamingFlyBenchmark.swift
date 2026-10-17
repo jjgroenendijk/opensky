@@ -155,23 +155,24 @@ public enum CellStreamingFlyBenchmark {
     }
 
     public static func run(
-        renderer: Renderer,
+        gameSession: GameSession,
         provider: sending any CellSceneProvider,
         lodPrebuild: DistantLODPrebuild? = nil,
         weather: WeatherSystem?,
         configuration: CellStreamingFlyBenchmarkConfiguration
     ) throws -> CellStreamingFlyBenchmarkResult {
+        let renderer = gameSession.renderer
         guard let weather else {
             throw CellStreamingFlyBenchmarkError.weatherUnavailable
         }
         guard let rain = weather.store.weather(for: .rain) else {
             throw CellStreamingFlyBenchmarkError.rainWeatherUnavailable
         }
-        renderer.weather = weather
-        renderer.timeOfDay = 13
+        gameSession.weather = weather
+        gameSession.timeOfDay = 13
         weather.forceWeather(rain.formID, transition: .instant)
         let driver = Driver(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: provider,
             lodPrebuild: lodPrebuild,
             configuration: configuration
@@ -188,7 +189,11 @@ public enum CellStreamingFlyBenchmark {
     }
 
     private final class Driver {
-        private let renderer: Renderer
+        private let gameSession: GameSession
+        private var renderer: Renderer {
+            gameSession.renderer
+        }
+
         private let runner: SerialCellBuildRunner
         private let streamer: CellStreamer
         private let swapError: SceneSwapErrorBox
@@ -206,12 +211,13 @@ public enum CellStreamingFlyBenchmark {
         private var startAreaReadyMS = 0.0
 
         init(
-            renderer: Renderer,
+            gameSession: GameSession,
             provider: sending any CellSceneProvider,
             lodPrebuild: DistantLODPrebuild?,
             configuration: CellStreamingFlyBenchmarkConfiguration
         ) {
-            self.renderer = renderer
+            self.gameSession = gameSession
+            let renderer = gameSession.renderer
             self.configuration = configuration
             runner = SerialCellBuildRunner(provider: provider, lodPrebuild: lodPrebuild)
             swapError = SceneSwapErrorBox()
@@ -237,7 +243,7 @@ public enum CellStreamingFlyBenchmark {
         }
 
         func step() throws -> Bool {
-            environmentEvidence.capture(renderer)
+            environmentEvidence.capture(gameSession)
             _ = try sampleFootprint()
             if let error = swapError.error {
                 throw CellStreamingFlyBenchmarkError.sceneSwapFailed(error)
@@ -284,7 +290,7 @@ public enum CellStreamingFlyBenchmark {
         }
 
         func result(render: OffscreenBenchResult) throws -> CellStreamingFlyBenchmarkResult {
-            environmentEvidence.capture(renderer)
+            environmentEvidence.capture(gameSession)
             try validateCompletion()
             let counts = try validatedBuildCounts()
             let collision = try validatedCollisionBuildMetrics(
@@ -354,8 +360,8 @@ public enum CellStreamingFlyBenchmark {
 
         private func moveOneSample() {
             currentPosition = segments[legIndex][sampleIndex]
-            renderer.freeFlyCamera.position.x = currentPosition.x
-            renderer.freeFlyCamera.position.y = currentPosition.y
+            gameSession.freeFlyCamera.position.x = currentPosition.x
+            gameSession.freeFlyCamera.position.y = currentPosition.y
             streamer.update(cameraPosition: currentPosition)
             sampleIndex += 1
             if sampleIndex == segments[legIndex].count {

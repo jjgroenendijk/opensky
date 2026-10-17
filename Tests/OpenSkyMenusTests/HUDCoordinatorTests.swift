@@ -12,6 +12,16 @@ import Testing
 final class FakeSWFLayerWorld: SWFLayerWorld {
     var renderer: Renderer?
 
+    /// A renderer without a session draws what its frame input holds.
+    var viewCamera: FreeFlyCamera? {
+        renderer?.frameInput.view
+    }
+
+    var uiScene: UIScene {
+        get { renderer?.frameInput.ui ?? .empty }
+        set { renderer?.frameInput.ui = newValue }
+    }
+
     init(renderer: Renderer? = nil) {
         self.renderer = renderer
     }

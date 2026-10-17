@@ -20,7 +20,7 @@ extension Renderer: MTKViewDelegate {
         wallClock.beginFrame()
         // Camera, the per-frame hook (streaming may setScene synchronously
         // before this frame encodes), game clock, world simulation, weather.
-        frameDriver?.prepareLiveFrame()
+        adoptFrameInput(frameDriver?.prepareLiveFrame() ?? frameInput)
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
         updatePrecipitation(deltaTime: particleDelta)

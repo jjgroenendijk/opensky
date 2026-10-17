@@ -38,6 +38,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var progression: ProgressionCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var saveGames: SaveGameWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
@@ -158,6 +159,19 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.renderer
     }
 
+    var gameSession: GameSession? {
+        game.gameSession
+    }
+
+    var viewCamera: FreeFlyCamera? {
+        game.gameSession?.freeFlyCamera
+    }
+
+    var uiScene: UIScene {
+        get { game.gameSession?.uiScene ?? .empty }
+        set { game.gameSession?.uiScene = newValue }
+    }
+
     var playerIdentity: PlayerIdentityState? {
         game.worldState.component(PlayerIdentityState.self, for: .player) ?? recordIdentity
     }
@@ -223,7 +237,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
     /// A chosen cell is a test start, so the race menu opens there at once.
     func startNewGame(at start: NewGameStart) {
         game.worldState.restore(from: .empty)
-        game.renderer?.gameClock = GameClock()
+        game.gameSession?.gameClock = GameClock()
         game.scripts.restore(instances: [], timers: [])
         game.messages.reloadHelpRecords()
         game.storyWorld.rerunSessionStart()
@@ -378,9 +392,9 @@ extension MenuWorldAdapter {
             openRaceMenuIfAsked()
             return
         }
-        guard !startTickerInstalled, let renderer = game.renderer else { return }
+        guard !startTickerInstalled, let gameSession = game.gameSession else { return }
         startTickerInstalled = true
-        renderer.session.frameSteps.register(.newGameTeleport) { [weak self] _ in
+        gameSession.frameSteps.register(.newGameTeleport) { [weak self] _ in
             self?.pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
         }
     }
@@ -401,7 +415,7 @@ extension MenuWorldAdapter {
         guard teleportCovered else { return }
         teleportCovered = false
         game.loadingScreens.loadFinished(at: now)
-        game.renderer?.setMovementMode(.walk)
+        game.gameSession?.setMovementMode(.walk)
     }
 
     private func openRaceMenuIfAsked() {

@@ -9,6 +9,8 @@ import Testing
 @MainActor
 private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
     var renderer: Renderer?
+    var viewCamera: FreeFlyCamera?
+    var uiScene = UIScene.empty
     var audioEnabled = true
     var quitCount = 0
     var mainMenuCount = 0

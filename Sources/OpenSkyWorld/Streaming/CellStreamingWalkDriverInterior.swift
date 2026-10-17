@@ -9,7 +9,7 @@ import simd
 extension CellStreamingWalkDriver {
     public func waitInterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
         guard let interior = streamer.interiorScene else {
             try timeout(limit: WalkPathRoute.maximumTransitionFrames)
@@ -26,9 +26,9 @@ extension CellStreamingWalkDriver {
 
     public func settleInterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
-        guard renderer.walkController.isGrounded else {
+        guard gameSession.walkController.isGrounded else {
             try timeout(limit: 120)
             return
         }
@@ -36,7 +36,7 @@ extension CellStreamingWalkDriver {
         interiorArrival = arrival
         interiorRoute = WalkPathRoute.interiorWaypoints(
             from: arrival,
-            yaw: renderer.freeFlyCamera.yaw
+            yaw: gameSession.freeFlyCamera.yaw
         )
         interiorRouteIndex = 0
         changePhase(.crossInterior)
@@ -51,7 +51,7 @@ extension CellStreamingWalkDriver {
         }
         let target = interiorRoute[interiorRouteIndex]
         drive(toward: target, routeIndex: 100 + interiorRouteIndex)
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
         interiorDistance = max(interiorDistance, simd_distance(arrival, currentXY))
         guard distance(to: target) <= WalkPathRoute.waypointTolerance else {
@@ -75,7 +75,7 @@ extension CellStreamingWalkDriver {
             ? interiorRoute[interiorRouteIndex]
             : arrival
         drive(toward: target, routeIndex: 200 + max(interiorRouteIndex, 0))
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
         guard distance(to: target) <= WalkPathRoute.waypointTolerance else {
             try timeout(limit: WalkPathRoute.maximumWaypointFrames)
@@ -91,7 +91,7 @@ extension CellStreamingWalkDriver {
 
     public func requestExit() throws {
         let door = streamer.interiorScene.flatMap {
-            streamer.nearestDoor(in: $0, to: renderer.freeFlyCamera.position)
+            streamer.nearestDoor(in: $0, to: gameSession.freeFlyCamera.position)
         }
         guard door?.reference == WalkPathRoute.interiorDoor else {
             throw CellStreamingWalkBenchmarkError.wrongDoor(
@@ -101,12 +101,12 @@ extension CellStreamingWalkDriver {
         }
         let interactionRay = door.flatMap {
             InteractionRay(
-                origin: renderer.freeFlyCamera.position,
-                direction: $0.position - renderer.freeFlyCamera.position
+                origin: gameSession.freeFlyCamera.position,
+                direction: $0.position - gameSession.freeFlyCamera.position
             )
         }
         streamer.update(
-            cameraPosition: renderer.freeFlyCamera.position,
+            cameraPosition: gameSession.freeFlyCamera.position,
             interactionRay: interactionRay,
             activate: true
         )
@@ -121,7 +121,7 @@ extension CellStreamingWalkDriver {
 
     public func waitExterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
         guard !streamer.isInterior else {
             try timeout(limit: WalkPathRoute.maximumTransitionFrames)
@@ -142,9 +142,9 @@ extension CellStreamingWalkDriver {
 
     public func settleExteriorReturn() throws -> Bool {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position)
+        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
         try validateController()
-        guard renderer.walkController.isGrounded else {
+        guard gameSession.walkController.isGrounded else {
             try timeout(limit: 120)
             return false
         }

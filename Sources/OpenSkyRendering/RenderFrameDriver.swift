@@ -1,28 +1,22 @@
 // The simulation side of a frame, as the renderer sees it. Live frame:
-// `prepareLiveFrame` (camera, frame steps, clock, world, weather), then the
-// renderer's own step, then `finishLiveFrame` (audio). Offscreen frames call the
-// update methods directly. Other values are read on demand, never copied.
+// `prepareLiveFrame` (camera, frame steps, clock, world, weather) returns the
+// frame's input, then the renderer's own step, then `finishLiveFrame` (audio).
+// An offscreen frame does the same on a fixed step.
 
 import Metal
 
 @MainActor
 public protocol RenderFrameDriver: AnyObject {
-    func prepareLiveFrame()
+    func prepareLiveFrame() -> RenderFrameInput
     func finishLiveFrame()
-    func updateWorldSim(deltaTime: Float)
-    func updateWeather(deltaTime: Float)
-    func updateAudio(deltaTime: Float)
+    /// Steps the world by `deltaTime` (zero while paused) when `advancesWorld`, then
+    /// resolves the weather, and returns the frame's input. The game clock never advances.
+    func prepareOffscreenFrame(deltaTime: Float, advancesWorld: Bool) -> RenderFrameInput
+    func finishOffscreenFrame(deltaTime: Float)
     /// Runs after `setScene` replaced the framing camera, so the player can be
     /// placed in the new scene.
     func didReplaceCamera(_ camera: SceneCamera)
 
-    /// Fractional hour of day in [0, 24).
-    var timeOfDay: Float { get set }
-    var wind: WindState { get }
-    var projectionFOVYRadians: Float { get }
-    var rigVisibility: PlayerRigVisibility { get }
-    var playerBodyRig: (any RenderRig)? { get }
-    var firstPersonRig: (any RenderRig)? { get }
     /// CPU wall time of the last world-simulation and audio updates.
     var lastScriptUpdateMS: Double { get }
     var lastAudioUpdateMS: Double { get }
@@ -38,33 +32,22 @@ public protocol RenderRig: AnyObject {
     func publishAnimation(enabled: Bool) -> Int
 }
 
-/// What the renderer reads from its driver. With no driver attached (a renderer
-/// built by `init(rendering:)` alone) the frame keeps the defaults: noon-ish
-/// light, calm wind, the shared field of view, and no player rigs.
 extension Renderer {
-    /// The hour of day a renderer without a driver lights its frame at.
-    public static let defaultTimeOfDay: Float = 13
-
-    /// Fractional hour of day in [0, 24), projected from the game clock.
-    public var timeOfDay: Float {
-        get { frameDriver?.timeOfDay ?? Self.defaultTimeOfDay }
-        set { frameDriver?.timeOfDay = newValue }
-    }
-
-    /// Published wind for precipitation, grass, particles and audio. Calm when
-    /// no weather is active.
-    public var currentWind: WindState {
-        frameDriver?.wind ?? .calm
-    }
-
-    /// What this frame draws and casts (`PlayerRigVisibility`).
-    public var rigVisibility: PlayerRigVisibility {
-        frameDriver?.rigVisibility ?? PlayerRigVisibility.resolve(
-            mode: movementMode,
-            hasBody: false,
-            hasArms: false,
-            armsEnabled: false,
-            dialogueCamera: false
-        )
+    /// Replaces the frame's input, at the one point in the frame where game state
+    /// enters the renderer. A changed field of view re-projects; changed poses re-merge.
+    func adoptFrameInput(_ input: RenderFrameInput) {
+        frameInput = input
+        if input.fovYRadians != adoptedFOVYRadians {
+            adoptedFOVYRadians = input.fovYRadians
+            rebuildProjection()
+        }
+        if input.instancePoses.revision != adoptedPoseRevision {
+            adoptedPoseRevision = input.instancePoses.revision
+            mergeInstanceDeltas()
+        }
+        if let tuning = input.precipitationTuning, tuning != precipitation.tuning {
+            precipitation.tuning = tuning
+        }
+        prepareClouds()
     }
 }

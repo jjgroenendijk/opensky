@@ -37,6 +37,7 @@ protocol InventoryWorldHost: AnyObject {
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -104,18 +105,18 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     func dropPlacement() -> DropPlacement? {
-        guard let renderer = game.renderer, let location = game.streamer?.currentCellLocation
+        guard let gameSession = game.gameSession, let location = game.streamer?.currentCellLocation
         else { return nil }
         return WorldItemRuntime.dropPlacement(
             in: location,
-            eye: renderer.freeFlyCamera.position,
-            forward: renderer.freeFlyCamera.forward
+            eye: gameSession.freeFlyCamera.position,
+            forward: gameSession.freeFlyCamera.forward
         )
     }
 
     func nearestActorEntry() -> RuntimeReferenceEntry? {
-        guard let renderer = game.renderer else { return nil }
-        return game.streamer?.nearestActorEntry(to: renderer.freeFlyCamera.position)
+        guard let gameSession = game.gameSession else { return nil }
+        return game.streamer?.nearestActorEntry(to: gameSession.freeFlyCamera.position)
     }
 
     func containerInteractions() -> [PlacedInteraction] {
@@ -139,7 +140,7 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     var gameDaysPassed: Float? {
-        game.renderer?.gameClock.daysPassed
+        game.gameSession?.gameClock.daysPassed
     }
 
     func playerSpeechSkill() -> Float? {
@@ -269,7 +270,7 @@ extension InventoryWorldAdapter: VendorWorld {
     }
 
     var hourOfDay: Float? {
-        game.renderer?.gameClock.hourOfDay
+        game.gameSession?.gameClock.hourOfDay
     }
 }
 

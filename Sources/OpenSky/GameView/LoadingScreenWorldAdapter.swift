@@ -21,6 +21,7 @@ protocol LoadingScreenWorldHost: MenuInputConsumer {
     var loadingScreens: LoadingScreenCoordinator { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var streamer: CellStreamer? { get }
@@ -46,7 +47,7 @@ final class LoadingScreenWorldAdapter {
         Date().timeIntervalSinceReferenceDate
     }
 
-    func wire(streamer: CellStreamer, renderer: Renderer) {
+    func wire(streamer: CellStreamer, gameSession: GameSession) {
         streamer.onDoorTransitionStarted = { [weak self] in
             guard let self else { return }
             game.loadingScreens.begin(at: now)
@@ -59,7 +60,7 @@ final class LoadingScreenWorldAdapter {
             }
             game.loadingScreens.destinationReady(location: location(of: scene), at: now)
         }
-        renderer.session.frameSteps.register(.loadingScreen) { [weak self] _ in
+        gameSession.frameSteps.register(.loadingScreen) { [weak self] _ in
             guard let self else { return }
             liftStartCoverIfReady()
             game.loadingScreens.tick(time: now)
@@ -92,7 +93,11 @@ final class LoadingScreenWorldAdapter {
         game.runtimeStateWorld.location(of: scene)
     }
 
-    private func placement(_ frame: LoadingCoverFrame, renderer: Renderer) -> [RenderPlacement] {
+    private func placement(
+        _ frame: LoadingCoverFrame,
+        gameSession: GameSession
+    ) -> [RenderPlacement] {
+        let renderer = gameSession.renderer
         guard
             frame.drawsObject, let path = frame.model,
             !failedModels.contains(path) else { return [] }
@@ -106,7 +111,7 @@ final class LoadingScreenWorldAdapter {
         }
         do {
             guard let model = try meshes?.model(path: path) else { return [] }
-            let view = renderer.dialogueCameraState.restorePose ?? renderer.freeFlyCamera
+            let view = gameSession.dialogueCameraState.restorePose ?? gameSession.freeFlyCamera
             let radius = meshes?.bounds(forPath: path)
                 .map { simd_length($0.max - $0.min) / 2 } ?? 64
             return [RenderPlacement(
@@ -148,10 +153,10 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
     }
 
     func presentLoadingCover(_ frame: LoadingCoverFrame?) {
-        guard let renderer = game.renderer else { return }
+        guard let renderer = game.renderer, let gameSession = game.gameSession else { return }
         do {
             if let frame, frame.drawsObject {
-                try renderer.setLoadingCover(placement(frame, renderer: renderer))
+                try renderer.setLoadingCover(placement(frame, gameSession: gameSession))
             } else {
                 try renderer.setLoadingCover(nil)
             }
@@ -161,7 +166,7 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
                     "[ERROR] loading cover failed: \(String(describing: error), privacy: .public)"
                 )
         }
-        renderer.uiScene = frame?.overlay ?? .empty
+        gameSession.uiScene = frame?.overlay ?? .empty
         game.hud.setCovered(frame != nil)
     }
 

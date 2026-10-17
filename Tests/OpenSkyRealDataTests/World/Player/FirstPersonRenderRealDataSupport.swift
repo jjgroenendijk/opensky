@@ -68,29 +68,29 @@ extension FirstPersonRenderRealDataTests {
     @MainActor
     static func place(
         _ assembled: PlayerBodyFixture.Assembled,
-        renderer: Renderer,
+        gameSession: GameSession,
         feet: SIMD3<Float>
     ) {
-        assembled.body.place(feetPosition: feet, yaw: renderer.freeFlyCamera.yaw)
+        assembled.body.place(feetPosition: feet, yaw: gameSession.freeFlyCamera.yaw)
         assembled.body.animation.update(at: 0)
         assembled.arms.animation.update(at: 0)
         assembled.arms.place(
             eyePosition: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
-            yaw: renderer.freeFlyCamera.yaw,
-            pitch: renderer.freeFlyCamera.pitch
+            yaw: gameSession.freeFlyCamera.yaw,
+            pitch: gameSession.freeFlyCamera.pitch
         )
     }
 
     /// Puts the eye where walk mode puts it, looking level — the same pose
-    /// `Renderer.advanceCamera` produces, so the capture is what the app shows.
+    /// `GameSession.advanceCamera` produces, so the capture is what the app shows.
     @MainActor
-    static func frameFirstPerson(_ renderer: Renderer, feet: SIMD3<Float>) {
-        renderer.freeFlyCamera = FreeFlyCamera(
+    static func frameFirstPerson(_ gameSession: GameSession, feet: SIMD3<Float>) {
+        gameSession.freeFlyCamera = FreeFlyCamera(
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
             pitch: 0
         )
-        renderer.setMovementMode(.walk)
+        gameSession.setMovementMode(.walk)
     }
 
     static func droppedPieces(_ rig: PlayerFirstPersonRig) -> Int {
@@ -103,17 +103,17 @@ extension FirstPersonRenderRealDataTests {
     // MARK: - Rendering
 
     @MainActor
-    static func renderer(
+    static func makeSession(
         device: MTLDevice,
         scene: CellScene,
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
-    ) throws -> Renderer {
+    ) throws -> GameSession {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size, height: size), device: device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(
+        return try GameSession(
             view: view,
             scene: scene.renderScene,
             camera: SceneCamera.framing(bounds: bounds)
