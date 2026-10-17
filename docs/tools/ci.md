@@ -17,7 +17,7 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Job | Make targets |
 | --- | --- |
 | Format | `swift-format-check`, `metal-format-check`, `md-lint` |
-| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `duplicates`, `no-suppressions` |
+| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `duplicates`, `no-suppressions` |
 | Changes | None. It decides whether Build & test runs |
 | Build & test | `swift-baseline`, `ffmpeg`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor` |
 | Lint | None. It passes only when the jobs above pass |

@@ -22,6 +22,11 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`;
 `Sources/OpenSkyCLI/Commands/GMSTCommand.swift` is a small model).
 
+Every command reads the whole active load order, as the game does. A probe does the same:
+open it with `ActiveLoadOrder.open(root:)` and read records through its `plugins`, never a
+single `ESMFile(url:)`. A record a DLC or mod overrides is only right that way, and
+`make lint` (`load-order-only`) fails on a single-file open outside the format modules.
+
 Otherwise probe from a scratch test class in `Tests/OpenSkyRealDataTests/`, copying the shape of
 `CellRenderRealDataTests.swift`. That folder is the whole `RealData` plan, so a class there
 runs under `make test-real` with the data root in the host. Never

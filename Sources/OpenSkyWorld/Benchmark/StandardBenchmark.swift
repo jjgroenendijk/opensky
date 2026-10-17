@@ -31,19 +31,19 @@ public enum StandardBenchmark {
 
     /// A builder with empty caches. A `recorder` gets every file read and asset phase.
     public static func makeBuilder(
-        root: GameDataRoot, file: ESMFile, files: any GameFileSource, device: MTLDevice,
-        recorder: LoadPhaseRecorder?
+        root: GameDataRoot, loadOrder: ActiveLoadOrder, files: any GameFileSource,
+        device: MTLDevice, recorder: LoadPhaseRecorder?
     ) throws -> CellSceneBuilder {
         let fileSystem: any GameFileSource = recorder
             .map { PhaseTimedFileSource(base: files, recorder: $0) } ?? files
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(
-            file: file,
+            file: loadOrder.baseFile,
             meshes: meshes,
             textures: textures,
             fileSystem: fileSystem,
-            plugins: ActivePluginFiles.load(root: root, baseFile: file),
+            plugins: loadOrder.files,
             terrainLODConfigurationStore: TerrainLODConfigurationStore(
                 snapshot: TerrainLODSettings.load(
                     root: root,
@@ -63,13 +63,13 @@ public enum StandardBenchmark {
         let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
         let plan = PerformanceBenchmarkPlan.standard
         let renderer = try makeRenderer(device: device, plan: plan, store: store)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let loadOrder = try ActiveLoadOrder.open(root: root)
         return try PerformanceBenchmark.run(
             plan: plan, machine: .current(gpu: device.name), renderer: renderer
         ) { recorder in
             try makeBuilder(
-                root: root, file: file, files: VirtualFileSystem(root: root), device: device,
-                recorder: recorder
+                root: root, loadOrder: loadOrder, files: VirtualFileSystem(root: root),
+                device: device, recorder: recorder
             )
         }
     }

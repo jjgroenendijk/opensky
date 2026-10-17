@@ -1,5 +1,6 @@
 // Model paths of one exterior cell without Metal, for tooling. Same WRLD ->
-// CELL -> REFR -> base chain as CellSceneBuilder (UESP WRLD, CELL, REFR, STAT).
+// CELL -> REFR -> base chain as CellSceneBuilder (UESP WRLD, CELL, REFR, STAT),
+// over the whole load order: every plugin that stores the cell adds references.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -13,7 +14,16 @@ nonisolated public struct ExteriorCellModels: Equatable, Sendable {
 }
 
 nonisolated public struct ExteriorCellModelCatalog: Sendable {
-    public let file: ESMFile
+    public let loadOrder: LoadOrderPlugins
+
+    public init(loadOrder: LoadOrderPlugins) {
+        self.loadOrder = loadOrder
+    }
+
+    /// One plugin read alone, for synthetic test fixtures.
+    public init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
 
     public func modelPaths(
         worldspaceEditorID: String,
@@ -28,15 +38,40 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         gridX: Int32,
         gridY: Int32
     ) throws -> ExteriorCellModels {
-        let localized = file.isLocalized
         var skipped = SkippedRecords()
-        let world = try worldChildren(
-            editorID: worldspaceEditorID, localized: localized, skipped: &skipped
-        )
-        let found = findCell(
-            in: world, x: gridX, y: gridY, localized: localized, skipped: &skipped
-        )
-        guard let cell = found else {
+        var hasWorld = false
+        var hasCell = false
+        var references: [FormID: PlacedReference] = [:]
+        for plugin in loadOrder.plugins {
+            guard
+                let world = worldChildren(
+                    editorID: worldspaceEditorID, in: plugin.file, skipped: &skipped
+                )
+            else { continue }
+            hasWorld = true
+            plugin.decode {
+                guard
+                    let cell = findCell(
+                        in: world, x: gridX, y: gridY, localized: plugin.localized,
+                        skipped: &skipped
+                    )
+                else { return }
+                hasCell = true
+                for record in self.references(in: cell.children, skipped: &skipped) {
+                    let formID = FormID(record.formID)
+                    guard !record.isDeleted else {
+                        references[formID] = nil
+                        continue
+                    }
+                    if let ref = skipped.decode(record, using: PlacedReference.init(record:)) {
+                        references[formID] = ref
+                    }
+                }
+            }
+        }
+        guard hasWorld
+        else { throw CellSceneError.worldspaceNotFound(editorID: worldspaceEditorID) }
+        guard hasCell else {
             throw CellSceneError.cellNotFound(
                 worldspaceEditorID: worldspaceEditorID,
                 gridX: gridX,
@@ -45,12 +80,8 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         }
         let bases = baseModelPaths(skipped: &skipped)
         var paths: Set<String> = []
-        for record in references(in: cell.children, skipped: &skipped) {
-            guard
-                !record.isDeleted,
-                let ref = skipped.decode(record, using: PlacedReference.init(record:))
-            else { continue }
-            guard let rawPath = bases[ref.base.rawValue], let rawPath else { continue }
+        for ref in references.values {
+            guard let rawPath = bases[ref.base.rawValue] else { continue }
             if let normalized = try? VirtualFileSystem.normalize(rawPath) {
                 let path = normalized.hasPrefix("meshes\\")
                     ? normalized
@@ -65,16 +96,16 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         let children: ESMGroup?
     }
 
+    /// The world children group of the WRLD named `editorID` in one plugin.
     private func worldChildren(
         editorID: String,
-        localized: Bool,
+        in file: ESMFile,
         skipped: inout SkippedRecords
-    ) throws -> ESMGroup {
-        guard let top = file.topGroup(of: "WRLD") else {
-            throw CellSceneError.worldspaceNotFound(editorID: editorID)
-        }
+    ) -> ESMGroup? {
+        guard let top = file.topGroup(of: "WRLD") else { return nil }
+        let localized = file.isLocalized
         var matchedFormID: UInt32?
-        for child in try top.children() {
+        for child in skipped.children(of: top) {
             switch child {
             case let .record(record) where record.type == "WRLD":
                 let world = skipped
@@ -87,7 +118,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
                 break
             }
         }
-        throw CellSceneError.worldspaceNotFound(editorID: editorID)
+        return nil
     }
 
     private func findCell(
@@ -161,26 +192,16 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         return references
     }
 
-    private func baseModelPaths(skipped: inout SkippedRecords) -> [UInt32: String?] {
-        var result: [UInt32: String?] = [:]
-        let localized = file.isLocalized
-        if let top = file.topGroup(of: "STAT") {
-            for case let .record(record) in skipped.children(of: top) where record.type == "STAT" {
-                if let object = skipped.decode(record, using: StaticObject.init(record:)) {
-                    result[record.formID] = object.modelPath
-                }
-            }
+    /// Keyed by load-order FormID; a later plugin's base wins.
+    private func baseModelPaths(skipped: inout SkippedRecords) -> [UInt32: String] {
+        var result: [UInt32: String] = loadOrder.indexRecords(of: "STAT", skipped: &skipped) {
+            try StaticObject(record: $0).modelPath
         }
         for type in ModelBase.supportedTypes {
-            guard let top = file.topGroup(of: type) else { continue }
-            for case let .record(record) in skipped.children(of: top) where record.type == type {
-                let object = skipped.decode(record) {
-                    try ModelBase(record: $0, localized: localized)
-                }
-                if let object {
-                    result[record.formID] = object.modelPath
-                }
+            let paths = loadOrder.indexRecords(of: type, skipped: &skipped) {
+                try ModelBase(record: $0, localized: $1).modelPath
             }
+            result.merge(paths) { _, new in new }
         }
         return result
     }

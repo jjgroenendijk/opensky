@@ -245,7 +245,8 @@ nonisolated extension OpenSkySaveStore {
     ) throws -> [SavePluginFingerprint] {
         try entries.map { entry in
             do {
-                let stats = try ESMFile(url: entry.url).pluginHeader().stats
+                let data = try Data(contentsOf: entry.url, options: .alwaysMapped)
+                let stats = try PluginHeader(pluginData: data).stats
                 return SavePluginFingerprint(pluginName: entry.name, stats: stats)
             } catch {
                 throw OpenSkySaveStoreError.unreadablePlugin(

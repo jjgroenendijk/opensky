@@ -36,20 +36,22 @@ nonisolated extension CellProviderIndexes {
         assetCache: AssetCacheReader? = nil,
         fastLoad: FastTextureLoadControl? = nil
     ) async throws -> sending CellSession {
-        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
-        let file = try progress.measure(.masterFile) { try ESMFile(url: esmURL) }
-        // Every load-order store reads this one list, so each plugin opens once.
-        let plugins = try progress.measure(.loadOrder) {
-            ActivePluginFiles.load(root: root, baseFile: file)
+        let file = try progress.measure(.masterFile) {
+            try ActiveLoadOrder.openBaseFile(root: root)
         }
+        // Every load-order store reads this one list, so each plugin opens once.
+        let activeLoadOrder = try progress.measure(.loadOrder) {
+            ActiveLoadOrder(root: root, baseFile: file)
+        }
+        let plugins = activeLoadOrder.files
         let tuning = try progress.measure(.settings) { SettingIndexes(plugins: plugins) }
         // The item index resolves enchantments, so magic comes before the fan-out.
         let magic = try progress.measure(.magic) { MagicIndexes(plugins: plugins) }
         let context = LoadContext(
             file: file,
-            pluginName: esmURL.lastPathComponent,
+            pluginName: ActiveLoadOrder.baseFileName,
             plugins: plugins,
-            loadOrder: LoadOrderPlugins(plugins),
+            loadOrder: activeLoadOrder.plugins,
             tuning: tuning,
             progress: progress
         )

@@ -208,14 +208,13 @@ final class AgentTeleportJob {
         do {
             return try .success(find(loadOrder(root)))
         } catch {
-            return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
+            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
         }
     }
 
     /// The same plugins and FormID space the session reads.
     nonisolated private static func loadOrder(_ root: GameDataRoot) throws -> LoadOrderPlugins {
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        return LoadOrderPlugins(ActivePluginFiles.load(root: root, baseFile: file))
+        try ActiveLoadOrder.open(root: root).plugins
     }
 
     // MARK: - References outside the loaded cells
@@ -238,7 +237,7 @@ final class AgentTeleportJob {
         do {
             return try .success(CellDirectory.exteriorPlacement(of: formID, in: loadOrder(root)))
         } catch {
-            return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
+            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
         }
     }
 

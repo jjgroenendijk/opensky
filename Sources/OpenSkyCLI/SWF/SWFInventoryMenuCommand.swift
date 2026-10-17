@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyCLIArguments
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -54,8 +55,7 @@ enum SWFInventoryMenuCommand {
     /// to the install; the inventory lives in an in-memory `WorldStateStore`.
     @MainActor
     private static func makeModel(context: CLIContext) throws -> InventoryMenuModel {
-        let file = try context.loadSkyrimESM()
-        let baselines = InventoryBaselineResolver.build(from: file)
+        let baselines = try InventoryBaselineResolver.build(from: context.loadOrder().plugins)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         for family in ItemDefinition.Family.allCases {
             for definition in baselines.items.definitions(of: family).prefix(3) {

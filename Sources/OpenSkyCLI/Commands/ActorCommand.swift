@@ -22,38 +22,23 @@ enum ActorCommand {
             throw CLIError.usage("--radius expects a non-negative integer")
         }
 
-        let file = try context.loadSkyrimESM()
-        let localized = file.isLocalized
+        let loadOrder = try context.loadOrder().plugins
         if let npc {
-            try reportNamed(npc, file: file, localized: localized)
+            try reportNamed(npc, loadOrder: loadOrder)
             return
         }
-        guard
-            let world = CLIWorldTreeWalk.worldChildren(
-                editorID: worldspace,
-                file: file,
-                localized: localized
-            )
-        else {
-            throw CLIError.failure("worldspace \(worldspace) not found")
-        }
-        let resolver = ActorTemplateResolver.build(from: file, localized: localized)
-        let visualResolver = ActorVisualResolver.build(
-            from: file, localized: localized, pluginName: "Skyrim.esm"
-        )
+        let resolver = ActorTemplateResolver.build(from: loadOrder)
+        let visualResolver = ActorVisualResolver.build(from: loadOrder)
         print("[INFO] actor probe — \(worldspace) (\(gridX),\(gridY)) radius \(radius), "
             + "indexes: \(resolver.actors.count) NPC_, \(resolver.leveledActors.count) LVLN, "
             + "\(visualResolver.races.count) RACE, \(visualResolver.armors.count) ARMO, "
             + "\(visualResolver.armorAddons.count) ARMA, \(visualResolver.outfits.count) OTFT, "
             + "\(visualResolver.leveledItems.count) LVLI")
 
-        let collection = collectActors(
-            world: world,
-            gridX: gridX,
-            gridY: gridY,
-            radius: radius,
-            localized: localized
-        )
+        let area = ActorArea(worldspace: worldspace, gridX: gridX, gridY: gridY, radius: radius)
+        guard let collection = collectActors(in: area, loadOrder: loadOrder) else {
+            throw CLIError.failure("worldspace \(worldspace) not found in the load order")
+        }
         var resolved = 0
         var failed = 0
         let ordered = collection.actors
@@ -78,13 +63,10 @@ enum ActorCommand {
     /// exterior walk cannot reach them.
     private static func reportNamed(
         _ key: String,
-        file: ESMFile,
-        localized: Bool
+        loadOrder: LoadOrderPlugins
     ) throws {
-        let resolver = ActorTemplateResolver.build(from: file, localized: localized)
-        let visualResolver = ActorVisualResolver.build(
-            from: file, localized: localized, pluginName: "Skyrim.esm"
-        )
+        let resolver = ActorTemplateResolver.build(from: loadOrder)
+        let visualResolver = ActorVisualResolver.build(from: loadOrder)
         let base: FormID
         if let raw = UInt32(key, radix: 16), resolver.actors[raw] != nil {
             base = FormID(raw)
@@ -241,22 +223,54 @@ extension ActorCommand {
 
     private struct Collection {
         var actors: [LocatedActor] = []
-        var deleted = 0
+        /// Load-order FormIDs a plugin deletes; an earlier plugin's actor leaves.
+        var deletedIDs: Set<UInt32> = []
         var malformed = 0
+
+        var deleted: Int {
+            deletedIDs.count
+        }
     }
 
     /// ACHRs from every cell in the radius plus the worldspace persistent
     /// CELL, persistent placements mapped to cells by position and
     /// deduplicated by FormID (door-handling pattern).
+    /// Every plugin that stores the worldspace adds its actors; a later plugin
+    /// overrides by load-order FormID. Nil when no plugin has the worldspace.
     private static func collectActors(
-        world: ESMGroup,
-        gridX: Int32,
-        gridY: Int32,
-        radius: Int32,
-        localized: Bool
-    ) -> Collection {
+        in area: ActorArea,
+        loadOrder: LoadOrderPlugins
+    ) -> Collection? {
         var collection = Collection()
         var byID: [UInt32: LocatedActor] = [:]
+        var hasWorld = false
+        for plugin in loadOrder.plugins {
+            guard
+                let world = CLIWorldTreeWalk.worldChildren(
+                    editorID: area.worldspace, file: plugin.file, localized: plugin.localized
+                )
+            else { continue }
+            hasWorld = true
+            plugin.decode {
+                collectActors(
+                    world: world, area: area, localized: plugin.localized,
+                    into: &byID, counting: &collection
+                )
+            }
+        }
+        guard hasWorld else { return nil }
+        collection.actors = byID.filter { !collection.deletedIDs.contains($0.key) }.map(\.value)
+        return collection
+    }
+
+    private static func collectActors(
+        world: ESMGroup,
+        area: ActorArea,
+        localized: Bool,
+        into byID: inout [UInt32: LocatedActor],
+        counting collection: inout Collection
+    ) {
+        let (gridX, gridY, radius) = (area.gridX, area.gridY, area.radius)
         for offsetY in -radius ... radius {
             for offsetX in -radius ... radius {
                 let x = gridX + offsetX
@@ -294,8 +308,6 @@ extension ActorCommand {
                 )
             }
         }
-        collection.actors = Array(byID.values)
-        return collection
     }
 
     private static func forEachActor(
@@ -312,7 +324,7 @@ extension ActorCommand {
             else { continue }
             for case let .record(record) in records where record.type == "ACHR" {
                 guard !record.isDeleted else {
-                    collection.deleted += 1
+                    collection.deletedIDs.insert(FormID(record.formID).rawValue)
                     continue
                 }
                 do {
@@ -333,4 +345,12 @@ extension ActorCommand {
         }
         return parsed
     }
+}
+
+/// The cells `actor` walks: a square of `radius` rings around the grid cell.
+private struct ActorArea {
+    let worldspace: String
+    let gridX: Int32
+    let gridY: Int32
+    let radius: Int32
 }

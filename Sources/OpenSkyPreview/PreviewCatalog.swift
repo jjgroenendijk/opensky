@@ -52,7 +52,7 @@ nonisolated public enum PreviewCategory: CaseIterable, Sendable {
         switch self {
         case .meshes: "Meshes (.nif)"
         case .textures: "Textures (.dds)"
-        case .records: "Records (Skyrim.esm)"
+        case .records: "Records (every plugin)"
         case .referenceRecords: "Reference records (load order)"
         case .allFiles: "All files"
         }
@@ -70,6 +70,7 @@ nonisolated public struct PreviewCatalog: Sendable {
     private let records: [PreviewItem]
     private let allFiles: [PreviewItem]
 
+    /// One plugin's records, as a synthetic test fixture lists them.
     public init(
         files: [VFSEntry],
         records: [ESMRecord],
@@ -77,15 +78,7 @@ nonisolated public struct PreviewCatalog: Sendable {
         recordsLocalized: Bool = false,
         notes: [String] = []
     ) {
-        // Display and search key share one string (VFS keys are already
-        // canonical lowercase), so file rows cost one allocation each.
-        let fileItems = files.map { entry in
-            PreviewItem(display: entry.path, searchKey: entry.path, selection: .file(entry))
-        }
-        allFiles = fileItems
-        meshes = fileItems.filter { $0.searchKey.hasSuffix(".nif") }
-        textures = fileItems.filter { $0.searchKey.hasSuffix(".dds") }
-        self.records = records.map { record in
+        let rows = records.map { record in
             let display = Self.recordDisplay(record)
             return PreviewItem(
                 display: display,
@@ -98,8 +91,45 @@ nonisolated public struct PreviewCatalog: Sendable {
                 ))
             )
         }
+        self.init(files: files, recordRows: rows, notes: notes)
+    }
+
+    /// Every record of every plugin, each under its load-order FormID and plugin,
+    /// so an override shows beside the record it replaces.
+    public init(files: [VFSEntry], loadOrder: LoadOrderPlugins, notes: [String] = []) {
+        var rows: [PreviewItem] = []
+        for plugin in loadOrder.plugins {
+            ESMWalk.forEachRecord(in: plugin.file) { record in
+                let formID = plugin.formID(of: record)
+                let display = "\(record.type) \(formID) \(plugin.name)"
+                rows.append(PreviewItem(
+                    display: display,
+                    searchKey: display.lowercased(),
+                    selection: .record(PreviewRecord(
+                        record: record,
+                        sourcePlugin: plugin.name,
+                        localized: plugin.localized,
+                        resolvedID: loadOrder.space.resolve(formID)
+                    ))
+                ))
+                return true
+            }
+        }
+        self.init(files: files, recordRows: rows, notes: notes)
+    }
+
+    private init(files: [VFSEntry], recordRows: [PreviewItem], notes: [String]) {
+        // Display and search key share one string (VFS keys are already
+        // canonical lowercase), so file rows cost one allocation each.
+        let fileItems = files.map { entry in
+            PreviewItem(display: entry.path, searchKey: entry.path, selection: .file(entry))
+        }
+        allFiles = fileItems
+        meshes = fileItems.filter { $0.searchKey.hasSuffix(".nif") }
+        textures = fileItems.filter { $0.searchKey.hasSuffix(".dds") }
+        records = recordRows
         fileCount = files.count
-        recordCount = records.count
+        recordCount = recordRows.count
         self.notes = notes
     }
 
@@ -131,33 +161,19 @@ nonisolated public struct PreviewCatalog: Sendable {
 
     /// Loads the whole browse surface: archive enumeration (opens every
     /// archive — seconds on a full install; callers run this off the main
-    /// thread) plus a headers-only walk of every Skyrim.esm record. A
-    /// missing/unreadable esm degrades to file browsing with a note, never
-    /// a crash. Returns the plugin's localized flag for record decoding.
+    /// thread) plus a headers-only walk of every plugin's records. A load order
+    /// that did not open degrades to file browsing with a note, never a crash.
     public static func load(
         fileSystem: any GameFileSource,
-        esmURL: URL
-    ) -> (catalog: PreviewCatalog, localized: Bool) {
+        loadOrder: Result<LoadOrderPlugins, any Error>
+    ) -> PreviewCatalog {
         let files = fileSystem.archiveEntries()
-        do {
-            let file = try ESMFile(url: esmURL)
-            var records: [ESMRecord] = []
-            ESMWalk.forEachRecord(in: file) { record in
-                records.append(record)
-                return true
-            }
-            let localized = file.isLocalized
-            return (
-                PreviewCatalog(
-                    files: files,
-                    records: records,
-                    recordsLocalized: localized
-                ),
-                localized
-            )
-        } catch {
-            let note = "Skyrim.esm unavailable: \(String(describing: error))"
-            return (PreviewCatalog(files: files, records: [], notes: [note]), false)
+        switch loadOrder {
+        case let .success(plugins):
+            return PreviewCatalog(files: files, loadOrder: plugins)
+        case let .failure(error):
+            let note = "Plugins unavailable: \(String(describing: error))"
+            return PreviewCatalog(files: files, records: [], notes: [note])
         }
     }
 }

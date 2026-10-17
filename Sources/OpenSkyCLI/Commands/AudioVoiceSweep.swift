@@ -13,10 +13,6 @@ import OpenSkyGameData
 enum AudioVoiceSweep {
     /// Plugins that ship voice archives. Read in this order so the report is
     /// stable; each is skipped when the install does not carry it.
-    static let voicePlugins = [
-        "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm"
-    ]
-
     static func run(context: CLIContext, arguments: AudioArguments.VoiceSweep) throws {
         let limit = try arguments.limit.map {
             guard let value = Int($0), value > 0 else {
@@ -46,15 +42,8 @@ enum AudioVoiceSweep {
         // of the name for exactly those lines.
         var dialogueStores: [(name: String, store: DialogueStore)] = []
         var questStores: [String: QuestStore] = [:]
-        for pluginName in voicePlugins {
-            let url = context.root.dataURL.appending(path: pluginName)
-            let file: ESMFile
-            do {
-                file = try ESMFile(url: url)
-            } catch {
-                printError("[WARNING] skipped \(pluginName): \(error)")
-                continue
-            }
+        for plugin in try context.loadOrder().plugins.plugins {
+            let (pluginName, file) = (plugin.name, plugin.file)
             questStores[pluginName.lowercased()] = QuestStore(file: file, pluginName: pluginName)
             let dialogue = DialogueStore(file: file, pluginName: pluginName)
             if dialogue.infoCount > 0 {
