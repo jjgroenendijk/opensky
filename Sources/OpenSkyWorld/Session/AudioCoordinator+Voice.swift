@@ -52,23 +52,16 @@ extension AudioCoordinator {
     }
 
     /// Nil when the line played or waits for its file; else the reason.
-    public func playVoiceFile(named name: String) -> String? {
-        guard let engine, engine.isRunning else {
-            voice.lastError = "audio engine is not running"
-            return voice.lastError
-        }
-        guard let voiceFiles else {
-            voice.lastError = "no game data"
-            return voice.lastError
-        }
+    public func playVoiceFile(named name: String) -> AudioTriggerRefusal? {
+        guard let engine, engine.isRunning else { return refuseVoice(.engineNotRunning) }
+        guard let voiceFiles else { return refuseVoice(.noGameData) }
         voice.waitingPath = nil
         switch voiceFiles.state(of: name) {
         case .loading:
             voice.waitingPath = name
             return nil
         case let .failed(failure):
-            voice.lastError = failure.reason
-            return voice.lastError
+            return refuseVoice(.playFailed(reason: failure.reason))
         case let .ready(data):
             voiceFiles.evict { $0 == name }
             return playVoice(data, named: name, engine: engine)
@@ -83,7 +76,16 @@ extension AudioCoordinator {
         _ = playVoiceFile(named: name)
     }
 
-    private func playVoice(_ data: Data, named name: String, engine: WorldAudioEngine) -> String? {
+    private func refuseVoice(_ refusal: AudioTriggerRefusal) -> AudioTriggerRefusal {
+        voice.lastError = refusal.text
+        return refusal
+    }
+
+    private func playVoice(
+        _ data: Data,
+        named name: String,
+        engine: WorldAudioEngine
+    ) -> AudioTriggerRefusal? {
         do {
             let playback = try engine.playVoice(
                 fuzData: data,
@@ -98,8 +100,7 @@ extension AudioCoordinator {
             startLipSync(playback: playback, path: name)
             return nil
         } catch {
-            voice.lastError = String(describing: error)
-            return voice.lastError
+            return refuseVoice(.playFailed(reason: String(describing: error)))
         }
     }
 

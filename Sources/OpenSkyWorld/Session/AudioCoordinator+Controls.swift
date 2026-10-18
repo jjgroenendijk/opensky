@@ -88,9 +88,9 @@ extension AudioCoordinator: AudioControlProviding {
         musicDirector?.selectableMusicTypeNames ?? []
     }
 
-    public func forceMusicType(named name: String) -> String? {
-        guard let musicDirector else { return "audio is not enabled" }
-        return musicDirector.forcePlayMusicType(named: name)?.text
+    public func forceMusicType(named name: String) -> AudioTriggerRefusal? {
+        guard let musicDirector else { return .audioNotEnabled }
+        return musicDirector.forcePlayMusicType(named: name).map(AudioTriggerRefusal.music)
     }
 
     public func stopMusic() {
@@ -150,10 +150,10 @@ extension AudioCoordinator: AudioControlProviding {
         set { footstepDirector?.forcedMaterial = newValue }
     }
 
-    public func forcePlayFootstep(tag: String) -> String? {
-        guard let footstepDirector else { return "audio is not enabled" }
+    public func forcePlayFootstep(tag: String) -> AudioTriggerRefusal? {
+        guard let footstepDirector else { return .audioNotEnabled }
         guard let gait = world?.playerGait, let position = world?.playerFeetPosition else {
-            return "no renderer"
+            return .noRenderer
         }
         return footstepDirector.forcePlayFootstep(tag: tag, gait: gait, position: position)
     }

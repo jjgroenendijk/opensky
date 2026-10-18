@@ -3,6 +3,7 @@
 
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+import OpenSkyWorld
 
 @MainActor
 final class FakeFootstepControls {
@@ -29,11 +30,11 @@ final class FakeFootstepControls {
     /// Tags the Footsteps section forced, in order.
     private(set) var forcedFootstepTags: [String] = []
     /// Failure the next `forcePlayFootstep(tag:)` reports; nil means success.
-    var footstepForceFailure: String?
+    var footstepForceFailure: AudioTriggerRefusal?
 
     /// Mirrors the live bridge: a successful force names the file in the
     /// description the readout shows and moves both counters.
-    func forcePlayFootstep(tag: String) -> String? {
+    func forcePlayFootstep(tag: String) -> AudioTriggerRefusal? {
         forcedFootstepTags.append(tag)
         guard footstepForceFailure == nil else { return footstepForceFailure }
         lastFootstepDescription = "\(tag): sound\\fx\\fst\\step.wav"
@@ -89,7 +90,7 @@ extension FakeFootstepForwarding {
         set { footsteps.forcedFootstepMaterial = newValue }
     }
 
-    func forcePlayFootstep(tag: String) -> String? {
+    func forcePlayFootstep(tag: String) -> AudioTriggerRefusal? {
         footsteps.forcePlayFootstep(tag: tag)
     }
 }

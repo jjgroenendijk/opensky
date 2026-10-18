@@ -70,7 +70,7 @@ final class AudioSourcesSection: PanelSectionViewController {
 
     @objc private func playSelected() {
         guard let name = fileControl.titleOfSelectedItem else { return }
-        lastPlayError = provider?.playAudioFile(named: name)
+        lastPlayError = provider?.playAudioFile(named: name)?.text
         finishInteraction()
     }
 

@@ -260,10 +260,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// gate reads this to prove the trigger reached the provider.
     private(set) var playedAudioFileNames: [String] = []
     /// Failure the next `playAudioFile(named:)` reports; nil means success.
-    var audioPlayFailure: String?
+    var audioPlayFailure: AudioTriggerRefusal?
     /// Mirrors the live bridge: a successful trigger starts one positional
     /// effects source, which the next snapshot then lists.
-    func playAudioFile(named name: String) -> String? {
+    func playAudioFile(named name: String) -> AudioTriggerRefusal? {
         playedAudioFileNames.append(name)
         guard audioPlayFailure == nil else { return audioPlayFailure }
         audioStatsSnapshot = AudioStatsSnapshot(
@@ -319,10 +319,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// MUSC editor ids the Music section forced, in order.
     private(set) var forcedMusicTypeNames: [String] = []
     /// Failure the next `forceMusicType(named:)` reports; nil means success.
-    var musicForceFailure: String?
+    var musicForceFailure: AudioTriggerRefusal?
     /// Mirrors the live bridge: a successful force names the playlist in the
     /// description the readout shows.
-    func forceMusicType(named name: String) -> String? {
+    func forceMusicType(named name: String) -> AudioTriggerRefusal? {
         forcedMusicTypeNames.append(name)
         guard musicForceFailure == nil else { return musicForceFailure }
         currentMusicDescription = "\(name) — music\\\(name).xwm"

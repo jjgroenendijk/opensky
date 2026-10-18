@@ -5,6 +5,7 @@
 import AppKit
 @testable import OpenSkyActorPresentation
 import OpenSkyAudio
+import OpenSkyWorld
 
 @MainActor
 struct FakeVoiceState {
@@ -14,7 +15,7 @@ struct FakeVoiceState {
     /// Files the Voice section asked to play, in order.
     var playedNames: [String] = []
     /// Failure the next `playVoiceFile(named:)` reports; nil means success.
-    var playFailure: String?
+    var playFailure: AudioTriggerRefusal?
     var currentDescription: String?
     var playbackDescription = ""
     var lastError: String?
@@ -72,9 +73,9 @@ extension FakeWorldProviders {
         voice.playedNames
     }
 
-    func playVoiceFile(named name: String) -> String? {
+    func playVoiceFile(named name: String) -> AudioTriggerRefusal? {
         voice.playedNames.append(name)
-        voice.lastError = voice.playFailure
+        voice.lastError = voice.playFailure?.text
         guard voice.playFailure == nil else { return voice.playFailure }
         voice.currentDescription = name
         return nil
