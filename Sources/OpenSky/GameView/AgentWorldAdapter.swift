@@ -29,6 +29,7 @@ protocol AgentWorldHost: AnyObject {
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var agentControl: AgentControlCoordinator? { get }
+    var benchmarkWorld: BenchmarkWorldAdapter { get }
     var cameraInput: CameraInputState { get }
     var combat: CombatCoordinator { get }
     var containerMenuSnapshot: ContainerMenuControlSnapshot { get }

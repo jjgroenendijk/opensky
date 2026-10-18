@@ -287,6 +287,10 @@ public final class Renderer: NSObject {
     public let blackCube: MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
+    /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
+    public var passTimer: GPUPassTimer?
+    /// A Metal GPU trace of the next live frame (RendererFrameCapture.swift).
+    var frameCapture = FrameCaptureState.idle
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
     var windowCapture = WindowCaptureState.idle
     /// Shadow-pass culling/draw counts of the last encoded frame (see

@@ -38,7 +38,10 @@ The app opens on the launcher, not on the developer shell. The launcher holds:
     [texture streaming](/rendering/texture-streaming.md)
     ([graphics options](/engine/graphics-options.md)). It writes the player settings file,
     which the game reads when it starts.
-  - Diagnostics opens the logs folder, copies a system report, and runs the benchmark.
+  - Benchmark picks the tour length and runs the [benchmark tour](/tools/benchmark.md) in the
+    Play window, then shows the newest result as a chart and its summary.
+  - Diagnostics opens the logs folder, copies a system report with the newest benchmark result,
+    and opens the Benchmark page.
 
 The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
 `LaunchMode`, the remembered mode, and `GameFolderStatus`. The app only draws them.
@@ -95,7 +98,9 @@ without the load panel. The UI tests set it to
   live provider graph per destination before the user opened any. A Settings reload drops the cache,
   so panels rebuild against the new renderer. Full-content controllers are cached for good and
   reloaded in place.
-- The toolbar has the sidebar toggle, a flexible space, and the screenshot button. It has no
+- The toolbar has the sidebar toggle, a flexible space, the benchmark overlay and stop buttons, and
+  the screenshot button. The Play window has no toolbar; it gets one with only the two benchmark
+  buttons while a tour runs. The Developer toolbar has no
   `.sidebarTrackingSeparator`: that item pinned the toggle inside the sidebar region, so the button
   moved every time it was clicked. The toggle is a custom item so it can carry an accessibility id.
   Settings is the Cmd+, window, not a sidebar row.
@@ -271,10 +276,12 @@ Accessibility ids are the UI test API and never change silently.
 | Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
 | Launcher Asset Optimisation page | `AssetOptimisation<Thing>Control` and `AssetOptimisation<Thing>StatsLabel`, `AssetOptimisationProgressIndicator` |
 | Launcher Graphics page | `Graphics<Thing>Control`, `GraphicsOption<key>Control`, and `GraphicsStatsLabel` |
+| Launcher Benchmark page | `Benchmark<Thing>Control`, `BenchmarkPresetStatsLabel`, `BenchmarkResultStatsLabel`, `BenchmarkChart` |
 | Launcher Diagnostics page | `Diagnostics<Thing>Control` and `Diagnostics<Thing>StatsLabel` |
 | Launcher page details | `<Page>ShowDetailsControl`, `<Name>StatusStatsLabel` |
 | Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
-| Toolbar | `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
+| Benchmark overlay | `BenchmarkOverlay`, `BenchmarkOverlayLabel` |
+| Toolbar | `BenchmarkOverlayButton`, `BenchmarkStopButton`, `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
 | Frame HUD | `FrameHUDStatsLabel` |
 
 Some ids are built at run time, such as `Audio<Category>VolumeControl`. The ids are pinned as literal

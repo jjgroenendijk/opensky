@@ -46,6 +46,8 @@ extension AgentWorldAdapter {
             return try done(resurrect(reference))
         case let .overlay(name, enabled):
             return try done(setOverlay(name, enabled: enabled))
+        case let .benchmark(request):
+            return try benchmark(request)
         }
     }
 

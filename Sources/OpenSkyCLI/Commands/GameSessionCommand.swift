@@ -33,7 +33,7 @@ enum GameLaunch {
     }
 
     /// `--app`, then the app built beside this binary, then `/Applications`.
-    private static func locateApp(_ path: String?) throws -> URL {
+    static func locateApp(_ path: String?) throws -> URL {
         if let path {
             return URL(filePath: path)
         }

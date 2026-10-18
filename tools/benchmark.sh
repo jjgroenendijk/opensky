@@ -1,29 +1,29 @@
 #!/bin/sh
-# Runs the shared performance benchmark (openskycli benchmark) on the real
-# install, with its launch and route modes, and keeps its output
-# (docs/tools/benchmark.md).
+# Flies the benchmark tour in the Release app on the real install and keeps its
+# output (docs/tools/benchmark.md).
 #
-# Usage: tools/benchmark.sh CLI [ARGS...]
-#   CLI   the Release openskycli (make benchmark builds and passes it)
-#   ARGS  more benchmark options, such as --cold-pipelines
+# Usage: tools/benchmark.sh PRODUCTS [BENCHMARK_OPTION...]
+#   PRODUCTS          the Release products folder (make benchmark builds and passes it)
+#   BENCHMARK_OPTION  passed on, such as --preset quick or --set rendering.gpuCulling=off
 #
-# Writes .logs/benchmark/<UTC timestamp>/: benchmark.log, result.json, and
-# view.png, the measured view. The PNG embeds game assets, so it stays in .logs/.
+# Writes .logs/benchmark/<UTC timestamp>/: benchmark.log, result.json, and summary.txt.
 set -eu
 
 if [ "$#" -lt 1 ]; then
-    echo "[ERROR] usage: tools/benchmark.sh CLI [ARGS...]" >&2
+    echo "[ERROR] usage: tools/benchmark.sh PRODUCTS [BENCHMARK_OPTION...]" >&2
     exit 2
 fi
-cli="$1"
+products="$1"
 shift
+cli="$products/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] no openskycli at $cli" >&2; exit 2; }
+[ -d "$products/OpenSky.app" ] || { echo "[ERROR] no OpenSky.app in $products" >&2; exit 2; }
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 run_dir=$("$root/tools/run-dir.sh" benchmark)
 echo "[INFO] run directory: $run_dir"
 
 status=0
-"$cli" benchmark --launch --route "$@" --out "$run_dir/result.json" --frame "$run_dir/view.png" >"$run_dir/benchmark.log" 2>&1 || status=$?
-grep -E '^\[ ?(INFO|OK|WARNING|ERROR)' "$run_dir/benchmark.log" || true
+"$cli" benchmark --app "$products/OpenSky.app" --out "$run_dir" "$@" >"$run_dir/benchmark.log" 2>&1 || status=$?
+cat "$run_dir/benchmark.log"
 exit "$status"

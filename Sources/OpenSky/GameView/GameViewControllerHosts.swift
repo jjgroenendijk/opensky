@@ -8,6 +8,7 @@ extension GameViewController: @MainActor ActorWorldHost {}
 extension GameViewController: @MainActor AgentWorldHost {}
 extension GameViewController: @MainActor AnimationEventWorldHost {}
 extension GameViewController: @MainActor AudioWorldHost {}
+extension GameViewController: @MainActor BenchmarkWorldHost {}
 extension GameViewController: @MainActor CinematicCameraWorldHost {}
 extension GameViewController: @MainActor CombatWorldHost {}
 extension GameViewController: @MainActor ContainerMenuHost {}

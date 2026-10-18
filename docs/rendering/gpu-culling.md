@@ -62,6 +62,7 @@ CPU path's count plus the GPU path's count. The GPU part is a few frames old.
 instances drawn and culled for the camera and for all cascades together. With the switch on,
 the CPU counts cover only the groups that stay on the CPU.
 
-`make benchmark` measures the GPU path, and `make benchmark ARGS=--cpu-culling` the CPU path.
-The `encodeTime` field of the result holds the CPU time of the shadow and scene pass encoding
+`make benchmark` measures the GPU path, and `make benchmark ARGS='--set rendering.gpuCulling=off'`
+the CPU path. The `encode` entry of each scene's `cpu` field holds the CPU time of the shadow and
+scene pass encoding
 ([benchmark](/tools/benchmark.md)).

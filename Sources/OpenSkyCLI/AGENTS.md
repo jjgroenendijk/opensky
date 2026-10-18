@@ -6,7 +6,8 @@ resolution order and exit codes: `docs/tools/cli.md`.
 ## What it is
 
 Terminal probes over the engine against a real install: `vfs ls|cat`, `record`, `cell`,
-`nif`, `dds`, `screenshot --out [--zoom]` (`render` alias), `bench` (sustained-fps gate).
+`nif`, `dds`, `screenshot --out [--zoom]` (`render` alias). `benchmark` opens the app and
+flies the benchmark tour in its window.
 It runs the same engine code the app runs, so a CLI failure reproduces the renderer's
 behavior. `game ...` is different: it drives the running app over its agent control
 socket. Load the `driving-the-running-game` skill before using it.

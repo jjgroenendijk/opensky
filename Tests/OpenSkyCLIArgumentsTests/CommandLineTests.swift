@@ -63,21 +63,29 @@ struct CommandLineTests {
         #expect(preview.yaw == "-30")
     }
 
-    @Test func benchKeepsItsBudgetAndCacheOptionNames() throws {
-        let bench = try command(
+    @Test func benchmarkTakesAPresetScenesAndRepeatedSettings() throws {
+        let benchmark = try command(
             [
-                "bench", "--fly-path", "--footprint-cap-mb", "900", "--budget-ms", "20",
-                "--asset-cache", "--texture-quality", "low", "--fast-load", "--no-lod-prebuild"
+                "benchmark", "--preset", "quick", "--scenes", "whiterun,dragonsreach",
+                "--set", "rendering.renderScale=1", "--set", "rendering.gpuCulling=off",
+                "--no-overlay", "--capture", "whiterun", "--no-load-passes", "--keep-open",
+                "--evict", "--out", "/tmp/run"
             ],
-            as: BenchArguments.self
+            as: BenchmarkArguments.self
         )
-        #expect(bench.flyPath)
-        #expect(bench.budgets.footprintCapMb == "900")
-        #expect(bench.budgetMs == "20")
-        #expect(bench.assets.assetCache)
-        #expect(bench.assets.fastLoad)
-        #expect(bench.assets.cache.textureQuality == "low")
-        #expect(bench.noLodPrebuild)
+        #expect(benchmark.preset == "quick")
+        #expect(benchmark.scenes == "whiterun,dragonsreach")
+        #expect(benchmark.settings == ["rendering.renderScale=1", "rendering.gpuCulling=off"])
+        #expect(benchmark.noOverlay && benchmark.noLoadPasses && benchmark.keepOpen && benchmark
+            .evict)
+        #expect(benchmark.capture == "whiterun")
+        #expect(benchmark.out == "/tmp/run")
+        #expect(try command(["benchmark", "--list"], as: BenchmarkArguments.self).list)
+    }
+
+    @Test func theOldBenchCommandsAreGone() {
+        #expect(exitCode(["bench"]) == OpenSkyCommandLine.usageExitCode)
+        #expect(exitCode(["launch-bench"]) == OpenSkyCommandLine.usageExitCode)
     }
 
     @Test func assetOptimisationKeepsTheOldNameAsAnAlias() throws {
@@ -95,11 +103,6 @@ struct CommandLineTests {
         #expect(build.options.settings.textureQuality == "medium")
         #expect(build.options.settings.maxTextureSide == "2048")
         _ = try command(["asset-cache", "status"], as: AssetCacheArguments.Status.self)
-        let load = try command(
-            ["bench", "--asset-optimisation", "--direct-load", "--direct-mesh-load"],
-            as: BenchArguments.self
-        )
-        #expect(load.assets.assetCache && load.assets.fastLoad && load.assets.fastMeshLoad)
     }
 
     @Test func graphicsPresetNamesThePreset() throws {
@@ -166,7 +169,7 @@ struct CommandLineTests {
         #expect(exitCode(["no-such-command"]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["vfs", "cat", "a.nif"]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["--help"]) == 0)
-        #expect(exitCode(["help", "bench"]) == 0)
+        #expect(exitCode(["help", "benchmark"]) == 0)
         #expect(exitCode([]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["swf"]) == OpenSkyCommandLine.usageExitCode)
     }

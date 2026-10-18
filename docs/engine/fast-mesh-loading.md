@@ -48,7 +48,7 @@ not read the GPU blocks or the model.
 
 The setting `assetOptimisation.directLoad.meshes` is off by default. It is the Meshes switch
 under "Direct GPU loading" on the launcher's Asset Optimisation page, and in World > Asset
-Optimisation. `openskycli benchmark --asset-optimisation --direct-load --direct-mesh-load`
+Optimisation. `make benchmark ARGS='--set assetOptimisation.directLoad.meshes=on'`
 measures it.
 
 ## Measured

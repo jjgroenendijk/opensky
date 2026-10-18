@@ -226,5 +226,5 @@ discovered = rendered + disabled + failed
 
 `disabled` is an ACHR with the "initially disabled" flag. `failed` is a malformed record, a
 broken chain, or an actor with no geometry. Every failure has a reason string
-(`ACHR <id>: <why>`), and `failed` must equal the number of reasons. `bench --fly-path`
-checks both rules ([CLI](/tools/cli.md), [cell streaming](/engine/cell-streaming.md)).
+(`ACHR <id>: <why>`), and `failed` must equal the number of reasons. The fly-path gate,
+`FlyPathGateRealDataTests`, checks both rules ([benchmark](/tools/benchmark.md), [cell streaming](/engine/cell-streaming.md)).

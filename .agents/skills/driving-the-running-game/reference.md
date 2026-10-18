@@ -79,6 +79,16 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 
+## Benchmark
+
+| Command | What it does |
+| --- | --- |
+| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--overlay on\|off] [--load-passes on\|off] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
+| `benchmark --stop on` | Stops a running tour; the scenes measured so far are kept |
+
+The tour takes over the camera, the clock, and the HUD until it ends
+(`docs/tools/benchmark.md`).
+
 ## Events
 
 `events` lists the ring buffer. `events --follow [--filter a,b] [--timeout <s>]` streams.

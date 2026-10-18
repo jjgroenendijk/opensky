@@ -5,6 +5,7 @@ import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
+import OpenSkyWorld
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {
@@ -13,6 +14,8 @@ protocol LauncherActions: AnyObject {
     func continueGame(slot: String)
     func cancelLoad()
     func gameFolderDidChange()
+    /// Opens the Play window and runs the benchmark tour in it.
+    func runBenchmark(_ request: BenchmarkRequest)
 }
 
 struct LaunchModeDescriptor {
@@ -100,10 +103,16 @@ enum LauncherRegistry {
             }
         ),
         LauncherPageDescriptor(
+            id: "benchmark",
+            title: "Benchmark",
+            symbolName: "speedometer",
+            makeController: { BenchmarkPageViewController(context: $0) }
+        ),
+        LauncherPageDescriptor(
             id: "diagnostics",
             title: "Diagnostics",
             symbolName: "stethoscope",
-            makeController: { _ in DiagnosticsPageViewController() }
+            makeController: { DiagnosticsPageViewController(context: $0) }
         ),
         LauncherPageDescriptor(
             id: "settings",

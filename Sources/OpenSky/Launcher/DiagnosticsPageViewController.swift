@@ -1,5 +1,5 @@
 // The launcher's Diagnostics page: what a problem report needs. It writes the
-// logs to a folder, copies a system report, and runs the shared benchmark.
+// logs to a folder and copies a system report with the newest benchmark result.
 
 import AppKit
 import Metal
@@ -13,10 +13,21 @@ final class DiagnosticsPageViewController: NSViewController {
     lazy var logsLabel = layout.line("DiagnosticsLogsStatsLabel")
     let copyButton = LauncherButton(title: "Copy System Report", target: nil, action: nil)
     let reportLabel = LauncherText(labelWithString: "")
-    let benchmarkButton = LauncherButton(title: "Run Benchmark", target: nil, action: nil)
+    let benchmarkButton = LauncherButton(title: "Open Benchmark", target: nil, action: nil)
     lazy var benchmarkLabel = layout.line("DiagnosticsBenchmarkStatsLabel")
     private(set) var report = DiagnosticsPageViewController.currentReport()
     private var installCheck: Task<Void, Never>?
+    private let context: LauncherContext
+
+    init(context: LauncherContext) {
+        self.context = context
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
 
     static func currentReport() -> SystemReport {
         let info = ProcessInfo.processInfo
@@ -35,19 +46,29 @@ final class DiagnosticsPageViewController: NSViewController {
         view = layout.makeView(title: "Diagnostics", groups: [
             layout.group("Logs", [logsLabel, layout.buttons([logsButton])]),
             layout.group("System report", [reportLabel, layout.buttons([copyButton])]),
-            layout.group("Benchmark", [
-                benchmarkLabel, layout.buttons([benchmarkButton]),
-                layout
-                    .detail(layout
-                        .note("The same run as openskycli benchmark, with the saved settings"))
-            ])
+            layout.group("Benchmark", [benchmarkLabel, layout.buttons([benchmarkButton])])
         ])
         refreshReport()
     }
 
     override func viewWillAppear() {
         super.viewWillAppear()
+        refreshBenchmark()
         checkInstall()
+    }
+
+    /// The report carries the newest tour's frame time, so a problem report shows it.
+    private func refreshBenchmark() {
+        guard let frame = BenchmarkReport.latestRun()?.result.frameTime else {
+            report.benchmark = nil
+            benchmarkLabel.stringValue = "Benchmark: not run"
+            refreshReport()
+            return
+        }
+        let benchmark = SystemReportBenchmark(averageMS: frame.averageMS, worstMS: frame.worstMS)
+        report.benchmark = benchmark
+        benchmarkLabel.stringValue = "Benchmark: \(benchmark.line)"
+        refreshReport()
     }
 
     private func configureControls() {
@@ -66,9 +87,9 @@ final class DiagnosticsPageViewController: NSViewController {
             ),
             (
                 benchmarkButton,
-                #selector(runBenchmark),
+                #selector(openBenchmark),
                 "DiagnosticsBenchmarkControl",
-                "Load and draw the fixed benchmark scene; takes about a minute"
+                "Go to the Benchmark page to run the tour"
             )
         ]
         for (button, action, identifier, toolTip) in buttons {
@@ -81,7 +102,6 @@ final class DiagnosticsPageViewController: NSViewController {
             button.toolTip = toolTip
         }
         logsLabel.stringValue = "Logs: not written yet"
-        benchmarkLabel.stringValue = "Benchmark: not run"
         reportLabel.font = PanelMetrics.monoFont
         reportLabel.textColor = LauncherStyle.textDim
         reportLabel.maximumNumberOfLines = 0
@@ -126,33 +146,7 @@ final class DiagnosticsPageViewController: NSViewController {
         NSPasteboard.general.setString(report.text, forType: .string)
     }
 
-    /// The benchmark renders on the main actor, so the page shows "Running" first.
-    @objc private func runBenchmark() {
-        guard
-            let root = try? GameDataLocator.locate(),
-            let device = MTLCreateSystemDefaultDevice()
-        else {
-            benchmarkLabel.stringValue = "Benchmark: no game folder or no GPU"
-            return
-        }
-        benchmarkButton.isEnabled = false
-        benchmarkLabel.stringValue = "Benchmark: running, the window waits until it ends"
-        Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(100))
-            let line: String
-            do {
-                let result = try StandardBenchmark.run(root: root, device: device)
-                let frame = SystemReportBenchmark(
-                    averageMS: result.frameTime.averageMS, worstMS: result.frameTime.worstMS
-                )
-                self?.report.benchmark = frame
-                line = "Benchmark: \(frame.line)"
-            } catch {
-                line = "Benchmark: failed, \(error.localizedDescription)"
-            }
-            self?.benchmarkLabel.stringValue = line
-            self?.benchmarkButton.isEnabled = true
-            self?.refreshReport()
-        }
+    @objc private func openBenchmark() {
+        context.showPage("benchmark")
     }
 }

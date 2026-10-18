@@ -6,6 +6,7 @@ import AppKit
 import MetalKit
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyWorld
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let gameContext = GameLaunchContext()
@@ -16,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var shellViewController: AppShellViewController?
     private var settingsController: SettingsWindowController?
     private var agentControl: AgentControlHost?
+    private let benchmarkHost = BenchmarkRunHost()
 
     /// The running mode, or nil while the launcher is up.
     private(set) var activeMode: LaunchMode?
@@ -29,8 +31,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         NSApplication.shared.mainMenu = MainMenu.make(target: self)
         agentControl = AgentControlHost()
+        benchmarkHost.onLauncherRunFinished = { [weak self] in
+            self?.launcher?.showPage(id: "benchmark")
+        }
 
-        if let mode = LaunchPreferences.forcedMode() {
+        if benchmarkHost.readLaunchArguments() {
+            begin(.play, atTitleScreen: false, showingLauncher: false)
+        } else if let mode = LaunchPreferences.forcedMode() {
             begin(
                 mode,
                 atTitleScreen: LaunchPreferences.forcedTitleScreen(),
@@ -149,6 +156,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pauseRendering(modeWindow?.contentViewController as? GameViewController)
             modeWindow?.contentViewController = game
         }
+        if let modeWindow {
+            benchmarkHost.attach(
+                game: game,
+                window: modeWindow,
+                shellItems: shellViewController?.benchmarkItems
+            )
+        }
     }
 }
 
@@ -179,6 +193,13 @@ extension AppDelegate: LauncherActions {
         launcher?.endLoad()
     }
 
+    func runBenchmark(_ request: BenchmarkRequest) {
+        benchmarkHost.queueLauncherRun(request)
+        pendingStart = .normal
+        pendingContinueSlot = nil
+        begin(.play, atTitleScreen: false)
+    }
+
     /// A forced mode skips the launcher, so its load shows no panel.
     private func begin(_ mode: LaunchMode, atTitleScreen: Bool, showingLauncher: Bool = true) {
         guard GameFolderStatus().canStart(mode) else {
@@ -187,6 +208,7 @@ extension AppDelegate: LauncherActions {
         }
         LaunchPreferences.remember(mode)
         gameContext.resolve()
+        gameContext.benchmarkLoadPhases = benchmarkHost.loadPhasesForNextLoad()
         if showingLauncher {
             showLauncher()
         }
@@ -214,6 +236,16 @@ extension AppDelegate: LauncherActions {
         window.delegate = self
         modeWindow = window
         activeMode = mode
+        if
+            let game = shellViewController?.gameViewController ?? window
+                .contentViewController as? GameViewController
+        {
+            benchmarkHost.attach(
+                game: game,
+                window: window,
+                shellItems: shellViewController?.benchmarkItems
+            )
+        }
         window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
         if

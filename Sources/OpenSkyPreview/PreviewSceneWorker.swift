@@ -51,10 +51,10 @@ nonisolated public final class PreviewSceneWorker: Sendable {
 
     private func makeBuilder() throws -> PreviewSceneBuilder {
         let files = VirtualFileSystem(root: root)
-        let builder = try StandardBenchmark.makeBuilder(
+        let builder = try ColdCellBuilder.makeBuilder(
             loadOrder: ActiveLoadOrder.open(root: root), files: files, device: device,
             recorder: nil,
-            terrainLOD: StandardBenchmark.terrainLODStore(root: root, settings: settings)
+            terrainLOD: ColdCellBuilder.terrainLODStore(root: root, settings: settings)
         )
         return PreviewSceneBuilder(builder: builder)
     }

@@ -62,7 +62,6 @@ nonisolated public final class AssetCacheReader: Sendable {
         var kinds: Set<AssetCacheKind>
         var counts: [AssetCacheKind: AssetCacheReadCounts] = [:]
         var rebuild: Set<AssetCacheRebuildItem> = []
-        var requested: Set<String> = []
     }
 
     private let state: Mutex<State>
@@ -98,11 +97,6 @@ nonisolated public final class AssetCacheReader: Sendable {
 
     public func counts(for kind: AssetCacheKind) -> AssetCacheReadCounts {
         state.withLock { $0.counts[kind] ?? AssetCacheReadCounts() }
-    }
-
-    /// Every path a lookup asked for, so a benchmark can build the cache for just its own assets.
-    public var requestedPaths: Set<String> {
-        state.withLock { $0.requested }
     }
 
     /// The counts of every kind read so far.
@@ -159,7 +153,6 @@ nonisolated public final class AssetCacheReader: Sendable {
             ($0.isEnabled && $0.kinds.contains(decoder.kind), $0.textureOutput)
         }
         guard enabled, let source = stamp(forPath: path) else { return nil }
-        state.withLock { _ = $0.requested.insert(source.path) }
         let request = AssetCacheRequest(
             kind: decoder.kind, source: source, converterVersion: decoder.converterVersion,
             output: decoder.kind == .texture ? output.variant(forPath: source.path) : 0

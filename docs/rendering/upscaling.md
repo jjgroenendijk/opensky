@@ -90,10 +90,6 @@ scaler inside a frame:
 A change of render scale, scaler, frame interpolation, or window size starts a new build, and
 the frame draws at full size until it lands. A stuck service leaves the game at full size.
 
-The benchmark and other offscreen loops render many frames without giving the main actor a
-turn, so the background task could not finish there. They call `buildUpscalerNow`, which builds
-on the calling thread before the loop starts.
-
 ## History resets
 
 The scaler forgets its history when the scene swaps, the output size changes, the render
@@ -116,5 +112,5 @@ of the old view.
 `Developer > Rendering Performance > Upscaling` has the render scale (`RenderScaleControl`)
 and the scaler (`UpscalerControl`), and a readout (`UpscalingStatsLabel`): the input and
 output sizes, the history resets, and whether the scaler is still being built.
-`make benchmark ARGS='--render-scale 67'` measures the GPU time against a native run, and
-`--upscaler spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).
+`make benchmark ARGS='--set rendering.renderScale=67%'` measures the GPU time against a native
+run, and `--set rendering.upscaler=spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).

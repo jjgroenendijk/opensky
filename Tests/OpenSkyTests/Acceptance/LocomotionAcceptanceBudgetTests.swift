@@ -103,10 +103,10 @@ struct LocomotionAcceptanceBudgetTests {
         )
     }
 
-    /// The shipping fly-path budgets, matching `openskycli bench --fly-path`'s
-    /// own defaults, spelled the way `InventoryAcceptanceBudgetTests` and
-    /// `QuestAcceptanceBudgetTests` spell them because they are private to the
-    /// command.
+    /// The shipping fly-path budgets, matching the defaults of
+    /// `FlyPathGateRealDataTests`, spelled the way `InventoryAcceptanceBudgetTests` and
+    /// `QuestAcceptanceBudgetTests` spell them because they are private to that
+    /// test.
     private static func configuration() -> CellStreamingFlyBenchmarkConfiguration {
         CellStreamingFlyBenchmarkConfiguration(
             start: CellCoordinate(x: 0, y: 0),

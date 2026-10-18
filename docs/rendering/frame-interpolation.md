@@ -94,5 +94,5 @@ page has the same switch (`GraphicsFrameInterpolationControl`).
 `openskycli game state frame` reports the same numbers under `interpolation`
 (`frameGapMS`, `longestFrameGapMS`, `hitches`), so the lag and the pacing can be measured
 from a script.
-`make benchmark ARGS='--render-scale 100 --frame-interpolation'` measures the GPU time of
-both frames ([benchmark](/tools/benchmark.md)).
+`make benchmark ARGS='--set rendering.renderScale=100% --set rendering.frameInterpolation=on'`
+measures the GPU time of both frames ([benchmark](/tools/benchmark.md)).

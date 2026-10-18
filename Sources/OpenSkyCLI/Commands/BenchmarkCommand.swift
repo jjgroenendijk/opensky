@@ -1,220 +1,108 @@
-// `benchmark`: the shared performance benchmark on the real install. Prints a
-// summary and writes the stable JSON result (docs/tools/benchmark.md).
+// `benchmark`: opens OpenSky.app with a tour request, waits for it to quit,
+// then prints the summary from its result.json (docs/tools/benchmark.md).
 
-import Darwin
 import Foundation
-import Metal
-import MetalKit
-import OpenSkyCells
+import OpenSkyAssetCache
 import OpenSkyCLIArguments
 import OpenSkyGameData
-import OpenSkyLoading
-import OpenSkyRendering
 import OpenSkyWorld
 
 enum BenchmarkCommand {
-    private struct Options {
-        let outPath: String?
-        let framePath: String?
-        let plan: PerformanceBenchmarkPlan
-        let launch: BenchmarkLaunchRequest?
-        let route: Bool
-        let coldPipelines: Bool
-        let gpuCulling: Bool
-        let textureStreaming: Bool
-        let textureBudgetMB: Int?
-        let renderScale: RenderScale
-        let upscaler: UpscalerKind
-        let frameInterpolation: Bool
-        let meshShaderGrass: Bool
-
-        init(arguments: BenchmarkArguments) throws {
-            outPath = arguments.out
-            framePath = arguments.frame
-            let standard = PerformanceBenchmarkPlan.standard
-            let size = try arguments.size.map { try RenderCommand.parseSize($0) }
-                ?? (width: standard.frameWidth, height: standard.frameHeight)
-            plan = standard.resized(width: size.width, height: size.height)
-            let seconds = try arguments.launchSeconds.map(Self.seconds)
-            if arguments.launch || seconds != nil {
-                launch = try BenchmarkLaunchRequest(
-                    processStart: Self.processStart(), seconds: seconds ?? 60
-                )
-            } else {
-                launch = nil
-            }
-            route = arguments.route
-            coldPipelines = arguments.coldPipelines
-            gpuCulling = !arguments.cpuCulling
-            textureBudgetMB = try arguments.textureBudget.map(Self.mebibytes)
-            textureStreaming = arguments.textureStreaming || textureBudgetMB != nil
-            renderScale = try arguments.renderScale.map(Self.renderScale) ?? .off
-            upscaler = try arguments.upscaler.map(Self.upscaler) ?? .temporal
-            frameInterpolation = arguments.frameInterpolation
-            meshShaderGrass = arguments.meshShaderGrass
-        }
-
-        func apply(to renderer: Renderer) {
-            renderer.gpuCullingEnabled = gpuCulling
-            renderer.textureStreaming.enabled = textureStreaming
-            if let textureBudgetMB {
-                renderer.textureStreaming.budgetBytes = textureBudgetMB << 20
-            }
-            renderer.renderScale = renderScale
-            renderer.upscaler = upscaler
-            renderer.frameInterpolationEnabled = frameInterpolation
-            renderer.meshShaderGrassEnabled = meshShaderGrass
-        }
-
-        /// The view loads on the main actor, so the library reads levels again inline.
-        func attachStreaming(textures: TextureLibrary, to renderer: Renderer) {
-            guard textureStreaming else { return }
-            textures.streaming = renderer.textureStreaming.mailbox
-            renderer.textureStreaming.reader = InlineTextureLevelReader(library: textures)
-        }
-
-        private static func mebibytes(_ value: String) throws -> Int {
-            guard let mebibytes = Int(value), mebibytes > 0 else {
-                throw CLIError.usage("--texture-budget expects a MiB count, got \(value)")
-            }
-            return mebibytes
-        }
-
-        private static func upscaler(_ value: String) throws -> UpscalerKind {
-            switch value {
-            case "temporal": .temporal
-            case "spatial": .spatial
-            default: throw CLIError.usage("--upscaler expects temporal or spatial, got \(value)")
-            }
-        }
-
-        private static func renderScale(_ value: String) throws -> RenderScale {
-            guard let percent = Int(value), (50 ... 100).contains(percent) else {
-                throw CLIError
-                    .usage("--render-scale expects a percent from 50 to 100, got \(value)")
-            }
-            return RenderScale(percent: percent)
-        }
-
-        private static func seconds(_ value: String) throws -> Double {
-            guard let seconds = Double(value), seconds > 0 else {
-                throw CLIError.usage("--launch-seconds expects a positive number, got \(value)")
-            }
-            return seconds
-        }
-
-        /// The kernel's record of when this process started.
-        private static func processStart() throws -> Date {
-            var info = kinfo_proc()
-            var size = MemoryLayout<kinfo_proc>.stride
-            var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-            guard sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0) == 0 else {
-                throw CLIError.failure("sysctl could not read the process start time")
-            }
-            let started = info.kp_proc.p_starttime
-            return Date(
-                timeIntervalSince1970: Double(started.tv_sec) + Double(started.tv_usec) / 1e6
-            )
-        }
-    }
-
     static func run(context: CLIContext, arguments: BenchmarkArguments) throws {
-        let options = try Options(arguments: arguments)
-        let assets = try AssetLoadOptions(arguments: arguments.assets, context: context)
+        let request = try makeRequest(arguments)
+        guard let out = request.outDirectory else { return }
+        let folder = URL(filePath: out, directoryHint: .isDirectory)
+        if arguments.evict {
+            let evicted = PageCacheEviction.evict(folders: [context.root.dataURL])
+            print("[INFO] evicted \(evicted >> 20) MiB from the page cache")
+        }
+        let started = Date()
+        try openApp(GameLaunch.locateApp(arguments.app), request: request, context: context)
+        let resultURL = folder.appending(path: BenchmarkReport.resultFile)
         guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
+            let data = try? Data(contentsOf: resultURL),
+            let result = try? BenchmarkTourResult.decode(json: data),
+            result.startedAt >= started.addingTimeInterval(-1)
         else {
-            throw CLIError.failure("no Metal 4 GPU available")
+            throw CLIError
+                .failure("the app wrote no result to \(resultURL.path(percentEncoded: false))")
         }
-        let plan = options.plan
-        let setupStart = DispatchTime.now().uptimeNanoseconds
-        let gameSession = try makeSession(
-            device: device, plan: plan, coldPipelines: options.coldPipelines
-        )
-        let renderer = gameSession.renderer
-        let setupMS = Double(DispatchTime.now().uptimeNanoseconds - setupStart) / 1e6
-        options.apply(to: renderer)
-        var fastLoader: FastTextureLoader?
-        var result = try PerformanceBenchmark.run(
-            plan: plan,
-            machine: .current(gpu: device.name),
-            gameSession: gameSession,
-            launch: options.launch
-        ) { recorder in
-            let builder = try RenderCommand.makeBuilder(
-                context: context, device: device, recorder: recorder, assets: assets
-            )
-            fastLoader = builder.textures.fastLoader
-            options.attachStreaming(textures: builder.textures, to: renderer)
-            return builder
+        BenchmarkReport.lines(for: result).forEach { print($0) }
+        print("[INFO] result: \(folder.path(percentEncoded: false))")
+        let failed = result.scenes.filter { $0.status == .failed }
+        guard failed.isEmpty else {
+            throw CLIError
+                .failure("\(failed.count) scene(s) failed: " + failed.map(\.id)
+                    .joined(separator: ", "))
         }
-        result.pipelines = BenchmarkPipelines(
-            rendererSetupMS: setupMS, stats: renderer.pipelineCache.stats
-        )
-        if let framePath = options.framePath {
-            try writeView(renderer: renderer, plan: plan, to: framePath)
+        print(result
+            .stopped ? "[WARNING] the tour was stopped early" : "[ OK ] benchmark tour finished")
+    }
+
+    /// Checks every option here, so a typo fails before the app opens.
+    static func makeRequest(_ arguments: BenchmarkArguments) throws -> BenchmarkRequest {
+        var request = BenchmarkRequest()
+        if let preset = arguments.preset {
+            guard let parsed = BenchmarkPreset(rawValue: preset.lowercased()) else {
+                throw CLIError.usage("--preset must be quick, standard, or full")
+            }
+            request.preset = parsed
         }
-        if options.textureStreaming {
-            result.textureStreaming = BenchmarkTextureStreaming(
-                stats: renderer.textureStreaming.stats
-            )
+        if let scenes = arguments.scenes {
+            request.sceneIDs = scenes.split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
         }
-        if options.route {
-            result.route = try runRoute(
-                gameSession: gameSession, plan: plan,
-                builder: RenderCommand.makeBuilder(context: context, device: device, assets: assets)
-            )
+        request.overlay = !arguments.noOverlay
+        request.captureScene = arguments.capture
+        request.loadPasses = !arguments.noLoadPasses
+        request.quitWhenDone = !arguments.keepOpen
+        do throws(BenchmarkRequestError) {
+            for pair in arguments.settings {
+                let (id, value) = try BenchmarkRequest.parseSetting(pair)
+                request.settings[id] = value
+            }
+            let scenes = try request.scenes()
+            if let capture = arguments.capture, !scenes.contains(where: { $0.id == capture }) {
+                throw BenchmarkRequestError.unknownScene(capture)
+            }
+            _ = try request.settingOverrides()
+        } catch {
+            throw CLIError.usage(error.description)
         }
-        report(result)
-        try assets.report(fastLoader: fastLoader)
-        if let outPath = options.outPath {
-            let url = URL(fileURLWithPath: outPath)
-            try result.jsonData().write(to: url)
-            print("[INFO] wrote result -> \(url.path(percentEncoded: false))")
+        let folder = arguments.out.map { URL(filePath: $0, directoryHint: .isDirectory) }
+            ?? BenchmarkReport.defaultFolder(startedAt: Date())
+        request.outDirectory = folder.standardizedFileURL.path(percentEncoded: false)
+        return request
+    }
+
+    /// `open -W` waits until the app quits after the tour.
+    private static func openApp(_ app: URL, request: BenchmarkRequest, context: CLIContext) throws {
+        var arguments = [
+            "-W", "-n", app.path(percentEncoded: false),
+            "--env", "OPENSKY_DATA_ROOT=\(context.root.installURL.path(percentEncoded: false))"
+        ]
+        if request.captureScene != nil {
+            arguments += ["--env", "MTL_CAPTURE_ENABLED=1"]
         }
-        guard result.isComparable else {
-            throw CLIError.failure("a cell failed to build; this result does not compare")
+        arguments += ["--args", BenchmarkRequest.appRequestArgument, request.encodedJSON]
+        print("[INFO] opening \(app.lastPathComponent); the tour runs in its window")
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/open")
+        process.arguments = arguments
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            throw CLIError.failure("open failed with status \(process.terminationStatus)")
         }
     }
 
-    /// The walk route. Its cell build worker reads streamed texture levels again.
-    private static func runRoute(
-        gameSession: GameSession, plan: PerformanceBenchmarkPlan, builder: CellSceneBuilder
-    ) throws -> BenchmarkRoute {
-        try PerformanceBenchmarkRoute.run(
-            gameSession: gameSession,
-            provider: BuilderCellSceneProvider(
-                builder: builder,
-                worldspaceEditorID: plan.worldspace
-            ),
-            worldspace: plan.worldspace,
-            plan: plan
-        )
-    }
-
-    /// A session over a paused offscreen renderer; the view only carries the pixel formats.
-    /// Its pipelines use the cache the settings ask for; `coldPipelines` clears it first.
-    private static func makeSession(
-        device: MTLDevice,
-        plan: PerformanceBenchmarkPlan,
-        coldPipelines: Bool
-    ) throws -> GameSession {
-        let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
-        if coldPipelines, let folder = PipelineCache.archiveFolder(store: store) {
-            try PipelineCacheFolder.clear(folder: folder)
+    static func printScenes() {
+        for scene in BenchmarkTour.scenes {
+            let presets = BenchmarkPreset.allCases.filter { preset in
+                preset.scenes().contains { $0.id == scene.id }
+            }.map(\.rawValue).joined(separator: ",")
+            print([scene.id, scene.group.rawValue, scene.shot.kind, scene.place.label, presets]
+                .joined(separator: "\t"))
         }
-        return try StandardBenchmark.makeSession(device: device, plan: plan, store: store)
-    }
-
-    private static func writeView(
-        renderer: Renderer,
-        plan: PerformanceBenchmarkPlan,
-        to path: String
-    ) throws {
-        let texture = try renderer.renderOffscreen(width: plan.frameWidth, height: plan.frameHeight)
-        let url = URL(fileURLWithPath: path)
-        try FrameScreenshot.write(texture: texture, to: url)
-        print("[INFO] wrote benchmark view -> \(url.path(percentEncoded: false))")
     }
 }

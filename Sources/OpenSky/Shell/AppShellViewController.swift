@@ -11,6 +11,7 @@ final class AppShellViewController: NSSplitViewController {
     private let content: ShellContentViewController
     private let screenshotCoordinator = ScreenshotCoordinator()
     private let screenshotButton = NSButton(title: "Screenshot…", target: nil, action: nil)
+    let benchmarkItems = BenchmarkToolbarItems()
 
     /// Lazily built full-content controllers, cached by destination id.
     private var fullContentControllers: [String: NSViewController] = [:]
@@ -30,6 +31,7 @@ final class AppShellViewController: NSSplitViewController {
         content = ShellContentViewController(gameViewController: gameViewController)
         self.fullContentContext = fullContentContext
         super.init(nibName: nil, bundle: nil)
+        benchmarkItems.benchmark = gameViewController.benchmarkWorld
     }
 
     @available(*, unavailable)
@@ -100,6 +102,7 @@ final class AppShellViewController: NSSplitViewController {
     func reload(gameViewController: GameViewController, fullContentContext: FullContentContext) {
         self.fullContentContext = fullContentContext
         content.replaceGame(with: gameViewController)
+        benchmarkItems.benchmark = gameViewController.benchmarkWorld
         for controller in fullContentControllers.values {
             (controller as? any FullContentReloadable)?
                 .reloadFullContent(context: fullContentContext)
@@ -217,7 +220,10 @@ extension AppShellViewController: NSToolbarDelegate {
     /// the sidebar collapsed. Laying the toolbar out left-to-right from a fixed
     /// origin keeps the toggle put in both states (docs/tools/app-ui.md).
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [ToolbarItemID.sidebarToggle, .flexibleSpace, ToolbarItemID.screenshot]
+        [
+            ToolbarItemID.sidebarToggle, .flexibleSpace, BenchmarkToolbarItems.overlayID,
+            BenchmarkToolbarItems.stopID, ToolbarItemID.screenshot
+        ]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -231,6 +237,9 @@ extension AppShellViewController: NSToolbarDelegate {
     ) -> NSToolbarItem? {
         if itemIdentifier == ToolbarItemID.sidebarToggle {
             return makeSidebarToggleItem(identifier: itemIdentifier)
+        }
+        if let item = benchmarkItems.item(for: itemIdentifier) {
+            return item
         }
         guard itemIdentifier == ToolbarItemID.screenshot else { return nil }
         screenshotButton.bezelStyle = .toolbar

@@ -113,12 +113,17 @@ if it survived. `launchd` starts a new one on the next run.
 
 Retires when a fresh daemon stops going stale over days.
 
+Observed again 2026-10-18 with a different sign: with a one-day-old daemon, `make test-real T=...`
+built and then ran 0 tests, an existing real-data suite included, with no error. The daemon is
+shared with other sessions, so check for other running tests before killing it.
+
 ## xctrace --launch never starts the process
 
 Observed 2026-10-01 on xctrace 27.0. `xcrun xctrace record --template 'Time Profiler' --launch --
 openskycli ...` printed "Launching process" and then waited for more than ten minutes. The CLI sat
 at 0% CPU with about 90 KB resident, so it never ran its first line. Starting the CLI first and
-attaching with `--attach <pid>` recorded normally, and `tools/profile.sh` does that
+attaching with `--attach <pid>` recorded normally. `tools/profile.sh` lets `openskycli benchmark`
+open the app, then attaches to the app's process
 ([profiling](/testing.md#profiling)).
 
 Retires when a `--launch` recording of the CLI runs to completion.

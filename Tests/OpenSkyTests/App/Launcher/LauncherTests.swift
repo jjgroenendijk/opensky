@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkySave
+import OpenSkyWorld
 import Testing
 
 @MainActor
@@ -18,6 +19,7 @@ struct LauncherTests {
         var continued: [String] = []
         var folderChanges = 0
         var cancels = 0
+        var benchmarks: [BenchmarkRequest] = []
 
         func start(_ mode: LaunchMode) {
             started.append(mode)
@@ -34,6 +36,10 @@ struct LauncherTests {
         func cancelLoad() {
             cancels += 1
         }
+
+        func runBenchmark(_ request: BenchmarkRequest) {
+            benchmarks.append(request)
+        }
     }
 
     @Test func registryIdsArePinned() {
@@ -43,7 +49,7 @@ struct LauncherTests {
         #expect(LauncherRegistry.modes.map(\.mode) == LaunchMode.allCases)
         #expect(LauncherRegistry.pages.map(\.sidebarIdentifier) == [
             "LauncherPage-launch", "LauncherPage-assetOptimisation", "LauncherPage-graphics",
-            "LauncherPage-diagnostics", "LauncherPage-settings"
+            "LauncherPage-benchmark", "LauncherPage-diagnostics", "LauncherPage-settings"
         ])
         #expect(LauncherRegistry.modes.allSatisfy { !$0.summary.isEmpty })
         #expect(LauncherRegistry.page(id: LauncherRegistry.defaultPageID) != nil)
@@ -60,6 +66,25 @@ struct LauncherTests {
         #expect(launcher.currentPageID == "diagnostics")
         launcher.showPage(id: "launch")
         #expect(launcher.currentPageID == "launch")
+    }
+
+    @Test func benchmarkPageRunsTheChosenPresetWithItsOptions() throws {
+        let actions = RecordingActions()
+        let page = BenchmarkPageViewController(context: LauncherContext(actions: actions))
+        page.loadViewIfNeeded()
+        try page.presetControl
+            .selectItem(at: #require(BenchmarkPreset.allCases.firstIndex(of: .quick)))
+        page.overlayControl.state = .off
+        page.loadPassesControl.state = .off
+        let run = try #require(button("BenchmarkRunControl", in: page.view))
+        run.performClick(nil)
+        let request = try #require(actions.benchmarks.first)
+        #expect(request.preset == .quick)
+        #expect(!request.overlay)
+        #expect(!request.loadPasses)
+        #expect(page.presetControl.accessibilityIdentifier() == "BenchmarkPresetControl")
+        #expect(page.overlayControl.accessibilityIdentifier() == "BenchmarkOverlayControl")
+        #expect(page.resultLabel.accessibilityIdentifier() == "BenchmarkResultStatsLabel")
     }
 
     @Test func modeButtonsFollowTheGameFolder() throws {

@@ -116,6 +116,10 @@ enum GameCommand {
         if request.command == "debug.teleport" {
             return 180
         }
+        if request.command == "benchmark" {
+            // The full tour takes about half an hour; each scene may wait minutes to arrive.
+            return 7200
+        }
         return GameCommandOptions.defaultTimeout
     }
 

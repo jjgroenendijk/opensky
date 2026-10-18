@@ -244,23 +244,14 @@ enum RenderCommand {
     /// Reusing one instance across multiple `buildScene` calls (the
     /// `--neighbors` grid) shares the STAT index and dedups mesh/texture
     /// residency across cells — `--neighbors` calls this once, `buildScene`
-    /// calls it once per invocation. A `recorder` gets every file read and asset phase.
+    /// calls it once per invocation.
     static func makeBuilder(
         context: CLIContext,
-        device: MTLDevice,
-        recorder: LoadPhaseRecorder? = nil,
-        assets: AssetLoadOptions? = nil
+        device: MTLDevice
     ) throws -> CellSceneBuilder {
-        let vfs = context.makeFileSystem()
-        var files: any GameFileSource = vfs
-        if let looseFolder = assets?.looseFolder {
-            files = FolderOverlayFileSource(base: vfs, folder: looseFolder)
-        }
-        let builder = try StandardBenchmark.makeBuilder(
-            root: context.root, loadOrder: context.loadOrder(), files: files, device: device,
-            recorder: recorder
+        try ColdCellBuilder.makeBuilder(
+            root: context.root, loadOrder: context.loadOrder(), files: context.makeFileSystem(),
+            device: device, recorder: nil
         )
-        try assets?.configure(builder, device: device)
-        return builder
     }
 }

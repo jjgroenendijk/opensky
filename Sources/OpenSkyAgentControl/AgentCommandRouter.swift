@@ -111,6 +111,8 @@ public final class AgentCommandRouter {
             return try .done(.success(world.query(.parse(name, args))))
         case "debug":
             return try world.perform(.parse(name, args))
+        case "benchmark":
+            return try world.perform(.benchmark(.parse(args)))
         case "events":
             return try events(args, now: now)
         default:

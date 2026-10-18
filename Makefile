@@ -550,22 +550,24 @@ ck-wiki: ## Download or update the offline Creation Kit wiki in Markdown [ARGS='
 coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last `test-unit COVERAGE=1` run
 	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
 
-profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
+profile: link-shared ## Record a Time Profiler trace of the Release app's benchmark tour [ARGS=...]
+	@$(MAKE) --no-print-directory build-app CONFIG=Release
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
-	@./tools/profile.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(or $(MODE),walk) $(ARGS)
+	@./tools/profile.sh "$(DERIVED_DATA)/Build/Products/Release" $(ARGS)
 
-benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI [ARGS=...]
+benchmark: link-shared ## Fly the benchmark tour in the Release app [PRESET=quick|standard|full] [ARGS=...]
+	@$(MAKE) --no-print-directory build-app CONFIG=Release
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
-	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(ARGS)
+	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release" --preset $(or $(PRESET),standard) $(ARGS)
 
 gaps: link-shared ## Rank what the install uses and the engine does not do yet [ONLY=papyrus,perks,...] [LIMIT=n]
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
 	@./tools/gaps.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(if $(ONLY),--only $(ONLY),) $(if $(LIMIT),--limit $(LIMIT),)
 
-asset-cache-bench: link-shared ## Measure the asset cache on the benchmark block [CACHE=<dir>] [EXTERNAL=<dir>]
-	@test -n "$(CACHE)" || { echo "[ERROR] usage: make asset-cache-bench CACHE=<dir outside the repo> [EXTERNAL=<dir>]" >&2; exit 2; }
+asset-cache-bench: link-shared ## Compare the quick tour from the originals, the optimised files, and direct loading
+	@$(MAKE) --no-print-directory build-app CONFIG=Release
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
-	@./tools/asset-cache-bench.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" "$(CACHE)" $(EXTERNAL)
+	@./tools/asset-cache-bench.sh "$(DERIVED_DATA)/Build/Products/Release"
 
 launch-sample: ## Sample the installed app's main thread through its first minute [SECONDS=60]
 	@./tools/launch-sample.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" \

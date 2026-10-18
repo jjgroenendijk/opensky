@@ -4,6 +4,37 @@ import OpenSkyAgentControl
 import Testing
 
 struct AgentCommandLineTests {
+    @Test func benchmarkTakesAPresetAndItsOptions() throws {
+        let request = try AgentCommandLine.request(
+            [
+                "benchmark",
+                "quick",
+                "--scenes",
+                "whiterun,riften",
+                "--overlay",
+                "off",
+                "--set",
+                "a=1,b=on"
+            ]
+        )
+        #expect(request.command == "benchmark")
+        let parsed = try AgentBenchmarkRequest.parse(AgentArguments(
+            command: request.command,
+            values: request.args
+        ))
+        #expect(parsed.preset == "quick")
+        #expect(parsed.scenes == ["whiterun", "riften"])
+        #expect(!parsed.overlay)
+        #expect(parsed.settings == ["a=1", "b=on"])
+        #expect(parsed.loadPasses && !parsed.stop)
+        #expect(throws: AgentFailure.self) {
+            try AgentBenchmarkRequest.parse(AgentArguments(
+                command: "benchmark",
+                values: ["out": "relative"]
+            ))
+        }
+    }
+
     @Test func groupedCommandsTakePositionalsAndOptions() throws {
         let request = try AgentCommandLine.request(["input", "hold", "forward", "--frames", "60"])
         #expect(request.command == "input.hold")

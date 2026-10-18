@@ -113,7 +113,7 @@ struct QuestAcceptanceBudgetTests {
 
     /// The shipping fly-path budgets over a frame whose script time is the
     /// quest work: it passes in budget and refuses an over-budget run. Same
-    /// validator and config as `openskycli bench --fly-path`.
+    /// validator and config as `FlyPathGateRealDataTests`.
     @Test
     func questDrivenFramesStayWithinTheShippingUpdateBudgets() throws {
         let inBudget = OffscreenBenchResult(
@@ -179,9 +179,9 @@ struct QuestAcceptanceBudgetTests {
         )
     }
 
-    /// The shipping fly-path budgets, matching `openskycli bench --fly-path`'s
-    /// own defaults, spelled the way `InventoryAcceptanceBudgetTests` spells them
-    /// because they are private to the command.
+    /// The shipping fly-path budgets, matching the defaults of
+    /// `FlyPathGateRealDataTests`, spelled the way `InventoryAcceptanceBudgetTests` spells them
+    /// because they are private to that test.
     private static func configuration() -> CellStreamingFlyBenchmarkConfiguration {
         CellStreamingFlyBenchmarkConfiguration(
             start: CellCoordinate(x: 0, y: 0),

@@ -3,7 +3,7 @@ type: Subsystem
 title: Cascaded sun shadows
 description: The depth-only cascade pre-pass - cascade fitting and texel snapping, the clamp to
   resident casters, per-cascade caster culling, the hazard barrier, PCF sampling of the sun term
-  only, quality levels, and the fly-bench budget.
+  only, quality levels, and the fly-path budget.
 tags: [rendering, metal, shadows, engine]
 ---
 
@@ -87,12 +87,12 @@ back on keeps the chosen quality.
 the shadow draw calls, drawn and culled instances, cascades, and the CPU time of the shadow pass. The
 quality is saved in user defaults, and a bad or missing value means high.
 
-## Fly-bench budget
+## Fly-path budget
 
-`openskycli bench --fly-path` holds both the average and the 95th percentile shadow pass time to
-`--shadow-budget-ms`, 14 ms by default. That is below half of a 30 frames per second frame (33.33 ms)
-with some room over measured Whiterun runs. The report prints the shadow update time and the culling
-counts ([CLI](/tools/cli.md)).
+The fly-path streaming gate (`FlyPathGateRealDataTests`, `make test-real PERF=1`) holds both the
+average and the 95th percentile shadow pass time to 14 ms. That is below half of a 30 frames per
+second frame (33.33 ms) with some room over measured Whiterun runs. The benchmark tour reports the
+`shadows` pass per scene ([benchmark](/tools/benchmark.md)).
 
 ## Not done
 

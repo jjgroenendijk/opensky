@@ -71,17 +71,13 @@ expect_usage() {
   printf '[ OK ] %s\n' "$step"
 }
 
-# Path-specific benchmark flags must fail during option parsing, before the CLI
-# opens or renders game data.
-expect_usage "walk path rejects sustained frame count" \
-  "--frames is not supported with --walk-path" \
-  bench --walk-path --frames 1
-expect_usage "walk path rejects fly footprint cap" \
-  "--footprint-cap-mb is not supported with --walk-path" \
-  bench --walk-path --footprint-cap-mb 1
-expect_usage "walk path rejects fly collision budget" \
-  "--collision-build-budget-ms is not supported with --walk-path" \
-  bench --walk-path --collision-build-budget-ms 1
+# The benchmark tour checks its options before it opens the app.
+expect_usage "benchmark rejects an unknown preset" \
+  "--preset must be quick, standard, or full" \
+  benchmark --preset longest
+expect_usage "benchmark rejects an unknown setting" \
+  "no.such.setting" \
+  benchmark --set no.such.setting=on
 
 # Agent control offline paths (docs/tools/agent-control.md): an unknown game
 # command is a usage error, and no server at the socket is notRunning, exit 1.
@@ -425,13 +421,6 @@ awk '/^--- interior door round trip/{f=1;next} /^--- /{f=0} f' "$log" \
   || fail "interior probe reported no animated actors"
 echo "[ OK ] interior actors drawn + animated"
 
-# World data load: every stage reports a time, and the wall time is printed.
-run "world data load stages" launch-bench
-launch="$(awk '/^--- world data load stages/{f=1;next} /^--- /{f=0} f' "$log")"
-printf '%s\n' "$launch" | grep -q '^stage items [0-9.]* s$' \
-  || fail "launch-bench did not time the items stage"
-printf '%s\n' "$launch" | grep '^total ' || fail "launch-bench printed no total"
-
 # Asset cache: a collision build of 20 meshes into a temporary folder outside the
 # repo, then a check that counts every built entry as current.
 cache_dir="$(mktemp -d)/AssetCache"
@@ -451,83 +440,9 @@ grep -qE '^animation[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" 
 rm -rf "$(dirname "$cache_dir")"
 echo "[ OK ] asset cache build + check + measure"
 
-# Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
-# command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
-run "sustained bench (360 frames @ 1280x720)" bench
-grep 'frames @' "$log" | tail -1
 
-# M3.2/M7.6 streaming gate: deterministic east + north crossings. Shared engine
-# verifier requires three settled 5x5 grids, eviction, 35 unique builds with
-# no duplicates, physical-footprint plateau, and avg/p95 under 30 fps budget.
-# M5.5 adds actor-enabled gates: actor-build p95 budget + exact per-cell
-# accounting (discovered = rendered + disabled + failed). M7.6 requires selected
-# rainy weather plus live animation, world particles, precipitation, shadows, and grass.
-run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
-grep 'unique builds' "$log" | tail -1
-grep 'collision build:' "$log" | tail -1
-grep 'actor build:' "$log" | tail -1
-grep '^\[INFO\] actors:' "$log" | tail -1 | grep -q 'discovered' \
-  || fail "fly bench reported no actor accounting"
-grep 'animation update:' "$log" | tail -1
-grep 'rendered actors:' "$log" | tail -1 | grep -q '[1-9][0-9]* animated' \
-  || fail "fly bench reported no animated actors"
-living_line="$(grep 'living environment:' "$log" | tail -1)"
-printf '%s\n' "$living_line" | grep -q 'weather .*; [1-9][0-9]* animated bones' \
-  || fail "fly bench reported no selected weather or animated bones"
-printf '%s\n' "$living_line" | grep -q '[1-9][0-9]* live particles in [1-9][0-9]* systems' \
-  || fail "fly bench reported no live world particles"
-printf '%s\n' "$living_line" | grep -q '[1-9][0-9]* live rain' \
-  || fail "fly bench reported no live precipitation"
-
-# M7.1.2 sun-shadow gate: per-frame shadow-update budget line + per-cascade
-# caster-culling accounting (some casters culled during the flight).
-grep 'shadow update:' "$log" | tail -1
-grep 'shadow culling:' "$log" | tail -1 | grep -q '[1-9][0-9]* culled' \
-  || fail "fly bench reported no shadow caster culling"
-
-# M9.2.4 audio gate: per-frame audio-update budget line. The engine gate throws
-# when avg or p95 exceeds the budget, so reaching here means it held.
-grep 'audio update:' "$log" | tail -1 \
-  || fail "fly bench reported no audio update budget line"
-
-# M7.5.2 grass gate: fly path must render batched grass without exhausting
-# the hard per-frame instance budget.
-grass_line="$(grep 'grass instancing:' "$log" | tail -1)"
-printf '%s\n' "$grass_line" | grep -q '[1-9][0-9]*/[1-9][0-9]* drawn' \
-  || fail "fly bench rendered no grass"
-printf '%s\n' "$grass_line" | grep -q '0 budget-dropped' \
-  || fail "fly bench exceeded grass instance budget"
-
-# M5.6 acceptance: one accounting line per touched cell (35 = three settled
-# 5x5 grids). The engine gate already throws on inexact accounting or a
-# reason-less failure; this proves the per-cell report surfaced. Failure
-# lines carry their reasons -> echo them for the acceptance record.
-fly_cells="$(sed -n '/^--- cross-cell streaming bench/,$p' "$log" \
-  | grep -c ') actors: ' || true)"
-[ "$fly_cells" -eq 35 ] \
-  || fail "fly bench reported $fly_cells per-cell actor lines, expected 35"
-echo "[ OK ] per-cell actor accounting (35 cells)"
-explained="$(sed -n '/^--- cross-cell streaming bench/,$p' "$log" \
-  | grep ') actors: ' | grep -v ' 0 failed' || true)"
-if [ -n "$explained" ]; then
-  echo "[INFO] explained actor failures:"
-  printf '%s\n' "$explained"
-fi
-
-# M4.5 route gate: fixed-step production physics from first-render cell to
-# Chillfurrow Farm, interior floor crossing, then paired exterior return.
-walk_png="$log_dir/probe-walk-path.png"
-run "walk/collision route bench (640x360)" bench --walk-path --size 640x360 \
-  --out "$walk_png"
-[ -s "$walk_png" ] || fail "walk-path bench wrote no PNG"
-grep 'active physics frames @' "$log" | tail -1
-grep 'audio update:' "$log" | tail -1 \
-  || fail "walk bench reported no audio update budget line"
-# M31.2 shared benchmark: cold + warm load of the fixed cells, then frame time.
-# The command exits 1 when a cell fails to build, so the result compares.
-benchmark_json="$log_dir/probe-benchmark.json"
-run "shared performance benchmark" benchmark --out "$benchmark_json"
-[ -s "$benchmark_json" ] || fail "benchmark wrote no JSON result"
-grep 'cold phases:' "$log" | tail -1
-grep 'frame time over' "$log" | tail -1
+# The benchmark tour lists its scenes without opening the app.
+run "benchmark scene list" benchmark --list
+awk '/^--- benchmark scene list/{f=1;next} /^--- /{f=0} f' "$log" | grep -q 'quick' \
+  || fail "benchmark --list showed no quick scene"
 echo "[INFO] probe passed — full output in $log"

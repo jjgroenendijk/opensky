@@ -6,6 +6,8 @@ import Foundation
 /// Steps that run after the camera advances, with the camera position.
 public enum FrameStep: Int, FramePhase {
     case menuRouting
+    /// Places the benchmark camera before anything reads the view.
+    case benchmark
     /// May call `setScene` before this frame encodes.
     case streaming
     case messages

@@ -194,21 +194,13 @@ extension PreviewArguments: CLIRunnable {
     }
 }
 
-extension BenchArguments: CLIRunnable {
-    func execute() throws {
-        try BenchCommand.run(context: context(), arguments: self)
-    }
-}
-
 extension BenchmarkArguments: CLIRunnable {
     func execute() throws {
+        if list {
+            BenchmarkCommand.printScenes()
+            return
+        }
         try BenchmarkCommand.run(context: context(), arguments: self)
-    }
-}
-
-extension LaunchBenchArguments: CLIRunnable {
-    func execute() async throws {
-        try await LaunchBenchCommand.run(context: context())
     }
 }
 

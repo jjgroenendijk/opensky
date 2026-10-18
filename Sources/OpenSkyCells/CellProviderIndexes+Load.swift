@@ -36,7 +36,8 @@ nonisolated extension CellProviderIndexes {
         terrainLODConfigurationStore: TerrainLODConfigurationStore,
         progress: WorldLoadProgress = .silent,
         assetCache: AssetCacheReader? = nil,
-        fastLoad: FastTextureLoadControl? = nil
+        fastLoad: FastTextureLoadControl? = nil,
+        loadPhases: LoadPhaseRecorder? = nil
     ) async throws -> sending CellSession {
         let file = try progress.measure(.masterFile) {
             try ActiveLoadOrder.openBaseFile(root: root)
@@ -62,7 +63,8 @@ nonisolated extension CellProviderIndexes {
             try makeRunner(
                 plugins: context,
                 assets: RunnerAssets(
-                    fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad
+                    fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad,
+                    loadPhases: loadPhases
                 ),
                 localizationLanguage: localizationLanguage,
                 terrainLODConfigurationStore: terrainLODConfigurationStore
@@ -109,6 +111,8 @@ nonisolated extension CellProviderIndexes {
         let cache: AssetCacheReader?
         /// Nil, or no cache, loads every texture on the CPU.
         let fastLoad: FastTextureLoadControl?
+        /// Times the streamer's builds by asset phase, for the benchmark's arrivals.
+        let loadPhases: LoadPhaseRecorder?
     }
 
     /// Hands the new builder straight to the runner, so no other code holds it.
@@ -118,7 +122,9 @@ nonisolated extension CellProviderIndexes {
         localizationLanguage: String,
         terrainLODConfigurationStore: TerrainLODConfigurationStore
     ) throws -> BuiltRunner {
-        let fileSystem = assets.fileSystem
+        let fileSystem: any GameFileSource = assets.loadPhases
+            .map { PhaseTimedFileSource(base: assets.fileSystem, recorder: $0) } ?? assets
+            .fileSystem
         let textures = try TextureLibrary(fileSystem: fileSystem, device: assets.device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: assets.device, textures: textures)
         textures.assetCache = assets.cache
@@ -137,6 +143,7 @@ nonisolated extension CellProviderIndexes {
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
         builder.collisionModels?.assetCache = assets.cache
+        builder.loadPhases = assets.loadPhases
         let formIDResolver = builder.formIDResolver
         let placedRecords = builder.placedRecords
         let lodPrebuild = builder.distantLODBuilder?.prebuild(

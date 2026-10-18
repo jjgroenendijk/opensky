@@ -17,7 +17,7 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 
 ## Prefer openskycli when it already covers the question
 
-`vfs ls|cat`, `record`, `cell`, `nif`, `dds`, `preview`, `render`, `bench` cover most lookups:
+`vfs ls|cat`, `record`, `cell`, `nif`, `dds`, `preview`, `render`, `benchmark` cover most lookups:
 `make run-cli ARGS="record --type LAND ..."` beats writing a probe. A probe that recurs
 across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`;
 `Sources/OpenSkyCLI/Commands/GMSTCommand.swift` is a small model).

@@ -185,11 +185,11 @@ response wins. The same probe crosses from terrain to a mesh stair.
 A door or the first scene placement resets the whole controller state before the next step. Moving
 bodies collide through the same query ([dynamic bodies](/engine/dynamic-bodies.md)).
 
-## The walk route benchmark
+## The walk route gate
 
-`openskycli bench --walk-path` runs a fixed route. Fixed 1/30 s input frames drive 1/120 s steps
-from Tamriel cell `(6,-2)` across streamed terrain to Chillfurrow Farm `(7,-3)`, around fixed
-waypoints, with small fixed sidesteps when a small static blocks progress. It requires:
+`WalkPathGateRealDataTests` (`make test-real PERF=1`) runs a fixed route. Fixed 1/30 s input frames
+drive 1/120 s steps from Tamriel cell `(6,-2)` across streamed terrain to Chillfurrow Farm `(7,-3)`,
+around fixed waypoints, with small fixed sidesteps when a small static blocks progress. It requires:
 
 - grounded travel with no penetration or fall-through on any active frame;
 - at least 16 units of climb on the outside stair before door `0001633D`;
@@ -197,4 +197,4 @@ waypoints, with small fixed sidesteps when a small static blocks progress. It re
   through the paired door `000163A8` to cell `(7,-3)` and the saved return pose;
 - a mean physics frame time of at most 33.33 ms (30 fps) in every build. The p95 limit is 33.33 ms
   in Release and two intervals (66.67 ms) in Debug, because the offscreen loop carries Debug
-  runtime and scheduler noise. A given `--budget-ms` applies strictly to both.
+  runtime and scheduler noise.

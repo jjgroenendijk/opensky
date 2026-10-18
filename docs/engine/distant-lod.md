@@ -72,13 +72,12 @@ are moved to their south-west corner. Object blocks (`.bto`) are already in worl
 
 ### Start time
 
-Measured with `openskycli bench --fly-path --evict` on a Release build, game data and cache on
-the same external USB SSD (2026-10-08, `.logs/lod-prebuild/20261008T060617Z`). The first ring
-takes about 0.9 s cold and now finishes within about 1.1 s of the start, long before the near
-grid. But both builds read from the same disk, so the near grid gets slower by almost the same
-time. "Start area ready" went from 6.2 s to 6.1 s with the asset cache, and stayed at about
-6.7 s from the archives. Background priority made it worse: its throttled reads finished the
-ring last.
+Measured with the fly-path gate after a page cache eviction, on a Release build, game data and cache
+on the same external USB SSD (2026-10-08, `.logs/lod-prebuild/20261008T060617Z`). The first ring
+takes about 0.9 s cold and now finishes within about 1.1 s of the start, long before the near grid.
+But both builds read from the same disk, so the near grid gets slower by almost the same time.
+"Start area ready" went from 6.2 s to 6.1 s with the asset cache, and stayed at about 6.7 s from the
+archives. Background priority made it worse: its throttled reads finished the ring last.
 
 ## Tree LOD
 
