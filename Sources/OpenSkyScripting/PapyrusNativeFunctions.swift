@@ -52,6 +52,7 @@ public enum PapyrusNativeFunctions {
         installConditionTwins(into: &registry)
         installLineOfSight(into: &registry)
         installTrackedStats(into: &registry)
+        installSleep(into: &registry)
         installStateChanges(into: &registry)
         installWorldReads(into: &registry)
         installFindReferences(into: &registry)

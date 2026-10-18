@@ -52,3 +52,11 @@ Registrations are not saved.
 
 The wiki notes that some tracked stats do not send the event in the game. Which ones is not
 documented, so OpenSky sends it for all of them.
+
+## Sleep
+
+`RegisterForSleep()` asks for `OnSleepStart(afSleepStartTime, afDesiredSleepEndTime)` when the
+player sleeps in a bed, and `OnSleepStop(abInterrupted)` when the player wakes (Creation Kit
+wiki "OnSleepStart - Form", <https://ck.uesp.net/wiki/OnSleepStart_-_Form>). The times are in
+game days passed. OpenSky passes the hours at once, so both events queue together and sleep
+is never interrupted. Waiting sends neither event. Registrations are not saved.

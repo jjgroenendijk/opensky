@@ -124,6 +124,8 @@ public final class PapyrusWorldRuntime {
     public var lineOfSight = LineOfSightWatch()
     /// Instances that called `RegisterForTrackedStatsEvent`.
     public var trackedStatListeners: Set<PapyrusInstanceKey> = []
+    /// Instances that called `RegisterForSleep`.
+    public var sleepListeners: Set<PapyrusInstanceKey> = []
     /// Master-list resolver from the latest attach, so an event argument naming a
     /// base record (`OnHit`'s `akSource`) becomes world identity. Nil until the
     /// first attach. One resolver per session.
