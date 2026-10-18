@@ -24,7 +24,8 @@ extension SceneRuntime {
         let isNew: Bool
         var events: [SceneEvent] = []
         private var ended = false
-        var evaluator: ConditionEvaluator
+        /// Built on the first condition, because most ticks of a waiting scene test none.
+        private var builtEvaluator: ConditionEvaluator?
 
         init(runtime: SceneRuntime, entry: CatalogScene, state: SceneRuntimeState, isNew: Bool) {
             self.runtime = runtime
@@ -32,14 +33,25 @@ extension SceneRuntime {
             self.isNew = isNew
             self.entry = entry
             self.state = state
-            var context = runtime.dialogue.context
-            context.subject = .player
-            context.target = nil
-            context.aliasQuest = entry.quest
-            context.formIDTranslation = entry.translation
-            evaluator = ConditionEvaluator(
-                context: context, registry: runtime.dialogue.registry, tally: ConditionTally()
-            )
+        }
+
+        var evaluator: ConditionEvaluator {
+            mutating get {
+                if let builtEvaluator {
+                    return builtEvaluator
+                }
+                var context = runtime.dialogue.context
+                context.subject = .player
+                context.target = nil
+                context.aliasQuest = entry.quest
+                context.formIDTranslation = entry.translation
+                let evaluator = ConditionEvaluator(
+                    context: context, registry: runtime.dialogue.registry, tally: ConditionTally()
+                )
+                builtEvaluator = evaluator
+                return evaluator
+            }
+            set { builtEvaluator = newValue }
         }
 
         var scene: Scene {

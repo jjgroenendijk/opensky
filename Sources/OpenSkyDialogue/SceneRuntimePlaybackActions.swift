@@ -56,7 +56,7 @@ extension SceneRuntime.Playback {
         guard let alias = dialogue.headtrackAliasID, alias >= 0, let quest = entry.quest else {
             return nil
         }
-        return evaluator.context.aliases.reference(alias: UInt32(alias), in: quest)
+        return runtime.dialogue.aliases.reference(alias: UInt32(alias), in: quest)
     }
 
     private mutating func say(
@@ -109,7 +109,7 @@ extension SceneRuntime.Playback {
         guard let alias = action.aliasID, alias >= 0, let quest = entry.quest else {
             return nil
         }
-        return evaluator.context.aliases.reference(alias: UInt32(alias), in: quest)
+        return runtime.dialogue.aliases.reference(alias: UInt32(alias), in: quest)
     }
 
     private mutating func run(_ index: UInt32, duration: Float?) {

@@ -313,9 +313,16 @@ public final class PackageCoordinator {
         clock: GameClock
     ) {
         guard let world else { return }
+        // The loop changes only this local runtime, so every actor reads one context.
+        var shared: ConditionContext?
         for actor in registeredActors.keys.sorted() {
             runtime.setAliasStack(stacks[actor], actor: actor, clock: clock) {
-                world.packageConditionContext(clock: clock)
+                if let shared {
+                    return shared
+                }
+                let live = world.packageConditionContext(clock: clock)
+                shared = live
+                return live
             }
         }
     }

@@ -109,6 +109,10 @@ extension IdleWorldAdapter: IdleWorld {
         return context
     }
 
+    var idleStateSequence: UInt64 {
+        game.worldState.nextJournalSequence
+    }
+
     func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {
         game.actorPlayback(for: actor)
     }
