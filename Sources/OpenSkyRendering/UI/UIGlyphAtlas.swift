@@ -87,6 +87,8 @@ nonisolated public final class UIGlyphAtlas {
     public var packFailures = 0
     /// Atlas texels occupied by packed glyph cells (the white block excluded).
     public var usedTexels = 0
+    /// Shaped HUD text, kept across frames beside the glyphs it uses.
+    public let layouts = UITextLayoutCache()
 
     /// Internal, not private: the packing extension lives in another file so
     /// this type stays inside the strict-lint type-body limit.
