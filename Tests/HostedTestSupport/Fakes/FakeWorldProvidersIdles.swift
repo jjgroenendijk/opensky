@@ -1,8 +1,9 @@
 // IdleControlProviding and HeadAssemblyControlProviding part of the shared panel fake.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 
 /// One "Play idle" request a section sent.
 struct FiredIdle {

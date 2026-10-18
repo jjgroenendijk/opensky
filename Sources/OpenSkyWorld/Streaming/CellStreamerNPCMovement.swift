@@ -1,9 +1,13 @@
 // Cell-streamer integration for NPC locomotion. Navigation,
 // collision, terrain, triggers, and residency already meet here.
 
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyNavigation
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 

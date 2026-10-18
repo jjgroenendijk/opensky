@@ -11,7 +11,6 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
-import OpenSkyWorld
 
 enum SWFRenderSweep {
     /// Fixed animation time: the demo scene is identical across renders, so

@@ -2,7 +2,10 @@
 // seams onto the streamer, and answers `DialogueWorld` from the session
 // systems. The rules live in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDiagnostics
@@ -15,13 +18,16 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

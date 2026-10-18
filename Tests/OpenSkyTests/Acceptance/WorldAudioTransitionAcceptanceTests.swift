@@ -5,13 +5,16 @@
 
 import Foundation
 @testable import OpenSkyAudio
+@testable import OpenSkyCells
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

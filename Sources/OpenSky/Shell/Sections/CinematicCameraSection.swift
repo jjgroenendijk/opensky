@@ -2,7 +2,7 @@
 // turn kill cams off, shake the camera, and see which camera paths pass.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyCamera
 
 final class CinematicCameraSection: PanelSectionViewController {
     weak var provider: (any CinematicCameraControlProviding)? {

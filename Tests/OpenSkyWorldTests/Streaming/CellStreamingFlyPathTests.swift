@@ -4,6 +4,7 @@
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import Testing
 

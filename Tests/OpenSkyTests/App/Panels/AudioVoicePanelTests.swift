@@ -4,10 +4,10 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
 import Testing
 
 struct AudioVoicePanelTests {

@@ -5,7 +5,7 @@
 import AppKit
 import OpenSkyAssetCache
 import OpenSkyGameData
-import OpenSkyWorld
+import OpenSkyLoading
 
 final class AssetOptimisationPageViewController: NSViewController {
     let coordinator: AssetCacheCoordinator

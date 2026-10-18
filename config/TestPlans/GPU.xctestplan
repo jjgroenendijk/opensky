@@ -260,445 +260,238 @@
   "testTargets" : [
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:OpenSky.xcodeproj",
-        "identifier" : "5A3BAE183000109300177F95",
-        "name" : "OpenSkyTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:OpenSky.xcodeproj", "identifier" : "5A3BAE183000109300177F95", "name" : "OpenSkyTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsCoreTests",
-        "name" : "OpenSkyFormatsCoreTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsCoreTests", "name" : "OpenSkyFormatsCoreTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsESMTests",
-        "name" : "OpenSkyFormatsESMTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsESMTests", "name" : "OpenSkyFormatsESMTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsMeshTests",
-        "name" : "OpenSkyFormatsMeshTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsMeshTests", "name" : "OpenSkyFormatsMeshTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsAnimationTests",
-        "name" : "OpenSkyFormatsAnimationTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsAnimationTests", "name" : "OpenSkyFormatsAnimationTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsAudioTests",
-        "name" : "OpenSkyFormatsAudioTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsAudioTests", "name" : "OpenSkyFormatsAudioTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsPEXTests",
-        "name" : "OpenSkyFormatsPEXTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsPEXTests", "name" : "OpenSkyFormatsPEXTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsSWFTests",
-        "name" : "OpenSkyFormatsSWFTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsSWFTests", "name" : "OpenSkyFormatsSWFTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFormatsESSTests",
-        "name" : "OpenSkyFormatsESSTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFormatsESSTests", "name" : "OpenSkyFormatsESSTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyGameDataTests",
-        "name" : "OpenSkyGameDataTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyGameDataTests", "name" : "OpenSkyGameDataTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyBehaviorTests",
-        "name" : "OpenSkyBehaviorTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyBehaviorTests", "name" : "OpenSkyBehaviorTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyAgentControlTests",
-        "name" : "OpenSkyAgentControlTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAgentControlTests", "name" : "OpenSkyAgentControlTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyLaunchTests",
-        "name" : "OpenSkyLaunchTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyLaunchTests", "name" : "OpenSkyLaunchTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyAssetCacheTests",
-        "name" : "OpenSkyAssetCacheTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAssetCacheTests", "name" : "OpenSkyAssetCacheTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyPhysicsTests",
-        "name" : "OpenSkyPhysicsTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyPhysicsTests", "name" : "OpenSkyPhysicsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyRenderingTests",
-        "name" : "OpenSkyRenderingTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRenderingTests", "name" : "OpenSkyRenderingTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyAudioTests",
-        "name" : "OpenSkyAudioTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAudioTests", "name" : "OpenSkyAudioTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyWorldStateTests",
-        "name" : "OpenSkyWorldStateTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyWorldStateTests", "name" : "OpenSkyWorldStateTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyPerceptionTests",
-        "name" : "OpenSkyPerceptionTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyPerceptionTests", "name" : "OpenSkyPerceptionTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyActorsTests",
-        "name" : "OpenSkyActorsTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyActorsTests", "name" : "OpenSkyActorsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyFactionsTests",
-        "name" : "OpenSkyFactionsTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyFactionsTests", "name" : "OpenSkyFactionsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyProgressionTests",
-        "name" : "OpenSkyProgressionTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyProgressionTests", "name" : "OpenSkyProgressionTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyCrimeTests",
-        "name" : "OpenSkyCrimeTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCrimeTests", "name" : "OpenSkyCrimeTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyInventoryTests",
-        "name" : "OpenSkyInventoryTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyInventoryTests", "name" : "OpenSkyInventoryTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyMagicTests",
-        "name" : "OpenSkyMagicTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyMagicTests", "name" : "OpenSkyMagicTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyCombatTests",
-        "name" : "OpenSkyCombatTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCombatTests", "name" : "OpenSkyCombatTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyQuestsTests",
-        "name" : "OpenSkyQuestsTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyQuestsTests", "name" : "OpenSkyQuestsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyDialogueTests",
-        "name" : "OpenSkyDialogueTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyDialogueTests", "name" : "OpenSkyDialogueTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyScriptingTests",
-        "name" : "OpenSkyScriptingTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyScriptingTests", "name" : "OpenSkyScriptingTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyPreviewTests",
-        "name" : "OpenSkyPreviewTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyPreviewTests", "name" : "OpenSkyPreviewTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyCLIArgumentsTests",
-        "name" : "OpenSkyCLIArgumentsTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCLIArgumentsTests", "name" : "OpenSkyCLIArgumentsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyWorldTests",
-        "name" : "OpenSkyWorldTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyWorldTests", "name" : "OpenSkyWorldTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkySaveTests",
-        "name" : "OpenSkySaveTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyWorldConditionsTests", "name" : "OpenSkyWorldConditionsTests"}
     },
     {
       "parallelizable" : true,
-      "selectedTags" : {
-        "tags" : [
-          "gpu"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:.",
-        "identifier" : "OpenSkyMenusTests",
-        "name" : "OpenSkyMenusTests"
-      }
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyWeatherTests", "name" : "OpenSkyWeatherTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyNavigationTests", "name" : "OpenSkyNavigationTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyTerrainTests", "name" : "OpenSkyTerrainTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyEffectsTests", "name" : "OpenSkyEffectsTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCameraTests", "name" : "OpenSkyCameraTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRuntimeStateTests", "name" : "OpenSkyRuntimeStateTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyActorPresentationTests", "name" : "OpenSkyActorPresentationTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyObjectAnimationTests", "name" : "OpenSkyObjectAnimationTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyPlayerTests", "name" : "OpenSkyPlayerTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAIPackagesTests", "name" : "OpenSkyAIPackagesTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCellsTests", "name" : "OpenSkyCellsTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyLoadingTests", "name" : "OpenSkyLoadingTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkySaveTests", "name" : "OpenSkySaveTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyMenusTests", "name" : "OpenSkyMenusTests"}
     }
   ],
   "version" : 1

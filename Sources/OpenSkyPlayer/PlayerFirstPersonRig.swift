@@ -1,0 +1,86 @@
+// The player's rendered first-person arms, shaped like `PlayerBody`. The arms
+// hang off the camera, so their transform comes from the eye pose and the
+// first-person graph's camera bone. Draw groups rebuild only when the transform
+// moves, which saves work on paused frames.
+
+import Metal
+import OpenSkyActorPresentation
+import OpenSkyBehavior
+import OpenSkyFormatsAnimation
+import OpenSkyRendering
+import simd
+
+nonisolated public final class PlayerFirstPersonRig {
+    public let assembly: ActorAssembly<ActorRenderAsset>
+    public let animation: PlayerAnimationPlayback
+    /// Index of `Camera1st [Cam1]` in the first-person rig, or nil when the
+    /// skeleton does not declare it. Nil is a reportable fact about the
+    /// install, not a crash: the arms then hang off the reference height.
+    public let cameraBoneIndex: Int?
+
+    public private(set) var transform = matrix_identity_float4x4
+    public private(set) var render: RenderScene
+
+    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
+        self.assembly = assembly
+        self.animation = animation
+        cameraBoneIndex = animation.skeleton.boneNames
+            .firstIndex(of: FirstPersonCamera.cameraBoneName)
+        render = RenderScene(
+            instances: Self.placements(of: assembly, at: matrix_identity_float4x4)
+        )
+    }
+
+    /// The camera bone's matrix in rig space for the pose currently published,
+    /// or nil when there is no pose or no such bone.
+    public var cameraBoneMatrix: float4x4? {
+        guard
+            let cameraBoneIndex,
+            !animation.pose.bones.isEmpty,
+            let world = try? SkeletonPoseMath.worldMatrices(
+                skeleton: animation.skeleton,
+                localPoses: animation.pose.bones
+            ),
+            cameraBoneIndex < world.count
+        else { return nil }
+        return world[cameraBoneIndex]
+    }
+
+    /// Hangs the arms off the eye. Draw groups are rebuilt only on a real move.
+    public func place(eyePosition: SIMD3<Float>, yaw: Float, pitch: Float) {
+        let wanted = FirstPersonCamera.rigTransform(
+            eyeMatrix: FirstPersonCamera.eyeMatrix(
+                eyePosition: eyePosition, yaw: yaw, pitch: pitch
+            ),
+            cameraBone: cameraBoneMatrix
+        )
+        guard !Self.isEqual(wanted, transform) else { return }
+        transform = wanted
+        render = RenderScene(instances: Self.placements(of: assembly, at: wanted))
+    }
+
+    /// GPU allocations the arms keep alive, added to the renderer's residency
+    /// set at attach and live for the whole session, exactly as the body's are.
+    public var residencyAllocations: [MTLAllocation] {
+        render.residencyAllocations
+    }
+
+    /// Unbounded, so never culled. The bounds are the bind pose, below the eye, while a drawn
+    /// weapon's clip lifts the hands into view.
+    private static func placements(
+        of assembly: ActorAssembly<ActorRenderAsset>,
+        at transform: float4x4
+    ) -> [RenderPlacement] {
+        assembly.renderPlacements(at: transform).map {
+            RenderPlacement(
+                model: $0.model, transform: $0.transform, faceMorphs: $0.faceMorphs,
+                layer: $0.layer, owner: $0.owner
+            )
+        }
+    }
+
+    private static func isEqual(_ lhs: float4x4, _ rhs: float4x4) -> Bool {
+        lhs.columns.0 == rhs.columns.0 && lhs.columns.1 == rhs.columns.1
+            && lhs.columns.2 == rhs.columns.2 && lhs.columns.3 == rhs.columns.3
+    }
+}

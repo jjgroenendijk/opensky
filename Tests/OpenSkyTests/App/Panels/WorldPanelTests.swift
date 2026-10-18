@@ -7,6 +7,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import Testing

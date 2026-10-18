@@ -4,11 +4,16 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
+import OpenSkyNavigation
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyTerrain
+import OpenSkyWeather
 import OpenSkyWorld
 
 enum BenchCommand {

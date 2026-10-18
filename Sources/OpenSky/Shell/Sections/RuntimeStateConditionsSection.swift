@@ -4,7 +4,7 @@
 // implemented" apart from "not satisfied". Never overridden.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 
 final class RuntimeStateConditionsSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

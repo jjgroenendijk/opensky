@@ -5,9 +5,10 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyCells
 import OpenSkyLaunch
+import OpenSkyLoading
 import OpenSkySave
-import OpenSkyWorld
 import Testing
 
 @MainActor

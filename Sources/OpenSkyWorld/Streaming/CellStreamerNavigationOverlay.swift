@@ -2,6 +2,7 @@
 // streamer; the renderer owns only the source registry and toggles.
 
 import OpenSkyDiagnostics
+import OpenSkyNavigation
 
 extension CellStreamer {
     public func appendNavigationWorldOverlay(

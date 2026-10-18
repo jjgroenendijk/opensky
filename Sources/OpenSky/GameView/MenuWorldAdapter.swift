@@ -5,13 +5,16 @@ import AppKit
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering

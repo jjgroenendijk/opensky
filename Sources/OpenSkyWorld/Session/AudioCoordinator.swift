@@ -3,10 +3,14 @@
 // (docs/engine/coordinators.md).
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
+import OpenSkyWeather
 import simd
 
 /// What the audio coordinator reads from the running session.

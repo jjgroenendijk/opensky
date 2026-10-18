@@ -7,6 +7,7 @@ import OpenSkyDiagnostics
 import OpenSkyFormatsESM
 import OpenSkyMagic
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface

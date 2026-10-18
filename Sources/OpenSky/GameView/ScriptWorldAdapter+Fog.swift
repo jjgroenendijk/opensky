@@ -1,6 +1,7 @@
 // The app side of the `Cell` fog natives: a change reaches the renderer only when the cell
 // is the loaded interior.
 
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering

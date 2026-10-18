@@ -1,6 +1,7 @@
 // App side of training: the nearest actor's class, the player's gold, and the
 // notice. The rule is in `ProgressionCoordinator+Training.swift`.
 
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -8,7 +9,6 @@ import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyQuestsInterface
-import OpenSkyWorld
 
 extension ProgressionWorldAdapter {
     func nearestTrainer() -> TrainerOffer? {

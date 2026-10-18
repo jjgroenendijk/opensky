@@ -3,17 +3,19 @@
 // and combat see the guard where the path follower put it.
 
 @testable import OpenSkyActorsInterface
+import OpenSkyAIPackages
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+import OpenSkyNavigation
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import simd
 
 extension NPCAIAcceptanceChain: PerceptionWorld {

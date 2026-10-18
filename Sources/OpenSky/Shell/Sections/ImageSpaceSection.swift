@@ -3,8 +3,8 @@
 // above the live values the pass draws with.
 
 import AppKit
+import OpenSkyEffects
 import OpenSkyRendering
-import OpenSkyWorld
 
 final class ImageSpaceSection: PanelSectionViewController {
     weak var provider: (any ImageSpaceControlProviding)? {

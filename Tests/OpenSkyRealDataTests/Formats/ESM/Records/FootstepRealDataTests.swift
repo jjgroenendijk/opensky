@@ -4,14 +4,15 @@
 // `make test-real T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import simd
 import Testing
 

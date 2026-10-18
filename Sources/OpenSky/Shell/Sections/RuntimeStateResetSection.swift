@@ -3,7 +3,7 @@
 // destination reset maps onto `resetAllReferenceState()`.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 
 final class RuntimeStateResetSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

@@ -5,9 +5,12 @@ import CoreGraphics
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyActorPresentation
 import OpenSkyBehavior
+@testable import OpenSkyCells
 import OpenSkyCombat
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd

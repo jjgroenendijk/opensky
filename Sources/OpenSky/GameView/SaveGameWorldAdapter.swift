@@ -3,6 +3,7 @@
 
 import Foundation
 import Metal
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus

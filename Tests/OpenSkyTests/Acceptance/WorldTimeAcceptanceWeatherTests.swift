@@ -12,9 +12,12 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
+@testable import OpenSkyWeather
+import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 extension WorldTimeAcceptanceTests {

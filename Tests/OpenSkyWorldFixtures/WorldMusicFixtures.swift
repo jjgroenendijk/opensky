@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import Testing
 
 public enum MusicFixture {

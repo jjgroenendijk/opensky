@@ -3,10 +3,12 @@
 // the CLI target, so a protocol added here needs no project-membership change.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkyRendering
 
 @MainActor

@@ -2,12 +2,15 @@
 // change on the build queue, and drops results built for the old worldspace.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

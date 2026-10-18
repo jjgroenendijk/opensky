@@ -3,7 +3,7 @@
 // stay cached.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyLoading
 
 final class LauncherViewController: NSSplitViewController {
     private let sidebar = LauncherSidebarViewController()

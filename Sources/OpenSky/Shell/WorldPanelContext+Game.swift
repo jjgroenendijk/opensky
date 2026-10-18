@@ -5,7 +5,6 @@ import OpenSkyDialogue
 import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyScripting
-import OpenSkyWorld
 
 extension WorldPanelContext {
     init(game: GameViewController) {

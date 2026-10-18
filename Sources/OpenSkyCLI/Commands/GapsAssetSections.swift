@@ -11,8 +11,8 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkyProgression
-import OpenSkyWorld
 
 extension GapsGatherer {
     func meshes() -> [GapSection] {

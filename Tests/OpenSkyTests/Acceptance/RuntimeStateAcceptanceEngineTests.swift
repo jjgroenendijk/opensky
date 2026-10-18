@@ -3,15 +3,18 @@
 // `ManualCellBuildRunner` records each build's snapshot. The last case needs Metal.
 
 import Foundation
+import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

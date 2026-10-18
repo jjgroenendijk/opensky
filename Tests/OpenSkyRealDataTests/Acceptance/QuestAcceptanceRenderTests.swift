@@ -11,7 +11,6 @@ import MetalKit
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

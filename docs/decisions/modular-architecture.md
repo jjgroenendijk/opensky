@@ -52,6 +52,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 6. Complete sets | Every feature has all four targets, or an exception with a reason | Gate |
 | 7. Declared imports | Every `import` of a package module names the target itself or a declared dependency | Gate |
 | 8. Composition | `OpenSkyPreview`, the app, and the CLI may depend on anything | Allowed |
+| 9. World domains | A domain of the world feature depends on lower modules, Interfaces, and earlier domains. Of the features, only `OpenSkyWorld` depends on a domain. Every domain has a `Tests` target | Gate |
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another
@@ -64,8 +65,8 @@ script adds the layer list, the Interface rules, the complete sets, and the impo
 ## Fixtures libraries
 
 Some fixtures need the feature's own implementation. Two examples: `FakeCombatWorld` fakes
-`CombatLoopWorld`, a seam that `OpenSkyCombat` declares, and `CellSceneBuilderFixture` builds
-real cell scenes. The feature's tests and the acceptance chains in the Xcode bundles both use
+`CombatLoopWorld`, a seam that `OpenSkyCombat` declares, and `CellStreamerFixture` builds a
+real cell streamer. The feature's tests and the acceptance chains in the Xcode bundles both use
 them, and a test target cannot import another test target. TMA has no target for this, so
 OpenSky adds one: `FeatureFixtures`, in `Tests/FeatureFixtures/`.
 
@@ -89,10 +90,11 @@ The lower modules, lowest first. The list is `LAYERS` in the script.
 7. `OpenSkyRendering`, `OpenSkyAudio`, `OpenSkyWorldState`
 8. `OpenSkyConditions`
 
-Every other target under `Sources/` is an Interface, a feature, or a composition module. The
-script tells them apart by name: an Interface ends in `Interface`, and a composition module is
-listed in `COMPOSITION`. Anything else is a feature, so a new module must bring its full set or
-an exception.
+Every other target under `Sources/` is an Interface, a world domain, a feature, or a
+composition module. The script tells them apart by name: an Interface ends in `Interface`, a
+domain is listed in `DOMAINS`, and a composition module is listed in `COMPOSITION`
+([world domains](/tools/modules.md#world-domains)). Anything else is a feature, so a new
+module must bring its full set or an exception.
 
 ## Exceptions
 

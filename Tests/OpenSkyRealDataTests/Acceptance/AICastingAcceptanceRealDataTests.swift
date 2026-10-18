@@ -11,7 +11,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

@@ -1,0 +1,116 @@
+// The third-person orbit camera. Skyrim.esm has no `fOverShoulder*` or `fVanityMode*`
+// GMST and the shipped INI has no `[Camera]` section, so framing is derived from the
+// player capsule and the vertical FOV. The camera is a pure function of the capsule's feet
+// and the shared look angles. See docs/engine/player-camera.md, "Third-person framing".
+
+import OpenSkyFormatsCore
+import OpenSkyPhysics
+import OpenSkyRendering
+import simd
+
+nonisolated public struct ThirdPersonCamera: Equatable, Sendable {
+    /// The vertical field of view the scene pass projects with
+    /// (`RendererDraw.swift`, `RendererOffscreen.swift`). Framing distance is
+    /// meaningless without it, so it is stated here and asserted against the
+    /// renderer by `ThirdPersonCameraTests`.
+    public static let fovYRadians = MatrixMath.radians(fromDegrees: 65)
+
+    /// How much of the frame's height the standing body should occupy. Chosen
+    /// rather than measured: it is the one number here with no source in the
+    /// data, so it is the one place a taste decision is made and it is made
+    /// once. Three fifths leaves head- and foot-room without shrinking the
+    /// character into the scene.
+    public static let framingFillFraction: Float = 0.6
+
+    /// The point the camera orbits: the capsule's own eye height above the
+    /// feet, which is exactly where `.walk` puts the first-person eye. Sharing
+    /// the pivot with first person is what makes the two modes agree about what
+    /// is at the centre of the screen.
+    public static let pivotHeight = PlayerCapsule.standard.eyeHeight
+
+    /// Distance from the pivot at which a capsule-tall subject fills
+    /// `framingFillFraction` of the view height:
+    /// `(height / 2 / fill) / tan(fov / 2)`. With the standard capsule (128
+    /// units) and a 65-degree vertical fov this resolves to about 167 units.
+    public static let orbitDistance =
+        (PlayerCapsule.standard.height / 2 / framingFillFraction)
+            / tanf(fovYRadians / 2)
+
+    /// How far right of the spine axis the eye sits. One capsule radius: the
+    /// camera rides the shoulder line of the measured capsule rather than its
+    /// centre, so the body sits left of frame and the crosshair looks past it.
+    public static let shoulderOffset = PlayerCapsule.standard.radius
+
+    /// The radius the zoom sweep collides with: the distance from the eye to a
+    /// corner of the near plane at 16:9, so no wall the probe clears can cut the view.
+    public static let collisionRadius: Float = {
+        let near = Renderer.nearPlane
+        let halfHeight = near * tanf(fovYRadians / 2)
+        let halfWidth = halfHeight * 16 / 9
+        return (near * near + halfHeight * halfHeight + halfWidth * halfWidth).squareRoot()
+    }()
+
+    /// How close the eye may be pulled before third person is no longer worth
+    /// the name. Set to the shoulder offset so a fully collapsed camera still
+    /// sits outside the capsule's own silhouette rather than inside the head.
+    public static let minimumDistance = shoulderOffset
+
+    /// The distance the last resolve settled on, after collision. Kept so the
+    /// panel can report a camera that is being squeezed by geometry, and so a
+    /// test can assert the pull-in happened.
+    public private(set) var resolvedDistance = orbitDistance
+    /// True when the last resolve was shortened by world geometry.
+    public private(set) var isCollisionLimited = false
+
+    public init() {}
+
+    /// The point the camera orbits for a capsule standing at `feetPosition`.
+    public static func pivot(feetPosition: SIMD3<Float>) -> SIMD3<Float> {
+        feetPosition + SIMD3<Float>(0, 0, pivotHeight)
+    }
+
+    /// Where the eye would sit with nothing in the way: back along the view
+    /// direction by `orbitDistance`, then right by `shoulderOffset`.
+    ///
+    /// The offset is built from the same `FreeFlyCamera` basis the view matrix
+    /// uses, so the resolved eye and the resolved forward vector cannot drift
+    /// apart.
+    public static func idealOffset(yaw: Float, pitch: Float) -> SIMD3<Float> {
+        let camera = FreeFlyCamera(position: .zero, yaw: yaw, pitch: pitch)
+        return camera.right * shoulderOffset - camera.forward * orbitDistance
+    }
+
+    /// The swept probe this camera pulls in with. Shared with the dialogue camera, so the
+    /// two agree about what a wall does to an eye.
+    public static let collisionProbe = CameraCollisionProbe(
+        radius: collisionRadius,
+        minimumDistance: minimumDistance
+    )
+
+    /// This frame's eye position, pulled in along the pivot-to-eye line when geometry is
+    /// in the way. It uses the controller's `CapsuleWorldCollider`, so camera and player
+    /// see the same shapes.
+    public mutating func resolve(
+        feetPosition: SIMD3<Float>,
+        yaw: Float,
+        pitch: Float,
+        collisionQuery: WalkController.CollisionQuery
+    ) -> SIMD3<Float> {
+        let pivot = Self.pivot(feetPosition: feetPosition)
+        let result = Self.collisionProbe.resolve(
+            pivot: pivot,
+            offset: Self.idealOffset(yaw: yaw, pitch: pitch),
+            collisionQuery: collisionQuery
+        )
+        resolvedDistance = result.distance
+        isCollisionLimited = result.isCollisionLimited
+        return result.position
+    }
+
+    /// Forgets the collision readout, so a teleport does not report the zoom
+    /// state of the place the player just left.
+    public mutating func reset() {
+        resolvedDistance = Self.orbitDistance
+        isCollisionLimited = false
+    }
+}

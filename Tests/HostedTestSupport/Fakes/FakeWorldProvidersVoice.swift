@@ -3,8 +3,8 @@
 // filters the whole corpus and lists a bounded prefix, like the real picker.
 
 import AppKit
+@testable import OpenSkyActorPresentation
 import OpenSkyAudio
-@testable import OpenSkyWorld
 
 @MainActor
 struct FakeVoiceState {

@@ -2,7 +2,8 @@
 // that run now, one row per stage with its time, and a Cancel button.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyCells
+import OpenSkyLoading
 
 final class WorldLoadPanel: NSStackView {
     var onCancel: (() -> Void)?

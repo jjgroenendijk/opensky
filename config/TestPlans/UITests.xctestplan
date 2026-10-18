@@ -68,11 +68,7 @@
   "testTargets" : [
     {
       "parallelizable" : false,
-      "target" : {
-        "containerPath" : "container:OpenSky.xcodeproj",
-        "identifier" : "5A3BAE223000109300177F95",
-        "name" : "OpenSkyUITests"
-      }
+      "target" : {"containerPath" : "container:OpenSky.xcodeproj", "identifier" : "5A3BAE223000109300177F95", "name" : "OpenSkyUITests"}
     }
   ],
   "version" : 1

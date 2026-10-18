@@ -2,6 +2,7 @@
 // answers it; a refused press raises a refusal event and nothing else.
 // See docs/engine/locks.md.
 
+import OpenSkyPlayer
 import OpenSkyWorldInterface
 
 @MainActor

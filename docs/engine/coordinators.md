@@ -56,13 +56,13 @@ reporter's `CrimeWorld`. It reaches factions only through its port, because `Ope
 may not import `OpenSkyFactions`.
 The audio domain has `AudioLabCore` in `Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
 port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
-coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns and
-`LipSyncPlayback` live there. It is also the panel's `AudioControlProviding`, so the panel
+coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns live
+there. It is also the panel's `AudioControlProviding`, so the panel
 reads the coordinator itself.
 The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `Sources/OpenSkyCombat/`,
 answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is the runtime's
 `RagdollWorldSeam`. The player has `PlayerCore`, `PlayerCoordinator`, and `PlayerWorld` in
-`Sources/OpenSkyWorld/Player/`, and the Face Morphs panel has `FaceMorphCoordinator` and
+`Sources/OpenSkyPlayer/`, and the Face Morphs panel has `FaceMorphCoordinator` and
 `FaceMorphWorld`. `PlayerWorldAdapter` answers both ports.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
 `Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
@@ -79,13 +79,13 @@ not import `OpenSkyMagic`, so perk abilities are applied through `PerkWorld`.
 The AI domain has four coordinators, all answered by `AIWorldAdapter`. `PackageCoordinator`
 with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigationCore` and
 `AINavigationWorld`, and `NPCAnimationCoordinator` with `NPCAnimationWorld` live in
-`Sources/OpenSkyWorld/`. `PerceptionCoordinator` with `PerceptionCore` and
+`Sources/OpenSkyAIPackages/`. `PerceptionCoordinator` with `PerceptionCore` and
 `PerceptionSessionWorld` lives in `Sources/OpenSkyPerception/`. The perception coordinator is
 the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
 The Runtime State panel has `RuntimeStateCore`, `RuntimeStateCoordinator`, and
-`RuntimeStateWorld` in `Sources/OpenSkyWorld/State/`, answered by `RuntimeStateWorldAdapter`.
+`RuntimeStateWorld` in `Sources/OpenSkyRuntimeState/`, answered by `RuntimeStateWorldAdapter`.
 The coordinator owns the `GlobalStore` and the clock scrubs. Save and load go through the port,
-because `OpenSkyWorld` may not import `OpenSkySave`. The adapter also builds the live condition
+because `OpenSkyRuntimeState` may not import `OpenSkySave`. The adapter also builds the live condition
 context, because it reads every feature's runtime. Papyrus has `ScriptCoordinator` and
 `ScriptWorld` in `Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
 the natives their collaborators. `WorldRenderControls` in `Sources/OpenSkyWorld/Session/` holds

@@ -2,10 +2,12 @@
 // placements and a gone cell drops its bodies. Reconciling means coverage, door and
 // rebuild changes all work without knowing physics. See docs/engine/dynamic-bodies.md.
 
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 
@@ -105,22 +107,4 @@ extension CellStreamer {
     /// frame contributes no shove. Engine units per second; a sprint is a few
     /// hundred.
     public static let maximumPushSpeed: Float = 3000
-}
-
-nonisolated extension CellSceneLocation {
-    /// A total order over cell identities, so a dictionary of resident cells
-    /// can be visited reproducibly. Exteriors sort by grid coordinate and come
-    /// before every interior, which sorts by CELL FormID.
-    public static func isOrderedBefore(_ lhs: CellSceneLocation, _ rhs: CellSceneLocation) -> Bool {
-        switch (lhs, rhs) {
-        case let (.exterior(left), .exterior(right)):
-            (left.x, left.y) < (right.x, right.y)
-        case let (.interior(left), .interior(right)):
-            left.rawValue < right.rawValue
-        case (.exterior, .interior):
-            true
-        case (.interior, .exterior):
-            false
-        }
-    }
 }

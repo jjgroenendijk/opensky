@@ -6,11 +6,14 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
+@testable import OpenSkyWeather
 @testable import OpenSkyWorld
 import Testing
 

@@ -8,7 +8,6 @@ import OpenSkyEngineTesting
 import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 

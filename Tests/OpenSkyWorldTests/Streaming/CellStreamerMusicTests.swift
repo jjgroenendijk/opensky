@@ -2,10 +2,12 @@
 // identity changes. Extends CellStreamerTests within the length limit.
 
 @testable import OpenSkyAudio
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 private typealias Fixture = CellStreamerFixture

@@ -7,9 +7,11 @@ them and the rules `Package.swift` enforces.
 
 A folder named `OpenSky<Layer>Testing/` is a library of shared fixtures, not a test target. There
 is one per layer: `OpenSkyFormatsTesting` (byte builders, one subfolder per format family),
-`OpenSkyEngineTesting` (game data, behavior, physics, rendering, world state), and
-`OpenSkyFeaturesTesting` (fakes of the feature interfaces). Every unit test target that needs the
-fixtures links it: package test targets, `OpenSkyTests`, and `OpenSkyRealDataTests`.
+`OpenSkyEngineTesting` (game data, behavior, physics, rendering, world state),
+`OpenSkyFeaturesTesting` (fakes of the feature interfaces), and `OpenSkyWorldTesting` (cell
+scenes, actor visuals, and fakes over the world domains below `OpenSkyWorld`). Every unit
+test target that needs the fixtures links it: package test targets, `OpenSkyTests`, and
+`OpenSkyRealDataTests`.
 
 - Declarations that tests use are `public`. A struct a test builds has an explicit
   `public init(...)`.
@@ -48,7 +50,7 @@ have:
   feature's tests may build no implementation but their own (`make module-graph`, rule 5).
 
 Inside a target, test folders use the subfolder names of the source they test: tests for
-`Sources/OpenSkyWorld/Terrain/DistantLOD.swift` live in `Tests/OpenSkyWorldTests/Terrain/`,
+`Sources/OpenSkyWorld/Streaming/CellStreamer.swift` live in `Tests/OpenSkyWorldTests/Streaming/`,
 and tests for app code live under `Tests/OpenSkyTests/App/`. Only cross-cutting folders are
 test-only: `Acceptance/` (end-to-end gates), `Fakes/`, and `Support/`. An acceptance suite
 is named for the behavior it checks, such as `CombatAcceptanceTests`, never for a milestone
@@ -70,7 +72,7 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 | `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests; builds no app |
 | `Formats` | the `OpenSkyFormats*Tests` targets |
 | `Engine` | game data, behavior, launch, agent control, physics, rendering, audio, world state |
-| `Features` | every feature's tests, save, menus, preview |
+| `Features` | every feature's tests, the world domains, save, menus, preview |
 | `App` | `OpenSkyTests`, hosted by the app |
 | `GPU` | every unit target, only the `.gpu` tests |
 | `UnitTests` | everything; CI runs it on every push |

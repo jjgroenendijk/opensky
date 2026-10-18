@@ -4,7 +4,7 @@
 // they are listed live instead. Not overridden.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyPlayer
 
 final class LocomotionBindingsSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

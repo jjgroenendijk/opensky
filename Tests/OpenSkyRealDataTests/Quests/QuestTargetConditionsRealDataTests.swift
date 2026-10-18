@@ -8,7 +8,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 struct QuestTargetConditionsRealDataTests {

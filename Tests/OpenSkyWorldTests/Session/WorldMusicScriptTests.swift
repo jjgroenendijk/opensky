@@ -3,8 +3,9 @@
 
 @testable import OpenSkyAudio
 import OpenSkyFormatsESM
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

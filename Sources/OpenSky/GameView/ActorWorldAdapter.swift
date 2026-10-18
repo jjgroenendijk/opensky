@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -16,6 +17,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld

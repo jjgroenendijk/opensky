@@ -6,6 +6,7 @@
 import AppKit
 import OpenSkyFormatsCore
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 

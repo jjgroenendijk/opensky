@@ -6,11 +6,13 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScripting

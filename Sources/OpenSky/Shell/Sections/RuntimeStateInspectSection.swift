@@ -2,7 +2,7 @@
 // plugin data, and the tail of the mutation journal. A readout only.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 
 final class RuntimeStateInspectSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

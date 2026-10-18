@@ -4,7 +4,7 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyWorld
+import OpenSkyEffects
 
 final class EffectsPanelViewController: InspectorPanelViewController {
     let imageSpaceSection = ImageSpaceSection()

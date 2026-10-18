@@ -7,8 +7,9 @@ import AVFAudio
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

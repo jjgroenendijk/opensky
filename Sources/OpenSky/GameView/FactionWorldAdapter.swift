@@ -2,6 +2,7 @@
 // runtimes to the Papyrus bridge, and answers `FactionWorld` from the session
 // systems. The rules live in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFactions
 import OpenSkyFactionsInterface

@@ -2,10 +2,10 @@
 // placed objects of one kind near Whiterun.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 
 struct WhiterunCellSweep {
     let file: ESMFile

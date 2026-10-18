@@ -4,7 +4,7 @@
 import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
-import OpenSkyWorld
+import OpenSkyLoading
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {

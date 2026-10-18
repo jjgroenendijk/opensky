@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering

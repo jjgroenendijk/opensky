@@ -3,7 +3,6 @@
 import AppKit
 import OpenSkyFormatsCore
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 
 extension FakeWorldProviders {
     var currentWorldspace: String? {

@@ -1,5 +1,7 @@
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd

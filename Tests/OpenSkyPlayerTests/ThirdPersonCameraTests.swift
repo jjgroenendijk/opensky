@@ -1,0 +1,209 @@
+// Third-person camera framing, mode cycling, and collision zoom. Synthetic
+// geometry only.
+
+import OpenSkyEngineTesting
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
+@testable import OpenSkyRendering
+import simd
+import Testing
+
+struct ThirdPersonCameraTests {
+    // MARK: - Mode cycling
+
+    /// One key press and one popup selection walk the same three modes in the
+    /// same order, so neither can reach a mode the other cannot.
+    @Test
+    func cyclingVisitsEveryModeAndReturnsToFly() {
+        var mode = CameraMovementMode.fly
+        var visited: [CameraMovementMode] = []
+        for _ in 0 ..< CameraMovementMode.allCases.count {
+            mode = mode.next
+            visited.append(mode)
+        }
+        #expect(visited == [.walk, .thirdPerson, .fly])
+        #expect(Set(visited) == Set(CameraMovementMode.allCases))
+    }
+
+    @Test
+    func onlyFlyIsNotPlayerControlled() {
+        #expect(!CameraMovementMode.fly.isPlayerControlled)
+        #expect(CameraMovementMode.walk.isPlayerControlled)
+        #expect(CameraMovementMode.thirdPerson.isPlayerControlled)
+    }
+
+    // MARK: - Framing
+
+    /// The orbit distance is the framing derivation, not a stored constant:
+    /// recomputing it from the capsule and the fov has to give the same answer,
+    /// which is what makes changing either of those inputs move the camera
+    /// instead of silently disagreeing with the documentation.
+    @Test
+    func orbitDistanceFramesTheCapsuleAtTheStatedFill() {
+        let halfHeight = PlayerCapsule.standard.height / 2
+        let expected = (halfHeight / ThirdPersonCamera.framingFillFraction)
+            / tanf(ThirdPersonCamera.fovYRadians / 2)
+        #expect(abs(ThirdPersonCamera.orbitDistance - expected) < 0.001)
+        // The subject really does fill the stated fraction at that distance.
+        let halfViewHeight = ThirdPersonCamera.orbitDistance
+            * tanf(ThirdPersonCamera.fovYRadians / 2)
+        #expect(
+            abs(halfHeight / halfViewHeight - ThirdPersonCamera.framingFillFraction) < 0.001
+        )
+    }
+
+    /// The fov the framing is derived from must be the fov the renderer
+    /// projects with, or the body is framed for a camera nobody looks through.
+    @Test
+    func framingFovMatchesTheProjectionFov() {
+        #expect(
+            abs(ThirdPersonCamera.fovYRadians - MatrixMath.radians(fromDegrees: 65)) < 1e-6
+        )
+    }
+
+    /// The pivot is the first-person eye, so switching modes does not change
+    /// what is at the centre of the screen.
+    @Test
+    func pivotIsTheFirstPersonEye() {
+        let feet = SIMD3<Float>(100, -50, 20)
+        let controller = WalkController(
+            cameraPosition: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
+        )
+        #expect(ThirdPersonCamera.pivot(feetPosition: feet) == controller.cameraPosition)
+    }
+
+    /// Looking east along +X, the eye sits behind the pivot on -X and one
+    /// shoulder offset to the camera's right, which in this basis is -Y.
+    @Test
+    func idealOffsetSitsBehindAndOffTheShoulder() {
+        let offset = ThirdPersonCamera.idealOffset(yaw: 0, pitch: 0)
+        #expect(abs(offset.x + ThirdPersonCamera.orbitDistance) < 0.001)
+        #expect(abs(offset.y + ThirdPersonCamera.shoulderOffset) < 0.001)
+        #expect(abs(offset.z) < 0.001)
+    }
+
+    /// Looking up raises the eye and shortens its horizontal reach, because the
+    /// orbit is a sphere rather than a ring.
+    @Test
+    func pitchOrbitsTheEyeVertically() {
+        let level = ThirdPersonCamera.idealOffset(yaw: 0, pitch: 0)
+        let raised = ThirdPersonCamera.idealOffset(
+            yaw: 0, pitch: MatrixMath.radians(fromDegrees: 30)
+        )
+        #expect(raised.z < level.z)
+        #expect(raised.x > level.x)
+        // Same orbit radius, whichever way it is aimed.
+        #expect(abs(simd_length(raised) - simd_length(level)) < 0.001)
+    }
+
+    // MARK: - Collision zoom
+
+    @Test
+    func openSpaceLeavesTheCameraAtTheOrbitDistance() {
+        var camera = ThirdPersonCamera()
+        let eye = camera.resolve(
+            feetPosition: .zero, yaw: 0, pitch: 0, collisionQuery: { _ in [] }
+        )
+        let pivot = ThirdPersonCamera.pivot(feetPosition: .zero)
+        #expect(abs(simd_length(eye - pivot) - camera.resolvedDistance) < 0.001)
+        #expect(
+            abs(camera.resolvedDistance - simd_length(
+                ThirdPersonCamera.idealOffset(yaw: 0, pitch: 0)
+            )) < 0.001
+        )
+        #expect(!camera.isCollisionLimited)
+    }
+
+    /// A wall close behind the player pulls the camera in rather than letting it
+    /// pass through: the resolved eye stays on the near side of the wall.
+    @Test
+    func aWallBehindThePlayerPullsTheCameraIn() {
+        var camera = ThirdPersonCamera()
+        let wallX: Float = -60
+        let wall = DynamicBodyScene.quad(
+            SIMD3(wallX, -400, -400), SIMD3(wallX, 400, -400),
+            SIMD3(wallX, 400, 400), SIMD3(wallX, -400, 400)
+        )
+        let eye = camera.resolve(
+            feetPosition: .zero,
+            yaw: 0,
+            pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
+        )
+        #expect(camera.isCollisionLimited)
+        #expect(camera.resolvedDistance < ThirdPersonCamera.orbitDistance)
+        #expect(eye.x > wallX)
+        // Still on the orbit line, just shorter.
+        let pivot = ThirdPersonCamera.pivot(feetPosition: .zero)
+        let direction = simd_normalize(ThirdPersonCamera.idealOffset(yaw: 0, pitch: 0))
+        #expect(simd_length(eye - (pivot + direction * camera.resolvedDistance)) < 0.001)
+    }
+
+    /// A wall at a slant to the orbit line stops the camera on the near side.
+    /// A slide along the wall must not carry the eye through it.
+    @Test
+    func aSlantedWallIsNotPassedBySliding() {
+        var camera = ThirdPersonCamera()
+        let wall = DynamicBodyScene.quad(
+            SIMD3(-460, -400, -400), SIMD3(340, 400, -400),
+            SIMD3(340, 400, 400), SIMD3(-460, -400, 400)
+        )
+        let eye = camera.resolve(
+            feetPosition: .zero,
+            yaw: 0,
+            pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
+        )
+        // The wall is the line x = y - 60; the pivot's side has x - y above -60.
+        #expect(eye.x - eye.y > -60)
+        #expect(camera.isCollisionLimited)
+    }
+
+    /// The probe is wide enough that the near plane never reaches a wall it cleared.
+    @Test
+    func theProbeCoversTheNearPlane() {
+        let near = Renderer.nearPlane
+        let halfHeight = near * tanf(ThirdPersonCamera.fovYRadians / 2)
+        let corner = SIMD3<Float>(near, halfHeight * 16 / 9, halfHeight)
+        #expect(ThirdPersonCamera.collisionRadius >= simd_length(corner) - 0.001)
+    }
+
+    /// Standing with a wall pressed against the player's back never collapses
+    /// the eye into the head: the pull-in stops at `minimumDistance`.
+    @Test
+    func theZoomNeverCollapsesPastTheMinimum() {
+        var camera = ThirdPersonCamera()
+        let wall = DynamicBodyScene.quad(
+            SIMD3(-2, -400, -400), SIMD3(-2, 400, -400),
+            SIMD3(-2, 400, 400), SIMD3(-2, -400, 400)
+        )
+        _ = camera.resolve(
+            feetPosition: .zero,
+            yaw: 0,
+            pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
+        )
+        #expect(camera.resolvedDistance >= ThirdPersonCamera.minimumDistance)
+    }
+
+    /// A teleport must not carry the zoom state of the place the player left.
+    @Test
+    func resetRestoresTheOrbitDistance() {
+        var camera = ThirdPersonCamera()
+        let wall = DynamicBodyScene.quad(
+            SIMD3(-60, -400, -400), SIMD3(-60, 400, -400),
+            SIMD3(-60, 400, 400), SIMD3(-60, -400, 400)
+        )
+        _ = camera.resolve(
+            feetPosition: .zero, yaw: 0, pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
+        )
+        camera.reset()
+        #expect(camera.resolvedDistance == ThirdPersonCamera.orbitDistance)
+        #expect(!camera.isCollisionLimited)
+    }
+
+    // MARK: - Synthetic geometry
+}

@@ -4,7 +4,9 @@
 // The rules live in the coordinators (docs/rendering/visual-effects.md).
 
 import Foundation
+import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -12,6 +14,7 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

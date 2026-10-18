@@ -7,6 +7,7 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

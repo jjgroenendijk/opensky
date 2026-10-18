@@ -8,6 +8,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

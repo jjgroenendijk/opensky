@@ -4,7 +4,7 @@
 import AppKit
 import Foundation
 @testable import OpenSky
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 import Testing
 
 /// The shared sidebar session, set up for the Runtime State panel.

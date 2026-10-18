@@ -4,13 +4,13 @@
 
 import Foundation
 import Metal
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
-import OpenSkyWorld
 
 enum CollisionCommand {
     static func run(context: CLIContext, arguments: CollisionArguments) throws {

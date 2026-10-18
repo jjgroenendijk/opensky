@@ -5,8 +5,10 @@ import Darwin
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyRendering
 import OpenSkyWorld
 

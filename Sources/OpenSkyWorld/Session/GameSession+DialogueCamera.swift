@@ -7,6 +7,7 @@
 
 import OpenSkyDiagnostics
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

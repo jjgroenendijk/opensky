@@ -6,9 +6,9 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyBehavior
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 

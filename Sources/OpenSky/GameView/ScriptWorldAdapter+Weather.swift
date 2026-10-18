@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWeather
 import OpenSkyWorld
 
 extension ScriptWorldAdapter: PapyrusWeatherControlling {

@@ -9,7 +9,9 @@ import OpenSkyAssetCache
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyLoading
 @testable import OpenSkyMenus
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 

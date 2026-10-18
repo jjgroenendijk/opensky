@@ -4,7 +4,7 @@
 // Runtime State > Reset drops reference transforms.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyAIPackages
 
 final class AIMovementSection: PanelSectionViewController {
     weak var provider: (any AINavigationControlProviding)? {

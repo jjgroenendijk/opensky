@@ -4,6 +4,7 @@
 // rules; Driver hands in its runner + configuration.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyRendering
 

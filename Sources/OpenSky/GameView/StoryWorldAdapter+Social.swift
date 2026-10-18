@@ -2,6 +2,7 @@
 // interrupt flags, and sight lines through the perception world. The rules live
 // in `SocialEventCore` (docs/engine/random-conversations.md).
 
+import OpenSkyAIPackages
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDialogue

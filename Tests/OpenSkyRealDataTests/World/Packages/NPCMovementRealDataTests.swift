@@ -2,14 +2,16 @@
 // game bytes or frames leave it.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 

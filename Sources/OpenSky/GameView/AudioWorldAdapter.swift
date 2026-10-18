@@ -1,13 +1,19 @@
 // App side of `AudioCoordinator`: answers `AudioWorld` from the renderer and
 // the streamer. The rules live in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyActorPresentation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyConditions
+import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldState
 import simd
 

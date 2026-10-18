@@ -3,7 +3,7 @@
 // control sent, so tests check more than rendered text.
 
 import AppKit
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 @testable import OpenSkyWorldState
 
 /// Sends a control's action the way a click would, so a test drives the panel

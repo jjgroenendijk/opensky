@@ -7,11 +7,13 @@ import CoreGraphics
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+@testable import OpenSkyNavigation
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

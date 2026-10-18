@@ -7,12 +7,13 @@
 
 import Foundation
 @testable import OpenSkyAudio
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

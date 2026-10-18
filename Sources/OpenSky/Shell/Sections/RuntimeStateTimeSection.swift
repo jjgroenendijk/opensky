@@ -4,7 +4,7 @@
 // global is the one setting here, so it is the override; elapsed time is not.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 import OpenSkyWorldState
 
 final class RuntimeStateTimeSection: PanelSectionViewController {

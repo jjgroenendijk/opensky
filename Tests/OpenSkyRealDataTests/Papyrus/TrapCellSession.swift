@@ -3,6 +3,7 @@
 // recording world. Wired the way the app wires them, with the streamer left out.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
@@ -11,7 +12,6 @@ import Foundation
 import OpenSkyPhysics
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
-@testable import OpenSkyWorld
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

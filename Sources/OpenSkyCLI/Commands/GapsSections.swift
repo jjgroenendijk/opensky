@@ -11,7 +11,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyScripting
-import OpenSkyWorld
+import OpenSkyWorldConditions
 
 extension GapsGatherer {
     func papyrus() throws -> GapSection {

@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyCells
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsCore
@@ -12,7 +13,6 @@ import Metal
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

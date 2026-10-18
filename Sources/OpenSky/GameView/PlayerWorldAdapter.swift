@@ -2,7 +2,9 @@
 // ports from the live renderer, the inventory, and the dialogue menu. The rules
 // live in the coordinators (docs/engine/coordinators.md).
 
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -11,6 +13,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

@@ -6,10 +6,12 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyCells
 import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+@testable import OpenSkyPlayer
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures
@@ -19,6 +21,7 @@ import OpenSkyScriptingFixtures
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

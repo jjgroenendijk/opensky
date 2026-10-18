@@ -6,11 +6,12 @@
 
 import Foundation
 @testable import OpenSkyBehavior
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import simd
 import Testing
 

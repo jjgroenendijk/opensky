@@ -2,12 +2,15 @@
 // crate. Split from `CombatAcceptanceChain.swift` for the type-length cap. The
 // real `CellStreamer` runs it through `ManualCellBuildRunner`.
 
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
-@testable import OpenSkyWorld
+import OpenSkyPlayer
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 
 @MainActor

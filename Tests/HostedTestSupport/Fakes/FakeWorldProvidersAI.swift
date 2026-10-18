@@ -2,10 +2,10 @@
 // type-length cap. Answers are stored values and actions are recorded, so a
 // panel test drives the whole destination without renderer or game data.
 
+@testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 
 /// The world-overlay part of the fake's stored state.
 struct FakeAIOverlayState {

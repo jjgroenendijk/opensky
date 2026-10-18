@@ -3,8 +3,8 @@
 // hands it a height field from the install.
 
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import simd
 
 /// One held input driven for a number of fixed steps.

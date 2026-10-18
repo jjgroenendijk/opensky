@@ -4,10 +4,11 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyCamera
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyLoading
 import OpenSkyMenus
-@testable import OpenSkyWorld
 import Testing
 
 @MainActor

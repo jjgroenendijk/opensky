@@ -2,10 +2,11 @@
 // in, built as the game builds it, with distant LOD around an exterior cell.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
-import OpenSkyWorld
+import OpenSkyTerrain
 import simd
 
 /// The cell a cell-stage preview builds.

@@ -3,12 +3,15 @@
 // `CellScene.references` is immutable.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+@testable import OpenSkyTerrain
+import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

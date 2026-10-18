@@ -2,7 +2,8 @@
 
 import AppKit
 @testable import OpenSky
-import OpenSkyWorld
+import OpenSkyCells
+import OpenSkyLoading
 import Testing
 
 @MainActor

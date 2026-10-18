@@ -3,7 +3,11 @@
 // provider protocol.
 
 import AppKit
+import OpenSkyCamera
+import OpenSkyLoading
+import OpenSkyObjectAnimation
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 

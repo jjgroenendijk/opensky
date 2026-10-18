@@ -4,9 +4,12 @@
 // The work lives in the `GameSession+*.swift` extensions.
 
 import MetalKit
+import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyWeather
 import OpenSkyWorldState
 import simd
 

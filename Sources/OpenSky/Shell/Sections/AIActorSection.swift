@@ -4,7 +4,7 @@
 // does not close it. Not overridden: the Overlays section owns the override.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyAIPackages
 
 final class AIActorSection: PanelSectionViewController {
     weak var provider: (any AINavigationControlProviding)? {

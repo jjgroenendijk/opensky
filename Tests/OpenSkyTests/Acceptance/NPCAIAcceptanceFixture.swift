@@ -3,12 +3,13 @@
 // decides: patrol at 09:00, sleep at 21:00, and the clock causes the change.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 
 @MainActor

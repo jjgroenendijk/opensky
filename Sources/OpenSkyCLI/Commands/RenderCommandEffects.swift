@@ -3,10 +3,13 @@
 // the A/B captures of docs/rendering/image-space.md and visual-effects.md.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyCLIArguments
+import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWeather
 import OpenSkyWorld
 import simd
 

@@ -2,17 +2,21 @@
 // volume in a real `CellStreamer`, and `OnTriggerEnter`/`OnTriggerLeave` run in
 // the VM. Leave is queued before `detach` retires the instances. Built in code.
 
+import OpenSkyCells
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

@@ -5,8 +5,11 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyLoading
+import OpenSkyPlayer
 import OpenSkyRendering
 
 @MainActor

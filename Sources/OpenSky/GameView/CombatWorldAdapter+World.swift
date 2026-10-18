@@ -3,8 +3,10 @@
 
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyBehavior
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
@@ -17,9 +19,11 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyNavigation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering

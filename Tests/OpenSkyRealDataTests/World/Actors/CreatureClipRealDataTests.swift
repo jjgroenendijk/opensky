@@ -2,12 +2,12 @@
 // run clip among its candidate names. The census goes to .logs/creature-clips/.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyPhysics
-@testable import OpenSkyWorld
 import Testing
 
 struct CreatureClipRealDataTests {

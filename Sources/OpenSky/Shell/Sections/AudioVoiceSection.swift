@@ -5,6 +5,7 @@
 // filter covers about 75,000 files, so the readout states the match count.
 
 import AppKit
+import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyFormatsAnimation
 import OpenSkyWorld

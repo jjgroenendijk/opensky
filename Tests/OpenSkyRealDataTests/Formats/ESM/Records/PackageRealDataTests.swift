@@ -2,11 +2,12 @@
 // gitignored run output.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

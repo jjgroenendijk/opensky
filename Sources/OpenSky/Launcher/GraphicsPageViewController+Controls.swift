@@ -3,8 +3,8 @@
 
 import AppKit
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyRendering
-import OpenSkyWorld
 
 extension GraphicsPageViewController {
     func configureControls() {

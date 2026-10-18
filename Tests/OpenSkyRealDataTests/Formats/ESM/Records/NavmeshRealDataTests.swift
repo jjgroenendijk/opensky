@@ -4,10 +4,11 @@
 // settles xEdit's parent rule against UESP's. The summary goes to `.logs/`.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+@testable import OpenSkyNavigation
 import Testing
 
 struct NavmeshRealDataTests {

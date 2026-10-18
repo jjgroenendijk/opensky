@@ -32,7 +32,7 @@ The app opens on the launcher, not on the developer shell. The launcher holds:
     the others and not on the page a player starts from.
   - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
     converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
-    `AssetCacheCoordinator` in `OpenSkyWorld`, shared by the pages through `LauncherContext`.
+    `AssetCacheCoordinator` in `OpenSkyLoading`, shared by the pages through `LauncherContext`.
   - Graphics holds a preset, the base game's options, and the GPU features, such as the
     [pipeline cache](/rendering/pipeline-cache.md) and
     [texture streaming](/rendering/texture-streaming.md)

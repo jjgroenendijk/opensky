@@ -3,6 +3,7 @@
 // Run with `make test-real T='PluginFormIDSpaceRealDataTests'`.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
@@ -10,7 +11,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

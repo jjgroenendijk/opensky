@@ -3,12 +3,14 @@
 // magic coordinator. The rules live in the coordinator (docs/engine/traps.md).
 
 import Foundation
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 

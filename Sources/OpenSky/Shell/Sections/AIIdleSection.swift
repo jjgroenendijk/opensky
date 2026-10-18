@@ -2,8 +2,9 @@
 // marker's idles and their tree, and the selector trace of the selected actor.
 
 import AppKit
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
 import OpenSkyFormatsESM
-import OpenSkyWorld
 
 final class AIIdleSection: PanelSectionViewController {
     weak var provider: (any IdleControlProviding)? {

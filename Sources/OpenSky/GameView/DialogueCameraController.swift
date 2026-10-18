@@ -3,11 +3,13 @@
 // speaker still is a `DialogueCoordinator` call. See docs/engine/dialogue-camera.md.
 
 import Foundation
+import OpenSkyAIPackages
 import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyMenus
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

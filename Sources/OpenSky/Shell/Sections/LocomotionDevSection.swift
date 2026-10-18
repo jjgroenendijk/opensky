@@ -5,7 +5,7 @@
 
 import AppKit
 import OpenSkyPhysics
-import OpenSkyWorld
+import OpenSkyPlayer
 
 final class LocomotionDevSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

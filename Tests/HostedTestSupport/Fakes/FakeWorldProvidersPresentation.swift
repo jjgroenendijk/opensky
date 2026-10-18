@@ -1,9 +1,10 @@
 // Kill cam, loading screen, message, and combat style part of the shared panel fake.
 
 import Foundation
+@testable import OpenSkyCamera
 import OpenSkyCombat
+@testable import OpenSkyLoading
 import OpenSkyMenus
-@testable import OpenSkyWorld
 
 /// What the Kill Cam, Loading Screens, and Messages sections read, and what they asked for.
 final class FakePresentationState {

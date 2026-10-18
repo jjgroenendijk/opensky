@@ -3,11 +3,14 @@
 // cell camera reseed. Fixture: `Tests/HostedTestSupport/World/Streaming/CellStreamerFixture.swift`.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+@testable import OpenSkyTerrain
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

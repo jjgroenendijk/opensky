@@ -5,8 +5,8 @@
 import AppKit
 import OpenSkyAssetCache
 import OpenSkyLaunch
+import OpenSkyLoading
 import OpenSkySave
-import OpenSkyWorld
 
 /// A page that shows game-folder state and must redraw when it changes.
 protocol LauncherPageRefreshing: AnyObject {

@@ -3,7 +3,7 @@
 // feet, and the counts.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyEffects
 
 final class ImpactSection: PanelSectionViewController {
     weak var provider: (any ImpactControlProviding)? {

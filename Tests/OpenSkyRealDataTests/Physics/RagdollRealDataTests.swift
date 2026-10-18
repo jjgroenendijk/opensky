@@ -11,7 +11,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
-@testable import OpenSkyWorld
+@testable import OpenSkyPlayer
 import simd
 import Testing
 

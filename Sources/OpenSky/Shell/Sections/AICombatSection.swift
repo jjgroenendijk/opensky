@@ -4,8 +4,8 @@
 // Not overridden: clearing the checkbox is the way back.
 
 import AppKit
+import OpenSkyAIPackages
 import OpenSkyCombat
-import OpenSkyWorld
 
 final class AICombatSection: PanelSectionViewController {
     weak var provider: (any CombatLoopControlProviding)? {

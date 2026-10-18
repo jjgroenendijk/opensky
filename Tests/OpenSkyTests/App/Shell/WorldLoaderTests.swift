@@ -2,7 +2,7 @@
 // load never completes.
 
 @testable import OpenSky
-import OpenSkyWorld
+import OpenSkyCells
 import Testing
 
 @MainActor

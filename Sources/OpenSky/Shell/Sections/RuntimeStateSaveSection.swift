@@ -3,8 +3,8 @@
 // all" must not delete saves. Errors show verbatim, so a failed save is diagnosable.
 
 import AppKit
+import OpenSkyRuntimeState
 import OpenSkySave
-import OpenSkyWorld
 
 final class RuntimeStateSaveSection: PanelSectionViewController {
     /// Slot the field starts on, so the acceptance round trip needs no typing.

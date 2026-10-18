@@ -8,7 +8,7 @@ import AppKit
 import OpenSkyActors
 import OpenSkyFeaturesTesting
 @testable import OpenSkyProgression
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 @MainActor

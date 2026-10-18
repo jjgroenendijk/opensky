@@ -4,6 +4,7 @@
 // Metal, no async, synthetic coordinates (AGENTS.md testing rule).
 
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import Testing
 

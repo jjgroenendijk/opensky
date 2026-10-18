@@ -2,6 +2,8 @@
 // pickup, speech, greetings, attacks, casts, and shouts.
 // See docs/engine/package-schedules.md, "Procedure machines".
 
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData

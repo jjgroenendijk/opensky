@@ -3,7 +3,7 @@
 // Dev Controls drives the graph.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyPlayer
 
 final class LocomotionGraphSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

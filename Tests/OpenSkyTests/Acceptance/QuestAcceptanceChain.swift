@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
@@ -20,6 +21,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

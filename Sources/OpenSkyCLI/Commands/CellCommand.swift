@@ -4,11 +4,11 @@
 // (docs/engine/cell-scene.md#load-order). Defaults to the first-render cell.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorld
 
 enum CellCommand {
     static func run(context: CLIContext, arguments: CellArguments) throws {

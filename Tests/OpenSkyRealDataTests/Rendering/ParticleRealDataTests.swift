@@ -4,10 +4,10 @@
 // carry particles, and their effect shaders must resolve. Summary goes to .logs/.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 import Testing
 
 struct ParticleRealDataTests {

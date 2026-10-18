@@ -2,6 +2,8 @@
 // there, and tell the furniture's scripts. See docs/engine/package-schedules.md,
 // "Furniture".
 
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyScripting

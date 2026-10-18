@@ -5,9 +5,11 @@
 // a mutation, a rebuild is queued. A rebuild is a whole cell, so it is
 // idempotent. See docs/engine/runtime-state.md.
 
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyTerrain
 import OpenSkyWorldState
 import simd
 

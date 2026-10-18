@@ -4,6 +4,7 @@
 // separate so each dependency is explicit.
 
 import AppKit
+import OpenSkyActorPresentation
 import OpenSkyDialogue
 import OpenSkyMenus
 import OpenSkyWorld

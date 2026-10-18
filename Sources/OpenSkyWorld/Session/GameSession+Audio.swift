@@ -6,7 +6,9 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyTerrain
 import simd
 
 extension GameSession {

@@ -4,6 +4,7 @@
 // a disabled seam costs nothing, one vertex range per active target.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore

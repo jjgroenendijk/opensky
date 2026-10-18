@@ -4,6 +4,7 @@
 // `CameraSection` owns camera mode's override.
 
 import AppKit
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 

@@ -34,6 +34,16 @@ LAYERS = [
     ["OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState"],
     ["OpenSkyConditions"],
 ]
+# Rule 9. The domains of the world feature, lowest first. A domain depends on lower
+# modules, interfaces, and earlier domains. Of the features, only the world feature
+# may depend on a domain; other features use OpenSkyWorldInterface.
+DOMAINS = [
+    "OpenSkyWorldConditions", "OpenSkyWeather", "OpenSkyNavigation", "OpenSkyTerrain",
+    "OpenSkyEffects", "OpenSkyCamera", "OpenSkyRuntimeState", "OpenSkyActorPresentation",
+    "OpenSkyObjectAnimation", "OpenSkyPlayer", "OpenSkyAIPackages", "OpenSkyCells",
+    "OpenSkyLoading",
+]
+DOMAIN_OWNER = "OpenSkyWorld"
 # Products of external packages. They sit below every layer.
 EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
@@ -59,18 +69,21 @@ test_side = {t["name"] for t in targets
 testing = {n for n in test_side if n.endswith("Testing")}
 fixtures = {n for n in test_side if n.endswith("Fixtures")}
 interfaces = {n for n in names if n.endswith("Interface") and n not in tests}
-features = names - set(layer) - COMPOSITION - tests - test_side - interfaces
+domain = {name: index for index, name in enumerate(DOMAINS)}
+features = names - set(layer) - set(domain) - COMPOSITION - tests - test_side - interfaces
 failures = []
 for name in sorted(test_side - testing - fixtures):
     failures.append(f"library {name} under Tests/ is named neither ...Testing nor ...Fixtures")
 for name in sorted(fixtures):
-    if name[:-len("Fixtures")] not in features:
-        failures.append(f"fixtures library {name} names no feature")
+    if name[:-len("Fixtures")] not in features | set(domain):
+        failures.append(f"fixtures library {name} names no feature or domain")
 
 
 def kind(name):
     if name in layer:
         return "lower"
+    if name in domain:
+        return "domain"
     if name in interfaces:
         return "interface"
     if name in testing:
@@ -89,8 +102,13 @@ for name in sorted(names):
         if name in layer:
             if dep not in layer or layer[dep] >= layer[name]:
                 failures.append(f"rule 1: lower module {name} depends on {dep}")
+        elif name in domain:
+            if kind(dep) not in ("lower", "interface", "domain") or domain.get(dep, -1) >= domain[name]:
+                failures.append(f"rule 9: domain {name} depends on {dep}")
         elif name in features:
-            if kind(dep) not in ("lower", "interface"):
+            if kind(dep) == "domain" and name != DOMAIN_OWNER:
+                failures.append(f"rule 9: feature {name} depends on the domain {dep}")
+            elif kind(dep) not in ("lower", "interface", "domain"):
                 failures.append(
                     f"rule 2: feature {name} depends on {dep}; use {dep}Interface")
         elif name in interfaces:
@@ -119,6 +137,11 @@ for feature in sorted(features):
         if present and excused:
             failures.append(
                 f"rule 6: {feature}{part} exists; drop its exception from this check")
+for name in DOMAINS:
+    if name not in names:
+        failures.append(f"rule 9: domain {name} is not a target")
+    elif name + "Tests" not in names:
+        failures.append(f"rule 9: domain {name} has no {name}Tests")
 for (feature, part) in MISSING:
     if feature not in features:
         failures.append(f"rule 6: exception names {feature}, which is not a feature")

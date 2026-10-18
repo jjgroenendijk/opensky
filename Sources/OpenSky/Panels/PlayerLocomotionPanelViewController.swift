@@ -4,6 +4,7 @@
 // state. The camera-mode popup is here because it starts the simulation.
 
 import AppKit
+import OpenSkyPlayer
 import OpenSkyWorld
 
 final class PlayerLocomotionPanelViewController: InspectorPanelViewController {

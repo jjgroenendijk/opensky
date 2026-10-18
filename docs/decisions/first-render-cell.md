@@ -9,7 +9,7 @@ tags: [decision, cell, rendering]
 # First render cell
 
 Which exterior cell to render first, and to use as the CLI default
-(`Sources/OpenSkyWorld/Cells/FirstRenderCell.swift`).
+(`Sources/OpenSkyCells/FirstRenderCell.swift`).
 
 ## Decision
 

@@ -3,7 +3,9 @@
 // The switch is world state on one actor, so Runtime State > Reset clears it.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
+import OpenSkyRuntimeState
 
 final class AIHeadAssemblySection: PanelSectionViewController {
     weak var provider: (any HeadAssemblyControlProviding)? {

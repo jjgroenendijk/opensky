@@ -13,8 +13,9 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+@testable import OpenSkyTerrain
 import simd
 
 /// The synthetic arena. Flat, so the fight is the one variable. The wall stops

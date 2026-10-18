@@ -4,12 +4,15 @@
 // clocks cap what a stalled frame can drive. Timings are synthetic.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyNavigation
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

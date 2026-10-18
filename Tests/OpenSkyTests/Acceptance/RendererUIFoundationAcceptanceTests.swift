@@ -8,8 +8,9 @@ import OpenSkyEngineTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

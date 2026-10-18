@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

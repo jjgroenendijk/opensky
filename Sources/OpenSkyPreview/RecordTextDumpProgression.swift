@@ -7,7 +7,8 @@ import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorld
+import OpenSkyRuntimeState
+import OpenSkyWorldConditions
 
 nonisolated extension RecordTextDump {
     public static func progressionSummary(

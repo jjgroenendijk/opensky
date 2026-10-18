@@ -6,12 +6,12 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.acceptance))

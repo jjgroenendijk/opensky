@@ -2,7 +2,8 @@
 // launcher. The main actor never waits: progress and the result arrive as tasks.
 
 import Foundation
-import OpenSkyWorld
+import OpenSkyCells
+import OpenSkyLoading
 
 final class WorldLoader {
     /// The stages of the newest load, kept after it ends for the timing inspector.

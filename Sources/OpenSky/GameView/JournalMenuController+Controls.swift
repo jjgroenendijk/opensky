@@ -11,7 +11,6 @@ import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
-import OpenSkyWorld
 
 /// A holder of the journal menu, which then provides the journal controls.
 protocol JournalMenuHosting: AnyObject {

@@ -2,7 +2,7 @@
 
 import AppKit
 import OpenSkyAssetCache
-import OpenSkyWorld
+import OpenSkyLoading
 
 extension AssetOptimisationPageViewController {
     func configureControls() {

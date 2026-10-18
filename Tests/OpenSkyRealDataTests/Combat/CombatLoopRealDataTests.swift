@@ -7,6 +7,7 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -16,8 +17,8 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 
