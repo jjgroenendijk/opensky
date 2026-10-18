@@ -2,7 +2,7 @@
 // answers. See docs/engine/package-schedules.md.
 
 import OpenSkyFormatsESM
-import simd
+import OpenSkyWorldInterface
 
 extension PackageCoordinator {
     /// Feeds one event to one running procedure. A procedure that ends moves the tree on.
@@ -38,7 +38,14 @@ extension PackageCoordinator {
         for tagged in commands {
             switch tagged.command {
             case let .move(point):
-                requestMove(actor, to: point)
+                // The idle runtime walks a sandboxing actor to its marker, so the
+                // sandbox's own walk counts as done.
+                let leaf = executions[actor]?.runner.running[tagged.leaf]?.leaf
+                if leaf?.kind == .sandbox, world?.packageActorHoldsIdleMarker(actor) == true {
+                    step(actor, with: .arrived, leaf: tagged.leaf)
+                } else {
+                    requestMove(actor, to: point)
+                }
             case .sit:
                 guard let seat = executions[actor]?.runner.running[tagged.leaf]?.setup.seat else {
                     continue
@@ -54,19 +61,6 @@ extension PackageCoordinator {
             case .playLoop:
                 continue
             }
-        }
-    }
-
-    /// A move that finds every mover slot taken waits, and is asked again each tick.
-    func requestMove(_ actor: ReferenceKey, to point: SIMD3<Float>) {
-        let execution = executions[actor]
-        let result = world?.movePackageActor(
-            mounts[actor] ?? actor, to: point,
-            direct: execution?.isDirect ?? false, gait: execution?.gait
-        )
-        waitingMoves[actor] = result == .busy ? point : nil
-        if result == .failed || result == nil {
-            movementSettled(actor: actor, reason: .giveUp)
         }
     }
 }

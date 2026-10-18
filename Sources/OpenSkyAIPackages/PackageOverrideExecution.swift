@@ -1,5 +1,5 @@
-// The procedure tree of a package that a scene or a quest alias gives an actor. A
-// scene action is done when the tree is.
+// The procedure tree of an actor's current package: one a scene or a quest alias
+// gives it, or one its own schedule picked. A scene action is done when the tree is.
 // See docs/engine/package-schedules.md, "Scene packages".
 
 import OpenSkyFormatsESM
@@ -15,9 +15,11 @@ nonisolated public enum PackageOverrideProgress: Equatable, Sendable {
     case notSimulated
 }
 
-/// The procedure tree of one overridden actor's current package.
+/// The procedure tree of one actor's current package.
 nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public let package: FormID
+    /// True for a package the actor's own schedule picked, false for a scene or alias one.
+    public let fromSchedule: Bool
     public internal(set) var runner: PackageTreeRunner
     /// True for a package that rides the actor's horse when it has one.
     public let ridesHorse: Bool
@@ -25,11 +27,15 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public internal(set) var seat: PackageSeat?
     /// The package's preferred speed, when its flag turns it on.
     public let gait: LocomotionGait?
+    /// The procedure inputs by `PKC2` index, read once because every tick asks for them.
+    public let values: [Int8: Package.DataValue]
 
-    public init(package: ResolvedPackage) {
+    public init(package: ResolvedPackage, fromSchedule: Bool = false) {
         self.package = package.package.formID
+        self.fromSchedule = fromSchedule
         ridesHorse = package.ridesHorse
         gait = Self.gait(of: package.package.general)
+        values = Self.values(of: package)
         runner = PackageTreeRunner(
             tree: package.tree, seed: UInt64(package.package.formID.rawValue)
         )
@@ -54,6 +60,13 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     /// waits for the package to end, not for the actor to stop.
     public var isDone: Bool {
         runner.outcome != nil || ends > 0
+    }
+
+    static func values(of package: ResolvedPackage) -> [Int8: Package.DataValue] {
+        PackageProcedureInputs.values(
+            of: package.package,
+            template: package.definition == package.package ? nil : package.definition
+        )
     }
 
     /// Jog runs and fast walk walks, because an NPC has only the walk and run gaits.

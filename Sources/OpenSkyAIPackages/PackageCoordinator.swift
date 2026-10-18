@@ -56,6 +56,19 @@ public protocol PackageWorld: AnyObject {
     func packageAction(_ action: PackageAction, actor: ReferenceKey) -> PackageActionResult
     /// The actor stops walking where it is.
     func stopPackageActor(_ actor: ReferenceKey)
+    /// What keeps the actor from running its own package now, such as a fight.
+    func packageActorActivity(_ actor: ReferenceKey) -> PackageActorActivity
+    /// False when every mover slot is taken and `actor` has none, so a move would wait.
+    func packageMoverHasRoom(for actor: ReferenceKey) -> Bool
+    /// True while the idle runtime holds an idle marker for the actor.
+    func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool
+}
+
+/// Whether an actor is free to run the package its schedule picked.
+nonisolated public enum PackageActorActivity: Equatable, Sendable {
+    case free
+    case fighting
+    case dead
 }
 
 extension PackageWorld {
@@ -100,6 +113,18 @@ extension PackageWorld {
     }
 
     public func stopPackageActor(_: ReferenceKey) {}
+
+    public func packageActorActivity(_: ReferenceKey) -> PackageActorActivity {
+        .free
+    }
+
+    public func packageMoverHasRoom(for _: ReferenceKey) -> Bool {
+        true
+    }
+
+    public func packageActorHoldsIdleMarker(_: ReferenceKey) -> Bool {
+        false
+    }
 }
 
 /// The begin, end, or change of one actor's package, which runs the package's fragment.
@@ -157,7 +182,7 @@ nonisolated public enum PackageCore {
 /// every call is a no-op.
 @MainActor
 public final class PackageCoordinator {
-    public private(set) var runtime: ActorPackageRuntime?
+    public internal(set) var runtime: ActorPackageRuntime?
     /// Each simulated actor and the base it registered with.
     public private(set) var registeredActors: [ReferenceKey: FormID] = [:]
     /// The procedure of each actor a scene holds.
@@ -165,13 +190,14 @@ public final class PackageCoordinator {
     /// Each rider's horse, which walks the rider's package for it.
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
     /// Walks that found no free mover slot, by actor.
-    var waitingMoves: [ReferenceKey: SIMD3<Float>] = [:]
+    var waitingMoves: [ReferenceKey: PackagePendingMove] = [:]
+    var nextMoveTicket = 0
     public var seats = PackageSeatLedger()
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
     weak let world: (any PackageWorld)?
-    private var store: PackageStore?
+    private(set) var store: PackageStore?
     /// Real seconds until the alias stacks are read again.
     private var aliasRefreshSeconds: Float = 0
     private static let aliasRefreshInterval: Float = 1
@@ -240,7 +266,7 @@ public final class PackageCoordinator {
             return live
         }
         self.runtime = runtime
-        advanceOverrides(by: delta)
+        advanceTrees(by: delta)
     }
 
     /// Holds `actor` out of scheduled selection, as a conversation does.
@@ -264,6 +290,7 @@ public final class PackageCoordinator {
             context: world.packageConditionContext(clock: clock)
         )
         self.runtime = runtime
+        syncExecution(actor)
     }
 
     /// Picks `actor`'s package again now, as `EvaluatePackage` asks.
@@ -330,20 +357,6 @@ public final class PackageCoordinator {
         updateMount(actor, rides: false)
     }
 
-    /// Drops the actor's machine and runs the change fragment of the package it left.
-    private func leaveExecution(of actor: ReferenceKey) {
-        waitingMoves[actor] = nil
-        guard let execution = executions.removeValue(forKey: actor) else { return }
-        if let seat = execution.seat {
-            world?.unseatPackageActor(actor, from: seat)
-        }
-        if let package = try? store?.resolve(execution.package).package {
-            world?.packageProcedure(
-                PackageScriptEvent(kind: .change, actor: actor, package: package)
-            )
-        }
-    }
-
     /// A move the procedure asked for ended.
     public func movementSettled(actor: ReferenceKey, reason: NPCMovementSettleReason) {
         let event: PackageProcedureEvent
@@ -357,55 +370,6 @@ public final class PackageCoordinator {
         step(rider, with: event, leaf: mover)
     }
 
-    private func advanceOverrides(by delta: Float) {
-        let held = registeredActors.keys.filter { runtime?.hold(for: $0) != nil }
-        let ridden = Set(mounts.values)
-        for actor in Set(executions.keys).union(held).sorted() where !ridden.contains(actor) {
-            syncExecution(actor)
-            if let point = waitingMoves[actor] {
-                requestMove(actor, to: point)
-            }
-            tick(actor, by: delta)
-        }
-    }
-
-    /// Starts the tree of the actor's current held package when the package changed.
-    private func syncExecution(_ actor: ReferenceKey) {
-        guard
-            let runtime, let world, runtime.hold(for: actor) != nil,
-            let current = runtime.currentPackage(for: actor)
-        else {
-            leaveExecution(of: actor)
-            return
-        }
-        guard executions[actor]?.package != current.package.formID else { return }
-        guard world.packageActorPosition(actor) != nil, var session = session(for: actor) else {
-            return
-        }
-        leaveExecution(of: actor)
-        var execution = PackageOverrideExecution(package: current)
-        updateMount(actor, rides: execution.ridesHorse)
-        let commands = execution.runner.start(host: &session)
-        executions[actor] = execution
-        world.packageProcedure(PackageScriptEvent(
-            kind: .begin, actor: actor, package: current.package
-        ))
-        apply(commands, actor: actor, endsBefore: 0)
-    }
-
-    /// The session side of the actor's held package, or nil when nothing holds it.
-    func session(for actor: ReferenceKey) -> PackageTreeSession? {
-        guard
-            let runtime, let world, let clock = world.packageClock,
-            let hold = runtime.hold(for: actor),
-            let current = runtime.currentPackage(for: actor)
-        else { return nil }
-        return PackageTreeSession(
-            world: world, actor: actor, hold: hold, package: current, clock: clock,
-            translation: store?.translation(of: current.definition.formID)
-        )
-    }
-
     /// Runs the end fragment once for each time the package ended since `before`.
     func reportEnds(of actor: ReferenceKey, since before: Int) {
         guard
@@ -415,7 +379,7 @@ public final class PackageCoordinator {
         world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
     }
 
-    private func updateMount(_ actor: ReferenceKey, rides: Bool) {
+    func updateMount(_ actor: ReferenceKey, rides: Bool) {
         guard let world else { return }
         if rides, mounts[actor] == nil, let horse = world.mountPackageActor(actor) {
             mounts[actor] = horse

@@ -13,74 +13,6 @@ import simd
 import Testing
 
 @MainActor
-private final class FakePackageWorld: PackageWorld {
-    var residents: [RuntimeReferenceEntry]? = []
-    var packageClock: GameClock? = GameClock(hour: 9)
-    private(set) var contextReads = 0
-    private(set) var moves: [SIMD3<Float>] = []
-    private(set) var gaits: [LocomotionGait?] = []
-    private(set) var movers: [ReferenceKey] = []
-    var horse: ReferenceKey?
-    var moverSlotsFull = false
-    var drivesPlayer = false
-    private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
-    private(set) var actions: [PackageAction] = []
-    static let place = SIMD3<Float>(100, 0, 0)
-    static let patrol = [SIMD3<Float>(10, 0, 0), SIMD3<Float>(20, 0, 0)]
-
-    func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        .zero
-    }
-
-    func packagePlace(
-        of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
-    ) -> PackagePlace? {
-        location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
-    }
-
-    func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?
-    ) -> PackageMoveResult {
-        gaits.append(gait)
-        moves.append(point)
-        movers.append(actor)
-        return moverSlotsFull ? .busy : .started
-    }
-
-    func packagePatrolPath(
-        from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
-    ) -> [SIMD3<Float>]? {
-        Self.patrol
-    }
-
-    func packageAction(_ action: PackageAction, actor _: ReferenceKey) -> PackageActionResult {
-        actions.append(action)
-        return .done
-    }
-
-    func mountPackageActor(_: ReferenceKey) -> ReferenceKey? {
-        horse
-    }
-
-    func packageProcedure(_ event: PackageScriptEvent) {
-        scriptEvents.append(event.kind)
-    }
-
-    func packageResidents() -> [RuntimeReferenceEntry]? {
-        residents
-    }
-
-    var packageDrivesPlayer: Bool {
-        drivesPlayer
-    }
-
-    func packageConditionContext(clock _: GameClock) -> ConditionContext {
-        contextReads += 1
-        return ConditionContext()
-    }
-}
-
-@MainActor
 struct PackageCoordinatorTests {
     private static let guardKey = PackageRuntimeFixture.key(0x500)
     private static let otherKey = PackageRuntimeFixture.key(0x501)
@@ -173,7 +105,8 @@ struct PackageCoordinatorTests {
         #expect(coordinator.readout(for: Self.guardKey)?.editorID == "Morning")
         #expect(coordinator.executions.isEmpty)
         // Leaving the package runs its change fragment, after the end of the walk.
-        #expect(world.scriptEvents == [.begin, .end, .change])
+        // The schedule's tree changes to the scene's, whose walk ends, then back.
+        #expect(world.scriptEvents == [.begin, .change, .begin, .end, .change])
         #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
     }
 
@@ -226,7 +159,7 @@ struct PackageCoordinatorTests {
 
         #expect(coordinator.runOverride(walk, actor: Self.guardKey) == .running)
         #expect(coordinator.runOverride(ride, actor: Self.guardKey) == .running)
-        #expect(world.scriptEvents == [.begin, .change, .begin])
+        #expect(world.scriptEvents == [.begin, .change, .begin, .change, .begin])
     }
 
     /// After `SetPlayerAIDriven(true)` a scene package walks the player, and the

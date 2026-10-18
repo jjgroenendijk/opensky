@@ -178,6 +178,25 @@ nonisolated public struct ActorPackageRuntime {
         reevaluate(actor: actor, clock: clock, context: context)
     }
 
+    /// Keeps a "Must Complete" package current until its tree ends, whatever the schedule
+    /// and conditions say (<https://ck.uesp.net/wiki/Package_Flags>). Nil lets it go.
+    public mutating func setCompleting(_ package: FormID?, actor: ReferenceKey) {
+        actors[actor]?.completing = package
+    }
+
+    public func completing(for actor: ReferenceKey) -> FormID? {
+        actors[actor]?.completing
+    }
+
+    /// The actor's own package ended its tree: a "Must Complete" package lets go, and a
+    /// "Once Per Day" package is not picked again within its day.
+    public mutating func packageEnded(
+        actor: ReferenceKey, clock: GameClock, context: ConditionContext
+    ) {
+        actors[actor]?.completing = nil
+        reevaluate(actor: actor, clock: clock, context: context, keepsOncePerDay: false)
+    }
+
     public func override(for actor: ReferenceKey) -> PackageOverride? {
         actors[actor]?.override
     }
@@ -229,7 +248,8 @@ nonisolated public struct ActorPackageRuntime {
     private mutating func reevaluate(
         actor: ReferenceKey,
         clock: GameClock,
-        context: ConditionContext
+        context: ConditionContext,
+        keepsOncePerDay: Bool = true
     ) {
         guard var state = actors[actor] else { return }
         var evaluationContext = context
@@ -237,7 +257,14 @@ nonisolated public struct ActorPackageRuntime {
         evaluationContext.clock = clock
         let previous = state.current?.package.formID
         let stack = state.override?.packages ?? ((state.aliasStack?.packages ?? []) + state.stack)
-        state.current = select(stack: stack, clock: clock, context: &evaluationContext)
+        if state.override != nil || state.completing == nil || state.completing != previous {
+            state.completing = nil
+            state.current = select(
+                stack: stack, clock: clock, context: &evaluationContext,
+                ranToday: state.ranToday(at: clock, except: keepsOncePerDay ? previous : nil)
+            )
+            state.noteOncePerDay(state.current?.package, at: clock)
+        }
         state.lastEvaluationGameSeconds = clock.totalGameSeconds
         state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: stack)
         actors[actor] = state
@@ -249,9 +276,10 @@ nonisolated public struct ActorPackageRuntime {
     private func select(
         stack: [FormID],
         clock: GameClock,
-        context: inout ConditionContext
+        context: inout ConditionContext,
+        ranToday: Set<FormID>
     ) -> ResolvedPackage? {
-        for id in stack {
+        for id in stack where !ranToday.contains(id) {
             guard let package = try? store.resolve(id) else { continue }
             guard package.package.schedule.matches(clock) else { continue }
             var evaluator = ConditionEvaluator(context: context)
@@ -284,6 +312,29 @@ nonisolated public struct ActorPackageRuntime {
         var isSuspended = false
         var override: PackageOverride?
         var aliasStack: PackageAliasStack?
+        var completing: FormID?
+        /// When each "Once Per Day" package was first picked in its current 24-hour block.
+        var oncePerDayStarts: [FormID: Double] = [:]
+
+        /// "Once Per Day" packages picked less than a day ago, other than `current`.
+        func ranToday(at clock: GameClock, except current: FormID?) -> Set<FormID> {
+            Set(oncePerDayStarts.filter {
+                $0.key != current && clock.totalGameSeconds >= $0.value
+                    && clock.totalGameSeconds - $0.value < GameClock.secondsPerDay
+            }.keys)
+        }
+
+        mutating func noteOncePerDay(_ package: Package?, at clock: GameClock) {
+            guard let package, package.general.flags.contains(.oncePerDay) else { return }
+            let start = oncePerDayStarts[package.formID]
+            if
+                let start, clock.totalGameSeconds >= start,
+                clock.totalGameSeconds - start < GameClock.secondsPerDay
+            {
+                return
+            }
+            oncePerDayStarts[package.formID] = clock.totalGameSeconds
+        }
 
         func needsEvaluation(at clock: GameClock) -> Bool {
             guard

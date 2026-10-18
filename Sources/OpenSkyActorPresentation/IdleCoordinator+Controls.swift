@@ -32,6 +32,11 @@ extension IdleCoordinator: IdleControlProviding {
         )
     }
 
+    /// True while `actor` has claimed an idle marker, walking to it or playing there.
+    public func holdsMarker(_ actor: ReferenceKey) -> Bool {
+        sessions[actor]?.marker != nil
+    }
+
     public func setUsesIdleMarkers(_ enabled: Bool) {
         usesIdleMarkers = enabled
     }

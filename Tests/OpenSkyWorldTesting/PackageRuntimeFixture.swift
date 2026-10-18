@@ -15,7 +15,8 @@ public enum PackageRuntimeFixture {
         condition: ESMField? = nil,
         template: UInt32? = nil,
         procedureNames: [String] = [],
-        dataInputs: [Package.DataInput] = []
+        dataInputs: [Package.DataInput] = [],
+        flags: Package.GeneralFlags = []
     ) throws -> Package {
         var conditions = ConditionList()
         if let condition {
@@ -25,7 +26,7 @@ public enum PackageRuntimeFixture {
             formID: FormID(id),
             editorID: editorID,
             general: Package.GeneralData(
-                flags: [],
+                flags: flags,
                 kind: .package,
                 interruptOverride: 0,
                 preferredSpeed: .walk,

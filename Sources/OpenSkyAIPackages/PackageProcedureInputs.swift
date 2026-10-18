@@ -89,7 +89,7 @@ public struct PackageProcedureInputs {
     }
 
     /// The data inputs of `package` over those of `template`, by index.
-    public static func values(
+    nonisolated public static func values(
         of package: Package, template: Package?
     ) -> [Int8: Package.DataValue] {
         var values: [Int8: Package.DataValue] = [:]

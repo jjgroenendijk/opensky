@@ -134,10 +134,13 @@ public struct NPCMovementRuntime {
         facings.count
     }
 
+    /// True when `actor` walks already or a mover slot is free.
+    public func hasRoom(for actor: ReferenceKey) -> Bool {
+        movers[actor] != nil || movers.count < Self.maximumSimultaneousMovers
+    }
+
     public mutating func start(_ start: NPCMoveStart) -> Bool {
-        guard movers[start.actor] != nil || movers.count < Self.maximumSimultaneousMovers else {
-            return false
-        }
+        guard hasRoom(for: start.actor) else { return false }
         movers[start.actor] = NPCMover(
             start: start,
             drawnPlacement: drawnPlacement(of: start.actor)

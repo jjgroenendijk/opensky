@@ -35,6 +35,17 @@ Picking happens on events, not every frame. The next pick is at the earliest of:
 
 A callback fires only when the picked package changes.
 
+Two package flags change the pick. Source: <https://ck.uesp.net/wiki/Package_Flags>.
+
+- Must Complete: the package stays picked until its procedure tree ends, whatever the
+  schedule and conditions say. A scene package still takes over. A tree that never ends, such
+  as a sandbox, keeps the package for good, as the wiki describes.
+- Once Per Day: the package is not picked again within 24 game hours of the time it was first
+  picked. When its tree ends, the actor picks again at once and skips it. The wiki notes that
+  testing suggests the flag works only for a package with no start time and no duration.
+  OpenSky applies it to every package, which changes nothing for a package with a schedule
+  window, because the window has passed when the day is over.
+
 `GetDisabled` reads a fixed snapshot of enable states: a runtime enable or disable wins,
 otherwise the reference's "initially disabled" flag. This lets condition evaluation see enable
 state without reaching into the live world state.
@@ -164,10 +175,26 @@ animations are not used yet: the actor appears in the seat and plays no sit idle
 On each world tick, the app adds actors that came into range and removes those that left. New
 actors are picked against the live clock, quest and actor state, and enable state.
 
+Every simulated actor runs the procedure tree of its current package, whether the actor's own
+schedule picked it or a scene or alias holds it. When the pick changes, the old tree stops: its
+change fragment runs, a walk it started stops, and the new tree starts with its begin fragment.
+A scene or alias package wins over the schedule while it holds the actor. When it lets go, the
+schedule picks again and the new tree starts from its root.
+
+The actor's own tree waits, and a new one starts after the wait:
+
+- while a conversation or an arrest holds the actor,
+- while the actor fights. A package with the Ignore Combat flag keeps the actor out of
+  fights ([combat](/engine/combat.md#combat-state-is-derived)), so its tree runs on,
+- while the actor is dead, for good,
+- while the actor is a horse that walks its rider's package.
+
+A sandbox procedure does not walk while the idle runtime has sent the actor to an idle marker
+([idles](/engine/idle-runtime.md#marker-claim)). Its walk counts as done, so it waits and asks
+again, and the marker's idles play.
+
 Not done yet:
 
-- Sending procedure commands to movement and animation for packages the schedule picks from
-  the actor's own list. Only scene and alias packages run their machine.
 - Aliases and linked references as package locations. They are decoded, but need their quest
   and reference runtime first. A patrol start already resolves both.
 
@@ -183,13 +210,17 @@ A scene's package action holds an actor ([scenes](/engine/scenes.md#package-acti
 it holds one, the selector picks from the action's packages, not from the actor's `PKID` list,
 and picks again at once. When the action ends, the actor picks from its own list again.
 
-Only a held actor runs its procedure tree. A procedure's place is the package's first
-location input (`PLDT`). OpenSky can place these kinds: near a reference, in a cell (the cell
-reference), a reference alias of the scene's quest, near the actor itself, and the actor's
-editor location. The `move` command goes to the NPC mover. The mover's arrival or give-up ends
-the move. At most eight actors walk a path at once, to bound the cost. A move that finds all
-eight slots taken waits and is asked again on each tick; this limit is OpenSky's, not the
-game's. A move that cannot start for another reason, such as no path, fails the machine.
+A procedure's place is the package's first location input (`PLDT`). OpenSky can place
+these kinds: near a reference, in a cell (the cell reference), a reference alias of the
+scene's quest, near the actor itself, and the actor's editor location. The `move` command goes
+to the NPC mover. The mover's arrival or give-up ends the move. A move that cannot start for
+another reason, such as no path, fails the machine.
+
+At most eight actors walk a path at once, to bound the cost with dozens of actors in a cell.
+This limit is OpenSky's, not the game's. A move that finds all eight slots taken waits in a
+queue, and the queue is asked again on each tick. Scene and alias walks go first, then the
+others in the order they asked, so every actor gets a slot in the end. A waiting move searches
+no path until a slot is free.
 
 The action is done when the tree completes or fails. Travel completes on arrival. Wander,
 sandbox, sleep, and eat never complete. An unsupported procedure fails at once.
@@ -235,10 +266,11 @@ through it.
 ## Package fragments
 
 A package can carry Papyrus fragments in its `VMAD` (flag 0x01 begin, 0x02 end, 0x04 change). A
-held package runs its begin fragment when its machine starts and its end fragment when the
+package runs its begin fragment when its tree starts and its end fragment when the
 machine completes. A failed machine runs no end fragment. The change fragment runs when the actor
 leaves the package, whether it completed or not: another package replaced it, or its scene or
-alias let the actor go. Each fragment gets the actor as `akActor`. Layout: [VMAD](/formats/vmad.md).
+alias let the actor go, or a fight, a conversation, or death paused its tree. Each fragment
+gets the actor as `akActor`. Layout: [VMAD](/formats/vmad.md).
 
 The same three moments queue `OnPackageStart(akNewPackage)`, `OnPackageEnd(akOldPackage)`, and
 `OnPackageChange(akOldPackage)` on the actor's own scripts. Source: the Creation Kit wiki pages for
@@ -266,6 +298,8 @@ another loaded cell ([vehicles](/engine/vehicles.md)).
 World > AI & Navigation > Package shows the selected actor's current package, its editor ID, its
 procedure, and its schedule as a start time and duration.
 
-The only control is Reevaluate, on purpose. The clock and conditions pick the package. A control
-that set a package directly would show a state the schedule never makes. To watch the schedule
-work, move the clock in World > Runtime State > Time and press Reevaluate.
+The Package line shows the running procedures of every actor's current package, a schedule
+package as well as a scene or alias one. The only control is Reevaluate, on purpose. It picks
+the package again and starts its tree from the root. The clock and conditions pick the package.
+A control that set a package directly would show a state the schedule never makes. To watch the
+schedule work, move the clock in World > Runtime State > Time and press Reevaluate.

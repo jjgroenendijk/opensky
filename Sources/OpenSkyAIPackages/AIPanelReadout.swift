@@ -112,7 +112,8 @@ nonisolated public enum AIPackageReadout: Sendable {
         return lines.compactMap(\.self).joined(separator: "\n")
     }
 
-    /// Where a held package's procedure is, such as `Procedure: patrol, moving, point 3 of 32`.
+    /// Where the current package's procedure is, such as
+    /// `Procedure: patrol, moving, point 3 of 32`.
     public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
         let state = stateText(for: machine.state)
         guard !machine.path.isEmpty else { return "Procedure: \(machine.kind.name), \(state)" }
