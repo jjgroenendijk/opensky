@@ -1,4 +1,4 @@
-// `cell`: summarize one exterior cell without touching Metal. The cell comes from
+// `cell`: summarize one cell without touching Metal. The cell comes from
 // the whole load order: the last plugin that has the cell wins its record, and
 // every plugin adds, overrides, or deletes references by load-order FormID
 // (docs/engine/cell-scene.md#load-order). Defaults to the first-render cell.
@@ -12,6 +12,10 @@ import OpenSkyGameData
 
 enum CellCommand {
     static func run(context: CLIContext, arguments: CellArguments) throws {
+        if let interior = arguments.cell {
+            try runInterior(context: context, editorID: interior, listRefs: arguments.refs)
+            return
+        }
         let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
         let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
@@ -51,6 +55,29 @@ enum CellCommand {
         summarize(merged, index: LoadOrderRecordIndex(loadOrder), listRefs: arguments.refs)
     }
 
+    private static func runInterior(
+        context: CLIContext, editorID: String, listRefs: Bool
+    ) throws {
+        let loadOrder = try context.loadOrder().plugins
+        var merged = MergedCell()
+        for plugin in loadOrder.plugins {
+            let found = plugin.decode {
+                CLIWorldTreeWalk.interiorCell(
+                    editorID: editorID, file: plugin.file, localized: plugin.localized
+                )
+            }
+            if let found {
+                merged.add(found, from: plugin)
+            }
+        }
+        guard let winner = merged.winner else {
+            throw CLIError.failure("no interior cell \(editorID) in the load order")
+        }
+        let formID = winner.plugin.translation(FormID(stored: winner.found.formID))
+        print("[INFO] \(editorID) — CELL \(formID), interior, from \(winner.plugin.name)")
+        summarize(merged, index: LoadOrderRecordIndex(loadOrder), listRefs: listRefs)
+    }
+
     private static func int32(_ value: String?, name: String) throws -> Int32? {
         guard let value else { return nil }
         guard let parsed = Int32(value) else {
@@ -83,7 +110,10 @@ enum CellCommand {
         for ref in refs {
             let type = baseType(of: ref, in: index)
             let position = ref.placement.position
-            print("  REFR \(ref.formID) base \(ref.base) [\(type)] at "
+            let name = index.record(withFormID: ref.base).flatMap {
+                ESMWalk.editorID(of: $0.record)
+            } ?? "-"
+            print("  REFR \(ref.formID) base \(ref.base) \(name) [\(type)] at "
                 + "(\(position.x), \(position.y), \(position.z))")
         }
     }
@@ -102,7 +132,7 @@ enum CellCommand {
     }
 }
 
-/// One exterior cell gathered from every plugin that stores it, lowest priority first.
+/// One cell gathered from every plugin that stores it, lowest priority first.
 private struct MergedCell {
     struct Winner {
         let found: CLIWorldTreeWalk.FoundCell

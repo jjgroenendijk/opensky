@@ -71,6 +71,40 @@ enum CLIWorldTreeWalk {
         return nil
     }
 
+    /// The interior CELL named `editorID`, from the CELL top group's blocks.
+    static func interiorCell(editorID: String, file: ESMFile, localized: Bool) -> FoundCell? {
+        guard let top = file.topGroup(of: "CELL") else { return nil }
+        return findInterior(in: top, editorID: editorID.lowercased(), localized: localized)
+    }
+
+    private static func findInterior(
+        in group: ESMGroup, editorID: String, localized: Bool
+    ) -> FoundCell? {
+        guard let children = childrenOrWarn(group) else { return nil }
+        for (index, child) in children.enumerated() {
+            switch child {
+            case let .record(record) where record.type == "CELL":
+                guard
+                    ESMWalk.editorID(of: record)?.lowercased() == editorID,
+                    let cell = decodeOrWarn(
+                        record,
+                        using: { try Cell(record: $0, localized: localized) }
+                    )
+                else { continue }
+                let children = cellChildren(following: index, in: children, formID: record.formID)
+                return FoundCell(cell: cell, formID: record.formID, children: children)
+            case let .group(sub)
+                where sub.kind == .interiorCellBlock || sub.kind == .interiorCellSubBlock:
+                if let found = findInterior(in: sub, editorID: editorID, localized: localized) {
+                    return found
+                }
+            default:
+                break
+            }
+        }
+        return nil
+    }
+
     /// The worldspace persistent CELL: the CELL stored directly in the world
     /// children group, not in a block.
     static func persistentCell(in worldChildren: ESMGroup, localized: Bool) -> FoundCell? {

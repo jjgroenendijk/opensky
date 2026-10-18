@@ -5,10 +5,15 @@ import ArgumentParser
 public struct CellArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(
         commandName: "cell",
-        abstract: "Summarize an exterior cell's references without Metal."
+        abstract: "Summarize a cell's references without Metal."
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var grid: GridOptions
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("An interior cell editor ID, in place of a grid.", valueName: "edid")
+    )
+    public var cell: String?
     @Flag(help: "List every reference.")
     public var refs = false
 
