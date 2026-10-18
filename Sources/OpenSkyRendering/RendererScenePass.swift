@@ -43,7 +43,7 @@ extension Renderer {
         let weatherSky = scene.sky != nil ? weatherLight : nil
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
-        let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorFog)
+        let fog = resolveFrameFog(weatherLight: weatherLight)
         let grassDistance = simd_clamp(
             grassDrawDistance,
             GrassRenderPolicy.minimumDrawDistance,
@@ -472,6 +472,7 @@ extension Renderer {
             slot: slot,
             viewProjection: upscaleFrame?.jitteredViewProjection ?? projection * view
         )
+        target.colorAttachments[0].clearColor = sceneBackground
         let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
             ?? target
         let grade = imageSpaceGrade(descriptor: sceneTarget, slot: slot)

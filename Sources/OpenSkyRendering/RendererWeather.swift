@@ -1,6 +1,7 @@
 // Frame-fog resolution: active exterior weather overrides the fog uniforms, not
 // interior lighting. The weather advance runs in the session (`GameSession+Weather.swift`).
 
+import Metal
 import simd
 
 extension Renderer {
@@ -11,6 +12,23 @@ extension Renderer {
         public let farColor: SIMD3<Float>
         public let distances: SIMD4<Float>
         public let enabled: UInt32
+    }
+
+    /// Where no sky draws, as in an interior or Blackreach, a gap in the geometry shows
+    /// the far fog colour instead of black (docs/rendering/metal4-renderer.md).
+    public static func background(fog: FrameFog, drawsSky: Bool) -> MTLClearColor {
+        guard !drawsSky, fog.enabled != 0 else {
+            return MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        }
+        let colour = SIMD3<Double>(fog.farColor)
+        return MTLClearColor(red: colour.x, green: colour.y, blue: colour.z, alpha: 1)
+    }
+
+    /// The frame's fog, and the background colour that follows from it.
+    func resolveFrameFog(weatherLight: ResolvedWeather?) -> FrameFog {
+        let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorFog)
+        sceneBackground = Self.background(fog: fog, drawsSky: scene.sky != nil)
+        return fog
     }
 
     /// The loaded interior's fog, with a script's change when it still applies.
