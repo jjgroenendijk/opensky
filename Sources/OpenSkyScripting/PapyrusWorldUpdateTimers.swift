@@ -11,7 +11,7 @@ import OpenSkyWorldState
 /// The timer table itself: slots keyed by instance, plus the clock anchors.
 nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
     /// When one armed slot is due, in the arithmetic of its family.
-    private enum Wake: Equatable {
+    fileprivate enum Wake: Equatable {
         case realSteps(startTick: Int, duration: Double)
         case gameHours(deadline: Double)
     }
@@ -38,6 +38,9 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
     private var lastGameSeconds: Double?
     private var nextOrder: UInt64 = 0
     private var entries: [PapyrusInstanceKey: [PapyrusUpdateTimerSlot: Entry]] = [:]
+    /// The earliest wake of each clock. It may be early, never late, so a step before
+    /// it can skip the scan. Nil means the next step scans and finds it again.
+    private var earliestWake: EarliestWake?
 
     public init(maximumGameHoursPerStep: Double = 24) {
         self.maximumGameHoursPerStep = max(0, maximumGameHoursPerStep)
@@ -84,11 +87,13 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
             slots[slot] = nil
         }
         entries[key] = slots.isEmpty ? nil : slots
+        earliestWake = nil
     }
 
     /// Drops every slot `key` holds; called when the instance is retired.
     public mutating func removeAll(for key: PapyrusInstanceKey) {
-        entries[key] = nil
+        guard entries.removeValue(forKey: key) != nil else { return }
+        earliestWake = nil
     }
 
     /// Advances one fixed step and returns the slots that came due, ordered
@@ -100,10 +105,18 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
     ) -> [Firing] {
         tickCount += 1
         consumeGameTime(gameClock)
+        if
+            let earliestWake, earliestWake.isAfter(
+                tick: tickCount, gameHours: elapsedGameHours, stepSeconds: stepSeconds
+            )
+        {
+            return []
+        }
         let due = dueEntries(stepSeconds: stepSeconds)
         for (_, firing) in due {
             settle(firing)
         }
+        earliestWake = findEarliestWake(stepSeconds: stepSeconds)
         return due.sorted { $0.order < $1.order }.map(\.firing)
     }
 
@@ -147,6 +160,17 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
             interval: interval, wake: wake, order: nextOrder
         )
         nextOrder &+= 1
+        earliestWake = earliestWake.map { $0.including(wake) }
+    }
+
+    private func findEarliestWake(stepSeconds: Double) -> EarliestWake {
+        var earliest = EarliestWake(stepSeconds: stepSeconds)
+        for slots in entries.values {
+            for entry in slots.values {
+                earliest = earliest.including(entry.wake)
+            }
+        }
+        return earliest
     }
 
     /// Same sampling policy as `PapyrusScheduler.consumeGameTime`: the first
@@ -255,6 +279,53 @@ extension PapyrusWorldRuntime {
                 arguments: [],
                 activationDepth: 0
             ))
+        }
+    }
+}
+
+nonisolated extension PapyrusUpdateTimerRegistry {
+    /// The first tick a real slot can be due and the first game-hour deadline. A
+    /// replaced slot can leave it early, which costs one extra scan and stays correct.
+    fileprivate struct EarliestWake {
+        let stepSeconds: Double
+        var realTick = Int.max
+        var gameDeadline = Double.infinity
+
+        init(stepSeconds: Double) {
+            self.stepSeconds = stepSeconds
+        }
+
+        func isAfter(tick: Int, gameHours: Double, stepSeconds: Double) -> Bool {
+            stepSeconds == self.stepSeconds && tick < realTick && gameHours < gameDeadline
+        }
+
+        func including(_ wake: Wake) -> Self {
+            var copy = self
+            switch wake {
+            case let .realSteps(startTick, duration):
+                copy.realTick = min(realTick, Self.dueTick(
+                    startTick: startTick, duration: duration, stepSeconds: stepSeconds
+                ))
+            case let .gameHours(deadline):
+                copy.gameDeadline = min(gameDeadline, deadline)
+            }
+            return copy
+        }
+
+        /// The first tick where `isDue` holds, found with the same arithmetic it uses.
+        private static func dueTick(startTick: Int, duration: Double, stepSeconds: Double) -> Int {
+            guard duration > 0 else { return startTick }
+            guard stepSeconds > 0 else { return Int.max }
+            let estimate = (duration / stepSeconds).rounded(.up)
+            guard estimate < Double(Int32.max) else { return Int.max }
+            var steps = Int(estimate)
+            while steps > 0, Double(steps - 1) * stepSeconds >= duration {
+                steps -= 1
+            }
+            while Double(steps) * stepSeconds < duration {
+                steps += 1
+            }
+            return startTick + steps
         }
     }
 }
