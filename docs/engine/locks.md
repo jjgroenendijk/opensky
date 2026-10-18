@@ -128,6 +128,21 @@ These bindings are OpenSky's. The sounds are the install's `SNDR` records, found
 `UILockpickingEnter`, `UILockpickingCylinderTurn`, `UILockpickingCylinderStop`,
 `UILockpickingPickBreak`, and `UILockpickingUnlock`.
 
+## Lockpicking menu
+
+`Interface\lockpickingmenu.swf` draws the panel beside the lock: the skill meter, the lock
+level, the picks left, and the button bar. The lock itself stays the overlay above. The
+engine calls `InitExtensions` and `SetPlatform(0, false)` once, then:
+
+| Call | Arguments |
+| --- | --- |
+| `SetLockInfo` | skill level, next level, progress 0 to 100, level name, picks left |
+| `UpdatePickAngle` | the pick angle in degrees |
+| `UpdateLockAngle` | the lock turn times 90 |
+| `UpdatePickHealth` | the pick health times 100 |
+
+The level name is the `sLockLevel` text of the load order, such as "Adept".
+
 ## Saves
 
 The `LOCK` chunk holds every changed lock ([save format](/formats/opensky-save.md)).

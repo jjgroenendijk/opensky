@@ -81,8 +81,32 @@ Later ones wait in order.
 
 The world resumes when the last waiting box closes.
 
+`Interface\messagebox.swf` draws the box. The movie registers four callbacks, and OpenSky
+calls them in this order: `setMessageText(text, false)`, `setIsVertical(more than two
+buttons)`, `setIsCancellable(one button, 0)`, and `setButtons(true, label, ...)`. A click
+calls `buttonPress(index)`, where `index` counts the buttons that were sent. The keys stay
+with OpenSky, which moves the movie's focus to the highlighted button so the movie draws
+the highlight.
+
+## Help topics
+
+The help menu (`Interface\tutorialmenu.swf`) shows one long help text. The topics are the
+`MESG` records whose editor ID starts with `Help` and ends with `Long`, such as
+`HelpAlchemyLong` (Creation Kit wiki "Message", <https://ck.uesp.net/wiki/Message>). The
+title is the record's `FULL` name and the text its `DESC`.
+
+The engine calls `InitExtensions` and `SetPlatform`, sets `/Menu_mc/TitleText`, assigns the
+text to the `text` property of `/Menu_mc/HelpText`, and calls `ApplyButtonArt`. That
+function replaces each `[Event]` tag, such as `[Activate]`, with the key: it asks the
+engine `GetButtonFromUserEvent(event)`, and OpenSky answers with the key bound to that
+control. The exit button calls `CloseMenu`.
+
+The game opens a topic from the Help page of the journal. OpenSky opens the first topic
+from the sidebar (HUD & Interaction > Menu screens).
+
 ## Differences from the game
 
 - `LocalizedStrings` reads the string tables of `Skyrim.esm` only. A message from a DLC
   plugin may show the wrong text or none.
-- The box is drawn as OpenSky overlay text, not with the game's `MessageBox` movie.
+- Without the `MessageBox` movie, for example with menu movies off, the box is drawn as
+  OpenSky overlay text.

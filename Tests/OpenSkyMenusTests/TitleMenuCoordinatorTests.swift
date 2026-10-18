@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyRendering
 import Testing
@@ -20,6 +21,10 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
     }
 
     var renderer: Renderer? {
+        nil
+    }
+
+    var gameFiles: (any GameFileSource)? {
         nil
     }
 
@@ -182,7 +187,7 @@ struct TitleMenuCoordinatorTests {
         menu.open()
         menu.apply(.credits)
         #expect(menu.isOpen)
-        #expect(menu.snapshot.lastResult == "Credits: not shown")
+        #expect(menu.snapshot.lastResult == "Credits: no game data")
         menu.apply(.quit)
         #expect(world.quits == 1)
         menu.apply(.new)

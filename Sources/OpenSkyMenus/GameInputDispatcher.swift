@@ -9,7 +9,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case forward, back, left, right, up, down
     case run, sprint, sneak, jump, activate, attack, block
     case readyWeapon, cameraMode, journal, inventory, skills
-    case map, quicksave, quickload, pause
+    case map, magic, wait, quicksave, quickload, pause
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
 
     /// A held action stays down until released; the rest fire once on press.
@@ -68,7 +68,7 @@ public struct GameInputDispatcher {
     public let menuMode: MenuModeController?
     public let openJournal: (() -> Void)?
     public let openInventory: (() -> Void)?
-    /// Map, quicksave, quickload, pause, and skills: commands the app carries out.
+    /// Map, magic, wait, saves, pause, and skills: commands the app carries out.
     public let onCommand: ((GameInputAction) -> Void)?
 
     public init(
@@ -127,7 +127,7 @@ public struct GameInputDispatcher {
         case .cameraMode: input?.requestCameraModeCycle()
         case .journal: openJournal?()
         case .inventory: openInventory?()
-        case .map, .quicksave, .quickload, .pause, .skills: onCommand?(action)
+        case .map, .magic, .wait, .quicksave, .quickload, .pause, .skills: onCommand?(action)
         default: break
         }
     }

@@ -15,6 +15,8 @@ nonisolated public struct MessageControlSnapshot: Equatable, Sendable {
     public var helpLines: [String] = []
     public var openBox: String?
     public var queuedBoxes = 0
+    /// What draws the open box: the vanilla movie, or the overlay and why.
+    public var boxDrawing: String?
     public var lastAnswer: String?
     public var lastOutcome: String?
 
@@ -42,6 +44,10 @@ extension MessageCoordinator {
         }
         snapshot.openBox = boxes.current.map { $0.title ?? String($0.text.prefix(40)) }
         snapshot.queuedBoxes = max(0, boxes.queue.count - 1)
+        if boxes.isOpen {
+            snapshot.boxDrawing = movie.isLoaded ? "movie" : movie.error.map { "overlay, \($0)" }
+                ?? "overlay"
+        }
         snapshot.lastAnswer = lastAnswer.map { "button \($0.buttonIndex)" }
         snapshot.lastOutcome = lastOutcome
         return snapshot
@@ -60,6 +66,9 @@ nonisolated public enum MessageReadout {
         lines += snapshot.helpLines.map { "  \($0)" }
         lines.append("Box: \(snapshot.openBox ?? "none")"
             + (snapshot.queuedBoxes > 0 ? ", \(snapshot.queuedBoxes) waiting" : ""))
+        if let drawing = snapshot.boxDrawing {
+            lines.append("Box drawn by: \(drawing)")
+        }
         if let answer = snapshot.lastAnswer {
             lines.append("Last answer: \(answer)")
         }
