@@ -289,6 +289,8 @@ public final class Renderer: NSObject {
     public var gpuFrameLog: GPUFrameLog?
     /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
     public var passTimer: GPUPassTimer?
+    /// The colour behind all geometry this frame (`Renderer.background(fog:drawsSky:)`).
+    var sceneBackground = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
     /// A Metal GPU trace of the next live frame (RendererFrameCapture.swift).
     var frameCapture = FrameCaptureState.idle
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).

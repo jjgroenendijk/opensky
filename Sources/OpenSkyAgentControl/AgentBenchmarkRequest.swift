@@ -13,6 +13,8 @@ nonisolated public struct AgentBenchmarkRequest: Equatable, Sendable {
     /// `id=value` pairs, as `openskycli benchmark --set` takes them.
     public var settings: [String] = []
     public var loadPasses = true
+    public var screenshots = false
+    public var fullScreen = true
     /// Ends the running tour instead of starting one.
     public var stop = false
 
@@ -30,6 +32,8 @@ nonisolated public struct AgentBenchmarkRequest: Equatable, Sendable {
         request.capture = try args.optionalString("capture")
         request.settings = try list(args.optionalString("set"))
         request.loadPasses = try args.bool("loadPasses", default: true)
+        request.screenshots = try args.bool("screenshots", default: false)
+        request.fullScreen = try args.bool("fullScreen", default: true)
         request.stop = try args.bool("stop", default: false)
         return request
     }

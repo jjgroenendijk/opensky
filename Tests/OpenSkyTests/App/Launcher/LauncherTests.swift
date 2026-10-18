@@ -76,12 +76,18 @@ struct LauncherTests {
             .selectItem(at: #require(BenchmarkPreset.allCases.firstIndex(of: .quick)))
         page.overlayControl.state = .off
         page.loadPassesControl.state = .off
+        page.screenshotsControl.state = .on
+        #expect(page.fullScreenControl.state == .on)
+        page.fullScreenControl.state = .off
         let run = try #require(button("BenchmarkRunControl", in: page.view))
         run.performClick(nil)
         let request = try #require(actions.benchmarks.first)
         #expect(request.preset == .quick)
         #expect(!request.overlay)
         #expect(!request.loadPasses)
+        #expect(request.screenshots)
+        #expect(!request.fullScreen)
+        #expect(page.fullScreenControl.accessibilityIdentifier() == "BenchmarkFullScreenControl")
         #expect(page.presetControl.accessibilityIdentifier() == "BenchmarkPresetControl")
         #expect(page.overlayControl.accessibilityIdentifier() == "BenchmarkOverlayControl")
         #expect(page.resultLabel.accessibilityIdentifier() == "BenchmarkResultStatsLabel")

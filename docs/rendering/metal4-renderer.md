@@ -84,9 +84,11 @@ had hidden.
 
 The sky is a fullscreen triangle with no vertex buffer and no depth state. It draws a procedural
 vertical palette and a sun disc from the time of day, and later geometry replaces its pixels. A
-`WRLD` with no sky skips it. Water blends with straight alpha (source RGB times source alpha,
-destination times one minus source alpha) and reads depth without writing it
-([sky and water](/engine/sky-water.md)).
+`WRLD` with no sky skips it. A scene with no sky, such as an interior or Blackreach, clears to
+its far fog colour instead of black, so a gap in the geometry reads as fog, not as a hole. This
+is an OpenSky choice; what the game clears to there is not confirmed. Water blends with straight
+alpha (source RGB times source alpha, destination times one minus source alpha) and reads depth
+without writing it ([sky and water](/engine/sky-water.md)).
 
 ## Interior lighting
 

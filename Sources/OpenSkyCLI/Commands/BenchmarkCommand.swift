@@ -55,6 +55,8 @@ enum BenchmarkCommand {
         request.overlay = !arguments.noOverlay
         request.captureScene = arguments.capture
         request.loadPasses = !arguments.noLoadPasses
+        request.screenshots = arguments.screenshots
+        request.fullScreen = !arguments.windowed
         request.quitWhenDone = !arguments.keepOpen
         do throws(BenchmarkRequestError) {
             for pair in arguments.settings {

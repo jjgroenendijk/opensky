@@ -57,6 +57,10 @@ public protocol BenchmarkTourWorld: AnyObject {
     /// No cell build is queued or running.
     var isStreamingSettled: Bool { get }
     func groundHeight(x: Float, y: Float) -> Float?
+    /// A sphere of `radius` at `point` overlaps static collision, such as a rock or a wall.
+    func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool
+    /// The straight line from `start` to `end` hits static collision.
+    func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool
 
     func setHour(_ hour: Float)
     /// False when the weather cannot be selected here.
@@ -75,6 +79,8 @@ public protocol BenchmarkTourWorld: AnyObject {
     func arrivalPhases() -> LoadPhaseTimes?
 
     func captureFrame(to url: URL, done: @escaping (Result<URL, FrameCaptureError>) -> Void)
+    /// Writes the next frame the window presents as a PNG at `url`.
+    func saveScreenshot(to url: URL)
     /// The inputs for a cold builder, or nil when the session has no game data.
     var loadInputs: BenchmarkLoadInputs? { get }
 }

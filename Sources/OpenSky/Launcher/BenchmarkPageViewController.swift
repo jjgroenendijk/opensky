@@ -11,6 +11,10 @@ final class BenchmarkPageViewController: NSViewController {
     let loadPassesControl = NSButton(
         checkboxWithTitle: "Time a cold and a warm load first", target: nil, action: nil
     )
+    let screenshotsControl = NSButton(
+        checkboxWithTitle: "Save screenshots", target: nil, action: nil
+    )
+    let fullScreenControl = NSButton(checkboxWithTitle: "Full screen", target: nil, action: nil)
     let runButton = LauncherButton(title: "Run Benchmark", target: nil, action: nil)
     let folderButton = LauncherButton(title: "Open Run Folder", target: nil, action: nil)
     lazy var presetLabel = layout.line("BenchmarkPresetStatsLabel")
@@ -35,6 +39,7 @@ final class BenchmarkPageViewController: NSViewController {
             layout.group("Run", [
                 layout.row("Length", presetControl), presetLabel,
                 layout.toggle(overlayControl), layout.toggle(loadPassesControl),
+                layout.toggle(screenshotsControl), layout.toggle(fullScreenControl),
                 layout.buttons([runButton])
             ]),
             layout.group("Newest result", [chart, resultLabel, layout.buttons([folderButton])])
@@ -60,6 +65,11 @@ final class BenchmarkPageViewController: NSViewController {
         loadPassesControl.setAccessibilityIdentifier("BenchmarkLoadPassesControl")
         loadPassesControl.state = .on
         loadPassesControl.toolTip = "Build the first scene twice off screen before the tour"
+        screenshotsControl.setAccessibilityIdentifier("BenchmarkScreenshotsControl")
+        screenshotsControl.toolTip = "Save the start, middle, and end of each scene as PNGs"
+        fullScreenControl.setAccessibilityIdentifier("BenchmarkFullScreenControl")
+        fullScreenControl.state = .on
+        fullScreenControl.toolTip = "Fill the screen for the tour, then go back to the window"
         PanelComponents.configureButton(
             runButton, target: self, action: #selector(run), identifier: "BenchmarkRunControl"
         )
@@ -92,6 +102,8 @@ final class BenchmarkPageViewController: NSViewController {
         request.preset = selectedPreset
         request.overlay = overlayControl.state == .on
         request.loadPasses = loadPassesControl.state == .on
+        request.screenshots = screenshotsControl.state == .on
+        request.fullScreen = fullScreenControl.state == .on
         context.actions?.runBenchmark(request)
     }
 

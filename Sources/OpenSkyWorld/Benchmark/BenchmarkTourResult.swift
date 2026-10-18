@@ -39,6 +39,8 @@ nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
     public var averageDrawnInstances: Int?
     public var gpuMemory: BenchmarkGPUMemory?
     public var capturePath: String?
+    /// The PNGs of the start, middle, and end of the shot, when the run saved them.
+    public var screenshots: [String]?
 
     public init(scene: BenchmarkScene, status: BenchmarkSceneStatus, note: String? = nil) {
         id = scene.id
@@ -121,6 +123,8 @@ nonisolated public struct BenchmarkTourResult: Codable, Equatable, Sendable {
     public var gpuMemory: BenchmarkGPUMemory?
     /// True when the user stopped the tour before its last scene.
     public var stopped = false
+    /// Writing a PNG takes main-actor time inside the measured frames.
+    public var screenshots = false
 
     public init(
         startedAt: Date, machine: BenchmarkMachine,
@@ -132,9 +136,9 @@ nonisolated public struct BenchmarkTourResult: Codable, Equatable, Sendable {
         self.preset = preset
     }
 
-    /// No scene failed and every load built, so the numbers compare with another clean run.
+    /// No scene failed, every load built, and no PNG was written, so the numbers compare.
     public var isComparable: Bool {
-        !stopped && scenes.allSatisfy { $0.status != .failed }
+        !stopped && !screenshots && scenes.allSatisfy { $0.status != .failed }
             && ((coldLoad?.cells ?? []) + (warmLoad?.cells ?? [])).allSatisfy { $0.error == nil }
     }
 

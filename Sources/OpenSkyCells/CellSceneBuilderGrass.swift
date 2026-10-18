@@ -22,7 +22,7 @@ nonisolated extension CellSceneBuilder {
         guard
             worldspace?.flags.contains(.noGrass) != true,
             let terrain,
-            let land = landRecord(in: found)
+            let land = landRecord(in: found, worldspace: worldspace)
         else { return nil }
 
         let textures = landTextureIndexBuildingIfNeeded()

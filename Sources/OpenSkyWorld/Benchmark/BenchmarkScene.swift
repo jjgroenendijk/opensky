@@ -23,7 +23,7 @@ nonisolated public enum BenchmarkSceneGroup: String, Codable, CaseIterable, Send
 nonisolated public enum BenchmarkPlace: Equatable, Sendable {
     /// The origin is the ground under `x`, `y`, so offsets read as heights above it.
     case exterior(worldspace: String, x: Float, y: Float)
-    /// The origin is where the player stands after entering through the cell's door.
+    /// Shot points are cell coordinates, so each shot stands in its main room.
     case interior(cell: String)
 
     public var label: String {
@@ -39,6 +39,9 @@ nonisolated public struct BenchmarkScene: Equatable, Sendable, Identifiable {
     public let title: String
     public let group: BenchmarkSceneGroup
     public let place: BenchmarkPlace
+    /// The street height a city shot is written over. A city on meshes hides the
+    /// terrain under it, so no ground sample gives its height.
+    public let streetLevel: Float?
     /// Game hour, 0 to 24.
     public let hour: Float
     /// A weather editor ID; nil keeps the region's own weather.
@@ -49,12 +52,14 @@ nonisolated public struct BenchmarkScene: Equatable, Sendable, Identifiable {
 
     public init(
         id: String, title: String, group: BenchmarkSceneGroup, place: BenchmarkPlace,
-        hour: Float, weather: String?, shot: BenchmarkShot, requiredPlugin: String? = nil
+        streetLevel: Float? = nil, hour: Float, weather: String?, shot: BenchmarkShot,
+        requiredPlugin: String? = nil
     ) {
         self.id = id
         self.title = title
         self.group = group
         self.place = place
+        self.streetLevel = streetLevel
         self.hour = hour
         self.weather = weather
         self.shot = shot
