@@ -79,6 +79,7 @@ extension FeaturePanelServices {
             impact: game.effectsWorld,
             loadingScreen: game.loadingScreens,
             mapMenu: game.mapMenu,
+            menuScreens: game.menuScreens,
             message: game.messages,
             objectAnimation: game.objectAnimationWorld,
             playerSettings: game.menuWorld,

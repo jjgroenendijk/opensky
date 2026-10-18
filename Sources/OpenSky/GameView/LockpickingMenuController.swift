@@ -7,6 +7,8 @@ import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -16,6 +18,8 @@ import OpenSkyWorldInterface
 protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var progression: ProgressionCoordinator { get }
+    var swfMovies: SWFMovieSource { get }
     var inventoryWorld: InventoryWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
@@ -35,10 +39,22 @@ final class LockpickingMenuController {
     private var lastFrame: Date?
     private var wasTurning = false
     private let sounds: MenuSoundPlayer
+    private lazy var movie = MenuMovieDriver<Never>(
+        movies: game.swfMovies, hud: game.hud, label: "lockpicking movie"
+    ) { [weak self] in self?.game.renderer }
+    private var movieInfo: LockpickingMovieInfo?
 
     init(game: any LockpickingMenuHost) {
         self.game = game
         sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
+    }
+
+    /// The readout of the movie layer: "movie", or why the overlay draws alone.
+    var movieState: String {
+        if movie.isLoaded {
+            return "movie"
+        }
+        return movie.error.map { "overlay, \($0)" } ?? "overlay"
     }
 
     private var locks: LockCoordinator {
@@ -67,7 +83,17 @@ final class LockpickingMenuController {
         game.menuMode.inputConsumer = game
         game.menuMode.present(Self.identifier)
         play(.enter)
+        startMovie()
         publish()
+    }
+
+    private func startMovie() {
+        movieInfo = nil
+        movie.start(MenuMovie(
+            path: LockpickingMenuMovieBridge.moviePath,
+            activate: LockpickingMenuMovieBridge.activate(runtime:),
+            didLoad: { [weak self] in self?.publishMovie(force: true) }
+        ), while: { [weak self] in self?.isOpen == true })
     }
 
     /// Opens the menu on the lock the sidebar selected, as if the player pressed on it.
@@ -100,6 +126,7 @@ final class LockpickingMenuController {
         let opened = locks.lastOutcome?.opened == true && locks.session?.isFinished == true
         locks.closeLockpicking()
         presentation = nil
+        movie.stop()
         game.gameSession?.uiScene = .empty
         game.menuMode.dismiss(Self.identifier)
         // The press that met the lock goes through now that it is open.
@@ -122,6 +149,7 @@ final class LockpickingMenuController {
     /// paused under the menu, so its clock does not move.
     func tick(now: Date = Date()) {
         guard isOpen, let session = locks.session else { return }
+        _ = movie.tick(now: now.timeIntervalSinceReferenceDate)
         let seconds = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
         lastFrame = now
         let intent = controls.intent(seconds: min(seconds, Self.longestStep))
@@ -161,6 +189,28 @@ final class LockpickingMenuController {
         guard next != presentation else { return }
         presentation = next
         game.gameSession?.uiScene = next.scene
+        publishMovie()
+    }
+
+    /// The panel changes only when a pick breaks; the debug angles change every frame.
+    private func publishMovie(force: Bool = false) {
+        guard movie.isLoaded, let frame = presentation else { return }
+        let index = ActorValueIdentity.index(named: "Lockpicking")
+        let skill = game.progression.skillsMenuSkills.first { $0.index == index }
+        let info = LockpickingMovieInfo(
+            skillLevel: Int(skill?.level ?? 0),
+            skillProgress: skill?.progress ?? 0,
+            lockLevel: locks.texts.name(of: frame.difficulty),
+            picksRemaining: frame.picksRemaining
+        )
+        let infoChanged = force || info != movieInfo
+        movieInfo = info
+        movie.publish { runtime in
+            if infoChanged {
+                LockpickingMenuMovieBridge.publish(info, runtime: runtime)
+            }
+            LockpickingMenuMovieBridge.publish(frame, runtime: runtime)
+        }
     }
 
     private func play(_ sound: LockpickingSound) {

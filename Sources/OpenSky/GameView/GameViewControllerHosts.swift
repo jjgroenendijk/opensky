@@ -26,6 +26,8 @@ extension GameViewController: @MainActor LockpickingMenuHost {}
 extension GameViewController: @MainActor MagicWorldHost {}
 extension GameViewController: @MainActor MapWorldHost {}
 extension GameViewController: @MainActor MenuRouterHost {}
+extension GameViewController: @MainActor MenuScreensHost {}
+extension GameViewController: @MainActor MenuScreensWorldHost {}
 extension GameViewController: @MainActor MenuSoundHost {}
 extension GameViewController: @MainActor MenuWorldHost {}
 extension GameViewController: @MainActor MessageWorldHost {}

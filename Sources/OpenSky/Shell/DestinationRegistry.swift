@@ -129,6 +129,7 @@ struct FeaturePanelServices {
     let impact: any ImpactControlProviding
     let loadingScreen: any LoadingScreenControlProviding
     let mapMenu: any MapMenuControlProviding
+    let menuScreens: any MenuScreensControlProviding
     let message: any MessageControlProviding
     let objectAnimation: any ObjectAnimationControlProviding
     let playerSettings: any PlayerSettingsControlProviding
@@ -350,6 +351,7 @@ enum DestinationRegistry {
                 panel.provider = context.hud
                 panel.itemProvider = context.item
                 panel.messageProvider = context.message
+                panel.menuScreensProvider = context.menuScreens
                 return panel
             },
             overrides: hudInteractionOverrides

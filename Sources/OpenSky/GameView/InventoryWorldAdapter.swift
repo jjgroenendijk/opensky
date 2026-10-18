@@ -37,6 +37,7 @@ protocol InventoryWorldHost: AnyObject {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
+    var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
@@ -85,8 +86,27 @@ final class InventoryWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         streamer.onInteraction.add { [weak self] event in
             guard let self else { return }
-            run(game.inventory.handleInteraction(event.target.interaction.action))
+            let action = event.target.interaction.action
+            if action == .take, openBook(event.target.interaction) {
+                return
+            }
+            run(game.inventory.handleInteraction(action))
+            if action == .use, game.inventory.crafting != nil {
+                game.menuScreens.crafting.open()
+            }
         }
+    }
+
+    /// A book is read where it lies, as in the game; its bar offers to take it.
+    private func openBook(_ interaction: PlacedInteraction) -> Bool {
+        let book = game.menuScreens.book
+        guard book.isBook(interaction.base), let runtime = game.inventory.runtime else {
+            return false
+        }
+        let offer = BookTakeOffer(isTheft: runtime.isTheft(interaction)) { [game] in
+            game.inventory.take(interaction)
+        }
+        return book.open(item: interaction.base, takeOffer: offer)
     }
 
     /// After `wireFactions`, whose runtime answers the memberships.

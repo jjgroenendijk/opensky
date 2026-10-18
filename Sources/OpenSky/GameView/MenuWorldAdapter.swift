@@ -35,6 +35,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var loadingScreens: LoadingScreenCoordinator { get }
     var mapMenu: MapMenuCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
+    var menuScreens: MenuScreens { get }
     var messages: MessageCoordinator { get }
     var player: PlayerCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
@@ -46,6 +47,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
     var subtitles: SubtitleCoordinator { get }
+    var swfMovies: SWFMovieSource { get }
     var hostView: NSView { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -160,6 +162,10 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
 
     var renderer: Renderer? {
         game.renderer
+    }
+
+    var gameFiles: (any GameFileSource)? {
+        game.swfMovies.fileSystem
     }
 
     var gameSession: GameSession? {
@@ -340,6 +346,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
 
     func openInventory(of actor: ReferenceKey) {
         game.containerMenu.openInventory(of: actor)
+    }
+
+    func showTrainingMenu(trainer: ReferenceKey) {
+        game.menuScreens.training.open(trainer: trainer)
+    }
+
+    func showGiftMenu(actor: ReferenceKey, giving: Bool) {
+        game.menuScreens.gift.open(actor: actor, giving: giving)
     }
 
     private var identityRecords: ActorIdentityRecords? {

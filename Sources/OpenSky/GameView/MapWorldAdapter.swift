@@ -54,6 +54,8 @@ final class MapWorldAdapter {
     /// Marker sites per map worldspace, read once each.
     private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
     private var strings: LocalizedStrings?
+    /// The map camera, so the map movie can place markers where the view sees them.
+    private(set) var mapViewPose: CinematicCameraPose?
 
     init(game: any MapWorldHost) {
         self.game = game
@@ -105,7 +107,8 @@ final class MapWorldAdapter {
                 key: ReferenceKey(resolved: entry.reference),
                 name: text(entry.name) ?? "\(entry.reference.objectID)",
                 position: entry.position,
-                state: MapMarkerState(record: entry.marker)
+                state: MapMarkerState(record: entry.marker),
+                iconType: entry.marker.type?.rawValue ?? 0
             )
         }
     }
@@ -169,12 +172,13 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     func setMapView(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
-        game.gameSession?.setCinematicCamera(
-            CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
-        )
+        let pose = CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
+        mapViewPose = pose
+        game.gameSession?.setCinematicCamera(pose)
     }
 
     func clearMapView() {
+        mapViewPose = nil
         game.gameSession?.setCinematicCamera(nil)
     }
 
