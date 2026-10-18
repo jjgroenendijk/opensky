@@ -133,24 +133,64 @@ custom_rules:
     excluded: '(Tests/.*|Sources/OpenSky(CrimeInterface/CrimeTexts|CombatInterface/(Archery|Arrow|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemNoticeTexts|MagicTexts|MenuRecordData|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings|LockTexts|TemperingTexts)|PerceptionInterface/DetectionSettings|Player/PlayerMovementConfiguration)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
+  # attach(world:), wire(host:), setWorld(_:), and the like.
   late_attached_world:
     name: "Late-attached world"
-    regex: '\bfunc\s+attach\s*\(\s*(_\s+)?world\s*:'
+    regex: '\bfunc\s+(attach|wire|connect|bind|set|install)\w*\s*(<[^>]*>)?\(\s*(_\s+)?(\w+World|world|host|\w+Host|port|game|session)\s*:'
     included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
     message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
     severity: error
-  adapter_holds_controller:
-    name: "Adapter holds the controller"
-    regex: '\b(let|var)\s+\w+\s*:\s*GameViewController\b'
-    included: 'Sources/OpenSky/GameView/.*\.swift$'
-    excluded: 'Sources/OpenSky/GameView/GameViewController[A-Za-z]*\.swift$'
-    message: "Store the adapter's own host protocol, not GameViewController (docs/engine/coordinators.md)"
+  # The composition root is the app shell and the GameViewController files.
+  controller_outside_composition_root:
+    name: "Controller outside the composition root"
+    regex: '\bGameViewController\b'
+    included: 'Sources/.*\.swift$'
+    excluded: 'Sources/OpenSky/(Shell/.*|GameView/GameViewController[A-Za-z]*)\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Only the composition root names GameViewController; reach the session through a host protocol (docs/engine/coordinators.md)"
     severity: error
   action_returns_text:
     name: "Action returns text"
     regex: '@discardableResult\s+(?:(?:public|internal|package)\s+)?func\s+\w+\((?:[^()]|\([^()]*\))*\)\s*->\s*String\b'
     excluded: '(Sources/OpenSky/|Tests/).*$'
     message: "Return a typed outcome and build its line in a formatter (docs/engine/coordinators.md)"
+    severity: error
+  # A protocol requirement in a panel seam: no access modifier, no body, no static.
+  panel_action_returns_text:
+    name: "Panel action returns text"
+    regex: '^[ \t]*func\s+\w+\((?:[^()]|\([^()]*\))*\)\s*->\s*String\??[ \t]*$'
+    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]+ControlProviding\.swift$'
+    message: "A panel action returns a typed outcome; the panel writes its text (docs/engine/coordinators.md)"
+    severity: error
+  pure_core_side_effect:
+    name: "Pure core side effect"
+    regex: '^\s*(@\w+\s+)*import\s+(AppKit|Cocoa|SwiftUI|Metal|MetalKit|MetalFX|QuartzCore|AVFoundation|AVFAudio|AudioToolbox|CoreAudio|GameController|Dispatch|OpenSkyRendering)\b|\b(Date\(\)|Date\.now\b|CACurrentMediaTime\b|DispatchTime\b|ContinuousClock\b|SuspendingClock\b|mach_absolute_time\b|CFAbsoluteTimeGetCurrent\b|systemUptime\b)'
+    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]+Core(\+[A-Za-z]+)?\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "A core is pure: no AppKit, Metal, audio, or clock; the shell passes the time in (docs/engine/coordinators.md)"
+    severity: error
+  renderer_downcast:
+    name: "Renderer downcast"
+    regex: '\b(frameDriver|renderer)\s+(as[?!]|is)\s'
+    included: 'Sources/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Read game state from RenderFrameInput, never by casting the renderer or its driver (docs/engine/architecture.md)"
+    severity: error
+  papyrus_loose_closure:
+    name: "Papyrus loose closure"
+    regex: '\b(var|let)\s+\w+\s*:\s*[^=\n{]*->[^{\n]*$'
+    included: 'Sources/OpenSkyScripting/PapyrusWorld[A-Za-z]*Bridge[^/]*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Give the bridge a collaborator through a native family value, not a closure property (docs/engine/coordinators.md)"
+    severity: error
+  # A closure property or fan-out whose name says frame, tick, or update.
+  frame_callback_property:
+    name: "Frame callback property"
+    regex: '\bvar\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*:\s*[^=\n{]*->[^{\n]*$|\b(var|let)\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*(=|:)\s*CallbackFanOut\b'
+    included: 'Sources/.*\.swift$'
+    excluded: 'Sources/OpenSky(World/Session/FrameSchedule|/(Shell|Panels|Launcher)/.*)\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Join the frame through a phase of a FrameSchedule, not a callback (docs/engine/architecture.md)"
     severity: error
 
 reporter: "xcode"

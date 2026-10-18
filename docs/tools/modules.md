@@ -276,6 +276,27 @@ A lower module never imports a higher one. These patterns keep it that way:
   feature adds an accessor such as `context.magic`. The code that names every feature, such as
   the `.standard` condition registry, lives above all of them.
 
+## Module size
+
+A module stays below a size limit. `make module-size` counts the Swift source lines of each
+folder under `Sources/`, without blank lines and comments, and prints every module sorted
+by size. The app target, `Sources/OpenSky/`, counts as a module. `make lint` and CI run it
+on the whole tree, because a module grows with each change.
+
+- Over 20,000 lines, the check prints a `[WARNING]`. Plan the split then.
+- Over 30,000 lines, the check fails.
+
+A module over the limit splits along the domain boundaries it already has, the way
+`OpenSkyWorld` split into one module per domain ([World domains](#world-domains)). Each new
+module holds at least about 1,500 lines. One module per type is too fine: each module adds
+build time, import lines, and test plan entries.
+
+`tools/lint/module-size-exceptions.txt` lists the modules that were over the limit when the
+check came in. Each line names the module, an open issue that splits it, and the reason, for
+example `OpenSky #1402 <reason>`. The check fails when an entry's issue is not open, or
+when its module is no longer over the limit, so the list only shrinks. It reads the issue
+state with `gh`, so it needs `gh auth login` locally and `GH_TOKEN` in CI.
+
 ## Access and imports
 
 A declaration another module uses is `public`. The rules that follow are the standard library

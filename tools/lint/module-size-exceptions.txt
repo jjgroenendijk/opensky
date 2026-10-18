@@ -1,0 +1,4 @@
+# Modules over the module size limit, read by module-size.sh. One line each:
+# <module> #<open issue that splits it> <reason>. The list only shrinks: the check
+# fails on an entry whose issue is closed or whose module is under the limit.
+OpenSky #1402 The app target grew with the panels and the world adapters before the check existed

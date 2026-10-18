@@ -120,13 +120,16 @@ small adapter. The coordinator takes the port in its initializer and keeps it, s
 is never half built. The adapter holds the session `unowned`, so there is no retain cycle.
 When the adapter owns the coordinator, or the port is the view controller itself, the
 coordinator keeps the port as `weak let`, and the app builds it in a `lazy var`. The lint rule
-`late_attached_world` fails an `attach(world:)` method in a package module.
+`late_attached_world` fails a late-attach method, such as `attach(world:)`, in a package
+module.
 
 An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
 protocol lists only the coordinators and values that adapter reads. `GameViewController`
 conforms to every host protocol in one file, and an adapter holds `unowned let game: any
-CombatWorldHost`, never the view controller itself. The lint rule `adapter_holds_controller`
-fails a stored property of type `GameViewController` in an adapter. A value that a Settings
+CombatWorldHost`, never the view controller itself. Only the composition root, the app shell
+and the `GameViewController` files, names the view controller in code. The lint rule
+`controller_outside_composition_root` fails any other use; a comment that says which type
+conforms is fine. A value that a Settings
 reload replaces, such as the renderer or the streamer, is a get-only requirement, so the
 adapter always reads the live one. A small adapter that reads two or three parts takes a
 dependency struct instead, such as `HazardWorldDependencies`, with a closure for each
@@ -139,7 +142,8 @@ The Papyrus bridge gets its collaborators as one value per native family:
 `actorNatives`, `magicNatives`, `progressionNatives`, `crimeNatives`, `playerNatives`,
 `perceptionNatives`, `sessionNatives`, and `factionNatives`. Each member is an optional
 closure. The default value answers nothing, which matches a load without that data, so a
-native refuses rather than reading a half-wired family.
+native refuses rather than reading a half-wired family. A new collaborator goes in a family.
+The lint rule `papyrus_loose_closure` fails a closure property on the bridge itself.
 
 The coordinator returns values, not text. The app turns a value into a readout line and runs
 the menu or camera change. Example: `counterparty(for:vendorFaction:)` returns
@@ -151,7 +155,9 @@ Every panel action returns a typed outcome, such as `ItemActionOutcome` or
 readout line. An outcome whose words come from the load order takes them as an argument,
 such as `text(training:)` or `text(texts:)`. A test compares outcomes, not English
 sentences. The lint rule `action_returns_text` fails a `@discardableResult` function that
-returns `String` in a package module.
+returns `String` in a package module. The lint rule `panel_action_returns_text` fails a
+requirement of a `ControlProviding` protocol that returns `String` or `String?`. Example: the
+World > Audio triggers return an `AudioTriggerRefusal`, and the panel writes its `text`.
 
 ## Commands
 
@@ -185,6 +191,7 @@ Every coordinator splits into two parts:
 
 - The core decides. It is pure: values in, values out. It imports no AppKit, Metal, or audio,
   reads no clock, and calls no port. A test calls it with plain values and needs no fake.
+  The lint rule `pure_core_side_effect` checks the imports and the clocks of a `...Core` file.
 - The shell does the input and output. It holds the state and the port, reads the world,
   calls the core, and returns what the core decided, with its commands for the app.
 
@@ -233,5 +240,6 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
    caller at the coordinator, and delete the old functions.
 6. Run `make check` and `make test-unit T='<Feature>Tests'`, then `make build-app`.
 
-Do not add a new `GameViewController+X` file for new logic. A SwiftLint rule will enforce this
-once every domain has moved ([code-health automation](/decisions/code-health-automation.md)).
+Do not add a new `GameViewController+X` file for new logic. The lint rule
+`game_view_controller_extension` fails an extension of the view controller outside its own
+files ([code-health automation](/decisions/code-health-automation.md)).

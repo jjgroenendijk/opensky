@@ -40,6 +40,8 @@ baseline files, and updating the baselines after each refactor cost too much.
 | No lint suppressions | `make no-suppressions` | Lint | Instant |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint |
+| Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | SwiftLint `custom_rules`, `module-graph` | Lint | Part of the current lint |
+| Module size | `tools/lint/module-size.sh`, `make module-size` | Lint | Under a second, whole tree |
 | Parser coverage floor | `llvm-cov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
 
 ## Duplicated code: jscpd
