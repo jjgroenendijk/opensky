@@ -120,6 +120,11 @@ struct CommandLineTests {
             as: GameArguments.Launch.self
         )
         #expect(launch.mode == "developer")
+        #expect(launch.survivalMode == "off")
+        let asking = try command(
+            ["game", "launch", "--survival-mode", "ask"], as: GameArguments.Launch.self
+        )
+        #expect(asking.survivalMode == "ask")
     }
 
     @Test func gapsRunsTheAskedSectionsInReportOrder() throws {

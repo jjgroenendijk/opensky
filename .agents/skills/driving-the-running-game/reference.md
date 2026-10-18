@@ -10,7 +10,7 @@ a usage error.
 
 | Command | Does |
 | --- | --- |
-| `launch [--mode play\|developer] [--title] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does |
+| `launch [--mode play\|developer] [--title] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
 | `attach` | Prints the hello line: protocol version, data root, `worldReady` |
 | `status` | Running, mode, data root, frame, paused |
 | `quit` | Quits the app after the reply |
@@ -37,7 +37,7 @@ arrow keys.
 - `input look --dx <deg> --dy <deg>`; positive dx turns right, dy looks up
 - `input select <label>`: moves the open menu's selection to the row with that label; a
   message box's buttons count as rows, so `input select No` then `input press menuAccept`
-  answers the survival mode prompt that blocks a new game
+  answers a question box
 - `input point --x <0..1> --y <0..1>`, `input click --x <0..1> --y <0..1>`: moves the cursor
   over the open menu, or clicks there; fractions of the game view, origin top left
 - `input text <text>`: types into the open menu that takes text, such as the race menu's

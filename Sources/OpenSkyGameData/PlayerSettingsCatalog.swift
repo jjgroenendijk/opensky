@@ -72,7 +72,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "$SaveGameMissingCreationsCheck",
             1
         ),
-        row("gameplay.survivalMode", .gameplay, .toggle, "$Survival Mode", 0),
+        row("gameplay.survivalMode", .gameplay, .toggle, "$Survival Mode", 0, applied: true),
         row(
             "gameplay.difficulty",
             .gameplay,
@@ -146,6 +146,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             .toggle,
             "Start at title screen",
             0,
+            applied: true
+        ),
+        row(
+            "opensky.survivalModeAsk", .opensky, .toggle, "Ask about Survival Mode", 0,
             applied: true
         ),
         row(

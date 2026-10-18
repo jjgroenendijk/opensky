@@ -37,7 +37,7 @@ struct FrameScheduleTests {
     /// Moving a case changes the simulation, so a change here must be deliberate.
     @Test func theWorldTickOrderIsPinned() {
         #expect(WorldTickStep.allCases == [
-            .scripts, .actorValues, .magicEffects, .archery, .ragdoll, .combatLoop,
+            .survivalMode, .scripts, .actorValues, .magicEffects, .archery, .ragdoll, .combatLoop,
             .packages, .perception, .idles, .vehicles, .objectAnimation,
             .dialogueCamera, .story
         ])

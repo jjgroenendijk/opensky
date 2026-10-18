@@ -26,6 +26,7 @@ extension DestinationRegistry {
             content: .worldInspector { context in
                 let panel = PlayerSettingsPanelViewController()
                 panel.provider = context.playerSettings
+                panel.survivalModeProvider = context.survivalMode
                 return panel
             },
             overrides: playerSettingsOverrides

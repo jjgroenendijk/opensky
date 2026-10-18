@@ -19,6 +19,10 @@ The server is off by default. Two things turn it on:
 - `openskycli game launch`, which opens the app with `OPENSKY_AGENT_CONTROL=1`.
 - Developer > Agent Control > Agent control server, in the sidebar.
 
+`game launch` also sets `OPENSKY_SURVIVAL_MODE`, from `--survival-mode on|off|ask` with `off` as
+the default. So the Survival Mode question never stops an agent session unless the script asks
+for it ([Survival Mode prompt](/engine/survival-mode.md)).
+
 It listens on a Unix domain socket, never a network port. The default path is
 `~/Library/Application Support/OpenSky/agent-control.sock`; `OPENSKY_AGENT_SOCKET` changes it
 for both the app and the CLI. The folder is created with mode 0700 and the socket with mode

@@ -34,3 +34,22 @@ extension FakeWorldProviders {
         menuCalls.calls.append("settings.difficulty(\(offset))")
     }
 }
+
+extension FakeWorldProviders {
+    var survivalModeSnapshot: SurvivalModeSnapshot {
+        SurvivalModeSnapshot(
+            answer: .off, isForced: false,
+            globals: SurvivalModeGlobals(
+                prompted: true, toggle: false, enabled: false, canBeEnabled: true
+            )
+        )
+    }
+
+    func setSurvivalMode(_ on: Bool) {
+        menuCalls.calls.append("survival.mode(\(on))")
+    }
+
+    func setSurvivalModeAsk(_ ask: Bool) {
+        menuCalls.calls.append("survival.ask(\(ask))")
+    }
+}

@@ -35,6 +35,7 @@ the system that uses it at once.
 | Key bindings | The game view's key table ([control map](/formats/controlmap.md)) |
 | Save on rest, wait, travel, pause | The autosave policy |
 | Start at title screen | Whether the session opens on the title menu |
+| Survival Mode, Ask about Survival Mode | The Survival Mode plugin's globals ([Survival Mode prompt](/engine/survival-mode.md)) |
 
 The two subtitle settings choose which lines the HUD shows
 ([dialogue menu](/engine/dialogue-menu.md), "Subtitles").

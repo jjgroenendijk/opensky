@@ -128,6 +128,11 @@ final class GameViewController: NSViewController {
         ),
         world: menuWorld
     )
+    /// Answers the Survival Mode plugin's prompt from the settings.
+    lazy var survivalMode = SurvivalModeCoordinator(
+        store: playerSettings.store, world: survivalModeWorld
+    )
+    lazy var survivalModeWorld = SurvivalModeWorldAdapter(runtimeState: runtimeState)
     /// `interface\translations` for the `$` keys movies show; nil without game data.
     var menuTextLoader: (() -> LocalizedLabels)?
     var controlMapLoader: (() throws -> ControlMapFile)?
@@ -345,6 +350,9 @@ extension GameViewController {
         if let session {
             worldData = session.data
             sessionWiring.wireStreaming(session: session, gameSession: newGameSession)
+        }
+        newGameSession.worldTick.register(.survivalMode) { [weak self] _ in
+            self?.survivalMode.tick()
         }
         // The engine reads the world's sound records once, so it starts after they load.
         audio.audioEnabled = playerSettings.store.bool(.audioEnabled)
