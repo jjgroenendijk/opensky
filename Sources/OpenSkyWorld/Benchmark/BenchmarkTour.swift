@@ -193,9 +193,10 @@ nonisolated public enum BenchmarkTour {
             id: "forgottenVale", title: "Forgotten Vale", group: .dlc,
             place: .exterior(worldspace: "DLC01FalmerValley", x: 20252, y: 5160),
             hour: 10, weather: nil,
-            shot: .flyover(
-                from: [-2000, -3000, 2200], to: [2000, 3000, 2600], pitchDegrees: 12,
-                seconds: shotSeconds
+            // Steep walls ring the vale, so the eye circles its floor and looks inward.
+            shot: .orbit(
+                center: [0, 0, 300], radius: 2500, height: 1800,
+                startDegrees: 180, sweepDegrees: 120, seconds: shotSeconds
             ),
             requiredPlugin: "Dawnguard.esm"
         ),
