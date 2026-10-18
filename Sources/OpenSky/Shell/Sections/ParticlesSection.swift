@@ -110,6 +110,7 @@ final class ParticlesSection: PanelSectionViewController {
             ? (provider.particlesFrozen ? "frozen" : "playing") : "disabled"
         statsLabel.stringValue = "Particles: \(snapshot.systemCount) systems, "
             + "\(snapshot.emitterCount) emitters, \(snapshot.liveCount) live, "
+            + "\(snapshot.offscreenCount) off screen, "
             + "\(provider.controlledParticleSystemCount) keyed · \(state)"
     }
 

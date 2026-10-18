@@ -557,7 +557,9 @@ extension Renderer {
             encodeRefraction(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }
         encodeParticles(
-            items: sortedParticles(scene.particles + effects.particles),
+            items: sortedParticles(visibleParticles(
+                scene.particles + effects.particles, frustum: state.frustum
+            )),
             enabled: particlesEnabled,
             sorted: particleSortingEnabled,
             state: &state

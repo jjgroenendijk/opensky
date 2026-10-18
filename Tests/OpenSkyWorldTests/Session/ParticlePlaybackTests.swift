@@ -137,6 +137,40 @@ struct ParticlePlaybackTests {
         #expect(playback.liveCount > 0)
     }
 
+    /// The view test reads the live particles: the system shows from in front and
+    /// is skipped from behind, and a dead system has no bounds at all.
+    @Test(.enabled(if: Self.device != nil))
+    @MainActor
+    func liveBoundsHoldEveryParticleAndCullBehindTheCamera() throws {
+        let device = try #require(Self.device)
+        let playback = try ParticlePlayback(
+            device: device,
+            definition: makeDefinition(windStrength: 0),
+            placementTransform: matrix_identity_float4x4,
+            texture: whiteTexture(device: device),
+            seed: 7
+        )
+        #expect(playback.liveBounds == nil)
+        for _ in 0 ..< 20 {
+            playback.advance(deltaTime: 0.05, wind: .calm, emissionScale: 1)
+        }
+        let bounds = try #require(playback.liveBounds)
+        for particle in playback.simulator.particles {
+            #expect(all(particle.position - particle.radius .>= bounds.min))
+            #expect(all(particle.position + particle.radius .<= bounds.max))
+        }
+        let projection = MatrixMath.perspective(
+            fovYRadians: 1, aspectRatio: 1, nearZ: 1, farZ: 10000
+        )
+        func frustum(eye: SIMD3<Float>, target: SIMD3<Float>) -> Frustum {
+            Frustum(viewProjection: projection * MatrixMath.lookAt(
+                eye: eye, target: target, up: SIMD3(0, 0, 1)
+            ))
+        }
+        #expect(frustum(eye: SIMD3(-500, 0, 0), target: .zero).intersects(bounds))
+        #expect(!frustum(eye: SIMD3(-500, 0, 0), target: SIMD3(-1000, 0, 0)).intersects(bounds))
+    }
+
     private static let device: MTLDevice? = {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
         else { return nil }
