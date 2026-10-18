@@ -37,9 +37,15 @@ public final class PapyrusWorldRuntime {
 
     /// Stored state is internal rather than private because the lifecycle,
     /// event, and persistence satellites live in separate files.
-    public var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:] {
+    /// Written only through `storeInstance(_:for:)` and `retire(_:)`, which keep
+    /// `instanceKeysByReference` in step.
+    public internal(set) var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:] {
         didSet { runtime.variableGeneration.advance() }
     }
+
+    /// Each reference's live instance keys in key order, so an event on one reference
+    /// does not filter every instance in the world.
+    private(set) var instanceKeysByReference: [ReferenceKey: [PapyrusInstanceKey]] = [:]
 
     public var keysByHandle: [PapyrusObjectHandle: PapyrusInstanceKey] = [:]
     /// Instances whose `OnInit` has been delivered. Persists in the save
@@ -338,10 +344,30 @@ public final class PapyrusWorldRuntime {
         return map
     }
 
-    /// One reference's instances in key order. Filtering first keeps an event from
-    /// sorting every instance in the world.
+    /// One reference's instances in key order.
     func instanceKeys(on reference: ReferenceKey) -> [PapyrusInstanceKey] {
-        instancesByKey.keys.filter { $0.reference == reference }.sorted()
+        instanceKeysByReference[reference] ?? []
+    }
+
+    /// Records a live instance under `key`, replacing the handle the key held.
+    public func storeInstance(_ handle: PapyrusObjectHandle, for key: PapyrusInstanceKey) {
+        if instancesByKey.updateValue(handle, forKey: key) == nil {
+            var keys = instanceKeysByReference[key.reference] ?? []
+            keys.insert(key, at: keys.firstIndex { key < $0 } ?? keys.endIndex)
+            instanceKeysByReference[key.reference] = keys
+        }
+        keysByHandle[handle] = key
+    }
+
+    /// Drops the instance under `key` from both tables and returns its handle.
+    func removeInstance(for key: PapyrusInstanceKey) -> PapyrusObjectHandle? {
+        guard let handle = instancesByKey.removeValue(forKey: key) else { return nil }
+        instanceKeysByReference[key.reference]?.removeAll { $0 == key }
+        if instanceKeysByReference[key.reference]?.isEmpty == true {
+            instanceKeysByReference.removeValue(forKey: key.reference)
+        }
+        keysByHandle.removeValue(forKey: handle)
+        return handle
     }
 }
 

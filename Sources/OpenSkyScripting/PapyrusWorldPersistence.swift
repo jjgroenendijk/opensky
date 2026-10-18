@@ -96,8 +96,7 @@ extension PapyrusWorldRuntime {
         else {
             return nil
         }
-        instancesByKey[key] = handle
-        keysByHandle[handle] = key
+        storeInstance(handle, for: key)
         return handle
     }
 

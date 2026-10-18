@@ -68,9 +68,8 @@ extension PapyrusWorldRuntime {
     /// whole map. Alias and effect scripts are not `ObjectReference` scripts, so they never answer.
     private func instanceHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
         let otherKeys = aliasInstanceKeys.union(effectScripts.instanceKeys)
-        return instancesByKey.keys
-            .filter { $0.reference == key && !otherKeys.contains($0) }
-            .min()
+        return instanceKeys(on: key)
+            .first { !otherKeys.contains($0) }
             .flatMap { instancesByKey[$0] }
     }
 
@@ -91,9 +90,8 @@ extension PapyrusWorldRuntime {
         guard let reference = referenceKey(for: handle) else { return nil }
         let group = keysByHandle[handle].map(instanceGroup) ?? .form
         let find = {
-            self.instancesByKey.keys
-                .filter { $0.reference == reference && self.instanceGroup($0) == group }
-                .sorted()
+            self.instanceKeys(on: reference)
+                .filter { self.instanceGroup($0) == group }
                 .lazy
                 .compactMap { self.instancesByKey[$0] }
                 .first { self.runtime.resolvesObject($0, as: typeName) }
