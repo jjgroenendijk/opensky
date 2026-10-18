@@ -5,8 +5,8 @@
 # compilation cache in about two minutes (docs/tools/build-system.md).
 #
 #   tools/build-cache-budget.sh record TREE   store TREE's size, after a build
-#   tools/build-cache-budget.sh evict TREE    delete the trees built longest ago
-#                                             until the rest fit; never TREE
+#   tools/build-cache-budget.sh evict TREE    delete the trees under CACHE_ROOT built
+#                                             longest ago until the rest fit; never TREE
 #
 # A full size scan costs about a second per tree, so each build measures only its
 # own tree and stores the result in TREE/.opensky-size; its time stamp is when the
@@ -44,7 +44,9 @@ list_trees() {
 
 evict() {
     keep="$1"
-    root="$(dirname "$keep")"
+    # Only CACHE_ROOT holds build trees. CI keeps its tree beside the compilation
+    # store instead, and that folder must never be listed.
+    root="${OPENSKY_CACHE_ROOT:?}"
     budget_kb=$((${OPENSKY_BUILD_CACHE_GB:-40} * 1024 * 1024))
     # TREE is about to be built, so it counts first, whenever it was last built.
     used_kb="$(cat "$keep/$size_file" 2>/dev/null || echo 0)"
