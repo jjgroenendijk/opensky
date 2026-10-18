@@ -32,18 +32,26 @@ extension CombatLoopRuntime {
         let player = world.combatPlayer
         var hostility: [ReferenceKey: ActorHostility] = [:]
         var influences: [ReferenceKey: ActorMagicInfluence] = [:]
+        var ignoring: Set<ReferenceKey> = []
         for actor in actors where !actor.isDead && actor.key != player.key {
             hostility[actor.key] = world.combatHostility(of: actor.key)
             influences[actor.key] = world.combatInfluence(of: actor.key)
+            if world.combatIgnoredByPackage(actor.key) {
+                ignoring.insert(actor.key)
+            }
         }
-        for actor in actors where influences[actor.key]?.refusesCombat == true {
+        for actor in actors
+            where influences[actor.key]?.refusesCombat == true || ignoring.contains(actor.key)
+        {
             holdStill(actor.key, world: world)
         }
         let candidates = actors
             .filter { actor in
                 guard let stance = hostility[actor.key] else { return false }
                 let influence = influences[actor.key] ?? .none
-                guard !influence.refusesCombat else { return false }
+                guard !influence.refusesCombat, !ignoring.contains(actor.key) else {
+                    return false
+                }
                 return stance == .hostile || influence.isFrenzied
                     || engagesWithoutPerceiving(actor.key)
             }

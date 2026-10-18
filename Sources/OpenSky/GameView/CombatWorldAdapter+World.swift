@@ -194,6 +194,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.influence(of: key)
     }
 
+    func packageIgnoresCombat(_ key: ReferenceKey) -> Bool {
+        game.packages.ignoresCombat(key)
+    }
+
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         game.magic.enchantmentProfile(of: item)
     }

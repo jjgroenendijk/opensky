@@ -20,6 +20,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
+    /// Actors whose current package has the Ignore Combat flag.
+    public var ignoringCombat: Set<ReferenceKey> = []
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     public var styles: [ReferenceKey: CombatStyleTuning] = [:]
     /// What each actor could cast, and what it can pay for.
@@ -232,5 +234,9 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
         influences[key] ?? .none
+    }
+
+    public func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool {
+        ignoringCombat.contains(key)
     }
 }

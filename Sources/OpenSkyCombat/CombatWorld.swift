@@ -124,6 +124,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func trimBodyTransients(to limits: CombatTransientLimits) -> CombatTransientCounts
     /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+    /// True while `key`'s current AI package has the Ignore Combat flag.
+    func packageIgnoresCombat(_ key: ReferenceKey) -> Bool
     /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
     @discardableResult
     func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
@@ -133,6 +135,11 @@ extension CombatWorld {
     /// A session with no magic forces no behaviour.
     public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
         .none
+    }
+
+    /// A session with no packages ignores nothing.
+    public func packageIgnoresCombat(_: ReferenceKey) -> Bool {
+        false
     }
 
     /// A session with no stamina pays nothing to block.

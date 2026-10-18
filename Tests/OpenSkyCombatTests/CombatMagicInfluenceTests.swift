@@ -58,6 +58,18 @@ struct CombatMagicInfluenceTests {
         #expect(world.stopRequests.contains(CombatLoopFixture.opponent))
     }
 
+    /// A package with the Ignore Combat flag: the actor "will not fight or flee"
+    /// (<https://ck.uesp.net/wiki/Package_Flags>).
+    @Test func anActorWhosePackageIgnoresCombatLeavesTheFight() {
+        let (runtime, world) = CombatLoopFixture.session()
+        CombatLoopFixture.engage(runtime, world)
+        CombatLoopFixture.run(runtime, seconds: 1)
+        world.ignoringCombat = [CombatLoopFixture.opponent]
+        CombatLoopFixture.run(runtime, seconds: 1)
+        #expect(runtime.phase(of: CombatLoopFixture.opponent) == .idle)
+        #expect(!runtime.state.isPlayerInCombat)
+    }
+
     @Test func aParalysedActorDealsNoBlows() {
         let (runtime, world) = CombatLoopFixture.session()
         CombatLoopFixture.engage(runtime, world)
