@@ -271,15 +271,28 @@ extension PapyrusWorldRuntime {
             stepSeconds: fixedStepSeconds, gameClock: gameClock
         )
         for firing in firings {
-            enqueue(PapyrusScriptEvent(
-                target: firing.key,
-                functionName: firing.slot.family == .real
-                    ? PapyrusEngineEvents.onUpdate
-                    : PapyrusEngineEvents.onUpdateGameTime,
-                arguments: [],
-                activationDepth: 0
-            ))
+            let name = firing.slot.family == .real
+                ? PapyrusEngineEvents.onUpdate
+                : PapyrusEngineEvents.onUpdateGameTime
+            for target in updateTargets(of: firing.key, event: name) {
+                enqueue(PapyrusScriptEvent(
+                    target: target, functionName: name, arguments: [], activationDepth: 0
+                ))
+            }
         }
+    }
+
+    /// The registering script, then every other script on the same form that handles
+    /// the event: the game relays an update to all scripts on the object
+    /// (<https://ck.uesp.net/wiki/OnUpdate_-_Form>). Alias and effect scripts are
+    /// objects of their own, so they neither relay nor hear another's update.
+    private func updateTargets(of key: PapyrusInstanceKey, event: String) -> [PapyrusInstanceKey] {
+        let separate = aliasInstanceKeys.union(effectScripts.instanceKeys)
+        guard !separate.contains(key) else { return [key] }
+        let siblings = instanceKeys(on: key.reference).filter { sibling in
+            sibling != key && !separate.contains(sibling) && definesFunction(event, key: sibling)
+        }
+        return [key] + siblings
     }
 }
 

@@ -64,6 +64,8 @@ public final class PapyrusNativeContext {
     public let world: (any PapyrusWorldBridge)?
     /// The user logs `Debug.OpenUserLog` opened; `TraceUser` writes only to these.
     var openUserLogs: Set<String> = []
+    /// True while a menu-time step runs, the only time a script runs in a menu.
+    public var isInMenuMode = false
 
     public init(
         seed: UInt64 = ConditionRandom.defaultSeed,
@@ -127,5 +129,15 @@ public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
 
     public var count: Int {
         functions.count
+    }
+
+    /// Every registered native as the registration spells it, sorted by key.
+    public var registeredNames: [(scriptName: String, functionName: String)] {
+        functions.values
+            .sorted { lhs, rhs in
+                (lhs.key.scriptName, lhs.key.functionName)
+                    < (rhs.key.scriptName, rhs.key.functionName)
+            }
+            .map { ($0.scriptName, $0.functionName) }
     }
 }

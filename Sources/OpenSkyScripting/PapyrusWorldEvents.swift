@@ -14,8 +14,10 @@ extension PapyrusWorldRuntime {
     @discardableResult
     public func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
         runtime.stepInstructionsLeft = max(0, budget.instructions)
+        let delayedBefore = runtime.tally.delayedNativeTotal
         defer {
             lastStepInstructions = max(0, budget.instructions) - runtime.stepInstructionsLeft
+            lastStepDelayedCalls = runtime.tally.delayedNativeTotal - delayedBefore
             runtime.stepInstructionsLeft = .max
         }
         _ = scheduler.tick(gameClock: gameClock)

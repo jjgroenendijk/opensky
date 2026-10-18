@@ -152,6 +152,14 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         )
     }
 
+    func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation? {
+        guard
+            let streamer = game.streamer, streamer.referenceEntry(key: key) == nil,
+            let placement = streamer.pluginPlacement(of: key), placement.entry.placedActor != nil
+        else { return nil }
+        return placement.home
+    }
+
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
         if game.scripts.bridge?.silentDeath != key {
             game.storyWorld.reportKill(victim: key, killer: killer)

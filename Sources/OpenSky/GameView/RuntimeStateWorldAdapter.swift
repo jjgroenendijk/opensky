@@ -16,6 +16,7 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -45,6 +46,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
@@ -137,6 +139,9 @@ final class RuntimeStateWorldAdapter {
         state.action = actionFacts(of: holder.key, isDead: isDead)
         // OpenSky weighs only the player's load; an NPC carries any weight.
         state.isOverEncumbered = holder.key == .player ? playerIsOverEncumbered() : false
+        state.holdsWeapon = game.inventory.conditionEquipment(of: holder.key).map { facts in
+            facts.rightWeapon != nil || facts.leftWeapon != nil
+        }
         return state
     }
 

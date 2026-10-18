@@ -107,7 +107,9 @@ nonisolated public enum ScriptsReadout: Sendable {
                 + "resumed \(snapshot.lastTickResumed) · "
                 + "faulted \(snapshot.lastTickFaulted)",
             "Last step instructions: \(snapshot.lastStepInstructions)"
-                + " of \(snapshot.budgetInstructions)"
+                + " of \(snapshot.budgetInstructions)",
+            "Native timing: \(snapshot.usesGameTiming ? "game" : "run to end")"
+                + "  Delayed calls last step: \(snapshot.lastStepDelayedCalls)"
         ].joined(separator: "\n")
     }
 

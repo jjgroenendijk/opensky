@@ -54,6 +54,13 @@ step.
 A due slot queues its event through the [event queue](/engine/papyrus-world.md#event-queue) at
 activation depth 0. Slots due on the same step queue in registration order.
 
+The game relays an event to every script on the object
+([`OnUpdate - Form`](https://ck.uesp.net/wiki/OnUpdate_-_Form)). So a due slot queues the event on
+the script that registered first, then on every other script of the same form that handles it, in
+instance key order. Example: a quest's main script registers, and its fragment script hears the
+update too. The timer still belongs to the script that registered. Alias and effect scripts are
+objects of their own: their updates reach only themselves, and they do not hear another script's.
+
 Both event pages say "This event will not be sent if the game is in menu mode"
 ([`OnUpdate - Form`](https://ck.uesp.net/wiki/OnUpdate_-_Form),
 [`OnUpdateGameTime - Form`](https://ck.uesp.net/wiki/OnUpdateGameTime_-_Form)). OpenSky keeps that

@@ -122,8 +122,12 @@ final class ScriptWorldAdapter {
         streamer.onCellDetached = { [weak world] location in
             world?.detach(cell: location)
         }
-        gameSession.worldTick.register(.scripts) { [weak self] delta in
+        gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in
             self?.game.scripts.advance(delta: delta)
+            let menuTime = gameSession?.consumeMenuTime() ?? 0
+            if menuTime > 0 {
+                self?.game.scripts.advanceMenuTime(delta: menuTime)
+            }
         }
     }
 

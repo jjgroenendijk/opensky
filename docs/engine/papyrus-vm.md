@@ -194,7 +194,34 @@ frames, so 2.4 ms of the game's budget. On Apple Silicon a Release build runs ab
 instructions in that time. Outside a world step, for example while VMAD binding runs a property
 setter, nothing limits a call.
 
-## Properties and arrays
+## Native timing
+
+In the game, a native call returns after at least one frame. Only the natives in the wiki's
+non-delayed category return in the same frame. Latent natives return when their own condition is
+met, such as the end of a wait. During any call to another object, the script's instance unlocks,
+so another thread can run on it. Sources:
+[Threading Notes (Papyrus)](https://ck.uesp.net/wiki/Threading_Notes_(Papyrus)),
+[Category:Non-delayed Native Function](https://ck.uesp.net/wiki/Category:Non-delayed_Native_Function),
+and [Category:Latent Functions](https://ck.uesp.net/wiki/Category:Latent_Functions).
+
+`PapyrusNativeTimingTable` gives every native one class: non-delayed, delayed, or latent. The two
+lists hold only the names from the wiki categories. Every other native is delayed. Mod functions
+in the latent category, such as the `ANDR PapyrusFunctions` pages, are left out. The wiki is
+written by the community, so where the install disagrees with a label, the install wins.
+
+`PapyrusRuntime.nativeTiming` picks the mode:
+
+- `.game`: a delayed or latent native that returns at once still answers one fixed step later.
+  The interpreter suspends the call with the value, and the scheduler wakes it on the next step.
+  The call does not hold its instance, so a queued event on the same instance can run first.
+- `.runToEnd`: only a native that suspends itself takes time.
+
+The app starts every session in `.game`. A headless `PapyrusRuntime` defaults to `.runToEnd`, so
+a parser or native test sees the result of a call at once. Example: a script that calls `AddItem`
+20 times finishes 20 steps after it starts under `.game`, and in one step under `.runToEnd`.
+
+`make test-real` checks the table against the local wiki mirror and writes the natives that have
+no wiki page to `.logs/native-timing/report.txt`. It skips when the mirror is missing.
 
 An automatic property reads and writes its backing variable in its script's storage. A getter or
 setter with a body runs as an ordinary frame. A missing accessor, variable, property, or receiver is
@@ -266,5 +293,12 @@ The public references do not fully describe the VM. These are OpenSky's choices:
   hide what the script does next.
 - `GetState` inside `OnEndState` already returns the new state. Both hooks run as frames that
   `GotoState` pushes, and the switch happens before either frame starts.
+- Threads that wait for one instance get in first in, first out. The wiki says the order is not
+  predictable. A fixed order keeps every run the same.
+- An instance unlocks only where a call suspends: a delayed, latent, or used-up call. A call to a
+  non-native function on another object that does not suspend lets no other event in, because
+  OpenSky runs one event at a time and nothing else could run in the gap.
+- A native called on a receiver whose declaring script is not loaded is looked up under the
+  receiver's type. A non-delayed native then counts as delayed.
 - Array find start clamping and the 100,000 element cap are defensive policy. The opcode table does
   not give either.

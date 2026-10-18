@@ -158,6 +158,10 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public var lastStepInstructions = 0
     /// References a `TranslateTo` is moving now.
     public var scriptedMoveCount = 0
+    /// True when natives follow the game's frame timing (`PapyrusNativeTimingMode.game`).
+    public var usesGameTiming = true
+    /// Native calls that the latest fixed step made wait for the next step.
+    public var lastStepDelayedCalls = 0
 }
 
 /// Live-renderer seam for the World > Scripts panel.
@@ -176,6 +180,10 @@ public protocol ScriptControlProviding: AnyObject {
     /// Sets the instructions all scripts share per fixed step. Values below one
     /// become one, so scripts always move. No-op when the session has no VM.
     func setScriptInstructionBudget(_ instructions: Int)
+
+    /// True makes natives take the game's frame timing; false lets each call run to its
+    /// end at once. No-op when the session has no VM.
+    func setScriptGameTiming(_ enabled: Bool)
 
     /// Runs `ticks` fixed steps immediately, whether or not the VM is paused.
     /// Values below one do nothing; the implementation caps the count so a

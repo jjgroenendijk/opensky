@@ -21,13 +21,19 @@ extension PapyrusWorldStateBridge {
         let spellbook = caster.spellbookAccess.state(of: holder)
         let effects = worldState.component(ActiveEffectState.self, for: key)
         let active = effects?.effects ?? []
+        let potential = MagicEffectReach.potentialEffects(
+            known: spellbook.known,
+            sources: active.map(\.source.record),
+            record: caster.spellbookAccess.record
+        )
         return PapyrusSpellState(
             knownSpells: Set(spellbook.known),
             activeEffects: Set(active.map(\.effect)),
-            effectKeywords: effectKeywords(of: active),
+            effectKeywords: effectKeywords(of: active.map(\.effect) + potential),
             handSpells: SpellHand.allCases.reduce(into: [:]) { table, hand in
                 table[hand] = spellbook.spell(in: hand)
-            }
+            },
+            potentialEffects: potential
         )
     }
 
@@ -157,10 +163,10 @@ extension PapyrusWorldStateBridge {
     }
 
     /// Every keyword the MGEFs behind `effects` carry, resolved once.
-    private func effectKeywords(of effects: [ActiveEffect]) -> Set<ReferenceKey> {
+    private func effectKeywords(of effects: some Sequence<ReferenceKey>) -> Set<ReferenceKey> {
         guard let store = magicEffectStore else { return [] }
-        return effects.reduce(into: []) { keywords, effect in
-            guard let record = store.effect(key: effect.effect) else { return }
+        return Set(effects).reduce(into: []) { keywords, effect in
+            guard let record = store.effect(key: effect) else { return }
             keywords.formUnion(record.keywordKeys(in: store))
         }
     }

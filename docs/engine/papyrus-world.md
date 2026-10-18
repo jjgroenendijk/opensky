@@ -34,6 +34,13 @@ Menu pause reaches the VM as a clock, not a branch. A paused frame delivers a de
 and the hook still runs ([menu mode](/engine/menu-mode.md)). The world runtime never reads the wall
 clock or a pause flag.
 
+`Utility.Wait` does not count time in a menu, and `Utility.WaitMenuMode` does
+([WaitMenuMode - Utility](https://ck.uesp.net/wiki/WaitMenuMode_-_Utility)). So the frame also hands
+the VM the time a menu paused the world for, in whole fixed steps of menu time. A menu step moves
+only the `WaitMenuMode` waits, and resumes the ones that are due, so such a timer finishes while a
+menu is open. `IsInMenuMode` is true while that call runs. Events, update timers, and the other waits
+stay paused. A resumed call that then waits on anything else goes on in world time.
+
 - One fixed step ticks the scheduler, settles what woke, then drains the event queue up to the
   budget. Tests and the offscreen path drive this directly.
 - Advancing by a delta adds it to an accumulator and runs whole steps only, so the frame rate never
@@ -55,7 +62,10 @@ in order, until that handler finishes or reaches a latent call. Other instances 
 skipped event goes back ahead of the rest of the queue, so the queue never reorders.
 
 A latent call, such as `Utility.Wait`, releases the instance, so its next event runs while the first
-handler waits. The game does the same: a thread unlocks its object during a latent call (Creation
+handler waits. Under game timing every delayed native releases it too
+([native timing](/engine/papyrus-vm.md#native-timing)). So a script that changes its state after
+an external call races with its next event, and a `GotoState` before the call guards it, as in the
+game. The game does the same: a thread unlocks its object during a latent call (Creation
 Kit wiki, "Threading Notes (Papyrus)"). Example: `CritterSpawn` waits in a loop in `OnLoad` for as
 long as its cell is loaded, and its `OnCellLoad` still runs.
 
@@ -226,6 +236,10 @@ checked only at the top of an advance: a paused advance does nothing and builds 
 ignores it. This pause is separate from menu pause, and either one stops scripts. The last tick
 report is kept only from a tick that did work, so the readout never shows a report of zeros. The
 destination counts as overridden while paused, and Reset unpauses.
+
+The `Game native timing` checkbox switches between game timing and run-to-end timing, so a user can
+compare both. The readout shows how many native calls the last step delayed. Run-to-end timing
+counts as an override, and Reset puts game timing back.
 
 ## Stated simplifications
 

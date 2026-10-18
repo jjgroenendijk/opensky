@@ -107,16 +107,15 @@ extension PapyrusNativeFunctions {
 
     /// `bool HasMagicEffect(MagicEffect akEffect)`,
     /// `bool HasMagicEffectWithKeyword(Keyword akKeyword)`,
-    /// `bool DispelSpell(Spell akSpell)` and `DispelAllSpells()`. Only applied
-    /// effects are stored, so the checks answer a narrower question than the game
-    /// (docs/engine/condition-functions.md).
+    /// `bool DispelSpell(Spell akSpell)` and `DispelAllSpells()`. The checks count every
+    /// effect a spell acting on the actor can apply, active or not.
     private static func installSpellEffects(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "HasMagicEffect"
         ) { call, context in
             spellState(call, context) { state, effect in
-                .returned(.boolean(state.activeEffects.contains(effect)))
+                .returned(.boolean(state.potentialEffects.contains(effect)))
             }
         })
         registry.register(PapyrusNativeFunction(

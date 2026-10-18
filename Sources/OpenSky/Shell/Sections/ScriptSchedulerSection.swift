@@ -30,6 +30,9 @@ final class ScriptSchedulerSection: PanelSectionViewController {
         title: "Step x\(ScriptSchedulerSection.burstTicks)", target: nil, action: nil
     )
     let budgetControl = NSPopUpButton()
+    let gameTimingControl = NSButton(
+        checkboxWithTitle: "Game native timing", target: nil, action: nil
+    )
 
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "ScriptSchedulerStatsLabel"
@@ -57,28 +60,32 @@ final class ScriptSchedulerSection: PanelSectionViewController {
     }
 
     /// Destination-level overridden-ness, which `DestinationRegistry` reads for
-    /// the sidebar dot. A paused VM or a changed budget is the deviation; stepping
+    /// the sidebar dot. A paused VM, a changed budget, or run-to-end timing is the deviation;
+    /// stepping
     /// is a momentary action that leaves no setting behind. A session without a VM
     /// reports a zero budget, which is no deviation.
     static func isOverridden(provider: (any ScriptControlProviding)?) -> Bool {
         guard let snapshot = provider?.scriptsSnapshot else { return false }
         let budget = snapshot.budgetInstructions
-        return snapshot.isPaused
+        return snapshot.isPaused || !snapshot.usesGameTiming
             || (budget != 0 && budget != PapyrusTickBudget.standard.instructions)
     }
 
-    /// The destination's reset: let the VM run again, with the standard budget.
+    /// The destination's reset: let the VM run again, with the standard budget and game timing.
     static func resetToDefaults(provider: (any ScriptControlProviding)?) {
         provider?.setScriptsPaused(false)
+        provider?.setScriptGameTiming(true)
         provider?.setScriptInstructionBudget(PapyrusTickBudget.standard.instructions)
     }
 
     override func makeContentViews() -> [NSView] {
         pauseControl.toolTip = "Pauses scripts only. The world keeps running."
         budgetControl.toolTip = "Instructions all scripts may run per step together."
+        gameTimingControl.toolTip = "Off lets every native call return at once, "
+            + "so scripts run faster than in the game."
         configureControls()
         return [
-            PanelComponents.group([pauseControl]),
+            PanelComponents.group([pauseControl, gameTimingControl]),
             PanelComponents.buttonRow([stepControl, burstControl]),
             PanelComponents.labeledFieldRow(
                 caption: "Step budget", captionWidth: 90, field: budgetControl
@@ -90,6 +97,7 @@ final class ScriptSchedulerSection: PanelSectionViewController {
     override func syncControls() {
         let snapshot = provider?.scriptsSnapshot
         pauseControl.state = snapshot?.isPaused == true ? .on : .off
+        gameTimingControl.state = snapshot?.usesGameTiming == false ? .off : .on
         budgetControl.selectItem(withTag: snapshot?.budgetInstructions ?? 0)
     }
 

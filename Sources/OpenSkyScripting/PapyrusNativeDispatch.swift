@@ -66,6 +66,8 @@ nonisolated public enum PapyrusNativeSuspension: Equatable, Sendable {
     /// Waits like `realSeconds`, then returns the value instead of the type's default.
     case realSecondsAnswering(Double, PapyrusValue)
     case gameHours(Double)
+    /// Waits like `realSeconds`, but time spent in a menu counts too (`WaitMenuMode`).
+    case realSecondsWithMenus(Double)
     /// Waits until the engine answers `token` through
     /// `PapyrusScheduler.answer(_:returning:)`, such as a message box closing.
     case external(UInt64)

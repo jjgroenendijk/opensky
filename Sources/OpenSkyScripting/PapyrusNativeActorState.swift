@@ -22,13 +22,16 @@ extension PapyrusNativeFunctions {
             return .returned(.integer(Int32(activity.rawValue)))
         }
         // OpenSky's combat loop fights the player alone, so a fighting actor targets
-        // the player, and the player has no target.
+        // the player, and the player targets the actor the loop picked.
         scriptState("Actor", "GetCombatTarget", into: &registry) { call, bridge, key in
             guard let activity = bridge.combatActivity(of: key) else {
                 return failure(call, "GetCombatTarget needs a combat runtime")
             }
-            guard activity != .notFighting, key != .player else { return .returned(.none) }
-            return .returned(handle(.player, in: bridge))
+            guard
+                activity != .notFighting,
+                let target = bridge.actorNatives.combatRuntime?()?.combatTarget(of: key)
+            else { return .returned(.none) }
+            return .returned(handle(target, in: bridge))
         }
         // `StopCombatAlarm()` ends the actor's fight; OpenSky keeps no alarm apart from it.
         scriptState("Actor", "StopCombatAlarm", into: &registry) { _, bridge, key in

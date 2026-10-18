@@ -33,6 +33,8 @@ public final class PapyrusRuntime {
     /// Instructions every script together may still run in this fixed step. The world
     /// runtime sets it for each step; outside a step nothing limits it.
     public var stepInstructionsLeft = Int.max
+    /// `.game` makes every native but a non-delayed one return on the next fixed step.
+    public var nativeTiming: PapyrusNativeTimingMode = .runToEnd
 
     public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:] {
         didSet { variableGeneration.advance() }

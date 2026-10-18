@@ -7,7 +7,26 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 
-/// Item counts per holder, keyed by the item plugin's raw FormIDs.
+/// Reads one holder's items on demand, so a condition can ask about any actor or
+/// container, not only the holders a context copied in. Each answers nil without a holder.
+nonisolated public struct InventoryConditionLookup: Sendable {
+    public let count: @Sendable (FormID, ReferenceKey) -> Int32?
+    public let isEquipped: @Sendable (FormID, ReferenceKey) -> Bool?
+    public let keywordCounts: @Sendable (ReferenceKey) -> [FormID: Int32]?
+
+    public init(
+        count: @escaping @Sendable (FormID, ReferenceKey) -> Int32?,
+        isEquipped: @escaping @Sendable (FormID, ReferenceKey) -> Bool?,
+        keywordCounts: @escaping @Sendable (ReferenceKey) -> [FormID: Int32]?
+    ) {
+        self.count = count
+        self.isEquipped = isEquipped
+        self.keywordCounts = keywordCounts
+    }
+}
+
+/// Item counts per holder, keyed by the item plugin's raw FormIDs. A holder the
+/// tables do not name is read through `lookup`.
 nonisolated public struct InventoryConditionResolution: Sendable {
     public static let empty = InventoryConditionResolution()
 
@@ -16,18 +35,21 @@ nonisolated public struct InventoryConditionResolution: Sendable {
     private let equipment: [ReferenceKey: ActorEquipmentFacts]
     /// Items per KWDA keyword, summed over each holder's stacks.
     private let keywordCounts: [ReferenceKey: [FormID: Int32]]
+    private let lookup: InventoryConditionLookup?
     public let isAvailable: Bool
 
     public init(
         counts: [ReferenceKey: [FormID: Int32]],
         equipped: [ReferenceKey: Set<FormID>] = [:],
         equipment: [ReferenceKey: ActorEquipmentFacts] = [:],
-        keywordCounts: [ReferenceKey: [FormID: Int32]] = [:]
+        keywordCounts: [ReferenceKey: [FormID: Int32]] = [:],
+        lookup: InventoryConditionLookup? = nil
     ) {
         self.counts = counts
         self.equipped = equipped
         self.equipment = equipment
         self.keywordCounts = keywordCounts
+        self.lookup = lookup
         isAvailable = true
     }
 
@@ -36,6 +58,7 @@ nonisolated public struct InventoryConditionResolution: Sendable {
         equipped = [:]
         equipment = [:]
         keywordCounts = [:]
+        lookup = nil
         isAvailable = false
     }
 
@@ -46,19 +69,25 @@ nonisolated public struct InventoryConditionResolution: Sendable {
 
     /// Nil without inventory data for `holder`.
     public func count(ofKeyword keyword: FormID, in holder: ReferenceKey) -> Int32? {
-        guard counts[holder] != nil else { return nil }
+        guard counts[holder] != nil else {
+            return lookup?.keywordCounts(holder).map { $0[keyword] ?? 0 }
+        }
         return keywordCounts[holder]?[keyword] ?? 0
     }
 
-    /// Nil without inventory data. A holder with no entry holds nothing.
+    /// Nil without inventory data. A holder neither the tables nor the lookup know
+    /// holds nothing.
     public func count(of item: FormID, in holder: ReferenceKey) -> Int32? {
         guard isAvailable else { return nil }
-        return counts[holder]?[item] ?? 0
+        if let table = counts[holder] {
+            return table[item] ?? 0
+        }
+        return lookup?.count(item, holder) ?? 0
     }
 
     /// Nil without equipment data for `holder`.
     public func isEquipped(_ item: FormID, on holder: ReferenceKey) -> Bool? {
-        equipped[holder]?.contains(item)
+        equipped[holder]?.contains(item) ?? lookup?.isEquipped(item, holder)
     }
 }
 

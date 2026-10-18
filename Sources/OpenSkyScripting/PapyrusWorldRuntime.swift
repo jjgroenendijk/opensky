@@ -27,6 +27,8 @@ public final class PapyrusWorldRuntime {
     public var budget: PapyrusTickBudget = .standard
     /// Instructions all scripts ran in the latest fixed step.
     public internal(set) var lastStepInstructions = 0
+    /// Native calls the latest fixed step delayed to the next one.
+    public internal(set) var lastStepDelayedCalls = 0
     /// Freezes the VM's own clock. While true, `advance(delta:gameClock:)` does
     /// nothing, and `stepFixed(gameClock:)` still steps one tick. Separate from
     /// `GameSession.worldSimPaused`, which pauses the whole simulation.
@@ -179,6 +181,8 @@ public final class PapyrusWorldRuntime {
 
     public let suspensionTracker: PapyrusWorldSuspensionTracker
     public var accumulatorSeconds = 0.0
+    /// Menu time not yet spent on a whole menu step.
+    public var menuAccumulatorSeconds = 0.0
 
     /// Cap on whole steps one `advance` may run, so a long hitch cannot
     /// snowball into a burst of catch-up simulation.

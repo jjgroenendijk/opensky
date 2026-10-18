@@ -53,7 +53,9 @@ extension PapyrusWorldRuntime {
             unimplementedNativeTotal: tally.unimplementedNativeTotal,
             topUnimplementedNatives: Self.topUnimplementedNatives(tally),
             lastFault: tally.lastFault,
-            lastStepInstructions: lastStepInstructions
+            lastStepInstructions: lastStepInstructions,
+            usesGameTiming: runtime.nativeTiming == .game,
+            lastStepDelayedCalls: lastStepDelayedCalls
         )
     }
 

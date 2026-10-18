@@ -88,6 +88,16 @@ public protocol RagdollWorldSeam: AnyObject {
     /// - Returns: how many events were queued; 0 without a script VM.
     @discardableResult
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int
+
+    /// The plugin cell of an actor that no loaded cell holds, or nil. Such an actor
+    /// dies without a body to fall.
+    func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation?
+}
+
+extension RagdollWorldSeam {
+    public func unloadedActorHome(of _: ReferenceKey) -> CellSceneLocation? {
+        nil
+    }
 }
 
 nonisolated extension RagdollWorldSeam {
@@ -146,7 +156,12 @@ public final class RagdollRuntime: DeathReporting {
     @discardableResult
     public func noteZeroHealth(of key: ReferenceKey, killer: ReferenceKey? = nil) -> Bool {
         guard let seam, seam.deathState(of: key)?.isDead != true else { return false }
-        guard let actor = seam.ragdollActor(for: key) else { return false }
+        guard let actor = seam.ragdollActor(for: key) else {
+            guard let home = seam.unloadedActorHome(of: key) else { return false }
+            seam.writeDeathState(.justDied, for: key, in: home)
+            deathEventsQueued += seam.queueActorDeathEvents(for: key, killer: killer)
+            return true
+        }
         seam.writeDeathState(.justDied, for: key, in: actor.cell)
         deathEventsQueued += seam.queueActorDeathEvents(for: key, killer: killer)
         var accepted = false

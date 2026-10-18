@@ -44,48 +44,61 @@ extension PapyrusInterpreter {
         destination: PexValue
     ) throws(PapyrusFault) -> PapyrusFlow {
         let typedCall = call.returning(nativeReturnType(destination))
+        let value: PapyrusValue
         switch dispatch(typedCall) {
-        case let .returned(value):
-            guard let frame = frames.last else {
-                return .returned(.none)
-            }
-            try write(value, to: destination, frame: frame)
-            return .next
+        case let .returned(returned), let .deviated(returned, _):
+            value = returned
         case .failed:
-            guard let frame = frames.last else {
-                return .returned(typedCall.returnType.defaultValue)
-            }
-            try write(typedCall.returnType.defaultValue, to: destination, frame: frame)
-            return .next
+            value = typedCall.returnType.defaultValue
         case let .suspended(request):
             return .suspended(suspend(
                 call: typedCall,
                 request: request,
                 target: .assign(destination)
             ))
-        case let .deviated(value, _):
-            guard let frame = frames.last else {
-                return .returned(value)
-            }
-            try write(value, to: destination, frame: frame)
-            return .next
         }
+        if let delayed = delay(typedCall, returning: value, target: .assign(destination)) {
+            return .suspended(delayed)
+        }
+        guard let frame = frames.last else {
+            return .returned(value)
+        }
+        try write(value, to: destination, frame: frame)
+        return .next
     }
 
     public func nativeOutcome(
         _ call: PapyrusNativeCall,
         target: PapyrusResumeTarget
     ) -> PapyrusRunOutcome {
+        let value: PapyrusValue
         switch dispatch(call) {
-        case let .returned(value):
-            .completed(value)
+        case let .returned(returned), let .deviated(returned, _):
+            value = returned
         case .failed:
-            .completed(call.returnType.defaultValue)
+            value = call.returnType.defaultValue
         case let .suspended(request):
-            .suspended(suspend(call: call, request: request, target: target))
-        case let .deviated(value, _):
-            .completed(value)
+            return .suspended(suspend(call: call, request: request, target: target))
         }
+        if let delayed = delay(call, returning: value, target: target) {
+            return .suspended(delayed)
+        }
+        return .completed(value)
+    }
+
+    /// Under game timing a native that is not non-delayed answers on the next fixed step,
+    /// and releases its instance meanwhile (CK wiki "Threading Notes (Papyrus)").
+    private func delay(
+        _ call: PapyrusNativeCall,
+        returning value: PapyrusValue,
+        target: PapyrusResumeTarget
+    ) -> SuspendedCall? {
+        guard
+            runtime.nativeTiming == .game,
+            PapyrusNativeTimingTable.timing(of: call.key) != .nonDelayed
+        else { return nil }
+        runtime.tally.noteDelayedNative()
+        return suspend(call: call, request: .realSecondsAnswering(0, value), target: target)
     }
 
     private func dispatch(_ call: PapyrusNativeCall) -> PapyrusNativeResult {

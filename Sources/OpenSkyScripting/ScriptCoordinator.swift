@@ -53,6 +53,7 @@ public final class ScriptCoordinator {
                 context: PapyrusNativeContext(world: bridge)
             )
         ))
+        runtime.runtime.nativeTiming = .game
         // Session start runs before the first frame, so it may load at once.
         runtime.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
         scripts = AssetLoader(load: Self.chainLoad(fileSystem: fileSystem))
@@ -107,6 +108,11 @@ public final class ScriptCoordinator {
         bridge?.advanceTranslations(by: delta)
         bridge?.queueTriggerRepeats(after: delta)
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
+    }
+
+    /// Time a menu pauses the world for. Only `WaitMenuMode` counts it.
+    public func advanceMenuTime(delta: Float) {
+        runtime?.advanceMenuTime(delta: delta)
     }
 
     /// Quest instances first, so saved variables have somewhere to go. Timers
@@ -279,6 +285,10 @@ extension ScriptCoordinator: ScriptControlProviding {
 
     public func setScriptInstructionBudget(_ instructions: Int) {
         runtime?.budget.instructions = max(1, instructions)
+    }
+
+    public func setScriptGameTiming(_ enabled: Bool) {
+        runtime?.runtime.nativeTiming = enabled ? .game : .runToEnd
     }
 }
 

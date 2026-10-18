@@ -25,7 +25,8 @@ extension MagicCoordinator {
                     ?? ActiveEffectState(),
                 castingHands: Set(SpellHand.allCases.filter { hand in
                     caster.phase(of: hand, on: key).isCasting
-                })
+                }),
+                record: caster.spellbook.record
             )
         }
         return MagicConditionResolution(

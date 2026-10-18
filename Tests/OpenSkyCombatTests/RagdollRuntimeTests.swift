@@ -164,6 +164,26 @@ struct RagdollRuntimeTests {
         #expect(world.states.isEmpty)
     }
 
+    /// An actor no loaded cell holds dies in its plugin cell, with its death events,
+    /// and no body falls.
+    @Test
+    func anUnloadedActorDiesWithoutABody() {
+        let (runtime, world) = Self.session(declaring: [])
+        world.actor = nil
+        world.unloadedHomes[Self.key] = Self.cell
+        var events: [ReferenceKey] = []
+        world.deathEvents = { key, _ in
+            events.append(key)
+            return 1
+        }
+        #expect(runtime.noteZeroHealth(of: Self.key))
+        #expect(world.states[Self.key]?.isDead == true)
+        #expect(events == [Self.key])
+        #expect(world.raised.isEmpty)
+        #expect(runtime.world.ragdollCount == 0)
+        #expect(!runtime.noteZeroHealth(of: Self.key))
+    }
+
     // MARK: - Fixture
 
     /// A runtime and the fake it resolves against.

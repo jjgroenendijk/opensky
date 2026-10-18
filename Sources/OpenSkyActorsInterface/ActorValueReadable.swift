@@ -58,14 +58,14 @@ nonisolated extension ActorValueReadable {
     }
 
     /// What `GetActorValuePercent` and `GetActorValuePercentage` report: the current
-    /// value over its ceiling, clamped to 0 ... 1. A primary divides by its effective
-    /// maximum, others by their base. A zero or negative denominator reads as 0.
+    /// value over its buffed maximum, clamped to 0 ... 1. A primary divides by its bar,
+    /// others by base plus permanent and temporary modifiers. A zero denominator reads 0.
     public func fraction(at index: Int32) -> Float? {
         guard let value = value(at: index) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
             maximums[kind]
         } else {
-            baseValue(at: index)
+            entry(at: index)?.undamagedValue
         }
         guard let ceiling else { return nil }
         guard ceiling.isFinite, ceiling > 0, value.isFinite else { return 0 }

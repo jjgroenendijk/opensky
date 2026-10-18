@@ -17,6 +17,8 @@ public final class PapyrusScheduler {
     /// 30 ticks, where an accumulated `realSeconds` drifts past 31.
     private enum Wake: Equatable {
         case realSteps(startTick: Int, duration: Double, answer: PapyrusValue?)
+        /// Counts `menuAwareTickCount`, which menu steps advance too.
+        case menuAwareSteps(startTick: Int, duration: Double)
         case gameHours(Double)
         case external(UInt64)
     }
@@ -31,6 +33,8 @@ public final class PapyrusScheduler {
     public var onResume: ((SuspendedCall, PapyrusRunOutcome) -> Void)?
 
     public private(set) var tickCount = 0
+    /// Fixed steps of world time plus fixed steps of menu time.
+    public private(set) var menuAwareTickCount = 0
     public private(set) var elapsedGameHours = 0.0
     public private(set) var pendingCount = 0
 
@@ -81,8 +85,27 @@ public final class PapyrusScheduler {
 
     public func tick(gameClock: GameClock? = nil) -> [PapyrusRunOutcome] {
         tickCount += 1
+        menuAwareTickCount += 1
         consumeGameTime(gameClock)
         wakeDueCalls()
+        return drainTerminal()
+    }
+
+    /// One fixed step of menu time: only waits that count menu time move, and only
+    /// they resume. A resumed call that waits again goes on in world time.
+    public func tickMenu() -> [PapyrusRunOutcome] {
+        menuAwareTickCount += 1
+        wakeDueCalls {
+            if case .menuAwareSteps = $0 {
+                true
+            } else {
+                false
+            }
+        }
+        return drainTerminal()
+    }
+
+    private func drainTerminal() -> [PapyrusRunOutcome] {
         let result = terminal
         terminal.removeAll(keepingCapacity: true)
         return result
@@ -103,6 +126,8 @@ public final class PapyrusScheduler {
             .realSteps(startTick: tickCount, duration: max(0, seconds), answer: nil)
         case let .realSecondsAnswering(seconds, value):
             .realSteps(startTick: tickCount, duration: max(0, seconds), answer: value)
+        case let .realSecondsWithMenus(seconds):
+            .menuAwareSteps(startTick: menuAwareTickCount, duration: max(0, seconds))
         case let .gameHours(hours):
             .gameHours(elapsedGameHours + max(0, hours))
         case let .external(token):
@@ -123,10 +148,10 @@ public final class PapyrusScheduler {
     /// Resumes due calls oldest first while the step has instructions left. A call
     /// that is not reached keeps its place, and a call that yields goes to the back,
     /// so every busy loop gets a turn within a few steps.
-    private func wakeDueCalls() {
+    private func wakeDueCalls(where eligible: (Wake) -> Bool = { _ in true }) {
         while
             runtime.stepInstructionsLeft > 0,
-            let index = entries.firstIndex(where: { isDue($0.wake) })
+            let index = entries.firstIndex(where: { eligible($0.wake) && isDue($0.wake) })
         {
             let entry = entries.remove(at: index)
             let outcome = runtime.resume(entry.call, returning: answer(for: entry.wake))
@@ -140,7 +165,7 @@ public final class PapyrusScheduler {
         switch wake {
         case let .external(token): answers.removeValue(forKey: token)
         case let .realSteps(_, _, answer): answer
-        case .gameHours: nil
+        case .menuAwareSteps, .gameHours: nil
         }
     }
 
@@ -150,6 +175,9 @@ public final class PapyrusScheduler {
             answers[token] != nil
         case let .realSteps(startTick, duration, _):
             tickCount > startTick && Double(tickCount - startTick) * fixedStepSeconds >= duration
+        case let .menuAwareSteps(startTick, duration):
+            menuAwareTickCount > startTick
+                && Double(menuAwareTickCount - startTick) * fixedStepSeconds >= duration
         case let .gameHours(value):
             elapsedGameHours >= value
         }

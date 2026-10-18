@@ -147,7 +147,7 @@ struct PapyrusWorldUpdateTimerTests {
             return
         }
         // B registers first, so B fires first even though A's instance key
-        // sorts lower.
+        // sorts lower. Each firing is relayed to the sibling script too.
         session.world.registerUpdateTimer(
             handle: bHandle, slot: .realSingleShot, interval: 0
         )
@@ -156,7 +156,7 @@ struct PapyrusWorldUpdateTimerTests {
         )
         _ = session.world.stepFixed()
         #expect(PapyrusUpdateTimerFixture.updateNotes(session) == [
-            "bscript.onupdate", "ascript.onupdate"
+            "bscript.onupdate", "ascript.onupdate", "ascript.onupdate", "bscript.onupdate"
         ])
     }
 
@@ -199,5 +199,37 @@ struct PapyrusWorldUpdateTimerTests {
         PapyrusWorldFixture.drain(session.world)
         #expect(session.dispatch.notes == ["selftimer.onupdate"])
         #expect(session.world.updateTimers.pendingCount == 0)
+    }
+
+    /// The game relays an update to every script on the form that handles it.
+    @Test func anUpdateReachesEverySiblingScriptThatHandlesIt() throws {
+        let sibling = "SiblingScript"
+        let entry = try PapyrusWorldFixture.referenceEntry(
+            objectID: PapyrusUpdateTimerFixture.refID,
+            scripts: [
+                VMADFixture.Script(PapyrusUpdateTimerFixture.scriptName, properties: []),
+                VMADFixture.Script(sibling, properties: [])
+            ]
+        )
+        let session = PapyrusWorldFixture.session(
+            objects: [
+                PapyrusUpdateTimerFixture.timerScript(),
+                PapyrusUpdateTimerFixture.timerScript(sibling)
+            ],
+            entries: [entry]
+        )
+        PapyrusWorldFixture.drain(session.world)
+
+        PapyrusUpdateTimerFixture.invoke(session, "RegisterForSingleUpdate", interval: 0.05)
+        for _ in 0 ..< 3 {
+            _ = session.world.stepFixed()
+        }
+
+        let notes = PapyrusUpdateTimerFixture.updateNotes(session)
+        #expect(notes.count == 2)
+        #expect(Set(notes) == [
+            "\(PapyrusRuntime.key(PapyrusUpdateTimerFixture.scriptName)).onupdate",
+            "\(PapyrusRuntime.key(sibling)).onupdate"
+        ])
     }
 }

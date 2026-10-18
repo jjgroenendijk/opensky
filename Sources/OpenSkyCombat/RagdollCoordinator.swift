@@ -171,4 +171,8 @@ extension RagdollCoordinator: RagdollWorldSeam {
     public func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
         world.queueActorDeathEvents(for: key, killer: killer)
     }
+
+    public func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation? {
+        world.unloadedActorHome(of: key)
+    }
 }

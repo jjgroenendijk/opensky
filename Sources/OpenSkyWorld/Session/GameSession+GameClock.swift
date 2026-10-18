@@ -62,6 +62,11 @@ extension GameSession {
         updateWorldSim(deltaTime: delta * worldTimeScale)
     }
 
+    /// Seconds of menu pause since the last call; zero while the world runs.
+    public func consumeMenuTime() -> Float {
+        menuTimeClock.advance(to: renderer.wallClock.now, paused: !worldSimPaused)
+    }
+
     /// Times only the world callback, excluding the renderer clock advance.
     /// Both the live and offscreen loops use this seam so the fly benchmark
     /// measures the same Papyrus VM work the shipping frame loop performs.

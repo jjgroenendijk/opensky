@@ -126,6 +126,8 @@ public final class GameSession: RenderFrameDriver {
     /// Wall-clock delta source for the world simulation tick (the Papyrus VM),
     /// paused in menu mode.
     public var worldSimClock = FrameSimClock()
+    /// Counts only the time the world spends paused by a menu, for `WaitMenuMode`.
+    public var menuTimeClock = FrameSimClock()
     /// Wall-clock delta source for camera movement, paused in menu mode.
     public var cameraClock = FrameSimClock()
     /// The clamped delta `advanceCamera` last ran with. Dynamic bodies step on it, so they

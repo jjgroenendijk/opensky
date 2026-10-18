@@ -46,6 +46,28 @@ struct ConditionInventoryFunctionTests {
         #expect(!none.isTrue)
     }
 
+    @Test func aHolderOutsideTheTablesIsReadThroughTheLookup() throws {
+        let chest = ReferenceKey.plugin(name: "test.esm", objectID: 0x77)
+        let item = FormID(Self.ingot)
+        let lookup = InventoryConditionLookup(
+            count: { $1 == chest ? 4 : nil },
+            isEquipped: { $1 == chest ? $0 == item : nil },
+            keywordCounts: { $0 == chest ? [item: 2] : nil }
+        )
+        let inventory = InventoryConditionResolution(
+            counts: [.player: [:]], equipped: [.player: []], lookup: lookup
+        )
+        var context = ConditionContext(subject: chest)
+        context.inventory = inventory
+        var evaluator = ConditionEvaluator(context: context)
+
+        #expect(try evaluator.evaluate(Self.holds(4)).isTrue)
+        #expect(inventory.count(of: item, in: .player) == 0)
+        #expect(inventory.isEquipped(item, on: chest) == true)
+        #expect(inventory.count(ofKeyword: item, in: chest) == 2)
+        #expect(inventory.count(of: item, in: .generated(9)) == 0)
+    }
+
     @Test func getItemCountWithoutInventoryIsATaggedFailure() throws {
         var evaluator = Self.evaluator(holding: nil)
         let outcome = try evaluator.evaluate(Self.holds(0))

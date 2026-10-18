@@ -24,11 +24,11 @@ registered. The counts are the References column.
 | `bool HasSpell(Form)` | 72 | Whether the actor knows it | [HasSpell - Actor](https://ck.uesp.net/wiki/HasSpell_-_Actor) |
 | `Spell GetEquippedSpell(int aiSource)` | 40 | The spell ready at that source, or `None` | [GetEquippedSpell - Actor](https://ck.uesp.net/wiki/GetEquippedSpell_-_Actor) |
 | `EquipSpell(Spell, int aiSource)` | 37 | Readies it, teaching it first if needed | [EquipSpell - Actor](https://ck.uesp.net/wiki/EquipSpell_-_Actor) |
-| `bool HasMagicEffect(MagicEffect)` | 31 | Whether an effect of that `MGEF` is acting | [HasMagicEffect - Actor](https://ck.uesp.net/wiki/HasMagicEffect_-_Actor) |
+| `bool HasMagicEffect(MagicEffect)` | 31 | Whether a spell acting on the actor can apply that `MGEF`: an active effect, or an effect of a carried ability, disease, or addiction | [HasMagicEffect - Actor](https://ck.uesp.net/wiki/HasMagicEffect_-_Actor) |
 | `bool DispelSpell(Spell)` | 30 | Removes every effect that spell applied | [DispelSpell - Actor](https://ck.uesp.net/wiki/DispelSpell_-_Actor) |
 | `UnequipSpell(Spell, int aiSource)` | 21 | Clears that hand, only if it holds the spell | [UnequipSpell - Actor](https://ck.uesp.net/wiki/UnequipSpell_-_Actor) |
 | `DispelAllSpells()` | 16 | Removes every effect that can be dispelled | [DispelAllSpells - Actor](https://ck.uesp.net/wiki/DispelAllSpells_-_Actor) |
-| `bool HasMagicEffectWithKeyword(Keyword)` | 8 | Whether an acting effect has that keyword | [HasMagicEffectWithKeyword - Actor](https://ck.uesp.net/wiki/HasMagicEffectWithKeyword_-_Actor) |
+| `bool HasMagicEffectWithKeyword(Keyword)` | 8 | Whether such an effect has that keyword | [HasMagicEffectWithKeyword - Actor](https://ck.uesp.net/wiki/HasMagicEffectWithKeyword_-_Actor) |
 
 ## None is latent
 

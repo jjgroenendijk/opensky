@@ -32,15 +32,15 @@ extension ActorValueRuntime {
         entry(at: index, on: holder)?.base
     }
 
-    /// `GetActorValuePercentage`: current over maximum, clamped to 0...1. A primary uses
-    /// its effective maximum (its bar); others use their base. A zero or negative
-    /// denominator reads 0.
+    /// `GetActorValuePercentage`: current over the buffed maximum, clamped to 0...1. A
+    /// primary uses its bar; others use base plus permanent and temporary modifiers. A
+    /// zero or negative denominator reads 0.
     public func fraction(at index: Int32, on holder: ActorValueHolder) -> Float? {
         guard let value = value(at: index, on: holder) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
             maximums(of: holder)[kind]
         } else {
-            baseValue(at: index, on: holder)
+            entry(at: index, on: holder)?.undamagedValue
         }
         guard let ceiling else { return nil }
         guard ceiling.isFinite, ceiling > 0, value.isFinite else { return 0 }

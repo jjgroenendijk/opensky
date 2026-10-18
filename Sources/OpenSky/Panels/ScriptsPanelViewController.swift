@@ -46,4 +46,8 @@ final class ScriptsPanelViewController: InspectorPanelViewController {
     var scriptBudgetControl: NSPopUpButton {
         schedulerSection.budgetControl
     }
+
+    var scriptGameTimingControl: NSButton {
+        schedulerSection.gameTimingControl
+    }
 }

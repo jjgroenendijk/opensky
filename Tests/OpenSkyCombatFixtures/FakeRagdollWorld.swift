@@ -57,4 +57,11 @@ public final class FakeRagdollWorld: RagdollWorldSeam {
     public func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
         deathEvents?(key, killer) ?? 0
     }
+
+    /// The plugin cell an unloaded actor answers with.
+    public var unloadedHomes: [ReferenceKey: CellSceneLocation] = [:]
+
+    public func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation? {
+        unloadedHomes[key]
+    }
 }
