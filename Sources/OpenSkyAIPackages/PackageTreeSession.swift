@@ -20,18 +20,16 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     private var context: ConditionContext?
 
     init(
-        world: any PackageWorld, actor: ReferenceKey, hold: PackageHold,
-        package: ResolvedPackage, clock: GameClock, translation: FormIDTranslation?
+        world: any PackageWorld, actor: ReferenceKey, aliasQuest: FormID?,
+        package: ResolvedPackage, values: [Int8: Package.DataValue], clock: GameClock,
+        translation: FormIDTranslation?
     ) {
         self.world = world
         self.actor = actor
-        aliasQuest = hold.aliasQuest
+        self.aliasQuest = aliasQuest
         self.clock = clock
         self.translation = translation
-        values = PackageProcedureInputs.values(
-            of: package.package,
-            template: package.definition == package.package ? nil : package.definition
-        )
+        self.values = values
         seed = UInt64(package.package.formID.rawValue)
     }
 

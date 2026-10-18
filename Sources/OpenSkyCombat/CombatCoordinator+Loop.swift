@@ -51,6 +51,10 @@ extension CombatCoordinator: CombatLoopWorld {
         world.magicInfluence(of: key)
     }
 
+    public func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool {
+        world.packageIgnoresCombat(key)
+    }
+
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         meleeBlock(of: key)
     }

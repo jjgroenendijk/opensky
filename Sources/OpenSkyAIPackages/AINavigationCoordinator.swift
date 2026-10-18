@@ -167,7 +167,7 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             lastAction = .noPackageStack(actor: name)
             return
         }
-        packages.resume(key)
+        packages.restart(key)
         let readout = packages.readout(for: key) ?? AINavigationCore.emptyPackageReadout(key)
         lastAction = .reevaluated(actor: name, readout)
     }

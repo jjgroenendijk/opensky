@@ -1,8 +1,7 @@
 // World > AI & Navigation > Package section: which package the selected
-// actor's schedule chose, its procedure, and a force-reevaluate button. There
-// is no direct package control, because the schedule and conditions decide.
-// Scrub the clock under World > Runtime State > Time, then reevaluate. Not
-// overridden.
+// actor's schedule chose, its running procedures, and a force-reevaluate button.
+// There is no direct package control, because the schedule and conditions decide.
+// Scrub the clock under World > Runtime State > Time, then reevaluate.
 
 import AppKit
 import OpenSkyAIPackages
@@ -30,7 +29,8 @@ final class AIPackageSection: PanelSectionViewController {
 
     override func makeContentViews() -> [NSView] {
         reevaluateControl.toolTip =
-            "Picks the package again now. Change the clock under Runtime State > Time first."
+            "Picks the package again now and starts its procedures from the beginning. "
+                + "Change the clock under Runtime State > Time first."
         PanelComponents.configureButton(
             reevaluateControl, target: self, action: #selector(reevaluate),
             identifier: "AIPackageReevaluateControl"

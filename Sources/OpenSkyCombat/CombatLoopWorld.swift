@@ -244,6 +244,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func setCombatMusicActive(_ active: Bool)
     /// What `key`'s running magic effects force on it, such as Calm or Paralysis.
     func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+    /// True while `key`'s current AI package has the Ignore Combat flag: the actor
+    /// neither fights nor flees (<https://ck.uesp.net/wiki/Package_Flags>).
+    func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool
 }
 
 nonisolated extension CombatLoopWorld {
@@ -273,5 +276,9 @@ nonisolated extension CombatLoopWorld {
     /// A session with no magic forces no behaviour.
     public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
         .none
+    }
+
+    public func combatIgnoredByPackage(_: ReferenceKey) -> Bool {
+        false
     }
 }

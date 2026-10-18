@@ -248,6 +248,21 @@ extension AIWorldAdapter {
         return simd_distance(place.point, position) <= Float(max(0, place.radius))
     }
 
+    func packageActorActivity(_ actor: ReferenceKey) -> PackageActorActivity {
+        if game.worldState.component(ActorDeathState.self, for: actor)?.isDead == true {
+            return .dead
+        }
+        return game.combat.loop?.phase(of: actor)?.isEngaged == true ? .fighting : .free
+    }
+
+    func packageMoverHasRoom(for actor: ReferenceKey) -> Bool {
+        actor == .player || game.streamer?.npcMovement.hasRoom(for: actor) ?? true
+    }
+
+    func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool {
+        game.idleWorld.idles.holdsMarker(actor)
+    }
+
     func movePackageActor(
         _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
     ) -> PackageMoveResult {

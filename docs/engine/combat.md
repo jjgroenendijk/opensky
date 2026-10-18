@@ -67,6 +67,11 @@ that searched, gave up, and went back to work, are both hostile and both out of 
 from engagement is why the combat music stops when the fight ends, not when the actor is killed or
 calmed.
 
+An actor whose current AI package has the Ignore Combat flag is never engaged, and leaves a fight it
+was in. The Creation Kit wiki says such an actor does not fight or flee, but still counts as in
+combat for condition functions (<https://ck.uesp.net/wiki/Package_Flags>). OpenSky does not count
+it: it stays out of the fight in every way.
+
 The current target is the nearest hostile living actor, engaged or not, with ties going to the lower
 `ReferenceKey`. From the player's side, "who am I fighting?" is answered by turning to face someone.
 Nearest, not last hit, because a player who turned to a second attacker has answered by turning.
