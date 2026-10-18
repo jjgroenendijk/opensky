@@ -31,13 +31,13 @@ nonisolated public enum CreditsMenuMovieBridge: Sendable {
             runtime.root.object.define(.object(codeObject), for: codeObjectName)
         }
         let text = SWFEditText.stripHTML(credits)
-        AS2Natives.method(runtime.runtime, on: codeObject, name: "requestCredits") {
-            [weak runtime] context in
+        let request: (AS2CallContext) throws -> AS2Value = { [weak runtime] context in
             if let field = SWFDisplayObject.resolve(context.arguments.first?.objectValue) {
                 runtime?.setText(text, of: field)
             }
             return .undefined
         }
+        AS2Natives.method(runtime.runtime, on: codeObject, name: "requestCredits", body: request)
         AS2Natives.method(runtime.runtime, on: codeObject, name: "getScrollSpeed") { _ in
             .number(scrollSpeed)
         }

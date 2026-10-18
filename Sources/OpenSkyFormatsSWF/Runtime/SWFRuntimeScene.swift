@@ -36,7 +36,12 @@ nonisolated private struct SWFRuntimeSceneBuilder {
     var skipped = 0
 
     /// A sprite's grid, bounds, and transform, for its direct shape children.
-    typealias GridContext = (splitter: SWFRect, bounds: SWFBoundsBox, transform: SWFTransform)
+    struct GridContext {
+        let splitter: SWFRect
+        let bounds: SWFBoundsBox
+        let transform: SWFTransform
+    }
+
     /// Set by `emit` for the clip it walks next; `walk` takes it at entry.
     var pendingGrid: GridContext?
 
@@ -135,7 +140,11 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                 return
             }
             let splitter = id.flatMap { runtime.movie.sprite($0)?.scalingGrid }
-            pendingGrid = splitter.map { ($0, runtime.localBounds(of: node), transform) }
+            pendingGrid = splitter.map {
+                GridContext(
+                    splitter: $0, bounds: runtime.localBounds(of: node), transform: transform
+                )
+            }
             walk(
                 node: node,
                 parentTransform: transform,

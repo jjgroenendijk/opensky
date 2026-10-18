@@ -17,7 +17,7 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
 
     init(
         identifier: MenuIdentifier,
-        movie: (path: String, title: String, hint: String),
+        movie: ItemListScreenMovie,
         menuMode: MenuModeController,
         layer: (movies: SWFMovieSource?, hud: HUDCoordinator?),
         world: (any MenuScreenWorld)?
@@ -122,4 +122,11 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
     func choose(_: ItemListRow, alternate _: Bool) -> String {
         "none"
     }
+}
+
+/// The movie an item list screen loads, and the title and hint of its text panel.
+struct ItemListScreenMovie {
+    let path: String
+    let title: String
+    let hint: String
 }

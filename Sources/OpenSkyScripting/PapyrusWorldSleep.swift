@@ -41,7 +41,10 @@ extension PapyrusWorldRuntime {
 extension PapyrusNativeFunctions {
     static func installSleep(into registry: inout PapyrusNativeRegistry) {
         for script in updateTimerScripts {
-            for (name, isRegistered) in [("RegisterForSleep", true), ("UnregisterForSleep", false)] {
+            for (name, isRegistered) in [("RegisterForSleep", true), (
+                "UnregisterForSleep",
+                false
+            )] {
                 registry.register(PapyrusNativeFunction(
                     scriptName: script, functionName: name
                 ) { call, context in

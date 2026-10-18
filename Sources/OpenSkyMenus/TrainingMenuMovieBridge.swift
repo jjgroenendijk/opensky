@@ -19,21 +19,21 @@ nonisolated public struct TrainingCard: Equatable, Sendable {
     public var gold: Int
 
     public init(
-        skill: (name: String, level: Int, progress: Float),
+        skill: (name: String, level: Int),
+        progress: Float,
         trainer: (name: String, maximum: Int),
         sessions: (done: Int, perLevel: Int),
-        cost: Int,
-        gold: Int
+        price: (cost: Int, gold: Int)
     ) {
         skillName = skill.name
         skillLevel = skill.level
-        skillProgress = skill.progress
+        skillProgress = progress
         trainerName = trainer.name
         trainerMaximum = trainer.maximum
         self.sessions = sessions.done
         sessionsPerLevel = sessions.perLevel
-        self.cost = cost
-        self.gold = gold
+        cost = price.cost
+        gold = price.gold
     }
 
     /// The card's lines, in the movie's field order. The wording is OpenSky's.

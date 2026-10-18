@@ -79,7 +79,7 @@ final class MenuScreens {
         ]
     }
 
-    private static func route<Event>(_ screen: MenuScreen<Event>) -> MenuScreenRoute {
+    private static func route(_ screen: MenuScreen<some Any>) -> MenuScreenRoute {
         MenuScreenRoute(
             identifier: screen.identifier,
             key: { [unowned screen] in screen.route($0) },

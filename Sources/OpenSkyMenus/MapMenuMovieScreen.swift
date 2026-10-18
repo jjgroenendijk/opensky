@@ -47,7 +47,11 @@ public final class MapMenuMovieScreen {
 
     public func tick(now: Double) {
         if map.isOpen != isShown {
-            map.isOpen ? show() : hide()
+            if map.isOpen {
+                show()
+            } else {
+                hide()
+            }
         }
         guard isShown else { return }
         for event in movie.tick(now: now) where isShown {

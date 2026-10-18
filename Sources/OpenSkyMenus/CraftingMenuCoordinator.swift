@@ -46,7 +46,9 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         self.world = world
         super.init(
             identifier: Self.identifier,
-            movie: (CraftingMenuMovieBridge.moviePath, "Crafting", Self.hint),
+            movie: ItemListScreenMovie(
+                path: CraftingMenuMovieBridge.moviePath, title: "Crafting", hint: Self.hint
+            ),
             menuMode: menuMode, layer: (movies, hud), world: world
         )
     }

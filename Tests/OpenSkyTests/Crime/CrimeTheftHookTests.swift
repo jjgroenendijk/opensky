@@ -145,8 +145,10 @@ struct CrimeTheftHookTests {
     /// The book bar asks before the take, so its Steal label matches the take.
     @Test func theTheftQuestionMatchesTheTake() throws {
         let take = Chain.take(Chain.looseSwordReference, base: InventoryBaselineFixture.sword)
-        #expect(try Harness().chain.runtime.isTheft(take))
-        #expect(try !Harness(owned: false).chain.runtime.isTheft(take))
+        let owned = try Harness()
+        let unowned = try Harness(owned: false)
+        #expect(owned.chain.runtime.isTheft(take))
+        #expect(!unowned.chain.runtime.isTheft(take))
     }
 
     @Test func takingPropertyTheActorMayUseIsNoCrime() throws {

@@ -11,11 +11,12 @@ final class MenuMovieCallLog {
 
     init(runtime: SWFMovieRuntime, names: [String], on node: SWFDisplayObject? = nil) {
         for name in names {
-            AS2Natives.method(runtime.runtime, on: (node ?? runtime.root).object, name: name) {
-                [weak self] context in
+            let record: (AS2CallContext) throws -> AS2Value = { [weak self] context in
                 self?.calls.append((name, context.arguments))
                 return .undefined
             }
+            let target = (node ?? runtime.root).object
+            AS2Natives.method(runtime.runtime, on: target, name: name, body: record)
         }
     }
 

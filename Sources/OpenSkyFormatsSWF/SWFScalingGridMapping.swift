@@ -68,20 +68,22 @@ nonisolated public struct SWFSceneScalingGrid: Equatable, Sendable {
     public func remap(_ point: SIMD2<Float>) -> SIMD2<Float> {
         SIMD2(
             Self.remap(
-                point.x, low: bounds.x, high: bounds.z, gridLow: grid.x, gridHigh: grid.z,
+                point.x, span: SIMD2(bounds.x, bounds.z), grid: SIMD2(grid.x, grid.z),
                 scale: scale.x
             ),
             Self.remap(
-                point.y, low: bounds.y, high: bounds.w, gridLow: grid.y, gridHigh: grid.w,
+                point.y, span: SIMD2(bounds.y, bounds.w), grid: SIMD2(grid.y, grid.w),
                 scale: scale.y
             )
         )
     }
 
     /// One axis. A sprite drawn smaller than its two corners scales normally.
+    /// `span` and `grid` are each a low and a high edge.
     static func remap(
-        _ value: Float, low: Float, high: Float, gridLow: Float, gridHigh: Float, scale: Float
+        _ value: Float, span: SIMD2<Float>, grid: SIMD2<Float>, scale: Float
     ) -> Float {
+        let (low, high, gridLow, gridHigh) = (span.x, span.y, grid.x, grid.y)
         let lead = gridLow - low
         let trail = high - gridHigh
         guard

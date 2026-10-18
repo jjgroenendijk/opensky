@@ -26,7 +26,9 @@ public final class MagicMenuCoordinator: ItemListMenuScreen {
         self.world = world
         super.init(
             identifier: Self.identifier,
-            movie: (ItemListMenuMovieBridge.magicMoviePath, "Magic", Self.hint),
+            movie: ItemListScreenMovie(
+                path: ItemListMenuMovieBridge.magicMoviePath, title: "Magic", hint: Self.hint
+            ),
             menuMode: menuMode, layer: (movies, hud), world: world
         )
     }

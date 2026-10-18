@@ -17,8 +17,9 @@ extension MenuScreensWorldAdapter: MapMovieWorld {
             eye: pose.eye, target: pose.lookAt, up: SIMD3(0, 0, 1),
             fovYRadians: session.sessionFOVYRadians
         )
-        guard let screen = view.screenPoint(point, aspectRatio: renderer.drawableAspectRatio),
-              (0 ... 1).contains(screen.x), (0 ... 1).contains(screen.y)
+        guard
+            let screen = view.screenPoint(point, aspectRatio: renderer.drawableAspectRatio),
+            (0 ... 1).contains(screen.x), (0 ... 1).contains(screen.y)
         else { return nil }
         return screen
     }

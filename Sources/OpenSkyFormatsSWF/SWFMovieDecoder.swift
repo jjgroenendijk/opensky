@@ -60,7 +60,14 @@ nonisolated public struct SWFMovieDecoder: Sendable {
         } else if tag.code == SWFButton.tagCode {
             let button = try SWFButton.parse(tag: tag)
             characters[button.characterId] = .button(button)
-        } else if tag.code == SWFScalingGrid.tagCode {
+        } else {
+            try decodeMovieTag(tag)
+        }
+    }
+
+    /// Tags that define no character, only facts about the movie or one sprite.
+    private mutating func decodeMovieTag(_ tag: SWFTag) throws {
+        if tag.code == SWFScalingGrid.tagCode {
             // A grid on anything but a sprite has no effect in Flash either.
             if
                 let grid = parsed({ try SWFScalingGrid.parse(tag: tag) }),

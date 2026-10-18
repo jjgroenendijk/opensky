@@ -28,7 +28,8 @@ struct SmallMenuMovieTests {
             if
                 case .string("nameChange") = context.argument(0),
                 let scope = context.argument(1).objectValue,
-                case let .string(method) = context.argument(2) {
+                case let .string(method) = context.argument(2)
+            {
                 MainActor.assumeIsolated { listener = (scope, method) }
             }
             return .undefined

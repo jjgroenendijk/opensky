@@ -86,13 +86,13 @@ static inline float2 swfApplyAffine(float4 rotation, float2 translation, float2 
 }
 
 // One axis of DefineScalingGrid, as SWFSceneScalingGrid.remap does it.
-static inline float swfScaleGridAxis(float value, float low, float high, float gridLow,
-                                     float gridHigh, float scale)
+static inline float
+swfScaleGridAxis(float value, float low, float high, float gridLow, float gridHigh, float scale)
 {
     float lead = gridLow - low;
     float trail = high - gridHigh;
-    if (scale <= 0.0 || gridHigh <= gridLow || lead < 0.0 || trail < 0.0
-        || scale * (high - low) <= lead + trail) {
+    if (scale <= 0.0 || gridHigh <= gridLow || lead < 0.0 || trail < 0.0 ||
+        scale * (high - low) <= lead + trail) {
         return value;
     }
     if (value < gridLow) {
@@ -115,10 +115,12 @@ vertex SWFVertexOut swfVertex(
     float2 position = in.position;
     if (draw.scaleGridScale.x > 0.0) {
         position = float2(
-            swfScaleGridAxis(position.x, draw.scaleGridBounds.x, draw.scaleGridBounds.z,
-                             draw.scaleGrid.x, draw.scaleGrid.z, draw.scaleGridScale.x),
-            swfScaleGridAxis(position.y, draw.scaleGridBounds.y, draw.scaleGridBounds.w,
-                             draw.scaleGrid.y, draw.scaleGrid.w, draw.scaleGridScale.y));
+            swfScaleGridAxis(
+                position.x, draw.scaleGridBounds.x, draw.scaleGridBounds.z, draw.scaleGrid.x,
+                draw.scaleGrid.z, draw.scaleGridScale.x),
+            swfScaleGridAxis(
+                position.y, draw.scaleGridBounds.y, draw.scaleGridBounds.w, draw.scaleGrid.y,
+                draw.scaleGrid.w, draw.scaleGridScale.y));
     }
     float2 clip = swfApplyAffine(draw.transformRotation, draw.transformTranslation, position);
     SWFVertexOut out;

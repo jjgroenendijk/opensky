@@ -20,12 +20,13 @@ extension MenuScreensWorldAdapter: TrainingMenuWorld {
         let level = Int(skill?.level ?? 0)
         let name = skill?.name ?? ActorValueIdentity.name(at: offer.skill) ?? ""
         let sessions = progression.leveling?.state.trainingSessions ?? 0
+        let cost = progression.training.cost(skillLevel: level)
+        let price = (cost, game.progressionWorld.playerGold())
         return TrainingCard(
-            skill: (name, level, skill?.progress ?? 0),
+            skill: (name, level), progress: skill?.progress ?? 0,
             trainer: (offer.name, offer.maximumLevel),
             sessions: (Int(sessions), TrainingSettings.sessionsPerLevel),
-            cost: progression.training.cost(skillLevel: level),
-            gold: game.progressionWorld.playerGold()
+            price: price
         )
     }
 

@@ -64,7 +64,7 @@ struct SWFMovieAttributesTests {
 
     @Test func aSpriteSmallerThanItsCornersScalesNormally() {
         let mapped = SWFSceneScalingGrid.remap(
-            50, low: 0, high: 1000, gridLow: 400, gridHigh: 600, scale: 0.5
+            50, span: SIMD2(0, 1000), grid: SIMD2(400, 600), scale: 0.5
         )
         #expect(mapped == 50)
     }
