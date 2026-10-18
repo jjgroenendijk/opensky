@@ -89,8 +89,9 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
 
 1. **Stale worktree caches.** Every directory under the main checkout's
    `.claude/worktrees/` that `git worktree list --porcelain` no longer names loses its
-   `DerivedData/`, `build/`, and `.logs/`, and every build cache under
-   `~/Library/Caches/OpenSky/` whose checkout is not a live worktree goes too. This is the
+   `DerivedData/`, `build/`, and `.logs/`, and every build tree under the main checkout's
+   `.cache/Build/` whose checkout is not a live worktree goes too, as does every build tree left
+   in `~/Library/Caches/OpenSky/` (the app's `AssetCache` there stays). This is the
    rule that frees gigabytes: removing a worktree often leaves the directory behind precisely
    because those trees are untracked, so git's own `worktree prune` never reaches them.
 2. **`build/install`**, the private Release tree `make install` used before it started

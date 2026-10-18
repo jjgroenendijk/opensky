@@ -9,3 +9,15 @@
 // See docs/tools/environment.md.
 OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_mh_dylib = NO
 DIAGNOSE_MISSING_TARGET_DEPENDENCIES = $(OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_$(MACH_O_TYPE):default=YES)
+
+// Compilation-cache keys must not depend on where a checkout or its build tree
+// lives, or no other worktree can reuse an entry. Prefix mapping turns the checkout
+// into /^src, the tree into /^derived, and products into /^built; it has to reach
+// the package targets, which hold the engine. Debug only, as Release ships.
+SWIFT_ENABLE_PREFIX_MAPPING[config=Debug] = YES
+SWIFT_ENABLE_PROJECT_PREFIX_MAPPING[config=Debug] = YES
+CLANG_ENABLE_PREFIX_MAPPING[config=Debug] = YES
+CLANG_ENABLE_PROJECT_PREFIX_MAPPING[config=Debug] = YES
+// SwiftPM names the package after the checkout folder and passes it to every
+// compile as -package-name, which put each worktree's name in the keys.
+SWIFT_PACKAGE_NAME = opensky

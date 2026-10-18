@@ -50,10 +50,33 @@ store lives under the hidden `.cache/`, why run output goes to the hidden `.logs
 keeps one day of it, why `make clean` removes a `DerivedData*` tree left in a checkout, and why
 nothing else that grows should be visible under the root.
 
-The cache is on the internal disk because the data volume is a USB disk that writes at about
-135 MB/s against the internal disk's 2 GB/s, and a build writes gigabytes of intermediates. The
-compilation cache store stays on the data volume: it is tens of gigabytes, more than the boot
-volume can hold, and a replayed task reads a few files from it rather than streaming.
+The build trees live in the main checkout's hidden `.cache/Build/`, on the data volume, and the
+internal disk holds only the app's asset cache. About twenty worktrees are alive at once, and each
+tree is 1.5 to 8 GB, so the trees filled the internal disk. The data volume is a USB disk that
+writes at about 135 MB/s against the internal disk's 2 GB/s. Measured on 2026-10-18, a fresh Debug
+`make build-app` there took 84 to 126 s when every task hit the
+[compilation cache](#compilation-caching).
+
+## The build cache budget
+
+Many worktrees stay alive at once, so deleting only the trees of gone worktrees does not hold the
+disk. After a build takes its locks, `tools/build-cache-budget.sh` deletes the trees built longest
+ago until all trees fit in `BUILD_CACHE_GB`. It never deletes the tree about to build, or a tree
+whose lock is held. A deleted tree costs about two minutes when its worktree builds again, because
+nearly every task replays from the shared store.
+
+Measuring a tree with `du` costs about a second, so each build measures only its own tree when it
+ends and stores the size in `.opensky-size` inside the tree. That file's time stamp is when the
+tree was last built.
+
+What each tree holds, measured on 2026-10-18:
+
+| Part | Size | Shared? |
+| --- | --- | --- |
+| `Build/` (objects, products, build database) | 1.2 GB | No: a cache hit still writes a full copy, never an APFS clone |
+| `ModuleCache.noindex` (dependency scanner) | 470 MB | No: the hashes differ per checkout |
+| SDK precompiled modules | 230 MB | Yes: `SDK_MODULES`, `.cache/SDKModules.noindex` |
+| `SourcePackages` | 50 MB | No: about 40 dependency tasks miss per new tree, which costs seconds |
 
 ## Two builds at a time
 
@@ -74,9 +97,11 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | --- | --- | --- |
 | `CONFIG` | `Debug` | The configuration for `build`, `cli`, `test`, `app-path`, and `cli-path`. `install` is always Release |
 | `DESTINATION` | `platform=macOS` | The test destination |
-| `CACHE_ROOT` | `~/Library/Caches/OpenSky` | Where every checkout's build cache lives, on the internal disk, exported as `OPENSKY_CACHE_ROOT` |
+| `CACHE_ROOT` | `<main checkout>/.cache/Build` | Where every checkout's build tree and the build locks live, exported as `OPENSKY_CACHE_ROOT` |
+| `BUILD_CACHE_GB` | `40` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
 | `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
 | `COMPILATION_CACHE` | `<main checkout>/.cache/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
+| `SDK_MODULES` | `<main checkout>/.cache/SDKModules.noindex` | The SDK's precompiled modules, shared by every tree |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
@@ -92,7 +117,7 @@ read, and the project file, the worst merge conflict surface, holds no copies of
 config/
 ├── Build/
 │   ├── Base.xcconfig        deployment target, SDK, Swift mode, warnings, versioning
-│   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability, prefix mapping
+│   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability
 │   ├── Release.xcconfig     #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
 │   ├── Signing.xcconfig     CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
 │   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg + astcenc link
@@ -145,7 +170,7 @@ every compile task. The reason for the module is explicit dependencies and two d
 cache. Each compile task is keyed on its command line and inputs, and a task with a known key
 replays the stored result instead of compiling. Explicit modules, which the cache needs, are already
 on by default. The store is `$(COMPILATION_CACHE)`, passed as `COMPILATION_CACHE_CAS_PATH` on every
-command line, so it stays on the data volume while the build cache is on the internal disk.
+command line, so every checkout and every tree uses one store.
 `make clean` keeps it; `make clean DEEP=1` removes it.
 
 What it helps and what it does not:
@@ -172,19 +197,30 @@ make build-app XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES
 grep -c 'Cache hit' .logs/build/latest/build.log
 ```
 
-The store grows to gigabytes and is not visibly bounded: `COMPILATION_CACHE_LIMIT_SIZE` set below
-the store's size shrank nothing. `make clean DEEP=1` and `make prune` reclaim it. CI starts its
+The store grows to tens of gigabytes. It prunes itself in generations: on 2026-10-18 a new
+`builtin/v1.2/` folder started next to the 91 GB `v1.1/`, and each hit copied its entry into the
+new folder. `COMPILATION_CACHE_LIMIT_SIZE` set below the store's size shrank nothing at once.
+`make clean DEEP=1` removes it. CI starts its
 store over by size instead ([CI](/tools/ci.md#caches)).
 
 ### One store for every worktree
 
-Without prefix mapping, every project task's key holds the absolute source path, so a new worktree
-hit only SDK module builds. `config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
-`SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
-`CLANG_ENABLE_PROJECT_PREFIX_MAPPING`. Xcode then rewrites the checkout path to `/^src`, derived-data
-temporaries to `/^derived`, and products to `/^built`, so the same source gets the same key in any
-worktree. Every checkout passes the same store path, the main checkout's, so a fresh worktree's
-first unit build takes seconds instead of minutes. `make link-shared`, run first by every
+A task's key holds its whole command line, so any path or name that differs per checkout or per
+tree makes every other worktree miss. Two inputs did that:
+
+- Absolute paths. `config/Build/Overrides.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
+  `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
+  `CLANG_ENABLE_PROJECT_PREFIX_MAPPING` for Debug. Xcode then rewrites the checkout path to
+  `/^src`, derived-data temporaries to `/^derived`, and products to `/^built`. The settings must
+  be in that file: a project `.xcconfig` does not reach the package targets, which hold the engine.
+- The package name. SwiftPM names the root package after the checkout folder and passes it to
+  every compile as `-package-name`. `SWIFT_PACKAGE_NAME = opensky` fixes it. The two dependency
+  packages get the same name, which only widens `package` access.
+
+`llvm-cas --diff-graphs <key> <key>` on two keys of one task shows the input that differs.
+Measured on 2026-10-18 with both in place, a Debug `make build-app` from a second checkout into a
+fresh tree hit 647 of 688 tasks; before, it hit 12. Every checkout passes the same store path, the main
+checkout's. `make link-shared`, run first by every
 building target, links a worktree's `.vendor/ffmpeg` to the main checkout's, and moves a store
 still at the old visible path `DerivedData/` under `.cache/`
 ([the start-up scan](#the-workspace-and-the-start-up-scan)).
@@ -327,8 +363,8 @@ For a macOS scheme built with `-derivedDataPath`, the products are always in
 `tools/xcodebuild-lib.sh` is sourced, never run. It sets `OPENSKY_DERIVED_DATA` for a script run
 outside `make`, and provides the products path and the output filter. The test targets share the
 normal cache, except `make test-real PERF=1`, which changes a build setting and so builds into
-`$OPENSKY_DERIVED_DATA-optimized`. Both stay on the external volume, and `make prune` removes both
-from a removed worktree.
+`$OPENSKY_DERIVED_DATA-optimized`. Both live under `CACHE_ROOT`, and the budget and `make prune`
+cover both.
 
 Two `xcodebuild` runs against the same derived-data folder deadlock until the tool times out. Let one
 finish before starting another.

@@ -5,7 +5,8 @@
 #   make fix         autoformat, then run every linter
 #   make test-unit   build and run the unit tests
 #
-# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, XCODEBUILD_FLAGS='...'.
+# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, BUILD_CACHE_GB=<n>,
+# XCODEBUILD_FLAGS='...'.
 
 # ------------------------------------------------------------------------------
 # Configuration
@@ -27,24 +28,29 @@ CHANGED_SWIFT     = $(shell { git diff --name-only --diff-filter=AMR $$(git merg
 	git ls-files --others --exclude-standard -- '*.swift'; } 2>/dev/null | sort -u | while read -r f; do [ -f "$$f" ] && printf '%s ' "$$f"; done)
 LINT_SWIFT        = $(if $(ALL),$(SWIFT_PATHS),$(CHANGED_SWIFT))
 
-# Build cache. One tree per checkout, named after the checkout folder, on the boot
-# volume: it is about fifteen times faster to write than the external data volume,
-# and `make prune` (also run when a session ends) removes the trees of worktrees
-# that are gone. Every xcodebuild below passes it, and the tools/ scripts read it
-# from OPENSKY_DERIVED_DATA. CI sets that variable to a path inside its workspace.
-CACHE_ROOT       ?= $(HOME)/Library/Caches/OpenSky
+# Build cache. One tree per checkout, named after the checkout folder, in the main
+# checkout's hidden .cache/Build on the data volume: the boot volume holds only the
+# app's asset cache. Many worktrees stay alive at once, so every build first deletes
+# the trees built longest ago once all of them pass BUILD_CACHE_GB
+# (tools/build-cache-budget.sh). Every xcodebuild below passes the tree, and the
+# tools/ scripts read it from OPENSKY_DERIVED_DATA. CI sets that variable to a path
+# inside its workspace. It lives in a hidden folder: xcodebuild scans every visible
+# file under the package root at each start (docs/tools/build-system.md).
+SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --path-format=absolute --git-common-dir)))
+CACHE_ROOT       ?= $(SHARED_ROOT)/.cache/Build
 export OPENSKY_CACHE_ROOT := $(CACHE_ROOT)
+BUILD_CACHE_GB   ?= 40
+export OPENSKY_BUILD_CACHE_GB := $(BUILD_CACHE_GB)
 DERIVED_DATA     ?= $(or $(OPENSKY_DERIVED_DATA),$(CACHE_ROOT)/$(notdir $(CURDIR)))
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
-# The compilation cache store. Every worktree shares the main checkout's, which
-# stays on the data volume because it runs to tens of gigabytes. Prefix mapping in
-# config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
-# in a hidden folder: xcodebuild scans every visible file under the package root
-# at each start, and the store holds hundreds of thousands (docs/tools/build-system.md).
-SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --git-common-dir)))
+# The compilation cache store. Every worktree shares the main checkout's. Prefix
+# mapping and the fixed package name in config/Build/Overrides.xcconfig make the
+# keys the same in every worktree and every tree.
 COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/CompilationCache.noindex)
 export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
+# The SDK's precompiled modules depend only on the SDK, so every tree shares one set.
+SDK_MODULES      ?= $(SHARED_ROOT)/.cache/SDKModules.noindex
 # The unused-code scan's own build tree: uncached, so its index store is complete.
 INDEX_DATA       ?= $(DERIVED_DATA)-index
 # Settings that must also reach package targets (config/Build/Overrides.xcconfig).
@@ -79,6 +85,7 @@ PRUNE_DAYS       ?= 1
 # breaks every build above it (docs/tools/build-system.md).
 xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
+	SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
 	-IDEBuildingContinueBuildingAfterErrors=YES \
 	$(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
 # A test build compiles every target with coverage and a plain build does not, and
@@ -93,6 +100,7 @@ ARCHS_Release    := ARCHS=arm64
 # because a task replayed from the cache writes no index data.
 xcb_index = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration Debug \
 	-derivedDataPath $(INDEX_DATA) COMPILATION_CACHE_ENABLE_CACHING=NO \
+	SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
 	$(COVERAGE_Debug) $(XCODEBUILD_FLAGS)
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
@@ -441,7 +449,7 @@ guarded = sh tools/memguard.sh "$(3)" $(or $(CAP),$(1)) 10800 & guard=$$!; \
 # own cache, which keeps the Debug build (issue #392).
 XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
 	-configuration Debug -derivedDataPath $(DERIVED_DATA)-optimized \
-	COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
+	COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
 	-destination '$(DESTINATION)' $(XCODEBUILD_FLAGS) \
 	SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
 	SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
@@ -578,7 +586,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RU
 clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
 	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
 	@rm -rf DerivedData DerivedData-optimized DerivedData-index .build
-	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)"
+	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)" "$(SDK_MODULES)"
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
 			-type d -name 'OpenSky-*' -exec rm -rf {} +; \

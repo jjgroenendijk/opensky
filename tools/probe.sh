@@ -7,8 +7,7 @@ set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 # Same build cache and products layout the Makefile uses (Makefile DERIVED_DATA
-# and PRODUCTS): the boot volume is too small to hold this project's
-# DerivedData, so it lives beside the checkout.
+# and PRODUCTS).
 # shellcheck source=/dev/null
 . "$root/tools/xcodebuild-lib.sh"
 derived_data="$OPENSKY_DERIVED_DATA"
