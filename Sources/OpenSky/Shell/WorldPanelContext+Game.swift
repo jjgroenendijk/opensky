@@ -90,6 +90,7 @@ extension FeaturePanelServices {
             sequenceDoor: game.objectAnimationWorld,
             skillsMenu: game.skillsMenu,
             storyManager: game.storyManager,
+            survivalMode: game.survivalMode,
             systemMenu: game.systemMenu,
             titleMenu: game.titleMenu,
             uiLab: game.uiLab,

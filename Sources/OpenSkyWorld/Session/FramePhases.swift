@@ -43,6 +43,8 @@ public enum AssetDrain: Int, FramePhase {
 /// The world simulation, after the game clock advances. The delta is zero
 /// on a paused frame.
 public enum WorldTickStep: Int, FramePhase {
+    /// Before scripts, so the Survival Mode plugin sees the answer before it asks.
+    case survivalMode
     case scripts
     /// Magic effects write through actor values, so these come first.
     case actorValues

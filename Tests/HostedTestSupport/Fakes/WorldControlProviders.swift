@@ -85,6 +85,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & SkillsMenuControlProviding
     & StoryManagerControlProviding
     & SurfaceShadingControlProviding
+    & SurvivalModeControlProviding
     & SystemMenuControlProviding
     & TerrainLODControlProviding
     & TerrainShadingControlProviding
@@ -185,6 +186,7 @@ extension FeaturePanelServices {
             sequenceDoor: providers,
             skillsMenu: providers,
             storyManager: providers,
+            survivalMode: providers,
             systemMenu: providers,
             titleMenu: providers,
             uiLab: providers,

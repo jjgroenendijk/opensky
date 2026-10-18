@@ -1,11 +1,11 @@
 // The launcher's registry ids, its page cache, its mode buttons, the start
-// options, Continue, the load panel, and the install check on Settings. The unit test host
-// withholds the
-// install, so play stays disabled here.
+// options, the new game options, Continue, the load panel, and the install check on
+// Settings. The unit test host withholds the install, so play stays disabled here.
 
 import AppKit
 @testable import OpenSky
 import OpenSkyCells
+import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkySave
@@ -184,6 +184,23 @@ struct LauncherTests {
         try #require(button("LauncherAssetOptimisationLinkControl", in: page.view))
             .performClick(nil)
         #expect(shown == ["assetOptimisation"])
+    }
+
+    @Test func survivalModeIsOffAndUnaskedByDefaultAndTheBoxesWriteTheSettings() throws {
+        let store = PlayerSettingsStore(persistence: nil)
+        let context = LauncherContext(actions: RecordingActions())
+        context.playerSettings = { store }
+        let page = LaunchPageViewController(context: context)
+        page.loadViewIfNeeded()
+        let survival = try #require(button("LaunchSurvivalModeControl", in: page.view))
+        let ask = try #require(button("LaunchSurvivalModeAskControl", in: page.view))
+        #expect(survival.state == .off)
+        #expect(ask.state == .off)
+        survival.performClick(nil)
+        #expect(store.bool(.survivalMode))
+        ask.performClick(nil)
+        #expect(store.bool(.survivalModeAsk))
+        #expect(!survival.isEnabled)
     }
 
     private func button(_ identifier: String, in view: NSView) -> NSButton? {

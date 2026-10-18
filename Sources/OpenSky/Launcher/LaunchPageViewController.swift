@@ -1,6 +1,7 @@
-// The launcher's first page: Continue, where Play starts, the two launch modes side
-// by side, and what to check before playing. The game folder is set in Settings.
-// While a world load runs, the load panel takes the place of the mode buttons.
+// The launcher's first page: Continue, where Play starts, the new game options,
+// the two launch modes side by side, and what to check before playing. The game
+// folder is set in Settings. While a world load runs, the load panel takes the
+// place of the mode buttons.
 
 import AppKit
 import OpenSkyAssetCache
@@ -31,6 +32,12 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     lazy var startCellRow = layout.row("Cell", startCellField)
     lazy var startGridRow = layout.row("Worldspace and grid cell", makeGridFields())
     var startForm = LaunchStartForm(LaunchPreferences.savedStart())
+    let survivalModeControl = NSButton(
+        checkboxWithTitle: "Survival Mode", target: nil, action: nil
+    )
+    let survivalModeAskControl = NSButton(
+        checkboxWithTitle: "Ask when a new game starts", target: nil, action: nil
+    )
     private(set) var modeButtons: [(LaunchMode, NSButton)] = []
     private var modeRow = NSView()
     let assetStatus = LauncherStatusView(name: "LauncherAssetOptimisation")
@@ -60,6 +67,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         view = layout.makeView(title: "OpenSky", groups: [
             layout.group("Continue", [continueLabel, layout.buttons([continueButton])]),
             makeStartGroup(),
+            makeNewGameGroup(),
             modeRow,
             loadPanel,
             makeBeforeYouPlayGroup()
@@ -73,6 +81,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         super.viewWillAppear()
         refreshGameFolder()
         refreshContinue()
+        refreshNewGame()
         let assets = context.assetOptimisation
         if assets.check == nil, assets.activity == .idle {
             assets.startCheck()

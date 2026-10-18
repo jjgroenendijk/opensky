@@ -9,24 +9,22 @@ enum GameLaunch {
     static let defaultWaitSeconds = 180.0
     static let retrySeconds = 0.5
     static let modes = ["play", "developer"]
+    static let survivalAnswers = ["on", "off", "ask"]
 
     static func run(arguments: GameArguments.Launch) throws {
         let options = try GameCommandOptions(arguments.game)
-        let dataRoot = arguments.global.dataRoot
-        let mode = arguments.mode
-        guard modes.contains(mode) else {
+        guard modes.contains(arguments.mode) else {
             throw CLIError.usage("--mode must be play or developer")
         }
-        let appPath = arguments.app
+        guard survivalAnswers.contains(arguments.survivalMode) else {
+            throw CLIError.usage("--survival-mode must be on, off, or ask")
+        }
         let wait = arguments.wait ?? defaultWaitSeconds
-        let title = arguments.title
         // An app already serving the socket is attached to, not launched twice.
         if (try? AgentClientSession(path: options.socketPath, connectTimeout: 2)) == nil {
             try open(
-                app: locateApp(appPath),
-                mode: mode,
-                title: title,
-                dataRoot: dataRoot,
+                app: locateApp(arguments.app),
+                arguments: arguments,
                 socket: options.socketPath
             )
         }
@@ -52,16 +50,17 @@ enum GameLaunch {
     }
 
     private static func open(
-        app: URL, mode: String, title: Bool, dataRoot: String?, socket: String
+        app: URL, arguments launch: GameArguments.Launch, socket: String
     ) throws {
         var arguments = [
             "-n", app.path(percentEncoded: false),
             "--env", "OPENSKY_AGENT_CONTROL=1",
-            "--env", "OPENSKY_LAUNCH_MODE=\(mode)",
-            "--env", "OPENSKY_START_AT_TITLE=\(title ? 1 : 0)",
+            "--env", "OPENSKY_LAUNCH_MODE=\(launch.mode)",
+            "--env", "OPENSKY_START_AT_TITLE=\(launch.title ? 1 : 0)",
+            "--env", "OPENSKY_SURVIVAL_MODE=\(launch.survivalMode)",
             "--env", "OPENSKY_AGENT_SOCKET=\(socket)"
         ]
-        if let dataRoot {
+        if let dataRoot = launch.global.dataRoot {
             arguments += ["--env", "OPENSKY_DATA_ROOT=\(dataRoot)"]
         }
         let process = Process()

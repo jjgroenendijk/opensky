@@ -31,6 +31,11 @@ struct LaunchModeDescriptor {
 final class LauncherContext {
     weak var actions: (any LauncherActions)?
     var showPage: (String) -> Void = { _ in }
+    /// Read again each time, because the game window may have changed the file.
+    var playerSettings: () -> PlayerSettingsStore = {
+        PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+    }
+
     lazy var assetOptimisation = AssetCacheCoordinator(
         store: AssetOptimisationPageViewController.savedSettings()
     )

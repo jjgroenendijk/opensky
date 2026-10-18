@@ -140,6 +140,7 @@ struct FeaturePanelServices {
     let sequenceDoor: any SequenceDoorControlProviding
     let skillsMenu: any SkillsMenuControlProviding
     let storyManager: any StoryManagerControlProviding
+    let survivalMode: any SurvivalModeControlProviding
     let systemMenu: any SystemMenuControlProviding
     let titleMenu: any TitleMenuControlProviding
     let uiLab: any UILabControlProviding

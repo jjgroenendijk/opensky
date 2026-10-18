@@ -53,6 +53,14 @@ public struct GameArguments: ParsableCommand, Sendable {
         public var wait: Double?
         @Flag(help: "Open the title screen instead of the world.")
         public var title = false
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Answer the Survival Mode prompt ahead of time. Default: off.",
+                valueName: "on|off|ask"
+            )
+        )
+        public var survivalMode = "off"
 
         public init() {}
     }

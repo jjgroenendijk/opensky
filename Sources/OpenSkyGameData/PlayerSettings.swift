@@ -111,6 +111,10 @@ nonisolated extension PlayerSettingID {
     public static let invertLook = Self("gameplay.invertY")
     public static let lookSensitivity = Self("gameplay.lookSensitivity")
     public static let difficulty = Self("gameplay.difficulty")
+    /// The answer to the Survival Mode prompt, and the in-game toggle.
+    public static let survivalMode = Self("gameplay.survivalMode")
+    /// When on, a new game asks about Survival Mode instead of using `survivalMode`.
+    public static let survivalModeAsk = Self("opensky.survivalModeAsk")
     public static let floatingMarkers = Self("gameplay.showFloatingMarkers")
     public static let saveOnRest = Self("gameplay.saveOnRest")
     public static let saveOnWait = Self("gameplay.saveOnWait")

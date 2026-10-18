@@ -40,6 +40,31 @@ struct PlayerSettingsPanelTests {
         ])
     }
 
+    @Test @MainActor
+    func survivalModeSectionPinsIdsAndPicksTheAnswer() {
+        let provider = FakeWorldProviders()
+        let panel = PlayerSettingsPanelViewController()
+        panel.survivalModeProvider = provider
+        panel.loadViewIfNeeded()
+        let section = panel.survivalModeSection
+        #expect(section.sectionIdentifier == "survivalMode")
+        #expect(section.buttons.map { $0.accessibilityIdentifier() } == [
+            "SurvivalModeOnControl", "SurvivalModeOffControl", "SurvivalModeAskControl"
+        ])
+        section.buttons.forEach(send)
+        #expect(provider.menuCalls.calls == [
+            "survival.ask(false)", "survival.mode(true)", "survival.ask(false)",
+            "survival.mode(false)", "survival.ask(true)"
+        ])
+        #expect(section.readoutText() == """
+        Answer: off
+        Asked: yes
+        Chosen: off
+        Running: no
+        Choice allowed: yes
+        """)
+    }
+
     @Test
     func readoutsListValuesDefaultsAndConflicts() {
         let snapshot = PlayerSettingsSnapshot(
