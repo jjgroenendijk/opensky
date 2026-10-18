@@ -63,6 +63,33 @@ struct CellSceneTerrainTests {
         #expect(scene.renderScene.terrain[0].weightsBuffer.length == 17 * 17 * 2 * 16)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func childWorldWithoutLANDUsesTheParentLand() throws {
+        // A city world (PNAM useLandData) has no LAND of its own; the parent's
+        // flat LAND at height 0 must win over the child's -27000 default plane.
+        var wnam = Data()
+        wnam.appendUInt32(0x1A)
+        var dnam = Data()
+        dnam.appendFloat32(-27000)
+        dnam.appendFloat32(-14000)
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("TamrielCity"))
+            + ESMFixture.field("WNAM", wnam) + ESMFixture.field("PNAM", Data([0x01, 0]))
+            + ESMFixture.field("DNAM", dnam)
+        let child = ESMFixture.record("WRLD", formID: 0x1B, data: fields)
+            + worldCells(world: 0x1B, cell: 0x2D, land: Data())
+        let scene = try build(
+            pluginData: pluginWithLand(
+                land: landFields(baseQuadrants: [0, 1, 2, 3], ltexFormID: 0x300),
+                childWorld: child
+            ),
+            worldspace: "TamrielCity"
+        )
+        let ground = try #require(scene.terrainHeightField?.sample(
+            at: SIMD2<Float>(24576 + 64, -8192 + 64)
+        ))
+        #expect(ground.height == 0)
+        #expect(scene.renderScene.terrain.count == 4)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func hidesQuadrantsPerXCLCFlags() throws {
         // XCLC quad-flags 0x2 | 0x8 hide quadrants 1 and 3 -> two remain.
         let scene = try build(pluginData: pluginWithLand(
@@ -292,35 +319,12 @@ extension CellSceneTerrainTests {
         quadFlags: UInt32 = 0,
         defaultLandHeight: Float? = nil,
         worldFlags: UInt8 = 0,
-        grid: (x: Int32, y: Int32) = (6, -2)
+        grid: (x: Int32, y: Int32) = (6, -2),
+        childWorld: Data = Data()
     ) -> Data {
-        let cellFormID: UInt32 = 0x2B
         let worldFormID: UInt32 = 0x1A
-        var cellFields = ESMFixture.field("EDID", ESMFixture.zstring("TestCell06"))
-        var xclc = Data()
-        xclc.appendUInt32(UInt32(bitPattern: grid.x))
-        xclc.appendUInt32(UInt32(bitPattern: grid.y))
-        xclc.appendUInt32(quadFlags)
-        cellFields += ESMFixture.field("XCLC", xclc)
-        let cell = ESMFixture.record("CELL", formID: cellFormID, data: cellFields)
-        let landRecordBytes = land.isEmpty
-            ? Data()
-            : ESMFixture.compressedRecord("LAND", formID: 0x2C, fieldData: land)
-        let children = ESMFixture.childGroup(
-            parent: cellFormID, groupType: 9, contents: landRecordBytes
-        )
-        let cellChildren = ESMFixture.childGroup(
-            parent: cellFormID, groupType: 6, contents: children
-        )
-        let subBlock = ESMFixture.exteriorBlock(
-            x: Int16(grid.x >> 3), y: Int16(grid.y >> 3),
-            groupType: 5, contents: cell + cellChildren
-        )
-        let block = ESMFixture.exteriorBlock(
-            x: Int16(grid.x >> 5), y: Int16(grid.y >> 5), groupType: 4, contents: subBlock
-        )
-        let worldChildren = ESMFixture.childGroup(
-            parent: worldFormID, groupType: 1, contents: block
+        let worldChildren = worldCells(
+            world: worldFormID, cell: 0x2B, land: land, quadFlags: quadFlags, grid: grid
         )
         var worldFields = ESMFixture.field("EDID", ESMFixture.zstring("Tamriel"))
         if worldFlags != 0 {
@@ -334,14 +338,47 @@ extension CellSceneTerrainTests {
         }
         let wrld = ESMFixture.record("WRLD", formID: worldFormID, data: worldFields)
         return ESMFixture.tes4()
-            + ESMFixture.topGroup("WRLD", contents: wrld + worldChildren)
+            + ESMFixture.topGroup("WRLD", contents: wrld + worldChildren + childWorld)
             + ESMFixture.topGroup("LTEX", contents: ltex)
             + ESMFixture.topGroup("TXST", contents: txst)
             + ESMFixture.topGroup("GRAS", contents: grass)
             + ESMFixture.topGroup("STAT", contents: Data())
     }
 
-    private func build(pluginData: Data, passes: Int = 1) throws -> CellScene {
+    /// The world's cell children group: one exterior cell with an optional LAND.
+    private func worldCells(
+        world: UInt32, cell cellFormID: UInt32, land: Data, quadFlags: UInt32 = 0,
+        grid: (x: Int32, y: Int32) = (6, -2)
+    ) -> Data {
+        var cellFields = ESMFixture.field("EDID", ESMFixture.zstring("TestCell\(cellFormID)"))
+        var xclc = Data()
+        xclc.appendUInt32(UInt32(bitPattern: grid.x))
+        xclc.appendUInt32(UInt32(bitPattern: grid.y))
+        xclc.appendUInt32(quadFlags)
+        cellFields += ESMFixture.field("XCLC", xclc)
+        let cell = ESMFixture.record("CELL", formID: cellFormID, data: cellFields)
+        let landRecordBytes = land.isEmpty
+            ? Data()
+            : ESMFixture.compressedRecord("LAND", formID: cellFormID + 1, fieldData: land)
+        let children = ESMFixture.childGroup(
+            parent: cellFormID, groupType: 9, contents: landRecordBytes
+        )
+        let cellChildren = ESMFixture.childGroup(
+            parent: cellFormID, groupType: 6, contents: children
+        )
+        let subBlock = ESMFixture.exteriorBlock(
+            x: Int16(grid.x >> 3), y: Int16(grid.y >> 3),
+            groupType: 5, contents: cell + cellChildren
+        )
+        let block = ESMFixture.exteriorBlock(
+            x: Int16(grid.x >> 5), y: Int16(grid.y >> 5), groupType: 4, contents: subBlock
+        )
+        return ESMFixture.childGroup(parent: world, groupType: 1, contents: block)
+    }
+
+    private func build(
+        pluginData: Data, worldspace: String = "Tamriel", passes: Int = 1
+    ) throws -> CellScene {
         let device = try #require(Self.device)
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
@@ -351,9 +388,9 @@ extension CellSceneTerrainTests {
             meshes: meshes,
             textures: textures
         )
-        var scene = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+        var scene = try builder.buildScene(worldspaceEditorID: worldspace, gridX: 6, gridY: -2)
         for _ in 1 ..< passes {
-            scene = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+            scene = try builder.buildScene(worldspaceEditorID: worldspace, gridX: 6, gridY: -2)
         }
         return scene
     }

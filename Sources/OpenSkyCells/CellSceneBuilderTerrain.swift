@@ -141,7 +141,7 @@ nonisolated extension CellSceneBuilder {
         coordinate: CellCoordinate,
         quadFlags: UInt32
     ) -> (patches: [TerrainMeshBuilder.Patch], heightField: TerrainHeightField)? {
-        if let land = landRecord(in: found) {
+        if let land = landRecord(in: found, worldspace: worldspace) {
             if let heights = land.heightField?.heights {
                 let field = TerrainHeightField(
                     coordinate: coordinate,
@@ -220,6 +220,23 @@ nonisolated extension CellSceneBuilder {
             }
         }
         return landRecord(in: found.children)
+    }
+
+    /// The cell's LAND, else the LAND of the same grid cell in the worldspace it takes its
+    /// land from: the city worlds draw Tamriel's ground (docs/formats/world-records.md).
+    nonisolated public func landRecord(in found: FoundCell, worldspace: Worldspace?) -> Land? {
+        if let land = landRecord(in: found) {
+            return land
+        }
+        guard let worldspace, let grid = found.cell.grid else { return nil }
+        let source = worldspace.source(of: .useLandData, in: worldspaceIndexBuildingIfNeeded())
+        guard source.formID != worldspace.formID else { return nil }
+        let parent = FoundWorld(
+            children: baseWorldChildren(of: source.formID), worldspace: source,
+            formID: source.formID
+        )
+        return findCell(in: parent, gridX: grid.x, gridY: grid.y, localized: pluginLocalized)
+            .flatMap { landRecord(in: $0) }
     }
 
     /// The first decodable LAND in the cell's temporary-children group (UESP Groups).

@@ -45,7 +45,7 @@ its own fields. Source: xEdit `wbDefinitionsTES5.pas` (commit above), the `PNAM`
 
 | bit | meaning | what OpenSky takes from the parent |
 | --- | --- | --- |
-| `0x01` | use land data | default land and water height |
+| `0x01` | use land data | default land and water height, and the `LAND` of a cell that has none |
 | `0x02` | use LOD data | the distant LOD files, under the parent's name |
 | `0x04` | use map data | the world map, its markers, and fast travel |
 | `0x08` | use water data | the default water type |
@@ -56,8 +56,10 @@ its own fields. Source: xEdit `wbDefinitionsTES5.pas` (commit above), the `PNAM`
 A parent can have its own parent, so OpenSky walks up while the flag is set, and stops at a
 cycle. The vanilla city worlds (`WhiterunWorld`, `SolitudeWorld`, `WindhelmWorld`) set
 `0x7F` under Tamriel, and have no LOD folder of their own under `meshes/terrain`.
-`MarkarthWorld` sets `0x44` and has its own LOD. A child's cells still carry their own `LAND`
-records, and OpenSky draws those.
+`MarkarthWorld` sets `0x44` and has its own LOD and its own `LAND` records. The cells of
+the `0x7F` cities (and `RiftenWorld`) have no `LAND` record, observed with `openskycli cell`
+on the install. Their ground is the parent's `LAND` at the same grid cell, so OpenSky draws
+that one when a cell has none.
 
 `Skyrim.esm` has 37 worldspaces. Tamriel has 11,187 cells.
 
