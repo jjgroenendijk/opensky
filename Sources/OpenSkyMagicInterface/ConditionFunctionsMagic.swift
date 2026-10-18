@@ -1,9 +1,8 @@
 // Magic condition functions, reading only the `magic` seam. Raw indices from xEdit
 // wbDefinitionsTES5.pas: 214 HasMagicEffect, 223 IsSpellTarget, 264 HasSpell, 570
 // HasEquippedSpell, 571 GetCurrentCastingType, 572 GetCurrentDeliveryType, 632
-// IsCasting, 699 HasMagicEffectKeyword. Only applied effects are stored, so
-// `HasMagicEffect` means "affected by", narrower than the wiki's "having".
-// See docs/engine/condition-functions.md.
+// IsCasting, 699 HasMagicEffectKeyword. `HasMagicEffect` counts every effect a spell
+// acting on the actor can apply, active or not. See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
@@ -58,15 +57,14 @@ nonisolated extension ConditionFunctions {
     private static func installEffectPresence(_ registry: inout ConditionFunctionRegistry) {
         // "If the calling reference is being affected by a Spell that can
         // potentially apply the specified Magic Effect, then the condition
-        // function returns 1." (<https://ck.uesp.net/wiki/HasMagicEffect>) See
-        // the file header for the narrower question OpenSky answers.
+        // function returns 1." (<https://ck.uesp.net/wiki/HasMagicEffect>)
         registry.register(ConditionFunction(
             index: 214,
             name: "HasMagicEffect",
             parameter1: .formID
         ) { call in
             Self.magicParameter(call, index: 214) { state, effect in
-                .success(Self.isTrue(state.activeEffects.contains(effect)))
+                .success(Self.isTrue(state.canApply(effect)))
             }
         })
 

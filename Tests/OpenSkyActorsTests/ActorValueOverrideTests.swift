@@ -252,6 +252,25 @@ struct ActorValueOverrideTests {
         #expect(runtime.baseValue(at: Self.resistFire, on: holder) == 40)
     }
 
+    /// A buff raises the ceiling and damage lowers only the value, so 25 of a buffed 50
+    /// reads one half.
+    @Test func aNonPrimaryPercentageDividesByTheBuffedMaximum() {
+        let (runtime, _) = self.runtime()
+        let holder = holder()
+        runtime.setBase(at: Self.resistFire, to: 40, on: holder)
+        runtime.addModifier(10, to: .temporary, at: Self.resistFire, on: holder)
+        runtime.addModifier(-25, to: .damage, at: Self.resistFire, on: holder)
+        let state = ActorConditionState(
+            current: runtime.current(of: holder),
+            maximums: runtime.maximums(of: holder),
+            general: runtime.resolvedEntries(of: holder),
+            generalBaseline: runtime.baseline(of: holder).basesByIndex
+        )
+
+        #expect(runtime.fraction(at: Self.resistFire, on: holder) == 0.5)
+        #expect(state.fraction(at: Self.resistFire) == 0.5)
+    }
+
     // MARK: - Skills
 
     /// The API item 20.5 advances a skill through, and the guard that keeps it

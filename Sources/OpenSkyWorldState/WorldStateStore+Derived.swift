@@ -9,6 +9,12 @@ extension WorldStateStore {
         derivedCache.revision
     }
 
+    /// Rises on every write of one of `kinds` and on every restore. A cache that reads
+    /// only these kinds keys on it, so writes of other kinds keep it.
+    public func revision(of kinds: [WorldStateComponentKind]) -> UInt64 {
+        kinds.reduce(derivedCache.restoreRevision) { $0 &+ derivedCache.revision(of: $1) }
+    }
+
     /// A value built from the deltas and `source`, kept until the next delta write.
     /// Readers that scan many keys each frame use it, such as the quest resolutions.
     public func derived<Value>(
@@ -44,10 +50,22 @@ extension WorldStateStore {
 @MainActor
 final class WorldStateDerivedCache {
     private(set) var revision: UInt64 = 0
+    private(set) var restoreRevision: UInt64 = 0
+    private var kindRevisions: [WorldStateComponentKind: UInt64] = [:]
     private var values: [Key: (revision: UInt64, value: Any)] = [:]
 
-    func invalidate() {
+    /// `kind` is the slot written, or nil for a restore, which replaces every slot.
+    func invalidate(_ kind: WorldStateComponentKind?) {
         revision &+= 1
+        if let kind {
+            kindRevisions[kind, default: 0] &+= 1
+        } else {
+            restoreRevision &+= 1
+        }
+    }
+
+    func revision(of kind: WorldStateComponentKind) -> UInt64 {
+        kindRevisions[kind] ?? 0
     }
 
     func value<Value>(

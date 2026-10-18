@@ -57,20 +57,20 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 131 | `GetPCIsSex` | 0 male, 1 female | 1 when the player has that sex |
 | 136 | `GetIsReference` | reference | 1 when the run-on is that reference |
 | 149 | `GetIsCurrentWeather` | `WTHR` | 1 when that weather is current or coming in |
-| 159 | `GetSitting` | none | 0 not sitting, 2 getting ready to sit, 3 sitting |
+| 159 | `GetSitting` | none | 0 not sitting, 1 loading the sit idle, 2 getting ready to sit, 3 sitting, 4 getting ready to stand |
 | 162 | `IsCurrentFurnitureRef` | reference | 1 when the actor uses that furniture |
 | 163 | `IsCurrentFurnitureObj` | base form | 1 when the actor's furniture has that base |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
 | 182 | `GetEquipped` | item | 1 when the actor has it equipped |
 | 185 | `IsSwimming` | none | 1 while the actor swims |
-| 214 | `HasMagicEffect` | `MGEF` | 1 when that effect acts on the actor |
+| 214 | `HasMagicEffect` | `MGEF` | 1 when a spell acting on the actor can apply that effect |
 | 223 | `IsSpellTarget` | `SPEL`, `ALCH`, `INGR`, or `ENCH` | 1 when an effect from it acts on the actor |
 | 237 | `GetIsGhost` | none | 1 after a script called `SetGhost` |
 | 244 | `GetRestrained` | none | 1 after a script called `SetRestrained` |
 | 248 | `IsScenePlaying` | `SCEN` | 1 while the scene plays |
 | 249 | `IsInDialogueWithPlayer` | none | 1 when the player talks to this actor |
 | 250 | `GetLocationCleared` | `LCTN` | 1 after a script called `SetCleared` |
-| 263 | `IsWeaponOut` | none | 0 nothing drawn, 2 weapon in a hand |
+| 263 | `IsWeaponOut` | none | 0 nothing drawn, 1 only fists, 2 weapon in a hand |
 | 264 | `HasSpell` | `SPEL` | 1 when the actor knows the spell |
 | 266 | `IsPleasant` | none | 1 when the current weather is pleasant |
 | 277 | `GetBaseActorValue` | actor-value index | base value, without modifiers |
@@ -127,7 +127,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 691 | `EPModSkillUsage_AdvanceObjectHasKeyword` | `KYWD` | 1 when the use's object has the keyword |
 | 692 | `EPModSkillUsage_IsAdvanceAction` | action | 1 when the use's action matches (0 normal to 4 lockpick broken) |
 | 698 | `IsAllowedToFly` | none | 1 after a script called `SetAllowFlying` |
-| 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
+| 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when such an effect has that keyword |
 | 700 | `IsCommandedActor` | none | 1 while a caster commands the actor; always 0 |
 | 703 | `IsExitingInteractionQuick` | none | always 0 |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
@@ -207,8 +207,10 @@ unavailable; the game keeps the outside weather.
 
 ## Inventory
 
-`GetGold` counts `Gold001` (`Skyrim.esm` 0x0F). It and `GetEquipped` read the player only;
-another actor fails as unavailable.
+`GetGold` counts `Gold001` (`Skyrim.esm` 0x0F). `GetItemCount`, `GetGold`, and `GetEquipped`
+answer for any actor or container. The context copies in the player's items, and reads every
+other holder from the inventory runtime when a condition asks, so a merchant's gold and a crate's
+count are right without building a table for every holder each frame.
 
 ## Time, quests, and enable state
 
@@ -232,11 +234,13 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 
 ## Actors
 
-- `IsWeaponOut` documents 0, 1 (only fists out), and 2. OpenSky tracks where the
-  weapon is, not whether it is fists, so it returns 0 or 2. Raised fists give 2.
+- `IsWeaponOut` documents 0, 1 (only fists out), and 2. A drawn actor with no weapon equipped
+  in either hand reads 1, so an unarmed brawler is not armed. When nothing reads the actor's
+  equipment, a draw reads 2.
 - `GetCombatState` reads the combat phase: 0 when the actor has not noticed the player or
-  gave up searching, 1 when fighting, 2 when searching. A dead actor is never in combat
-  ([combat](/engine/combat.md)).
+  gave up searching, 1 when fighting, 2 when searching. The player has no combat machine: it
+  fights while any actor fights it, and searches while the actors that engage it only search.
+  A dead actor is never in combat ([combat](/engine/combat.md)).
 - `IsTorchOut` and `IsShieldOut` read what the left hand holds out. OpenSky draws no
   torch, and a shield comes out only with a drawn weapon. So an actor whose weapon is
   sheathed, or an NPC that is not fighting, holds nothing out and both return 0. An NPC
@@ -271,10 +275,10 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 
 ## Magic
 
-- `HasMagicEffect` and `HasMagicEffectKeyword` answer a narrower question than the game. The
-  Creation Kit says the game returns 1 "even if the spell-side conditions aren't met and the
-  effect isn't actually active". OpenSky stores only applied effects, so it answers "is it
-  acting".
+- `HasMagicEffect` and `HasMagicEffectKeyword` return 1 "even if the spell-side conditions aren't
+  met and the effect isn't actually active" (Creation Kit wiki). OpenSky counts the effects of
+  every spell acting on the actor: the sources of its active effects, and the abilities, diseases
+  and addictions it carries. A carried disease answers 1 while its effect is off.
 - xEdit's casting sources are `Left`, `Right`, `Voice`, and `Instant`. OpenSky has two hands
   and no voice slot, so sources 2 and 3 fail as unavailable.
 - A hand with no spell has no casting type or delivery, so those functions fail.
@@ -286,10 +290,15 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 
 The furniture functions read how the actor uses a furniture marker. Only the idle runtime fills
 this data, when a package seats an actor ([Idle runtime](/engine/idle-runtime.md#furniture)).
-Elsewhere they fail with the furniture reason.
+Every live context carries it, so a quest, a topic, and `Actor.GetSitState` read the same seat. A
+context with no idle runtime fails with the furniture reason.
 
-- The `GetSitting` values come from the Creation Kit wiki page "GetSitting". OpenSky uses 0, 2,
-  and 3: 2 while the entry idle is picked, 3 after.
+- The `GetSitting` values come from the Creation Kit wiki page "GetSitting". OpenSky uses 0 to 4:
+  2 while the entry idle is picked, 1 while an NPC's sit idle still loads, 3 once it plays, and 4
+  for one second after the actor gets up. The player and a bed or lean never read 1, as the wiki
+  says. OpenSky plays no exit idle, so the second stands in for one. The mount values 11 to 14 are
+  not used: the wiki says the game does not always return them, and `IsRidingMount` answers the
+  same question.
 - The parameter enums come from xEdit `wbDefinitionsTES5.pas`: animation type 1 Sit, 2 Lay,
   4 Lean; entry `0x10000` Front, `0x20000` Behind, `0x40000` Right, `0x80000` Left,
   `0x100000` Up. A NIF marker stores the same entry bits 16 places lower.

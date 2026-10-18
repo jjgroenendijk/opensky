@@ -141,7 +141,8 @@ When a package seats an actor on a furniture marker, the actor picks an entry id
 under the `ActionActivate` action (`AACT`). The tree's conditions read the seat through these
 functions ([Condition functions](/engine/condition-functions.md#furniture)):
 
-- `GetSitting` is 2 (getting ready to sit) while the idle is picked, and 3 after.
+- `GetSitting` is 2 (getting ready to sit) while the idle is picked, 1 while an NPC's sit idle
+  still loads, and 3 once it plays. When the actor gets up it reads 4 for one second, then 0.
 - `IsFurnitureAnimType` is the marker's animation type: 1 sit, 2 lay, 4 lean.
 - `IsFurnitureEntryType` is the one entry the actor uses. It is the allowed side of the marker
   that faces the actor most; "up" counts only when no side is allowed.

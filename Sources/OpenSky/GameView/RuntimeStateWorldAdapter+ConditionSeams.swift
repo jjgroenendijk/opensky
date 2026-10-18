@@ -32,6 +32,7 @@ extension RuntimeStateWorldAdapter {
         context.scriptedState = game.scripts.bridge?.scriptedStateResolution() ?? .empty
         context.scenes = game.scenes.conditionResolution(aliases: context.aliases)
         context.weather = weatherResolution()
+        context.furniture = game.idleWorld.idles.furnitureResolution
         if let inventory = inventoryResolution(context: context) {
             context.inventory = inventory
         }
@@ -87,9 +88,27 @@ extension RuntimeStateWorldAdapter {
     }
 
     /// The player's item counts, and the equipment of the player and every actor a
-    /// run-on can name. Other holders' counts are not read yet.
+    /// run-on can name. Any other holder is read on demand through the lookup.
     private func inventoryResolution(context: ConditionContext) -> InventoryConditionResolution? {
         guard let runtime = game.inventory.runtime else { return nil }
+        let actors = [.player] + context.references.sortedActorEntries.map(\.key)
+        let key = InventoryViewKey(
+            runtime: ObjectIdentifier(runtime),
+            writes: runtime.inventory.store.revision(of: [.inventory]),
+            actors: actors,
+            spellHands: actors.map { actor in
+                context.magic.state(of: actor).map { Set($0.handSpells.keys) } ?? []
+            },
+            hasEquipment: game.inventory.equipment != nil
+        )
+        return conditionCaches.inventory.value(for: key) {
+            freshInventoryResolution(context: context, runtime: runtime)
+        }
+    }
+
+    private func freshInventoryResolution(
+        context: ConditionContext, runtime: WorldItemRuntime
+    ) -> InventoryConditionResolution {
         let stacks = runtime.inventory.inventory(of: runtime.player).stacks
         let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []
         var equipment: [ReferenceKey: ActorEquipmentFacts] = [:]
@@ -106,7 +125,24 @@ extension RuntimeStateWorldAdapter {
             counts: [.player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }],
             equipped: [.player: Set(equipped)],
             equipment: equipment,
-            keywordCounts: [.player: game.inventory.conditionKeywordCounts(of: .player) ?? [:]]
+            keywordCounts: [.player: game.inventory.conditionKeywordCounts(of: .player) ?? [:]],
+            lookup: inventoryLookup()
+        )
+    }
+
+    /// Conditions run on the main actor, as the whole simulation does.
+    private func inventoryLookup() -> InventoryConditionLookup {
+        let inventory = game.inventory
+        return InventoryConditionLookup(
+            count: { [weak inventory] item, holder in
+                MainActor.assumeIsolated { inventory?.scriptItemCount(item, in: holder) }
+            },
+            isEquipped: { [weak inventory] item, holder in
+                MainActor.assumeIsolated { inventory?.scriptIsEquipped(item, on: holder) }
+            },
+            keywordCounts: { [weak inventory] holder in
+                MainActor.assumeIsolated { inventory?.conditionKeywordCounts(of: holder) }
+            }
         )
     }
 

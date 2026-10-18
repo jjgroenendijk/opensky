@@ -59,6 +59,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var action: ActorActionFacts?
     /// Carried weight above the carry weight. Nil when nothing weighs the inventory.
     public var isOverEncumbered: Bool?
+    /// Whether a weapon is equipped in either hand. Nil when nothing reads equipment.
+    public var holdsWeapon: Bool?
 
     public init(
         current: ActorValues,
@@ -96,11 +98,13 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
         isDead ? 0 : Float(combatActivity.rawValue)
     }
 
-    /// This actor's `IsWeaponOut` value, or nil when no draw state is observed.
-    /// OpenSky reports 0 and 2, never 1 (fists only), because the melee runtime does
-    /// not track an unarmed draw. See docs/engine/condition-functions.md.
+    /// This actor's `IsWeaponOut` value, or nil when no draw state is observed: 0
+    /// sheathed, 1 only fists out, 2 a weapon in either hand. Unknown equipment reads 2.
     public var weaponOutValue: Float? {
-        weaponDrawState.map { $0.isWeaponInHand ? 2 : 0 }
+        weaponDrawState.map { state in
+            guard state.isWeaponInHand else { return 0 }
+            return holdsWeapon == false ? 1 : 2
+        }
     }
 }
 

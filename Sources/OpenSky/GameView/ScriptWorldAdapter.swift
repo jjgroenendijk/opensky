@@ -25,6 +25,7 @@ import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -122,8 +123,12 @@ final class ScriptWorldAdapter {
         streamer.onCellDetached = { [weak world] location in
             world?.detach(cell: location)
         }
-        gameSession.worldTick.register(.scripts) { [weak self] delta in
+        gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in
             self?.game.scripts.advance(delta: delta)
+            let menuTime = gameSession?.consumeMenuTime() ?? 0
+            if menuTime > 0 {
+                self?.game.scripts.advanceMenuTime(delta: menuTime)
+            }
         }
     }
 
@@ -242,6 +247,10 @@ final class ScriptWorldAdapter {
         bridge.crimeNatives.crimeReporter = { [weak game] in game?.crime.reporter }
         bridge.crimeNatives.arrestSession = { [weak game] in game?.crime }
         game.crime.scriptedOwner = { [weak bridge] key in bridge?.scriptedOwner(of: key) }
+        let worldState = game.worldState
+        game.crime.scriptedOwnerRevision = { [weak worldState] in
+            worldState?.revision(of: [.scriptedState]) ?? 0
+        }
         bridge.crimeNatives.showBarterMenu = { [weak game] actor in
             guard let game, game.inventory.vendors != nil else { return nil }
             let text = game.containerMenu.openBarter(with: actor)

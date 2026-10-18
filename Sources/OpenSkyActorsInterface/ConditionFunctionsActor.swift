@@ -49,8 +49,7 @@ nonisolated extension ConditionFunctions {
         })
 
         // "0 - no weapon drawn. 1 - only fists out. 2 - a weapon in either hand."
-        // (<https://www.creationkit.com/index.php?title=IsWeaponOut>) 1 is
-        // unreachable here (`ActorConditionState.weaponOutValue`). An unobserved
+        // (<https://www.creationkit.com/index.php?title=IsWeaponOut>) An unobserved
         // draw state is `.unavailableActorState`, not 0.
         registry.register(ConditionFunction(
             index: 263,

@@ -45,6 +45,9 @@ struct ScriptsPanelTests {
         #expect(panel.scriptBurstControl.accessibilityIdentifier() == "ScriptBurstControl")
         #expect(panel.scriptBudgetControl.accessibilityIdentifier() == "ScriptBudgetControl")
         #expect(
+            panel.scriptGameTimingControl.accessibilityIdentifier() == "ScriptGameTimingControl"
+        )
+        #expect(
             panel.questsSection.questAliasControl.accessibilityIdentifier()
                 == "ScriptQuestAliasControl"
         )
@@ -67,7 +70,7 @@ struct ScriptsPanelTests {
 
         for control: NSView in [
             panel.scriptPauseControl, panel.scriptStepControl, panel.scriptBurstControl,
-            panel.scriptBudgetControl
+            panel.scriptBudgetControl, panel.scriptGameTimingControl
         ] {
             #expect(!control.isHidden)
             #expect(control.frame.height > 0)

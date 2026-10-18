@@ -72,4 +72,12 @@ public protocol RagdollSessionWorld: AnyObject {
     var playerFeetPosition: SIMD3<Float>? { get }
     /// Points the container menu at a corpse. False when no inventory runs.
     func searchCorpse(_ key: ReferenceKey) -> Bool
+    /// The plugin cell of an actor that no loaded cell holds, or nil.
+    func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation?
+}
+
+extension RagdollSessionWorld {
+    public func unloadedActorHome(of _: ReferenceKey) -> CellSceneLocation? {
+        nil
+    }
 }

@@ -97,7 +97,7 @@ public final class WorldStateStore {
         guard delta[value.kind] != value else { return false }
         let wasClean = delta.isEmpty
         let previous = delta.set(value)
-        derivedCache.invalidate()
+        derivedCache.invalidate(value.kind)
         let previousCell = delta.cell
         delta.record(cell: cell)
         deltas[key] = delta
@@ -127,7 +127,7 @@ public final class WorldStateStore {
     @discardableResult
     public func reset(_ kind: WorldStateComponentKind, for key: ReferenceKey) -> Bool {
         guard var delta = deltas[key], let previous = delta.clear(kind) else { return false }
-        derivedCache.invalidate()
+        derivedCache.invalidate(kind)
         let cell = delta.cell
         if delta.isEmpty {
             deltas.removeValue(forKey: key)
@@ -260,7 +260,7 @@ public final class WorldStateStore {
     /// how a save becomes live. Nothing is journalled and the window is cleared, so
     /// `snapshot()` equals the input. One unattributed `onMutation` rebuilds all cells.
     public func restore(from snapshot: WorldStateSnapshot) {
-        derivedCache.invalidate()
+        derivedCache.invalidate(nil)
         deltas = [:]
         dirtyCountsByCell = [:]
         for entry in snapshot.entries {

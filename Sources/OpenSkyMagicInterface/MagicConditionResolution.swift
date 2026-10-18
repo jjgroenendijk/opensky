@@ -18,6 +18,9 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
     public var handSpells: [SpellHand: ReferenceKey]
     /// Hands with a cast in flight — charging, ready or concentrating.
     public var castingHands: Set<SpellHand>
+    /// MGEFs the spells acting on this actor can apply, active or not
+    /// (`MagicEffectReach`).
+    public var potentialEffects: Set<ReferenceKey> = []
 
     public init(
         knownSpells: Set<ReferenceKey> = [],
@@ -38,7 +41,8 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
     public init(
         spellbook: SpellbookState,
         effects: ActiveEffectState,
-        castingHands: Set<SpellHand> = []
+        castingHands: Set<SpellHand> = [],
+        record: (ReferenceKey) -> ResolvedSpell? = { _ in nil }
     ) {
         self.init(
             knownSpells: Set(spellbook.known),
@@ -49,6 +53,15 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
             },
             castingHands: castingHands
         )
+        potentialEffects = MagicEffectReach.potentialEffects(
+            known: spellbook.known, sources: effectSources, record: record
+        ).union(activeEffects)
+    }
+
+    /// Whether a spell acting on this actor can apply `effect`, as `HasMagicEffect`
+    /// asks.
+    public func canApply(_ effect: ReferenceKey) -> Bool {
+        activeEffects.contains(effect) || potentialEffects.contains(effect)
     }
 
     public var isCasting: Bool {
@@ -120,7 +133,7 @@ nonisolated public struct MagicConditionResolution: Sendable {
     /// from "no effect on this actor carries that keyword".
     public func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
         guard let effects else { return nil }
-        return state.activeEffects.contains { effect in
+        return state.activeEffects.union(state.potentialEffects).contains { effect in
             guard let record = effects.effect(key: effect) else { return false }
             return record.keywordKeys(in: effects).contains(keyword)
         }

@@ -181,9 +181,25 @@ public final class CombatLoopRuntime: CombatControlling {
         behaviors.values.contains { $0.phase.isEngaged }
     }
 
+    /// The player has no machine: every fight is against the player, so it fights while
+    /// any actor fights, and searches while the engaged ones only search.
     public func activity(of key: ReferenceKey) -> ActorCombatActivity {
-        guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
-        return phase == .searching ? .searching : .fighting
+        guard key == .player else {
+            guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
+            return phase == .searching ? .searching : .fighting
+        }
+        let engaged = behaviors.values.lazy.map(\.phase).filter(\.isEngaged)
+        if engaged.contains(where: { $0 != .searching }) {
+            return .fighting
+        }
+        return engaged.isEmpty ? .notFighting : .searching
+    }
+
+    /// Every fight is against the player, so an engaged actor targets the player, and
+    /// the player targets the actor the loop picked.
+    public func combatTarget(of key: ReferenceKey) -> ReferenceKey? {
+        guard activity(of: key) != .notFighting else { return nil }
+        return key == .player ? state.target : .player
     }
 
     /// Whether `key` engages without having to perceive its target: a script

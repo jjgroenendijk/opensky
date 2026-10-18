@@ -38,6 +38,21 @@ struct CombatLoopRuntimeTests {
         #expect(runtime.activity(of: Fixture.opponent) != .notFighting)
     }
 
+    /// The player has no machine, so it reads the fight its opponents are in.
+    @Test func thePlayerFightsWhileAnOpponentDoesAndTargetsIt() {
+        let (runtime, world) = Fixture.session()
+        #expect(world.actors.count == 1)
+        #expect(runtime.activity(of: .player) == .notFighting)
+        #expect(runtime.combatTarget(of: .player) == nil)
+
+        runtime.notePlayerHits([Fixture.opponent])
+        Fixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds * 2)
+
+        #expect(runtime.activity(of: .player) == .fighting)
+        #expect(runtime.combatTarget(of: .player) == Fixture.opponent)
+        #expect(runtime.combatTarget(of: Fixture.opponent) == .player)
+    }
+
     @Test func provokingTwiceWritesOnce() {
         let (runtime, world) = Fixture.session()
         #expect(runtime.provoke(Fixture.opponent))

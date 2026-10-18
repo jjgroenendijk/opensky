@@ -19,7 +19,7 @@ dirty counts, and the save by the same path as any other change.
 | --- | --- | --- |
 | `float GetActorValue(string)` | The current value | [GetActorValue - Actor](https://www.creationkit.com/index.php?title=GetActorValue_-_Actor) |
 | `float GetBaseActorValue(string)` | The derived maximum | [GetBaseActorValue - Actor](https://www.creationkit.com/index.php?title=GetBaseActorValue_-_Actor) |
-| `float GetActorValuePercentage(string)` | Current over maximum, 0 to 1 | [GetActorValuePercentage - Actor](https://www.creationkit.com/index.php?title=GetActorValuePercentage_-_Actor) |
+| `float GetActorValuePercentage(string)` | Current over the buffed maximum (base plus permanent and temporary modifiers), 0 to 1 | [GetActorValuePercentage - Actor](https://www.creationkit.com/index.php?title=GetActorValuePercentage_-_Actor) |
 | `DamageActorValue(string, float)` | Takes the magnitude off, down to 0 | [DamageActorValue - Actor](https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor) |
 | `RestoreActorValue(string, float)` | Adds the magnitude, up to the maximum | [RestoreActorValue - Actor](https://www.creationkit.com/index.php?title=RestoreActorValue_-_Actor) |
 | `bool IsDead()` | The death latch, not health | [IsDead - Actor](https://www.creationkit.com/index.php?title=IsDead_-_Actor) |
@@ -31,7 +31,7 @@ dirty counts, and the save by the same path as any other change.
 | `KillSilent(Actor akKiller = None)` | The same death, but the story manager gets no `KILL` event. `OnDying` and `OnDeath` still fire, because the wiki names only the kill event | [KillSilent - Actor](https://ck.uesp.net/wiki/KillSilent_-_Actor) |
 | `Resurrect()` | Clears the death latch and refills every actor value. A ragdoll keeps its pose until the cell reloads | [Resurrect - Actor](https://ck.uesp.net/wiki/Resurrect_-_Actor) |
 | `int GetCombatState()` | 0 not fighting, 1 fighting, 2 searching; a dead actor is 0 | [GetCombatState - Actor](https://ck.uesp.net/wiki/GetCombatState_-_Actor) |
-| `Actor GetCombatTarget()` | The player while the actor fights, because the combat loop fights the player alone; `None` for the player | [GetCombatTarget - Actor](https://ck.uesp.net/wiki/GetCombatTarget_-_Actor) |
+| `Actor GetCombatTarget()` | The player while the actor fights, because the combat loop fights the player alone. For the player, the actor the loop targets | [GetCombatTarget - Actor](https://ck.uesp.net/wiki/GetCombatTarget_-_Actor) |
 | `StopCombatAlarm()` | Ends the fight, as `StopCombat` does; OpenSky keeps no separate alarm | [StopCombatAlarm - Actor](https://ck.uesp.net/wiki/StopCombatAlarm_-_Actor) |
 | `float GetActorValueMax(string)` | The value with every modifier and no damage | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool IsEssential()` | A script's `SetEssential` on the base, else the `ACBS` essential flag; false for the player | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
@@ -54,6 +54,11 @@ will be converted to positive so -100 and 100 will have the same effect".
 gives each as a Papyrus wrapper that calls the native, so compiled scripts reach the native
 themselves.
 
+An actor's values and its dead flag belong to the actor, wherever the player is. An actor in a
+cell that is not loaded is found through its plugin placement, so a quest script can damage an
+alias in a hold the player has left and read the result back. A death there sets the dead flag
+and sends `OnDying` and `OnDeath`, but no body falls until the cell loads.
+
 Actor values are named by the vanilla table ([actor value names](/engine/actor-value-names.md)). A
 name outside it is a tallied failure that names the value, never a zero.
 
@@ -63,7 +68,6 @@ name outside it is a tallied failure that names the value, never a zero.
 | --- | --- | --- |
 | `StartSneaking` on an NPC | No change | Only the player has a sneak gait. On the player it turns sneak on, or off when the player already sneaks, as the wiki states. It does not wait for a fall, swim, or attack to end |
 | `StartCombat` with a target other than the player | Tallied failure | OpenSky simulates no fight between two NPCs. Hostility has two cases and both are about the player |
-| `Game.GetPlayer().IsInCombat()` | False during a fight | A combat behavior machine belongs to an NPC. Whether the player is in a fight is derived from every loaded actor, not stored on one |
 | `IsWeaponDrawn()` on an NPC | Tallied failure | Only the player has a behavior graph that tracks drawing. "Sheathed" would be invented |
 
 ## OnHit

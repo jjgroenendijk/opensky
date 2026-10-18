@@ -16,6 +16,7 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -45,6 +46,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
@@ -73,6 +75,8 @@ final class RuntimeStateWorldAdapter {
     private var cellLocations: CellLocationResolver?
     /// Reference places for one set of resident cells, rebuilt when the set changes.
     private var referencePlaces: ResidentReferencePlaces?
+    /// Condition views kept until their inputs change.
+    let conditionCaches = ConditionViewCaches()
 
     init(game: any RuntimeStateWorldHost) {
         self.game = game
@@ -89,18 +93,37 @@ final class RuntimeStateWorldAdapter {
         guard let values = game.actorValues.runtime else { return .empty }
         var player = actorConditionState(holder: .player, values: values)
         playerConditionTraits(&player)
-        var states: [ReferenceKey: ActorConditionState] = [.player: player]
-        for observation in game.actorWorld.combatActors() {
-            guard let holder = game.actorWorld.actorValueHolder(for: observation.key) else {
-                continue
-            }
-            states[observation.key] = actorConditionState(
-                holder: holder, values: values, isDead: observation.isDead
-            )
-        }
+        var states = residentActorStates(values: values)
+        states[.player] = player
         return ActorStateResolution.fight(
             states: states, playerKey: .player, playerTarget: game.combat.loop?.state.target
         )
+    }
+
+    /// Actor values, death and equipment are store writes; the fight is each machine's phase.
+    private func residentActorStates(values: ActorValueRuntime)
+        -> [ReferenceKey: ActorConditionState]
+    {
+        let members = game.actorWorld.combatActors().compactMap { observation in
+            game.actorWorld.actorValueHolder(for: observation.key).map {
+                ActorViewMember(holder: $0, isDead: observation.isDead)
+            }
+        }
+        let key = ActorViewKey(
+            store: ObjectIdentifier(game.worldState),
+            writes: game.worldState.revision(of: [.actorValues, .inventory]),
+            playerLevel: values.baselines.playerLevel.level,
+            hasInventory: game.inventory.equipment != nil,
+            actors: members,
+            phases: game.combat.loop?.behaviors.mapValues(\.phase)
+        )
+        return conditionCaches.actors.value(for: key) {
+            members.reduce(into: [:]) { states, member in
+                states[member.holder.key] = actorConditionState(
+                    holder: member.holder, values: values, isDead: member.isDead
+                )
+            }
+        }
     }
 
     /// Only the player has a graph that tracks a draw state, so every other
@@ -137,6 +160,9 @@ final class RuntimeStateWorldAdapter {
         state.action = actionFacts(of: holder.key, isDead: isDead)
         // OpenSky weighs only the player's load; an NPC carries any weight.
         state.isOverEncumbered = holder.key == .player ? playerIsOverEncumbered() : false
+        state.holdsWeapon = game.inventory.conditionEquipment(of: holder.key).map { facts in
+            facts.rightWeapon != nil || facts.leftWeapon != nil
+        }
         return state
     }
 

@@ -29,6 +29,10 @@ extension FakeWorldProviders {
         scripts.setScriptInstructionBudget(instructions)
     }
 
+    func setScriptGameTiming(_ enabled: Bool) {
+        scripts.setScriptGameTiming(enabled)
+    }
+
     var questAliasQuestEditorIDs: [String] {
         scripts.questAliasQuestEditorIDs
     }

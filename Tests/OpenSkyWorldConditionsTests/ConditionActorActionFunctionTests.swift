@@ -39,6 +39,21 @@ struct ConditionActorActionFunctionTests {
         #expect(try Self.value(672, equals: 0, action: .still) == .true)
     }
 
+    @Test func fistsOutReadOneAndAWeaponTwo() {
+        func value(_ draw: WeaponDrawState, holdsWeapon: Bool?) -> Float? {
+            var state = ActorConditionState(
+                current: ActorValues(repeating: 100), maximums: ActorValues(repeating: 100),
+                weaponDrawState: draw
+            )
+            state.holdsWeapon = holdsWeapon
+            return state.weaponOutValue
+        }
+        #expect(value(.drawn, holdsWeapon: false) == 1)
+        #expect(value(.drawn, holdsWeapon: true) == 2)
+        #expect(value(.drawn, holdsWeapon: nil) == 2)
+        #expect(value(.sheathed, holdsWeapon: true) == 0)
+    }
+
     @Test func guardStaggerAndFleeAreReadFromTheFacts() throws {
         let guarding = ActorActionFacts(isBlocking: true)
         #expect(try Self.value(569, equals: 1, action: guarding) == .true)

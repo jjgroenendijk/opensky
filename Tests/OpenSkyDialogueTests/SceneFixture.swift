@@ -178,9 +178,14 @@ extension SceneFixture {
 /// Answers the scene host from fixed values: line lengths, and a package that is
 /// done once `packageDone` is set.
 @MainActor
-final class FakeSceneHost: SceneHost {
+final class FakeSceneHost: SceneWorld {
     /// Nil while the voice file "loads".
     var lineSeconds: Float? = 2
+    var sceneSeconds: Double = 0
+    var sceneFragments: (any SceneFragmentDispatching)? {
+        nil
+    }
+
     var packageDone = false
     private(set) var running: [ReferenceKey: [FormID]] = [:]
     private(set) var released: [ReferenceKey] = []

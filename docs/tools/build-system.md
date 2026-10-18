@@ -101,7 +101,7 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | `BUILD_CACHE_GB` | `40` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
 | `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
 | `COMPILATION_CACHE` | `<main checkout>/.cache/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
-| `SDK_MODULES` | `<main checkout>/.cache/SDKModules.noindex` | The SDK's precompiled modules, shared by every tree |
+| `SDK_MODULES` | `<main checkout>/.cache/SDKModules.noindex` | The SDK's precompiled modules, shared by every tree. CI keeps them inside its build tree: there, beside it, the prune at the end of a build reloaded the package graph and crashed `xcodebuild` before the tests |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |

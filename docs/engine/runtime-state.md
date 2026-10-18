@@ -111,6 +111,32 @@ delta write, reset, or restore. A restore does not move the journal sequence, so
 its own revision counter for this. Global writes do not clear derived values, because globals
 live outside the deltas.
 
+## Caching derived views
+
+Some kinds of state change on most frames and others rarely. For example, a damaged actor writes
+`actorValues` on every regeneration step, but its inventory stays the same. So the store also counts
+writes per component kind. `revision(of:)` adds the counts of the given kinds and a restore
+counter. A restore replaces every kind, so it moves every such revision.
+
+A `RevisionCache` keeps one value and the key it was built from. The key holds the revisions of the
+kinds the value reads, plus every cheap input that does not live in the store. An unchanged key
+means a fresh build would give the same value. The live condition context keeps these views this
+way:
+
+| View | Store kinds | Other inputs in the key |
+| --- | --- | --- |
+| Places, deaths | `death` | the streamer, the resident cells |
+| Places, map markers | `mapMarker` | the run-on reference keys |
+| Inventory | `inventory` | the actors, which hands hold a spell, equipment present |
+| Actor state, NPCs | `actorValues`, `inventory` | the actors and death, player level, each combat phase |
+| Scenes | `scene` | the scene catalog; aliases resolve on every read |
+| Crime | `crimeLedger`, `inventory`, `scriptedState`, `factions` | the crime coordinator's state, the player's cell, the run-ons |
+
+The player's actor state also reads its gait, melee graph, and race menu, so it is built every
+frame. The crime coordinator keeps its own counter, raised by every change of the fields the crime
+seam reads, such as pursuits, assaults, and trespass. A script changes state through the same
+writes, so its changes move the same revisions.
+
 ## The snapshot
 
 The snapshot is a read-only value that holds the dirty references in `ReferenceKey` order, the

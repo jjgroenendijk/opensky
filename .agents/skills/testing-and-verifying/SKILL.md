@@ -87,7 +87,7 @@ Rules that hold across all four:
 
 These commands build, so the background-shell and one-`xcodebuild` rules in the root
 `AGENTS.md` apply to them: every `make test-*` and `make build-*`, `make health`,
-`make install`, and `git push`.
+and `make install`. `git push` builds nothing: the only git hook is `pre-commit`.
 
 - Start the command itself in the background, not with `> file` redirection, and wait for
   the completion notification. Do not `cat` the task output, `sleep`, or loop on a log

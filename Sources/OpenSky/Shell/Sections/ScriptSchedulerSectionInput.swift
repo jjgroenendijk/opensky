@@ -13,6 +13,10 @@ extension ScriptSchedulerSection {
             pauseControl, target: self, action: #selector(pauseToggled),
             identifier: "ScriptPauseControl"
         )
+        PanelComponents.configureCheckbox(
+            gameTimingControl, target: self, action: #selector(gameTimingToggled),
+            identifier: "ScriptGameTimingControl"
+        )
         PanelComponents.configureButton(
             stepControl, target: self, action: #selector(stepPressed),
             identifier: "ScriptStepControl"
@@ -33,6 +37,12 @@ extension ScriptSchedulerSection {
 
     @objc func pauseToggled() {
         provider?.setScriptsPaused(pauseControl.state == .on)
+        syncControls()
+        finishInteraction()
+    }
+
+    @objc func gameTimingToggled() {
+        provider?.setScriptGameTiming(gameTimingControl.state == .on)
         syncControls()
         finishInteraction()
     }

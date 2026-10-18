@@ -45,6 +45,9 @@ env:
   # of the package root skips. Locally both default to paths outside the checkout.
   OPENSKY_DERIVED_DATA: ${{ github.workspace }}/.cache/DerivedData
   OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
+  # Inside the build tree, not beside it: a build prunes these modules at its end, and
+  # under the package root that reloaded the package graph before the tests.
+  SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
 
 jobs:
   format:

@@ -37,6 +37,11 @@ public struct CrimeRuntime {
 
     // MARK: - Reading
 
+    /// The store revision of `kinds`, for a cache of a view built from them.
+    public func revision(of kinds: [WorldStateComponentKind]) -> UInt64 {
+        worldState.revision(of: kinds)
+    }
+
     /// `key`'s ledger, empty when nothing has ever written one.
     public func ledger(of key: ReferenceKey = .player) -> CrimeLedgerState {
         worldState.component(CrimeLedgerState.self, for: key) ?? .empty

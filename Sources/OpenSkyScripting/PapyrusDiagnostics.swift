@@ -88,6 +88,8 @@ nonisolated public final class PapyrusTally {
     /// same case-folded name; the first declaration wins.
     public private(set) var duplicateVariableTotal = 0
     public private(set) var suspensionTotal = 0
+    /// Native calls that returned a fixed step late under `PapyrusNativeTimingMode.game`.
+    public private(set) var delayedNativeTotal = 0
     /// Method calls on `None`, which return the declared default instead of faulting.
     public private(set) var noneReceiverTotal = 0
     public private(set) var faultTotal = 0
@@ -193,6 +195,10 @@ nonisolated public final class PapyrusTally {
 
     public func noteSuspension() {
         suspensionTotal += 1
+    }
+
+    public func noteDelayedNative() {
+        delayedNativeTotal += 1
     }
 
     public func noteNoneReceiver() {

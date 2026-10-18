@@ -205,4 +205,27 @@ struct CrimeCoordinatorTests {
         #expect(coordinator.joinSelectedFaction(rank: 0).text
             == CrimeFactionControlSnapshot.unavailable.lastActionText)
     }
+
+    @Test func theCachedConditionSeamFollowsEveryCrimeChange() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        func expectFresh() {
+            let cached = coordinator.conditionResolution(owning: [Self.victim])
+            let fresh = coordinator.freshConditionResolution(owning: [Self.victim])
+            #expect(cached.situation == fresh.situation)
+            #expect(cached.currentCrimeFaction == fresh.currentCrimeFaction)
+        }
+        expectFresh()
+        #expect(coordinator.conditionResolution().currentCrimeFaction == Self.hold)
+
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+        expectFresh()
+        #expect(coordinator.conditionResolution().situation?.victims == [Self.victim])
+
+        coordinator.reportMurder(of: Self.victim)
+        expectFresh()
+        world.currentCellLocation = nil
+        expectFresh()
+        #expect(coordinator.conditionResolution().currentCrimeFaction == nil)
+    }
 }

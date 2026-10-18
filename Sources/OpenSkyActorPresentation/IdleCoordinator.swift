@@ -89,6 +89,8 @@ public final class IdleCoordinator {
     var positions: [ReferenceKey: BehaviorStatePosition] = [:]
     /// Actors on a furniture marker, for the furniture condition functions.
     var furnitureUses: [ReferenceKey: FurnitureUse] = [:]
+    /// When each actor that gets up from furniture stops reading `GetSitting` 4.
+    var standingUntil: [ReferenceKey: Float] = [:]
     /// Actors that take each owner's idle events too, in the order they were added.
     var dependents: [ReferenceKey: [ReferenceKey]] = [:]
     var reports: [ReferenceKey: IdleReport] = [:]
@@ -156,6 +158,7 @@ public final class IdleCoordinator {
             world.idleActors().map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first }
         )
         releaseDeparted(actors: actors, now: now)
+        advanceSitStates(now: now)
         claimMarkers(actors: actors)
         for key in sessions.keys.sorted() {
             guard let actor = actors[key] else { continue }

@@ -32,6 +32,12 @@ after the SWF layer, so developer readouts stay on top.
 System text uses CoreText in regular and bold. Shaping uses `CTLine` glyph runs, measures
 typographic bounds, and wraps greedily at a width in points.
 
+Shaping a line is expensive, and most HUD strings stay the same for many frames. So the atlas keeps
+a text layout cache. A shaped line is kept by its text, weight, and size. A wrapped label is kept by
+its text, weight, point size, and wrap width. A `CTFont` is kept by weight and size. A new language
+gives new text, and a new window size gives a new pixel size, so both shape again. Each table holds
+at most 2,048 entries and is emptied when full.
+
 Each glyph is drawn once per font, glyph, and pixel size, through a `CGContext` with font smoothing
 off, because smoothing would make output depend on the machine. It goes into one `r8` coverage atlas
 packed on the CPU in shelves. The atlas has a revision number that changes on every pack, so the

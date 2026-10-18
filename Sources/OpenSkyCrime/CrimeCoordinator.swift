@@ -29,18 +29,41 @@ public struct CrimeFactionPanelState {
 /// Without a FACT index the reporter stays nil, and every take is honest.
 @MainActor
 public final class CrimeCoordinator {
-    public private(set) var reporter: CrimeReporter?
+    public private(set) var reporter: CrimeReporter? {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
-    public var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
-    var ownership: OwnershipResolver?
-    var crimeFactions: CrimeFactionResolver?
-    var pluginName: String?
+    public var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)? {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    /// Rises whenever a script sets or clears an owner, so the crime seam is rebuilt.
+    public var scriptedOwnerRevision: (() -> UInt64)?
+    var ownership: OwnershipResolver? {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    var crimeFactions: CrimeFactionResolver? {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    var pluginName: String? {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// Actors the player struck first. A later death counts as murder. Session
     /// state: a reloaded save restarts every fight.
-    var assaultedActors: Set<ReferenceKey> = []
+    var assaultedActors: Set<ReferenceKey> = [] {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// Each murder's outcome, so a death reports once and `KILL` can read it.
-    var murders: [ReferenceKey: CrimeOutcome] = [:]
+    var murders: [ReferenceKey: CrimeOutcome] = [:] {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// Takes `ARRT` and `JAIL`, and is passed on to the reporter.
     public weak var storyEvents: (any StoryEventReporting)? {
         didSet { reporter?.storyEvents = storyEvents }
@@ -49,12 +72,27 @@ public final class CrimeCoordinator {
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
     /// The player stands in a cell whose owner they may not use.
-    var isPlayerTrespassing = false
+    var isPlayerTrespassing = false {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// Days served in the last jail sentence, for `GetDaysInJail`.
-    var lastSentenceDays = 0
-    public internal(set) var guards = GuardResponseState()
+    var lastSentenceDays = 0 {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    public internal(set) var guards = GuardResponseState() {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    /// Rises on every change of the in-memory state the crime condition seam reads.
+    private(set) var conditionRevision: UInt64 = 0
+    let conditionCache = RevisionCache<CrimeConditionKey, CrimeConditionResolution>()
     /// Where each pursuing guard was last sent.
-    var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:]
+    var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:] {
+        didSet { conditionRevision &+= 1 }
+    }
+
     /// A guard walks toward the player or holds the arrest talk. Fast travel
     /// refuses with `sNoFastTravelAlarm` meanwhile.
     public var isPlayerPursued: Bool {

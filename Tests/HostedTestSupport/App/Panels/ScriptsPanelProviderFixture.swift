@@ -60,6 +60,14 @@ final class FakeScriptProvider: ScriptControlProviding {
         stepCalls.append(ticks)
     }
 
+    /// Every timing switch the panel requested, in order.
+    private(set) var gameTimingCalls: [Bool] = []
+
+    func setScriptGameTiming(_ enabled: Bool) {
+        gameTimingCalls.append(enabled)
+        scriptsSnapshot.usesGameTiming = enabled
+    }
+
     /// Alias tables the fake serves, keyed by editor ID.
     var questAliasTables: [String: ScriptQuestAliasInspection] = [:]
 

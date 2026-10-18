@@ -80,4 +80,26 @@ struct ConditionSpellPropertyTests {
     @Test func alchemyNeedsAnAlchemyEvaluation() throws {
         #expect(try Self.evaluate(500, equals: 0).failures == [.unavailableData(.alchemy)])
     }
+
+    /// An ability's effects count even while none is active; an aimed spell counts
+    /// only while one of its effects acts on the actor.
+    @Test func abilitiesAndActiveSourcesReachTheirEffects() throws {
+        let index = try SpellbookFixture.index()
+        let spells = SpellStore(index: index, effects: SpellbookFixture.effectStore(index: index))
+        let ability = SpellbookFixture.key(SpellbookFixture.Spell.resistFire)
+        let bolt = SpellbookFixture.key(SpellbookFixture.Spell.firebolt)
+        func effects(of spell: ReferenceKey) -> Set<ReferenceKey> {
+            Set(spells.spell(key: spell)?.effects.compactMap { $0.effect?.key } ?? [])
+        }
+        let carried = MagicEffectReach.potentialEffects(
+            known: [ability, bolt], sources: [], record: { spells.spell(key: $0) }
+        )
+        let struck = MagicEffectReach.potentialEffects(
+            known: [], sources: [bolt], record: { spells.spell(key: $0) }
+        )
+
+        #expect(!effects(of: ability).isEmpty)
+        #expect(carried == effects(of: ability))
+        #expect(struck == effects(of: bolt))
+    }
 }

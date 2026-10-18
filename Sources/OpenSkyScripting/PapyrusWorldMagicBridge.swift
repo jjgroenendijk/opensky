@@ -19,17 +19,22 @@ nonisolated public struct PapyrusSpellState: Equatable, Sendable {
     public let effectKeywords: Set<ReferenceKey>
     /// The spell readied in each hand, absent for a hand holding none.
     public let handSpells: [SpellHand: ReferenceKey]
+    /// MGEFs the spells acting on this actor can apply, active or not
+    /// (`MagicEffectReach`).
+    public let potentialEffects: Set<ReferenceKey>
 
     public init(
         knownSpells: Set<ReferenceKey> = [],
         activeEffects: Set<ReferenceKey> = [],
         effectKeywords: Set<ReferenceKey> = [],
-        handSpells: [SpellHand: ReferenceKey] = [:]
+        handSpells: [SpellHand: ReferenceKey] = [:],
+        potentialEffects: Set<ReferenceKey> = []
     ) {
         self.knownSpells = knownSpells
         self.activeEffects = activeEffects
         self.effectKeywords = effectKeywords
         self.handSpells = handSpells
+        self.potentialEffects = potentialEffects.union(activeEffects)
     }
 }
 

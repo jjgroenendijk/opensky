@@ -195,30 +195,29 @@ extension PapyrusWorldStateBridge {
     // MARK: - Private
 
     /// Whether `key` is in a fight: its behavior phase, not stored hostility.
-    /// Searching counts. The player always reads false here, because the player's
-    /// fight state is derived (`CombatLoopState.isPlayerInCombat`); a stated gap in
-    /// docs/engine/papyrus-actor-natives.md.
+    /// Searching counts. The player's comes from the actors it fights.
     private func isActorInCombat(_ key: ReferenceKey) -> Bool {
         guard worldState.component(ActorDeathState.self, for: key)?.isDead != true
         else { return false }
         return (actorNatives.combatRuntime?()?.activity(of: key) ?? .notFighting) != .notFighting
     }
 
-    /// The actor-value holder behind a reference: the player, or a resident
-    /// ACHR resolved through the reference source. Nil for anything that is not
-    /// an actor, which is what makes an `Actor` native called on a crate a
-    /// tallied failure rather than a write to a crate's health.
+    /// The actor-value holder behind a reference: the player, or an ACHR, loaded or
+    /// not. An actor's values belong to it wherever the player is. Nil for anything
+    /// that is not an actor, so an `Actor` native on a crate is a tallied failure.
     public func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
         if key == playerKey {
             return .player
         }
-        guard let actor = references?.referenceEntry(key: key)?.placedActor else {
-            return nil
+        if let actor = references?.referenceEntry(key: key)?.placedActor {
+            return ActorValueHolder(
+                key: key, subject: .actor(base: actor.base), cell: cellLocation(of: key)
+            )
         }
-        return ActorValueHolder(
-            key: key,
-            subject: .actor(base: actor.base),
-            cell: cellLocation(of: key)
-        )
+        guard
+            let placement = references?.pluginPlacement(of: key),
+            let actor = placement.entry.placedActor
+        else { return nil }
+        return ActorValueHolder(key: key, subject: .actor(base: actor.base), cell: placement.home)
     }
 }

@@ -71,7 +71,7 @@ nonisolated public struct UIScene: Sendable {
 
     /// Per-label pixel-space text setup, reused across its wrapped lines.
     private struct LineContext {
-        let fontKey: Int
+        let font: UIFont
         let pixelFont: CTFont
         let pixelSize: Int
         let originX: Float
@@ -130,26 +130,31 @@ nonisolated public struct UIScene: Sendable {
         context: ResolveContext,
         into list: inout UIDrawList
     ) {
+        let layouts = context.atlas.layouts
         let lines = label.maxWidth
-            .map { UITextShaper.wrap(label.text, font: label.font, maxWidth: $0) }
+            .map { layouts.wrap(label.text, font: label.font, maxWidth: $0) }
             ?? [label.text]
         guard !lines.isEmpty else { return }
-        let pointFont = label.font.makeCTFont(size: CGFloat(label.font.pointSize))
-        let lineHeightPoints = UITextShaper.lineMetrics(pointFont).lineHeight
-        let blockWidth = lines.map { UITextShaper.shape($0, font: pointFont).width }.max() ?? 0
+        let pointSize = label.font.pointSize
+        let lineHeightPoints = UITextShaper.lineMetrics(
+            layouts.ctFont(label.font, size: pointSize)
+        ).lineHeight
+        let blockWidth = lines.map {
+            layouts.shape($0, font: label.font, size: pointSize).width
+        }.max() ?? 0
         let block = node.anchor.rect(
             ofSize: UISize(width: blockWidth, height: lineHeightPoints * Float(lines.count)),
             in: context.viewportPoints,
             offset: node.offset
         )
         let pixelSize = max(Int((label.font.pointSize * context.scale.factor).rounded()), 1)
-        let pixelFont = label.font.makeCTFont(size: CGFloat(pixelSize))
+        let pixelFont = layouts.ctFont(label.font, size: Float(pixelSize))
         let pixelMetrics = UITextShaper.lineMetrics(pixelFont)
         let lineHeightPixels = pixelMetrics.lineHeight.rounded()
         let ascentPixels = pixelMetrics.ascent.rounded()
         let originY = (block.y * context.scale.factor).rounded()
         let lineContext = LineContext(
-            fontKey: label.font.fontKey,
+            font: label.font,
             pixelFont: pixelFont,
             pixelSize: pixelSize,
             originX: (block.x * context.scale.factor).rounded(),
@@ -173,10 +178,12 @@ nonisolated public struct UIScene: Sendable {
         atlas: UIGlyphAtlas,
         into list: inout UIDrawList
     ) {
-        let shaped = UITextShaper.shape(line, font: context.pixelFont)
+        let shaped = atlas.layouts.shape(
+            line, font: context.font, size: Float(context.pixelSize)
+        )
         for glyph in shaped.glyphs {
             let entry = atlas.entry(
-                fontKey: context.fontKey,
+                fontKey: context.font.fontKey,
                 glyphID: glyph.glyphID,
                 pixelSize: context.pixelSize,
                 ctFont: context.pixelFont

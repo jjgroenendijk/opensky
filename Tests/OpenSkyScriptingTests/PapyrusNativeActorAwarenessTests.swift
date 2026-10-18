@@ -90,13 +90,13 @@ struct PapyrusNativeActorAwarenessTests {
         #expect(call(fixture, "GetCurrentPackage") == .returned(.none))
     }
 
-    @Test func waitMenuModeSuspendsLikeWait() throws {
+    @Test func waitMenuModeSuspendsCountingMenuTime() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let result = fixture.registry.invoke(PapyrusNativeCall(
             kind: .staticFunction, scriptName: "Utility", functionName: "WaitMenuMode",
             receiver: nil, arguments: [.float(2)], returnType: .none
         ))
-        #expect(result == .suspended(.realSeconds(2)))
+        #expect(result == .suspended(.realSecondsWithMenus(2)))
     }
 
     @Test func lightLevelScalesTheDetectionLevel() throws {
