@@ -32,6 +32,7 @@ nonisolated public struct CellSceneComposition {
                 first
             }
             let sorted = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            residentCoordinates = sorted.map(\.key)
             residentReferences = sorted
                 .map { (location: $0.value.location, references: $0.value.references) }
             actorPlacements = ResidentActorPlacement.index(residentReferences)
@@ -53,6 +54,8 @@ nonisolated public struct CellSceneComposition {
         location: CellSceneLocation?,
         references: RuntimeReferenceIndex
     )] = []
+    /// The grid coordinate of each entry in `residentReferences`.
+    private var residentCoordinates: [CellCoordinate] = []
     /// `referenceEntries()` as one index, built on the first read after residency changes.
     private var mergedReferences: RuntimeReferenceIndex?
     public private(set) var distantLOD: DistantLODScene?
@@ -376,6 +379,13 @@ nonisolated extension CellSceneComposition {
     /// cell in grid order wins, because the worldspace persistent CELL repeats actors.
     public func actorEntries() -> [RuntimeReferenceEntry] {
         residentActors
+    }
+
+    /// Every resident exterior cell that holds `key`, in grid order.
+    public func cellCoordinates(holding key: ReferenceKey) -> [CellCoordinate] {
+        zip(residentCoordinates, residentReferences)
+            .filter { $0.1.references[key] != nil }
+            .map(\.0)
     }
 
     /// One entry of `actorEntries()` by key.

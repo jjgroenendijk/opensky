@@ -389,3 +389,31 @@ private struct OffScreenState: WorldStateComponent {
 
     var phase: Int
 }
+
+// MARK: - Writes that name no cell
+
+extension CellStreamerRuntimeStateTests {
+    @Test
+    func aWriteWithoutACellRebuildsOnlyTheCellHoldingTheReference() throws {
+        var harness = Self.makeHarness(radius: 1)
+        let holder = Self.coordinate(1, 0)
+        let entry = try FakeRuntimeStateWorld.referenceEntry(objectID: 0x91)
+        let camera = Self.position(of: Self.coordinate(0, 0))
+        for _ in 0 ..< 64 {
+            harness.streamer.update(cameraPosition: camera)
+            for cell in harness.runner.enqueued.dropFirst(harness.completedCount) {
+                harness.runner.complete(cell, with: .success(CellStreamerFixture.cellScene(
+                    references: cell == holder ? RuntimeReferenceIndex(entries: [entry]) : .empty
+                )))
+            }
+            harness.completedCount = harness.runner.enqueued.count
+        }
+        #expect(harness.streamer.residentCellCount == 9)
+
+        harness.store.set(ReferenceEnableState.disabled, for: entry.key)
+        #expect(harness.streamer.queuedRebuildCount == 1)
+        let before = harness.runner.enqueued.count
+        harness.streamer.update(cameraPosition: camera)
+        #expect(Array(harness.runner.enqueued.dropFirst(before)) == [holder])
+    }
+}

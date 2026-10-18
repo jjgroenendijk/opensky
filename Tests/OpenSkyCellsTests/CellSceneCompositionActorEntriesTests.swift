@@ -89,6 +89,23 @@ struct CellSceneCompositionActorEntriesTests {
         #expect(composition.actorEntry(key: Self.key(Self.single)) == nil)
     }
 
+    @Test func cellLookupNamesEveryResidentCellHoldingTheKey() throws {
+        let origin = CellCoordinate(x: 0, y: 0)
+        let southWest = CellCoordinate(x: -2, y: -1)
+        var composition = CellSceneComposition()
+        try composition.setCell(
+            Self.scene([(Self.shared, 0x101), (Self.single, 0x303)], at: origin), at: origin
+        )
+        try composition.setCell(Self.scene([(Self.shared, 0x202)], at: southWest), at: southWest)
+
+        #expect(Set(composition.cellCoordinates(holding: Self.key(Self.shared))) == [
+            origin,
+            southWest
+        ])
+        #expect(composition.cellCoordinates(holding: Self.key(Self.single)) == [origin])
+        #expect(composition.cellCoordinates(holding: Self.key(0x999)).isEmpty)
+    }
+
     private static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: "skyrim.esm", objectID: objectID)
     }

@@ -30,6 +30,25 @@ extension CellStreamer {
         }
     }
 
+    /// A write that names no cell rebuilds the resident cells that hold `key`. A
+    /// persistent reference can sit in more than one. When none holds it, such as a
+    /// spawned reference, every resident cell rebuilds, as for an unattributed write.
+    public func noteStateMutation(of key: ReferenceKey, sequence: UInt64) {
+        guard !isRecordingSettledBody, !noteNPCRestMutation(sequence: sequence) else { return }
+        let holders = composition.cellCoordinates(holding: key)
+        let interiorHolds = interiorScene?.references[key] != nil
+        guard !holders.isEmpty || interiorHolds else {
+            noteUnattributedMutation(sequence: sequence)
+            return
+        }
+        for coordinate in holders {
+            noteExteriorMutation(coordinate, sequence: sequence)
+        }
+        if interiorHolds {
+            interiorMutationSequence = max(interiorMutationSequence, sequence)
+        }
+    }
+
     private func noteExteriorMutation(_ coordinate: CellCoordinate, sequence: UInt64) {
         recordMutationSequence(coordinate, sequence: sequence)
         requestRebuild(coordinate)
@@ -188,6 +207,9 @@ extension CellStreamer {
         stateSource = { store.snapshot() }
         store.onMutation = { [weak self] location, sequence in
             self?.noteStateMutation(in: location, sequence: sequence)
+        }
+        store.onUnplacedMutation = { [weak self] key, sequence in
+            self?.noteStateMutation(of: key, sequence: sequence)
         }
         store.onReferenceMutation = { [weak self] key, kind, sequence in
             guard kind == .enableState else { return }
