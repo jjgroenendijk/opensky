@@ -1,4 +1,4 @@
-// `asset-optimisation` and the options the benchmarks share.
+// `asset-optimisation`: build, check, and measure the optimised files.
 
 import ArgumentParser
 
@@ -21,40 +21,6 @@ public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {
         help: ArgumentHelp("Asset kinds, separated by commas.", valueName: "list")
     )
     public var kinds: String?
-
-    public init() {}
-}
-
-/// How the benchmarks load assets: optimised files, direct GPU loading, or loose copies.
-public struct AssetLoadArguments: ParsableArguments, Sendable {
-    @Flag(
-        name: [.customLong("asset-optimisation"), .customLong("asset-cache")],
-        help: "Load the optimised files."
-    )
-    public var assetCache = false
-    @Flag(help: "Drop the files from the page cache first.")
-    public var evict = false
-    @Flag(
-        name: [.customLong("direct-load"), .customLong("fast-load")],
-        help: "Read optimised textures straight into GPU memory."
-    )
-    public var fastLoad = false
-    @Flag(
-        name: [.customLong("direct-mesh-load"), .customLong("fast-mesh-load")],
-        help: "Read optimised meshes straight into GPU memory."
-    )
-    public var fastMeshLoad = false
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Read extracted copies here first.", valueName: "dir")
-    )
-    public var loose: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Write the asset paths it read here.", valueName: "file")
-    )
-    public var recordPaths: String?
-    @OptionGroup public var cache: AssetCacheSettingsOptions
 
     public init() {}
 }

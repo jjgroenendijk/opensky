@@ -51,5 +51,7 @@ of this launch (`PipelineCacheStatsLabel`): pipelines loaded from the archive an
 compiled. The switch is the `pipelineCache.enabled` player setting and applies on the next
 launch. The launcher's Graphics page has the same switch and clear button.
 
-`make benchmark ARGS=--cold-pipelines` deletes the archive first; the `pipelines` field of the
-result holds the renderer setup time and the counts ([benchmark](/tools/benchmark.md)).
+To time a cold start, clear the cache on the Graphics page, then run
+`make benchmark PRESET=quick`. The app start in the result holds the renderer setup time
+([benchmark](/tools/benchmark.md)). `--set pipelineCache.enabled=off` compiles every pipeline
+without the archive.

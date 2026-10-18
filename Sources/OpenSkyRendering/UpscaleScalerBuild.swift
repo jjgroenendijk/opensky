@@ -99,26 +99,6 @@ extension Renderer {
         await upscale.scalerBuild?.task?.value
     }
 
-    /// Builds the scaler for an offscreen frame of this size now, blocking the caller.
-    /// For tools that render frames in a loop and never give the main actor a turn.
-    public func buildUpscalerNow(width: Int, height: Int) {
-        guard upscale.renderScale.isOn, upscale.unavailableReason == nil else { return }
-        let request = upscaleScalerRequest(
-            output: SIMD2(width, height), colorFormat: Self.offscreenColorFormat
-        )
-        if upscale.targets?.request == request {
-            return
-        }
-        if let build = upscale.scalerBuild, build.request == request, build.scalers != nil {
-            return
-        }
-        let build = UpscaleScalerBuild(request: request)
-        build.scalers = UpscaleScalers.build(
-            request, device: pipelineCache.device, compiler: pipelineCache.compiler
-        )
-        upscale.scalerBuild = build
-    }
-
     func upscaleScalerRequest(
         output: SIMD2<Int>, colorFormat: MTLPixelFormat
     ) -> UpscaleScalerRequest {

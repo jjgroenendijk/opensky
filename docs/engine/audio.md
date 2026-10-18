@@ -148,10 +148,11 @@ thread runs no OpenSky code. The work is bounded by the 8-source limit: a few sc
 source, with no allocation, no file reads, and no decoding.
 
 The budget is 0.5 ms for both the mean and the p95 of this update, about 1.5% of a 33.33 ms frame.
-Both `bench --fly-path` and `bench --walk-path` attach an audio engine so the tick really runs, and
-print an `audio update:` line. The measured floor, with no live sources, is about 35 times under
-the p95 limit. The rest grows with live sources, which the limit caps at 8. So the budget is
-reasoned headroom over a measured floor. A frame that does no audio work records zero.
+The fly-path and walk-path gates (`FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`) attach an
+audio engine so the tick really runs, and check this budget. The measured floor, with no live
+sources, is about 35 times under the p95 limit. The rest grows with live sources, which the limit
+caps at 8. So the budget is reasoned headroom over a measured floor. A frame that does no audio work
+records zero.
 
 ## Controls
 

@@ -148,5 +148,5 @@ thread and frames the camera on the first one. If setup fails, the app logs `[ER
 demo scene. It never crashes. A cell that fails to build is marked and not tried again, so one
 broken cell cannot cause a storm of retries.
 
-`openskycli render` and `bench` build cells directly and in one thread. They are one-shot tools,
-not the live streaming loop ([CLI](/tools/cli.md)).
+`openskycli render` and the benchmark's load passes build cells directly and in one thread. They are
+one-shot tools, not the live streaming loop ([CLI](/tools/cli.md)).

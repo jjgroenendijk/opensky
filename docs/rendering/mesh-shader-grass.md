@@ -57,7 +57,7 @@ instances.
 
 ## Measured
 
-`make benchmark ARGS='--mesh-shader-grass'` compares the paths ([benchmark](/tools/benchmark.md)).
+`make benchmark ARGS='--set rendering.meshShaderGrass=on'` compares the paths ([benchmark](/tools/benchmark.md)).
 
 On an M1, Release build, two runs of each path in turn, GPU time per frame:
 

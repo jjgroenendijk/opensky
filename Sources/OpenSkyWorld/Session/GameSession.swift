@@ -137,6 +137,9 @@ public final class GameSession: RenderFrameDriver {
     /// tick + music director). Exactly zero on a frame that did no audio work,
     /// which is every frame while no `WorldAudioEngine` is attached.
     public var lastAudioUpdateMS = 0.0
+    /// CPU wall time of the last live frame's camera, frame steps, clock, world
+    /// tick, and weather: everything before the renderer encodes.
+    public var lastSimulationMS = 0.0
 
     /// Takes over `renderer`: the player starts at its view pose, and the session
     /// drives its frames from now on.
@@ -186,12 +189,14 @@ public final class GameSession: RenderFrameDriver {
     // MARK: - RenderFrameDriver
 
     public func prepareLiveFrame() -> RenderFrameInput {
+        let started = DispatchTime.now().uptimeNanoseconds
         advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
         frameSteps(freeFlyCamera.position)
         advanceGameClockFromWallClock()
         updateWorldSimFromWallClock()
         updateWeatherFromWallClock()
+        lastSimulationMS = Double(DispatchTime.now().uptimeNanoseconds - started) / 1e6
         return frameInput
     }
 

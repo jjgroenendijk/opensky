@@ -85,17 +85,13 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `effects census`, `effects imad <edid> [--at seconds]` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions. `imad` samples one modifier ([image space](/rendering/image-space.md)) |
 | `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
 | `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](/tools/preview-render.md)) |
-| `bench [...]` | A sustained offscreen render with a frame time budget |
-| `bench --fly-path [...]` | A scripted flight across cells through the real streamer, with memory, build, and update budgets |
 | `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |
-| `bench --walk-path [...]` | A fixed walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, up stairs, through an interior, and back |
-| `launch-bench` | Times each stage of the world data load the app runs before its game window opens, slowest first, then the wall time. Stages run in parallel, so the wall time is less than their sum |
 | `asset-optimisation build\|check\|clear\|status [--texture-quality original\|high\|medium\|low] [--max-texture-side <n>] [--folder] [--kinds] [--width] [--paths <file>]` | Asset optimisation without the app; `asset-cache` is the old name and still works. `build` converts every source the folder does not hold yet and prints the space check first, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, texture quality, and location warnings. The texture quality and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](/engine/asset-cache.md)) |
-| `asset-optimisation extract --paths <file> --out <dir>` | Writes loose copies of the listed files, outside the repo and the install. The benchmark's `--loose` reads them, to time loose files apart from the archives |
+| `asset-optimisation extract --paths <file> --out <dir>` | Writes loose copies of the listed files, outside the repo and the install, to time loose files apart from the archives |
 | `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](/engine/asset-cache.md)) |
 | `asset-optimisation measure [--per-kind <n>]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
-| `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as the benchmark frame with the cache off and on. 100 dB means identical |
-| `benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict] [--size WxH] [--launch] [--route]` | The shared benchmark: a cold and a warm load of fixed cells split into asset phases, then frame time on a fixed view. `--out` writes the JSON result, `--frame` a PNG of the view. `--asset-optimisation` loads through the optimised files, `--direct-load` reads optimised textures with Metal fast resource loading, `--direct-mesh-load` adds optimised meshes (the old names `--asset-cache`, `--fast-load`, and `--fast-mesh-load` still work), `--evict` makes the cold load read from disk, `--loose <dir>` reads extracted copies first, `--record-paths <file>` lists the assets the cache was asked for, `--size WxH` sets the frame (default 2560x1600), `--launch` times the process start and its first 60 seconds, and `--route` walks the shared route with live streaming ([benchmark](/tools/benchmark.md)) |
+| `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two screenshots with the cache off and on. 100 dB means identical |
+| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value] [--no-overlay] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour in its window, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
 
 ## Notes on the probes
 
@@ -119,22 +115,9 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
   name (`normalMaps,specular`) or `all`, for a with and without pair. `--weather` forces a
   weather, so its `SPGD` rain falls. Rain needs a few frames to fill the volume, so add
   `--frames 60`.
-- `bench` waits for the GPU each frame, so its times are an upper bound. The default budget is
-  33.33 ms, which is 30 frames per second.
-- `bench --fly-path` moves one cell east, then north. The two 5 by 5 blocks overlap, so exactly 35
-  unique cells must build. A waypoint settles when its cells and its distant LOD ring are in, so
-  every run measures the same scene swaps. It fails on a missing or extra cell, a failed build, no
-  unload, memory growing past 1.6 times the start or past the cap, any budget miss, an actor
-  failure without a reason, or a missing living system (rain, animated bones, particles, shadow
-  casters, or grass).
-  The first cell with actors also pays for building the resolver indexes, which shows in the
-  maximum, not the 95th percentile. It prints "start area ready" in milliseconds.
-  `--no-lod-prebuild` builds the first distant LOD ring after the near grid, as a baseline for
-  that number.
-- `bench --walk-path` uses only observed form IDs and positions. Short sidesteps avoid small
-  obstacles without clipping. Its average budget is one 30 fps frame. The 95th percentile budget is
-  one frame in Release and two in Debug, for synchronous offscreen scheduling. `--budget-ms` applies
-  strictly to both. Options that belong to other bench modes are usage errors.
+- The streaming, walk, and sustained frame time gates are real-data tests:
+  `FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`, and `SustainedRenderGateRealDataTests`.
+  `make test-real PERF=1` runs them ([benchmark](/tools/benchmark.md)).
 
 ## make probe
 
@@ -149,10 +132,8 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
   `MT_RootBehavior`, with no unresolved members and no class without a decoder.
 - `animation` samples every frame of the male `mt_idle.hkx`, and `skeleton` maps the rig onto
   `skeleton.nif` with every mismatch tagged with a reason.
-- The benches pass their budgets, and `bench --fly-path` reports culled shadow casters and grass
-  draws with no budget drops.
-- `--walk-path` rejects `--frames`, `--footprint-cap-mb`, and `--collision-build-budget-ms` with exit
-  status 2, checked before touching game data.
+- `benchmark --list` prints the tour's scenes, and `benchmark` rejects an unknown preset or
+  setting with exit status 2, before it opens the app.
 - `asset-optimisation build --kinds collision` of 20 clutter meshes into a temporary folder
   reports no failures, and `check` then counts every entry as current.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.

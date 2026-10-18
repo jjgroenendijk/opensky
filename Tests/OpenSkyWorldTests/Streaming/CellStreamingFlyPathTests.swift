@@ -1,6 +1,6 @@
 // Pure scripted fly-path tests: pin waypoint order, interpolation endpoints,
 // and 5x5 union size without Metal or game data. Runtime settlement, memory,
-// unload, and build-count gates live in `openskycli bench --fly-path`.
+// unload, and build-count gates live in `FlyPathGateRealDataTests`.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering

@@ -6,7 +6,7 @@ import Foundation
 nonisolated public enum AgentCommandLine {
     /// The positional argument names of each command, after its own words.
     public static let positionals: [String: [String]] = [
-        "status": [], "quit": [], "screenshot": [], "events": [],
+        "status": [], "quit": [], "screenshot": [], "events": [], "benchmark": ["preset"],
         "input.press": ["action"], "input.release": ["action"], "input.hold": ["action"],
         "input.look": [], "input.select": ["label"], "input.text": ["text"],
         "input.point": [], "input.click": [],

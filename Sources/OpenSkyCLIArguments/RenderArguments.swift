@@ -1,4 +1,4 @@
-// The offscreen render, bench, and benchmark commands.
+// The offscreen render command.
 
 import ArgumentParser
 
@@ -69,59 +69,6 @@ public struct EffectCaptureArguments: ParsableArguments, Sendable {
         )
     )
     public var shadingOff: String?
-
-    public init() {}
-}
-
-public struct LaunchBenchArguments: CLICommandArguments {
-    public static let configuration = CommandConfiguration(
-        commandName: "launch-bench",
-        abstract: "Time each stage of the world data load the app runs before its window."
-    )
-    @OptionGroup public var global: GlobalOptions
-
-    public init() {}
-}
-
-public struct BenchmarkArguments: CLICommandArguments {
-    public static let configuration = CommandConfiguration(
-        commandName: "benchmark",
-        abstract: "The shared benchmark: cold and warm cell loads, then frame time.",
-        discussion: "--out writes stable JSON and --frame a PNG of the measured view."
-    )
-    @OptionGroup public var global: GlobalOptions
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "file"))
-    public var out: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "png"))
-    public var frame: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp("Default: 2560x1600.", valueName: "WxH"))
-    public var size: String?
-    @Flag(help: "Time the process start and its first 60 s.")
-    public var launch = false
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "s"))
-    public var launchSeconds: String?
-    @Flag(help: "Walk the shared route with live streaming.")
-    public var route = false
-    @Flag(help: "Delete the saved pipeline archive first.")
-    public var coldPipelines = false
-    @Flag(help: "Cull static groups on the CPU.")
-    public var cpuCulling = false
-    @Flag(help: "Stream texture levels.")
-    public var textureStreaming = false
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "MiB"))
-    public var textureBudget: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Render at 50 to 100 percent and upscale.", valueName: "percent")
-    )
-    public var renderScale: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "temporal|spatial"))
-    public var upscaler: String?
-    @Flag(help: "Build a MetalFX frame between real frames.")
-    public var frameInterpolation = false
-    @Flag(help: "Draw grass with object and mesh shaders.")
-    public var meshShaderGrass = false
-    @OptionGroup public var assets: AssetLoadArguments
 
     public init() {}
 }

@@ -42,13 +42,13 @@ separate actions, so looking at one system never changes another. This rule came
 single switch that hid which system was in which state. See
 [app UI](/tools/app-ui.md) for the panel rules.
 
-## Combined benchmark
+## Combined gate
 
-`openskycli bench --fly-path` flies through the 5 x 5 streamed world with a rainy weather forced.
-It fails if any system is missing: no weather, no updated bones, no live particles, no rain, no
-shadow casters, or no drawn grass. It also checks frame time, collision build time, actor build
-time, animation and shadow update time, and memory against fixed budgets. The budgets are in
-the benchmark code. See [CLI](/tools/cli.md).
+The fly-path gate, `FlyPathGateRealDataTests`, flies through the 5 x 5 streamed world with a rainy
+weather forced. It fails if any system is missing: no weather, no updated bones, no live particles,
+no rain, no shadow casters, or no drawn grass. It also checks frame time, collision build time,
+actor build time, animation and shadow update time, and memory against fixed budgets. The budgets
+are in the test. `make test-real PERF=1` runs it ([benchmark](/tools/benchmark.md)).
 
 In a wide exterior view, grass and cell particles can change no pixels, because they are too far
 away. Their live counters show they ran. The [particles](/rendering/particles.md) and

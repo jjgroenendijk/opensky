@@ -81,6 +81,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case kill(String)
     case resurrect(String)
     case overlay(name: String, enabled: Bool)
+    /// Runs the benchmark tour; the reply comes when the tour ends.
+    case benchmark(AgentBenchmarkRequest)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {

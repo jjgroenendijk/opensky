@@ -33,6 +33,22 @@ struct PlayerSettingsStoreTests {
         #expect(second.model.keyBindings == ["Main Gameplay|Forward": 0x48])
     }
 
+    @Test func aBenchmarkCopyTakesOverridesAndNeverSaves() {
+        let disk = MemoryPersistence()
+        let saved = PlayerSettingsStore(persistence: disk)
+        saved.set(.masterVolume, to: 0.5)
+        let before = disk.data
+        let copy = PlayerSettingsStore(
+            copying: saved,
+            overrides: [.gpuCulling: 0, .masterVolume: 0.25]
+        )
+        #expect(copy.value(.gpuCulling) == 0)
+        #expect(copy.value(.masterVolume) == 0.25)
+        copy.set(.masterVolume, to: 0.75)
+        #expect(disk.data == before)
+        #expect(saved.value(.masterVolume) == 0.5)
+    }
+
     @Test func aTextValueSurvivesARestartAndUnknownTextIsIgnored() {
         let disk = MemoryPersistence()
         let first = PlayerSettingsStore(persistence: disk)

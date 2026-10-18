@@ -91,6 +91,6 @@ the camera") and
 (`TextureStreamingStatsLabel`) shows the streamed textures, the mapped memory against the
 budget, the heap memory, and the levels loaded and dropped.
 
-`make benchmark ARGS=--texture-streaming` measures it, and `--texture-budget <MiB>` sets the
-budget ([benchmark](/tools/benchmark.md)). The heaps count as texture memory in the GPU
-memory samples.
+`make benchmark ARGS='--set rendering.textureStreaming=on'` measures it, and
+`--set rendering.textureBudget=<MiB>` sets the budget ([benchmark](/tools/benchmark.md)). The heaps
+count as texture memory in the GPU memory samples.

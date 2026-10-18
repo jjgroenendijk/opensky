@@ -1,5 +1,5 @@
 // OffscreenBenchResult math: average + nearest-rank percentile over
-// synthetic frame times — the numbers the `bench` fps gate asserts on, so
+// synthetic frame times — the numbers the real-data render gates assert on, so
 // the arithmetic itself is pinned here (no Metal, no game data).
 
 @testable import OpenSkyRendering

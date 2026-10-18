@@ -1,7 +1,7 @@
 // Inventory acceptance, budget half: a populated, equipped cell and a frame
 // with menus open meet the shipping budgets, through the same validators and
-// config as the CLI bench. Timings are synthetic; real ones come from
-// `openskycli bench --fly-path`.
+// config as the fly-path gate. Timings are synthetic; real ones come from
+// `FlyPathGateRealDataTests`.
 
 import Foundation
 @testable import OpenSkyCells
@@ -44,10 +44,10 @@ nonisolated private final class BudgetCellProvider: CellSceneProvider {
 
 @Suite(.tags(.acceptance))
 struct InventoryAcceptanceBudgetTests {
-    /// The shipping fly-path budgets, matching `openskycli bench --fly-path`'s
-    /// own defaults. Written out rather than imported because they are private
-    /// to the command; a drift between the two is what the comment on the
-    /// command's constants exists to prevent.
+    /// The shipping fly-path budgets, matching the defaults of
+    /// `FlyPathGateRealDataTests`. Written out rather than imported because they are private
+    /// to that test; a drift between the two is what the comment on the
+    /// test's constants exists to prevent.
     private static func configuration(
         actorBuildBudgetMS: Double = 3000
     ) -> CellStreamingFlyBenchmarkConfiguration {

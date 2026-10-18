@@ -97,8 +97,8 @@ the real placement for every cell in the square. Each cell row reports shapes, t
 time, and estimated memory. The check passes only with zero load, decode, or unsupported-type
 failures. Empty cells say so.
 
-`openskycli bench --fly-path` records the collision time of every cell build. The limit is a p95
-of 750 ms per build. The build limit allows for the uneven timing of the background queue, which
-shows up in repeated runs. The render limit is a mean and p95 of 33.33 ms per frame, and the
-memory limit is 1,024 MB with a steady plateau. See [walk mode](/engine/walk-mode.md) for how
-timing noise is handled.
+The fly-path gate (`FlyPathGateRealDataTests`) records the collision time of every cell build. The
+limit is a p95 of 750 ms per build. The build limit allows for the uneven timing of the background
+queue, which shows up in repeated runs. The render limit is a mean and p95 of 33.33 ms per frame,
+and the memory limit is 1,024 MB with a steady plateau. See [walk mode](/engine/walk-mode.md) for
+how timing noise is handled.

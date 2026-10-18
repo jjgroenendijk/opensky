@@ -130,13 +130,14 @@ changes timings: no other OpenSky should be running, and Spotlight may be indexi
 ## Profiling
 
 `make benchmark` gives the before and after numbers for a performance change: load time split
-into asset phases, and frame time ([shared benchmark](/tools/benchmark.md)). `make profile` then
-shows where the time goes inside one phase.
+into asset phases, and frame, GPU pass, and CPU subsystem times per scene
+([benchmark tour](/tools/benchmark.md)). `make profile` then shows where the time goes.
 
-`make profile` records an Instruments Time Profiler trace of `openskycli bench --walk-path` on a
-Release build. `MODE=fly` profiles `--fly-path` instead. `ARGS` passes more bench options, such as
-`ARGS='--footprint-cap-mb 2048'` when a bench gate stops the run early. The run directory holds
-the trace and `samples.xml`, the exported sample table, for reading without Instruments.
+`make profile` records an Instruments Time Profiler trace of the Release app while it flies the
+quick benchmark tour. `ARGS` passes other benchmark options, such as `ARGS='--scenes riften'`.
+Each scene is a signpost interval, so the trace shows which scene a hot spot belongs to. The run
+directory holds the trace and `samples.xml`, the exported sample table, for reading without
+Instruments.
 
 `make launch-sample` checks the app itself rather than the CLI. It launches
 `/Applications/OpenSky.app` in play mode and, every few seconds for one minute (`SECONDS`), takes a

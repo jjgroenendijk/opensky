@@ -47,6 +47,12 @@ struct AgentCommandRouterTests {
         return nil
     }
 
+    @Test func benchmarkGoesToTheGameAsOneCommand() throws {
+        let handling = run("benchmark", ["preset": "full", "stop": true])
+        let value = try #require(try result(handling)?.get())
+        #expect(value["done"]?.stringValue?.hasPrefix("benchmark(") == true)
+    }
+
     @Test func statusAnswersWithoutAGame() throws {
         let router = AgentCommandRouter(world: { nil })
         let status = try #require(try result(router.handle(

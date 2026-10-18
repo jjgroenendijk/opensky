@@ -55,6 +55,10 @@ final class GameViewController: NSViewController {
     var fastTextureLoad: FastTextureLoadControl?
     /// Times the work between the load and the first frame, for World > World Load.
     let sessionStart = SessionStartRecorder()
+    /// Times the streamer's builds by asset phase; set only when a benchmark tour will run.
+    var benchmarkLoadPhases: LoadPhaseRecorder?
+    /// The benchmark tour through the live window (docs/tools/benchmark.md).
+    lazy var benchmarkWorld = BenchmarkWorldAdapter(game: self)
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -346,6 +350,7 @@ extension GameViewController {
     private func wireSystems(session: CellSession?, gameSession newGameSession: GameSession) {
         hud.start()
         menuRouter.wire(gameSession: newGameSession)
+        benchmarkWorld.wire(gameSession: newGameSession)
         wireMenuMode(gameSession: newGameSession)
         if let session {
             worldData = session.data

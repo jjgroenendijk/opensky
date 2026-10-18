@@ -222,12 +222,13 @@ A texture loaded outside a cell build, or a texture with no current entry, takes
 path. The page calls this "Direct GPU loading", with one switch for textures, one for
 meshes, and one for "All disks". In a running game, World > Asset Optimisation has the same
 switches and shows the textures, bytes, and time of the last cell load.
-`openskycli benchmark --asset-optimisation --direct-load` measures it.
+`make benchmark` measures it, and `ARGS='--set assetOptimisation.directLoad=off'` the path
+without it ([benchmark](/tools/benchmark.md)).
 
 A texture read needs scratch memory, in requests from 16 KiB to 8 MiB. The queue's own
 allocator keeps that memory for the life of the queue, which added about 80 MB to the peak
 footprint of the fly route. The fast loader passes its own allocator, which frees each
-scratch buffer when its read ends. Median of three cold `bench --fly-path --fast-load` runs
+scratch buffer when its read ends. Median of three cold fly-path gate runs with direct loading
 (2026-10-07, run directory `.logs/fast-load-footprint/20261007T024924Z`): peak 1269 MB with
 the queue's allocator, 1189 MB with ours, and 1186 MB for the CPU upload. The frames until
 the stream settles did not change (391 and 393).
@@ -308,14 +309,19 @@ so the answer holds on any Mac and there is no per-Mac advice.
 
 ## Measurements
 
+`make asset-cache-bench` flies the quick benchmark tour three times, each after a page cache
+eviction: from the original archives, from the optimised files, and with direct GPU loading. It
+reads the optimised files from the folder in the app settings, so build them first. The tables
+below came from an earlier single-view benchmark of one block, so their numbers do not compare
+with a tour.
+
 Measured on 2026-10-07 on an Apple M1 with 16 GB and macOS 27, with the Release `openskycli`.
 The game data and every cache are on the same external USB SSD, so each table compares the
 archives with the cache and not two disks. Each cold run first drops the files from the page
 cache.
 
-The benchmark block, `openskycli benchmark`, reads 293 textures and makes 378 mesh loads. One
-run each,
-from `make asset-cache-bench CACHE=<folder on the game data disk>` (run directory
+The fixed nine-cell block around Tamriel `(6,-2)` reads 293 textures and makes 378 mesh loads.
+One run each, with the cache on the game data disk (run directory
 `.logs/asset-cache-bench/20261007T042624Z`):
 
 "Fixed ASTC" forces colour and normal maps to ASTC 6x6 and data maps to ASTC 8x8, with the
@@ -334,7 +340,7 @@ every file, while the cache keeps skinned and particle meshes (125 of the 378 lo
 the archives, so the two cold loads are not a fair pair. On this disk, direct GPU loading does
 not make the block's cold load faster, and it holds 377 MiB more GPU memory at its peak.
 
-Loading the block's 293 textures (365 MiB) as one batch, `asset-cache io-bench`, wall time
+Loading the block's 293 textures (365 MiB) as one batch, `asset-optimisation io-bench`, wall time
 and CPU time, same run:
 
 | Method | Cold | Warm |
@@ -347,7 +353,7 @@ and CPU time, same run:
 Cold, the disk limits every cache method, so fast loading gains nothing over the CPU
 upload. Warm, it is 12% faster.
 
-Streaming, `bench --fly-path --footprint-cap-mb 4096`, median of three cold runs, with a
+Streaming, the fly-path gate with a 4096 MB footprint cap, median of three cold runs, with a
 cache of the route's assets (run directory `.logs/stream-worst-frame/20261007T042841Z`):
 
 | Run | Frames until the stream settles | Worst frame | Peak footprint |

@@ -105,9 +105,9 @@ asset is ready at the next drain. The test stays deterministic.
 
 ## Decision per subsystem
 
-The per-frame numbers come from `openskycli bench --fly-path` on a Debug build, 3026 frames at
-1280x720 across 35 cells of Tamriel (measured 2026-09-30). Debug is slower than Release, so the
-numbers are an upper bound.
+The per-frame numbers come from the fly-path streaming gate (`FlyPathGateRealDataTests`) on a Debug
+build, 3026 frames at 1280x720 across 35 cells of Tamriel (measured 2026-09-30). Debug is slower
+than Release, so the numbers are an upper bound.
 
 | Subsystem | Isolation | Reason |
 | --- | --- | --- |

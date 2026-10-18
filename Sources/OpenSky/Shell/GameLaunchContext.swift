@@ -35,6 +35,8 @@ final class GameLaunchContext {
     private var cellSession: CellSession?
     private var worldLoadReport: WorldLoadReport?
     private(set) var gameDataErrorMessage: String?
+    /// Set before `load` when a benchmark tour will run, so its arrivals report asset phases.
+    var benchmarkLoadPhases: LoadPhaseRecorder?
     private var localizationLanguage = LocalizationLanguageSnapshot(
         language: LocalizationLanguageSettings.fallback,
         source: "English fallback"
@@ -84,21 +86,17 @@ final class GameLaunchContext {
             completion()
             return
         }
-        let language = localizationLanguage.language
-        let configurationStore = terrainLODConfigurationStore
-        let cacheSettings = AssetCacheSettings(store: PlayerSettingsStore(
-            persistence: try? PlayerSettingsFile.defaultFile()
-        ))
+        let request = WorldLoadRequest(
+            root: root,
+            language: localizationLanguage.language,
+            configurationStore: terrainLODConfigurationStore,
+            cacheSettings: AssetCacheSettings(store: PlayerSettingsStore(
+                persistence: try? PlayerSettingsFile.defaultFile()
+            )),
+            loadPhases: benchmarkLoadPhases
+        )
         loader.start(
-            work: { progress in
-                try await Self.loadWorld(
-                    root: root,
-                    language: language,
-                    configurationStore: configurationStore,
-                    cacheSettings: cacheSettings,
-                    progress: progress
-                )
-            },
+            work: { progress in try await Self.loadWorld(request, progress: progress) },
             onUpdate: onUpdate,
             completion: { [weak self, weak loader] world in
                 self?.virtualFileSystem = world.fileSystem
@@ -117,6 +115,7 @@ final class GameLaunchContext {
         let controller = GameViewController()
         controller.cellSession = cellSession
         controller.worldLoadReport = worldLoadReport
+        controller.benchmarkLoadPhases = benchmarkLoadPhases
         cellSession = nil
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
@@ -165,12 +164,9 @@ final class GameLaunchContext {
     /// to `DemoScene`. Only a cancel throws.
     @concurrent
     nonisolated private static func loadWorld(
-        root: GameDataRoot,
-        language: String,
-        configurationStore: TerrainLODConfigurationStore,
-        cacheSettings: AssetCacheSettings,
-        progress: WorldLoadProgress
+        _ request: WorldLoadRequest, progress: WorldLoadProgress
     ) async throws -> sending LoadedWorld {
+        let (root, cacheSettings) = (request.root, request.cacheSettings)
         let vfs = try progress.measure(.archives) { VirtualFileSystem(root: root) }
         logger.info("VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order")
         let cache = openAssetCache(settings: cacheSettings, files: vfs, root: root)
@@ -190,11 +186,12 @@ final class GameLaunchContext {
                 root: root,
                 fileSystem: vfs,
                 device: device,
-                localizationLanguage: language,
-                terrainLODConfigurationStore: configurationStore,
+                localizationLanguage: request.language,
+                terrainLODConfigurationStore: request.configurationStore,
                 progress: progress,
                 assetCache: cache,
-                fastLoad: fastLoad
+                fastLoad: fastLoad,
+                loadPhases: request.loadPhases
             )
             return LoadedWorld(
                 fileSystem: vfs, session: session, assetCache: cache, fastTextureLoad: fastLoad
@@ -226,4 +223,13 @@ final class GameLaunchContext {
             return nil
         }
     }
+}
+
+/// What the world load reads, taken on the main actor before the load starts.
+nonisolated private struct WorldLoadRequest: Sendable {
+    let root: GameDataRoot
+    let language: String
+    let configurationStore: TerrainLODConfigurationStore
+    let cacheSettings: AssetCacheSettings
+    let loadPhases: LoadPhaseRecorder?
 }

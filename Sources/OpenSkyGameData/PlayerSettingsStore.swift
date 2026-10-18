@@ -72,6 +72,19 @@ public final class PlayerSettingsStore {
             Self.logger
                 .error("[ERROR] settings load: \(String(describing: error), privacy: .public)")
         }
+        for (id, value) in PlayerSettingsOverrides.current {
+            _ = model.set(id, to: value, in: catalog)
+        }
+    }
+
+    /// An unsaved copy of `other` with `overrides` on top, for one benchmark run.
+    public init(copying other: PlayerSettingsStore, overrides: [PlayerSettingID: Double]) {
+        catalog = other.catalog
+        persistence = nil
+        model = other.model
+        for (id, value) in overrides {
+            _ = model.set(id, to: value, in: catalog)
+        }
     }
 
     public func value(_ id: PlayerSettingID) -> Double {
@@ -118,11 +131,14 @@ public final class PlayerSettingsStore {
 
     private func commit(_ changed: [PlayerSettingID], bindingsChanged: Bool = false) {
         guard !changed.isEmpty || bindingsChanged else { return }
-        do {
-            try persistence?.saveSettings(model.encoded())
-        } catch {
-            Self.logger
-                .error("[ERROR] settings save: \(String(describing: error), privacy: .public)")
+        // A forced value must not reach the player's file.
+        if !PlayerSettingsOverrides.isActive {
+            do {
+                try persistence?.saveSettings(model.encoded())
+            } catch {
+                Self.logger
+                    .error("[ERROR] settings save: \(String(describing: error), privacy: .public)")
+            }
         }
         let notify = changed + (bindingsChanged ? [.keyBindingsChanged] : [])
         for id in notify {

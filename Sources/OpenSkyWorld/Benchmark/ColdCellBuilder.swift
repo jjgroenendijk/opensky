@@ -1,37 +1,15 @@
-// The setup of the shared benchmark: a headless renderer and a fresh cell
-// builder over the install. `openskycli benchmark` and the Diagnostics page
-// both run it, so a problem report shows the number a developer measures.
+// A cell builder with empty caches over the install. The benchmark's cold load,
+// `openskycli render`, and the preview renderer each build one.
 
 import Foundation
 import Metal
-import MetalKit
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLoading
-import OpenSkyPlayer
 import OpenSkyRendering
 
-@MainActor
-public enum StandardBenchmark {
-    /// A session whose renderer draws offscreen at the plan's size, with the saved pipelines.
-    public static func makeSession(
-        device: MTLDevice, plan: PerformanceBenchmarkPlan, store: PlayerSettingsStore
-    ) throws -> GameSession {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: plan.frameWidth, height: plan.frameHeight),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try GameSession(
-            view: view,
-            scene: RenderScene(instances: []),
-            movementConfiguration: .synthetic,
-            pipelineCache: PipelineCache.fromSettings(device: device, store: store)
-        )
-    }
-
+public enum ColdCellBuilder {
     /// A builder with empty caches. A `recorder` gets every file read and asset phase.
     public static func makeBuilder(
         root: GameDataRoot, loadOrder: ActiveLoadOrder, files: any GameFileSource,
@@ -71,24 +49,5 @@ public enum StandardBenchmark {
             root: root,
             settings: settings
         ))
-    }
-
-    /// The benchmark with the saved settings and no options, as the Diagnostics page runs it.
-    public static func run(
-        root: GameDataRoot,
-        device: MTLDevice
-    ) throws -> PerformanceBenchmarkResult {
-        let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
-        let plan = PerformanceBenchmarkPlan.standard
-        let gameSession = try makeSession(device: device, plan: plan, store: store)
-        let loadOrder = try ActiveLoadOrder.open(root: root)
-        return try PerformanceBenchmark.run(
-            plan: plan, machine: .current(gpu: device.name), gameSession: gameSession
-        ) { recorder in
-            try makeBuilder(
-                root: root, loadOrder: loadOrder, files: VirtualFileSystem(root: root),
-                device: device, recorder: recorder
-            )
-        }
     }
 }

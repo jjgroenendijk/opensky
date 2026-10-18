@@ -1,173 +1,145 @@
 ---
 type: Tool
-title: Shared performance benchmark
-description: The one repeatable benchmark for load time, frame time, GPU time, and GPU memory -
-  what it measures, its launch and route modes, how load time splits into asset phases, the
-  result shape, and how to run it.
+title: Benchmark tour
+description: The one benchmark for load time, frame time, and GPU time - a camera tour through
+  cities, wilderness, interiors, and DLC worlds in the live game window, how to run it from the
+  launcher and the CLI, what each scene measures, and the result shape.
 tags: [tool, performance, benchmark]
 ---
 
-# Shared performance benchmark
+# Benchmark tour
 
-One benchmark measures load time and frame time on the real install. Every later
-performance item measures its win with it, and the app shows the same result. A second
-benchmark definition would give numbers that do not compare, so callers reuse this one.
+The benchmark flies a camera through a fixed list of places in the live game window and
+measures every frame. One tour serves the launcher, the CLI, and the agent socket, so their
+numbers compare. A second benchmark definition would give numbers that do not compare, so
+every performance change measures its win with this one.
 
 ## Run it
 
-`make benchmark` builds a Release `openskycli` and runs
-`openskycli benchmark --launch --route`. It writes
-`.logs/benchmark/<UTC timestamp>/` ([run output](/tools/run-output.md)):
+| From | How |
+| --- | --- |
+| Launcher | The Benchmark page: pick a length, then Run Benchmark. The page shows the newest result |
+| CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app and waits for it to quit |
+| Make | `make benchmark PRESET=quick` builds Release and keeps the output in `.logs/benchmark/` |
+| Running app | `openskycli game benchmark quick` starts the tour in the open game window |
+| App flag | `OpenSky.app --benchmark-request '<json>'`; this is what `openskycli benchmark` passes |
 
-- `benchmark.log`: the printed summary.
-- `result.json`: the full result.
-- `view.png`: the measured view, to check that it drew. It embeds game assets, so it stays in
-  `.logs/` and is never committed.
+A run writes `result.json` and `summary.txt` into its folder. The default folder is
+`~/Library/Application Support/OpenSky/Benchmarks/<UTC time>Z/`; `--out <folder>` picks
+another. The launcher and the Diagnostics page read the newest folder there.
 
-`openskycli benchmark --out <file>` runs the same steps from any build. A Debug build is
-much slower, and the result says which build ran it.
+CLI options:
 
-`--asset-optimisation` (or the old `--asset-cache`) loads textures and meshes through the
-[asset cache](/engine/asset-cache.md), with the texture quality and folder from the app
-settings unless `--texture-quality` or `--folder` overrides them. The summary then prints
-the cache hits and misses. `--evict` first drops the game data and the cache folder from the
-page cache, so the cold load reads from disk. It uses `msync` with `MS_INVALIDATE`, the
-method of `vmtouch -e`, and needs no `sudo`.
+| Option | What it does |
+| --- | --- |
+| `--preset` | `quick` (3 scenes), `standard` (every base-game scene), or `full` (DLC worlds too) |
+| `--scenes a,b` | These scene ids only, in tour order; `--list` prints every id |
+| `--set id=value` | Overrides one player setting for this run only. Repeat it for more |
+| `--no-overlay` | Starts with the readout hidden |
+| `--capture <id>` | Writes a GPU trace (`.gputrace`) of that scene's first measured frame |
+| `--no-load-passes` | Skips the cold and warm load passes |
+| `--evict` | Drops the game data from the page cache first, so the loads read from disk |
+| `--keep-open` | Leaves the app open after the tour |
+| `--app <path>` | Which `OpenSky.app` to open; the default is the installed one |
 
-`--loose <dir>` reads the files that `asset-optimisation extract` copied there before the
-archives.
-Comparing a run with it against a run without it separates the cost of the archive from the
-cost of the parse. `--record-paths <file>` writes the asset paths the cache was asked for,
-so `asset-optimisation build --paths` and `extract --paths` can work on just the benchmark's assets.
-The summary also prints the GPU memory allocated after the load.
+The CLI exits 1 when a scene fails, and such a result does not compare with a clean run.
 
-`--direct-load` (or `--fast-load`) loads the cached textures of each cell with Metal fast
-resource loading ([asset cache](/engine/asset-cache.md)) and prints the batches, textures,
-and bytes it read. `--direct-mesh-load` (or `--fast-mesh-load`) adds the cached meshes to the same batches
-([fast mesh loading](/engine/fast-mesh-loading.md)). `bench --fly-path` and
-`bench --walk-path` take the same cache options, so the cell
-loads while streaming can be compared with and without it.
+`--set` takes the ids of the player settings catalog. A toggle takes `on` or `off`, a choice
+takes its option text, and a number takes a number. For example:
+`--set rendering.gpuCulling=off`, `--set rendering.renderScale=67%`,
+`--set rendering.meshShaderGrass=on`, `--set assetOptimisation.directLoad=off`. The override
+lives only in the app's memory and is never saved.
 
-`--size WxH` sets the frame size. The default is 2560 by 1600, the size of a Retina
-display, because upscaling and other per-pixel work only show their cost at display sizes.
-`--launch` and `--route` add the two modes below; `--launch-seconds <s>` changes the 60
-seconds of the launch mode.
+`--evict` uses `msync` with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
 
-The command exits 1 when a cell fails to build. Such a result does not compare with a
-clean run.
+## While it runs
 
-## What it measures
+The Play window gets a toolbar with two buttons for the length of the run. The overlay
+button shows or hides the readout: the scene, its number, its progress, and the frame rate.
+The stop button ends the tour and keeps the scenes measured so far; the result then says
+`stopped`. The Developer window keeps both buttons in its own toolbar.
 
-The plan is fixed, so every run loads the same cells and renders the same view:
+The tour takes over the game for its length. It switches to fly mode, freezes the game
+clock, hides the in-game HUD, and steps the world by a fixed 1/60 s each frame. At the end it
+gives back the movement mode, the clock, the HUD, the camera, and the weather.
 
-1. A cold load: a new cell builder with empty caches builds the first-render cell, Tamriel
-   `(6,-2)`, and its eight neighbors. Then it builds distant LOD around that block, and the
-   farmhouse interior the walk benchmark enters.
-2. A warm load: the same builder builds the same cells again, with its caches full.
-3. Frame time: the nine exterior cells and the distant LOD from the warm load render
-   offscreen at the frame size. 60 frames warm up; 600 frames are measured.
+## The scenes
 
-The camera stands at the walk benchmark's start point, at player eye height over the
-terrain, and looks level toward the farm. A camera that frames the cell bounds does not
-work: a few placed objects sit far outside their cells, so the framed view shows the block
-from far away.
+Each scene has a place, a time of day, a weather, and a camera shot. Each shot runs 16 s, so
+every scene weighs the same in the tour total. Four shot kinds give different loads:
 
-Each frame waits for the GPU, so frame times are an upper bound on the pipelined game loop.
-The result reports the average, the 95th percentile, and the worst frame. It also reports the
-last frame's draw calls and drawn instances: two runs with different counts drew different
-views.
+- `dolly`: the eye follows a spline and looks along a second spline, as through a street.
+- `orbit`: a circle around a point, so the view sweeps the whole area.
+- `flyover`: a straight, fast flight that streams cells in on the way.
+- `pan`: the eye stands still and turns. Interiors use it.
 
-GPU time is the time the GPU spent on each frame's command buffer. Metal's commit feedback
-gives the GPU start and end time of each commit, the same numbers the frame HUD shows. It
-leaves out the CPU encode and the wait, so it shows GPU work apart from wall-clock time.
-Feedback can arrive after the last frame ends, so the GPU frame count can be one lower.
+| Group | Scenes |
+| --- | --- |
+| Cities | Whiterun, Solitude, Riften, Markarth, Windhelm |
+| Wilderness | Whiterun plains, Rift forest, Falkreath pines, Throat of the World, Hjaalmarch marsh, Winterhold coast, Blackreach |
+| Interiors | Dragonsreach, Bleak Falls Barrow, Mzinchaleft, Blue Palace, Ragged Flagon |
+| DLC worlds | Forgotten Vale, Soul Cairn (Dawnguard); Raven Rock, Tel Mithryn (Dragonborn) |
 
-CPU encode is the CPU time that the shadow and scene passes take to encode each frame. It
-holds culling, the per-draw uniform writes, and the draw calls, and leaves out the wait for the
-GPU. The static scene culls on the GPU, as in the app ([GPU culling](/rendering/gpu-culling.md)).
-`--cpu-culling` culls it on the CPU instead, and the `gpuCulling` field says which path ran.
-The drawn instance count adds the GPU's camera count, so the two paths compare.
+The quick preset takes one scene each of a city, the wilderness, and an interior.
 
-`--render-scale <percent>` renders the scene at 50 to 100 percent of the frame size and
-upscales it with MetalFX ([upscaling](/rendering/upscaling.md)). The `renderScale` field
-holds the percent, and 0 means native. `--upscaler temporal|spatial` picks the scaler, and the
-`upscaler` field records it. GPU time is the number to compare: the CPU encode
-barely changes.
+A DLC scene names the plugin it needs. When the load order lacks it, the scene is `skipped`
+with a note, and the result still compares. The positions come from the install's map
+markers and cell lists, read with `openskycli record` and `openskycli cell --refs`. A shot's
+points are offsets from the scene's origin: the ground under the exterior position, or where
+an interior's door puts the player.
 
-`--frame-interpolation`, with the temporal scaler, also builds one MetalFX frame between
-every two real frames and draws the overlays on it
-([frame interpolation](/rendering/frame-interpolation.md)). The `frameInterpolation` field
-says whether it ran. The GPU time then covers both frames, so the cost of the extra frame is
-the difference to the same run without the flag.
+## What a scene measures
 
-`--mesh-shader-grass` draws grass with object and mesh shaders, which cull meshlets on the
-GPU ([mesh-shader grass](/rendering/mesh-shader-grass.md)). The `meshShaderGrass` field says
-whether the mesh path drew. Compare its GPU time to the same run without the flag.
+Every scene runs the same steps:
 
-GPU memory is sampled after each load pass and after each measured frame:
+1. Arrival: the camera teleports to the place, and the time until streaming is done counts
+   as `arrivalMS`. Streaming is done when no cell is in flight, queued, or waiting to finish.
+   Its cell builds split into load phases (below). An arrival that takes over 150 s fails.
+2. Warm-up: 120 frames at the first pose of the shot, so first uploads and pipeline creation
+   do not land in the measured frames. Settling has its own 45 s limit.
+3. Measuring: the shot plays, one 1/60 s step a frame. Every frame is recorded.
 
-- total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;
-- render targets: resident textures that a pass renders into, such as the color and depth
-  targets and the shadow maps;
-- textures: resident textures that shaders only read.
+Per scene the result holds:
 
-The result keeps the peak of each value and the last sample. The two parts come from the
-renderer's residency set, so buffers and short-lived staging memory count only in the total.
+- `frameTime` and `gpuTime`: average, 95th and 99th percentile, the worst frame, and the 1%
+  low frame rate. GPU time is the time between Metal's start and end of each frame's command
+  buffer, so it leaves out the CPU encode and the wait.
+- `passes`: GPU time per pass, read from Metal counter heaps: `setup` (texture streaming and
+  the ray-traced shadow build), `shadows`, and `scene`, the main render pass. Apple GPUs run
+  the draws of one render encoder together, tile by tile, so a timestamp inside an encoder
+  does not split its time. On an M1, marks inside the scene encoder put almost the whole pass on
+  the first mark. The timer therefore marks only the boundaries between encoders. For the cost of one
+  layer inside the scene pass, compare two runs with that layer off, or read a `--capture`
+  trace in Xcode.
+- `cpu`: CPU time per subsystem: `simulation`, `animation`, `shadows`, `encode`, `scripts`,
+  and `audio`. Each is read from the frame before.
+- the average draw calls and drawn instances. Two runs with different counts drew different
+  views.
+- `gpuMemory`: the GPU memory allocated, sampled every 30 frames.
 
-`--texture-streaming` streams the large textures of the view and the route
-([texture streaming](/rendering/texture-streaming.md)), and `--texture-budget <MiB>` sets its
-budget; either flag turns streaming on. Without them, streaming is off whatever the player
-settings say. The `textureStreaming` field and its line hold the streamed textures, the mapped
-and heap memory at the end of the run, and the levels loaded and dropped.
+The whole tour also gets a `frameTime` and `gpuTime` over every measured frame.
 
-The grass line gives the grass draws and instances in the last measured frame. Zero draws
-means the view shows no grass, so a grass change cannot show a win there.
+Each scene is an `OSSignposter` interval in the `Benchmark` category, so an Instruments trace
+shows where each scene starts and ends. `make profile` records one
+([testing](/testing.md), Profiling).
 
-## Launch mode
+## Load time
 
-`--launch` times the start of a fresh process. After the cold load, the cold-loaded view
-renders frames for 60 seconds before the warm load starts. The result holds:
+A run from the CLI or the app flag times the app's own start: from the kernel's process
+start until the world is ready (`processToWorldReadyMS`), each world load stage, and the
+session start phases. A launcher run starts in a process that is already running, so it has
+no app start.
 
-- `processToFirstFrameMS`: from the process start, as the kernel records it, to the end of
-  the first frame. It holds Metal setup, the cold load, and the first frame.
-- `firstFrameMS`: the first frame alone. Pipeline creation and first uploads land here.
-- `frameTime`: every frame of the 60 seconds, so its worst frame is the worst frame of the
-  first minute.
+Before the first scene, unless `--no-load-passes` is given, a new cell builder with empty
+caches builds the first scene's cells twice off screen: once cold, then again warm with its
+caches full. An exterior builds the 3 by 3 block around its origin and its distant LOD. The
+live streamer is not touched. A cold load here means cold OpenSky caches. The operating
+system may still hold the archive bytes from an earlier run; `--evict` drops them.
 
-The [pipeline cache](/rendering/pipeline-cache.md) saves compiled pipelines in the asset
-cache folder. `--cold-pipelines` (`make benchmark ARGS=--cold-pipelines`) deletes the archive
-first, so the run compiles every pipeline and saves a new archive. A second run without it
-then loads them. The `pipelines` field holds the renderer setup time, the archive state, and
-how many pipelines were loaded and compiled. macOS also caches compiled shaders between runs,
-so the first run after a build or a reboot can be slower for that reason too.
+### Load phases
 
-## Route mode
-
-`--route` walks the shared route of `bench --walk-path` at the frame size: across a cell
-border, up stairs, through a door into the farmhouse, and back. Cells stream in while it
-walks. One route serves both tools, so their numbers compare.
-
-The route uses a new cell builder with empty caches; the file cache of the operating system
-may still be warm. The result holds:
-
-- `frameTime`: every frame of the route, the frames that wait for a cell included. Its worst
-  frame is the worst frame while streaming.
-- `gpuTime`: GPU time over the same frames.
-- `cellLoads`: each cell, distant LOD, and door build, with its time and any error. Builds
-  run off the main thread, so a slow build shows as a wait, not as a long frame.
-
-The walk gates still apply: a route that does not climb the stairs or cross the interior
-fails the command. The route runs without the audio engine of `bench --walk-path`, so its frame times
-are a little lower than that command's.
-
-The cold load runs in the same process as the first file access, but the operating system
-may still hold the archive bytes in its file cache from an earlier run. A cold load here
-means cold OpenSky caches, not a cold disk.
-
-## Load phases
-
-Each load pass splits its time into phases. A phase counts only its own time. A mesh load
-that reads an archive gives the read to `archive`, and the rest to `mesh`.
+Each load pass, and each arrival, splits its time into phases. A phase counts only its own
+time. A mesh load that reads an archive gives the read to `archive`, and the rest to `mesh`.
 
 | Phase | What it holds |
 | --- | --- |
@@ -177,37 +149,37 @@ that reads an archive gives the read to `archive`, and the rest to `mesh`.
 | `collision` | Static collision, trigger volumes, and dynamic bodies |
 | `other` | Everything else: record lookups, actors, lighting, setup |
 
-Distant LOD has its own line in the cell list, and its asset work counts in the phases.
-
 A cell builder reports phases when a `LoadPhaseRecorder` is attached to it and its file
 source is wrapped in `PhaseTimedFileSource`. Normal play attaches none and pays one nil check
-per asset load. The recorder handles one thread of loading. Two threads loading at once
-would mix their phase times.
+per asset load. The app attaches one only when a tour will run.
 
 ## The result
 
-`PerformanceBenchmarkResult` is the one result shape. The JSON has sorted keys and ISO 8601
-dates, so two results diff line by line. It holds:
+`BenchmarkTourResult` is the one result shape. The JSON has sorted keys and ISO 8601 dates,
+so two results diff line by line. It holds the machine, the build configuration, the preset,
+the frame size, every setting that differs from its default, the overrides, the app start,
+the cold and warm load, each scene, and the tour totals.
 
-- the machine: model, CPU, GPU, memory, and macOS version;
-- the build configuration: `debug`, `optimizedDebug`, or `release`;
-- the plan;
-- the cold and the warm load pass, each with its total, its phases, and each cell's time;
-- the frame time, with `gpuTime`, `encodeTime`, `gpuCulling`, and `grass`;
-- `gpuMemory`, with `peak` and `last`, each holding `totalMB`, `renderTargetMB`, and
-  `textureMB`;
-- `launch` and `route`, when their mode ran;
-- `pipelines`: the renderer setup time and the pipeline cache counts.
+`isComparable` is true when no scene failed, the tour was not stopped, and every load built.
+Compare only two comparable runs on the same machine, preset, and build configuration. A
+Debug build is much slower, and the result says which build ran it.
 
-A field added after the first version is optional, so an older result still decodes with that
-field empty.
+`schemaVersion` changes when a field changes meaning or goes away. A new field is optional,
+so an older result still decodes. Version 2 is the tour; version 1 results do not decode.
 
-`schemaVersion` changes when a field changes meaning or goes away. A new field does not
-need a new version. The frame size is part of the plan, so a result at another size says so
-in its own plan.
+## GPU capture
 
-## Calling it from the app
+`--capture <id>` sets `MTL_CAPTURE_ENABLED=1` for the app, because Metal allows a
+programmatic capture only with it. The trace lands in the run folder as `<id>.gputrace`.
+It embeds game assets, so keep it in `.logs/` or the default folder and never commit it.
 
-`PerformanceBenchmark.run` lives in `OpenSkyWorld`, so the app can call it without the
-CLI. The caller passes a renderer and a closure that builds a fresh `CellSceneBuilder`
-reporting into the given recorder. The CLI's builder is the example.
+## Where the code lives
+
+`BenchmarkTourCoordinator` in `OpenSkyWorld` holds the tour rules: the phases, the timeouts,
+the skipped scenes, and the result. It talks to the game through the `BenchmarkTourWorld`
+port, so `BenchmarkTourCoordinatorTests` runs a whole tour against a fake world. The app's
+`BenchmarkWorldAdapter` is the live game window behind that port.
+
+The old fixed-path gates for streaming, walking, and sustained frame time are now real-data
+tests: `FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`, and
+`SustainedRenderGateRealDataTests`. `make test-real PERF=1` runs them.
