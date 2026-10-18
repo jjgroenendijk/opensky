@@ -56,4 +56,17 @@ struct NavigationCellContentsTests {
         #expect(graph.door(FormID(8)) == nil)
         #expect(graph.installedCells.isEmpty)
     }
+
+    @Test
+    func teleportFlagFollowsTheResidentDoors() {
+        var graph = RuntimeNavigationGraph()
+        graph.setCell(Self.cell, contents: Self.contents(placed: [(8, Self.door(at: 30))]))
+        #expect(!graph.hasTeleportDoors)
+        graph.setCell(Self.other, contents: Self.contents(
+            placed: [(9, Self.door(at: 40, to: Self.destination))]
+        ))
+        #expect(graph.hasTeleportDoors)
+        graph.retainCells([Self.cell])
+        #expect(!graph.hasTeleportDoors)
+    }
 }

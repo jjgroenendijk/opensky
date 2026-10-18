@@ -110,9 +110,8 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
         navmeshes.values.reduce(0) { $0 + $1.triangles.count }
     }
 
-    public var hasTeleportDoors: Bool {
-        doors.values.contains { $0.destination != nil }
-    }
+    /// Kept on residency changes, because the pathfinder asks once per searched triangle.
+    public private(set) var hasTeleportDoors = false
 
     public mutating func setCell(_ location: CellSceneLocation, contents: NavigationCellContents) {
         removeCell(location)
@@ -131,6 +130,7 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
             }
         }
         installDoors(from: contents, at: location)
+        refreshTeleportDoors()
     }
 
     public mutating func removeCell(_ location: CellSceneLocation) {
@@ -150,6 +150,11 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
         for doorID in cellDoors.removeValue(forKey: location) ?? [] {
             doors.removeValue(forKey: doorID)
         }
+        refreshTeleportDoors()
+    }
+
+    private mutating func refreshTeleportDoors() {
+        hasTeleportDoors = doors.values.contains { $0.destination != nil }
     }
 
     public mutating func retainCells(_ locations: Set<CellSceneLocation>) {
@@ -264,6 +269,7 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
         self.cellDoors = cellDoors
         self.doorTriangles = doorTriangles
         self.scratch = scratch
+        refreshTeleportDoors()
     }
 }
 
