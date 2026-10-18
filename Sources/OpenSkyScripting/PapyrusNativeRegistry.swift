@@ -12,6 +12,12 @@ nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
         self.scriptName = PapyrusRuntime.key(scriptName)
         self.functionName = PapyrusRuntime.key(functionName)
     }
+
+    /// A key from names the caller already folded with `PapyrusName.key`.
+    public init(foldedScriptName: String, foldedFunctionName: String) {
+        scriptName = foldedScriptName
+        functionName = foldedFunctionName
+    }
 }
 
 nonisolated public struct PapyrusNativeFunction: Sendable {
@@ -104,11 +110,7 @@ public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
     }
 
     public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
-        let key = PapyrusNativeKey(
-            scriptName: call.scriptName,
-            functionName: call.functionName
-        )
-        guard let function = functions[key] else {
+        guard let function = functions[call.key] else {
             let message = "Unimplemented native \(call.qualifiedName)"
             context.log.append(message)
             Self.logger.info("\(message, privacy: .public)")

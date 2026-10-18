@@ -121,7 +121,8 @@ extension PapyrusInterpreter {
             functionName: call.functionName,
             receiver: call.receiver,
             arguments: arguments + [.string(lines.joined(separator: "\n"))],
-            returnType: call.returnType
+            returnType: call.returnType,
+            key: call.key
         )
     }
 
