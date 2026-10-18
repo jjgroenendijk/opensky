@@ -23,8 +23,14 @@ public final class SceneCoordinator {
     static let rescanInterval = 60
 
     public var catalog = SceneCatalog.empty {
-        didSet { rescan() }
+        didSet {
+            catalogRevision &+= 1
+            rescan()
+        }
     }
+
+    private(set) var catalogRevision: UInt64 = 0
+    let conditionCache = RevisionCache<SceneConditionKey, SceneConditionBase>()
 
     public private(set) var trace: [SceneEvent] = []
     public private(set) var lines: [SceneLine] = []

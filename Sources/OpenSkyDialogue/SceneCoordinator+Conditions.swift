@@ -8,26 +8,51 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
+/// The catalog and the scene-state writes the scene seam was built from.
+struct SceneConditionKey: Equatable {
+    let catalog: UInt64
+    let states: UInt64
+}
+
+/// The part of the scene seam that does not depend on the aliases.
+struct SceneConditionBase {
+    var playing: [FormID: Set<UInt32>] = [:]
+    /// The alias of each actor a playing scene holds, resolved on every read because
+    /// an alias can be filled again without a scene-state write.
+    var heldAliases: [(alias: UInt32, quest: FormID)] = []
+}
+
 extension SceneCoordinator {
     /// Completed actions by their `INAM` index; an action with none keeps its position.
     public func conditionResolution(aliases: QuestAliasResolution) -> SceneConditionResolution {
-        var playing: [FormID: Set<UInt32>] = [:]
+        let key = SceneConditionKey(
+            catalog: catalogRevision, states: dialogue.store.revision(of: [.scene])
+        )
+        let base = conditionCache.value(for: key, build: conditionBase)
         var actors: Set<ReferenceKey> = []
+        for held in base.heldAliases {
+            if let reference = aliases.reference(alias: held.alias, in: held.quest) {
+                actors.insert(reference)
+            }
+        }
+        return SceneConditionResolution(playing: base.playing, actors: actors)
+    }
+
+    private func conditionBase() -> SceneConditionBase {
+        var base = SceneConditionBase()
         for entry in catalog.all {
             guard let state = dialogue.store.component(SceneRuntimeState.self, for: entry.key)
             else { continue }
             let actions = entry.scene.actions
-            playing[entry.formID] = Set(state.completed.map { position in
+            base.playing[entry.formID] = Set(state.completed.map { position in
                 actions.indices.contains(Int(position))
                     ? actions[Int(position)].index ?? position : position
             })
             guard state.holdsActors, let quest = entry.quest else { continue }
             for actor in entry.scene.actors where actor.aliasID >= 0 {
-                if let reference = aliases.reference(alias: UInt32(actor.aliasID), in: quest) {
-                    actors.insert(reference)
-                }
+                base.heldAliases.append((UInt32(actor.aliasID), quest))
             }
         }
-        return SceneConditionResolution(playing: playing, actors: actors)
+        return base
     }
 }

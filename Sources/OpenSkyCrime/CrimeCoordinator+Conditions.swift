@@ -2,8 +2,21 @@
 
 import OpenSkyConditions
 import OpenSkyCrimeInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
+import OpenSkyWorldState
+
+/// What the crime seam was built from: the coordinator's own state, the store kinds
+/// it reads, where the player stands, and the run-ons asked about.
+struct CrimeConditionKey: Equatable {
+    let coordinator: UInt64
+    let store: UInt64
+    let scriptedOwners: UInt64?
+    let cell: CellSceneLocation?
+    let references: [ReferenceKey]
+}
 
 extension CrimeCoordinator {
     /// Only the player's ledger travels: nothing gives an NPC a bounty, so a
@@ -12,6 +25,23 @@ extension CrimeCoordinator {
     public func conditionResolution(owning references: [ReferenceKey] = [])
         -> CrimeConditionResolution
     {
+        guard let reporter else { return .empty }
+        let key = CrimeConditionKey(
+            coordinator: conditionRevision,
+            store: reporter.runtime.revision(of: Self.conditionKinds),
+            scriptedOwners: scriptedOwnerRevision?(),
+            cell: world.currentCellLocation,
+            references: references
+        )
+        return conditionCache.value(for: key) { freshConditionResolution(owning: references) }
+    }
+
+    /// The ledger, the gold that pays it, and faction memberships.
+    private static let conditionKinds: [WorldStateComponentKind] = [
+        .crimeLedger, .inventory, .factions
+    ]
+
+    func freshConditionResolution(owning references: [ReferenceKey]) -> CrimeConditionResolution {
         guard let reporter else { return .empty }
         let ledger = reporter.runtime.ledger()
         return CrimeConditionResolution(

@@ -91,6 +91,24 @@ extension RuntimeStateWorldAdapter {
     /// run-on can name. Any other holder is read on demand through the lookup.
     private func inventoryResolution(context: ConditionContext) -> InventoryConditionResolution? {
         guard let runtime = game.inventory.runtime else { return nil }
+        let actors = [.player] + context.references.sortedActorEntries.map(\.key)
+        let key = InventoryViewKey(
+            runtime: ObjectIdentifier(runtime),
+            writes: runtime.inventory.store.revision(of: [.inventory]),
+            actors: actors,
+            spellHands: actors.map { actor in
+                context.magic.state(of: actor).map { Set($0.handSpells.keys) } ?? []
+            },
+            hasEquipment: game.inventory.equipment != nil
+        )
+        return conditionCaches.inventory.value(for: key) {
+            freshInventoryResolution(context: context, runtime: runtime)
+        }
+    }
+
+    private func freshInventoryResolution(
+        context: ConditionContext, runtime: WorldItemRuntime
+    ) -> InventoryConditionResolution {
         let stacks = runtime.inventory.inventory(of: runtime.player).stacks
         let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []
         var equipment: [ReferenceKey: ActorEquipmentFacts] = [:]
