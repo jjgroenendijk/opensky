@@ -193,7 +193,7 @@ final class ScriptWorldAdapter {
         bridge.perceptionNatives.livePosition = { [weak game] key in
             guard let game else { return nil }
             guard key != .player else { return game.gameSession?.locomotion.status.feetPosition }
-            return game.actorWorld.combatActors().first { $0.key == key }?.feet
+            return game.actorWorld.combatActor(key: key)?.feet
         }
     }
 

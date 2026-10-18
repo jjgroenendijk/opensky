@@ -106,6 +106,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// is an ACHR.
     func combatActors() -> [CombatActorObservation]
 
+    /// The resident actor `key`, as `combatActors()` lists it.
+    func combatActor(key: ReferenceKey) -> CombatActorObservation?
+
     /// `key`'s stored regard for the player, neutral when it carries none.
     func combatHostility(of key: ReferenceKey) -> ActorHostility
 
@@ -247,6 +250,13 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// True while `key`'s current AI package has the Ignore Combat flag: the actor
     /// neither fights nor flees (<https://ck.uesp.net/wiki/Package_Flags>).
     func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool
+}
+
+extension CombatLoopWorld {
+    /// A search of the whole list, for a session without a lookup by key.
+    public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
+        combatActors().first { $0.key == key }
+    }
 }
 
 nonisolated extension CombatLoopWorld {

@@ -82,6 +82,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.actorWorld.combatActors()
     }
 
+    func residentActor(key: ReferenceKey) -> CombatActorObservation? {
+        game.actorWorld.combatActor(key: key)
+    }
+
     /// The nearest resident actor: the same selector the actor-value controls use.
     func selectedActor() -> ReferenceKey? {
         game.actorWorld.nearestActorValueHolder()?.key

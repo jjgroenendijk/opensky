@@ -4,6 +4,11 @@
 import OpenSkyFormatsESM
 
 extension WorldStateStore {
+    /// Rises on every delta write and every restore, so a reader can key its own cache.
+    public var deltaRevision: UInt64 {
+        derivedCache.revision
+    }
+
     /// A value built from the deltas and `source`, kept until the next delta write.
     /// Readers that scan many keys each frame use it, such as the quest resolutions.
     public func derived<Value>(
@@ -38,7 +43,7 @@ extension WorldStateStore {
 /// A restore does not move the journal sequence, so the cache keeps its own revision.
 @MainActor
 final class WorldStateDerivedCache {
-    private var revision: UInt64 = 0
+    private(set) var revision: UInt64 = 0
     private var values: [Key: (revision: UInt64, value: Any)] = [:]
 
     func invalidate() {

@@ -224,7 +224,7 @@ extension EffectsWorldAdapter: EffectsWorld {
                 yaw: atan2(look.y, look.x)
             )
         }
-        guard let observed = game.actorWorld.combatActors().first(where: { $0.key == actor }) else {
+        guard let observed = game.actorWorld.combatActor(key: actor) else {
             // A script plays effects on objects too; they stand where their record and
             // the session's moves put them.
             return game.scripts.bridge?.referenceState(for: actor).map {

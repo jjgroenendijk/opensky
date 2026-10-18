@@ -18,12 +18,16 @@ extension CombatCoordinator: CombatLoopWorld {
         world.residentActors()
     }
 
+    public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
+        world.residentActor(key: key)
+    }
+
     /// The actor the player last hurt, while it lives and stands within
     /// `enemyBarRange` of `playerFeet`. The HUD names it under the compass.
     public func engagedEnemy(playerFeet: SIMD3<Float>) -> CombatActorObservation? {
         guard
             let key = playerStruckTarget,
-            let actor = combatActors().first(where: { $0.key == key }),
+            let actor = combatActor(key: key),
             !actor.isDead,
             simd_distance(actor.feet, playerFeet) <= Self.enemyBarRange
         else { return nil }

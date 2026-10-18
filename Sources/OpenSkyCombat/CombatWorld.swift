@@ -38,6 +38,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     var playerShooter: ProjectileShooter? { get }
     /// Every resident actor, with its current pose and death state.
     func residentActors() -> [CombatActorObservation]
+    /// The resident actor `key`, as `residentActors()` lists it.
+    func residentActor(key: ReferenceKey) -> CombatActorObservation?
     /// The actor the panel's hostility control acts on.
     func selectedActor() -> ReferenceKey?
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
@@ -132,6 +134,11 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 }
 
 extension CombatWorld {
+    /// A search of the whole list, for a session without a lookup by key.
+    public func residentActor(key: ReferenceKey) -> CombatActorObservation? {
+        residentActors().first { $0.key == key }
+    }
+
     /// A session with no magic forces no behaviour.
     public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
         .none

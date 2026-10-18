@@ -151,7 +151,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
                 yaw: view.yaw
             )
         }
-        guard let actor = game.actorWorld.combatActors().first(where: { $0.key == key })
+        guard let actor = game.actorWorld.combatActor(key: key)
         else { return nil }
         return CinematicAnchor(
             position: actor.feet,

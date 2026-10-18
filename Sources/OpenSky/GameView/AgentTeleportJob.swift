@@ -319,7 +319,7 @@ extension AgentTeleportJob {
     private static func standingSpot(of key: ReferenceKey, game: any AgentWorldHost)
         -> SIMD3<Float>?
     {
-        if let actor = game.actorWorld.combatActors().first(where: { $0.key == key }) {
+        if let actor = game.actorWorld.combatActor(key: key) {
             // Rotation Z counts clockwise from north, so forward is (sin, cos).
             let front = SIMD2<Float>(sin(actor.facing), cos(actor.facing)) * actorStandOff
             return actor.feet + SIMD3(front, 0)

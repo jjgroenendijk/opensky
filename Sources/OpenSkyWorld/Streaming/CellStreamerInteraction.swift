@@ -251,6 +251,14 @@ extension CellStreamer {
         return composition.actorPlacements[key]
     }
 
+    /// One entry of `residentActorEntries()` in constant time.
+    public func residentActorEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        if let interiorScene {
+            return interiorActorPlacements?[key] == nil ? nil : interiorScene.references[key]
+        }
+        return composition.actorEntry(key: key)
+    }
+
     /// The resident ACHR closest to `position`, or nil when none is loaded. The
     /// equipment sidebar uses it. Linear over resident actors, with deterministic
     /// ties through `actorEntries()`.
