@@ -27,7 +27,8 @@ public final class BenchmarkTourCoordinator {
 
     /// A scene between its arrival and its first measured frame.
     public struct Settling: Equatable {
-        public let origin: SIMD3<Float>
+        /// Taken again once streaming settles, when the ground under it is resident.
+        public var origin: SIMD3<Float>
         public let started: Double
         public let arrived: Double
         /// Nil until streaming settles, then the warm-up frames run so far.
@@ -46,6 +47,7 @@ public final class BenchmarkTourCoordinator {
     private var result: BenchmarkTourResult?
     private var current: BenchmarkSceneResult?
     private var recorder = BenchmarkSceneRecorder()
+    private var clearance = BenchmarkTerrainClearance()
     private var allFrameMS: [Double] = []
     private var allGPUMS: [Double] = []
     private var memory = GPUMemoryTracker()
@@ -112,7 +114,7 @@ public final class BenchmarkTourCoordinator {
         result.appStart = appStart
         result.overrides = request.settings
         result.passTiming = true
-        (result.frameWidth, result.frameHeight) = world.frameSize
+        result.screenshots = request.screenshots
         world.beginTour(overrides: overrides, passTiming: true)
         result.settings = world.activeSettings
         self.result = result
@@ -199,6 +201,7 @@ extension BenchmarkTourCoordinator {
         current = BenchmarkSceneResult(scene: scene, status: .measured)
         current?.hour = scene.hour
         recorder = BenchmarkSceneRecorder()
+        clearance = BenchmarkTerrainClearance()
         signposts.beginScene(scene.id)
         world.resetArrivalPhases()
         world.startArrival(at: scene.place)
@@ -215,14 +218,14 @@ extension BenchmarkTourCoordinator {
         case let .failed(message):
             failScene(message)
         case let .arrived(feet):
-            let origin = Self.origin(of: scene.place, feet: feet, world: world)
+            let origin = Self.origin(of: scene, feet: feet, world: world)
             world.setHour(scene.hour)
             if world.setWeather(scene.weather) {
                 current?.weather = scene.weather
             } else if let weather = scene.weather {
                 current?.note = "weather \(weather) is not selectable here"
             }
-            world.setCamera(scene.shot.pose(at: 0, origin: origin))
+            world.setCamera(pose(of: scene, at: 0, origin: origin, world: world))
             signposts.mark("arrived")
             phase = .settling(Settling(origin: origin, started: started, arrived: now))
         }
@@ -230,7 +233,7 @@ extension BenchmarkTourCoordinator {
 
     private func awaitSettling(_ settling: Settling, world: any BenchmarkTourWorld, now: Double) {
         let scene = scenes[index]
-        world.setCamera(scene.shot.pose(at: 0, origin: settling.origin))
+        world.setCamera(pose(of: scene, at: 0, origin: settling.origin, world: world))
         var settling = settling
         if settling.settledSteps == nil {
             let timedOut = now - settling.arrived > Self.settleTimeoutSeconds
@@ -242,6 +245,8 @@ extension BenchmarkTourCoordinator {
                     current?.note = "streaming did not settle in \(limit) s"
                 }
                 settling.settledSteps = 0
+                settling.origin = Self.origin(of: scene, feet: settling.origin, world: world)
+                clearance = BenchmarkTerrainClearance()
                 signposts.mark("settled")
             }
         }
@@ -267,6 +272,9 @@ extension BenchmarkTourCoordinator {
             recorder.add(frameMS: interval, sample: world.frameSample())
         }
         recorder.add(gpuMS: world.takeGPUFrameTimes(), passes: world.takePassTimes())
+        if request.screenshots, let label = Self.screenshotLabel(step: step, shot: scene.shot) {
+            saveScreenshot(label, scene: scene, world: world)
+        }
         if step % Self.memoryInterval == 0 {
             let usage = world.gpuMemory()
             recorder.add(memory: usage)
@@ -277,14 +285,53 @@ extension BenchmarkTourCoordinator {
             finishScene()
             return
         }
-        world.setCamera(scene.shot.pose(at: elapsed, origin: origin))
+        world.setCamera(pose(of: scene, at: elapsed, origin: origin, world: world))
         phase = .measuring(origin: origin, step: step + 1)
     }
 
+    private func pose(
+        of scene: BenchmarkScene, at elapsed: Double, origin: SIMD3<Float>,
+        world: any BenchmarkTourWorld
+    ) -> BenchmarkCameraPose {
+        guard case .exterior = scene.place else {
+            return scene.shot.pose(at: elapsed, origin: origin)
+        }
+        let obstacles = BenchmarkObstacles(
+            ground: { x, y in world.groundHeight(x: x, y: y) },
+            isBlocked: { point, radius in world.isBlocked(point, radius: radius) },
+            crosses: { start, end in world.crossesCollision(from: start, to: end) }
+        )
+        return clearance.lift(scene.shot, at: elapsed, origin: origin, obstacles: obstacles)
+    }
+
+    /// The folder the result goes to, so traces and PNGs land beside `result.json`.
+    private var runFolder: URL {
+        request.outDirectory.map { URL(filePath: $0) }
+            ?? BenchmarkReport.defaultFolder(startedAt: result?.startedAt ?? Date())
+    }
+
+    static func screenshotLabel(step: Int, shot: BenchmarkShot) -> String? {
+        let last = Int(shot.seconds / stepSeconds)
+        return switch step {
+        case 1: "start"
+        case last / 2: "middle"
+        case last: "end"
+        default: nil
+        }
+    }
+
+    private func saveScreenshot(
+        _ label: String, scene: BenchmarkScene, world: any BenchmarkTourWorld
+    ) {
+        let number = String(format: "%02d", index + 1)
+        let url = runFolder.appending(path: "\(number)-\(scene.id)-\(label).png")
+        world.saveScreenshot(to: url)
+        let saved = current?.screenshots ?? []
+        current?.screenshots = saved + [url.path(percentEncoded: false)]
+    }
+
     private func requestCapture(scene: BenchmarkScene, world: any BenchmarkTourWorld) {
-        let folder = request.outDirectory.map { URL(filePath: $0) }
-            ?? FileManager.default.temporaryDirectory
-        let url = folder.appending(path: "\(scene.id).gputrace")
+        let url = runFolder.appending(path: "\(scene.id).gputrace")
         let sceneID = scene.id
         world.captureFrame(to: url) { [weak self] outcome in
             self?.recordCapture(outcome, sceneID: sceneID)
@@ -341,6 +388,10 @@ extension BenchmarkTourCoordinator {
             return
         }
         guard var result else { return }
+        // Read before the window leaves full screen, so it is the measured size.
+        if let world {
+            (result.frameWidth, result.frameHeight) = world.frameSize
+        }
         world?.endTour()
         result.durationSeconds = (world?.now ?? tourStarted) - tourStarted
         result.frameTime = BenchmarkDistribution(milliseconds: allFrameMS)
@@ -354,13 +405,9 @@ extension BenchmarkTourCoordinator {
     }
 
     static func origin(
-        of place: BenchmarkPlace, feet: SIMD3<Float>, world: any BenchmarkTourWorld
+        of scene: BenchmarkScene, feet: SIMD3<Float>, world: any BenchmarkTourWorld
     ) -> SIMD3<Float> {
-        switch place {
-        case let .exterior(_, x, y):
-            SIMD3(x, y, world.groundHeight(x: x, y: y) ?? feet.z)
-        case .interior:
-            feet
-        }
+        guard case let .exterior(_, x, y) = scene.place else { return .zero }
+        return SIMD3(x, y, scene.streetLevel ?? world.groundHeight(x: x, y: y) ?? feet.z)
     }
 }

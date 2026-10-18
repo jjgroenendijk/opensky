@@ -69,7 +69,7 @@ struct CommandLineTests {
                 "benchmark", "--preset", "quick", "--scenes", "whiterun,dragonsreach",
                 "--set", "rendering.renderScale=1", "--set", "rendering.gpuCulling=off",
                 "--no-overlay", "--capture", "whiterun", "--no-load-passes", "--keep-open",
-                "--evict", "--out", "/tmp/run"
+                "--evict", "--screenshots", "--windowed", "--out", "/tmp/run"
             ],
             as: BenchmarkArguments.self
         )
@@ -79,6 +79,8 @@ struct CommandLineTests {
         #expect(benchmark.noOverlay && benchmark.noLoadPasses && benchmark.keepOpen && benchmark
             .evict)
         #expect(benchmark.capture == "whiterun")
+        #expect(benchmark.screenshots)
+        #expect(benchmark.windowed)
         #expect(benchmark.out == "/tmp/run")
         #expect(try command(["benchmark", "--list"], as: BenchmarkArguments.self).list)
     }

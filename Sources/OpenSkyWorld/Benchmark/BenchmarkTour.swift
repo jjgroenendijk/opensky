@@ -30,7 +30,9 @@ nonisolated public enum BenchmarkTour {
         ),
         BenchmarkScene(
             id: "solitude", title: "Solitude from above", group: .city,
-            place: .exterior(worldspace: "SolitudeWorld", x: -58300, y: 102_800),
+            // The Blue Palace courtyard door stands at -8608.
+            place: .exterior(worldspace: "SolitudeWorld", x: -51600, y: 100_600),
+            streetLevel: -8600,
             hour: 16, weather: "SkyrimCloudy",
             shot: .orbit(
                 center: [0, 0, 400], radius: 4500, height: 2500,
@@ -42,7 +44,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "RiftenWorld", x: 173_415, y: -96600),
             hour: 19, weather: "SkyrimFog",
             shot: .dolly(
-                path: [[0, 0, 350], [1200, -900, 300], [2500, -1900, 350], [3400, -2900, 450]],
+                path: [[0, 0, 350], [900, -650, 450], [1700, -1250, 750], [2200, -1650, 1100]],
                 focus: [[1500, -1200, 250], [3426, -1708, 400], [3426, -3378, 500]],
                 seconds: shotSeconds
             )
@@ -58,7 +60,9 @@ nonisolated public enum BenchmarkTour {
         ),
         BenchmarkScene(
             id: "windhelm", title: "Windhelm in snow", group: .city,
+            // The street by Candlehearth Hall; the smithy floor is at -12270.
             place: .exterior(worldspace: "WindhelmWorld", x: 135_025, y: 35596),
+            streetLevel: -12270,
             hour: 9, weather: "SkyrimStormSnow",
             shot: .dolly(
                 path: [[0, 0, 300], [-50, 2000, 500], [-100, 4000, 800], [-126, 5600, 1100]],
@@ -74,7 +78,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "Tamriel", x: 18312, y: -10665),
             hour: 8, weather: "SkyrimClear",
             shot: .flyover(
-                from: [0, 0, 1500], to: [3629, -34127, 3500], pitchDegrees: 12,
+                from: [0, 0, 1600], to: [1800, -9000, 2400], pitchDegrees: 12,
                 seconds: shotSeconds
             )
         ),
@@ -83,7 +87,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "Tamriel", x: 162_923, y: -60529),
             hour: 15, weather: "SkyrimClear",
             shot: .flyover(
-                from: [0, 0, 1800], to: [7000, -23500, 2600], pitchDegrees: 10,
+                from: [0, 0, 2600], to: [2400, -8000, 3000], pitchDegrees: 14,
                 seconds: shotSeconds
             )
         ),
@@ -101,7 +105,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "Tamriel", x: 56368, y: -48511),
             hour: 11, weather: "SkyrimClearSN",
             shot: .orbit(
-                center: [0, 0, 200], radius: 6000, height: 1500,
+                center: [0, 0, 200], radius: 7500, height: 2200,
                 startDegrees: 90, sweepDegrees: 180, seconds: shotSeconds
             )
         ),
@@ -120,7 +124,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "Tamriel", x: 109_207, y: 102_864),
             hour: 17, weather: "SkyrimStormSnow",
             shot: .flyover(
-                from: [-2000, -3000, 1400], to: [9000, 21000, 1800], pitchDegrees: 8,
+                from: [-1500, -2500, 1700], to: [2500, 6000, 2000], pitchDegrees: 10,
                 seconds: shotSeconds
             )
         ),
@@ -135,17 +139,53 @@ nonisolated public enum BenchmarkTour {
         )
     ]
 
-    /// Interior shots stand where the door puts the player and turn on the spot.
+    /// Interior shot points are cell coordinates, placed in each cell's main room from
+    /// its references (`openskycli cell --cell <id> --refs`).
     static let interiors: [BenchmarkScene] = [
         interior(
-            id: "dragonsreach",
-            title: "Dragonsreach great hall",
-            cell: "WhiterunDragonsreach"
+            id: "dragonsreach", title: "Dragonsreach great hall", cell: "WhiterunDragonsreach",
+            // Up the hall past the fire pit (-384, 2176) to the throne (-384, 2870).
+            shot: .dolly(
+                path: [[-384, 450, 60], [-384, 1000, 110], [-430, 1500, 150]],
+                focus: [[-384, 2870, 140], [-384, 2870, 110], [-384, 2900, 90]],
+                seconds: shotSeconds
+            )
         ),
-        interior(id: "bleakFalls", title: "Bleak Falls Barrow", cell: "BleakFallsBarrow01"),
-        interior(id: "mzinchaleft", title: "Mzinchaleft Dwemer ruin", cell: "Mzinchaleft01"),
-        interior(id: "bluePalace", title: "Blue Palace", cell: "SolitudeBluePalace"),
-        interior(id: "raggedFlagon", title: "The Ragged Flagon", cell: "RiftenRaggedFlagon")
+        interior(
+            id: "bleakFalls", title: "Bleak Falls Barrow", cell: "BleakFallsBarrow01",
+            // Down the sunlit entry temple; its floor is at 512.
+            shot: .dolly(
+                path: [[-7250, 1024, 700], [-6700, 1000, 760], [-6000, 1040, 740]],
+                focus: [[-6000, 1024, 900], [-4400, 1024, 700], [-3700, 1024, 640]],
+                seconds: shotSeconds
+            )
+        ),
+        interior(
+            id: "mzinchaleft", title: "Mzinchaleft Dwemer ruin", cell: "Mzinchaleft01",
+            // Around the column in the middle of the large room; the floor is at -1536.
+            shot: .orbit(
+                center: [-3968, 960, -1380], radius: 700, height: 180,
+                startDegrees: 0, sweepDegrees: 75, seconds: shotSeconds
+            )
+        ),
+        interior(
+            id: "bluePalace", title: "Blue Palace", cell: "SolitudeBluePalace",
+            // From the south arches over the indoor garden of the main hall; the floor
+            // is at 300. An orbit there passes the garden's pillars.
+            shot: .pan(
+                eye: [-1162, -770, 550], fromYawDegrees: 85, toYawDegrees: 125,
+                pitchDegrees: -15, seconds: shotSeconds
+            )
+        ),
+        interior(
+            id: "raggedFlagon", title: "The Ragged Flagon", cell: "RiftenRaggedFlagon",
+            // Along the cistern pool (-1258, 1823) to the bar (150, 2350).
+            shot: .dolly(
+                path: [[-1950, 1500, 40], [-1450, 1600, 20], [-950, 1700, 10]],
+                focus: [[-600, 2000, -20], [0, 2200, -40], [150, 2350, -40]],
+                seconds: shotSeconds
+            )
+        )
     ]
 
     static let dlc: [BenchmarkScene] = [
@@ -154,7 +194,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "DLC01FalmerValley", x: 20252, y: 5160),
             hour: 10, weather: nil,
             shot: .flyover(
-                from: [-4000, -6000, 1600], to: [6000, 9000, 2200], pitchDegrees: 10,
+                from: [-2000, -3000, 2200], to: [2000, 3000, 2600], pitchDegrees: 12,
                 seconds: shotSeconds
             ),
             requiredPlugin: "Dawnguard.esm"
@@ -164,7 +204,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "DLC01SoulCairn", x: 26624, y: 2048),
             hour: 12, weather: nil,
             shot: .flyover(
-                from: [0, 0, 2200], to: [-24576, -24576, 2600], pitchDegrees: 12,
+                from: [0, 0, 1600], to: [-5000, -5000, 1900], pitchDegrees: 12,
                 seconds: shotSeconds
             ),
             requiredPlugin: "Dawnguard.esm"
@@ -174,7 +214,7 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "DLC2SolstheimWorld", x: 30883, y: 35049),
             hour: 14, weather: nil,
             shot: .orbit(
-                center: [0, 0, 300], radius: 3500, height: 1400,
+                center: [0, 0, 300], radius: 4000, height: 2200,
                 startDegrees: 270, sweepDegrees: 140, seconds: shotSeconds
             ),
             requiredPlugin: "Dragonborn.esm"
@@ -184,21 +224,19 @@ nonisolated public enum BenchmarkTour {
             place: .exterior(worldspace: "DLC2SolstheimWorld", x: 75484, y: 23834),
             hour: 18, weather: nil,
             shot: .orbit(
-                center: [0, 0, 800], radius: 2200, height: 600,
+                center: [0, 0, 800], radius: 3000, height: 1400,
                 startDegrees: 0, sweepDegrees: 200, seconds: shotSeconds
             ),
             requiredPlugin: "Dragonborn.esm"
         )
     ]
 
-    private static func interior(id: String, title: String, cell: String) -> BenchmarkScene {
+    private static func interior(
+        id: String, title: String, cell: String, shot: BenchmarkShot
+    ) -> BenchmarkScene {
         BenchmarkScene(
             id: id, title: title, group: .interior, place: .interior(cell: cell),
-            hour: 20, weather: nil,
-            shot: .pan(
-                eye: [0, 0, 120], fromYawDegrees: 0, toYawDegrees: 330,
-                pitchDegrees: 6, seconds: shotSeconds
-            )
+            hour: 20, weather: nil, shot: shot
         )
     }
 }

@@ -37,6 +37,8 @@ CLI options:
 | `--set id=value` | Overrides one player setting for this run only. Repeat it for more |
 | `--no-overlay` | Starts with the readout hidden |
 | `--capture <id>` | Writes a GPU trace (`.gputrace`) of that scene's first measured frame |
+| `--screenshots` | Saves the window at the start, middle, and end of each shot as PNGs in the run folder |
+| `--windowed` | Runs in the window. By default the window fills the screen for the tour and comes back after it; a window that was already full screen stays so |
 | `--no-load-passes` | Skips the cold and warm load passes |
 | `--evict` | Drops the game data from the page cache first, so the loads read from disk |
 | `--keep-open` | Leaves the app open after the tour |
@@ -53,6 +55,11 @@ lives only in the app's memory and is never saved.
 `--evict` uses `msync` with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
 
 ## While it runs
+
+Every way to start a run fills the screen with the game window for the tour, so the
+measured frame is the display's size. The window comes back when the run ends. "Full
+screen" on the launcher page, `--windowed` on `openskycli benchmark`, and
+`--full-screen off` on `game benchmark` keep the window instead.
 
 The Play window gets a toolbar with two buttons for the length of the run. The overlay
 button shows or hides the readout: the scene, its number, its progress, and the frame rate.
@@ -84,9 +91,27 @@ The quick preset takes one scene each of a city, the wilderness, and an interior
 
 A DLC scene names the plugin it needs. When the load order lacks it, the scene is `skipped`
 with a note, and the result still compares. The positions come from the install's map
-markers and cell lists, read with `openskycli record` and `openskycli cell --refs`. A shot's
-points are offsets from the scene's origin: the ground under the exterior position, or where
-an interior's door puts the player.
+markers and cell lists, read with `openskycli record` and `openskycli cell --refs`
+(`--cell <editorID>` lists an interior). An exterior shot's points are offsets from the
+ground under the scene's position. Solitude and Windhelm stand on meshes, and their cells
+hide the terrain under them, so no ground sample exists there. Those scenes give a street
+height instead, read from the `cell --refs` positions of doors and floors. An interior
+shot's points are cell coordinates in the cell's main room, because the door often opens
+into a side passage.
+
+The origin is taken again once streaming settles, because at arrival the ground under it
+may not be resident yet.
+
+An exterior eye stays at least 300 units above the ground. It also keeps an 80-unit sphere clear
+of static collision, such as rocks, walls, and roofs, by rising in 100-unit steps. A sphere deep
+inside a large rock touches no triangle, so the eye also rises while the line from its last
+position to the next one hits collision. It keeps 600 units of open view along its level look
+direction, so a shot does not end against a cliff. These checks also run on the path 2 s
+ahead, so a flight climbs before a hill or a rock instead of cutting into it. The camera rises
+smoothly and sinks back slowly. Interior shots get none of this, because a rising eye would
+go through the ceiling; they are placed by hand. Tree crowns have no collision, so a
+shot over a forest is written high enough to clear them. The tour hides the HUD on every frame,
+because a loading screen shows it again when it ends.
 
 ## What a scene measures
 
@@ -166,6 +191,14 @@ Debug build is much slower, and the result says which build ran it.
 
 `schemaVersion` changes when a field changes meaning or goes away. A new field is optional,
 so an older result still decodes. Version 2 is the tour; version 1 results do not decode.
+
+## Screenshots
+
+`--screenshots` (or "Save screenshots" on the launcher page) writes
+`<number>-<scene id>-start.png`, `-middle.png`, and `-end.png` into the run folder, from the
+frame the window presents. They show whether a shot frames its place. Writing a PNG takes
+main-actor time inside the measured frames, so such a run is not comparable. The PNGs embed
+game assets, so keep them in `.logs/` or the default folder and never commit them.
 
 ## GPU capture
 

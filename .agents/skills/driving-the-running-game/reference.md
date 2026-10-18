@@ -83,7 +83,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 
 | Command | What it does |
 | --- | --- |
-| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--overlay on\|off] [--load-passes on\|off] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
+| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--overlay on\|off] [--load-passes on\|off] [--screenshots on\|off] [--full-screen on\|off] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
 | `benchmark --stop on` | Stops a running tour; the scenes measured so far are kept |
 
 The tour takes over the camera, the clock, and the HUD until it ends

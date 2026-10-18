@@ -38,6 +38,10 @@ public struct BenchmarkArguments: CLICommandArguments {
         help: ArgumentHelp("A player setting for this run.", valueName: "id=value")
     )
     public var settings: [String] = []
+    @Flag(help: "Save PNGs of the start, middle, and end of each scene into the run folder.")
+    public var screenshots = false
+    @Flag(help: "Run in a window instead of full screen.")
+    public var windowed = false
     @Flag(help: "Skip the cold and warm load of the first scene.")
     public var noLoadPasses = false
     @Flag(help: "Drop the game data from the page cache first, so the loads read the disk.")

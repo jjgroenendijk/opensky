@@ -24,6 +24,7 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     var hours: [Float] = []
     var steps = 0
     var captures: [URL] = []
+    var screenshots: [URL] = []
 
     func beginTour(overrides: [PlayerSettingID: Double], passTiming _: Bool) {
         began = overrides
@@ -43,6 +44,14 @@ private final class FakeTourWorld: BenchmarkTourWorld {
 
     func groundHeight(x _: Float, y _: Float) -> Float? {
         100
+    }
+
+    func isBlocked(_: SIMD3<Float>, radius _: Float) -> Bool {
+        false
+    }
+
+    func crossesCollision(from _: SIMD3<Float>, to _: SIMD3<Float>) -> Bool {
+        false
     }
 
     func setHour(_ hour: Float) {
@@ -91,6 +100,10 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     func captureFrame(to url: URL, done: @escaping (Result<URL, FrameCaptureError>) -> Void) {
         captures.append(url)
         done(.success(url))
+    }
+
+    func saveScreenshot(to url: URL) {
+        screenshots.append(url)
     }
 }
 
@@ -209,6 +222,25 @@ struct BenchmarkTourCoordinatorTests {
         runToEnd(tour)
         #expect(world.captures.map(\.lastPathComponent) == ["dragonsreach.gputrace"])
         #expect(tour.lastResult?.scenes.first?.capturePath == "/tmp/bench/dragonsreach.gputrace")
+    }
+
+    @Test func screenshotsSaveTheStartMiddleAndEndOfEachShot() throws {
+        let world = FakeTourWorld()
+        let tour = BenchmarkTourCoordinator(world: world)
+        let request = BenchmarkRequest(
+            sceneIDs: ["dragonsreach"], outDirectory: "/tmp/bench", loadPasses: false,
+            screenshots: true
+        )
+        try tour.start(request, machine: Self.machine)
+        runToEnd(tour)
+        let names = [
+            "01-dragonsreach-start.png",
+            "01-dragonsreach-middle.png",
+            "01-dragonsreach-end.png"
+        ]
+        #expect(world.screenshots.map(\.lastPathComponent) == names)
+        #expect(tour.lastResult?.scenes.first?.screenshots == names.map { "/tmp/bench/" + $0 })
+        #expect(tour.lastResult?.isComparable == false)
     }
 
     @Test func aBadRequestStartsNothing() {

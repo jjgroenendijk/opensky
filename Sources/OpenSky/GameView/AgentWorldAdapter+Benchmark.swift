@@ -47,6 +47,8 @@ extension AgentWorldAdapter {
         request.outDirectory = agent.out
         request.captureScene = agent.capture
         request.loadPasses = agent.loadPasses
+        request.screenshots = agent.screenshots
+        request.fullScreen = agent.fullScreen
         do {
             for pair in agent.settings {
                 let (id, value) = try BenchmarkRequest.parseSetting(pair)

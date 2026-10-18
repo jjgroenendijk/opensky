@@ -91,7 +91,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](/engine/asset-cache.md)) |
 | `asset-optimisation measure [--per-kind <n>]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
 | `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two screenshots with the cache off and on. 100 dB means identical |
-| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value] [--no-overlay] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour in its window, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
+| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value] [--no-overlay] [--screenshots] [--windowed] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour full screen, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
 
 ## Notes on the probes
 

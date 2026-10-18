@@ -39,11 +39,16 @@ nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
     public var quitWhenDone: Bool
     /// The cold and warm load of the first scene's cells, before the tour.
     public var loadPasses: Bool
+    /// Saves the window at the start, middle, and end of each shot.
+    public var screenshots: Bool
+    /// The game window fills the screen for the run and comes back after it.
+    public var fullScreen: Bool
 
     public init(
         preset: BenchmarkPreset = .standard, sceneIDs: [String]? = nil, overlay: Bool = true,
         outDirectory: String? = nil, captureScene: String? = nil,
-        settings: [String: Double] = [:], quitWhenDone: Bool = false, loadPasses: Bool = true
+        settings: [String: Double] = [:], quitWhenDone: Bool = false, loadPasses: Bool = true,
+        screenshots: Bool = false, fullScreen: Bool = true
     ) {
         self.preset = preset
         self.sceneIDs = sceneIDs
@@ -53,6 +58,8 @@ nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
         self.settings = settings
         self.quitWhenDone = quitWhenDone
         self.loadPasses = loadPasses
+        self.screenshots = screenshots
+        self.fullScreen = fullScreen
     }
 
     /// The scenes in tour order. An unknown id is an error, not a silent skip.

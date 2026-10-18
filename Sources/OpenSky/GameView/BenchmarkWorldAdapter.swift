@@ -19,6 +19,7 @@ import OpenSkyRuntimeState
 import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import QuartzCore
 import simd
 
@@ -47,6 +48,10 @@ struct BenchmarkRun {
 }
 
 final class BenchmarkWorldAdapter {
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Benchmark"
+    )
     unowned let game: any BenchmarkWorldHost
     private(set) lazy var tour = BenchmarkTourCoordinator(world: self)
     let overlay = BenchmarkOverlayView()
@@ -68,6 +73,12 @@ final class BenchmarkWorldAdapter {
     private var ticks = 0
     private var tourOverrides: [PlayerSettingID: Double] = [:]
     private var plugins: Set<String> = []
+    /// PNGs the tour asked for; the first one waits for its window copy.
+    private var screenshots: [URL] = []
+    /// A finished run waits for its last PNGs, so a quit right after it keeps them.
+    private var finishing: (result: BenchmarkTourResult, framesLeft: Int)?
+    /// The run put the window in full screen, so its end takes it back out.
+    private var enteredFullScreen = false
 
     private struct SavedState {
         let movementMode: CameraMovementMode
@@ -79,7 +90,7 @@ final class BenchmarkWorldAdapter {
 
     init(game: any BenchmarkWorldHost) {
         self.game = game
-        tour.onFinish = { [weak self] result in self?.finish(result) }
+        tour.onFinish = { [weak self] result in self?.finishAfterScreenshots(result) }
     }
 
     func wire(gameSession: GameSession) {
@@ -110,7 +121,11 @@ final class BenchmarkWorldAdapter {
             pendingRequest = nil
             begin(request)
         }
+        writeReadyScreenshot()
+        drainFinish()
         guard tour.isRunning else { return }
+        // A loading screen or a door shows the HUD again when it ends.
+        game.gameSession?.renderer.swfEnabled = false
         tour.tick()
         ticks += 1
         if ticks % 6 == 0 {
@@ -130,6 +145,7 @@ final class BenchmarkWorldAdapter {
         do {
             try tour.start(request, machine: machine, appStart: takeAppStart())
             onRunningChange?(true)
+            setFullScreen(request.fullScreen)
         } catch {
             overlay.detach()
         }
@@ -145,8 +161,46 @@ final class BenchmarkWorldAdapter {
         )
     }
 
+    private func finishAfterScreenshots(_ result: BenchmarkTourResult) {
+        guard !screenshots.isEmpty else {
+            finish(result)
+            return
+        }
+        finishing = (result, 30)
+    }
+
+    private func drainFinish() {
+        guard let (result, framesLeft) = finishing else { return }
+        guard screenshots.isEmpty || framesLeft == 0 else {
+            finishing = (result, framesLeft - 1)
+            return
+        }
+        if !screenshots.isEmpty {
+            let count = screenshots.count
+            Self.logger.error("[ERROR] benchmark PNGs not written: \(count, privacy: .public)")
+            screenshots = []
+        }
+        finishing = nil
+        finish(result)
+    }
+
+    private func setFullScreen(_ on: Bool) {
+        guard let window = game.hostView.window else { return }
+        let isFull = window.styleMask.contains(.fullScreen)
+        if on, !isFull {
+            enteredFullScreen = true
+            window.toggleFullScreen(nil)
+        } else if !on, enteredFullScreen, isFull {
+            window.toggleFullScreen(nil)
+        }
+        if !on {
+            enteredFullScreen = false
+        }
+    }
+
     private func finish(_ result: BenchmarkTourResult) {
         overlay.detach()
+        setFullScreen(false)
         let folder = request.outDirectory.map { URL(filePath: $0) }
             ?? BenchmarkReport.defaultFolder(startedAt: result.startedAt)
         var writeError: String?
@@ -280,6 +334,27 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         game.streamer?.sampleTerrain(at: SIMD2(x, y))?.height
     }
 
+    func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool {
+        guard let query = game.gameSession?.collisionQuery else { return false }
+        let capsule = PlayerCapsule(radius: radius, height: radius * 2, eyeHeight: radius)
+        let bottom = point - SIMD3(0, 0, radius)
+        let probe = CapsuleWorldCollider(capsule: capsule)
+            .move(from: bottom, displacement: .zero, query: query)
+        return probe.hasUnresolvedPenetration || simd_distance(probe.position, bottom) > 0.01
+            || probe.contacts.contains { $0.depth > 0 }
+    }
+
+    func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool {
+        let line = end - start
+        guard
+            let streamer = game.streamer,
+            let ray = InteractionRay(
+                origin: start, direction: line, maximumDistance: simd_length(line)
+            )
+        else { return false }
+        return streamer.nearestCollisionHit(ray: ray) != nil
+    }
+
     func setHour(_ hour: Float) {
         game.runtimeState.setGameClockHour(hour)
     }
@@ -348,6 +423,35 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
             return
         }
         renderer.captureNextFrame(to: url, done: done)
+    }
+
+    func saveScreenshot(to url: URL) {
+        screenshots.append(url)
+        if screenshots.count == 1 {
+            game.gameSession?.renderer.requestWindowCapture()
+        }
+    }
+
+    /// The copy is readable a frame or two after it was encoded.
+    private func writeReadyScreenshot() {
+        guard
+            let url = screenshots.first,
+            let renderer = game.gameSession?.renderer,
+            let texture = renderer.takeWindowCapture()
+        else { return }
+        screenshots.removeFirst()
+        do {
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+            )
+            try FrameScreenshot.write(texture: texture, to: url)
+        } catch {
+            let reason = "\(url.lastPathComponent): \(error)"
+            Self.logger.error("[ERROR] benchmark screenshot: \(reason, privacy: .public)")
+        }
+        if !screenshots.isEmpty {
+            renderer.requestWindowCapture()
+        }
     }
 
     var loadInputs: BenchmarkLoadInputs? {
