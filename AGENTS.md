@@ -60,7 +60,7 @@ conflict.
   second, cold cache.
 - Anything that builds runs in a background shell: it can pass the tool timeout. Two builds
   run at a time on the machine: `make` waits for a free build slot and says whose builds it
-  waits for. `git push` builds too.
+  waits for.
 - Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
   `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
