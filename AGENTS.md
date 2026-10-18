@@ -52,10 +52,12 @@ conflict.
   the target: `make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
   lowercase on purpose: the CLI binary `openskycli`, and the bundle IDs, because macOS
   stores permission grants against them.
-- The build cache is one tree per checkout under `~/Library/Caches/OpenSky/`, on the fast
-  internal disk; the compilation cache store they all share stays on the data volume.
-  `make` passes both on every `xcodebuild` call and exports `OPENSKY_DERIVED_DATA` for
-  `tools/`. A new build command that skips them starts a second, cold cache.
+- The build cache is one tree per checkout under the main checkout's `.cache/Build/`, on the
+  data volume; the internal disk keeps only the app's asset cache. Every build first deletes
+  the trees built longest ago once all trees pass `BUILD_CACHE_GB`. The compilation cache
+  store they all share sits beside them. `make` passes both on every `xcodebuild` call and
+  exports `OPENSKY_DERIVED_DATA` for `tools/`. A new build command that skips them starts a
+  second, cold cache.
 - Anything that builds runs in a background shell: it can pass the tool timeout. Two builds
   run at a time on the machine: `make` waits for a free build slot and says whose builds it
   waits for. `git push` builds too.

@@ -12,8 +12,9 @@
 #
 #   xcodebuild_products_dir CONFIG   built-products directory for a macOS scheme
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
-#   opensky_build_lock               wait for a build slot and this build tree
-#   opensky_build_unlock             release both
+#   opensky_build_lock               wait for a build slot and this build tree,
+#                                    then keep the trees within the size budget
+#   opensky_build_unlock             record this tree's size, release both
 #   opensky_drop_failed_records ROOT LOG BUILD_DIR
 #                                    after a failed build, delete the driver
 #                                    records of the targets that failed
@@ -21,11 +22,17 @@
 #   xcodebuild_phases FILE           print one line with the length of each phase
 # shellcheck shell=sh
 
-: "${OPENSKY_CACHE_ROOT:=$HOME/Library/Caches/OpenSky}"
+# A make recipe sources this from the checkout root, where $0 is the shell.
+opensky_checkout="$(cd "$(dirname "$0")/.." && pwd)"
+[ -f "$opensky_checkout/tools/xcodebuild-lib.sh" ] || opensky_checkout="$(git rev-parse --show-toplevel)"
+# Every checkout's build tree sits in the main checkout's hidden .cache/Build, on
+# the data volume (Makefile CACHE_ROOT).
+: "${OPENSKY_CACHE_ROOT:=$(dirname "$(git -C "$opensky_checkout" rev-parse \
+    --path-format=absolute --git-common-dir)")/.cache/Build}"
 export OPENSKY_CACHE_ROOT
-: "${OPENSKY_DERIVED_DATA:=$OPENSKY_CACHE_ROOT/$(basename "$(cd "$(dirname "$0")/.." && pwd)")}"
+: "${OPENSKY_DERIVED_DATA:=$OPENSKY_CACHE_ROOT/$(basename "$opensky_checkout")}"
 export OPENSKY_DERIVED_DATA
-: "${XCODE_XCCONFIG_FILE:=$(cd "$(dirname "$0")/.." && pwd)/config/Build/Overrides.xcconfig}"
+: "${XCODE_XCCONFIG_FILE:=$opensky_checkout/config/Build/Overrides.xcconfig}"
 export XCODE_XCCONFIG_FILE
 
 # xcodebuild puts a macOS scheme's products at a fixed path under the derived
@@ -101,6 +108,8 @@ opensky_build_lock() {
             while [ "$slot" -le "$slots" ]; do
                 if opensky_try_lock "$OPENSKY_CACHE_ROOT/build.lock.$slot"; then
                     OPENSKY_BUILD_LOCK="$tree_lock $OPENSKY_CACHE_ROOT/build.lock.$slot"
+                    "$opensky_checkout/tools/build-cache-budget.sh" evict \
+                        "$OPENSKY_DERIVED_DATA" || true
                     return 0
                 fi
                 slot=$((slot + 1))
@@ -124,6 +133,7 @@ opensky_build_lock() {
 
 opensky_build_unlock() {
     [ -n "${OPENSKY_BUILD_LOCK:-}" ] || return 0
+    "$opensky_checkout/tools/build-cache-budget.sh" record "$OPENSKY_DERIVED_DATA" || true
     for held in $OPENSKY_BUILD_LOCK; do
         rm -rf "$held"
     done

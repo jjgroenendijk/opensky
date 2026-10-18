@@ -4,9 +4,9 @@
 #
 #   1. The build cache of a checkout whose worktree is gone: its tree under
 #      $OPENSKY_CACHE_ROOT, the DerivedData older checkouts kept inside the
-#      worktree, and its SwiftPM .build. Each one runs to tens of gigabytes and
-#      outlives the branch it was built for, which is what fills a volume
-#      mid-session. The app's AssetCache shares the cache root and is kept.
+#      worktree, and its SwiftPM .build. Each one runs to gigabytes and
+#      outlives the branch it was built for. Build trees left in the old place
+#      on the boot volume go too; the app's AssetCache there is kept.
 #   2. build/install, the separate Release tree older checkouts installed from.
 #   3. Result bundles and log run directories past the retention age, keeping
 #      the newest run of each script so `latest` always resolves.
@@ -50,7 +50,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # the main checkout, which is where .claude/worktrees/ lives.
 main="$(cd "$(dirname "$(git -C "$root" rev-parse --git-common-dir)")" && pwd)"
 worktree_home="$main/.claude/worktrees"
-cache_root="${OPENSKY_CACHE_ROOT:-$HOME/Library/Caches/OpenSky}"
+cache_root="${OPENSKY_CACHE_ROOT:-$main/.cache/Build}"
+# Build trees lived on the boot volume before; there only the app's AssetCache stays.
+legacy_root="$HOME/Library/Caches/OpenSky"
 cutoff="$(date -u -v-"${days}"d +%Y%m%dT%H%M%SZ)"
 
 plan="$(mktemp -t opensky-prune)"
@@ -69,7 +71,7 @@ add() {
         exit 1
     fi
     case "$2" in
-        "$root"/* | "$worktree_home"/* | "$cache_root"/*) ;;
+        "$root"/* | "$worktree_home"/* | "$cache_root"/* | "$legacy_root"/*) ;;
         *)
             printf '[ERROR] refusing to prune outside the checkout: %s\n' "$2" >&2
             exit 1
@@ -132,10 +134,19 @@ if [ -d "$cache_root" ]; then
     for tree in "$cache_root"/*; do
         [ -d "$tree" ] || continue
         name="$(basename "$tree")"
-        [ "$name" != "AssetCache" ] || continue
+        case "$name" in *.lock | *.lock.*) continue ;; esac
         case "$name" in *-optimized | *-index) name="${name%-*}" ;; esac
         if grep -q "/$name\$" "$live"; then continue; fi
         add "stale worktree cache" "$tree"
+    done
+fi
+if [ -d "$legacy_root" ] && [ "$legacy_root" != "$cache_root" ]; then
+    for tree in "$legacy_root"/*; do
+        [ -d "$tree" ] || continue
+        case "$(basename "$tree")" in AssetCache | *.lock | *.lock.*) continue ;; esac
+        # A branch from before the move may be building there right now.
+        [ ! -d "$tree.build.lock" ] || continue
+        add "build tree on the boot volume" "$tree"
     done
 fi
 if [ -d "$worktree_home" ]; then
