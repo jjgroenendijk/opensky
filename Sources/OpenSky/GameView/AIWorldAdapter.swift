@@ -407,8 +407,8 @@ extension AIWorldAdapter: AINavigationWorld {
         }
     }
 
-    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
-        game.streamer?.collisionCandidates(overlapping: bounds) ?? []
+    func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
+        game.streamer?.nearestCollisionHit(ray: ray)
     }
 
     func residentActor(for reference: FormID) -> ReferenceKey? {
@@ -499,8 +499,7 @@ extension AIWorldAdapter: PerceptionSessionWorld {
             distance.isFinite, distance > 0,
             let ray = InteractionRay(origin: origin, direction: offset, maximumDistance: distance)
         else { return true }
-        let shapes = streamer.staticCollisionCandidates(overlapping: ray.bounds)
-        return InteractionRaycaster.nearestHit(ray: ray, shapes: shapes) == nil
+        return !streamer.staticCollisionBlocks(ray: ray)
     }
 
     func run(_ commands: [PerceptionCommand]) {

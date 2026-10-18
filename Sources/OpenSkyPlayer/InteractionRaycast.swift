@@ -22,36 +22,23 @@ nonisolated private struct InteractionTriangle {
 }
 
 nonisolated public enum InteractionRaycaster: Sendable {
-    private static let epsilon: Float = 1e-5
+    static let epsilon: Float = 1e-5
 
     public static func nearestHit(
         ray: InteractionRay,
         shapes: [StaticCollisionShape]
     ) -> InteractionRayHit? {
-        var result: InteractionRayHit?
-        for shape in shapes {
-            guard let distance = hitDistance(ray: ray, shape: shape) else { continue }
-            let candidate = InteractionRayHit(
+        nearest(of: shapes.lazy.compactMap { hit(ray: ray, shape: $0) })
+    }
+
+    static func hit(ray: InteractionRay, shape: StaticCollisionShape) -> InteractionRayHit? {
+        hitDistance(ray: ray, shape: shape).map { distance in
+            InteractionRayHit(
                 reference: shape.reference,
                 position: ray.origin + ray.direction * distance,
                 distance: distance
             )
-            if shouldReplace(result, with: candidate) {
-                result = candidate
-            }
         }
-        return result
-    }
-
-    private static func shouldReplace(
-        _ current: InteractionRayHit?,
-        with candidate: InteractionRayHit
-    ) -> Bool {
-        guard let current else { return true }
-        if abs(candidate.distance - current.distance) <= epsilon {
-            return candidate.reference.rawValue < current.reference.rawValue
-        }
-        return candidate.distance < current.distance
     }
 
     private static func hitDistance(
@@ -279,6 +266,28 @@ nonisolated public enum InteractionRaycaster: Sendable {
             }
         }
         return candidates.min()
+    }
+}
+
+nonisolated extension InteractionRaycaster {
+    /// The hit `nearestHit` picks, folding `hits` in their order.
+    static func nearest(of hits: some Sequence<InteractionRayHit>) -> InteractionRayHit? {
+        var result: InteractionRayHit?
+        for candidate in hits where shouldReplace(result, with: candidate) {
+            result = candidate
+        }
+        return result
+    }
+
+    private static func shouldReplace(
+        _ current: InteractionRayHit?,
+        with candidate: InteractionRayHit
+    ) -> Bool {
+        guard let current else { return true }
+        if abs(candidate.distance - current.distance) <= epsilon {
+            return candidate.reference.rawValue < current.reference.rawValue
+        }
+        return candidate.distance < current.distance
     }
 }
 

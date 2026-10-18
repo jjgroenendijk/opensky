@@ -123,6 +123,20 @@ nonisolated public struct StaticCollisionSet: Sendable {
             .map { shapes[$0] }
             .filter { $0.bounds.overlaps(bounds) }
     }
+
+    /// The shapes whose bounds the segment passes through, nearer tree nodes first.
+    /// `visit` gets each shape and its index in `shapes`, and returns the walk limit
+    /// that `BoundsSpatialIndex.walk(along:visit:)` describes.
+    public func walk(
+        along segment: RaySegment,
+        visit: (StaticCollisionShape, Int) -> Float
+    ) {
+        index.walk(along: segment) { element in
+            let shape = shapes[element]
+            guard segment.entry(into: shape.bounds) != nil else { return .infinity }
+            return visit(shape, element)
+        }
+    }
 }
 
 nonisolated extension ModelBounds {

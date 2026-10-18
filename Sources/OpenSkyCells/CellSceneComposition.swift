@@ -371,3 +371,10 @@ nonisolated extension CellSceneComposition {
         }
     }
 }
+
+nonisolated extension CellSceneComposition {
+    /// Each resident cell's static collision, in the order `collisionCandidates` reads them.
+    public var residentCollisionSets: [StaticCollisionSet] {
+        residentCollision
+    }
+}

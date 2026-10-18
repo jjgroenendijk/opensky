@@ -76,11 +76,7 @@ final class CellScenePerceptionWorld: PerceptionWorld {
                 origin: origin, direction: offset, maximumDistance: distance
             )
         else { return true }
-        return collision.allSatisfy { set in
-            InteractionRaycaster.nearestHit(
-                ray: ray, shapes: set.candidates(overlapping: ray.bounds)
-            ) == nil
-        }
+        return !InteractionRaycaster.hasHit(ray: ray, sets: collision, shapes: [])
     }
 }
 
