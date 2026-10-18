@@ -133,6 +133,10 @@ extension Renderer {
         guard let movie = swf.movie else {
             return
         }
+        try updateSWFScene(scene, of: movie)
+    }
+
+    func updateSWFScene(_ scene: SWFScene, of movie: SWFMovieResources) throws {
         purgeRetiredResources()
         let retiring = try movie.update(scene: scene, device: device)
         guard !retiring.isEmpty else {

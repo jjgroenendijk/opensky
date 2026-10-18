@@ -103,10 +103,17 @@ public final class InventoryCoordinator {
 
     @discardableResult
     public func takeInteractionTarget() -> ItemActionOutcome {
-        guard let runtime else { return .unavailable }
+        guard runtime != nil else { return .unavailable }
         guard let interaction = world.crosshairInteraction else {
             return .nothingUnderCrosshair(verb: "take")
         }
+        return take(interaction)
+    }
+
+    /// Takes the item behind `interaction`, such as a book read where it lies.
+    @discardableResult
+    public func take(_ interaction: PlacedInteraction) -> ItemActionOutcome {
+        guard let runtime else { return .unavailable }
         do {
             let outcome = try runtime.take(interaction)
             storyEvents?.reportStoryEvent(.addItem(

@@ -12,7 +12,8 @@ tags: [rendering, ui, swf, metal]
 The SWF layer draws a movie's display list over the finished 3D frame. It is encoded in the scene
 pass just before the [screen-space UI](/rendering/ui.md) overlay, so developer readouts stay on top.
 Tag decoding and frame 1 rules are on the [SWF container](/formats/swf.md) and
-[SWF display list](/formats/swf-display-list.md) pages. There is one SWF layer.
+[SWF display list](/formats/swf-display-list.md) pages. There is one main movie and an optional
+[overlay movie](#overlay-movie).
 
 ## The movie package
 
@@ -92,6 +93,18 @@ Rings grow but never shrink, and a replaced buffer is freed after frames in flig
 movie swap. Draws past the ring size are counted as skipped, not dropped silently.
 
 Text set at run time reaches the renderer as an override on the scene item, and is laid out again.
+
+## Overlay movie
+
+Some game menus show two movies at once. The book menu draws its pages from `book.swf` and its
+button bar from `bookmenu.swf` ([books](/engine/books.md#the-button-bar)). The overlay is that
+second movie:
+
+- It has its own package and its own running movie, built when it is set and freed when it is
+  cleared.
+- It draws after the main movie, with the same fit to the viewport, scale, and opacity.
+- Setting or clearing the main movie leaves it alone. The menu that set it clears it.
+- It takes no pointer input.
 
 ## Determinism
 
