@@ -53,6 +53,32 @@ nonisolated public struct BoundsSpatialIndex: Sendable {
         return result.sorted()
     }
 
+    /// Visits the elements of every leaf the segment passes through, nearer nodes
+    /// first. `visit` returns how far along the ray a node may still begin and be
+    /// visited: the closest hit so far, or a negative value to stop at once.
+    public func walk(
+        along segment: RaySegment,
+        visit: (Int) -> Float
+    ) {
+        guard let root, let rootEntry = segment.entry(into: nodes[root].bounds) else { return }
+        var limit = segment.maximumDistance
+        var stack = [(node: root, entry: rootEntry)]
+        while let (index, entry) = stack.popLast() {
+            guard entry <= limit else { continue }
+            let node = nodes[index]
+            for element in node.elementIndices {
+                limit = min(limit, visit(element))
+                guard limit >= 0 else { return }
+            }
+            let children = [node.left, node.right].compactMap { child in
+                child.flatMap { child in
+                    segment.entry(into: nodes[child].bounds).map { (node: child, entry: $0) }
+                }
+            }
+            stack.append(contentsOf: children.sorted { $0.entry > $1.entry })
+        }
+    }
+
     private struct Builder {
         let bounds: [ModelBounds]
         var nodes: [Node] = []

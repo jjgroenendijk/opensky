@@ -49,6 +49,9 @@ final class ActorWorldAdapter {
     private var publishedEnemy: HUDEnemyHealth?
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     private var baseNames: [UInt32: String?] = [:]
+    /// `combatActors()` and what it was built from. A death, a move, or a residency
+    /// change advances one of the revisions, so the next read builds it again.
+    private var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
 
     init(game: any ActorWorldHost) {
         self.game = game
@@ -58,6 +61,7 @@ final class ActorWorldAdapter {
     /// the runtime nil.
     func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
         baseNames = [:]
+        actorList = nil
         guard let baselines = provider.actorValueBaselines
         else { return }
         let coordinator = game.actorValues
@@ -97,22 +101,45 @@ final class ActorWorldAdapter {
     /// the placement.
     func combatActors() -> [CombatActorObservation] {
         guard let streamer = game.streamer else { return [] }
-        let worldState = game.worldState
-        return streamer.residentActorEntries().compactMap { entry in
-            guard let actor = entry.placedActor else { return nil }
-            let moved = streamer.npcTransform(for: entry.key)
-                ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
-            return CombatActorObservation(
-                key: entry.key,
-                feet: moved?.position ?? actor.placement.position,
-                facing: moved?.rotation.z ?? actor.placement.rotation.z,
-                scale: actor.scale,
-                isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
-                    ?? false,
-                label: displayName(base: actor.base).map(ActorLabel.init)
-                    ?? ActorLabel(key: entry.key, base: actor.base)
-            )
+        let key = ActorListKey(
+            streamer: ObjectIdentifier(streamer),
+            poses: streamer.actorPoseRevision,
+            deltas: game.worldState.deltaRevision,
+            namesResolve: game.journal.strings != nil
+        )
+        if let actorList, actorList.key == key {
+            return actorList.actors
         }
+        let actors = streamer.residentActorEntries()
+            .compactMap { observation(of: $0, in: streamer) }
+        actorList = (key, actors)
+        return actors
+    }
+
+    /// One resident actor from `combatActors()`, found by key in constant time.
+    func combatActor(key: ReferenceKey) -> CombatActorObservation? {
+        guard let streamer = game.streamer, let entry = streamer.residentActorEntry(key: key)
+        else { return nil }
+        return observation(of: entry, in: streamer)
+    }
+
+    private func observation(
+        of entry: RuntimeReferenceEntry, in streamer: CellStreamer
+    ) -> CombatActorObservation? {
+        guard let actor = entry.placedActor else { return nil }
+        let worldState = game.worldState
+        let moved = streamer.npcTransform(for: entry.key)
+            ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
+        return CombatActorObservation(
+            key: entry.key,
+            feet: moved?.position ?? actor.placement.position,
+            facing: moved?.rotation.z ?? actor.placement.rotation.z,
+            scale: actor.scale,
+            isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
+                ?? false,
+            label: displayName(base: actor.base).map(ActorLabel.init)
+                ?? ActorLabel(key: entry.key, base: actor.base)
+        )
     }
 
     /// The FULL name of an NPC_ base after template inheritance, as the crosshair shows it.
@@ -230,4 +257,12 @@ extension ActorWorldAdapter: ActorValueWorld {
     func setPlayerSprintAllowed(_ allowed: Bool) {
         game.gameSession?.locomotion.isSprintAllowed = allowed
     }
+}
+
+/// The inputs of one `ActorWorldAdapter.combatActors()` list.
+private struct ActorListKey: Equatable {
+    let streamer: ObjectIdentifier
+    let poses: UInt64
+    let deltas: UInt64
+    let namesResolve: Bool
 }

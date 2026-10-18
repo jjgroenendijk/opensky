@@ -56,6 +56,16 @@ extension Renderer {
 }
 
 extension Renderer {
+    /// Drops the systems whose live particles lie outside the view. Their simulation
+    /// still runs, so a system looks the same when it comes back into view.
+    func visibleParticles(_ items: [ParticlePlayback], frustum: Frustum) -> [ParticlePlayback] {
+        let visible = items.filter { item in
+            item.liveBounds.map { frustum.intersects($0) } ?? false
+        }
+        offscreenParticleSystemCount = items.count - visible.count
+        return visible
+    }
+
     /// Far systems first when sorting is on, so near smoke blends over far fire.
     func sortedParticles(_ items: [ParticlePlayback]) -> [ParticlePlayback] {
         guard particleSortingEnabled, items.count > 1 else { return items }

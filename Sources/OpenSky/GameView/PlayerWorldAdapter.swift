@@ -222,7 +222,7 @@ extension PlayerWorldAdapter: HeadTrackingWorld {
                 $0.walkController.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
             }
         }
-        guard let actor = game.actorWorld.combatActors().first(where: { $0.key == key }) else {
+        guard let actor = game.actorWorld.combatActor(key: key) else {
             return nil
         }
         return actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0))

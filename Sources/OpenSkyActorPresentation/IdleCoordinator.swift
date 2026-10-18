@@ -20,6 +20,8 @@ public protocol IdleWorld: AnyObject {
     func idleActors() -> [IdleActorPresence]
     /// The live state one condition list reads; the coordinator sets the subject.
     func idleConditionContext() -> ConditionContext
+    /// Advances on every state write, so a shared context is rebuilt after one.
+    var idleStateSequence: UInt64 { get }
     func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback?
     /// The clock actor clips play on; nil without a renderer.
     var idleAnimationTime: Float? { get }
@@ -94,6 +96,9 @@ public final class IdleCoordinator {
     private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
     private(set) var markers: [IdleMarkerPlacement] = []
     private var markersRefreshAt: Float = 0
+    /// The world context one `advance` shares between its actors.
+    var passContext: (sequence: UInt64, context: ConditionContext)?
+    var isAdvancing = false
     public internal(set) var usesIdleMarkers = true
     /// Each clip annotation an idle passes, as `(actor, name)`.
     public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
@@ -138,6 +143,11 @@ public final class IdleCoordinator {
 
     public func advance() {
         guard let world, store != nil, let now = world.idleAnimationTime else { return }
+        isAdvancing = true
+        defer {
+            isAdvancing = false
+            passContext = nil
+        }
         if now >= markersRefreshAt || now < markersRefreshAt - 10 {
             markers = resolveMarkers(world.idleReferencePlacements() ?? [])
             markersRefreshAt = now + 1

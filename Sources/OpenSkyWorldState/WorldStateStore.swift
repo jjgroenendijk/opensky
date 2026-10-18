@@ -29,6 +29,10 @@ public final class WorldStateStore {
     /// (or nil) and the next snapshot's sequence. `CellStreamer` rebuilds stale cells.
     public var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
 
+    /// When set, a reference write with no cell fires this with its key instead of
+    /// `onMutation` with nil, so the reader can find the cell that holds it.
+    public var onUnplacedMutation: ((ReferenceKey, UInt64) -> Void)?
+
     /// Fires per journalled reference mutation with its key, kind, and the next
     /// sequence, for a reader that rebuilds other cells, such as an enable child's.
     public var onReferenceMutation: ((ReferenceKey, WorldStateComponentKind, UInt64) -> Void)?
@@ -111,7 +115,7 @@ public final class WorldStateStore {
             cell: delta.cell
         )
         if value.kind.affectsCellBuild {
-            onMutation?(delta.cell, changeJournal.nextSequence)
+            noteCellBuildMutation(of: key, in: delta.cell)
         }
         onReferenceMutation?(key, value.kind, changeJournal.nextSequence)
         return true
@@ -139,7 +143,7 @@ public final class WorldStateStore {
             cell: cell
         )
         if kind.affectsCellBuild {
-            onMutation?(cell, changeJournal.nextSequence)
+            noteCellBuildMutation(of: key, in: cell)
         }
         onReferenceMutation?(key, kind, changeJournal.nextSequence)
         return true
@@ -240,6 +244,14 @@ public final class WorldStateStore {
         defaults: GlobalStore?, clock: GameClock? = nil
     ) -> GlobalResolution {
         GlobalResolution(defaults: defaults, overrides: globalValues, clock: clock)
+    }
+
+    private func noteCellBuildMutation(of key: ReferenceKey, in cell: CellSceneLocation?) {
+        if cell == nil, let onUnplacedMutation {
+            onUnplacedMutation(key, changeJournal.nextSequence)
+        } else {
+            onMutation?(cell, changeJournal.nextSequence)
+        }
     }
 
     // MARK: - Restoring a saved session

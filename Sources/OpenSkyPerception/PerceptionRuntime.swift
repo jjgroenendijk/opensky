@@ -49,8 +49,14 @@ public final class PerceptionRuntime {
     /// The roster in key order, kept between frames while its members stay.
     private var observerOrder = ReferenceKeyOrder()
     private var targetOrder = ReferenceKeyOrder()
-    /// Evaluation order, rebuilt per `advance(by:)`.
+    /// Evaluation order. It is rebuilt only when the roster's members change, or
+    /// when the cap applies and the nearest pairs can change.
     private var order: [DetectionPairKey] = []
+    /// The roster keys `order` was built from.
+    private var orderRoster: (observers: [ReferenceKey], targets: [ReferenceKey])?
+    /// The roster by key, built once per frame for every step of that frame.
+    private var observerIndex: [ReferenceKey: PerceptionObserver] = [:]
+    private var targetIndex: [ReferenceKey: PerceptionTarget] = [:]
     /// Where the next slice starts in `order`.
     private var cursor = 0
     /// Step index each pair was last advanced at, so a sliced evaluation knows
@@ -111,6 +117,9 @@ public final class PerceptionRuntime {
         observers = []
         targets = []
         order = []
+        orderRoster = nil
+        observerIndex = [:]
+        targetIndex = [:]
         lastEvaluatedStep = [:]
         droppedPairCount = 0
         lineOfSightQueryCount = 0
@@ -121,11 +130,28 @@ public final class PerceptionRuntime {
 
     // MARK: - Private
 
-    /// Collects observers and targets, builds the capped pair order, and drops
-    /// the state of every pair that no longer exists.
+    /// Collects observers and targets with their current positions. The pair order
+    /// stays while the same actors are present and every pair fits under the cap.
     private func refreshRoster(world: any PerceptionWorld) {
         observers = observerOrder.sorted(world.perceptionObservers(), by: \.key)
         targets = targetOrder.sorted(world.perceptionTargets(), by: \.key)
+        observerIndex = Dictionary(observers.map { ($0.key, $0) }) { first, _ in first }
+        targetIndex = Dictionary(targets.map { ($0.key, $0) }) { first, _ in first }
+        let roster = (observers: observers.map(\.key), targets: targets.map(\.key))
+        if
+            droppedPairCount == 0,
+            let orderRoster,
+            orderRoster.observers == roster.observers,
+            orderRoster.targets == roster.targets
+        {
+            return
+        }
+        orderRoster = roster
+        rebuildOrder()
+    }
+
+    /// Builds the capped pair order and drops the state of every pair outside it.
+    private func rebuildOrder() {
         var candidates: [(key: DetectionPairKey, distance: Float)] = []
         for observer in observers {
             for target in targets where target.key != observer.key {
@@ -158,10 +184,6 @@ public final class PerceptionRuntime {
     private func step(world: any PerceptionWorld) {
         stepCount += 1
         guard !order.isEmpty else { return }
-        let observerIndex = Dictionary(
-            uniqueKeysWithValues: observers.map { ($0.key, $0) }
-        )
-        let targetIndex = Dictionary(uniqueKeysWithValues: targets.map { ($0.key, $0) })
         let count = min(Self.pairsPerStep, order.count)
         for offset in 0 ..< count {
             let key = order[(cursor + offset) % order.count]

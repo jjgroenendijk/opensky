@@ -28,7 +28,12 @@ nonisolated public struct CellSceneComposition {
         didSet {
             residentCollision = cells.values.map(\.staticCollision)
             residentActors = Self.mergedActorEntries(cells)
-            residentReferences = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            residentActorsByKey = Dictionary(residentActors.map { ($0.key, $0) }) { first, _ in
+                first
+            }
+            let sorted = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            residentCoordinates = sorted.map(\.key)
+            residentReferences = sorted
                 .map { (location: $0.value.location, references: $0.value.references) }
             actorPlacements = ResidentActorPlacement.index(residentReferences)
             mergedReferences = nil
@@ -43,11 +48,14 @@ nonisolated public struct CellSceneComposition {
     private var residentCollision: [StaticCollisionSet] = []
     /// `actorEntries()`, merged when residency changes rather than on each read.
     private var residentActors: [RuntimeReferenceEntry] = []
+    private var residentActorsByKey: [ReferenceKey: RuntimeReferenceEntry] = [:]
     /// Per-frame reference lookups walk this, in grid order, instead of copying scenes.
     private var residentReferences: [(
         location: CellSceneLocation?,
         references: RuntimeReferenceIndex
     )] = []
+    /// The grid coordinate of each entry in `residentReferences`.
+    private var residentCoordinates: [CellCoordinate] = []
     /// `referenceEntries()` as one index, built on the first read after residency changes.
     private var mergedReferences: RuntimeReferenceIndex?
     public private(set) var distantLOD: DistantLODScene?
@@ -212,19 +220,6 @@ nonisolated public struct CellSceneComposition {
         return nil
     }
 
-    /// Which resident cell holds `key`, so a write rebuilds one cell, not all. Nil when no
-    /// resident cell knows it.
-    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        residentReferences.first { $0.references[key] != nil }.flatMap(\.location)
-    }
-
-    /// Every resident ACHR, by `ReferenceKey` in a cell and by grid across cells, so
-    /// "the nearest actor" answers the same way twice. One entry per key: the first
-    /// cell in grid order wins, because the worldspace persistent CELL repeats actors.
-    public func actorEntries() -> [RuntimeReferenceEntry] {
-        residentActors
-    }
-
     private static func mergedActorEntries(
         _ cells: [CellCoordinate: CellScene]
     ) -> [RuntimeReferenceEntry] {
@@ -369,5 +364,37 @@ nonisolated extension CellSceneComposition {
                 ? cell.renderScene : cell.renderScene.excludingDynamicReferences(detached)
             detachedScenes[coordinate] = (detached, scene)
         }
+    }
+}
+
+nonisolated extension CellSceneComposition {
+    /// Which resident cell holds `key`, so a write rebuilds one cell, not all. Nil when no
+    /// resident cell knows it.
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        residentReferences.first { $0.references[key] != nil }.flatMap(\.location)
+    }
+
+    /// Every resident ACHR, by `ReferenceKey` in a cell and by grid across cells, so
+    /// "the nearest actor" answers the same way twice. One entry per key: the first
+    /// cell in grid order wins, because the worldspace persistent CELL repeats actors.
+    public func actorEntries() -> [RuntimeReferenceEntry] {
+        residentActors
+    }
+
+    /// Every resident exterior cell that holds `key`, in grid order.
+    public func cellCoordinates(holding key: ReferenceKey) -> [CellCoordinate] {
+        zip(residentCoordinates, residentReferences)
+            .filter { $0.1.references[key] != nil }
+            .map(\.0)
+    }
+
+    /// One entry of `actorEntries()` by key.
+    public func actorEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        residentActorsByKey[key]
+    }
+
+    /// Each resident cell's static collision, in the order `collisionCandidates` reads them.
+    public var residentCollisionSets: [StaticCollisionSet] {
+        residentCollision
     }
 }

@@ -17,6 +17,9 @@ nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
     public let receiver: PapyrusObjectHandle?
     public let arguments: [PapyrusValue]
     public let returnType: PapyrusType
+    /// The registry key. A caller that folded the names at load passes it, so the call
+    /// folds nothing.
+    public let key: PapyrusNativeKey
 
     public init(
         kind: PapyrusNativeCallKind,
@@ -24,7 +27,8 @@ nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
         functionName: String,
         receiver: PapyrusObjectHandle?,
         arguments: [PapyrusValue],
-        returnType: PapyrusType = .none
+        returnType: PapyrusType = .none,
+        key: PapyrusNativeKey? = nil
     ) {
         self.kind = kind
         self.scriptName = scriptName
@@ -32,6 +36,7 @@ nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
         self.receiver = receiver
         self.arguments = arguments
         self.returnType = returnType
+        self.key = key ?? PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
     }
 
     public var qualifiedName: String {
@@ -45,7 +50,8 @@ nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
             functionName: functionName,
             receiver: receiver,
             arguments: arguments,
-            returnType: type
+            returnType: type,
+            key: key
         )
     }
 }

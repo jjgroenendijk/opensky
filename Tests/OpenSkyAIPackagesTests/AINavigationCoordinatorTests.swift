@@ -7,6 +7,8 @@
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
+import OpenSkyWorldInterface
 import simd
 import Testing
 
@@ -31,9 +33,9 @@ private final class FakeAINavigationWorld: AINavigationWorld {
         actors
     }
 
-    func collisionCandidates(overlapping _: ModelBounds) -> [StaticCollisionShape] {
+    func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
         collisionQueries += 1
-        return shapes
+        return InteractionRaycaster.nearestHit(ray: ray, shapes: shapes)
     }
 
     func residentActor(for reference: FormID) -> ReferenceKey? {

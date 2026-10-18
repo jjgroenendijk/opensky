@@ -182,6 +182,14 @@ extension AIWorldAdapter: PackageWorld {
         game.gameSession?.gameClock
     }
 
+    /// Reads only the store, so it is kept until the next store write.
+    private func referenceEnableResolution() -> ReferenceEnableResolution {
+        let store = game.worldState
+        return store.derived(ReferenceEnableResolution.self, from: store) {
+            ReferenceEnableResolution(snapshot: store.snapshot())
+        }
+    }
+
     func packageConditionContext(clock: GameClock) -> ConditionContext {
         var context = ConditionContext(
             globals: game.runtimeState.globalResolution(),
@@ -189,7 +197,7 @@ extension AIWorldAdapter: PackageWorld {
             aliases: game.scripts.bridge?.questRuntime?.aliasResolution() ?? .empty,
             actors: game.runtimeStateWorld.actorResolution(),
             detection: game.perception.perceptionResolution(),
-            referenceEnable: ReferenceEnableResolution(snapshot: game.worldState.snapshot()),
+            referenceEnable: referenceEnableResolution(),
             clock: clock,
             references: game.streamer?.residentReferenceIndex()
                 ?? RuntimeReferenceIndex(entries: [])
@@ -407,8 +415,8 @@ extension AIWorldAdapter: AINavigationWorld {
         }
     }
 
-    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
-        game.streamer?.collisionCandidates(overlapping: bounds) ?? []
+    func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
+        game.streamer?.nearestCollisionHit(ray: ray)
     }
 
     func residentActor(for reference: FormID) -> ReferenceKey? {
@@ -499,8 +507,7 @@ extension AIWorldAdapter: PerceptionSessionWorld {
             distance.isFinite, distance > 0,
             let ray = InteractionRay(origin: origin, direction: offset, maximumDistance: distance)
         else { return true }
-        let shapes = streamer.staticCollisionCandidates(overlapping: ray.bounds)
-        return InteractionRaycaster.nearestHit(ray: ray, shapes: shapes) == nil
+        return !streamer.staticCollisionBlocks(ray: ray)
     }
 
     func run(_ commands: [PerceptionCommand]) {

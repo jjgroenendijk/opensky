@@ -32,7 +32,7 @@ extension SceneRuntime {
         return entry.scene.actors.compactMap { actor in
             guard
                 actor.aliasID >= 0,
-                let reference = dialogue.context.aliases.reference(
+                let reference = dialogue.aliases.reference(
                     alias: UInt32(actor.aliasID), in: quest
                 )
             else { return nil }

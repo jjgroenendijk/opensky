@@ -468,6 +468,20 @@ nonisolated public final class ParticlePlayback: Sendable {
         return SIMD3(origin.x, origin.y, origin.z)
     }
 
+    /// The box around the live particles and their radii, nil with none alive. Mesh
+    /// bounds are not used, because mod meshes often store wrong ones.
+    public var liveBounds: ModelBounds? {
+        let particles = simulator.particles
+        guard let first = particles.first else { return nil }
+        var lower = first.position - first.radius
+        var upper = first.position + first.radius
+        for particle in particles.dropFirst() {
+            lower = simd_min(lower, particle.position - particle.radius)
+            upper = simd_max(upper, particle.position + particle.radius)
+        }
+        return ModelBounds(min: lower, max: upper)
+    }
+
     /// Writes the live particles into the slot's range. With a `viewer`, a blend that
     /// depends on order gets its particles far to near.
     public func prepareBuffer(slot: Int, viewer: SIMD3<Float>? = nil) -> (offset: Int, count: Int) {

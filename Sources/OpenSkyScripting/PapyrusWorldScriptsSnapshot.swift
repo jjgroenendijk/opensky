@@ -75,10 +75,7 @@ extension PapyrusWorldRuntime {
     /// no instances.
     private func scriptNames(attachedTo key: ReferenceKey?) -> [String] {
         guard let key else { return [] }
-        return instancesByKey.keys
-            .filter { $0.reference == key }
-            .map(\.scriptName)
-            .sorted()
+        return instanceKeys(on: key).map(\.scriptName)
     }
 
     /// Distinct native names the session called that never reported

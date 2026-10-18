@@ -19,7 +19,8 @@ public protocol AINavigationWorld: AnyObject {
     var camera: AICameraPose? { get }
     /// The same actor list the fight uses, so both panels agree.
     func actorCandidates() -> [AIActorCandidate]
-    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape]
+    /// The nearest collision the ray hits, over every collision candidate.
+    func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit?
     /// The resident actor placed by `reference`, or nil when it is not an actor.
     func residentActor(for reference: FormID) -> ReferenceKey?
     func movementReadout(for actor: ReferenceKey) -> NPCMovementReadout?
@@ -190,8 +191,7 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         if let pick, pick.origin == ray.origin, pick.direction == ray.direction {
             return pick.hit
         }
-        let shapes = world.collisionCandidates(overlapping: ray.bounds)
-        let hit = InteractionRaycaster.nearestHit(ray: ray, shapes: shapes)
+        let hit = world.nearestCollisionHit(ray: ray)
         pick = AICrosshairPick(origin: ray.origin, direction: ray.direction, hit: hit)
         return hit
     }

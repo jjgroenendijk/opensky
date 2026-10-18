@@ -329,3 +329,23 @@ private struct OffScreenProbe: WorldStateComponent {
 }
 
 private final class DerivedSource {}
+
+// MARK: - Writes that name no cell
+
+@MainActor
+extension WorldStateStoreTests {
+    @Test func aWriteWithoutACellNamesItsReferenceToTheUnplacedHook() {
+        let store = WorldStateStore()
+        var unplaced: [(ReferenceKey, UInt64)] = []
+        var placed: [CellSceneLocation?] = []
+        store.onMutation = { location, _ in placed.append(location) }
+        store.onUnplacedMutation = { reference, sequence in unplaced.append((reference, sequence)) }
+
+        store.set(ReferenceEnableState.disabled, for: key(0x202))
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+
+        #expect(unplaced.map(\.0) == [key(0x202)])
+        #expect(unplaced.map(\.1) == [2])
+        #expect(placed == [whiterun])
+    }
+}

@@ -81,11 +81,14 @@ nonisolated public struct ParticleControlSnapshot: Equatable, Sendable {
     public let systemCount: Int
     public let emitterCount: Int
     public let liveCount: Int
+    /// Systems the last frame skipped drawing because the view could not see them.
+    public let offscreenCount: Int
 
-    public init(systemCount: Int, emitterCount: Int, liveCount: Int) {
+    public init(systemCount: Int, emitterCount: Int, liveCount: Int, offscreenCount: Int = 0) {
         self.systemCount = systemCount
         self.emitterCount = emitterCount
         self.liveCount = liveCount
+        self.offscreenCount = offscreenCount
     }
 }
 

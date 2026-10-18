@@ -51,20 +51,24 @@ public final class DialogueCoordinator {
         return cachedStrings
     }
 
-    /// Built per call, because every input is a live read. It is a cheap struct.
+    /// Built per call, because every input is a live read. The condition context is
+    /// built only when the runtime first reads it.
     public var runtime: DialogueRuntime? {
         guard let index, let quests = world.questStates() else { return nil }
-        var context = world.conditionContext()
-        context.dialogue = context.dialogue.talking(to: conversationSpeaker)
-            .saying(spokenLine)
+        let speaker = conversationSpeaker
+        let line = spokenLine
         return DialogueRuntime(
             store: store,
             dialogue: index,
             questStates: quests,
-            context: context,
+            aliases: world.questAliases(),
             registry: world.conditionRegistry,
             fragments: world.fragments
-        )
+        ) { [world] in
+            var context = world.conditionContext()
+            context.dialogue = context.dialogue.talking(to: speaker).saying(line)
+            return context
+        }
     }
 
     // MARK: - Conversation

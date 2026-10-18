@@ -292,4 +292,32 @@ final class RecordingDialogueDispatcher: DialogueFragmentDispatching {
         guard let fragment = info.script.infoFragments?.fragment(phase) else { return [] }
         return [fragment.functionName]
     }
+
+    @Test func theConditionContextIsBuiltOnceOnFirstUse() throws {
+        var builds = 0
+        let fixture = try DialogueRuntimeFixture.context()
+        let runtime = try DialogueRuntime(
+            store: WorldStateStore(),
+            dialogue: DialogueRuntimeFixture.dialogueStore(),
+            questStates: .empty,
+            aliases: fixture.aliases,
+            registry: .dialogueTests,
+            fragments: nil
+        ) {
+            builds += 1
+            return fixture
+        }
+        #expect(builds == 0)
+        let speaker = DialogueRuntimeFixture.speakerKey
+        let greeting = runtime.greeting(for: speaker)
+        _ = runtime.topics(for: speaker)
+        #expect(builds == 1)
+        let eager = try DialogueRuntime(
+            store: WorldStateStore(),
+            dialogue: DialogueRuntimeFixture.dialogueStore(),
+            context: fixture,
+            registry: .dialogueTests
+        )
+        #expect(greeting == eager.greeting(for: speaker))
+    }
 }

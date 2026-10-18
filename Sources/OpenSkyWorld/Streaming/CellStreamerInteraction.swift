@@ -57,6 +57,32 @@ extension CellStreamer {
             + dynamicBodies.placedShapes(overlapping: bounds)
     }
 
+    /// The nearest hit over every collision candidate, the per-cell trees walked
+    /// along the ray. The same hit as `collisionCandidates(overlapping: ray.bounds)`.
+    public func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
+        InteractionRaycaster.nearestHit(
+            ray: ray,
+            sets: fixedCollisionSets,
+            shapes: vehicleCollisionCandidates(overlapping: ray.bounds)
+                + doorCollisionCandidates(overlapping: ray.bounds)
+                + dynamicBodies.placedShapes(overlapping: ray.bounds)
+        )
+    }
+
+    /// Whether the static half, as `staticCollisionCandidates` holds it, blocks the ray.
+    public func staticCollisionBlocks(ray: InteractionRay) -> Bool {
+        InteractionRaycaster.hasHit(
+            ray: ray,
+            sets: fixedCollisionSets,
+            shapes: vehicleCollisionCandidates(overlapping: ray.bounds)
+                + doorCollisionCandidates(overlapping: ray.bounds)
+        )
+    }
+
+    private var fixedCollisionSets: [StaticCollisionSet] {
+        interiorScene.map { [$0.staticCollision] } ?? composition.residentCollisionSets
+    }
+
     private func fixedCollisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
@@ -108,8 +134,7 @@ extension CellStreamer {
     private func pickInteraction(
         ray: InteractionRay
     ) -> (target: InteractionTarget?, speaker: ReferenceKey?) {
-        let shapes = collisionCandidates(overlapping: ray.bounds)
-        let hit = InteractionRaycaster.nearestHit(ray: ray, shapes: shapes)
+        let hit = nearestCollisionHit(ray: ray)
         let solid = hit.flatMap { hit in
             activeInteraction(reference: hit.reference).map {
                 InteractionTarget(
@@ -224,6 +249,14 @@ extension CellStreamer {
             return interiorActorPlacements[key]
         }
         return composition.actorPlacements[key]
+    }
+
+    /// One entry of `residentActorEntries()` in constant time.
+    public func residentActorEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        if let interiorScene {
+            return interiorActorPlacements?[key] == nil ? nil : interiorScene.references[key]
+        }
+        return composition.actorEntry(key: key)
     }
 
     /// The resident ACHR closest to `position`, or nil when none is loaded. The

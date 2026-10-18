@@ -181,8 +181,7 @@ extension PapyrusWorldRuntime {
     public func instantiate(_ item: PapyrusAttachItem) -> Bool {
         do {
             let handle = try runtime.makeInstance(scriptName: item.script.name)
-            instancesByKey[item.key] = handle
-            keysByHandle[handle] = item.key
+            storeInstance(handle, for: item.key)
             return true
         } catch {
             skips.note(.instanceCreationFailed)
@@ -278,10 +277,9 @@ extension PapyrusWorldRuntime {
     /// Another script may still hold the handle, for example a property naming a quest
     /// that stopped, so the handle stays a name for its reference.
     public func retire(_ key: PapyrusInstanceKey) {
-        guard let handle = instancesByKey.removeValue(forKey: key) else {
+        guard let handle = removeInstance(for: key) else {
             return
         }
-        keysByHandle.removeValue(forKey: handle)
         opaqueKeysByHandle[handle] = key.reference
         runtime.instances.removeValue(forKey: handle)
         if let cursor = drainCursor {

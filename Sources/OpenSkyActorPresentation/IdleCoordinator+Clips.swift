@@ -25,7 +25,7 @@ extension IdleCoordinator.Playing {
 
 extension IdleCoordinator {
     func conditionContext(for actor: ReferenceKey) -> ConditionContext {
-        var context = world?.idleConditionContext() ?? ConditionContext()
+        var context = worldConditionContext()
         context.subject = actor
         context.furniture = FurnitureConditionResolution(uses: furnitureUses, isAvailable: true)
         // A furniture idle tests the furniture as its Target, such as its keywords.
@@ -38,15 +38,30 @@ extension IdleCoordinator {
         return context
     }
 
+    /// Within one `advance`, actors share the world's context until a state write.
+    private func worldConditionContext() -> ConditionContext {
+        guard let world else { return ConditionContext() }
+        guard isAdvancing else { return world.idleConditionContext() }
+        let sequence = world.idleStateSequence
+        if let passContext, passContext.sequence == sequence {
+            return passContext.context
+        }
+        let context = world.idleConditionContext()
+        passContext = (sequence, context)
+        return context
+    }
+
     func selector(for actor: ReferenceKey) -> IdleSelector {
-        let base = conditionContext(for: actor)
+        var base: ConditionContext?
         let project = graphProject(of: actor)
-        let check: IdleSelector.Check = { idle in
+        let check: IdleSelector.Check = { [weak self] idle in
             // A tree such as `ActionActivate` mixes idles of several graphs, like a lever's.
             if let project, !IdleCore.idle(behaviorFile: idle.fileName, belongsTo: project) {
                 return "behavior graph"
             }
-            var evaluator = ConditionEvaluator(context: base)
+            let context = base ?? self?.conditionContext(for: actor) ?? ConditionContext()
+            base = context
+            var evaluator = ConditionEvaluator(context: context)
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
         }
         guard let store else {

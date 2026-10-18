@@ -169,6 +169,8 @@ public final class Renderer: NSObject {
     /// Blended particles and their systems draw far to near.
     public var particleSortingEnabled = true
     public var particleEmissionScale: Float = 1
+    /// Placed and effect systems the last scene pass skipped as outside the view.
+    public internal(set) var offscreenParticleSystemCount = 0
     /// World > Environment > Grass live controls. Values clamp at encode so
     /// tests/CLI callers cannot bypass renderer safety policy.
     public var grassEnabled = true

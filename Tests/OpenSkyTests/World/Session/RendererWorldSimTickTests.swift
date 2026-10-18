@@ -66,8 +66,7 @@ struct RendererWorldSimTickTests {
     private static func seedInstance(_ world: PapyrusWorldRuntime) throws {
         let key = PapyrusWorldFixture.key(objectID: 0x101, script: "Waiter")
         let handle = try world.runtime.makeInstance(scriptName: "Waiter")
-        world.instancesByKey[key] = handle
-        world.keysByHandle[handle] = key
+        world.storeInstance(handle, for: key)
     }
 
     // MARK: - Frame hook

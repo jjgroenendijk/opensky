@@ -25,13 +25,40 @@ public struct DialogueRuntime: DialogueAccess {
     /// path into the store.
     public var questStates: QuestResolution
     /// Everything a condition may read. Selection overrides `subject`, `target`
-    /// and `aliasQuest` per response and leaves the rest alone.
-    public var context: ConditionContext
+    /// and `aliasQuest` per response and leaves the rest alone. Built on the first
+    /// read, so a runtime that evaluates no condition does not build every view.
+    public var context: ConditionContext {
+        get { contextOverride ?? contextSource.context }
+        set { contextOverride = newValue }
+    }
+
+    /// The filled quest aliases, which scene actors resolve through without a context.
+    public var aliases: QuestAliasResolution
     public var registry: ConditionFunctionRegistry
     /// Where a chosen response's result scripts go. Nil in a session with no
     /// script runtime, in which case the fragments a response declares are
     /// counted as unrun rather than silently dropped.
     public var fragments: (any DialogueFragmentDispatching)?
+    private let contextSource: LazyConditionContext
+    private var contextOverride: ConditionContext?
+
+    public init(
+        store: WorldStateStore,
+        dialogue: DialogueStore,
+        questStates: QuestResolution,
+        aliases: QuestAliasResolution,
+        registry: ConditionFunctionRegistry,
+        fragments: (any DialogueFragmentDispatching)?,
+        context: @escaping () -> ConditionContext
+    ) {
+        self.store = store
+        self.dialogue = dialogue
+        self.questStates = questStates
+        self.aliases = aliases
+        self.registry = registry
+        self.fragments = fragments
+        contextSource = LazyConditionContext(context)
+    }
 
     public init(
         store: WorldStateStore,
@@ -44,9 +71,10 @@ public struct DialogueRuntime: DialogueAccess {
         self.store = store
         self.dialogue = dialogue
         self.questStates = questStates
-        self.context = context
+        aliases = context.aliases
         self.registry = registry
         self.fragments = fragments
+        contextSource = LazyConditionContext { context }
     }
 
     // MARK: - Said-state

@@ -154,7 +154,8 @@ extension WorldRenderControls: ParticleControlProviding {
         return ParticleControlSnapshot(
             systemCount: playbacks.count,
             emitterCount: playbacks.reduce(0) { $0 + $1.emitterCount },
-            liveCount: playbacks.reduce(0) { $0 + $1.liveCount }
+            liveCount: playbacks.reduce(0) { $0 + $1.liveCount },
+            offscreenCount: renderer?.offscreenParticleSystemCount ?? 0
         )
     }
 }

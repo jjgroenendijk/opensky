@@ -38,7 +38,13 @@ public final class CellStreamer {
     public private(set) var worldspaceEditorID: String
     /// Fires with the new worldspace after the exterior switched to it.
     public let onWorldspaceChanged = CallbackFanOut<String>()
-    public var composition = CellSceneComposition()
+    public var composition = CellSceneComposition() {
+        didSet { actorPoseRevision &+= 1 }
+    }
+
+    /// Rises on every change that can move an actor or change which actors are
+    /// resident: the composition, the interior scene, and the NPC movement state.
+    public private(set) var actorPoseRevision: UInt64 = 0
     public var core = CellStreamCore()
     public let runner: any CellBuildRunning
     public let sink: SceneSink
@@ -109,6 +115,7 @@ public final class CellStreamer {
     public var stagedCells: [CellCoordinate: CellScene] = [:]
     public var interiorScene: CellScene? {
         didSet {
+            actorPoseRevision &+= 1
             interiorActorPlacements = interiorScene.map {
                 ResidentActorPlacement.index([(location: $0.location, references: $0.references)])
             }
@@ -178,7 +185,9 @@ public final class CellStreamer {
     /// Resident graph, repath backlog and completion sink.
     public var navigationState = CellStreamerNavigationState()
     /// Active NPC capsules, their drive, and app callbacks.
-    public var npcMovementState = CellStreamerNPCMovementState()
+    public var npcMovementState = CellStreamerNPCMovementState() {
+        didSet { actorPoseRevision &+= 1 }
+    }
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).

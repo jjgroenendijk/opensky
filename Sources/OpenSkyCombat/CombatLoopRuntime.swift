@@ -139,8 +139,7 @@ public final class CombatLoopRuntime: CombatControlling {
     @discardableResult
     public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
         guard let world, actor != .player, target == .player else { return false }
-        guard world.combatActors().contains(where: { $0.key == actor && !$0.isDead })
-        else { return false }
+        guard world.combatActor(key: actor)?.isDead == false else { return false }
         forcedTargets[actor] = target
         setHostility(.hostile, on: actor)
         record(.scriptStarted(actor))

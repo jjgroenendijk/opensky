@@ -51,8 +51,10 @@ and the erased value, so none of it changes.
 Writes go through the store and never around it, so the journal, the dirty counts, and the save see
 every change, including every script change ([Papyrus
 activation](/engine/papyrus-activation.md#the-world-bridge)). Each write passes the reference's
-loaded cell. An attributed change rebuilds one cell. An unattributed one rebuilds every loaded cell.
-A reference no loaded cell knows stays unattributed. That is the correct fallback, not a guess.
+loaded cell. An attributed change rebuilds one cell. A change without a cell rebuilds the loaded
+cells whose references hold its key; a persistent reference can sit in more than one. A reference
+no loaded cell holds, such as a spawned one, rebuilds every loaded cell. That is the correct
+fallback, not a guess.
 
 A kind declares whether a cell build reads it. Quest, alias, story manager, dialogue, scene, actor
 value, combat, magic, perk, faction, relationship, progress, and crime state do not: no placed
@@ -166,8 +168,8 @@ Three results follow from state living only in the store:
 
 - Unloading a cell changes no state, and a pending rebuild for an unloaded cell is dropped. A
   returning cell rebuilds from plugin bytes and the current snapshot, which applies its delta again.
-- An unattributed change rebuilds every loaded cell. That is correct first. The way to narrow it is
-  to attribute the write, or to mark its kind as one no cell build reads.
+- A change that no loaded cell can claim rebuilds every loaded cell. That is correct first. The way
+  to narrow it is to attribute the write, or to mark its kind as one no cell build reads.
 - A settled physics body saves its resting pose without a rebuild, because it already draws there
   ([dynamic bodies](/engine/dynamic-bodies.md#saving)). An idle prop is not world state at all
   ([idle runtime](/engine/idle-runtime.md#prop)).

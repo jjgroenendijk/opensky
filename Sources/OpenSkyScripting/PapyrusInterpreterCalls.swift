@@ -26,7 +26,8 @@ extension PapyrusInterpreter {
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(4, instruction: instruction)
-        let functionName = try name(from: operands[0])
+        let function = try callName(operands[0], frame: frame)
+        let functionName = function.spelling
         let receiverValue = try read(operands[1], frame: frame)
         if receiverValue == .none {
             // The game logs "Cannot call ... on a None object" and the script goes on.
@@ -56,7 +57,7 @@ extension PapyrusInterpreter {
         }
         guard let instance = runtime.instance(for: handle) else {
             let call = externalMethodCall(
-                functionName: functionName,
+                function,
                 receiverOperand: operands[1],
                 receiver: handle,
                 arguments: arguments,
@@ -67,19 +68,17 @@ extension PapyrusInterpreter {
         if let resolved = try resolveMethod(functionName, instance: instance) {
             return try resolvedMethodFlow(
                 resolved,
-                functionName: functionName,
+                function: function,
                 receiver: handle,
                 arguments: arguments,
                 destination: operands[2]
             )
         }
+        let root = instance.rootScriptName
         return try nativeFlow(
             nativeCall(
-                kind: .method,
-                script: instance.rootScriptName,
-                function: functionName,
-                receiver: handle,
-                arguments: arguments
+                kind: .method, script: (root, runtime.index(named: root)?.key), function: function,
+                receiver: handle, arguments: arguments
             ),
             destination: operands[2]
         )
@@ -90,7 +89,8 @@ extension PapyrusInterpreter {
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
-        let functionName = try name(from: operands[0])
+        let function = try callName(operands[0], frame: frame)
+        let functionName = function.spelling
         guard let handle = frame.instanceHandle, let instance = runtime.instance(for: handle) else {
             throw .invalidOperand(
                 instruction: instructionIndex,
@@ -118,8 +118,8 @@ extension PapyrusInterpreter {
             return try nativeFlow(
                 nativeCall(
                     kind: .parent,
-                    script: resolved.script.name,
-                    function: functionName,
+                    script: (resolved.script.name, resolved.owner.key),
+                    function: function,
                     receiver: handle,
                     arguments: arguments
                 ),
@@ -129,8 +129,8 @@ extension PapyrusInterpreter {
         return try nativeFlow(
             nativeCall(
                 kind: .parent,
-                script: parentName,
-                function: functionName,
+                script: (parentName, runtime.index(named: parentName)?.key),
+                function: function,
                 receiver: handle,
                 arguments: arguments
             ),
@@ -144,7 +144,8 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(4, instruction: instruction)
         let scriptName = try name(from: operands[0])
-        let functionName = try name(from: operands[1])
+        let function = try callName(operands[1], frame: frame)
+        let functionName = function.spelling
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
         if runtime.index(named: scriptName) == nil {
             _ = runtime.loadScript?(scriptName)
@@ -164,8 +165,8 @@ extension PapyrusInterpreter {
         return try nativeFlow(
             nativeCall(
                 kind: .staticFunction,
-                script: scriptName,
-                function: functionName,
+                script: (scriptName, function.scriptKey),
+                function: function,
                 receiver: nil,
                 arguments: arguments
             ),
@@ -270,58 +271,73 @@ extension PapyrusInterpreter {
         return name
     }
 
+    /// `script.key` and `function.key` are the folded names; either nil folds at the call.
     private func nativeCall(
         kind: PapyrusNativeCallKind,
-        script: String,
-        function: String,
+        script: (name: String, key: String?),
+        function: CallName,
         receiver: PapyrusObjectHandle?,
         arguments: [PapyrusValue]
     ) -> PapyrusNativeCall {
-        PapyrusNativeCall(
+        let key = script.key.flatMap { scriptKey in
+            function.key.map {
+                PapyrusNativeKey(foldedScriptName: scriptKey, foldedFunctionName: $0)
+            }
+        }
+        return PapyrusNativeCall(
             kind: kind,
-            scriptName: script,
-            functionName: function,
+            scriptName: script.name,
+            functionName: function.spelling,
             receiver: receiver,
-            arguments: arguments
+            arguments: arguments,
+            key: key
         )
     }
 
+    /// The call name operand with the folded names stored on the instruction at load.
+    private func callName(
+        _ operand: PexValue,
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> CallName {
+        let spelling = try name(from: operand)
+        let keys = frame.compiled.callNameKeys(at: frame.instructionIndex - 1, spelling: spelling)
+        return CallName(spelling: spelling, key: keys?.function, scriptKey: keys?.script)
+    }
+
     private func externalMethodCall(
-        functionName: String,
+        _ function: CallName,
         receiverOperand: PexValue,
         receiver: PapyrusObjectHandle,
         arguments: [PapyrusValue],
         frame: PapyrusFrame
     ) -> PapyrusNativeCall {
-        nativeCall(
+        let declared = receiverScriptName(receiverOperand, frame: frame)
+        let owner = nativeOwner(of: function.spelling, from: declared)
+        return nativeCall(
             kind: .method,
-            script: nativeOwner(
-                of: functionName, from: receiverScriptName(receiverOperand, frame: frame)
+            script: (
+                owner?.script.name ?? declared,
+                owner?.key ?? runtime.index(named: declared)?.key
             ),
-            function: functionName,
+            function: function,
             receiver: receiver,
             arguments: arguments
         )
     }
 
     /// The script in `declared`'s parent chain that declares `functionName` native, as a
-    /// call on an instance resolves it. `declared` itself when no loaded script does.
-    private func nativeOwner(of functionName: String, from declared: String) -> String {
-        guard let chain = try? runtime.scriptChain(from: declared) else { return declared }
-        let owner = chain.first { object in
-            object.states.contains { state in
-                state.functions.contains {
-                    PapyrusRuntime.matches($0.name, functionName)
-                        && $0.function.flags.contains(.native)
-                }
-            }
-        }
-        return owner?.name ?? declared
+    /// call on an instance resolves it. Nil when no loaded script does.
+    private func nativeOwner(
+        of functionName: String,
+        from declared: String
+    ) -> PapyrusScriptIndex? {
+        guard let chain = try? runtime.indexChain(from: declared) else { return nil }
+        return chain.first { $0.declaresNative(functionName) }
     }
 
     private func resolvedMethodFlow(
         _ resolved: PapyrusResolvedFunction,
-        functionName: String,
+        function: CallName,
         receiver: PapyrusObjectHandle,
         arguments: [PapyrusValue],
         destination: PexValue
@@ -337,8 +353,8 @@ extension PapyrusInterpreter {
         }
         let call = nativeCall(
             kind: .method,
-            script: resolved.script.name,
-            function: functionName,
+            script: (resolved.script.name, resolved.owner.key),
+            function: function,
             receiver: receiver,
             arguments: arguments
         )
@@ -354,4 +370,11 @@ extension PapyrusInterpreter {
         }
         return name
     }
+}
+
+/// A call name as the script spells it, with the folded names stored at load.
+private struct CallName {
+    let spelling: String
+    let key: String?
+    let scriptKey: String?
 }

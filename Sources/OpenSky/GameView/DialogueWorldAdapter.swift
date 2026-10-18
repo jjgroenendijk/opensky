@@ -189,6 +189,10 @@ extension DialogueWorldAdapter: DialogueWorld {
         game.scripts.bridge?.questRuntime?.resolution()
     }
 
+    func questAliases() -> QuestAliasResolution {
+        game.scripts.bridge?.questRuntime?.aliasResolution() ?? .empty
+    }
+
     func conditionContext() -> ConditionContext {
         var context = game.runtimeState.conditionContext()
         context.dialogue = DialogueResolution(

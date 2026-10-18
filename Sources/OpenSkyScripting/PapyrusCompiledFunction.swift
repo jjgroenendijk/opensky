@@ -15,6 +15,14 @@ nonisolated public struct PapyrusNameBinding: Equatable, Sendable {
     public let slot: Int?
 }
 
+/// The names one call instruction names, folded when the script is indexed.
+nonisolated public struct PapyrusCallNameKeys: Equatable, Sendable {
+    public let functionSpelling: String
+    public let function: String
+    /// The script a static call names; nil for a method or parent call.
+    public let script: String?
+}
+
 nonisolated public final class PapyrusCompiledFunction: Sendable {
     public let function: PexFunction
     public let slotTypes: [PapyrusType]
@@ -24,6 +32,8 @@ nonisolated public final class PapyrusCompiledFunction: Sendable {
     /// the parameter, because that declaration's value wins.
     public let argumentSlots: [Int?]
     public let defaultReturnValue: PapyrusValue
+    /// One entry per instruction; nil for an instruction that is not a call.
+    public let callNameKeys: [PapyrusCallNameKeys?]
 
     private let slotsByKey: [String: Int]
     /// Every identifier spelling the instructions use, so the run loop never folds one.
@@ -62,6 +72,39 @@ nonisolated public final class PapyrusCompiledFunction: Sendable {
             }
         }
         bindingsBySpelling = bindings
+        callNameKeys = function.instructions.map(Self.callNameKeys)
+    }
+
+    /// The folded names of the call at `index`, when its function is spelled `spelling`.
+    public func callNameKeys(at index: Int, spelling: String) -> PapyrusCallNameKeys? {
+        guard callNameKeys.indices.contains(index), let keys = callNameKeys[index] else {
+            return nil
+        }
+        return keys.functionSpelling == spelling ? keys : nil
+    }
+
+    private static func callNameKeys(_ instruction: PexInstruction) -> PapyrusCallNameKeys? {
+        let operands = instruction.operands
+        switch instruction.opcode {
+        case .callMethod, .callParent:
+            guard let function = operands.first?.stringValue else { return nil }
+            return PapyrusCallNameKeys(
+                functionSpelling: function, function: PapyrusName.key(function), script: nil
+            )
+        case .callStatic:
+            guard
+                operands.count > 1,
+                let script = operands[0].stringValue,
+                let function = operands[1].stringValue
+            else { return nil }
+            return PapyrusCallNameKeys(
+                functionSpelling: function,
+                function: PapyrusName.key(function),
+                script: PapyrusName.key(script)
+            )
+        default:
+            return nil
+        }
     }
 
     public func binding(for name: String) -> PapyrusNameBinding {

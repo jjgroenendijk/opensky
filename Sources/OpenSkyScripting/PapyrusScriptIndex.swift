@@ -10,6 +10,8 @@ public final class PapyrusScriptIndex {
     public typealias DeclaredVariable = (owner: PexObject, variable: PexVariable)
 
     public let script: PexObject
+    /// The folded script name, the script half of a native key.
+    public let key: String
 
     /// Folded state name, then folded function name. The first state and the first
     /// function of a name win, as in a lookup by name.
@@ -17,11 +19,19 @@ public final class PapyrusScriptIndex {
     private let readHandlers: [String: PapyrusCompiledFunction]
     private let writeHandlers: [String: PapyrusCompiledFunction]
     private var functionsBySpelling: [String: [String: PapyrusCompiledFunction?]] = [:]
+    /// Folded names of the functions declared native in any state.
+    private let nativeFunctions: Set<String>
+    private var nativeBySpelling: [String: Bool] = [:]
     private var variablesBySpelling: [String: DeclaredVariable?] = [:]
     private var variablesGeneration: Int?
 
     public init(_ script: PexObject) {
         self.script = script
+        key = PapyrusName.key(script.name)
+        nativeFunctions = Set(script.states.flatMap { state in
+            state.functions.filter { $0.function.flags.contains(.native) }
+                .map { PapyrusName.key($0.name) }
+        })
         var states: [String: [String: PapyrusCompiledFunction]] = [:]
         for state in script.states where states[PapyrusName.key(state.name)] == nil {
             var functions: [String: PapyrusCompiledFunction] = [:]
@@ -50,6 +60,16 @@ public final class PapyrusScriptIndex {
         }
         let found = functionsByState[PapyrusName.key(state)]?[PapyrusName.key(name)]
         functionsBySpelling[state, default: [:]][name] = .some(found)
+        return found
+    }
+
+    /// Whether any state declares a native function spelled `name`.
+    public func declaresNative(_ name: String) -> Bool {
+        if let known = nativeBySpelling[name] {
+            return known
+        }
+        let found = nativeFunctions.contains(PapyrusName.key(name))
+        nativeBySpelling[name] = found
         return found
     }
 

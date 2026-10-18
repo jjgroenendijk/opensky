@@ -14,9 +14,17 @@ public protocol DialogueWorld: AnyObject {
     /// Nil without a quest runtime. Then no conversation can run.
     func questStates() -> QuestResolution?
     func conditionContext() -> ConditionContext
+    /// The filled aliases alone, for a reader that needs them and no condition.
+    func questAliases() -> QuestAliasResolution
     var conditionRegistry: ConditionFunctionRegistry { get }
     /// Nil in a session with no script runtime.
     var fragments: (any DialogueFragmentDispatching)? { get }
     /// Walks the VFS, so the coordinator calls it once.
     func loadStrings() -> LocalizedStrings?
+}
+
+extension DialogueWorld {
+    public func questAliases() -> QuestAliasResolution {
+        conditionContext().aliases
+    }
 }
