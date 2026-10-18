@@ -90,5 +90,9 @@ struct PapyrusRegistrationEventTests {
         #expect(fixture.session.dispatch.notes == ["start", "stop"])
         #expect(try register("UnregisterForSleep") == .returned(.none))
         #expect(world.queueSleepEvents(start: 2, end: 2.25) == 0)
+        // Retiring the instance, as a stopped quest does, drops the registration.
+        #expect(try register("RegisterForSleep") == .returned(.none))
+        world.retire(PapyrusInstanceKey(reference: fixture.key, scriptName: "Lever"))
+        #expect(world.sleepListeners.isEmpty)
     }
 }

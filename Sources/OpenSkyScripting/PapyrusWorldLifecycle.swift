@@ -287,6 +287,9 @@ extension PapyrusWorldRuntime {
         }
         eventQueue.removeAll { $0.target == key }
         updateTimers.removeAll(for: key)
+        // A stopped quest drops its registrations (CK wiki "RegisterForSleep - Form").
+        sleepListeners.remove(key)
+        trackedStatListeners.remove(key)
         pendingOnInit.remove(key)
         retiringKeys.remove(key)
         handledEvents[key] = nil
