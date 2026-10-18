@@ -81,6 +81,10 @@ jobs:
     name: Static checks
     runs-on: xcode-27
     timeout-minutes: 10
+    # The module size check reads whether each exception's split issue is open.
+    permissions:
+      contents: read
+      issues: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/cache@v6
@@ -122,6 +126,10 @@ jobs:
           docs-length agent-files comment-length panel-text load-order-only gap-registries duplicates no-suppressions
       - if: success() || failure()
         run: make file-length ALL=1
+      - if: success() || failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: make module-size
       # The Python tools pin ruff in their uv.lock, so CI needs only uv.
       - if: success() || failure()
         uses: astral-sh/setup-uv@v10.3.0

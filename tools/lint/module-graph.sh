@@ -44,6 +44,14 @@ DOMAINS = [
     "OpenSkyLoading",
 ]
 DOMAIN_OWNER = "OpenSkyWorld"
+# Rule 10. The renderer draws from one RenderFrameInput per frame and holds no game
+# state, so it depends only on these: formats, loaded data, assets, and draw helpers.
+RENDERER = "OpenSkyRendering"
+RENDERER_DEPS = {
+    "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
+    "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
+    "OpenSkyAssetCache", "CASTCEncoder", "OpenSkyImageKernels",
+}
 # Products of external packages. They sit below every layer.
 EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
@@ -127,6 +135,9 @@ for name in sorted(names):
                 failures.append(f"rule 5: {name} depends on the implementation {dep}")
             if dep in fixtures and dep != own + "Fixtures":
                 failures.append(f"rule 5: {name} depends on {dep}, another feature's fixtures")
+
+for dep in sorted(set(deps.get(RENDERER, [])) - RENDERER_DEPS):
+    failures.append(f"rule 10: the renderer depends on {dep}; pass its state in RenderFrameInput")
 
 for feature in sorted(features):
     for part in ("Interface", "Tests"):

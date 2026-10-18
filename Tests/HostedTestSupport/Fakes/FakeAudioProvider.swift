@@ -85,14 +85,14 @@ final class FakeAudioProvider: AudioControlProviding {
         }
     }
 
-    func playAudioFile(named name: String) -> String? {
+    func playAudioFile(named name: String) -> AudioTriggerRefusal? {
         playedFiles.append(name)
         return nil
     }
 
-    func playVoiceFile(named name: String) -> String? {
+    func playVoiceFile(named name: String) -> AudioTriggerRefusal? {
         playedVoiceFiles.append(name)
-        return lastVoiceError
+        return lastVoiceError.map { .playFailed(reason: $0) }
     }
 
     func stopAllAudioSources() {
@@ -103,7 +103,7 @@ final class FakeAudioProvider: AudioControlProviding {
         stopAmbienceCount += 1
     }
 
-    func forceMusicType(named name: String) -> String? {
+    func forceMusicType(named name: String) -> AudioTriggerRefusal? {
         forcedMusicTypeNames.append(name)
         return nil
     }

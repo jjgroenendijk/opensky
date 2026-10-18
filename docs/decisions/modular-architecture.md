@@ -53,6 +53,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 7. Declared imports | Every `import` of a package module names the target itself or a declared dependency | Gate |
 | 8. Composition | `OpenSkyPreview`, the app, and the CLI may depend on anything | Allowed |
 | 9. World domains | A domain of the world feature depends on lower modules, Interfaces, and earlier domains. Of the features, only `OpenSkyWorld` depends on a domain. Every domain has a `Tests` target | Gate |
+| 10. Renderer | `OpenSkyRendering` depends only on the formats, `OpenSkyGameData`, the asset cache, and its draw helpers. Game state reaches it in `RenderFrameInput` | Gate |
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another

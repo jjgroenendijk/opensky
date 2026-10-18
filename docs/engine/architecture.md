@@ -55,7 +55,9 @@ Where it does not apply:
 - A small runtime with almost no logic does not need a separate core.
 
 A coordinator follows this style too: a pure core and a thin shell. [Coordinators](/engine/coordinators.md)
-has the rule and the two shapes a core can take.
+has the rule and the two shapes a core can take. A core lives in a file whose name ends in
+`Core`, such as `VendorCore.swift`. The lint rule `pure_core_side_effect` fails such a file
+when it imports AppKit, Metal, or an audio framework, or reads a clock such as `Date()`.
 
 ## Ports and adapters
 
@@ -73,7 +75,9 @@ Where it applies:
   frame the driver returns one `RenderFrameInput` value, built after every system has run:
   the view, the weather, the moved references, the player rigs, and the UI. The renderer
   reads game state only from that value, so nothing changes half way through an encode. A
-  renderer without a driver draws the input its caller sets.
+  renderer without a driver draws the input its caller sets. Rule 10 of `make module-graph`
+  keeps the renderer's dependencies to formats, loaded data, assets, and draw helpers, and
+  the lint rule `renderer_downcast` fails a cast of the renderer or its driver.
 - Controls. `AudioControlProviding` is what the audio sidebar section needs.
   `AudioVoiceSection` holds `any AudioControlProviding`, not the audio engine.
 - Files. Code reads game files through `any GameFileSource`. `VirtualFileSystem` is the
@@ -93,8 +97,10 @@ It lives in that domain's feature module and is tested there. It imports no AppK
 and the package tests can use it. `GameViewController` keeps only the view, the input, the
 render loop, and the panel wiring. It holds the coordinators and forwards to them. A
 coordinator takes its port in its initializer and returns the changes it wants outside its
-domain as commands, which the app runs. The lint rule `late_attached_world` fails an
-`attach(world:)` method in a package module.
+domain as commands, which the app runs. The lint rule `late_attached_world` fails a
+late-attach method, such as `attach(world:)` or `wire(host:)`, in a package module. The lint
+rule `controller_outside_composition_root` fails code that names `GameViewController` outside
+the app shell and the `GameViewController` files; a comment may still name it.
 
 Where it applies: every game domain that has a `GameViewController+X` file today. Issues 30.24
 to 30.34 move them.
@@ -139,4 +145,24 @@ frame steps after the camera moves, the asset drains, and the world tick after t
 hook takes one step per case of its phase enum (`FrameStep`, `AssetDrain`, `WorldTickStep`),
 and the enum order is the run order. So moving a wiring statement cannot reorder the
 simulation, and a system wired late still runs in its own slot. A new system adds a case where
-it must run; a unit test pins the world-tick order.
+it must run; a unit test pins the world-tick order. The lint rule `frame_callback_property`
+fails a closure property or a `CallbackFanOut` whose name says frame, tick, or update, so no
+second list of per-frame callbacks grows beside the schedule.
+
+## Machine checks
+
+Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
+`make check` and CI. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
+
+| Rule | Check |
+| --- | --- |
+| A feature uses another feature only through its `Interface` module | `make module-graph`, rules 1 to 9 |
+| Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
+| No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
+| No late-attach method in a package module | SwiftLint `late_attached_world` |
+| A panel action returns a typed outcome, not `String` | SwiftLint `action_returns_text`, `panel_action_returns_text` |
+| A pure core imports no AppKit, Metal, or audio, and reads no clock | SwiftLint `pure_core_side_effect` |
+| The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |
+| The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |
+| A system joins the frame only through a `FrameSchedule` phase | SwiftLint `frame_callback_property` |
+| A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |

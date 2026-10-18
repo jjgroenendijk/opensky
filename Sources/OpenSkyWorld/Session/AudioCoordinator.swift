@@ -106,11 +106,9 @@ public final class AudioCoordinator {
     }
 
     /// Nil when the play started or waits for its file; else the reason.
-    public func playAudioFile(named name: String) -> String? {
-        guard let engine, engine.isRunning, let assets else {
-            return "audio engine is not running"
-        }
-        var reason: String?
+    public func playAudioFile(named name: String) -> AudioTriggerRefusal? {
+        guard let engine, engine.isRunning, let assets else { return .engineNotRunning }
+        var reason: AudioTriggerRefusal?
         let position = triggerPosition()
         assets.request(name) { result in
             do {
@@ -119,7 +117,7 @@ public final class AudioCoordinator {
                     name: name, category: .effects, worldPosition: position
                 ))
             } catch {
-                reason = String(describing: error)
+                reason = .playFailed(reason: String(describing: error))
             }
         }
         return reason

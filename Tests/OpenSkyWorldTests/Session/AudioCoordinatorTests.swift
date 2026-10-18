@@ -97,8 +97,8 @@ struct AudioCoordinatorTests {
     @Test
     func playRefusesWithoutARunningEngine() {
         let (audio, _) = Self.makeCoordinator()
-        #expect(audio.playAudioFile(named: "music\\a.xwm") == "audio engine is not running")
-        #expect(audio.playVoiceFile(named: "x.fuz") == "audio engine is not running")
+        #expect(audio.playAudioFile(named: "music\\a.xwm") == .engineNotRunning)
+        #expect(audio.playVoiceFile(named: "x.fuz") == .engineNotRunning)
         #expect(audio.lastVoiceError == "audio engine is not running")
         #expect(audio.currentVoiceDescription == nil)
         #expect(audio.voicePlaybackDescription.isEmpty)
@@ -139,8 +139,8 @@ struct AudioCoordinatorTests {
         #expect(audio.currentMusicStateName == "unknown")
         #expect(audio.currentFootstepTags.isEmpty)
         #expect(audio.footstepCounts.routed == 0 && audio.footstepCounts.played == 0)
-        #expect(audio.forceMusicType(named: "MUSExplore") == "audio is not enabled")
-        #expect(audio.forcePlayFootstep(tag: "FSTWalkLeft") == "audio is not enabled")
+        #expect(audio.forceMusicType(named: "MUSExplore") == .audioNotEnabled)
+        #expect(audio.forcePlayFootstep(tag: "FSTWalkLeft") == .audioNotEnabled)
     }
 
     @Test

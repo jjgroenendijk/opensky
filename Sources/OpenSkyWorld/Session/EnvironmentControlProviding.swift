@@ -311,8 +311,8 @@ public protocol AudioControlProviding: AnyObject {
     var selectableAudioFileNames: [String] { get }
     /// Streams the picked file as a positional source placed a fixed offset in
     /// front of the camera, so panning/attenuation are audible immediately.
-    /// Returns nil on success or a short failure description for the readout.
-    func playAudioFile(named name: String) -> String?
+    /// Returns nil when the play started or waits for its file.
+    func playAudioFile(named name: String) -> AudioTriggerRefusal?
     func stopAllAudioSources()
     var audioStatsSnapshot: AudioStatsSnapshot { get }
     /// Fixes the room reverb's wet level, in dB; nil follows the acoustic space.
@@ -338,8 +338,8 @@ public protocol AudioControlProviding: AnyObject {
     /// as the whole match set.
     var voiceFileMatchCount: Int { get }
     /// Plays one `.fuz` line positionally in front of the camera, on the voice
-    /// submix. Returns nil on success or a short failure description.
-    func playVoiceFile(named name: String) -> String?
+    /// submix. Returns nil when the line started or waits for its file.
+    func playVoiceFile(named name: String) -> AudioTriggerRefusal?
     /// The line currently playing, with its container summary. Nil when no
     /// voice line has been started this session.
     var currentVoiceDescription: String? { get }
@@ -386,8 +386,8 @@ public protocol AudioControlProviding: AnyObject {
     /// MUSC editor ids the music picker offers, sorted. Empty without data.
     var selectableMusicTypeNames: [String] { get }
     /// Forces a crossfade to a named MUSC, bypassing the precedence chain.
-    /// Returns nil on success or a short failure description for the readout.
-    func forceMusicType(named name: String) -> String?
+    /// Returns nil when the crossfade started.
+    func forceMusicType(named name: String) -> AudioTriggerRefusal?
     /// Force-stops music; the next cell change resolves and starts it again.
     func stopMusic()
     /// Playlist plus playing file, joined for the readout. "none" when silent.
@@ -427,7 +427,7 @@ public protocol AudioControlProviding: AnyObject {
     var forcedFootstepMaterial: FormID? { get set }
     /// Forces one footstep for the named tag at the player's feet, so the
     /// chain can be verified without walking.
-    func forcePlayFootstep(tag: String) -> String?
+    func forcePlayFootstep(tag: String) -> AudioTriggerRefusal?
     /// The dialogue lines scenes and the dialogue menu are saying, one row per actor.
     var speechDescription: String { get }
 }

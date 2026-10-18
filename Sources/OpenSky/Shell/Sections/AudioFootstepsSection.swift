@@ -152,7 +152,7 @@ final class AudioFootstepsSection: PanelSectionViewController {
 
     @objc private func playFootstep() {
         guard let tag = footstepTagControl.titleOfSelectedItem else { return }
-        lastForceError = provider?.forcePlayFootstep(tag: tag)
+        lastForceError = provider?.forcePlayFootstep(tag: tag)?.text
         finishInteraction()
     }
 

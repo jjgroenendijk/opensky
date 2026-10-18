@@ -132,15 +132,14 @@ public final class WorldAudioFootstepDirector {
     }
 
     /// Plays one footstep for `tag` without waiting for the graph to fire it.
-    /// The World > Audio panel's verification control; returns nil on success
-    /// or a short reason for the readout.
+    /// The World > Audio panel's verification control; nil when the step played.
     public func forcePlayFootstep(
         tag: String,
         gait: LocomotionGait,
         position: SIMD3<Float>
-    ) -> String? {
-        guard engine.isRunning else { return "engine not running" }
-        guard let footstepStore, let footstepSet else { return "no footstep records" }
+    ) -> AudioTriggerRefusal? {
+        guard engine.isRunning else { return .engineNotRunning }
+        guard let footstepStore, let footstepSet else { return .noFootstepRecords }
         guard
             let resolved = footstepStore.resolve(
                 tag: tag,
@@ -148,7 +147,7 @@ public final class WorldAudioFootstepDirector {
                 in: footstepSet,
                 material: activeMaterial
             )
-        else { return "\(tag) resolves to no sound in \(describe(footstepSet))" }
+        else { return .tagUnresolved(tag: tag, footstepSet: describe(footstepSet)) }
         routedEventCount += 1
         onImpact?(resolved.impact, position)
         return play(resolved, tag: tag, at: position)
@@ -190,24 +189,18 @@ public final class WorldAudioFootstepDirector {
         _ resolved: ResolvedFootstep,
         tag: String,
         at position: SIMD3<Float>
-    ) -> String? {
-        guard let soundStore else {
-            lastFootstepError = "no sound records"
-            return lastFootstepError
-        }
+    ) -> AudioTriggerRefusal? {
+        guard let soundStore else { return refuse(.noSoundRecords) }
         guard
             let sound = try? soundStore.resolveAny(resolved.sound),
             let path = sound.filePaths.first
-        else {
-            lastFootstepError = "unresolved \(tag) -> \(resolved.sound.description)"
-            return lastFootstepError
-        }
+        else { return refuse(.soundUnresolved(tag: tag, sound: resolved.sound)) }
         // The SNCT chain places vanilla footstep descriptors under
         // `AudioCategoryFST`; the fallback is for a chain that reaches no menu category.
         let request = AudioPlayRequest(
             name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position
         )
-        var reason: String?
+        var reason: AudioTriggerRefusal?
         assets.request(path) { [weak self] result in
             reason = self?.start(result, request: request, tag: tag)
         }
@@ -218,7 +211,7 @@ public final class WorldAudioFootstepDirector {
         _ result: Result<AudioFileAsset, AssetLoadFailure>,
         request: AudioPlayRequest,
         tag: String
-    ) -> String? {
+    ) -> AudioTriggerRefusal? {
         do {
             try engine.playPositional(asset: result.get(), request: request)
             playedFootstepCount += 1
@@ -231,7 +224,12 @@ public final class WorldAudioFootstepDirector {
             Self.logger.warning(
                 "[WARNING] footstep play failed: \(reason, privacy: .public)"
             )
-            return reason
+            return .playFailed(reason: reason)
         }
+    }
+
+    private func refuse(_ refusal: AudioTriggerRefusal) -> AudioTriggerRefusal {
+        lastFootstepError = refusal.text
+        return refusal
     }
 }

@@ -127,7 +127,7 @@ final class AudioMusicSection: PanelSectionViewController {
             return
         }
         forcedTypeName = selected
-        lastForceError = provider?.forceMusicType(named: selected)
+        lastForceError = provider?.forceMusicType(named: selected)?.text
         finishInteraction()
     }
 

@@ -147,7 +147,9 @@ struct WorldAudioFootstepDirectorTests {
         let failure = director.forcePlayFootstep(
             tag: "FootLeft2", gait: .walk, position: .zero
         )
-        #expect(failure?.contains("FootLeft2") == true)
+        #expect(failure == .tagUnresolved(
+            tag: "FootLeft2", footstepSet: director.footstepSetDescription
+        ))
     }
 
     @Test func tagsReportWhatTheCurrentGaitCanPlay() throws {
@@ -173,7 +175,7 @@ struct WorldAudioFootstepDirectorTests {
         #expect(engine.sources.isEmpty)
         #expect(director.footstepSetDescription == "none")
         #expect(director.forcePlayFootstep(tag: "FootLeft", gait: .walk, position: .zero)
-            == "no footstep records")
+            == .noFootstepRecords)
     }
 
     /// The vanilla footstep chain ends at a `.wav`, so the engine's own file
