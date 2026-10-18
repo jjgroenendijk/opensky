@@ -114,7 +114,7 @@ final class EffectsWorldAdapter {
         do {
             try effects.step(seconds, extraModels: extraModels(), renderer: renderer)
         } catch {
-            GameViewController.logger.error(
+            Self.logger.error(
                 "[ERROR] effect draw lists: \(String(describing: error), privacy: .public)"
             )
         }
@@ -163,6 +163,11 @@ final class EffectsWorldAdapter {
         spawnedHazards += 1
         return .generated(0x8000_0000_0000_0000 | spawnedHazards)
     }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Effects"
+    )
 }
 
 extension EffectsWorldAdapter: ExplosionWorld {

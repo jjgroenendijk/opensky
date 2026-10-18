@@ -83,7 +83,7 @@ final class WorldSessionWiring {
                 do {
                     try renderer?.setScene(scene, camera: camera)
                 } catch {
-                    GameViewController.logger.error(
+                    Self.logger.error(
                         "[ERROR] scene swap failed: \(String(describing: error), privacy: .public)"
                     )
                 }
@@ -266,4 +266,9 @@ final class WorldSessionWiring {
             feetPosition: gameSession.walkController.feetPosition
         )
     }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "CellStream"
+    )
 }
