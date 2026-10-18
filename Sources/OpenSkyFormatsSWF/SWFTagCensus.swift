@@ -28,7 +28,8 @@ nonisolated public struct SWFTagCensus: Sendable {
             SWFDisplayListParser.placeObjectCode, SWFDisplayListParser.placeObject2Code,
             SWFDisplayListParser.placeObject3Code, SWFDisplayListParser.removeObjectCode,
             SWFDisplayListParser.removeObject2Code, SWFDisplayListParser.setBackgroundColorCode,
-            SWFDisplayListParser.showFrameCode, 73, 74, 88
+            SWFDisplayListParser.showFrameCode, SWFButton.tagCode, SWFScalingGrid.tagCode,
+            SWFFileAttributes.tagCode, SWFMetadata.tagCode, 73, 74, 88
         ])
 
     public static func isHandled(_ row: String) -> Bool {

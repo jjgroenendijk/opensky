@@ -62,6 +62,29 @@ body holds its own tag stream with the same framing.
 Scaleform GFx adds its own tags, with codes around 1000 and above. They are not in the Adobe
 specification. Vanilla uses none of them.
 
+## Movie attributes
+
+Three tags carry facts about the movie, not display content (spec v19, pp. 50-52 and 57):
+
+| tag | name | body |
+| --- | --- | --- |
+| 69 | FileAttributes | one flag byte, then 3 reserved bytes |
+| 77 | Metadata | one STRING of XML |
+| 78 | DefineScalingGrid | `CharacterId` UI16, then a RECT |
+
+FileAttributes flags, MSB to LSB: reserved, `UseDirectBlit`, `UseGPU`, `HasMetadata`,
+`ActionScript3`, two reserved bits, `UseNetwork`. OpenSky keeps them and the Metadata text
+on the decoded movie. A movie that sets `ActionScript3` carries DoABC code, which the AS2
+runtime cannot run.
+
+DefineScalingGrid gives a sprite a nine-slice grid: the RECT, in the sprite's twips, is the
+centre. When the sprite is scaled, its corners keep their authored size, the edges stretch
+along one axis, and the centre takes the rest. A shape placed rotated or skewed in the sprite
+scales normally, as in Flash. The SWF vertex shader moves each vertex by the same rule on
+each axis: a point left of the centre stays at its distance from the left edge, divided by
+the scale; a point right of it stays at its distance from the right edge; a point inside is
+mapped linearly between the two. If the corners would overlap, the sprite scales normally.
+
 ## Vanilla movies
 
 `Skyrim - Interface.bsa` has 53 `.swf` movies. All parse. None uses `ZWS`.
@@ -84,6 +107,6 @@ because a rendered vanilla movie contains game art.
 - `ZWS` (LZMA) decompression.
 - Stroke geometry for line styles.
 - HTML text layout in DefineEditText.
-- `Ratio` morph shapes and button states.
+- `Ratio` morph shapes.
 - PlaceObject3 filters and blend modes (decoded and counted, not applied).
 - DoABC (82), ActionScript 3, and GFx extension tags.

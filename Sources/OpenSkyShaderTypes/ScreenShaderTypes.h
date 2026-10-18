@@ -94,6 +94,12 @@ typedef struct
     unsigned int sourcePremultiplied;
     /// 1 -> tiled bitmap fill (repeat sampler), 0 -> clipped (clamp).
     unsigned int bitmapTiled;
+    /// Nine-slice centre in vertex space: min x, min y, max x, max y.
+    vector_float4 scaleGrid;
+    /// The sprite bounds the nine-slice corners stay anchored to.
+    vector_float4 scaleGridBounds;
+    /// The sprite scale the corners undo; 0 means the draw has no grid.
+    vector_float2 scaleGridScale;
 } SWFDrawUniforms;
 
 /// The image-space composite (docs/rendering/image-space.md). Colors are linear.

@@ -159,3 +159,33 @@ On the main timelines and in each sprite's first frame: 0 PlaceObject, 5,926 Pla
 `SetBackgroundColor`. There are no moves and no removals in frame 1. The main timelines
 place 130 characters at frame 1, and 5 movies place nothing. Frame 1 has 233 filters, 25
 blend modes, and 122 CLIPACTIONS blocks.
+
+## Buttons
+
+DefineButton2 (34) defines a button character (spec v19, pp. 226-228):
+
+| field | type |
+| --- | --- |
+| `ButtonId` | UI16 |
+| flags | UI8: 7 reserved bits, then `TrackAsMenu` |
+| `ActionOffset` | UI16, from the start of this field to the first condition; 0 when none |
+| `Characters` | BUTTONRECORDs, ended by a 0 byte |
+| `Actions` | BUTTONCONDACTIONs |
+
+A BUTTONRECORD starts with a flag byte, MSB to LSB: two reserved bits, `HasBlendMode`,
+`HasFilterList`, and the states it shows in: `HitTest`, `Down`, `Over`, `Up`. Then come
+`CharacterId` UI16, `PlaceDepth` UI16, a MATRIX, and a CXFORMWITHALPHA. A filter list and
+a blend mode byte follow when their flags are set.
+
+A BUTTONCONDACTION starts with `CondActionSize` UI16 (0 on the last one), then two flag
+bytes, then an action stream. The first byte holds 8 transitions, MSB to LSB:
+`IdleToOverDown`, `OutDownToIdle`, `OutDownToOverDown`, `OverDownToOutDown`,
+`OverDownToOverUp`, `OverUpToOverDown`, `OverUpToIdle`, `IdleToOverUp`. The second byte
+holds a key code in its top 7 bits and `OverDownToIdle` in the lowest bit.
+
+The runtime places a button as a stopped clip with three frames, `_up`, `_over`, and
+`_down`. Each frame shows the records of that state. A pointer event moves the button to
+the state it leads to, and the transitions run as clip events: `IdleToOverUp` as
+`rollOver`, `OverDownToOverUp` as `release`, and so on. A button's actions run on its
+parent timeline, as in Flash. The `HitTest` records are not used for hit testing yet: the
+button's drawn bounds are.

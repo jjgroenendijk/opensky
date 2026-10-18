@@ -35,6 +35,11 @@ nonisolated private struct SWFRuntimeSceneBuilder {
     var commands: [SWFSceneCommand] = []
     var skipped = 0
 
+    /// A sprite's grid, bounds, and transform, for its direct shape children.
+    typealias GridContext = (splitter: SWFRect, bounds: SWFBoundsBox, transform: SWFTransform)
+    /// Set by `emit` for the clip it walks next; `walk` takes it at entry.
+    var pendingGrid: GridContext?
+
     mutating func walk(
         node: SWFDisplayObject,
         parentTransform: SWFTransform,
@@ -42,6 +47,8 @@ nonisolated private struct SWFRuntimeSceneBuilder {
         clipCount: Int,
         spriteDepth: Int
     ) {
+        let grid = pendingGrid
+        pendingGrid = nil
         var active: [(clipDepth: UInt16, masks: [SWFSceneItem])] = []
         for child in node.children {
             while let last = active.last, last.clipDepth < child.depth {
@@ -60,6 +67,17 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                 )
                 commands.append(.beginClip(masks: masks))
                 active.append((clipDepth, masks))
+            } else if case let .shape(id) = child.content {
+                var item = SWFSceneItem(
+                    content: .shape(id), transform: transform, colorTransform: color
+                )
+                item.scalingGrid = grid.flatMap {
+                    SWFSceneScalingGrid.make(
+                        splitter: $0.splitter, spriteBounds: $0.bounds,
+                        spriteTransform: $0.transform, childMatrix: child.matrix
+                    )
+                }
+                append(item, clipCount: clipCount + active.count)
             } else {
                 emit(
                     node: child,
@@ -83,11 +101,9 @@ nonisolated private struct SWFRuntimeSceneBuilder {
         spriteDepth: Int
     ) {
         switch node.content {
-        case let .shape(id):
-            append(
-                SWFSceneItem(content: .shape(id), transform: transform, colorTransform: color),
-                clipCount: clipCount
-            )
+        case .shape:
+            // `walk` draws shapes itself, with the sprite's scaling grid.
+            break
         case let .staticText(id):
             guard let text = runtime.movie.staticText(id) else {
                 skipped += 1
@@ -113,11 +129,13 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                 ),
                 clipCount: clipCount
             )
-        case .clip:
+        case let .clip(id):
             guard spriteDepth < SWFScene.maximumSpriteDepth else {
                 skipped += 1
                 return
             }
+            let splitter = id.flatMap { runtime.movie.sprite($0)?.scalingGrid }
+            pendingGrid = splitter.map { ($0, runtime.localBounds(of: node), transform) }
             walk(
                 node: node,
                 parentTransform: transform,

@@ -215,6 +215,16 @@ nonisolated public final class SWFMovieRuntime {
             node.object.prototype = movieClipPrototype
             globalMouseHandlers.observe(node)
             return node
+        case let .button(button):
+            let node = SWFDisplayObject(
+                content: .clip(characterId),
+                timeline: button.stateTimeline,
+                frameCount: SWFButton.stateLabels.count
+            )
+            node.isButton = true
+            node.isPlaying = false
+            node.clipActions = button.clipActions
+            return node
         case .shape:
             return SWFDisplayObject(content: .shape(characterId))
         case .staticText:

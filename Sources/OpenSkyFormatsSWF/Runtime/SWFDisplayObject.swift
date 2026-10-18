@@ -41,6 +41,9 @@ nonisolated public final class SWFDisplayObject {
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
     public var clipDepth: UInt16?
     public var isVisible = true
+    /// A DefineButton2 instance: its frames are its states, and its actions run
+    /// on the parent timeline.
+    public var isButton = false
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?

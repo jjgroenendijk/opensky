@@ -13,6 +13,7 @@ nonisolated public enum SWFCharacter: Sendable {
     case staticText(SWFTextDefinition)
     case editText(SWFEditText)
     case sprite(SWFSprite)
+    case button(SWFButton)
 }
 
 /// A DefineSprite character: its declared frame count plus its own timeline
@@ -22,6 +23,8 @@ nonisolated public struct SWFSprite: Sendable {
     public let characterId: UInt16
     public let frameCount: UInt16
     public let timeline: SWFTimeline
+    /// DefineScalingGrid (78): the nine-slice centre, in the sprite's twips.
+    public var scalingGrid: SWFRect?
 
     /// The sprite's frame-1 display list, depth-ascending.
     public var frame1: [SWFPlacedObject] {
@@ -234,6 +237,10 @@ nonisolated public struct SWFMovie: Sendable {
     public var importDiagnostics = SWFImportMergeDiagnostics()
     /// Engine pictures by `img://` name (`SWFImageSlot`). Empty for a decoded movie.
     public var imageSlots: [String: SWFImageSlot] = [:]
+    /// FileAttributes (69); nil when the movie has none.
+    public let fileAttributes: SWFFileAttributes?
+    /// Metadata (77): the authoring tool's XML description.
+    public let metadata: String?
 
     /// Main-timeline display list at the first ShowFrame, depth-ascending.
     public var frame1: [SWFPlacedObject] {
@@ -267,6 +274,8 @@ nonisolated public struct SWFMovie: Sendable {
         try decoder.run(tags: file.tags)
         backgroundColor = decoder.timeline.backgroundColor
         characters = decoder.characters
+        fileAttributes = decoder.fileAttributes
+        metadata = decoder.metadata
         importedNames = decoder.importedNames
         imports = decoder.imports
         exportedNames = decoder.exportedNames
@@ -320,6 +329,13 @@ nonisolated public struct SWFMovie: Sendable {
     public func staticText(_ id: UInt16) -> SWFTextDefinition? {
         if case let .staticText(text) = characters[id] {
             return text
+        }
+        return nil
+    }
+
+    public func button(_ id: UInt16) -> SWFButton? {
+        if case let .button(button) = characters[id] {
+            return button
         }
         return nil
     }

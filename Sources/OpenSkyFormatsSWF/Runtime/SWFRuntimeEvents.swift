@@ -36,6 +36,9 @@ nonisolated extension SWFMovieRuntime {
         to node: SWFDisplayObject,
         keyCode: UInt8? = nil
     ) -> Bool {
+        if node.isButton {
+            showButtonState(for: event, on: node)
+        }
         var handled = runClipActions(event, on: node, keyCode: keyCode)
         if let name = SWFClipEventFlags.handlerName(for: event) {
             handled = dispatch(name, to: node) || handled
@@ -59,13 +62,28 @@ nonisolated extension SWFMovieRuntime {
             if event == .keyPress, let trapped = record.keyCode, trapped != keyCode {
                 continue
             }
-            runtime.execute(record.actions, target: node.object)
+            let target = node.isButton ? (node.parent ?? node) : node
+            runtime.execute(record.actions, target: target.object)
             ran = true
         }
         if ran {
             markDirty()
         }
         return ran
+    }
+
+    /// A button shows the state the pointer left it in: over after a rollover
+    /// or a release, down while pressed, up otherwise.
+    private func showButtonState(for event: SWFClipEventFlags, on node: SWFDisplayObject) {
+        let label: String
+        switch event {
+        case .rollOver, .release: label = "_over"
+        case .press, .dragOver: label = "_down"
+        case .rollOut, .releaseOutside, .dragOut: label = "_up"
+        default: return
+        }
+        gotoLabel(label, of: node, play: false)
+        markDirty()
     }
 
     /// The lifecycle a newly placed instance runs through, in the order the
