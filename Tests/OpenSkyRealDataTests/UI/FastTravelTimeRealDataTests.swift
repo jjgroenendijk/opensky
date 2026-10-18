@@ -8,7 +8,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyPhysics
-@testable import OpenSkyWorld
+@testable import OpenSkyPlayer
 import simd
 import Testing
 

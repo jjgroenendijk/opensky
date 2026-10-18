@@ -3,15 +3,19 @@
 // The rules live in the coordinator. See docs/engine/messages.md.
 
 import Foundation
+import OpenSkyCamera
+import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldState
 
 /// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.

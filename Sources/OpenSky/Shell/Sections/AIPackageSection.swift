@@ -5,7 +5,7 @@
 // overridden.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyAIPackages
 
 final class AIPackageSection: PanelSectionViewController {
     weak var provider: (any AINavigationControlProviding)? {

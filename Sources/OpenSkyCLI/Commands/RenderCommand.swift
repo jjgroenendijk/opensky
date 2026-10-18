@@ -7,11 +7,14 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyNavigation
 import OpenSkyRendering
+import OpenSkyTerrain
 import OpenSkyWorld
 import simd
 

@@ -1,11 +1,11 @@
 // Real exterior cell selection and boundary direction for the env-gated
 // dynamic-body probe.
 
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import simd
 
 extension DynamicBodyRealDataTests {

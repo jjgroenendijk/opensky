@@ -5,7 +5,7 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 struct ConditionDataRealDataTests {

@@ -1,0 +1,47 @@
+// The Face Morphs panel shell: it acts on the playback of the selected actor only.
+
+@testable import OpenSkyActorPresentation
+@testable import OpenSkyFormatsESM
+import Testing
+
+@MainActor
+struct FaceMorphCoordinatorTests {
+    private final class World: FaceMorphWorld {
+        var faceMorphSubject: FormID?
+        let playback = FaceMorphPlayback(
+            actor: FormID(0x1A67), bindings: [:], pairedPaths: ["head.tri"], misses: [
+                FaceMorphAssociationMiss(headPart: FormID(0x51), reason: "no TRI")
+            ]
+        )
+
+        func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
+            actor == playback.actor ? playback : nil
+        }
+
+        var faceMorphPlaybacks: [FaceMorphPlayback] {
+            [playback]
+        }
+    }
+
+    @Test
+    func noSubjectGivesTheEmptySnapshot() {
+        let world = World()
+        let coordinator = FaceMorphCoordinator(world: world)
+        #expect(coordinator.faceMorphSnapshot == .empty)
+        world.faceMorphSubject = FormID(0x99)
+        #expect(coordinator.faceMorphSnapshot == .empty)
+    }
+
+    @Test
+    func theSubjectsPlaybackIsReadAndWritten() {
+        let world = World()
+        world.faceMorphSubject = world.playback.actor
+        let coordinator = FaceMorphCoordinator(world: world)
+        coordinator.setFaceMorphWeight(0.5, target: "Aah")
+        let snapshot = coordinator.faceMorphSnapshot
+        #expect(snapshot.actor == world.playback.actor)
+        #expect(snapshot.pairedPaths == ["head.tri"])
+        #expect(snapshot.associationMisses == ["\(FormID(0x51)): no TRI"])
+        #expect(snapshot.unknownTargetCount == 1)
+    }
+}

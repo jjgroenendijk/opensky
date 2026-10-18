@@ -1,6 +1,8 @@
 // The world side of the non-combat procedure acts. Object type codes are read from
 // the vanilla templates' selectors: docs/engine/package-schedules.md, "Procedure machines".
 
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface

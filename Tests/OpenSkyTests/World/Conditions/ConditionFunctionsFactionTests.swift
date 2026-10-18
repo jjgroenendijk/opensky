@@ -8,7 +8,7 @@ import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 @MainActor

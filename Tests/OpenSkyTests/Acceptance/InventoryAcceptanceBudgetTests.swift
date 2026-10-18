@@ -4,6 +4,7 @@
 // `openskycli bench --fly-path`.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering

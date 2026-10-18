@@ -3,13 +3,14 @@
 // so at least one cone is always lit.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
-import OpenSkyWorld
+import OpenSkyPlayer
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

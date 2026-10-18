@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyWorld

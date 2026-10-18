@@ -4,11 +4,12 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
-import OpenSkyWorld
+import OpenSkyTerrain
 import simd
 
 enum InteriorCommand {

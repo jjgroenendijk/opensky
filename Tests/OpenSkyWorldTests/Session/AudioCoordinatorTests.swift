@@ -2,7 +2,9 @@
 // The engine is never started, so no audio device is touched.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 import OpenSkyAudio
+@testable import OpenSkyCells
 import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData

@@ -5,6 +5,7 @@
 // subtitle field once the HUD movie is back. See docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
@@ -12,6 +13,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

@@ -3,6 +3,8 @@
 // session systems. The rules live in the coordinator (docs/engine/coordinators.md).
 
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyCrimeInterface
@@ -15,6 +17,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyPerception
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

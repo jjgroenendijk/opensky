@@ -3,8 +3,8 @@
 
 import AppKit
 import OpenSkyAssetCache
+import OpenSkyLoading
 import OpenSkyRendering
-import OpenSkyWorld
 
 final class AssetCacheSection: PanelSectionViewController {
     weak var provider: (any AssetCacheControlProviding)? {

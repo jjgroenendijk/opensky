@@ -2,9 +2,11 @@
 // benchmark owns the route and its gates; this file adds the timing.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyTerrain
 import OpenSkyWorldState
 import Synchronization
 

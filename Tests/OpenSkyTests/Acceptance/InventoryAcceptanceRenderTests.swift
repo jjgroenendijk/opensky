@@ -5,6 +5,7 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -13,9 +14,11 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
+import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

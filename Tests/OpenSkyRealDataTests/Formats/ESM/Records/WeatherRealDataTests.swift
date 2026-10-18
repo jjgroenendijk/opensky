@@ -5,10 +5,10 @@
 // unset/unresolvable (CI has no game data). Summary printed + written to .logs/.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 import Testing
 
 struct WeatherRealDataTests {

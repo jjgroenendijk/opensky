@@ -5,7 +5,7 @@
 import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 
 extension PerkRuntimeFixture {

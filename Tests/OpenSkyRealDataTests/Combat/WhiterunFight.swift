@@ -5,6 +5,7 @@
 
 import Foundation
 @testable import OpenSkyActorsInterface
+@testable import OpenSkyCells
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
@@ -14,7 +15,6 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
-@testable import OpenSkyWorld
 import simd
 
 @MainActor

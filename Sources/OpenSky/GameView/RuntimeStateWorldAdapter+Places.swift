@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

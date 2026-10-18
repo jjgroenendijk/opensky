@@ -4,8 +4,8 @@
 // change-and-restore sections.
 
 import AppKit
+import OpenSkyRuntimeState
 import OpenSkySave
-import OpenSkyWorld
 
 final class RuntimeStatePanelViewController: InspectorPanelViewController {
     let inspectSection = RuntimeStateInspectSection()

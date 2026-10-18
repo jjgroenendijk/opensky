@@ -8,9 +8,12 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyActorPresentation
+import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

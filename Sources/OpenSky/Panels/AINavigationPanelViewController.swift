@@ -4,9 +4,10 @@
 // actor, send it, read its schedule, perception, and combat reaction.
 
 import AppKit
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
 import OpenSkyCombat
 import OpenSkyPerceptionInterface
-import OpenSkyWorld
 
 final class AINavigationPanelViewController: InspectorPanelViewController {
     let overlaySection = AIOverlaySection()

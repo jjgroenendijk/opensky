@@ -3,6 +3,7 @@
 // harvest is refused. Run with `make test-real T='HarvestRealDataTests'`.
 
 import Foundation
+@testable import OpenSkyCells
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -11,7 +12,6 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

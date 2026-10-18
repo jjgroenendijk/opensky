@@ -1,6 +1,8 @@
 // The regions the player stands in, for conditions that ask about them.
 
+import OpenSkyCells
 import OpenSkyFormatsESM
+import OpenSkyTerrain
 
 extension CellStreamer {
     /// The REGN records over the exterior cell at the grid centre; empty indoors.

@@ -260,67 +260,35 @@
   "testTargets": [
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsCoreTests",
-        "name": "OpenSkyFormatsCoreTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsCoreTests", "name": "OpenSkyFormatsCoreTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsESMTests",
-        "name": "OpenSkyFormatsESMTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsESMTests", "name": "OpenSkyFormatsESMTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsMeshTests",
-        "name": "OpenSkyFormatsMeshTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsMeshTests", "name": "OpenSkyFormatsMeshTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsAnimationTests",
-        "name": "OpenSkyFormatsAnimationTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsAnimationTests", "name": "OpenSkyFormatsAnimationTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsAudioTests",
-        "name": "OpenSkyFormatsAudioTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsAudioTests", "name": "OpenSkyFormatsAudioTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsPEXTests",
-        "name": "OpenSkyFormatsPEXTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsPEXTests", "name": "OpenSkyFormatsPEXTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsSWFTests",
-        "name": "OpenSkyFormatsSWFTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsSWFTests", "name": "OpenSkyFormatsSWFTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyFormatsESSTests",
-        "name": "OpenSkyFormatsESSTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsESSTests", "name": "OpenSkyFormatsESSTests"}
     }
   ],
   "version": 1

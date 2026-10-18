@@ -2,11 +2,15 @@
 // procedure machine the AI panel reads, the vehicle the actor rides, and its last idle.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyAgentControl
+import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

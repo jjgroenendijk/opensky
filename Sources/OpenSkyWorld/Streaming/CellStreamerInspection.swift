@@ -3,7 +3,9 @@
 // are unchanged.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
+import OpenSkyTerrain
 
 extension CellStreamer {
     /// Grid slots that reached a terminal state: resident + void + failed.

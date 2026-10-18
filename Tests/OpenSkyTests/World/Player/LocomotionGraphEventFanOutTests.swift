@@ -4,7 +4,7 @@
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
-@testable import OpenSkyWorld
+@testable import OpenSkyPlayer
 import Testing
 
 struct LocomotionGraphEventFanOutTests {

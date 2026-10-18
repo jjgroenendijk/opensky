@@ -1,7 +1,11 @@
 // Exterior half of the walk benchmark driver.
 
+import OpenSkyCells
+import OpenSkyNavigation
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyTerrain
 import OpenSkyWorldInterface
 import simd
 

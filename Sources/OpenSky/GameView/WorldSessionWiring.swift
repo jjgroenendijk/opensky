@@ -2,12 +2,18 @@
 // every system to it and to the renderer, in dependency order.
 
 import Foundation
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyPerception
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState

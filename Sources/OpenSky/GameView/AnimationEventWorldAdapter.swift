@@ -1,7 +1,10 @@
 // App side of `AnimationEventCoordinator`: where a source stands, and the sound, camera,
 // and head tracking systems its annotations reach (docs/engine/animation-events.md).
 
+import OpenSkyActorPresentation
+import OpenSkyCamera
 import OpenSkyFormatsESM
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

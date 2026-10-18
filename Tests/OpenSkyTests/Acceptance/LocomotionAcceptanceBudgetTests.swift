@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

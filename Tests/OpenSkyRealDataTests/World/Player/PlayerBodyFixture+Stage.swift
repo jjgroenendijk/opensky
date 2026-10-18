@@ -1,4 +1,5 @@
 import Metal
+@testable import OpenSkyCells
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

@@ -5,12 +5,15 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyTerrain
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

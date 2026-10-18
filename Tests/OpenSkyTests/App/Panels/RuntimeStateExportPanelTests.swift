@@ -3,7 +3,6 @@
 import AppKit
 @testable import OpenSky
 import OpenSkySave
-@testable import OpenSkyWorld
 import Testing
 
 struct RuntimeStateExportPanelTests {

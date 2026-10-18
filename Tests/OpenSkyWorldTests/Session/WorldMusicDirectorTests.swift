@@ -4,8 +4,9 @@
 // device, no decode-queue timing, explicit frame deltas.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

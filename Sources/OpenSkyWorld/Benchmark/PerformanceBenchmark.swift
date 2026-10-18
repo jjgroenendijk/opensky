@@ -3,10 +3,12 @@
 // driver owns the steps. See docs/tools/benchmark.md.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyTerrain
 
 nonisolated public enum PerformanceBenchmarkError: LocalizedError {
     /// No built exterior cell has terrain under the view's eye.

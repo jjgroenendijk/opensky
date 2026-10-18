@@ -5,9 +5,11 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

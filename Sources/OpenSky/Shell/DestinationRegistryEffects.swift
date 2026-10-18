@@ -4,7 +4,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyWorld
 
 extension DestinationRegistry {
     static let effectsDestinations: [DestinationDescriptor] = [

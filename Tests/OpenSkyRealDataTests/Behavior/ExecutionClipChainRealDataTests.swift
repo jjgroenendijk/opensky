@@ -4,10 +4,10 @@
 // Names only.
 
 import Foundation
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 import Testing
 
 struct ExecutionClipChainRealDataTests {

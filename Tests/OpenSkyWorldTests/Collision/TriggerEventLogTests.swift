@@ -3,8 +3,10 @@
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
-@testable import OpenSkyWorld
+import OpenSkyPlayer
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

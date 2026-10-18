@@ -2,8 +2,10 @@
 // script variables, scenes, weather, and the player's inventory.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
@@ -14,10 +16,13 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

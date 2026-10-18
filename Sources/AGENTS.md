@@ -6,7 +6,7 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 ## Folder layout
 
 - No Swift file sits loose at the root of `OpenSky/`, a multi-format `OpenSkyFormats*/`, or
-  `OpenSkyWorld/`; each goes in a domain folder. `OpenSkyGameData/` and the feature modules
+  `OpenSkyWorld/`; each goes in a folder. `OpenSkyGameData/` and the feature modules
   are small enough to stay flat. `OpenSkyRendering/` keeps the renderer at its root and puts
   `UI/`, `Terrain/`, `Weather/`, `ImageSpace/`, `Effects/`, `TextureStreaming/`, and
   `RayTracing/` in folders.
@@ -19,9 +19,9 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   `OpenSkyFormatsPEX`, `OpenSkyFormatsSWF`) keeps the format at its root, because a folder
   with the module's own name says nothing (`OpenSkyFormatsESM/Records/`). Its test target
   and its `OpenSkyFormatsTesting` folder follow the same layout.
-- `OpenSkyWorld/`: `Actors/`, `Benchmark/`, `Camera/`, `Cells/`, `Conditions/`, `Effects/`,
-  `Loading/`, `Navigation/`, `Objects/`, `Packages/`, `Player/`, `Session/`, `State/`,
-  `Streaming/`, `Terrain/`, and `Weather/`.
+- `OpenSkyWorld/`: `Benchmark/`, `Session/`, and `Streaming/`. Every other world domain is its
+  own flat module, such as `OpenSkyPlayer/` or `OpenSkyCells/`
+  (`docs/tools/modules.md#world-domains`).
 - A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in the module of its
   domain. A seam that names a higher layer, such as menus, cameras, or scripts, lives in
   `OpenSkyMenus/`.

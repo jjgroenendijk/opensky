@@ -3,8 +3,9 @@
 // selection; no combat playlist leaves music unchanged. Offline rendering only.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

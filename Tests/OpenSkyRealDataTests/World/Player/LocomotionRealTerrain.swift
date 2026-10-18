@@ -2,11 +2,11 @@
 // needs a device, so this walks the WRLD tree directly.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import simd
 
 enum LocomotionRealTerrain {

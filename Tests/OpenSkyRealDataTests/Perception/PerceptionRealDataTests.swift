@@ -3,6 +3,7 @@
 
 import Foundation
 import Metal
+import OpenSkyCells
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -11,7 +12,6 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 

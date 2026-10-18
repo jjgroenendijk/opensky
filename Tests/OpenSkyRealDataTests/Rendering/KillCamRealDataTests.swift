@@ -4,6 +4,7 @@
 // Run with `make test-real T='KillCamRealDataTests'`.
 
 import Foundation
+@testable import OpenSkyCamera
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh

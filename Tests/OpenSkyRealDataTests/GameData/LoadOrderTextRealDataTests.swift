@@ -4,12 +4,12 @@
 // Run with `make test-real T='LoadOrderTextRealDataTests'`.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyDialogue
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
-@testable import OpenSkyWorld
 import Testing
 
 struct LoadOrderTextRealDataTests {

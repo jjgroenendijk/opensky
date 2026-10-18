@@ -2,6 +2,7 @@
 // route. The CLI prints; this driver owns behavior and gates.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import simd

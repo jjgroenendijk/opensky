@@ -2,7 +2,7 @@
 // transitions, and see which screens pass where the player stands.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyLoading
 
 final class LoadingScreenSection: PanelSectionViewController {
     weak var provider: (any LoadingScreenControlProviding)? {

@@ -5,12 +5,12 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.gpu))

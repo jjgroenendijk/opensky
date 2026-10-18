@@ -4,7 +4,7 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 @testable import OpenSkyWorldState
 import Testing
 

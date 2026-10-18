@@ -1,8 +1,8 @@
 // `render` options: the parsed command line and the camera and clock parsers.
 
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyRendering
-import OpenSkyWorld
 
 extension RenderCommand {
     /// Everything `render` takes off the command line, parsed once. A value

@@ -2,12 +2,16 @@
 // them from the renderer's frame hooks, and plays reaction clips. The rules live
 // in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
 import OpenSkyBehavior
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrime
+import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -16,6 +20,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyScripting

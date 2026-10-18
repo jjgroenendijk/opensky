@@ -2,6 +2,7 @@
 // while the main menu movie shows. The placement math is `TitleBackdrop`.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyMenus
 import OpenSkyRendering

@@ -17,9 +17,10 @@ import OpenSkyEngineTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 

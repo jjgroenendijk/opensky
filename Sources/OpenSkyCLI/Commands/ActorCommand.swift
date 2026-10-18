@@ -4,11 +4,13 @@
 // this file parses arguments and prints.
 
 import Foundation
+import OpenSkyActorPresentation
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorld
+import OpenSkyTerrain
 
 enum ActorCommand {
     static func run(context: CLIContext, arguments: ActorArguments) throws {

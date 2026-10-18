@@ -2,8 +2,11 @@
 // name stands, and how the player and the path-following actors move.
 
 import Foundation
+import OpenSkyAIPackages
 import OpenSkyFormatsESM
+import OpenSkyPlayer
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldState
 
 extension RuntimeStateWorldAdapter {

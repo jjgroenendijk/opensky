@@ -5,10 +5,12 @@
 // it stays light. The report in `.logs/` holds counts and editor IDs only.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyRuntimeState
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+@testable import OpenSkyWeather
 @testable import OpenSkyWorldState
 import Testing
 

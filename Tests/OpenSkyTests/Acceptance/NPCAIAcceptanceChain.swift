@@ -5,19 +5,24 @@
 
 import Foundation
 @testable import OpenSkyActorsInterface
+@testable import OpenSkyAIPackages
+import OpenSkyCells
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 
 @MainActor

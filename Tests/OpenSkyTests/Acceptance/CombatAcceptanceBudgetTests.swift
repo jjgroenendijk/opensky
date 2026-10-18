@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

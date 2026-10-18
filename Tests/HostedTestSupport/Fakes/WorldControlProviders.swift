@@ -1,19 +1,27 @@
 // Every panel seam at once, so one fake can stand in for the whole game.
 
 @testable import OpenSky
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyAIPackages
+import OpenSkyCamera
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
+import OpenSkyEffects
 import OpenSkyInventory
+import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
 

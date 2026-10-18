@@ -4,7 +4,7 @@
 // animate in place, so the root-motion total stays zero on vanilla data.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyPlayer
 
 final class LocomotionMotionSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

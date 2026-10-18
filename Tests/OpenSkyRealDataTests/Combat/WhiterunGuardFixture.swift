@@ -4,12 +4,13 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd

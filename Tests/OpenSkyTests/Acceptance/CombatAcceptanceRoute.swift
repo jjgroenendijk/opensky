@@ -11,9 +11,10 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkySave
 import OpenSkySaveFixtures
-@testable import OpenSkyWorld
+import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

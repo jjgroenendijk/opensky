@@ -5,15 +5,17 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+@testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

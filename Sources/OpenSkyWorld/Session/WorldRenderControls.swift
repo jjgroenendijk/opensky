@@ -4,8 +4,12 @@
 
 import OpenSkyDiagnostics
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyRuntimeState
+import OpenSkyTerrain
 
 /// What `WorldRenderControls` reads from the app.
 @MainActor

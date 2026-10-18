@@ -2,14 +2,19 @@
 // synthetic navmesh geometry. No game data is embedded.
 
 import Foundation
+@testable import OpenSkyAIPackages
+import OpenSkyCells
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+@testable import OpenSkyNavigation
+import OpenSkyWorldConditions
 import OpenSkyWorldFixtures
+@testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

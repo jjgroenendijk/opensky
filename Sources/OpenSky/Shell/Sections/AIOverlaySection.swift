@@ -4,7 +4,7 @@
 // here that is overridden, so "Reset all" turns them off.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyAIPackages
 
 final class AIOverlaySection: PanelSectionViewController {
     weak var provider: (any AIOverlayControlProviding)? {

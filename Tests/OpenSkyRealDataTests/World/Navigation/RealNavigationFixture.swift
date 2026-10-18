@@ -3,12 +3,15 @@
 // locates records by FormID and returns live values; nothing is committed.
 
 import Foundation
+@testable import OpenSkyAIPackages
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

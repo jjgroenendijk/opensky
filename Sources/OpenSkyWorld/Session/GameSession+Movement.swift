@@ -1,6 +1,7 @@
 // Renderer camera movement split from Renderer.swift for file-length limits.
 
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 
 extension GameSession {

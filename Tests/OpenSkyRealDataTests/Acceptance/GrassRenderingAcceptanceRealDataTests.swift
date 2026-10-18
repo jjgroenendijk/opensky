@@ -7,10 +7,12 @@ import CoreGraphics
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
+@testable import OpenSkyWeather
 @testable import OpenSkyWorld
 import simd
 import Testing

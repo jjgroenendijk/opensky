@@ -9,7 +9,7 @@ import OpenSkyAssetCache
 import OpenSkyAudio
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyWorld
+import OpenSkyLoading
 
 enum AssetCacheMeasure {
     /// One kind's two load paths. Each returns nothing: only the time counts.

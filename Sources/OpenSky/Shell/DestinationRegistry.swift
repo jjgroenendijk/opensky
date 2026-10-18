@@ -5,20 +5,28 @@
 // Placement rules + the how-to: docs/tools/app-ui.md.
 
 import AppKit
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyAIPackages
+import OpenSkyCamera
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
+import OpenSkyEffects
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
 

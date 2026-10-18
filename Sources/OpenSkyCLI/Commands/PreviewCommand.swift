@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyPreview
 import OpenSkyRendering

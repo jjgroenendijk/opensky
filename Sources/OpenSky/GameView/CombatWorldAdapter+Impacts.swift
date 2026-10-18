@@ -2,10 +2,11 @@
 // effects coordinator, and the race material an actor's body counts as.
 
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorld
 import simd
 
 extension CombatWorldAdapter {

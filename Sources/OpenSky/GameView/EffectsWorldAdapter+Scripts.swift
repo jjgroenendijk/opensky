@@ -2,6 +2,7 @@
 // `ImageSpaceModifier` natives. The rules live in `EffectsCoordinator`.
 
 import Foundation
+import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyScriptingInterface

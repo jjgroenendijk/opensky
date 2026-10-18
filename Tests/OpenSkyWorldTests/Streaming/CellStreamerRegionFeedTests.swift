@@ -3,8 +3,9 @@
 // the length limit.
 
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 private typealias Fixture = CellStreamerFixture

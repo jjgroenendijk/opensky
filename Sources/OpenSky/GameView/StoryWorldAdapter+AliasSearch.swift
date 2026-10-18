@@ -6,6 +6,7 @@
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting

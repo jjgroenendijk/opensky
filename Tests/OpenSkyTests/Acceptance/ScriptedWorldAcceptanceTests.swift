@@ -4,6 +4,7 @@
 // `runtimeDisabledSkipCount` shows the door left. Only the rebuild needs a GPU.
 
 import Foundation
+import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
@@ -11,9 +12,9 @@ import Foundation
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

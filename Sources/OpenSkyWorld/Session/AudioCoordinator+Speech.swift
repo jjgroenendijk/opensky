@@ -4,6 +4,7 @@
 // See docs/engine/audio-decoding.md.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData

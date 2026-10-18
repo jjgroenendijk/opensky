@@ -2,7 +2,8 @@
 // for the running session, slowest first, then each phase of the session start.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyCells
+import OpenSkyLoading
 
 final class WorldLoadSection: PanelSectionViewController {
     weak var provider: (any WorldLoadReportProviding)? {

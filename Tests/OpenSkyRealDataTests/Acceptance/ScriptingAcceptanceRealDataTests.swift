@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
@@ -16,10 +17,11 @@ import MetalKit
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyTerrain
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

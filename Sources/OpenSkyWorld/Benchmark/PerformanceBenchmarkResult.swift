@@ -3,8 +3,10 @@
 // shape. See docs/tools/benchmark.md.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyNavigation
 import OpenSkyPhysics
 
 /// One exterior grid slot, in a form that encodes as plain numbers.

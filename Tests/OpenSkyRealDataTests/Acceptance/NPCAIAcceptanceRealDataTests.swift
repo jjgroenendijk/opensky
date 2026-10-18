@@ -6,15 +6,17 @@
 // FormIDs, counts, and timings only.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyNavigation
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

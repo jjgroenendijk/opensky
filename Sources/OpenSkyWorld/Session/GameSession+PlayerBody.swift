@@ -2,6 +2,7 @@
 // frame. The renderer's half is `RendererPlayerBody.swift`.
 
 import Metal
+import OpenSkyPlayer
 import OpenSkyRendering
 
 extension GameSession {

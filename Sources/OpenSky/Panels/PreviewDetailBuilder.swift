@@ -11,7 +11,6 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPreview
 import OpenSkyRendering
-import OpenSkyWorld
 import simd
 import Synchronization
 

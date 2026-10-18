@@ -1,7 +1,7 @@
 // FaceMorphControlProviding part of the shared panel fake.
 
 import Foundation
-@testable import OpenSkyWorld
+@testable import OpenSkyActorPresentation
 
 extension FakeWorldProviders {
     func setFaceMorphWeight(_ weight: Float, target: String) {

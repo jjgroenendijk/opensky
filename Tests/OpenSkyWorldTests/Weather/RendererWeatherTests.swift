@@ -9,8 +9,10 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+@testable import OpenSkyWeather
+import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

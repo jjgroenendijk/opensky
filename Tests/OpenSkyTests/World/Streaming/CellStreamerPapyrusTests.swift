@@ -4,6 +4,7 @@
 // synthetic references and scripts. No Metal.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
@@ -12,9 +13,11 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

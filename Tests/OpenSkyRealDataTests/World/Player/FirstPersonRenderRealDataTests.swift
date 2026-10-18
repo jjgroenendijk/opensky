@@ -9,8 +9,11 @@ import Foundation
 import ImageIO
 import Metal
 import MetalKit
+import OpenSkyActorPresentation
+import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

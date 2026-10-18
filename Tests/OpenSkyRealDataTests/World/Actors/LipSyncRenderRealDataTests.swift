@@ -2,10 +2,10 @@
 // actor face. Six PNGs and a numeric report remain under gitignored `.logs/`.
 
 import Foundation
+import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.gpu))

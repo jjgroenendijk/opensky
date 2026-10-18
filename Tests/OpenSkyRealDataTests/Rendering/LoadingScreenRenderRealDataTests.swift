@@ -8,10 +8,11 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyLoading
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorld
 import simd
 import Testing
 

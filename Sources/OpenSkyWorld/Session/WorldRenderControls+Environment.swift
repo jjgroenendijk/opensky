@@ -1,10 +1,13 @@
 // The World > Environment controls: weather, animation, particles,
 // precipitation, and grass.
 
+import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRuntimeState
+import OpenSkyWeather
 import simd
 
 extension WorldRenderControls: WeatherControlProviding {

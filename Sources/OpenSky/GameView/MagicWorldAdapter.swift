@@ -4,6 +4,7 @@
 
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
@@ -14,10 +15,13 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldState
 
 /// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.

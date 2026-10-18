@@ -2,15 +2,18 @@
 // controllers `GameViewController` holds. The logic lives behind them
 // (docs/engine/coordinators.md).
 
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyCells
 import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkySave

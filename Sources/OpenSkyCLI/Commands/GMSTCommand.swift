@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
-import OpenSkyWorld
+import OpenSkyPlayer
 
 enum GMSTCommand {
     static func run(context: CLIContext, arguments: GMSTArguments) throws {

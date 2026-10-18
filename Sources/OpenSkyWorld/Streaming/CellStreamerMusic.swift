@@ -3,9 +3,11 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyTerrain
 
 /// Cheap identity for diff: only the fields that drive `MusicSelection.resolve`.
 /// Equal keys never re-resolve, so a steady-state frame costs one comparison.

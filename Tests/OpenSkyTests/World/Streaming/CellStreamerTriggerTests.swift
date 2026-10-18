@@ -7,9 +7,12 @@
 
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyRendering
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

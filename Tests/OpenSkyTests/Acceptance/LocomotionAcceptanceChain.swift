@@ -6,14 +6,18 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyBehavior
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
+import OpenSkyWorldTesting
 import simd
 import Testing
 

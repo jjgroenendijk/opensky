@@ -1,6 +1,7 @@
 // Peak live-system evidence collected across production fly frames.
 
 import OpenSkyRendering
+import OpenSkyWeather
 
 nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
     public var grassDrawStats = GrassDrawStats()

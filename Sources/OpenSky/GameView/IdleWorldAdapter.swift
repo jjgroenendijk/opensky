@@ -2,11 +2,17 @@
 // ports from the session systems and runs the idle pass in the frame loop.
 // See docs/engine/coordinators.md.
 
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyNavigation
+import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd

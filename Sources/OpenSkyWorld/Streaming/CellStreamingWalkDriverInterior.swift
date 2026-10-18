@@ -1,6 +1,9 @@
 // Interior crossing and paired exterior return for the walk benchmark.
 
+import OpenSkyCells
 import OpenSkyGameData
+import OpenSkyNavigation
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

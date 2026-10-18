@@ -3,7 +3,7 @@
 // Beside Traps, because a trap script plays these graphs.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyObjectAnimation
 
 final class ObjectAnimationSection: PanelSectionViewController {
     weak var provider: (any ObjectAnimationControlProviding)? {

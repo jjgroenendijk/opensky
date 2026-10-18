@@ -4,10 +4,10 @@
 // support. The report in `.logs/` holds counts, names, and paths only.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
 import Testing
 
 struct NIFDynamicsCensusRealDataTests {

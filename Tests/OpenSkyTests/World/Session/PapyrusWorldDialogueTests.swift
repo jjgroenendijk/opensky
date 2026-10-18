@@ -15,7 +15,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 @MainActor

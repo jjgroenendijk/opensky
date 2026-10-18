@@ -2,8 +2,11 @@
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
@@ -15,15 +18,19 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
+import OpenSkyNavigation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

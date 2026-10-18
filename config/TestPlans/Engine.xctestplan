@@ -260,75 +260,39 @@
   "testTargets": [
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyGameDataTests",
-        "name": "OpenSkyGameDataTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyGameDataTests", "name": "OpenSkyGameDataTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyBehaviorTests",
-        "name": "OpenSkyBehaviorTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyBehaviorTests", "name": "OpenSkyBehaviorTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyAgentControlTests",
-        "name": "OpenSkyAgentControlTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyAgentControlTests", "name": "OpenSkyAgentControlTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyLaunchTests",
-        "name": "OpenSkyLaunchTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyLaunchTests", "name": "OpenSkyLaunchTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyAssetCacheTests",
-        "name": "OpenSkyAssetCacheTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyAssetCacheTests", "name": "OpenSkyAssetCacheTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyPhysicsTests",
-        "name": "OpenSkyPhysicsTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyPhysicsTests", "name": "OpenSkyPhysicsTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyRenderingTests",
-        "name": "OpenSkyRenderingTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderingTests", "name": "OpenSkyRenderingTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyAudioTests",
-        "name": "OpenSkyAudioTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyAudioTests", "name": "OpenSkyAudioTests"}
     },
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyWorldStateTests",
-        "name": "OpenSkyWorldStateTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyWorldStateTests", "name": "OpenSkyWorldStateTests"}
     }
   ],
   "version": 1

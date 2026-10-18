@@ -3,8 +3,8 @@
 // actor, above the live effects.
 
 import AppKit
+import OpenSkyEffects
 import OpenSkyRendering
-import OpenSkyWorld
 
 final class VisualEffectSection: PanelSectionViewController {
     weak var provider: (any VisualEffectControlProviding)? {

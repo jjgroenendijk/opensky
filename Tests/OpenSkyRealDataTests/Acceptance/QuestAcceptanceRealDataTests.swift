@@ -18,7 +18,7 @@ import OpenSkySaveFixtures
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

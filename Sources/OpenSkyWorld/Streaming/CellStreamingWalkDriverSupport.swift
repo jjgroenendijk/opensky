@@ -1,6 +1,8 @@
 // State labels, movement helpers, and failure gates for the walk driver.
 
+import OpenSkyNavigation
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import simd
 

@@ -3,7 +3,7 @@
 // conformances are shared too (Tests/HostedTestSupport/AGENTS.md).
 
 import AppKit
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 import Testing
 
 /// Forwards the runtime-state seam to the panel tests' recorder rather than

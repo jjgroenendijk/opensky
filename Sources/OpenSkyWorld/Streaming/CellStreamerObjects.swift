@@ -1,5 +1,9 @@
 // Animated objects of the resident cells, for `ObjectBehaviorCoordinator`.
 
+import OpenSkyActorPresentation
+import OpenSkyCells
+import OpenSkyObjectAnimation
+
 extension CellStreamer {
     /// The interior's animated objects, or those of every resident exterior cell.
     public func residentAnimatedObjects() -> [CellAnimatedObject] {

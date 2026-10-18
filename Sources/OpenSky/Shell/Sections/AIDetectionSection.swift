@@ -4,8 +4,8 @@
 // The detection-cone checkbox lives in the Overlays section.
 
 import AppKit
+import OpenSkyAIPackages
 import OpenSkyPerceptionInterface
-import OpenSkyWorld
 
 final class AIDetectionSection: PanelSectionViewController {
     weak var provider: (any PerceptionControlProviding)? {

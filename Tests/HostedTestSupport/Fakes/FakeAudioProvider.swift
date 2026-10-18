@@ -4,6 +4,7 @@
 // compile; see Tests/HostedTestSupport/AGENTS.md.
 
 import AppKit
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 import OpenSkyFormatsESM
 @testable import OpenSkyWorld

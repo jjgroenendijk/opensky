@@ -11,7 +11,7 @@ import OpenSkyFeaturesTesting
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

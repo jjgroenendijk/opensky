@@ -3,6 +3,7 @@
 // (docs/engine/coordinators.md, docs/engine/locks.md).
 
 import OpenSkyActors
+import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyDiagnostics
 import OpenSkyFormatsESM
@@ -10,6 +11,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering

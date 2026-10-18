@@ -1,12 +1,12 @@
 // The AI and perception panels forward to the coordinators that own them.
 
+import OpenSkyAIPackages
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyRendering
-import OpenSkyWorld
 
 extension GameViewController: AIOverlayControlProviding {
     var navmeshOverlayEnabled: Bool {

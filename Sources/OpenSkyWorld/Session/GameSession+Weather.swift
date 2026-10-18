@@ -1,9 +1,11 @@
 // The per-frame weather advance, between the world simulation and the animation step,
 // and the image space that follows the weather or the interior cell.
 
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWeather
 
 /// Where the session finds effect records (`IMGS`, `SPGD`), and the cell link an
 /// interior names.

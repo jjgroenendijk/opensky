@@ -13,7 +13,7 @@ import Foundation
 import OpenSkyMagicInterface
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

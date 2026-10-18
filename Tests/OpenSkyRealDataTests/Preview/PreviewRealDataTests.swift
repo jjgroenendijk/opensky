@@ -17,7 +17,6 @@ import MetalKit
 @testable import OpenSkyPreview
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 import UniformTypeIdentifiers

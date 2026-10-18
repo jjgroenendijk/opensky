@@ -260,11 +260,7 @@
   "testTargets": [
     {
       "parallelizable": true,
-      "target": {
-        "containerPath": "container:.",
-        "identifier": "OpenSkyAgentControlTests",
-        "name": "OpenSkyAgentControlTests"
-      }
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyAgentControlTests", "name": "OpenSkyAgentControlTests"}
     }
   ],
   "version": 1

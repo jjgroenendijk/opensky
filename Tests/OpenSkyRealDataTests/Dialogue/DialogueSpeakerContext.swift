@@ -12,7 +12,7 @@ import Foundation
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 
 /// One `Skyrim.esm` NPC_ record and the synthetic placement it is selected

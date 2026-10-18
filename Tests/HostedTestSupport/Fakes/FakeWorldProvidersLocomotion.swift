@@ -11,8 +11,8 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 
 /// The stored half of the fake's locomotion state, kept as one value so the
 /// class body above stays inside the type-length cap.

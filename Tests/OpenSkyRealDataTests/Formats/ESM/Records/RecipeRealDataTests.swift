@@ -7,7 +7,7 @@ import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import OpenSkyWorld
+import OpenSkyWorldConditions
 import Testing
 
 struct RecipeRealDataTests {

@@ -9,8 +9,8 @@ import MetalKit
 import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

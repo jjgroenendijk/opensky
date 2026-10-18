@@ -7,13 +7,14 @@
 
 import Foundation
 import Metal
+import OpenSkyActorPresentation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import simd
 import Testing
 

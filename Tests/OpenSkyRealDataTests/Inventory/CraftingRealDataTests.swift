@@ -9,7 +9,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

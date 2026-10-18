@@ -2,10 +2,12 @@
 // from CellStreamer so exterior grid scheduling stays readable.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyTerrain
 import OpenSkyWorldInterface
 import simd
 

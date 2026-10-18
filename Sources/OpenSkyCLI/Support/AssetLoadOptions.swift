@@ -5,11 +5,11 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
-import OpenSkyWorld
 
 struct AssetLoadOptions {
     let cache: AssetCacheReader?

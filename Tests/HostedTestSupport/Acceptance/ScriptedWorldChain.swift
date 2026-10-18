@@ -9,6 +9,7 @@ import Foundation
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyPlayer
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
@@ -16,6 +17,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

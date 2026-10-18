@@ -19,11 +19,7 @@
   },
   "testTargets": [
     {
-      "target": {
-        "containerPath": "container:OpenSky.xcodeproj",
-        "identifier": "5AD1000130001093001700A1",
-        "name": "OpenSkyRealDataTests"
-      }
+      "target": {"containerPath": "container:OpenSky.xcodeproj", "identifier": "5AD1000130001093001700A1", "name": "OpenSkyRealDataTests"}
     }
   ],
   "version": 1

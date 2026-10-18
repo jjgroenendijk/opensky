@@ -5,12 +5,13 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyAIPackages
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

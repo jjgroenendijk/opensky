@@ -1,10 +1,13 @@
 // View-ray target state and use-key action dispatch. Split from
 // CellStreamer so streaming scheduling remains below strict type/file limits.
 
+import OpenSkyActorPresentation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import OpenSkyWorldState

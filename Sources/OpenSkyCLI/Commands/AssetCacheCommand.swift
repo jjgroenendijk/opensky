@@ -8,8 +8,8 @@ import Metal
 import OpenSkyAssetCache
 import OpenSkyCLIArguments
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyRendering
-import OpenSkyWorld
 
 enum AssetCacheCommand {
     private struct Options {

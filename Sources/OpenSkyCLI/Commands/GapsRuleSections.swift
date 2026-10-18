@@ -2,6 +2,7 @@
 // and AI package procedures.
 
 import Foundation
+import OpenSkyAIPackages
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
@@ -9,8 +10,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPerceptionInterface
+import OpenSkyPlayer
 import OpenSkyScripting
-import OpenSkyWorld
 
 extension GapsGatherer {
     func events() -> GapSection {

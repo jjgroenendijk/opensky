@@ -4,8 +4,8 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 import OpenSkyInventoryInterface
+@testable import OpenSkyObjectAnimation
 @testable import OpenSkyPhysics
-@testable import OpenSkyWorld
 
 struct FakeLockTrapState {
     var doorLocked = true

@@ -3,7 +3,7 @@
 // (docs/engine/actor-state-graph.md).
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyPlayer
 
 final class LocomotionActorStateSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

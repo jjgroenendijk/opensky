@@ -5,9 +5,11 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyTerrain
 
 /// Cheap identity for diff: only the fields that drive `AmbienceBed.resolve`.
 /// The director's bed cache means equal keys never re-resolve.

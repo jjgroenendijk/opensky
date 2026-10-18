@@ -2,14 +2,18 @@
 // that move: the streamer delivers the rest write after the runtime stores its state.
 
 import Foundation
+import OpenSkyAIPackages
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyNavigation
 import OpenSkyPhysics
+@testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 

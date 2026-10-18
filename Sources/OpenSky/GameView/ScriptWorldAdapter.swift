@@ -2,7 +2,10 @@
 // their collaborators, binds script lifetime to cell streaming, and ticks the
 // VM from the renderer. The panel logic lives in the coordinator.
 
+import OpenSkyActorPresentation
 import OpenSkyActors
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
@@ -16,9 +19,11 @@ import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface

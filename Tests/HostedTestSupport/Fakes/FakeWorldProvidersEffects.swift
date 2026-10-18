@@ -2,10 +2,10 @@
 // one visual effect, and one explosion, debris, and hazard each.
 
 @testable import OpenSkyCombat
+@testable import OpenSkyEffects
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 
 struct FakeEffectsState {
     var imageSpace = ImageSpaceState()

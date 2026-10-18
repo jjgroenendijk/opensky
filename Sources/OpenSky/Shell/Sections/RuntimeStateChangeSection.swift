@@ -3,7 +3,7 @@
 // reads `targetSelector`, so two boxes cannot disagree about the target.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 
 final class RuntimeStateChangeSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

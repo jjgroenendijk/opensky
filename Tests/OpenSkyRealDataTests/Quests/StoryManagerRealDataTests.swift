@@ -3,13 +3,14 @@
 // free Creation Club plugins. See docs/engine/story-manager.md.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyConditions
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

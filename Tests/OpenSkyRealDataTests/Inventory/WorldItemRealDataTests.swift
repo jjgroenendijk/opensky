@@ -2,10 +2,10 @@
 // bases resolve a model, and that the item index describes each one.
 
 import Foundation
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import Testing
 

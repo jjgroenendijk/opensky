@@ -5,13 +5,15 @@
 // render, and real-data halves live in the other `NPCAIAcceptance*` suites.
 
 import Foundation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyNavigation
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

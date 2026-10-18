@@ -4,9 +4,11 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyActorPresentation
+@testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
+import OpenSkyRuntimeState
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.acceptance))

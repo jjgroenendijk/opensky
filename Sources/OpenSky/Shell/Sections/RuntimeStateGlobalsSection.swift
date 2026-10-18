@@ -5,7 +5,7 @@
 // time globals differ from their default with no override.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyRuntimeState
 
 final class RuntimeStateGlobalsSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

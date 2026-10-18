@@ -10,6 +10,7 @@ import OpenSkyEngineTesting
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import simd
 import Testing
 

@@ -3,9 +3,9 @@
 // zero and one, and proves a repeated one-weight frame is deterministic.
 
 import Foundation
+import OpenSkyActorPresentation
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
-@testable import OpenSkyWorld
 import Testing
 
 @Suite(.tags(.gpu))

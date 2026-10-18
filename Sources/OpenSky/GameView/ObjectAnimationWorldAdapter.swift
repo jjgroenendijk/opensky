@@ -3,10 +3,12 @@
 // Papyrus. The rules live in `ObjectBehaviorCoordinator` and `SequenceDoorCoordinator`
 // (docs/engine/object-animation.md).
 
+import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface

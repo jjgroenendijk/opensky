@@ -85,6 +85,32 @@ import feature implementations, because it is part of the composition roots, and
 import it. Example: `OpenSkyPreview` prints records with the whole-game condition registry, and
 both the Preview panel and `openskycli record` use it.
 
+A fifth helper, `domain`, declares one domain of the world feature: a module below
+`OpenSkyWorld`, such as `OpenSkyPlayer` or `OpenSkyCells`.
+
+## World domains
+
+The world feature is one feature in many modules. `OpenSkyWorld` holds cell streaming and the
+game session, and each other domain is its own module below it: conditions, weather,
+navigation, terrain, effects, camera, runtime state, actor presentation, object animation,
+player, AI packages, cells, and loading. A domain module is like a lower module that sits above
+the feature interfaces:
+
+- It may import lower modules, interfaces, and the domains listed before it.
+- Of the features, only `OpenSkyWorld` may import a domain. Another feature still reaches the
+  world through `OpenSkyWorldInterface`.
+- The app, `OpenSkyCLI`, `OpenSkyPreview`, and tests may import any domain.
+- Every domain has its own `<Domain>Tests` target.
+
+The domains are not features with their own interfaces, because `OpenSkyWorld` builds and drives
+them directly, and no domain has a second implementation that a protocol would hide. A value
+type that a domain and another feature both need goes in `OpenSkyWorldInterface`, for example
+`PackageProcedureKind`.
+
+`DOMAINS` in `tools/lint/module-graph.sh` holds the order, and the order of the `domain` calls
+in `Package.swift` follows it. A domain that needs a later one is a cycle: move the shared type
+down, or invert the call through a protocol.
+
 The helpers also give every target the same settings: the language settings of
 `config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
 path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
@@ -143,8 +169,6 @@ OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll r
 OpenSkyQuests             quest runtime, alias filler, story manager, start-game pass
 OpenSkyDialogue           dialogue runtime, branches, scenes, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
-OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
-                          the whole-game condition registry
 OpenSkySave               OpenSky save files: encoder, decoders, store; Skyrim save import
 OpenSkyMenus              menu models, movie bridges, panel seams that name several features
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
@@ -152,6 +176,22 @@ OpenSkyInventory          inventory, equipment, container, barter, and world ite
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
+  ^
+OpenSkyWorldConditions    world condition functions, the whole-game condition registry
+OpenSkyWeather            weather selection, transitions, precipitation
+OpenSkyNavigation         navmesh graph, pathfinder, walk routes
+OpenSkyTerrain            the exterior cell grid, distant LOD, LOD water
+OpenSkyEffects            visual effect catalog, impact effects
+OpenSkyCamera             cinematic shots, kill cams, camera shake
+OpenSkyRuntimeState       runtime state coordinator, condition probes, actor presentation state
+OpenSkyActorPresentation  actor assembly, heads, face morphs, idles, actor animation, vehicles
+OpenSkyObjectAnimation    animated objects, sequence doors
+OpenSkyPlayer             player body, locomotion bridge, walk controller, cameras, talk target
+OpenSkyAIPackages         package runtime and procedures, NPC movement, AI navigation
+OpenSkyCells              cell scene builder, cell indexes, cell build runner
+OpenSkyLoading            asset cache coordinator, loading screens, load timeline
+  ^
+OpenSkyWorld              cell streaming, the game session, audio directors, benchmark
   ^
 OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
@@ -198,7 +238,7 @@ A lower module never imports a higher one. These patterns keep it that way:
 - A value type both sides need moves down, for example `CellCoordinate`, `ModelBounds`, and
   `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
 - Behavior that needs a higher layer stays up there as an extension of the lower type, in a file
-  named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in `OpenSkyWorld` over a
+  named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in `OpenSkyAIPackages` over a
   `OpenSkyFormatsESM` record, and `ItemDefinitionStore+MagicItemUse.swift` in `OpenSkyMagic` over an
   `OpenSkyGameData` store.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
@@ -227,7 +267,7 @@ A lower module never imports a higher one. These patterns keep it that way:
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime`, `ActiveEffectRuntime`, and `DialogueRuntime` take their
   `ConditionFunctionRegistry` as a parameter, and the caller passes `.standard`, which lives
-  in `OpenSkyWorld`, above every feature interface. A package test target builds its own
+  in `OpenSkyWorldConditions`, above every feature interface. A package test target builds its own
   registry from the install functions it can reach, for example `.magicTests` in
   `OpenSkyMagicTests`.
 - A lower module that stores something for every feature keeps an open set instead of a closed
@@ -261,11 +301,12 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 
 ## Tests
 
-Shared test fixtures live in three testing libraries, one per layer: `OpenSkyFormatsTesting` for
-the format modules, `OpenSkyEngineTesting` for the engine modules, and `OpenSkyFeaturesTesting`
-for the feature interfaces. Each has one subfolder per module, for example
-`Tests/OpenSkyEngineTesting/Physics/`. Three libraries instead of one per module keep the
-package at 89 targets, because every target costs manifest and graph time on each build.
+Shared test fixtures live in four testing libraries, one per layer: `OpenSkyFormatsTesting` for
+the format modules, `OpenSkyEngineTesting` for the engine modules, `OpenSkyFeaturesTesting`
+for the feature interfaces, and `OpenSkyWorldTesting` for the world domains, such as
+`CellSceneBuilderFixture`. The first three have one subfolder per module, for example
+`Tests/OpenSkyEngineTesting/Physics/`. One library per layer instead of one per module keeps
+the target count down, because every target costs manifest and graph time on each build.
 Their declarations are `public`, and a library may `@testable import` the modules it builds
 fixtures for. One library, `OpenSkyTagsTesting`, holds no fixtures: it declares the shared
 Swift Testing tags, and the `testTarget` helper in `Package.swift` links it into every package
@@ -276,7 +317,7 @@ a feature implementation. So any test target may link it without building anothe
 A fixture that needs the real implementation goes in the feature's fixtures library,
 `Tests/<Name>Fixtures/`, declared with the `fixtures` helper. It may depend on its own feature's
 implementation and on testing libraries, and only `<Name>Tests` and the Xcode test bundles may
-link it. Example: `CellSceneBuilderFixture` builds real cell scenes, so it is in
+link it. Example: `CellStreamerFixture` builds a real cell streamer, so it is in
 `OpenSkyWorldFixtures`. A module that ships in the app never depends on either kind
 ([The Modular Architecture](/decisions/modular-architecture.md)).
 

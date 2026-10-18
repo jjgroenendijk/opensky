@@ -7,6 +7,7 @@ import Metal
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))

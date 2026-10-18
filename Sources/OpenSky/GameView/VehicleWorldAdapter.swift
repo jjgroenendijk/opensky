@@ -3,13 +3,18 @@
 // vehicle pass in the frame loop. See docs/engine/vehicles.md.
 
 import Foundation
+import OpenSkyActorPresentation
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyTerrain
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd

@@ -4,7 +4,10 @@
 // coordinators (docs/engine/scenes.md, docs/engine/story-manager.md).
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
+import OpenSkyAIPackages
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
@@ -20,8 +23,10 @@ import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldState
 
 /// What `StoryWorldAdapter` reads from the session. `GameViewController` conforms.

@@ -1,7 +1,7 @@
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorld
 import OpenSkyWorldState
 import Testing
 

@@ -5,8 +5,8 @@ import Foundation
 @testable import OpenSky
 import OpenSkyAssetCache
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyRendering
-import OpenSkyWorld
 import Testing
 
 @MainActor

@@ -7,8 +7,8 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
 import OpenSkyProgression
+import OpenSkyRuntimeState
 import OpenSkySave
-import OpenSkyWorld
 import OpenSkyWorldState
 
 nonisolated enum SkyrimSaveExportError: Error, LocalizedError {

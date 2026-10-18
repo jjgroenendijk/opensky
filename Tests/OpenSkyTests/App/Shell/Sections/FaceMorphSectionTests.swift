@@ -1,7 +1,7 @@
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
 import Testing
 
 @MainActor

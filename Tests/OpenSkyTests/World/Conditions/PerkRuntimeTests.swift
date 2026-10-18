@@ -10,7 +10,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
-@testable import OpenSkyWorld
+import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing
 

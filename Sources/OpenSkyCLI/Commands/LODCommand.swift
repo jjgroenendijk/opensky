@@ -2,11 +2,11 @@
 // and object LOD NIF for one worldspace through production decoders.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyWorld
 
 enum LODCommand {
     static func run(context: CLIContext, arguments: LODArguments) throws {

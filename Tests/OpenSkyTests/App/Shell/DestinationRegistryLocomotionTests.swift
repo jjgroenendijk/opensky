@@ -3,8 +3,8 @@
 
 @testable import OpenSky
 @testable import OpenSkyPhysics
+@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
 import Testing
 
 struct DestinationRegistryLocomotionTests {

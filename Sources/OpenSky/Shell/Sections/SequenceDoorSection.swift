@@ -2,7 +2,7 @@
 // `Open` and `Close` sequences, their state, and an open or close as `SetOpen` does.
 
 import AppKit
-import OpenSkyWorld
+import OpenSkyObjectAnimation
 
 final class SequenceDoorSection: PanelSectionViewController {
     weak var provider: (any SequenceDoorControlProviding)? {

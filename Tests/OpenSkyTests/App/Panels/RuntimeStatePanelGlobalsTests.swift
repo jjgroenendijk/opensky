@@ -4,7 +4,7 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyWorld
+@testable import OpenSkyRuntimeState
 import Testing
 
 struct RuntimeStatePanelGlobalsTests {
