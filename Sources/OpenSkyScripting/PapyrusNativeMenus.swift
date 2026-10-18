@@ -38,8 +38,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     /// Opens the container menu on the actor's inventory, as a follower's trade does.
     func openInventory(of actor: ReferenceKey)
     func showTrainingMenu(trainer: ReferenceKey)
-    /// `giving` true lets the player give items; false lets the actor give them.
-    func showGiftMenu(actor: ReferenceKey, giving: Bool)
+    /// `filter` holds the form list's entries; nil shows every item.
+    func showGiftMenu(
+        actor: ReferenceKey, giving: Bool, filter: [ReferenceKey?]?, showsStolenItems: Bool
+    )
 }
 
 extension PapyrusNativeFunctions {
@@ -92,9 +94,16 @@ extension PapyrusNativeFunctions {
             menus.showTrainingMenu(trainer: trainer)
             return .returned(.none)
         })
-        withReference("Actor", "ShowGiftMenu", into: &registry) { call, _, menus, key in
-            menus.showGiftMenu(actor: key, giving: boolean(call, at: 0, default: true))
-            return .returned(.none)
+        // OpenSky returns at once with 0 favor points: the favor rule has no source yet.
+        withReference("Actor", "ShowGiftMenu", into: &registry) { call, world, menus, key in
+            let filter = objectArgument(call, at: 1)
+                .flatMap(world.referenceKey(for:))
+                .flatMap(world.formListEntries(of:))
+            menus.showGiftMenu(
+                actor: key, giving: boolean(call, at: 0, default: true), filter: filter,
+                showsStolenItems: boolean(call, at: 2, default: false)
+            )
+            return .returned(.integer(0))
         }
     }
 

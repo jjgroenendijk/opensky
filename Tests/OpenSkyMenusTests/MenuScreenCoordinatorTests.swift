@@ -10,13 +10,13 @@ import Testing
 @MainActor
 struct MenuScreenCoordinatorTests {
     private static let trainer = ReferenceKey(
-        resolved: ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x1_3BB9)
+        resolved: ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x13BB9)
     )
 
     private static func card(level: Int) -> TrainingCard {
         TrainingCard(
-            skill: ("One-handed", level, 0.5), trainer: ("Amren", 50),
-            sessions: (0, 5), cost: 250, gold: 1000
+            skill: ("One-handed", level), progress: 0.5, trainer: ("Amren", 50),
+            sessions: (0, 5), price: (250, 1000)
         )
     }
 
@@ -110,6 +110,16 @@ struct MenuScreenCoordinatorTests {
         #expect(menu.openNearest())
         menu.route(.button(.accept))
         #expect(world.actions == ["give 77495 true"])
+    }
+
+    @Test func aGiftFilterKeepsMatchingHonestItems() {
+        let food = ReferenceKey(resolved: ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x8CDEA))
+        let bread = ReferenceKey(resolved: ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x65C9F))
+        let request = GiftMenuRequest(giving: true, filter: [food])
+        #expect(request.shows(stolen: false, identities: [bread, food]))
+        #expect(!request.shows(stolen: true, identities: [bread, food]))
+        #expect(!request.shows(stolen: false, identities: [bread]))
+        #expect(GiftMenuRequest(giving: true).shows(stolen: false, identities: []))
     }
 
     @Test func craftingListsWhatCanBeMadeFirstAndClosesTheStation() {

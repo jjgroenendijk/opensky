@@ -114,8 +114,17 @@ the command line. Frames go to `.logs/`, because a drawn frame contains the user
 
 `Actor.ShowGiftMenu` opens `Interface\giftmenu.swf`. The movie uses the same list clips as
 the inventory movie. With `abGivingGift` true the list holds the player's items, and each
-pick moves one to the actor; with false it holds the actor's items. The `FLST` filter list
-and the favour points that the native also takes are not used yet.
+pick moves one to the actor; with false it holds the actor's items. The other arguments follow
+the [CK wiki](https://ck.uesp.net/wiki/ShowGiftMenu_-_Actor):
+
+| Argument | Default | What OpenSky does |
+| --- | --- | --- |
+| `apFilterList` | `None` | Shows only an item that is in the list, or that has a keyword in the list |
+| `abShowStolenItems` | `false` | Hides stolen copies unless it is true |
+| `abUseFavorPoints` | `true` | Ignored. No source says how many favour points an item is worth |
+
+The game's native is latent: it returns when the menu closes, with the favour points spent or
+gained. OpenSky's native returns at once, with 0.
 
 ## Not done yet
 

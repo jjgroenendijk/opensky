@@ -352,8 +352,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         game.menuScreens.training.open(trainer: trainer)
     }
 
-    func showGiftMenu(actor: ReferenceKey, giving: Bool) {
-        game.menuScreens.gift.open(actor: actor, giving: giving)
+    func showGiftMenu(
+        actor: ReferenceKey, giving: Bool, filter: [ReferenceKey?]?, showsStolenItems: Bool
+    ) {
+        let request = GiftMenuRequest(
+            giving: giving, filter: filter.map { Set($0.compactMap(\.self)) },
+            showsStolenItems: showsStolenItems
+        )
+        game.menuScreens.gift.open(actor: actor, request: request)
     }
 
     private var identityRecords: ActorIdentityRecords? {

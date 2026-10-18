@@ -2,6 +2,7 @@
 // and gift items moved between the player and an actor's inventory.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -37,13 +38,14 @@ extension MenuScreensWorldAdapter: GiftMenuWorld {
         game.actorWorld.nearestActorValueHolder()?.key
     }
 
-    func giftCategories(actor: ReferenceKey, giving: Bool) -> [ItemListCategory] {
+    func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory] {
         guard
             let runtime = game.inventory.runtime?.inventory,
-            let giver = giving ? .player : game.streamer?.inventoryHolder(of: actor)
+            let giver = request.giving ? .player : game.streamer?.inventoryHolder(of: actor)
         else { return [] }
         let rows = runtime.inventory(of: giver).stacks
             .filter { $0.item != runtime.goldFormID }
+            .filter { request.shows(stolen: $0.stolen, identities: giftIdentities(of: $0.item)) }
             .map { stack in
                 ItemListRow(
                     tag: stack.item.rawValue, name: game.inventory.name(of: stack.item),
@@ -52,6 +54,18 @@ extension MenuScreensWorldAdapter: GiftMenuWorld {
             }
             .sorted { $0.name < $1.name }
         return [ItemListCategory(label: "All", rows: rows)]
+    }
+
+    /// The item and its keywords as form list entries, for a gift filter.
+    private func giftIdentities(of item: FormID) -> Set<ReferenceKey> {
+        guard
+            let data = game.worldData, let lists = data.formListStore,
+            let plugin = data.magicItemPluginName
+        else { return [] }
+        let keywords = game.inventoryWorld.itemKeywords(of: item) ?? []
+        return Set(([item] + keywords).compactMap {
+            lists.resolvedID($0, fromPlugin: plugin).map(ReferenceKey.init(resolved:))
+        })
     }
 
     func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String {

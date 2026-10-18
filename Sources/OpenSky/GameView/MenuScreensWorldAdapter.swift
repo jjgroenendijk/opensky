@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyActors
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyGameData
@@ -27,6 +28,7 @@ protocol MenuScreensWorldHost: MenuInputConsumer {
     var gameSession: GameSession? { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var messageWorld: MessageWorldAdapter { get }
@@ -37,6 +39,7 @@ protocol MenuScreensWorldHost: MenuInputConsumer {
     var saveGames: SaveGameWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
 }
 
 final class MenuScreensWorldAdapter {

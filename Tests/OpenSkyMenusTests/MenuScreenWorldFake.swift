@@ -99,7 +99,7 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld 
         return "Readied"
     }
 
-    func giftCategories(actor: ReferenceKey, giving: Bool) -> [ItemListCategory] {
+    func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory] {
         categories
     }
 

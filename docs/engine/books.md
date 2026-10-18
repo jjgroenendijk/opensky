@@ -51,5 +51,8 @@ same rule as taking any item ([crime](/engine/crime.md)).
 ## Differences from the game
 
 - Which key takes the book in the game is not checked. OpenSky uses the accept key.
+- The `BOOK` record has a "Can't Be Taken" flag. The
+  [CK wiki](https://ck.uesp.net/wiki/Book) marks it "Does not work?", so OpenSky ignores it
+  until a test in the game shows what it does.
 - The game draws the book as a 3D model with the movie on its pages. OpenSky draws the
   movie flat.
