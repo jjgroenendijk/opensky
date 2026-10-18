@@ -15,6 +15,24 @@ enum SWFCommand {
             let name = SWFTagName.name(forCode: tag.code) ?? "unknown"
             print("  tag \(tag.code) (\(name)): \(tag.body.count) bytes")
         }
+        let movie = try SWFMovie(file: file)
+        if let attributes = movie.fileAttributes {
+            print("[INFO] attributes: actionScript3 \(attributes.isActionScript3), "
+                + "metadata \(attributes.hasMetadata), network \(attributes.usesNetwork)")
+        }
+        if let metadata = movie.metadata {
+            print("[INFO] metadata: \(metadata.count) characters")
+        }
+        var buttons = 0
+        var grids = 0
+        for character in movie.characters.values {
+            switch character {
+            case .button: buttons += 1
+            case let .sprite(sprite) where sprite.scalingGrid != nil: grids += 1
+            default: break
+            }
+        }
+        print("[INFO] buttons \(buttons), nine-slice sprites \(grids)")
     }
 
     /// Enumerates every `interface\*.swf` archive path, parses each through

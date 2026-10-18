@@ -142,6 +142,15 @@ struct CrimeTheftHookTests {
     /// Property this actor may use is not theft, even though it plainly has an
     /// owner — the same rule a faction-owned chest and a shopkeeper's own
     /// counter both follow.
+    /// The book bar asks before the take, so its Steal label matches the take.
+    @Test func theTheftQuestionMatchesTheTake() throws {
+        let take = Chain.take(Chain.looseSwordReference, base: InventoryBaselineFixture.sword)
+        let owned = try Harness()
+        let unowned = try Harness(owned: false)
+        #expect(owned.chain.runtime.isTheft(take))
+        #expect(!unowned.chain.runtime.isTheft(take))
+    }
+
     @Test func takingPropertyTheActorMayUseIsNoCrime() throws {
         let harness = try Harness()
         harness.world.actor = CrimeActor(base: CrimeFixture.key(CrimeFixture.Actors.shopkeeper))

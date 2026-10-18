@@ -73,16 +73,14 @@ extension TitleMenuCoordinator {
         apply(request)
     }
 
-    /// The row the movie picked. Credits have no vanilla screen yet, so the movie
-    /// goes back to its main rows. Load runs in the movie (`answerLoadCalls`).
+    /// The row the movie picked. Load runs in the movie (`answerLoadCalls`).
     func apply(_ request: TitleMenuMovieBridge.Request) {
         switch request {
         case .resume: activate(.resume)
         case .new: activate(.new)
         case .quit: activate(.quit)
         case .credits:
-            lastResult = "Credits: not shown"
-            try? world?.renderer?.updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
+            showCredits()
         }
     }
 }

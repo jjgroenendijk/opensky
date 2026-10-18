@@ -12,8 +12,16 @@ import OpenSkyQuestsInterface
 
 extension ProgressionWorldAdapter {
     func nearestTrainer() -> TrainerOffer? {
+        game.actorWorld.nearestActorValueHolder().flatMap(offer(of:))
+    }
+
+    /// The actor's class training, or nil when the actor does not train.
+    func trainerOffer(for key: ReferenceKey) -> TrainerOffer? {
+        game.actorWorld.actorValueHolder(for: key).flatMap(offer(of:))
+    }
+
+    private func offer(of holder: ActorValueHolder) -> TrainerOffer? {
         guard
-            let holder = game.actorWorld.nearestActorValueHolder(),
             case let .actor(base) = holder.subject,
             let resolver = game.worldData?.actorValueBaselines?
                 .resolver,

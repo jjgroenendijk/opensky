@@ -66,6 +66,8 @@ nonisolated public final class SWFPassResources {
     /// The AS2 runtime driving `movie`, when one was started. nil keeps the
     /// layer on the static frame-1 path.
     public var runtime: SWFMovieRuntime?
+    /// A second running movie drawn over `movie`.
+    public var overlay: SWFOverlayLayer?
     public var lastDrawStats = SWFDrawStats()
     /// Bumped per setSWFMovie: namespaces glyph-atlas font keys so two loaded
     /// movies (or reloads) never collide in the shared atlas cache.

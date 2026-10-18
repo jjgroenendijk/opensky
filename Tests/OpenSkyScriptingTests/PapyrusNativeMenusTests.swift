@@ -80,6 +80,16 @@ final class FakeMenuBridge: PapyrusMenuBridge {
     func openInventory(of actor: ReferenceKey) {
         calls.append("inventory(\(actor))")
     }
+
+    func showTrainingMenu(trainer: ReferenceKey) {
+        calls.append("training(\(trainer))")
+    }
+
+    func showGiftMenu(
+        actor: ReferenceKey, giving: Bool, filter: [ReferenceKey?]?, showsStolenItems: Bool
+    ) {
+        calls.append("gift(\(actor), \(giving), \(filter == nil), \(showsStolenItems))")
+    }
 }
 
 @MainActor
@@ -141,6 +151,25 @@ struct PapyrusNativeMenusTests {
         #expect(open(false) == .returned(.none))
         let opened = "inventory(\(fixture.key))"
         #expect(menus.calls == [opened, opened])
+    }
+
+    @Test func trainingAndGiftMenusOpenOnTheActor() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let trainer = fixture.registry.invoke(Self.game(
+            "ShowTrainingMenu",
+            [.object(fixture.receiver)]
+        ))
+        let gift = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "Actor", "ShowGiftMenu", receiver: fixture.receiver,
+            arguments: [.boolean(false)], returnType: .integer
+        ))
+        #expect(trainer == .returned(.none))
+        #expect(gift == .returned(.integer(0)))
+        #expect(menus.calls == [
+            "training(\(fixture.key))", "gift(\(fixture.key), false, true, false)"
+        ])
     }
 
     @Test func withoutTheBridgeANativeDoesNothing() {

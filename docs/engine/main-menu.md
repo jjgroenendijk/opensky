@@ -126,3 +126,17 @@ time, and a `THMB` chunk with a 192 by 108 picture of the frame
 ([save container](/formats/opensky-save.md)). The list reads only these chunks and skips
 the rest by length, so a large save lists fast. Play time is real time, carried from the
 save that was loaded.
+
+## Credits
+
+Credits on the title menu plays `Interface\creditsmenu.swf` on the title menu's layer. The
+movie makes `_root.CodeObj` itself and calls three functions on it, which the engine adds:
+
+| Function | What OpenSky does |
+| --- | --- |
+| `requestCredits(field)` | Writes the text of `Interface\credits.txt` into `field`, without HTML tags |
+| `getScrollSpeed()` | Returns 1 movie pixel per frame. The game's own speed is not in the data |
+| `closeMenu()` | Gives the layer back to the title movie |
+
+The engine then calls `onCodeObjectInit`, and the movie starts to scroll. Escape also ends
+the credits. The facts were measured with `openskycli swf movie-probe`.

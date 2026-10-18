@@ -57,3 +57,20 @@ instead, which standing stones and rest bonuses can raise. OpenSky does not appl
 to training.
 
 The session count is saved in its own `PTRN` chunk ([save format](/formats/opensky-save.md)).
+
+## Training menu
+
+`Game.ShowTrainingMenu` and the trainer's dialogue open `Interface\trainingmenu.swf`. The
+engine calls `InitExtensions(0, false)` and fills `/TrainingMenuObj`:
+
+| Field | Text |
+| --- | --- |
+| `SkillName` | the skill and its level |
+| `TrainerSkill` | the trainer's name and maximum level |
+| `TimesTrained` | the sessions done and the sessions per level |
+| `TrainCost` | the price |
+| `CurrentGold` | the player's gold |
+
+`SkillMeter.SetPercent` shows the progress to the next skill level. The movie's train button
+calls `Train`, and its exit button calls `Exit`. A refusal stays on the HUD as in the
+table above, and the menu stays open.

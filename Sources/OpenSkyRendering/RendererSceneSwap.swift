@@ -190,7 +190,7 @@ extension Renderer {
         live.insert(ObjectIdentifier(shadowDrawUniformBuffer))
         live.insert(ObjectIdentifier(shadowInstanceBuffer))
         live.insert(ObjectIdentifier(shadow.map))
-        if let movie = swf.movie {
+        for movie in [swf.movie, swf.overlay?.movie].compactMap(\.self) {
             live.formUnion(movie.residencyAllocations.map(ObjectIdentifier.init))
         }
         live.formUnion((gpuCull.scene?.allocations ?? []).map(ObjectIdentifier.init))

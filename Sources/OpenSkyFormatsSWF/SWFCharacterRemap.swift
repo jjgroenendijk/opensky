@@ -58,6 +58,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         case let .staticText(text): .staticText(staticText(text))
         case let .editText(text): .editText(editText(text))
         case let .sprite(sprite): .sprite(self.sprite(sprite))
+        case let .button(button): .button(self.button(button))
         }
     }
 
@@ -128,7 +129,25 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         SWFSprite(
             characterId: id(source.characterId),
             frameCount: source.frameCount,
-            timeline: timeline(source.timeline)
+            timeline: timeline(source.timeline),
+            scalingGrid: source.scalingGrid
+        )
+    }
+
+    public mutating func button(_ source: SWFButton) -> SWFButton {
+        SWFButton(
+            characterId: id(source.characterId),
+            trackAsMenu: source.trackAsMenu,
+            records: source.records.map { record in
+                SWFButtonRecord(
+                    states: record.states,
+                    characterId: id(record.characterId),
+                    depth: record.depth,
+                    matrix: record.matrix,
+                    colorTransform: record.colorTransform
+                )
+            },
+            conditions: source.conditions
         )
     }
 

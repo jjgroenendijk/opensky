@@ -94,3 +94,24 @@ route. The worst route is Riverwood to Whiterun, 3 hours in the table and 2.4 in
 are in
 `.logs/fast-travel-time/routes.tsv`. For example, Riverwood to Winterhold is 171746 units:
 the table says 12 hours, and OpenSky gives 11.9.
+
+## Map movie
+
+`Interface\map.swf` draws the markers, the date, and the button bar over the 3D map view.
+Its root timeline makes `WorldMap`, a `Map.MapMenu`. When the map opens the engine:
+
+1. calls `WorldMap.Init()`, which registers the callbacks, then `SetPlatform` and
+   `SetDateString(date)`;
+2. calls `SetNumMarkers(n)` and writes `MarkerData` with 3 values per marker: name, icon
+   type, undiscovered;
+3. calls `CreateMarkers()` until every marker is built. Each call builds 10.
+
+Each frame it writes `MarkerData` with 4 values per marker: shown, x, y, rotation, where x
+and y run from 0 to 1 over the stage. Then it calls `RefreshMarkers()` and
+`SetSelectedMarker(index)`. The icon type is the marker's `TNAM` value: the movie's
+`IconTypes` list has the same 67 names in the same order as the xEdit table.
+
+The movie calls `MarkerClick(index)` when a marker is pressed, which travels there, and
+`ToggleMapCallback`, `OpenJournalCallback`, and `CurrentLocationCallback` for its buttons.
+OpenSky keeps the mouse for panning, so the cursor does not reach the markers; Enter
+travels to the marker nearest the centre, which the movie shows as selected.

@@ -96,6 +96,11 @@ public final class ScriptCoordinator {
         Self.logger.info("[INFO] quest scripts instantiated: \(started, privacy: .public)")
     }
 
+    /// The player slept from `start` to `end`, in game days passed; time has already passed.
+    public func reportSleep(start: Double, end: Double) {
+        bridge?.world?.queueSleepEvents(start: start, end: end)
+    }
+
     /// The renderer gates `delta`, so a menu-paused frame advances nothing.
     public func advance(delta: Float) {
         queueLocationChange()

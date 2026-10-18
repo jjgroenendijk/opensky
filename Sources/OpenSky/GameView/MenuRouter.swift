@@ -22,6 +22,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var mapWorld: MapWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var menuTextLoader: (() -> LocalizedLabels)? { get }
+    var menuScreens: MenuScreens { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
@@ -93,6 +94,10 @@ final class MenuRouter {
             game.mapMenu.open()
         case .skills:
             game.skillsMenu.open()
+        case .wait:
+            game.menuScreens.sleepWait.open(sleeping: false)
+        case .magic:
+            game.menuScreens.magic.open()
         case .quicksave:
             game.systemMenu.quicksave()
         case .quickload:
@@ -124,6 +129,7 @@ final class MenuRouter {
             game?.raceMenu.tick(now: now)
             game?.skillsMenu.tick(now: now)
             game?.systemMenu.tick(now: now)
+            game?.menuScreens.tick(now: now)
             game?.menuWorld.refreshTitleBackdrop()
         }
     }
@@ -162,13 +168,15 @@ final class MenuRouter {
         table.register(SkillsMenuCoordinator.identifier) { [unowned game] in
             game.skillsMenu.route($0)
         }
+        game.menuScreens.register(in: table)
         return table
     }()
 
     /// The menus whose movie hit tests the cursor, so it must be visible.
     static let cursorMenus: [MenuIdentifier] = [
-        TitleMenuCoordinator.identifier, RaceMenuCoordinator.identifier
-    ]
+        TitleMenuCoordinator.identifier, RaceMenuCoordinator.identifier,
+        MessageCoordinator.identifier
+    ] + MenuScreens.cursorMenus
 
     /// A script opens the race menu during play, while look holds the cursor.
     func modeChanged(to route: InputRoute) {
@@ -176,15 +184,22 @@ final class MenuRouter {
         (game.hostView as? GameMetalView)?.setMenuCursorFree(free)
     }
 
-    /// The main menu movie hit tests the cursor. The other menus still take a
+    /// A menu whose movie hit tests the cursor gets it. The other menus take a
     /// press as their accept button.
     func route(_ event: MenuPointerEvent) {
-        if game.menuMode.topMenu == TitleMenuCoordinator.identifier {
-            game.titleMenu.route(event)
-        } else if game.menuMode.topMenu == RaceMenuCoordinator.identifier {
-            game.raceMenu.route(event)
+        if let route = game.menuMode.topMenu.flatMap({ pointerRoutes[$0] }) {
+            route(event)
         } else if event.phase == .pressed {
             route(.button(.accept))
         }
+    }
+
+    /// The menus whose movie takes the cursor itself.
+    private var pointerRoutes: [MenuIdentifier: (MenuPointerEvent) -> Void] {
+        [
+            TitleMenuCoordinator.identifier: { [unowned game] in game.titleMenu.route($0) },
+            RaceMenuCoordinator.identifier: { [unowned game] in game.raceMenu.route($0) },
+            MessageCoordinator.identifier: { [unowned game] in game.messages.route($0) }
+        ].merging(game.menuScreens.pointerRoutes) { first, _ in first }
     }
 }

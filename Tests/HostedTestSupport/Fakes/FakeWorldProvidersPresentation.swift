@@ -1,4 +1,5 @@
-// Kill cam, loading screen, message, and combat style part of the shared panel fake.
+// Kill cam, loading screen, message, menu screen, and combat style part of the shared
+// panel fake.
 
 import Foundation
 @testable import OpenSkyCamera
@@ -20,6 +21,8 @@ final class FakePresentationState {
     var releases = 0
     var shownMessages: [(String, Bool)] = []
     var helpResets = 0
+    var menuScreenReadouts: [MenuScreenReadout] = []
+    var openedScreens: [MenuScreenKind] = []
 }
 
 extension FakeWorldProviders {
@@ -81,5 +84,16 @@ extension FakeWorldProviders {
 
     func resetHelpMessages() {
         presentationState.helpResets += 1
+    }
+}
+
+extension FakeWorldProviders {
+    var menuScreenReadouts: [MenuScreenReadout] {
+        presentationState.menuScreenReadouts
+    }
+
+    func openMenuScreen(_ kind: MenuScreenKind) -> Bool {
+        presentationState.openedScreens.append(kind)
+        return true
     }
 }

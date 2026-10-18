@@ -124,6 +124,14 @@ public final class WorldItemRuntime {
 
     // MARK: - Take
 
+    /// True when taking the item behind `interaction` is theft.
+    public func isTheft(_ interaction: PlacedInteraction) -> Bool {
+        guard let entry = references?.referenceEntry(formID: interaction.reference) else {
+            return false
+        }
+        return crime?.verdict(on: entry.key).isTheft ?? false
+    }
+
     /// Moves the item behind `interaction` into the player's inventory and removes
     /// its reference from the world.
     /// - Throws: `WorldItemError.notTakeable`, `WorldItemError.unknownReference`, or

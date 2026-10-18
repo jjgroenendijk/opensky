@@ -22,6 +22,20 @@ extension MagicCoordinator {
         return readSkillBook(unread.item, skill: unread.skill)
     }
 
+    /// What reading `item` does: a skill book raises its skill, a spell tome teaches its
+    /// spell. Nil for a book that teaches nothing.
+    @discardableResult
+    public func readBook(_ item: FormID) -> CastingActionOutcome? {
+        guard let items = world.inventory?.baselines.items else { return nil }
+        if let skill = items.teachesSkill(item) {
+            return readSkillBook(item, skill: skill)
+        }
+        if let spell = items.teachesSpell(item) {
+            return readSpellTome(item, spell: spell)
+        }
+        return nil
+    }
+
     /// Marks `item` read and raises `skill`. A book read before raises nothing.
     @discardableResult
     func readSkillBook(_ item: FormID, skill: Int32) -> CastingActionOutcome {

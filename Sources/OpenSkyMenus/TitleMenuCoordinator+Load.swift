@@ -12,6 +12,9 @@ extension TitleMenuCoordinator {
 
     /// Steps the movie, then answers what it asked for in those frames.
     public func tick(now: Double) {
+        if creditsClosing {
+            closeCredits()
+        }
         guard movieLoaded, let renderer = world?.renderer else {
             framePacer = MenuMovieFramePacer()
             return
@@ -21,7 +24,9 @@ extension TitleMenuCoordinator {
             for _ in 0 ..< framePacer.ticks(at: now, frameRate: rate) {
                 try renderer.advanceSWFRuntime()
             }
-            renderer.swfRuntime.map(TitleMenuMovieBridge.followStateFocus(runtime:))
+            if !creditsShown {
+                renderer.swfRuntime.map(TitleMenuMovieBridge.followStateFocus(runtime:))
+            }
         } catch {
             movie.record(error)
         }

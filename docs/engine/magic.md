@@ -203,3 +203,12 @@ This is OpenSky's reading of the game's active effects list, not a measured rule
 
 Effect visuals and sounds are not drawn or played. The `ALCH` consume sound is decoded and passed
 along for when they are.
+
+## Magic menu
+
+The magic menu (`Interface\magicmenu.swf`) uses the same list clips as the inventory movie
+(`/Menu_mc/InventoryLists_mc`), filled through `EntriesA` as the
+[inventory menu](/engine/inventory-menu.md#list-data) does. The first tab holds every known
+spell and power; the other tabs hold one spell type each. Accept, or the movie's
+`ItemSelect`, readies the spell in the right hand; the X key readies it in the left hand.
+The game also lists active effects and shouts; OpenSky does not yet.

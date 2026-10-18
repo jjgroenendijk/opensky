@@ -22,6 +22,7 @@ protocol InventoryMenuHost: MenuInputConsumer {
     var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
+    var menuScreens: MenuScreens { get }
     var renderer: Renderer? { get }
     var swfMovies: SWFMovieSource { get }
 }
@@ -197,8 +198,15 @@ final class InventoryMenuController {
         }
     }
 
-    /// Activating an equipped row unequips it, as the vanilla menu does.
+    /// Activating an equipped row unequips it, as the vanilla menu does. A book opens;
+    /// the inventory closes first, because both draw on the one movie layer.
     func activateSelection() {
+        let books = game.menuScreens.book
+        if let entry = model.selectedEntry, books.isBook(entry.item) {
+            close()
+            books.open(item: entry.item)
+            return
+        }
         perform { entry in
             entry.isEquipped
                 ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text

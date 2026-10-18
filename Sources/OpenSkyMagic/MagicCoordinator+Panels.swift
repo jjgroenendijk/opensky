@@ -140,18 +140,24 @@ extension MagicCoordinator: CastingControlProviding {
 
     @discardableResult
     public func readFirstCarriedSpellTome() -> CastingActionOutcome {
-        guard let caster else { return recordCasting(.unavailable) }
+        guard caster != nil else { return recordCasting(.unavailable) }
         guard let tome = carriedSpellTomes().first else { return recordCasting(.noTome) }
+        return readSpellTome(tome.item, spell: tome.spell)
+    }
+
+    @discardableResult
+    func readSpellTome(_ item: FormID, spell: FormID) -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
         let spells = caster.spellbook.spells
-        let bookKey = spells.resolvedID(tome.item, fromPlugin: pluginName)
+        let bookKey = spells.resolvedID(item, fromPlugin: pluginName)
             .map(ReferenceKey.init(resolved:))
-        let spellKey = spells.resolvedID(tome.spell, fromPlugin: pluginName)
+        let spellKey = spells.resolvedID(spell, fromPlugin: pluginName)
             .map(ReferenceKey.init(resolved:))
         guard let bookKey else {
-            return recordCasting(.unresolvedTome(book: itemName(tome.item), plugin: pluginName))
+            return recordCasting(.unresolvedTome(book: itemName(item), plugin: pluginName))
         }
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
-        return recordCasting(.readTome(reading, book: itemName(tome.item)))
+        return recordCasting(.readTome(reading, book: itemName(item)))
     }
 
     @discardableResult

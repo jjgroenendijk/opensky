@@ -107,6 +107,20 @@ Differences from the game:
   game uses them, so OpenSky does not read them.
 - The matching material perk, which doubles the skill above the offset, is not read.
 
+## Crafting menu
+
+Using a station opens `Interface\craftingmenu.swf` over the session. The engine calls
+`/Menu.Initialize` and `SetPlatform`, writes the station name into
+`/Menu/MenuNameHolder/MenuName`, and sets `bCanCraft`. The lists are
+`/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
+same list class as the [inventory menu](/engine/inventory-menu.md#list-data). OpenSky shows
+two tabs: the recipes the player can make now, and all recipes.
+
+The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected recipe, and
+`CloseMenu` to leave, which closes the session. The game splits a forge's recipes into
+tabs by material keyword, shows the item in 3D (`ShowItem3D`), and lets the player rename
+an enchanted item and set its charge; OpenSky answers those calls and does nothing.
+
 ## Not modeled yet
 
 - Perk entry points that change crafting, such as Arcane Blacksmith and the material perks.

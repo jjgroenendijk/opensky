@@ -23,6 +23,8 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     /// the static path always produces. Declared last so the memberwise
     /// initializer of the static path keeps its three-argument spelling.
     public var textOverride: String?
+    /// The nine-slice grid of the sprite this shape sits in directly, if any.
+    public var scalingGrid: SWFSceneScalingGrid?
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the
@@ -138,6 +140,18 @@ nonisolated private struct SceneBuilder {
                 content: .editText(text.characterId), transform: transform, colorTransform: color
             )
             commands.append(.draw(item: item, clipCount: clipCount))
+        case let .button(button):
+            guard spriteDepth < SWFScene.maximumSpriteDepth else {
+                skipped += 1
+                return
+            }
+            walk(
+                placements: button.stateTimeline.frame1,
+                parentTransform: transform,
+                parentColor: color,
+                clipCount: clipCount,
+                spriteDepth: spriteDepth + 1
+            )
         case let .sprite(sprite):
             guard spriteDepth < SWFScene.maximumSpriteDepth else {
                 skipped += 1

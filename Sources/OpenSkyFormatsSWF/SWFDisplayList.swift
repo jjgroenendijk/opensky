@@ -214,7 +214,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
     /// determines. Filters are not rendered — this only frames past them so
     /// the fields after the list stay readable — but the count is returned so
     /// the sweep can tally the deferral.
-    private static func skipFilterList(_ bits: inout SWFBitReader) throws -> Int {
+    static func skipFilterList(_ bits: inout SWFBitReader) throws -> Int {
         let count = try Int(bits.readAlignedUInt8())
         for _ in 0 ..< count {
             let filterID = try bits.readAlignedUInt8()

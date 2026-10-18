@@ -37,6 +37,11 @@ public protocol PapyrusMenuBridge: AnyObject {
     func movePlayer(to target: ReferenceKey)
     /// Opens the container menu on the actor's inventory, as a follower's trade does.
     func openInventory(of actor: ReferenceKey)
+    func showTrainingMenu(trainer: ReferenceKey)
+    /// `filter` holds the form list's entries; nil shows every item.
+    func showGiftMenu(
+        actor: ReferenceKey, giving: Bool, filter: [ReferenceKey?]?, showsStolenItems: Bool
+    )
 }
 
 extension PapyrusNativeFunctions {
@@ -72,6 +77,34 @@ extension PapyrusNativeFunctions {
         installIdentityNatives(into: &registry)
         installMoveTo(into: &registry)
         installOpenInventory(into: &registry)
+        installMenuScreens(into: &registry)
+    }
+
+    /// `Game.ShowTrainingMenu(akTrainer)` and `Actor.ShowGiftMenu(abGivingGift, ...)`.
+    private static func installMenuScreens(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "ShowTrainingMenu"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge, let menus = world.menus,
+                let handle = objectArgument(call, at: 0),
+                let trainer = world.referenceKey(for: handle)
+            else { return failure(call, "ShowTrainingMenu needs a world and a trainer") }
+            menus.showTrainingMenu(trainer: trainer)
+            return .returned(.none)
+        })
+        // OpenSky returns at once with 0 favor points: the favor rule has no source yet.
+        withReference("Actor", "ShowGiftMenu", into: &registry) { call, world, menus, key in
+            let filter = objectArgument(call, at: 1)
+                .flatMap(world.referenceKey(for:))
+                .flatMap(world.formListEntries(of:))
+            menus.showGiftMenu(
+                actor: key, giving: boolean(call, at: 0, default: true), filter: filter,
+                showsStolenItems: boolean(call, at: 2, default: false)
+            )
+            return .returned(.integer(0))
+        }
     }
 
     /// `MoveTo(akTarget, afX, afY, afZ, abMatchRotation)`. The opening quest moves the

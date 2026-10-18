@@ -24,12 +24,12 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-17 by `make gaps`.
+Measured on 2026-10-18 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
-| Papyrus natives | 442 | 66 | 508 | 87% |
-| Papyrus events | 52 | 16 | 68 | 76% |
+| Papyrus natives | 448 | 60 | 508 | 88% |
+| Papyrus events | 54 | 14 | 68 | 79% |
 | Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 707 | 941 | 1648 | 42% |
@@ -51,9 +51,9 @@ Measured on 2026-10-17 by `make gaps`.
 | Texture variants | 10 | 0 | 10 | 100% |
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
-| Menus with no bridge | 9 | 14 | 23 | 39% |
+| Menus with no bridge | 23 | 0 | 23 | 100% |
 | AS2 runtime | - | 222 | - | - |
-| SWF tags | 24 | 4 | 28 | 85% |
+| SWF tags | 28 | 0 | 28 | 100% |
 
 <!-- gaps:end -->
 

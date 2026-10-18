@@ -88,7 +88,7 @@ extension Renderer {
     /// Hands one released movie's glyph cells back to the shared atlas, so swapped
     /// movies do not fill it. Safe between frames: both passes re-query the atlas,
     /// and the bumped revision re-uploads the texture.
-    private func releaseSWFGlyphs(generation: Int) {
+    func releaseSWFGlyphs(generation: Int) {
         uiResources.glyphAtlas.releaseSWFGlyphs { fontKey in
             SWFTextPlanner.generation(forFontKey: fontKey) == generation
         }
@@ -100,12 +100,21 @@ extension Renderer {
     public func encodeSWF(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
         var stats = SWFDrawStats()
         defer { swf.lastDrawStats = stats }
-        guard swf.enabled, let movie = swf.movie else { return }
+        guard swf.enabled else { return }
         let colorTexture = descriptor.colorAttachments[0].texture
         let viewport = SIMD2<Float>(
             Float(colorTexture?.width ?? 0), Float(colorTexture?.height ?? 0)
         )
         guard viewport.x > 0, viewport.y > 0 else { return }
+        for movie in [swf.movie, swf.overlay?.movie].compactMap(\.self) {
+            encodeSWFMovie(movie, viewport: viewport, state: &state, stats: &stats)
+        }
+    }
+
+    private func encodeSWFMovie(
+        _ movie: SWFMovieResources, viewport: SIMD2<Float>,
+        state: inout ScenePassState, stats: inout SWFDrawStats
+    ) {
         var frame = SWFFrameBuilder(
             movie: movie,
             viewport: viewport,
@@ -114,7 +123,7 @@ extension Renderer {
         )
         frame.opacity = swf.opacity
         frame.build()
-        stats.skippedItems = frame.skipped + movie.buildSkipped
+        stats.skippedItems += frame.skipped + movie.buildSkipped
         uploadUIAtlasIfNeeded()
         guard !frame.ops.isEmpty else { return }
         writeSWFFrameData(frame: frame, movie: movie, slot: state.slot)
@@ -315,11 +324,17 @@ nonisolated public struct SWFFrameBuilder {
                 skipped += 1
                 continue
             }
-            uniforms.append(makeUniforms(
+            var drawUniforms = makeUniforms(
                 transform: transform,
                 fill: run.fill,
                 colorTransform: item.colorTransform
-            ))
+            )
+            if let grid = item.scalingGrid {
+                drawUniforms.scaleGrid = grid.grid
+                drawUniforms.scaleGridBounds = grid.bounds
+                drawUniforms.scaleGridScale = grid.scale
+            }
+            uniforms.append(drawUniforms)
             let bitmapId: UInt16? = if case let .bitmap(id, _, _) = run.fill {
                 id
             } else {

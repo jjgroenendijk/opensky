@@ -61,12 +61,6 @@ nonisolated public struct MessageBoxPresentation: Equatable, Sendable {
     }
 
     private func label(_ string: String, y: Float, size: Float, color: SIMD4<Float>) -> UINode {
-        UINode(
-            anchor: .center,
-            offset: UIPoint(x: 0, y: y),
-            content: .label(UILabel(
-                text: string, font: UIFont(pointSize: size), color: color, maxWidth: Self.width - 40
-            ))
-        )
+        MenuTextPanel.label(string, y: y, size: size, color: color, panelWidth: Self.width)
     }
 }

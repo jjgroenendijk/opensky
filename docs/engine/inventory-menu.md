@@ -110,6 +110,22 @@ keyboard.
 `make run-cli ARGS="swf inventory-menu --ticks 20 --down 3 --right 2"` drives the real movie from
 the command line. Frames go to `.logs/`, because a drawn frame contains the user's game art.
 
+## Gift menu
+
+`Actor.ShowGiftMenu` opens `Interface\giftmenu.swf`. The movie uses the same list clips as
+the inventory movie. With `abGivingGift` true the list holds the player's items, and each
+pick moves one to the actor; with false it holds the actor's items. The other arguments follow
+the [CK wiki](https://ck.uesp.net/wiki/ShowGiftMenu_-_Actor):
+
+| Argument | Default | What OpenSky does |
+| --- | --- | --- |
+| `apFilterList` | `None` | Shows only an item that is in the list, or that has a keyword in the list |
+| `abShowStolenItems` | `false` | Hides stolen copies unless it is true |
+| `abUseFavorPoints` | `true` | Ignored. No source says how many favour points an item is worth |
+
+The game's native is latent: it returns when the menu closes, with the favour points spent or
+gained. OpenSky's native returns at once, with 0.
+
 ## Not done yet
 
 - The turning 3D item preview. `UpdateItem3D` and `EndItem3D` are answered with no action, so the

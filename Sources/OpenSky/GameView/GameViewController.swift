@@ -164,7 +164,9 @@ final class GameViewController: NSViewController {
     lazy var containerMenu = ContainerMenuController(game: self)
     lazy var lockpickingMenu = LockpickingMenuController(game: self)
     /// Notifications, help messages, and message boxes for scripts and the sidebar.
-    lazy var messages = MessageCoordinator(menuMode: menuMode, world: messageWorld)
+    lazy var messages = MessageCoordinator(
+        menuMode: menuMode, movies: swfMovies, hud: hud, world: messageWorld
+    )
     lazy var subtitles: SubtitleCoordinator = {
         let subtitles = SubtitleCoordinator()
         subtitles.attach(presenter: hud)
@@ -172,6 +174,9 @@ final class GameViewController: NSViewController {
     }()
 
     lazy var messageWorld = MessageWorldAdapter(game: self)
+    /// Wait, training, books, help, magic, gifts, crafting, and text entry.
+    lazy var menuScreens = MenuScreens(game: self)
+    lazy var menuScreensWorld = MenuScreensWorldAdapter(game: self)
     /// Kill cams and camera shake.
     lazy var cinematicCamera = CinematicCameraCoordinator(world: cinematicWorld)
     lazy var cinematicWorld = CinematicCameraWorldAdapter(game: self)
@@ -398,7 +403,10 @@ extension GameViewController {
         gameView.onCapturedKey = { [weak self] code in
             self?.systemMenu.captureKey(scanCode: code) ?? false
         }
-        gameView.onTypedText = { [weak self] text in self?.raceMenu.type(text) ?? false }
+        gameView.onTypedText = { [weak self] text in
+            guard let self else { return false }
+            return raceMenu.type(text) || menuScreens.textEntry.type(text)
+        }
     }
 
     /// Menu mode drives the renderer's world-sim pause and clears held world

@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 
@@ -38,13 +39,34 @@ public final class MessageCoordinator {
     public var lastPanelOutcome: String?
     private var frame: UInt64 = 0
     private var nextToken: UInt64 = 1
+    /// The box the movie was last sent, so a highlight change does not resend it.
+    private var movieRequest: MessageBoxRequest?
     private let menuMode: MenuModeController
     weak let world: (any MessageWorld)?
 
+    /// Draws the box with `messagebox.swf`; the overlay stands in while it loads.
+    lazy var movie = MenuMovieDriver<Int>(
+        movies: movies, hud: hud, label: "message box movie"
+    ) { [weak self] in self?.world?.renderer }
+
+    private let movies: SWFMovieSource?
+    private let hud: HUDCoordinator?
+
     /// Call `reloadHelpRecords()` once the world's records are loaded.
-    public init(menuMode: MenuModeController, world: (any MessageWorld)? = nil) {
+    public init(
+        menuMode: MenuModeController,
+        movies: SWFMovieSource? = nil,
+        hud: HUDCoordinator? = nil,
+        world: (any MessageWorld)? = nil
+    ) {
         self.menuMode = menuMode
+        self.movies = movies
+        self.hud = hud
         self.world = world
+    }
+
+    public var movieLoaded: Bool {
+        movie.isLoaded
     }
 
     /// Reads the help counts again, after a save loads.
@@ -55,6 +77,9 @@ public final class MessageCoordinator {
 
     public func tick(time: Double) {
         frame += 1
+        for row in movie.tick(now: time) where boxes.isOpen {
+            choose(row: row)
+        }
         for entry in notifications.advance(to: time) {
             world?.showHUDNotification(entry.text)
         }
@@ -104,6 +129,16 @@ public final class MessageCoordinator {
         case .button(.xButton), .button(.yButton), .pointer, .release: return
         }
         publish()
+    }
+
+    /// The cursor goes to the movie, whose buttons take the click.
+    public func route(_ event: MenuPointerEvent) {
+        guard boxes.isOpen else { return }
+        if movie.isLoaded {
+            movie.route(event)
+        } else if event.phase == .pressed {
+            route(.button(.accept))
+        }
     }
 
     public func choose(row: Int) {
@@ -156,7 +191,39 @@ public final class MessageCoordinator {
     }
 
     private func publish() {
-        world?.uiScene = presentation?.scene ?? .empty
+        guard let request = boxes.current else {
+            movieRequest = nil
+            movie.stop()
+            world?.uiScene = .empty
+            return
+        }
+        world?.uiScene = movie.isLoaded ? .empty : presentation?.scene ?? .empty
+        guard movie.isLoaded else {
+            if movie.session.path == nil {
+                startMovie()
+            }
+            return
+        }
+        let selection = boxes.selection
+        movie.publish { runtime in
+            if movieRequest != request {
+                MessageBoxMovieBridge.publish(request, runtime: runtime)
+            }
+            MessageBoxMovieBridge.highlight(row: selection, runtime: runtime)
+        }
+        movieRequest = request
+    }
+
+    private func startMovie() {
+        movieRequest = nil
+        movie.start(MenuMovie(
+            path: MessageBoxMovieBridge.moviePath,
+            prepare: { [weak self] runtime in
+                MessageBoxMovieBridge.prepare(runtime: runtime) { self?.movie.post($0) }
+            },
+            activate: MessageBoxMovieBridge.activate,
+            didLoad: { [weak self] in self?.publish() }
+        ), while: { [weak self] in self?.boxes.isOpen == true })
     }
 }
 

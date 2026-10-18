@@ -2,6 +2,7 @@
 // the vanilla main menu movie when it loads; see docs/engine/main-menu.md.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyRendering
 
 /// What the title menu does in the running game.
@@ -13,6 +14,8 @@ public protocol TitleMenuWorld: AnyObject {
     /// Clears the session, starts the opening quests, and places the player.
     func startNewGame(at start: NewGameStart)
     func quitApplication()
+    /// The install's files, for the credits text; nil without game data.
+    var gameFiles: (any GameFileSource)? { get }
 }
 
 /// Where a new game puts the player.
@@ -95,6 +98,12 @@ public final class TitleMenuCoordinator {
     public weak var saves: SaveGameService?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
+    /// The credits movie has the layer in place of the title movie.
+    public internal(set) var creditsShown = false
+    /// The credits movie asked to close; applied after its step.
+    var creditsClosing = false
+    /// Reads the credits text before the credits movie starts.
+    var creditsWork: Task<Void, Never>?
     /// A row the movie picked during input, applied once the movie returns.
     var pendingRequest: TitleMenuMovieBridge.Request?
     /// Load list calls from the movie, answered once its input event ends.
@@ -167,6 +176,8 @@ public final class TitleMenuCoordinator {
         guard isOpen else { return }
         isOpen = false
         loadPage = nil
+        creditsShown = false
+        creditsClosing = false
         menuMode.dismiss(Self.identifier)
         stopMovie()
     }
@@ -186,6 +197,10 @@ public final class TitleMenuCoordinator {
         guard isOpen else { return }
         if loadPage != nil {
             routeLoad(event)
+            return
+        }
+        if creditsShown {
+            routeCredits(event)
             return
         }
         if movieLoaded, let renderer = world?.renderer {

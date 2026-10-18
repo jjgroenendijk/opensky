@@ -1,6 +1,7 @@
 // World > HUD & Interaction: HUD element overrides, the crosshair target and
-// its prompt, the item actions on that target, and the message tools. The items section takes its
-// own provider because it reads the world-item runtime, not the HUD.
+// its prompt, the item actions on that target, the message tools, and the menu
+// screens. The items section takes its own provider because it reads the
+// world-item runtime, not the HUD.
 
 import AppKit
 import OpenSkyInventory
@@ -11,6 +12,7 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let targetSection = HUDTargetSection()
     let itemsSection = ItemsSection()
     let messagesSection = MessagesSection()
+    let menuScreensSection = MenuScreensSection()
 
     weak var provider: (any HUDControlProviding)? {
         didSet {
@@ -27,7 +29,11 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
         didSet { messagesSection.provider = messageProvider }
     }
 
+    weak var menuScreensProvider: (any MenuScreensControlProviding)? {
+        didSet { menuScreensSection.provider = menuScreensProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [elementsSection, targetSection, itemsSection, messagesSection]
+        [elementsSection, targetSection, itemsSection, messagesSection, menuScreensSection]
     }
 }

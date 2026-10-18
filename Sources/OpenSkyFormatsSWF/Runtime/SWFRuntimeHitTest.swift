@@ -38,6 +38,9 @@ nonisolated extension SWFMovieRuntime {
         guard node.isClip else {
             return false
         }
+        if node.isButton {
+            return true
+        }
         if let events = node.clipActions?.allEvents, !events.isDisjoint(with: .mouseEvents) {
             return true
         }

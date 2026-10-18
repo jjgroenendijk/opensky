@@ -22,6 +22,8 @@ nonisolated public struct SWFMovieDecoder: Sendable {
     public var spriteTally = SWFMovieTally()
     /// Definition tags this decoder skipped because they failed to parse.
     public var malformedTags = 0
+    public var fileAttributes: SWFFileAttributes?
+    public var metadata: String?
 
     public init(version: UInt8, jpegTables: Data?) {
         self.version = version
@@ -55,6 +57,29 @@ nonisolated public struct SWFMovieDecoder: Sendable {
         } else if tag.code == SWFDisplayListParser.defineSpriteCode {
             let sprite = try decodeSprite(tag)
             characters[sprite.characterId] = .sprite(sprite)
+        } else if tag.code == SWFButton.tagCode {
+            let button = try SWFButton.parse(tag: tag)
+            characters[button.characterId] = .button(button)
+        } else {
+            try decodeMovieTag(tag)
+        }
+    }
+
+    /// Tags that define no character, only facts about the movie or one sprite.
+    private mutating func decodeMovieTag(_ tag: SWFTag) throws {
+        if tag.code == SWFScalingGrid.tagCode {
+            // A grid on anything but a sprite has no effect in Flash either.
+            if
+                let grid = parsed({ try SWFScalingGrid.parse(tag: tag) }),
+                case var .sprite(sprite) = characters[grid.characterId]
+            {
+                sprite.scalingGrid = grid.splitter
+                characters[grid.characterId] = .sprite(sprite)
+            }
+        } else if tag.code == SWFFileAttributes.tagCode {
+            fileAttributes = parsed { try SWFFileAttributes.parse(tag: tag) }
+        } else if tag.code == SWFMetadata.tagCode {
+            metadata = parsed { try SWFMetadata.parse(tag: tag) }
         } else if tag.code == SWFActionParser.doInitActionCode {
             // A malformed DoInitAction loses its actions, never the movie.
             if let initAction = parsed({ try SWFActionParser.parseDoInitAction(tag: tag) }) {
