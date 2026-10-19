@@ -178,6 +178,9 @@ A prop is a held object, such as a broom or a tankard. It is an `ANIO` record.
   rides on, such as `AnimObjectR` or `NPC R Hand [RHnd]`
   ([NIF](/formats/nif.md#nistringextradata)). A value without the bone's tag, such as
   `NPC R Hand`, takes the skeleton bone whose name starts with it.
+- A clip can name an `ANIO` in its own annotations instead, as `AnimObjDraw.<editor ID>`. The
+  object shows when the annotation passes, and leaves at its unload event
+  ([animation objects](/engine/animation-events.md#animation-objects)).
 
 On the install, 48 idles of `0_Master.hkx` show a prop. The lute does not: its prop event is
 outside its target state, so OpenSky shows no lute.

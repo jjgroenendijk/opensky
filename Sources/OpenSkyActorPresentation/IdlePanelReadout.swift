@@ -42,6 +42,12 @@ nonisolated public enum IdleReadout {
         if let plan = report.plan {
             lines.append("Event: \(plan.event ?? "none") · served by \(pathText(plan.path))")
             lines.append("Prop: \(propText(plan.prop)) · plays \(seconds(report.seconds))")
+            if !plan.animationObjects.isEmpty {
+                let objects = plan.animationObjects.map {
+                    $0.prop == .none ? "\($0.editorID), no ANIO record" : propText($0.prop)
+                }
+                lines.append("Clip objects: " + objects.joined(separator: ", "))
+            }
         }
         if let failure = report.failure {
             lines.append("Result: \(failure)")

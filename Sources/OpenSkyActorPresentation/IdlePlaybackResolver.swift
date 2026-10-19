@@ -36,6 +36,14 @@ nonisolated public enum IdleProp: Equatable, Sendable {
     case noBone(editorID: String)
 }
 
+/// An `ANIO` a clip annotation names, such as `AnimObjDraw.AnimObjectSkeletonKey`.
+nonisolated public struct IdleAnimationObject: Equatable, Sendable {
+    public let editorID: String
+    public let prop: IdleProp
+    /// The `BNAM` event that takes the object off again.
+    public let unloadEvent: String?
+}
+
 nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public let event: String?
     public let path: IdleServedPath
@@ -54,6 +62,8 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public var followUps: [IdlePlanSegment] = []
     /// Where the actor's graph is when the chain ends.
     public var position: BehaviorStatePosition?
+    /// The objects the clips' annotations show while they play.
+    public var animationObjects: [IdleAnimationObject] = []
 
     /// Every clip path the plan plays, in order.
     public var clipPaths: [String] {
@@ -134,7 +144,9 @@ nonisolated public final class IdlePlaybackResolver {
                 event: event, path: .none(.eventNotInGraph), clipPath: nil, prop: .none
             )
         }
-        return IdlePlaybackPlan(event: event, path: .namedClip, clipPath: named, prop: .none)
+        var plan = IdlePlaybackPlan(event: event, path: .namedClip, clipPath: named, prop: .none)
+        plan.animationObjects = animationObjects(clipPaths: [named], project: project)
+        return plan
     }
 
     private func plan(
@@ -152,7 +164,7 @@ nonisolated public final class IdlePlaybackResolver {
                 event: event, path: .none(.clipMissing(missing)), clipPath: nil, prop: .none
             )
         }
-        return IdlePlaybackPlan(
+        var plan = IdlePlaybackPlan(
             event: event,
             path: .graphEvent(behaviorFiles: clip.behaviorFiles),
             clipPath: path,
@@ -164,6 +176,30 @@ nonisolated public final class IdlePlaybackResolver {
             followUps: followUps,
             position: clip.position
         )
+        plan.animationObjects = animationObjects(clipPaths: plan.clipPaths, project: project)
+        return plan
+    }
+
+    /// The `ANIO`s the clips' annotations name. A clip whose bytes do not hold the
+    /// event name, which is nearly every clip, is not decoded.
+    private func animationObjects(clipPaths: [String], project: String) -> [IdleAnimationObject] {
+        var texts: [String] = []
+        for path in clipPaths {
+            guard
+                let data = try? files.contents(forPath: path),
+                data.range(of: Data("nimObj".utf8)) != nil,
+                let graph = try? HKXObjectGraph.decode(data),
+                let clips = try? HKASplineCompressedAnimation.animations(in: graph)
+            else { continue }
+            texts += clips.flatMap(\.annotations).map(\.text)
+        }
+        return AnimationObjectEvent.editorIDs(in: texts).map { editorID in
+            IdleAnimationObject(
+                editorID: editorID,
+                prop: prop(payloads: [editorID], project: project),
+                unloadEvent: animatedObjects.record(editorID: editorID)?.record.unloadEvent
+            )
+        }
     }
 
     /// Clips named after an event no transition takes. The second form is the clip of the

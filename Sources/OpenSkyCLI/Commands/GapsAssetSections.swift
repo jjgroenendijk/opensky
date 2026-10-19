@@ -60,12 +60,15 @@ extension GapsGatherer {
 
     func animations() -> [GapSection] {
         var census = HKXGapCensus()
-        let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1) }
+        let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
         let handledEvents = Set(
             (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
-                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents)
+                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
+                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents())
                 .map { $0.lowercased() }
-        ).union(footstepTags())
+        )
+        let footsteps = footstepTags()
+        let handled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
         let boundVariables = Set(
             (CombatGraphNames.variables + CombatGraphNames.loopVariables
                 + ArcheryGraphNames.variables
@@ -85,8 +88,15 @@ extension GapsGatherer {
             ),
             GapSection(
                 title: "Animation events", unit: "events", counts: census.annotations,
-                handled: { handledEvents.contains($0.lowercased()) }, usesUnit: "clips",
-                notes: ["done means engine code reacts to it; the graph itself uses many others"]
+                handled: {
+                    handled.contains($0.lowercased())
+                        || FootstepStore.isUnanswered(tag: $0, known: footsteps)
+                },
+                usesUnit: "clips",
+                notes: [
+                    "done means engine code reacts to it, or a graph of the clip's own folder "
+                        + "waits for it"
+                ]
             ),
             GapSection(
                 title: "Behavior graph variables", unit: "variables",
@@ -206,6 +216,15 @@ extension GapsGatherer {
     }
 
     /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
+    /// The events that take an animation object off its actor (`ANIO` `BNAM`).
+    private func animationObjectUnloadEvents() -> [String] {
+        var skipped = SkippedRecords()
+        let objects = (try? requirePlugins().decodeRecords(of: "ANIO", skipped: &skipped) {
+            try AnimatedObject(record: $0)
+        }) ?? []
+        return objects.compactMap(\.unloadEvent)
+    }
+
     private func footstepTags() -> Set<String> {
         let store = FootstepStore(loadOrder: plugins)
         return Set(store.footsteps.values.compactMap { $0.tag?.lowercased() })
