@@ -52,6 +52,23 @@ textures it may swap to. `MO2S` to `MO5S` are per-shape alternate textures, laid
 First-person models are rare: of the ARMAs for vanilla iron armor, only the torso and hands
 have one.
 
+## Skin texture
+
+The Creation Kit wiki says the skin texture "defines the base texture for a race" and "is
+not done on actual armors" (<https://ck.uesp.net/wiki/ArmorAddon>). Only the naked-skin
+ARMAs set it. `NakedTorsoArgonian` uses the human `FemaleBody_1.nif`, and its `NAM1` set
+`SkinBodyFemaleArgonian` gives the scales. So OpenSky lays the wearer's set over every
+skin-tint shape (shader type 5) the actor draws:
+
+- A skin ARMA uses its own set.
+- A worn ARMA uses the set of the skin ARMA whose slots it shares, so gloves take the hand
+  set. With no shared slot it takes the body (slot 32) set.
+
+A `TXST` stores the subsurface map in `TX03` and the specular map in `TX07`, while the body
+NIF holds them in texture slots 2 and 7. `SkinBodyFemale_1` and `FemaleBody_1.nif` name the
+same files, which confirms the mapping: `TX00` to slot 0, `TX01` to 1, `TX03` to 2, `TX07`
+to 7. The swap list in `NAM2`/`NAM3` is not read yet.
+
 `DNAM`: `0x00` uint8 male priority, `0x01` uint8 female priority, `0x02` 4 bytes (xEdit:
 weight-slider flags; UESP: one unknown uint32), `0x06` uint8 detection sound value, `0x07`
 unused, `0x08` float32 weapon adjust.

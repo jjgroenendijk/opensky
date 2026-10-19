@@ -121,4 +121,39 @@ struct ModelSurfaceOverrideTests {
         #expect(surface?.cacheKey != ModelSurfaceOverride.skinned(nil, skinTone: .one)?.cacheKey)
         #expect(ModelSurfaceOverride.skinned(nil, skinTone: nil) == nil)
     }
+
+    @Test func theRaceSkinTexturesReplaceOnlySkinTintShapes() {
+        let base = Self.model(colors: [])
+        var shading = SurfaceShading()
+        shading.terms = [.specular, .specularMap, .softLighting]
+        shading.glowTexture = "textures/body_sk.dds"
+        shading.backLightTexture = "textures/body_s.dds"
+        let skin = Material(
+            diffuseTexture: "textures/body.dds", normalTexture: "textures/body_msn.dds",
+            uvOffset: .zero, uvScale: SIMD2(1, 1), alpha: 1, glossiness: 30,
+            specularColor: SIMD3(1, 1, 1), specularStrength: 3, doubleSided: false,
+            alphaBlend: false, alphaTestThreshold: nil, tintsSkin: true, shading: shading
+        )
+        let model = Model(
+            meshes: base.meshes, materials: base.materials + [skin], skippedShapeCount: 0
+        )
+        let textures = ModelSurfaceOverride.SkinTextures(
+            diffuse: "textures/lizard.dds", normal: "textures/lizard_msn.dds",
+            lightMask: "textures/lizard_sk.dds", specular: "textures/lizard_s.dds"
+        )
+        let surface = ModelSurfaceOverride.skinned(
+            ModelSurfaceOverride(
+                diffuseTexture: nil, normalTexture: nil, tint: nil, skinTextures: textures
+            ),
+            skinTone: .one
+        )
+        let result = surface?.applied(to: model)
+        #expect(result?.materials[0].diffuseTexture == "textures/old_d.dds")
+        #expect(result?.materials[1].diffuseTexture == "textures/lizard.dds")
+        #expect(result?.materials[1].normalTexture == "textures/lizard_msn.dds")
+        #expect(result?.materials[1].shading.glowTexture == "textures/lizard_sk.dds")
+        #expect(result?.materials[1].shading.backLightTexture == "textures/lizard_s.dds")
+        let human = ModelSurfaceOverride.skinned(nil, skinTone: .one)
+        #expect(surface?.cacheKey != human?.cacheKey, "the skin tone must not hide the set")
+    }
 }
