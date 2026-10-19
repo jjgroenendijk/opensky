@@ -77,6 +77,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug item <editorID> [--count <n>]` | negative count removes; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
+| `debug racemenu [--limited on]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 
 ## Benchmark

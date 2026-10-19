@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -30,14 +31,8 @@ extension AgentWorldAdapter {
             return done(["hour": .init(game.runtimeState.runtimeStateClock.hourOfDay)])
         case let .weather(editorID):
             return try done(forceWeather(editorID))
-        case let .setActorValue(reference, name, value):
-            return try done(writeActorValue(reference, name: name) { _ in value })
-        case let .modActorValue(reference, name, delta):
-            return try done(writeActorValue(reference, name: name) { $0 + delta })
-        case let .addItem(reference, item, count):
-            return try done(changeItem(reference, item: item, by: count))
-        case let .removeItem(reference, item, count):
-            return try done(changeItem(reference, item: item, by: -count))
+        case .setActorValue, .modActorValue, .addItem, .removeItem:
+            return try done(changeActor(command))
         case let .setQuestStage(quest, stage):
             return try done(setQuestStage(quest, stage: stage))
         case let .kill(reference):
@@ -46,9 +41,33 @@ extension AgentWorldAdapter {
             return try done(resurrect(reference))
         case let .overlay(name, enabled):
             return try done(setOverlay(name, enabled: enabled))
+        case let .raceMenu(limited):
+            return try done(openRaceMenu(limited: limited))
         case let .benchmark(request):
             return try benchmark(request)
         }
+    }
+
+    private func changeActor(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .setActorValue(reference, name, value):
+            try writeActorValue(reference, name: name) { _ in value }
+        case let .modActorValue(reference, name, delta):
+            try writeActorValue(reference, name: name) { $0 + delta }
+        case let .addItem(reference, item, count):
+            try changeItem(reference, item: item, by: count)
+        case let .removeItem(reference, item, count):
+            try changeItem(reference, item: item, by: -count)
+        default:
+            throw AgentFailure(.invalidArgument, "not an actor change")
+        }
+    }
+
+    private func openRaceMenu(limited: Bool) throws(AgentFailure) -> AgentJSON {
+        guard game.raceMenu.isOpen || game.raceMenu.open(limited: limited) else {
+            throw AgentFailure(.notReady, "the race menu needs a loaded world")
+        }
+        return ["open": true, "limited": .bool(game.raceMenu.snapshot.isLimited)]
     }
 
     private func done(_ value: AgentJSON) -> AgentHandling {
