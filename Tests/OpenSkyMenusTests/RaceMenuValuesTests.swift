@@ -89,4 +89,24 @@ struct RaceMenuValuesTests {
         )
         #expect(made.identity.face.tints == identity.face.tints)
     }
+
+    /// Some presets have no skin tone layer. The face takes the mask's `TIND` colour
+    /// at its strength, so it is not white, and the body tone follows it.
+    @Test func aPresetWithoutSkinToneTakesTheRaceDefault() {
+        let grey = RaceMenuColor(formID: FormID(0x21), color: [235, 235, 235, 0], strength: 0.79)
+        let skin = RaceMenuTintMask(
+            index: 4, type: RaceMenuModel.skinToneType, colors: [Self.red, grey],
+            defaultColor: grey
+        )
+        let lips = PlayerTintLayer(maskIndex: 9, color: [80, 9, 1, 0], strength: 0.5)
+        let preset = RacePreset(name: "Khajiit", face: PlayerFace(tints: [lips]))
+        let model = RaceMenuModel(
+            identity: Self.identity, races: [], limited: false,
+            options: RaceMenuOptions(presets: [preset], tintMasks: [skin])
+        )
+        let layer = PlayerTintLayer(maskIndex: 4, color: [235, 235, 235, 0], strength: 0.79)
+        #expect(model.identity.face.tints == [layer, lips])
+        #expect(model.position(.tintColor(RaceMenuModel.skinToneType)) == 1)
+        #expect(model.bodyToneLine == "Body tone: rgb 212 212 212")
+    }
 }

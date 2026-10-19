@@ -39,6 +39,14 @@ test list (`racesex_menu.swf`, `FaceChanges`), which names the callbacks the gam
   (`DFTM`/`DFTF`). It replaces the face part's diffuse, normal, and detail maps.
 - A race or sex change brings that race's choices, and the face takes its first preset, so
   no part of the old race stays. A preset keeps the weight.
+- Some presets have no skin tone layer (`TINP` 6), such as Redguard male, Dark Elf, and the
+  female Nord and Breton, and no Khajiit or Argonian preset has one. Such a face takes the
+  mask's `TIND` colour at the `TINV` of that colour's `TINC` entry. Every playable race
+  lists its `TIND` colour among its `TINC` entries. The Creation Kit bakes faces the same
+  way: `Hulda` has no skin tone layer, and her baked face tint (mean 213, 208, 209) matches
+  the Nord female default (221, 221, 221). The Creation Kit wiki page "Tutorial Creating a
+  Playable Race" describes the default and its blend value
+  (<https://ck.uesp.net/wiki/Tutorial_Creating_a_Playable_Race>).
 - A control the race offers nothing for is left out, so its slider does not show.
 - The 19th `NAM9` value is the vampire morph; the menu does not show it.
 
@@ -46,7 +54,9 @@ The type ranges come from the chargen TRI of the female head: 30 nose targets, 2
 targets, and 30 lip targets.
 
 [WARNING] The vanilla Head category also has an Age control (`sRSMAge`). No record names what it
-changes, so OpenSky leaves it out.
+changes, so OpenSky leaves it out. A lead: each race's `FTSM`/`FTSF` list mixes complexion
+texture sets with age ones, such as `SkinHeadMaleNordComplexion_Age40` and
+`SkinHeadMaleKhajiitOld`. The movie's own test list sends only one `ChangeFaceDetails` slider.
 
 ## Limited mode
 
@@ -110,10 +120,12 @@ the `Player` record and `Hulda`, so it is not used as alpha.
 
 A real-data probe rebuilt the face tint of six vanilla NPCs this way (`Ralof`, `Hadvar`,
 `Ysolda`, `Belethor`, `Nazeem`, `Faendal`) and compared it with their baked
-`facegendata\facetint` texture. The mean error was 1.5 to 2.8 out of 255 per channel. The
-skin tone layer covers the whole face, so the starting colour does not matter for them.
-`Hulda` has no skin tone layer; a white start fits her texture best, so OpenSky starts from
-white.
+`facegendata\facetint` texture. The mean error was 1.5 to 2.8 out of 255 per channel. Their
+skin tone layer covers the whole face at full strength, so the start colour does not matter
+for them. NPCs with a weak skin tone layer show the start: from grey 127 the mean error is
+1.4 to 2.9, and from white it is 28 to 129. Examples are `CWBattleGalmar` (strength 0),
+`POIMageIlasTei` (32), `DA11Sanyon` (66), and `Jdatharr` (74). So the layers paint over grey
+127, the neutral grey of the overlay blend.
 
 ## The drawn head
 
@@ -131,9 +143,12 @@ FaceGen head, because the baked head belongs to the record's race and face.
   Painting the layers straight over the color map instead makes the face the flat skin
   tone colour, much paler than the body.
 - The body keeps the race skin texture. The skin tone layer (`TINP` 6) paints the face, and
-  its colour becomes the body's skin tone, which an NPC stores as `QNAM`. Ralof's layer
-  colour divided by 255 equals his `QNAM`. The layer strength is not used for the body; for
-  vanilla NPCs it is 100, so its role there is not known.
+  it also gives the body's skin tone, which an NPC stores as `QNAM`:
+  `QNAM` × 255 = 127 + (colour − 127) × strength. This fits all 2168 NPCs in `Skyrim.esm`
+  that have a skin tone layer, within 1.6 of 255: 1959 at strength 100, where `QNAM` is
+  the colour, and 209 below it. For example, `KhajiitMalePreset10` has black at 50 and
+  stores 63. 127 is the neutral grey of the skin shader's overlay blend, so a layer at
+  strength 0 leaves the body texture as it is.
 - Each head part's texture set adds its detail map (`TX04`), which the lit shader already
   reads for FaceGen faces. The player's complexion, or an NPC's `FTST`, replaces the face
   part's texture set.
@@ -160,6 +175,15 @@ measured with `openskycli swf movie-probe`.
 | `ChangeName` | Sets the name |
 | `ConfirmDone` | Closes the menu |
 
+The engine calls these back:
+
+| Callback | When |
+| --- | --- |
+| `HideLoadingIcon` | After each change is applied. Before it sends a change, the movie shows `LoadingIconInstance` and waits for the engine; without this call the icon stays |
+
+Each `Set...List` call clears its list with `entryList.splice(0, entryList.length)` before
+it fills it, so sending the lists again leaves one copy of each row.
+
 Each change goes through the same model as the panel rows, so the head updates the same way.
 A race, sex, preset, or war paint change moves other controls, so the engine sends the
 sliders again.
@@ -174,8 +198,9 @@ show the placeholder text `TEXT`. An empty race description makes the movie prin
 
 The movie's Done button calls `ConfirmDone` only on a mouse click; its key handler does not
 look at the Done key. So the engine reads that key itself. The button's art is the `XButton`
-user event. The install's `controlmap.txt` binds `XButton` in menus to the Ready Weapon key,
-`R` on PC. That key closes the menu, as `ConfirmDone` does.
+user event. The install's `controlmap.txt` binds `XButton` in its "Item Menus" context to the
+Ready Weapon key, `R` on PC ([control map](/formats/controlmap.md)). That key closes the
+menu, as `ConfirmDone` does.
 
 On PC the categories change only with a click on the arrows beside the category name. The
 movie's key handler moves between categories only on a gamepad, with the triggers. The arrow keys,

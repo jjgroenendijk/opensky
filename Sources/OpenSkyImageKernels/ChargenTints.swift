@@ -17,10 +17,15 @@ nonisolated public struct ChargenTintLayer: Equatable, Sendable {
 }
 
 nonisolated public enum ChargenTints {
-    /// The face tint the face overlays: the layers painted over white. The skin tone
-    /// layer covers the whole face, so white shows only where no layer reaches.
+    /// The overlay's neutral grey. Baked face tints with a weak skin tone layer fit a
+    /// 127 start, the same grey an NPC's `QNAM` starts from.
+    public static let neutral: UInt8 = 127
+
+    /// The face tint the face overlays: the layers painted over the neutral grey.
     public static func compose(width: Int, height: Int, layers: [ChargenTintLayer]) -> [UInt8] {
-        paint(rgba: [UInt8](repeating: 255, count: max(width * height, 0) * 4), layers: layers)
+        let pixel: [UInt8] = [neutral, neutral, neutral, 255]
+        let base = Array([[UInt8]](repeating: pixel, count: max(width * height, 0)).joined())
+        return paint(rgba: base, layers: layers)
     }
 
     /// Layers paint in order over `rgba`, a straight alpha blend per pixel. A layer

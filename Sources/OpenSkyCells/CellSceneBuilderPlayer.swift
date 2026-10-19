@@ -71,11 +71,11 @@ nonisolated extension CellSceneBuilder {
         label: String
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
         let resolvers = actorResolversBuildingIfNeeded()
+        let override = override.map(withSkinTone)
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
             var appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)
-            if var override {
-                override.skinTone = override.skinToneLayerColour(masks: raceTintMasks(override))
+            if let override {
                 appearance = appearance.applying(override)
             }
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
@@ -112,5 +112,17 @@ nonisolated extension CellSceneBuilder {
             )
         }
         return .success(assembly)
+    }
+
+    /// The face takes the race's default skin tone when it has no layer of its own,
+    /// and the body takes the colour of that layer.
+    private func withSkinTone(_ override: PlayerAppearanceOverride) -> PlayerAppearanceOverride {
+        var override = override
+        let masks = raceTintMasks(override)
+        override.addDefaultSkinTone(masks: masks) { [actorVisualResolver] id in
+            actorVisualResolver?.colors[id.rawValue]?.color
+        }
+        override.skinTone = override.skinToneLayerColour(masks: masks)
+        return override
     }
 }

@@ -40,6 +40,12 @@ nonisolated public struct RaceTintPreset: Equatable, Sendable {
     public var defaultValue: Float?
     /// TIRS.
     public var index: UInt16?
+
+    /// `TINV` from 0 to 1. Some records store a percent, so a value over 1 is divided by 100.
+    public var strength: Float {
+        let value = defaultValue ?? 1
+        return min(max(value > 1 ? value / 100 : value, 0), 1)
+    }
 }
 
 nonisolated public struct RaceTintMask: Equatable, Sendable {
@@ -52,6 +58,12 @@ nonisolated public struct RaceTintMask: Equatable, Sendable {
     /// TIND, a CLFM.
     public var presetDefault: FormID?
     public var presets: [RaceTintPreset] = []
+
+    /// The preset `TIND` names, else the first. A face without this mask's layer
+    /// takes it, as the Creation Kit bakes such faces.
+    public var defaultPreset: RaceTintPreset? {
+        presets.first { $0.color != nil && $0.color == presetDefault } ?? presets.first
+    }
 }
 
 nonisolated public struct RaceHeadData: Equatable, Sendable {

@@ -71,6 +71,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         self.races = races
         self.options = options
         isLimited = limited
+        addDefaultSkinTone()
     }
 
     /// The rows in the vanilla order, without those the race offers nothing for.
@@ -143,6 +144,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
             identity.face.headParts = []
             identity.face.tints = []
             identity.face.faceTexture = nil
+            addDefaultSkinTone()
         }
         selectedIndex = min(selectedIndex, rows.count - 1)
     }
@@ -151,6 +153,23 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         let weight = identity.face.weight
         identity.face = Self.padded(preset.face)
         identity.face.weight = weight
+        addDefaultSkinTone()
+    }
+
+    /// Some presets have no skin tone layer, and their face would show white. The
+    /// face takes the mask's `TIND` colour instead, as the Creation Kit bakes such faces.
+    private mutating func addDefaultSkinTone() {
+        let masks = options.masks(ofType: Self.skinToneType)
+        guard
+            !identity.face.tints.contains(where: { layer in
+                masks.contains { $0.index == layer.maskIndex }
+            }),
+            let mask = masks.first, let color = mask.defaultColor ?? mask.colors.first
+        else { return }
+        identity.face.tints.insert(
+            PlayerTintLayer(maskIndex: mask.index, color: color.color, strength: color.strength),
+            at: 0
+        )
     }
 
     /// Every slider and part the menu edits, so a short record list reads as zeros.

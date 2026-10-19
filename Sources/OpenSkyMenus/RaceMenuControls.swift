@@ -46,6 +46,7 @@ nonisolated public struct RaceMenuControl: Equatable, Sendable {
 }
 
 nonisolated extension RaceMenuModel {
+    static let skinToneType: UInt16 = 6
     static let paintType: UInt16 = 7
     static let dirtType: UInt16 = 14
     /// Types whose masks the player picks one of, with a colour for the pick.
@@ -62,7 +63,7 @@ nonisolated extension RaceMenuModel {
 
     private static let race = [control(.race, .race, "Race")]
     private static let body = [
-        control(.sex, .body, "Sex"), control(.tintColor(6), .body, "Tone"),
+        control(.sex, .body, "Sex"), control(.tintColor(skinToneType), .body, "Tone"),
         control(.weight, .body, "Weight")
     ]
     private static let head = [
