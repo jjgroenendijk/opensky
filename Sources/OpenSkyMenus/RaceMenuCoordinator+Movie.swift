@@ -106,8 +106,11 @@ extension RaceMenuCoordinator {
             world?.applyPlayerIdentity(model.identity)
         }
         self.model = model
-        if republish {
-            try? renderer?.updateSWFRuntime { RaceMenuMovieBridge.publish(model, runtime: $0) }
+        try? renderer?.updateSWFRuntime { runtime in
+            if republish {
+                RaceMenuMovieBridge.publish(model, runtime: runtime)
+            }
+            RaceMenuMovieBridge.finishChange(runtime: runtime)
         }
         if done {
             close()

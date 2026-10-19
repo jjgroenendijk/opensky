@@ -26,6 +26,28 @@ struct InputBindingsTests {
         #expect(bindings.action(forMacKey: 36, inMenu: true) == .menuAccept)
         #expect(bindings.action(forMacKey: 53, inMenu: true) == .menuCancel)
         #expect(bindings.action(forMacKey: 126, inMenu: true) == .menuUp)
+        #expect(bindings.action(forMacKey: 0, inMenu: true) == .menuLeft, "A")
+        #expect(bindings.action(forMacKey: 15, inMenu: true) == .readyWeapon, "R is XButton")
+        #expect(bindings.action(forMacKey: 49, inMenu: true) == .jump, "Space")
+    }
+
+    /// The race menu's Done key is `XButton`, which the file binds in its Item Menus context.
+    @Test func theFilesXButtonFollowsTheReadyWeaponKey() throws {
+        let text = """
+        // Main Gameplay
+        Ready Weapon\t0x13\t0xff\t0xff\t1\t1\t1
+        Toggle POV\t0x21\t0xff\t0xff\t1\t1\t1
+
+        // Menu Mode
+        Accept\t!0,Activate\t!0,Activate\t0x1000\t0\t0\t0\t0x8
+
+        // Item Menus
+        XButton\t!0,Toggle POV\t!0,Toggle POV\t0x4000\t0\t0\t0\t0x8
+
+        """
+        let bindings = try InputBindings(controlMap: ControlMapFile(data: Data(text.utf8)))
+        #expect(bindings.action(forMacKey: 3, inMenu: true) == .readyWeapon, "F is XButton")
+        #expect(bindings.action(forMacKey: 15, inMenu: true) == nil, "R")
     }
 
     @Test

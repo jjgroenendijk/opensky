@@ -60,5 +60,10 @@ of `quest_journal.swf` attaches a clip named `L-Ctrl` or `Slash`, and falls back
 - macOS sends Control-click as a right click, so Sneak moves from Left Control to C.
 - The free-fly camera adds Fly Up (X) and Fly Down (V) in an OpenSky context.
 - Return, keypad Enter, the arrow keys, and Tab also steer menus.
+- A menu reads `Accept`, `Cancel`, `Up`, `Down`, `Left`, and `Right` from `Menu Mode`, and
+  `XButton` from `Item Menus`, which points at Ready Weapon. The race menu's Done key is
+  `XButton`.
+- Jump also reaches a menu, because the skills menu makes a skill legendary with it. No
+  menu event in the file names Jump.
 - A remap is stored in OpenSky's own settings file by `context|event`. A key taken by
   another event in the same context swaps with it, so no event is left without a key.

@@ -77,6 +77,18 @@ struct RaceMenuMovieBridgeTests {
 }
 
 extension RaceMenuMovieBridgeTests {
+    /// The movie shows its loading icon before each change and waits for the engine.
+    @Test func aFinishedChangeHidesTheLoadingIcon() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        var hidden = 0
+        AS2Natives.method(runtime.runtime, on: runtime.root.object, name: "HideLoadingIcon") { _ in
+            hidden += 1
+            return .undefined
+        }
+        RaceMenuMovieBridge.finishChange(runtime: runtime)
+        #expect(hidden == 1)
+    }
+
     @Test func aMovieWithoutItsPanelListsLeavesTheEngineRowsInCharge() throws {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         #expect(!RaceMenuMovieBridge.listsBuilt(runtime: runtime))

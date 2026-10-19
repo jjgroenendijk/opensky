@@ -196,25 +196,33 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         ("Accept", .menuAccept), ("Cancel", .menuCancel), ("Up", .menuUp),
         ("Down", .menuDown), ("Left", .menuLeft), ("Right", .menuRight)
     ]
+    /// The `XButton` user event, such as the race menu's Done, sits in this context.
+    static let itemMenusContext = "Item Menus"
 
     static let vanillaMenuReferences: [GameInputAction: [String]] = [
         .menuAccept: ["Activate"], .menuCancel: ["Tween Menu", "Pause"],
         .menuUp: ["Forward"], .menuDown: ["Back"], .menuLeft: ["Strafe Left"],
-        .menuRight: ["Strafe Right"]
+        .menuRight: ["Strafe Right"], .readyWeapon: ["Ready Weapon"], .jump: ["Jump"]
     ]
 
+    /// The skills menu reads Jump for Make Legendary, but no menu event in the file names it.
     private static func menuReferences(in file: ControlMapFile) -> [GameInputAction: [String]]? {
         guard let menu = file.context(named: InputContext.menu.rawValue) else { return nil }
-        var result: [GameInputAction: [String]] = [:]
+        var result: [GameInputAction: [String]] = [.jump: ["Jump"]]
         for (event, action) in menuEvents {
-            let names = menu.event(named: event)?.keyboard.compactMap { input -> String? in
-                if case let .reference(_, name) = input {
-                    return name
-                }
-                return nil
-            } ?? []
-            result[action] = names
+            result[action] = references(menu.event(named: event))
         }
+        result[.readyWeapon] = file.context(named: itemMenusContext)
+            .map { references($0.event(named: "XButton")) } ?? ["Ready Weapon"]
         return result
+    }
+
+    private static func references(_ event: ControlMapEvent?) -> [String] {
+        event?.keyboard.compactMap { input -> String? in
+            if case let .reference(_, name) = input {
+                return name
+            }
+            return nil
+        } ?? []
     }
 }
