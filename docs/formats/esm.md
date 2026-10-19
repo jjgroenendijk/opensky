@@ -111,10 +111,6 @@ decompressed only when asked for. Every child must lie inside its parent. A size
 range, a cut header, or a bad `XXXX` field is an error, never a crash. Every header is 24
 bytes and the walk moves at least that far each step, so the walk always ends.
 
-## Not supported
-
-- The `0xFE` FormID space of light masters. See [FormID](/formats/formid.md).
-
 ## Vanilla Skyrim.esm
 
 Form version 44, `TES4` flags `0x81`. 50,494 groups and 869,687 records, with no unknown

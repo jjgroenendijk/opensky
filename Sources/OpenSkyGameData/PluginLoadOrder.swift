@@ -28,11 +28,14 @@ nonisolated public enum PluginLoadOrder: Sendable {
         public let name: String
         public let url: URL
         public let origin: Origin
+        /// Loads into a `0xFE` slot rather than a top byte of its own.
+        public let isLight: Bool
 
-        public init(name: String, url: URL, origin: Origin = .pluginsText) {
+        public init(name: String, url: URL, origin: Origin = .pluginsText, isLight: Bool = false) {
             self.name = name
             self.url = url
             self.origin = origin
+            self.isLight = isLight
         }
     }
 
@@ -102,10 +105,10 @@ nonisolated public enum PluginLoadOrder: Sendable {
                 }
                 continue
             }
+            let url = root.dataURL.appending(path: actual, directoryHint: .notDirectory)
             entries.append(Entry(
-                name: actual,
-                url: root.dataURL.appending(path: actual, directoryHint: .notDirectory),
-                origin: candidate.origin
+                name: actual, url: url, origin: candidate.origin,
+                isLight: isLightPlugin(url, name: actual)
             ))
         }
         return Resolution(entries: entries, location: location, missing: missing)
@@ -124,6 +127,28 @@ nonisolated public enum PluginLoadOrder: Sendable {
             uniquingKeysWith: { first, _ in first }
         )
     }
+
+    /// The `.esl` extension, or the `0x200` flag of the TES4 record header, read
+    /// from its first 12 bytes so the order does not open whole plugins.
+    static func isLightPlugin(_ url: URL, name: String) -> Bool {
+        if URL(filePath: name).pathExtension.lowercased() == "esl" {
+            return true
+        }
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard
+            let header = try? handle.read(upToCount: 12),
+            header.count == 12,
+            header.prefix(4).elementsEqual("TES4".utf8)
+        else { return false }
+        let flags = header.suffix(4).enumerated().reduce(UInt32(0)) { value, byte in
+            value | UInt32(byte.element) << (8 * byte.offset)
+        }
+        return flags & lightFlag != 0
+    }
+
+    /// The TES4 light-plugin flag (ESL).
+    static let lightFlag: UInt32 = 0x200
 
     private static func readLines(_ url: URL, fileManager: FileManager) -> [String] {
         guard

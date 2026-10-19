@@ -49,6 +49,19 @@ struct ESSLoadOrderMappingTests {
             == .unmapped(.lightPluginIndexOutOfRange(5)))
     }
 
+    @Test func currentLightPluginTakesItsFESlot() throws {
+        let survival = "ccQDRSSE001-SurvivalMode.esl"
+        let mapping = try ESSLoadOrderMapping(
+            file: Self.file(),
+            currentPlugins: ["Skyrim.esm", survival, "Update.esm", "Dawnguard.esm"],
+            currentLightPlugins: [survival]
+        )
+        let light = ResolvedFormID(plugin: survival, objectID: 0x801)
+        #expect(mapping.currentFormID(light) == FormID(stored: 0xFE00_0801))
+        let dawnguard = ResolvedFormID(plugin: "Dawnguard.esm", objectID: 0xD62)
+        #expect(mapping.currentFormID(dawnguard) == FormID(stored: 0x0200_0D62))
+    }
+
     @Test func reorderedPluginMapsByNameAndIsReported() throws {
         let current = ["Skyrim.esm", "Dawnguard.esm", "Update.esm", "HearthFires.esm"]
         let mapping = try ESSLoadOrderMapping(file: Self.file(light: []), currentPlugins: current)

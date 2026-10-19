@@ -31,6 +31,14 @@ struct LocalizedLabelsTests {
         #expect(labels.value(forKey: "$Missing") == nil)
     }
 
+    @Test func argumentTokenFillsItsSlots() throws {
+        let labels = try LocalizedLabels(language: "english", files: [table([
+            (key: "$Picked up {} {}.", value: "You took {} {}."),
+            (key: "$Coins", value: "coins")
+        ])])
+        #expect(labels.label(for: "$Picked up {3} {$Coins}.") == "You took 3 coins.")
+    }
+
     @Test func nonTokenPassesThrough() {
         let labels = LocalizedLabels(language: "english", files: [])
         #expect(labels.label(for: "Plain text") == "Plain text")

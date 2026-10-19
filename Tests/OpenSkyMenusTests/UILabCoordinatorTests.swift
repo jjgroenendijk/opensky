@@ -58,7 +58,7 @@ struct UILabCoordinatorTests {
         let snapshot = lab.localizedLabelsSnapshot
         #expect(snapshot == LocalizedLabelsControlSnapshot(
             sampleShown: false,
-            sampleKeyCount: 4,
+            sampleKeyCount: 6,
             language: "english",
             installLoaded: false,
             installFileCount: 0,

@@ -34,7 +34,7 @@ nonisolated struct ESSExportForms {
         guard lightPlugins.count <= 0x1000 else {
             throw .tooManyLightPlugins(lightPlugins.count)
         }
-        loadOrder = FormIDResolver.loadOrder(installed.map(\.name))
+        loadOrder = FormIDResolver.loadOrder(installed.map(\.name), light: Set(lightPlugins))
         for (index, name) in plugins.enumerated() {
             fullIndex[name.lowercased()] = index
         }

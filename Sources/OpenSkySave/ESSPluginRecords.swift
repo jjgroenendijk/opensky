@@ -46,9 +46,15 @@ nonisolated public struct ESSPluginIndex: Sendable {
     var exportScripts: [String: ESSExportScript] = [:]
     let currentResolver: FormIDResolver
 
-    init(loadOrder: [String]) {
+    init(loadOrder: [String], light: Set<String> = []) {
         self.loadOrder = loadOrder
-        currentResolver = FormIDResolver.loadOrder(loadOrder)
+        lightPlugins = Set(light.map { $0.lowercased() })
+        currentResolver = FormIDResolver.loadOrder(loadOrder, light: light)
+    }
+
+    /// Lowercased names of the light plugins among `plugins`.
+    static func lightNames(_ plugins: [(name: String, file: ESMFile)]) -> Set<String> {
+        Set(plugins.filter { $0.file.isLight(named: $0.name) }.map { $0.name.lowercased() })
     }
 
     func form(_ id: ResolvedFormID) -> Form? {
@@ -72,6 +78,10 @@ nonisolated public struct ESSPluginRecords: ESSImportRecords {
 
     public var loadOrder: [String] {
         index.loadOrder
+    }
+
+    public var lightPlugins: Set<String> {
+        index.lightPlugins
     }
 
     public func signature(of form: ResolvedFormID) -> String? {

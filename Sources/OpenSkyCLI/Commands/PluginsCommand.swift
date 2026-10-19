@@ -16,7 +16,7 @@ enum PluginsCommand {
         }
         for row in report.rows {
             let note = row.note.isEmpty ? "" : " — \(row.note)"
-            print("\(row.position)\t\(row.name) [\(row.origin)]\(note)")
+            print("\(row.index)\t\(row.name) [\(row.origin)]\(note)")
         }
         print("[INFO] \(report.summary)")
     }

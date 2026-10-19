@@ -136,4 +136,10 @@ nonisolated extension ESMFile {
     public var isLocalized: Bool {
         tes4.flags.contains(.localized)
     }
+
+    /// A light plugin: the TES4 `0x200` flag, or the `.esl` extension, which the
+    /// game treats as light without the flag.
+    public func isLight(named name: String) -> Bool {
+        tes4.flags.contains(.esl) || name.lowercased().hasSuffix(".esl")
+    }
 }

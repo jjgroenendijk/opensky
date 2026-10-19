@@ -28,8 +28,8 @@ nonisolated extension ESSPluginIndex {
     public static func build(
         for file: ESSFile, plugins: [(name: String, file: ESMFile)], scripts: PexScriptLoader? = nil
     ) -> ESSPluginIndex {
-        var records = ESSPluginIndex(loadOrder: plugins.map(\.name))
-        records.walk(plugins, wanted: changedInventories(in: file, loadOrder: records.loadOrder))
+        var records = ESSPluginIndex(loadOrder: plugins.map(\.name), light: lightNames(plugins))
+        records.walk(plugins, wanted: changedInventories(in: file, records: records))
         if let scripts, let papyrus = try? file.papyrus() {
             for script in papyrus.scripts {
                 records.loadScript(script.name, from: scripts)
@@ -42,9 +42,6 @@ nonisolated extension ESSPluginIndex {
     mutating func walk(_ plugins: [(name: String, file: ESMFile)], wanted: Set<Key>) {
         for plugin in plugins {
             guard let header = try? plugin.file.pluginHeader() else { continue }
-            if header.flags.contains(.esl) || plugin.name.lowercased().hasSuffix(".esl") {
-                lightPlugins.insert(plugin.name.lowercased())
-            }
             var walk = Walk(
                 resolver: header.formIDResolver(pluginName: plugin.name), wanted: wanted
             )
@@ -60,8 +57,10 @@ nonisolated extension ESSPluginIndex {
         }
     }
 
-    private static func changedInventories(in file: ESSFile, loadOrder: [String]) -> Set<Key> {
-        let mapping = ESSLoadOrderMapping(file: file, currentPlugins: loadOrder)
+    private static func changedInventories(in file: ESSFile, records: ESSPluginIndex) -> Set<Key> {
+        let mapping = ESSLoadOrderMapping(
+            file: file, currentPlugins: records.loadOrder, currentLightPlugins: records.lightPlugins
+        )
         var wanted: Set<Key> = []
         for change in file.changeForms where change.type?.isReference == true {
             guard

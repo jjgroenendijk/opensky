@@ -69,7 +69,7 @@ nonisolated public struct LoadOrderPlugins: Sendable {
             FormIDResolver(pluginName: $0.name, masters: skipped.masters(of: $0.file))
         }
         let space = space ?? (plugins.count == 1
-            ? resolvers[0] : FormIDResolver.loadOrder(plugins.map(\.name)))
+            ? resolvers[0] : FormIDResolver.loadOrder(files: plugins))
         self.space = space
         self.plugins = zip(plugins, resolvers).enumerated().map { position, pair in
             LoadOrderPlugin(

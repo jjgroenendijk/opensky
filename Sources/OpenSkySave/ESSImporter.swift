@@ -48,7 +48,9 @@ nonisolated public struct ESSImporter {
     init(file: ESSFile, records: any ESSImportRecords) {
         self.file = file
         self.records = records
-        mapping = ESSLoadOrderMapping(file: file, currentPlugins: records.loadOrder)
+        mapping = ESSLoadOrderMapping(
+            file: file, currentPlugins: records.loadOrder, currentLightPlugins: records.lightPlugins
+        )
         report = ESSImportReport(loadOrder: mapping.comparison)
     }
 

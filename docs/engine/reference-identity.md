@@ -115,8 +115,9 @@ Everything below the index (collision rays, interaction data, the draw sort key)
 placement by raw form ID, so a spawn needs one. The generated number goes into mod index `0xFF`:
 `.generated(1)` becomes `FF000001`.
 
-`0xFF` is safe by construction. A plugin's records are numbered by its load-order position, which is
-one byte, so a load order holds at most `0xFE` plugins and no plugin record has `0xFF`. Bethesda's
+`0xFF` is safe by construction. A full plugin's records are numbered by its position, below `0xFE`,
+and light plugins share `0xFE` ([FormID](/formats/formid.md#light-plugins)), so no plugin record
+has `0xFF`. Bethesda's
 own save format uses the same index for objects a save created, which agrees with this reasoning
 without being its source. A number past `00FFFFFF` has no form ID left, so the build drops the object
 and counts it, instead of giving two objects one ID. That needs 16.7 million spawns in one session.

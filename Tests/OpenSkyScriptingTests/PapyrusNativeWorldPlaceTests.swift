@@ -153,6 +153,19 @@ struct PapyrusNativeWorldPlaceTests {
         #expect(missing == .returned(.none))
     }
 
+    @Test func formFromFileKeepsTwelveBitsOfALightPlugin() throws {
+        let fixture = try Fixture.make()
+        let wideID = Int32(0x0012_3000 | Fixture.leverID)
+        fixture.session.bridge.formIDResolver = PapyrusWorldFixture.resolver
+        let full = getFormFromFile(fixture, wideID, "Skyrim.esm")
+        #expect(full != .returned(.object(fixture.receiver)))
+        fixture.session.bridge.formIDResolver = FormIDResolver(
+            pluginName: "", masters: [], lightPlugins: [PapyrusWorldFixture.pluginName]
+        )
+        let light = getFormFromFile(fixture, wideID, "Skyrim.esm")
+        #expect(light == .returned(.object(fixture.receiver)))
+    }
+
     private func isChild(
         _ fixture: Fixture, of parent: PapyrusObjectHandle, _ child: PapyrusObjectHandle
     ) -> PapyrusNativeResult {
