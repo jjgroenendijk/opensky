@@ -68,6 +68,7 @@ struct FakeAINavigationState {
     var moveRequestCount = 0
     var stopRequestCount = 0
     var reevaluateCount = 0
+    var scriptPackages: [String?] = []
 }
 
 extension FakeWorldProviders {
@@ -99,6 +100,10 @@ extension FakeWorldProviders {
 
     func reevaluateSelectedAIActorPackage() {
         aiNavigation.reevaluateCount += 1
+    }
+
+    func setSelectedAIActorScriptPackage(_ name: String?) {
+        aiNavigation.scriptPackages.append(name)
     }
 
     /// Rebuilds the snapshot around a new selection, exactly as the live

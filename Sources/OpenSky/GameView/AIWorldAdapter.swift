@@ -39,6 +39,7 @@ import simd
 @MainActor
 protocol AIWorldHost: AnyObject {
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var combat: CombatCoordinator { get }
@@ -132,7 +133,9 @@ final class AIWorldAdapter {
             }
         }
         let animation = game.npcAnimation
-        streamer.onNPCLocomotionDrive = { [weak animation] update in
+        let graphs = game.actorGraphWorld
+        streamer.onNPCLocomotionDrive = { [weak animation, weak graphs] update in
+            graphs?.drive(update)
             animation?.drive(update)
         }
     }
@@ -215,6 +218,11 @@ extension AIWorldAdapter {
             return live.position
         }
         return streamer.referenceEntry(key: actor).flatMap(Self.placedPosition)
+    }
+
+    /// Only the player's gait is known; an NPC leader moves at its package's pace.
+    func packageActorGait(_ actor: ReferenceKey) -> LocomotionGait? {
+        actor == .player ? game.gameSession?.locomotion.status.gait : nil
     }
 
     /// Places OpenSky can name: a reference, a reference alias, and the actor itself.

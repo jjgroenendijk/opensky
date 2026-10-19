@@ -53,6 +53,9 @@ struct ConditionCrimeSituationFunctionTests {
         let served = CrimeSituation(lastSentenceDays: 3)
         #expect(try Self.outcome(499, equals: 3, situation: served) == .true)
         #expect(try Self.outcome(144, equals: 0, situation: served) == .true)
+        var warned = served
+        warned.trespassWarnings = [Self.subject: 2]
+        #expect(try Self.outcome(144, equals: 2, situation: warned) == .true)
     }
 
     @Test func aGuardPolicesItsCrimeFaction() throws {

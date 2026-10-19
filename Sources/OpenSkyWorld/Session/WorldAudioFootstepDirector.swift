@@ -30,6 +30,8 @@ public final class WorldAudioFootstepDirector {
     /// Each routed step's impact, for its dust model; set by the session.
     public var onImpact: ((Impact, SIMD3<Float>) -> Void)?
     public var footstepsEnabled = true
+    /// The SOPM output models, so another actor's step past its sound's range is skipped.
+    public var outputModels: ((FormID) -> OutputModelProfile?)?
 
     /// The MATT under the player's feet in the last routed frame. Nil while airborne.
     public private(set) var groundMaterial: FormID?
@@ -96,20 +98,52 @@ public final class WorldAudioFootstepDirector {
         material: FormID? = nil
     ) {
         groundMaterial = material
-        guard footstepsEnabled, engine.isRunning, !names.isEmpty else { return }
-        guard let footstepStore, let footstepSet else { return }
+        guard let footstepSet else { return }
+        let walker = Walker(set: footstepSet, material: activeMaterial, isPlayer: true)
+        route(names, gait: gait, position: position, walker: walker)
+    }
+
+    /// Routes one NPC's or creature's graph events. Its steps use the default footstep set
+    /// and no ground material, and leave the player's readout alone.
+    public func handleActorGraphEvents(
+        _ names: [String],
+        gait: LocomotionGait,
+        position: SIMD3<Float>
+    ) {
+        guard let set = footstepStore?.defaultSet else { return }
+        let walker = Walker(set: set, material: nil, isPlayer: false)
+        route(names, gait: gait, position: position, walker: walker)
+    }
+
+    /// Whose steps a route plays: their set, the ground under them, and whether a
+    /// step out of the listener's range may be skipped.
+    private struct Walker {
+        let set: FootstepSet
+        let material: FormID?
+        let isPlayer: Bool
+    }
+
+    private func route(
+        _ names: [String],
+        gait: LocomotionGait,
+        position: SIMD3<Float>,
+        walker: Walker
+    ) {
+        guard footstepsEnabled, engine.isRunning, !names.isEmpty, let footstepStore else {
+            return
+        }
         for name in names {
             guard
                 let resolved = footstepStore.resolve(
                     tag: name,
                     gait: Self.footstepGait(for: gait),
-                    in: footstepSet,
-                    material: activeMaterial
+                    in: walker.set,
+                    material: walker.material
                 )
             else { continue }
             routedEventCount += 1
             onImpact?(resolved.impact, position)
-            play(resolved, tag: name, at: position)
+            play(resolved, tag: name, at: position, culls: !walker.isPlayer)
         }
     }
 
@@ -188,13 +222,17 @@ public final class WorldAudioFootstepDirector {
     private func play(
         _ resolved: ResolvedFootstep,
         tag: String,
-        at position: SIMD3<Float>
+        at position: SIMD3<Float>,
+        culls: Bool = false
     ) -> AudioTriggerRefusal? {
         guard let soundStore else { return refuse(.noSoundRecords) }
         guard
             let sound = try? soundStore.resolveAny(resolved.sound),
             let path = sound.filePaths.first
         else { return refuse(.soundUnresolved(tag: tag, sound: resolved.sound)) }
+        if culls, isOutOfRange(sound, at: position) {
+            return nil
+        }
         // The SNCT chain places vanilla footstep descriptors under
         // `AudioCategoryFST`; the fallback is for a chain that reaches no menu category.
         let request = AudioPlayRequest(
@@ -205,6 +243,16 @@ public final class WorldAudioFootstepDirector {
             reason = self?.start(result, request: request, tag: tag)
         }
         return reason
+    }
+
+    /// Past its output model's maximum distance the game plays the sound silent, so
+    /// a voice for it is wasted. Vanilla NPC steps use `SOMMono01800`: 1,800 units.
+    private func isOutOfRange(_ sound: ResolvedSound, at position: SIMD3<Float>) -> Bool {
+        guard
+            let model = sound.descriptor.outputModel,
+            let range = outputModels?(model)?.attenuation?.maximumDistance
+        else { return false }
+        return simd_distance(position, engine.listenerWorldPosition) > range
     }
 
     private func start(

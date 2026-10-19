@@ -4,6 +4,7 @@
 import AppKit
 
 extension GameViewController: @MainActor AIWorldHost {}
+extension GameViewController: @MainActor ActorGraphWorldHost {}
 extension GameViewController: @MainActor ActorWorldHost {}
 extension GameViewController: @MainActor AgentWorldHost {}
 extension GameViewController: @MainActor AnimationEventWorldHost {}

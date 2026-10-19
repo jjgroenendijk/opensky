@@ -22,6 +22,9 @@ final class CombatLoopSection: PanelSectionViewController {
     let castingControl = NSButton(
         checkboxWithTitle: "Fighters cast spells", target: nil, action: nil
     )
+    let temperamentControl = NSButton(
+        checkboxWithTitle: "Confidence and Assistance", target: nil, action: nil
+    )
     let clearTraceControl = NSButton(title: "Clear hit trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "CombatLoopStatsLabel")
@@ -41,6 +44,11 @@ final class CombatLoopSection: PanelSectionViewController {
     override func makeContentViews() -> [NSView] {
         hostilityControl.toolTip = "The actor fights only after it detects the player."
         castingControl.toolTip = "Off keeps every fighter on weapons only."
+        temperamentControl.toolTip = "Confidence decides who fights or flees; allies join fights."
+        PanelComponents.configureCheckbox(
+            temperamentControl, target: self, action: #selector(temperamentChanged),
+            identifier: "CombatTemperamentControl"
+        )
         PanelComponents.configureCheckbox(
             hostilityControl, target: self, action: #selector(hostilityChanged),
             identifier: "CombatHostilityControl"
@@ -57,6 +65,7 @@ final class CombatLoopSection: PanelSectionViewController {
             PanelComponents.group([
                 hostilityControl,
                 castingControl,
+                temperamentControl,
                 PanelComponents.buttonRow([clearTraceControl])
             ]),
             statsLabel
@@ -65,11 +74,12 @@ final class CombatLoopSection: PanelSectionViewController {
 
     override func syncControls() {
         let available = provider != nil
-        for control in [hostilityControl, castingControl, clearTraceControl] {
+        for control in [hostilityControl, castingControl, temperamentControl, clearTraceControl] {
             control.isEnabled = available
         }
         hostilityControl.state = provider?.selectedActorIsHostile == true ? .on : .off
         castingControl.state = provider?.isActorCastingEnabled == true ? .on : .off
+        temperamentControl.state = provider?.usesCombatTemperament == false ? .off : .on
     }
 
     override func refreshReadout() {
@@ -83,6 +93,7 @@ final class CombatLoopSection: PanelSectionViewController {
             CombatLoopReadout.actorsText(for: snapshot),
             CombatLoopReadout.castingText(for: snapshot),
             CombatLoopReadout.hostilityText(for: snapshot),
+            CombatLoopReadout.temperamentText(for: snapshot),
             provider.selectedCombatStyle
                 .map { "\($0.styleText)\n\($0.settingsText)" } ?? "Style: none",
             CombatLoopReadout.incomingText(for: snapshot),
@@ -100,6 +111,11 @@ final class CombatLoopSection: PanelSectionViewController {
 
     @objc private func castingChanged() {
         provider?.isActorCastingEnabled = castingControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func temperamentChanged() {
+        provider?.usesCombatTemperament = temperamentControl.state == .on
         finishInteraction()
     }
 

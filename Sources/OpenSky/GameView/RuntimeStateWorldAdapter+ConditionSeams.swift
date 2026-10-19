@@ -7,6 +7,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyConditions
+import OpenSkyCrimeInterface
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
@@ -33,6 +34,11 @@ extension RuntimeStateWorldAdapter {
         context.scenes = game.scenes.conditionResolution(aliases: context.aliases)
         context.weather = weatherResolution()
         context.furniture = game.idleWorld.idles.furnitureResolution
+        context.graphVariables = game.actorGraphWorld.graphVariableResolution()
+        let warnings = game.packages.trespassWarnings
+        if !warnings.isEmpty {
+            context.crime.situation?.trespassWarnings = warnings
+        }
         if let inventory = inventoryResolution(context: context) {
             context.inventory = inventory
         }

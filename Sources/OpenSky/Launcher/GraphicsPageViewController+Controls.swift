@@ -107,6 +107,14 @@ extension GraphicsPageViewController {
             objectAnimationControl, "ObjectAnimation",
             "Traps, doors, and levers play their animations"
         )
+        checkbox(
+            actorGraphsControl, "ActorGraphs",
+            "NPCs and creatures run their own behaviour graphs"
+        )
+        checkbox(
+            combatTemperamentControl, "CombatTemperament",
+            "Confidence decides who flees, and Assistance brings allies into a fight"
+        )
     }
 
     /// `name` becomes the id `Graphics<name>Control`.
@@ -168,7 +176,8 @@ extension GraphicsPageViewController {
             (blinkingControl, .characterBlinking),
             (expressionsControl, .characterDialogueExpressions),
             (headTrackingControl, .characterHeadTracking),
-            (objectAnimationControl, .objectAnimation),
+            (objectAnimationControl, .objectAnimation), (actorGraphsControl, .actorGraphs),
+            (combatTemperamentControl, .combatTemperament),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }

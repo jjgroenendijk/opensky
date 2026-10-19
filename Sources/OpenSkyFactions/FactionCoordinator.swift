@@ -103,6 +103,16 @@ public final class FactionCoordinator {
         )
     }
 
+    /// What `observer` makes of `target`: crime, then relationship rank, then factions.
+    public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
+        guard
+            let mine = profile(of: observer),
+            let theirs = profile(of: target),
+            let derivation = runtime?.derivation
+        else { return nil }
+        return derivation.reaction(of: mine, toward: theirs)
+    }
+
     /// The player and every resident actor, seeded. An unstreamed actor has
     /// no profile, so the condition functions report the gap.
     public func conditionResolution() -> FactionConditionResolution {

@@ -81,6 +81,29 @@ nonisolated public struct ResolvedActorStats: Equatable {
 /// Ordered AI package stack after `useAIPackages` template inheritance.
 nonisolated public struct ResolvedActorPackages: Equatable {
     public let packages: ActorSourcedField<[FormID]>
+    /// The FLST package lists of the same tab, which ride the same flag.
+    public let lists: ActorSourcedField<ActorPackageListIDs>
+}
+
+/// The default list and the four override lists of the AI Packages tab
+/// (<https://ck.uesp.net/wiki/AI_Packages_Tab>), each a FLST of packages.
+nonisolated public struct ActorPackageListIDs: Equatable, Sendable {
+    public var defaults: FormID?
+    public var spectator: FormID?
+    public var observeDeadBody: FormID?
+    public var guardWarn: FormID?
+    public var combat: FormID?
+
+    public init(
+        defaults: FormID? = nil, spectator: FormID? = nil, observeDeadBody: FormID? = nil,
+        guardWarn: FormID? = nil, combat: FormID? = nil
+    ) {
+        self.defaults = defaults
+        self.spectator = spectator
+        self.observeDeadBody = observeDeadBody
+        self.guardWarn = guardWarn
+        self.combat = combat
+    }
 }
 
 /// Authored spell list after `useSpellList` template inheritance. Its own struct,
@@ -228,6 +251,18 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         return ResolvedActorPackages(
             packages: resolveField(in: npcs, flag: .useAIPackages) {
                 ActorSourcedField(value: $0.packages, source: $0.formID)
+            },
+            lists: resolveField(in: npcs, flag: .useAIPackages) {
+                ActorSourcedField(
+                    value: ActorPackageListIDs(
+                        defaults: $0.details.defaultPackageList,
+                        spectator: $0.details.spectatorOverride,
+                        observeDeadBody: $0.details.observeDeadOverride,
+                        guardWarn: $0.details.guardWarnOverride,
+                        combat: $0.details.combatOverride
+                    ),
+                    source: $0.formID
+                )
             }
         )
     }

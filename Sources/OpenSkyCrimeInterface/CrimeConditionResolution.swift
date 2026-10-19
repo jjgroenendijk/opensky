@@ -14,7 +14,7 @@ nonisolated public struct CrimeConditionResolution: Sendable {
     /// in. The context carries no cell, so the caller resolves it.
     public let currentCrimeFaction: ReferenceKey?
     /// Who is a victim, a trespasser, alarmed, or arresting. Nil without a crime runtime.
-    public let situation: CrimeSituation?
+    public var situation: CrimeSituation?
 
     public static let empty = CrimeConditionResolution()
 
@@ -72,6 +72,8 @@ nonisolated public struct CrimeSituation: Equatable, Sendable {
     public var lastSentenceDays: Int
     /// Who owns each reference a run-on can name.
     public var owners: [ReferenceKey: ReferenceOwner]
+    /// The warnings each guard gave a trespasser, for `GetTrespassWarningLevel`.
+    public var trespassWarnings: [ReferenceKey: Int] = [:]
 
     public init(
         guardFaction: ReferenceKey? = nil,

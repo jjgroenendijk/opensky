@@ -38,6 +38,8 @@ public final class NPCAnimationCoordinator {
         }
         guard let playback = world?.actorPlayback(for: update.actor) else { return }
         waiting[update.actor] = nil
+        // The actor's own graph plays its gait.
+        guard !playback.isGraphDriven else { return }
         guard
             update.intent != .still,
             let key = gaitKey(

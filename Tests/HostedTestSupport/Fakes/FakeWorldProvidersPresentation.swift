@@ -26,6 +26,12 @@ final class FakePresentationState {
 }
 
 extension FakeWorldProviders {
+    func refocusGameView() {
+        refocusCount += 1
+    }
+}
+
+extension FakeWorldProviders {
     var cinematicSnapshot: CinematicCameraSnapshot {
         presentationState.cinematic
     }

@@ -227,18 +227,19 @@ nonisolated public final class BehaviorGraphInstance {
     }
 
     /// Builds an instance over a decoded `hkbBehaviorGraph` in a parsed
-    /// packfile — the engine-side entry point.
+    /// packfile — the engine-side entry point. Instances over one file share `objects`.
     public convenience init(
         graph: HKBBehaviorGraph,
         in objectGraph: HKXObjectGraph,
         skeleton: BehaviorSkeleton,
         clips: any BehaviorClipSource = EmptyBehaviorClipSource(),
+        objects: SharedBehaviorObjectSource? = nil,
         tallyNameLimit: Int = BehaviorTally.defaultNameLimit
     ) {
         self.init(
             root: graph.rootGenerator,
             data: graph.data,
-            source: HKXBehaviorObjectSource(graph: objectGraph),
+            source: objects ?? HKXBehaviorObjectSource(graph: objectGraph),
             skeleton: skeleton,
             clips: clips,
             tallyNameLimit: tallyNameLimit

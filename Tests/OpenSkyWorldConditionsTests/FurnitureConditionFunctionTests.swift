@@ -82,6 +82,14 @@ struct FurnitureConditionFunctionTests {
         #expect(try Self.returns(447, value: 0, context: context, name: "Direction").isTrue)
     }
 
+    @Test func aRunningGraphAnswersBeforeTheListedTable() throws {
+        var context = ConditionContext()
+        context.graphVariables.values[Self.actor] = ["iState": 1]
+        context.graphVariables.graphs[Self.actor] = StubGraph(ints: ["iState": 3], floats: [:])
+        #expect(try Self.returns(675, value: 3, context: context, name: "iState").isTrue)
+        #expect(try Self.returns(675, value: 0, context: context, name: "iMissing").isTrue)
+    }
+
     @Test func theCurrentFurnitureIsComparedByReferenceAndByBase() throws {
         let chair = ConditionEvaluatorFixture.subjectFormID
         let other = ConditionEvaluatorFixture.targetFormID
@@ -117,5 +125,18 @@ struct FurnitureConditionFunctionTests {
         for function: UInt16 in [637, 703] {
             #expect(try Self.returns(function, value: 0, context: context).isTrue)
         }
+    }
+}
+
+private struct StubGraph: GraphVariableReading {
+    let ints: [String: Int]
+    let floats: [String: Float]
+
+    func graphVariableInt(_ name: String) -> Int? {
+        ints[name]
+    }
+
+    func graphVariableFloat(_ name: String) -> Float? {
+        floats[name]
     }
 }

@@ -17,14 +17,18 @@ nonisolated extension CombatBehaviorInputs {
         max(0, reach - settings.reachSlack)
     }
 
-    /// Whether the actor is hurt enough to break off, or a spell frightened it.
-    /// Rally "maxes the Confidence", so a rallied actor never breaks off.
+    /// Whether the actor's Confidence breaks it off, or a spell frightened it. Rally
+    /// "maxes the Confidence", so a rallied actor never breaks off. Without a known
+    /// Confidence, an actor breaks off when hurt below the flee fraction.
     public func shouldFlee(settings: CombatBehaviorSettings) -> Bool {
         if influence.isRallied {
             return false
         }
         if influence.isFrightened {
             return true
+        }
+        if let temperament {
+            return temperament.breaksOff
         }
         return healthFraction.isFinite && healthFraction <= settings.fleeHealthFraction
     }

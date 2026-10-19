@@ -250,6 +250,10 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// True while `key`'s current AI package has the Ignore Combat flag: the actor
     /// neither fights nor flees (<https://ck.uesp.net/wiki/Package_Flags>).
     func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool
+    /// `key`'s Confidence beside `target`, or nil when its actor values are unknown.
+    func combatTemperament(of key: ReferenceKey, toward target: ReferenceKey) -> CombatTemperament?
+    /// True when `helper`'s Assistance and its regard for `ally` make it join `ally`'s fight.
+    func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool
 }
 
 extension CombatLoopWorld {
@@ -289,6 +293,17 @@ nonisolated extension CombatLoopWorld {
     }
 
     public func combatIgnoredByPackage(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// A session with no actor values keeps the health-fraction rule.
+    public func combatTemperament(
+        of _: ReferenceKey, toward _: ReferenceKey
+    ) -> CombatTemperament? {
+        nil
+    }
+
+    public func combatAssists(_: ReferenceKey, ally _: ReferenceKey) -> Bool {
         false
     }
 }

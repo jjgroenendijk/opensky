@@ -37,6 +37,7 @@ import OpenSkyWorldState
 /// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RuntimeStateWorldHost: AnyObject {
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }

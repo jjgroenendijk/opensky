@@ -26,9 +26,9 @@ struct ObjectBehaviorCoordinatorTests {
 
     @Test func laterPathsAreRelativeToTheProjectFolder() {
         let project = "meshes\\traps\\swingingblade\\trapbladeswinging01.hkx"
-        let folder = ObjectBehaviorAsset.folder(of: project)
+        let folder = BehaviorProjectAsset.folder(of: project)
         #expect(folder == "meshes\\traps\\swingingblade")
-        #expect(ObjectBehaviorAsset.join(folder, "Characters/Character00.hkx")
+        #expect(BehaviorProjectAsset.join(folder, "Characters/Character00.hkx")
             == "meshes\\traps\\swingingblade\\characters\\character00.hkx")
     }
 

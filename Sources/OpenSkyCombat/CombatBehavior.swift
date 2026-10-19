@@ -167,6 +167,8 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     public var casting: CombatCastingProfile
     /// What running magic effects force on the actor, such as fear.
     public var influence: ActorMagicInfluence
+    /// The actor's Confidence beside its target. Nil keeps the health-fraction rule.
+    public var temperament: CombatTemperament?
 
     public init(
         actorPosition: SIMD3<Float>,
@@ -177,7 +179,8 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
         isTargetAlive: Bool = true,
         isForced: Bool = false,
         casting: CombatCastingProfile = .none,
-        influence: ActorMagicInfluence = .none
+        influence: ActorMagicInfluence = .none,
+        temperament: CombatTemperament? = nil
     ) {
         self.actorPosition = actorPosition
         self.targetPosition = targetPosition
@@ -188,6 +191,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
         self.isForced = isForced
         self.casting = casting
         self.influence = influence
+        self.temperament = temperament
     }
 
     /// Ground-plane distance between the actor and its target.

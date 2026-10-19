@@ -64,6 +64,10 @@ extension GameViewController: AINavigationControlProviding {
     func reevaluateSelectedAIActorPackage() {
         aiNavigation.reevaluateSelectedAIActorPackage()
     }
+
+    func setSelectedAIActorScriptPackage(_ name: String?) {
+        aiNavigation.setSelectedAIActorScriptPackage(name)
+    }
 }
 
 extension GameViewController: PerceptionControlProviding {

@@ -21,6 +21,7 @@ import simd
 @MainActor
 protocol IdleWorldHost: AnyObject {
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
@@ -133,9 +134,12 @@ extension IdleWorldAdapter: IdleWorld {
         streamer.setActorProp(prop, on: placed.formID)
     }
 
-    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) {
-        guard actor == .player else { return }
+    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {
+        guard actor == .player else {
+            return game.actorGraphWorld.graphs.raise(name, on: actor)
+        }
         game.player.playIdle(named: name, state: state)
+        return true
     }
 }
 

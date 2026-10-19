@@ -140,4 +140,7 @@ public protocol AINavigationControlProviding: AnyObject {
     /// Re-runs 16.5's package selection for the selected actor immediately,
     /// rather than waiting out the reevaluation interval.
     func reevaluateSelectedAIActorPackage()
+
+    /// Gives the selected actor a script package by editor ID or FormID; nil removes it.
+    func setSelectedAIActorScriptPackage(_ name: String?)
 }

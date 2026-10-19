@@ -30,8 +30,8 @@ extension IdleCoordinator {
         context.furniture = FurnitureConditionResolution(uses: furnitureUses, isAvailable: true)
         // A furniture idle tests the furniture as its Target, such as its keywords.
         context.target = furnitureUses[actor]?.furniture
-        // Only the player runs a live graph; another actor's variables read 0.
-        if actor != .player {
+        // An actor whose graph does not run reads 0 for every variable.
+        if context.graphVariables.graphs[actor] == nil, actor != .player {
             context.graphVariables.values[actor] = [:]
             context.graphVariables.floats[actor] = [:]
         }
@@ -110,7 +110,9 @@ extension IdleCoordinator {
     func endIdle(of actor: ReferenceKey) {
         positions[actor] = nil
         guard let playing = sessions[actor]?.playing else { return }
-        if !playing.end.isFinite {
+        if !playing.end.isFinite, playing.throughGraph {
+            _ = world?.raiseIdleEvent(Self.defaultStateEvent, state: nil, on: actor)
+        } else if !playing.end.isFinite {
             world?.actorPlayback(for: actor)?.endOverride()
         }
         if playing.hasProp {

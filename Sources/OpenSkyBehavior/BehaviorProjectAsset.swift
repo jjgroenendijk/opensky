@@ -1,13 +1,12 @@
-// The decoded behaviour set of one animated object: the project a mesh names,
-// its character file, behaviour graph, one-bone or few-bone rig, and clip list.
-// Decoded on the build queue; the main actor only instances it.
-// See docs/engine/object-animation.md.
+// The decoded behaviour set of one project: the project file an object mesh or a race
+// names, its character file, behaviour graph, rig, and clip list. Decoded off the main
+// actor; the main actor only instances it. See docs/engine/object-animation.md.
 
 import Foundation
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
-nonisolated public enum ObjectBehaviorAssetError: Error, Equatable {
+nonisolated public enum BehaviorProjectAssetError: Error, Equatable {
     case missing(String)
     case invalid(String)
     case noCharacter(String)
@@ -15,12 +14,15 @@ nonisolated public enum ObjectBehaviorAssetError: Error, Equatable {
     case noSkeleton(String)
 }
 
-nonisolated public struct ObjectBehaviorAsset: Sendable {
+nonisolated public struct BehaviorProjectAsset: Sendable {
     public let projectPath: String
+    /// The behaviour file the character names. Behaviour references resolve beside it.
+    public let behaviorPath: String
     public let objectGraph: HKXObjectGraph
     public let behavior: HKBBehaviorGraph
     public let skeleton: HKASkeleton
-    /// Archive paths of the clips the character file lists.
+    /// Archive paths of the clips the character file lists. With `folderClips`, then the
+    /// other clips of the project's `animations` folder, which a referenced file can name.
     public let clipPaths: [String]
 
     /// The events the graph declares, in index order. Papyrus sends these by name.
@@ -32,15 +34,16 @@ nonisolated public struct ObjectBehaviorAsset: Sendable {
     /// Each later path is relative to the project's folder.
     public static func load(
         fileSystem: any GameFileSource,
-        projectPath: String
-    ) throws -> ObjectBehaviorAsset {
+        projectPath: String,
+        folderClips: Bool = false
+    ) throws -> BehaviorProjectAsset {
         let folder = Self.folder(of: projectPath)
         let project = try objects(projectPath, fileSystem) { graph in
             graph.objects(ofClass: HKBProjectData.className).lazy
                 .compactMap { HKBProjectData.decode(at: target($0), in: graph) }.first
         }
         guard let characterName = project?.characterFilenames.compactMap(\.self).first
-        else { throw ObjectBehaviorAssetError.noCharacter(projectPath) }
+        else { throw BehaviorProjectAssetError.noCharacter(projectPath) }
         let characterPath = join(folder, characterName)
         let character = try objects(characterPath, fileSystem) { graph in
             graph.objects(ofClass: HKBCharacterData.className).lazy
@@ -49,32 +52,38 @@ nonisolated public struct ObjectBehaviorAsset: Sendable {
         guard
             let character, let behaviorName = character.behaviorFilename,
             let rigName = character.rigName
-        else { throw ObjectBehaviorAssetError.noCharacter(characterPath) }
+        else { throw BehaviorProjectAssetError.noCharacter(characterPath) }
         let behaviorPath = join(folder, behaviorName)
         let graph = try read(behaviorPath, fileSystem)
         guard let behavior = HKBBehaviorGraph.graphs(in: graph).first else {
-            throw ObjectBehaviorAssetError.noGraph(behaviorPath)
+            throw BehaviorProjectAssetError.noGraph(behaviorPath)
         }
         let rigPath = join(folder, rigName)
         guard let rig = try? HKASkeleton.skeletons(in: read(rigPath, fileSystem)).first else {
-            throw ObjectBehaviorAssetError.noSkeleton(rigPath)
+            throw BehaviorProjectAssetError.noSkeleton(rigPath)
         }
-        return ObjectBehaviorAsset(
+        let listed = character.animationNames.compactMap(\.self).map { join(folder, $0) }
+        let listedSet = Set(listed)
+        let extra = folderClips ? InstallBehaviorClipSource.animationPaths(
+            in: fileSystem, folder: join(folder, "animations") + "\\"
+        ).filter { !listedSet.contains($0) } : []
+        return BehaviorProjectAsset(
             projectPath: projectPath,
+            behaviorPath: behaviorPath,
             objectGraph: graph,
             behavior: behavior,
             skeleton: rig,
-            clipPaths: character.animationNames.compactMap(\.self).map { join(folder, $0) }
+            clipPaths: listed + extra
         )
     }
 
-    static func folder(of path: String) -> String {
+    public static func folder(of path: String) -> String {
         guard let cut = path.lastIndex(of: "\\") else { return "" }
         return String(path[..<cut])
     }
 
     /// `folder\name`, with forward slashes turned and the case folded.
-    static func join(_ folder: String, _ name: String) -> String {
+    public static func join(_ folder: String, _ name: String) -> String {
         let relative = name.replacingOccurrences(of: "/", with: "\\").lowercased()
         return folder.isEmpty ? relative : folder + "\\" + relative
     }
@@ -99,9 +108,9 @@ nonisolated public struct ObjectBehaviorAsset: Sendable {
     ) throws -> HKXObjectGraph {
         let data = (try? fileSystem.contents(forPath: path))
             ?? tagfilePath(path).flatMap { try? fileSystem.contents(forPath: $0) }
-        guard let data else { throw ObjectBehaviorAssetError.missing(path) }
+        guard let data else { throw BehaviorProjectAssetError.missing(path) }
         guard let graph = try? HKXObjectGraph.decode(data) else {
-            throw ObjectBehaviorAssetError.invalid(path)
+            throw BehaviorProjectAssetError.invalid(path)
         }
         return graph
     }

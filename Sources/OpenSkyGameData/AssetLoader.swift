@@ -54,6 +54,12 @@ nonisolated public enum AssetLoadQueue {
     public static let shared = DispatchQueue(
         label: "nl.jjgroenendijk.opensky.assetload", qos: .userInitiated
     )
+
+    /// For bulk loads that only add detail, such as every clip an actor graph can reach.
+    /// Hundreds of those on `shared` would delay the meshes and textures a frame needs.
+    public static let background = DispatchQueue(
+        label: "nl.jjgroenendijk.opensky.assetload.background", qos: .utility
+    )
 }
 
 /// Runs each load on a serial queue, needed loads before prefetches.

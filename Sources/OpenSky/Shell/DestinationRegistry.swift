@@ -117,6 +117,7 @@ struct GamePanelServices {
 /// The seams feature coordinators and world adapters answer.
 @MainActor
 struct FeaturePanelServices {
+    let actorGraph: any ActorGraphControlProviding
     let agent: any AgentControlProviding
     let audio: any AudioControlProviding
     let cinematicCamera: any CinematicCameraControlProviding
@@ -316,6 +317,7 @@ enum DestinationRegistry {
                 panel.combatProvider = context.combatLoop
                 panel.headProvider = context.headAssembly
                 panel.idleProvider = context.idle
+                panel.graphProvider = context.actorGraph
                 return panel
             },
             overrides: aiNavigationOverrides

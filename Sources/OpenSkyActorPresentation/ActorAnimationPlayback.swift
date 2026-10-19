@@ -1,6 +1,6 @@
-// Cell-owned direct idle playback (milestone 6.4/6.5). HKX local tracks are
-// composed through the hkaSkeleton parent graph, name-mapped onto each NIF
-// skin palette, then uploaded once per render frame. No behavior graph or AI.
+// Cell-owned actor playback. HKX local tracks, or the pose of the actor's own behaviour
+// graph, are composed through the hkaSkeleton parent graph, name-mapped onto each NIF
+// skin palette, then uploaded once per render frame. See docs/engine/actor-graphs.md.
 
 import Foundation
 import OpenSkyBehavior
@@ -122,6 +122,29 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         var headLook = HeadLook.forward
         var speechHeadMotion = LipHeadMotion.zero
         var weaponsDrawn = false
+        /// The actor's running behaviour graph. It replaces the gait and idle clip,
+        /// but a combat override still wins while it plays.
+        var graph: GraphSource?
+    }
+
+    nonisolated private struct GraphSource {
+        let skeleton: HKASkeleton
+        let boneIndex: SkeletonBoneIndex
+        let buffer: PlayerPoseBuffer
+        var revision: Int?
+        var pose: SkeletonPose?
+
+        /// The newest graph pose, composed once per published revision.
+        mutating func current() -> SkeletonPose? {
+            let snapshot = buffer.snapshot
+            if snapshot.revision != revision {
+                revision = snapshot.revision
+                pose = snapshot.bones.isEmpty ? nil : (try? SkeletonPoseMath.worldMatrices(
+                    skeleton: skeleton, localPoses: snapshot.bones
+                )).map { SkeletonPose(bones: boneIndex, matrices: $0) }
+            }
+            return pose
+        }
     }
 
     public let actor: FormID
@@ -200,16 +223,37 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     /// The one place the override's own clock is applied, so every consumer —
     /// skinning here, the ragdoll hand-off in the app — reads the same pose.
     public func skeletonPose(at time: Float) -> SkeletonPose? {
-        let (clip, clipTime) = state.withLock { state in
+        let (clip, clipTime, graphPose) = state.withLock { state in
             if state.overrideEnd > 0, time >= state.overrideEnd {
                 state.clip = state.locomotionClip
                 state.overrideEnd = 0
                 state.overrideStart = 0
             }
+            let graphPose = state.overrideEnd == 0 ? state.graph?.current() : nil
             let clipTime = state.overrideEnd > 0 ? time - state.overrideStart : time
-            return (state.clip, clipTime)
+            return (state.clip, clipTime, graphPose)
         }
-        return clip.worldPose(at: clipTime)
+        return graphPose ?? clip.worldPose(at: clipTime)
+    }
+
+    /// Hands the pose to the actor's behaviour graph: `pose` is what the graph publishes,
+    /// in the bone order of `skeleton`.
+    public func attachGraph(skeleton: HKASkeleton, pose: PlayerPoseBuffer) {
+        let source = GraphSource(
+            skeleton: skeleton, boneIndex: SkeletonBoneIndex(names: skeleton.boneNames),
+            buffer: pose
+        )
+        state.withLock { $0.graph = source }
+    }
+
+    /// Returns the actor to its clips.
+    public func detachGraph() {
+        state.withLock { $0.graph = nil }
+    }
+
+    /// True while a behaviour graph poses the actor.
+    public var isGraphDriven: Bool {
+        state.withLock { $0.graph != nil }
     }
 
     @discardableResult
@@ -223,23 +267,35 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         actor.rawValue
     }
 
+    /// A graph-driven actor shares its pose with no other actor.
     public var sharedClipKey: ObjectIdentifier {
-        ObjectIdentifier(clip)
+        state.withLock { state in
+            state.overrideEnd == 0 && state.graph != nil
+                ? ObjectIdentifier(self) : ObjectIdentifier(state.clip)
+        }
     }
 
     public func sampleSharedPose(at time: Float) -> SkeletonPose? {
-        clip.worldPose(at: time)
+        let graphPose = state.withLock { state in
+            state.overrideEnd == 0 ? state.graph?.current() : nil
+        }
+        return graphPose ?? clip.worldPose(at: time)
     }
 
     public func apply(
         _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        let (look, clip, drawn) = state.withLock {
-            ($0.headLook.adding($0.speechHeadMotion), $0.clip, $0.weaponsDrawn)
+        let (look, skeleton, drawn) = state.withLock { state in
+            let graphDriven = state.overrideEnd == 0 && state.graph != nil
+            let skeleton = graphDriven ? state.graph?.skeleton : nil
+            return (
+                state.headLook.adding(state.speechHeadMotion),
+                skeleton ?? state.clip.skeleton, state.weaponsDrawn
+            )
         }
         let sheathed = WeaponSheathing.apply(sheathNodes, drawn: drawn, to: pose)
-        let posed = HeadTrackingCore.apply(look, to: sheathed, parents: clip.skeleton.parentIndices)
+        let posed = HeadTrackingCore.apply(look, to: sheathed, parents: skeleton.parentIndices)
         return meshes.applySkinningPose(posed, updating: &updatedMeshes)
     }
 

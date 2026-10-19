@@ -73,7 +73,9 @@ extension PackageCoordinator {
         guard actor != .player, !runtime.isSuspended(actor) else { return false }
         switch world.packageActorActivity(actor) {
         case .free: return true
-        case .fighting: return package.general.flags.contains(.ignoreCombat)
+        case .fighting:
+            return package.general.flags.contains(.ignoreCombat)
+                || runtime.source(for: actor) == .situation(.combat)
         case .dead: return false
         }
     }
@@ -99,6 +101,7 @@ extension PackageCoordinator {
     /// schedule walk stops with it, unless a fight now moves the actor.
     func leaveExecution(of actor: ReferenceKey) {
         waitingMoves[actor] = nil
+        paces[actor] = nil
         guard let execution = executions.removeValue(forKey: actor) else { return }
         if runtime?.completing(for: actor) == execution.package {
             runtime?.setCompleting(nil, actor: actor)
@@ -137,10 +140,12 @@ extension PackageCoordinator {
         )
     }
 
-    /// True while the actor's current package has the Ignore Combat flag.
+    /// True while the actor's current package has the Ignore Combat flag, or came from
+    /// its combat override list, which runs in place of combat.
     public func ignoresCombat(_ actor: ReferenceKey) -> Bool {
-        runtime?.currentPackage(for: actor)?.package.general.flags.contains(.ignoreCombat)
-            ?? false
+        guard let runtime else { return false }
+        let flags = runtime.currentPackage(for: actor)?.package.general.flags ?? []
+        return flags.contains(.ignoreCombat) || runtime.source(for: actor) == .situation(.combat)
     }
 
     /// Picks the actor's package again and starts its tree from the root, as the AI
@@ -173,7 +178,8 @@ extension PackageCoordinator {
             world.packageMoverHasRoom(for: walker)
                 ? world.movePackageActor(
                     walker, to: point,
-                    direct: execution?.isDirect ?? false, gait: execution?.gait
+                    direct: execution?.isDirect ?? false,
+                    gait: paces[actor] ?? execution?.gait
                 )
                 : .busy
         }

@@ -4,6 +4,7 @@
 // See docs/engine/object-animation.md.
 
 import OpenSkyActorPresentation
+import OpenSkyBehavior
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
 import OpenSkyRendering
@@ -13,7 +14,7 @@ nonisolated extension CellSceneBuilder {
     static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR"]
 
     /// The behaviour set of a base that can animate and whose mesh names one.
-    func objectBehavior(recordType: FourCC, modelPath: String) -> ObjectBehaviorAsset? {
+    func objectBehavior(recordType: FourCC, modelPath: String) -> BehaviorProjectAsset? {
         guard
             Self.animatedObjectTypes.contains(recordType),
             let fileSystem,
@@ -22,9 +23,9 @@ nonisolated extension CellSceneBuilder {
         if let known = objectBehaviorAssets[project] {
             return known
         }
-        var asset: ObjectBehaviorAsset?
+        var asset: BehaviorProjectAsset?
         do {
-            asset = try ObjectBehaviorAsset.load(fileSystem: fileSystem, projectPath: project)
+            asset = try BehaviorProjectAsset.load(fileSystem: fileSystem, projectPath: project)
         } catch {
             let reason = String(describing: error)
             Self.logger.warning(

@@ -23,9 +23,8 @@ nonisolated extension ConditionFunctions {
                 situation(call) { Self.isTrue(read($0, $1)) }
             })
         }
-        // OpenSky gives no trespass warning: the bounty is set on entry.
         registry.register(ConditionFunction(index: 144, name: "GetTrespassWarningLevel") { call in
-            situation(call) { _, _ in 0 }
+            situation(call) { situation, warner in Float(situation.trespassWarnings[warner] ?? 0) }
         })
         registry.register(ConditionFunction(index: 499, name: "GetDaysInJail") { call in
             situation(call) { situation, _ in Float(situation.lastSentenceDays) }

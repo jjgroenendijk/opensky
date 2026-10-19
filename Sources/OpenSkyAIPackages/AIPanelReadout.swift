@@ -105,11 +105,31 @@ nonisolated public enum AIPackageReadout: Sendable {
         }
         let lines = [
             header, selectionText(for: package), scheduleText(for: package.schedule),
+            listText(for: package),
             snapshot.procedure.map(procedureStateText(for:)),
             runningText(for: snapshot.runningProcedures),
             snapshot.carrier.map { "Riding: \($0)" }
         ]
         return lines.compactMap(\.self).joined(separator: "\n")
+    }
+
+    /// Which list the package came from, and the situation the actor is in.
+    public static func listText(for package: PackageActorReadout) -> String {
+        let list = package.source.map(sourceText(for:)) ?? "none"
+        let situation = package.situation.map { ", situation \($0.rawValue)" } ?? ""
+        let script = package.scriptPackage.map { ", script package \($0)" } ?? ""
+        return "List: \(list)\(situation)\(script)"
+    }
+
+    static func sourceText(for source: PackageSource) -> String {
+        switch source {
+        case .scene: "scene"
+        case .script: "script package"
+        case let .situation(situation): "\(situation.rawValue) override"
+        case .alias: "quest alias"
+        case .own: "own"
+        case .defaults: "default list"
+        }
     }
 
     /// Where the current package's procedure is, such as

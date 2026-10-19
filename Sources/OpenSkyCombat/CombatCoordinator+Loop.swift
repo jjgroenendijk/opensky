@@ -59,6 +59,39 @@ extension CombatCoordinator: CombatLoopWorld {
         world.packageIgnoresCombat(key)
     }
 
+    /// `Confidence` is actor value 1 (UESP "Actor Value Indices").
+    public func combatTemperament(
+        of key: ReferenceKey, toward target: ReferenceKey
+    ) -> CombatTemperament? {
+        guard
+            usesTemperament,
+            let confidence = world.actorValues(of: key)?(Self.confidenceIndex)
+        else { return nil }
+        return CombatTemperament(
+            confidence: confidence,
+            modifier: CombatTemperament.modifier(for: key),
+            strengthRatio: CombatTemperament.strengthRatio(
+                level: world.level(of: key) ?? 1,
+                healthFraction: combatHealthFraction(of: key),
+                targetLevel: world.level(of: target) ?? 1,
+                targetHealthFraction: combatHealthFraction(of: target)
+            )
+        )
+    }
+
+    /// `Assistance` is actor value 5 (UESP "Actor Value Indices").
+    public func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
+        guard
+            usesTemperament,
+            let value = world.actorValues(of: helper)?(Self.assistanceIndex),
+            let reaction = world.reaction(of: helper, toward: ally)
+        else { return false }
+        return CombatAssistance(value: value).helps(reaction)
+    }
+
+    static let confidenceIndex: Int32 = 1
+    static let assistanceIndex: Int32 = 5
+
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         meleeBlock(of: key)
     }

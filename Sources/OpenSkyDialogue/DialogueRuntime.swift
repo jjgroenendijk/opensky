@@ -140,6 +140,11 @@ public struct DialogueRuntime: DialogueAccess {
         ).offers.first
     }
 
+    /// Selection over the topics of one `SNAM` subtype, such as `TRES` trespass lines.
+    public func topics(subtype: FourCC, speaker: ReferenceKey) -> DialogueSelection {
+        selectTopics(dialogue.sortedTopics().filter { $0.subtype == subtype }, speaker: speaker)
+    }
+
     /// Selection restricted to the topics `ids` names, which is what a chosen
     /// response's TCLT links produce.
     public func topics(linked ids: [FormID], speaker: ReferenceKey) -> DialogueSelection {

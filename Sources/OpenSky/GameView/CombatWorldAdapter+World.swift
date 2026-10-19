@@ -202,6 +202,18 @@ extension CombatWorldAdapter: CombatWorld {
         game.packages.ignoresCombat(key)
     }
 
+    func level(of key: ReferenceKey) -> Int? {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return nil }
+        return runtime.baseline(of: holder).level
+    }
+
+    func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
+        game.factions.reaction(of: observer, toward: target)
+    }
+
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         game.magic.enchantmentProfile(of: item)
     }

@@ -37,6 +37,8 @@ extension PackageProcedureInputs {
         case .sit: result.seat = targets.first.flatMap(resolver.seat(in:))
         case .orbit: result.setup = orbit(result.setup)
         case .hover: result.setup.destination = result.setup.destination.map { $0 + height }
+        // SuspiciousOf is usually PlayerFaction, which names no one reference.
+        case .guardArea where result.setup.watched == nil: result.setup.watched = .player
         default: break
         }
         if let seat = result.seat {

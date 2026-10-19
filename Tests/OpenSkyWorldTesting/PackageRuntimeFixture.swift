@@ -46,7 +46,8 @@ public enum PackageRuntimeFixture {
         id: UInt32,
         templateFlags: UInt16 = 0,
         template: UInt32? = nil,
-        packages: [UInt32]
+        packages: [UInt32],
+        extraFields: Data = Data()
     ) throws -> ActorBase {
         var acbs = Data(count: 18)
         acbs.appendUInt16(templateFlags)
@@ -58,6 +59,7 @@ public enum PackageRuntimeFixture {
         for package in packages {
             fields += formIDField("PKID", package)
         }
+        fields += extraFields
         return try ActorBase(
             record: PackageFixture.parse(ESMFixture.record("NPC_", formID: id, data: fields)),
             localized: false

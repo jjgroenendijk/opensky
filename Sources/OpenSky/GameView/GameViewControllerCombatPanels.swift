@@ -75,6 +75,11 @@ extension GameViewController: CombatLoopControlProviding {
         set { combat.isActorCastingEnabled = newValue }
     }
 
+    var usesCombatTemperament: Bool {
+        get { combat.usesCombatTemperament }
+        set { playerSettingsStore.set(.combatTemperament, to: newValue ? 1 : 0) }
+    }
+
     func clearCombatTrace() {
         combat.clearCombatTrace()
     }

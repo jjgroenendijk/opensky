@@ -15,6 +15,9 @@ nonisolated public enum AINavigationActionOutcome: Equatable, Sendable {
     case stopped(actor: String, hadMover: Bool)
     case noPackageStack(actor: String)
     case reevaluated(actor: String, PackageActorReadout)
+    case unknownPackage(String)
+    /// Nil `package` removed the script package.
+    case scriptPackage(actor: String, package: String?)
 
     public var text: String {
         switch self {
@@ -32,6 +35,9 @@ nonisolated public enum AINavigationActionOutcome: Equatable, Sendable {
         case let .noPackageStack(actor): "\(actor) has no package stack registered."
         case let .reevaluated(actor, readout):
             "Reevaluated \(actor): " + AIPackageReadout.selectionText(for: readout)
+        case let .unknownPackage(name): "No package is named \(name)."
+        case let .scriptPackage(actor, package?): "\(actor) runs script package \(package)."
+        case let .scriptPackage(actor, nil): "\(actor) has no script package."
         }
     }
 }

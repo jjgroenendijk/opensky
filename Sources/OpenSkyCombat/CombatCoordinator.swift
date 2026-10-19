@@ -22,6 +22,9 @@ public final class CombatCoordinator {
     public private(set) var items: ItemDefinitionStore?
     /// Fighting actors may cast their spells unless the panel turns it off.
     public private(set) var allowsActorCasting = true
+    /// Confidence decides engaging and fleeing, and Assistance brings allies into a
+    /// fight. Off keeps the flat health-fraction rule and lone fighters.
+    public var usesTemperament = true
     public internal(set) var actorCastCount = 0
     let world: any CombatWorld
     /// What this step asked of the app. A frame step returns and empties it.
