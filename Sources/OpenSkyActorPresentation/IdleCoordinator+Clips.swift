@@ -83,6 +83,28 @@ extension IdleCoordinator {
         return ActorPropAttachment(modelPath: modelPath, bone: bone)
     }
 
+    /// Shows or removes the object an annotation names. It replaces the graph's prop,
+    /// because an actor carries one prop. The player has no playback, so no prop.
+    func applyAnimationObject(_ name: String, to playing: inout Playing, on actor: ReferenceKey) {
+        guard
+            playing.playback != nil,
+            let change = IdleCore.objectChange(
+                for: name, objects: playing.animationObjects, shown: playing.shownObject
+            )
+        else { return }
+        switch change {
+        case let .show(object):
+            guard let prop = Self.attachment(object.prop) else { return }
+            world?.setProp(prop, on: actor)
+            playing.hasProp = true
+            playing.shownObject = object
+        case .remove:
+            world?.setProp(nil, on: actor)
+            playing.hasProp = false
+            playing.shownObject = nil
+        }
+    }
+
     /// Drops the prop of the idle that ends. A finite clip retires on its own; a held
     /// one is stopped.
     func endIdle(of actor: ReferenceKey) {

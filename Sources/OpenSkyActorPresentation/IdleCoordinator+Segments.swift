@@ -57,7 +57,8 @@ extension IdleCoordinator {
             clip: segment.clip, start: start, end: start + seconds, hasProp: playing.hasProp,
             exitEvents: playing.exitEvents, loopEnd: held && duration > 0 ? start + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: playing.events + events,
-            marks: marks, followUps: followUps, holdsLast: playing.holdsLast
+            marks: marks, followUps: followUps, holdsLast: playing.holdsLast,
+            animationObjects: playing.animationObjects, shownObject: playing.shownObject
         )
     }
 }

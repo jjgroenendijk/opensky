@@ -2,6 +2,7 @@
 // markers, which marker an actor takes, and how long one idle plays.
 // See docs/engine/idle-runtime.md.
 
+import Foundation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
@@ -212,6 +213,32 @@ nonisolated extension IdleCore {
             + markEvents(marks, clipDuration: clipDuration, seconds: seconds)
             + notify.exit.map { IdleAnimationEvent(time: seconds, name: $0) }
     }
+}
+
+nonisolated extension IdleCore {
+    /// What an annotation does to the idle's animation object: `AnimObjDraw` shows a
+    /// named one, and the shown object's own unload event takes it off.
+    public static func objectChange(
+        for name: String, objects: [IdleAnimationObject], shown: IdleAnimationObject?
+    ) -> IdleObjectChange? {
+        if
+            case let .draw(editorID)? = AnimationObjectEvent.parse(name),
+            let object = objects.first(where: {
+                $0.editorID.caseInsensitiveCompare(editorID) == .orderedSame
+            })
+        {
+            return .show(object)
+        }
+        if let unload = shown?.unloadEvent, name.caseInsensitiveCompare(unload) == .orderedSame {
+            return .remove
+        }
+        return nil
+    }
+}
+
+nonisolated public enum IdleObjectChange: Equatable, Sendable {
+    case show(IdleAnimationObject)
+    case remove
 }
 
 /// One clip annotation an idle sends, at seconds from the idle's start.

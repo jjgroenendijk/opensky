@@ -57,7 +57,7 @@ public final class IdleCoordinator {
         let start: Float
         /// Infinite while a looping state holds until another idle replaces it.
         let end: Float
-        let hasProp: Bool
+        var hasProp: Bool
         /// What the state sends when another idle replaces it before it ends.
         var exitEvents: [String] = []
         /// When a held idle's current loop ends and its annotations repeat.
@@ -73,6 +73,9 @@ public final class IdleCoordinator {
         var followUps: [Segment] = []
         /// The last clip of the chain holds until another idle replaces it.
         var holdsLast = false
+        /// The objects the clips' annotations name, and the one on the actor now.
+        var animationObjects: [IdleAnimationObject] = []
+        var shownObject: IdleAnimationObject?
     }
 
     /// One loaded clip of an idle's chain and the triggers its generator raises.
@@ -230,6 +233,7 @@ public final class IdleCoordinator {
             playing.repeatLoops(until: now)
             let due = playing.events.prefix { $0.time <= now }
             playing.events.removeFirst(due.count)
+            due.forEach { applyAnimationObject($0.name, to: &playing, on: actor.key) }
             session.playing = playing
             due.forEach { onAnimationEvent?(actor.key, $0.name) }
             if now >= playing.end, !playing.followUps.isEmpty {
@@ -414,7 +418,8 @@ extension IdleCoordinator {
             clip: clip, start: now, end: now + seconds, hasProp: prop != nil,
             exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: events, marks: marks,
-            followUps: chain.followUps, holdsLast: chain.holdsLast
+            followUps: chain.followUps, holdsLast: chain.holdsLast,
+            animationObjects: plan.animationObjects
         )
     }
 
