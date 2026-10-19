@@ -60,8 +60,10 @@ and at least one second later.
 ## Playback
 
 An `IDLE` names a behavior file (`DNAM`), or takes its nearest ancestor's
-([IDLE](/formats/idle.md#idle)), and an animation event (`ENAM`). OpenSky does not
-run a behavior graph for NPCs, so it resolves the clip statically:
+([IDLE](/formats/idle.md#idle)), and an animation event (`ENAM`). An NPC that runs its own
+graph ([actor graphs](/engine/actor-graphs.md)) gets the event, and the graph plays the idle.
+For an actor without a running graph, such as one past the graph distance, OpenSky resolves
+the clip statically:
 
 1. Open the behavior file and its project folder, for example
    `meshes\actors\character\behaviors\0_master.hkx`.

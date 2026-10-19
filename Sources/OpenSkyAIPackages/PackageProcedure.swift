@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 
@@ -31,6 +32,8 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
 
 nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case move(to: SIMD3<Float>)
+    /// The gait the next moves use, over the package's own; nil gives it back.
+    case pace(LocomotionGait?)
     case playLoop(PackageLoopClip)
     /// Seat the actor in the furniture its package names.
     case sit
@@ -97,6 +100,8 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     static let followSlack: Float = 128
     /// How close a greeter walks to the player before it speaks.
     static let greetDistance: Float = 150
+    /// `fFollowStartSprintDistance`: a follower this far behind sprints to catch up.
+    static let followSprintDistance: Float = 300
 
     public let setup: PackageProcedureSetup
     /// Times a repeatable patrol went back to its first point.
@@ -110,6 +115,11 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     var targetIndex = 0
     /// Where the last move went, so a follower walks again only when its target moved.
     var lastGoal: SIMD3<Float>?
+    /// The gait a follower last asked for.
+    var pace: LocomotionGait?
+    /// The warnings a guard gave the intruder now in its warn radius.
+    public internal(set) var warnings = 0
+    var warnCooldown: Float = 0
 
     public var kind: PackageProcedureKind {
         setup.kind
@@ -193,6 +203,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     }
 
     private mutating func handleTick(_ delta: Float) -> [PackageProcedureCommand] {
+        warnCooldown = max(0, warnCooldown - delta)
         switch state {
         case let .idleStop(remaining):
             guard remaining - delta <= 0 else {
@@ -207,7 +218,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             }
             return start()
         case let .acting(remaining?):
-            state = remaining - delta <= 0 ? .complete :
+            state = remaining - delta <= 0 ? stateAfterAct :
                 .acting(secondsRemaining: remaining - delta)
             return []
         case .waiting:
@@ -226,10 +237,10 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         guard state == .acting(secondsRemaining: nil) else { return [] }
         switch result {
         case .done:
-            state = kind == .useWeapon && setup.flag ? .waiting : .complete
+            state = stateAfterAct
             return []
         case let .lasts(seconds):
-            state = seconds > 0 ? .acting(secondsRemaining: seconds) : .complete
+            state = seconds > 0 ? .acting(secondsRemaining: seconds) : stateAfterAct
             return []
         case let .found(references):
             guard !references.isEmpty else {
@@ -239,9 +250,18 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             found = references
             state = .complete
             return []
+        case .failed where kind == .guardArea:
+            // A guard with no trespass line still counts the warning.
+            state = .waiting
+            return []
         case .failed:
             return retryNextTarget()
         }
+    }
+
+    /// A guard and a repeating UseWeapon keep holding after each act.
+    private var stateAfterAct: PackageProcedureState {
+        kind == .guardArea || (kind == .useWeapon && setup.flag) ? .waiting : .complete
     }
 
     /// Acquire takes the next item of its list when one cannot be picked up.

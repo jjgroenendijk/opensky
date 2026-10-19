@@ -45,6 +45,9 @@ extension CombatLoopRuntime {
         {
             holdStill(actor.key, world: world)
         }
+        recruitAssistants(
+            among: actors, hostility: &hostility, ignoring: ignoring, world: world
+        )
         let candidates = actors
             .filter { actor in
                 guard let stance = hostility[actor.key] else { return false }
@@ -103,7 +106,8 @@ extension CombatLoopRuntime {
             isTargetAlive: true,
             isForced: engagesWithoutPerceiving(actor.key),
             casting: world.combatCasting(of: actor.key),
-            influence: influence
+            influence: influence,
+            temperament: world.combatTemperament(of: actor.key, toward: player.key)
         ))
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)

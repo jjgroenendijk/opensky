@@ -278,6 +278,8 @@ final class GameViewController: NSViewController {
     lazy var vehicleWorld = VehicleWorldAdapter(game: self)
     /// Traps, doors, and levers that a behaviour graph runs.
     lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
+    /// The behaviour graph each loaded NPC and creature runs.
+    lazy var actorGraphWorld = ActorGraphWorldAdapter(game: self)
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

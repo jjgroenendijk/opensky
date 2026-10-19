@@ -48,6 +48,7 @@ protocol CombatWorldHost: AnyObject {
     var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
+    var playerSettingsStore: PlayerSettingsStore { get }
     var progression: ProgressionCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
@@ -136,6 +137,13 @@ final class CombatWorldAdapter {
         let combat = game.combat
         combat.difficultySettings = provider.difficultySettings
         combat.wireLoop(settings: settings)
+        let store = game.playerSettingsStore
+        combat.load(settings: store)
+        // The launcher page writes the switch while a session runs.
+        store.observe { [weak combat, weak store] id in
+            guard id == .combatTemperament, let store else { return }
+            combat?.load(settings: store)
+        }
         gameSession.worldTick.register(.combatLoop) { [weak combat, weak self] delta in
             self?.run(combat?.advanceLoop(by: delta) ?? [])
             self?.updateNPCDrawStates()

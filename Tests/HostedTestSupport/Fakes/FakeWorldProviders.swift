@@ -24,6 +24,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var livingEnvironment = FakeLivingEnvironmentState()
     var faceState = FakeFaceState()
     var idleState = FakeIdleState()
+    var actorGraphState = FakeActorGraphState()
     var agentControlState = FakeAgentControlState()
     var presentationState = FakePresentationState()
 
@@ -40,9 +41,6 @@ final class FakeWorldProviders: WorldControlProviders {
     var shadowDrawStats = ShadowDrawStats()
     var shadowUpdateMS: Double = 0
     var shadowsActive = true
-    func refocusGameView() {
-        refocusCount += 1
-    }
 
     /// TerrainLODControlProviding
     var terrainLODConfigurationSnapshot = TerrainLODConfigurationSnapshot(

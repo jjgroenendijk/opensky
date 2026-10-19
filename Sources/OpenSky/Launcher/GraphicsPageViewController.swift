@@ -71,6 +71,12 @@ final class GraphicsPageViewController: NSViewController {
     let objectAnimationControl = NSButton(
         checkboxWithTitle: "Animated objects", target: nil, action: nil
     )
+    let actorGraphsControl = NSButton(
+        checkboxWithTitle: "Actor behaviour graphs", target: nil, action: nil
+    )
+    let combatTemperamentControl = NSButton(
+        checkboxWithTitle: "Confidence and Assistance", target: nil, action: nil
+    )
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
@@ -165,7 +171,8 @@ final class GraphicsPageViewController: NSViewController {
             layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [
                 layout.toggle(blinkingControl), layout.toggle(expressionsControl),
-                layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl)
+                layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl),
+                layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl)
             ]),
             layout.group("Texture memory", [
                 layout.toggle(textureStreamingControl),
@@ -218,6 +225,8 @@ final class GraphicsPageViewController: NSViewController {
         expressionsControl.state = store.bool(.characterDialogueExpressions) ? .on : .off
         headTrackingControl.state = store.bool(.characterHeadTracking) ? .on : .off
         objectAnimationControl.state = store.bool(.objectAnimation) ? .on : .off
+        actorGraphsControl.state = store.bool(.actorGraphs) ? .on : .off
+        combatTemperamentControl.state = store.bool(.combatTemperament) ? .on : .off
         for (button, setting) in surfaceShadingControls {
             button.state = store.bool(setting.id) ? .on : .off
         }

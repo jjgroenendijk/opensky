@@ -2,6 +2,7 @@
 // answers. See docs/engine/package-schedules.md, "Procedure machines".
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// One act of a procedure. The world answers each with a `PackageActionResult`.
@@ -26,6 +27,11 @@ nonisolated public enum PackageAction: Equatable, Sendable {
     case cast(Package.Target?, at: ReferenceKey?)
     /// Shout: the selected shout at the target.
     case shout(Package.Target?, at: ReferenceKey?)
+    /// Guard: draw the weapon and say a trespass line to the intruder. `level` counts
+    /// the warnings, the first one 1.
+    case warn(ReferenceKey, level: Int)
+    /// Guard: the intruder left, so put the weapon away.
+    case standDown
 }
 
 nonisolated public enum PackageActionResult: Equatable, Sendable {
@@ -42,9 +48,14 @@ nonisolated public enum PackageActionResult: Equatable, Sendable {
 nonisolated public struct PackageSenses: Equatable, Sendable {
     public let actor: SIMD3<Float>
     public let watched: SIMD3<Float>?
+    /// How the watched reference moves, so a follower can sprint or sneak with it.
+    public let watchedGait: LocomotionGait?
 
-    public init(actor: SIMD3<Float>, watched: SIMD3<Float>?) {
+    public init(
+        actor: SIMD3<Float>, watched: SIMD3<Float>?, watchedGait: LocomotionGait? = nil
+    ) {
         self.actor = actor
         self.watched = watched
+        self.watchedGait = watchedGait
     }
 }

@@ -55,20 +55,45 @@ nonisolated public struct FurnitureConditionResolution: ConditionResolution {
     }
 }
 
+/// One actor's running behaviour graph, read by variable name. Nil when the graph
+/// declares no such variable.
+nonisolated public protocol GraphVariableReading: Sendable {
+    func graphVariableInt(_ name: String) -> Int?
+    func graphVariableFloat(_ name: String) -> Float?
+}
+
 /// Behavior-graph variables per actor. An actor listed with no value for a name reads
-/// 0, as an actor whose graph does not run does.
+/// 0, as an actor whose graph does not run does. `graphs` holds the running graphs.
 nonisolated public struct GraphVariableResolution: ConditionResolution {
     public var values: [ReferenceKey: [String: Int]] = [:]
     public var floats: [ReferenceKey: [String: Float]] = [:]
+    public var graphs: [ReferenceKey: any GraphVariableReading] = [:]
 
     public static let empty = GraphVariableResolution()
 
     public init(
         values: [ReferenceKey: [String: Int]] = [:],
-        floats: [ReferenceKey: [String: Float]] = [:]
+        floats: [ReferenceKey: [String: Float]] = [:],
+        graphs: [ReferenceKey: any GraphVariableReading] = [:]
     ) {
         self.values = values
         self.floats = floats
+        self.graphs = graphs
+    }
+
+    /// The integer value, from a running graph before a listed table.
+    public func int(_ name: String, of actor: ReferenceKey) -> Float? {
+        if let graph = graphs[actor] {
+            return Float(graph.graphVariableInt(name) ?? 0)
+        }
+        return values[actor].map { $0[name].map(Float.init) ?? 0 }
+    }
+
+    public func float(_ name: String, of actor: ReferenceKey) -> Float? {
+        if let graph = graphs[actor] {
+            return graph.graphVariableFloat(name) ?? 0
+        }
+        return floats[actor].map { $0[name] ?? 0 }
     }
 }
 
@@ -110,14 +135,14 @@ nonisolated extension ConditionFunctions {
         }
         registry.register(ConditionFunction(index: 675, name: "GetGraphVariableInt") { call in
             graphVariable(call, index: 675) { graph, actor, name in
-                graph.values[actor].map { $0[name].map(Float.init) ?? 0 }
+                graph.int(name, of: actor)
             }
         })
         registry.register(ConditionFunction(
             index: 447, name: "GetGraphVariableFloat"
         ) { call in
             graphVariable(call, index: 447) { graph, actor, name in
-                graph.floats[actor].map { $0[name] ?? 0 }
+                graph.float(name, of: actor)
             }
         })
         installCurrentFurniture(&registry)

@@ -21,6 +21,8 @@ public protocol PackageWorld: AnyObject {
     func packageConditionContext(clock: GameClock) -> ConditionContext
     /// Where the actor stands now. Nil when it is not loaded.
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>?
+    /// How the actor moves now: sprint and sneak make a follower match it.
+    func packageActorGait(_ actor: ReferenceKey) -> LocomotionGait?
     /// The world point a package location names, or nil when OpenSky cannot place it.
     func packagePlace(
         of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
@@ -58,6 +60,9 @@ public protocol PackageWorld: AnyObject {
     func stopPackageActor(_ actor: ReferenceKey)
     /// What keeps the actor from running its own package now, such as a fight.
     func packageActorActivity(_ actor: ReferenceKey) -> PackageActorActivity
+    /// The code-driven behaviour each actor is in, which picks an override package list.
+    /// One call for all, so the world scans its actors once.
+    func packageSituations(of actors: [ReferenceKey]) -> [ReferenceKey: PackageSituation]
     /// False when every mover slot is taken and `actor` has none, so a move would wait.
     func packageMoverHasRoom(for actor: ReferenceKey) -> Bool
     /// True while the idle runtime holds an idle marker for the actor.
@@ -72,6 +77,10 @@ nonisolated public enum PackageActorActivity: Equatable, Sendable {
 }
 
 extension PackageWorld {
+    public func packageActorGait(_: ReferenceKey) -> LocomotionGait? {
+        nil
+    }
+
     public func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
         [:]
     }
@@ -116,6 +125,16 @@ extension PackageWorld {
 
     public func packageActorActivity(_: ReferenceKey) -> PackageActorActivity {
         .free
+    }
+
+    public func packageSituations(
+        of actors: [ReferenceKey]
+    ) -> [ReferenceKey: PackageSituation] {
+        actors.reduce(into: [:]) { result, actor in
+            if packageActorActivity(actor) == .fighting {
+                result[actor] = .combat
+            }
+        }
     }
 
     public func packageMoverHasRoom(for _: ReferenceKey) -> Bool {
@@ -191,6 +210,8 @@ public final class PackageCoordinator {
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
     /// Walks that found no free mover slot, by actor.
     var waitingMoves: [ReferenceKey: PackagePendingMove] = [:]
+    /// A follower's gait, which overrides its package's preferred speed.
+    var paces: [ReferenceKey: LocomotionGait] = [:]
     var nextMoveTicket = 0
     public var seats = PackageSeatLedger()
     /// The newest move result per actor, for `state packages`.
@@ -251,20 +272,22 @@ public final class PackageCoordinator {
             registeredActors[arrival.actor] = arrival.base
         }
 
+        var context: ConditionContext?
+        let live = {
+            if let context {
+                return context
+            }
+            let fresh = world.packageConditionContext(clock: clock)
+            context = fresh
+            return fresh
+        }
         aliasRefreshSeconds -= delta
         if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
             aliasRefreshSeconds = Self.aliasRefreshInterval
             applyAliasStacks(world.packageAliasStacks(), to: &runtime, clock: clock)
         }
-        var context: ConditionContext?
-        runtime.advance(clock: clock) { _ in
-            if let context {
-                return context
-            }
-            let live = world.packageConditionContext(clock: clock)
-            context = live
-            return live
-        }
+        applySituations(to: &runtime, clock: clock, context: live)
+        runtime.advance(clock: clock) { _ in live() }
         self.runtime = runtime
         advanceTrees(by: delta)
     }

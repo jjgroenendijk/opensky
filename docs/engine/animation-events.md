@@ -27,13 +27,15 @@ a fire-and-forget spell. The payload shapes below come from the install's clips.
 
 ## Sources
 
-Three runtimes raise annotations, and all three send them to `AnimationEventCoordinator`:
+Four runtimes raise annotations, and all four send them to `AnimationEventCoordinator`:
 
 - the player's third-person graph, through its event queue. The first-person graph runs the same
   clips, so it is not read, or every sound would play twice;
 - the NPC idles. A player idle runs on the player's graph, so the idle runtime's copy of its
   events is not sent;
-- the object graphs, such as the sawmill and traps.
+- the object graphs, such as the sawmill and traps;
+- each NPC's and creature's own graph ([actor graphs](/engine/actor-graphs.md)). Its idle events
+  are not sent again by the idle runtime.
 
 A graph declares only some of these names as events. The vanilla player graph declares about a
 hundred `SoundPlay` names, such as the weapon draw sounds its states raise, but not the clip-only

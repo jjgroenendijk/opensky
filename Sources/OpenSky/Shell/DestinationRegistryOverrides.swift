@@ -212,10 +212,12 @@ extension DestinationRegistry {
         isOverridden: { context in
             AIOverlaySection.isOverridden(provider: context.aiOverlay)
                 || AIIdleSection.isOverridden(provider: context.idle)
+                || AIBehaviorGraphSection.isOverridden(provider: context.actorGraph)
         },
         resetToDefaults: { context in
             AIOverlaySection.resetToDefaults(provider: context.aiOverlay)
             AIIdleSection.resetToDefaults(provider: context.idle)
+            AIBehaviorGraphSection.resetToDefaults(provider: context.actorGraph)
         }
     )
 

@@ -128,6 +128,10 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
     /// True while `key`'s current AI package has the Ignore Combat flag.
     func packageIgnoresCombat(_ key: ReferenceKey) -> Bool
+    /// `key`'s level, or nil when it has no actor values.
+    func level(of key: ReferenceKey) -> Int?
+    /// What `observer` makes of `target` through factions and relationships.
+    func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
     /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
     @discardableResult
     func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
@@ -145,6 +149,14 @@ extension CombatWorld {
     }
 
     /// A session with no packages ignores nothing.
+    public func level(of _: ReferenceKey) -> Int? {
+        nil
+    }
+
+    public func reaction(of _: ReferenceKey, toward _: ReferenceKey) -> ActorReaction? {
+        nil
+    }
+
     public func packageIgnoresCombat(_: ReferenceKey) -> Bool {
         false
     }

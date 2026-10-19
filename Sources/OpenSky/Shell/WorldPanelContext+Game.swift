@@ -67,6 +67,7 @@ extension GamePanelServices {
 extension FeaturePanelServices {
     init(game: GameViewController) {
         self.init(
+            actorGraph: game.actorGraphWorld,
             agent: game.agentWorld,
             audio: game.audio,
             cinematicCamera: game.cinematicWorld,

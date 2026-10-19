@@ -364,6 +364,14 @@ nonisolated extension PlayerSettingID {
     public static let characterHeadTracking = Self("characters.headTracking")
     /// Traps, doors, and levers play their behaviour graph animations.
     public static let objectAnimation = Self("world.objectAnimation")
+    /// NPCs and creatures run their own behaviour graphs.
+    public static let actorGraphs = Self("characters.actorGraphs")
+    /// Up to this many units from the camera an actor's graph steps every frame.
+    public static let actorGraphFullRateDistance = Self("characters.actorGraphFullRateDistance")
+    /// Past this many units from the camera an actor's graph stops stepping.
+    public static let actorGraphDistance = Self("characters.actorGraphDistance")
+    /// Confidence decides who flees, and Assistance brings allies into a fight.
+    public static let combatTemperament = Self("combat.temperament")
     /// An index into `PlayerSettingsCatalog.frameRateCapOptions`.
     public static let frameRateCap = Self("window.frameRateCap")
 
@@ -386,6 +394,27 @@ nonisolated extension PlayerSettingsCatalog {
             applied: true
         ),
         row("characters.headTracking", .opensky, .toggle, "Head tracking", 1, applied: true),
-        row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true)
+        row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true),
+        row(
+            "combat.temperament", .opensky, .toggle, "Confidence and Assistance", 1,
+            applied: true
+        ),
+        row(
+            "characters.actorGraphs",
+            .opensky,
+            .toggle,
+            "Actor behaviour graphs",
+            1,
+            applied: true
+        ),
+        row(
+            "characters.actorGraphFullRateDistance", .opensky,
+            .slider(range: 0 ... 8192, step: 256), "Full-rate graph distance", 2048,
+            applied: true
+        ),
+        row(
+            "characters.actorGraphDistance", .opensky,
+            .slider(range: 0 ... 16384, step: 512), "Graph distance", 6144, applied: true
+        )
     ]
 }

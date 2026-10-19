@@ -18,6 +18,7 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
     let combatSection = AICombatSection()
     let headSection = AIHeadAssemblySection()
     let idleSection = AIIdleSection()
+    let graphSection = AIBehaviorGraphSection()
 
     /// Weak throughout, for the reason every other panel holds its providers
     /// weakly: the game controller owns this panel's parent and the renderer,
@@ -26,7 +27,7 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
         didSet { overlaySection.provider = overlayProvider }
     }
 
-    /// The shared selection. Four sections read it, so it is assigned to all of
+    /// The shared selection. Several sections read it, so it is assigned to all of
     /// them from one place rather than being threaded through each.
     weak var navigationProvider: (any AINavigationControlProviding)? {
         didSet {
@@ -37,6 +38,7 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
             combatSection.selectionProvider = navigationProvider
             headSection.selectionProvider = navigationProvider
             idleSection.selectionProvider = navigationProvider
+            graphSection.selectionProvider = navigationProvider
         }
     }
 
@@ -46,6 +48,10 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
 
     weak var idleProvider: (any IdleControlProviding)? {
         didSet { idleSection.provider = idleProvider }
+    }
+
+    weak var graphProvider: (any ActorGraphControlProviding)? {
+        didSet { graphSection.provider = graphProvider }
     }
 
     weak var perceptionProvider: (any PerceptionControlProviding)? {
@@ -59,7 +65,8 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             overlaySection, actorSection, movementSection,
-            packageSection, detectionSection, combatSection, headSection, idleSection
+            packageSection, detectionSection, combatSection, headSection, idleSection,
+            graphSection
         ]
     }
 

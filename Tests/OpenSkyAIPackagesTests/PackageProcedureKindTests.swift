@@ -3,6 +3,7 @@
 
 @testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
+import OpenSkyPhysics
 @testable import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd
@@ -78,8 +79,8 @@ struct PackageProcedureKindTests {
         }
         #expect(machine.start().isEmpty)
         let target = SIMD3<Float>(500, 0, 0)
-        #expect(machine
-            .handle(.sensed(.init(actor: .zero, watched: target))) == [.move(to: target)])
+        #expect(machine.handle(.sensed(.init(actor: .zero, watched: target)))
+            == [.pace(.sprint), .move(to: target)])
         let step = SIMD3<Float>(550, 0, 0)
         #expect(machine.handle(.sensed(.init(actor: .zero, watched: step))).isEmpty)
         _ = machine.handle(.arrived)

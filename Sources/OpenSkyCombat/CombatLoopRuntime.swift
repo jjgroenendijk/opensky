@@ -116,6 +116,14 @@ public final class CombatLoopRuntime: CombatControlling {
         }
     }
 
+    /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
+    /// hostile and engages without first having to see the player.
+    func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
+        guard provoke(actor) else { return }
+        provoked.insert(actor)
+        record(.assisted(actor, ally: ally))
+    }
+
     /// Interrupts `key`'s attack and plays its stagger clip.
     ///
     /// A charge in the actor's hand goes with the attack: the same blow that

@@ -38,7 +38,7 @@ struct FrameScheduleTests {
     @Test func theWorldTickOrderIsPinned() {
         #expect(WorldTickStep.allCases == [
             .survivalMode, .scripts, .actorValues, .magicEffects, .archery, .ragdoll, .combatLoop,
-            .packages, .perception, .idles, .vehicles, .objectAnimation,
+            .packages, .perception, .idles, .actorGraphs, .vehicles, .objectAnimation,
             .dialogueCamera, .story
         ])
     }

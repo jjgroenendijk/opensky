@@ -46,7 +46,9 @@ extension IdleCoordinator {
         let held = followUps.isEmpty && playing.holdsLast
         let seconds = held ? Float.infinity : duration
         let playback = world?.actorPlayback(for: actor)
-        playback?.play(segment.clip, startingAt: start, forSeconds: seconds)
+        if !playing.throughGraph {
+            playback?.play(segment.clip, startingAt: start, forSeconds: seconds)
+        }
         let marks = Self.marks(of: segment)
         let exit = followUps.isEmpty && !held ? playing.exitEvents : []
         let events = IdleCore.playEvents(
@@ -58,7 +60,8 @@ extension IdleCoordinator {
             exitEvents: playing.exitEvents, loopEnd: held && duration > 0 ? start + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: playing.events + events,
             marks: marks, followUps: followUps, holdsLast: playing.holdsLast,
-            animationObjects: playing.animationObjects, shownObject: playing.shownObject
+            animationObjects: playing.animationObjects, shownObject: playing.shownObject,
+            throughGraph: playing.throughGraph
         )
     }
 }

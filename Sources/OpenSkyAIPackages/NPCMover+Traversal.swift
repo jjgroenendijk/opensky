@@ -48,7 +48,9 @@ extension NPCMover {
         switch gait {
         case .swim: configuration.swimSpeed.value
         case .run: configuration.runSpeed.value
-        default: configuration.walkSpeed.value
+        case .sprint: configuration.sprintSpeed.value
+        case .sneak: configuration.sneakSpeed.value
+        case .walk: configuration.walkSpeed.value
         }
     }
 

@@ -127,8 +127,9 @@ the block chance means what it says: per attack, not per sixtieth of a second.
 
 ## Fleeing
 
-At or below the flee health fraction, an actor stops fighting and runs. It asks for a point at the
-flee distance along the line from the target through itself, turned by a seeded angle. So a straight
+When its Confidence breaks it off (see Confidence and Assistance), or without one at or below
+the flee health fraction, an actor stops fighting and runs. It asks for a point at the flee
+distance along the line from the target through itself, turned by a seeded angle. So a straight
 line into whatever is behind it is not the only try, and two actors fleeing one swing scatter. It
 asks again each command interval until it is past the break distance, and then leaves the fight.
 
@@ -137,6 +138,39 @@ Health rising above the threshold does not bring it back: nothing heals an NPC m
 actor that ran and then turned around again would be hard to read. An actor still under the
 threshold does not start a fight at all, so the one it fled from does not restart the moment it
 looks back.
+
+## Confidence and Assistance
+
+The AI Data tab gives each actor a Confidence and an Assistance (<https://ck.uesp.net/wiki/AI_Data_Tab>).
+OpenSky reads both as actor values, 1 and 5, so a script that sets them is followed.
+
+Confidence decides when an actor breaks off. Cowardly "will always flee" and foolhardy "will
+never flee". For the levels between, the wiki gives only words, so the numbers are OpenSky's.
+The actor compares its strength with its target's:
+
+- strength = own health fraction / target health fraction × √(level ratio)
+- the level ratio is clamped to 0.5 through 2, so a low-level wolf at full health still fights
+- it breaks off below 2^(1 − confidence − modifier): cautious unless stronger (1), average
+  when much weaker (0.5), brave when overwhelmingly weaker (0.25)
+- the modifier is fixed per actor in −0.5 to 0.5, the range of `fCombatConfidenceModifierMin`
+  and `...Max`, so a crowd of one record does not run at one moment
+
+An actor whose Confidence breaks it off flees as soon as it detects its enemy, instead of
+starting a fight. Without actor values, the flee health fraction below is the rule.
+
+Assistance decides who joins. A calm living actor within 2,048 units of an engaged one joins
+the fight when it helps that actor: "helps allies" for an ally reaction, "helps friends and
+allies" for a friend too. The reaction is the faction and relationship one
+([hostility](/engine/hostility.md)). The radius is OpenSky's; the wiki names none.
+
+Members of one faction are allies only when the faction lists itself as one
+(<https://ck.uesp.net/wiki/Faction>). On the install, `BanditFaction` does, so bandits help each
+other. `GuardFactionWhiterun` and `CrimeFactionWhiterun` do not, so Whiterun guards do not join
+each other's fights through Assistance.
+
+The Combat Loop section and the launcher's graphics page share a saved switch, Confidence and
+Assistance. Off gives the flat health rule and lone fighters. The readout shows the selected
+actor's Confidence, strength, decision, and Assistance.
 
 ## Searching and giving up
 

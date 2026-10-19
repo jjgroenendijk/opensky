@@ -226,7 +226,9 @@ struct WorldAudioFootstepDirectorTests {
     /// Store shaped like vanilla's humanoid sets: a default set answering
     /// `FootLeft` while walking and `FootSprintLeft` while sprinting, a boot
     /// set the armature `0x900` declares, and nothing for swimming.
-    private func makeDirector(engine: WorldAudioEngine) -> WorldAudioFootstepDirector {
+    func makeDirector(
+        engine: WorldAudioEngine, outputModel: UInt32? = nil
+    ) -> WorldAudioFootstepDirector {
         WorldAudioFootstepDirector(
             engine: engine,
             footstepStore: Self.makeFootstepStore(),
@@ -234,7 +236,8 @@ struct WorldAudioFootstepDirectorTests {
                 soundID: 0xAAA,
                 descriptorID: 0xAAA,
                 tracks: ["fx/fst/step.xwm"],
-                category: .footsteps
+                category: .footsteps,
+                outputModel: outputModel
             ),
             // Stubbed: the director hands the engine whatever bytes the loader
             // answers with, so these cases use the shared `.xwm` fixture and

@@ -28,9 +28,9 @@ public protocol IdleWorld: AnyObject {
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
     /// Shows a prop on the actor, or removes it with nil. It rebuilds no cell.
     func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey)
-    /// Sends an idle's event to an actor that runs its own behavior graph, the player.
-    /// `state` is the graph state the event enters, when the graph walk found it.
-    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey)
+    /// Sends an idle's event to an actor that runs its own behavior graph. `state` is the
+    /// graph state the event enters, when the graph walk found it. False when no graph took it.
+    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool
 }
 
 @MainActor
@@ -76,6 +76,8 @@ public final class IdleCoordinator {
         /// The objects the clips' annotations name, and the one on the actor now.
         var animationObjects: [IdleAnimationObject] = []
         var shownObject: IdleAnimationObject?
+        /// The actor's own graph plays the clips and sends their annotations.
+        var throughGraph = false
     }
 
     /// One loaded clip of an idle's chain and the triggers its generator raises.
@@ -109,6 +111,8 @@ public final class IdleCoordinator {
     public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
     /// The player has no playback, so a player idle only times its events with this rig.
     static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
+    /// The event that returns a graph from a held idle, as `Debug.SendAnimationEvent` sends it.
+    static let defaultStateEvent = "IdleForceDefaultState"
         + "character assets\\skeleton.nif"
     let random: (Int) -> Int
 
@@ -235,13 +239,16 @@ public final class IdleCoordinator {
             playing.events.removeFirst(due.count)
             due.forEach { applyAnimationObject($0.name, to: &playing, on: actor.key) }
             session.playing = playing
-            due.forEach { onAnimationEvent?(actor.key, $0.name) }
+            if !playing.throughGraph {
+                due.forEach { onAnimationEvent?(actor.key, $0.name) }
+            }
             if now >= playing.end, !playing.followUps.isEmpty {
                 session.playing = nextSegment(after: playing, on: actor.key)
             } else if now >= playing.end {
                 endIdle(of: actor.key)
                 session.playing = nil
             } else if
+                !playing.throughGraph,
                 let playback = world?.actorPlayback(for: actor.key),
                 ObjectIdentifier(playback) != playing.playback
             {
@@ -388,7 +395,8 @@ extension IdleCoordinator {
         ))
     }
 
-    /// The player has no playback; its clip only times the events.
+    /// The player has no playback, and a graph-driven NPC plays the idle through its
+    /// graph; for both, the clip only times the idle.
     private func start(
         _ chain: Chain, plan: IdlePlaybackPlan,
         on actor: ReferenceKey, for seconds: Float, now: Float
@@ -397,9 +405,15 @@ extension IdleCoordinator {
         let clip = segment.clip
         leaveState(of: actor, now: now)
         let playback = world?.actorPlayback(for: actor)
-        playback?.play(clip, startingAt: now, forSeconds: seconds)
-        if playback == nil, let event = plan.event {
-            world?.raiseIdleEvent(event, state: plan.state, on: actor)
+        let toGraph = playback == nil || playback?.isGraphDriven == true
+        let raised = toGraph && plan.event.map {
+            world?.raiseIdleEvent($0, state: plan.state, on: actor) ?? false
+        } ?? false
+        // A graph that took the event plays the clips and sends their annotations; the
+        // idle only times them, to show its animation objects.
+        let graphPlays = raised && playback != nil
+        if !graphPlays {
+            playback?.play(clip, startingAt: now, forSeconds: seconds)
         }
         let prop = playback == nil ? nil : Self.attachment(plan.prop)
         if prop != nil || sessions[actor]?.playing?.hasProp == true {
@@ -419,7 +433,7 @@ extension IdleCoordinator {
             exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: events, marks: marks,
             followUps: chain.followUps, holdsLast: chain.holdsLast,
-            animationObjects: plan.animationObjects
+            animationObjects: plan.animationObjects, throughGraph: graphPlays
         )
     }
 

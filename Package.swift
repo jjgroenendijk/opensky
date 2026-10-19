@@ -795,6 +795,7 @@ targets += domain(
         "OpenSkyTerrain",
         "OpenSkyRuntimeState",
         "OpenSkyActorPresentation",
+        "OpenSkyBehavior",
         "OpenSkyObjectAnimation",
         "OpenSkyPlayer",
         "OpenSkyAIPackages"

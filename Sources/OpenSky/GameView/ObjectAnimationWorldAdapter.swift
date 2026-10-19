@@ -19,6 +19,7 @@ import simd
 /// What `ObjectAnimationWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ObjectAnimationWorldHost: AnyObject {
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var playerSettingsStore: PlayerSettingsStore { get }
@@ -58,6 +59,9 @@ final class ObjectAnimationWorldAdapter {
             self?.forward(name, from: reference)
         }
         objects.onWaitFinished = { [weak self] token, fired in
+            self?.pendingAnswers[token] = fired
+        }
+        game.actorGraphWorld.graphs.onWaitFinished = { [weak self] token, fired in
             self?.pendingAnswers[token] = fired
         }
         gameSession.worldTick.register(.objectAnimation) { [weak self] delta in
@@ -107,18 +111,30 @@ extension ObjectAnimationWorldAdapter: ObjectBehaviorWorld {
     }
 }
 
+/// An object's own graph answers first; an actor's behaviour graph answers otherwise.
 extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
+    private var actorGraphs: ActorGraphCoordinator {
+        game.actorGraphWorld.graphs
+    }
+
     func playAnimation(_ event: String, on key: ReferenceKey) -> Bool {
-        guard let reference = reference(of: key) else { return false }
-        return objects.send(event, to: reference)
+        if let reference = reference(of: key), objects.send(event, to: reference) {
+            return true
+        }
+        return actorGraphs.raise(event, on: key)
     }
 
     func awaitAnimationEvent(_ event: String, on key: ReferenceKey) -> UInt64? {
         reference(of: key).flatMap { objects.awaitEvent(event, on: $0) }
+            ?? actorGraphs.awaitEvent(event, on: key)
     }
 
     func animationVariable(_ name: String, on key: ReferenceKey) -> PapyrusValue? {
-        switch reference(of: key).flatMap({ objects.variable(named: name, on: $0) }) {
+        let objectValue: BehaviorVariableValue? = reference(of: key).flatMap {
+            objects.variable(named: name, on: $0)
+        }
+        let value = objectValue ?? actorGraphs.variable(named: name, on: key)
+        return switch value {
         case let .bool(flag): .boolean(flag)
         case let .int(integer): .integer(integer)
         case let .real(real): .float(real)
@@ -131,14 +147,20 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
         to value: PapyrusValue,
         on key: ReferenceKey
     ) -> Bool {
-        guard let reference = reference(of: key) else { return false }
         let graphValue: BehaviorVariableValue? = switch value {
         case let .boolean(flag): .bool(flag)
         case let .integer(integer): .int(integer)
         case let .float(real): .real(real)
         default: nil
         }
-        return graphValue.map { objects.setVariable($0, named: name, on: reference) } ?? false
+        guard let graphValue else { return false }
+        if
+            let reference = reference(of: key),
+            objects.setVariable(graphValue, named: name, on: reference)
+        {
+            return true
+        }
+        return actorGraphs.setVariable(graphValue, named: name, on: key)
     }
 
     func openStateCode(of key: ReferenceKey) -> Int32? {

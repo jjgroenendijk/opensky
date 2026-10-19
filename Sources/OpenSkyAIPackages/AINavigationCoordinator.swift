@@ -173,6 +173,34 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         lastAction = .reevaluated(actor: name, readout)
     }
 
+    /// `AddScriptPackage` on the selected actor, by editor ID or hexadecimal FormID.
+    /// Nil or empty removes it, as `RemoveScriptPackage` does.
+    public func setSelectedAIActorScriptPackage(_ name: String?) {
+        let actors = actorOptions()
+        guard let key = AINavigationCore.resolve(chosenActor, in: actors) else {
+            lastAction = .noActor(verb: "add a script package")
+            return
+        }
+        let actor = AINavigationCore.name(of: key, in: actors)
+        guard packages.registeredActors[key] != nil else {
+            lastAction = .noPackageStack(actor: actor)
+            return
+        }
+        guard let name, !name.isEmpty else {
+            packages.setScriptPackage(nil, for: key)
+            lastAction = .scriptPackage(actor: actor, package: nil)
+            return
+        }
+        guard
+            let package = packages.store?.packageID(named: name),
+            packages.setScriptPackage(package, for: key)
+        else {
+            lastAction = .unknownPackage(name)
+            return
+        }
+        lastAction = .scriptPackage(actor: actor, package: name)
+    }
+
     private func actorOptions() -> [AIActorOption] {
         guard let world, let camera = world.camera else { return [] }
         return AINavigationCore.options(world.actorCandidates(), eye: camera.position)

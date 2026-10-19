@@ -27,6 +27,7 @@ import OpenSkyWorld
 
 typealias WorldControlProviders = AINavigationControlProviding
     & AIOverlayControlProviding
+    & ActorGraphControlProviding
     & ActorValueControlProviding
     & AgentControlProviding
     & AnimationControlProviding
@@ -164,6 +165,7 @@ extension GamePanelServices {
 extension FeaturePanelServices {
     init(providers: any WorldControlProviders) {
         self.init(
+            actorGraph: providers,
             agent: providers,
             audio: providers,
             cinematicCamera: providers,

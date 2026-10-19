@@ -45,6 +45,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var messageWorld: MessageWorldAdapter { get }
     var npcAnimation: NPCAnimationCoordinator { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var perception: PerceptionCoordinator { get }
     var playerWorld: PlayerWorldAdapter { get }
     var progressionWorld: ProgressionWorldAdapter { get }
@@ -233,6 +234,7 @@ final class WorldSessionWiring {
         game.aiWorld.wirePackages(provider: provider, gameSession: gameSession)
         game.aiWorld.wirePerception(provider: provider, gameSession: gameSession)
         game.idleWorld.wireIdles(provider: provider, gameSession: gameSession)
+        game.actorGraphWorld.wire(gameSession: gameSession)
         game.vehicleWorld.wireVehicles(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
         animationEvents.wire(gameSession: gameSession)

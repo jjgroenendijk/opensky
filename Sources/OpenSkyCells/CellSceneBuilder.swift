@@ -5,6 +5,7 @@
 import Foundation
 import Metal
 import OpenSkyActorPresentation
+import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -76,7 +77,7 @@ nonisolated public struct ResolvedInstance {
     public let surface: ModelSurfaceOverride
     public let transform: float4x4
     /// The behaviour set when `model` is this reference's own node-skinned copy.
-    public var animated: ObjectBehaviorAsset?
+    public var animated: BehaviorProjectAsset?
     /// The colour of the reference's `XEMI` light, for external-emittance shapes.
     public var emittance: SIMD3<Float>?
     /// A door whose `Open` and `Close` sequences move its leaves.
@@ -150,7 +151,7 @@ nonisolated public final class CellSceneBuilder {
     /// Painted chargen face color maps as DDS bytes, by their synthetic texture key.
     var faceTintTextures: [String: Data] = [:]
     /// Object behaviour sets by project path; nil inside records a failed load.
-    var objectBehaviorAssets: [String: ObjectBehaviorAsset?] = [:]
+    var objectBehaviorAssets: [String: BehaviorProjectAsset?] = [:]
     /// Sequence door rigs by mesh key; nil inside records a mesh without one.
     var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
     public let pluginName: String
@@ -528,7 +529,7 @@ nonisolated extension CellSceneBuilder {
         ref: PlacedReference,
         modelPath: String,
         surface: ModelSurfaceOverride,
-        behavior: ObjectBehaviorAsset?,
+        behavior: BehaviorProjectAsset?,
         counts: inout BuildCounts
     ) -> ResolvedInstance? {
         do {

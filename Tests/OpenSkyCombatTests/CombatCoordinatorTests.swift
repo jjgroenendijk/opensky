@@ -24,6 +24,16 @@ struct CombatCoordinatorTests {
         return coordinator
     }
 
+    @Test func theConfidenceAndAssistanceSwitchFollowsTheSavedSetting() {
+        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld())
+        let store = PlayerSettingsStore(persistence: nil)
+        coordinator.load(settings: store)
+        #expect(coordinator.usesCombatTemperament)
+        store.set(.combatTemperament, to: 0)
+        coordinator.load(settings: store)
+        #expect(!coordinator.usesCombatTemperament)
+    }
+
     @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
         let coordinator = CombatCoordinator(world: FakeCoordinatorWorld())
         #expect(coordinator.meleeCombatSnapshot == .unavailable)

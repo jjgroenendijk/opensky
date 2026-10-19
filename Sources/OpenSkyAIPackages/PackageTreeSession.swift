@@ -58,7 +58,10 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
 
     func senses(watching watched: ReferenceKey) -> PackageSenses? {
         world.packageActorPosition(actor).map {
-            PackageSenses(actor: $0, watched: world.packageActorPosition(watched))
+            PackageSenses(
+                actor: $0, watched: world.packageActorPosition(watched),
+                watchedGait: world.packageActorGait(watched)
+            )
         }
     }
 

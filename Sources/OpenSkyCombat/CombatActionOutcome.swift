@@ -56,6 +56,7 @@ nonisolated public enum CombatLoopOutcome: Equatable, Sendable {
     case hostility(actor: String, hostile: Bool)
     case scriptStarted(ReferenceKey)
     case scriptStopped(ReferenceKey)
+    case assisted(ReferenceKey, ally: ReferenceKey)
 
     public var text: String {
         switch self {
@@ -67,6 +68,8 @@ nonisolated public enum CombatLoopOutcome: Equatable, Sendable {
         case let .scriptStarted(actor):
             "Combat: a script started \(actor.description) fighting the player."
         case let .scriptStopped(actor): "Combat: a script stopped \(actor.description) fighting."
+        case let .assisted(actor, ally):
+            "Combat: \(actor.description) joined to help \(ally.description)."
         }
     }
 }

@@ -45,6 +45,12 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     public let actorCastCount: Int
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// Whether Confidence and Assistance are on: the panel's own switch.
+    public var usesTemperament = true
+    /// The selected actor's Confidence beside the player, when it is known.
+    public var selectedTemperament: CombatTemperament?
+    /// The selected actor's Assistance actor value, when it is known.
+    public var selectedAssistance: CombatAssistance?
 
     /// The reading with no runtime attached.
     public static let unavailable = CombatLoopSnapshot(
@@ -132,6 +138,9 @@ public protocol CombatLoopControlProviding: AnyObject {
     /// Whether fighting actors may cast. Turning it off separates "chose a swing" from
     /// "nothing deliverable". On by default.
     var isActorCastingEnabled: Bool { get set }
+
+    /// Whether Confidence decides fleeing and Assistance brings allies in. On by default.
+    var usesCombatTemperament: Bool { get set }
 
     /// Empties the incoming-hit trace and its count, without disturbing the
     /// fight.

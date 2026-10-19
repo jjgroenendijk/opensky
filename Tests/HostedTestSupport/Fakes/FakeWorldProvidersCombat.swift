@@ -178,6 +178,7 @@ struct FakeCombatLoopState {
     var traceClearCount = 0
     /// Whether fighters may cast. On, matching the app.
     var allowsCasting = true
+    var usesTemperament = true
 }
 
 extension FakeWorldProviders {
@@ -193,6 +194,11 @@ extension FakeWorldProviders {
     var isActorCastingEnabled: Bool {
         get { combatLoop.allowsCasting }
         set { combatLoop.allowsCasting = newValue }
+    }
+
+    var usesCombatTemperament: Bool {
+        get { combatLoop.usesTemperament }
+        set { combatLoop.usesTemperament = newValue }
     }
 
     func clearCombatTrace() {

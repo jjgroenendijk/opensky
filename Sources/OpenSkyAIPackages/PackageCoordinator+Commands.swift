@@ -58,6 +58,8 @@ extension PackageCoordinator {
             case .stop:
                 waitingMoves[actor] = nil
                 world?.stopPackageActor(mounts[actor] ?? actor)
+            case let .pace(gait):
+                paces[actor] = gait
             case .playLoop:
                 continue
             }

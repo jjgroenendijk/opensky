@@ -59,6 +59,8 @@ public enum WorldTickStep: Int, FramePhase {
     case packages
     case perception
     case idles
+    /// After the idles, so an idle's event reaches the actor's graph in the same frame.
+    case actorGraphs
     case vehicles
     case objectAnimation
     /// Samples the speaker's head bone in the same tick.

@@ -12,6 +12,54 @@ An AI package tells an actor what to do at a time of day, such as "sleep at home
 This page explains how OpenSky picks the current package for each loaded actor. The record is
 on the [packages](/formats/packages.md) page.
 
+## Guard
+
+The Guard procedure reads RestrictedArea, SuspiciousOf, WarnOnlyRadius, and
+ImmediateAttackRadius, in that order (<https://ck.uesp.net/wiki/Guard_(Procedure)>). Both
+radii are measured from the edge of the area. OpenSky guards only against the player:
+SuspiciousOf is usually `PlayerFaction`, which names no single reference.
+
+- Inside the immediate attack radius, the guard starts combat at once.
+- Inside the warn radius, it draws its weapon (graph event `WeapEquip`) and says a `TRES`
+  trespass line. It warns again every 5 seconds (`FAITrespassWarningTimer`), and attacks
+  after 2 warnings (`iGuardWarnings`).
+- When the intruder leaves the warn radius, the count goes back to 0 and the guard sheathes
+  (`Unequip`). Both event names were read from the human graph of the install.
+
+`GetTrespassWarningLevel` reads the guard's count, including the warning being spoken. The
+wiki names no exceptions OpenSky checks yet: owners, allies, and friends are warned too.
+The graph event names are the vanilla ones as far as known; they are not in an open spec.
+
+## Package lists
+
+The AI Packages tab has more lists than the stack (<https://ck.uesp.net/wiki/AI_Packages_Tab>).
+Each is a `FLST` of packages, read through the template chain with the same flag as the stack:
+`DPLT` default, `SPOR` spectator, `OCOR` observe dead body, `GWOR` guard warn, `ECOR` combat.
+
+The actor picks from the first list that gives a valid package:
+
+1. A scene's packages, and nothing else while a scene holds the actor.
+2. The script package, which `AddScriptPackage` gives (<https://ck.uesp.net/wiki/AddScriptPackage>).
+   It needs no schedule or condition. Without "Must Complete" it goes at the next pick after it
+   started; with it, it goes when its tree ends.
+3. The override list of the situation the actor is in.
+4. The quest alias packages, then the actor's own stack.
+5. The default list.
+
+The situations are code-driven behaviours. The wiki names them but not their ranges, so the
+ranges are OpenSky's:
+
+| Situation | When |
+| --- | --- |
+| Combat | The actor is engaged, or runs its combat override package and is still hostile |
+| Spectator | Another actor fights within 2,048 units, and this one does not |
+| Observe dead body | A dead actor lies within 1,024 units |
+| Guard warn | Its Guard procedure has warned, until the warn package's tree ends |
+
+A combat override package runs in place of combat: the combat loop treats the actor as one
+whose package ignores combat. Only actors with an override list are checked, so the scan is
+cheap in a crowd.
+
 ## Picking a package
 
 An actor's packages come from its `PKID` list. The list follows the template chain only when the
@@ -71,7 +119,8 @@ input names of the vanilla templates.
 | Sit | Move to a free seat of the target furniture, then sit; done when seated |
 | UseIdleMarker | Move to the marker, then finish; the idle marker plays as in sandbox |
 | Wait | Stay in place; with a time input, finish after it |
-| HoldPosition, Guard, KeepAnEyeOn, FlightGrab | Move to the place, then stay there |
+| HoldPosition, KeepAnEyeOn, FlightGrab | Move to the place, then stay there |
+| Guard | Hold the place; warn an intruder, then attack (see below) |
 | LockDoors, UnlockDoors | Lock or unlock the load doors in the place that the actor owns |
 | Find | Look for matching references in the place; look again every 2 seconds |
 | Acquire | Walk to the item, pick it up; try the next item of the list when one fails |
@@ -79,7 +128,7 @@ input names of the vanilla templates.
 | Say | Speak one line of the topic, and finish when the line ends |
 | ForceGreet | Wait for the player in the trigger place, walk up, open the conversation |
 | DialogueActivate | Walk to the target, then turn the head to it for 3 seconds |
-| Follow | Walk to the target each time it is out of range |
+| Follow | Walk to the target each time it is out of range; sprint or sneak with it |
 | Escort | Walk to the place; stop while the escorted actor is too far behind |
 | Flee | Run to the place, or straight away from the threat until far enough |
 | UseWeapon | Walk to the place, then start combat with the target |
@@ -91,8 +140,12 @@ Where OpenSky differs from the game:
 - DialogueActivate only turns the head. OpenSky has no conversations between two NPCs.
 - UseWeapon can attack only by starting real combat, so it acts only when its
   "Allow Combat Start" input is true. Otherwise it fails.
-- Guard, HoldPosition, KeepAnEyeOn, and FlightGrab hold the place. They do not watch for
-  intruders, look at the target, or carry anyone.
+- HoldPosition, KeepAnEyeOn, and FlightGrab hold the place. They do not look at the target
+  or carry anyone.
+- A follower sneaks while its target sneaks. It sprints while the target sprints, or while it
+  is more than 300 units behind (`fFollowStartSprintDistance`,
+  <https://ck.uesp.net/wiki/Follow_(Procedure)>). Only the player's gait is known, so a
+  follower of an NPC sprints only to catch up.
 - Find sees only references that are loaded now.
 - Find selects by object type with the `PTDA` object type codes. Their names are not in an
   open spec. OpenSky reads them from how the vanilla templates use them: 10 furniture,
@@ -299,7 +352,11 @@ World > AI & Navigation > Package shows the selected actor's current package, it
 procedure, and its schedule as a start time and duration.
 
 The Package line shows the running procedures of every actor's current package, a schedule
-package as well as a scene or alias one. The only control is Reevaluate, on purpose. It picks
-the package again and starts its tree from the root. The clock and conditions pick the package.
-A control that set a package directly would show a state the schedule never makes. To watch the
-schedule work, move the clock in World > Runtime State > Time and press Reevaluate.
+package as well as a scene or alias one. The List line shows which list gave the package, the
+situation, and any script package. Reevaluate picks the package again and starts its tree from
+the root. The clock and conditions pick the package. To watch the schedule work, move the clock
+in World > Runtime State > Time and press Reevaluate.
+
+Add script package takes an editor ID or a FormID and does what `AddScriptPackage` does;
+Remove does what `RemoveScriptPackage` does. This is the one way to set a package directly,
+because the game has it too.

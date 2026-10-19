@@ -161,7 +161,7 @@ public final class ObjectBehaviorCoordinator {
 
     private func start(_ object: CellAnimatedObject) -> Running {
         var load: @Sendable (String) throws -> SplineBehaviorClip = { path in
-            throw ObjectBehaviorAssetError.missing(path)
+            throw BehaviorProjectAssetError.missing(path)
         }
         if let files = files() {
             load = InstallBehaviorClipSource.load(fileSystem: files)

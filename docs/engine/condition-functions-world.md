@@ -91,7 +91,8 @@ These read what a native or the dialogue stored in the actor's
 - `GetAlarmed` (61), `IsTrespassing` (145), `IsActorAVictim` (314), and `GetArrestingActor`
   (657) read the crime state of the current frame.
 - `GetArrestedState` (656) is 1 for the player while a guard confronts them.
-- `GetTrespassWarningLevel` (144) is always 0, because OpenSky gives no trespass warning.
+- `GetTrespassWarningLevel` (144) counts the warnings the guard gave under its Guard
+  package ([package schedules](/engine/package-schedules.md#guard)).
 - `IsGuard` (125) and `CanPayCrimeGold` (497) use the same guard faction rule as the arrest
   dialogue ([crime](/engine/crime.md)).
 - `GetDaysInJail` (499) is the length of the last sentence served.

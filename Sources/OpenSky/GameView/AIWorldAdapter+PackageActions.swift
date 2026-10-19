@@ -62,6 +62,10 @@ extension AIWorldAdapter {
             greet(actor)
         case let .talk(target):
             look(at: target, from: actor)
+        case let .warn(intruder, _):
+            warn(intruder, from: actor)
+        case .standDown:
+            standDown(actor)
         default:
             combatAction(action, actor: actor)
         }
@@ -107,15 +111,30 @@ extension AIWorldAdapter {
     }
 
     /// The nearest resident reference within `reach` of `point` that passes `matches`.
+    /// One pass, not a sort: a package start asks this once per target. A tie keeps
+    /// the first in key order.
     func nearest(
         to point: SIMD3<Float>, within reach: Float,
         where matches: (RuntimeReferenceEntry) -> Bool
     ) -> ReferenceKey? {
-        residentPlaced(near: point, within: reach).first { matches($0.entry) }?.entry.key
+        var best: (key: ReferenceKey, distance: Float)?
+        for (entry, distance) in residentPlacedUnsorted(near: point, within: reach)
+            where distance < (best?.distance ?? .infinity) && matches(entry)
+        {
+            best = (entry.key, distance)
+        }
+        return best?.key
     }
 
     /// Resident references within `reach` of `point`, nearest first.
     func residentPlaced(
+        near point: SIMD3<Float>, within reach: Float
+    ) -> [(entry: RuntimeReferenceEntry, distance: Float)] {
+        residentPlacedUnsorted(near: point, within: reach).sorted { $0.distance < $1.distance }
+    }
+
+    /// Resident references within `reach` of `point`, in key order.
+    private func residentPlacedUnsorted(
         near point: SIMD3<Float>, within reach: Float
     ) -> [(entry: RuntimeReferenceEntry, distance: Float)] {
         let entries = game.streamer?.residentReferenceIndex().sortedEntries() ?? []
@@ -125,6 +144,5 @@ extension AIWorldAdapter {
             return position.map { (entry: entry, distance: simd_distance($0, point)) }
         }
         .filter { $0.distance <= reach }
-        .sorted { $0.distance < $1.distance }
     }
 }

@@ -22,6 +22,10 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
     public var isSuspended = false
     /// The scene action whose packages run ahead of the schedule, if any.
     public var override: PackageOverrideOwner?
+    /// Which list the current package came from.
+    public var source: PackageSource?
+    public var situation: PackageSituation?
+    public var scriptPackage: FormID?
 
     public init(
         actor: ReferenceKey,
@@ -32,7 +36,10 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         procedure: PackageProcedureKind?,
         lastEvaluationGameSeconds: Double?,
         isSuspended: Bool = false,
-        override: PackageOverrideOwner? = nil
+        override: PackageOverrideOwner? = nil,
+        source: PackageSource? = nil,
+        situation: PackageSituation? = nil,
+        scriptPackage: FormID? = nil
     ) {
         self.actor = actor
         self.actorBase = actorBase
@@ -43,6 +50,9 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         self.lastEvaluationGameSeconds = lastEvaluationGameSeconds
         self.isSuspended = isSuspended
         self.override = override
+        self.source = source
+        self.situation = situation
+        self.scriptPackage = scriptPackage
     }
 }
 
@@ -95,8 +105,8 @@ nonisolated public struct ActorPackageRuntime {
 
     public var onSelectionChanged: ((PackageActorReadout) -> Void)?
 
-    private let store: PackageStore
-    private var actors: [ReferenceKey: ActorState] = [:]
+    let store: PackageStore
+    var actors: [ReferenceKey: ActorState] = [:]
 
     public init(store: PackageStore) {
         self.store = store
@@ -117,8 +127,7 @@ nonisolated public struct ActorPackageRuntime {
     }
 
     public mutating func register(actor: ReferenceKey, base: FormID) throws {
-        let stack = try store.packageStack(for: base).value
-        actors[actor] = ActorState(base: base, stack: stack)
+        actors[actor] = try ActorState(base: base, lists: store.packageLists(for: base))
     }
 
     public mutating func unregister(actor: ReferenceKey) {
@@ -194,6 +203,9 @@ nonisolated public struct ActorPackageRuntime {
         actor: ReferenceKey, clock: GameClock, context: ConditionContext
     ) {
         actors[actor]?.completing = nil
+        if actors[actor]?.source == .script {
+            actors[actor]?.scriptPackage = nil
+        }
         reevaluate(actor: actor, clock: clock, context: context, keepsOncePerDay: false)
     }
 
@@ -222,7 +234,7 @@ nonisolated public struct ActorPackageRuntime {
         if let override = state.override {
             return PackageHold(aliasQuest: override.aliasQuest)
         }
-        if let alias = state.aliasStack, alias.packages.contains(current) {
+        if let alias = state.aliasStack, state.source == .alias, alias.packages.contains(current) {
             return PackageHold(aliasQuest: alias.quest)
         }
         return nil
@@ -245,7 +257,7 @@ nonisolated public struct ActorPackageRuntime {
         actors.keys.sorted().compactMap { actors[$0]?.readout(actor: $0) }
     }
 
-    private mutating func reevaluate(
+    mutating func reevaluate(
         actor: ReferenceKey,
         clock: GameClock,
         context: ConditionContext,
@@ -256,24 +268,29 @@ nonisolated public struct ActorPackageRuntime {
         evaluationContext.subject = actor
         evaluationContext.clock = clock
         let previous = state.current?.package.formID
-        let stack = state.override?.packages ?? ((state.aliasStack?.packages ?? []) + state.stack)
+        state.dropSpentScriptPackage()
         if state.override != nil || state.completing == nil || state.completing != previous {
             state.completing = nil
-            state.current = select(
-                stack: stack, clock: clock, context: &evaluationContext,
+            let pick = choose(
+                for: state, clock: clock, context: &evaluationContext,
                 ranToday: state.ranToday(at: clock, except: keepsOncePerDay ? previous : nil)
             )
+            state.current = pick?.package
+            state.source = pick?.source
+            if pick?.source == .script {
+                state.scriptPackage?.isPicked = true
+            }
             state.noteOncePerDay(state.current?.package, at: clock)
         }
         state.lastEvaluationGameSeconds = clock.totalGameSeconds
-        state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: stack)
+        state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: state.allPackages)
         actors[actor] = state
         if previous != state.current?.package.formID {
             onSelectionChanged?(state.readout(actor: actor))
         }
     }
 
-    private func select(
+    func select(
         stack: [FormID],
         clock: GameClock,
         context: inout ConditionContext,
@@ -303,10 +320,13 @@ nonisolated public struct ActorPackageRuntime {
         return clock.totalGameSeconds + Double(minutes * 60)
     }
 
-    private struct ActorState {
+    struct ActorState {
         let base: FormID
-        let stack: [FormID]
+        let lists: ActorPackageLists
         var current: ResolvedPackage?
+        var source: PackageSource?
+        var situation: PackageSituation?
+        var scriptPackage: ScriptPackageSlot?
         var lastEvaluationGameSeconds: Double?
         var nextEvaluationGameSeconds: Double?
         var isSuspended = false
@@ -354,7 +374,10 @@ nonisolated public struct ActorPackageRuntime {
                 procedure: current?.procedure,
                 lastEvaluationGameSeconds: lastEvaluationGameSeconds,
                 isSuspended: isSuspended,
-                override: override?.owner
+                override: override?.owner,
+                source: source,
+                situation: situation,
+                scriptPackage: scriptPackage?.package
             )
         }
     }

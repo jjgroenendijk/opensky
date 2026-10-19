@@ -2,6 +2,7 @@
 // to where its target stands. Behaviour from the Creation Kit wiki procedure pages.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 
@@ -41,7 +42,7 @@ nonisolated extension PackageProcedureMachine {
 
     /// Kinds that watch their target and move when it does.
     private static let watchers: Set<PackageProcedureKind> = [
-        .follow, .followTo, .escort, .flee, .forceGreet, .keepAnEyeOn
+        .follow, .followTo, .escort, .flee, .forceGreet, .keepAnEyeOn, .guardArea
     ]
 
     public var watchesTarget: Bool {
@@ -176,27 +177,41 @@ nonisolated extension PackageProcedureMachine {
         let distance = simd_distance(senses.actor, target)
         switch kind {
         case .follow, .followTo:
-            return follow(target, distance: distance)
+            return follow(target, distance: distance, targetGait: senses.watchedGait)
         case .escort:
             return escort(distance: distance)
         case .flee where setup.flag:
             return flee(from: target, actor: senses.actor, distance: distance)
         case .forceGreet:
             return greet(target, distance: distance)
+        case .guardArea:
+            return guardArea(intruder: target)
         default:
             return []
         }
     }
 
     /// Walks to the target when it is farther than the maximum radius, and walks again
-    /// only once it moved on.
+    /// once it moved on or changed gait. It sneaks while the target sneaks, and sprints
+    /// while the target sprints or is far ahead.
     private mutating func follow(
-        _ target: SIMD3<Float>, distance: Float
+        _ target: SIMD3<Float>, distance: Float, targetGait: LocomotionGait?
     ) -> [PackageProcedureCommand] {
         guard state == .waiting || state == .moving else { return [] }
+        let gait = Self.followGait(distance: distance, targetGait: targetGait)
         let moved = lastGoal.map { simd_distance($0, target) > Self.followSlack } ?? true
-        guard distance > max(setup.far, setup.near), moved else { return [] }
-        return move(to: target)
+        let repaced = state == .moving && gait != pace
+        guard distance > max(setup.far, setup.near), moved || repaced else { return [] }
+        pace = gait
+        return [.pace(gait)] + move(to: target)
+    }
+
+    static func followGait(distance: Float, targetGait: LocomotionGait?) -> LocomotionGait? {
+        switch targetGait {
+        case .sneak: .sneak
+        case .sprint: .sprint
+        default: distance > followSprintDistance ? .sprint : nil
+        }
     }
 
     /// The escort stops while its charge is farther than the follow distance.

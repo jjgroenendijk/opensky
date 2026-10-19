@@ -106,6 +106,28 @@ nonisolated public enum CombatLoopReadout: Sendable {
             + " \(snapshot.actorCastCount) spells cast"
     }
 
+    /// The selected actor's Confidence and Assistance, and whether it would break off.
+    public static func temperamentText(for snapshot: CombatLoopSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Confidence: unavailable" }
+        guard snapshot.usesTemperament else { return "Confidence: off, fighters flee when hurt" }
+        guard let temperament = snapshot.selectedTemperament else { return "Confidence: unknown" }
+        let names = ["cowardly", "cautious", "average", "brave", "foolhardy"]
+        let level = names[min(max(Int(temperament.confidence.rounded()), 0), names.count - 1)]
+        let strength = String(format: "%.2f", temperament.strengthRatio)
+        let decision = temperament.breaksOff ? "would flee" : "would fight"
+        let assistance = snapshot.selectedAssistance.map(assistanceText(for:)) ?? "unknown"
+        return "Confidence: \(level), strength \(strength), \(decision)\n"
+            + "Assistance: \(assistance)"
+    }
+
+    static func assistanceText(for assistance: CombatAssistance) -> String {
+        switch assistance {
+        case .helpsNobody: "helps nobody"
+        case .helpsAllies: "helps allies"
+        case .helpsFriendsAndAllies: "helps friends and allies"
+        }
+    }
+
     /// What the hostility toggle acts on, and where it stands.
     public static func hostilityText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Hostility: unavailable" }

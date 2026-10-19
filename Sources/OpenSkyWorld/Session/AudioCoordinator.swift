@@ -177,6 +177,7 @@ public final class AudioCoordinator {
             assets: assets
         )
         footsteps.materialTypes = audioData?.materialTypes ?? .empty
+        footsteps.outputModels = director.outputModels
         footstepDirector = footsteps
         world?.installAudio(engine: engine, sounds: director, music: music, footsteps: footsteps)
         // The body is usually assembled before audio is on, so do not wait for an equip change.

@@ -1,0 +1,157 @@
+// The rules of the per-actor behaviour graphs: how often a graph steps at a distance,
+// which locomotion events a change of motion raises, and what each step writes.
+// Pure; `ActorGraphCoordinator` is the shell. See docs/engine/actor-graphs.md.
+
+import Foundation
+import OpenSkyBehavior
+import simd
+
+/// How far from the camera an actor's graph steps every frame, at a reduced rate, or
+/// not at all. A graph that does not step keeps its last pose.
+nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
+    /// Seconds between steps past `fullRateDistance`: 15 steps per second.
+    public static let reducedStepInterval: Float = 1.0 / 15
+    public static let standard = ActorGraphCutoff(fullRateDistance: 2048, maximumDistance: 6144)
+
+    public var fullRateDistance: Float
+    public var maximumDistance: Float
+
+    public init(fullRateDistance: Float, maximumDistance: Float) {
+        self.fullRateDistance = max(0, fullRateDistance)
+        self.maximumDistance = max(self.fullRateDistance, maximumDistance)
+    }
+
+    /// Zero steps every frame. Nil does not step.
+    public func stepInterval(atDistance distance: Float) -> Float? {
+        if distance <= fullRateDistance {
+            return 0
+        }
+        return distance <= maximumDistance ? Self.reducedStepInterval : nil
+    }
+}
+
+/// What an actor's movement drive does, as the graph's locomotion inputs see it.
+nonisolated public struct ActorGraphMotion: Equatable, Sendable {
+    public var isMoving: Bool
+    public var isRunning: Bool
+    public var isSprinting: Bool
+    public var isSneaking: Bool
+
+    public static let still = ActorGraphMotion()
+
+    public init(
+        isMoving: Bool = false, isRunning: Bool = false,
+        isSprinting: Bool = false, isSneaking: Bool = false
+    ) {
+        self.isMoving = isMoving
+        self.isRunning = isRunning
+        self.isSprinting = isSprinting
+        self.isSneaking = isSneaking
+    }
+}
+
+/// Graph names an actor's step writes and raises. The human graph declares all of them;
+/// a creature graph declares a subset, and a missing name is skipped.
+nonisolated public enum ActorGraphNames {
+    public static let speed = "Speed"
+    public static let speedSampled = "SpeedSampled"
+    public static let direction = "Direction"
+    public static let turnDelta = "TurnDelta"
+    public static let isSprinting = "IsSprinting"
+    public static let isSneaking = "IsSneaking"
+    public static let isInSneak = "iIsInSneak"
+    public static let isPlayer = "IsPlayer"
+    public static let isPlayerInt = "iIsPlayer"
+    public static let isNPC = "IsNPC"
+    public static let timeDelta = "TimeDelta"
+
+    public static let moveStart = "moveStart"
+    public static let moveStop = "moveStop"
+    public static let sprintStart = "SprintStart"
+    public static let sprintStop = "SprintStop"
+    public static let sneakStart = "SneakStart"
+    public static let sneakStop = "SneakStop"
+}
+
+/// What one actor's graph is fed in one step.
+nonisolated public struct ActorGraphStepInput: Equatable, Sendable {
+    public var motion: ActorGraphMotion
+    /// Horizontal travel since the last step, world units per second.
+    public var speed: Float
+    /// Yaw change since the last step, radians.
+    public var turnDelta: Float
+    public var deltaTime: Float
+
+    public init(motion: ActorGraphMotion, speed: Float, turnDelta: Float, deltaTime: Float) {
+        self.motion = motion
+        self.speed = speed
+        self.turnDelta = turnDelta
+        self.deltaTime = deltaTime
+    }
+}
+
+nonisolated public enum ActorGraphCore {
+    /// The events a drive change raises, move before sprint before sneak.
+    public static func events(from old: ActorGraphMotion, to new: ActorGraphMotion) -> [String] {
+        typealias Names = ActorGraphNames
+        var events: [String] = []
+        if old.isMoving != new.isMoving {
+            events.append(new.isMoving ? Names.moveStart : Names.moveStop)
+        }
+        if old.isSprinting != new.isSprinting {
+            events.append(new.isSprinting ? Names.sprintStart : Names.sprintStop)
+        }
+        if old.isSneaking != new.isSneaking {
+            events.append(new.isSneaking ? Names.sneakStart : Names.sneakStop)
+        }
+        return events
+    }
+
+    /// The variables one step writes, in write order. An NPC walks where it faces, so
+    /// `Direction` stays 0.
+    public static func variables(_ input: ActorGraphStepInput)
+        -> [(name: String, value: BehaviorVariableValue)]
+    {
+        typealias Names = ActorGraphNames
+        let speed = input.motion.isMoving ? input.speed : 0
+        return [
+            (Names.speed, .real(speed)),
+            (Names.speedSampled, .real(speed)),
+            (Names.direction, .real(0)),
+            (Names.turnDelta, .real(input.turnDelta)),
+            (Names.isSprinting, .bool(input.motion.isSprinting)),
+            (Names.isSneaking, .bool(input.motion.isSneaking)),
+            (Names.isInSneak, .int(input.motion.isSneaking ? 1 : 0)),
+            (Names.isPlayer, .bool(false)),
+            (Names.isPlayerInt, .int(0)),
+            (Names.isNPC, .bool(true)),
+            (Names.timeDelta, .real(input.deltaTime))
+        ]
+    }
+
+    /// Horizontal speed between two feet positions, or 0 without a time step.
+    public static func speed(from old: SIMD3<Float>, to new: SIMD3<Float>, seconds: Float)
+        -> Float
+    {
+        guard seconds > 0 else { return 0 }
+        return simd_length(SIMD2(new.x - old.x, new.y - old.y)) / seconds
+    }
+
+    /// The shortest turn from `old` to `new`, in (-pi, pi].
+    public static func turnDelta(from old: Float, to new: Float) -> Float {
+        let turn = remainder(new - old, 2 * Float.pi)
+        return turn == -Float.pi ? Float.pi : turn
+    }
+
+    /// The archive path of a race's behaviour graph project. The record names it
+    /// relative to `Data\meshes`, such as `Actors\Canine\WolfProject.hkx`.
+    public static func projectPath(modelPath: String) -> String {
+        "meshes\\" + modelPath.replacingOccurrences(of: "/", with: "\\").lowercased()
+    }
+
+    /// A placement's Z rotation turns clockwise seen from above, and Havok's model
+    /// forward is +Y, so the model turns by the negated angle.
+    public static func worldRotation(placementRotationZ angle: Float) -> simd_quatf {
+        simd_quatf(angle: -angle, axis: SIMD3(0, 0, 1))
+    }
+}

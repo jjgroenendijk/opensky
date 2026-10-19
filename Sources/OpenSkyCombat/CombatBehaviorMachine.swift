@@ -128,9 +128,11 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// Not in a fight: engage when the target is perceived or a script says so.
     /// Hostility itself is still entered only by a blow, the panel, or a script. An
     /// actor under the flee threshold does not start a fight. A frightened actor
-    /// "will not flee until combat begins", and then runs at once.
+    /// "will not flee until combat begins", and then runs at once; so does an actor
+    /// whose Confidence breaks it off, such as a coward.
     private mutating func advanceWaiting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         let isAfraid = inputs.influence.flees
+            || (inputs.temperament != nil && inputs.shouldFlee(settings: settings))
         guard isAfraid || !inputs.shouldFlee(settings: settings) else { return unchanged() }
         guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
         fightCount += 1

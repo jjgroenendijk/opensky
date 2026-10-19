@@ -234,7 +234,7 @@ extension CombatCoordinator: CombatLoopControlProviding {
     public var combatLoopSnapshot: CombatLoopSnapshot {
         guard let loop else { return .unavailable }
         let selected = world.selectedActor()
-        return CombatLoopSnapshot(
+        var snapshot = CombatLoopSnapshot(
             isAvailable: true,
             isPlayerInCombat: loop.state.isPlayerInCombat,
             targetName: loop.state.target == nil ? "—" : loop.state.targetName,
@@ -257,6 +257,23 @@ extension CombatCoordinator: CombatLoopControlProviding {
             actorCastCount: actorCastCount,
             lastActionText: loop.lastAction.text
         )
+        snapshot.usesTemperament = usesTemperament
+        if let selected, selected != .player {
+            snapshot.selectedTemperament = combatTemperament(of: selected, toward: .player)
+            snapshot.selectedAssistance = world.actorValues(of: selected)?(Self.assistanceIndex)
+                .map(CombatAssistance.init(value:))
+        }
+        return snapshot
+    }
+
+    /// Reads the persisted Confidence and Assistance switch.
+    public func load(settings store: PlayerSettingsStore) {
+        usesTemperament = store.bool(.combatTemperament)
+    }
+
+    public var usesCombatTemperament: Bool {
+        get { usesTemperament }
+        set { usesTemperament = newValue }
     }
 
     public var selectedActorIsHostile: Bool {
