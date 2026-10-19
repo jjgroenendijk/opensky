@@ -107,7 +107,8 @@ into account."
 | --- | --- | --- |
 | Melee hit that lands | One-Handed or Two-Handed, by animation type | The weapon's base damage |
 | Arrow that lands | Archery | The bow's base damage |
-| Blow blocked | Block | Raw damage the block took |
+| Blow blocked | Block | Raw damage the block took, times `fBlockSkillUseMult` (2) with a shield or `fWeaponBlockSkillUseMult` (1) with a weapon |
+| Bash that lands | Block | `fShieldBashSkillUseBase` (5) with a shield, `fWeaponBashSkillUseBase` (1) without |
 | Blow taken in armor | Heavy or Light Armor | Raw damage of the blow, times pieces worn |
 | Spell cast | The effect's `MGEF` magic skill | Spell base cost times the effect's skill usage multiplier |
 | Held spell, per step | The same | Magicka spent, times the same multiplier |
@@ -120,6 +121,16 @@ into account."
   grindstone."
 - Unarmed hits, staves, torches, and shields give nothing. "Unarmed combat does not have its own
   skill tree and cannot be developed like other skills."
+- Skyrim.esm carries none of the Block settings, so OpenSky keeps the engine values. The CK wiki
+  [settings list](https://ck.uesp.net/wiki/Category:Settings) gives `fShieldBashSkillUseBase` 5
+  ("Experience for using shield bash"), `fWeaponBashSkillUseBase` 1, `fWeaponBlockSkillUseMult` 1
+  ("Experience multiplier for blocking"), and a `...Base` or `...Mult` partner of 0 for each.
+  OpenSky reads each pair as `base + mult * damage`; with the partners at 0 the damage term does
+  not matter. `fBlockSkillUseMult` 2 comes from UESP [Block](https://en.uesp.net/wiki/Skyrim:Block)
+  alone: "Blocking with a shield grants 2 times the XP compared to blocking with a weapon".
+  [Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) agrees on "5 base XP for a shield bash".
+- A bash teaches Block and not the weapon's skill. This is our reading: UESP names Block as the
+  skill a bash trains and says nothing of the weapon skill.
 - Casting counts per effect, not per spell, because the Creation Kit puts both values on the
   `MGEF`: "Magic Skill: The Skill associated with the effect ... will accumulate Skill Uses from
   it", and "Skill Usage Mult: For Spells, a multiplier to the Skill Uses ... that casting this
@@ -169,7 +180,9 @@ The stones' perks choose their skills with condition 681 `EPMagic_IsAdvanceSkill
 group. Conditions 691 and 692 ask about the object and the action of the use
 ([condition functions](/engine/condition-functions.md)). Every use passes its skill, its action
 (normal, power attack, bash, lock picked, lockpick broken), and its object where one exists.
-Melee does not tell power attacks and bashes apart yet, so it reports normal use.
+A melee hit reports a power attack as the power-attack action and a bash as the bash action. A
+power bash reports the bash action, because the action list has no power-bash value. A melee hit
+names its weapon as the object; a bash names none.
 
 An effect whose archetype OpenSky does not implement still becomes active when it carries a
 perk, because the perk is the whole point of the effect.
@@ -211,4 +224,3 @@ Each needs one reporting call when its system arrives:
 - Smithing, Alchemy, and Enchanting, which need crafting menus.
 - Sneak: `fSkillUsageSneakPerSecond` (0.625) while hidden, and sneak attacks.
 - Restoration by healing done, and Destruction's difficulty change, which needs a difficulty setting.
-- Shield bashes, which melee does not tell apart from swings yet.

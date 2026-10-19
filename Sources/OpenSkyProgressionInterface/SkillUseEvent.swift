@@ -21,6 +21,9 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// A blow the actor blocked. The amount is the raw damage the block
     /// absorbed.
     case blockedBlow
+    /// A landed bash, credited to Block. The amount is the `fShieldBashSkillUseBase`
+    /// or `fWeaponBashSkillUseBase` setting.
+    case bash
     /// A blow the actor took while wearing armour. The amount is the raw damage
     /// of the strike, before the worn-armour scaling this engine applies when
     /// it resolves which armour skill is credited.
@@ -58,7 +61,7 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
             case .handToHand, .staff, .spell, .shield, .torch:
                 nil
             }
-        case .blockedBlow:
+        case .blockedBlow, .bash:
             ActorValueIdentity.index(named: "Block")
         case .armorHit:
             nil

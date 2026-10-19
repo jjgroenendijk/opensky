@@ -40,6 +40,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public var limits = CombatTransientLimits.standard
     /// The cadence, block, flee and search numbers every machine runs on.
     public var behaviorSettings = CombatBehaviorSettings.standard
+    /// The Block experience of a blow the player blocks.
+    public var skillUses = MeleeSkillUseSettings.vanilla
 
     public private(set) var state = CombatLoopState.calm
     /// One machine per actor that is fighting or has fought, keyed by actor.

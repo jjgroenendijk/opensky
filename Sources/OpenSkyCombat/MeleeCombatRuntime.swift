@@ -53,6 +53,8 @@ public final class MeleeCombatRuntime {
     public var panelBlocking = false
     /// Power attack and bash damage, stamina, and reach.
     public var powerAttacks = PowerAttackSettings.vanilla
+    /// The Block experience of a blocked blow and a bash.
+    public var skillUses = MeleeSkillUseSettings.vanilla
     /// What the swing in progress is, set when its start event is raised.
     public internal(set) var strikeKind = MeleeStrikeKind.normal
     /// The direction of the power attack in progress, nil for any other strike.
@@ -323,36 +325,26 @@ public final class MeleeCombatRuntime {
         return record
     }
 
-    /// Reports what this blow taught both characters (`SkillUseEvent`): the
-    /// attacker's weapon skill, the blocker's Block for the absorbed damage, and the
-    /// target's armor skill for the raw strike
-    /// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>). The weapon skill counts only
-    /// against a target whose health can be damaged
-    /// (<https://en.uesp.net/wiki/Skyrim:One-handed>).
+    /// Reports what this blow taught both characters (`MeleeSkillUses`).
     private func noteSkillUse(
         _ hit: MeleeHit,
         damage: MeleeDamageResult,
         landed: Bool,
         world: any MeleeCombatWorld
     ) {
-        let raw = damage.base * damage.attackMultiplier
-        if landed {
-            world.reportSkillUse(SkillUseEvent(
-                actor: world.meleeAttacker.key,
-                action: .weaponHit(weapon.handType),
-                amount: damage.base
-            ))
+        let blow = MeleeSkillUseBlow(
+            attacker: world.meleeAttacker.key,
+            target: hit.target,
+            handType: weapon.handType,
+            kind: strikeKind,
+            damage: damage,
+            landed: landed,
+            bashedWithShield: strikeKind.isBash && world.meleeBashSource().shieldRating != nil,
+            weapon: world.meleeResolvedWeapon(weapon.weapon)
+        )
+        for use in MeleeSkillUses.events(for: blow, settings: skillUses) {
+            world.reportSkillUse(use)
         }
-        if damage.wasBlocked {
-            world.reportSkillUse(SkillUseEvent(
-                actor: hit.target,
-                action: .blockedBlow,
-                amount: raw * damage.blockedFraction
-            ))
-        }
-        world.reportSkillUse(SkillUseEvent(
-            actor: hit.target, action: .armorHit, amount: raw
-        ))
     }
 
     /// Fires the weapon's enchantment at the contact point. Only a contact

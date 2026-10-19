@@ -80,6 +80,7 @@ final class CombatWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
         combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
+        combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),

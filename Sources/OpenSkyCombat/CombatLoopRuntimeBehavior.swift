@@ -237,8 +237,8 @@ extension CombatLoopRuntime {
         )
     }
 
-    /// The reverse of the player's own swing report: attacker weapon skill, player Block,
-    /// player armor. Progression decides who advances (the player only).
+    /// The reverse of the player's own swing report. NPC blows are plain swings, and
+    /// progression decides who advances (the player only).
     private func noteSkillUse(
         from actor: CombatActorObservation,
         weapon: MeleeWeaponProfile,
@@ -246,19 +246,16 @@ extension CombatLoopRuntime {
         landed: Bool,
         world: any CombatLoopWorld
     ) {
-        let player = world.combatPlayer.key
-        let raw = damage.base * damage.attackMultiplier
-        if landed {
-            world.reportSkillUse(SkillUseEvent(
-                actor: actor.key, action: .weaponHit(weapon.handType), amount: damage.base
-            ))
+        let blow = MeleeSkillUseBlow(
+            attacker: actor.key,
+            target: world.combatPlayer.key,
+            handType: weapon.handType,
+            damage: damage,
+            landed: landed
+        )
+        for use in MeleeSkillUses.events(for: blow, settings: skillUses) {
+            world.reportSkillUse(use)
         }
-        if damage.wasBlocked {
-            world.reportSkillUse(SkillUseEvent(
-                actor: player, action: .blockedBlow, amount: raw * damage.blockedFraction
-            ))
-        }
-        world.reportSkillUse(SkillUseEvent(actor: player, action: .armorHit, amount: raw))
     }
 
     /// Raises the census-named hit reaction on the player's graph, magnitude
