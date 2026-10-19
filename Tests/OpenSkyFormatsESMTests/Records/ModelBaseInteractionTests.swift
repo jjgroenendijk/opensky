@@ -90,6 +90,8 @@ extension RecordDecoderTests {
 
         #expect(!ignoredActivator.allowsManualInteraction)
         #expect(!automaticDoor.allowsManualInteraction)
+        #expect(automaticDoor.isAutomaticDoor)
+        #expect(!ignoredActivator.isAutomaticDoor)
         #expect(!disabledFurniture.allowsManualInteraction)
     }
 }

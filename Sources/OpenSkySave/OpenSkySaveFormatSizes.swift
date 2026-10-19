@@ -91,6 +91,8 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `LOCK` entry: the smallest key and cell (8), the locked byte, the
     /// level byte, and the key FormID (4).
     public static let minimumLockEntrySize = 14
+    /// Smallest `CRST` entry: an interior cell (5) and the hour (8).
+    public static let minimumCellResetEntrySize = 13
     /// Smallest `RLOC` entry: the smallest key and cell (8) and an interior target (5).
     public static let minimumRelocationEntrySize = 13
     /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the

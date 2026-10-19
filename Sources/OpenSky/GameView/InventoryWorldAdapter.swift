@@ -90,6 +90,12 @@ final class InventoryWorldAdapter {
             if action == .take, openBook(event.target.interaction) {
                 return
             }
+            if event.target.interaction.isBed {
+                game.menuScreens.sleepWait.open(
+                    sleeping: true, bed: event.target.interaction.reference
+                )
+                return
+            }
             run(game.inventory.handleInteraction(action))
             if action == .use, game.inventory.crafting != nil {
                 game.menuScreens.crafting.open()

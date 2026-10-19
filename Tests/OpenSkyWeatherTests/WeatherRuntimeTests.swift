@@ -171,7 +171,7 @@ struct WeatherRuntimeTests {
     @Test func forceInstantSnaps() throws {
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         system.forceWeather(FormID(0x200), transition: .instant)
-        system.update(deltaTime: 0, hour: 12)
+        system.update(hour: 12)
         #expect(system.currentWeatherID == FormID(0x200))
         #expect(system.transitionFraction == 1)
     }
@@ -179,18 +179,18 @@ struct WeatherRuntimeTests {
     @Test func forceTimedBlendsFromCurrentToTarget() throws {
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         system.forceWeather(FormID(0x100), transition: .instant)
-        system.update(deltaTime: 0, hour: 12)
+        system.update(hour: 12)
         let windA = system.currentWind
 
         // B has a higher wind speed (0xFF vs 0x40); transition A -> B over time.
         system.forceWeather(FormID(0x200), transition: .timed)
-        system.update(deltaTime: 0, hour: 12)
+        system.update(hour: 12)
         #expect(system.transitionFraction == 0)
         #expect(system.outgoingWeatherID == FormID(0x100))
         #expect(abs(system.currentWind.speed - windA.speed) < 1e-4, "t=0 wind is still A")
 
         // Advance well past the derived duration -> fully settled on B.
-        system.update(deltaTime: 100, hour: 12)
+        system.update(hour: 12, elapsedGameHours: 1)
         #expect(system.transitionFraction == 1)
         #expect(system.outgoingWeatherID == nil)
         #expect(system.currentWeatherID == FormID(0x200))
@@ -200,37 +200,37 @@ struct WeatherRuntimeTests {
     @Test func pausedTransitionFreezesBlendUntilResumed() throws {
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         system.forceWeather(FormID(0x100), transition: .instant)
-        system.update(deltaTime: 0, hour: 12)
+        system.update(hour: 12)
         system.forceWeather(FormID(0x200), transition: .timed)
-        system.update(deltaTime: 0.5, hour: 12)
+        system.update(hour: 12, elapsedGameHours: 0.01)
         let pausedFraction = system.transitionFraction
         #expect(pausedFraction > 0 && pausedFraction < 1)
 
         system.transitionsPaused = true
-        system.update(deltaTime: 100, hour: 12)
+        system.update(hour: 12, elapsedGameHours: 1)
         #expect(system.transitionFraction == pausedFraction)
 
         system.transitionsPaused = false
-        system.update(deltaTime: 100, hour: 12)
+        system.update(hour: 12, elapsedGameHours: 1)
         #expect(system.transitionFraction == 1)
     }
 
     @Test func autoRerollAdvancesWithElapsedGameHours() throws {
         // Elapsed game hours from the game clock drive the reroll cadence.
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: 8) // settle the initial pick
+        system.update(hour: 8) // settle the initial pick
         let settled = system.currentWeatherID
         #expect(settled != nil)
 
         // A static clock never elapses hours, so no reroll ever fires.
-        system.update(deltaTime: 100, hour: 8)
+        system.update(hour: 8)
         #expect(system.currentWeatherID == settled)
         #expect(system.transitionFraction == 1)
 
         // Hours accumulate across updates and reroll at the 6-hour cadence.
-        system.update(deltaTime: 0.016, hour: 10, elapsedGameHours: 3)
+        system.update(hour: 10, elapsedGameHours: 3)
         #expect(system.transitionFraction == 1, "below the cadence: no reroll yet")
-        system.update(deltaTime: 0.016, hour: 13, elapsedGameHours: 3.5)
+        system.update(hour: 13, elapsedGameHours: 3.5)
         #expect(system.currentWeatherID != nil)
         #expect(system.resolvedWeather != nil)
     }
@@ -238,7 +238,7 @@ struct WeatherRuntimeTests {
     @Test func inactiveWorldspaceResolvesNil() throws {
         // Worldspace with no climate + no regions -> no candidates -> nil.
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x999)
-        system.update(deltaTime: 0, hour: 12)
+        system.update(hour: 12)
         #expect(system.resolvedWeather == nil)
         #expect(system.currentWind == .calm)
     }
@@ -247,8 +247,8 @@ struct WeatherRuntimeTests {
 /// Synthetic weather plugin fixtures, in an extension so they stay off the test
 /// struct's body-length budget.
 extension WeatherRuntimeTests {
-    fileprivate static func store() throws -> WeatherStore {
-        try WeatherStore(file: ESMFile(data: plugin()))
+    static func store(volatility: UInt8? = nil) throws -> WeatherStore {
+        try WeatherStore(file: ESMFile(data: plugin(volatility: volatility)))
     }
 
     private static func presetStore() throws -> WeatherStore {
@@ -279,7 +279,7 @@ extension WeatherRuntimeTests {
     }
 
     /// Plugin with two weathers, one climate, two regions, one worldspace.
-    private static func plugin() -> Data {
+    private static func plugin(volatility: UInt8?) -> Data {
         let weathers = ESMFixture.topGroup(
             "WTHR",
             contents: weather(
@@ -299,7 +299,8 @@ extension WeatherRuntimeTests {
             "CLMT",
             contents: climate(
                 formID: 0x300,
-                list: [(0x100, 70), (0x200, 30)]
+                list: [(0x100, 70), (0x200, 30)],
+                volatility: volatility
             )
         )
         let regions = ESMFixture.topGroup(
@@ -363,15 +364,21 @@ extension WeatherRuntimeTests {
         return ESMFixture.record("WTHR", formID: formID, data: fields)
     }
 
-    private static func climate(formID: UInt32, list: [(UInt32, UInt32)]) -> Data {
+    private static func climate(
+        formID: UInt32, list: [(UInt32, UInt32)], volatility: UInt8?
+    ) -> Data {
         var wlst = Data()
         for (weather, chance) in list {
             wlst.appendUInt32(weather)
             wlst.appendUInt32(chance)
             wlst.appendUInt32(0) // global
         }
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring("CLMT\(formID)"))
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("CLMT\(formID)"))
             + ESMFixture.field("WLST", wlst)
+        if let volatility {
+            // Sunrise 05:30-06:00 and sunset 17:30-18:00, in 10-minute units.
+            fields += ESMFixture.field("TNAM", Data([33, 36, 105, 108, volatility, 3]))
+        }
         return ESMFixture.record("CLMT", formID: formID, data: fields)
     }
 

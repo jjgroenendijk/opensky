@@ -15,7 +15,7 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     /// alone; nil rebuilds every resident cell.
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
     /// Resident references whose `XAPR` names `key`: activating `key` activates them too.
-    func activateChildren(of key: ReferenceKey) -> [ReferenceKey]
+    func activateChildren(of key: ReferenceKey) -> [ActivateChild]
     /// The plugin record behind `key` and the cell that draws it there, loaded or not.
     func pluginPlacement(of key: ReferenceKey) -> PluginPlacement?
     /// Every resident reference, in key order, for the radius searches.
@@ -43,13 +43,26 @@ nonisolated public struct PluginPlacement: Sendable {
     }
 }
 
+/// A reference an activate parent passes its activation to.
+nonisolated public struct ActivateChild: Equatable, Sendable {
+    public let key: ReferenceKey
+    /// `XAPR` delay: seconds after the parent's activation before the child's.
+    public let delay: Float
+
+    public init(key: ReferenceKey, delay: Float = 0) {
+        self.key = key
+        self.delay = delay
+    }
+}
+
 nonisolated extension Sequence<RuntimeReferenceEntry> {
     /// The entries whose `XAPR` activate parents include `parent`, in sequence order.
-    public func activateChildren(of parent: FormID) -> [ReferenceKey] {
+    public func activateChildren(of parent: FormID) -> [ActivateChild] {
         compactMap { entry in
             let details = entry.placedReference?.details ?? entry.placedActor?.details
-            let linked = details?.activateParents.contains { $0.reference == parent } ?? false
-            return linked ? entry.key : nil
+            return details?.activateParents.first { $0.reference == parent }.map {
+                ActivateChild(key: entry.key, delay: $0.delay.isFinite ? Swift.max(0, $0.delay) : 0)
+            }
         }
     }
 }

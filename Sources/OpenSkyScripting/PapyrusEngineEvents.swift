@@ -8,6 +8,7 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onInit = "OnInit"
     public static let onCellAttach = "OnCellAttach"
     public static let onLoad = "OnLoad"
+    public static let onReset = "OnReset"
     public static let onCellLoad = "OnCellLoad"
     public static let onAnimationEvent = "OnAnimationEvent"
     public static let onActivate = "OnActivate"

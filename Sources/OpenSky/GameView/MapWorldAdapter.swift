@@ -12,6 +12,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -36,6 +37,7 @@ protocol MapWorldHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var journal: JournalCoordinator { get }
+    var magic: MagicCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
@@ -210,6 +212,7 @@ extension MapWorldAdapter: MapMenuWorld {
         context.hostilesNear = combat.hostileCount > 0
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.alarmed = game.crime.isPlayerPursued
+        context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
         if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
                 carried: game.inventory.playerCarriedWeight,

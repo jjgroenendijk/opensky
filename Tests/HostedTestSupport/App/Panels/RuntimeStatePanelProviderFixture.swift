@@ -35,6 +35,8 @@ final class FakeRuntimeStateProvider: RuntimeStateControlProviding {
     var runtimeStateSnapshot = RuntimeStateSnapshot.empty
     var lastSaveOutcome = RuntimeStateSaveOutcome.none
     var runtimeStateSaveSlots: [String] = []
+    var cellResetReadout = "Cells left behind: 2  Last cell reset: none"
+    private(set) var cellResetForceCount = 0
 
     /// Every enable/disable the panel requested, in order.
     private(set) var enableCalls: [(enabled: Bool, target: RuntimeStateTargetSelector)] = []
@@ -51,6 +53,11 @@ final class FakeRuntimeStateProvider: RuntimeStateControlProviding {
     func setReferenceEnabled(_ enabled: Bool, target: RuntimeStateTargetSelector) -> Bool {
         enableCalls.append((enabled, target))
         return mutationSucceeds
+    }
+
+    func makeCellResetsDue() -> Int {
+        cellResetForceCount += 1
+        return 2
     }
 
     func nudgeReferenceTransform(target: RuntimeStateTargetSelector) -> Bool {

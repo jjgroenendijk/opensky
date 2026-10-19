@@ -138,6 +138,12 @@ public protocol RuntimeStateControlProviding: AnyObject {
     /// data.
     func resetAllReferenceState()
 
+    /// How many cells wait to reset, and the last reset.
+    var cellResetReadout: String { get }
+    /// Makes every cell the player left reset on the next visit. Returns the count.
+    @discardableResult
+    func makeCellResetsDue() -> Int
+
     /// Writes the current world state to `slot`, reporting the result through
     /// `lastSaveOutcome`. Never throws: a failed save is a readout state, not
     /// a caller error.

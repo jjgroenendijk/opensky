@@ -92,6 +92,8 @@ nonisolated extension OpenSkySaveDecoder {
             body.miscStats = try OpenSkySaveStoryDecoder.decodeMiscStats(payload)
         case OpenSkySaveFormat.ChunkTag.questTracking:
             body.questTracking = try OpenSkySaveStoryDecoder.decodeQuestTracking(payload)
+        case OpenSkySaveFormat.ChunkTag.cellResets:
+            body.cellResets = try [OpenSkySaveCellResetDecoder.decode(payload)]
         default:
             break
         }
@@ -102,7 +104,8 @@ nonisolated extension OpenSkySaveDecoder {
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
         let merged = OpenSkySaveDeltaMerge.merge(body.miscStats, into: entries)
-        return OpenSkySaveDeltaMerge.merge(body.questTracking, into: merged)
+        let tracked = OpenSkySaveDeltaMerge.merge(body.questTracking, into: merged)
+        return OpenSkySaveDeltaMerge.merge(body.cellResets, into: tracked)
     }
 }
 

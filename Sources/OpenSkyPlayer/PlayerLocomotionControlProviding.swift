@@ -70,6 +70,8 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     public let bodyFailureReason: String?
     /// The actor-state inputs and outputs of the third-person graph.
     public let actorState: ActorStateGraphSnapshot
+    /// The breath under water; nil without a game session.
+    public var breath: PlayerBreath?
 
     public static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,

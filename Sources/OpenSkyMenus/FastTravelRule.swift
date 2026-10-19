@@ -14,6 +14,8 @@ nonisolated public enum FastTravelRefusal: String, Equatable, Sendable, CaseIter
     case noFastTravelHere = "sNoFastTravelCell"
     case scriptBlock = "sNoFastTravelScriptBlock"
     case undiscovered = "sNoFastTravelUndiscovered"
+    /// The install has no own setting for this refusal, so the default text shows.
+    case takingHealthDamage = "sNoFastTravelDefault"
 }
 
 nonisolated public struct FastTravelContext: Equatable, Sendable {
@@ -22,6 +24,7 @@ nonisolated public struct FastTravelContext: Equatable, Sendable {
     public var overencumbered = false
     public var inAir = false
     public var alarmed = false
+    public var takingHealthDamage = false
     public var locationForbidsFastTravel = false
     public var enabledByScripts = true
     public var destinationCanTravelTo = true
@@ -50,6 +53,9 @@ nonisolated public enum FastTravelRule {
         }
         if context.alarmed {
             return .alarm
+        }
+        if context.takingHealthDamage {
+            return .takingHealthDamage
         }
         if context.inAir {
             return .inAir

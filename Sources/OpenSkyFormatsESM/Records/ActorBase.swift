@@ -22,6 +22,8 @@ nonisolated public struct ActorBase: Sendable {
         /// race + class + level rather than from race plus the ACBS offsets
         /// alone (UESP NPC_ ACBS; CK "Stats Tab").
         public static let autoCalcStats = Flags(rawValue: 0x0000_0010)
+        /// UESP NPC_ ACBS: a dead actor comes back when its cell resets.
+        public static let respawns = Flags(rawValue: 0x0000_0008)
         public static let unique = Flags(rawValue: 0x0000_0020)
         /// "PC Level Mult": the level word holds a multiplier x1000 against
         /// the player's level instead of a fixed level. The Creation Kit

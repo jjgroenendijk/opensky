@@ -112,6 +112,7 @@ public final class ScriptCoordinator {
         bridge?.queueLineOfSightEvents()
         bridge?.advanceTranslations(by: delta)
         bridge?.queueTriggerRepeats(after: delta)
+        bridge?.advanceDelayedActivations(by: delta)
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 

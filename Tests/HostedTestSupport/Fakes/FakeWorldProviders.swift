@@ -53,6 +53,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var currentWeatherName: String?
     var weatherOverrideActive = false
     var weatherTransitionFraction: Float = 0
+    var weatherRerollInterval: Float? = 6
     var weatherTransitionsPaused = false
     var windState: WindState = .calm
     var cloudsEnabled = true

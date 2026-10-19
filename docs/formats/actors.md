@@ -66,7 +66,7 @@ before it appears. Header flag `0x200` means "starts dead". Not read: `XEZN`, pa
 
 | offset | type | meaning |
 | --- | --- | --- |
-| `0x00` | uint32 | flags: `0x01` female, `0x10` auto-calc stats, `0x20` unique, `0x80` PC level multiplier |
+| `0x00` | uint32 | flags: `0x01` female, `0x08` respawn, `0x10` auto-calc stats, `0x20` unique, `0x80` PC level multiplier |
 | `0x04` | int16 | magicka offset |
 | `0x06` | int16 | stamina offset |
 | `0x08` | uint16 | level, or level multiplier x1000 when the PC flag is set |

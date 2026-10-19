@@ -38,7 +38,7 @@ nonisolated extension InteractionAction {
 nonisolated extension PlacedInteraction {
     /// This interaction with its prompt label, and optionally its name, replaced.
     public func relabelled(_ label: String, name newName: String? = nil) -> PlacedInteraction {
-        PlacedInteraction(
+        var copy = PlacedInteraction(
             reference: reference,
             base: base,
             position: position,
@@ -51,5 +51,8 @@ nonisolated extension PlacedInteraction {
             produce: produce,
             lock: lock
         )
+        copy.seats = seats
+        copy.automaticArea = automaticArea
+        return copy
     }
 }

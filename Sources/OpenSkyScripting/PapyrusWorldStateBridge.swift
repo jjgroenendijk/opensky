@@ -44,6 +44,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// Seconds since the last `OnTrigger` repeat.
     var triggerRepeatElapsed: Float = 0
+    /// Activate children still waiting out their `XAPR` delay, in the order they were queued.
+    public internal(set) var delayedActivations: [DelayedActivation] = []
     /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
     public internal(set) var silentDeath: ReferenceKey?
     public var factionNatives = PapyrusFactionNatives()
@@ -212,7 +214,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     /// Records one activation, queues `OnActivate` on the target's scripts, and
     /// passes it to the target's `XAPR` activate children, each activated by its
-    /// parent. Each reference is activated at most once per call, so a cycle ends.
+    /// parent. A child with a delay waits for `advanceDelayedActivations`. Each
+    /// reference is activated at most once per call, so a cycle ends.
     @discardableResult
     public func activate(
         _ target: ReferenceKey,
@@ -226,10 +229,17 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         var parents = [target]
         while let parent = parents.popLast() {
             for child in references?.activateChildren(of: parent) ?? []
-                where visited.insert(child).inserted
+                where visited.insert(child.key).inserted
             {
-                queuedEvents += activateOne(child, by: parent, togglesOpen: false).queuedEvents
-                parents.append(child)
+                guard child.delay <= 0 else {
+                    delayedActivations.append(DelayedActivation(
+                        child: child.key, parent: parent, remaining: child.delay
+                    ))
+                    continue
+                }
+                queuedEvents += activateOne(child.key, by: parent, togglesOpen: false)
+                    .queuedEvents
+                parents.append(child.key)
             }
         }
         return PapyrusActivationOutcome(

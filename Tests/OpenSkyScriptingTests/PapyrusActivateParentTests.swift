@@ -47,6 +47,36 @@ struct PapyrusActivateParentTests {
         #expect(session.dispatch.notes == ["trap.onactivate"])
     }
 
+    @Test func aDelayedChildActivatesOnlyAfterItsDelay() throws {
+        let note = PapyrusWorldFixture.probeBody(note: "trap.onactivate")
+        let trapScript = PapyrusWorldFixture.eventScript("Trap", events: [("OnActivate", note)])
+        let entries = try [
+            PapyrusWorldFixture.referenceEntry(objectID: Self.plateID, scripts: []),
+            PapyrusWorldFixture.referenceEntry(
+                objectID: Self.trapID,
+                scripts: [VMADFixture.Script("Trap", properties: [])],
+                delayedActivateParents: [(Self.plateID, 1.5)]
+            )
+        ]
+        let session = PapyrusWorldFixture.session(objects: [trapScript], entries: entries)
+        PapyrusWorldFixture.drain(session.world)
+
+        let outcome = session.bridge.activate(key(Self.plateID), by: .player, togglesOpen: false)
+        #expect(outcome.queuedEvents == 0)
+        #expect(session.bridge.advanceDelayedActivations(by: 1) == 0)
+        #expect(trapActivations(session) == nil)
+        #expect(session.bridge.advanceDelayedActivations(by: 0.5) == 1)
+        #expect(trapActivations(session) == 1)
+        #expect(session.bridge.delayedActivations.isEmpty)
+        PapyrusWorldFixture.drain(session.world)
+        #expect(session.dispatch.notes == ["trap.onactivate"])
+    }
+
+    private func trapActivations(_ session: PapyrusWorldFixture.Session) -> UInt32? {
+        session.worldState.component(ReferenceActivationState.self, for: key(Self.trapID))?
+            .activationCount
+    }
+
     private func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: PapyrusWorldFixture.pluginName, objectID: objectID)
     }

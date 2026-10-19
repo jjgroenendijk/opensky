@@ -80,6 +80,38 @@ extension CellSceneBuilderTests {
         #expect(seats[1].entryPoints == 2)
     }
 
+    /// An automatic door covers its `OBND` box at its pose; a parent-only reference is no
+    /// use-key target at all.
+    @Test(.enabled(if: Self.hasDevice))
+    func automaticDoorsGetAnAreaAndParentOnlyReferencesNone() throws {
+        var bounds = Data()
+        for value: Int16 in [-10, -20, 0, 10, 20, 100] {
+            bounds.appendUInt16(UInt16(bitPattern: value))
+        }
+        let door = ESMFixture.field("OBND", bounds) + ESMFixture.field("FNAM", Data([0x02]))
+        let parentOnly = ESMFixture.field("XAPD", Data([0x01]))
+        let scene = try build(pluginData: plugin(
+            temporaryRefs: refrRecord(
+                formID: 0x400, base: 0x300, position: [100, 0, 0], rotation: [0, 0, .pi / 2]
+            ) + refrRecord(formID: 0x401, base: 0x301, extraFields: parentOnly),
+            modelBaseRecords: [
+                "DOOR": modelBaseRecord(
+                    type: "DOOR", formID: 0x300, modelPath: nil, displayName: "Auto",
+                    extraFields: door
+                ),
+                "ACTI": modelBaseRecord(
+                    type: "ACTI", formID: 0x301, modelPath: nil, displayName: "Hidden"
+                )
+            ]
+        ))
+        let area = try #require(scene.interactions[FormID(0x400)]?.automaticArea)
+        // A quarter turn swaps the box's x and y spans in the world.
+        #expect(area.contains([115, 0, 50]))
+        #expect(!area.contains([100, 15, 50]))
+        #expect(!area.contains([100, 0, 150]))
+        #expect(scene.interactions[FormID(0x401)] == nil)
+    }
+
     /// The actor uses the allowed side that faces it most; up only when no side is allowed.
     @Test func aSeatEntryIsTheAllowedSideFacingTheActor() {
         let seat = FurnitureSeat(

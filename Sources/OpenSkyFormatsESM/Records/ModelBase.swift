@@ -45,6 +45,8 @@ nonisolated public struct ModelBase: Sendable {
     public let activateTextOverride: LString?
     /// Record-specific flags can suppress manual use-key activation.
     public let allowsManualInteraction: Bool
+    /// DOOR FNAM bit 1: the door opens when the player walks into its area.
+    public let isAutomaticDoor: Bool
     /// MODL — mesh path relative to Data/ (e.g. "meshes\\trees\\treepineforest01.nif").
     /// Nil for bases with no model (rare outside markers).
     public let modelPath: String?
@@ -103,6 +105,7 @@ nonisolated public struct ModelBase: Sendable {
         // xEdit dev-4.1.6: ACTI header bit 20 is Ignore Object
         // Interaction; DOOR FNAM bit 1 is Automatic; FURN MNAM bit 25
         // disables activation.
+        isAutomaticDoor = record.type == "DOOR" && fields.doorFlags & 0x02 != 0
         allowsManualInteraction = !(record.type == "ACTI"
             && record.flags.rawValue & (1 << 20) != 0)
             && !(record.type == "DOOR" && fields.doorFlags & 0x02 != 0)

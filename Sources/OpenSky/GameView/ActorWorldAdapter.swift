@@ -79,6 +79,33 @@ final class ActorWorldAdapter {
         gameSession.frameSteps.register(.actorValues) { [weak self, weak gameSession] _ in
             self?.publishHUDMeters(gameSession: gameSession)
         }
+        gameSession.breath = PlayerBreath(settings: BreathSettings.resolve(store: settings))
+        gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
+            guard let gameSession else { return }
+            self?.advanceBreath(delta: delta, gameSession: gameSession)
+        }
+    }
+
+    /// Drowning costs health once the breath runs out; the `Water Breathing` actor value
+    /// above 0 keeps the breath full.
+    private func advanceBreath(delta: Float, gameSession: GameSession) {
+        guard delta > 0 else { return }
+        let runtime = game.actorValues.runtime
+        let status = gameSession.locomotion.status
+        let eyeZ = gameSession.walkController.feetPosition.z
+            + gameSession.walkController.capsule.eyeHeight
+        let submerged = gameSession.movementMode.isPlayerControlled
+            && PlayerBreath.isSubmerged(eyeZ: eyeZ, waterSurface: status.waterSurfaceHeight)
+        let waterBreathing = ActorValueIdentity.index(named: "Water Breathing")
+            .flatMap { runtime?.value(at: $0, on: .player) }
+            .map { $0 > 0 } ?? false
+        let damage = gameSession.breath.advance(
+            seconds: delta, submerged: submerged, waterBreathing: waterBreathing,
+            maximumHealth: runtime?.maximums(of: .player).health ?? 0
+        )
+        if damage > 0 {
+            game.combat.applyHealthDamage(damage, to: .player, attacker: nil)
+        }
     }
 
     // MARK: - Resident actors

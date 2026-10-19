@@ -83,6 +83,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var harvestDays: [SaveHarvestDayEntry] = []
         /// Absent `LOCK`: every lock is as its plugin placed it.
         public var locks: [SaveLockEntry] = []
+        /// Absent `CRST`: no cell has a departure, so none resets on the next visit.
+        public var cellResets: [SaveCellResetLedger] = []
         /// Absent `RLOC`: every reference is in its plugin cell.
         public var relocations: [SaveRelocationEntry] = []
         /// Absent `SCNS`: no scene is playing.

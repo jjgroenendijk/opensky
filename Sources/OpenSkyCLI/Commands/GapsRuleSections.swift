@@ -12,6 +12,7 @@ import OpenSkyInventoryInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyScripting
+import OpenSkyWorldState
 
 extension GapsGatherer {
     func events() -> GapSection {
@@ -110,6 +111,8 @@ extension GapsGatherer {
         _ = PlayerMovementConfiguration.resolve(store: store)
         _ = RegenerationSettings.resolve(store: store)
         _ = StaminaSettings.resolve(store: store)
+        _ = BreathSettings.resolve(store: store)
+        _ = CellResetSettings.resolve(store: store)
         return log.editorIDs
     }
 }

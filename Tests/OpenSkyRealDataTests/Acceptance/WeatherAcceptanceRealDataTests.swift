@@ -78,12 +78,12 @@ struct WeatherAcceptanceRealDataTests {
         let clearFrame = try frame(harness, force: harness.clear, hour: 13)
         let cloudyFrame = try frame(harness, force: harness.cloudy, hour: 13)
         weather.forceWeather(harness.clear, transition: .instant)
-        weather.update(deltaTime: 0, hour: 13)
+        weather.update(hour: 13)
         weather.forceWeather(harness.cloudy, transition: .timed)
         var fractions: [Float] = []
         var steps = 0
         while weather.transitionFraction < 0.45, steps < 100_000 {
-            weather.update(deltaTime: 0.1, hour: 13)
+            weather.update(hour: 13, elapsedGameHours: 0.001)
             fractions.append(weather.transitionFraction)
             steps += 1
         }

@@ -39,7 +39,7 @@ extension WorldTimeAcceptanceTests {
         #expect(timescale == WorldTimeAcceptanceClock.fastTimescale)
 
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: clock.hourOfDay) // settle the initial pick
+        system.update(hour: clock.hourOfDay) // settle the initial pick
         var weather = system.currentWeatherID
         #expect(weather != nil, "the fixture worldspace resolves no weather at all")
 
@@ -54,7 +54,7 @@ extension WorldTimeAcceptanceTests {
             elapsedTotal += elapsed
             lastResolvedHour = clock.hourOfDay
             system.update(
-                deltaTime: WorldTimeAcceptanceClock.wallStep, hour: lastResolvedHour,
+                hour: lastResolvedHour,
                 elapsedGameHours: elapsed
             )
             if system.currentWeatherID != weather {
@@ -76,7 +76,7 @@ extension WorldTimeAcceptanceTests {
 
     /// The same run through the real renderer seam the app uses:
     /// `GameSession.consumeElapsedGameHours()` feeding
-    /// `WeatherSystem.update(deltaTime:hour:elapsedGameHours:)`, with the
+    /// `WeatherSystem.update(hour:elapsedGameHours:)`, with the
     /// timescale read through `GameSession.currentTimescale` off the global
     /// resolution rather than passed in.
     @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device)) @MainActor
@@ -95,7 +95,7 @@ extension WorldTimeAcceptanceTests {
         #expect(gameSession.consumeElapsedGameHours() == 0)
 
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: gameSession.timeOfDay)
+        system.update(hour: gameSession.timeOfDay)
         var weather = system.currentWeatherID
         var changePoints: [Float] = []
         var elapsedTotal: Float = 0
@@ -108,7 +108,7 @@ extension WorldTimeAcceptanceTests {
             #expect(elapsed == WorldTimeAcceptanceClock.gameHoursPerStep)
             elapsedTotal += elapsed
             system.update(
-                deltaTime: WorldTimeAcceptanceClock.wallStep, hour: gameSession.timeOfDay,
+                hour: gameSession.timeOfDay,
                 elapsedGameHours: elapsed
             )
             if system.currentWeatherID != weather {
@@ -135,7 +135,7 @@ extension WorldTimeAcceptanceTests {
     @Test @MainActor
     func aPausedWorldElapsesNoGameHoursSoWeatherNeverRerolls() throws {
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: WorldTimeAcceptanceClock.startHour)
+        system.update(hour: WorldTimeAcceptanceClock.startHour)
         let settled = system.currentWeatherID
         var clock = FrameSimClock()
         var elapsedTotal: Float = 0
@@ -146,7 +146,6 @@ extension WorldTimeAcceptanceTests {
             )
             #expect(delta == 0)
             system.update(
-                deltaTime: WorldTimeAcceptanceClock.wallStep,
                 hour: WorldTimeAcceptanceClock.startHour,
                 elapsedGameHours: delta
             )

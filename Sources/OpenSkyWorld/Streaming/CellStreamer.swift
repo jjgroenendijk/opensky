@@ -166,6 +166,9 @@ public final class CellStreamer {
     /// moved further than a capsule radius can be swept rather than sampled
     /// only at its destination. Nil outside walk mode.
     public var lastTriggerFeetPosition: SIMD3<Float>?
+    /// Automatic doors whose area held the player's feet last frame. Nil until the first
+    /// frame in a scene, so arriving inside a door's area does not send the player back.
+    public var automaticDoorOccupancy: Set<FormID>?
     /// Recent trigger edges for `World > World > Triggers`, filled by a subscriber
     /// registered in `init`.
     public let triggerLog = TriggerEventLog()
@@ -242,8 +245,7 @@ public final class CellStreamer {
             }
             // Interiors carry most authored trigger volumes, so the test runs
             // on this path too rather than only on the exterior tail below.
-            updateTriggerOccupancy(playerCapsule)
-            advanceWorldSystems(frameTime: frameTime, player: playerCapsule)
+            updatePlayerSpaces(playerCapsule, frameTime: frameTime)
             return
         }
 
@@ -287,8 +289,14 @@ public final class CellStreamer {
         emitCenterRegionsIfChanged()
         emitAmbienceContextIfNeeded()
         emitMusicContextIfNeeded()
-        updateTriggerOccupancy(playerCapsule)
-        advanceWorldSystems(frameTime: frameTime, player: playerCapsule)
+        updatePlayerSpaces(playerCapsule, frameTime: frameTime)
+    }
+
+    /// Trigger volumes and automatic doors the player stands in, then the world systems.
+    private func updatePlayerSpaces(_ capsule: PlayerCapsuleState?, frameTime: Float) {
+        updateTriggerOccupancy(capsule)
+        updateAutomaticDoors(feet: capsule?.feetPosition)
+        advanceWorldSystems(frameTime: frameTime, player: capsule)
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather

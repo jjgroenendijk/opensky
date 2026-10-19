@@ -86,6 +86,30 @@ A door with the "Open" action asks for a transition for that exact reference. Wi
 follows the [interior](/engine/interiors.md) path. Without one, it still sends the event, but has
 no open animation yet.
 
+A bed is a `FURN` whose model has a sleep marker (animation type 2). Its prompt reads "Sleep",
+and using it opens the [rest menu](/engine/sleep-wait.md). The game's prompt text is the
+`sFurnitureSleep` setting, which the cell build does not read yet.
+
+### Automatic doors
+
+A `DOOR` with `FNAM` bit 0x02 ("Automatic") opens when the player walks into it, not with the
+use key. The Creation Kit wiki page "Door" (<https://ck.uesp.net/wiki/Door>) says it is
+activated when the player enters its space. OpenSky takes that space as the base's `OBND` box
+at the reference's position, rotation, and scale. A door without bounds is left out. The door
+fires once when the feet enter the box, and again only after they leave it. The crosshair
+never picks an automatic door. In `Skyrim.esm` the automatic doors are the
+`AutoLoadDoor01` family, invisible load doors at the mouth of some caves.
+
+### Activate parents
+
+A reference with `XAPR` children passes its activation on to them
+([Papyrus activation](/engine/papyrus-activation.md)). Each child has a delay in seconds
+(Creation Kit wiki "Reference", <https://ck.uesp.net/wiki/Reference>). A child with a delay
+above 0 activates once that many seconds of world time have passed, so a menu pause holds it.
+A reference with `XAPD`
+"Parent Activate Only" can be activated only by its parent or a script: it has no use-key
+target.
+
 ## Locks
 
 A door or container with `XLOC` lock data passes through the lock gate before any listener

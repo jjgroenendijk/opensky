@@ -40,7 +40,7 @@ nonisolated public final class FakeWorldReferences: PapyrusWorldReferenceSource 
         index[key] == nil ? nil : cell
     }
 
-    public func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
+    public func activateChildren(of key: ReferenceKey) -> [ActivateChild] {
         index[key].map { index.sortedEntries().activateChildren(of: $0.formID) } ?? []
     }
 

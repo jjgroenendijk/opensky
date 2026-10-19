@@ -84,10 +84,10 @@ struct PrecipitationAcceptanceRealDataTests {
     @MainActor
     private func pauseMidRain(_ harness: Harness) throws -> [UInt8] {
         harness.weather.forceWeather(harness.clear, transition: .instant)
-        harness.weather.update(deltaTime: 0, hour: 13)
+        harness.weather.update(hour: 13)
         harness.weather.forceWeather(harness.rain, transition: .timed)
         while harness.weather.transitionFraction < 0.35 {
-            harness.weather.update(deltaTime: 0.1, hour: 13)
+            harness.weather.update(hour: 13, elapsedGameHours: 0.001)
         }
         harness.weather.transitionsPaused = true
         let fraction = harness.weather.transitionFraction
@@ -106,7 +106,7 @@ struct PrecipitationAcceptanceRealDataTests {
     ) throws -> [UInt8] {
         harness.weather.transitionsPaused = false
         harness.weather.forceWeather(weather, transition: .timed)
-        harness.weather.update(deltaTime: 100, hour: 13)
+        harness.weather.update(hour: 13, elapsedGameHours: 1)
         #expect(harness.weather.transitionFraction == 1)
         return try renderFrames(harness.renderer, count: particleFrames)
     }
@@ -115,7 +115,7 @@ struct PrecipitationAcceptanceRealDataTests {
     private func returnToClear(_ harness: Harness) throws -> [UInt8] {
         harness.weather.forceWeather(harness.clear, transition: .timed)
         #expect(harness.weather.transitionFraction == 0)
-        harness.weather.update(deltaTime: 100, hour: 13)
+        harness.weather.update(hour: 13, elapsedGameHours: 1)
         #expect(harness.weather.transitionFraction == 1)
         let pixels = try renderFrames(harness.renderer, count: 130)
         let snapshot = harness.renderer.precipitation.snapshot

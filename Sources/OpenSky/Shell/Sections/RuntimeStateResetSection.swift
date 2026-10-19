@@ -20,6 +20,7 @@ final class RuntimeStateResetSection: PanelSectionViewController {
 
     let resetTargetControl = NSButton(title: "Reset target", target: nil, action: nil)
     let resetAllControl = NSButton(title: "Reset all", target: nil, action: nil)
+    let cellResetsDueControl = NSButton(title: "Make cell resets due", target: nil, action: nil)
     private let statsLabel = PanelComponents.statsLabel(identifier: "RuntimeStateResetStatsLabel")
     private var lastActionText = "No reset applied yet."
 
@@ -73,8 +74,14 @@ final class RuntimeStateResetSection: PanelSectionViewController {
             resetAllControl, target: self, action: #selector(resetAll),
             identifier: "RuntimeStateResetAllControl"
         )
+        cellResetsDueControl.toolTip = "Every cell the player left resets on the next visit."
+        PanelComponents.configureButton(
+            cellResetsDueControl, target: self, action: #selector(makeCellResetsDue),
+            identifier: "RuntimeStateCellResetsDueControl"
+        )
         return [
             PanelComponents.buttonRow([resetTargetControl, resetAllControl]),
+            PanelComponents.buttonRow([cellResetsDueControl]),
             statsLabel
         ]
     }
@@ -94,6 +101,12 @@ final class RuntimeStateResetSection: PanelSectionViewController {
         finishInteraction()
     }
 
+    @objc private func makeCellResetsDue() {
+        let count = provider?.makeCellResetsDue() ?? 0
+        lastActionText = "\(count) cells reset on the next visit."
+        finishInteraction()
+    }
+
     override func refreshReadout() {
         guard let provider else {
             statsLabel.stringValue = "Runtime state: unavailable"
@@ -101,6 +114,7 @@ final class RuntimeStateResetSection: PanelSectionViewController {
         }
         let snapshot = provider.runtimeStateSnapshot
         statsLabel.stringValue = "Dirty references: \(snapshot.dirtyReferenceCount)"
-            + "  Overridden globals: \(snapshot.overriddenGlobalCount)\n\(lastActionText)"
+            + "  Overridden globals: \(snapshot.overriddenGlobalCount)\n"
+            + "\(provider.cellResetReadout)\n\(lastActionText)"
     }
 }

@@ -136,7 +136,9 @@ extension CellStreamer {
     ) -> (target: InteractionTarget?, speaker: ReferenceKey?) {
         let hit = nearestCollisionHit(ray: ray)
         let solid = hit.flatMap { hit in
-            activeInteraction(reference: hit.reference).map {
+            activeInteraction(reference: hit.reference).flatMap {
+                $0.automaticArea == nil ? $0 : nil
+            }.map {
                 InteractionTarget(
                     interaction: $0, hitPosition: hit.position, distance: hit.distance
                 )
@@ -197,7 +199,7 @@ extension CellStreamer {
         return composition.cells.values.flatMap { $0.references.sortedEntries() }
     }
 
-    public func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
+    public func activateChildren(of key: ReferenceKey) -> [ActivateChild] {
         guard let parent = referenceEntry(key: key) else { return [] }
         return residentReferences.activateChildren(of: parent.formID)
     }
