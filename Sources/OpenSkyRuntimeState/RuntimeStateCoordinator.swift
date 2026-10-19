@@ -101,6 +101,15 @@ extension RuntimeStateCoordinator: RuntimeStateControlProviding {
         )
     }
 
+    public var cellResetReadout: String {
+        world?.cellResetReadout ?? "Cell reset: unavailable"
+    }
+
+    @discardableResult
+    public func makeCellResetsDue() -> Int {
+        world?.makeCellResetsDue() ?? 0
+    }
+
     /// A listing failure reads as "no slots": the list is a readout.
     /// Empty until the first listing arrives.
     public var runtimeStateSaveSlots: [String] {

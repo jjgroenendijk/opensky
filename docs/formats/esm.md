@@ -41,6 +41,9 @@ Flags OpenSky uses: `0x1` master (on `TES4`), `0x20` deleted, `0x80` localized (
 `0x200` light (on `TES4`), `0x1000` ignored, `0x40000` data compressed. Many bits mean
 different things for different record types. See the UESP table.
 
+On `REFR` and `ACHR`, `0x40000000` is "No Respawn": a [cell reset](/engine/cell-reset.md)
+leaves the reference as it is. `Skyrim.esm` sets it on 1,798 `REFR` and 2 `ACHR` records.
+
 Compressed data is a uint32 decompressed size, then a zlib stream (RFC 1950) that fills the
 rest of `dataSize`. Apple's `COMPRESSION_ZLIB` reads raw deflate only. So OpenSky checks
 and removes the 2-byte zlib header first. It does not check the Adler-32 checksum at the

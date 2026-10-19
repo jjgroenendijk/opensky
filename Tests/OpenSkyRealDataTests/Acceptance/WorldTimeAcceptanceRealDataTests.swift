@@ -95,7 +95,7 @@ struct WorldTimeAcceptanceRealDataTests {
     /// outside the pool makes the first reroll visible.
     @MainActor
     private static func showAContrastingWeather(_ system: WeatherSystem) throws {
-        system.update(deltaTime: 100, hour: WorldTimeAcceptanceClock.startHour)
+        system.update(hour: WorldTimeAcceptanceClock.startHour)
         let automatic = try #require(system.currentWeatherID, "no automatic pick for Tamriel")
         let contrast = try #require(
             system.store.selectableWeathers().first { $0.formID != automatic },
@@ -179,7 +179,7 @@ struct WorldTimeAcceptanceRealDataTests {
         _ system: WeatherSystem, session: Session, timescale: Float
     ) -> RunResult {
         var result = RunResult()
-        system.update(deltaTime: 100, hour: session.clock.hourOfDay)
+        system.update(hour: session.clock.hourOfDay)
         var weather = system.currentWeatherID
         if let weather {
             result.observedWeatherIDs.insert(weather)
@@ -189,7 +189,6 @@ struct WorldTimeAcceptanceRealDataTests {
             result.elapsedGameHours += elapsed
             result.lastResolvedHour = session.clock.hourOfDay
             system.update(
-                deltaTime: WorldTimeAcceptanceClock.wallStep,
                 hour: result.lastResolvedHour,
                 elapsedGameHours: elapsed
             )

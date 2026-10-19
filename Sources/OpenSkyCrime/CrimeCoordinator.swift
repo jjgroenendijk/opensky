@@ -72,7 +72,7 @@ public final class CrimeCoordinator {
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
     /// The player stands in a cell whose owner they may not use.
-    var isPlayerTrespassing = false {
+    public internal(set) var isPlayerTrespassing = false {
         didSet { conditionRevision &+= 1 }
     }
 

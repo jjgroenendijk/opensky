@@ -247,6 +247,8 @@ final class WorldSessionWiring {
         game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
         game.cinematicWorld.wire(gameSession: gameSession)
         game.loadingWorld.wire(streamer: streamer, gameSession: gameSession)
+        // It wraps the scripts' cell attach, so it comes after `wirePapyrus`.
+        wireCellReset(provider: provider, gameSession: gameSession, streamer: streamer)
     }
 
     /// Player-controlled modes only: the fly camera never picks up a target.

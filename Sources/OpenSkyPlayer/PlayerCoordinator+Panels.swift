@@ -11,7 +11,7 @@ import simd
 extension PlayerCoordinator: PlayerLocomotionControlProviding {
     public var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         guard let world, let bridge = world.playerLocomotion else { return .unavailable }
-        return PlayerLocomotionSnapshot(
+        var snapshot = PlayerLocomotionSnapshot(
             rendererAvailable: true,
             walkModeActive: world.isWalkModeActive,
             status: bridge.status,
@@ -32,6 +32,8 @@ extension PlayerCoordinator: PlayerLocomotionControlProviding {
                 bridge.graph, constants: bridge.actorStateConstants
             )
         )
+        snapshot.breath = world.playerBreath
+        return snapshot
     }
 
     public var isSneaking: Bool {

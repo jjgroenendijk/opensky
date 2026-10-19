@@ -225,8 +225,12 @@ final class WeatherSection: PanelSectionViewController {
             .truncatingRemainder(dividingBy: 360))
         let progress = Int((provider.weatherTransitionFraction * 100).rounded())
         let paused = provider.weatherTransitionsPaused ? " · paused" : ""
+        let changes = provider.weatherRerollInterval.map {
+            "every \(String(format: "%.1f", $0)) game hours"
+        } ?? "only with the region or a script"
         statsLabel.stringValue = """
         Weather: \(name) (blend \(progress)%)\(paused)
+        Changes: \(changes)
         Wind: \(String(format: "%.2f", wind.speed)) @ \(heading)°
         Clouds: \(provider.cloudReadout)
         """

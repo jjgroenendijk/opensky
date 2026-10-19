@@ -49,6 +49,10 @@ public final class GameSession: RenderFrameDriver {
     public var terrainSampler: WalkController.GroundSampler?
     /// Behavior-graph locomotion bridge (docs/engine/walk-mode.md).
     public var locomotion: LocomotionBridge
+    /// The player's breath under water (docs/engine/walk-mode.md).
+    public var breath = PlayerBreath()
+    /// Returns a cell the player left long ago to its plugin state; nil until wired.
+    public var cellReset: CellResetCoordinator?
     /// Orbit framing and collision zoom for `.thirdPerson`. Pure math; holds no pose.
     public var thirdPersonCamera = ThirdPersonCamera()
     /// The conversation camera's focus, framing and saved player pose. An override on top

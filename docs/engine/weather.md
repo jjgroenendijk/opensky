@@ -81,11 +81,23 @@ the next reroll time. See [runtime state](/engine/runtime-state.md).
 
 The system holds a "from" weather, a "to" weather, and a progress from 0 to 1. A reroll, or a
 forced change with a transition, stores the current look as "from", sets the new "to", and resets
-progress to 0. Each frame, progress grows by the real frame time divided by the duration. The
-blend uses a smoothstep of the progress. At 1, "from" becomes "to".
+progress to 0. Each frame, progress grows by the game hours that passed divided by the duration.
+The blend uses a smoothstep of the progress. At 1, "from" becomes "to".
 
-An automatic reroll happens every 6 game hours. The hours come from how far the game clock moved
-since the last frame, not from the hour value itself. So:
+An automatic reroll happens after an interval set by the climate's volatility (`CLMT` `TNAM`
+byte 4). The Creation Kit wiki page "Climate" (<https://ck.uesp.net/wiki/Climate>) says a higher
+volatility changes the weather more often, but gives no formula. OpenSky uses
+`6 * 50 / volatility` game hours:
+
+| Volatility | Interval |
+| --- | --- |
+| 50 (`SkyrimClimate` in `Skyrim.esm`) | 6 game hours |
+| 100 | 3 game hours |
+| 0 (such as Blackreach) | never; only a region change or a script changes it |
+| no climate | 6 game hours |
+
+The hours come from how far the game clock moved since the last frame, not from the hour value
+itself. So:
 
 - Scrubbing forward ages the weather, up to one day per step.
 - Scrubbing backward ages nothing.
@@ -97,17 +109,13 @@ from the same progress.
 
 ## Transition duration
 
-`WTHR` `DATA` "Trans Delta" is a float from 0 to 0.25. UESP and xEdit give it no time unit.
-OpenSky reads it as a rate: a full cross-fade takes `1 / clamp(delta, 0.02, 0.25)` seconds.
+`WTHR` `DATA` "Trans Delta" is a byte that the parser scales to 0 ... 0.25. The Creation Kit
+wiki page "Weather" (<https://ck.uesp.net/wiki/Weather>) says it is the number of game hours
+the transition takes. OpenSky uses the scaled value as game hours. Most `Skyrim.esm` weathers
+store 125, which is 0.1225 game hours: about 22 real seconds at the default timescale of 20.
 
-| Delta | Duration |
-| --- | --- |
-| 0.25 | 4 s |
-| 0.1 | 10 s |
-| 0.02 or less | 50 s |
-| missing or 0 | 10 s |
-
-This is a chosen mapping, not a spec value.
+A delta of 0 (19 weathers in `Skyrim.esm`) switches at once, with no fade. The scaling is not
+confirmed against the game; the wiki gives the unit, not the range.
 
 ## Time-of-day blend
 

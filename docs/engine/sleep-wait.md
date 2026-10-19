@@ -8,9 +8,9 @@ tags: [engine, menu, time]
 
 # Sleep and wait
 
-The Wait key (T) opens the wait menu. A bed opens the same menu as the rest menu. The player
-picks 1 to 24 hours, and the [game clock](/engine/game-clock.md) moves forward by that much at
-once.
+The Wait key (T) opens the wait menu. Using a bed opens the same menu as the rest menu. The
+player picks 1 to 24 hours, and the [game clock](/engine/game-clock.md) moves forward by that
+much.
 
 ## Refusals
 
@@ -23,14 +23,25 @@ menu `sNoWait...`. OpenSky checks them in this order:
 | --- | --- |
 | In combat, or a hostile actor nearby | `HostileActorsNear` |
 | Guards are pursuing the player | `WhileAlarm` |
+| The player stands in a cell they may not enter | `Trespass` |
+| The bed belongs to someone else (sleep only) | `InOwnedBed` |
 | Not on the ground | `InAir` |
 | A harmful effect drains health each second | `TakingHealthDamage` |
 
 ## Passing time
 
-When the hours pass, OpenSky refills health, magicka, and stamina, and makes an autosave
-(`rest` or `wait`). The game instead steps the world hour by hour: actors move on with
-their packages, and effects run out. OpenSky does not simulate the skipped hours. Sleeping
+The clock moves in steps of 15 game minutes. Each step ages the [weather](/engine/weather.md)
+and runs the scripts' game-time timers, so `OnUpdateGameTime` and a weather change can happen
+during a rest. After the last step, OpenSky refills health, magicka, and stamina, and makes an
+autosave (`rest` or `wait`). Actors do not move on with their packages during the skipped
+time, and timed effects do not run out.
+
+A bed's owner comes from the same ownership rule as theft ([crime](/engine/crime.md)). A bed
+the player owns, or that the player's faction owns at a rank they hold, is allowed.
+
+The settings `sNoSleepInCell`, `sNoWaitInCell`, `sNoSleepWarnToLeave`, and `sNoWaitDefault`
+also exist in `Skyrim.esm`. OpenSky does not use them, because no observed rule says when they
+apply. Sleeping
 sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).
 The Well Rested and Lover's
 Comfort bonuses are not given.

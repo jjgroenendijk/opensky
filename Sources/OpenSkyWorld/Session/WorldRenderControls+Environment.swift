@@ -50,6 +50,10 @@ extension WorldRenderControls: WeatherControlProviding {
         gameSession?.weather?.transitionFraction ?? 1
     }
 
+    public var weatherRerollInterval: Float? {
+        gameSession?.weather?.rerollInterval
+    }
+
     public var weatherTransitionsPaused: Bool {
         get { gameSession?.weather?.transitionsPaused ?? false }
         set { gameSession?.weather?.transitionsPaused = newValue }

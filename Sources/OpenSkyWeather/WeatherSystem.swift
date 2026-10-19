@@ -24,15 +24,10 @@ nonisolated public final class WeatherSystem {
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
 
-    /// Auto reroll cadence in game-hours, accumulated from the game clock's
-    /// elapsed hours. Chosen for a visible-but-not-frantic churn on a dev
-    /// clock.
+    /// Reroll cadence in game hours at `baseVolatility`, and for a climate without `TNAM`.
     public static let rerollGameHours: Float = 6
-    /// Fallback transition seconds when a weather has no DATA Trans Delta.
-    public static let defaultTransitionSeconds: Float = 10
-    /// Trans Delta is clamped to this floor before inversion so a near-zero
-    /// delta cannot produce an unbounded transition.
-    public static let minTransDelta: Float = 0.02
+    /// The `SkyrimClimate` volatility, which keeps the six-hour cadence.
+    public static let baseVolatility: Float = 50
 
     // MARK: Selection + transition state
 
@@ -48,7 +43,7 @@ nonisolated public final class WeatherSystem {
     private var toWeather: FormID?
     /// 0 -> fully `fromWeather`, 1 -> fully `toWeather`.
     private var transitionProgress: Float = 1
-    private var transitionDuration: Float = WeatherSystem.defaultTransitionSeconds
+    private var transitionGameHours: Float = 0
     private var gameHoursSinceRoll: Float = 0
     /// Cached resolve at the last update — recomputed only on update().
     public private(set) var resolvedWeather: ResolvedWeather?
@@ -194,26 +189,32 @@ nonisolated public final class WeatherSystem {
         ).map(\.weather)
     }
 
-    /// Advances the transition by `deltaTime` seconds and rerolls by `elapsedGameHours`,
-    /// then resolves the blend at `hour`. A still clock never rerolls, so forced weather
-    /// stays deterministic.
-    public func update(deltaTime: Float, hour: Float, elapsedGameHours: Float = 0) {
-        advanceTransition(deltaTime: max(0, deltaTime))
-        if elapsedGameHours.isFinite, elapsedGameHours > 0 {
-            gameHoursSinceRoll += elapsedGameHours
-        }
-        if forced == nil, gameHoursSinceRoll >= Self.rerollGameHours {
+    /// Advances the fade and the reroll timer by `elapsedGameHours`, then resolves the
+    /// blend at `hour`. A still clock neither fades nor rerolls.
+    public func update(hour: Float, elapsedGameHours: Float = 0) {
+        let elapsed = elapsedGameHours.isFinite ? max(0, elapsedGameHours) : 0
+        advanceTransition(gameHours: elapsed)
+        gameHoursSinceRoll += elapsed
+        if forced == nil, let interval = rerollInterval, gameHoursSinceRoll >= interval {
             gameHoursSinceRoll = 0
             reroll(startTransition: true)
         }
         recomputeResolved(hour: hour)
     }
 
+    /// Game hours between automatic rerolls under the current climate's volatility; nil
+    /// for a volatility of 0, whose weather changes only with the region or a script.
+    public var rerollInterval: Float? {
+        guard let volatility = climateTiming()?.volatility else { return Self.rerollGameHours }
+        guard volatility > 0 else { return nil }
+        return Self.rerollGameHours * Self.baseVolatility / Float(volatility)
+    }
+
     // MARK: Transition mechanics
 
-    private func advanceTransition(deltaTime: Float) {
+    private func advanceTransition(gameHours: Float) {
         guard !transitionsPaused, transitionProgress < 1 else { return }
-        let step = transitionDuration > 0 ? deltaTime / transitionDuration : 1
+        let step = transitionGameHours > 0 ? gameHours / transitionGameHours : 1
         transitionProgress = simd_clamp(transitionProgress + step, 0, 1)
         if transitionProgress >= 1 {
             fromWeather = toWeather
@@ -243,22 +244,13 @@ nonisolated public final class WeatherSystem {
             transitionProgress = 1
         case .timed:
             guard weather != toWeather || transitionProgress < 1 else { return }
-            fromWeather = source ?? weather
             toWeather = weather
-            transitionProgress = (source == nil) ? 1 : 0
-            transitionDuration = transitionSeconds(for: weather)
+            transitionGameHours = store.weather(weather)?.data?.transDelta ?? 0
+            // Trans Delta is the fade's length in game hours, so 0 switches at once.
+            let fades = source != nil && transitionGameHours > 0
+            fromWeather = fades ? source : weather
+            transitionProgress = fades ? 0 : 1
         }
-    }
-
-    /// Trans Delta (0-0.25) as an inverse rate: full 0->1 blend takes
-    /// 1/clamp(delta) seconds. Delta 0.25 -> 4 s, 0.1 -> 10 s, floor -> 50 s.
-    /// The exact game time-unit of Trans Delta is unconfirmed in open specs;
-    /// this interpretation is documented as a deviation in docs/engine/weather.md.
-    private func transitionSeconds(for weather: FormID) -> Float {
-        guard let delta = store.weather(weather)?.data?.transDelta, delta > 0 else {
-            return Self.defaultTransitionSeconds
-        }
-        return 1 / max(Self.minTransDelta, delta)
     }
 
     private func pickAutomatic() -> FormID? {

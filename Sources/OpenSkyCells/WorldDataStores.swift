@@ -67,6 +67,10 @@ nonisolated public struct WorldDataStores {
     public var difficultySettings = DifficultySettings.synthetic
     /// GMST-derived harvest regrowth, vanilla on a synthetic scene.
     public var harvestRegrowth = HarvestRegrowth.vanilla
+    /// `iHoursToRespawnCell` and `iHoursToRespawnCellCleared`.
+    public var cellResetSettings = CellResetSettings.vanilla
+    /// ECZN records, for the encounter zone's "never resets" flag.
+    public var encounterZoneStore: EncounterZoneStore?
     /// The bribe and intimidation settings; OpenSky's fallbacks on a synthetic scene.
     public var speechCheckSettings = SpeechCheckSettings.fallback
     /// Every GMST of the load order, which each subsystem resolves its settings from

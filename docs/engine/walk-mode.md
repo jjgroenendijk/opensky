@@ -148,6 +148,26 @@ toward the depth that puts its eye at the surface, or up (jump) and down (sneak)
 to 200 units per second. A swimmer resting on a shallow bottom counts as grounded, so it can walk
 out.
 
+## Breath and drowning
+
+The player is under water while the eye is below the water surface. Under water the breath
+counts down. When it reaches 0, the player loses a part of the maximum health each second.
+Above water the breath is full again at once. The settings come from the CK wiki
+"Category:Settings" page (<https://ck.uesp.net/wiki/Category:Settings>):
+
+| Setting | Meaning | Value |
+| --- | --- | --- |
+| `fActorSwimBreathBase` | seconds of breath | 10, the wiki default; `Skyrim.esm` does not set it |
+| `fActorSwimBreathDamage` | fraction of maximum health lost each second | 0.08 in `Skyrim.esm` |
+
+Example: with 100 health, a 16 second dive costs 6 seconds at 8 health a second, which is 48 health.
+
+The `Water Breathing` actor value above 0 keeps the breath full. A water breathing effect, or
+the Argonian racial ability, raises it. `fActorSwimBreathMult` is in `Skyrim.esm` (0.2), but the
+wiki text for it ("number of minutes (additive)") does not say what it multiplies, so OpenSky
+does not use it. The breath refills at once, but the game may refill it over time; this is not
+measured. World > Player & Locomotion shows the breath left.
+
 ## Ground material
 
 The controller reports the `MATT` of the surface underfoot. It is empty in the air, and on a surface

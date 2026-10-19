@@ -160,11 +160,12 @@ extension CellSceneBuilderFixture {
         scale: Float? = nil,
         includePlacement: Bool = true,
         teleport: TeleportFixture? = nil,
-        enableParent: UInt32? = nil
+        enableParent: UInt32? = nil,
+        extraFields: Data = Data()
     ) -> Data {
         var name = Data()
         name.appendUInt32(base)
-        var fields = ESMFixture.field("NAME", name) + enableParentField(enableParent)
+        var fields = ESMFixture.field("NAME", name) + enableParentField(enableParent) + extraFields
         if includePlacement {
             var data = Data()
             for value in [

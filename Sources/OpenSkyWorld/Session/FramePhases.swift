@@ -51,6 +51,8 @@ public enum WorldTickStep: Int, FramePhase {
     /// Magic effects write through actor values, so these come first.
     case actorValues
     case magicEffects
+    /// After the magic effects, so a water breathing effect that started this frame counts.
+    case breath
     case archery
     case ragdoll
     /// Reads what melee, archery, and the ragdolls did this frame.

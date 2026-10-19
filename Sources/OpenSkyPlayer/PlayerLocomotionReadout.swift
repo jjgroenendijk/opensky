@@ -33,8 +33,19 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
             grounded + "  " + swimming + "  Water surface: " + water,
             step + "  Jump impulse: " + impulse,
             gaitSpeedLine(snapshot.configuration),
-            "Walk speed source: \(snapshot.configuration.walkSpeed.source)"
+            "Walk speed source: \(snapshot.configuration.walkSpeed.source)",
+            breathLine(snapshot.breath)
         ].joined(separator: "\n")
+    }
+
+    /// The breath left under water, and whether the player is drowning.
+    public static func breathLine(_ breath: PlayerBreath?) -> String {
+        guard let breath else { return "Breath: unavailable" }
+        let total = format(breath.settings.breathSeconds)
+        let left = "\(format(breath.remainingSeconds)) of \(total) s"
+        guard breath.isSubmerged else { return "Breath: \(left)  (above water)" }
+        return "Breath: \(left)" +
+            (breath.remainingSeconds > 0 ? "  (under water)" : "  (drowning)")
     }
 
     /// The resolved gait speeds on one line, built piece by piece so the

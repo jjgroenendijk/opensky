@@ -151,7 +151,7 @@ final class FakeCrimeReferences: PapyrusWorldReferenceSource {
         cell
     }
 
-    func activateChildren(of _: ReferenceKey) -> [ReferenceKey] {
+    func activateChildren(of _: ReferenceKey) -> [ActivateChild] {
         []
     }
 }

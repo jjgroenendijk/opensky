@@ -27,4 +27,12 @@ public protocol PlayerWorld: AnyObject {
     /// Nil without a renderer.
     var firstPersonArmsEnabled: Bool? { get }
     func setFirstPersonArmsEnabled(_ enabled: Bool)
+    /// Nil without a renderer.
+    var playerBreath: PlayerBreath? { get }
+}
+
+extension PlayerWorld {
+    public var playerBreath: PlayerBreath? {
+        nil
+    }
 }

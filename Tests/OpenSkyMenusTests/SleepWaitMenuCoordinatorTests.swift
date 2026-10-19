@@ -2,6 +2,7 @@
 // rest rule's order.
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
 import OpenSkyRendering
@@ -23,8 +24,11 @@ final class FakeSleepWaitWorld: SleepWaitWorld, MenuInputConsumer {
     var passed: [(hours: Int, sleeping: Bool)] = []
     var hudLines: [String] = []
 
-    func restRefusal(sleeping: Bool) -> String? {
-        refusal
+    var askedBeds: [FormID?] = []
+
+    func restRefusal(sleeping: Bool, bed: FormID?) -> String? {
+        askedBeds.append(bed)
+        return refusal
     }
 
     func passTime(hours: Int, sleeping: Bool) {
@@ -82,6 +86,14 @@ struct SleepWaitMenuCoordinatorTests {
         #expect(events.events == [.wait(hours: 5), .cancel])
     }
 
+    @Test func aBedOpensTheRestMenuAndNamesItselfToTheRefusalCheck() {
+        let world = FakeSleepWaitWorld()
+        let menu = SleepWaitMenuCoordinator(menuMode: MenuModeController(), world: world)
+        #expect(menu.open(sleeping: true, bed: FormID(0x0001_2345)))
+        #expect(menu.isSleeping)
+        #expect(world.askedBeds == [FormID(0x0001_2345)])
+    }
+
     @Test func anOutOfRangeHourIsClamped() {
         let world = FakeSleepWaitWorld()
         let menu = SleepWaitMenuCoordinator(menuMode: MenuModeController(), world: world)
@@ -98,5 +110,25 @@ struct SleepWaitMenuCoordinatorTests {
         #expect(RestRefusal.inAir.settingEditorID(sleeping: false) == "sNoWaitInAir")
         #expect(RestRefusal.alarm.settingEditorID(sleeping: true) == "sNoSleepWhileAlarm")
         #expect(RestRule.refusal(RestContext()) == nil)
+    }
+}
+
+struct RestStepTests {
+    @Test func timePassesInQuarterHourSteps() {
+        #expect(RestTimeSteps.steps(hours: 1) == [0.25, 0.5, 0.75, 1])
+        #expect(RestTimeSteps.steps(hours: 24).count == 96)
+        #expect(RestTimeSteps.steps(hours: 0).isEmpty)
+    }
+
+    @Test func anOwnedBedAndTrespassRefuseAfterTheAlarm() {
+        var context = RestContext()
+        context.bedOwnedByOther = true
+        #expect(RestRule.refusal(context) == .ownedBed)
+        #expect(RestRefusal.ownedBed.settingEditorID(sleeping: true) == "sNoSleepInOwnedBed")
+        context.trespassing = true
+        #expect(RestRule.refusal(context) == .trespass)
+        #expect(RestRefusal.trespass.settingEditorID(sleeping: false) == "sNoWaitTrespass")
+        context.alarmed = true
+        #expect(RestRule.refusal(context) == .alarm)
     }
 }

@@ -106,6 +106,10 @@ extension PlayerWorldAdapter: PlayerWorld {
         game.gameSession?.locomotion
     }
 
+    var playerBreath: PlayerBreath? {
+        game.gameSession?.breath
+    }
+
     var isWalkModeActive: Bool {
         game.gameSession?.movementMode.isPlayerControlled ?? false
     }

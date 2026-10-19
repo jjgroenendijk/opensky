@@ -68,6 +68,13 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public let lock: LockData?
     /// FURN markers in world space, in marker order. Empty for every other base.
     public var seats: [FurnitureSeat] = []
+    /// An automatic DOOR's area; walking into it activates the door. Nil for other bases.
+    public var automaticArea: AutomaticDoorArea?
+
+    /// A FURN with a sleep marker. Using it opens the rest menu.
+    public var isBed: Bool {
+        seats.contains { $0.animationType == FurnitureSeat.sleepAnimation }
+    }
 
     public init(
         reference: FormID,
@@ -96,6 +103,25 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     }
 }
 
+/// The space an automatic door covers: its base's `OBND` box at the reference's pose.
+nonisolated public struct AutomaticDoorArea: Equatable, Sendable {
+    public let worldToLocal: simd_float4x4
+    public let minimum: SIMD3<Float>
+    public let maximum: SIMD3<Float>
+
+    public init(worldToLocal: simd_float4x4, minimum: SIMD3<Float>, maximum: SIMD3<Float>) {
+        self.worldToLocal = worldToLocal
+        self.minimum = minimum
+        self.maximum = maximum
+    }
+
+    public func contains(_ point: SIMD3<Float>) -> Bool {
+        let local = worldToLocal * SIMD4(point, 1)
+        let position = SIMD3(local.x, local.y, local.z)
+        return all(position .>= minimum) && all(position .<= maximum)
+    }
+}
+
 /// One place an actor uses a piece of furniture.
 nonisolated public struct FurnitureSeat: Equatable, Sendable {
     public let position: SIMD3<Float>
@@ -103,6 +129,7 @@ nonisolated public struct FurnitureSeat: Equatable, Sendable {
     public let heading: Float
     /// 1 sit, 2 sleep, 4 lean.
     public let animationType: UInt16
+    public static let sleepAnimation: UInt16 = 2
     /// FURN `FNMK`: only an actor with this keyword may use the seat.
     public let keyword: FormID?
     /// The marker's entry bits: 1 front, 2 behind, 4 right, 8 left, 16 up.

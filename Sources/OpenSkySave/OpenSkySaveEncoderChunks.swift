@@ -36,6 +36,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeViolentCrimeGold(entries, into: &writer)
         writeHarvests(entries, into: &writer)
         writeLocks(entries, into: &writer)
+        writeCellResets(entries, into: &writer)
         writeRelocations(entries, into: &writer)
         writeSceneChunks(entries, into: &writer)
         writeStoryManagerQuests(entries, into: &writer)

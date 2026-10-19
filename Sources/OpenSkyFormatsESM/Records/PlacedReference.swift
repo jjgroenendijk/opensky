@@ -51,6 +51,8 @@ nonisolated public struct PlacedReference: Sendable {
     public let formID: FormID
     /// Record-header flag 0x800: hidden until a script or quest enables it.
     public let isInitiallyDisabled: Bool
+    /// Record-header flag 0x4000_0000 (xEdit "No Respawn"): a cell reset leaves it alone.
+    public var isNoRespawn = false
     /// NAME — the base object this reference places.
     public let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
@@ -107,6 +109,7 @@ nonisolated public struct PlacedReference: Sendable {
         }
         formID = FormID(record.formID)
         isInitiallyDisabled = record.isInitiallyDisabled
+        isNoRespawn = record.flags.rawValue & 0x4000_0000 != 0
 
         var base: FormID?
         var placement: Placement?

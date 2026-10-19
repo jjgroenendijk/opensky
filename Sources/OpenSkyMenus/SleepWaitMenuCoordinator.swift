@@ -2,6 +2,7 @@
 // world passes the game time. See docs/engine/sleep-wait.md.
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 
@@ -9,8 +10,9 @@ import OpenSkyRendering
 public protocol SleepWaitWorld: MenuScreenWorld {
     /// The date line, such as "Sundas, 1:00 PM, 17th of Last Seed, 4E 201"; nil without a game.
     var gameDateText: String? { get }
-    /// The game's reason the player cannot rest or wait now; nil allows it.
-    func restRefusal(sleeping: Bool) -> String?
+    /// The game's reason the player cannot rest or wait now; nil allows it. `bed` is
+    /// the bed the player used, nil for the wait key.
+    func restRefusal(sleeping: Bool, bed: FormID?) -> String?
     func passTime(hours: Int, sleeping: Bool)
 }
 
@@ -40,13 +42,13 @@ public final class SleepWaitMenuCoordinator: MenuScreen<SleepWaitMovieEvent> {
 
     /// Opens the menu, or shows the game's refusal and stays shut.
     @discardableResult
-    public func open(sleeping: Bool) -> Bool {
+    public func open(sleeping: Bool, bed: FormID? = nil) -> Bool {
         guard !isOpen else { return false }
         guard let world, let date = world.gameDateText else {
             lastResult = "Not opened: no game"
             return false
         }
-        if let refusal = world.restRefusal(sleeping: sleeping) {
+        if let refusal = world.restRefusal(sleeping: sleeping, bed: bed) {
             lastResult = "Refused: \(refusal)"
             notify(refusal)
             return false

@@ -21,6 +21,8 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public var timescale: Float?
     public var isWorldSimPaused = false
     public var musicStore: MusicRecordStore?
+    public var cellResetReadout = "Cells left behind: 0"
+    public private(set) var cellResetForces = 0
     public private(set) var timeOfDayWrites: [Float] = []
     public private(set) var persistedHours: [Float] = []
     public private(set) var projectedGlobals: [(GameClock.TimeGlobal, Float)] = []
@@ -31,6 +33,11 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public private(set) var slotListings = 0
 
     public init() {}
+
+    public func makeCellResetsDue() -> Int {
+        cellResetForces += 1
+        return cellResetForces
+    }
 
     public var residentReferenceCount: Int {
         entries.count

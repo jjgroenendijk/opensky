@@ -51,18 +51,14 @@ nonisolated public struct InteriorImageSpace: Equatable, Sendable {
 
 extension GameSession {
     /// Advances weather and caches this frame's resolve; nil without a weather system.
-    /// Rerolls count real game hours, so a fixed clock (offscreen, CLI) never rerolls.
+    /// Fades and rerolls count game hours, so a fixed clock (offscreen, CLI) holds both.
     public func updateWeather(deltaTime: Float) {
         defer { updateImageSpace(deltaTime: deltaTime) }
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return
         }
-        weather.update(
-            deltaTime: max(deltaTime, 0),
-            hour: timeOfDay,
-            elapsedGameHours: consumeElapsedGameHours()
-        )
+        weather.update(hour: timeOfDay, elapsedGameHours: consumeElapsedGameHours())
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
         if let links = imageSpaceLinks {
             precipitationTuning = PrecipitationTuning(record: weather.precipitationParticles(

@@ -63,10 +63,13 @@ interior shows every floor; the game cuts the view above the player's floor. Fog
 ## Fast travel
 
 Fast travel is refused for a script block (`Game.EnableFastTravel(false)`), an
-undiscovered target, a location that forbids it, combat, hostiles near, an alarm, being in
-the air, and being overencumbered, checked in that order. Overencumbered means the carried
-weight is above the `CarryWeight` actor value. An alarm means guards pursue the player for
-a crime. The message is the matching `sNoFastTravel*` GMST string.
+undiscovered target, a location that forbids it, combat, hostiles near, an alarm, taking
+health damage, being in the air, and being overencumbered, checked in that order.
+Overencumbered means the carried weight is above the `CarryWeight` actor value. An alarm
+means guards pursue the player for a crime. Taking health damage means a harmful effect
+lowers health each second, such as poison or fire. The message is the matching
+`sNoFastTravel*` GMST string. `Skyrim.esm` has no such string for health damage, so that
+refusal shows `sNoFastTravelDefault`. The vanilla wording for this case is not confirmed.
 
 Two natives read this state. `Game.IsFastTravelControlsEnabled()` is false while a script
 block from `EnableFastTravel(false)` holds. `ObjectReference.CanFastTravelToMarker()` is true

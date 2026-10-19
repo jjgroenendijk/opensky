@@ -78,14 +78,16 @@ public enum PapyrusWorldFixture {
     /// Decodes a synthetic REFR with the given VMAD scripts into the runtime
     /// entry a cell build produces. `placement` is the DATA position.
     /// `linkedReferences` are XLKR `(keyword, ref)` pairs; a nil keyword is an
-    /// untagged link. `activateParents` become `XAPR` fields with no delay.
+    /// untagged link. `activateParents` become `XAPR` fields with no delay, and
+    /// `delayedActivateParents` `XAPR` fields with their delay in seconds.
     public static func referenceEntry(
         objectID: UInt32,
         scripts: [VMADFixture.Script],
         isPersistent: Bool = false,
         placement: SIMD3<Float> = .zero,
         linkedReferences: [(keyword: UInt32?, ref: UInt32)] = [],
-        activateParents: [UInt32] = []
+        activateParents: [UInt32] = [],
+        delayedActivateParents: [(parent: UInt32, delay: Float)] = []
     ) throws -> RuntimeReferenceEntry {
         var name = Data()
         name.appendUInt32(0x100)
@@ -97,7 +99,7 @@ public enum PapyrusWorldFixture {
         var links = linkedReferences.reduce(into: Data()) { bytes, link in
             bytes += linkedReferenceField(keyword: link.keyword, ref: link.ref)
         }
-        links += activateParentFields(activateParents)
+        links += activateParentFields(activateParents.map { ($0, 0) } + delayedActivateParents)
         let fields = ESMFixture.field("NAME", name)
             + ESMFixture.field("DATA", data)
             + links
@@ -351,11 +353,11 @@ public enum PapyrusWorldFixture {
 
 extension PapyrusWorldFixture {
     /// One `XAPR` field per parent: its FormID, then a zero delay.
-    static func activateParentFields(_ parents: [UInt32]) -> Data {
-        parents.reduce(into: Data()) { bytes, parent in
+    static func activateParentFields(_ parents: [(parent: UInt32, delay: Float)]) -> Data {
+        parents.reduce(into: Data()) { bytes, link in
             var payload = Data()
-            payload.appendUInt32(parent)
-            payload.appendUInt32(Float(0).bitPattern)
+            payload.appendUInt32(link.parent)
+            payload.appendUInt32(link.delay.bitPattern)
             bytes += ESMFixture.field("XAPR", payload)
         }
     }

@@ -234,7 +234,14 @@ byte, 1 for true. Values: a uint32 count, then a name and a float32. Form links:
 count, then a name and a key. Added forms: a uint32 count, then that many keys, in the order
 the script added them. Names are lowercased and sorted. Minimum size: 24 bytes per entry.
 
-`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, and `SCRS` merge into the `RDLT` deltas
+## CRST: cell resets
+
+One list for the player: per cell the player has left, the cell, then the game hour it left as
+a float64, in the cell order of `RDLT`. A cell with no entry has no reset pending
+([cell reset](/engine/cell-reset.md)). A cell entry that reads as absent, or an hour that is
+not finite, is dropped. Minimum size: 13 bytes per entry.
+
+`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, `SCRS`, and `CRST` merge into the `RDLT` deltas
 by key, like the other component chunks.
 
 ## PIDN: player identity

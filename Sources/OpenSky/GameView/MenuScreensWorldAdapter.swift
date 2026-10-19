@@ -7,6 +7,8 @@ import OpenSkyActors
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
+import OpenSkyCrimeInterface
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
@@ -81,12 +83,17 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         game.gameSession?.gameClock.menuDateText
     }
 
-    func restRefusal(sleeping: Bool) -> String? {
+    func restRefusal(sleeping: Bool, bed: FormID?) -> String? {
         var context = RestContext()
         let combat = game.combat.combatLoopSnapshot
         context.inCombat = combat.isPlayerInCombat
         context.hostilesNear = combat.hostileCount > 0
         context.alarmed = game.crime.isPlayerPursued
+        context.trespassing = game.crime.isPlayerTrespassing
+        if let bed, let key = game.streamer?.referenceEntry(formID: bed)?.key {
+            // The theft rule decides whose a bed is, as it does for an item.
+            context.bedOwnedByOther = game.crime.ownershipVerdict(on: key).isTheft
+        }
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
         guard let refusal = RestRule.refusal(context) else { return nil }
@@ -94,13 +101,18 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
             ?? refusal.fallbackText(sleeping: sleeping)
     }
 
-    /// Time passes at once; health, magicka, and stamina refill over it.
+    /// The clock moves in 15-minute steps. Each step ages the weather and runs the
+    /// scripts' game-time timers; health, magicka, and stamina refill at the end.
     func passTime(hours: Int, sleeping: Bool) {
         guard let gameSession = game.gameSession else { return }
         let start = gameSession.gameClock
-        gameSession.gameClock = GameClock(
-            totalGameSeconds: start.totalGameSeconds + Double(hours) * GameClock.secondsPerHour
-        )
+        for step in RestTimeSteps.steps(hours: hours) {
+            gameSession.gameTime.clock = GameClock(
+                totalGameSeconds: start.totalGameSeconds + step * GameClock.secondsPerHour
+            )
+            gameSession.updateWeather(deltaTime: 0)
+            game.scripts.advance(delta: 0)
+        }
         if sleeping {
             game.scripts.reportSleep(
                 start: Double(start.daysPassed), end: Double(gameSession.gameClock.daysPassed)

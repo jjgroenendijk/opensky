@@ -41,6 +41,8 @@ public protocol WeatherControlProviding: AnyObject {
     var currentWeatherName: String? { get }
     var weatherOverrideActive: Bool { get }
     var weatherTransitionFraction: Float { get }
+    /// Game hours between automatic changes; nil when the climate never changes on its own.
+    var weatherRerollInterval: Float? { get }
     var weatherTransitionsPaused: Bool { get set }
     var windState: WindState { get }
     var timeOfDay: Float { get set }

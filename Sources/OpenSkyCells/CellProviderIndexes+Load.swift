@@ -260,5 +260,6 @@ nonisolated extension CellProviderIndexes.WorldRecords {
         factions = FactionStore(plugins: context.plugins)
         relationships = RelationshipStore(plugins: context.plugins)
         formLists = FormListStore(plugins: context.plugins)
+        encounterZones = EncounterZoneStore(plugins: context.plugins)
     }
 }

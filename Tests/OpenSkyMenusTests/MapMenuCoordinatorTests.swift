@@ -268,6 +268,9 @@ struct MapMenuCoordinatorTests {
         var context = FastTravelContext()
         context.overencumbered = true
         #expect(FastTravelRule.refusal(context) == .overencumbered)
+        context.takingHealthDamage = true
+        #expect(FastTravelRule.refusal(context) == .takingHealthDamage)
+        #expect(FastTravelRefusal.takingHealthDamage.rawValue == "sNoFastTravelDefault")
         context.alarmed = true
         #expect(FastTravelRule.refusal(context) == .alarm)
     }

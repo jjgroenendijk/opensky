@@ -25,6 +25,11 @@ public protocol RuntimeStateWorld: AnyObject {
     /// Hands weather and the clock fresh global values.
     func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool)
 
+    /// How many cells wait to reset, and the last reset.
+    var cellResetReadout: String { get }
+    /// Makes every cell the player left reset on the next visit. Returns the count.
+    func makeCellResetsDue() -> Int
+
     var musicStore: MusicRecordStore? { get }
     /// The live condition context, with the crosshair as subject and target. `indexing`
     /// adds resident references a run-on must find, such as a perk's target.

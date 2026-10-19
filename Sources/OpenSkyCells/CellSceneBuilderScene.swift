@@ -11,6 +11,7 @@ import OpenSkyRendering
 import OpenSkyTerrain
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 
 nonisolated public struct CellGeometryBuild {
     public let location: CellSceneLocation
@@ -104,20 +105,25 @@ nonisolated extension CellSceneBuilder {
         for ref in refs {
             guard
                 let base = modelBaseIndex[ref.base.rawValue],
-                base.allowsManualInteraction,
+                base.allowsManualInteraction || base.isAutomaticDoor,
+                // XAPD: only an activate parent or a script may activate the reference.
+                ref.details.parentActivateOnly != true,
                 let action = interactionAction(for: base.recordType)
             else { continue }
             let override = resolvedText(base.activateTextOverride)
                 .flatMap { $0.isEmpty ? nil : $0 }
             let name = resolvedText(base.name)
                 .flatMap { $0.isEmpty ? nil : $0 }
+            let seats = base.recordType == "FURN" ? seats(of: base, at: ref) : []
+            // The game's text is `sFurnitureSleep`, which the build cannot read.
+            let isBed = seats.contains { $0.animationType == FurnitureSeat.sleepAnimation }
             var interaction = PlacedInteraction(
                 reference: ref.formID,
                 base: ref.base,
                 position: ref.placement.position,
                 name: name ?? base.editorID ?? base.formID.description,
                 action: action,
-                actionLabel: override ?? action.defaultLabel,
+                actionLabel: override ?? (isBed ? "Sleep" : action.defaultLabel),
                 sounds: base.sounds,
                 voiceType: base.voiceType,
                 station: base.workbench.map {
@@ -126,12 +132,29 @@ nonisolated extension CellSceneBuilder {
                 produce: base.produce,
                 lock: action == .open || action == .search ? ref.lock : nil
             )
-            if base.recordType == "FURN" {
-                interaction.seats = seats(of: base, at: ref)
+            interaction.seats = seats
+            if base.isAutomaticDoor {
+                guard let area = Self.automaticArea(of: base, at: ref) else { continue }
+                interaction.automaticArea = area
             }
             interactions[ref.formID] = interaction
         }
         return interactions
+    }
+
+    /// An automatic door without bounds covers no space, so it is left out.
+    nonisolated private static func automaticArea(
+        of base: ModelBase, at ref: PlacedReference
+    ) -> AutomaticDoorArea? {
+        guard let bounds = base.details.bounds, !bounds.isEmpty else { return nil }
+        let transform = MatrixMath.placement(
+            position: ref.placement.position, rotation: ref.placement.rotation, scale: ref.scale
+        )
+        return AutomaticDoorArea(
+            worldToLocal: transform.inverse,
+            minimum: SIMD3<Float>(bounds.minimum),
+            maximum: SIMD3<Float>(bounds.maximum)
+        )
     }
 
     nonisolated private func interactionAction(
@@ -253,6 +276,7 @@ nonisolated extension CellSceneBuilder {
             stateSequence: geometry.stateSequence
         )
         scene.cellFormID = FormID(found.formID)
+        scene.encounterZone = found.cell.encounterZone
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         scene.sequenceDoors = doors.map(\.door)

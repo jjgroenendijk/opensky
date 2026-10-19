@@ -16,6 +16,7 @@ extension CellStreamer {
     public func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
         transitionInFlight = nil
+        automaticDoorOccupancy = nil
         let motionInteraction = doorMotionInteraction
         doorMotionInteraction = nil
         let isRebuild = interiorRebuildInFlight

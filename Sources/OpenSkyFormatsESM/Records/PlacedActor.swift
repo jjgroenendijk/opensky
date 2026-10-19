@@ -15,6 +15,8 @@ nonisolated public struct PlacedActor: Sendable {
     /// Record-header flag 0x800 (UESP): the actor stays hidden until a quest
     /// or script enables it, so the renderer skips it.
     public let isInitiallyDisabled: Bool
+    /// Record-header flag 0x4000_0000 (xEdit "No Respawn"): a cell reset leaves it alone.
+    public var isNoRespawn = false
     /// VMAD — Papyrus scripts attached directly to this placed actor.
     public let scriptData: ScriptData
     /// XESP.
@@ -33,6 +35,7 @@ nonisolated public struct PlacedActor: Sendable {
         self.placement = placement
         self.scale = scale
         isInitiallyDisabled = actor.isInitiallyDisabled
+        isNoRespawn = actor.isNoRespawn
         scriptData = actor.scriptData
         enableParent = actor.enableParent
         details = actor.details
@@ -64,6 +67,7 @@ nonisolated public struct PlacedActor: Sendable {
         }
         formID = FormID(record.formID)
         isInitiallyDisabled = record.isInitiallyDisabled
+        isNoRespawn = record.flags.rawValue & 0x4000_0000 != 0
 
         var base: FormID?
         var placement: PlacedReference.Placement?

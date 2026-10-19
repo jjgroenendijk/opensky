@@ -43,6 +43,15 @@ extension FakeWorldProviders {
         runtimeState.resetAllReferenceState()
     }
 
+    var cellResetReadout: String {
+        runtimeState.cellResetReadout
+    }
+
+    @discardableResult
+    func makeCellResetsDue() -> Int {
+        runtimeState.makeCellResetsDue()
+    }
+
     func saveWorldState(slot: String) {
         runtimeState.saveWorldState(slot: slot)
     }
