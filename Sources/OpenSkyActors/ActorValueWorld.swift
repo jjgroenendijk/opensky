@@ -20,6 +20,10 @@ public protocol ActorValueWorld: AnyObject {
     func playerSprintLoad() -> Float?
     /// An empty stamina bar turns the player's sprint into a run.
     func setPlayerSprintAllowed(_ allowed: Bool)
+    /// What the player carries, with worn armour at its perk weight. Nil without items.
+    func playerCarriedWeight() -> Float?
+    /// An over-encumbered player can only walk; true shows `sOverEncumbered` on the HUD.
+    func setPlayerOverencumbered(_ overencumbered: Bool)
 }
 
 extension ActorValueWorld {
@@ -29,4 +33,10 @@ extension ActorValueWorld {
     }
 
     public func setPlayerSprintAllowed(_: Bool) {}
+
+    public func playerCarriedWeight() -> Float? {
+        nil
+    }
+
+    public func setPlayerOverencumbered(_: Bool) {}
 }

@@ -34,6 +34,7 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
 
     var craftingStationName: String?
     var craftingRecipes: [CraftingMenuRecipe] = []
+    var alchemyIngredients: [CraftingMenuIngredient]?
 
     func showHUDNotification(_ text: String) {
         hudLines.append(text)
@@ -119,5 +120,15 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld 
 
     func closeCraftingStation() {
         actions.append("close station")
+    }
+
+    func toggleIngredient(_ ingredient: FormID) -> String {
+        actions.append("toggle \(ingredient.rawValue)")
+        return "Chose"
+    }
+
+    func brewChosenIngredients() -> String {
+        actions.append("brew")
+        return "Brewed"
     }
 }

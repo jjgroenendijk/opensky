@@ -32,6 +32,9 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     public let stolenCount: Int32
     /// An `ALCH` with the food flag, which the Food tab takes instead of Potions.
     public let isFood: Bool
+    public let isFavourite: Bool
+    /// The number key 1 to 8 bound to the item, if any.
+    public let hotkey: Int?
 
     public init(
         item: FormID,
@@ -42,7 +45,9 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         isEquipped: Bool,
         family: ItemDefinition.Family?,
         stolenCount: Int32 = 0,
-        isFood: Bool = false
+        isFood: Bool = false,
+        isFavourite: Bool = false,
+        hotkey: Int? = nil
     ) {
         self.item = item
         self.name = name
@@ -53,6 +58,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         self.family = family
         self.stolenCount = stolenCount
         self.isFood = isFood
+        self.isFavourite = isFavourite
+        self.hotkey = hotkey
     }
 
     /// Whether any copy in this row is stolen, which is what the "Stolen"
@@ -79,35 +86,48 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
     public let families: Set<ItemDefinition.Family>
     /// Splits `ALCH` rows: true takes only food, false only potions, nil both.
     public let food: Bool?
+    /// The Favorites tab, which takes the marked rows of any family.
+    public let favourites: Bool
 
-    public init(label: String, families: Set<ItemDefinition.Family>, food: Bool? = nil) {
+    public init(
+        label: String, families: Set<ItemDefinition.Family>, food: Bool? = nil,
+        favourites: Bool = false
+    ) {
         self.label = label
         self.families = families
         self.food = food
+        self.favourites = favourites
     }
 
     /// Whether `entry` belongs in this category. An empty family set is the
     /// "All" tab and takes everything.
     public func accepts(_ entry: InventoryMenuEntry) -> Bool {
+        guard !favourites else { return entry.isFavourite }
         guard !families.isEmpty else { return true }
         guard food == nil || food == entry.isFood else { return false }
         return families.contains(entry.family ?? .miscellaneous)
     }
 
-    /// The tabs in the game's order, named by `texts`. A family OpenSky does not
-    /// decode yet, such as scrolls, has no tab.
-    public static func tabs(texts: InventoryMenuTexts) -> [InventoryMenuCategory] {
+    /// The tabs in the game's order, named by `texts`. Only the player's own inventory
+    /// has a Favorites tab.
+    public static func tabs(
+        texts: InventoryMenuTexts, favourites: Bool = false
+    ) -> [InventoryMenuCategory] {
         func tab(
             _ tab: InventoryMenuTexts.Tab, _ families: Set<ItemDefinition.Family>,
             food: Bool? = nil
         ) -> InventoryMenuCategory {
             InventoryMenuCategory(label: texts.label(tab), families: families, food: food)
         }
-        return [
+        let favouritesTab = InventoryMenuCategory(
+            label: texts.label(.favorites), families: [], favourites: true
+        )
+        return (favourites ? [favouritesTab] : []) + [
             tab(.all, []),
             tab(.weapons, [.weapon, .ammunition]),
             tab(.apparel, [.armor]),
             tab(.potions, [.ingestible], food: false),
+            tab(.scrolls, [.scroll]),
             tab(.food, [.ingestible], food: true),
             tab(.ingredients, [.ingredient]),
             tab(.books, [.book]),
@@ -132,6 +152,8 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     /// The owner's gold, which is an ordinary stack rather than a currency
     /// field — see `ItemDefinitionStore.vanillaGoldFormID`.
     public let gold: Int32
+    /// Open while the player picks how many of a stack to drop.
+    public var quantity: InventoryQuantityPrompt?
 
     public static let empty = InventoryMenuModel(
         allEntries: [], categories: [], carriedWeight: 0, gold: 0
@@ -147,7 +169,9 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
         self.categories = categories
         self.carriedWeight = carriedWeight
         self.gold = gold
-        selectedCategoryIndex = 0
+        // The menu opens on All, not on the Favorites tab before it.
+        selectedCategoryIndex = categories.firstIndex { $0.families.isEmpty && !$0.favourites }
+            ?? 0
         selectedIndex = 0
     }
 
@@ -213,5 +237,39 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     public mutating func select(_ index: Int) {
         guard entries.indices.contains(index) else { return }
         selectedIndex = index
+    }
+}
+
+/// The quantity slider: how many of one stack the next drop moves.
+nonisolated public struct InventoryQuantityPrompt: Equatable, Sendable {
+    public let item: FormID
+    public let name: String
+    public let maximum: Int32
+    /// Starts at the whole stack, as the movie's `ShowQuantityMenu` sets it.
+    public private(set) var value: Int32
+
+    /// `InventoryDefines.QUANTITY_MENU_COUNT_LIMIT` in the vanilla movie: a stack of
+    /// at most this many drops one without asking.
+    public static let countLimit: Int32 = 5
+
+    /// The prompt a drop of `count` copies opens, or nil when it drops one at once.
+    public static func asking(item: FormID, name: String, count: Int32) -> Self? {
+        count > countLimit ? Self(item: item, name: name, maximum: count) : nil
+    }
+
+    public init(item: FormID, name: String, maximum: Int32) {
+        self.item = item
+        self.name = name
+        self.maximum = max(1, maximum)
+        value = self.maximum
+    }
+
+    /// Moves the count by `step`, kept between 1 and the stack.
+    public mutating func adjust(by step: Int32) {
+        value = min(max(1, value &+ step), maximum)
+    }
+
+    public var text: String {
+        "Drop how many \(name)? \(value) of \(maximum)"
     }
 }

@@ -97,7 +97,8 @@ nonisolated public struct CellScene: Sendable {
     public var assets = CellAssets()
     /// Enabled `PHZD` placed hazards, for the hazard runtime.
     public var hazards: [CellHazard] = []
-    /// CELL `XEZN`, spelled in `ownerPluginName`. Its "never resets" flag stops a cell reset.
+    /// CELL `XEZN`, else the worldspace's, spelled in `ownerPluginName`. Its "never
+    /// resets" flag stops a cell reset.
     public var encounterZone: FormID?
     /// CELL `XCIM`, the interior's image space, spelled in `ownerPluginName`.
     public var imageSpace: FormID?

@@ -235,7 +235,13 @@ final class ItemsSection: PanelSectionViewController {
     }
 
     private static func carriedLine(_ snapshot: ItemControlSnapshot) -> String {
-        let weight = String(format: "%.1f", snapshot.playerWeight)
+        var weight = String(format: "%.1f", snapshot.playerWeight)
+        if let capacity = snapshot.playerCapacity {
+            weight += String(format: " of %.0f", capacity)
+            if snapshot.playerWeight > capacity {
+                weight += " (over-encumbered: walk only)"
+            }
+        }
         return "Carried: \(snapshot.playerStacks.count) stacks · "
             + "weight \(weight) · gold \(snapshot.playerGold)"
     }

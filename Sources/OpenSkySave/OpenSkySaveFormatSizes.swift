@@ -241,4 +241,21 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumTemperedItemSize = 8
     /// Bytes one `TMPR` level occupies.
     public static let temperedLevelSize = 4
+    /// Smallest `CPOT`, `INGK`, or `WPSN` entry: the smallest key and cell (8) and a
+    /// zero row count (4).
+    public static let minimumAlchemyEntrySize = 12
+    /// Smallest `CPOT` potion: FormID, an empty name (2), the poison byte, the value,
+    /// and a zero effect count.
+    public static let minimumCreatedPotionSize = 15
+    /// One `CPOT` effect: MGEF, magnitude, area, and duration.
+    public static let createdPotionEffectSize = 16
+    /// One `INGK` row: the ingredient and its effect bits.
+    public static let ingredientKnowledgeRowSize = 5
+    /// One `WPSN` row: weapon, poison, and doses.
+    public static let weaponPoisonRowSize = 12
+    /// Smallest `FAVS` entry: the smallest key and cell (8), a zero item count (4), and
+    /// a zero hotkey count (4).
+    public static let minimumFavouritesEntrySize = 16
+    /// One `FAVS` hotkey row: the slot byte and the item.
+    public static let favouriteHotkeySize = 5
 }

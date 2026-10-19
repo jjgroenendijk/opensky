@@ -11,6 +11,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case readyWeapon, cameraMode, journal, inventory, skills
     case map, magic, wait, quicksave, quickload, pause
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
+    case hotkey1, hotkey2, hotkey3, hotkey4, hotkey5, hotkey6, hotkey7, hotkey8
 
     /// A held action stays down until released; the rest fire once on press.
     public var isHeld: Bool {
@@ -18,6 +19,14 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
         case .forward, .back, .left, .right, .up, .down, .run, .sprint, .attack, .block: true
         default: false
         }
+    }
+
+    /// The favourites slot, 1 to 8, a hotkey action uses.
+    public var hotkeySlot: Int? {
+        let hotkeys: [Self] = [
+            .hotkey1, .hotkey2, .hotkey3, .hotkey4, .hotkey5, .hotkey6, .hotkey7, .hotkey8
+        ]
+        return hotkeys.firstIndex(of: self).map { $0 + 1 }
     }
 
     var moveKey: CameraInputState.MoveKey? {
@@ -128,7 +137,10 @@ public struct GameInputDispatcher {
         case .journal: openJournal?()
         case .inventory: openInventory?()
         case .map, .magic, .wait, .quicksave, .quickload, .pause, .skills: onCommand?(action)
-        default: break
+        default:
+            if action.hotkeySlot != nil {
+                onCommand?(action)
+            }
         }
     }
 

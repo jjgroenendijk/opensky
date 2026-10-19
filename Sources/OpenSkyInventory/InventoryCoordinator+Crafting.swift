@@ -26,7 +26,7 @@ extension InventoryCoordinator {
     /// perk's activate label, which wins.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
         let labelled = locks
-            .labelled(runtime?.labelled(interaction, onDay: world.gameDaysPassed) ?? interaction)
+            .labelled(runtime?.labelled(interaction) ?? interaction)
         guard let label = world.perkActivateLabel(for: interaction.reference) else {
             return labelled
         }
@@ -38,7 +38,7 @@ extension InventoryCoordinator {
         guard let runtime else { return InventoryResult(.unavailable) }
         do {
             let outcome = try runtime.harvest(
-                interaction, onDay: world.gameDaysPassed, count: harvestCount(of: interaction)
+                interaction, at: harvestMoment, count: harvestCount(of: interaction)
             )
             let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
             return InventoryResult(
@@ -51,6 +51,13 @@ extension InventoryCoordinator {
                 reason: String(describing: error)
             )))
         }
+    }
+
+    /// The day and the season of a harvest now.
+    var harvestMoment: HarvestMoment {
+        HarvestMoment(
+            day: world.gameDaysPassed, season: world.gameMonth.flatMap(HarvestSeason.init(month:))
+        )
     }
 
     /// Green Thumb sets Mod Ingredients Harvested to 2, with the produce bound as the item.
@@ -108,6 +115,11 @@ extension InventoryCoordinator {
             skills: skillUses,
             skillUse: craftingSkillUse
         )
+        alchemySelection = crafting?.station.brews == true ? [] : nil
+        if alchemySelection != nil {
+            let carried = alchemyIngredients.count
+            return noteCraft(.openedLab(event.interaction.name, ingredients: carried))
+        }
         let count = crafting?.recipes.count ?? 0
         return noteCraft(.opened(station: event.interaction.name, recipes: count))
     }
@@ -163,6 +175,7 @@ extension InventoryCoordinator {
     public func closeCraftingSession() -> CraftingActionOutcome {
         guard crafting != nil else { return noteCraft(.notOpen) }
         crafting = nil
+        alchemySelection = nil
         return noteCraft(.closed)
     }
 

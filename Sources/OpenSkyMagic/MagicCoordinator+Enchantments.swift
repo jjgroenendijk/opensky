@@ -6,6 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyWorldState
 
 extension MagicCoordinator: WeaponEnchantmentApplying {
     @discardableResult
@@ -14,6 +15,47 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
         let holders = residentHolders(of: hit.targets)
         return withEffects { runtime in
             WeaponEnchantmentApplication.apply(hit, owner: owner, holders: holders, using: &runtime)
+        }.flatMap(\.self)
+    }
+
+    /// Spends one dose of the poison on the striking weapon and applies the poison's
+    /// effects to the target, scaled by its resistances like a hostile spell.
+    @discardableResult
+    public func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+        guard
+            let weapon = hit.weapon,
+            let items = world.inventory?.baselines.items,
+            let target = residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
+        else { return nil }
+        let plugin = pluginName
+        return withEffects { runtime -> WeaponPoisonReport? in
+            let poisons = runtime.store.component(WeaponPoisonState.self, for: hit.attacker)
+            guard let poisons else { return nil }
+            let (left, spent) = poisons.spendingDose(of: weapon)
+            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return nil }
+            if left.isEmpty {
+                runtime.store.reset(WeaponPoisonState.componentKind, for: hit.attacker)
+            } else {
+                runtime.store.set(left, for: hit.attacker)
+            }
+            let scaled = SpellHitApplication.scale(
+                potion.effects, fromPlugin: plugin, ignoresResistance: false,
+                on: target, using: runtime, resistances: .documentedDefaults
+            )
+            let stored = runtime.apply(
+                scaled.entries,
+                fromPlugin: plugin,
+                source: ActiveEffectSource(
+                    kind: .potion, record: runtime.sourceKey(of: spent, fallbackPlugin: plugin)
+                ),
+                caster: hit.attacker,
+                on: target
+            )
+            return WeaponPoisonReport(
+                poison: spent,
+                dosesLeft: left.poisons[weapon]?.doses ?? 0,
+                storedCount: stored.count
+            )
         }.flatMap(\.self)
     }
 }

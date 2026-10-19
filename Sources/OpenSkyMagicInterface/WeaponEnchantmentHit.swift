@@ -110,4 +110,7 @@ public protocol WeaponEnchantmentApplying {
     ///   at all — every synthetic scene, which has no effect runtime.
     @discardableResult
     func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport?
+    /// Delivers one dose of the poison on the weapon, if it carries one.
+    @discardableResult
+    func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport?
 }

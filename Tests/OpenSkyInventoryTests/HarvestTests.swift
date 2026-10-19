@@ -1,9 +1,11 @@
 // Harvesting synthetic flora: the produce grant, the harvested component, the
-// refused second harvest, the label change, the reset, and the regrowth.
+// refused second harvest, the label change, the season roll, and the cell reset.
 
 import Foundation
 import OpenSkyFeaturesTesting
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldInterface
@@ -19,10 +21,12 @@ struct HarvestTests {
     static let leveledPlant = FormID(0x0000_0810)
     static let barePlant = FormID(0x0000_0820)
     static let floraBase = FormID(0x0000_5000)
-    /// Game days passed at the harvest in these tests.
-    static let day: Float = 3
+    /// A spring morning, three game days in.
+    static let moment = HarvestMoment(day: 3, season: .spring)
 
-    static func flora(_ reference: FormID, produce: FormID?) -> PlacedInteraction {
+    static func flora(
+        _ reference: FormID, produce: FormID?, chances: [UInt8]? = nil
+    ) -> PlacedInteraction {
         PlacedInteraction(
             reference: reference,
             base: floraBase,
@@ -31,7 +35,9 @@ struct HarvestTests {
             action: .harvest,
             actionLabel: InteractionAction.harvest.defaultLabel,
             sounds: nil,
-            produce: HarvestProduce(ingredient: produce, harvestSound: nil, seasonalChance: nil)
+            produce: HarvestProduce(
+                ingredient: produce, harvestSound: nil, seasonalChance: chances
+            )
         )
     }
 
@@ -46,34 +52,31 @@ struct HarvestTests {
     @Test func aHarvestGrantsOneProduceAndMarksThePlant() throws {
         let harness = try Self.harness()
         let target = Self.flora(Self.plant, produce: Fixture.lockpick)
-        #expect(harness.runtime.labelled(target, onDay: Self.day).actionLabel == "Harvest")
-        let outcome = try harness.runtime.harvest(target, onDay: Self.day)
+        #expect(harness.runtime.labelled(target).actionLabel == "Harvest")
+        let outcome = try harness.runtime.harvest(target, at: Self.moment)
         #expect(outcome.granted == [InventoryStack(item: Fixture.lockpick, count: 1)])
         #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 1)
-        #expect(harness.runtime.isHarvested(target, onDay: Self.day))
-        #expect(
-            harness.runtime.labelled(target, onDay: Self.day).actionLabel
-                == InteractionAction.harvestedLabel
-        )
+        #expect(harness.runtime.isHarvested(target))
+        #expect(harness.runtime.labelled(target).actionLabel == InteractionAction.harvestedLabel)
         #expect(
             harness.store.component(ReferenceHarvestState.self, for: outcome.reference)
-                == ReferenceHarvestState(isHarvested: true, harvestedOnDay: Self.day)
+                == ReferenceHarvestState(isHarvested: true, harvestedOnDay: 3)
         )
     }
 
     @Test func aGreenThumbHarvestGrantsTheCountItIsGiven() throws {
         let harness = try Self.harness()
         let target = Self.flora(Self.plant, produce: Fixture.lockpick)
-        let outcome = try harness.runtime.harvest(target, onDay: Self.day, count: 2)
+        let outcome = try harness.runtime.harvest(target, at: Self.moment, count: 2)
         #expect(outcome.granted == [InventoryStack(item: Fixture.lockpick, count: 2)])
     }
 
     @Test func aSecondHarvestIsRefusedAndWritesNothing() throws {
         let harness = try Self.harness()
         let target = Self.flora(Self.plant, produce: Fixture.lockpick)
-        try harness.runtime.harvest(target, onDay: Self.day)
+        try harness.runtime.harvest(target, at: Self.moment)
         #expect(throws: HarvestError.alreadyHarvested(Self.plant)) {
-            try harness.runtime.harvest(target, onDay: Self.day)
+            try harness.runtime.harvest(target, at: Self.moment)
         }
         #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 1)
     }
@@ -81,8 +84,7 @@ struct HarvestTests {
     @Test func aLeveledProduceGrantsItsDeterministicPick() throws {
         let harness = try Self.harness()
         let outcome = try harness.runtime.harvest(
-            Self.flora(Self.leveledPlant, produce: Fixture.singlePickList),
-            onDay: Self.day
+            Self.flora(Self.leveledPlant, produce: Fixture.singlePickList), at: Self.moment
         )
         #expect(outcome.granted.count == 1)
         #expect(outcome.granted.first?.item != Fixture.singlePickList)
@@ -91,7 +93,7 @@ struct HarvestTests {
     @Test func aPlantWithoutProduceWritesNothing() throws {
         let harness = try Self.harness()
         #expect(throws: HarvestError.noProduce(Self.floraBase)) {
-            try harness.runtime.harvest(Self.flora(Self.barePlant, produce: nil), onDay: Self.day)
+            try harness.runtime.harvest(Self.flora(Self.barePlant, produce: nil), at: Self.moment)
         }
         #expect(harness.store.dirtyCount == 0)
     }
@@ -99,41 +101,45 @@ struct HarvestTests {
     @Test func aResetMakesThePlantHarvestableAgain() throws {
         let harness = try Self.harness()
         let target = Self.flora(Self.plant, produce: Fixture.lockpick)
-        try harness.runtime.harvest(target, onDay: Self.day)
+        try harness.runtime.harvest(target, at: Self.moment)
         try harness.runtime.resetHarvest(target)
-        #expect(!harness.runtime.isHarvested(target, onDay: Self.day))
-        try harness.runtime.harvest(target, onDay: Self.day)
+        #expect(!harness.runtime.isHarvested(target))
+        try harness.runtime.harvest(target, at: Self.moment)
         #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 2)
     }
 
-    /// `iHoursToRespawnCell` is 240 hours, so the plant regrows 10 game days on.
-    @Test func aPlantGrowsBackWhenItsCellResets() throws {
+    /// PFPC 0 in spring: the plant is picked bare, and still counts as harvested.
+    @Test func anOutOfSeasonHarvestYieldsNothingButMarksThePlant() throws {
         let harness = try Self.harness()
-        let target = Self.flora(Self.plant, produce: Fixture.lockpick)
-        try harness.runtime.harvest(target, onDay: Self.day)
-        #expect(harness.runtime.regrowthDay(of: target) == Self.day + 10)
-
-        #expect(harness.runtime.isHarvested(target, onDay: Self.day + 9.9))
-        #expect(!harness.runtime.isHarvested(target, onDay: Self.day + 10))
-        #expect(harness.runtime.labelled(target, onDay: Self.day + 10).actionLabel == "Harvest")
-        try harness.runtime.harvest(target, onDay: Self.day + 10)
-        #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 2)
+        let target = Self.flora(Self.plant, produce: Fixture.lockpick, chances: [0, 100, 100, 100])
+        let outcome = try harness.runtime.harvest(target, at: Self.moment)
+        #expect(outcome.granted.isEmpty)
+        #expect(harness.runtime.isHarvested(target))
+        let summer = HarvestMoment(day: 3, season: .summer)
+        let other = Self.flora(
+            Self.leveledPlant,
+            produce: Fixture.lockpick,
+            chances: [0, 100, 0, 0]
+        )
+        #expect(try harness.runtime.harvest(other, at: summer).granted.count == 1)
     }
 
-    /// A harvest without a known day, as in an older save, never regrows alone.
-    @Test func aHarvestWithoutADayStaysHarvested() {
-        let regrowth = HarvestRegrowth.vanilla
-        #expect(regrowth.isHarvested(.harvested, onDay: 1000))
-        #expect(regrowth.regrowthDay(of: .harvested) == nil)
-        #expect(!regrowth.isHarvested(nil, onDay: 1000))
+    /// Six vanilla plants carry PFPC 0 in every season and still yield in the game.
+    @Test func allZeroChancesMeanNoSeasonalData() {
+        #expect(HarvestSeason.spring.chance(in: [0, 0, 0, 0]) == nil)
+        #expect(HarvestSeason.yields(chances: [0, 0, 0, 0], season: .winter, roll: 99))
+        #expect(!HarvestSeason.yields(chances: [50, 0, 0, 0], season: .spring, roll: 50))
+        #expect(HarvestSeason.yields(chances: [50, 0, 0, 0], season: .spring, roll: 49))
+        #expect(HarvestSeason.yields(chances: [50, 0, 0, 0], season: nil, roll: 99))
     }
 
-    @Test func theIntervalComesFromTheLoadOrderAndRefusesNonsense() {
-        let timed = ReferenceHarvestState(isHarvested: true, harvestedOnDay: 0)
-        #expect(HarvestRegrowth(hours: 48).regrowthDay(of: timed) == 2)
-        #expect(HarvestRegrowth(hours: 0).hours == HarvestRegrowth.vanillaHours)
-        #expect(HarvestRegrowth(hours: .nan).hours == HarvestRegrowth.vanillaHours)
-        // Without a clock, a harvested plant stays harvested.
-        #expect(HarvestRegrowth.vanilla.isHarvested(timed, onDay: nil))
+    /// Tamriel months 1 to 12 start in Morning Star, a winter month.
+    @Test func theMonthPicksTheSeason() {
+        #expect(HarvestSeason(month: 1) == .winter)
+        #expect(HarvestSeason(month: 3) == .spring)
+        #expect(HarvestSeason(month: 6) == .summer)
+        #expect(HarvestSeason(month: 9) == .fall)
+        #expect(HarvestSeason(month: 12) == .winter)
+        #expect(HarvestSeason(month: 13) == nil)
     }
 }

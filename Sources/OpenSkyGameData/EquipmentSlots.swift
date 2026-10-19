@@ -1,5 +1,5 @@
 // What an equippable item occupies: biped slots for worn armor (`BodySlots`,
-// from BOD2/BODT) and hands for a weapon. A conflict is an overlap in either.
+// from BOD2/BODT) and hands for a weapon or shield. A conflict is an overlap in either.
 // Hands come from the weapon's ETYP link through EQUP (`EquipSlotTable`), not
 // from the animation type. See docs/formats/shouts-equip-slots.md,
 // docs/engine/inventory-equipment.md, and docs/engine/inventory-state.md.
@@ -124,8 +124,13 @@ nonisolated public struct EquipmentCatalog: Sendable {
         var skipped = SkippedRecords()
         var items = loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
             let armor = try Armor(record: $0, localized: $1)
+            // A shield's ETYP names the left hand, so it conflicts with a two-handed
+            // weapon. Other vanilla armour carries no ETYP.
             return EquippableItem(
-                occupancy: EquipmentOccupancy(slots: armor.bodyTemplate?.slots ?? BodySlots()),
+                occupancy: EquipmentOccupancy(
+                    slots: armor.bodyTemplate?.slots ?? BodySlots(),
+                    hands: equipSlots.hands(of: armor.details.equipType) ?? HandSlots()
+                ),
                 modelPath: nil
             )
         }

@@ -1,5 +1,6 @@
 // The menu a crafting station opens: its recipes, split into those the player can make
-// now and the rest. The crafting rules stay in the inventory's crafting session.
+// now and the rest. At an alchemy lab it lists the carried ingredients instead, to
+// choose and brew. The rules stay in the inventory feature.
 // See docs/engine/crafting.md#crafting-menu.
 
 import Foundation
@@ -20,6 +21,20 @@ nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
     }
 }
 
+/// One carried ingredient at an alchemy lab.
+nonisolated public struct CraftingMenuIngredient: Equatable, Sendable {
+    public let id: FormID
+    /// The name with the known effects, as the row shows it.
+    public let name: String
+    public let isChosen: Bool
+
+    public init(id: FormID, name: String, isChosen: Bool) {
+        self.id = id
+        self.name = name
+        self.isChosen = isChosen
+    }
+}
+
 /// What the crafting menu needs from the app.
 public protocol CraftingMenuWorld: MenuScreenWorld {
     /// The open station's name, or nil when no station is open.
@@ -28,13 +43,20 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     /// Makes one of `recipe`; the outcome text.
     func craft(_ recipe: ResolvedFormID) -> String
     func closeCraftingStation()
+    /// The carried ingredients when the open station is an alchemy lab, else nil.
+    var alchemyIngredients: [CraftingMenuIngredient]? { get }
+    /// Chooses `ingredient`, or takes it out; the outcome text with the preview.
+    func toggleIngredient(_ ingredient: FormID) -> String
+    /// Brews the chosen ingredients; the outcome text.
+    func brewChosenIngredients() -> String
 }
 
 public final class CraftingMenuCoordinator: ItemListMenuScreen {
     public static let identifier: MenuIdentifier = "Crafting Menu"
-    public static let hint = "W/S: recipe   A/D: tab   E: make   Esc: leave"
+    public static let hint = "W/S: row   A/D: tab   E: make or choose   R: brew   Esc: leave"
 
     private var recipes: [ResolvedFormID] = []
+    private var ingredients: [FormID] = []
     private weak var world: (any CraftingMenuWorld)?
 
     public init(
@@ -71,6 +93,10 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     override func loadCategories() -> [ItemListCategory] {
+        if let carried = world?.alchemyIngredients {
+            return ingredientCategories(carried)
+        }
+        ingredients = []
         let all = world?.craftingRecipes ?? []
         recipes = all.map(\.id)
         let rows = all.enumerated().map { index, recipe in
@@ -82,7 +108,27 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         ]
     }
 
-    override func choose(_ row: ItemListRow, alternate _: Bool) -> String {
+    /// A chosen ingredient shows as equipped, as the vanilla lab marks it.
+    private func ingredientCategories(_ carried: [CraftingMenuIngredient]) -> [ItemListCategory] {
+        recipes = []
+        ingredients = carried.map(\.id)
+        let rows = carried.enumerated().map { index, ingredient in
+            ItemListRow(tag: UInt32(index), name: ingredient.name, isEquipped: ingredient.isChosen)
+        }
+        return [
+            ItemListCategory(label: "Ingredients", rows: rows),
+            ItemListCategory(label: "Chosen", rows: rows.filter(\.isEquipped))
+        ]
+    }
+
+    override func choose(_ row: ItemListRow, alternate: Bool) -> String {
+        if !ingredients.isEmpty || world?.alchemyIngredients != nil {
+            if alternate {
+                return world?.brewChosenIngredients() ?? "No game"
+            }
+            guard ingredients.indices.contains(Int(row.tag)) else { return "No ingredient" }
+            return world?.toggleIngredient(ingredients[Int(row.tag)]) ?? "No game"
+        }
         guard recipes.indices.contains(Int(row.tag)) else { return "No recipe" }
         return world?.craft(recipes[Int(row.tag)]) ?? "No game"
     }
@@ -101,6 +147,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     override func didClose() {
         recipes = []
+        ingredients = []
         world?.closeCraftingStation()
     }
 }

@@ -57,6 +57,11 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.applyWeaponEnchantment(hit)
     }
 
+    @discardableResult
+    func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+        game.magic.applyWeaponPoison(hit)
+    }
+
     var playerAttacker: MeleeAttacker? {
         guard let gameSession = game.gameSession else { return nil }
         return MeleeAttacker(

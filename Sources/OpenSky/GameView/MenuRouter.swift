@@ -106,7 +106,9 @@ final class MenuRouter {
             game.saveGames.autosave(.pause)
             game.systemMenu.open()
         default:
-            return
+            if let slot = action.hotkeySlot {
+                game.inventoryMenu.useHotkey(slot)
+            }
         }
     }
 
@@ -130,6 +132,7 @@ final class MenuRouter {
             game?.skillsMenu.tick(now: now)
             game?.systemMenu.tick(now: now)
             game?.menuScreens.tick(now: now)
+            game?.inventoryMenu.tick(now: now)
             game?.menuWorld.refreshTitleBackdrop()
         }
     }

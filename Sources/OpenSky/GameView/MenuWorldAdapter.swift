@@ -11,6 +11,7 @@ import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMenus
@@ -32,6 +33,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var combat: CombatCoordinator { get }
     var containerMenu: ContainerMenuController { get }
     var hud: HUDCoordinator { get }
+    var inventory: InventoryCoordinator { get }
     var loadingScreens: LoadingScreenCoordinator { get }
     var mapMenu: MapMenuCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
@@ -246,6 +248,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
     /// A chosen cell is a test start, so the race menu opens there at once.
     func startNewGame(at start: NewGameStart) {
         game.worldState.restore(from: .empty)
+        game.inventory.registerCreatedPotions()
         game.gameSession?.gameClock = GameClock()
         game.scripts.restore(instances: [], timers: [])
         game.messages.reloadHelpRecords()

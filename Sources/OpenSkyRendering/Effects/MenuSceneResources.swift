@@ -19,6 +19,8 @@ public final class MenuSceneResources {
 
     let pipelines: ParticlePipelines
     let depthState: MTLDepthStencilState
+    /// Tests and writes depth, for a scene drawn in front of the world.
+    let frontDepthState: MTLDepthStencilState
     let uniformBuffer: MTLBuffer
 
     init(device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache) throws {
@@ -36,6 +38,14 @@ public final class MenuSceneResources {
             throw RendererError.depthStateAllocationFailed
         }
         depthState = state
+        let front = MTLDepthStencilDescriptor()
+        front.label = "MenuSceneFrontDepth"
+        front.depthCompareFunction = .less
+        front.isDepthWriteEnabled = true
+        guard let frontState = device.makeDepthStencilState(descriptor: front) else {
+            throw RendererError.depthStateAllocationFailed
+        }
+        frontDepthState = frontState
         guard
             let buffer = device.makeBuffer(
                 length: Self.uniformStride * Self.drawLimit * Renderer.maxFramesInFlight,

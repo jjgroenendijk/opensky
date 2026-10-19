@@ -38,6 +38,7 @@ protocol ActorWorldHost: AnyObject {
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
+    var mapWorld: MapWorldAdapter { get }
 }
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
@@ -283,6 +284,19 @@ extension ActorWorldAdapter: ActorValueWorld {
 
     func setPlayerSprintAllowed(_ allowed: Bool) {
         game.gameSession?.locomotion.isSprintAllowed = allowed
+    }
+
+    func playerCarriedWeight() -> Float? {
+        game.inventory.runtime == nil ? nil : game.inventory.playerCarriedWeight
+    }
+
+    func setPlayerOverencumbered(_ overencumbered: Bool) {
+        game.gameSession?.locomotion.isRunAllowed = !overencumbered
+        guard overencumbered else { return }
+        game.hud.showNotification(
+            game.mapWorld.text(game.mapWorld.records?.menuTexts["sOverEncumbered"])
+                ?? "You are carrying too much to be able to run."
+        )
     }
 }
 

@@ -36,13 +36,21 @@ extension Renderer {
         residencySet.commit()
     }
 
-    func encodeMenuScene(state: inout ScenePassState) {
+    func encodeMenuScene(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
         let menu = effects.menuScene
         menu.lastDraws = 0
         guard let scene = menu.scene, !scene.draws.isEmpty else { return }
         let viewProjection = scene.viewProjection(aspectRatio: drawableAspectRatio)
         let encoder = state.encoder
-        encoder.setDepthStencilState(menu.depthState)
+        let target = descriptor.colorAttachments[0].texture
+        let slice = scene.frontDepthSlice.flatMap { slice in target.map { (slice, $0) } }
+        if let (depth, target) = slice {
+            encoder.setViewport(MTLViewport(
+                originX: 0, originY: 0, width: Double(target.width), height: Double(target.height),
+                znear: 0, zfar: Double(depth)
+            ))
+        }
+        encoder.setDepthStencilState(slice == nil ? menu.depthState : menu.frontDepthState)
         encoder.setCullMode(.none)
         let stride = MenuSceneResources.uniformStride
         let base = state.slot * MenuSceneResources.drawLimit * stride
@@ -78,6 +86,12 @@ extension Renderer {
         }
         menu.lastDraws = draws.count
         encoder.setDepthStencilState(depthState)
+        if let (_, target) = slice {
+            encoder.setViewport(MTLViewport(
+                originX: 0, originY: 0, width: Double(target.width), height: Double(target.height),
+                znear: 0, zfar: 1
+            ))
+        }
     }
 
     static func menuSceneUniforms(

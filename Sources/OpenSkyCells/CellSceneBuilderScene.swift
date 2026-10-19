@@ -213,6 +213,13 @@ nonisolated extension CellSceneBuilder {
         return bounds
     }
 
+    /// A cell without its own `XEZN` takes the worldspace's encounter zone.
+    nonisolated static func encounterZone(of found: FoundCell, in geometry: CellGeometryBuild)
+        -> FormID?
+    {
+        found.cell.encounterZone ?? geometry.world?.worldspace?.encounterZone
+    }
+
     nonisolated public func makeScene(
         found: FoundCell,
         grid: (x: Int32, y: Int32),
@@ -276,7 +283,7 @@ nonisolated extension CellSceneBuilder {
             stateSequence: geometry.stateSequence
         )
         scene.cellFormID = FormID(found.formID)
-        scene.encounterZone = found.cell.encounterZone
+        scene.encounterZone = Self.encounterZone(of: found, in: geometry)
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         scene.sequenceDoors = doors.map(\.door)

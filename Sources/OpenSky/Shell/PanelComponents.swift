@@ -117,6 +117,16 @@ enum PanelComponents {
         button.setAccessibilityIdentifier(identifier)
     }
 
+    /// Wires every button in `specs` to `target`, with its tooltip.
+    static func configureButtons(_ specs: [PanelButtonSpec], target: AnyObject) {
+        for spec in specs {
+            spec.button.toolTip = spec.toolTip
+            configureButton(
+                spec.button, target: target, action: spec.action, identifier: spec.identifier
+            )
+        }
+    }
+
     /// Stacks tightly-related controls at `rowSpacing` into one unit. A section
     /// returns *groups*; the section stack spaces those at `groupSpacing`, so a
     /// checkbox sits close to the slider it governs while distinct groups stay
@@ -216,5 +226,20 @@ enum PanelComponents {
         label.font = PanelMetrics.monoDigitFont
         label.widthAnchor.constraint(equalToConstant: width).isActive = true
         return label
+    }
+}
+
+/// One push button of a section: its action, accessibility id, and tooltip.
+struct PanelButtonSpec {
+    let button: NSButton
+    let action: Selector
+    let identifier: String
+    let toolTip: String
+
+    init(_ button: NSButton, _ action: Selector, _ identifier: String, _ toolTip: String) {
+        self.button = button
+        self.action = action
+        self.identifier = identifier
+        self.toolTip = toolTip
     }
 }

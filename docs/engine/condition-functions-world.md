@@ -152,7 +152,8 @@ letter: 88 X, 89 Y, 90 Z.
   hand at a time.
 - `IsWardState` (602) is true only for state 0, "none", because OpenSky has no wards.
 - `EPAlchemyGetMakingPoison` (500), `IsPoison` (721), and `EPAlchemyEffectHasKeyword` (501)
-  read an alchemy session. OpenSky has no alchemy station yet, so they fail as unavailable.
+  read the brew in progress while Mod Alchemy Effectiveness runs ([alchemy](/engine/alchemy.md)).
+  Outside a brew they fail as unavailable.
 
 ## Locations
 

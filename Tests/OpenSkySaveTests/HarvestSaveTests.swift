@@ -48,7 +48,7 @@ struct HarvestSaveTests {
         #expect(data.range(of: Data("HRVS".utf8)) == nil)
     }
 
-    /// The day survives, so a plant whose cell has not reset stays harvested after a load.
+    /// The day of the harvest survives a load.
     @Test func aTimedHarvestKeepsItsDay() throws {
         let timed = ReferenceHarvestState(isHarvested: true, harvestedOnDay: 4.5)
         let original = OpenSkySaveFixture.snapshot(
@@ -67,8 +67,6 @@ struct HarvestSaveTests {
         store.restore(from: file.snapshot)
         let restored = store.component(ReferenceHarvestState.self, for: plant)
         #expect(restored == timed)
-        #expect(HarvestRegrowth.vanilla.isHarvested(restored, onDay: 10))
-        #expect(!HarvestRegrowth.vanilla.isHarvested(restored, onDay: 14.5))
     }
 
     @Test func anUntimedHarvestWritesNoDayChunk() {

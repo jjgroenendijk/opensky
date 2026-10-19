@@ -152,11 +152,17 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     }
 
     /// How a removal of `count` of `item` divides between honest and stolen copies.
-    /// Honest copies go first. Clamped to what is held.
-    public func split(taking count: Int32, of item: FormID) -> StolenSplit {
+    /// Honest copies go first, unless `stolenFirst`. Clamped to what is held.
+    public func split(
+        taking count: Int32, of item: FormID, stolenFirst: Bool = false
+    ) -> StolenSplit {
         guard count > 0 else { return .none }
-        let clean = min(count, self.count(of: item, stolen: false))
-        let stolen = min(count - clean, self.count(of: item, stolen: true))
+        guard stolenFirst else {
+            let clean = min(count, self.count(of: item, stolen: false))
+            return StolenSplit(clean: clean, stolen: min(count - clean, stolenCount(of: item)))
+        }
+        let stolen = min(count, stolenCount(of: item))
+        let clean = min(count - stolen, self.count(of: item, stolen: false))
         return StolenSplit(clean: clean, stolen: stolen)
     }
 
@@ -211,11 +217,14 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     }
 
     /// This inventory with `count` fewer of `item`, spending honest copies
-    /// first and dropping each stack as it reaches zero.
+    /// first (stolen ones with `stolenFirst`, as a craft uses them up) and
+    /// dropping each stack as it reaches zero.
     ///
     /// - Throws: `InventoryError.nonPositiveCount` for a count of zero or less,
     ///   `InventoryError.insufficientCount` when the owner holds fewer.
-    public func removing(_ item: FormID, count: Int32, owner: ReferenceKey) throws -> Self {
+    public func removing(
+        _ item: FormID, count: Int32, owner: ReferenceKey, stolenFirst: Bool = false
+    ) throws -> Self {
         guard count > 0 else { throw InventoryError.nonPositiveCount(count) }
         let available = self.count(of: item)
         guard available >= count else {
@@ -223,7 +232,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
                 item: item, owner: owner, requested: count, available: available
             )
         }
-        let split = split(taking: count, of: item)
+        let split = split(taking: count, of: item, stolenFirst: stolenFirst)
         var result = self
         if split.clean > 0 {
             result = result.replacing(

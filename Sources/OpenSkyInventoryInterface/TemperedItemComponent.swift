@@ -1,6 +1,6 @@
 // Tempered copies as a world-state component: per item, the quality level of each
-// improved copy. Copies beyond the list are plain. Readers clamp the list to the
-// held count, so a take or drop never needs to edit it. See docs/engine/crafting.md.
+// improved copy. Copies beyond the list are plain. Quality belongs to the copy, so a
+// move takes the levels along: the lowest copies leave first. See docs/engine/crafting.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -52,6 +52,26 @@ nonisolated public struct TemperedItemState: WorldStateComponent, Sendable {
         copies[index] = to
         var updated = levels
         updated[item.rawValue] = copies
+        return TemperedItemState(levels: updated)
+    }
+
+    /// This state after `count` of the `held` copies of `item` leave, and the level
+    /// of each copy that left. The lowest copies leave first, so the owner keeps
+    /// the best one, which is the one an equip wears.
+    public func taking(
+        _ count: Int32, of item: FormID, held: Int32
+    ) -> (remaining: TemperedItemState, taken: [Int32]) {
+        let copies = copies(of: item, held: held)
+        let leaving = min(Int(max(0, count)), copies.count)
+        var updated = levels
+        updated[item.rawValue] = Array(copies.dropLast(leaving))
+        return (TemperedItemState(levels: updated), Array(copies.suffix(leaving)))
+    }
+
+    /// This state after copies at `arriving` levels join the `held` copies of `item`.
+    public func giving(_ arriving: [Int32], of item: FormID, held: Int32) -> TemperedItemState {
+        var updated = levels
+        updated[item.rawValue] = copies(of: item, held: held) + arriving
         return TemperedItemState(levels: updated)
     }
 }

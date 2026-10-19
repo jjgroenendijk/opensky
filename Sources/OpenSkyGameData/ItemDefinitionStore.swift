@@ -57,6 +57,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
         case key = "KEYM"
         case miscellaneous = "MISC"
         case soulGem = "SLGM"
+        case scroll = "SCRL"
         case weapon = "WEAP"
 
         /// The top group this family lives in. `FourCC` only builds from a
@@ -73,6 +74,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
             case .key: "KEYM"
             case .miscellaneous: "MISC"
             case .soulGem: "SLGM"
+            case .scroll: "SCRL"
             case .weapon: "WEAP"
             }
         }
@@ -92,6 +94,9 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// EITM and, on a weapon, EAMT. Nil on an unenchanted record and on every
     /// family that has no enchantment field at all.
     public let enchantment: ItemEnchantment?
+    /// The ground model, relative to `Data/`, that the inventory preview turns. An
+    /// armour piece names its male world model.
+    public let modelPath: String?
 
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
@@ -99,7 +104,8 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
         guard name?.tableIDValue != nil, let text = strings.resolve(name) else { return self }
         return ItemDefinition(
             formID: formID, family: family, editorID: editorID, name: .inline(text),
-            value: value, weight: weight, keywords: keywords, enchantment: enchantment
+            value: value, weight: weight, keywords: keywords, enchantment: enchantment,
+            modelPath: modelPath
         )
     }
 
@@ -116,7 +122,7 @@ nonisolated public final class ItemDefinitionStore {
     public static let vanillaGoldFormID = FormID(0x0000_000F)
 
     /// Carryable item definitions, keyed by raw FormID.
-    public let definitions: [UInt32: ItemDefinition]
+    public private(set) var definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
     public let containers: [UInt32: Container]
     /// WEAP decodes, keyed by raw FormID. Kept beside the unified view, because melee
@@ -125,7 +131,7 @@ nonisolated public final class ItemDefinitionStore {
     /// AMMO decodes, keyed by raw FormID, for archery's DATA `damage` and PROJ link.
     public let ammunition: [UInt32: Ammunition]
     /// ALCH decodes, keyed by raw FormID, for a potion's EFID/EFIT effect list.
-    public let ingestibles: [UInt32: Ingestible]
+    public private(set) var ingestibles: [UInt32: Ingestible]
     /// INGR decodes, keyed by raw FormID.
     public let ingredients: [UInt32: Ingredient]
     /// BOOK decodes, keyed by raw FormID, for the spell tome DATA union.
@@ -137,9 +143,14 @@ nonisolated public final class ItemDefinitionStore {
     public let soulGems: [UInt32: SoulGem]
     /// APPA decodes, keyed by raw FormID, for quality.
     public let apparatus: [UInt32: Apparatus]
+    /// SCRL decodes, keyed by raw FormID, for the item card's effects.
+    public let scrolls: [UInt32: Scroll]
     /// PROJ decodes, keyed by raw FormID. Not carryable, but an arrow's shot needs
     /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
+
+    /// Potions brewed this session, which no plugin holds (`registerCreated(_:)`).
+    public private(set) var createdPotions: Set<UInt32> = []
 
     /// Records that failed to decode, by family, so the real-data sweep can assert zero.
     public let skippedCounts: [ItemDefinition.Family: Int]
@@ -227,6 +238,9 @@ nonisolated public final class ItemDefinitionStore {
         apparatus = Self.decodeAll("APPA", in: loadOrder, skipped: &repeated) {
             try Apparatus(record: $0, localized: $1)
         }
+        scrolls = Self.decodeAll("SCRL", in: loadOrder, skipped: &repeated) {
+            try Scroll(record: $0, localized: $1)
+        }
     }
 
     /// The armour type of a worn piece — heavy, light or clothing — or nil when
@@ -250,6 +264,24 @@ nonisolated public final class ItemDefinitionStore {
 
     public func definition(_ id: FormID) -> ItemDefinition? {
         definitions[id.rawValue]
+    }
+
+    /// Adds a brewed potion, or replaces one with the same FormID. A plugin record wins.
+    public func registerCreated(_ potion: Ingestible) {
+        let raw = potion.formID.rawValue
+        guard createdPotions.contains(raw) || definitions[raw] == nil else { return }
+        createdPotions.insert(raw)
+        ingestibles[raw] = potion
+        definitions[raw] = Self.view(potion)
+    }
+
+    /// Drops every brewed potion, before a save's own list is registered.
+    public func removeCreatedPotions() {
+        for raw in createdPotions {
+            ingestibles[raw] = nil
+            definitions[raw] = nil
+        }
+        createdPotions = []
     }
 
     /// A linear scan, for a console-style command that names an item by editor ID.
@@ -333,6 +365,8 @@ nonisolated public final class ItemDefinitionStore {
             try view(MiscItem(record: record, localized: localized))
         case .soulGem:
             try view(SoulGem(record: record, localized: localized))
+        case .scroll:
+            try view(Scroll(record: record, localized: localized))
         case .weapon:
             try view(Weapon(record: record, localized: localized), enchantments)
         }
@@ -364,7 +398,8 @@ nonisolated extension ItemDefinitionStore {
             value: armor.itemValue.value,
             weight: armor.itemValue.weight,
             keywords: armor.keywords.keywords,
-            enchantment: enchantment(armor.enchantment, charge: nil, enchantments)
+            enchantment: enchantment(armor.enchantment, charge: nil, enchantments),
+            modelPath: (armor.details.maleWorldModel ?? armor.details.femaleWorldModel)?.path
         )
     }
 
@@ -415,6 +450,10 @@ nonisolated extension ItemDefinitionStore {
         view(apparatus.formID, .apparatus, apparatus.fields, apparatus.itemValue)
     }
 
+    fileprivate static func view(_ scroll: Scroll) -> ItemDefinition {
+        view(scroll.formID, .scroll, scroll.header.fields, scroll.itemValue)
+    }
+
     fileprivate static func view(
         _ weapon: Weapon,
         _ enchantments: ItemEnchantmentResolver?
@@ -450,7 +489,8 @@ nonisolated extension ItemDefinitionStore {
             value: itemValue.value,
             weight: itemValue.weight,
             keywords: fields.keywords.keywords,
-            enchantment: enchantment
+            enchantment: enchantment,
+            modelPath: fields.modelPath
         )
     }
 }

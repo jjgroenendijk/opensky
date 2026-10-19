@@ -18,8 +18,9 @@ container session. The record layouts are on [recipes](/formats/recipes.md) and
 
 A recipe's `BNAM` names a keyword. A station offers every recipe whose keyword is in the
 station's `KWDA`. The bench type does not decide this. A station whose keywords name no recipe,
-such as an alchemy lab, opens a session with no recipes. Alchemy and enchanting use other
-systems, not `COBJ`.
+opens a session with no recipes. An alchemy lab (bench type alchemy or alchemy experiment)
+brews from ingredients instead ([alchemy](/engine/alchemy.md)). Enchanting uses its own system,
+not `COBJ`.
 
 The use key raises a crafting activation event beside the plain interaction event. The
 inventory coordinator opens the session on it. Opening a new session closes the old one.
@@ -47,11 +48,22 @@ as subject. `GetItemCount` reads the player's inventory, and the rest read the l
 context of the session. A function the evaluator does not know makes its group false, so the
 verdict names it, for example `function 4725` for `GetVMQuestVariable`.
 
+The conditions decide whether the recipe is listed at all. The CK wiki calls them "Match
+Conditions", the "pre-requisites for the recipe to appear in the crafting menu"
+([Constructible Object](https://ck.uesp.net/wiki/Constructible_Object)). So the crafting menu
+hides a recipe whose conditions fail. Missing components only mark the row as not makeable. The
+sidebar still lists every recipe with its verdict, so a hidden one can be inspected.
+
 ## What a craft writes
 
 A craft removes every component and adds the created object at its `NAM1` count (one when
 absent). Both happen in one inventory write, so a failed step writes nothing. A recipe that is
 not eligible is refused before anything changes.
+
+A component the player holds both stolen and owned copies of is taken from the stolen copies
+first. So the stolen mark leaves with the parts, and the made item is the player's own. The
+game's order is not documented; this is a choice that keeps the player's own copies. The same
+rule applies to tempering parts and alchemy ingredients.
 
 After the write, the session reports one skill use for the station's `WBDT` skill. UESP
 "Skyrim:Leveling" gives the amount as `count * (25 + 3 * value^0.65)`, where `value` is the
@@ -93,12 +105,18 @@ the owner holds copies, so a take or a drop needs no change to the list. The sav
 levels in the `TMPR` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
 
 The player's weapon damage adds the bonus of the best held copy, because the equipped set
-names a base item, not a copy. Armor rating is shown in the station row; no damage step
-reads armor rating yet.
+names a base item, not a copy. In the same way, the armour step of combat adds the bonus of the
+best worn copy to its rating ([combat](/engine/combat.md)).
+
+Quality belongs to the copy. Every move carries the levels of the copies it moves: a take, a
+drop into the world and the pick-up again, a container, a gift, and a trade. The lowest copies
+leave first, so the owner keeps the best one, which an equip wears. A merchant prices a tempered
+copy at the UESP value multiplier `1 + level / 6`. A [cell reset](/engine/cell-reset.md) of a
+container clears the quality of the copies it held, because its contents go back to the
+plugin's.
 
 Differences from the game:
 
-- A copy that leaves the player loses its quality. The game keeps it on the item.
 - The skill use amount is `3.8 * sqrt(value gain) * sqrt(levels gained)`, times
   `fTemperingSkillUseMult`. The value gain is the base value times the rise in the UESP
   value multiplier (`1 + level / 6`). Players measured this formula (UESP "Skyrim
@@ -117,9 +135,11 @@ same list class as the [inventory menu](/engine/inventory-menu.md#list-data). Op
 two tabs: the recipes the player can make now, and all recipes.
 
 The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected recipe, and
-`CloseMenu` to leave, which closes the session. The game splits a forge's recipes into
-tabs by material keyword, shows the item in 3D (`ShowItem3D`), and lets the player rename
-an enchanted item and set its charge; OpenSky answers those calls and does nothing.
+`CloseMenu` to leave, which closes the session. At an alchemy lab the movie lists the carried
+ingredients, with their known effects, on an Ingredients tab and a Chosen tab. Activate chooses or
+drops an ingredient, a chosen one shows as equipped, and R brews. The game splits a forge's recipes
+into tabs by material keyword, shows the item in 3D (`ShowItem3D`), and lets the player rename an
+enchanted item and set its charge; OpenSky answers those calls and does nothing.
 
 ## Not modeled yet
 

@@ -41,6 +41,12 @@ nonisolated public struct RecipeEligibility: Equatable, Sendable {
     public var isEligible: Bool {
         failingFunction == nil && shortfalls.isEmpty && !hasUnresolvedItem
     }
+
+    /// Whether the crafting menu lists the recipe. The conditions are its
+    /// pre-requisites to appear; missing components only mark the row.
+    public var isOffered: Bool {
+        failingFunction == nil
+    }
 }
 
 /// One recipe in item-plugin terms. A nil item is a link outside the item index.
@@ -90,11 +96,16 @@ nonisolated public struct CraftingStationInfo: Equatable, Sendable {
     public let skill: Int32?
     /// A grindstone or armor table: its recipes improve a held item.
     public let improves: Bool
+    /// An alchemy lab: it brews from ingredients, with no recipe.
+    public let brews: Bool
 
-    public init(keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false) {
+    public init(
+        keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false, brews: Bool = false
+    ) {
         self.keywords = keywords
         self.skill = skill
         self.improves = improves
+        self.brews = brews
     }
 }
 
@@ -134,12 +145,13 @@ nonisolated public struct CraftingCatalog: Sendable {
         self.init(recipes: recipes, itemPlugin: itemPlugin, loadOrder: LoadOrderPlugins(file: file))
     }
 
-    /// Builds the catalog with every recipe-offering FURN base of the load order.
+    /// Builds the catalog with every recipe-offering FURN base and every alchemy lab.
     /// `itemPlugin` must be the space `loadOrder` reads in.
     public init(recipes: RecipeStore, itemPlugin: FormIDResolver, loadOrder: LoadOrderPlugins) {
         let probe = CraftingCatalog(recipes: recipes, itemPlugin: itemPlugin, stations: [])
         let offering = Self.stations(in: loadOrder).filter {
-            !probe.station(workbench: $0.workbench, keywords: $0.keywords).keywords.isEmpty
+            let station = probe.station(workbench: $0.workbench, keywords: $0.keywords)
+            return station.brews || !station.keywords.isEmpty
         }
         self.init(recipes: recipes, itemPlugin: itemPlugin, stations: offering)
     }
@@ -151,7 +163,8 @@ nonisolated public struct CraftingCatalog: Sendable {
                 !recipes.recipes(workbenchKeyword: $0).isEmpty
             },
             skill: workbench.skillName.flatMap(ActorValueIdentity.index(named:)),
-            improves: [.smithingWeapon, .smithingArmor].contains(workbench.benchType)
+            improves: [.smithingWeapon, .smithingArmor].contains(workbench.benchType),
+            brews: [.alchemy, .alchemyExperiment].contains(workbench.benchType)
         )
     }
 

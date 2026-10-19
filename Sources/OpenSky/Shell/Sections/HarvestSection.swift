@@ -1,5 +1,5 @@
-// World > Inventory & Equipment > Harvest: the crosshair plant's produce, harvested
-// state, and regrowth time, with a forced harvest and a forced regrowth.
+// World > Inventory & Equipment > Harvest: the crosshair plant's produce, season,
+// harvested state, and cell reset time, with a forced harvest, regrowth, and cell reset.
 
 import AppKit
 import OpenSkyInventory

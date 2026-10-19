@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
@@ -91,6 +92,19 @@ struct CellResetCoordinatorTests {
         #expect(reset.makeAllDue() == 1)
         #expect(reset.cellAttached(scene) == [Self.key(0x10)])
         #expect(reset.readout.contains("1 references"))
+    }
+
+    @Test func aResetRegrowsAPlantAndClearsTemperedCopies() throws {
+        var now = 1000.0
+        let reset = coordinator { now }
+        let scene = try Self.scene([Self.reference(0x10)])
+        store.set(ReferenceHarvestState.harvested, for: Self.key(0x10), in: Self.cell)
+        store.set(TemperedItemState(levels: [0x100: [10]]), for: Self.key(0x10), in: Self.cell)
+        reset.cellDetached(Self.cell)
+        now += 240
+        #expect(reset.cellAttached(scene) == [Self.key(0x10)])
+        #expect(store.component(ReferenceHarvestState.self, for: Self.key(0x10)) == nil)
+        #expect(store.component(TemperedItemState.self, for: Self.key(0x10)) == nil)
     }
 
     // MARK: - Fixtures
