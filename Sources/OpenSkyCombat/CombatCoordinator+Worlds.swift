@@ -4,6 +4,7 @@
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -84,6 +85,10 @@ extension CombatCoordinator: MeleeCombatWorld {
         let strike = strike(blow, on: target)
         reportSneakAttack(strike, ranged: false)
         return strike
+    }
+
+    public func meleeResolvedWeapon(_ weapon: FormID?) -> ResolvedFormID? {
+        items?.conditionSubject(of: weapon)?.id
     }
 
     public func meleeSweeps(_ blow: CombatBlow) -> Bool {

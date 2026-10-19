@@ -42,6 +42,8 @@ public final class CombatCoordinator {
     public var stamina = StaminaSettings.vanilla
     /// Power attacks and bashes; the app sets them before `wireMelee`.
     public var powerAttacks = PowerAttackSettings.vanilla
+    /// The Block experience of blocks and bashes; the app sets it before `wireMelee`.
+    public var skillUses = MeleeSkillUseSettings.vanilla
     /// What a landed arrow does; the app sets it before `wireArchery`.
     public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
@@ -65,6 +67,7 @@ public final class CombatCoordinator {
         let runtime = MeleeCombatRuntime(settings: settings, world: self)
         runtime.impacts = impacts
         runtime.powerAttacks = powerAttacks
+        runtime.skillUses = skillUses
         self.items = items ?? self.items
         melee = runtime
     }
@@ -84,7 +87,9 @@ public final class CombatCoordinator {
     }
 
     public func wireLoop(settings: CombatSettings) {
-        loop = CombatLoopRuntime(settings: settings, world: self)
+        let runtime = CombatLoopRuntime(settings: settings, world: self)
+        runtime.skillUses = skillUses
+        loop = runtime
     }
 
     /// One frame of melee. The caller drains `events` every frame, even when

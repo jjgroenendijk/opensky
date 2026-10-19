@@ -31,19 +31,23 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
     public let attackMultiplier: Float
     /// Skill, sneak-attack, and armour terms.
     public let strike: WeaponStrike
+    /// What the target blocked with, or nil when it did not block.
+    public let block: MeleeBlockKind?
 
     public init(
         base: Float,
         blockedFraction: Float,
         applied: Float,
         attackMultiplier: Float = 1,
-        strike: WeaponStrike = .plain
+        strike: WeaponStrike = .plain,
+        block: MeleeBlockKind? = nil
     ) {
         self.base = base
         self.blockedFraction = blockedFraction
         self.applied = applied
         self.attackMultiplier = attackMultiplier
         self.strike = strike
+        self.block = block
     }
 
     public var wasBlocked: Bool {
@@ -98,7 +102,8 @@ nonisolated public enum MeleeDamage: Sendable {
             blockedFraction: fraction,
             applied: strike.damage(base: base, attack: attack) * (1 - fraction),
             attackMultiplier: attack,
-            strike: strike
+            strike: strike,
+            block: block
         )
     }
 

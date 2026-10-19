@@ -79,6 +79,7 @@ extension GapsGatherer {
         _ = CombatSettings.resolve(store: store)
         _ = WeaponDamageSettings.resolve(store: store)
         _ = PowerAttackSettings.resolve(store: store)
+        _ = MeleeSkillUseSettings.resolve(store: store)
         _ = ArrowSettings.resolve(store: store)
         _ = TrainingSettings.resolve(store: store)
         _ = CraftingSkillUseSettings.resolve(store: store)

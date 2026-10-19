@@ -11,6 +11,7 @@ import OpenSkyEngineTesting
 import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyProgressionInterface
 import simd
 import Testing
 
@@ -59,6 +60,9 @@ struct MeleePowerAttackTests {
         #expect(world.staminaPaid == [60])
         #expect(world.damage == [.generated(1): 20])
         #expect(runtime.trace.last?.kind == .power)
+        // The power attack teaches the weapon skill and says how it was used.
+        #expect(world.skillUses.first?.action == .weaponHit(.handToHand))
+        #expect(world.skillUses.first?.advanceAction == .powerAttack)
     }
 
     @Test func withNoStaminaAHeldPressSwingsPlainly() {
@@ -88,6 +92,10 @@ struct MeleePowerAttackTests {
         #expect(world.staminaPaid == [35])
         let applied = world.damage[.generated(1)] ?? 0
         #expect(abs(applied - 1.75) < 1e-4)
+        // A shield bash teaches Block `fShieldBashSkillUseBase`, not the weapon skill.
+        #expect(world.skillUses.first?.action == .bash)
+        #expect(world.skillUses.first?.amount == 5)
+        #expect(world.skillUses.first?.advanceAction == .bash)
     }
 
     @Test func bashDamageFollowsTheBlockSkill() {

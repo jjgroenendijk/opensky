@@ -122,6 +122,8 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     func canPowerBash() -> Bool
     /// The player's Block skill, and the base rating of its shield or nil without one.
     func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?)
+    /// The load-order identity of `weapon`, which a skill use names as its object.
+    func meleeResolvedWeapon(_ weapon: FormID?) -> ResolvedFormID?
 
     /// Takes `amount` off `target`'s health.
     ///
@@ -185,6 +187,10 @@ nonisolated extension MeleeCombatWorld {
 
     public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
         (MeleeDamage.defaultBlockSkill, nil)
+    }
+
+    public func meleeResolvedWeapon(_: FormID?) -> ResolvedFormID? {
+        nil
     }
 }
 
