@@ -43,12 +43,10 @@ nonisolated public final class LocalizedLabels: Sendable {
         entries[key]
     }
 
-    /// Resolves a UI token to display text. A token beginning with `$` is looked
-    /// up; an unknown key — or any token without a leading `$` — returns
-    /// unchanged, the vanilla-observable behavior for an unresolved token.
+    /// Resolves a UI token to display text, filling `$KEY{argument}` slots. An
+    /// unknown key, or text without a leading `$`, returns unchanged, as in vanilla.
     public func label(for token: String) -> String {
-        guard token.first == "$" else { return token }
-        return entries[token] ?? token
+        TranslationToken.expand(token) { entries[$0] }
     }
 }
 

@@ -20,6 +20,8 @@ nonisolated extension LocalizedLabels {
                 + "across several lines so the preview shows how translated menu text "
                 + "reflows at every scale preset, including verbose languages whose "
                 + "strings run far longer than the English source text.",
+            "$OPENSKY_UILAB_COUNT{}{}": "Picked up {} {}.",
+            "$OPENSKY_UILAB_COINS": "gold coins",
             "$OPENSKY_UILAB_CLIP": "This unwrapped localized line intentionally keeps "
                 + "running past the right edge of the frame so edge clipping stays "
                 + "visible at every scale preset."
@@ -30,6 +32,10 @@ nonisolated extension LocalizedLabels {
 nonisolated extension UIScene {
     /// The deliberately-unresolved token the preview renders verbatim.
     public static let localizedSampleMissingToken = "$OPENSKY_UILAB_MISSING"
+
+    /// The argument case: `{}` slots filled, one argument itself a token.
+    public static let localizedSampleArgumentToken =
+        "$OPENSKY_UILAB_COUNT{3}{$OPENSKY_UILAB_COINS}"
 
     /// Wrap width (points) of the long-paragraph case.
     public static let localizedSampleWrapWidth: Float = 312
@@ -46,7 +52,7 @@ nonisolated extension UIScene {
                 anchor: .topLeft,
                 offset: UIPoint(x: 24, y: 24),
                 content: .panel(
-                    size: UISize(width: 360, height: 240),
+                    size: UISize(width: 360, height: 264),
                     color: SIMD4(0.06, 0.07, 0.10, 0.85),
                     border: UIBorder(width: 2, color: SIMD4(0.55, 0.62, 0.75, 1))
                 )
@@ -77,6 +83,12 @@ nonisolated extension UIScene {
                 at: UIPoint(x: 40, y: 196),
                 font: UIFont(pointSize: 13),
                 color: SIMD4(0.95, 0.60, 0.45, 1)
+            ),
+            sampleLabel(
+                labels.label(for: localizedSampleArgumentToken),
+                at: UIPoint(x: 40, y: 220),
+                font: UIFont(pointSize: 13),
+                color: SIMD4(0.80, 0.85, 0.95, 1)
             ),
             // Clip case: no wrap width, so the line runs past the frame edge.
             sampleLabel(

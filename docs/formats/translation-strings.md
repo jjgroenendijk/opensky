@@ -33,8 +33,7 @@ sources were used:
   of the line and may contain more tabs.
 - Vanilla-style files end lines with CRLF.
 - A key keeps its `$` and its exact case. `$Key` and `$key` are different keys.
-- A value may hold `{}` or `{$OtherKey}` placeholders. OpenSky keeps the raw value and does
-  not expand them yet.
+- A value may hold `{}` slots. The parser keeps the raw value; the lookup fills the slots.
 
 ## Parse rules
 
@@ -51,6 +50,26 @@ sources were used:
 
 OpenSky merges all files for the chosen language into one map. Files load in sorted path
 order, and the last file wins when two share a key.
+
+A token can carry arguments in braces. SkyUI's `skyui-lib` wiki gives this example: the menu
+script builds `"$Enemy hits you for {" + myDamage + "} damage."`, and the file holds
+`$Enemy hits you for {} damage.<TAB>Enemy hits you for {} damage.` When `myDamage` is 10,
+the game shows "Enemy hits you for 10 damage."
+
+OpenSky resolves such a token in these steps:
+
+1. A token that is a key as written resolves to its value. No argument is read.
+2. Otherwise each `{...}` group is one argument. The key is the token with each group
+   emptied to `{}`. For example, `$Pair{a}{b}` looks up `$Pair{}{}`.
+3. Each `{}` in the value takes the next argument, in order. A `{}` past the last argument
+   stays `{}`.
+4. An argument that starts with `$` is resolved first, by the same steps. So `$Pair{$Gold}{3}`
+   shows the value of `$Gold`. The wiki calls the feature "nested translations"; that the
+   argument itself is looked up is OpenSky's reading of that name, not a tested game fact.
+5. Braces that do not pair up, or a key that is not found, leave the whole token as written.
+
+The vanilla `translate_english.txt` has no braces at all (checked on the install), so only
+mod files use arguments.
 
 A token that is not found is shown as it is, for example `$Unknown`. A string without `$`
 is also shown as it is. The game also leaves an unknown `$KEY` visible on screen.
