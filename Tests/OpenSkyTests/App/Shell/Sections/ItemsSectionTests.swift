@@ -26,7 +26,8 @@ struct ItemsSectionTests {
         spawned: Int = 0,
         playerEquipped: [EquippedItemReadout] = [],
         nearestActorName: String? = nil,
-        nearestActorEquipped: [EquippedItemReadout] = []
+        nearestActorEquipped: [EquippedItemReadout] = [],
+        capacity: Float? = nil
     ) -> ItemControlSnapshot {
         ItemControlSnapshot(
             isAvailable: true,
@@ -42,7 +43,8 @@ struct ItemsSectionTests {
             lastActionText: "Took 1 × Iron Sword.",
             playerEquipped: playerEquipped,
             nearestActorName: nearestActorName,
-            nearestActorEquipped: nearestActorEquipped
+            nearestActorEquipped: nearestActorEquipped,
+            playerCapacity: capacity
         )
     }
 
@@ -189,6 +191,21 @@ struct ItemsSectionTests {
         #expect(section.readout.contains("3 × Lockpick"))
         #expect(section.readout.contains("Spawned objects: 1"))
         #expect(section.readout.contains("Took 1 × Iron Sword."))
+    }
+
+    @Test func readoutSaysWhenTheLoadIsAboveTheCarryWeight() {
+        let provider = FakeItemProvider()
+        provider.itemControlSnapshot = Self.snapshot(
+            playerStacks: [Self.stack(0x200, 2, "Iron Sword")], capacity: 10
+        )
+        let section = Self.loadedSection(provider)
+        section.refreshReadout()
+        #expect(section.readout.contains("weight 12.5 of 10 (over-encumbered: walk only)"))
+        provider.itemControlSnapshot = Self.snapshot(
+            playerStacks: [Self.stack(0x200, 2, "Iron Sword")], capacity: 300
+        )
+        section.refreshReadout()
+        #expect(section.readout.contains("weight 12.5 of 300 · gold 42"))
     }
 
     @Test func readoutNamesAnEmptyInventoryAndNoOpenContainer() {

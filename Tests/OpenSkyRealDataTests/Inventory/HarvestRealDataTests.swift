@@ -37,11 +37,11 @@ struct HarvestRealDataTests {
             inventory: InventoryRuntime(store: store, baselines: baselines),
             references: references
         )
-        let outcome = try runtime.harvest(found.flora, onDay: 0)
+        let outcome = try runtime.harvest(found.flora, at: HarvestMoment(day: 0, season: nil))
         let ingredient = try #require(found.flora.produce?.ingredient)
         #expect(outcome.granted == [InventoryStack(item: ingredient, count: 1)])
         #expect(runtime.inventory.count(of: ingredient, in: .player) == 1)
-        #expect(runtime.labelled(found.flora, onDay: 0).actionLabel == InteractionAction
+        #expect(runtime.labelled(found.flora).actionLabel == InteractionAction
             .harvestedLabel)
 
         let saved = OpenSkySaveFixture.encode(store.snapshot())
@@ -51,10 +51,10 @@ struct HarvestRealDataTests {
             inventory: InventoryRuntime(store: reloaded, baselines: baselines),
             references: references
         )
-        #expect(after.isHarvested(found.flora, onDay: 0))
+        #expect(after.isHarvested(found.flora))
         #expect(after.inventory.count(of: ingredient, in: .player) == 1)
         #expect(throws: HarvestError.alreadyHarvested(found.flora.reference)) {
-            try after.harvest(found.flora, onDay: 0)
+            try after.harvest(found.flora, at: HarvestMoment(day: 0, season: nil))
         }
     }
 

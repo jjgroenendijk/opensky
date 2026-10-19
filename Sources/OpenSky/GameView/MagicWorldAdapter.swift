@@ -179,6 +179,10 @@ extension MagicWorldAdapter: MagicWorld {
         ConditionProbe.text(of: function, parameter1: parameter, in: context)
     }
 
+    func playerAteIngredient(_ item: FormID) {
+        game.inventory.learnEatenIngredient(item)
+    }
+
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {
         (0 ..< max(0, points)).reduce(0) { raised, _ in
             raised + (game.progression.incrementSkill(skill) ? 1 : 0)

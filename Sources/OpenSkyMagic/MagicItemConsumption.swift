@@ -75,7 +75,7 @@ extension ActiveEffectRuntime {
     }
 
     /// The plugin that defines `item`, which sits in the load-order FormID space.
-    private func sourceKey(of item: FormID, fallbackPlugin pluginName: String) -> ReferenceKey {
+    func sourceKey(of item: FormID, fallbackPlugin pluginName: String) -> ReferenceKey {
         effects.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
             .map(ReferenceKey.init(resolved:))
             ?? .plugin(name: pluginName.lowercased(), objectID: item.objectID)

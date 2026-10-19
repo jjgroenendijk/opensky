@@ -185,6 +185,9 @@ public final class MagicCoordinator {
                     )
                 }
             }
+            if outcome?.kind == .ingredient {
+                world.playerAteIngredient(item)
+            }
             return recordEffect(.consumed(item: name, outcome))
         } catch {
             return recordEffect(.consumeFailed(item: name, reason: String(describing: error)))

@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, TMPR, and CRVG chunks in an .osav save.
+  CRIM, STOL, TMPR, CRVG, CPOT, INGK, WPSN, and FAVS chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -171,3 +171,33 @@ minus this value. An older build skips `CRVG` and reads all gold as non-violent.
 with a violent part are written. A violent part above the total is cut to the total, and a
 row for a faction with no `CRIM` row is dropped. Sizes: 11 bytes minimum per entry, 11 per
 row.
+
+## CPOT: created potions
+
+Key (the player), cell, uint32 potion count, then per potion: uint32 FormID, the name as a string
+(uint16 length and UTF-8 bytes), a uint8 poison flag, an int32 value, uint32 effect count, and per
+effect the uint32 `MGEF` FormID, float32 magnitude, uint32 area, and uint32 duration. Potions
+ascend by FormID. The FormIDs are in mod index `0xFF` from `0xFF800000` up. After a load, each
+potion goes back into the item index, so a carried potion keeps its name and effects
+([alchemy](/engine/alchemy.md)). Sizes: 12 bytes minimum per entry, 15 minimum per potion, 16 per
+effect.
+
+## INGK: known ingredient effects
+
+Key (the player), cell, uint32 row count, then rows of uint32 `INGR` FormID and a uint8 with bit
+`n` set when effect `n` is known, for the four effects of an `INGR`. Sizes: 12 bytes minimum per
+entry, 5 per row.
+
+## WPSN: weapon poisons
+
+Key (the actor), cell, uint32 row count, then rows of uint32 weapon FormID, uint32 poison FormID,
+and int32 doses left. A row with no doses left is dropped. Sizes: 12 bytes minimum per entry, 12
+per row.
+
+## FAVS: favourites
+
+Key (the player), cell, uint32 item count, then uint32 FormIDs in the order they were marked, then
+a uint32 hotkey count with rows of a uint8 slot (1 to 8) and a uint32 FormID. Slots ascend. A
+decoder drops a repeated item, a slot outside 1 to 8, and a hotkey for an item that is not a
+favourite ([inventory menu](/engine/inventory-menu.md#favourites-and-hotkeys)). Sizes: 16 bytes
+minimum per entry, 5 per hotkey.

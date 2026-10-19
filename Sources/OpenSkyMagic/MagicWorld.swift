@@ -60,6 +60,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     /// a read skill book. Returns how many levels it rose.
     @discardableResult
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int
+    /// The player ate `item`, an ingredient, which teaches its first effect.
+    func playerAteIngredient(_ item: FormID)
 }
 
 extension MagicWorld {
@@ -79,4 +81,7 @@ extension MagicWorld {
     public func raiseSkillFromBook(_: Int32, points _: Int) -> Int {
         0
     }
+
+    /// A session with no alchemy learns nothing.
+    public func playerAteIngredient(_: FormID) {}
 }

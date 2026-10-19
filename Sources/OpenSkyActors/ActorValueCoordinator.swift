@@ -24,6 +24,8 @@ public final class ActorValueCoordinator {
     private var regenAccumulator: Double = 0
     /// Regeneration walks holders in key order; this keeps that order between frames.
     private var holderOrder = ReferenceKeyOrder()
+    /// The over-encumbered state last sent to the world, so the HUD message shows once.
+    public private(set) var isPlayerOverencumbered = false
     /// What sprinting costs; `wire` sets it from the load order.
     public private(set) var stamina = StaminaSettings.vanilla
 
@@ -66,6 +68,21 @@ public final class ActorValueCoordinator {
             runtime.damage(.stamina, by: stamina.sprintDrain(wornWeight: worn) * delta, on: .player)
         }
         world.setPlayerSprintAllowed(runtime.current(of: .player).stamina > 0)
+        let overencumbered = Self.isOverencumbered(
+            carried: world.playerCarriedWeight(),
+            capacity: runtime.value(at: ActorValueIdentity.carryWeightIndex, on: .player)
+        )
+        if overencumbered != isPlayerOverencumbered {
+            isPlayerOverencumbered = overencumbered
+            world.setPlayerOverencumbered(overencumbered)
+        }
+    }
+
+    /// UESP "Skyrim:Carry Weight": past the `CarryWeight` actor value the player
+    /// can only walk. Unknown weight or capacity is never over.
+    public static func isOverencumbered(carried: Float?, capacity: Float?) -> Bool {
+        guard let carried, let capacity, carried.isFinite, capacity.isFinite else { return false }
+        return carried > capacity
     }
 
     /// The NPC_ base FormID, which is what the user types into the record dump.

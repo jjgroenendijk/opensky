@@ -65,8 +65,6 @@ nonisolated public struct WorldDataStores {
     public var presentationRecords: PresentationRecordStore?
     /// The `fDiffMult*` GMSTs; the documented defaults on a synthetic scene.
     public var difficultySettings = DifficultySettings.synthetic
-    /// GMST-derived harvest regrowth, vanilla on a synthetic scene.
-    public var harvestRegrowth = HarvestRegrowth.vanilla
     /// `iHoursToRespawnCell` and `iHoursToRespawnCellCleared`.
     public var cellResetSettings = CellResetSettings.vanilla
     /// ECZN records, for the encounter zone's "never resets" flag.

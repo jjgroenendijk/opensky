@@ -570,7 +570,7 @@ extension Renderer {
             enabled: precipitationEnabled,
             state: &state
         )
-        encodeMenuScene(state: &state)
+        encodeMenuScene(descriptor: descriptor, state: &state)
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
         state.encoder.setTriangleFillMode(.fill)
         return true

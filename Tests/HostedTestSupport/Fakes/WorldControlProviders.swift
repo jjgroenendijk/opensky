@@ -30,6 +30,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ActorGraphControlProviding
     & ActorValueControlProviding
     & AgentControlProviding
+    & AlchemyControlProviding
     & AnimationControlProviding
     & ArcheryControlProviding
     & AssetCacheControlProviding
@@ -115,6 +116,7 @@ extension GamePanelServices {
         self.init(
             aiNavigation: providers,
             aiOverlay: providers,
+            alchemy: providers,
             actorValue: providers,
             animation: providers,
             archery: providers,

@@ -111,22 +111,39 @@ public final class BarterSession {
         inventory.goldCount(of: player)
     }
 
-    /// What the player would pay for one of `item`.
+    /// What the player would pay for the next one of `item`, the merchant's lowest copy.
     public func buyPrice(of item: FormID) -> Int32 {
-        pricing.buyPrice(value: value(of: item))
+        Int32(clamping: price(of: item, count: 1, from: merchant, buying: true))
     }
 
-    /// What the merchant would pay for one of `item`.
+    /// What the merchant would pay for the next one of `item`, the player's lowest copy.
     public func sellPrice(of item: FormID) -> Int32 {
-        pricing.sellPrice(value: value(of: item))
+        Int32(clamping: price(of: item, count: 1, from: player, buying: false))
     }
 
     /// The item's base gold value, or zero when no loaded plugin describes the
     /// form — the same answer `InventoryRuntime.carriedValue` gives, because
     /// inventing a value for an unknown form would put a number the data never
-    /// authored into a price.
-    private func value(of item: FormID) -> Int32 {
-        inventory.baselines.items.definition(item)?.value ?? 0
+    /// authored into a price. A tempered copy is worth the UESP value multiplier more.
+    private func value(of item: FormID, level: Int32 = 0) -> Int32 {
+        let base = inventory.baselines.items.definition(item)?.value ?? 0
+        guard level > 0 else { return base }
+        let tempered = (Float(base) * Tempering.valueMultiplier(level: level)).rounded(.down)
+        return Int32(clamping: Int(min(tempered, Float(Int32.max))))
+    }
+
+    /// The whole price of the `count` copies a move from `holder` takes, each one priced
+    /// apart, so a stack rounds as its rows do.
+    private func price(
+        of item: FormID, count: Int32, from holder: InventoryHolder, buying: Bool
+    ) -> Int64 {
+        var levels = inventory.leavingLevels(count, of: item, in: holder)
+        levels += Array(repeating: 0, count: max(0, Int(count) - levels.count))
+        return levels.reduce(Int64(0)) { total, level in
+            let value = value(of: item, level: level)
+            let one = buying ? pricing.buyPrice(value: value) : pricing.sellPrice(value: value)
+            return total + Int64(one)
+        }
     }
 
     // MARK: - Transactions
@@ -145,7 +162,7 @@ public final class BarterSession {
         guard available >= count else {
             throw BarterError.notStocked(item: item, wanted: count, available: available)
         }
-        let price = try wholePrice(pricing.buyPrice(value: value(of: item), count: count))
+        let price = try wholePrice(price(of: item, count: count, from: merchant, buying: true))
         let gold = playerGold
         guard gold >= price else {
             throw BarterError.playerCannotAfford(price: Int64(price), gold: gold)
@@ -178,7 +195,7 @@ public final class BarterSession {
         if let vendor = rules.vendor, stolen > 0, !vendor.buysStolen {
             throw BarterError.vendorRefusesStolen(item: item, stolen: stolen)
         }
-        let price = try wholePrice(pricing.sellPrice(value: value(of: item), count: count))
+        let price = try wholePrice(price(of: item, count: count, from: player, buying: false))
         let gold = merchantGold
         guard gold >= price else {
             throw BarterError.merchantCannotAfford(price: Int64(price), gold: gold)

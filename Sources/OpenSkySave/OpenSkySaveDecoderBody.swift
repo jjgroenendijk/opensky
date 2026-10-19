@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
@@ -75,6 +76,14 @@ nonisolated extension OpenSkySaveDecoder {
         public var stolenGoods: [SaveStolenGoodsEntry] = []
         /// Absent `TMPR`: every held copy is plain.
         public var temperedItems: [SaveTemperedItemEntry] = []
+        /// Absent `CPOT`: the player brewed nothing.
+        public var createdPotions: [SaveStoryEntry<CreatedPotionState>] = []
+        /// Absent `INGK`: no ingredient effect is known.
+        public var ingredientKnowledge: [SaveStoryEntry<IngredientKnowledgeState>] = []
+        /// Absent `WPSN`: no weapon is poisoned.
+        public var weaponPoisons: [SaveStoryEntry<WeaponPoisonState>] = []
+        /// Absent `FAVS`: no item is a favourite.
+        public var favourites: [SaveStoryEntry<FavouritesState>] = []
         /// Absent `CRVG`: every `CRIM` row is non-violent gold.
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
         /// Absent `HRVS`: every plant is unharvested.

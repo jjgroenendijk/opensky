@@ -290,6 +290,9 @@ public final class MeleeCombatRuntime {
         noteSkillUse(hit, damage: damage, landed: landed, world: world)
         if landed {
             world.applyMeleeHitSpell(blow(world: world), on: hit.target)
+            world.applyWeaponPoison(WeaponPoisonHit(
+                attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: hit.target
+            ))
         }
         let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`

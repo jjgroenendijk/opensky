@@ -69,6 +69,7 @@ struct WorldPanelContext {
 struct GamePanelServices {
     let aiNavigation: any AINavigationControlProviding
     let aiOverlay: any AIOverlayControlProviding
+    let alchemy: any AlchemyControlProviding
     let actorValue: any ActorValueControlProviding
     let animation: any AnimationControlProviding
     let archery: any ArcheryControlProviding
@@ -388,6 +389,7 @@ enum DestinationRegistry {
                 let panel = InventoryEquipmentPanelViewController()
                 panel.provider = context.inventoryEquipment
                 panel.craftingProvider = context.crafting
+                panel.alchemyProvider = context.alchemy
                 panel.lockProvider = context.lock
                 return panel
             },

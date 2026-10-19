@@ -17,6 +17,7 @@ extension GamePanelServices {
         self.init(
             aiNavigation: game,
             aiOverlay: game,
+            alchemy: game,
             actorValue: game,
             animation: game.renderControls,
             archery: game,

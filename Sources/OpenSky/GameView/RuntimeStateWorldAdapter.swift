@@ -363,6 +363,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         let current = try? await pluginFingerprint()
         let file = try await store().read(slot: slot, verifyingAgainst: current)
         game.worldState.restore(from: file.snapshot)
+        // No plugin holds a brewed potion, so the save's own list goes in the item index.
+        game.inventory.registerCreatedPotions()
         // A save without a CLOK chunk restores the vanilla-start clock.
         game.gameSession?.gameClock = file.clock ?? GameClock()
         // After the world state, so the fired `OnInit` set is in place before the

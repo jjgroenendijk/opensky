@@ -6,6 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 /// One recipe row: what it makes and whether the player can make it now.
 nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
@@ -14,16 +15,32 @@ nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
     /// `ready`, or what stops it, such as `needs HasPerk`.
     public let verdict: String
     public let isEligible: Bool
+    /// False when a condition fails, so the crafting menu leaves the recipe out.
+    public let isOffered: Bool
 
-    public init(id: ResolvedFormID, name: String, verdict: String, isEligible: Bool) {
+    public init(
+        id: ResolvedFormID, name: String, verdict: String, isEligible: Bool, isOffered: Bool = true
+    ) {
         self.id = id
         self.name = name
         self.verdict = verdict
         self.isEligible = isEligible
+        self.isOffered = isOffered
     }
 
     public var line: String {
         "\(name): \(verdict)"
+    }
+}
+
+/// This season and its `PFPC` chance; a nil chance always yields.
+nonisolated public struct HarvestSeasonChance: Equatable, Sendable {
+    public let season: HarvestSeason
+    public let chance: Float?
+
+    public init(season: HarvestSeason, chance: Float?) {
+        self.season = season
+        self.chance = chance
     }
 }
 
@@ -32,22 +49,38 @@ nonisolated public struct HarvestTargetReadout: Equatable, Sendable {
     public let name: String
     public let produce: String
     public let isHarvested: Bool
-    /// Game days until it grows back. Nil when not harvested, or when the
-    /// harvest time is unknown.
-    public let daysUntilRegrowth: Float?
+    /// Game days away from its cell before the cell resets. Nil when not harvested.
+    public let resetDays: Float?
+    /// This season and its `PFPC` chance; a nil chance always yields. Nil without a clock.
+    public let seasonChance: HarvestSeasonChance?
 
-    public init(name: String, produce: String, isHarvested: Bool, daysUntilRegrowth: Float? = nil) {
+    public init(
+        name: String,
+        produce: String,
+        isHarvested: Bool,
+        resetDays: Float? = nil,
+        seasonChance: HarvestSeasonChance? = nil
+    ) {
         self.name = name
         self.produce = produce
         self.isHarvested = isHarvested
-        self.daysUntilRegrowth = daysUntilRegrowth
+        self.resetDays = resetDays
+        self.seasonChance = seasonChance
     }
 
     /// The regrowth line of the readout.
     public var regrowthText: String {
         guard isHarvested else { return "Grows back: -" }
-        guard let days = daysUntilRegrowth else { return "Grows back: never (time unknown)" }
-        return "Grows back: in \(String(format: "%.1f", days)) game days"
+        guard let days = resetDays else { return "Grows back: when its cell resets" }
+        return "Grows back: when its cell resets, \(String(format: "%.1f", days)) game days"
+            + " after you leave it"
+    }
+
+    /// The yield line: this season and its chance.
+    public var seasonText: String {
+        guard let seasonChance else { return "Season: unknown (always yields)" }
+        let chance = seasonChance.chance.map { String(format: "%.0f%%", $0) } ?? "always"
+        return "Season: \(seasonChance.season), yields \(chance)"
     }
 }
 
@@ -133,17 +166,18 @@ extension InventoryCoordinator {
     private func harvestTarget() -> HarvestTargetReadout? {
         guard let interaction = world.crosshairInteraction, interaction.action == .harvest
         else { return nil }
-        let day = world.gameDaysPassed
-        let isHarvested = runtime?.isHarvested(interaction, onDay: day) ?? false
-        var daysLeft: Float?
-        if isHarvested, let day, let regrowth = runtime?.regrowthDay(of: interaction) {
-            daysLeft = max(0, regrowth - day)
-        }
+        let isHarvested = runtime?.isHarvested(interaction) ?? false
+        let season = harvestMoment.season
         return HarvestTargetReadout(
             name: interaction.name,
             produce: interaction.produce?.ingredient.map(name(of:)) ?? "none",
             isHarvested: isHarvested,
-            daysUntilRegrowth: daysLeft
+            resetDays: isHarvested ? Float(cellReset.hours) / 24 : nil,
+            seasonChance: season.map {
+                HarvestSeasonChance(
+                    season: $0, chance: $0.chance(in: interaction.produce?.seasonalChance)
+                )
+            }
         )
     }
 
@@ -155,7 +189,8 @@ extension InventoryCoordinator {
                 id: recipe.id,
                 name: itemName,
                 verdict: verdict(status.eligibility),
-                isEligible: status.isReady
+                isEligible: status.isReady,
+                isOffered: status.eligibility.isOffered
             )
         }
         let copies = temper.copies.map { qualityName($0, of: temper.item) }
@@ -164,7 +199,8 @@ extension InventoryCoordinator {
             id: recipe.id,
             name: "\(itemName) (\(copies))",
             verdict: temperVerdict(status, temper),
-            isEligible: status.isReady
+            isEligible: status.isReady,
+            isOffered: status.eligibility.isOffered
         )
     }
 
@@ -213,7 +249,7 @@ extension InventoryCoordinator {
             return "item not loaded"
         }
         if let function = eligibility.failingFunction {
-            return "needs \(function)"
+            return "hidden: needs \(function)"
         }
         let missing = eligibility.shortfalls.map {
             "\(name(of: $0.item)) \($0.held) of \($0.required)"
@@ -255,6 +291,7 @@ nonisolated public enum CraftingReadout {
             "Plant: \(target.name)",
             "Produce: \(target.produce)",
             "Harvested: \(target.isHarvested ? "yes" : "no")",
+            target.seasonText,
             target.regrowthText,
             "Last: \(snapshot.lastActionText)"
         ].joined(separator: "\n")

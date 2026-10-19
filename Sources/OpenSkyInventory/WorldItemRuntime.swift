@@ -97,9 +97,6 @@ public final class WorldItemRuntime {
     /// every take is honest.
     public var crime: (any CrimeReporting)?
 
-    /// When a harvested plant grows back: the load order's interval once wired.
-    public var harvestRegrowth = HarvestRegrowth.vanilla
-
     public var store: WorldStateStore {
         inventory.store
     }
@@ -148,8 +145,10 @@ public final class WorldItemRuntime {
         // Asked before the item moves, because once it is in the inventory the
         // reference is gone and there is nothing left to ask about.
         let verdict = crime?.verdict(on: entry.key) ?? .unowned
+        let levels = store.component(TemperedItemState.self, for: entry.key)?
+            .copies(of: interaction.base, held: count) ?? []
         try inventory.add(
-            interaction.base, count: count, to: player, stolen: verdict.isTheft
+            interaction.base, count: count, to: player, stolen: verdict.isTheft, levels: levels
         )
         // Reported before the reference leaves the world, for the reason the
         // verdict is read before the item moves: the crime is located by where
@@ -191,6 +190,7 @@ public final class WorldItemRuntime {
             store.reset(key)
             return
         }
+        store.reset(TemperedItemState.componentKind, for: key)
         store.set(ReferenceDeletionState.deleted, for: key, in: cell)
     }
 
@@ -208,6 +208,7 @@ public final class WorldItemRuntime {
         count: Int32 = 1,
         at placement: DropPlacement
     ) throws -> ReferenceKey {
+        let levels = inventory.leavingLevels(count, of: item, in: player)
         try inventory.remove(item, count: count, from: player)
         let key = store.allocateGeneratedKey()
         store.set(
@@ -222,6 +223,11 @@ public final class WorldItemRuntime {
             for: key,
             in: placement.location
         )
+        // A dropped Legendary sword is still Legendary when picked up again.
+        let tempered = TemperedItemState(levels: [item.rawValue: levels])
+        if !tempered.isEmpty {
+            store.set(tempered, for: key, in: placement.location)
+        }
         return key
     }
 

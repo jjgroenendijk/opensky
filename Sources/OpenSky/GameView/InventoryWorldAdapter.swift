@@ -22,6 +22,7 @@ import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -47,6 +48,7 @@ protocol InventoryWorldHost: AnyObject {
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
+    var worldData: WorldDataStores? { get }
 }
 
 /// Answers `InventoryWorld` and `VendorWorld` from the session systems `game` owns.
@@ -68,9 +70,10 @@ final class InventoryWorldAdapter {
             references: streamer,
             catalog: provider.equipmentCatalog,
             pricing: provider.barterPricing,
-            harvestRegrowth: provider.harvestRegrowth
+            cellReset: provider.cellResetSettings
         )
         game.scripts.bridge?.inventory = self
+        game.scripts.bridge?.alchemy = self
         coordinator.wireCrafting(
             catalog: provider.craftingCatalog, conditions: self, skills: game.progression
         )
@@ -84,6 +87,12 @@ final class InventoryWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         coordinator.temperingTexts = TemperingTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        coordinator.wireAlchemy(
+            effects: provider.magicEffectStore,
+            pluginName: provider.magicItemPluginName ?? FormIDResolver.loadOrderSpaceName,
+            settings: AlchemySettings.resolve(store: provider.gameSettings),
+            texts: alchemyTexts
+        )
         streamer.onInteraction.add { [weak self] event in
             guard let self else { return }
             let action = event.target.interaction.action
@@ -101,6 +110,20 @@ final class InventoryWorldAdapter {
                 game.menuScreens.crafting.open()
             }
         }
+    }
+
+    /// The lab's notices, from the load order's strings.
+    private var alchemyTexts: AlchemyTexts {
+        let records = game.mapWorld.records
+        func text(_ name: String, _ fallback: String) -> String {
+            game.mapWorld.text(records?.menuTexts[name]) ?? fallback
+        }
+        let vanilla = AlchemyTexts.vanilla
+        return AlchemyTexts(
+            potionPrefix: text("sCreatedPotionNamePrefix", vanilla.potionPrefix),
+            poisonPrefix: text("sCreatedPoisonNamePrefix", vanilla.poisonPrefix),
+            failed: text("sPotionCreationFailed", vanilla.failed)
+        )
     }
 
     /// A book is read where it lies, as in the game; its bar offers to take it.
@@ -173,9 +196,17 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.gameSession?.gameClock.daysPassed
     }
 
+    var gameMonth: Int? {
+        game.gameSession?.gameClock.month
+    }
+
     func playerSpeechSkill() -> Float? {
         guard let speech = ActorValueIdentity.index(named: "Speechcraft") else { return nil }
         return game.actorValues.runtime?.value(at: speech, on: .player)
+    }
+
+    var playerCarryCapacity: Float? {
+        game.actorValues.runtime?.value(at: ActorValueIdentity.carryWeightIndex, on: .player)
     }
 
     func perkModified(
@@ -192,6 +223,10 @@ extension InventoryWorldAdapter: InventoryWorld {
             subjects: { _ in subjects },
             seams: seams
         )
+    }
+
+    func magicEffectName(_ effect: ResolvedMagicEffect) -> String {
+        game.mapWorld.text(effect.effect.name) ?? effect.displayName
     }
 
     func perkActivateLabel(for reference: FormID) -> String? {
@@ -365,5 +400,19 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
 
     func goldValue(of item: FormID) -> Int32? {
         game.inventory.scriptGoldValue(of: item)
+    }
+}
+
+extension InventoryWorldAdapter: PapyrusAlchemyBridge {
+    func learnIngredientEffects(_ ingredient: FormID, indices: [Int]?) -> Bool {
+        game.inventory.learnIngredientEffects(ingredient, indices: indices)
+    }
+
+    func learnNextIngredientEffect(_ ingredient: FormID) -> Int? {
+        game.inventory.learnNextIngredientEffect(ingredient)
+    }
+
+    func isHostileItem(_ item: FormID) -> Bool? {
+        game.inventory.isHostileItem(item)
     }
 }

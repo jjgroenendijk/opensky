@@ -47,6 +47,10 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         slot(.wait, .gameplay, "Wait"),
         slot(.quicksave, .gameplay, "Quicksave"), slot(.quickload, .gameplay, "Quickload"),
         slot(.pause, .gameplay, "Pause"),
+        slot(.hotkey1, .gameplay, "Hotkey1"), slot(.hotkey2, .gameplay, "Hotkey2"),
+        slot(.hotkey3, .gameplay, "Hotkey3"), slot(.hotkey4, .gameplay, "Hotkey4"),
+        slot(.hotkey5, .gameplay, "Hotkey5"), slot(.hotkey6, .gameplay, "Hotkey6"),
+        slot(.hotkey7, .gameplay, "Hotkey7"), slot(.hotkey8, .gameplay, "Hotkey8"),
         slot(.up, .opensky, "Fly Up"), slot(.down, .opensky, "Fly Down")
     ]
 
@@ -69,7 +73,11 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         "Main Gameplay|Quick Map": 0x32, "Main Gameplay|Quick Stats": 0x35,
         "Main Gameplay|Quick Magic": 0x19, "Main Gameplay|Wait": 0x14,
         "Main Gameplay|Quicksave": 0x3F,
-        "Main Gameplay|Quickload": 0x43, "Main Gameplay|Pause": 0x01
+        "Main Gameplay|Quickload": 0x43, "Main Gameplay|Pause": 0x01,
+        "Main Gameplay|Hotkey1": 0x02, "Main Gameplay|Hotkey2": 0x03,
+        "Main Gameplay|Hotkey3": 0x04, "Main Gameplay|Hotkey4": 0x05,
+        "Main Gameplay|Hotkey5": 0x06, "Main Gameplay|Hotkey6": 0x07,
+        "Main Gameplay|Hotkey7": 0x08, "Main Gameplay|Hotkey8": 0x09
     ]
 
     /// Menu keys OpenSky adds to the controlmap's: Return, keypad Enter, the arrows,

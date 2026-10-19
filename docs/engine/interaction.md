@@ -159,27 +159,26 @@ deterministic pick, as container baselines do. A harvested reference shows `Harv
 of the action word, and activating it does nothing. The component is saved in the `HRVS` and
 `HRVD` chunks ([OpenSky save](/formats/opensky-save.md)).
 
-OpenSky gives one produce item per harvest. The seasonal chances in `PFPC` show in the readout
-but do not change the yield yet. In the game a harvest can fail outside the right season, so a
-later change to the yield is deliberate, not a bug fix.
+Each harvest rolls the plant's `PFPC` chance for the season of the game date. The CK wiki says
+the produce is given "depending upon the harvest chance set for that season"
+([Flora](https://ck.uesp.net/wiki/Flora)). A failed roll gives nothing, and the plant still reads
+as harvested. The seasons follow the Tamriel months in
+[UESP Lore:Calendar](https://en.uesp.net/wiki/Lore:Calendar): spring is First Seed to Second
+Seed, summer is Midyear to Last Seed, fall is Hearthfire to Sun's Dusk, and winter is Evening Star
+to Sun's Dawn. Six vanilla plants, such as `ChickenNest`, have 0 in every season. They still give
+produce in the game, so a plant with no chance in any season always yields. Without a game clock
+the roll is skipped. Mod Ingredients Harvested ([perk entry points](/engine/perk-entry-points.md))
+sets how many times a yield is granted.
 
-A plant grows back when its cell resets. In the game a cell resets after the player stays away
-for `iHoursToRespawnCell` game hours, read from the load order. The install has 240 hours, which
-is 10 game days ([UESP Respawning](https://en.uesp.net/wiki/Skyrim:Respawning)). The harvested
-component stores the game day of the harvest. A plant reads as harvested until that day plus the
-interval, then it can be harvested again. The rule is `HarvestRegrowth`, a pure function of the
-component and the game clock.
+## Grow back
 
-OpenSky differs from the game in two ways:
+A harvested plant grows back when its cell resets ([cell reset](/engine/cell-reset.md)): the
+player leaves the cell, stays away for `iHoursToRespawnCell` game hours, and comes back. The
+install has 240 hours, which is 10 game days.
 
-- The interval counts from the harvest, not from the player's last visit to the cell. OpenSky does
-  not track cell visits yet.
-- A cleared dungeon uses `iHoursToRespawnCellCleared` (720 hours) in the game. OpenSky does not
-  track cleared cells, so every plant uses the shorter interval.
-
-A harvest from a save written before regrowth has no day and never grows back on its own. World >
-Inventory & Equipment > Harvest shows when the plant under the crosshair grows back, and its
-`Grow back` button makes it grow back now.
+World > Inventory & Equipment > Harvest shows the wait for the plant under the crosshair. Its
+`Grow back` button makes the one plant grow back now. World > Runtime State makes every cell
+reset due.
 
 ## Where a drop lands
 

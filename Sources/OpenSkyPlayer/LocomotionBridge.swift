@@ -91,6 +91,8 @@ nonisolated public final class LocomotionBridge {
     public var forcedGait: LocomotionGait?
     /// False while the stamina bar is empty: a held sprint key runs instead.
     public var isSprintAllowed = true
+    /// False while the player carries more than its carry weight: run and sprint walk.
+    public var isRunAllowed = true
     /// What combat, magic, and the camera report this frame, for the actor-state
     /// graph inputs (ActorStateGraphCore.swift).
     public var actorState = ActorStateGraphInputs()
@@ -282,6 +284,7 @@ nonisolated public final class LocomotionBridge {
         if intent.sneak {
             return .sneak
         }
+        guard isRunAllowed else { return .walk }
         if intent.sprint, isSprintAllowed {
             return .sprint
         }

@@ -4,21 +4,22 @@
 nonisolated public struct InventoryMenuTexts: Equatable, Sendable {
     /// The tabs in the order the game's menu lists them.
     public enum Tab: CaseIterable, Sendable {
-        case all, weapons, apparel, potions, food, ingredients, books, keys, misc
+        case favorites, all, weapons, apparel, potions, scrolls, food, ingredients, books, keys
+        case misc
     }
 
     public var labels: [Tab: String] = [
-        .all: "All", .weapons: "Weapons", .apparel: "Armor", .potions: "Potions",
-        .food: "Food", .ingredients: "Ingredients", .books: "Books", .keys: "Keys",
-        .misc: "Misc"
+        .favorites: "Favorites", .all: "All", .weapons: "Weapons", .apparel: "Armor",
+        .potions: "Potions", .scrolls: "Scrolls", .food: "Food", .ingredients: "Ingredients",
+        .books: "Books", .keys: "Keys", .misc: "Misc"
     ]
 
     public static let vanilla = Self()
 
     public static let settings: [Tab: String] = [
-        .all: "sAllItems", .weapons: "sWeapons", .apparel: "sApparel", .potions: "sPotions",
-        .food: "sFood", .ingredients: "sIngredients", .books: "sBooks", .keys: "sKeys",
-        .misc: "sMisc"
+        .favorites: "sFavorites", .all: "sAllItems", .weapons: "sWeapons", .apparel: "sApparel",
+        .potions: "sPotions", .scrolls: "sScrolls", .food: "sFood", .ingredients: "sIngredients",
+        .books: "sBooks", .keys: "sKeys", .misc: "sMisc"
     ]
 
     public init() {}

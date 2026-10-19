@@ -8,6 +8,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
 /// Every runtime stays nil without game data, and each action then says so.
@@ -48,6 +49,18 @@ public final class InventoryCoordinator {
     public var soulTexts = SoulTexts.vanilla
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla
+    /// The load order's cell reset intervals, which a harvested plant waits for.
+    public private(set) var cellReset = CellResetSettings.vanilla
+    /// The ingredients chosen at the open alchemy lab, in the order chosen. Nil when no
+    /// lab is open.
+    public internal(set) var alchemySelection: [FormID]?
+    public internal(set) var lastAlchemy = AlchemyActionOutcome.idle
+    public var alchemySettings = AlchemySettings.vanilla
+    public var alchemyTexts = AlchemyTexts.vanilla
+    /// The MGEF index ingredient effects resolve through. Nil leaves alchemy unavailable.
+    public internal(set) var magicEffects: MagicEffectStore?
+    /// The plugin ingredient EFID links are relative to.
+    var magicItemPlugin = FormIDResolver.loadOrderSpaceName
 
     let world: any InventoryWorld
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.
@@ -65,10 +78,10 @@ public final class InventoryCoordinator {
         references: any PapyrusWorldReferenceSource,
         catalog: EquipmentCatalog?,
         pricing: BarterPricing?,
-        harvestRegrowth: HarvestRegrowth = .vanilla
+        cellReset: CellResetSettings = .vanilla
     ) {
         let items = WorldItemRuntime(inventory: inventory, references: references)
-        items.harvestRegrowth = harvestRegrowth
+        self.cellReset = cellReset
         runtime = items
         locks.wire(items: items)
         if let catalog {

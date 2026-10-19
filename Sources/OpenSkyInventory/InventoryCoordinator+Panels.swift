@@ -30,7 +30,8 @@ extension InventoryCoordinator {
             lastActionText: lastAction.text,
             playerEquipped: equippedReadout(on: .player),
             nearestActorName: nearestActorHolder().map(InventoryCore.actorName),
-            nearestActorEquipped: equippedReadout(on: .nearestActor)
+            nearestActorEquipped: equippedReadout(on: .nearestActor),
+            playerCapacity: world.playerCarryCapacity
         )
     }
 }

@@ -37,6 +37,11 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
         world.applyWeaponEnchantment(hit)
     }
 
+    @discardableResult
+    public func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+        world.applyWeaponPoison(hit)
+    }
+
     /// Only the player carries a behavior graph, so an event on an NPC
     /// answers false.
     @discardableResult

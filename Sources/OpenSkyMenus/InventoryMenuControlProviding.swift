@@ -39,6 +39,7 @@ nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
     /// `EntriesA`. These prove the engine's rows actually reached the movie.
     public let movieEntryTitles: [String]
     public let movieCategoryTitles: [String]
+    public let extras: InventoryMenuExtras
 
     public init(
         isOpen: Bool,
@@ -60,7 +61,8 @@ nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
         movieMissingNames: Int,
         movieUnhandledInvokes: Int,
         movieEntryTitles: [String],
-        movieCategoryTitles: [String]
+        movieCategoryTitles: [String],
+        extras: InventoryMenuExtras = .none
     ) {
         self.isOpen = isOpen
         self.openMenus = openMenus
@@ -82,6 +84,35 @@ nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
         self.movieUnhandledInvokes = movieUnhandledInvokes
         self.movieEntryTitles = movieEntryTitles
         self.movieCategoryTitles = movieCategoryTitles
+        self.extras = extras
+    }
+}
+
+/// The item card, the quantity slider, the favourites, and the turning preview.
+nonisolated public struct InventoryMenuExtras: Equatable, Sendable {
+    public static let none = Self(
+        itemCard: [], quantity: nil, hotkeys: [], previewEnabled: false, previewLine: nil
+    )
+
+    /// The selected row's card, one line each.
+    public let itemCard: [String]
+    /// The open quantity prompt's line.
+    public let quantity: String?
+    /// One line per bound slot, such as "1: Iron Sword".
+    public let hotkeys: [String]
+    public let previewEnabled: Bool
+    /// The preview's model and turn, or why it shows nothing.
+    public let previewLine: String?
+
+    public init(
+        itemCard: [String], quantity: String?, hotkeys: [String], previewEnabled: Bool,
+        previewLine: String?
+    ) {
+        self.itemCard = itemCard
+        self.quantity = quantity
+        self.hotkeys = hotkeys
+        self.previewEnabled = previewEnabled
+        self.previewLine = previewLine
     }
 }
 
@@ -103,5 +134,13 @@ public protocol InventoryMenuControlProviding: AnyObject {
     /// Eats or drinks one unit of the selected row and applies its effects.
     /// A row that is not ALCH or INGR reports that and changes nothing.
     func consumeInventoryMenuSelection()
+    /// Drops `count` of the selected row at once, with no quantity prompt.
+    func dropInventoryMenuSelection(count: Int32)
+    func toggleInventoryMenuFavourite()
+    /// Binds number key `slot` to the selected row, which becomes a favourite.
+    func bindInventoryMenuHotkey(_ slot: Int)
+    /// What number key `slot` does in play.
+    func useInventoryHotkey(_ slot: Int)
+    var inventoryMenuPreviewEnabled: Bool { get set }
     var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
 }

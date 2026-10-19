@@ -34,6 +34,25 @@ nonisolated public struct Ingestible: Sendable {
     public let effects: [MagicItemEffect]
     public let skipped: FieldTally
 
+    /// A potion made at runtime, such as one brewed at an alchemy lab.
+    public init(
+        formID: FormID,
+        fields: InventoryItemFields,
+        itemValue: ItemValue,
+        flags: Flags,
+        effects: [MagicItemEffect]
+    ) {
+        self.formID = formID
+        self.fields = fields
+        self.itemValue = itemValue
+        self.flags = flags.union(.noAutoCalc)
+        addiction = nil
+        addictionChance = 0
+        consumeSound = nil
+        self.effects = effects
+        skipped = FieldTally()
+    }
+
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ALCH" else {
             throw ESMError.malformed("expected ALCH record, got \(record.type)")

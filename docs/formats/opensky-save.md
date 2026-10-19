@@ -116,6 +116,11 @@ chunk cannot read into the next.
 | `CRIM` | crime gold and crime counts | actors |
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |
+| `TMPR` | tempered quality of each copy | actors |
+| `CPOT` | brewed potions and poisons | actors |
+| `INGK` | known ingredient effects | actors |
+| `WPSN` | poison on each weapon | actors |
+| `FAVS` | favourites and hotkeys | actors |
 | `HRVS` | harvested flora and trees | world |
 | `HRVD` | game day of each timed harvest | world |
 | `LOCK` | changed locks | world |
@@ -130,7 +135,8 @@ chunk cannot read into the next.
 `HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
 means harvested, so it has no other field. `HRVD` is a uint32 entry count, then one key and a
 float32 game day per harvest with a known day. A decoder applies it after `HRVS` and ignores a key
-that `HRVS` does not name. An older build skips `HRVD`, so its plants stay harvested.
+that `HRVS` does not name. The day is kept for the readout; a plant grows back when its cell
+resets ([cell reset](/engine/cell-reset.md)), not on a day count.
 
 `LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or
 1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that

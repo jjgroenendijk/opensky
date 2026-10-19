@@ -145,4 +145,21 @@ struct MenuScreenCoordinatorTests {
         menu.route(.button(.cancel))
         #expect(world.actions.last == "close station")
     }
+
+    /// At a lab the rows are the carried ingredients: E chooses one, R brews.
+    @Test func anAlchemyLabListsIngredientsToChooseAndBrew() {
+        let world = FakeMenuScreenWorld()
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
+        world.craftingStationName = "Alchemy Lab"
+        world.alchemyIngredients = [
+            CraftingMenuIngredient(id: FormID(0x10), name: "Wheat", isChosen: false),
+            CraftingMenuIngredient(id: FormID(0x11), name: "Blue Mountain Flower", isChosen: true)
+        ]
+        #expect(menu.open())
+        #expect(menu.model.categories.map(\.label) == ["Ingredients", "Chosen"])
+        #expect(menu.model.rows.map(\.name) == ["Wheat", "Blue Mountain Flower"])
+        menu.route(.button(.accept))
+        menu.route(.button(.xButton))
+        #expect(world.actions == ["toggle 16", "brew"])
+    }
 }

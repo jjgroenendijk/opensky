@@ -61,7 +61,6 @@ nonisolated public struct CellProviderIndexes {
         let skillAdvancement: SkillAdvancementSettings
         let characterLevel: CharacterLevelSettings
         let level: ActorValueLevelSettings
-        let harvestRegrowth: HarvestRegrowth
         let cellReset: CellResetSettings
         let speechChecks: SpeechCheckSettings
         /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
@@ -81,7 +80,6 @@ nonisolated public struct CellProviderIndexes {
             skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
             characterLevel = CharacterLevelSettings.resolve(store: settings)
             level = ActorValueLevelSettings.resolve(store: settings)
-            harvestRegrowth = HarvestRegrowth.resolve(store: settings)
             cellReset = CellResetSettings.resolve(store: settings)
             speechChecks = SpeechCheckSettings.resolve(store: settings)
             store = settings
@@ -197,7 +195,6 @@ nonisolated public struct CellProviderIndexes {
         stores.presentationRecords = records.loadOrder.presentation
         stores.menuRecords = records.loadOrder.menus
         stores.difficultySettings = tuning.difficulty
-        stores.harvestRegrowth = tuning.harvestRegrowth
         stores.cellResetSettings = tuning.cellReset
         stores.encounterZoneStore = records.world.encounterZones
         stores.speechCheckSettings = tuning.speechChecks

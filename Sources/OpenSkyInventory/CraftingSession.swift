@@ -145,7 +145,7 @@ public final class CraftingSession {
         }
         let consumed = Self.consumed(by: recipe)
         let created = InventoryStack(item: item, count: recipe.createdCount)
-        try inventory.apply(removing: consumed, adding: [created], on: player)
+        try inventory.apply(removing: consumed, adding: [created], on: player, usingUp: true)
         let value = inventory.baselines.items.definition(item)?.value ?? 0
         return CraftOutcome(
             consumed: consumed,

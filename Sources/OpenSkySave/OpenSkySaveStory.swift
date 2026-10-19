@@ -259,7 +259,10 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.relocations:
             body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         default:
-            if try !applyIdentityAndMap(tag: tag, payload: payload, to: &body) {
+            if
+                try !applyPlayerItems(tag: tag, payload: payload, to: &body),
+                try !applyIdentityAndMap(tag: tag, payload: payload, to: &body)
+            {
                 try applyJournal(tag: tag, payload: payload, to: &body)
             }
         }

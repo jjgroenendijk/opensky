@@ -20,6 +20,20 @@ nonisolated public struct MagicItemEffect: Equatable, Sendable {
     /// overrides behave exactly as they do everywhere else.
     public let conditions: ConditionList
 
+    public init(
+        effect: FormID,
+        magnitude: Float,
+        area: UInt32,
+        duration: UInt32,
+        conditions: ConditionList = ConditionList()
+    ) {
+        self.effect = effect
+        self.magnitude = magnitude
+        self.area = area
+        self.duration = duration
+        self.conditions = conditions
+    }
+
     /// A copy of this entry with its magnitude multiplied, for one
     /// resistance-scaled application. The decoded record stays unchanged.
     public func scalingMagnitude(by multiplier: Float) -> MagicItemEffect {

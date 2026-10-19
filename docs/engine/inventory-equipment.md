@@ -114,6 +114,10 @@ Which hands a weapon fills does not come from a bit field on the item. It comes 
 | `Shield` | left |
 | A slot that names no hand, like `Voice` or `Potion` | none |
 
+A shield is the one armour piece with an `ETYP`: it names `Shield`, so it fills the left hand.
+That makes a shield and a two-handed weapon conflict, and equipping one unequips the other, as in
+the game. Other vanilla armour has no `ETYP` and fills no hand.
+
 A weapon whose `ETYP` resolves to nothing takes the right hand and is counted as unresolved. So
 a load order with many misses is visible, not quietly plausible. In vanilla, 5 weapons have no
 `ETYP` at all, and every other one resolves.
@@ -136,11 +140,19 @@ same two parents. They differ only in the "use all parents" byte of `DATA`, beca
 chooses the hand for a spell. The slot table keeps the two apart for spells, and still gives the
 one fixed answer for weapons. Casting is on the [magic](/engine/magic.md) page.
 
+## Carry weight
+
+The player is over-encumbered when the carried weight is above the `CarryWeight` actor value
+([UESP Carry Weight](https://en.uesp.net/wiki/Skyrim:Carry_Weight)). Worn armour counts at its
+perk weight ([perk entry points](/engine/perk-entry-points.md#armour-weight)). An
+over-encumbered player can only walk: run and sprint fall back to walking. The HUD shows
+`sOverEncumbered` once, when the state starts. Fast travel is refused too
+([world map](/engine/world-map.md)). The check runs every frame, so dropping an item or raising the
+actor value lifts the state at once. World > HUD & Interaction > Items shows the weight against
+the actor value, and says when the player can only walk.
+
 ## Not done yet
 
-- Armor fills body slots only. `ARMO` also has an `ETYP`, which is not decoded. So a shield
-  conflicts with a cuirass by body slot, but not yet with a two-handed weapon by hand.
-- Carry weight is computed and shown, but nothing is slowed by it.
 - A dropped object with a simulated Havok body falls and settles
   ([dynamic rigid bodies](/engine/dynamic-bodies.md)). One without a dynamic body stays where
   it was placed.

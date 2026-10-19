@@ -103,6 +103,18 @@ material, and Fortify Smithing multiplies it by `1 + Smithing Modifier / 100`. T
 `1 + perk` term of the UESP effective skill (see [crafting](/engine/crafting.md)). UESP gives the
 perk term only; that Fortify Smithing enters the same term is read from `PerkSkillBoosts`.
 
+## Alchemy
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Alchemy Effectiveness | 66 | a factor on power for each effect, the brew bound for the EPAlchemy conditions |
+| Mod Initial Ingredient Effects Learned | 72 | how many first effects eating an ingredient teaches |
+| Purify Alchemy Ingredients | 73 | above 0, a potion keeps only good effects and a poison only bad |
+| Mod Poison Dose Count | 83 | the hits one applied poison lasts, poison bound as the item |
+| Mod Potions Created | 89 | how many items one brew makes, made item bound |
+
+Each starts at 1, except Purify, which starts at 0. The rules are on [alchemy](/engine/alchemy.md).
+
 ## Animation
 
 | Entry point | Id | Where |

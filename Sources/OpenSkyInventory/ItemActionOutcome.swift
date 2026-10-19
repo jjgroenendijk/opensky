@@ -64,6 +64,8 @@ nonisolated public enum ItemActionOutcome: Equatable, Sendable {
             changed
                 ? "Unequipped \(item) on \(target)."
                 : "\(item) was not equipped on \(target)."
+        case let .harvested(plant, items) where items.isEmpty:
+            "Harvested \(plant): nothing this season."
         case let .harvested(plant, items):
             "Harvested \(plant): \(items.joined(separator: ", "))."
         case let .grewBack(plant): "\(plant) grew back."
@@ -78,6 +80,7 @@ nonisolated public enum CraftingActionOutcome: Equatable, Sendable {
     case unavailable
     case noRecipeData
     case opened(station: String, recipes: Int)
+    case openedLab(String, ingredients: Int)
     case noStationNamed(String)
     case notAStation(String)
     case notOpen
@@ -92,6 +95,8 @@ nonisolated public enum CraftingActionOutcome: Equatable, Sendable {
         case .unavailable: InventoryCore.noRuntimeText
         case .noRecipeData: "No recipe data is loaded."
         case let .opened(station, recipes): "Opened \(station): \(recipes) recipes."
+        case let .openedLab(station, ingredients):
+            "Opened \(station): \(ingredients) ingredients carried."
         case let .noStationNamed(name): "No station named \(name)."
         case let .notAStation(name): "\(name) is no crafting station."
         case .notOpen: "No crafting station is open."

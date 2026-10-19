@@ -74,6 +74,14 @@ final class WorldSessionWiring {
     /// Builds run off the main thread on the session's runner; the finished scene
     /// swaps in through `Renderer.setScene`. Every capture is weak, because
     /// `game` owns both the renderer and the streamer.
+    private func wireAssetDrains(gameSession: GameSession) {
+        let scripts = game.scripts
+        gameSession.assetDrains
+            .register(.scripts) { [weak scripts] _ in scripts?.drainLoads() }
+        let audio = game.audio
+        gameSession.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
+    }
+
     func wireStreaming(session: CellSession, gameSession: GameSession) {
         let renderer = gameSession.renderer
         let provider = session.data
@@ -109,11 +117,7 @@ final class WorldSessionWiring {
             gameSession: gameSession,
             streamer: streamer
         )
-        let scripts = game.scripts
-        gameSession.assetDrains
-            .register(.scripts) { [weak scripts] _ in scripts?.drainLoads() }
-        let audio = game.audio
-        gameSession.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
+        wireAssetDrains(gameSession: gameSession)
         game.messageWorld.wire(gameSession: gameSession)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.

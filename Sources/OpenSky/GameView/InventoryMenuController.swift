@@ -5,6 +5,7 @@
 // See docs/engine/inventory-menu.md.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -25,6 +26,7 @@ protocol InventoryMenuHost: MenuInputConsumer {
     var menuScreens: MenuScreens { get }
     var renderer: Renderer? { get }
     var swfMovies: SWFMovieSource { get }
+    var worldData: WorldDataStores? { get }
 }
 
 /// Holds the inventory menu's row list and movie state for `game`.
@@ -35,12 +37,17 @@ final class InventoryMenuController {
 
     unowned let game: any InventoryMenuHost
     private(set) var isOpen = false
-    private(set) var model = InventoryMenuModel.empty
+    var model = InventoryMenuModel.empty
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
-    private(set) var lastActionText: String?
+    var lastActionText: String?
     let movie: MenuMovieSession
+    /// The turning item beside the list. Off leaves the world behind the menu bare.
+    var previewEnabled = true
+    var preview = InventoryItemPreview()
+    var previewSource: InventoryItemPreviewSource?
+    var previewShown = false
 
     init(game: any InventoryMenuHost) {
         self.game = game
@@ -74,8 +81,10 @@ final class InventoryMenuController {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        model.quantity = nil
         game.menuMode.dismiss(Self.identifier)
         movie.stop()
+        hidePreview()
     }
 
     func setMovieEnabled(_ enabled: Bool) {
@@ -98,18 +107,28 @@ final class InventoryMenuController {
         }
         var refreshed = InventoryMenuModel.build(
             holder: .player, runtime: inventory,
-            categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
+            categories: InventoryMenuCategory.tabs(
+                texts: game.inventory.menuTexts, favourites: true
+            ),
+            favourites: game.inventory.playerFavourites
         )
         refreshed.carriedWeight = game.inventory.playerCarriedWeight
-        refreshed.selectCategory(model.selectedCategoryIndex)
-        refreshed.select(model.selectedIndex)
+        if !model.categories.isEmpty {
+            refreshed.selectCategory(model.selectedCategoryIndex)
+            refreshed.select(model.selectedIndex)
+        }
+        refreshed.quantity = model.quantity
         model = refreshed
         publishModel()
     }
 
     private func publishModel() {
         let model = model
-        movie.publish { InventoryMenuMovieBridge.publish(model, runtime: $0) }
+        let card = model.selectedEntry.flatMap { game.inventory.itemCard(for: $0.item) }
+        movie.publish {
+            InventoryMenuMovieBridge.publish(model, runtime: $0)
+            InventoryMenuMovieBridge.publishItemCard(card, runtime: $0)
+        }
     }
 
     // MARK: - Movie
@@ -135,12 +154,20 @@ final class InventoryMenuController {
     /// install-side movie.
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
+        if model.quantity != nil {
+            routeQuantity(event)
+            return
+        }
         switch event {
         case .button(.accept):
             activateSelection()
         case .button(.cancel):
             close()
-        case .button(.xButton), .button(.yButton), .pointer, .release:
+        case .button(.xButton):
+            requestDrop()
+        case .button(.yButton):
+            toggleFavouriteSelection()
+        case .pointer, .release:
             return
         case let .move(direction):
             move(direction)
@@ -194,7 +221,7 @@ final class InventoryMenuController {
             activateSelection()
         case let .drop(index):
             model.select(index)
-            dropSelection()
+            requestDrop()
         }
     }
 
@@ -214,15 +241,20 @@ final class InventoryMenuController {
         }
     }
 
-    func dropSelection() {
-        perform { game.inventory.dropPlayerItem($0.item, count: 1).text }
+    func dropSelection(count: Int32 = 1) {
+        perform { game.inventory.dropPlayerItem($0.item, count: count).text }
     }
 
+    /// A poison goes on the drawn weapon; anything else is eaten or drunk.
     func consumeSelection() {
-        perform { game.magic.consumeMagicItem($0.item).text }
+        perform { entry in
+            game.inventory.isPoison(entry.item)
+                ? game.inventory.applyPoison(entry.item).text
+                : game.magic.consumeMagicItem(entry.item).text
+        }
     }
 
-    private func perform(_ action: (InventoryMenuEntry) -> String) {
+    func perform(_ action: (InventoryMenuEntry) -> String) {
         guard let entry = model.selectedEntry else {
             lastActionText = "No row selected."
             return
@@ -262,7 +294,8 @@ final class InventoryMenuController {
             movieUnhandledInvokes: diagnostics?.unhandledInvokes ?? 0,
             movieEntryTitles: runtime.map(InventoryMenuMovieBridge.entryLabels(runtime:)) ?? [],
             movieCategoryTitles: runtime
-                .map(InventoryMenuMovieBridge.categoryLabels(runtime:)) ?? []
+                .map(InventoryMenuMovieBridge.categoryLabels(runtime:)) ?? [],
+            extras: extrasSnapshot
         )
     }
 

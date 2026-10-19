@@ -64,6 +64,8 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     public let nearestActorEquipped: [EquippedItemReadout]
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// The `CarryWeight` actor value. Above it the player can only walk.
+    public let playerCapacity: Float?
 
     /// Written out so the equipment members can trail the list with defaults.
     public init(
@@ -80,7 +82,8 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
         lastActionText: String,
         playerEquipped: [EquippedItemReadout] = [],
         nearestActorName: String? = nil,
-        nearestActorEquipped: [EquippedItemReadout] = []
+        nearestActorEquipped: [EquippedItemReadout] = [],
+        playerCapacity: Float? = nil
     ) {
         self.isAvailable = isAvailable
         self.targetName = targetName
@@ -96,6 +99,7 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
         self.playerEquipped = playerEquipped
         self.nearestActorName = nearestActorName
         self.nearestActorEquipped = nearestActorEquipped
+        self.playerCapacity = playerCapacity
     }
 
     /// The reading with no runtime attached.

@@ -1,5 +1,5 @@
 // Persistent harvested state of one FLOR or TREE reference, with the game day of
-// the harvest so `HarvestRegrowth` can tell when it grows back.
+// the harvest. The plant grows back when its cell resets (docs/engine/cell-reset.md).
 // See docs/engine/interaction.md.
 
 import OpenSkyWorldState

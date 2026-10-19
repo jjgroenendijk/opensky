@@ -5,6 +5,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
@@ -32,10 +33,16 @@ public protocol InventoryWorld: AnyObject {
     /// The enchantment `item` carries, as worn by `owner`.
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String?
     var enchantmentCacheReadout: EnchantmentCacheReadout { get }
-    /// Game days passed, which harvest regrowth counts in. Nil without a clock.
+    /// Game days passed, which a harvest records. Nil without a clock.
     var gameDaysPassed: Float? { get }
+    /// The Tamriel month, 1 to 12, which picks a harvest's season. Nil without a clock.
+    var gameMonth: Int? { get }
     /// The player's current Speech skill. Nil without actor values.
     func playerSpeechSkill() -> Float?
+    /// The player's `CarryWeight` actor value. Nil without actor values.
+    var playerCarryCapacity: Float? { get }
+    /// `effect`'s name in the load order's language.
+    func magicEffectName(_ effect: ResolvedMagicEffect) -> String
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s
     /// prompt, such as a werewolf's "Feed". Nil keeps the authored label.
     func perkActivateLabel(for reference: FormID) -> String?
@@ -51,6 +58,18 @@ public protocol InventoryWorld: AnyObject {
 }
 
 extension InventoryWorld {
+    public var gameMonth: Int? {
+        nil
+    }
+
+    public var playerCarryCapacity: Float? {
+        nil
+    }
+
+    public func magicEffectName(_ effect: ResolvedMagicEffect) -> String {
+        effect.displayName
+    }
+
     /// A session with no actor values trades at the starting Speech skill.
     public func playerSpeechSkill() -> Float? {
         nil

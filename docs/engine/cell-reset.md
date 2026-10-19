@@ -27,7 +27,8 @@ A location is cleared when a script called `SetCleared` on it (the `cleared` fla
 [script state](/engine/papyrus-script-state.md)). The location is the cell's `XLCN`.
 
 A cell does not reset when its encounter zone (`CELL XEZN`) has the ECZN "Never Resets" flag
-(`DATA` flags bit 0x01). OpenSky reads only the cell's own zone, not the worldspace zone.
+(`DATA` flags bit 0x01). An exterior cell with no zone of its own uses the worldspace's
+`WRLD XEZN`.
 
 The departures are saved in the `CRST` chunk
 ([save chunks](/formats/opensky-save-world-chunks.md#crst-cell-resets)).
@@ -35,9 +36,11 @@ The departures are saved in the `CRST` chunk
 ## What resets
 
 For each reference in the cell, OpenSky drops these runtime changes: death, actor values,
-combat state, inventory, open state, lock, deletion, position, and relocation. So a creature
-respawns with full health, a container refills, a door shuts and locks again, and a taken
-item is back.
+combat state, inventory, open state, lock, deletion, position, relocation, harvest, and
+tempered copies. So a creature respawns with full health, a container refills, a door shuts
+and locks again, a taken item is back, and a harvested plant grows back
+([interaction](/engine/interaction.md#grow-back)). A refilled container holds plain copies
+again, so the quality of the tempered copies left in it is gone.
 
 These are kept, as the wiki lists:
 

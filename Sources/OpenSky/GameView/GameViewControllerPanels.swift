@@ -11,6 +11,7 @@ import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -108,6 +109,37 @@ extension GameViewController: CraftingControlProviding {
     }
 }
 
+extension GameViewController: AlchemyControlProviding {
+    var alchemySnapshot: AlchemyControlSnapshot {
+        inventory.alchemySnapshot
+    }
+
+    func openAlchemyLab(_ editorID: String) -> CraftingActionOutcome {
+        inventory.openAlchemyLab(editorID)
+    }
+
+    func toggleAlchemyIngredient(_ id: FormID) -> AlchemyActionOutcome {
+        inventory.toggleAlchemyIngredient(id)
+    }
+
+    func clearAlchemyIngredients() -> AlchemyActionOutcome {
+        inventory.clearAlchemyIngredients()
+    }
+
+    func brewChosenIngredients() -> AlchemyActionOutcome {
+        inventory.brewChosenIngredients()
+    }
+
+    /// Through the magic feature, which applies the effect and reports the meal back.
+    func eatIngredient(_ id: FormID) {
+        magic.consumeMagicItem(id)
+    }
+
+    func applyPoison(_ id: FormID) -> AlchemyActionOutcome {
+        inventory.applyPoison(id)
+    }
+}
+
 extension GameViewController: LockControlProviding {
     var lockSnapshot: LockControlSnapshot {
         inventory.locks.lockSnapshot
@@ -145,45 +177,6 @@ extension GameViewController: TrapControlProviding {
 
     func disarmSelectedTrap() -> TrapActionOutcome {
         trapControl.disarm()
-    }
-}
-
-extension GameViewController: InventoryMenuControlProviding {
-    var inventoryMenuIsOpen: Bool {
-        inventoryMenu.isOpen
-    }
-
-    var inventoryMenuMovieEnabled: Bool {
-        get { inventoryMenu.movieEnabled }
-        set { inventoryMenu.setMovieEnabled(newValue) }
-    }
-
-    var inventoryMenuSnapshot: InventoryMenuControlSnapshot {
-        inventoryMenu.snapshot
-    }
-
-    func openInventoryMenu() {
-        inventoryMenu.open()
-    }
-
-    func closeInventoryMenu() {
-        inventoryMenu.close()
-    }
-
-    func sendInventoryMenuInput(_ event: MenuInputEvent) {
-        inventoryMenu.route(event)
-    }
-
-    func activateInventoryMenuSelection() {
-        inventoryMenu.activateSelection()
-    }
-
-    func dropInventoryMenuSelection() {
-        inventoryMenu.dropSelection()
-    }
-
-    func consumeInventoryMenuSelection() {
-        inventoryMenu.consumeSelection()
     }
 }
 

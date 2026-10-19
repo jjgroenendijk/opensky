@@ -56,11 +56,17 @@ nonisolated public struct MenuRecordData: Sendable {
     /// them as read.
     public static let statsPrefix = "fStats"
 
-    /// A string setting the fast-travel and race menus show.
+    /// A string setting the fast-travel, race, or alchemy menus or the HUD show.
     public static func isMenuText(_ editorID: String) -> Bool {
         editorID.hasPrefix("sNoFastTravel") || editorID.hasPrefix("sRSM")
-            || editorID == "sFastTravelConfirm"
+            || editorID == "sFastTravelConfirm" || editorID == "sOverEncumbered"
+            || alchemyTexts.contains(editorID)
     }
+
+    /// The alchemy lab's notices.
+    public static let alchemyTexts: Set = [
+        "sCreatedPotionNamePrefix", "sCreatedPoisonNamePrefix", "sPotionCreationFailed"
+    ]
 
     public let player: ActorBase?
     /// RACE records with the playable flag, sorted by editor ID.

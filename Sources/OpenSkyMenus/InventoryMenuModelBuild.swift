@@ -15,7 +15,8 @@ nonisolated extension InventoryMenuModel {
         inventory: ReferenceInventoryState,
         items: ItemDefinitionStore,
         goldFormID: FormID = ItemDefinitionStore.vanillaGoldFormID,
-        categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
+        categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder,
+        favourites: FavouritesState = FavouritesState()
     ) -> InventoryMenuModel {
         var rows: [InventoryMenuEntry] = []
         var weight = 0.0
@@ -37,7 +38,9 @@ nonisolated extension InventoryMenuModel {
                     isEquipped: inventory.isEquipped(stack.item),
                     family: definition?.family,
                     stolenCount: inventory.stolenCount(of: stack.item),
-                    isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true
+                    isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true,
+                    isFavourite: favourites.contains(stack.item),
+                    hotkey: favourites.hotkey(of: stack.item)
                 )
             )
         }
@@ -77,13 +80,15 @@ extension InventoryMenuModel {
     public static func build(
         holder: InventoryHolder,
         runtime: any InventoryAccess,
-        categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
+        categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder,
+        favourites: FavouritesState = FavouritesState()
     ) -> InventoryMenuModel {
         build(
             inventory: runtime.inventory(of: holder),
             items: runtime.baselines.items,
             goldFormID: runtime.goldFormID,
-            categories: categories
+            categories: categories,
+            favourites: favourites
         )
     }
 }

@@ -121,6 +121,14 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Tempered copies: per owner and item, one quality level per improved copy.
         /// A sibling of `INVN`, whose rows have no room for a quality.
         public static let temperedItems = "TMPR"
+        /// Potions and poisons brewed at an alchemy lab, which no plugin holds.
+        public static let createdPotions = "CPOT"
+        /// The ingredient effects the player has learned, one bit per effect.
+        public static let ingredientKnowledge = "INGK"
+        /// The poison on each weapon and the doses it has left.
+        public static let weaponPoisons = "WPSN"
+        /// The player's favourite items and the hotkeys bound to them.
+        public static let favourites = "FAVS"
 
         /// Violent crime gold: per faction, the violent part of the `CRIM` row. A sibling,
         /// because `CRIM` rows have a fixed layout; `CRIM` keeps the total.

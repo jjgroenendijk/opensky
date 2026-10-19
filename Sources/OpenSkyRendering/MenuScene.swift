@@ -71,6 +71,9 @@ public struct MenuScene {
     public var up: SIMD3<Float>
     public var fovYRadians: Float
     public var draws: [MenuSceneDraw]
+    /// Set, the scene draws over the world into `[0, slice]` of the depth range, with
+    /// a depth test among its own shapes. Nil draws in order without depth.
+    public var frontDepthSlice: Float?
 
     public init(
         eye: SIMD3<Float>, target: SIMD3<Float>, up: SIMD3<Float>, fovYRadians: Float,

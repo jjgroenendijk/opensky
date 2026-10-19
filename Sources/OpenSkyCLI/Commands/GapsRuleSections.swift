@@ -8,6 +8,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -103,7 +104,7 @@ extension GapsGatherer {
         _ = SkillAdvancementSettings.resolve(store: store)
         _ = SocialSettings.resolve(store: store)
         _ = SpeechCheckSettings.resolve(store: store)
-        _ = HarvestRegrowth.resolve(store: store)
+        _ = AlchemySettings.resolve(store: store)
         _ = LockpickingSettings.resolve(store: store)
         _ = LockTexts.resolve(store: store)
         _ = TemperingTexts.resolve(store: store)

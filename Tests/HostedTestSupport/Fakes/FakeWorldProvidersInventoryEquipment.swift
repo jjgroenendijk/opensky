@@ -17,6 +17,8 @@ struct FakeInventoryEquipmentState {
     var playerCount: Int32 = 1
     var containerCount: Int32 = 0
     var lastAction = "No grant yet."
+    /// The inventory menu's turning preview switch.
+    var menuPreviewEnabled = true
     var ownership: ReferenceOwnershipReadout? = ReferenceOwnershipReadout(
         name: "Iron Sword", reference: FormID(0x0700), owner: nil, factionRank: nil
     )
