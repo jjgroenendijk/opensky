@@ -65,12 +65,13 @@ struct ChargenMorphsTests {
         #expect(painted == [100, 50, 25, 255, 100, 100, 100, 255])
     }
 
-    @Test func composeStartsFromWhiteSoTheSkinToneLayerSetsTheFace() {
+    /// A layer at strength 0 leaves the overlay neutral, as in `CWBattleGalmar`'s baked face.
+    @Test func composeStartsFromTheNeutralGrey() {
         let layers = [
             ChargenTintLayer(mask: [255, 0], color: SIMD4(198, 176, 168, 0), strength: 1)
         ]
         #expect(ChargenTints.compose(width: 2, height: 1, layers: layers)
-            == [198, 176, 168, 255, 255, 255, 255, 255])
+            == [198, 176, 168, 255, 127, 127, 127, 255])
         #expect(ChargenTints.compose(width: 0, height: 0, layers: layers).isEmpty)
     }
 

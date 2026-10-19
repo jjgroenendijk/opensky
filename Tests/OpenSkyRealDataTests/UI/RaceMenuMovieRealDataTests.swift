@@ -2,6 +2,8 @@
 // row, and the cursor reaches the category arrows and the Done button.
 
 import Foundation
+import OpenSkyActorsInterface
+import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
@@ -34,6 +36,68 @@ struct RaceMenuMovieRealDataTests {
             .objectValue)
         try click(center(of: #require(SWFDisplayObject.resolve(done)), runtime), runtime: runtime)
         #expect(requests.seen.contains(.done), "a click on Done sent no ConfirmDone")
+    }
+
+    /// Each list clears itself with `splice` before it fills, so a second publish
+    /// leaves one copy of every row.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
+    func aSecondPublishKeepsOneCopyOfEachRow() throws {
+        let (runtime, _) = try startMovie()
+        RaceMenuMovieBridge.publish(Self.model, runtime: runtime)
+        RaceMenuMovieBridge.publish(Self.model, runtime: runtime)
+        advance(runtime)
+        #expect(entryCount("_SubList1", runtime) == Self.model.races.count)
+        #expect(entryCount("_CategoriesList", runtime) == RaceMenuCategory.allCases.count)
+        let sliders = Self.model.rows.filter { $0 != .race && $0 != .name }.count
+        #expect(entryCount("_SubList2", runtime) == sliders)
+    }
+
+    /// In Body, left and right move the selected slider and the category stays open.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
+    func leftAndRightMoveTheBodySlider() throws {
+        let (runtime, requests) = try startMovie()
+        RaceMenuMovieBridge.publish(Self.model, runtime: runtime)
+        advance(runtime)
+        let base = try #require(panels(runtime)?.parent)
+        let right = try #require(child("RightClickInstance", of: base))
+        click(center(of: right, runtime), runtime: runtime)
+        advance(runtime)
+        let body = try #require(categoryIndex(runtime))
+        RaceMenuMovieBridge.handle(.move(.down), runtime: runtime)
+        advance(runtime)
+        requests.seen = []
+        for direction in [MenuInputEvent.Direction.left, .right, .right] {
+            RaceMenuMovieBridge.handle(.move(direction), runtime: runtime)
+            advance(runtime)
+        }
+        #expect(categoryIndex(runtime) == body, "the category stayed open")
+        let weight = try #require(Self.model.rows.firstIndex(of: .weight))
+        let moved = requests.seen.contains { request in
+            if case .slider(weight, _) = request {
+                true
+            } else {
+                false
+            }
+        }
+        #expect(moved, "the weight slider moved: \(requests.seen)")
+    }
+
+    private static let model = RaceMenuModel(
+        identity: PlayerIdentityState(race: FormID(0x13746), isFemale: false, name: "Prisoner"),
+        races: ["Nord", "Orc", "Redguard", "Breton"].enumerated().map {
+            RaceChoice(formID: FormID(0x13746 + UInt32($0.offset)), name: $0.element)
+        },
+        limited: false
+    )
+
+    @MainActor
+    private func entryCount(_ name: String, _ runtime: SWFMovieRuntime) -> Int? {
+        guard
+            let list = panels(runtime)?.object.lookup(name)?.property.value.objectValue,
+            let getter = list.lookup("__get__entryList")?.property.value
+        else { return nil }
+        return runtime.runtime.invoke(getter, thisValue: .object(list)).value
+            .objectValue?.arrayLength
     }
 
     @MainActor

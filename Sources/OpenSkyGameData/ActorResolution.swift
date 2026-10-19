@@ -405,9 +405,11 @@ nonisolated extension ResolvedActorAppearance {
 nonisolated extension PlayerAppearanceOverride {
     /// `TINP` 6, the race mask whose layer colours the face and the body alike.
     public static let skinToneMaskType: UInt16 = 6
+    /// The neutral grey of the skin shader's overlay: a layer at strength 0 gives it.
+    static let neutralSkinTone: Float = 127
 
-    /// The skin tone layer's colour. An NPC's `QNAM` equals it: Ralof's layer is
-    /// (198, 176, 168) and his `QNAM` is that divided by 255.
+    /// The body colour an NPC stores as `QNAM`: 127 + (layer - 127) × strength. This
+    /// fits all 2168 vanilla NPCs with a skin tone layer (docs/engine/race-menu.md).
     public func skinToneLayerColour(masks: [RaceTintMask]) -> SIMD3<Float>? {
         let skinMasks = Set(
             masks.filter { $0.maskType == Self.skinToneMaskType }.compactMap(\.index)
@@ -415,6 +417,28 @@ nonisolated extension PlayerAppearanceOverride {
         guard let layer = tints.last(where: { skinMasks.contains($0.maskIndex) }) else {
             return nil
         }
-        return SIMD3(Float(layer.color.x), Float(layer.color.y), Float(layer.color.z)) / 255
+        return Self.bodySkinTone(layer: layer.color, strength: layer.strength)
+    }
+
+    public static func bodySkinTone(layer: SIMD4<UInt8>, strength: Float) -> SIMD3<Float> {
+        let colour = SIMD3(Float(layer.x), Float(layer.y), Float(layer.z))
+        let grey = SIMD3(repeating: neutralSkinTone)
+        return (grey + (colour - grey) * min(max(strength, 0), 1)) / 255
+    }
+
+    /// Adds the race's default skin tone layer (`TIND` at its `TINV`) to a face that
+    /// has none, so the face and body are not white or bare grey.
+    public mutating func addDefaultSkinTone(
+        masks: [RaceTintMask], colour: (FormID) -> SIMD4<UInt8>?
+    ) {
+        let skinMasks = masks.filter { $0.maskType == Self.skinToneMaskType }
+        guard
+            !tints.contains(where: { tint in skinMasks.contains { $0.index == tint.maskIndex } }),
+            let mask = skinMasks.first, let index = mask.index,
+            let preset = mask.defaultPreset, let id = preset.color, let rgba = colour(id)
+        else { return }
+        tints.insert(
+            PlayerAppearanceTint(maskIndex: index, color: rgba, strength: preset.strength), at: 0
+        )
     }
 }

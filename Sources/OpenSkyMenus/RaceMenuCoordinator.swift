@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 
 /// What the race menu reads from and writes to the running game.
@@ -270,7 +271,8 @@ public final class RaceMenuCoordinator {
             } ?? [],
             selectedIndex: model?.selectedIndex ?? 0,
             lastResult: lastResult,
-            face: (model?.identity ?? world?.playerIdentity).map { Self.faceLines($0.face) } ?? [],
+            face: ((model?.identity ?? world?.playerIdentity).map { Self.faceLines($0.face) } ?? [])
+                + (model?.bodyToneLine.map { [$0] } ?? []),
             movie: TitleMenuMovieSnapshot(
                 isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError
             )

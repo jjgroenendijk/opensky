@@ -80,11 +80,11 @@ private func makeArmorAddons(
     [
         try? arma(
             formID: 0x210, race: 0x19, additional: [0x100], slots: 0b0100,
-            models: ("torso_m.nif", "torso_f.nif")
+            models: ("torso_m.nif", "torso_f.nif"), skinTexture: 0x70
         ),
         try? arma(
             formID: 0x211, race: 0x100, additional: [], slots: 0b1000_0000,
-            models: (feetMaleModel, feetFemaleModel)
+            models: (feetMaleModel, feetFemaleModel), skinTexture: 0x71
         ),
         try? arma(
             formID: 0x212, race: 0x999, additional: [], slots: 0b0100,
@@ -254,9 +254,13 @@ private func arma(
     additional: [UInt32],
     slots: UInt32,
     models: (male: String?, female: String?),
-    priority: UInt8 = 0
+    priority: UInt8 = 0,
+    skinTexture: UInt32? = nil
 ) throws -> ArmorAddon {
     var fields = bod2Field(slots: slots) + formIDField("RNAM", race)
+    if let skinTexture {
+        fields += formIDField("NAM0", skinTexture) + formIDField("NAM1", skinTexture)
+    }
     if priority > 0 {
         fields += InventoryFixture.armorAddonDNAM(male: priority, female: priority)
     }

@@ -79,11 +79,15 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
     public let slots: BodySlots
     /// ARMA MO2S/MO3S per-shape textures, already resolved through their TXST.
     public let textureSwaps: [ModelSurfaceOverride.ShapeTextures]
+    /// The wearer's skin texture set, for the skin this part shows.
+    public var skinTextures: ModelSurfaceOverride.SkinTextures?
 
     public init(
         origin: Origin, armature: FormID, modelPath: String, firstPersonModelPath: String?,
-        slots: BodySlots, textureSwaps: [ModelSurfaceOverride.ShapeTextures] = []
+        slots: BodySlots, textureSwaps: [ModelSurfaceOverride.ShapeTextures] = [],
+        skinTextures: ModelSurfaceOverride.SkinTextures? = nil
     ) {
+        self.skinTextures = skinTextures
         self.origin = origin
         self.armature = armature
         self.modelPath = modelPath
@@ -94,9 +98,10 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
 
     /// The swaps as a model override, or nil when the part keeps its own textures.
     public var surface: ModelSurfaceOverride? {
-        guard !textureSwaps.isEmpty else { return nil }
+        guard !textureSwaps.isEmpty || skinTextures != nil else { return nil }
         return ModelSurfaceOverride(
-            diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: textureSwaps
+            diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: textureSwaps,
+            skinTextures: skinTextures
         )
     }
 }
@@ -313,6 +318,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         parts += bodyParts(
             of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
         ).map(\.part)
+        parts = withSkinTextures(parts, skin: skin, race: raceID, female: female)
 
         // FaceGen assets belong to the NPC_ that provides character-gen data
         // — the traits source (head parts ride the traits flag). Gated on

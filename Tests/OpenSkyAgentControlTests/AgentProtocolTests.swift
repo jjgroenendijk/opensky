@@ -80,6 +80,14 @@ struct AgentCommandParsingTests {
         }
     }
 
+    @Test func theRaceMenuOpensFullOrLimited() throws {
+        #expect(try AgentDebugCommand.parse("racemenu", args([:])) == .raceMenu(limited: false))
+        #expect(try AgentDebugCommand.parse("racemenu", args(["limited": true]))
+            == .raceMenu(limited: true))
+        #expect(try AgentCommandLine.request(["debug", "racemenu", "--limited", "on"]).args
+            == ["limited": true])
+    }
+
     @Test func aNegativeItemCountRemoves() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "Gold001", "count": -5]))
             == .removeItem(reference: "player", item: "Gold001", count: 5))

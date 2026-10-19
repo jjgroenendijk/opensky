@@ -117,6 +117,12 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         runtime.callMovie("SetNameText", arguments: [.string(model.identity.name)])
     }
 
+    /// The movie shows its loading icon before each change it sends and hides it only
+    /// when the engine calls `HideLoadingIcon`, once the head shows the change.
+    public static func finishChange(runtime: SWFMovieRuntime) {
+        runtime.callMovie("HideLoadingIcon")
+    }
+
     /// Eight values per slider: text, filter flag, callback, min, max, position,
     /// interval, and id. The race and name rows have their own lists.
     static func slider(id: Int, row: RaceMenuRow, model: RaceMenuModel) -> [AS2Value] {

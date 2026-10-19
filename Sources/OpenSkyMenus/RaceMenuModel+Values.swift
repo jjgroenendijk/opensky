@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension RaceMenuModel {
     /// Head part types that may be left off.
@@ -124,6 +125,17 @@ nonisolated extension RaceMenuModel {
         case .slider: String(format: "%.1f", position(row))
         default: "\(Int(position(row)))"
         }
+    }
+
+    /// The body colour the skin tone layer gives, which an NPC stores as `QNAM`.
+    var bodyToneLine: String? {
+        guard
+            let mask = activeMask(Self.skinToneType), let layer = layer(of: mask)
+        else { return nil }
+        let tone = PlayerAppearanceOverride.bodySkinTone(
+            layer: layer.color, strength: layer.strength
+        ) * 255
+        return String(format: "Body tone: rgb %.0f %.0f %.0f", tone.x, tone.y, tone.z)
     }
 
     // MARK: - Face edits

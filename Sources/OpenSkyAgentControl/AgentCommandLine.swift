@@ -18,7 +18,8 @@ nonisolated public enum AgentCommandLine {
         "state.time": [], "state.frame": [],
         "debug.teleport": [], "debug.time": ["hour"], "debug.weather": ["id"],
         "debug.av": ["name"], "debug.item": ["id"], "debug.quest": ["id", "stage"],
-        "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"]
+        "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"],
+        "debug.racemenu": []
     ]
 
     /// Arguments a command gets when the words leave them out.

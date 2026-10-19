@@ -1,9 +1,8 @@
-// The `Array` built-in.
-//
-// Reference: ECMA-262 3rd edition, section 15.4 "Array Objects" — the
+// The `Array` built-in. Reference: ECMA-262 3rd edition, section 15.4 "Array Objects" — the
 // constructor's single-numeric-argument form (15.4.2.2) and the prototype
 // methods reimplemented here (15.4.4.5 `join`, 15.4.4.6 `pop`, 15.4.4.7 `push`,
-// 15.4.4.9 `shift`, 15.4.4.10 `slice`, 15.4.4.13 `unshift`).
+// 15.4.4.9 `shift`, 15.4.4.10 `slice`, 15.4.4.13 `unshift`). AS2NativesArrayOrder.swift
+// has the methods that reorder or cut.
 
 import Foundation
 
@@ -12,12 +11,23 @@ nonisolated extension AS2Natives {
         let prototype = runtime.arrayPrototype
         prototype.markArray(length: 0)
         installArrayMethods(runtime, on: prototype)
-        constructor(runtime, name: "Array", prototype: prototype) { context in
+        let arrayConstructor = constructor(
+            runtime,
+            name: "Array",
+            prototype: prototype
+        ) { context in
             let array = context.isConstructing
                 ? (context.thisObject ?? context.runtime.makeArray())
                 : context.runtime.makeArray()
             fill(array, with: context)
             return context.isConstructing ? .undefined : .object(array)
+        }
+        for (name, value) in arraySortConstants {
+            arrayConstructor.define(
+                .integer(value),
+                for: name,
+                flags: [.dontEnumerate, .dontDelete]
+            )
         }
     }
 
@@ -67,6 +77,7 @@ nonisolated extension AS2Natives {
             return .integer(array.arrayLength ?? 0)
         }
         installArrayReaders(runtime, on: prototype)
+        installArrayOrder(runtime, on: prototype)
     }
 
     private static func installArrayReaders(_ runtime: AS2Runtime, on prototype: AS2Object) {
@@ -123,7 +134,7 @@ nonisolated extension AS2Natives {
         return parts.joined(separator: text)
     }
 
-    private static func replace(_ array: AS2Object, with elements: [AS2Value]) {
+    static func replace(_ array: AS2Object, with elements: [AS2Value]) {
         array.resizeArray(to: 0)
         for (index, element) in elements.enumerated() {
             array.setElement(element, at: index)
@@ -132,7 +143,7 @@ nonisolated extension AS2Natives {
 
     /// ECMA-262 15.4.4.10: a negative index counts back from the end, and every
     /// index clamps into `0...count`.
-    private static func bound(_ value: Double, count: Int, fallback: Int) -> Int {
+    static func bound(_ value: Double, count: Int, fallback: Int) -> Int {
         guard value.isFinite else {
             return fallback
         }

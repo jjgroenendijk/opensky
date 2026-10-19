@@ -81,6 +81,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case kill(String)
     case resurrect(String)
     case overlay(name: String, enabled: Bool)
+    /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
+    /// `Game.ShowLimitedRaceMenu`.
+    case raceMenu(limited: Bool)
     /// Runs the benchmark tour; the reply comes when the tour ends.
     case benchmark(AgentBenchmarkRequest)
 
@@ -97,6 +100,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "resurrect": return try .resurrect(args.string("ref"))
         case "overlay":
             return try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
+        case "racemenu": return try .raceMenu(limited: args.bool("limited", default: false))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

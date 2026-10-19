@@ -24,11 +24,16 @@ nonisolated public struct RaceMenuTintMask: Equatable, Sendable {
     /// `TINP`, such as 6 for skin tone or 7 for war paint.
     public let type: UInt16
     public let colors: [RaceMenuColor]
+    /// `TIND`, the colour a face without this mask's layer takes.
+    public let defaultColor: RaceMenuColor?
 
-    public init(index: UInt16, type: UInt16, colors: [RaceMenuColor]) {
+    public init(
+        index: UInt16, type: UInt16, colors: [RaceMenuColor], defaultColor: RaceMenuColor? = nil
+    ) {
         self.index = index
         self.type = type
         self.colors = colors
+        self.defaultColor = defaultColor
     }
 }
 
@@ -61,7 +66,6 @@ nonisolated public struct RaceMenuOptions: Equatable, Sendable {
     }
 
     /// Builds the options from the race's head data and the chargen records.
-    /// `TINV` is a percent in some records, so a value over 1 is divided by 100.
     public static func build(
         head: RaceHeadData,
         parts: (HeadPart.PartType) -> [FormID], color: (FormID) -> SIMD4<UInt8>?,
@@ -76,11 +80,14 @@ nonisolated public struct RaceMenuOptions: Equatable, Sendable {
             guard let index = mask.index, let type = mask.maskType else { return nil }
             let colors = mask.presets.compactMap { preset -> RaceMenuColor? in
                 guard let id = preset.color, let rgba = color(id) else { return nil }
-                let value = preset.defaultValue ?? 1
-                let strength = min(max(value > 1 ? value / 100 : value, 0), 1)
-                return RaceMenuColor(formID: id, color: rgba, strength: strength)
+                return RaceMenuColor(formID: id, color: rgba, strength: preset.strength)
             }
-            return RaceMenuTintMask(index: index, type: type, colors: colors)
+            let defaultColor = mask.defaultPreset.flatMap { preset in
+                colors.first { $0.formID == preset.color }
+            }
+            return RaceMenuTintMask(
+                index: index, type: type, colors: colors, defaultColor: defaultColor
+            )
         }
         return Self(
             presets: presets, headParts: headParts,
