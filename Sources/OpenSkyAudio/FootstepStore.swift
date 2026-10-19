@@ -123,6 +123,21 @@ nonisolated public final class FootstepStore {
         return defaultSet
     }
 
+    /// Footstep annotations in vanilla clips that no `FSTP` tag matches. `resolve`
+    /// compares whole tags, so they play nothing, as in the game.
+    public static let unansweredTags: Set = [
+        "frontfoot", "backfoot", "footfornt", "fottfront", "frootback", "foorright"
+    ]
+
+    /// True for a tag above, or a known tag with a line break after it, such as
+    /// `FootBack\r`. `known` holds the `FSTP` tags in lower case.
+    public static func isUnanswered(tag: String, known: Set<String>) -> Bool {
+        let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let padded = trimmed != tag.lowercased()
+        return unansweredTags.contains(trimmed)
+            || (padded && (known.contains(trimmed) || trimmed.hasPrefix("foot")))
+    }
+
     /// Walks one graph event name to its sound. `material` is the MATT under
     /// the foot, tried with its parents; nil makes the impact table use its
     /// representative entry.

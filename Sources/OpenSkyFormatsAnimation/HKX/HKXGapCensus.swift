@@ -15,6 +15,8 @@ nonisolated public struct HKXGapCensus: Sendable {
     /// Variable name -> how graphs use it: `Class.memberPath` for each binding,
     /// and `assignedUse` for an expression statement that assigns it.
     public private(set) var variableUses: [String: Set<String>] = [:]
+    /// Which annotations the graphs of their own project wait for.
+    public private(set) var hearing = HKXAnnotationHearing()
     /// Failure kind -> files.
     public private(set) var failures = GapCounts()
     public private(set) var fileCount = 0
@@ -37,7 +39,8 @@ nonisolated public struct HKXGapCensus: Sendable {
             "hkaAnimationContainer"
         ])
 
-    public mutating func record(data: Data) {
+    /// `path` places the file in its project, so an annotation meets its own graphs.
+    public mutating func record(data: Data, path: String = "") {
         fileCount += 1
         do {
             let graph = try HKXObjectGraph.decode(data)
@@ -46,21 +49,29 @@ nonisolated public struct HKXGapCensus: Sendable {
                 classes.add(name)
             }
             if names.contains(HKASplineCompressedAnimation.className) {
-                try recordAnnotations(graph)
+                try recordAnnotations(graph, path: path)
             }
             if names.contains(HKBBehaviorGraph.className), !HKXObjectGraph.isTagfile(data) {
                 let census = try HKBBehaviorCensus.census(of: HKXFile(data: data))
                 for name in Set(census.variables.compactMap(\.name)) {
                     graphVariables.add(name)
                 }
-                recordVariableUses(graph, names: census.variables.map(\.name))
+                recordGraphUses(
+                    graph, variables: census.variables.map(\.name),
+                    events: census.eventNames, path: path
+                )
             }
         } catch {
             failures.add("file does not decode: " + GapCounts.failureKind("\(error)"))
         }
     }
 
-    private mutating func recordVariableUses(_ graph: HKXObjectGraph, names: [String?]) {
+    /// How the graph uses its variables, and which events it waits for.
+    private mutating func recordGraphUses(
+        _ graph: HKXObjectGraph, variables names: [String?], events: [String?], path: String
+    ) {
+        var listened: [String] = []
+        defer { hearing.addListened(listened, graphPath: path) }
         for ref in graph.objectRefs {
             let target = HKXPointerTarget(
                 sectionIndex: ref.sectionIndex,
@@ -70,6 +81,8 @@ nonisolated public struct HKXGapCensus: Sendable {
                 let className = ref.className,
                 let object = HKBClassRegistry.decode(at: target, in: graph)
             else { continue }
+            listened += HKBEventListeners.eventIDs(of: object)
+                .compactMap { events.indices.contains($0) ? events[$0] : nil }
             if let array = object as? HKBExpressionDataArray {
                 for data in array.expressionsData {
                     if let name = data.expression.flatMap(Self.assignedVariable) {
@@ -117,10 +130,13 @@ nonisolated public struct HKXGapCensus: Sendable {
         return nil
     }
 
-    private mutating func recordAnnotations(_ graph: HKXObjectGraph) throws {
+    private mutating func recordAnnotations(_ graph: HKXObjectGraph, path: String) throws {
         for clip in try HKASplineCompressedAnimation.animations(in: graph) {
             for event in Set(clip.annotations.map { Self.event($0.text) }) {
                 annotations.add(event)
+            }
+            for annotation in clip.annotations {
+                hearing.addAnnotation(annotation.text, clipPath: path)
             }
         }
     }

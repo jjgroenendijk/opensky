@@ -2,7 +2,8 @@
 type: Subsystem
 title: Animation events
 description: The clip annotations that ask the engine, not the behaviour graph, to act - sounds,
-  camera shake, and head tracking - where they come from, and which ones OpenSky leaves alone.
+  camera shake, head tracking, and animation objects - which ones the graph handles itself, and
+  which ones OpenSky leaves alone.
 tags: [engine, animation, audio, camera, behavior-graph]
 ---
 
@@ -17,6 +18,12 @@ camera shake, or a head tracking change.
 
 The text is `<event>` or `<event>.<payload>`. The event part is compared without case, because the
 clips use `SoundPlay` and `soundPlay` both.
+
+The Creation Kit wiki lists the events the game raises for a humanoid, in the order they fire for a
+bow shot, a sword swing, a spell, and a sneak
+(<https://ck.uesp.net/wiki/Animation_Events>). It confirms `SoundPlay`, `SoundStop`,
+`HeadTrackingOff` and `HeadTrackingOn` around an attack, and `MRh_SpellFire_Event` as the release of
+a fire-and-forget spell. The payload shapes below come from the install's clips.
 
 ## Sources
 
@@ -52,6 +59,52 @@ A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which pla
 A descriptor whose `LNAM` loops keeps playing until the same source stops it. A one-shot is not
 tracked. A `SoundStop` for a sound that is not looping does nothing.
 
+## Animation objects
+
+An animation object is an `ANIO` record: a model an animation holds for a while, such as the
+skeleton key the player shows in the Thieves Guild
+(<https://ck.uesp.net/wiki/AnimObject>). A clip names one in its annotations:
+
+| Event | Payload | Action |
+| --- | --- | --- |
+| `AnimObjLoad` | `ANIO` editor ID | Nothing. OpenSky loads the model at the draw |
+| `AnimObjDraw` | `ANIO` editor ID | Shows the object on the actor that plays the clip |
+| The object's `BNAM` event | none | Takes the object off again, such as `AnimObjectUnequip` |
+
+The idle runtime runs these, because it holds the clip and the actor's skeleton. When an idle
+plan loads, it reads the annotations of its clips and resolves each named `ANIO` to a model and a
+bone, the same way as the prop the graph names ([idle runtime](/engine/idle-runtime.md#prop)).
+The World > AI & Navigation > Idles readout lists them as "Clip objects".
+
+An actor shows one prop, so a drawn object replaces the graph's prop. The player has no playback
+of its own, so a player idle shows no object.
+
+The execution clips at the chopping block name `DecapitationHeadGore` and `DecapitationNeckGore`.
+No record in the vanilla load order has those editor IDs, so nothing is drawn.
+
+## Events the graph handles
+
+A behaviour graph raises an annotation that it declares as one of its own events
+([behavior clips](/engine/behavior-clips.md)). A transition, an event-driven modifier, or another
+node can wait for it, and the graph acts without the engine. Examples on the install:
+
+- `weaponDraw` and `weaponSheathe` in the equip clips switch modifiers in `0_master.hkx`.
+- `AttackWinStart` and `AttackWinStartLeft` take transitions in `1hm_behavior.hkx`.
+- `FlapThrustBegin` and `FlapThrustEnd` switch a modifier in the dragon graph.
+
+`make gaps` counts such an event as done when a graph of the clip's own folder waits for it
+([gap report](/tools/gaps.md)). A graph of another folder does not count. A door graph waits for
+`Open`, but a dragon clip that carries `Open` is not played by a door.
+
+## Footsteps no record answers
+
+Some creature clips carry footstep names that no `FSTP` tag matches: `FrontFoot` and `BackFoot`
+on the riekling boar, the misspelled `FootFornt`, `FottFront`, `FrootBack` and `FoorRight`, and
+`FootBack` and `FootRight` with a line break after the name. The footstep lookup compares whole
+tags, so these play nothing. OpenSky does not correct them, because no source says the game does.
+
+## Head tracking
+
 `HeadTrackingOff` is in one creature attack clip. It holds the head forward, so the attack points
 where the body faces, until `HeadTrackingOn`.
 
@@ -69,20 +122,29 @@ where the body faces, until `HeadTrackingOn`.
 These annotations need a system OpenSky does not have. `make gaps` lists them under "Animation
 events" ([gap report](/tools/gaps.md)).
 
-- `2_SoundPlay` and other `2_` events: in a paired animation, such as a kill move, they belong to
-  the second actor. Playing them at the source would play the sound twice.
-- `NPCSoundPlay`: the player graph declares it beside `SoundPlay` for the same kill move sounds,
-  so it likely plays on the other actor of the pair. No source confirms it.
-- `MLh_SpellFire_Event`, `MRh_SpellFire_Event`, `Voice_SpellFire_Event`: the cast release frame.
-  The cast loop is timed by a clock, not by a casting graph ([spellcasting](/engine/spellcasting.md)).
-- `AnimObjLoad`, `AnimObjDraw`, `AnimObjectUnequip`: a kill move's gore props and a key.
-- The dragon flight events (`FlightLandingEffect`, `DragonTakeoffEffect`, and more) and `Func.*`:
-  visual effects.
-- `StartAnimationDriven`, `AttackWinStart`, `AttackWinEnd`, `bowZoomStop`, and the sync markers
-  (`SyncLeft`, `SyncRight`, `SyncPoint`).
-- Footstep names no `FSTP` record answers, such as `FrontFoot`, `BackFoot`, the misspelled
-  `FootFornt`, and `FootBack` with a trailing carriage return. The game matches tags exactly, so
-  OpenSky does not correct them.
+- Paired animations, such as kill moves and the vampire lord feed. `2_SoundPlay` belongs to the
+  second actor of the pair, and playing it at the source would play the sound twice.
+  `NPCSoundPlay` likely plays on the other actor too; no source confirms it. `PlayAnim01` in the
+  werewolf mauling clip is in the same group.
+- The cast and shout release frame: `MLh_SpellFire_Event`, `MRh_SpellFire_Event`,
+  `Voice_SpellFire_Event`, and `Spellfire` on the staff release clips. The cast is timed by a
+  clock ([spellcasting](/engine/spellcasting.md)). The magic and shout effect graphs, such as
+  `dragonmouthfire.hkx`, wait for these events, so the game sends an actor's events on to the
+  graphs of its effects too.
+- Dragon flight and its effects: `FlightLandingEffect`, `DragonTakeoffEffect`,
+  `DragonLandEffect`, the crash landing events, `DiveSplashStart`, the wing and tail attack
+  effects, and `Func.DragonBiteEffect`. `Func.GiantStompEffect` on the lurker stomp is an effect
+  of the same kind.
+- `bowZoomStop` on the crossbow release clips: OpenSky has no bow zoom.
+- `StartAnimationDriven`: about 29 creature graphs declare it and none waits for it, so the engine
+  reads it. It likely moves the actor by the clip's root motion; no source confirms it.
+- The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and
+  `SyncF_Left` on creature run and walk clips. Many graphs declare them and none waits for them.
+  OpenSky keeps blended clips in phase by their length instead
+  ([behavior clips](/engine/behavior-clips.md)).
+- Creature sound cues with no `SoundPlay` prefix, such as `NPCScribAttack1`, `BenthicAOE` and
+  `NPCGiantFootDistantR`, and the storm atronach's `L1_Start` and `R1_Start` marks. Their graph
+  declares them and nothing waits for them. No source says what the game does with them.
 
 ## Controls
 

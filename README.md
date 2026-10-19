@@ -24,7 +24,7 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-18 by `make gaps`.
+Measured on 2026-10-19 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
@@ -41,7 +41,7 @@ Measured on 2026-10-18 by `make gaps`.
 | Behavior node classes | 52 | 2 | 54 | 96% |
 | Behavior features ignored | - | 256 | - | - |
 | Havok classes | 71 | 29 | 100 | 71% |
-| Animation events | 68 | 76 | 144 | 47% |
+| Animation events | 97 | 47 | 144 | 67% |
 | Behavior graph variables | 645 | 51 | 696 | 92% |
 | NIF block types | 82 | 63 | 145 | 56% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
