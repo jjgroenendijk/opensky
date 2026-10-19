@@ -28,14 +28,14 @@ final class LoadOrderViewController: NSViewController {
     let reloadControl = NSButton()
 
     private enum Column: String, CaseIterable {
-        case position
+        case index
         case name
         case origin
         case note
 
         var title: String {
             switch self {
-            case .position: "#"
+            case .index: "Index"
             case .name: "Plugin"
             case .origin: "Source"
             case .note: "Note"
@@ -44,7 +44,7 @@ final class LoadOrderViewController: NSViewController {
 
         var width: CGFloat {
             switch self {
-            case .position: 40
+            case .index: 64
             case .name: 260
             case .origin: 110
             case .note: 260
@@ -279,7 +279,7 @@ extension LoadOrderViewController: NSTableViewDelegate {
         }
         let entry = rows[row]
         label.stringValue = switch column {
-        case .position: entry.position
+        case .index: entry.index
         case .name: entry.name
         case .origin: entry.origin
         case .note: entry.note

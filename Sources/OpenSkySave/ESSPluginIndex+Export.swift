@@ -25,7 +25,7 @@ nonisolated extension ESSPluginIndex {
         forExport contents: OpenSkySaveContents, plugins: [(name: String, file: ESMFile)],
         scripts: PexScriptLoader? = nil
     ) -> ESSPluginIndex {
-        var records = ESSPluginIndex(loadOrder: plugins.map(\.name))
+        var records = ESSPluginIndex(loadOrder: plugins.map(\.name), light: lightNames(plugins))
         records.walk(plugins, wanted: changedReferences(in: contents.snapshot))
         if let scripts {
             for state in contents.scripts {

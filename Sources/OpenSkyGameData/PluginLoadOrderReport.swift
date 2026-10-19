@@ -1,12 +1,13 @@
 // The rows and summary the Load Order panel shows, built here so the strings are
-// unit-tested. Positions are 1-based decimal, not hex: light plugins in 0xFE are not
-// modelled (docs/formats/formid.md), and a wrong hex index would look authoritative.
+// unit-tested. The index is the runtime top byte a console FormID starts with: hex for
+// a full plugin, `FE` and a slot for a light one (docs/formats/formid.md).
 
 import Foundation
 
 nonisolated public struct PluginLoadOrderReport: Equatable, Sendable {
     public struct Row: Equatable, Sendable {
-        public let position: String
+        /// The runtime index, such as `02` or `FE 001`.
+        public let index: String
         public let name: String
         public let origin: String
         /// Empty for a plugin that loaded; otherwise why the row is listed.
@@ -26,17 +27,30 @@ nonisolated public struct PluginLoadOrderReport: Equatable, Sendable {
 
     public init(resolution: PluginLoadOrder.Resolution) {
         var built: [Row] = []
-        for (index, entry) in resolution.entries.enumerated() {
+        var full = 0
+        var light = 0
+        for entry in resolution.entries {
+            let index: String
+            let note: String
+            if entry.isLight {
+                index = String(format: "FE %03X", light)
+                note = light > Self.lastLightSlot ? "Past the 4,096 light plugin slots" : ""
+                light += 1
+            } else {
+                index = String(format: "%02X", full)
+                note = full >= Self.lightTopByte ? "Past the 254 full plugin slots" : ""
+                full += 1
+            }
             built.append(Row(
-                position: String(index + 1),
+                index: index,
                 name: entry.name,
                 origin: entry.origin.label,
-                note: ""
+                note: note
             ))
         }
         for absentPlugin in resolution.missing {
             built.append(Row(
-                position: "—",
+                index: "—",
                 name: absentPlugin.name,
                 origin: absentPlugin.origin.label,
                 note: "Listed active but not in Data/"
@@ -71,4 +85,7 @@ nonisolated public struct PluginLoadOrderReport: Equatable, Sendable {
         }
         problem = resolution.location.problemDescription
     }
+
+    private static let lightTopByte = 0xFE
+    private static let lastLightSlot = 0xFFF
 }

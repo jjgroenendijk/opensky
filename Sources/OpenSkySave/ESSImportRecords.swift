@@ -9,6 +9,8 @@ import OpenSkyInventoryInterface
 nonisolated public protocol ESSImportRecords {
     /// The plugins loaded now, in load order.
     var loadOrder: [String] { get }
+    /// The light plugins among `loadOrder`, which take `0xFE` slots.
+    var lightPlugins: Set<String> { get }
     /// The record type of a form in the current load order, such as `QUST`.
     func signature(of form: ResolvedFormID) -> String?
     func editorID(of form: ResolvedFormID) -> String?

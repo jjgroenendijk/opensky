@@ -161,7 +161,11 @@ extension PapyrusNativeFunctions {
             guard let raw = integer(call, at: 0), let file = string(call, at: 1) else {
                 return failure(call, "GetFormFromFile needs a FormID and a file name")
             }
-            let form = ResolvedFormID(plugin: file, objectID: UInt32(bitPattern: raw) & 0xFFFFFF)
+            let isLight = loadOrder.lightPlugins.contains {
+                $0.caseInsensitiveCompare(file) == .orderedSame
+            }
+            let mask = isLight ? FormIDResolver.lightObjectIDMask : 0xFFFFFF
+            let form = ResolvedFormID(plugin: file, objectID: UInt32(bitPattern: raw) & mask)
             // A file outside the load order has no forms, which is how mods test for a DLC.
             guard loadOrder.localFormID(of: form) != nil else { return .returned(.none) }
             let key = ReferenceKey(resolved: form)

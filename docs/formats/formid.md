@@ -87,9 +87,32 @@ the load-order space when it runs. For example, `Dragonborn.esm` writes its own 
 `Dawnguard.esm`, and the condition would name a quest that does not exist.
 For identities that must stay stable during a session, see [runtime reference identity](/engine/runtime-state.md).
 
-Light plugins (ESL) use the `0xFE` prefix only at runtime. Inside the file, they encode
-master indices as above. OpenSky does not model the `0xFE` slots yet, so the Load Order
-panel shows a plain position, not a runtime index.
+## Light plugins
+
+A light plugin (ESL) has the `0x200` flag on its `TES4` record, or the `.esl` extension. The
+game treats an `.esl` file as light even without the flag. Inside the file, a light plugin
+encodes master indices as above, and its own objects use only the low 12 bits.
+
+At runtime, all light plugins share the top byte `0xFE`: `FE xxx yyy`. The 12 bits `xxx` are
+the plugin's slot, counted in load order over light plugins only. The 12 bits `yyy` are the
+object ID. Full plugins count their own positions from `00` and skip the light ones.
+For example, with `Skyrim.esm`, `Small.esl`, and `Mod.esp` active, `Mod.esp` is `01` and
+`Small.esl` object `0x801` is `FE000801`. Sources: UESP
+[FormIDs](https://en.uesp.net/wiki/Skyrim_Mod:FormIDs), and the `.ess` file's own light
+plugin list (see [ESS](/formats/ess.md)).
+
+The Creation Kit wiki gives no layout for light plugins. Its
+[Data file](https://ck.uesp.net/wiki/Data_file) page says light masters came with SE 1.5.3
+and points to the Fallout 4 wiki. Its
+[GetFormFromFile](https://ck.uesp.net/wiki/GetFormFromFile_-_Game) page says the top byte
+of the given ID is unused, so `0000ABCD` and `0400ABCD` name the same form.
+
+The load-order space follows this rule, as does `Game.GetFormFromFile`: it drops the top
+byte, and for a light file it keeps only the low 12 bits. A light plugin FormID whose object
+ID needs more than 12 bits cannot be named in the space and becomes the null FormID. A load
+order with no light plugins keeps every plugin on its plain position. On the install checked,
+`_ResourcePack.esl`, `ccBGSSSE037-Curios.esl`, and `ccQDRSSE001-SurvivalMode.esl` carry the
+flag. `ccBGSSSE001-Fish.esm` does not.
 
 ## Record index across plugins
 

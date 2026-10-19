@@ -57,7 +57,7 @@ nonisolated public final class QuestStore: Sendable {
 
     /// Every active plugin's QUST records, lowest priority first.
     public convenience init(plugins: [(name: String, file: ESMFile)]) {
-        let space = FormIDResolver.loadOrder(plugins.map(\.name))
+        let space = FormIDResolver.loadOrder(files: plugins)
         var byFormID: [UInt32: Quest] = [:]
         var sources: [UInt32: FormIDResolver] = [:]
         var skipped = SkippedRecords()

@@ -126,7 +126,7 @@ nonisolated private struct LoadOrderDialogue {
 nonisolated extension DialogueStore {
     /// Every active plugin's dialogue records, lowest priority first.
     public convenience init(plugins: [(name: String, file: ESMFile)], localized: Bool? = nil) {
-        let space = FormIDResolver.loadOrder(plugins.map(\.name))
+        let space = FormIDResolver.loadOrder(files: plugins)
         var merged = LoadOrderDialogue()
         var skipped = SkippedRecords()
         for plugin in plugins {

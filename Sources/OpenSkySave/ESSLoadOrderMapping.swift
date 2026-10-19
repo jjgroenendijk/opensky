@@ -44,13 +44,14 @@ nonisolated public struct ESSLoadOrderMapping: Sendable {
     private let loaded: Set<String>
     private let currentResolver: FormIDResolver
 
-    public init(file: ESSFile, currentPlugins: [String]) {
+    /// `currentLightPlugins` names the light plugins among `currentPlugins`.
+    public init(file: ESSFile, currentPlugins: [String], currentLightPlugins: Set<String> = []) {
         savePlugins = file.plugins
         saveLightPlugins = file.lightPlugins
         formIDArray = file.formIDArray
         self.currentPlugins = currentPlugins
         loaded = Set(currentPlugins.map { $0.lowercased() })
-        currentResolver = FormIDResolver.loadOrder(currentPlugins)
+        currentResolver = FormIDResolver.loadOrder(currentPlugins, light: currentLightPlugins)
     }
 
     public func resolve(_ ref: ESSRefID) -> ESSFormResolution {

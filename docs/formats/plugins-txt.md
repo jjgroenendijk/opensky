@@ -100,14 +100,12 @@ worse than loading one archive the game would skip.
 
 - Settings (Cmd+,) has a "Plugin Load Order (plugins.txt)" group: the path in use, where it
   came from, "Choose...", and "Search Automatically".
-- Library > Load Order lists the order: position, plugin, source (masters, `Skyrim.ccc`, or
+- Library > Load Order lists the order: runtime index (`02`, or `FE 001` for a light
+  plugin, see [FormID](/formats/formid.md#light-plugins)), plugin, source (masters, `Skyrim.ccc`, or
   `plugins.txt`), and missing plugins. It has the same buttons and "Reload".
 
 ## Not supported
 
-- Light plugins (`.esl`) load into the shared `0xFE` index space. OpenSky orders them
-  correctly but does not model that space. The panel shows a plain position, not the hex
-  index a mod manager shows. See [FormID](/formats/formid.md).
 - `loadorder.txt`, which some mod managers write to also order inactive plugins. OpenSky
   does not need it.
 - A `plugins.txt` that changes while the app runs. OpenSky reads the order when asked and
