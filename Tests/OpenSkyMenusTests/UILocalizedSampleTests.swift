@@ -25,10 +25,17 @@ struct UILocalizedSampleTests {
     @Test
     func sampleProviderResolvesInventedKeys() {
         let labels = LocalizedLabels.uiLabSample
-        #expect(labels.keyCount == 4)
+        #expect(labels.keyCount == 6)
         #expect(labels.fileCount == 1)
         #expect(labels.language == "english")
         #expect(labels.label(for: "$OPENSKY_UILAB_TITLE") == "Localized strings")
+    }
+
+    @Test
+    func argumentTokenFillsItsSlots() {
+        let text = LocalizedLabels.uiLabSample.label(for: UIScene.localizedSampleArgumentToken)
+        #expect(text == "Picked up 3 gold coins.")
+        #expect(sampleTexts.contains(text))
     }
 
     @Test
