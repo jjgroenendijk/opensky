@@ -37,8 +37,23 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     /// FULL name or editor ID, for the readout. Never empty.
     public let name: String
 
+    /// Both hands cast it, so `entries` already carry the dual cast scaling.
+    public var isDualCast = false
+
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
+    }
+
+    /// This payload carrying a dual cast's `entries`, or itself for nil.
+    public func dualCast(_ entries: [MagicItemEffect]?) -> SpellPayload {
+        guard let entries else { return self }
+        var payload = SpellPayload(
+            spell: spell, sourcePlugin: sourcePlugin, caster: caster, entries: entries,
+            isHostile: isHostile, ignoresResistance: ignoresResistance,
+            projectile: projectile, name: name
+        )
+        payload.isDualCast = true
+        return payload
     }
 }
 

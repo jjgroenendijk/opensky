@@ -204,4 +204,9 @@ public protocol CastingControlProviding: AnyObject {
     /// alone can verify it. Returns a readable outcome the panel shows verbatim.
     @discardableResult
     func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome
+
+    /// Begins both hands together and runs the whole cast, so a dual cast can be
+    /// checked without two buttons.
+    @discardableResult
+    func castReadiedSpellWithBothHands() -> CastingActionOutcome
 }

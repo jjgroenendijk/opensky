@@ -12,6 +12,8 @@ nonisolated public struct CastingTally: Equatable, Sendable {
     public private(set) var failureCounts: [String: Int] = [:]
     /// Spell projectiles launched.
     public private(set) var projectileCount = 0
+    /// Casts both hands began together.
+    public private(set) var dualCastCount = 0
     /// Casts per delivery kind, so the ground each delivery covers is measured
     /// rather than assumed from the refusal counts alone.
     public private(set) var deliveryCounts: [String: Int] = [:]
@@ -26,6 +28,10 @@ nonisolated public struct CastingTally: Equatable, Sendable {
 
     public mutating func note(_ failure: SpellCastFailure) {
         failureCounts[failure.describedReason, default: 0] += 1
+    }
+
+    public mutating func noteDualCast() {
+        dualCastCount += 1
     }
 
     public mutating func noteProjectile() {

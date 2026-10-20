@@ -24,6 +24,7 @@ final class CombatSpellcastingSection: PanelSectionViewController {
     let readyLeftControl = NSButton(title: "Ready left", target: nil, action: nil)
     let castRightControl = NSButton(title: "Cast right", target: nil, action: nil)
     let castLeftControl = NSButton(title: "Cast left", target: nil, action: nil)
+    let dualCastControl = NSButton(title: "Dual cast", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "CombatSpellcastingStatsLabel"
@@ -43,13 +44,14 @@ final class CombatSpellcastingSection: PanelSectionViewController {
         readSkillBookControl.toolTip = "Reads the first unread skill book the player carries."
         castRightControl.toolTip = "Casts one spell. Only self spells cast."
         castLeftControl.toolTip = "Casts one spell. Only self spells cast."
+        dualCastControl.toolTip = "Begins both hands at once. Needs a dual casting perk."
         configureControls()
         return [
             PanelComponents.group([
                 PanelComponents.buttonRow([learnControl, readTomeControl, readSkillBookControl]),
                 PanelComponents.buttonRow([selectControl]),
                 PanelComponents.buttonRow([readyRightControl, readyLeftControl]),
-                PanelComponents.buttonRow([castRightControl, castLeftControl])
+                PanelComponents.buttonRow([castRightControl, castLeftControl, dualCastControl])
             ]),
             statsLabel
         ]
@@ -59,7 +61,8 @@ final class CombatSpellcastingSection: PanelSectionViewController {
         let available = provider != nil
         for control in [
             learnControl, readTomeControl, readSkillBookControl, selectControl,
-            readyRightControl, readyLeftControl, castRightControl, castLeftControl
+            readyRightControl, readyLeftControl, castRightControl, castLeftControl,
+            dualCastControl
         ] {
             control.isEnabled = available
         }
@@ -125,6 +128,11 @@ final class CombatSpellcastingSection: PanelSectionViewController {
                 control: castLeftControl,
                 action: #selector(castLeft),
                 identifier: "SpellcastingCastLeftControl"
+            ),
+            Wiring(
+                control: dualCastControl,
+                action: #selector(dualCast),
+                identifier: "SpellcastingDualCastControl"
             )
         ]
         for entry in wiring {
@@ -174,6 +182,11 @@ final class CombatSpellcastingSection: PanelSectionViewController {
 
     @objc private func castLeft() {
         provider?.castReadiedSpell(in: .left)
+        finishInteraction()
+    }
+
+    @objc private func dualCast() {
+        provider?.castReadiedSpellWithBothHands()
         finishInteraction()
     }
 }

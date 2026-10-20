@@ -97,6 +97,12 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
+    func castReadiedSpellWithBothHands() -> CastingActionOutcome {
+        casting.cast += [.right, .left]
+        return .cast(.ignored)
+    }
+
+    @discardableResult
     func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
         magicEffects.consumeCount += 1
         return .nothingToConsume

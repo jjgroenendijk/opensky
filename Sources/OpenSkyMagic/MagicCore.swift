@@ -151,7 +151,8 @@ nonisolated public enum MagicCore {
         switch outcome {
         case let .cast(result):
             String(
-                format: "Cast: %.0f magicka spent, %d effect entries, %d now running.",
+                format: "%@: %.0f magicka spent, %d effect entries, %d now running.",
+                result.isDualCast ? "Dual cast" : "Cast",
                 result.magickaSpent, result.entryCount, result.storedCount
             )
         case let .released(_, held, spent):

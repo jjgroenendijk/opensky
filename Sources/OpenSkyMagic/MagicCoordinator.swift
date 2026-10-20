@@ -260,8 +260,11 @@ extension MagicCoordinator: CasterWorld {
         let scaled = source.kind == .spell
             ? perkScaled(entries, of: source.record, caster: caster, on: target.key)
             : entries
+        let isDualCast = self.caster?.isApplyingDualCast == true
         let stored = withEffects { runtime in
-            runtime.apply(
+            runtime.application.isDualCast = isDualCast
+            defer { runtime.application = MagicApplicationContext() }
+            return runtime.apply(
                 scaled, fromPlugin: pluginName, source: source, caster: caster, on: target
             )
         }
@@ -298,7 +301,9 @@ extension MagicCoordinator: CasterWorld {
         let holders = residentHolders(of: hit.targets)
         guard
             let report = withEffects({ runtime in
-                SpellHitApplication
+                runtime.application.isDualCast = hit.payload.isDualCast
+                defer { runtime.application = MagicApplicationContext() }
+                return SpellHitApplication
                     .apply(hit, holders: holders, using: &runtime) { entries, target in
                         self.perkScaled(
                             entries, of: hit.payload.spell, caster: hit.payload.caster, on: target

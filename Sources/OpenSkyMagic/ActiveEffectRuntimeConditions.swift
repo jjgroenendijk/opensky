@@ -32,9 +32,12 @@ extension ActiveEffectRuntime {
     @discardableResult
     public mutating func recheckConditions(on holder: ActorValueHolder) -> Int {
         let state = state(of: holder)
+        let applying = application
+        defer { application = applying }
         var changed: [ActiveEffect] = []
         for effect in state.effects {
             guard let list = entryConditions(effect), !list.conditions.isEmpty else { continue }
+            application.isDualCast = effect.wasDualCast
             let holds = allows(list, on: holder)
             guard holds == effect.isSuspended else { continue }
             changed.append(holds ? resume(effect, on: holder) : suspend(effect, on: holder))

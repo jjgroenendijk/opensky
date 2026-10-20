@@ -205,6 +205,25 @@ extension MagicCoordinator: CastingControlProviding {
         return recordCasting(.cast(caster.release(hand, on: .player)))
     }
 
+    @discardableResult
+    public func castReadiedSpellWithBothHands() -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
+        caster.begin(.right, on: .player)
+        let outcome = caster.begin(.left, on: .player)
+        guard caster.state(of: .right).isDualCast else {
+            caster.cancel(.right, on: .player)
+            caster.cancel(.left, on: .player)
+            return recordCasting(.cast(outcome.failure.map(SpellCastOutcome.failed)
+                    ?? .failed(.notDualCastable)))
+        }
+        let charge = caster.state(of: .right).phase == .charging ? MagicCore.panelChargeStep : 0
+        caster.advance(delta: charge, on: .player)
+        if caster.phase(of: .right) == .concentrating {
+            caster.advance(delta: 1, on: .player)
+        }
+        return recordCasting(.cast(caster.release(.right, on: .player)))
+    }
+
     // MARK: - Reads
 
     func playerKnownSpells() -> [ResolvedSpell] {

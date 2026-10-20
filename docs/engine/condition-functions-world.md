@@ -148,8 +148,10 @@ letter: 88 X, 89 Y, 90 Z.
   (713) read the spell a perk entry point is evaluated for, such as `Mod Spell Cost`. The
   spell's school is the magic skill of its costliest effect.
 - `GetDisease` (39) is 1 when the actor knows a spell of type disease.
-- `IsDualCasting` (627) and `EffectWasDualCast` (724) are 0, because OpenSky casts with one
-  hand at a time.
+- `IsDualCasting` (627) is 1 while the actor runs a dual cast. The Creation Kit page adds that
+  damage taken mid-cast makes it 0 until the next dual cast; OpenSky does not do that yet.
+- `EffectWasDualCast` (724) is 1 for an effect a dual cast applied. It is answered at apply time
+  and in the per-second check of the effect's entry conditions.
 - `IsWardState` (602) is true only for state 0, "none", because OpenSky has no wards.
 - `EPAlchemyGetMakingPoison` (500), `IsPoison` (721), and `EPAlchemyEffectHasKeyword` (501)
   read the brew in progress while Mod Alchemy Effectiveness runs ([alchemy](/engine/alchemy.md)).

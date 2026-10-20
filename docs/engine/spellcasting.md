@@ -116,8 +116,29 @@ cast duration is a minimum: a release inside it keeps the cast going until it en
 out, the cast ends with the insufficient magicka refusal and takes what was left. The same
 one-millisecond slack as for effects keeps a held spell from skipping an application each second.
 
-Dual casting is not implemented. UESP documents 2.2 times the effect for 2.8 times the cost, but it
-is a perk, so two hands casting the same spell are two casts.
+## Dual casting
+
+UESP "Skyrim:Magic Overview" (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>): "once a
+dual-casting perk has been taken, relevant spells can be 'overcharged' by casting with both the
+right and left hands at the same time, resulting in a single, more powerful effect. The formula
+seems to be: 2.2x spell effectiveness for 2.8x spell cost".
+
+- The same spell must be readied in both hands, and the second hand must begin within 0.25 s of the
+  first. The window is OpenSky's choice; no record states one.
+- A perk must pass `Can Dual Cast Spell` for the spell. Each vanilla school perk, such as
+  `DestructionDualCasting`, sets it to 1 when `EPMagic_SpellHasSkill` names its school. Without
+  such a perk, the two hands stay two casts.
+- The first hand leads. The second only holds the spell, so the cast pays and applies once. Letting
+  go of either hand releases it.
+- The cost is `fMagicDualCastingCostMult` (2.8 in `Skyrim.esm`) times one cast. The charge time is
+  `fMagicDualCastingTimeMult` (1) times one charge.
+- Each entry's magnitude is multiplied by `fMagicDualCastingEffectivenessBase` (2.2) when its MGEF
+  has Power Affects Magnitude, and its duration when it has Power Affects Duration. A spell with
+  the `SPIT` flag No Dual Cast Modifications keeps its entries as authored.
+- The skill use is that of one cast: "Dual-casting a spell gives the same experience per cast as
+  one-handed cast."
+
+The values are read from the install with `openskycli gmst list --prefix fMagicDualCasting`.
 
 ## What refuses a cast
 
@@ -195,6 +216,8 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
 - Cast right and Cast left: each runs a whole cast without holding a button. The charge is skipped
   ahead, then the cast is released. Holding the button in walk mode reaches the same states over real
   frames.
+- Dual cast: begins both hands together and runs the whole cast. The readout's last line says
+  "Dual cast" when the perk allowed it, and the refusal when it did not.
 - Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
   counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
   = adjusted`), the count of ability effects the player holds, and a Conditions (player) block with
@@ -223,7 +246,5 @@ For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCast
 (skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
 `fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
 NPC formula; this is OpenSky's reading of the setting names.
-
-Dual casting is not built, so the `fMagicDualCasting*` settings stay unread.
 
 Casting animations, hand effects, and sounds are not done yet.

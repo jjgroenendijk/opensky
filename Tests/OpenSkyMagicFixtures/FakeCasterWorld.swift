@@ -51,6 +51,8 @@ public final class FakeCasterWorld: CasterWorld {
     }
 
     public private(set) var applications: [Application] = []
+    /// The entry list each self application carried, in order.
+    public private(set) var appliedEntries: [[MagicItemEffect]] = []
     public private(set) var firedProjectiles: [SpellPayload] = []
     public private(set) var spellHits: [SpellHit] = []
     public private(set) var aimRanges: [Float] = []
@@ -66,6 +68,7 @@ public final class FakeCasterWorld: CasterWorld {
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int {
+        appliedEntries.append(entries)
         applications.append(Application(
             entries: entries.count,
             source: source,

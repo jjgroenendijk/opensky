@@ -18,7 +18,7 @@ extension CasterRuntime {
         caster: ActorValueHolder
     ) -> SpellCastOutcome {
         var running = state(of: hand, on: caster.key)
-        let perSecond = cost(of: spell, caster: caster)
+        let perSecond = castCost(of: spell, dual: running.isDualCast, caster: caster)
         let available = values.current(of: caster).magicka
         let drain = perSecond * delta
         guard drain <= available else {
@@ -26,6 +26,7 @@ extension CasterRuntime {
             // fraction of a second they got before the pool ran dry.
             values.damage(.magicka, by: available, on: caster)
             casts[slot(hand, caster)] = SpellCastState()
+            endDualPartner(of: hand, lead: running, caster: caster)
             return .failed(.insufficientMagicka(cost: drain, available: available))
         }
         values.damage(.magicka, by: drain, on: caster)
@@ -54,7 +55,7 @@ extension CasterRuntime {
         var state = state(of: hand, on: caster.key)
         state.noteApplied()
         casts[slot(hand, caster)] = state
-        _ = apply(spell, caster: caster)
+        _ = apply(spell, caster: caster, dual: state.isDualCast)
         tally.noteConcentrationSecond()
     }
 
@@ -65,6 +66,7 @@ extension CasterRuntime {
     ) -> SpellCastOutcome {
         let state = state(of: hand, on: caster.key)
         casts[slot(hand, caster)] = SpellCastState()
+        endDualPartner(of: hand, lead: state, caster: caster)
         tally.noteCast()
         return .released(
             spell: spell,

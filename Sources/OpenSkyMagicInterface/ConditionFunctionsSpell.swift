@@ -120,15 +120,16 @@ nonisolated extension ConditionFunctions {
         installUnreachedMagic(&registry)
     }
 
-    /// OpenSky casts with one hand at a time and has no ward state, so these read
-    /// the run-on's magic and answer the single-hand, no-ward value.
+    /// `IsDualCasting` reads the run-on's hands; `EffectWasDualCast` reads the cast
+    /// behind the effect whose conditions are being checked.
     private static func installUnreachedMagic(_ registry: inout ConditionFunctionRegistry) {
-        for (index, name) in [(UInt16(627), "IsDualCasting"), (724, "EffectWasDualCast")] {
-            registry.register(ConditionFunction(index: index, name: name) { call in
-                magicState(call).map { _ in 0 }
-            })
-        }
-        // Ward state 0 is "none".
+        registry.register(ConditionFunction(index: 627, name: "IsDualCasting") { call in
+            magicState(call).map { Self.isTrue($0.isDualCasting) }
+        })
+        registry.register(ConditionFunction(index: 724, name: "EffectWasDualCast") { call in
+            .success(Self.isTrue(call.context.magicApplication.isDualCast))
+        })
+        // OpenSky has no ward state yet, so the answer is state 0, "none".
         registry
             .register(ConditionFunction(
                 index: 602,

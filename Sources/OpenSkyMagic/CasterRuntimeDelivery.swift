@@ -35,12 +35,12 @@ extension CasterRuntime {
     /// - Returns: how many timed effects were stored, which is zero for a
     ///   projectile — the effects land when it does, not when it is fired.
     public func deliverAway(
-        _ spell: ResolvedSpell,
+        _ payload: SpellPayload,
+        spell: ResolvedSpell,
         delivery: MagicEffectDelivery,
         caster: ActorValueHolder,
         world: any CasterWorld
     ) -> Int {
-        let payload = spell.payload(caster: caster.key)
         switch delivery {
         case .aimed where spell.data?.castingType != .concentration:
             guard world.fireSpellProjectile(payload) else { return 0 }

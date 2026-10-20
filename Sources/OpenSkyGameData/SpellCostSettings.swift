@@ -1,5 +1,6 @@
 // How a caster's skill lowers a spell's cost. UESP "Skyrim:Magic Overview", Spell Cost:
-// "Skill multiplier = 1 − (skill / 400)^0.65". See docs/engine/spellcasting.md.
+// "Skill multiplier = 1 − (skill / 400)^0.65". Dual casting: "2.2x spell effectiveness
+// for 2.8x spell cost". See docs/engine/spellcasting.md.
 
 import Foundation
 
@@ -14,6 +15,12 @@ nonisolated public struct SpellCostSettings: Equatable, Sendable {
     public var actorMult: Float = 0.5
     /// `fMagicSkillCostScale`.
     public var actorScale: Float = 0.5
+    /// `fMagicDualCastingCostMult`: what a dual cast costs, in single casts.
+    public var dualCastCostMult: Float = 2.8
+    /// `fMagicDualCastingEffectivenessBase`: what a dual cast does, in single casts.
+    public var dualCastEffectiveness: Float = 2.2
+    /// `fMagicDualCastingTimeMult`: the charge time of a dual cast, in single charges.
+    public var dualCastTimeMult: Float = 1
 
     public static let vanilla = Self()
 
@@ -34,6 +41,9 @@ nonisolated public struct SpellCostSettings: Equatable, Sendable {
         store.read("fMagicCasterSkillCostBase", into: &settings, \.actorBase)
         store.read("fMagicCasterSkillCostMult", into: &settings, \.actorMult)
         store.read("fMagicSkillCostScale", into: &settings, \.actorScale)
+        store.read("fMagicDualCastingCostMult", into: &settings, \.dualCastCostMult)
+        store.read("fMagicDualCastingEffectivenessBase", into: &settings, \.dualCastEffectiveness)
+        store.read("fMagicDualCastingTimeMult", into: &settings, \.dualCastTimeMult)
         return settings
     }
 }
