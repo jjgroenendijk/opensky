@@ -35,9 +35,10 @@ LEADING_BREAK = re.compile(r"<p>\s*<br\s*/?>")
 # A line break that ends a block, or a run of them, becomes a stray backslash line in Markdown.
 TRAILING_BREAKS = re.compile(r"(?:\s*<br\s*/?>)+\s*(?=</(?:p|li|td|th|dd|div)>)")
 REPEATED_BREAKS = re.compile(r"(?:<br\s*/?>\s*){2,}")
-# A table whose first body row holds only header cells: that row becomes the header.
+# A table whose first body row holds only header cells: that row becomes the header. The row
+# stops at a nested table, so a layout table does not swallow the header of the table inside it.
 HEADER_ROW = re.compile(
-    r"(<table\b[^>]*>\s*)<tbody>\s*(<tr\b[^>]*>(?:(?!</tr>).)*?</tr>)", re.DOTALL
+    r"(<table\b[^>]*>\s*)<tbody>\s*(<tr\b[^>]*>(?:(?!</tr>|<table\b).)*?</tr>)", re.DOTALL
 )
 PANDOC_TIMEOUT = 120
 MARKDOWN_FILTER = Path(__file__).with_name("markdown.lua")

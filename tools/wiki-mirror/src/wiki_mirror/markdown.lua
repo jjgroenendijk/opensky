@@ -22,6 +22,55 @@ local function all_rows(tbl)
   return rows
 end
 
+-- The gfm writer ignores row and column spans, so the cells after a span slide into the
+-- wrong column. Give each spanned position an empty cell instead.
+local function expand_spans(rows)
+  local carried = {}
+  local expanded = pandoc.List()
+  for _, row in ipairs(rows) do
+    local cells = pandoc.List()
+    local column = 1
+    local function fill(last)
+      while column <= last and (carried[column] or 0) > 0 do
+        carried[column] = carried[column] - 1
+        cells:insert(pandoc.Cell({}))
+        column = column + 1
+      end
+    end
+    for _, cell in ipairs(row.cells) do
+      fill(math.huge)
+      local width, height = cell.col_span, cell.row_span
+      cell.col_span, cell.row_span = 1, 1
+      cells:insert(cell)
+      for offset = 0, width - 1 do
+        if height > 1 then carried[column + offset] = height - 1 end
+        if offset > 0 then cells:insert(pandoc.Cell({})) end
+      end
+      column = column + width
+    end
+    fill(#carried)
+    row.cells = cells
+    expanded:insert(row)
+  end
+  return expanded
+end
+
+local function expand_table_spans(tbl)
+  local head = tbl.head
+  head.rows = expand_spans(head.rows)
+  tbl.head = head
+  local bodies = pandoc.List()
+  for _, body in ipairs(tbl.bodies) do
+    body.head = expand_spans(body.head)
+    body.body = expand_spans(body.body)
+    bodies:insert(body)
+  end
+  tbl.bodies = bodies
+  local foot = tbl.foot
+  foot.rows = expand_spans(foot.rows)
+  tbl.foot = foot
+end
+
 local function has_line_break(blocks)
   local found = false
   pandoc.Blocks(blocks):walk({ LineBreak = function() found = true end })
@@ -56,6 +105,7 @@ end
 -- anything else. A layout table, one row or one column, is unwrapped into its cells;
 -- the cells of any other table are flattened to one line.
 function Table(tbl)
+  expand_table_spans(tbl)
   local rows = all_rows(tbl)
   local complex = false
   for _, row in ipairs(rows) do
@@ -63,7 +113,7 @@ function Table(tbl)
       if not is_simple(cell) then complex = true end
     end
   end
-  if not complex then return nil end
+  if not complex then return tbl end
   local widest = 0
   for _, row in ipairs(rows) do widest = math.max(widest, #row.cells) end
   if #rows == 1 or widest <= 1 then

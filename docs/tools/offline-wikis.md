@@ -139,7 +139,8 @@ because the plain conversion lost or garbled content:
 | Remove the table of contents, edit links, and image zoom links | Wiki chrome, not content |
 | Remove navigation boxes (UESP `navbox` tables) | Every page in a series repeats the same box of links |
 | Give scheme-relative links such as `//images.uesp.net/...` an `https:` scheme | Markdown readers do not resolve them |
-| Make a first row of header cells the table header | Otherwise the table gets an empty header |
+| Make a first row of header cells the table header, also in a table inside a layout table | Otherwise the table gets an empty header |
+| Fill each position a row or column span covers with an empty cell | The gfm writer drops spans, so the next cells slid into the wrong column |
 | Unwrap a one-row or one-column table into its cells | GFM cannot hold the notice and layout boxes; pandoc wrote `[TABLE]` |
 | Flatten other table cells to one line, `/` between parts | GFM table cells hold one line; pandoc wrote `[TABLE]` |
 | Fence every code block with its language | The gfm writer drops languages it does not know, such as `papyrus` |
