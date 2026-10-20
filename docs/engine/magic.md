@@ -161,7 +161,23 @@ rules change that:
 - Peak Value Modifier keywords: "If there are two PVMs with the same keyword active at the same
   time, the one with the lower `<mag>` will be dispelled automatically?" The question mark is the
   wiki's own. OpenSky follows the rule as written: the stronger stays, the weaker is dispelled, and
-  an incoming weaker one is refused. The doubt is real.
+  an incoming weaker one is refused.
+
+The keyword is the `MGEF`'s associated item, not its `KWDA` list. The install shows who shares one:
+
+- Every armour spell, from `ArmorFFSelf0` (Oakflesh) up, names `MagicArmorSpell`. The perk
+  bonus effects beside them name their own keywords, such as `MagicArmor30Perk`, so a perk bonus
+  never replaces the spell.
+- Fortify enchantments, such as `EnchFortifyHealthConstantSelf` and
+  `EnchFortifyOneHandedConstantSelf`, name no associated item. So four worn fortify items all
+  apply: the rule never compares them.
+
+UESP agrees on the result for armour spells: "Armor spells do not stack. They are concurrent with
+the effect of the strongest spell taking precedence over other armor spells"
+(<https://en.uesp.net/wiki/Skyrim:Armor_(spells)>). "Concurrent" may mean the weaker one keeps
+running under the stronger and takes over when the stronger ends first. OpenSky drops it instead.
+The two differ only when a stronger armour spell ends before a weaker one, and only the running game
+can settle which one is right.
 
 Tapering is not applied. The Creation Kit documents it, but no vanilla potion or ingredient effect
 uses it, so it would be untested.
