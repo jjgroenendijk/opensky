@@ -78,4 +78,13 @@ extension MagicWorldAdapter {
             return keywords.hasKeyword(keyword, on: id) == true
         }
     }
+
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        guard
+            let keywords = game.worldData?.locationStore?.keywords,
+            let keyword = keywords.keyword(editorID: editorID)?.id,
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return false }
+        return keywords.hasKeyword(keyword, on: id) == true
+    }
 }

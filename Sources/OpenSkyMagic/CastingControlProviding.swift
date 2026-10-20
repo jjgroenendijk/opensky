@@ -211,4 +211,8 @@ public protocol CastingControlProviding: AnyObject {
     /// checked without two buttons.
     @discardableResult
     func castReadiedSpellWithBothHands() -> CastingActionOutcome
+
+    /// Recharges the equipped enchanted weapon from a carried filled soul gem.
+    @discardableResult
+    func rechargeEquippedWeapon() -> RechargeOutcome
 }

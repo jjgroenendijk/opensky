@@ -1,5 +1,6 @@
-// The inventory fixture plugin plus five SLGM records: three white gems, a black gem,
-// and the two filled records the grand and black gems link to. Every byte is built here.
+// The inventory fixture plugin plus six SLGM records: three white gems, a black gem,
+// and the two filled records the grand and black gems link to. The recharge plugin adds
+// an enchanted blade. Every byte is built here.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -19,16 +20,54 @@ public enum SoulGemFixture {
 
     private static let canHoldNPCSoul: UInt32 = 0x0002_0000
 
+    /// ENCH 0x42 spends 60 a hit out of 1500.
+    public static let enchantedBlade = FormID(0x0000_0500)
+    public static let bladeCapacity: Float = 1500
+    public static let bladeCostPerUse: Float = 60
+
+    private static var gemRecords: [Data] {
+        [
+            gem(petty, "SoulGemPetty", capacity: 1),
+            gem(common, "SoulGemCommon", capacity: 3),
+            gem(grand, "SoulGemGrand", capacity: 5, linked: grandFilled),
+            gem(grandFilled, "SoulGemGrandFilled", capacity: 5, soul: 5),
+            gem(black, "SoulGemBlack", flags: canHoldNPCSoul, linked: blackFilled),
+            gem(blackFilled, "SoulGemBlackFilled", flags: canHoldNPCSoul, soul: 5)
+        ]
+    }
+
     public static func pluginBytes() -> Data {
-        let records = gem(petty, "SoulGemPetty", capacity: 1)
-            + gem(common, "SoulGemCommon", capacity: 3)
-            + gem(grand, "SoulGemGrand", capacity: 5, linked: grandFilled)
-            + gem(grandFilled, "SoulGemGrandFilled", capacity: 5, soul: 5)
-            + gem(black, "SoulGemBlack", flags: canHoldNPCSoul, linked: blackFilled)
-            + gem(blackFilled, "SoulGemBlackFilled", flags: canHoldNPCSoul, soul: 5)
-        return InventoryBaselineFixture.pluginBytes() + ESMFixture.topGroup(
+        InventoryBaselineFixture.pluginBytes() + ESMFixture.topGroup(
             "SLGM",
-            contents: records
+            contents: gemRecords.reduce(Data(), +)
+        )
+    }
+
+    /// The gems, `SpellStoreFixture`'s effects, and one enchanted blade.
+    public static func rechargePlugin() throws -> ESMFile {
+        let enchantment = EnchantmentFixture.record(
+            formID: 0x42,
+            editorID: "TestEnchFire",
+            name: "Burning",
+            enit: EnchantmentFixture.enit(
+                cost: Int32(bladeCostPerUse),
+                flags: EnchantmentFlags.manualCostCalc.rawValue,
+                amount: Int32(bladeCapacity)
+            ),
+            effects: [.init(0x50, magnitude: 25)]
+        )
+        let blade = ESMFixture.record(
+            "WEAP",
+            formID: enchantedBlade.rawValue,
+            data: ESMFixture.field("EDID", ESMFixture.zstring("TestEnchantedBlade"))
+                + InventoryFixture.formIDField("EITM", 0x42)
+                + ESMFixture.field("EAMT", EnchantmentFixture.chargeField(UInt16(bladeCapacity)))
+                + ESMFixture.field("DATA", InventoryFixture.weaponData(
+                    value: 100, weight: 12, damage: 9
+                ))
+        )
+        return try SpellStoreFixture.plugin(
+            records: SpellStoreFixture.effectRecords + [enchantment, blade] + gemRecords
         )
     }
 

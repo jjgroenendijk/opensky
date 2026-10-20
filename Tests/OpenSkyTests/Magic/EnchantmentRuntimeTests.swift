@@ -142,8 +142,7 @@ struct EnchantmentRuntimeTests {
         #expect(report.storedCount == 0)
     }
 
-    /// Recharging is out of scope for this item, but the load path and a dev
-    /// control need a way back to full, and it stops recording the item entirely.
+    /// A full recharge stops recording the item entirely.
     @Test func rechargingForgetsTheStoredCharge() throws {
         var world = try EnchantmentRuntimeFixture.world()
         let blade = try world.profile(of: EnchantmentRuntimeFixture.enchantedBlade)

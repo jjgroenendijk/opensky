@@ -44,6 +44,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey]
     /// Whether `holder`'s base record or race carries the keyword `editorID`.
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool
+    /// Whether `item`'s base record carries the keyword named `editorID`.
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool
     /// One condition function's value as a readout word. The registry lives
     /// above this module, so the app runs the probe.
     func conditionText(of function: UInt16, parameter: UInt32, in context: ConditionContext)
@@ -93,6 +95,11 @@ extension MagicWorld {
     public func playerAteIngredient(_: FormID) {}
 
     public func postNotification(_: String) {}
+
+    /// A session with no keyword index finds none.
+    public func itemHasKeyword(_: String, on _: FormID) -> Bool {
+        false
+    }
 
     /// A session with no placement treats every actor as facing every source.
     public func actor(_: ReferenceKey, faces _: ReferenceKey) -> Bool {

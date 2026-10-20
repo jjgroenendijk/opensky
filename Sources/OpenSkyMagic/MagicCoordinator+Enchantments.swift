@@ -13,8 +13,11 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         guard let owner = world.actorValueHolder(for: hit.attacker) else { return nil }
         let holders = residentHolders(of: hit.targets)
+        let inventory = world.inventory
         return withEffects { runtime in
-            WeaponEnchantmentApplication.apply(hit, owner: owner, holders: holders, using: &runtime)
+            WeaponEnchantmentApplication.apply(
+                hit, owner: owner, holders: holders, using: &runtime, inventory: inventory
+            )
         }.flatMap(\.self)
     }
 
@@ -121,7 +124,8 @@ extension MagicCoordinator {
         on holder: ActorValueHolder
     ) -> EnchantmentCharge? {
         guard let runtime = effects, let profile = enchantmentProfile(of: item) else { return nil }
-        return EnchantmentLedger(store: runtime.store).charge(of: profile, on: holder)
+        return EnchantmentLedger(store: runtime.store, inventory: world.inventory)
+            .charge(of: profile, on: holder)
     }
 
     /// Brings magic in line after `holder`'s worn set changed: readied spells

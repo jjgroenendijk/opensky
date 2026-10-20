@@ -1,6 +1,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import simd
 
@@ -15,7 +16,7 @@ public enum WeaponEnchantmentApplication {
     /// Spends `hit`'s charge and applies its effects to every actor it reached. The
     /// charge is spent first and once, even when no entry is implemented.
     /// - Parameters:
-    ///   - owner: the holder of whoever swung, whose component holds the charge.
+    ///   - owner: the holder of whoever swung, whose weapon copy holds the charge.
     ///   - holders: the holder of each target. A target with no holder stopped
     ///     being resident and is skipped. The charge is still spent.
     public static func apply(
@@ -24,10 +25,11 @@ public enum WeaponEnchantmentApplication {
         holders: [ReferenceKey: ActorValueHolder],
         using runtime: inout ActiveEffectRuntime,
         settings: MagicAreaSettings = .documentedDefaults,
-        resistances: ActorResistanceSettings = .documentedDefaults
+        resistances: ActorResistanceSettings = .documentedDefaults,
+        inventory: (any InventoryAccess)? = nil
     ) -> WeaponEnchantmentReport {
         let profile = hit.profile
-        let ledger = EnchantmentLedger(store: runtime.store)
+        let ledger = EnchantmentLedger(store: runtime.store, inventory: inventory)
         guard let charge = ledger.spend(profile, on: owner) else {
             return WeaponEnchantmentReport(
                 name: profile.name,

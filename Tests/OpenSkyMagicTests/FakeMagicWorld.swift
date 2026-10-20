@@ -26,7 +26,11 @@ final class FakeMagicWorld: MagicWorld {
     var nearbyHostiles: [ReferenceKey] = []
     /// Every actor's perks at an entry point, as a factor on the value.
     var perkFactors: [PerkEntryPoint: Float] = [:]
+    /// Every actor's perks at an entry point, as a value that replaces the input.
+    var perkValues: [PerkEntryPoint: Float] = [:]
     private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
+    /// Items with `ReusableSoulGem`.
+    var reusableGems: Set<FormID> = []
     private(set) var bookRaises: [(skill: Int32, points: Int)] = []
     var undead: Set<ReferenceKey> = []
     /// Actors with `ActorTypeNPC`, whose souls are black.
@@ -103,6 +107,10 @@ final class FakeMagicWorld: MagicWorld {
         notifications.append(text)
     }
 
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        editorID == "ReusableSoulGem" && reusableGems.contains(item)
+    }
+
     func perkModified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
@@ -111,7 +119,7 @@ final class FakeMagicWorld: MagicWorld {
         seams _: ConditionContext
     ) -> Float {
         perkOwners[entryPoint] = key
-        return value * (perkFactors[entryPoint] ?? 1)
+        return perkValues[entryPoint] ?? value * (perkFactors[entryPoint] ?? 1)
     }
 
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {

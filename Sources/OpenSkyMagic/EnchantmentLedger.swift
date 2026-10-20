@@ -1,17 +1,21 @@
-// Reads and writes one owner's `EnchantedItemState` through `WorldStateStore.set`.
-// Charge math is in `EnchantmentCharge`, record resolution in `ItemEnchantmentProfile`.
+// Reads and writes an item's charge: on its best held copy when an inventory holds it,
+// else in the owner's `EnchantedItemState`. Charge math is in `EnchantmentCharge`.
 // Nothing throws: an unspent item reads its full record charge.
 // See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyWorldState
 
 @MainActor
 public struct EnchantmentLedger {
     public let store: WorldStateStore
+    /// Holds the charge per copy. Without it, or for an item the owner does not hold,
+    /// the charge is kept per base item.
+    public let inventory: (any InventoryAccess)?
 
     // MARK: - Reading
 
@@ -25,10 +29,13 @@ public struct EnchantmentLedger {
     public func charge(of profile: ItemEnchantmentProfile, on holder: ActorValueHolder)
         -> EnchantmentCharge
     {
-        guard let remaining = state(of: holder).charge(of: profile.item) else {
-            return profile.fullCharge
-        }
-        return profile.charge(remaining: remaining)
+        let stored = bestCopy(of: profile.item, on: holder)?.charge
+            ?? state(of: holder).charge(of: profile.item)
+        return stored.map(profile.charge(remaining:)) ?? profile.fullCharge
+    }
+
+    private func bestCopy(of item: FormID, on holder: ActorValueHolder) -> ItemCopy? {
+        inventory?.copies(of: item, in: InventoryHolder(actor: holder)).first
     }
 
     // MARK: - Mutating
@@ -47,14 +54,41 @@ public struct EnchantmentLedger {
         // whose record charges no magicka must not make its owner dirty on every
         // swing for a number that never changes.
         guard after != before else { return after }
-        write(state(of: holder).setting(charge: after.remaining, of: profile.item), for: holder)
+        setCharge(after.remaining, of: profile.item, on: holder)
         return after
     }
 
-    /// Restores `profile`'s item to full charge and stops recording it. Not a soul gem:
-    /// recharging is not modelled. For the dev control and tests.
-    public func recharge(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder) {
-        write(state(of: holder).clearingCharge(of: profile.item), for: holder)
+    /// Puts `amount` of charge back into `profile`'s item, capped at its capacity.
+    /// A full item stops being recorded.
+    @discardableResult
+    public func recharge(
+        _ profile: ItemEnchantmentProfile,
+        by amount: Float = .infinity,
+        on holder: ActorValueHolder
+    ) -> EnchantmentCharge {
+        let before = charge(of: profile, on: holder)
+        let remaining = min(before.capacity, before.remaining + max(0, amount))
+        setCharge(remaining >= before.capacity ? nil : remaining, of: profile.item, on: holder)
+        return before.restoring(to: remaining)
+    }
+
+    /// Stores `remaining` on the best held copy, or per base item when `holder`
+    /// holds none. Nil means full.
+    private func setCharge(_ remaining: Float?, of item: FormID, on holder: ActorValueHolder) {
+        let state = state(of: holder)
+        let onCopy = inventory?.editCopy(
+            of: item, in: InventoryHolder(actor: holder), where: { _ in true },
+            { $0.charge = remaining }
+        ) == true
+        if onCopy {
+            if state.charge(of: item) != nil {
+                write(state.clearingCharge(of: item), for: holder)
+            }
+        } else if let remaining {
+            write(state.setting(charge: remaining, of: item), for: holder)
+        } else {
+            write(state.clearingCharge(of: item), for: holder)
+        }
     }
 
     /// Records that `item` established `sequences` while worn on `holder`. An
@@ -78,7 +112,8 @@ public struct EnchantmentLedger {
         }
     }
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, inventory: (any InventoryAccess)? = nil) {
         self.store = store
+        self.inventory = inventory
     }
 }

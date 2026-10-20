@@ -75,6 +75,8 @@ perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
 | Mod Spell Cost | 38 | the magicka cost |
 | Can Dual Cast Spell | 75 | whether both hands cast the spell as one dual cast; above 0 allows it |
 | Mod Ward Magicka Absorption Pct | 71 | the share of a warded spell given back as magicka, ward holder's perk |
+| Mod Soul Gem Recharge | 49 | the charge a soul gem gives back, the recharged weapon bound as the item |
+| Mod Soul Pct Captured to Weapon | 78 | the share of a victim's soul that goes into the killer's weapon, victim as target |
 
 The scaling applies to a cast spell or scroll, on a projectile hit and on a self cast. A drunk
 potion takes Mod Spell Magnitude and Mod Spell Duration from the drinker's perks, with the potion

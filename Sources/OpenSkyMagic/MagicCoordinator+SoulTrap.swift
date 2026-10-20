@@ -19,14 +19,20 @@ nonisolated public enum SoulTrapOutcome: Equatable, Sendable {
 }
 
 extension MagicCoordinator {
-    /// Called once for each death. Traps the soul when a soul trap effect is on the
-    /// dying actor.
+    /// Called once for each death. Soul Siphon feeds the killer's weapon, then the soul
+    /// is trapped when a soul trap effect is on the dying actor.
     @discardableResult
-    public func noteDeath(of victim: ReferenceKey) -> SoulTrapOutcome? {
+    public func noteDeath(
+        of victim: ReferenceKey,
+        killer: ReferenceKey? = nil
+    ) -> SoulTrapOutcome? {
         guard
             let effects,
             let holder = world.actorValueHolder(for: victim)
         else { return nil }
+        if let killer {
+            siphonSoul(of: holder, killer: killer)
+        }
         let casters = effects.active(on: holder)
             .filter { effects.rule(of: $0) == .world(.soulTrap) }
             .compactMap(\.caster)
@@ -103,7 +109,10 @@ extension MagicCoordinator {
         let gems = carriedGems(inventory).map { gem in
             "\(world.itemName(gem.item)): \(soulTexts.contents(gem.soul))"
         }
-        return gems + [lastSoulTrap.map(soulTrapText) ?? "No soul trapped yet"]
+        return gems + [
+            lastSoulTrap.map(soulTrapText) ?? "No soul trapped yet",
+            lastRecharge.map(rechargeText) ?? "No weapon recharged yet"
+        ]
     }
 
     private func soulTrapText(_ outcome: SoulTrapOutcome) -> String {

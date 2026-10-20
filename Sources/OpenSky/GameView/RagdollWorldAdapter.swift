@@ -167,7 +167,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
             game.storyWorld.reportKill(victim: key, killer: killer)
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
-        game.magic.noteDeath(of: key)
+        game.magic.noteDeath(of: key, killer: killer)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
     }
 

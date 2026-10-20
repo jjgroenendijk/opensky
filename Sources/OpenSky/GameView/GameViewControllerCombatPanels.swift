@@ -140,6 +140,11 @@ extension GameViewController: CastingControlProviding {
     func castReadiedSpellWithBothHands() -> CastingActionOutcome {
         magic.castReadiedSpellWithBothHands()
     }
+
+    @discardableResult
+    func rechargeEquippedWeapon() -> RechargeOutcome {
+        magic.rechargeEquippedWeapon()
+    }
 }
 
 extension GameViewController: RagdollControlProviding {
