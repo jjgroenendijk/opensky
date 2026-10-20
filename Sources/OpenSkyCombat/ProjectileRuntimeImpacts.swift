@@ -102,7 +102,7 @@ extension ProjectileRuntime {
             ))
         }
         return world.applySpellHit(SpellHit(
-            payload: payload, targets: targets
+            payload: payload, targets: targets, impact: impact.position
         ))
     }
 }

@@ -2,8 +2,8 @@
 type: Subsystem
 title: Spell delivery
 description: Spells that leave the caster - which deliveries run, spell projectiles through the
-  arrow pipeline, which actors a landed spell reaches, the EFIT area unit, resistance scaling on a
-  hostile hit, and what a hit tells the combat loop.
+  arrow pipeline, touch reach, which actors a landed spell reaches, the EFIT area unit, the wards,
+  absorption and walls that stop a hit, resistance scaling, and what a hit tells the combat loop.
 tags: [engine, magic, spells, projectiles, resistances, combat]
 ---
 
@@ -28,19 +28,21 @@ Magic Overview describes the shapes:
 | Self | Applies to the caster | Applies to the caster once a second |
 | Aimed | Fires the `MGEF`'s `PROJ` | Applies to whatever the aim ray reaches, once a second |
 | Target Actor | Applies to the aimed actor, within `SPIT` range | Refused |
-| Touch | Refused | Refused |
+| Touch | Applies to the aimed actor within touch reach | Applies to the aimed actor within touch reach, once a second |
 | Target Location | Refused | Refused |
 
 A refusal is the `deliveryUnsupported` failure, with a sentence and a count. The reasons differ:
 
-- Touch needs melee reach and the contact frame the animation graph owns. Treating it as a
-  zero-range aimed cast would land a "touch" spell at the far end of a room.
 - Target Location places an effect on the ground, which vanilla does with an `EXPL` or a rune.
   Explosions are not run yet, so the effect has nowhere to live.
 - Holding a beam on a named actor needs targeting OpenSky does not do.
 
 The install has 1,452 `SPEL` records: 733 self, 451 aimed, 155 touch, 74 target location, and 39
-target actor. So 1,218 of them, 84%, use a delivery OpenSky runs.
+target actor. So 1,378 of them, 95%, use a delivery OpenSky runs.
+
+Touch reach is `fCombatDistance`, 141 units in the install, the same reach an unarmed swing has. A
+touch spell lands on the actor the aim ray finds within that reach, at the moment of release. It does
+not wait for a contact frame of the casting animation, because OpenSky does not play one yet.
 
 What a delivery carries is fixed once, when the spell is cast: the spell, its plugin, the caster, the
 whole effect list, whether any entry is hostile, the `SPEL` "Ignore Resistance" flag, and the `PROJ`
@@ -111,9 +113,37 @@ Every scaled entry records the effect, the target, the resistance value, the bas
 multiplier. A moving health bar does not prove the multiplier was the documented one, so the
 Spellcasting panel prints each one.
 
-Wards, spell absorption, and reflect are not implemented. UESP says "Spell Absorption is calculated
-before Magic Resistance", so the order is known. The `SPEL` "Disallow Absorb/Reflect" flag is decoded
-and not read.
+## Defences
+
+Before resistance, each target runs three defences. The first that answers stops the spell for that
+target, and the Spellcasting panel counts it.
+
+1. A wall. A bystander that a straight line from the impact to its middle does not reach takes
+   nothing, so a fireball does not burn through stone. The actor the spell struck is never asked. The
+   `SPEL` flag "Area Effect Ignores Line of Sight" skips this step.
+2. A ward. A hostile spell from another actor goes into the target's Ward Power (actor value 63)
+   instead of its body, when the target faces the caster within 45 degrees either side. UESP:
+   "the angle of protection is pretty generous (around 90 degrees)"
+   (<https://en.uesp.net/wiki/Skyrim:Ward>). The ward loses the spell's summed hostile magnitude. A
+   spell stronger than the ward breaks it, and still does no damage: the holder is staggered and its
+   casts end. The ward perk entry point Mod Ward Magicka Absorption Pct (71) gives back that share
+   of what the ward held as magicka; vanilla `wardAbsorb` sets it to 0.25.
+3. Absorption. Absorb Chance (actor value 83) is a percent chance to negate the spell and gain
+   magicka equal to its base cost (<https://en.uesp.net/wiki/Skyrim_Mod:Actor_Value_Indices>). A
+   spell the target cast on itself is never absorbed, and the `SPEL` flag "Disallow Absorb/Reflect"
+   turns it off.
+
+UESP says "Spell Absorption is calculated before Magic Resistance", which fixes the order against
+resistance. That a ward comes before absorption is OpenSky's choice; no source orders the two.
+
+Ward Power regenerates at 40 points a second, which refills a lesser ward in about a second, as UESP
+describes it charging. The rate and the break stagger strength are OpenSky's choices. `IsWardState`
+answers 1 while Ward Power is above 0 and 2 for one second after a break. Those values are taken from
+the statuses of the Papyrus `OnWardHit` event, because the condition's own Creation Kit page gives
+none. Treat them as unconfirmed.
+
+Skyrim has no spell reflect. Reflect Damage (actor value 163) reflects melee damage only, so the
+"Reflect" in the `SPEL` flag's name has nothing to switch off in the vanilla game.
 
 ## What a hit tells the fight
 

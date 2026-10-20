@@ -68,7 +68,7 @@ nonisolated public enum CastingControlReadout: Sendable {
             ? "nothing cast yet"
             : snapshot.deliveryLines.joined(separator: ", ")
         var text = "Delivery: \(snapshot.projectileCount) projectile(s) — \(deliveries)"
-        guard snapshot.lastHitTargets > 0 else {
+        guard snapshot.lastHitTargets > 0 || !snapshot.lastHitAdjustments.isEmpty else {
             return text + "; no hits yet"
         }
         text += "; last hit reached \(snapshot.lastHitTargets) actor(s)"

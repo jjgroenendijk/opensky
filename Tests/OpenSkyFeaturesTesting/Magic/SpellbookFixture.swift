@@ -47,8 +47,7 @@ public enum SpellbookFixture {
         public static let flamestream: UInt32 = 0x0290
         /// Fire and forget, target actor.
         public static let sparkAtTarget: UInt32 = 0x02A0
-        /// Fire and forget, touch — a delivery 19.8 counts rather than carries
-        /// out.
+        /// Fire and forget, touch.
         public static let touchOfDeath: UInt32 = 0x02B0
     }
 

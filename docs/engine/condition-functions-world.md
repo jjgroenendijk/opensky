@@ -152,7 +152,8 @@ letter: 88 X, 89 Y, 90 Z.
   damage taken mid-cast makes it 0 until the next dual cast; OpenSky does not do that yet.
 - `EffectWasDualCast` (724) is 1 for an effect a dual cast applied. It is answered at apply time
   and in the per-second check of the effect's entry conditions.
-- `IsWardState` (602) is true only for state 0, "none", because OpenSky has no wards.
+- `IsWardState` (602) compares its parameter with the actor's ward state: 0 none, 1 absorbing,
+  2 broken ([spell delivery](/engine/spell-delivery.md#defences) says where the values come from).
 - `EPAlchemyGetMakingPoison` (500), `IsPoison` (721), and `EPAlchemyEffectHasKeyword` (501)
   read the brew in progress while Mod Alchemy Effectiveness runs ([alchemy](/engine/alchemy.md)).
   Outside a brew they fail as unavailable.

@@ -14,7 +14,7 @@ nonisolated extension ResolvedSpell {
     /// projectile in the air has to apply the spell that was cast rather than
     /// whatever the caster has readied by the time it lands.
     public func payload(caster: ReferenceKey) -> SpellPayload {
-        SpellPayload(
+        var payload = SpellPayload(
             spell: key,
             sourcePlugin: sourcePlugin,
             caster: caster,
@@ -32,5 +32,10 @@ nonisolated extension ResolvedSpell {
             projectile: effects.compactMap { $0.effect?.effect.data?.projectile }.first,
             name: displayName
         )
+        payload.baseCost = Float(cost.cost)
+        payload.disallowsAbsorb = data?.flags.contains(.disallowAbsorbReflect) ?? false
+        payload.areaIgnoresLineOfSight = data?.flags
+            .contains(.areaEffectIgnoresLineOfSight) ?? false
+        return payload
     }
 }

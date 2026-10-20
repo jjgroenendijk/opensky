@@ -61,6 +61,7 @@ nonisolated extension PerkEntryPoint {
     public static let modPoisonDoseCount = PerkEntryPoint(rawValue: 83)
     public static let modPotionsCreated = PerkEntryPoint(rawValue: 89)
     public static let canDualCastSpell = PerkEntryPoint(rawValue: 75)
+    public static let modWardMagickaAbsorptionPct = PerkEntryPoint(rawValue: 71)
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
@@ -83,6 +84,6 @@ nonisolated extension PerkEntryPoint {
         modPoisonDoseCount, modPotionsCreated,
         modPickpocketChance, canPickpocketEquippedItem, shouldApplyPlacedItem,
         modLockpickingCrimeChance,
-        canDualCastSpell
+        canDualCastSpell, modWardMagickaAbsorptionPct
     ]
 }

@@ -23,6 +23,8 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
     public var potentialEffects: Set<ReferenceKey> = []
     /// Both hands cast one spell together right now.
     public var isDualCasting = false
+    /// `IsWardState`: 0 none, 1 a ward is up, 2 a ward just broke.
+    public var wardState: Int32 = 0
 
     public init(
         knownSpells: Set<ReferenceKey> = [],

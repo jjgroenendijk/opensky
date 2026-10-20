@@ -2,8 +2,8 @@
 // MGEF DATA table: 0 Self, 1 Touch, 2 Aimed, 3 Target Actor, 4 Target Location
 // (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>). Aimed fires the
 // PROJ, or for concentration applies to the aim ray target once a second; Target
-// Actor applies within SPIT range. Touch and Target Location are refused and
-// counted. See docs/engine/spell-delivery.md.
+// Actor applies within SPIT range; Touch applies to the actor within a hand's reach.
+// Target Location is refused and counted. See docs/engine/spell-delivery.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -22,9 +22,9 @@ nonisolated public enum SpellDelivery: Sendable {
         castingType: MagicEffectCastingType?
     ) -> Bool {
         switch delivery {
-        case .selfTarget, .aimed: true
+        case .selfTarget, .aimed, .touch: true
         case .targetActor: castingType != .concentration
-        case .touch, .targetLocation, .unknown: false
+        case .targetLocation, .unknown: false
         }
     }
 }
@@ -53,7 +53,9 @@ extension CasterRuntime {
                 caster: caster.key,
                 world: world
             )
-        case .selfTarget, .touch, .targetLocation, .unknown:
+        case .touch:
+            return applyAtAim(payload, range: world.touchReach, caster: caster.key, world: world)
+        case .selfTarget, .targetLocation, .unknown:
             // Unreachable: `SpellDelivery.isImplemented` refused these before
             // the cast started, and self delivery never gets here. Returning
             // zero rather than trapping keeps a mod-authored delivery this
@@ -83,7 +85,7 @@ extension CasterRuntime {
         )
         guard !targets.isEmpty else { return 0 }
         let report = world.applySpellHit(SpellHit(
-            payload: payload, targets: targets
+            payload: payload, targets: targets, impact: aim.position
         ))
         return report.storedCount
     }

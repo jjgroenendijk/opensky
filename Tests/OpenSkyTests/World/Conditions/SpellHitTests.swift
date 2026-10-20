@@ -18,15 +18,15 @@ import Testing
 
 @MainActor
 struct SpellHitTests {
-    private struct Harness {
+    struct Harness {
         var effects: ActiveEffectRuntime
         let values: ActorValueRuntime
         let spellbook: SpellbookRuntime
     }
 
-    private static let victim = ReferenceKey.plugin(name: "base.esm", objectID: 0x0900)
+    static let victim = ReferenceKey.plugin(name: "base.esm", objectID: 0x0900)
 
-    private func harness() throws -> Harness {
+    func harness() throws -> Harness {
         let store = WorldStateStore()
         let (spellbook, _) = try SpellbookFixture.runtime(store: store)
         let values = SpellbookFixture.values(store: store)
@@ -44,11 +44,11 @@ struct SpellHitTests {
 
     /// A non-player actor, so the 85% player cap does not enter the arithmetic
     /// unless a test asks for it.
-    private static func holder(_ key: ReferenceKey = victim) -> ActorValueHolder {
+    static func holder(_ key: ReferenceKey = victim) -> ActorValueHolder {
         ActorValueHolder(key: key, subject: .actor(base: FormID(0x0000_0F01)), cell: nil)
     }
 
-    private func payload(
+    func payload(
         _ objectID: UInt32,
         harness: Harness,
         caster: ReferenceKey = .player
@@ -57,7 +57,7 @@ struct SpellHitTests {
         return spell.payload(caster: caster)
     }
 
-    private func hit(_ payload: SpellPayload, targets: [SpellHitTarget]) -> SpellHit {
+    func hit(_ payload: SpellPayload, targets: [SpellHitTarget]) -> SpellHit {
         SpellHit(payload: payload, targets: targets)
     }
 

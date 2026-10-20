@@ -32,6 +32,7 @@ extension MagicCoordinator {
                 let cast = caster.state(of: hand, on: key)
                 return cast.isDualCast && cast.phase.isCasting
             }
+            state.wardState = wardState(of: key).rawValue
             states[key] = state
         }
         return MagicConditionResolution(

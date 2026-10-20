@@ -31,6 +31,7 @@ extension MagicCoordinator {
         guard delta.isFinite, delta > 0 else { return }
         let holders = world.regeneratingHolders()
         rebuildLoadedModifiers(over: holders)
+        recoverWards(delta: delta, over: holders)
         abilityClock += delta
         guard abilityClock >= Self.abilityReconcileSeconds else { return }
         abilityClock = 0

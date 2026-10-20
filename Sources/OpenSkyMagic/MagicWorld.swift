@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import simd
 
 /// What `MagicCoordinator` reads from the running world. Skill uses pass
 /// through to the session's skill runtime.
@@ -62,6 +63,10 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int
     /// The player ate `item`, an ingredient, which teaches its first effect.
     func playerAteIngredient(_ item: FormID)
+    /// Whether `target` faces `source` within a ward's front arc.
+    func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool
+    /// Whether no placed geometry stands between `point` and `target`.
+    func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool
 }
 
 extension MagicWorld {
@@ -84,4 +89,14 @@ extension MagicWorld {
 
     /// A session with no alchemy learns nothing.
     public func playerAteIngredient(_: FormID) {}
+
+    /// A session with no placement treats every actor as facing every source.
+    public func actor(_: ReferenceKey, faces _: ReferenceKey) -> Bool {
+        true
+    }
+
+    /// A session with no collision has no walls.
+    public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {
+        true
+    }
 }

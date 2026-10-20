@@ -48,10 +48,19 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
 
     /// Called once per cast that spent its cost, for the `CAST` story event.
     func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey)
+
+    /// How far a touch spell reaches from the caster, world units.
+    var touchReach: Float { get }
 }
 
 extension CasterWorld {
     public func spellWasCast(_: ReferenceKey, by _: ReferenceKey) {}
+
+    /// `fCombatDistance` in `Skyrim.esm`: an unarmed swing's reach, which is where
+    /// a hand meets its target.
+    public var touchReach: Float {
+        141
+    }
 }
 
 /// One cast in flight, identified by who is casting and in which hand.

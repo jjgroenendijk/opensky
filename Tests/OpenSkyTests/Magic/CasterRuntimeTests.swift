@@ -134,17 +134,20 @@ struct CasterRuntimeTests {
         #expect(harness.runtime.begin(.left, on: .player).failure == .noSpellReadied(.left))
     }
 
-    /// Touch delivery needs the melee-reach geometry and the contact frame the
-    /// animation graph owns, so item 19.8 counts it rather than approximating
-    /// it as a zero-range aimed cast.
-    @Test func anUnimplementedDeliveryIsRefusedAndCounted() throws {
+    /// A touch spell lands on the actor in front of the caster, within a hand's reach.
+    @Test func aTouchSpellAppliesToTheActorWithinReach() throws {
         let harness = try harness()
+        let victim = ReferenceKey.plugin(name: "base.esm", objectID: 0x0900)
+        harness.world.aim = SpellAim(target: victim)
         try ready(SpellbookFixture.Spell.touchOfDeath, in: .right, harness)
 
-        let outcome = harness.runtime.begin(.right, on: .player)
+        harness.runtime.begin(.right, on: .player)
+        harness.runtime.advance(delta: 1, on: .player)
+        let outcome = harness.runtime.release(.right, on: .player)
 
-        #expect(outcome.failure == .deliveryUnsupported(.touch))
-        #expect(harness.runtime.tally.failureCount == 1)
+        #expect(outcome.isCast)
+        #expect(harness.world.aimRanges == [harness.world.touchReach])
+        #expect(harness.world.spellHits.first?.targets.first?.key == victim)
     }
 
     // MARK: - Concentration

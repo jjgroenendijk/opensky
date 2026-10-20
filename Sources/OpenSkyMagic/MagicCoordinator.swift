@@ -54,6 +54,10 @@ public final class MagicCoordinator {
     var abilityClock: Float = 0
     /// Actors a load gave timed effects whose modifiers are not rebuilt yet.
     var pendingModifierRebuild: Set<ReferenceKey> = []
+    /// Seconds each broken ward stays in `IsWardState` 2.
+    var brokenWardSeconds: [ReferenceKey: Float] = [:]
+    /// The absorption roll, in 0 ..< 100. A test fixes it.
+    public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
@@ -304,7 +308,9 @@ extension MagicCoordinator: CasterWorld {
                 runtime.application.isDualCast = hit.payload.isDualCast
                 defer { runtime.application = MagicApplicationContext() }
                 return SpellHitApplication
-                    .apply(hit, holders: holders, using: &runtime) { entries, target in
+                    .apply(
+                        hit, holders: holders, using: &runtime, defences: spellHitDefences()
+                    ) { entries, target in
                         self.perkScaled(
                             entries, of: hit.payload.spell, caster: hit.payload.caster, on: target
                         )
@@ -312,6 +318,7 @@ extension MagicCoordinator: CasterWorld {
             })
         else { return .none }
         lastHit = report
+        breakWards(report.brokenWards)
         if !hit.targets.isEmpty, let onSpellHit, let store = effects?.effects {
             onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
         }

@@ -125,7 +125,8 @@ extension MagicCoordinator: CastingControlProviding {
             projectileCount: tally.projectileCount,
             deliveryLines: tally.deliveryLines,
             lastHitTargets: lastHit?.targetCount ?? 0,
-            lastHitAdjustments: lastHit?.adjustments.map(\.line) ?? [],
+            lastHitAdjustments: (lastHit?.defenceLines ?? [])
+                + (lastHit?.adjustments.map(\.line) ?? []),
             conditionLines: magicConditionLines(),
             lastActionText: lastCastingAction.text
         )

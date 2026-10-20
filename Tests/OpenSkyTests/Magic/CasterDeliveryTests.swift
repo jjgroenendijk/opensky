@@ -218,8 +218,8 @@ struct CasterDeliveryTests {
 
     /// Every delivery this build refuses, refused for the reason the record
     /// gives rather than silently doing something else.
-    @Test func touchAndTargetLocationAreCountedRatherThanCarriedOut() {
-        #expect(!SpellDelivery.isImplemented(.touch, castingType: .fireAndForget))
+    @Test func targetLocationIsCountedRatherThanCarriedOut() {
+        #expect(SpellDelivery.isImplemented(.touch, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.targetLocation, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.unknown(raw: 9), castingType: .fireAndForget))
         // Target-actor concentration needs a tracked AI target, which this
