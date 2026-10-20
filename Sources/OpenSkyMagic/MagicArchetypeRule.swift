@@ -41,6 +41,9 @@ nonisolated public enum MagicWorldArchetype: Equatable, Sendable {
     case boundWeapon
     /// "Disarms targets up to level <MAG>."
     case disarm
+    /// "If the target dies while this effect is active, fills a soul gem carried by
+    /// the caster."
+    case soulTrap
 }
 
 nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
@@ -89,6 +92,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
         case .cloak: .world(.cloak)
         case .boundWeapon: .world(.boundWeapon)
         case .disarm: .world(.disarm)
+        case .soulTrap: .world(.soulTrap)
         default: nil
         }
     }
@@ -131,7 +135,9 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     /// nothing. A constant effect still runs.
     public var needsDuration: Bool {
         switch self {
-        case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon): true
+        case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon),
+             .world(.soulTrap):
+            true
         default: false
         }
     }

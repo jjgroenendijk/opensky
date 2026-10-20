@@ -58,6 +58,9 @@ public final class MagicCoordinator {
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
     public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
+    public var soulTrapSettings = SoulTrapSettings.vanilla
+    public var soulTexts = SoulTexts.vanilla
+    public internal(set) var lastSoulTrap: SoulTrapOutcome?
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.

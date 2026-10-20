@@ -71,7 +71,8 @@ extension MagicCoordinator {
             dismissBoundWeapon(action)
         case (.disarm, .began):
             disarm(action.target)
-        case (.cloak, _), (.stagger, .ended), (.spawnHazard, .ended), (.disarm, .ended):
+        case (.cloak, _), (.soulTrap, _), (.stagger, .ended), (.spawnHazard, .ended),
+             (.disarm, .ended):
             break
         }
     }

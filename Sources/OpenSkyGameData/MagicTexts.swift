@@ -102,6 +102,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         + ["Potion", "Enchantment"].map { "sMagicType\($0)" } + ["sIngredient"]
         + ["Sec", "Secs", "Min", "Mins", "Hour", "Hours"].map { "sEffectsListDisplay\($0)" }
         + levels.map { "s\($0.0)DisplayName" }
+        + ["sSoulCaptured", "sSoulGemTooSmall"]
 
     public static func resolve(
         store: GameSettingStore, text: GameTextResolver = { _ in nil }

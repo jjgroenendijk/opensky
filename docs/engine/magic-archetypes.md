@@ -34,7 +34,7 @@ Each archetype has one rule (`MagicArchetypeRule`). The rule decides where the a
 | Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Absorb, Accumulate Magnitude, Invisibility |
 | Influence | The combat loop, through `ActorMagicInfluence` | Calm, Frenzy, Demoralize, Rally, Turn Undead, Paralysis, Etherealize |
 | Effect list | The target's running effects | Dispel, Cure Disease, Cure Poison, Cure Paralysis |
-| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm |
+| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap |
 
 Script, Concussion, and Cure Addiction are carriers. Script "has no effect other than any
 Papyrus Scripts specified", and the wiki marks the other two "Not Used". A timed carrier is
@@ -131,7 +131,6 @@ These archetypes have no rule. Each is counted per effect, and `make gaps` ranks
 | Detect Life, Light | Drawing a shader or a light on an actor |
 | Slow Time | A time scale for everything except the player |
 | Enhance Weapon | A temporary enchantment on the equipped weapon |
-| Soul Trap | Filling a soul gem when the target dies |
 | Werewolf, Vampire Lord, Werewolf Feed | Changing an actor's race |
 | Telekinesis, Grab Actor | Holding an object or actor in front of the caster |
 | Guide, Spawn Scripted Ref, Lock, Open, Disguise, Value and Parts | Each is rare in vanilla; the wiki gives no rule for Disguise or Value and Parts |

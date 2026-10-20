@@ -106,6 +106,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public let conditionLines: [String]
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// One line per carried soul gem copy, then the last soul trap.
+    public var soulLines: [String] = []
 
     /// The reading with no runtime attached.
     public static let unavailable = CastingControlSnapshot(

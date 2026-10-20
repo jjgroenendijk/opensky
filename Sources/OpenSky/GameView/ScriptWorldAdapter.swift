@@ -216,6 +216,10 @@ final class ScriptWorldAdapter {
         bridge.magicNatives.applySpellHit = { [weak game] hit in
             game?.magic.applySpellHit(hit) ?? .none
         }
+        bridge.magicNatives.trapSoul = { [weak game] victim, caster in
+            guard case .trapped = game?.magic.trapSoul(of: victim, by: caster) else { return false }
+            return true
+        }
         wirePerkNatives(bridge: bridge)
     }
 

@@ -67,6 +67,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool
     /// Whether no placed geometry stands between `point` and `target`.
     func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool
+    /// Shows `text` in the HUD's notification line.
+    func postNotification(_ text: String)
 }
 
 extension MagicWorld {
@@ -89,6 +91,8 @@ extension MagicWorld {
 
     /// A session with no alchemy learns nothing.
     public func playerAteIngredient(_: FormID) {}
+
+    public func postNotification(_: String) {}
 
     /// A session with no placement treats every actor as facing every source.
     public func actor(_: ReferenceKey, faces _: ReferenceKey) -> Bool {

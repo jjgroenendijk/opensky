@@ -90,6 +90,12 @@ nonisolated public enum CastingControlReadout: Sendable {
         return "Conditions (player):\n\(lines)"
     }
 
+    /// The player's soul gems and what the last soul trap did.
+    public static func soulsText(for snapshot: CastingControlSnapshot) -> String {
+        guard snapshot.isAvailable, !snapshot.soulLines.isEmpty else { return "Soul gems: none" }
+        return "Soul gems:\n" + snapshot.soulLines.map { "  \($0)" }.joined(separator: "\n")
+    }
+
     public static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
@@ -104,6 +110,7 @@ nonisolated public enum CastingControlReadout: Sendable {
             coverageText(for: snapshot),
             deliveryText(for: snapshot),
             conditionsText(for: snapshot),
+            soulsText(for: snapshot),
             lastActionText(for: snapshot)
         ].joined(separator: "\n")
     }

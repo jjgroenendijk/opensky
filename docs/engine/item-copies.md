@@ -13,7 +13,7 @@ An inventory counts items by base form ID. Some facts belong to one copy, not to
 | Fact | Set by | Read by |
 | --- | --- | --- |
 | Temper level | [Crafting](/engine/crafting.md) at a grindstone or workbench | Weapon damage, armour rating, price |
-| Trapped soul | Soul trap | Recharging and enchanting |
+| Trapped soul | [Soul trap](/engine/soul-trap.md) | Recharging and enchanting |
 | Enchantment charge | A hit with an enchanted weapon | [Item enchantments](/engine/item-enchantments.md) |
 | Made enchantment | The enchanting table | Item enchantments |
 

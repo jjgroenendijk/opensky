@@ -106,7 +106,7 @@ extension MagicCoordinator: CastingControlProviding {
         guard let caster else { return .unavailable }
         let book = caster.spellbook.state(of: .player)
         let tally = caster.tally
-        return CastingControlSnapshot(
+        var snapshot = CastingControlSnapshot(
             isAvailable: true,
             knownSpells: playerKnownSpells().map { readout($0, book: book) },
             selectedSpellName: selectedKnownSpell()?.displayName,
@@ -130,6 +130,8 @@ extension MagicCoordinator: CastingControlProviding {
             conditionLines: magicConditionLines(),
             lastActionText: lastCastingAction.text
         )
+        snapshot.soulLines = soulLines()
+        return snapshot
     }
 
     @discardableResult

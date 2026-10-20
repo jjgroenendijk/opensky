@@ -25,6 +25,7 @@ extension ActiveEffectFixture {
         public static let rally: UInt32 = 0x3E
         public static let hazard: UInt32 = 0x3F
         public static let cloakSpell: UInt32 = 0x40
+        public static let soulTrap: UInt32 = 0x41
         /// `Ward Power` in the vanilla actor-value table.
         public static let wardPower: Int32 = 63
     }
@@ -94,6 +95,9 @@ extension ActiveEffectFixture {
                 editorID: "Rally",
                 flags: [.recover],
                 archetype: 38
+            ),
+            ArchetypeSpec(
+                formID: Archetype.soulTrap, editorID: "SoulTrap", flags: [.hostile], archetype: 23
             )
         ]
         return specs.map { spec in

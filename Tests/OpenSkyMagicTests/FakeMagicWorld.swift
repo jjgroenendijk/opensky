@@ -29,6 +29,11 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
     private(set) var bookRaises: [(skill: Int32, points: Int)] = []
     var undead: Set<ReferenceKey> = []
+    /// Actors with `ActorTypeNPC`, whose souls are black.
+    var npcs: Set<ReferenceKey> = []
+    /// Resident actors beside the player.
+    var holders: [ReferenceKey: ActorValueHolder] = [:]
+    private(set) var notifications: [String] = []
     private(set) var cloakRadii: [Float] = []
 
     @discardableResult
@@ -38,7 +43,7 @@ final class FakeMagicWorld: MagicWorld {
     }
 
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
-        key == .player ? .player : nil
+        key == .player ? .player : holders[key]
     }
 
     func regeneratingHolders() -> [ActorValueHolder] {
@@ -90,8 +95,12 @@ final class FakeMagicWorld: MagicWorld {
         return nearbyHostiles
     }
 
-    func actorHasKeyword(_: String, on holder: ActorValueHolder) -> Bool {
-        undead.contains(holder.key)
+    func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
+        editorID == "ActorTypeNPC" ? npcs.contains(holder.key) : undead.contains(holder.key)
+    }
+
+    func postNotification(_ text: String) {
+        notifications.append(text)
     }
 
     func perkModified(

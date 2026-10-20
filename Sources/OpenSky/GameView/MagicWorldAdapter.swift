@@ -15,6 +15,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
@@ -36,6 +37,7 @@ protocol MagicWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
+    var messages: MessageCoordinator { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
@@ -115,6 +117,9 @@ final class MagicWorldAdapter {
         game.magic.magicTexts = MagicTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
+        game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
+        game.magic.soulTexts = SoulTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.wireEnchantments(store: provider.enchantmentStore)
     }
 }
@@ -182,6 +187,10 @@ extension MagicWorldAdapter: MagicWorld {
 
     func playerAteIngredient(_ item: FormID) {
         game.inventory.learnEatenIngredient(item)
+    }
+
+    func postNotification(_ text: String) {
+        _ = game.messages.postNotification(text)
     }
 
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {

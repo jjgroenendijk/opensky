@@ -12,6 +12,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
@@ -32,6 +33,7 @@ protocol RagdollWorldHost: AnyObject {
     var containerMenu: ContainerMenuController { get }
     var crime: CrimeCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var magic: MagicCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -165,6 +167,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
             game.storyWorld.reportKill(victim: key, killer: killer)
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
+        game.magic.noteDeath(of: key)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
     }
 
