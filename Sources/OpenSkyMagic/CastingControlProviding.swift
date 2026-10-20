@@ -88,9 +88,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public let failureCount: Int
     /// The refusals seen, most frequent first, already spelled `reason x count`.
     public let failureLines: [String]
-    /// Ability effect entries carrying no duration, which the active-effect
-    /// runtime has no permanent mode to hold.
-    public let unheldAbilityEntries: Int
+    /// Effects the player's known abilities hold right now.
+    public let abilityEffectCount: Int
     /// Spell projectiles launched this session.
     public let projectileCount: Int
     /// Casts per delivery kind, most frequent first, already spelled
@@ -123,7 +122,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         concentrationSeconds: 0,
         failureCount: 0,
         failureLines: [],
-        unheldAbilityEntries: 0,
+        abilityEffectCount: 0,
         projectileCount: 0,
         deliveryLines: [],
         lastHitTargets: 0,
@@ -146,7 +145,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         concentrationSeconds: Int,
         failureCount: Int,
         failureLines: [String],
-        unheldAbilityEntries: Int,
+        abilityEffectCount: Int,
         projectileCount: Int,
         deliveryLines: [String],
         lastHitTargets: Int,
@@ -167,7 +166,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         self.concentrationSeconds = concentrationSeconds
         self.failureCount = failureCount
         self.failureLines = failureLines
-        self.unheldAbilityEntries = unheldAbilityEntries
+        self.abilityEffectCount = abilityEffectCount
         self.projectileCount = projectileCount
         self.deliveryLines = deliveryLines
         self.lastHitTargets = lastHitTargets

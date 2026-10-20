@@ -139,11 +139,13 @@ in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#re
 
 ## Abilities and powers
 
-An ability (`SPIT` type ability) is not cast. The actor has it. All abilities the actor knows are
-applied through the effect runtime. Vanilla gives most ability entries zero duration, meaning "as
-long as the actor has it". The effect runtime has no permanent mode for spells, and a zero-duration
-entry there applies once. For a resistance that would be a one-off nudge wearing the name of a
-permanent bonus. So those entries are counted and not applied. Timed entries apply normally.
+An ability (`SPIT` type ability) is not cast. The actor has it. Vanilla gives most ability entries
+zero duration, meaning "as long as the actor has it". So every entry of an ability is stored as a
+constant effect, whatever its duration, with the source kind `ability`. Once a second the effects
+are reconciled with the abilities each loaded actor knows: a new ability is applied, and a forgotten
+one is dispelled. A racial resistance therefore holds while the race keeps it. An entry with
+conditions, such as a night-only bonus, is suspended while they fail
+([conditions](/engine/magic.md#conditions)).
 
 A greater power works once per game day. The spellbook records the whole day number each power was
 last used, and a second cast that day is refused. Lesser powers have no limit: "Unlike Greater
@@ -195,7 +197,8 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
   frames.
 - Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
   counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
-  = adjusted`), and a Conditions (player) block with one line per magic condition function.
+  = adjusted`), the count of ability effects the player holds, and a Conditions (player) block with
+  one line per magic condition function.
 
 The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
 `sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,

@@ -86,6 +86,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
         case .ingredient: "sIngredient"
         case .spell: "sMagicTypeSpell"
         case .enchantment: "sMagicTypeEnchantment"
+        case .ability: "sMagicTypeAbility"
         case .perk: nil
         }
         return setting.map { magicTexts.word($0, or: kind.describedName) } ?? kind.describedName
@@ -119,7 +120,8 @@ extension MagicCoordinator: CastingControlProviding {
             concentrationSeconds: tally.concentrationSeconds,
             failureCount: tally.failureCount,
             failureLines: tally.failureLines,
-            unheldAbilityEntries: tally.unheldAbilityEntries,
+            abilityEffectCount: effects?.active(on: .player)
+                .filter { $0.source.kind == .ability }.count ?? 0,
             projectileCount: tally.projectileCount,
             deliveryLines: tally.deliveryLines,
             lastHitTargets: lastHit?.targetCount ?? 0,
@@ -134,7 +136,7 @@ extension MagicCoordinator: CastingControlProviding {
         guard let caster else { return recordCasting(.unavailable) }
         let race = caster.spellbook.resolve(world.playerRaceSpells(), fromPlugin: pluginName)
         let granted = caster.spellbook.grantStartSpells(to: .player, additional: race)
-        let held = caster.applyAbilities(on: .player)
+        let held = reconcileAbilities(on: .player).storedCount
         return recordCasting(.learnedStartSpells(granted: granted, held: held))
     }
 

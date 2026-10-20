@@ -28,6 +28,8 @@ public enum ActiveEffectFixture {
     /// Fortify Health: value modifier on health with Recover set — a held
     /// modifier on a primary.
     public static let fortifyHealth: UInt32 = 0x16
+    /// Fortify Resist Fire whose own `MGEF` conditions ask `IsPC1stPerson == 1`.
+    public static let firstPersonFortify: UInt32 = 0x17
 
     public static let stackKeyword: UInt32 = 0x900
 
@@ -60,7 +62,8 @@ public enum ActiveEffectFixture {
         formID: UInt32,
         editorID: String,
         name: String,
-        data: Data
+        data: Data,
+        conditions: Data = Data()
     ) -> Data {
         ESMFixture.record(
             "MGEF",
@@ -68,7 +71,21 @@ public enum ActiveEffectFixture {
             data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
                 + ESMFixture.field("FULL", ESMFixture.zstring(name))
                 + ESMFixture.field("DATA", data)
+                + conditions
         )
+    }
+
+    /// One `CTDA` field asking `IsPC1stPerson == 1`.
+    public static var firstPersonCondition: Data {
+        var data = Data([0, 0, 0, 0])
+        data.appendUInt32(Float(1).bitPattern)
+        data.appendUInt16(391)
+        data.appendUInt16(0)
+        for _ in 0 ..< 4 {
+            data.appendUInt32(0)
+        }
+        data.appendUInt32(UInt32(bitPattern: -1))
+        return ESMFixture.field("CTDA", data)
     }
 
     /// The seven effects every suite shares.
@@ -112,6 +129,14 @@ public enum ActiveEffectFixture {
             magicEffect(
                 formID: fortifyHealth, editorID: "FortifyHealth", name: "Fortify Health",
                 data: data(flags: [.recover], archetype: 0, primaryValue: 24)
+            ),
+            magicEffect(
+                formID: firstPersonFortify, editorID: "FirstPersonFortify",
+                name: "First Person Fortify",
+                data: data(
+                    flags: [.recover], archetype: 0, primaryValue: ActorValueIndex.resistFire
+                ),
+                conditions: firstPersonCondition
             )
         ]
     }

@@ -135,8 +135,20 @@ run-ons naming the receiving actor ([condition evaluation](/engine/conditions.md
 empty list is true. A list OpenSky cannot evaluate is a false with a reason, and the entry is
 skipped and counted, never passed quietly.
 
-Conditions on the `MGEF` itself are not evaluated yet. The Creation Kit separates the two, and the
-difference matters for held spells.
+The `MGEF` has its own `CTDA` list, and it is checked first. The [Creation
+Kit](https://ck.uesp.net/wiki/Magic_Effect) separates the two lists:
+
+> Effect-side conditions are checked when the magic effect is applied, and determine whether the
+> actor will ever receive the magic effect. In most cases, an effect's spell-side conditions are
+> checked every second while an actor has the effect.
+
+So a failing `MGEF` list means the effect is never stored. A stored effect has its entry list
+checked again once a second. When the check fails, the effect is suspended: it gives back its share
+of the modifier slot, and its clock pays nothing. When the check passes again, it takes its share
+back. A constant effect whose entry list fails at first is stored suspended, so a night-only
+ability starts to act at dusk. A timed effect whose list fails at first is skipped.
+
+The suspended flag is not saved. The first check after a load sets it again.
 
 ## Stacking
 
@@ -178,9 +190,9 @@ would double every buff. Each saved effect records how much of the slot it owns,
 rebuilt from that after a load. Instant effects are not saved: they already moved a value, and the
 value is saved.
 
-The rebuild runs for the player only. When the player's state loads, the cells have not streamed
-back in, so no other actor has a holder yet. An NPC with a timed effect across a load keeps the
-effect but not its modifier. That is a known gap.
+The player's slot is rebuilt as soon as the state loads. At that time the cells have not streamed
+back in, so no other actor has a holder yet. Each NPC that had effects is kept in a list, and its
+slot is rebuilt on the first frame its holder is loaded again.
 
 ## Controls
 

@@ -50,6 +50,10 @@ public final class MagicCoordinator {
     var accumulator: Double = 0
     /// Seconds since the last cloak pulse.
     var cloakClock: Float = 0
+    /// Seconds since the last ability reconcile.
+    var abilityClock: Float = 0
+    /// Actors a load gave timed effects whose modifiers are not rebuilt yet.
+    var pendingModifierRebuild: Set<ReferenceKey> = []
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
@@ -129,6 +133,7 @@ public final class MagicCoordinator {
         )
         effects = runtime
         performWorldActions()
+        maintainCarriedEffects(delta: delta)
         pulseCloaks(delta: delta)
         return takeCommands()
     }
@@ -221,7 +226,7 @@ public final class MagicCoordinator {
             caster.spellbook.resolve(baseline.all, fromPlugin: spellPluginName),
             to: holder
         )
-        caster.applyAbilities(on: holder)
+        reconcileAbilities(on: holder)
     }
 
     /// The carried items, in FormID order, that `transform` maps to a value.

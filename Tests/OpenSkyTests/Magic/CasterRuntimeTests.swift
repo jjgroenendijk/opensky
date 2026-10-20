@@ -270,24 +270,6 @@ struct CasterRuntimeTests {
         #expect(harness.runtime.begin(.right, on: .player).failure == .abilityNotCastable)
     }
 
-    /// A zero-duration ability entry is counted rather than applied wrongly:
-    /// the active-effect runtime has no permanent mode, and applying one once
-    /// would be a nudge wearing the name of a permanent bonus.
-    @Test func abilitiesApplyTheirTimedEntriesAndCountTheRest() throws {
-        let harness = try harness()
-        harness.spellbook.learn(
-            SpellbookFixture.key(SpellbookFixture.Spell.resistFire),
-            on: .player
-        )
-
-        let stored = harness.runtime.applyAbilities(on: .player)
-
-        #expect(stored == 1)
-        #expect(harness.world.applications.count == 1)
-        #expect(harness.world.applications[0].entries == 1)
-        #expect(harness.runtime.tally.unheldAbilityEntries == 1)
-    }
-
     // MARK: - Input
 
     /// The button edges, not its level: a held button must not restart the

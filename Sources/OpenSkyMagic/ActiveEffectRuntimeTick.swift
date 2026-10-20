@@ -53,6 +53,10 @@ extension ActiveEffectRuntime {
             advanced.reserveCapacity(state.effects.count)
             for effect in state.effects {
                 let moved = effect.advanced(by: seconds)
+                guard !moved.isSuspended else {
+                    advanced.append(moved.paying(moved.unpaidSeconds))
+                    continue
+                }
                 advanced.append(accumulate(pay(moved, on: holder), on: holder))
             }
             var updated = state.replacing(advanced)
@@ -65,6 +69,7 @@ extension ActiveEffectRuntime {
             }
             write(updated, for: holder)
         }
+        advanceConditionClock(by: seconds, over: holders)
         return expiredCount
     }
 

@@ -16,6 +16,11 @@ nonisolated public struct ActiveEffectTally: Equatable, Sendable {
     public private(set) var dispelled = 0
     /// Entries whose CTDA list evaluated false against the target.
     public private(set) var conditionSkipped = 0
+    /// Entries whose `MGEF` conditions evaluated false, so the target never got them.
+    public private(set) var effectConditionSkipped = 0
+    /// Stored effects suspended or resumed by the per-second check of their entry.
+    public private(set) var suspended = 0
+    public private(set) var resumed = 0
     /// Applications refused because the MGEF sets No Recast and the target
     /// already carries that effect.
     public private(set) var recastRefused = 0
@@ -31,7 +36,8 @@ nonisolated public struct ActiveEffectTally: Equatable, Sendable {
 
     /// Everything that was counted as declining to do something.
     public var totalSkips: Int {
-        skips.values.reduce(0, +) + conditionSkipped + recastRefused + unresolvedEffect
+        skips.values.reduce(0, +) + conditionSkipped + effectConditionSkipped + recastRefused
+            + unresolvedEffect
     }
 
     /// Every unimplemented archetype seen, with its count — the listing a
@@ -72,6 +78,18 @@ nonisolated public struct ActiveEffectTally: Equatable, Sendable {
 
     public mutating func noteConditionSkipped() {
         conditionSkipped += 1
+    }
+
+    public mutating func noteEffectConditionSkipped() {
+        effectConditionSkipped += 1
+    }
+
+    public mutating func noteSuspension(_ suspended: Bool) {
+        if suspended {
+            self.suspended += 1
+        } else {
+            resumed += 1
+        }
     }
 
     public mutating func noteRecastRefused() {

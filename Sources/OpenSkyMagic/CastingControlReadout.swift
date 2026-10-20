@@ -54,8 +54,8 @@ nonisolated public enum CastingControlReadout: Sendable {
         } else {
             "Refused casts: none"
         }
-        if snapshot.unheldAbilityEntries > 0 {
-            text += "; \(snapshot.unheldAbilityEntries) permanent ability effect(s) skipped"
+        if snapshot.abilityEffectCount > 0 {
+            text += "; \(snapshot.abilityEffectCount) ability effect(s) held"
         }
         return text
     }
