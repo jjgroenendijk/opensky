@@ -57,6 +57,10 @@ every texture whole.
    level far too coarse. A moving instance, such as an actor on the opening cart, is
    measured where it draws this frame, not at the bounds its cell was built with. A
    landscape texture repeats every two terrain quads ([terrain](/engine/terrain.md)).
+   Every map of a material is measured at the same surface as its diffuse: the normal,
+   glow, detail, environment mask, back light, and face tint maps share its UV density. A
+   multilayer inner map is measured at its larger inner scale, and a landscape noise map
+   at its world-space repeat. A cube map is sampled by direction, so it is not measured.
    A scene texture the rule does not measure, such as grass or particles, keeps all its
    levels. A grass texture keeps them even when a static far away shares it. A texture
    outside the scene lists, such as the player's first-person body, keeps the levels it

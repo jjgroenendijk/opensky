@@ -18,8 +18,10 @@ extension Renderer {
         let nearest = textureStreaming.enabled ? nearestUses() : [:]
         let inScene = Set(sceneAllocations.map(ObjectIdentifier.init))
         // Grass has no per-instance measure, so a static far away that shares its
-        // texture must not lower it under the grass at the player's feet.
-        let grass = Set(scene.grass.map { ObjectIdentifier($0.material.diffuse) })
+        // map must not lower it under the grass at the player's feet.
+        let grass = Set(scene.grass.flatMap { group in
+            group.material.streamedMaps(uvPerUnit: 0).map { ObjectIdentifier($0.texture) }
+        })
         var demands: [TextureDemand] = []
         for entry in entries {
             guard let texture = entry.texture else {
@@ -83,7 +85,8 @@ extension Renderer {
         )
     }
 
-    /// The use of each texture the scene draws that needs the most texels per pixel.
+    /// The use of each texture the scene draws that needs the most texels per pixel. Every
+    /// map of a material is measured at the same surface as its diffuse.
     func nearestUses() -> [ObjectIdentifier: TextureUse] {
         let camera = frameInput.view.position
         var nearest: [ObjectIdentifier: TextureUse] = [:]
@@ -94,6 +97,11 @@ extension Renderer {
                 nearest[key] = use
             }
         }
+        func note(_ material: RenderMaterial, bounds: ModelBounds, uvPerUnit: Float) {
+            for map in material.streamedMaps(uvPerUnit: uvPerUnit) {
+                note(map.texture, bounds: bounds, uvPerUnit: map.uvPerUnit)
+            }
+        }
         for group in [frameDrawGroups.opaque, frameDrawGroups.alphaTested].joined() {
             let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
             // A rider or a walker is far from its baked bounds; measure where it draws.
@@ -102,7 +110,7 @@ extension Renderer {
                 let axis = instance.modelMatrix.columns.0
                 let scale = max(simd_length(SIMD3(axis.x, axis.y, axis.z)), 0.01)
                 note(
-                    group.material.diffuse, bounds: bounds,
+                    group.material, bounds: bounds,
                     uvPerUnit: group.mesh.uvPerUnit * uvScale / scale
                 )
             }
@@ -118,7 +126,7 @@ extension Renderer {
         let atEye = ModelBounds(min: camera, max: camera)
         for group in firstPersonArmGroups {
             let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
-            note(group.material.diffuse, bounds: atEye, uvPerUnit: group.mesh.uvPerUnit * uvScale)
+            note(group.material, bounds: atEye, uvPerUnit: group.mesh.uvPerUnit * uvScale)
         }
         return nearest
     }
