@@ -213,3 +213,38 @@ final class FakeSceneHost: SceneWorld {
         statuses[actor] ?? []
     }
 }
+
+extension SceneFixture {
+    static let loopSceneID: UInt32 = 0x4003
+    static let loopPause: Float = 2
+    static let loopTimer: Float = 20
+
+    /// One phase: a looping line with a fixed pause, and a timer that ends the phase.
+    static func loopScene() throws -> CatalogScene {
+        let fields: [(String, Data)] = [
+            ("EDID", ESMFixture.zstring("LoopScene")),
+            ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Chatter")), ("NEXT", Data()),
+            ("NEXT", Data()), ("HNAM", Data()),
+            ("ALID", ESMFixture.i32(0)),
+            ("ANAM", ESMFixture.u16(0)), ("ALID", ESMFixture.i32(0)), ("INAM", ESMFixture.u32(1)),
+            ("FNAM", ESMFixture.u32(SceneAction.loopingFlag)),
+            ("SNAM", ESMFixture.u32(0)), ("ENAM", ESMFixture.u32(0)),
+            ("DATA", ESMFixture.u32(DialogueRuntimeFixture.ordinaryTopic)),
+            ("DMAX", ESMFixture.f32(loopPause)), ("DMIN", ESMFixture.f32(loopPause)),
+            ("ANAM", Data()),
+            ("ANAM", ESMFixture.u16(2)), ("INAM", ESMFixture.u32(2)), ("SNAM", ESMFixture.u32(0)),
+            ("ENAM", ESMFixture.u32(0)), ("SNAM", ESMFixture.f32(loopTimer)), ("ANAM", Data()),
+            ("PNAM", ESMFixture.u32(DialogueRuntimeFixture.runningQuest))
+        ]
+        let record = try Scene(record: ESMFixture.record(
+            "SCEN",
+            formID: loopSceneID,
+            fields: fields
+        ))
+        return CatalogScene(
+            formID: FormID(loopSceneID),
+            key: .plugin(name: DialogueFixture.pluginName, objectID: loopSceneID),
+            scene: record
+        )
+    }
+}

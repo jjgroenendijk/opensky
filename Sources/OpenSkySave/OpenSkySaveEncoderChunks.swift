@@ -18,6 +18,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeQuestStates(entries, into: &writer)
         writeQuestAliases(entries, into: &writer)
         writeQuestLocationAliases(entries, into: &writer)
+        writeQuestJournalLogs(entries, into: &writer)
         writeActorValues(entries, into: &writer)
         writeActorValueOverrides(entries, into: &writer)
         writeDeaths(entries, into: &writer)

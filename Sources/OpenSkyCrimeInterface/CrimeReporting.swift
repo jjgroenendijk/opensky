@@ -22,6 +22,10 @@ public protocol CrimeReporting: AnyObject {
         by actor: ReferenceKey
     ) -> CrimeOutcome
 
+    /// Reports a pickpocket the victim caught. The victim is the witness.
+    @discardableResult
+    func reportPickpocket(of victim: ReferenceKey, by actor: ReferenceKey) -> CrimeOutcome
+
     /// Reports `event` as it stands, with no witness check.
     @discardableResult
     func report(_ event: CrimeEvent) -> CrimeOutcome

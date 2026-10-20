@@ -45,7 +45,10 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         let deltas = OpenSkySaveDeltaMerge.sorted(OpenSkySaveDeltaMerge.index(body.entries))
         var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: deltas)
         entries = OpenSkySaveDeltaMerge.merge(body.spawns, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.quests, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(
+            OpenSkySaveQuestDecoder.applying(body.questJournalLogs, to: body.quests),
+            into: entries
+        )
         entries = OpenSkySaveDeltaMerge.merge(body.questAliases, into: entries)
         entries = OpenSkySaveQuestDecoder.mergeLocationAliases(
             body.questLocationAliases,
@@ -219,6 +222,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         case OpenSkySaveFormat.ChunkTag.questLocationAliases:
             body.questLocationAliases = try OpenSkySaveQuestDecoder
                 .decodeQuestLocationAliases(payload)
+        case OpenSkySaveFormat.ChunkTag.questJournalLogs:
+            body.questJournalLogs = try OpenSkySaveQuestDecoder.decodeQuestJournalLogs(payload)
         case OpenSkySaveFormat.ChunkTag.actorValues:
             body.actorValues = try OpenSkySaveActorValueDecoder.decodeActorValues(payload)
         case OpenSkySaveFormat.ChunkTag.actorValueOverrides:
@@ -262,7 +267,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             try applySocialGameplay(tag: tag, payload: payload, to: &body)
         }
     }
+}
 
+nonisolated extension OpenSkySaveDecoder {
     /// The social and progression half: who an actor sides with, what two actors
     /// are to each other, how far the player has come, and what they owe for.
     /// Split from `applyActorGameplay` only for the complexity cap.

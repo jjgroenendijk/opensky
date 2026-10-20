@@ -49,6 +49,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Filled location aliases. Separate from QALS so old readers skip
         /// location targets instead of misparsing QALS's flat entries.
         public static let questLocationAliases = "QLOC"
+        /// The journal's newest log entry per quest. A sibling of `QSTS` for the same
+        /// reason as `QALS`.
+        public static let questJournalLogs = "QJLG"
         /// Actor values: current health, magicka and stamina below full. Current values
         /// only; maximums come from the records.
         public static let actorValues = "AVAL"
@@ -193,10 +196,11 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
 
     /// Bits of a `QSTS` entry's quest-level flag byte. Ours, not Bethesda's:
     /// the DNAM bits a QUST record carries describe what the plugin authored,
-    /// while these two describe what the session did.
+    /// while these describe what the session did.
     public enum QuestFlag: Sendable {
         public static let running: UInt8 = 1 << 0
         public static let completed: UInt8 = 1 << 1
+        public static let failed: UInt8 = 1 << 2
     }
 
     /// Bits of a `QSTS` objective's flag byte, in the order the three Papyrus

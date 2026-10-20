@@ -17,6 +17,7 @@ struct FakeProgressionState {
     var incrementCount = 0
     /// Every character-experience award the panel asked for, newest last.
     var awards: [Float] = []
+    var levelApplications = 0
     /// Every attribute pick the panel spent, in order.
     var picks: [ActorValueKind] = []
     /// Every perk-point change the panel asked for, in order.
@@ -63,6 +64,12 @@ extension FakeWorldProviders {
     func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome {
         progression.awards.append(amount)
         return record(.perkPointsChanged(delta: Int(amount), unspent: 0))
+    }
+
+    @discardableResult
+    func applyBankedLevels() -> ProgressionActionOutcome {
+        progression.levelApplications += 1
+        return record(.perkPointsChanged(delta: 0, unspent: 0))
     }
 
     @discardableResult

@@ -30,10 +30,16 @@ runtime uses no AppKit and also builds into `OpenSkyCLI`.
    `Skyrim.esm` has 6,535 player topics and 7,426 scene topics.
 3. File order is selection order. Inside a topic, the `INFO` records are checked in the order
    the type 7 child group lists them, and the first whose conditions pass wins. That is why the
-   dialogue store keeps group order and does not sort.
-4. Say-once is checked before the conditions. "Say Once: If checked, this info will only be said
-   once. Once said, it will never be said again." (<https://ck.uesp.net/wiki/Dialogue_Views>,
-   Response Data.)
+   dialogue store keeps group order and does not sort. A passing response flagged Random starts a
+   stack instead: "If the next Info is also Random, it's put on the stack. The stack keeps building
+   until an Info that is not marked Random is found, or an info marked Random End is found. The
+   final Info is then added to the stack, and one of the Infos is selected randomly"
+   (<https://ck.uesp.net/wiki/Topic_Info>). Responses that fail their conditions do not join or
+   close the stack.
+4. Say-once is checked before the conditions, per speaker: "this Info can only be said once by any
+   given Actor ... However, a different actor that qualifies may say it" (Topic Info). The said
+   state records each speaker of a Say Once line. A count saved without speakers, by an older
+   build, counts for every speaker.
 5. The reset time is checked next. "Hours Until Reset: After this line is spoken, the speaker
    will not say it again until the specified time has elapsed."
    (<https://ck.uesp.net/wiki/Topic_Info>.) The wait belongs to the speaker, so another actor may
@@ -60,9 +66,11 @@ A dialogue branch (`DLBR`) groups the topics of one conversation. The Creation K
 opens. OpenSky applies them like this:
 
 1. A blocking branch whose quest runs and whose starting topic has a passing response for the
-   speaker is the only topic offered, and it is also the greeting. All other topics are
-   rejected as blocked by that branch. When several answer, the branch of the quest with the
-   highest priority wins, and ties go to the lower `DLBR` FormID. The tie-break is OpenSky's.
+   speaker supplies the greeting. When that response links topics (a choice list), they are
+   offered instead of the normal list. Without links, the starting topic is the only topic. When
+   the response is a goodbye ("Force Goodbye"), the speaker says it and no menu opens. All other
+   topics are rejected as blocked by that branch. When several answer, the branch of the quest with
+   the highest priority wins, and ties go to the lower `DLBR` FormID. The tie-break is OpenSky's.
 2. Otherwise, only the starting topics of top-level branches open a conversation. A topic that
    is not a branch entry is rejected as not a branch entry. Only a link (`TCLT`) from a chosen
    response reaches it.
@@ -93,6 +101,7 @@ reasons:
 | `waitingForReset` | The speaker said it fewer game hours ago than its reset time |
 | `conditionsFailed` | The conditions were false, or `ANAM` named another speaker |
 | `notReached` | An earlier response in file order already won |
+| `lostRandomPick` | It passed and joined a Random stack, and another response was picked |
 
 Nothing stops early. Every topic is checked even after several have won. The question "why is
 this line not offered?" needs exactly the topics a shortcut would skip.
@@ -142,6 +151,27 @@ the world before the result. The quest page describes the same gap for `SetStage
 
 The result also carries the goodbye flag ("this response ends the conversation") and a count of
 fragments nothing ran. So a declared fragment that did not run shows as a number, not silence.
+
+## Response flags after the line
+
+Topic Info gives two more flags that act when a response ends:
+
+- Invisible Continue: "When this Info is finished, the next Info will begin automatically; no
+  player prompt will be displayed." The menu says the first passing linked response at once.
+- Walk Away: "If the player backs out of this Info's Choice List, the Walk Away Topic will be
+  spoken as dialogue ends." The topic is `INFO` `TWAT`. Walk Away Invisible in Menu keeps it off
+  the choice list. The line is voiced and subtitled outside the menu after it closes.
+
+## Favour lines
+
+The Favors tab topics (category 4: `SHOW`, `AGRE`, `REFU`, `MREF`, `FEXT`) "play in response to
+specific Follower Command events" (<https://ck.uesp.net/wiki/Favors_Tab>). The follower commands
+themselves (`DialogueFollowerFollowTopic`, `DialogueFollowerWaitTopic`, the favour-state topic
+"I need you to do something") are ordinary player topics of `DialogueFollower` in `Skyrim.esm`.
+Their result scripts call `SetDoingFavor`. When that call changes an actor's favour state, the
+actor says its `SHOW` line on entry and its `FEXT` line on exit. Command mode, where the player
+points at a target and the follower agrees or refuses, does not exist yet, so `AGRE`, `REFU`, and
+`MREF` are not said.
 
 ## Result scripts
 

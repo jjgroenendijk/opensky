@@ -61,6 +61,9 @@ nonisolated extension OpenSkySaveFormat {
     /// with an empty name (1 + 2 + 4) naming the quest, and a zero fill count
     /// (4).
     public static let minimumQuestAliasEntrySize = 11
+    /// Smallest `QJLG` entry: a plugin key with an empty name (1 + 2 + 4), the stage (2),
+    /// and a zero item count (4).
+    public static let minimumQuestJournalLogEntrySize = 13
     /// Smallest number of bytes one `QALS` fill can occupy: the alias ID (4)
     /// and a plugin key with an empty name (1 + 2 + 4). A generated key is
     /// longer, so this is a lower bound rather than the size.

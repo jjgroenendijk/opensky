@@ -23,6 +23,8 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
     /// `iAVDSkillsLevelUp`: skill points per level above 1, "the fixed 8"
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
     public var skillPointsPerLevel = 8
+    /// `iAVDSkillStart`: every skill's level-1 value before race bonuses.
+    public var skillStart = Int(ActorValueIdentity.skillFloor)
     /// `fDefaultBowSpeedBonus`: the base of `Bow Speed Bonus`, the time scale while
     /// zoomed with a bow. Steady Hand lowers it.
     public var defaultBowSpeedBonus: Float = 1
@@ -54,6 +56,7 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
             settings.skillPointsPerLevel = max(0, Int(points))
         }
         store.read("fDefaultBowSpeedBonus", into: &settings, \.defaultBowSpeedBonus)
+        store.read("iAVDSkillStart", into: &settings, \.skillStart)
         return settings
     }
 }

@@ -61,11 +61,12 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         })
         installAddPerkPoints(into: &registry)
+        installSetPerkPoints(into: &registry)
     }
 
     /// `Game.AddPerkPoints(aiPerkPoints)`, declared native in the install's `Game.pex`.
-    /// `DLC2MiraakAltarScript` refunds a cleared tree with it. The pool clamp is the one
-    /// `ModPerkPoints` uses.
+    /// `DLC2MiraakAltarScript` refunds a cleared tree with it. "Negative values are
+    /// ignored" (<https://ck.uesp.net/wiki/AddPerkPoints_-_Game>).
     static func installAddPerkPoints(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
@@ -76,13 +77,38 @@ extension PapyrusNativeFunctions {
             }
             guard
                 let world = context.world,
-                world.modifyPlayerPerkPoints(by: Int(delta)) != nil
+                world.modifyPlayerPerkPoints(by: Int(max(0, delta))) != nil
             else {
                 return needsProgress(call)
             }
             return .returned(.none)
         })
     }
+
+    /// SKSE `Game.SetPerkPoints(PerkPoints)`: "Negative values give the Player 255 Perk
+    /// Points" (<https://ck.uesp.net/wiki/SetPerkPoints_-_Game>).
+    static func installSetPerkPoints(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "SetPerkPoints"
+        ) { call, context in
+            guard let wanted = integer(call, at: 0) else {
+                return failure(call, "SetPerkPoints needs a perk-point count")
+            }
+            let target = wanted < 0 ? PapyrusNativeFunctions.perkPointCap : Int(wanted)
+            guard
+                let world = context.world,
+                let current = world.playerPerkPoints(),
+                world.modifyPlayerPerkPoints(by: target - current) != nil
+            else {
+                return needsProgress(call)
+            }
+            return .returned(.none)
+        })
+    }
+
+    /// The pool's ceiling, which `PlayerProgressState` also clamps to.
+    static let perkPointCap = 255
 
     /// The one failure the perk-point natives return when the session runs
     /// no character leveling: nothing was read or written, and saying so is

@@ -1,6 +1,6 @@
 // The bribe price and the intimidation check, from UESP "Skyrim:Speech" (Bribe and
 // Intimidate formulas). Skyrim.esm sets only the three `fBribe` costs; the other
-// settings live in the game executable, so the fallbacks below are OpenSky's own.
+// fallbacks are the game's defaults from <https://ck.uesp.net/wiki/Category:Settings>.
 // See docs/engine/speech-checks.md.
 
 import Foundation
@@ -11,11 +11,11 @@ nonisolated public struct SpeechCheckSettings: Equatable, Sendable {
     public var bribeScale: Float = 0.5
     public var bribeSpeechcraftMult: Float = 0.1
     public var bribeMoralityMult: Float = 1
-    public var bribeNPCLevelMult: Float = 1
-    public var intimidateSpeechcraftCurve: Float = 1
+    public var bribeNPCLevelMult: Float = 0.1
+    public var intimidateSpeechcraftCurve: Float = 1.5
     /// By the `Confidence` actor value: cowardly, cautious, average, brave, foolhardy.
-    /// UESP calls a foolhardy actor too brave to intimidate, so it never yields.
-    public var intimidateConfidenceMults: [Float] = [0.5, 0.75, 1, 1.25, .infinity]
+    /// A coward yields to anyone; 100 makes a foolhardy actor all but fearless.
+    public var intimidateConfidenceMults: [Float] = [0, 0.5, 1, 1.5, 100]
 
     public static let fallback = SpeechCheckSettings()
 

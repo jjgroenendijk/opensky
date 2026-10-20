@@ -79,12 +79,12 @@ progression". `Actor.GetLevel` follows the menu: "if you have leveled up but hav
 the perk menu screen, this will still return your level seen in the HUD"
 ([GetLevel - Actor](https://www.creationkit.com/index.php?title=GetLevel_-_Actor)).
 
-OpenSky differs on purpose. It raises the level and gives the perk point and the owed pick as
-soon as they are earned. Only the choice waits. There is no level-up menu yet. A level that was
-earned but stays hidden from `GetLevel`, from `PC Level Mult` scaling, and from every condition
-would be a worse answer than one that comes slightly early. Owed picks still queue as in
-vanilla, so a later menu can still show "if you gained 4 levels you will be prompted to make 4
-choices in succession".
+OpenSky does the same. An award only banks experience and shows the "level up available"
+notice once per new level. Opening the skills menu applies every earned level at once: the
+level, one perk point, and one owed pick per level. Until then `GetLevel`, `PC Level Mult`
+scaling, and every condition read the old level. The progression panel's "Apply levels" button
+does what opening the menu does. Owed picks queue, so the menu shows "if you gained 4 levels you
+will be prompted to make 4 choices in succession".
 
 ## The attribute pick
 
@@ -147,8 +147,10 @@ no conditions. `Armsman20` has both `GetBaseActorValue One-Handed >= 20` and
 `HasPerk Armsman00 == 1`. Checking only one rule would let a tree written another way be climbed
 out of order.
 
-A condition OpenSky cannot evaluate is a refusal, not a pass. An unknown function is false with a
-reason, so a perk that depends on it cannot be bought, instead of being free.
+A condition function OpenSky does not implement holds when a spend is checked. The game has every
+function, so a perk the player meets in the game must not be locked by a gap in OpenSky. The
+function is still counted in the condition tally, so `make gaps` and the readout show it. A
+function that is implemented but answers false still refuses the spend.
 
 ## Conditions
 
@@ -169,12 +171,14 @@ potion cannot buy a perk requirement ([condition evaluation](/engine/conditions.
 | `Actor.GetLevel()` | Vanilla | The actor's level, through the same baseline as every actor value |
 | `Game.GetPerkPoints()` | SKSE | The player's unspent perk points |
 | `Game.ModPerkPoints(int)` | SKSE | Adds or removes points, clamped to 0 to 255 |
-| `Game.AddPerkPoints(int)` | Vanilla | Adds points with the same clamp; the Dragonborn altar refunds with it |
+| `Game.AddPerkPoints(int)` | Vanilla | Adds points with the same clamp; "Negative values are ignored" |
+| `Game.SetPerkPoints(int)` | SKSE | Sets the pool; a negative value gives 255 |
 
 `GetPerkPoints` and `ModPerkPoints` are not vanilla Papyrus. The Creation Kit wiki lists them as SKSE
-additions to the `Game` script ([Papyrus VM](/engine/papyrus-vm.md)). `Game.SetPerkPoints` is not
-implemented. A session with no leveling refuses both, instead of answering 0, which would look
-like a player who spent everything.
+additions to the `Game` script ([Papyrus VM](/engine/papyrus-vm.md)). The negative-value rules come
+from [AddPerkPoints - Game](https://ck.uesp.net/wiki/AddPerkPoints_-_Game) and
+[SetPerkPoints - Game](https://ck.uesp.net/wiki/SetPerkPoints_-_Game). A session with no leveling
+refuses all of them, instead of answering 0, which would look like a player who spent everything.
 
 ## Menus, legendary skills, and the altar
 

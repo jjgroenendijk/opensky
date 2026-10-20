@@ -55,3 +55,15 @@ public struct PapyrusSessionNatives {
 
     public init() {}
 }
+
+/// What a script changed in the story that the session reacts to.
+public struct PapyrusStoryNatives {
+    /// A script started a quest, after its start-up stage: begin-on-start scenes start.
+    public var questStarted: ((FormID) -> Void)?
+    /// A stage item's Fail Quest flag failed a quest.
+    public var questFailed: ((FormID) -> Void)?
+    /// `SetDoingFavor` changed an actor's favour state: true on entry, false on exit.
+    public var favorStateChanged: ((ReferenceKey, Bool) -> Void)?
+
+    public init() {}
+}

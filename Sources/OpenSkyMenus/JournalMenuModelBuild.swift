@@ -57,7 +57,7 @@ extension JournalMenuModel {
         var misc: [JournalQuestEntry] = []
         for quest in runtime.quests.journalQuests() {
             guard let state = try? runtime.state(of: quest.formID) else { continue }
-            guard state.isRunning || state.isCompleted else { continue }
+            guard state.isRunning || state.isCompleted || state.isFailed else { continue }
             // A DLC quest's text IDs point into its own plugin's tables.
             var entry = makeEntry(
                 quest: quest,
@@ -71,10 +71,10 @@ extension JournalMenuModel {
             guard !entry.objectives.isEmpty || !entry.logEntries.isEmpty else { continue }
             if state.isRunning, quest.kind == .miscellaneous {
                 misc.append(entry)
-            } else if state.isRunning {
+            } else if state.isRunning, !state.isFailed {
                 active.append(entry)
             }
-            if state.isCompleted {
+            if state.isCompleted || state.isFailed {
                 completed.append(entry)
             }
         }
@@ -101,7 +101,7 @@ extension JournalMenuModel {
         }
         let title = JournalMenuModel.text(quest.name, kind: .strings, strings: strings)
             .flatMap { $0.isEmpty ? nil : substitute($0) }
-        return JournalQuestEntry(
+        var entry = JournalQuestEntry(
             formID: quest.formID,
             editorID: JournalMenuModel.fallbackTitle(for: quest),
             title: title ?? JournalMenuModel.fallbackTitle(for: quest),
@@ -115,6 +115,8 @@ extension JournalMenuModel {
                 of: quest, state: state, strings: strings, substitute: substitute
             )
         )
+        entry.isFailed = state.isFailed
+        return entry
     }
 
     /// The game lists running misc quests as one last row, whose objectives are
@@ -180,28 +182,30 @@ extension JournalMenuModel {
         return display.isCompleted ? .completed : .displayed
     }
 
-    /// The journal paragraphs of every reached stage, in stage order. The page
-    /// has no condition context, so it takes `Quest.Stage.primaryLogEntry`.
+    /// The newest log entry: the items its stage wrote when set. A state with no record
+    /// of one, such as an imported save, shows the highest reached stage with text.
     private static func logEntries(
         of quest: Quest,
         state: QuestRuntimeState,
         strings: LocalizedStrings?,
         substitute: (String) -> String
     ) -> [String] {
-        quest.stages
-            .filter { state.isStageDone($0.index) }
-            .sorted { $0.index < $1.index }
-            .compactMap { stage in
-                guard let entry = stage.primaryLogEntry else { return nil }
-                guard
-                    let text = JournalMenuModel
-                        .text(entry.text, kind: .dlstrings, strings: strings),
-                    !text.isEmpty
-                else {
-                    return nil
-                }
-                return substitute(text)
+        let entries: [Quest.LogEntry] = if
+            let log = state.journalLog,
+            let stage = quest.stages.first(where: { $0.index == log.stage })
+        {
+            log.items.compactMap { item in
+                stage.logEntries.indices.contains(Int(item)) ? stage.logEntries[Int(item)] : nil
             }
+        } else {
+            quest.stages
+                .filter { state.isStageDone($0.index) && $0.primaryLogEntry?.text != nil }
+                .max { $0.index < $1.index }?.primaryLogEntry.map { [$0] } ?? []
+        }
+        return entries.compactMap { entry in
+            JournalMenuModel.text(entry.text, kind: .dlstrings, strings: strings)
+                .flatMap { $0.isEmpty ? nil : substitute($0) }
+        }
     }
 }
 

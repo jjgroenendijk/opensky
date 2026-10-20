@@ -155,6 +155,23 @@ struct ProgressionCoordinatorTests {
         #expect(world.wornArmorReads == [target])
     }
 
+    // MARK: - Speech
+
+    /// A won speech check, a trade, and a pickpocket each teach their skill.
+    @Test func speechAndPickpocketUsesClaimTheirSkills() throws {
+        let speech = ActorValueIdentity.index(named: "Speech")
+        #expect(SkillUseAction.speechCheck.skillIndex == speech)
+        #expect(SkillUseAction.barter.skillIndex == speech)
+        #expect(SkillUseAction.pickpocket.skillIndex == ActorValueIdentity
+            .index(named: "Pickpocket"))
+        let coordinator = try coordinator(world: FakeProgressionWorld())
+        let before = coordinator.skills?.tally
+        coordinator.reportSpeechCheckWon()
+        let after = try #require(coordinator.skills?.tally)
+        #expect(after.uses + after.missingParameters
+            == (before?.uses ?? 0) + (before?.missingParameters ?? 0) + 1)
+    }
+
     // MARK: - Story events
 
     @Test func aSkillPointAndALevelUpFireTheirStoryEvents() throws {
@@ -164,6 +181,9 @@ struct ProgressionCoordinatorTests {
 
         #expect(coordinator.incrementSkill(oneHanded))
         coordinator.awardCharacterExperience(100_000)
+        #expect(recorder.events("LEVL").isEmpty, "the level waits for the skills menu")
+        #expect(coordinator.leveling?.level == 1)
+        coordinator.skillsMenuWillOpen()
 
         #expect(recorder.events("SKIL").map(\.value1) == [Float(oneHanded)])
         let level = try #require(coordinator.leveling?.level)

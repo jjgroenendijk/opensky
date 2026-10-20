@@ -39,7 +39,6 @@ extension PapyrusNativeFunctions {
             "IsPlayerTeammate",
             ScriptedStateName.playerTeammate
         ),
-        ScriptedFlag("Actor", "SetDoingFavor", "IsDoingFavor", ScriptedStateName.doingFavor),
         ScriptedFlag("Actor", "SetAlert", "IsAlerted", ScriptedStateName.alerted),
         ScriptedFlag("Actor", "SetAllowFlying", "IsAllowedToFly", ScriptedStateName.allowFlying),
         ScriptedFlag("Actor", "SetIntimidated", "IsIntimidated", "intimidated"),
@@ -79,6 +78,7 @@ extension PapyrusNativeFunctions {
     ]
 
     public static func installScriptState(into registry: inout PapyrusNativeRegistry) {
+        installDoingFavor(into: &registry)
         for flag in scriptedFlags {
             scriptState(flag.script, flag.setter, into: &registry) { call, bridge, key in
                 let isSet = boolean(call, at: 0, default: true)
@@ -118,6 +118,24 @@ extension PapyrusNativeFunctions {
         installOwnership(into: &registry)
         installPlayerControls(into: &registry)
         installAddedForms(into: &registry)
+    }
+
+    /// `SetDoingFavor` also tells the session when the state changes, so the actor says
+    /// its Favors tab line (<https://ck.uesp.net/wiki/Favors_Tab>).
+    private static func installDoingFavor(into registry: inout PapyrusNativeRegistry) {
+        let name = ScriptedStateName.doingFavor
+        scriptState("Actor", "SetDoingFavor", into: &registry) { call, bridge, key in
+            let isSet = boolean(call, at: 0, default: true)
+            let was = bridge.scriptedState(of: key).flag(name) ?? false
+            bridge.updateScriptedState(of: key) { $0.setFlag(name, isSet ? true : nil) }
+            if was != isSet {
+                bridge.storyNatives.favorStateChanged?(key, isSet)
+            }
+            return .returned(.none)
+        }
+        scriptState("Actor", "IsDoingFavor", into: &registry) { _, bridge, key in
+            .returned(.boolean(bridge.scriptedState(of: key).flag(name) ?? false))
+        }
     }
 
     /// `SetKeywordData(Keyword, float)` and `float GetKeywordData(Keyword)` on a location.

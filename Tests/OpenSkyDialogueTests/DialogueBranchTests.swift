@@ -32,7 +32,7 @@ struct DialogueBranchTests {
         topic + 0x1000
     }
 
-    static func topic(_ id: UInt32, branch: UInt32?) -> Data {
+    static func topic(_ id: UInt32, branch: UInt32?, infoFields: Data = Data()) -> Data {
         var fields = DialogueFixture.editorID("Topic\(id)") + DialogueFixture.topicData(category: 0)
             + DialogueFixture.subtype("CUST") + DialogueFixture.priority(50)
             + DialogueFixture.word("QNAM", quest)
@@ -44,7 +44,7 @@ struct DialogueBranchTests {
                 parent: id,
                 infos: DialogueFixture.infoRecord(
                     formID: info(id),
-                    fields: DialogueFixture.infoData()
+                    fields: (infoFields.isEmpty ? DialogueFixture.infoData() : infoFields)
                         + DialogueFixture.isSpeaker(DialogueRuntimeFixture.speakerBase)
                 )
             )
@@ -52,12 +52,13 @@ struct DialogueBranchTests {
 
     func runtime(
         withBlocking: Bool = false,
+        blockingInfo: Data = Data(),
         store: WorldStateStore = WorldStateStore()
     ) throws -> DialogueRuntime {
         let topics = Self.topic(Self.start, branch: Self.topLevel)
             + Self.topic(Self.follow, branch: Self.topLevel)
             + Self.topic(Self.branchless, branch: nil)
-            + Self.topic(Self.blockingStart, branch: Self.blocking)
+            + Self.topic(Self.blockingStart, branch: Self.blocking, infoFields: blockingInfo)
             + Self.topic(Self.exclusiveStart, branch: Self.exclusive)
         let branches = DialogueFixture.branchRecord(
             formID: Self.topLevel, quest: Self.quest, flags: 1, startingTopic: Self.start
@@ -115,6 +116,26 @@ struct DialogueBranchTests {
                 && $0.considered.first?.rejection == .blockedByBranch(FormID(Self.blocking))
         })
         #expect(runtime.greeting(for: speaker)?.topic.rawValue == Self.blockingStart)
+    }
+
+    /// A blocking greeting with a choice list shows that list instead of itself.
+    @Test func aBlockingGreetingsChoiceListReplacesTheList() throws {
+        let runtime = try runtime(
+            withBlocking: true,
+            blockingInfo: DialogueFixture.infoData() + DialogueFixture.word("TCLT", Self.follow)
+        )
+        #expect(runtime.topics(for: speaker).offers.map(\.topic.rawValue) == [Self.follow])
+        #expect(runtime.greeting(for: speaker)?.topic.rawValue == Self.blockingStart)
+    }
+
+    /// A Force Goodbye blocking greeting is said without the menu; any other is not.
+    @Test(arguments: [true, false])
+    func aForceGoodbyeGreetingSkipsTheMenu(isGoodbye: Bool) throws {
+        let runtime = try runtime(
+            withBlocking: true, blockingInfo: DialogueFixture.infoData(flags: isGoodbye ? 1 : 0)
+        )
+        let expected = isGoodbye ? FormID(Self.info(Self.blockingStart)) : nil
+        #expect(runtime.forcedGoodbye(for: speaker) == expected)
     }
 
     /// A line from an exclusive branch holds the speaker there, across a save of the

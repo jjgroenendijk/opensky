@@ -1,9 +1,8 @@
 // Character leveling: banking experience, crossing the threshold, attribute picks
 // and perk points, all written through `ActorValueRuntime` and `PerkRuntime`.
-// Nothing throws; an unowed pick is a refused answer. Deviation: the level moves as
-// soon as it is earned, not when the skills menu opens (vanilla, per
-// <https://www.creationkit.com/index.php?title=GetLevel_-_Actor>); only the choice
-// waits. See docs/engine/character-leveling.md.
+// Nothing throws; an unowed pick is a refused answer. Experience banks at once, and
+// the level it buys applies when the skills menu opens, as `GetLevel` documents
+// (<https://ck.uesp.net/wiki/GetLevel_-_Actor>). See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -23,6 +22,8 @@ nonisolated public struct PlayerLevelUpReport: Equatable, Sendable {
     public let perkPoints: Int
     /// Attribute picks owed after the award.
     public let pendingAttributePicks: Int
+    /// Levels the banked experience has earned that wait for the skills menu.
+    public var levelsReady = 0
 
     public var levelsGained: Int {
         max(0, level - previousLevel)
@@ -96,21 +97,35 @@ public struct PlayerLevelRuntime {
         CharacterLeveling.experienceForNextLevel(atLevel: level, settings: settings)
     }
 
+    /// Levels the banked experience has earned and the skills menu has not applied.
+    public var levelsReady: Int {
+        CharacterLeveling.advance(
+            experience: state.experience, from: state.level, settings: settings
+        ).levelsGained
+    }
+
     // MARK: - Writing
 
-    /// Banks `amount` of character experience and spends it against the curve.
-    ///
-    /// - Returns: what happened, including the no-op shape when the award did
-    ///   not reach the threshold.
+    /// Banks `amount` of character experience. The level it buys waits for
+    /// `applyEarnedLevels`, so the report's `levelsReady` says what is waiting.
     @discardableResult
     public func award(characterExperience amount: Float) -> PlayerLevelUpReport {
-        let banked = state.banking(experience: amount)
+        var report = write(state.banking(experience: amount))
+        report.levelsReady = levelsReady
+        return report
+    }
+
+    /// Spends the banked experience against the curve: the level, one perk point, and
+    /// one owed attribute pick per level. The skills menu calls it when it opens.
+    @discardableResult
+    public func applyEarnedLevels() -> PlayerLevelUpReport {
+        let current = state
         let outcome = CharacterLeveling.advance(
-            experience: banked.experience,
-            from: banked.level,
+            experience: current.experience,
+            from: current.level,
             settings: settings
         )
-        return write(banked.leveled(outcome), from: banked.level)
+        return write(current.leveled(outcome), from: current.level)
     }
 
     /// Notes `count` skill points gained, which the level-up screen counts

@@ -39,6 +39,8 @@ public final class ProgressionCoordinator {
 
     let world: any ProgressionWorld
     var pendingCommands: [ProgressionCommand] = []
+    /// Earned levels the HUD has announced, so each shows its notice once.
+    var announcedLevelsReady = 0
     private var cachedStrings: LocalizedStrings??
     /// Takes `SKIL` and `LEVL`.
     public weak var storyEvents: (any StoryEventReporting)?
@@ -121,6 +123,19 @@ public final class ProgressionCoordinator {
         return report?.experience ?? 0
     }
 
+    /// A won Persuade, Intimidate, or Bribe: "75 * Speech level base XP for passing
+    /// Speech checks" (UESP "Skyrim:Leveling"), read as the player's base Speech.
+    @discardableResult
+    public func reportSpeechCheckWon() -> Float {
+        guard let skills, let speech = ActorValueIdentity.index(named: "Speech") else { return 0 }
+        let level = skills.level(ofSkill: speech, on: skills.player)
+        return reportSkillUse(SkillUseEvent(
+            actor: .player, action: .speechCheck, amount: Self.speechCheckUse * level
+        ))
+    }
+
+    static let speechCheckUse: Float = 75
+
     /// `Game.AdvanceSkill`. Returns whether the skill took it.
     @discardableResult
     public func advanceSkill(_ index: Int32, byUse magnitude: Float) -> Bool {
@@ -187,7 +202,7 @@ public final class ProgressionCoordinator {
         )
     }
 
-    private func store(_ runtime: SkillAdvancementRuntime, report: SkillAdvanceReport?) {
+    func store(_ runtime: SkillAdvancementRuntime, report: SkillAdvanceReport?) {
         skills = runtime
         guard let report else { return }
         lastAdvance = report
@@ -202,10 +217,27 @@ public final class ProgressionCoordinator {
         }
     }
 
+    /// The level-up notice shows once per level earned, not once per skill point
+    /// banked while the level waits.
     func reportLevel(_ report: PlayerLevelUpReport) {
-        guard report.didLevel else { return }
-        storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
-        pendingCommands.append(.showNotification(texts.levelUpAvailable))
+        if report.didLevel {
+            storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
+        }
+        if report.levelsReady > announcedLevelsReady {
+            pendingCommands.append(.showNotification(texts.levelUpAvailable))
+        }
+        announcedLevelsReady = report.levelsReady
+    }
+
+    /// Applies the levels banked experience has earned. The skills menu calls it as it
+    /// opens, which is when the game raises the level. Nil without leveling.
+    @discardableResult
+    public func applyEarnedLevels() -> PlayerLevelUpReport? {
+        guard let leveling else { return nil }
+        let report = leveling.applyEarnedLevels()
+        skills?.noteCharacterLevels(report.levelsGained)
+        reportLevel(report)
+        return report
     }
 }
 

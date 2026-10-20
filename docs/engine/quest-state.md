@@ -17,8 +17,9 @@ apply. Quest changes never belong to a cell, because a quest is in none. The rec
 
 ## The component
 
-The quest component holds the running flag, the completed flag, the set of stages ever reached, and
-a table of objective states (displayed, completed, failed). Its initializer enforces two rules, so
+The quest component holds the running, completed, and failed flags, the set of stages ever reached,
+the journal's newest log entry (a stage and the items of it that passed), and a table of objective
+states (displayed, completed, failed). Its initializer enforces two rules, so
 two stores with the same state snapshot and save the same way:
 
 - Reached stages are sorted, with no duplicates.
@@ -26,7 +27,8 @@ two stores with the same state snapshot and save the same way:
   That is an objective nothing touched, and storing it would make two equal worlds compare unequal.
 
 Like inventory, it is a full override. An untouched quest has no component, and the first change
-copies its baseline in. Quest state is saved in the `QSTS` chunk.
+copies its baseline in. Quest state is saved in the `QSTS` chunk, and the log entry in the
+`QJLG` chunk beside it.
 
 ## Rules
 
@@ -63,17 +65,35 @@ here until something starts it. Quest scripts and stage fragments are on the
 | --- | --- | --- |
 | Start, stop | Moves the running flag only. Stopping keeps stages and the completed flag | Unknown quest |
 | Complete | Sets completed, and leaves the quest running | Also: quest not running |
-| Set stage | Records the stage. A start-up stage starts the quest, a shut-down stage stops it | Also: unknown stage, quest not running |
-| Set objective displayed, completed, failed | Sets one flag | Also: unknown objective, quest not running |
+| Set stage | Starts a stopped quest, records the stage, applies its items the first time, then a shut-down stage stops it | Also: unknown stage, alias fill refused |
+| Set objective displayed | Sets the flag. Showing one starts a stopped quest | Also: unknown objective |
+| Set objective completed, failed | Sets one flag | Also: unknown objective, quest not running |
+| Fail all objectives | Fails every shown objective, completed ones too | Also: quest not running |
 | Reset | Drops the runtime state, so the quest derives from plugin data again | Never. Returns false if clean |
 
 A refusal writes nothing. Each is a caller bug that a silent no-op would hide inside a quest that
 never moves on.
 
-OpenSky is stricter than vanilla in one place. Papyrus's `SetCurrentStageID` on a stopped quest
-waits for it to start. Here, only a stage flagged start-up may move a stopped quest, and any other
-stage is refused. Stage flags are plain record data, and a stage index may repeat within a `QUST`, so
-the flags of every matching stage are combined.
+Setting a stage on a stopped quest starts it, as the [Quest Stages
+Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab) says of setting a stage. Stage flags are plain
+record data, and a stage index may repeat within a `QUST`, so the flags of every matching stage are
+combined.
+
+## Stage items
+
+A stage holds items (log entries), each with conditions, text, and flags. "The script fragments will
+be run for all entries where the conditions pass" (Quest Stages Tab). When a stage is first set:
+
+- Every passing item's fragment runs ([Papyrus quests](/engine/papyrus-quests.md)).
+- The passing items with text become the journal's log entry. "Only the most recent log entry is
+  displayed", so a later stage replaces it.
+- A Complete Quest item completes the quest.
+- A Fail Quest item fails the quest and every shown objective, completed ones too, as
+  [FailAllObjectives](https://ck.uesp.net/wiki/FailAllObjectives_-_Quest) does. The HUD shows
+  "<quest> failed".
+
+Without a condition evaluator, such as in a unit test, the items with no conditions apply, or the
+first item when all have conditions.
 
 Readers use a quest seam shaped like the global one: the session override wins, the baseline is next,
 and no answer means the form ID names no quest. It can be built from the live store or from a

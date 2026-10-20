@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: OpenSky save chunks — world and scripts
-description: Payload layouts of the GVAR, CLOK, PSCR, PTMR, INVN, SPWN, QSTS, QALS, and
+description: Payload layouts of the GVAR, CLOK, PSCR, PTMR, INVN, SPWN, QSTS, QJLG, QALS, and
   QLOC chunks in an .osav save.
 tags: [format, save, world-state, papyrus, inventory, quests]
 ---
@@ -139,7 +139,7 @@ One entry per quest whose state differs from the plugins:
 | type | field | notes |
 | --- | --- | --- |
 | key | key | the QUST record |
-| uint8 | flags | bit 0 running, bit 1 completed |
+| uint8 | flags | bit 0 running, bit 1 completed, bit 2 failed |
 | uint32 | stageCount | stages reached |
 | uint16 | stage | one per `stageCount`, ascending |
 | uint32 | objectiveCount | objectives that follow |
@@ -149,6 +149,14 @@ These flags are OpenSky's own. They describe the session, not the QUST `DNAM`. A
 cell, so there is no cell field. Repeated or unsorted stages are sorted. Unknown objective
 flag bits are ignored, so a newer build can add one. Minimum sizes: 16 bytes per entry, 2
 per stage, 3 per objective.
+
+## QJLG: journal log entries
+
+One entry per quest whose journal shows a log entry from a stage item: the QUST key, a uint16 stage,
+a uint32 item count, then one uint16 item index per item. The items are the passing log entries of
+that stage, in file order. A save with no such quest writes no chunk. An entry for a quest that
+`QSTS` does not name is dropped, and a build that does not know the tag loses only the log entries.
+Minimum size: 13 bytes per entry.
 
 ## QALS: reference aliases
 

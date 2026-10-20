@@ -73,6 +73,7 @@ extension InventoryCoordinator {
             storyEvents?.reportStoryEvent(.addItem(
                 item, from: container.key, owner: nil, how: .buy
             ))
+            reportTrade(bought)
             return .bought(item: name, gold: bought.gold)
         case .sell:
             let sold: BarterTransaction
@@ -84,6 +85,7 @@ extension InventoryCoordinator {
             storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: nil, how: .given
             ))
+            reportTrade(sold)
             return .sold(item: name, gold: sold.gold)
         }
     }
@@ -134,6 +136,14 @@ extension InventoryCoordinator {
 }
 
 extension InventoryCoordinator {
+    /// "1 base XP per gold used in transactions", at the item's own value
+    /// (UESP "Skyrim:Leveling", "Skyrim:Speech").
+    func reportTrade(_ trade: BarterTransaction) {
+        skillUses?.reportSkillUse(SkillUseEvent(
+            actor: .player, action: .barter, amount: Float(trade.unitValue)
+        ))
+    }
+
     /// `AIPL` per stack taken. A container that is an actor is a dead body here,
     /// because pickpocketing does not use this path.
     func reportTaken(_ stacks: [InventoryStack], from session: ContainerSession) {

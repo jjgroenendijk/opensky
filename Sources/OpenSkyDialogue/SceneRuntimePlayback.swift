@@ -114,15 +114,7 @@ extension SceneRuntime {
         /// False while the phase still waits.
         private mutating func completePhaseIfDone() -> Bool {
             let index = state.phase
-            let phase = scene.phases[Int(index)]
-            let ending = scene.actions.indices.filter { Self.endPhase(scene.actions[$0]) == index }
-            let hasConditions = !phase.completionConditions.isEmpty
-            // A phase with end conditions and no actions waits for the conditions.
-            let actionsDone = !(ending.isEmpty && hasConditions)
-                && ending.allSatisfy { !state.isRunning(UInt32($0)) }
-            let byConditions = hasConditions
-                && evaluator.evaluate(phase.completionConditions).isTrue
-            guard actionsDone || byConditions else { return false }
+            guard let byConditions = phaseDone() else { return false }
             for progress in state.running
                 where Self.endPhase(scene.actions[Int(progress.action)]) <= index
             {
@@ -134,6 +126,23 @@ extension SceneRuntime {
             state.phase += 1
             state.phaseEntered = false
             return true
+        }
+
+        /// Nil while the current phase waits, else whether its conditions ended it.
+        mutating func phaseDone() -> Bool? {
+            let index = state.phase
+            let phase = scene.phases[Int(index)]
+            let ending = scene.actions.indices.filter { Self.endPhase(scene.actions[$0]) == index }
+            let hasConditions = !phase.completionConditions.isEmpty
+            // A phase with end conditions and no actions waits for the conditions.
+            // A looping line that was said once does not hold its phase.
+            let actionsDone = !(ending.isEmpty && hasConditions)
+                && ending.allSatisfy {
+                    !state.isRunning(UInt32($0)) || state.completed.contains(UInt32($0))
+                }
+            let byConditions = hasConditions
+                && evaluator.evaluate(phase.completionConditions).isTrue
+            return actionsDone || byConditions ? byConditions : nil
         }
 
         static func endPhase(_ action: SceneAction) -> UInt32 {

@@ -48,10 +48,12 @@ nonisolated public struct JournalQuestEntry: Equatable, Sendable {
     /// Displayed objectives only. A quest whose objectives are all untouched
     /// shows none, which is what the vanilla page does.
     public internal(set) var objectives: [JournalObjectiveEntry]
-    /// CNAM text of every reached stage, oldest first — the journal's running
-    /// account of the quest.
+    /// CNAM text of the newest log entry, one paragraph per passing stage item. "Only
+    /// the most recent log entry is displayed" (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
     public let logEntries: [String]
     public var isTracked = false
+    /// A Fail Quest stage item failed it. It is listed with the finished quests.
+    public var isFailed = false
     /// The running misc quests this one row stands for. Empty on a quest row.
     public var miscQuests: [FormID] = []
 
@@ -59,8 +61,7 @@ nonisolated public struct JournalQuestEntry: Equatable, Sendable {
         !miscQuests.isEmpty
     }
 
-    /// The journal's description block: the log entries as one paragraph run,
-    /// newest last, which is the order the reached stages come in.
+    /// The journal's description block: the newest log entry's paragraphs.
     public var descriptionText: String {
         logEntries.joined(separator: "\n\n")
     }

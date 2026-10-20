@@ -11,6 +11,7 @@ nonisolated public enum ProgressionActionOutcome: Equatable, Sendable {
     case skillAdvanced(SkillAdvanceReport, skill: String)
     case skillUnchanged(skill: String, verb: String)
     case experienceAwarded(Float, PlayerLevelUpReport, nextLevelAt: Float)
+    case levelsApplied(PlayerLevelUpReport)
     case attributeChosen(ActorValueKind, picksOwed: Int)
     case progressRefused(PlayerProgressError)
     case perkPointsChanged(delta: Int, unspent: Int)
@@ -39,6 +40,8 @@ nonisolated extension ProgressionActionOutcome {
             "\(skill) \(verb): this load order carries no advancement parameters for it."
         case let .experienceAwarded(amount, report, nextLevelAt):
             Self.awardText(amount, report, nextLevelAt: nextLevelAt)
+        case let .levelsApplied(report):
+            report.didLevel ? Self.awardText(0, report, nextLevelAt: 0) : "No earned level waits."
         case let .attributeChosen(kind, picksOwed):
             String(format: "Chose %@: %d pick(s) still owed.", kind.rawValue, picksOwed)
         case let .progressRefused(error): Self.text(for: error)
@@ -74,15 +77,14 @@ nonisolated extension ProgressionActionOutcome {
     ) -> String {
         guard report.didLevel else {
             return String(
-                format: "Awarded %.0f character XP: still level %d, %.0f/%.0f banked.",
-                amount, report.level, report.carriedExperience, nextLevelAt
+                format: "Awarded %.0f character XP: still level %d, %.0f/%.0f banked, "
+                    + "%d level(s) wait for the skills menu.",
+                amount, report.level, report.carriedExperience, nextLevelAt, report.levelsReady
             )
         }
         return String(
-            format: "Awarded %.0f character XP: level %d to %d, "
-                + "%d perk point(s), %d pick(s) owed.",
-            amount, report.previousLevel, report.level, report.perkPoints,
-            report.pendingAttributePicks
+            format: "Applied levels: level %d to %d, %d perk point(s), %d pick(s) owed.",
+            report.previousLevel, report.level, report.perkPoints, report.pendingAttributePicks
         )
     }
 

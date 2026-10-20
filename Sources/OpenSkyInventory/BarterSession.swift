@@ -69,6 +69,9 @@ nonisolated public struct BarterTransaction: Equatable, Sendable {
     public let count: Int32
     /// Total gold that changed hands, already multiplied by `count`.
     public let gold: Int32
+    /// One copy's base value. Speech learns from it, once per trade, whatever the
+    /// count and price (UESP "Skyrim:Speech").
+    public var unitValue: Int32 = 0
 }
 
 /// A live buy-and-sell session between the player and one merchant container.
@@ -174,7 +177,7 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor != nil
         )
-        return BarterTransaction(count: count, gold: price)
+        return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
     }
 
     /// Sells `count` of `item` to the merchant. Honest copies go first. A non-fence
@@ -207,7 +210,7 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor?.buysStolen == true
         )
-        return BarterTransaction(count: count, gold: price)
+        return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
     }
 
     private func requirePositive(_ count: Int32) throws {

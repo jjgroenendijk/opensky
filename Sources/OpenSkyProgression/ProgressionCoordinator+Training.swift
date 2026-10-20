@@ -30,11 +30,11 @@ nonisolated public enum TrainingOutcome: Equatable, Sendable {
 }
 
 extension ProgressionCoordinator {
-    /// UESP "Skyrim:Trainers": a session costs gold by the current level and
-    /// raises the skill one point. The notice for a refusal goes to the HUD.
+    /// UESP "Skyrim:Trainers": a session costs gold by the current level and gives a
+    /// level's worth of skill experience. The notice for a refusal goes to the HUD.
     @discardableResult
     public func train(with offer: TrainerOffer) -> TrainingOutcome {
-        guard let leveling, let skills else { return .unavailable }
+        guard let leveling, var skills else { return .unavailable }
         let level = Int(skills.level(ofSkill: offer.skill, on: skills.player))
         let cost = training.cost(skillLevel: level)
         if
@@ -52,7 +52,8 @@ extension ProgressionCoordinator {
             pendingCommands.append(.showNotification(training.insufficientGoldText))
             return .refused(.insufficientGold)
         }
-        incrementSkill(offer.skill)
+        let report = skills.train(skill: offer.skill, on: skills.player)
+        store(skills, report: report)
         leveling.noteTrainingSession()
         pendingCommands.append(.incrementStat("Training Sessions"))
         return .trained(skill: offer.skill, level: level + 1, gold: cost)

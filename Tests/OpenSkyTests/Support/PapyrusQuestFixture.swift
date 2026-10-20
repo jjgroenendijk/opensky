@@ -88,6 +88,12 @@ public enum PapyrusQuestFixture {
         fields += QuestFixture.logEntry(text: "Started.")
         fields += QuestFixture.stage(fragmentStage)
         fields += QuestFixture.logEntry(text: "Advanced.")
+        // One stage item per fragment: a fragment runs only when its item applies.
+        let itemCount = (fragments ?? []).filter { $0.stage == fragmentStage }
+            .map { Int($0.logEntry) + 1 }.max() ?? 1
+        for _ in 1 ..< max(1, itemCount) {
+            fields += QuestFixture.logEntry()
+        }
         fields += QuestFixture.stage(20)
         fields += QuestFixture.logEntry(text: "Later.")
         fields += QuestFixture.stage(shutDownStage, flags: UInt8(1 << 2))

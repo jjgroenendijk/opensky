@@ -251,6 +251,18 @@ struct ConditionEvaluatorTests {
         #expect(!outcome.isConclusive)
     }
 
+    /// With `unknownFunctionsHold` an unknown function passes but is still tallied.
+    @Test func anUnknownFunctionCanBeMadeToHold() throws {
+        var evaluator = try evaluator()
+        evaluator.unknownFunctionsHold = true
+        let outcome = try evaluator.evaluate(
+            [ConditionEvaluatorFixture.comparing(functionIndex: 9999, 0, 1)]
+        )
+        #expect(outcome.isTrue)
+        #expect(outcome.failures == [.unknownFunction(9999)])
+        #expect(evaluator.tally != ConditionTally())
+    }
+
     // MARK: - End to end
 
     /// A MUST-style condition run: raw CITC/CTDA bytes decoded through

@@ -51,10 +51,13 @@ Each refusal shows its notice on the HUD:
 | At the trainer's level | `sCanNotTrainHigher` |
 | Not enough gold | `sInsufficientGoldToTrain` |
 
-A session raises the skill one point, as `Game.IncrementSkill` does, and counts the
-"Training Sessions" misc stat. UESP says the game gives one level's worth of experience
-instead, which standing stones and rest bonuses can raise. OpenSky does not apply those bonuses
-to training.
+A session gives one level's worth of skill experience and counts the "Training Sessions"
+misc stat. UESP: "One session of training gives exactly one whole level's worth of XP", which
+"benefits from Sleeping and Standing Stone bonuses" but "will not award a bonus level", and
+"overflow XP will be lost". So OpenSky multiplies the cost of the next level by the `Mod Skill
+Use` perk entry point, raises the skill one level, and keeps at most just under the next
+level's cost as progress. The skill level banks character experience like any other skill
+level.
 
 The session count is saved in its own `PTRN` chunk ([save format](/formats/opensky-save.md)).
 

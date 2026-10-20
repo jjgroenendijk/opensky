@@ -144,8 +144,10 @@ pages linked at the top, and also in [crime](/engine/crime.md), [barter](/engine
 `Game.GetPerkPoints` and `Game.ModPerkPoints` are SKSE functions: the Creation Kit wiki declares
 both as SKSE additions to `Game`, and nothing else can read or write the perk point pool from a
 script. OpenSky aims to support SKSE at the script level, never at the binary level.
-`Game.SetPerkPoints` is absent on purpose rather than guessed. Both refuse when the session runs no
-character leveling, because zero would read as a player who spent every point.
+`Game.SetPerkPoints` is SKSE too; a negative count gives 255, as the wiki says. All of them refuse
+when the session runs no character leveling, because zero would read as a player who spent every
+point. `Actor.SetDoingFavor` is bound to the dialogue runtime: entering and leaving favour mode says
+the speaker's Favors tab lines ([dialogue](/engine/dialogue.md#favour-lines)).
 
 The corpus census found no string native that can be answered honestly without the world, and
 string basics are opcodes, not natives. So they stay visible as unknowns instead of getting

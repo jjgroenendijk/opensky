@@ -66,6 +66,8 @@ public struct SceneRuntime {
     public let pendingLines: ScenePendingLines
     /// Scene seconds: game seconds divided by the time scale.
     public var now: Double
+    /// The pause after a looping line, between the action's minimum and maximum. Tests fix it.
+    public var loopPause: @MainActor (ClosedRange<Float>) -> Float = { Float.random(in: $0) }
 
     public init(
         catalog: SceneCatalog,

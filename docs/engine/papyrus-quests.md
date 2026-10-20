@@ -47,9 +47,9 @@ first casts the quest to one of its script types. Hearthfire's adoption script r
 into the quest runtime, so the stage and objective rules live in one place.
 
 `CompleteAllObjectives` completes the objectives the quest has shown. An objective never shown has
-no journal row, so leaving it out changes nothing the player sees. `FailAllObjectives` fails the
-shown objectives that are not completed, so a finished step keeps its tick in the journal. The wiki
-page does not say which objectives it touches; this is the reading that keeps the journal sensible.
+no journal row, so leaving it out changes nothing the player sees. `FailAllObjectives` fails every
+shown objective, completed ones too: "This will also flag completed objectives as failed"
+([FailAllObjectives - Quest](https://ck.uesp.net/wiki/FailAllObjectives_-_Quest)).
 
 `IsStopped` is true whenever the quest is not running, because a stop finishes at once in OpenSky.
 
@@ -81,14 +81,12 @@ The Creation Kit compiles each stage fragment into a numbered function on the ge
 queued on the fragment script's instance through the ordinary queue. So the tick budget, one event
 at a time per instance, and global order apply to fragments as to `OnActivate`.
 
-Each fragment belongs to one log entry of its stage. A stage with several log entries runs only the
-fragment of the first entry whose conditions pass, with the player as Subject. For example, `MQ101`
-stage 0 has five entries keyed on one global's value; value 0 is the normal start, and the others
-are debug starts. A session without a condition evaluator runs every entry's fragment. That choice is
-an observation of `Skyrim.esm` data, not a documented rule.
-
-When the log entry that runs has the Complete Quest flag (`QSDT` bit 0), setting the stage also
-completes the quest. With no choice made, that is the stage's first entry.
+Each fragment belongs to one log entry (item) of its stage. "The script fragments will be run for
+all entries where the conditions pass" ([Quest Stages Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab)),
+with the player as Subject. For example, `MQ101` stage 0 has five entries keyed on one global's
+value; value 0 is the normal start, and the others are debug starts, so one passes. A session
+without a condition evaluator runs the items with no conditions, or the first one. The same items
+write the log entry and apply Complete Quest and Fail Quest ([quest state](/engine/quest-state.md#stage-items)).
 
 All scripts on one quest are one object in the game. Here each script is its own instance, so a cast
 from one to another, such as `self as MQ101QuestScript` in a fragment, finds the sibling instance on
@@ -145,9 +143,10 @@ opening cells load, and the cart horses wait for this event before the opening c
 ## Where OpenSky differs
 
 - `SetStage` and `Start` are latent in the game: they wait for the quest to start and its fragments
-  to finish. OpenSky writes the state, queues the fragments, and returns. The fragments run on a
-  later tick. So a script that reads state right after sees the value before its fragment ran, and
-  `IsRunning` is true at once after `Start`.
+  to finish. OpenSky writes the state, queues the fragments, and returns. `Start` sets the start-up
+  stage before it returns, so the stage and its objectives are there at once
+  ([Start - Quest](https://ck.uesp.net/wiki/Start_-_Quest)). The fragments run on a later tick, so
+  a script that reads state right after sees the value before its fragment ran.
 - A fragment runs only on the change into a stage. Setting a stage already reached runs nothing,
   because setting a stage is idempotent. The `QUST` allow-repeated-stages flag is decoded and not
   used: nothing open says what the game does with it, and a guess would run fragments twice.

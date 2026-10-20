@@ -52,6 +52,10 @@ final class ContainerMenuController {
     private(set) var vendor: Vendor?
     /// The actor the player barters with, whom the price perks name.
     private(set) var merchant: ReferenceKey?
+    /// The living actor whose pockets are open. Each take then rolls the chance.
+    var pickpocketTarget: ReferenceKey?
+    /// Whether a take from the open pockets succeeded, so "Pockets Picked" counts once.
+    var pickedOpenPockets = false
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
@@ -136,6 +140,8 @@ final class ContainerMenuController {
         merchant: ReferenceKey? = nil
     ) {
         container = holder
+        pickpocketTarget = nil
+        pickedOpenPockets = false
         containerName = name
         containerReference = reference
         self.vendor = vendor

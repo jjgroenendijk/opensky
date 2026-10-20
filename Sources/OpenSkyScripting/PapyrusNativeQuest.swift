@@ -125,12 +125,10 @@ extension PapyrusNativeFunctions {
             }
             return .returned(.none)
         }
-        // Fails the shown objectives that are still open; a completed one stays completed.
+        // "Any objectives completed will be flagged as failed in the journal"
+        // (<https://ck.uesp.net/wiki/FailAllObjectives_-_Quest>).
         registerMutation(&registry, ["FailAllObjectives"]) { _, world, key in
-            let open = try world.questState(for: key).objectives.filter { !$0.isCompleted }
-            for objective in open.map(\.index) {
-                try world.setQuestObjectiveFailed(objective, true, for: key)
-            }
+            try world.failAllQuestObjectives(for: key)
             return .returned(.none)
         }
     }

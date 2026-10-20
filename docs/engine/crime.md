@@ -148,6 +148,9 @@ first is a murder victim. This also matches UESP: "if you kill an NPC ... after 
 making them hostile, you can be simultaneously guilty of both assault and murder". A bandit that
 attacked first is not a murder victim.
 
+A caught [pickpocket](/engine/pickpocket.md) is a theft with the target as witness. It costs the
+`CRVA` pickpocket price, 25 in vanilla, instead of the steal multiplier times the value.
+
 Melee, archery, and combat all report hits through one function, so a sword and an arrow cannot
 disagree about what is a first strike.
 
@@ -157,7 +160,6 @@ disagree about what is a first strike.
   original, it walks to a guard and reports. Crimes by followers, animal witnesses, and children
   telling adults are the same shortcut.
 - Trespass is charged on arrival, not after the warning and the 30 second grace period.
-- Pickpocketing needs a sneak menu. `CRVA` already prices it at 25.
 - A one-hit kill charges assault and murder. UESP says only murder. The hit is reported before the
   zero-health check notices the death.
 - `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the

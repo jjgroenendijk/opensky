@@ -25,9 +25,10 @@ extension DialogueRuntime {
         guard let key = dialogue.key(forInfo: id) else {
             throw DialogueError.unresolvedInfoKey(id)
         }
-        let state = saidState(of: id).said(
-            by: speaker, onDay: info.resetHours > 0 ? currentDay : nil
-        )
+        // Say Once needs the speaker even without a clock; a reset time needs the day.
+        let day = info.flags.contains(.sayOnce) ? currentDay ?? 0
+            : info.resetHours > 0 ? currentDay : nil
+        let state = saidState(of: id).said(by: speaker, onDay: day)
         store.set(state, for: key)
         noteBranch(ofSaid: id, speaker: speaker)
 

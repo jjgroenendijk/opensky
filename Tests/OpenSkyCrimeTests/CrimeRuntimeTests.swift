@@ -100,6 +100,18 @@ struct CrimeRuntimeTests {
         #expect(CrimeGoldTable.stealBounty(of: 100, multiplier: nil) == 100)
     }
 
+    /// A caught pickpocket costs the flat `CRVA` pickpocket price, not the value.
+    @Test
+    func aCaughtPickpocketCostsTheFlatPrice() {
+        let values = Faction.CrimeValues(
+            arrest: true, attackOnSight: false, murder: 1000, assault: 40, trespass: 5,
+            pickpocket: 25, unknown: 0, stealMultiplier: 0.5, escape: nil, werewolf: nil
+        )
+        var caught = CrimeFixture.event(.theft, stolenValue: 400)
+        caught.isPickpocket = true
+        #expect(CrimeGoldTable(values: values).bounty(for: caught) == 25)
+    }
+
     /// A faction with no `CRVA` prices nothing, and the crime is still counted.
     @Test
     func anUnpricedFactionChargesNothingAndStillCounts() {

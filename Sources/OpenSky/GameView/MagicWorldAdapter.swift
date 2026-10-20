@@ -35,6 +35,7 @@ protocol MagicWorldHost: AnyObject {
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
@@ -165,7 +166,7 @@ extension MagicWorldAdapter: MagicWorld {
     func playerRaceSpells() -> [FormID] {
         guard
             let baselines = game.actorValues.runtime?.baselines,
-            let raceID = baselines.playerRace,
+            let raceID = baselines.playerRace(chosen: game.menuWorld.playerIdentity?.race),
             let race = baselines.resolver?.races[raceID.rawValue]
         else { return [] }
         return race.spells

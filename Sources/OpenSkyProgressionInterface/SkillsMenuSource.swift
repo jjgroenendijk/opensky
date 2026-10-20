@@ -123,6 +123,9 @@ nonisolated public enum SkillsMenuOutcome: Equatable, Sendable {
 
 @MainActor
 public protocol SkillsMenuSource: AnyObject {
+    /// Called as the menu opens, before the first read: the game applies an earned
+    /// level then (<https://ck.uesp.net/wiki/GetLevel_-_Actor>).
+    func skillsMenuWillOpen()
     var skillsMenuPlayer: SkillsMenuPlayer { get }
     /// The eighteen skills, in actor-value order.
     var skillsMenuSkills: [SkillsMenuSkill] { get }

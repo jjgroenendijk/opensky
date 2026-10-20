@@ -1,6 +1,6 @@
 // Dialogue state as a world-state component: one INFO's said-state, keyed by
-// the INFO's `ReferenceKey`. Per INFO, not per speaker: "Say Once: ... Once
-// said, it will never be said again" (<https://ck.uesp.net/wiki/Dialogue_Views>).
+// the INFO's `ReferenceKey`. Say Once is per speaker: "a different actor that
+// qualifies may say it" (<https://ck.uesp.net/wiki/Topic_Info>).
 // Branch progress is not stored; it follows from the INFO record and said-state.
 // See docs/engine/runtime-state.md and docs/engine/dialogue.md.
 
@@ -29,9 +29,8 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// still benefits from an honest count in the trace readout, and because a
     /// counter costs the same four bytes a flag would have been padded to.
     public private(set) var saidCount: UInt32
-    /// `GameDaysPassed` when each speaker last said the response, kept only for a
-    /// response with a reset time: "the speaker will not say it again until the
-    /// specified time has elapsed" (<https://ck.uesp.net/wiki/Topic_Info>).
+    /// `GameDaysPassed` when each speaker last said the response, kept for a response
+    /// with a reset time or Say Once. A Say Once line said without a clock stores day 0.
     public private(set) var saidDays: [ReferenceKey: Double]
 
     /// The state an INFO has before anything says it, which is the baseline of
@@ -47,10 +46,15 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
         self.saidDays = saidDays
     }
 
-    /// Whether this response has ever been said, which is what the say-once
-    /// rule tests.
+    /// Whether this response has ever been said, by anyone.
     public var hasBeenSaid: Bool {
         saidCount > 0
+    }
+
+    /// The Say Once test. A count with no speaker on record, as an older save has,
+    /// counts for every speaker.
+    public func hasBeenSaid(by speaker: ReferenceKey) -> Bool {
+        saidDays[speaker] != nil || (saidCount > 0 && saidDays.isEmpty)
     }
 
     /// True when nothing has said this response, which is the state that must

@@ -46,6 +46,7 @@ public final class InventoryCoordinator {
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
     public var menuTexts = InventoryMenuTexts.vanilla
     public var tradeTexts = TradeTexts.vanilla
+    public var pickpocketSettings = PickpocketSettings.vanilla
     public var soulTexts = SoulTexts.vanilla
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla

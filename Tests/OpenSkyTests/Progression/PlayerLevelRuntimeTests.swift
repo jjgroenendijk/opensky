@@ -58,12 +58,35 @@ struct PlayerLevelRuntimeTests {
         #expect(runtime.state.perkPoints == 0)
     }
 
+    /// An award banks; the level waits until the skills menu applies it.
+    @Test func anAwardWaitsForTheSkillsMenu() {
+        let (runtime, _) = self.runtime()
+
+        let banked = runtime.award(characterExperience: 130)
+
+        #expect(!banked.didLevel)
+        #expect(banked.levelsReady == 1)
+        #expect(runtime.level == 1)
+        let applied = runtime.applyEarnedLevels()
+        #expect(applied.level == 2)
+        #expect(runtime.state.experience == 30)
+        #expect(runtime.applyEarnedLevels().levelsGained == 0)
+    }
+
+    /// Banks the experience and applies the levels it bought, as opening the skills
+    /// menu does.
+    @discardableResult
+    private func earn(_ runtime: PlayerLevelRuntime, _ amount: Float) -> PlayerLevelUpReport {
+        runtime.award(characterExperience: amount)
+        return runtime.applyEarnedLevels()
+    }
+
     /// Crossing the threshold raises the level, grants one perk point and owes
     /// one attribute pick, and carries the surplus.
     @Test func crossingTheThresholdLevelsAndCarries() {
         let (runtime, _) = self.runtime()
 
-        let report = runtime.award(characterExperience: 130)
+        let report = earn(runtime, 130)
 
         #expect(report.previousLevel == 1)
         #expect(report.level == 2)
@@ -79,13 +102,13 @@ struct PlayerLevelRuntimeTests {
     @Test func experienceCarriesAcrossSeveralAwards() {
         let (runtime, _) = self.runtime()
 
-        runtime.award(characterExperience: 80)
-        runtime.award(characterExperience: 80)
+        earn(runtime, 80)
+        earn(runtime, 80)
 
         #expect(runtime.level == 2)
         #expect(runtime.state.experience == 60)
 
-        runtime.award(characterExperience: 65)
+        earn(runtime, 65)
 
         #expect(runtime.level == 3)
         #expect(runtime.state.experience == 0)
@@ -98,7 +121,7 @@ struct PlayerLevelRuntimeTests {
     @Test func oneAwardMayBuySeveralLevels() {
         let (runtime, _) = self.runtime()
 
-        let report = runtime.award(characterExperience: 400)
+        let report = earn(runtime, 400)
 
         #expect(report.levelsGained == 3)
         #expect(report.level == 4)
@@ -111,7 +134,7 @@ struct PlayerLevelRuntimeTests {
     /// does.
     @Test func anAttributePickRaisesTheChosenValue() {
         let (runtime, _) = self.runtime()
-        runtime.award(characterExperience: 100)
+        earn(runtime, 100)
         runtime.values.damage(.health, by: 40, on: .player)
 
         let result = runtime.chooseAttribute(.health)
@@ -138,7 +161,7 @@ struct PlayerLevelRuntimeTests {
     /// the ten stamina, and a health pick does not.
     @Test func aStaminaPickAlsoRaisesCarryWeight() {
         let (runtime, _) = self.runtime()
-        runtime.award(characterExperience: 400)
+        earn(runtime, 400)
 
         runtime.chooseAttribute(.stamina)
 
@@ -191,7 +214,7 @@ struct PlayerLevelRuntimeTests {
 
         #expect(source.level == 1)
 
-        runtime.award(characterExperience: 400)
+        earn(runtime, 400)
 
         #expect(source.level == 4)
         #expect(runtime.level == 4)

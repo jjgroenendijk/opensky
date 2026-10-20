@@ -103,7 +103,7 @@ extension PapyrusWorldRuntime {
     }
 
     /// Enqueues the fragment functions `quest` attaches to `stage`, in table order,
-    /// only for `logEntry` when given. A missing instance counts as
+    /// only for the stage items in `logEntries` when given. A missing instance counts as
     /// `missingQuestFragmentInstance`; an undefined function as `undefinedEventFunction`.
     /// - Returns: events enqueued.
     @discardableResult
@@ -111,17 +111,19 @@ extension PapyrusWorldRuntime {
         of quest: Quest,
         stage: UInt16,
         key: ReferenceKey,
-        logEntry: Int32? = nil
+        logEntries: Set<Int32>? = nil
     ) -> Int {
         if hasDeferredWork(forQuest: key) {
             deferUntilScriptsLoad(quest: key) { [weak self] in
-                self?.queueQuestFragments(of: quest, stage: stage, key: key, logEntry: logEntry)
+                self?.queueQuestFragments(
+                    of: quest, stage: stage, key: key, logEntries: logEntries
+                )
             }
             return 0
         }
         var queued = 0
         for fragment in quest.fragments where fragment.stageIndex == stage
-            && logEntry.map({ $0 == fragment.logEntryIndex }) ?? true
+            && logEntries.map({ $0.contains(fragment.logEntryIndex) }) ?? true
         {
             let target = PapyrusInstanceKey(
                 reference: key, scriptName: fragment.scriptName

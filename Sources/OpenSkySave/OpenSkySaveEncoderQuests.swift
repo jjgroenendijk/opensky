@@ -49,6 +49,9 @@ nonisolated extension OpenSkySaveEncoder {
         if state.isCompleted {
             flags |= OpenSkySaveFormat.QuestFlag.completed
         }
+        if state.isFailed {
+            flags |= OpenSkySaveFormat.QuestFlag.failed
+        }
         writer.writeUInt8(flags)
         writer.writeUInt32(UInt32(clamping: state.stagesReached.count))
         for stage in state.stagesReached {

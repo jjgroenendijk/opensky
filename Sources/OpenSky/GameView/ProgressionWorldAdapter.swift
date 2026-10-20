@@ -147,13 +147,25 @@ extension ProgressionWorldAdapter: ProgressionWorld {
         var heavy = 0
         var light = 0
         for item in equipment.equipped(on: holder) {
+            let parts = Self.armouredParts(of: item, in: items)
             switch items.armorType(item) {
-            case .heavy: heavy += 1
-            case .light: light += 1
+            case .heavy: heavy += parts
+            case .light: light += parts
             case .clothing, nil: continue
             }
         }
-        return WornArmorProfile(heavyPieces: heavy, lightPieces: light)
+        return WornArmorProfile(heavyParts: heavy, lightParts: light)
+    }
+
+    /// The body slots `item` covers for the armour roll: a shield and a piece worth
+    /// nothing count none, and the torso counts twice.
+    static func armouredParts(of item: FormID, in items: ItemDefinitionStore) -> Int {
+        guard
+            let slots = items.armor[item.rawValue]?.bodyTemplate?.slots,
+            !slots.contains(.shield),
+            (items.definition(item)?.value ?? 0) > 0
+        else { return 0 }
+        return slots.rawValue.nonzeroBitCount + (slots.contains(.body) ? 1 : 0)
     }
 
     func conditionContext() -> ConditionContext {

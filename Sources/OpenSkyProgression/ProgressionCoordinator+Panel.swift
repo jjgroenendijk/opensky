@@ -59,6 +59,13 @@ extension ProgressionCoordinator {
         ))
     }
 
+    /// What opening the skills menu does to the level, for the panel.
+    @discardableResult
+    public func applyBankedLevels() -> ProgressionActionOutcome {
+        guard let report = applyEarnedLevels() else { return .unavailable }
+        return record(.levelsApplied(report))
+    }
+
     @discardableResult
     public func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
         switch chooseAttribute(kind) {

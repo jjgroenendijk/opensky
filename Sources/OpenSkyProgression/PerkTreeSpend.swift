@@ -1,8 +1,9 @@
 // Spending a perk point. `PerkRuntime` grants whatever it is told; this layer
 // enforces the player's own spend: not owned, playable, previous rank owned
 // (`NNAM`), tree parent owned (`PerkTreeIndex`, checked at the chain head), and the
-// perk's `CTDA` run. Vanilla states parents both as `HasPerk` and as tree lines, but
-// not always, so both are checked. See docs/engine/character-leveling.md.
+// perk's `CTDA` run, where an unknown function holds. Vanilla states parents both as
+// `HasPerk` and as tree lines, but not always, so both are checked. See
+// docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyConditions
@@ -103,9 +104,9 @@ public struct PerkTreeSpendValidator {
         return nil
     }
 
-    /// Whether the perk's own condition run holds. An empty run holds. An unknown
-    /// function answers false, so a perk gated on something unimplemented stays
-    /// unbuyable rather than free.
+    /// Whether the perk's own condition run holds. An empty run holds. A function
+    /// OpenSky does not know holds, because the game answers every function and a
+    /// mod's perk must not lock forever (docs/engine/perks.md).
     private func passesRecordConditions(
         _ record: ResolvedPerk,
         on holder: ActorValueHolder,
@@ -119,6 +120,7 @@ public struct PerkTreeSpendValidator {
         context.subject = holder.key
         context.target = holder.key
         var evaluator = ConditionEvaluator(context: context, registry: conditionRegistry)
+        evaluator.unknownFunctionsHold = true
         return evaluator.evaluate(record.record.conditions).isTrue
     }
 }

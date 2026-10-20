@@ -144,8 +144,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// unit test can drive the runtime without loading a plugin: with no
     /// resolver every actor baseline is `fallback`.
     public let resolver: ActorValueResolver?
-    /// Race whose starting attributes the player uses. Nil until character
-    /// generation exists, which is why `playerValues` has a fallback at all.
+    /// Race whose starting attributes the player uses when the race menu chose none.
+    /// Nil reads the `Player` record's race.
     public let playerRace: FormID?
     /// Baseline handed to a subject nothing can be derived for: the player
     /// before chargen, a summon, an NPC_ whose chain will not walk.
@@ -153,6 +153,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Where the player's own level is published. The same reference the resolver
     /// reads for `PC Level Mult` scaling, so the two cannot disagree.
     public let playerLevel: PlayerLevelSource
+    /// The vanilla `Player` NPC_ record.
+    static let playerRecord = FormID(0x7)
 
     public init(
         resolver: ActorValueResolver? = nil,
@@ -176,7 +178,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     public func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
         switch subject {
         case .player:
-            playerBaseline()
+            playerBaseline(race: nil)
         case let .actor(base):
             actorBaseline(base: base)
         case .generated:
@@ -184,12 +186,20 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         }
     }
 
-    // MARK: - Private
+    /// The race the player's baseline derives from: `chosen` (the race menu's), else the
+    /// configured race, else the `Player` record's race.
+    public func playerRace(chosen: FormID?) -> FormID? {
+        chosen.flatMap { $0.rawValue == 0 ? nil : $0 } ?? playerRace ?? resolver?.templates
+            .actors[Self.playerRecord.rawValue]?.race
+    }
 
-    private func playerBaseline() -> ActorValueBaseline {
+    /// The player's baseline for the race `chosen` in the race menu. The race's `DATA`
+    /// skill bonuses add to the skill floor, so a Nord starts with One-Handed 20.
+    public func playerBaseline(race chosen: FormID?) -> ActorValueBaseline {
+        let raceID = playerRace(chosen: chosen)
         guard
             let resolver,
-            let race = playerRace.flatMap({ resolver.races[$0.rawValue] })
+            let race = raceID.flatMap({ resolver.races[$0.rawValue] })
         else {
             return fallback.atLevel(playerLevel.level)
         }
@@ -209,7 +219,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             // no class spread, which is exactly the level-1 unclassed actor the
             // player is before chargen exists.
             general: ActorValueDerivation.generalBaseValues(
-                inputs: ActorValueInputs(race: race.stats)
+                inputs: ActorValueInputs(race: race.stats),
+                settings: resolver.settings
             ),
             // The player's level is the character level, not a derived one:
             // nothing in the records describes the player, and the number a
@@ -217,7 +228,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             // `GetLevel` reports for them.
             level: playerLevel.level,
             isChild: race.flags.contains(.child),
-            race: playerRace
+            race: raceID
         )
         baseline.raceKeywords = race.details.keywords
         return baseline

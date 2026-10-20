@@ -111,6 +111,22 @@ public final class CrimeReporter: CrimeReporting {
         record(event(.murder, victim: victim, by: actor))
     }
 
+    /// A failed pickpocket: the target noticed, so it is witnessed, and it costs the
+    /// `CRVA` pickpocket price (<https://en.uesp.net/wiki/Skyrim:Pickpocket>).
+    @discardableResult
+    public func reportPickpocket(
+        of victim: ReferenceKey,
+        by actor: ReferenceKey = .player
+    ) -> CrimeOutcome {
+        let base = event(.theft, victim: victim, by: actor)
+        var caught = CrimeEvent(
+            kind: .theft, perpetrator: actor, victim: victim,
+            crimeFaction: base.crimeFaction, cell: base.cell, witnessed: true
+        )
+        caught.isPickpocket = true
+        return recordAsIs(caught)
+    }
+
     /// Reports being somewhere an owner has not let this actor be.
     ///
     /// The cell is named rather than derived from the actor, because the caller
@@ -135,7 +151,11 @@ public final class CrimeReporter: CrimeReporting {
 
     /// `ASSU` for every assault, `ADCR` when the crime cost gold.
     private func record(_ event: CrimeEvent) -> CrimeOutcome {
-        let outcome = runtime.reportWitnessed(event)
+        recordAsIs(event.witnessed(by: runtime.witnesses))
+    }
+
+    private func recordAsIs(_ event: CrimeEvent) -> CrimeOutcome {
+        let outcome = runtime.report(event)
         if event.kind == .assault, let victim = event.victim {
             storyEvents?.reportStoryEvent(.assault(
                 attacker: event.perpetrator, victim: victim, location: nil
@@ -150,7 +170,7 @@ public final class CrimeReporter: CrimeReporting {
                 victim: event.victim,
                 crimeFaction: faction,
                 gold: outcome.gold,
-                crime: event.kind.storyCrimeType
+                crime: event.isPickpocket ? .pickpocket : event.kind.storyCrimeType
             ))
         }
         return outcome
