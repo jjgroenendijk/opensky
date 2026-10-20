@@ -34,6 +34,7 @@ public enum CrimeFixture {
     public enum Links {
         public static let evidenceChest: UInt32 = 0x700
         public static let jailMarker: UInt32 = 0x701
+        public static let belongingsChest: UInt32 = 0x702
     }
 
     /// The `DOBJ` record's own FormID.
@@ -80,6 +81,7 @@ public enum CrimeFixture {
                 flags: Flags.tracksCrime | Flags.canBeOwner,
                 links: FactionFixture.link("JAIL", Links.jailMarker)
                     + FactionFixture.link("STOL", Links.evidenceChest)
+                    + FactionFixture.link("PLCN", Links.belongingsChest)
             ),
             faction(
                 Factions.tolerant,

@@ -21,7 +21,7 @@ extension InventoryCoordinator {
             layout: Self.layout(of: definition, items: items),
             name: name(of: item),
             kind: Self.kind(of: definition, items: items),
-            value: definition.value,
+            value: items.gameValue(of: item),
             weight: definition.weight,
             damage: items.weapons[item.rawValue].map { Int($0.damage) },
             // DNAM holds the rating times 100.

@@ -38,7 +38,7 @@ struct CrimeCoreTests {
         let hostility = CrimeCore.guardHostility(
             ledger: runtime.ledger(), factions: store, resisted: [Self.hold]
         )
-        #expect(hostility.bounties == [Self.hold: 1500])
+        #expect(hostility.bounties.mapValues(\.gold) == [Self.hold: 1500])
         #expect(hostility.crimeValues[Self.hold] != nil)
         #expect(hostility.guardFaction == CrimeFixture.key(CrimeFixture.Factions.guards))
         #expect(hostility.resisted == [Self.hold])

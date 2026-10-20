@@ -6,4 +6,8 @@ nonisolated public enum CrimeCommand: Equatable, Sendable {
     case showNotice(String)
     /// The guards' hostility from the player's bounties, for the faction derivation.
     case applyGuardHostility(GuardCrimeHostility)
+    /// A crime stat on the journal's Stats page, such as "Times Jailed".
+    case incrementStat(String, by: Int32)
+    /// Raises a stat to `value` when it is lower, such as "Largest Bounty".
+    case raiseStat(String, to: Int32)
 }

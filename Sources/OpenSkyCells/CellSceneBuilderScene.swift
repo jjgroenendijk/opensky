@@ -213,6 +213,18 @@ nonisolated extension CellSceneBuilder {
         return bounds
     }
 
+    /// The CELL's own identity, trespass flags, and encounter zone.
+    nonisolated static func applyCellRecord(
+        _ found: FoundCell, geometry: CellGeometryBuild, to scene: inout CellScene
+    ) {
+        scene.cellFormID = FormID(found.formID)
+        scene.trespass = CellTrespassFlags(
+            isPublicArea: found.cell.flags.contains(.publicArea),
+            isOffLimits: found.cell.isOffLimits
+        )
+        scene.encounterZone = encounterZone(of: found, in: geometry)
+    }
+
     /// A cell without its own `XEZN` takes the worldspace's encounter zone.
     nonisolated static func encounterZone(of found: FoundCell, in geometry: CellGeometryBuild)
         -> FormID?
@@ -282,8 +294,7 @@ nonisolated extension CellSceneBuilder {
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )
-        scene.cellFormID = FormID(found.formID)
-        scene.encounterZone = Self.encounterZone(of: found, in: geometry)
+        Self.applyCellRecord(found, geometry: geometry, to: &scene)
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         scene.sequenceDoors = doors.map(\.door)

@@ -17,6 +17,7 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
     private(set) var changeCount = 0
     private(set) var reconciled: [ReferenceKey] = []
     private(set) var wornArmorReads: [ReferenceKey] = []
+    private(set) var questStages: [QuestStageSet] = []
 
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
         key == .player ? .player : residents[key]
@@ -32,6 +33,10 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
 
     func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey> {
         holder.key == .player ? effectPerks : []
+    }
+
+    func setPerkQuestStage(_ stage: UInt16, quest: FormID, fromPlugin plugin: String) {
+        questStages.append(QuestStageSet(stage: stage, quest: quest, plugin: plugin))
     }
 
     func reconcileAbilities(on holder: ActorValueHolder, perks _: PerkRuntime) {
@@ -69,4 +74,11 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
         paid.append(amount)
         return true
     }
+}
+
+/// One quest stage a perk set.
+struct QuestStageSet {
+    let stage: UInt16
+    let quest: FormID
+    let plugin: String
 }

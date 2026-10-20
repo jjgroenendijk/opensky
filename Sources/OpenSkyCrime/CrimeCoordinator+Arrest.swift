@@ -20,7 +20,8 @@ extension CrimeCoordinator: CrimeArrestSession {
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
         guard let arrest = crimeArrest() else { return nil }
-        let evidence = evidenceHolder(of: faction, arrest: arrest)
+        let owed = arrest.crime.ledger().entry(for: faction)
+        let evidence = arrest.evidenceChest(of: faction).map(chestHolder)
         let result: Result<ArrestSettlement, ArrestRefusal> = switch outcome {
         case let .pay(removeStolen, goToJail):
             Result { () throws(ArrestRefusal) in
@@ -35,7 +36,7 @@ extension CrimeCoordinator: CrimeArrestSession {
         case let .success(settlement):
             showBountyNotice(gold: settlement.bounty, added: false, faction: faction)
             reportArrest(settlement)
-            serve(settlement)
+            serve(settlement, owed: owed)
         case let .failure(refusal):
             lastGuard = .arrestRefused(faction: factionName(faction), refusal)
         }
@@ -49,9 +50,9 @@ extension CrimeCoordinator: CrimeArrestSession {
     }
 
     /// The resident chest when it is streamed in, so its own `CNTO` baseline
-    /// is kept, and a baseline-free holder under the same key otherwise.
-    private func evidenceHolder(of faction: ReferenceKey, arrest: CrimeArrest) -> InventoryHolder? {
-        guard let key = arrest.evidenceChest(of: faction) else { return nil }
+    /// is kept, and a baseline-free holder under the same key otherwise. Every
+    /// `STOL` and `PLCN` chest in `Skyrim.esm` authors no `CNTO`.
+    func chestHolder(_ key: ReferenceKey) -> InventoryHolder {
         if let placed = world.references?.referenceEntry(key: key)?.placedReference {
             return InventoryHolder(
                 key: key,
@@ -59,28 +60,44 @@ extension CrimeCoordinator: CrimeArrestSession {
                 cell: world.references?.cellLocation(of: key)
             )
         }
-        return arrest.unresidentEvidence(of: faction)
+        return InventoryHolder(key: key, owner: .generated)
     }
 
-    /// The sentence on the clock, the player at the release marker when it is
-    /// resident, and the guards stood down. A marker that is not resident is
-    /// left alone: there is no cross-cell teleport yet.
-    private func serve(_ settlement: ArrestSettlement) {
+    /// The guards stood down, and the player either in the jail cell or, without
+    /// a cell to enter, through the sentence at once and on the release marker.
+    private func serve(_ settlement: ArrestSettlement, owed: CrimeLedgerEntry?) {
         // Before the sentence passes: the cooldown counts from the arrest.
         let now = world.gameSeconds ?? 0
         lastSentenceDays = settlement.sentenceDays
-        if settlement.sentenceDays > 0 {
+        countArrest(settlement)
+        let jailed = imprison(settlement, owed: owed)
+        if settlement.sentenceDays > 0, !jailed {
             world.passGameTime(days: settlement.sentenceDays)
+            pendingCommands.append(.incrementStat(
+                "Days Jailed",
+                by: Int32(settlement.sentenceDays)
+            ))
         }
-        let moved = settlement.releaseMarker.map { world.movePlayer(toMarker: $0) }
-            ?? false
+        let moved = jailed
+            || settlement.releaseMarker.map { world.movePlayer(toMarker: $0) } ?? false
         guards.forgive(settlement.faction)
         if case let .confront(guardKey, faction, _) = guards.active, faction == settlement.faction {
             guards.end(settled: true, now: now)
             world.resumePackage(for: guardKey)
         }
         refreshGuardHostility()
-        lastGuard = .settled(settlement, faction: factionName(settlement.faction), moved: moved)
+        lastGuard = jailed
+            ? .jailed(days: settlement.sentenceDays, faction: factionName(settlement.faction))
+            : .settled(settlement, faction: factionName(settlement.faction), moved: moved)
+    }
+
+    private func countArrest(_ settlement: ArrestSettlement) {
+        if settlement.goldPaid > 0 {
+            pendingCommands.append(.incrementStat("Fines Paid", by: settlement.goldPaid))
+        }
+        if settlement.sentenceDays > 0 {
+            pendingCommands.append(.incrementStat("Times Jailed", by: 1))
+        }
     }
 
     /// `ARRT`, and `JAIL` when the player serves time. The location is left for

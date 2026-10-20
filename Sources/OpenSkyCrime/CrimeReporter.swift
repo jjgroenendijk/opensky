@@ -23,6 +23,10 @@ public final class CrimeReporter: CrimeReporting {
     public weak var storyEvents: (any StoryEventReporting)?
     /// The crime faction and the gold, each time a crime by the player costs gold.
     public var onPlayerBounty: ((ReferenceKey, Int32) -> Void)?
+    /// Each crime that cost gold, with who saw it, so the report can wait for a guard.
+    public var onCrimeCharged: ((CrimeEvent, CrimeOutcome, [ReferenceKey]) -> Void)?
+    /// Each crime recorded, seen or not, for the journal's crime stats.
+    public var onCrimeRecorded: ((CrimeEvent, CrimeOutcome) -> Void)?
 
     public init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
         self.runtime = runtime
@@ -156,6 +160,7 @@ public final class CrimeReporter: CrimeReporting {
 
     private func recordAsIs(_ event: CrimeEvent) -> CrimeOutcome {
         let outcome = runtime.report(event)
+        onCrimeRecorded?(event, outcome)
         if event.kind == .assault, let victim = event.victim {
             storyEvents?.reportStoryEvent(.assault(
                 attacker: event.perpetrator, victim: victim, location: nil
@@ -165,6 +170,10 @@ public final class CrimeReporter: CrimeReporting {
             if event.perpetrator == .player {
                 onPlayerBounty?(faction, outcome.gold)
             }
+            let witnesses = event.isPickpocket
+                ? event.victim.map { [$0] } ?? []
+                : runtime.witnesses.witnesses(of: event.perpetrator)
+            onCrimeCharged?(event, outcome, witnesses)
             storyEvents?.reportStoryEvent(.crimeGold(
                 criminal: event.perpetrator,
                 victim: event.victim,
@@ -185,7 +194,7 @@ public final class CrimeReporter: CrimeReporting {
     ) -> CrimeEvent {
         let cell = world?.crimeCell(of: reference)
         let unitValue = world?.crimeItemValue(of: item) ?? 0
-        return CrimeEvent(
+        var event = CrimeEvent(
             kind: .theft,
             perpetrator: actor,
             victim: owner.map(\.key),
@@ -193,6 +202,8 @@ public final class CrimeReporter: CrimeReporting {
             cell: cell,
             stolenValue: unitValue * Int64(max(0, count))
         )
+        event.stolenCount = max(0, count)
+        return event
     }
 
     /// An event against one actor, located by where that actor stands.

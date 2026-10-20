@@ -112,18 +112,6 @@ struct CrimeCoordinatorTests {
         #expect(coordinator.killStatus(of: Self.victim, by: Self.guardKey) == .notMurder)
     }
 
-    @Test func trespassIsNoticedOnceOnArrival() throws {
-        let world = FakeCrimeSessionWorld()
-        world.cellOwners[Self.shop] = RecordOwnership(owner: FormID(CrimeFixture.Factions.hold))
-        let coordinator = try Self.coordinator(world)
-        coordinator.advanceTrespass()
-        let charged = coordinator.lastCrime.text
-        coordinator.advanceTrespass()
-
-        #expect(charged.hasPrefix("Trespass:"))
-        #expect(coordinator.lastCrime.text == charged)
-    }
-
     @Test func aDetectingGuardWithNoDialogueIsHeldOffAndResumed() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
@@ -141,7 +129,7 @@ struct CrimeCoordinatorTests {
         #expect(world.spokenTo == [Self.guardKey])
         #expect(world.resumed == [Self.guardKey])
         #expect(coordinator.lastGuard.text.hasPrefix("Guard could not open"))
-        #expect(Self.hostility(commands)?.bounties == [Self.hold: 100])
+        #expect(Self.hostility(commands)?.bounties.mapValues(\.gold) == [Self.hold: 100])
     }
 
     @Test func aFarGuardPursuesAndRepathsOnlyWhenThePlayerMoves() throws {
@@ -171,7 +159,8 @@ struct CrimeCoordinatorTests {
         coordinator.bountyFactionSelection = Self.hold
         coordinator.modifySelectedBounty(by: 1500, violent: true)
         #expect(coordinator.crimeGold(of: Self.hold) == 1500)
-        #expect(Self.hostility(coordinator.takeCommands())?.bounties == [Self.hold: 1500])
+        #expect(Self.hostility(coordinator.takeCommands())?.bounties
+            .mapValues(\.gold) == [Self.hold: 1500])
 
         let text = coordinator.clearSelectedBounty().text
         #expect(text == "Cleared 1500 gold owed to CrimeFactionHold.")

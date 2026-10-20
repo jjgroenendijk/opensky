@@ -25,6 +25,8 @@ nonisolated public enum LockActionOutcome: Equatable, Sendable {
     case pickBroke
     case stoppedPicking
     case picked(name: String?)
+    /// Someone saw an owned lock picked.
+    case caughtPicking(bounty: Int32)
 }
 
 nonisolated extension LockTexts {
@@ -45,7 +47,8 @@ nonisolated extension LockTexts {
         case let .unlockedWithKey(name): "Unlocked \(name) with its key."
         case let .refused(name, difficulty): "\(name) is locked (\(self.name(of: difficulty)))."
         case let .lockChanged(name, locked): "\(locked ? "Locked" : "Unlocked") \(name)."
-        case .picking, .pickRefused, .notice, .pickBroke, .stoppedPicking, .picked:
+        case .picking, .pickRefused, .notice, .pickBroke, .stoppedPicking, .picked,
+             .caughtPicking:
             pickingText(for: outcome)
         }
     }
@@ -58,6 +61,7 @@ nonisolated extension LockTexts {
         case .pickBroke: "A lockpick broke."
         case .stoppedPicking: "Stopped picking."
         case let .picked(name): "Picked \(name ?? "the lock")."
+        case let .caughtPicking(bounty): "Seen picking an owned lock; bounty \(bounty)."
         default: ""
         }
     }

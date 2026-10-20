@@ -341,4 +341,19 @@ struct SkillAdvancementRuntimeTests {
         #expect(runtime.increment(skill: Self.block, on: .player) == nil)
         #expect(runtime.level(ofSkill: Self.block, on: .player) == 100)
     }
+
+    // MARK: - Jail
+
+    @Test func jailClearsTheSkillsNearestTheirNextLevelFirst() {
+        var (runtime, _) = runtime()
+        let player = runtime.player
+        runtime.advance(skill: Self.block, byUse: 1, on: player)
+        runtime.advance(skill: Self.heavyArmor, byUse: 0.1, on: player)
+
+        let cleared = runtime.clearProgress(ofSkills: 1, on: player)
+
+        #expect(cleared == [Self.block])
+        #expect(runtime.experience(forSkill: Self.block, on: player) == 0)
+        #expect(runtime.experience(forSkill: Self.heavyArmor, on: player) > 0)
+    }
 }

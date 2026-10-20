@@ -44,9 +44,22 @@ extension LockCoordinator {
             }
             sessionExperience += report(uses: settings.brokenUses, action: .lockpickBroken)
             lastAction = .pickBroke
+            if let bounty = reportCrime(), bounty > 0 {
+                // UESP: a pick broken while seen closes the window and resets the lock.
+                if var current = session {
+                    _ = current.cancel()
+                    session = current
+                }
+                finish(opened: false, keyRewarded: false)
+                lastAction = .caughtPicking(bounty: bounty)
+            }
             return []
         case .opened:
-            return open()
+            let commands = open()
+            if let bounty = reportCrime(), bounty > 0 {
+                lastAction = .caughtPicking(bounty: bounty)
+            }
+            return commands
         case .outOfPicks:
             finish(opened: false, keyRewarded: false)
             lastAction = .notice(.outOfLockpicks)
@@ -68,9 +81,22 @@ extension LockCoordinator {
         if let items {
             storyEvents?.reportStoryEvent(.lockPick(actor: items.player.key, lock: target.key))
         }
+        world.countLockPicked()
         finish(opened: true, keyRewarded: rewarded)
         lastAction = .picked(name: sessionTarget?.interaction.name)
         return commands
+    }
+
+    /// A seen pick of an owned lock is a crime, unless the crime chance roll says the
+    /// player was not noticed. UESP "Skyrim:Lockpicking": opening the window is no
+    /// crime, a success or a broken pick is.
+    private func reportCrime() -> Int32? {
+        guard let target = sessionLock, target.perks.crimeChance > 0 else { return nil }
+        guard
+            target.perks.crimeChance >= 1 || random.uniform(in: 0 ... 1) < target.perks
+                .crimeChance
+        else { return nil }
+        return world.reportLockpickingCrime(on: target.key)
     }
 
     /// `Mod Lockpicking Key Reward Chance` in percent. Wax Key sets 100.

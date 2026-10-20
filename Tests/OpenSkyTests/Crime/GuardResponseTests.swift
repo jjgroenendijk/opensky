@@ -69,23 +69,40 @@ struct GuardResponseTests {
         #expect(GuardRecognition.policedFaction(of: guardProfile(), guardFaction: nil) == nil)
     }
 
+    private func row(_ nonViolent: Int32, violent: Int32 = 0) -> CrimeLedgerEntry {
+        CrimeLedgerEntry(faction: hold, nonViolentGold: nonViolent, violentGold: violent)
+    }
+
+    /// The line past which the vanilla settings fight: `iAttackOnSightViolent`.
+    private let line = CrimeSettings.vanilla.attackOnSightViolent
+
     // MARK: - Policy
 
     @Test func arrestFactionsConfrontAndAttackOnSightFactionsFightPastTheLine() throws {
         let arresting = try values(arrest: true, attackOnSight: false)
         let attacking = try values(arrest: true, attackOnSight: true)
         let lenient = try values(arrest: false, attackOnSight: false)
-        let line = CrimeResponsePolicy.attackOnSightGold
 
-        #expect(CrimeResponsePolicy.response(bounty: 0, values: arresting) == .none)
-        #expect(CrimeResponsePolicy.response(bounty: 40, values: nil) == .none)
-        #expect(CrimeResponsePolicy.response(bounty: 40, values: lenient) == .none)
-        #expect(CrimeResponsePolicy.response(bounty: line, values: arresting)
+        #expect(line == 2999)
+        #expect(CrimeResponsePolicy.response(row(0), values: arresting) == .none)
+        #expect(CrimeResponsePolicy.response(nil, values: arresting) == .none)
+        #expect(CrimeResponsePolicy.response(row(40), values: nil) == .none)
+        // Without Arrest, any bounty is fought.
+        #expect(CrimeResponsePolicy
+            .response(row(40), values: lenient) == .attackOnSight(bounty: 40))
+        #expect(CrimeResponsePolicy.response(row(0, violent: line + 1), values: arresting)
+            == .confront(bounty: line + 1))
+        #expect(CrimeResponsePolicy.response(row(0, violent: line), values: attacking)
             == .confront(bounty: line))
-        #expect(CrimeResponsePolicy.response(bounty: line - 1, values: attacking)
-            == .confront(bounty: line - 1))
-        #expect(CrimeResponsePolicy.response(bounty: line, values: attacking)
-            == .attackOnSight(bounty: line))
+        #expect(CrimeResponsePolicy.response(row(0, violent: line + 1), values: attacking)
+            == .attackOnSight(bounty: line + 1))
+        // Non-violent gold never fights at the vanilla 0, however high.
+        #expect(CrimeResponsePolicy.response(row(50000), values: attacking)
+            == .confront(bounty: 50000))
+        var strict = CrimeSettings.vanilla
+        strict.attackOnSightNonViolent = 500
+        #expect(CrimeResponsePolicy.response(row(501), values: attacking, settings: strict)
+            == .attackOnSight(bounty: 501))
     }
 
     // MARK: - Hostility
@@ -93,10 +110,12 @@ struct GuardResponseTests {
     @Test func guardsTurnHostileOnlyPastTheLineOrAfterResistance() throws {
         let player = ActorSocialProfile(key: .player)
         let attacking = try values(arrest: true, attackOnSight: true)
-        func hostility(bounty: Int32, resisted: Set<ReferenceKey> = []) -> ActorReaction? {
+        func hostility(
+            bounty: Int32, violent: Int32 = 0, resisted: Set<ReferenceKey> = []
+        ) -> ActorReaction? {
             GuardCrimeHostility(
                 guardFaction: guardFaction,
-                bounties: [hold: bounty],
+                bounties: [hold: row(bounty, violent: violent)],
                 crimeValues: [hold: attacking],
                 resisted: resisted
             ).crimeReaction(of: guardProfile(), toward: player)
@@ -104,14 +123,15 @@ struct GuardResponseTests {
 
         #expect(hostility(bounty: 40) == nil)
         #expect(hostility(bounty: 40, resisted: [hold]) == .enemy)
-        #expect(hostility(bounty: CrimeResponsePolicy.attackOnSightGold) == .enemy)
+        #expect(hostility(bounty: 0, violent: line + 1) == .enemy)
+        #expect(hostility(bounty: 0, violent: line) == nil)
         #expect(hostility(bounty: 0, resisted: [hold]) == nil)
     }
 
     @Test func nonGuardsAndOtherTargetsGetNoOpinionFromCrime() throws {
         let term = try GuardCrimeHostility(
             guardFaction: guardFaction,
-            bounties: [hold: 5000],
+            bounties: [hold: row(5000)],
             crimeValues: [hold: values(arrest: true, attackOnSight: true)],
             resisted: [hold]
         )
@@ -124,7 +144,7 @@ struct GuardResponseTests {
         var derivation = try HostilityFixture.derivation()
         derivation.crime = try GuardCrimeHostility(
             guardFaction: guardFaction,
-            bounties: [hold: 40],
+            bounties: [hold: row(40)],
             crimeValues: [hold: values(arrest: true, attackOnSight: false)],
             resisted: [hold]
         )
@@ -152,13 +172,15 @@ struct GuardResponseTests {
         _ state: GuardResponseState,
         _ guards: [GuardCandidate],
         bounty: Int32 = 40,
+        violent: Int32 = 0,
         attackOnSight: Bool = false,
         now: Double = 0
     ) throws -> [GuardAction] {
         let crva = try values(arrest: true, attackOnSight: attackOnSight)
+        let entry = row(bounty, violent: violent)
         return state.actions(
             guards: guards,
-            bounty: { _ in bounty },
+            bounty: { _ in entry },
             values: { _ in crva },
             now: now
         )
@@ -185,7 +207,7 @@ struct GuardResponseTests {
         #expect(try actions(state, [candidate(0x801, distance: 10)], bounty: 0).isEmpty)
         #expect(try actions(
             state, [candidate(0x801, distance: 10)],
-            bounty: CrimeResponsePolicy.attackOnSightGold, attackOnSight: true
+            bounty: 0, violent: line + 1, attackOnSight: true
         ).isEmpty)
     }
 

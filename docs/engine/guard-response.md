@@ -30,12 +30,18 @@ The crime faction's `CRVA` has two flags. The Creation Kit's Faction page: "Atta
 checked, guards will attack the player on sight if crime gold is high enough" and "Arrest: If
 checked, guards will try to arrest the player".
 
-No open source says how high "high enough" is. No `iCrimeGold*` setting prices it on the local
-install. UESP's talk pages only say "Normally a 1000 bounty will cause them to arrest you on
-sight". So OpenSky uses 1000, the vanilla murder bounty. This is OpenSky's choice.
+The line is a pair of settings. The Creation Kit's Category:Settings page gives
+`iAttackOnSightViolent` 2999 and `iAttackOnSightNonViolent` 0; the install sets neither, so the
+wiki's values apply.
 
-- Below 1000, guards of an arresting faction confront the player.
-- At 1000 or more, guards of an attack-on-sight faction fight.
+- Guards of an attack-on-sight faction fight once the violent half of the bounty is over 2999.
+- The non-violent line is 0 in vanilla. OpenSky reads 0 as "no line": a theft bounty alone never
+  makes guards fight. This is OpenSky's reading. Reading 0 as "any bounty" would make every guard
+  fight over one stolen spoon, which the game does not do.
+- Otherwise guards of an arresting faction confront the player.
+- A faction without Arrest fights over any bounty. The Creation Kit tutorial "Creating a Custom
+  Crime Faction": "If you don't check Arrest, guards will always try to kill the player on sight
+  if there is a bounty".
 
 ## Hostility
 
@@ -69,12 +75,13 @@ loaded save starts every encounter again from the ledger.
 | Ending | Effect |
 | --- | --- |
 | Pay (`PlayerPayCrimeGold`) | Refused unless the player's gold covers the bounty. Takes the gold and clears both halves of the bounty. The counts stay. By default it takes every stolen stack into the faction's `STOL` evidence chest, still stolen. `abGoToJail` moves the player to the `JAIL` marker |
-| Jail (`SendPlayerToJail`) | Takes stolen goods, clears the bounty, moves the game clock forward by the sentence, and moves the player to the `JAIL` marker |
+| Jail (`SendPlayerToJail`) | Takes stolen goods, clears the bounty, and sends the player to the jail cell ([jail](/engine/jail.md)). A faction with no cell to enter passes the sentence at once and moves the player to the `JAIL` marker |
 
 The Creation Kit describes the `JAIL` marker as "the spot where you'd be if you served time and
 were released from jail".
 
-The sentence is one day per 100 gold, at least one and at most seven. This is OpenSky's reading of
+The sentence is one day per `iCrimeDaysInPrisonMod` gold (100), at least one and at most
+`iCrimeMaxNumberofDaysinJail` (7). This is OpenSky's reading of
 UESP: "The maximum sentence is seven days ... You will serve the maximum sentence for any bounty
 700 or higher". UESP is also the source for taking the goods: "If you choose to pay off your
 bounty, all stolen items in your possession will be seized and put into the jail's evidence
@@ -123,6 +130,7 @@ Each signature is quoted from the Creation Kit wiki:
 | `Faction.CanPayCrimeGold` | `bool Function CanPayCrimeGold() native` |
 | `Faction.PlayerPayCrimeGold` | `Function PlayerPayCrimeGold(bool abRemoveStolenItems = True, bool abGoToJail = True) native` |
 | `Faction.SendPlayerToJail` | `Function SendPlayerToJail(bool abRemoveInventory = True, bool abRealJail = True) native`. Both parameters are accepted and not read yet |
+| `Game.ServeTime` | `Function ServeTime() native global`. Serves the sentence; fails when the player is not in jail |
 
 A refused payment, or a sentence with no bounty, fails with a reason, so the script log says why
 nothing happened.
@@ -134,13 +142,7 @@ scripted alarm fail silently because the witness faced away. The wiki also notes
 
 ## Not done yet
 
-- Serving a sentence happens at once. The clock moves and the bounty clears, but there is no jail
-  cell, no belongings chest (`PLCN`), no jail outfit, no escape, and no loss of skill progress. The
-  gear round trip ends where it started, so skipping it changes no end state. The skill loss does,
-  and waits for a jail cell.
-- The player moves to the jail marker only when it is loaded. There is no teleport to another cell
-  yet, so the player stays in place and the readout says so.
-- Guards do not warn about trespass.
+- A faction with no cell to enter moves the player to the jail marker only when it is loaded.
 - Guards do not arrest NPCs. A guard does not walk over to answer another actor's report. Only
   guards who see the player themselves act.
 

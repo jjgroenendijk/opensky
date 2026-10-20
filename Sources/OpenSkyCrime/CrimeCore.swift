@@ -66,7 +66,8 @@ nonisolated public enum CrimeCore {
     public static func bountyReadouts(
         _ ledger: CrimeLedgerState,
         factions store: FactionStore,
-        texts: CrimeTexts = .vanilla
+        texts: CrimeTexts = .vanilla,
+        settings: CrimeSettings = .vanilla
     ) -> [BountyReadout] {
         ledger.entries.filter { !$0.isEmpty }.map { entry in
             BountyReadout(
@@ -75,8 +76,9 @@ nonisolated public enum CrimeCore {
                 violentGold: entry.violentGold,
                 counts: entry.counts,
                 response: CrimeResponsePolicy.response(
-                    bounty: entry.gold,
-                    values: store.faction(key: entry.faction)?.faction.crimeValues
+                    entry,
+                    values: store.faction(key: entry.faction)?.faction.crimeValues,
+                    settings: settings
                 ),
                 crimeTexts: texts
             )
@@ -100,20 +102,25 @@ nonisolated public enum CrimeCore {
     public static func guardHostility(
         ledger: CrimeLedgerState,
         factions store: FactionStore,
-        resisted: Set<ReferenceKey>
+        resisted: Set<ReferenceKey>,
+        settings: CrimeSettings = .vanilla,
+        actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
     ) -> GuardCrimeHostility {
-        var bounties: [ReferenceKey: Int32] = [:]
+        var bounties: [ReferenceKey: CrimeLedgerEntry] = [:]
         var values: [ReferenceKey: Faction.CrimeValues] = [:]
         for entry in ledger.entries where entry.gold > 0 {
-            bounties[entry.faction] = entry.gold
+            bounties[entry.faction] = entry
             values[entry.faction] = store.faction(key: entry.faction)?.faction.crimeValues
         }
-        return GuardCrimeHostility(
+        var hostility = GuardCrimeHostility(
             guardFaction: store.guardFactionKey,
             bounties: bounties,
             crimeValues: values,
-            resisted: resisted
+            resisted: resisted,
+            settings: settings
         )
+        hostility.actorCriminals = actorCriminals
+        return hostility
     }
 
     public static func guardKey(of action: GuardAction) -> ReferenceKey {

@@ -155,12 +155,17 @@ final class AIWorldAdapter {
         let renderer = gameSession.renderer
         let settings = provider.detectionSettings
         let perception = game.perception
-        perception.wire(settings: settings)
+        perception.wire(
+            settings: settings,
+            stealthPoints: StealthPointSettings.resolve(store: provider.gameSettings)
+        )
         gameSession.worldTick.register(.perception) { [weak self] delta in
             guard let self else { return }
             run(game.perception.advance(by: delta))
             // After the pass, so a trespass is judged against this frame's detection.
-            game.crime.advanceTrespass()
+            game.crime.advanceTrespass(by: Double(delta))
+            game.crime.advanceReports()
+            game.crime.advanceJail()
             // After the trespass, so the guards see a bounty charged this frame.
             game.crimeWorld.run(game.crime.advanceGuardResponse())
         }

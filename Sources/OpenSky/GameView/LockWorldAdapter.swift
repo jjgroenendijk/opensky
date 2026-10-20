@@ -5,6 +5,7 @@
 import OpenSkyActors
 import OpenSkyCells
 import OpenSkyConditions
+import OpenSkyCrime
 import OpenSkyDiagnostics
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -14,14 +15,17 @@ import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 /// What `LockWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LockWorldHost: AnyObject {
     var actorValues: ActorValueCoordinator { get }
+    var crime: CrimeCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var inventoryWorld: InventoryWorldAdapter { get }
@@ -30,6 +34,7 @@ protocol LockWorldHost: AnyObject {
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
 }
 
 /// Answers `LockWorld` from the session systems `game` owns.
@@ -96,6 +101,14 @@ extension LockWorldAdapter: LockWorld {
 
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
         game.progression.reportSkillUse(use)
+    }
+
+    func reportLockpickingCrime(on lock: ReferenceKey) -> Int32 {
+        game.crime.reportLockpicking(of: lock)
+    }
+
+    func countLockPicked() {
+        game.worldState.incrementMiscStat("Locks Picked")
     }
 
     func lockables() -> [PlacedInteraction] {

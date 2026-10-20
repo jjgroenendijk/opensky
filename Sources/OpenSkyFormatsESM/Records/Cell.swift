@@ -24,6 +24,8 @@ nonisolated public struct Cell: Sendable {
         public static let interior = Flags(rawValue: 0x0001)
         public static let hasWater = Flags(rawValue: 0x0002)
         public static let noLODWater = Flags(rawValue: 0x0008)
+        /// Trespass is no crime here: an inn or a shop.
+        public static let publicArea = Flags(rawValue: 0x0020)
         public static let showSky = Flags(rawValue: 0x0080)
         public static let useSkyLighting = Flags(rawValue: 0x0100)
     }
@@ -42,6 +44,8 @@ nonisolated public struct Cell: Sendable {
     /// FULL — interior cells only in vanilla.
     public let name: LString?
     public let flags: Flags
+    /// Record-header flag `0x20000`: trespass here costs a bounty at once.
+    public let isOffLimits: Bool
     /// Present on exterior cells, nil on interiors.
     public let grid: Grid?
     /// XCLW. nil = inherit WRLD DNAM default water height, also for FLT_MAX.
@@ -99,6 +103,7 @@ nonisolated public struct Cell: Sendable {
         editorID = fields.editorID
         name = fields.name
         flags = fields.flags
+        isOffLimits = record.flags.rawValue & 0x0002_0000 != 0
         grid = fields.grid
         waterHeight = fields.waterHeight
         waterType = fields.waterType

@@ -154,6 +154,15 @@ public final class ProgressionCoordinator {
         return report != nil
     }
 
+    /// A served sentence: the skills nearest their next level lose their progress.
+    /// - Returns: the skills that lost progress.
+    @discardableResult
+    public func loseJailProgress(days: Int, maximumDays: Int) -> [Int32] {
+        guard let runtime = skills else { return [] }
+        let count = SkillAdvancementRuntime.jailSkillCount(days: days, maximumDays: maximumDays)
+        return runtime.clearProgress(ofSkills: count, on: runtime.player)
+    }
+
     // MARK: - Spending
 
     @discardableResult

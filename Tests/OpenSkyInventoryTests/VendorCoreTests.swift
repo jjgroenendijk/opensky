@@ -102,4 +102,30 @@ struct VendorCoreTests {
         let pluginless = try VendorCore(resolver: VendorRulesTests.resolver(), itemPluginName: nil)
         #expect(pluginless.keywords([FormID(IDs.key)]).isEmpty)
     }
+
+    @Test func unavailabilityChecksHoursThenPlaceThenConditions() throws {
+        let vendor = try Self.pawnbroker()
+        #expect(VendorCore.unavailability(
+            of: vendor, hour: 3, allowsPlace: true, failingCondition: nil
+        ) == .closed(VendorHours(start: 8, end: 20)))
+        #expect(VendorCore.unavailability(
+            of: vendor, hour: 12, allowsPlace: false, failingCondition: "GetIsID"
+        ) == .awayFromPlace)
+        #expect(VendorCore.unavailability(
+            of: vendor, hour: 12, allowsPlace: true, failingCondition: "GetIsID"
+        ) == .conditionFailed("GetIsID"))
+        #expect(VendorCore.unavailability(
+            of: vendor, hour: nil, allowsPlace: true, failingCondition: nil
+        ) == nil)
+    }
+
+    @Test func theFirstTradingVendorWinsOverAClosedOne() throws {
+        let open = try Self.pawnbroker()
+        let closed = Self.chestless(open)
+        let picked = VendorCore.trading([closed, open]) { $0 == closed ? .closed(nil) : nil }
+        #expect(picked?.vendor == open && picked?.refusal == nil)
+        let refused = VendorCore.trading([closed]) { _ in .closed(nil) }
+        #expect(refused?.vendor == closed && refused?.refusal == .closed(nil))
+        #expect(VendorUnavailability.closed(nil).text.contains("no trading hours"))
+    }
 }

@@ -18,6 +18,26 @@ nonisolated public struct VendorStock: Equatable, Sendable {
     }
 }
 
+/// Why a vendor is not trading right now.
+nonisolated public enum VendorUnavailability: Equatable, Sendable {
+    /// Outside the `VENV` hours, or a faction with no hours at all.
+    case closed(VendorHours?)
+    /// The merchant is not where its `PLVD` rule says it trades.
+    case awayFromPlace
+    /// A vendor condition failed; the function's name.
+    case conditionFailed(String)
+
+    public var text: String {
+        switch self {
+        case let .closed(hours?) where hours.start != hours.end:
+            "closed, open \(hours.start) to \(hours.end)"
+        case .closed: "offers no services: no trading hours"
+        case .awayFromPlace: "not at the place it trades"
+        case let .conditionFailed(function): "vendor condition \(function) fails"
+        }
+    }
+}
+
 /// The vendor rules over loaded plugin data. It reads no world state.
 nonisolated public struct VendorCore: Sendable {
     public let resolver: VendorResolver
@@ -40,6 +60,39 @@ nonisolated public struct VendorCore: Sendable {
             return nil
         }
         return resolver.vendor(faction: resolved)
+    }
+
+    /// Why `vendor` does not trade now, or nil when it does. A nil `hour` (no clock)
+    /// leaves the hours ungated; `allowsPlace` and `failingCondition` come from the world.
+    public static func unavailability(
+        of vendor: Vendor,
+        hour: Float?,
+        allowsPlace: Bool,
+        failingCondition: String?
+    ) -> VendorUnavailability? {
+        if let hour, !vendor.isOpen(atHour: hour) {
+            return .closed(vendor.hours)
+        }
+        if !allowsPlace {
+            return .awayFromPlace
+        }
+        return failingCondition.map(VendorUnavailability.conditionFailed)
+    }
+
+    /// The first vendor that trades now, else the first one with why it does not.
+    public static func trading(
+        _ vendors: [Vendor],
+        unavailability: (Vendor) -> VendorUnavailability?
+    ) -> (vendor: Vendor, refusal: VendorUnavailability?)? {
+        var first: (Vendor, VendorUnavailability?)?
+        for vendor in vendors {
+            let refusal = unavailability(vendor)
+            if refusal == nil {
+                return (vendor, nil)
+            }
+            first = first ?? (vendor, refusal)
+        }
+        return first
     }
 
     /// The faction's merchant chest when it names one, and the actor's own

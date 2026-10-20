@@ -28,6 +28,9 @@ public enum PerkRuntimeFixture {
         /// A Guardian Stone shape: One-Handed experience times 1.2, through
         /// `Mod Skill Use` and `EPMagic_IsAdvanceSkill`.
         public static let skillUse: UInt32 = 0x0108
+        /// Investor's shape: a quest effect that sets stage 10 of `investQuest`.
+        public static let questStage: UInt32 = 0x0109
+        public static let investQuest: UInt32 = 0x0400
     }
 
     /// AVIF identities. One record, carrying the One-Handed perk tree the
@@ -219,6 +222,14 @@ public enum PerkRuntimeFixture {
                     editorID: "AbilityPerk",
                     name: "Stoneskin",
                     effects: [PerkFixture.abilityEffect(spell: Spell.stoneskin)]
+                )
+            ),
+            PerkFixture.perkRecord(
+                formID: Perk.questStage,
+                fields: PerkFixture.fields(
+                    editorID: "QuestStagePerk",
+                    name: "Investor",
+                    effects: [PerkFixture.questEffect(quest: Perk.investQuest, stage: 10)]
                 )
             ),
             PerkFixture.perkRecord(

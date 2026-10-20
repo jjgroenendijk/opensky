@@ -36,6 +36,23 @@ who takes a 1-weight item from a target with Pickpocket 15 that has not seen the
 An equipped item can only be taken with a perk that passes the Can Pickpocket Equipped Item entry
 point.
 
+The menu shows the chance for the selected item, "To steal" on the target's side and "To place"
+on the player's.
+
+## Perks
+
+| Entry point | Index | Vanilla perk | Effect |
+| --- | --- | --- | --- |
+| Mod Pickpocket Chance | 61 | `Pickpocket00` to `Pickpocket80`, `Cutpurse`, `ExtraPockets` | Scales the chance, with the item bound as the condition subject |
+| Can Pickpocket Equipped Item | 56 | `Misdirection`, `PerfectTouch` | Allows taking an equipped item, under item conditions |
+| Should Apply Placed Item | 84 | `Poisoned` | A poison placed in the target's pockets is applied to them instead of left there |
+
+## Placing items
+
+A player item can be placed into the target's pockets. The chance uses the same formula. A
+success moves the item; a failure is caught like a failed take. With Poisoned, a placed poison
+lands on the target as if it hit them, and the poison is used up.
+
 ## Success and failure
 
 A roll from 0 to 100 below the chance succeeds:

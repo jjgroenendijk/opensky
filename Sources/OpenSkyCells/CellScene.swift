@@ -55,6 +55,8 @@ nonisolated public struct CellScene: Sendable {
     public let worldspace: FormID?
     /// The CELL's load-order FormID. Nil for a scene built without a cell record.
     public var cellFormID: FormID?
+    /// The CELL's Public Area and Off Limits flags, which trespass reads.
+    public var trespass = CellTrespassFlags()
 
     /// Where a reference in this scene stands, for `GetInCell` and `GetInWorldspace`.
     public var referenceCell: ReferenceCell? {

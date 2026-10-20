@@ -56,6 +56,10 @@ final class ContainerMenuController {
     var pickpocketTarget: ReferenceKey?
     /// Whether a take from the open pockets succeeded, so "Pockets Picked" counts once.
     var pickedOpenPockets = false
+    /// The count slider a stack of more than five opens before it moves.
+    var quantity: InventoryQuantityPrompt?
+    /// A sale the merchant cannot pay in full, waiting for accept or cancel.
+    var pendingSale: (entry: InventoryMenuEntry, count: Int32)?
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
@@ -105,6 +109,8 @@ final class ContainerMenuController {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        quantity = nil
+        pendingSale = nil
         game.menuMode.dismiss(activeIdentifier)
         movie.stop()
     }
@@ -218,6 +224,10 @@ final class ContainerMenuController {
 
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
+        if quantity != nil || pendingSale != nil {
+            routePrompt(event)
+            return
+        }
         switch event {
         case .button(.accept):
             activateSelection()

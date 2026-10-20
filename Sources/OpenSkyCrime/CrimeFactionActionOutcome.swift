@@ -16,6 +16,10 @@ nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {
     )
     /// The guard pass's own line after resisting.
     case resisted(String)
+    case notInJail
+    case restocked(chests: Int)
+    /// The jail's own line after serving.
+    case served(String)
     case crosshairNotOnActor
     case subjectSelected(String?)
     case joined(actor: String, faction: String, rank: Int8, changed: Bool)
@@ -41,6 +45,10 @@ nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {
                 + "\(CrimeFactionReadout.responseText(response))."
                 + (tick.map { " Guard tick: \($0)" }
                     ?? " No world is running, so no guard tick ran.")
+        case .notInJail: "The player is not in jail."
+        case let .restocked(chests):
+            "\(chests) merchant chest(s) restock the next time their vendor trades."
+        case let .served(line): line
         case .resisted, .crosshairNotOnActor, .subjectSelected, .joined, .left, .barter:
             membershipText
         }

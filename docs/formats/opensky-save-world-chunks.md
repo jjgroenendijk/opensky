@@ -249,8 +249,15 @@ a float64, in the cell order of `RDLT`. A cell with no entry has no reset pendin
 ([cell reset](/engine/cell-reset.md)). A cell entry that reads as absent, or an hour that is
 not finite, is dropped. Minimum size: 13 bytes per entry.
 
-`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, `SCRS`, and `CRST` merge into the `RDLT` deltas
-by key, like the other component chunks.
+## VRST: vendor restocks
+
+One list for the player: per merchant chest, its key, then the game hour it was last stocked
+as a float64, in key order. A chest with no entry counts as stocked at the next barter
+([vendor factions](/engine/vendor-factions.md)). An hour that is not finite is dropped.
+Minimum size: 15 bytes per entry.
+
+`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, `SCRS`, `CRST`, and `VRST` merge into the
+`RDLT` deltas by key, like the other component chunks.
 
 ## PIDN: player identity
 

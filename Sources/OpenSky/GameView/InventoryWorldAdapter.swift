@@ -67,6 +67,8 @@ final class InventoryWorldAdapter {
     func wireWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
         guard let baselines = provider.inventoryBaselines
         else { return }
+        baselines.items.enchantedValueSettings = EnchantedValueSettings
+            .resolve(store: provider.gameSettings)
         let coordinator = game.inventory
         coordinator.wire(
             inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
@@ -104,6 +106,10 @@ final class InventoryWorldAdapter {
                 return
             }
             if event.target.interaction.isBed {
+                // An inmate's bed serves the sentence (UESP "Skyrim:Crime").
+                if game.crime.serveSentence() {
+                    return
+                }
                 game.menuScreens.sleepWait.open(
                     sleeping: true, bed: event.target.interaction.reference
                 )
@@ -152,7 +158,9 @@ final class InventoryWorldAdapter {
             resolver: VendorResolver(factions: factionStore, formLists: formLists),
             itemPluginName: provider.magicItemPluginName
         )
-        game.inventory.vendors = VendorCoordinator(core: core, world: self)
+        let vendors = VendorCoordinator(core: core, world: self)
+        vendors.restockSettings = VendorRestockSettings.resolve(store: provider.gameSettings)
+        game.inventory.vendors = vendors
     }
 }
 
@@ -220,6 +228,10 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     func detectsPlayer(_ observer: ReferenceKey) -> Bool {
         game.perception.runtime?.state(observer: observer, target: .player).state == .detected
+    }
+
+    func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool {
+        game.magic.applyPlacedPoison(poison, by: .player, on: target) != nil
     }
 
     var playerCarryCapacity: Float? {

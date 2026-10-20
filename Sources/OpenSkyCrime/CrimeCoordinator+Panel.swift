@@ -16,10 +16,11 @@ extension CrimeCoordinator {
         let options = factionOptions(store)
         let subject = subjectReadout(panel.subject ?? .player, store: store)
         let override = panel.vendorOverride
-        return CrimeFactionControlSnapshot(
+        var snapshot = CrimeFactionControlSnapshot(
             isAvailable: true,
             bounties: CrimeCore.bountyReadouts(
-                reporter.runtime.ledger(), factions: store, texts: crimeTexts
+                reporter.runtime.ledger(), factions: store, texts: crimeTexts,
+                settings: reporter.runtime.settings
             ),
             currentCrimeFaction: crimeFaction(in: world.currentCellLocation)
                 .map { CrimeCore.factionOption($0, in: store) },
@@ -40,6 +41,29 @@ extension CrimeCoordinator {
             lastGuardText: lastGuard.text,
             lastActionText: panel.lastAction.text
         )
+        snapshot.statusText = statusText
+        return snapshot
+    }
+
+    /// One line each for the jail stay, the trespass watch, and the open reports.
+    private var statusText: String {
+        var lines: [String] = []
+        if let stay = jailStay {
+            lines.append("In the \(factionName(stay.faction)) jail: \(stay.sentenceDays) days"
+                + (stay.cell == nil ? ", on the way to the cell" : ""))
+        }
+        if isPlayerTrespassing {
+            lines.append("Trespassing: \(trespassWatch.warnings) warning(s)"
+                + (trespassWatch.isCharged ? ", charged" : ""))
+        }
+        if !pendingReports.isEmpty {
+            let gold = pendingReports.map { Int($0.gold) }.reduce(0, +)
+            lines
+                .append(
+                    "Open reports: \(pendingReports.count), \(gold) gold a dead witness takes back"
+                )
+        }
+        return lines.joined(separator: "\n")
     }
 
     /// The selection, or the first crime faction, matching the popup.

@@ -57,3 +57,14 @@ struct TrainingTests {
         #expect(leveled.trainingSessions == 0)
     }
 }
+
+@MainActor
+struct JailSkillLossTests {
+    @Test func aLongerSentenceClearsMoreSkillsAndTheLongestClearsAll() {
+        #expect(SkillAdvancementRuntime.jailSkillCount(days: 0, maximumDays: 7) == 0)
+        #expect(SkillAdvancementRuntime.jailSkillCount(days: 1, maximumDays: 7) == 3)
+        #expect(SkillAdvancementRuntime.jailSkillCount(days: 3, maximumDays: 7) == 8)
+        #expect(SkillAdvancementRuntime.jailSkillCount(days: 7, maximumDays: 7) == 18)
+        #expect(SkillAdvancementRuntime.jailSkillCount(days: 9, maximumDays: 7) == 18)
+    }
+}

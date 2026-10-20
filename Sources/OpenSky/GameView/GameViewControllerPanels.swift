@@ -275,6 +275,16 @@ extension GameViewController: CrimeFactionControlProviding {
     }
 
     @discardableResult
+    func restockAllVendors() -> CrimeFactionActionOutcome {
+        crime.restockAllVendors()
+    }
+
+    @discardableResult
+    func serveJailSentence() -> CrimeFactionActionOutcome {
+        ranCrimeCommands(crime.serveJailSentence())
+    }
+
+    @discardableResult
     func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         crime.selectSocialSubjectFromCrosshair()
     }

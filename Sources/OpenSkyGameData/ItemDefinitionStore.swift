@@ -149,6 +149,9 @@ nonisolated public final class ItemDefinitionStore {
     /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
 
+    /// The weapon terms of `enchantedValue(of:settings:)`, from the load order.
+    public var enchantedValueSettings = EnchantedValueSettings.vanilla
+
     /// Potions brewed this session, which no plugin holds (`registerCreated(_:)`).
     public private(set) var createdPotions: Set<UInt32> = []
 

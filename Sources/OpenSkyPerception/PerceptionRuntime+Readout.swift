@@ -34,7 +34,11 @@ extension PerceptionRuntime {
             droppedPairCount: droppedPairCount,
             lineOfSightQueryCount: lineOfSightQueryCount,
             stepCount: stepCount,
-            targets: targets.map { DetectionTargetReadout(name: $0.name, traits: $0.traits) }
+            targets: targets.map {
+                DetectionTargetReadout(
+                    name: $0.name, traits: $0.traits, stealthPoints: pools[$0.key]
+                )
+            }
         )
     }
 }

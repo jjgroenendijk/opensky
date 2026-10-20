@@ -18,6 +18,8 @@ import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
+import OpenSkyProgression
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -36,6 +38,8 @@ protocol CrimeWorldHost: AnyObject {
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
+    var progression: ProgressionCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
@@ -63,7 +67,10 @@ final class CrimeWorldAdapter {
         game.crime.crimeTexts = CrimeTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.crime.wire(
-            runtime: CrimeRuntime(store: game.worldState, factions: factionStore),
+            runtime: CrimeRuntime(
+                store: game.worldState, factions: factionStore,
+                settings: CrimeSettings.resolve(store: provider.gameSettings)
+            ),
             locations: provider.locationStore,
             pluginName: pluginName
         )
@@ -75,6 +82,15 @@ final class CrimeWorldAdapter {
             switch command {
             case let .showNotice(text): game.hud.showNotification(text)
             case let .applyGuardHostility(hostility): game.factions.setCrimeHostility(hostility)
+            case let .incrementStat(name, amount): game.worldState.incrementMiscStat(
+                    name,
+                    by: amount
+                )
+            case let .raiseStat(name, value):
+                let current = game.worldState.miscStats.value(name)
+                if value > current {
+                    game.worldState.incrementMiscStat(name, by: value - current)
+                }
             }
         }
     }
@@ -106,6 +122,10 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         game.streamer?.residentScene(at: location)?.owner
     }
 
+    func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
+        game.streamer?.residentScene(at: location)?.trespass ?? CellTrespassFlags()
+    }
+
     func cellLocationLink(at location: CellSceneLocation) -> (link: FormID, plugin: String)? {
         guard
             let scene = game.streamer?.residentScene(at: location),
@@ -116,7 +136,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     func itemValue(of item: FormID) -> Int64 {
-        Int64(game.inventory.runtime?.inventory.baselines.items.definition(item)?.value ?? 0)
+        Int64(game.inventory.runtime?.inventory.baselines.items.gameValue(of: item) ?? 0)
     }
 
     func actorName(_ key: ReferenceKey) -> String {
@@ -216,6 +236,46 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         game.gameSession?.locomotion.status.feetPosition
     }
 
+    func restockAllVendors() -> Int {
+        game.inventory.vendors?.makeAllRestocksDue() ?? 0
+    }
+
+    func enterJail(through marker: ReferenceKey) -> Bool {
+        guard
+            let streamer = game.streamer,
+            let door = streamer.pluginPlacement(of: marker)?.entry
+            ?? streamer.referenceEntry(key: marker),
+            door.placedReference?.teleportDestination != nil
+        else { return false }
+        return streamer.requestDoorTransition(from: door.formID)
+    }
+
+    /// The cell's PrisonMarker is the `XTEL` target of the outside one.
+    func leaveJail(to marker: ReferenceKey) -> Bool {
+        guard
+            let streamer = game.streamer,
+            let outside = streamer.pluginPlacement(of: marker)?.entry,
+            let inside = outside.placedReference?.teleportDestination?.door
+        else { return false }
+        return streamer.requestDoorTransition(from: inside)
+    }
+
+    func wearJailOutfit(_ outfit: FormID) -> [FormID] {
+        guard
+            let pieces = game.inventory.runtime?.inventory.baselines.outfitStacks(outfit),
+            game.inventoryWorld.setOutfit(outfit, on: .player)
+        else { return [] }
+        return pieces.map(\.item)
+    }
+
+    func loseJailProgress(days: Int, maximumDays: Int) -> Int {
+        game.progression.loseJailProgress(days: days, maximumDays: maximumDays).count
+    }
+
+    var lockpickItem: FormID? {
+        game.inventory.locks.lockpickItem
+    }
+
     func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard
             let renderer = game.renderer, let gameSession = game.gameSession,
@@ -235,6 +295,16 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         return game.actorWorld.combatActors()
             .filter { !$0.isDead && detecting.contains($0.key) }
             .map { CrimeObserver(key: $0.key, feet: $0.feet) }
+    }
+
+    func livingActors() -> [CrimeObserver] {
+        game.actorWorld.combatActors()
+            .filter { !$0.isDead }
+            .map { CrimeObserver(key: $0.key, feet: $0.feet) }
+    }
+
+    func isDead(_ key: ReferenceKey) -> Bool {
+        game.worldState.component(ActorDeathState.self, for: key)?.isDead == true
     }
 
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> String? {

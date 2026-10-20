@@ -63,8 +63,9 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
         else { return notePanel(.notAGuard(name)) }
         let bounty = runtime.crimeGold(of: faction)
         let response = CrimeResponsePolicy.response(
-            bounty: bounty,
-            values: runtime.factions.faction(key: faction)?.faction.crimeValues
+            runtime.ledger().entry(for: faction),
+            values: runtime.factions.faction(key: faction)?.faction.crimeValues,
+            settings: runtime.settings
         )
         var tick: String?
         if world.gameSeconds != nil {
@@ -83,6 +84,17 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
         guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         resistArrest(with: faction)
         return notePanel(.resisted(lastGuard.text))
+    }
+
+    @discardableResult
+    public func restockAllVendors() -> CrimeFactionActionOutcome {
+        notePanel(.restocked(chests: world.restockAllVendors()))
+    }
+
+    @discardableResult
+    public func serveJailSentence() -> CrimeFactionActionOutcome {
+        guard serveSentence() else { return notePanel(.notInJail) }
+        return notePanel(.served(lastGuard.text))
     }
 
     // MARK: - Subject and memberships

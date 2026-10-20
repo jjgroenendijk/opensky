@@ -35,6 +35,26 @@ struct VendorCoordinatorTests {
         func itemKeywords(of item: FormID) -> [FormID]? {
             keywords[item]
         }
+
+        var placeFacts: VendorPlaceFacts?
+        var failingCondition: String?
+        var totalGameHours: Double?
+        var vendorRestockLedger = VendorRestockLedger()
+        var restocked: [ReferenceKey] = []
+
+        func vendorPlaceFacts(of _: ReferenceKey, for _: VendorPlace) -> VendorPlaceFacts? {
+            placeFacts
+        }
+
+        func failingVendorCondition(
+            _: ConditionList, sourcePlugin _: String, merchant _: ReferenceKey
+        ) -> String? {
+            failingCondition
+        }
+
+        func restockMerchantChest(_ chest: ReferenceKey) {
+            restocked.append(chest)
+        }
     }
 
     private static let merchant = ReferenceKey.plugin(name: "vendors.esm", objectID: 0x900)
@@ -89,5 +109,37 @@ struct VendorCoordinatorTests {
         #expect(coordinator.rules(for: pawnbroker).refusal(for: FormID(0x41))
             == .vendorClosed(opens: 8, closes: 20))
         #expect(coordinator.rules(for: nil).refusal(for: item) == nil)
+    }
+
+    @Test func aClosedVendorRefusesToOpenTheBarter() throws {
+        let world = FakeWorld()
+        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.pawnbroker])
+        world.owners[Self.chest] = .container(base: FormID(0x701))
+        world.hourOfDay = 3
+        let coordinator = try Self.coordinator(world)
+        let name = try #require(coordinator.vendor(of: Self.merchant)).factionName
+        #expect(coordinator.counterparty(for: Self.merchant) == .failure(.notTrading(
+            factionName: name, .closed(VendorHours(start: 8, end: 20))
+        )))
+    }
+
+    @Test func aChestRestocksOnlyAfterTheInterval() throws {
+        let world = FakeWorld()
+        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.pawnbroker])
+        world.owners[Self.chest] = .container(base: FormID(0x701))
+        world.totalGameHours = 100
+        let coordinator = try Self.coordinator(world)
+        _ = coordinator.counterparty(for: Self.merchant)
+        #expect(world.vendorRestockLedger.stockedAt[Self.chest] == 100)
+        world.totalGameHours = 147
+        _ = coordinator.counterparty(for: Self.merchant)
+        #expect(world.restocked.isEmpty)
+        world.totalGameHours = 148
+        _ = coordinator.counterparty(for: Self.merchant)
+        #expect(world.restocked == [Self.chest])
+        #expect(world.vendorRestockLedger.stockedAt[Self.chest] == 148)
+        #expect(coordinator.makeAllRestocksDue() == 1)
+        _ = coordinator.counterparty(for: Self.merchant)
+        #expect(world.restocked.count == 2)
     }
 }

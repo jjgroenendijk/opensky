@@ -141,6 +141,25 @@ struct PerceptionRuntimeTests {
         #expect(emptied.lastKnownPosition == nil)
     }
 
+    @Test func anAggressiveObserverKeepsTheTargetThroughTheAlertWait() {
+        var observer = PerceptionFixture.observer(feet: SIMD3(0, 0, 0))
+        observer.isAggressive = true
+        let world = FakePerceptionWorld(
+            observers: [observer],
+            targets: [PerceptionFixture.target(feet: SIMD3(200, 0, 0))]
+        )
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 120)
+        world.targets = [PerceptionFixture.target(feet: SIMD3(99999, 0, 0), gait: nil)]
+        advance(runtime, steps: 240) // 4 s: the level is gone, the alert wait is not
+        let pair = runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+        #expect(pair.levelState == .unaware)
+        #expect(pair.state == .detected)
+        advance(runtime, steps: 420) // 11 s: the pool refills and the observer searches
+        #expect(runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+            .state == .unaware)
+    }
+
     @Test func theInvestigatePositionLandsWhereTheTargetWasLastSeen() {
         let seenAt = SIMD3<Float>(600, 120, 0)
         let world = FakePerceptionWorld(

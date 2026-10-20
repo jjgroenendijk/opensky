@@ -37,6 +37,19 @@ apply: the sell price is at most `value * 1.00`, and the buy price is at least `
 The same page lists results the code is tested against: a factor of 3.3 at Speech 0, 3.10 at 15,
 and 2 at 100, and a sell factor of 0.322 at 15.
 
+The value is the game value: an enchanted weapon or armour adds its enchantment to the record's
+value. UESP's WEAP and ARMO pages:
+
+```text
+weapon value = value + floor(fEnchantmentPointsMult * EAMT + fEnchantmentEffectPointsMult * cost)
+armour value = value + floor(cost + 0.5)
+```
+
+`fEnchantmentPointsMult` is 0.12 and `fEnchantmentEffectPointsMult` 8. The cost is the
+enchantment's exact calculated cost, or the authored one when it has manual cost. Tempering
+multiplies the result. The inventory, the item card, theft, and pickpocket experience read the
+same value.
+
 Choices on top of the formula:
 
 - Both settings are read from the load order ([game settings](/formats/gmst.md)), so a plugin
@@ -88,6 +101,16 @@ A refusal writes nothing:
 
 A merchant with no gold buys nothing and still sells everything. An item worth 0 still changes
 hands: the gold part of the exchange is skipped, not refused.
+
+## Quantity and selling for less
+
+Moving a stack of more than five opens a quantity prompt: left and right change the count by one,
+up and down by ten, and accept confirms. A smaller stack moves one item. The same prompt places
+items into pockets.
+
+A sale the merchant cannot fully pay for asks first. Confirming sells for all the gold the
+merchant has; cancelling keeps the item. UESP "Skyrim:Merchants": "you'll be given the option to
+sell the item for less gold (or none if the merchant has run out of gold), or back off".
 
 ## The two-pane list
 
@@ -170,9 +193,8 @@ navigation step, and one transaction from each side:
 
 ## Not done yet
 
-- Every transfer and trade moves one item. The vanilla `QuantitySlider` is built but never
-  driven, and neither is the `ShowConfirmMessage` step.
-- There is no "sell for less". A sale the merchant cannot pay for is refused.
+- The quantity and the confirm step are OpenSky's own prompts on the menu, not the vanilla
+  `QuantitySlider` and `ShowConfirmMessage` movie clips.
 - Category changes are made by the engine, as in the inventory menu, for the same measured
   reason.
 

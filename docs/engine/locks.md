@@ -102,6 +102,10 @@ coordinator, so a test can replay a session.
 | Set Lockpick Starting Arc | 63 | `Locksmith` (45) | A fresh pick starts within half of this many degrees of the sweet spot |
 | Make Lockpicks Unbreakable | 65 | `Unbreakable` (1) | Picks never break |
 | Mod Lockpicking Key Reward Chance | 90 | `WaxKey` (100) | Percent chance to receive the key on success |
+| Mod Lockpicking Crime Chance | 86 | `QuickHands` (0) | Scales the chance that a seen pick of an owned lock is reported. 0 means never |
+
+A seen success, or a seen broken pick, on a lock the player may not open is a
+[crime](/engine/crime.md). A reported broken pick closes the menu. A success counts "Locks Picked".
 
 The perk runtime binds the lock as the locked reference, and the condition function
 `GetLockLevel` (65) answers with its level. "Locksmith starts near the sweet spot" is OpenSky's

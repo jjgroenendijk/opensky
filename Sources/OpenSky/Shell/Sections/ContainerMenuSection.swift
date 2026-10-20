@@ -158,6 +158,10 @@ final class ContainerMenuSection: PanelSectionViewController {
     nonisolated static func goldLine(for snapshot: ContainerMenuControlSnapshot) -> String {
         let purses = "Gold: player \(snapshot.playerGold) · "
             + "\(snapshot.containerName ?? "container") \(snapshot.containerGold)"
+        if let chance = snapshot.pickpocketChance {
+            let verb = snapshot.side == .container ? "steal" : "place"
+            return purses + "\nTo \(verb): \(chance)% chance"
+        }
         guard let price = snapshot.selectedPrice else {
             return purses
         }

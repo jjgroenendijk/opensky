@@ -245,6 +245,8 @@ nonisolated public struct InventoryQuantityPrompt: Equatable, Sendable {
     public let item: FormID
     public let name: String
     public let maximum: Int32
+    /// What the count is for: "Drop", "Take", "Store", "Buy", or "Sell".
+    public let verb: String
     /// Starts at the whole stack, as the movie's `ShowQuantityMenu` sets it.
     public private(set) var value: Int32
 
@@ -252,15 +254,18 @@ nonisolated public struct InventoryQuantityPrompt: Equatable, Sendable {
     /// at most this many drops one without asking.
     public static let countLimit: Int32 = 5
 
-    /// The prompt a drop of `count` copies opens, or nil when it drops one at once.
-    public static func asking(item: FormID, name: String, count: Int32) -> Self? {
-        count > countLimit ? Self(item: item, name: name, maximum: count) : nil
+    /// The prompt a move of `count` copies opens, or nil when it moves one at once.
+    public static func asking(
+        item: FormID, name: String, count: Int32, verb: String = "Drop"
+    ) -> Self? {
+        count > countLimit ? Self(item: item, name: name, maximum: count, verb: verb) : nil
     }
 
-    public init(item: FormID, name: String, maximum: Int32) {
+    public init(item: FormID, name: String, maximum: Int32, verb: String = "Drop") {
         self.item = item
         self.name = name
         self.maximum = max(1, maximum)
+        self.verb = verb
         value = self.maximum
     }
 
@@ -270,6 +275,6 @@ nonisolated public struct InventoryQuantityPrompt: Equatable, Sendable {
     }
 
     public var text: String {
-        "Drop how many \(name)? \(value) of \(maximum)"
+        "\(verb) how many \(name)? \(value) of \(maximum)"
     }
 }

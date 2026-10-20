@@ -73,7 +73,7 @@ public struct InventoryRuntime: InventoryAccess {
     /// Total gold value of everything `holder` carries, before barter adjustment.
     public func carriedValue(of holder: InventoryHolder) -> Int64 {
         inventory(of: holder).stacks.reduce(0) { running, stack in
-            let value = baselines.items.definition(stack.item)?.value ?? 0
+            let value = baselines.items.gameValue(of: stack.item)
             return running + Int64(value) * Int64(stack.count)
         }
     }

@@ -29,6 +29,11 @@ public final class PerceptionRuntime {
     public static let pairsPerStep = 8
 
     public let settings: DetectionSettings
+    public let stealthPoints: StealthPointSettings
+    /// Each target's stealth points.
+    public private(set) var pools: [ReferenceKey: StealthPointPool] = [:]
+    /// Pairs whose observer has the target detected through the pool.
+    private var detectedPairs: Set<DetectionPairKey> = []
 
     /// Every tracked pair's state, keyed by the pair.
     public private(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
@@ -63,8 +68,13 @@ public final class PerceptionRuntime {
     /// how much simulated time to charge it.
     private var lastEvaluatedStep: [DetectionPairKey: Int] = [:]
 
-    public init(settings: DetectionSettings, world: (any PerceptionWorld)? = nil) {
+    public init(
+        settings: DetectionSettings,
+        stealthPoints: StealthPointSettings = .vanilla,
+        world: (any PerceptionWorld)? = nil
+    ) {
         self.settings = settings
+        self.stealthPoints = stealthPoints
         self.world = world
     }
 
@@ -80,6 +90,13 @@ public final class PerceptionRuntime {
     public func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {
         pairs
             .filter { $0.key.target == target && $0.value.state == .detected }
+            .map(\.key.observer)
+            .sorted()
+    }
+
+    public func observersWitnessing(_ target: ReferenceKey) -> [ReferenceKey] {
+        pairs
+            .filter { $0.key.target == target && $0.value.levelState == .detected }
             .map(\.key.observer)
             .sorted()
     }
@@ -114,6 +131,8 @@ public final class PerceptionRuntime {
     /// Forgets every tracked pair and every counter.
     public func reset() {
         pairs = [:]
+        pools = [:]
+        detectedPairs = []
         observers = []
         targets = []
         order = []
@@ -175,6 +194,7 @@ public final class PerceptionRuntime {
         let live = Set(order)
         pairs = pairs.filter { live.contains($0.key) }
         lastEvaluatedStep = lastEvaluatedStep.filter { live.contains($0.key) }
+        detectedPairs = detectedPairs.filter { live.contains($0) }
         if cursor >= order.count {
             cursor = 0
         }
@@ -194,6 +214,43 @@ public final class PerceptionRuntime {
             evaluate(key: key, observer: observer, target: target, world: world)
         }
         cursor = (cursor + count) % order.count
+        updateStealthPoints()
+    }
+
+    /// Drains or refills each target's pool from the highest detection value of an
+    /// aggressive observer, then reads those pairs through the pool.
+    private func updateStealthPoints() {
+        detectedPairs = detectedPairs.filter { observerIndex[$0.observer]?.isAggressive == true }
+        for target in targets {
+            let keys = order.filter {
+                $0.target == target.key && observerIndex[$0.observer]?.isAggressive == true
+            }
+            let values = keys.map { pairs[$0]?.breakdown.value ?? 0 }
+            let threshold = stealthPoints.threshold(isSneaking: target.isSneaking)
+            var pool = pools[target.key] ?? StealthPointPool(settings: stealthPoints)
+            pool.advance(
+                highestValue: values.max() ?? 0,
+                overThreshold: values.contains { $0 >= threshold },
+                by: Self.fixedStepSeconds,
+                settings: stealthPoints
+            )
+            pools[target.key] = pool
+            for key in keys {
+                guard var pair = pairs[key] else { continue }
+                let detected = pool.detects(
+                    value: pair.breakdown.value, isSneaking: target.isSneaking,
+                    wasDetected: detectedPairs.contains(key), settings: stealthPoints
+                )
+                if detected {
+                    detectedPairs.insert(key)
+                    pair.state = .detected
+                } else {
+                    detectedPairs.remove(key)
+                    pair.state = pair.levelState == .detected ? .suspicious : pair.levelState
+                }
+                pairs[key] = pair
+            }
+        }
     }
 
     /// One pair, advanced by the simulated time since it was last looked at.

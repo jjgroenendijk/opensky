@@ -161,6 +161,8 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
     public let lastCrimeText: String
     public let lastGuardText: String
     public let lastActionText: String
+    /// The jail stay, the trespass watch, and the open crime reports, or empty.
+    public var statusText = ""
 
     /// The reading with no runtime attached.
     public static let unavailable = CrimeFactionControlSnapshot(
@@ -262,6 +264,14 @@ public protocol CrimeFactionControlProviding: AnyObject {
     /// Refuses arrest with the selected faction, turning its guards hostile.
     @discardableResult
     func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome
+
+    /// Makes every merchant chest restock the next time its vendor trades.
+    @discardableResult
+    func restockAllVendors() -> CrimeFactionActionOutcome
+
+    /// Serves the jail sentence, as sleeping in the cell does.
+    @discardableResult
+    func serveJailSentence() -> CrimeFactionActionOutcome
 
     /// Makes the actor under the crosshair the subject.
     @discardableResult

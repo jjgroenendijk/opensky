@@ -92,7 +92,10 @@ struct BarterVendorRulesTests {
             try honest.session.sell(Items.sword)
         }
 
-        let fence = try shop(vendor: Self.vendor(hours: nil, buysStolen: true))
+        let fence = try shop(vendor: Self.vendor(
+            hours: VendorHours(start: 0, end: 24),
+            buysStolen: true
+        ))
         try fence.session.sell(Items.sword, count: 3)
         #expect(fence.inventory.count(of: Items.sword, in: fence.merchant) == 3)
         #expect(fence.inventory.stolenCount(of: Items.sword, in: fence.merchant) == 0)

@@ -36,6 +36,10 @@ public protocol PapyrusWorldGuardBridge {
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>?
+
+    /// `Game.ServeTime` (<https://ck.uesp.net/wiki/ServeTime_-_Game>). False when the
+    /// player is not in jail, nil for a session with no crime runtime.
+    func serveTime() -> Bool?
 }
 
 extension PapyrusWorldStateBridge {
@@ -64,5 +68,9 @@ extension PapyrusWorldStateBridge {
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
         crimeNatives.arrestSession?()?.settleArrest(with: faction, outcome)
+    }
+
+    public func serveTime() -> Bool? {
+        crimeNatives.arrestSession?()?.serveSentence()
     }
 }

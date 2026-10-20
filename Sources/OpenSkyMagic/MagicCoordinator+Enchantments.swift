@@ -38,26 +38,64 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
             } else {
                 runtime.store.set(left, for: hit.attacker)
             }
-            let scaled = SpellHitApplication.scale(
-                potion.effects, fromPlugin: plugin, ignoresResistance: false,
-                on: target, using: runtime, resistances: .documentedDefaults
-            )
-            let stored = runtime.apply(
-                scaled.entries,
-                fromPlugin: plugin,
-                source: ActiveEffectSource(
-                    kind: .potion, record: runtime.sourceKey(of: spent, fallbackPlugin: plugin)
-                ),
-                caster: hit.attacker,
-                on: target
+            let stored = Self.land(
+                PoisonDose(potion: potion, id: spent, plugin: plugin),
+                caster: hit.attacker, on: target, using: &runtime
             )
             return WeaponPoisonReport(
                 poison: spent,
                 dosesLeft: left.poisons[weapon]?.doses ?? 0,
-                storedCount: stored.count
+                storedCount: stored
             )
         }.flatMap(\.self)
     }
+
+    /// Applies `poison` straight to `target`, as a poison the Poisoned perk lets the
+    /// player place in a pocket. Returns the timed effects stored, or nil.
+    @discardableResult
+    public func applyPlacedPoison(
+        _ poison: FormID, by caster: ReferenceKey, on target: ReferenceKey
+    ) -> Int? {
+        guard
+            let potion = world.inventory?.baselines.items.ingestibles[poison.rawValue],
+            let holder = residentHolders(of: [SpellHitTarget(key: target)])[target]
+        else { return nil }
+        let plugin = pluginName
+        return withEffects { runtime in
+            Self.land(
+                PoisonDose(potion: potion, id: poison, plugin: plugin),
+                caster: caster, on: holder, using: &runtime
+            )
+        }
+    }
+
+    /// A poison's effects on `target`, scaled by its resistances like a hostile spell.
+    private static func land(
+        _ dose: PoisonDose, caster: ReferenceKey,
+        on target: ActorValueHolder, using runtime: inout ActiveEffectRuntime
+    ) -> Int {
+        let (potion, id, plugin) = (dose.potion, dose.id, dose.plugin)
+        let scaled = SpellHitApplication.scale(
+            potion.effects, fromPlugin: plugin, ignoresResistance: false,
+            on: target, using: runtime, resistances: .documentedDefaults
+        )
+        return runtime.apply(
+            scaled.entries,
+            fromPlugin: plugin,
+            source: ActiveEffectSource(
+                kind: .potion, record: runtime.sourceKey(of: id, fallbackPlugin: plugin)
+            ),
+            caster: caster,
+            on: target
+        ).count
+    }
+}
+
+/// One poison and the plugin its effects resolve through.
+private struct PoisonDose {
+    let potion: Ingestible
+    let id: FormID
+    let plugin: String
 }
 
 extension MagicCoordinator {

@@ -96,6 +96,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var locks: [SaveLockEntry] = []
         /// Absent `CRST`: no cell has a departure, so none resets on the next visit.
         public var cellResets: [SaveCellResetLedger] = []
+        public var vendorRestocks: [SaveVendorRestockLedger] = []
         /// Absent `RLOC`: every reference is in its plugin cell.
         public var relocations: [SaveRelocationEntry] = []
         /// Absent `SCNS`: no scene is playing.

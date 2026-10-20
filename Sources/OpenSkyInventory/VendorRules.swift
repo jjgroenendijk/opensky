@@ -1,8 +1,8 @@
-// Faction vendors: which faction makes a merchant, its chest, hours, and what it
-// trades, all per the Vendor tab (<https://ck.uesp.net/wiki/Faction>). "Only Buys
-// Stolen Goods" means "also buys stolen goods" here: every fence faction on this
-// install also authors a keyword list. Hours `0-0` read as always open, and no list
-// means no keyword gate. See docs/engine/vendor-factions.md.
+// Faction vendors: which faction makes a merchant, its chest, hours, place,
+// conditions, and what it trades, all per the Vendor tab
+// (<https://ck.uesp.net/wiki/Faction>). "Only Buys Stolen Goods" means "also buys
+// stolen goods" here: every fence faction on this install also authors a keyword
+// list. No list means no keyword gate. See docs/engine/vendor-factions.md.
 
 import Foundation
 import OpenSkyFactionsInterface
@@ -15,22 +15,26 @@ nonisolated public struct VendorResolver: Sendable {
     public let factions: FactionStore
     public let formLists: FormListStore
 
-    /// The first vendor faction in membership order, or nil. Vendor conditions that
-    /// switch between two factions are not evaluated, so the first is the default.
+    /// The first vendor faction in membership order, or nil.
     public func vendor(memberships: ActorFactionState) -> Vendor? {
-        for membership in memberships.memberships {
+        vendors(memberships: memberships).first
+    }
+
+    /// Every vendor faction in membership order. An actor with two trades as the
+    /// first one whose hours, place, and conditions hold now.
+    public func vendors(memberships: ActorFactionState) -> [Vendor] {
+        memberships.memberships.compactMap { membership in
             guard
                 let resolved = factions.faction(key: membership.faction),
                 resolved.faction.isVendor
-            else { continue }
+            else { return nil }
             return vendor(faction: resolved)
         }
-        return nil
     }
 
     public func vendor(faction resolved: ResolvedFaction) -> Vendor {
         let values = resolved.faction.vendorValues
-        return Vendor(
+        var vendor = Vendor(
             faction: ReferenceKey(resolved: resolved.id),
             factionName: resolved.displayName,
             merchantChest: factions.linkKey(resolved.faction.merchantContainer, of: resolved),
@@ -39,6 +43,18 @@ nonisolated public struct VendorResolver: Sendable {
             negatesList: values?.notSellBuy ?? false,
             buysStolen: values?.onlyBuysStolenItems ?? false
         )
+        vendor.location = resolved.faction.vendorLocation.map { location in
+            VendorLocationRule(
+                place: VendorPlace(
+                    type: location.type,
+                    link: factions.linkKey(FormID(location.value), of: resolved)
+                ),
+                radius: Float(values?.radius ?? 0)
+            )
+        }
+        vendor.conditions = resolved.faction.vendorConditions
+        vendor.sourcePlugin = resolved.sourcePlugin
+        return vendor
     }
 
     /// An item's keywords as the same identities the list resolves to.

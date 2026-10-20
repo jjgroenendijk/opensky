@@ -48,7 +48,11 @@ nonisolated public enum PerceptionCore {
     public static func observers(from candidates: [PerceptionCandidate]) -> [PerceptionObserver] {
         candidates
             .filter { !$0.isDead && ($0.isHostile || $0.isEngaged || $0.hasPackage) }
-            .map(\.observer)
+            .map { candidate in
+                var observer = candidate.observer
+                observer.isAggressive = candidate.isHostile || candidate.isEngaged
+                return observer
+            }
     }
 }
 
@@ -63,8 +67,10 @@ public final class PerceptionCoordinator {
         self.world = world
     }
 
-    public func wire(settings: DetectionSettings) {
-        runtime = PerceptionRuntime(settings: settings, world: self)
+    public func wire(
+        settings: DetectionSettings, stealthPoints: StealthPointSettings = .vanilla
+    ) {
+        runtime = PerceptionRuntime(settings: settings, stealthPoints: stealthPoints, world: self)
     }
 
     /// - Returns: the Sneak skill uses earned by hiding during the steps run.

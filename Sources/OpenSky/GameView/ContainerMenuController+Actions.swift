@@ -92,6 +92,8 @@ extension ContainerMenuController {
             return note("\(game.dialogueWorld.speakerLabel(for: actor)) is not a merchant.")
         case let .failure(.chestNotResident(factionName)):
             return note("\(factionName)'s merchant chest is not streamed in.")
+        case let .failure(.notTrading(factionName, reason)):
+            return note("\(factionName) is not trading: \(reason.text).")
         }
         game.dialogueMenu.close()
         close()
@@ -140,11 +142,20 @@ extension ContainerMenuController {
         return true
     }
 
-    /// A failed take closes the pockets, because the target noticed.
-    private func pickpocket(_ entry: InventoryMenuEntry, from target: InventoryHolder) {
-        let outcome = game.inventory.pickpocket(
-            entry.item, named: entry.name, from: target, roll: Float.random(in: 0 ..< 100)
-        )
+    /// A take from the pocket side, a place from the player side. A failure closes
+    /// the pockets, because the target noticed.
+    private func pickpocket(
+        _ entry: InventoryMenuEntry, count: Int32, side: ContainerMenuModel.Side,
+        target: InventoryHolder
+    ) {
+        let roll = Float.random(in: 0 ..< 100)
+        let outcome = side == .container
+            ? game.inventory.pickpocket(
+                entry.item, count: count, named: entry.name, from: target, roll: roll
+            )
+            : game.inventory.plant(
+                entry.item, count: count, named: entry.name, into: target, roll: roll
+            )
         note(outcome.text)
         let worldState = game.inventoryWorld.game.worldState
         if case .took = outcome {
@@ -161,18 +172,35 @@ extension ContainerMenuController {
 
     // MARK: - Transactions
 
-    /// Take, store, buy or sell, according to the mode and the side.
+    /// Take, store, buy or sell, according to the mode and the side. A stack of
+    /// more than five asks how many first, as the vanilla movies do.
     func activateSelection() {
         guard let entry = model.selectedEntry else {
             note("No row selected.")
             return
         }
+        if
+            let prompt = InventoryQuantityPrompt.asking(
+                item: entry.item, name: entry.name, count: entry.count,
+                verb: pickpocketTarget != nil && model.side == .player ? "Place"
+                    : model.transferLabel
+            )
+        {
+            quantity = prompt
+            note(prompt.text)
+            return
+        }
+        move(entry, count: 1)
+    }
+
+    /// Moves `count` of `entry`. A sale the merchant cannot pay waits for a confirm.
+    func move(_ entry: InventoryMenuEntry, count: Int32, acceptingLess: Bool = false) {
         guard game.inventory.runtime != nil, let container else {
             note(InventoryCore.noRuntimeText)
             return
         }
-        if pickpocketTarget != nil, mode == .container, model.side == .container {
-            pickpocket(entry, from: container)
+        if pickpocketTarget != nil, mode == .container {
+            pickpocket(entry, count: count, side: model.side, target: container)
             refreshModel()
             return
         }
@@ -184,10 +212,17 @@ extension ContainerMenuController {
         }
         do {
             let outcome = try game.inventory.transfer(
-                transfer, item: entry.item, named: entry.name, container: container,
-                vendor: vendor, merchant: merchant
+                transfer, item: entry.item, count: count, named: entry.name,
+                container: container, vendor: vendor, merchant: merchant,
+                acceptingLess: acceptingLess
             )
-            note(outcome.text(texts: game.inventory.tradeTexts))
+            if case .merchantShort = outcome {
+                pendingSale = (entry, count)
+                note(outcome.text(texts: game.inventory.tradeTexts)
+                    + " Accept sells for the merchant's gold; cancel keeps the item.")
+            } else {
+                note(outcome.text(texts: game.inventory.tradeTexts))
+            }
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
         }
@@ -216,6 +251,16 @@ extension ContainerMenuController {
     // MARK: - Readout
 
     var snapshot: ContainerMenuControlSnapshot {
+        var snapshot = baseSnapshot
+        if pickpocketTarget != nil, let container, let entry = model.selectedEntry {
+            snapshot.pickpocketChance = Int(game.inventory.pickpocketChance(
+                of: entry.item, count: 1, from: container
+            ))
+        }
+        return snapshot
+    }
+
+    private var baseSnapshot: ContainerMenuControlSnapshot {
         let runtime = movie.runtime
         let diagnostics = runtime.map(ContainerMenuMovieBridge.diagnostics(runtime:))
         return ContainerMenuControlSnapshot(

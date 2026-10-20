@@ -81,6 +81,8 @@ when it has no `R1`.
 | `ADCR` | A crime costs crime gold | `R1` criminal, `R2` victim, `F1` crime faction, `V1` gold, `V2` crime type |
 | `ARRT` | The player accepts an arrest | `R1` guard, `R2` player, `V1` crime type, always 0 |
 | `JAIL` | The arrest sends the player to jail | `R1` guard, `F1` crime faction, `V1` bounty |
+| `ESJA` | The player leaves the jail cell without serving | `R1` player, `F1` crime faction |
+| `STIJ` | The player serves a sentence | `F1` crime faction, `V1` bounty, `V2` days |
 | `LOCK` | The player picks a lock | `R1` player, `R2` the locked reference |
 | `CAST` | The player casts a spell | `R1` player, `R2` aimed target, `F1` spell |
 | `AIPL` | The player takes, steals, or buys an item | `R1` source container, `F1` item, `V1` acquire type |
@@ -117,11 +119,11 @@ These have vanilla nodes, but OpenSky has no system that does what they describe
 | Code | Event | Why it does not fire |
 | --- | --- | --- |
 | `AFAV` | The player receives a favor | No favor system |
-| `ESJA` | The player escapes jail | Jail time passes at once, so there is no escape |
 | `NVPE` | The player learns a word of power | No shout learning |
 
-`PFIN`, `STIJ`, `INFC`, `CURE`, and `QSTR` exist in the event list, but `Skyrim.esm` has no
-node for them, so firing them would start nothing.
+`PFIN`, `INFC`, `CURE`, and `QSTR` exist in the event list, but `Skyrim.esm` has no node for
+them, so firing them would start nothing. `STIJ` (served time) has no vanilla node either, but it
+fires when a sentence is served, for mods ([jail](/engine/jail.md)).
 
 ## Papyrus events for a started quest
 

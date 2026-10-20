@@ -25,7 +25,7 @@ nonisolated public enum BarterError: Error, Equatable {
     /// The price exceeds what one gold stack can hold, so no amount of gold in
     /// the world could settle it.
     case priceOutOfRange(Int64)
-    /// Outside the vendor faction's `VENV` hours.
+    /// Outside the vendor faction's `VENV` hours, or a vendor with no hours.
     case vendorClosed(opens: UInt16, closes: UInt16)
     /// The vendor's buy/sell list, with its negation, excludes the item.
     case vendorDoesNotTrade(item: FormID)
@@ -51,8 +51,8 @@ nonisolated public struct BarterRules {
     /// Why this vendor will not trade `item` at all, or nil when it will.
     public func refusal(for item: FormID) -> BarterError? {
         guard let vendor else { return nil }
-        if let hour, let hours = vendor.hours, !hours.isOpen(atHour: hour) {
-            return .vendorClosed(opens: hours.start, closes: hours.end)
+        if let hour, !vendor.isOpen(atHour: hour) {
+            return .vendorClosed(opens: vendor.hours?.start ?? 0, closes: vendor.hours?.end ?? 0)
         }
         return vendor.trades(keywords: keywords(item)) ? nil : .vendorDoesNotTrade(item: item)
     }
@@ -124,12 +124,12 @@ public final class BarterSession {
         Int32(clamping: price(of: item, count: 1, from: player, buying: false))
     }
 
-    /// The item's base gold value, or zero when no loaded plugin describes the
-    /// form — the same answer `InventoryRuntime.carriedValue` gives, because
-    /// inventing a value for an unknown form would put a number the data never
-    /// authored into a price. A tempered copy is worth the UESP value multiplier more.
+    /// The item's gold value with its enchantment, or zero when no loaded plugin
+    /// describes the form — the same answer `InventoryRuntime.carriedValue` gives,
+    /// because inventing a value would put a number the data never authored into a
+    /// price. A tempered copy is worth the UESP value multiplier more.
     private func value(of item: FormID, level: Int32 = 0) -> Int32 {
-        let base = inventory.baselines.items.definition(item)?.value ?? 0
+        let base = inventory.baselines.items.gameValue(of: item)
         guard level > 0 else { return base }
         let tempered = (Float(base) * Tempering.valueMultiplier(level: level)).rounded(.down)
         return Int32(clamping: Int(min(tempered, Float(Int32.max))))
@@ -181,11 +181,15 @@ public final class BarterSession {
     }
 
     /// Sells `count` of `item` to the merchant. Honest copies go first. A non-fence
-    /// refuses stolen copies; a fence takes them in honest.
+    /// refuses stolen copies; a fence takes them in honest. `acceptingLess` sells
+    /// for all the merchant's gold when it has less than the price, as the game's
+    /// `sNotEnoughVendorGold` question allows.
     /// - Throws: `BarterError.notCarried`, `BarterError.merchantCannotAfford`, and
     ///   the vendor refusals `BarterRules` names. All write nothing.
     @discardableResult
-    public func sell(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
+    public func sell(
+        _ item: FormID, count: Int32 = 1, acceptingLess: Bool = false
+    ) throws -> BarterTransaction {
         try requirePositive(count)
         if let refusal = rules.refusal(for: item) {
             throw refusal
@@ -198,11 +202,12 @@ public final class BarterSession {
         if let vendor = rules.vendor, stolen > 0, !vendor.buysStolen {
             throw BarterError.vendorRefusesStolen(item: item, stolen: stolen)
         }
-        let price = try wholePrice(price(of: item, count: count, from: player, buying: false))
+        let asked = try wholePrice(price(of: item, count: count, from: player, buying: false))
         let gold = merchantGold
-        guard gold >= price else {
-            throw BarterError.merchantCannotAfford(price: Int64(price), gold: gold)
+        guard gold >= asked || acceptingLess else {
+            throw BarterError.merchantCannotAfford(price: Int64(asked), gold: gold)
         }
+        let price = min(asked, max(0, gold))
         try inventory.exchange(
             giving: (item, count),
             taking: (inventory.goldFormID, price),

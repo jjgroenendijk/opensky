@@ -87,8 +87,8 @@ extension PapyrusNativeFunctions {
 
         // `Function SendPlayerToJail(bool abRemoveInventory = True, bool
         // abRealJail = True) native` (<https://ck.uesp.net/wiki/SendPlayerToJail_-_Faction>).
-        // Both arguments are ignored: the sentence is served at once, with no jail
-        // cell and no belongings chest (docs/engine/guard-response.md).
+        // Both arguments are ignored: the player always goes to the jail cell when
+        // the faction has one (docs/engine/jail.md).
         registry.register(PapyrusNativeFunction(
             scriptName: "Faction",
             functionName: "SendPlayerToJail"
@@ -96,6 +96,19 @@ extension PapyrusNativeFunctions {
             factionTarget(call, context) { world, faction in
                 settle(call, world, faction, .jail)
             }
+        })
+
+        // `Function ServeTime() native global`
+        // (<https://ck.uesp.net/wiki/ServeTime_-_Game>).
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "ServeTime"
+        ) { call, context in
+            guard let served = context.world?.serveTime() else {
+                return failure(call, "ServeTime needs a crime runtime")
+            }
+            guard served else { return failure(call, "ServeTime: the player is not in jail") }
+            return .returned(.none)
         })
     }
 

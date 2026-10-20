@@ -20,12 +20,16 @@ public protocol PerkWorld: AnyObject {
     func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime)
     /// The perks `holder`'s active magic effects apply (MGEF "Perk to Apply").
     func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey>
+    /// Sets `stage` of `quest`, a FormID of `plugin`, as a script `SetStage` would.
+    func setPerkQuestStage(_ stage: UInt16, quest: FormID, fromPlugin plugin: String)
 }
 
 extension PerkWorld {
     public func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey> {
         []
     }
+
+    public func setPerkQuestStage(_: UInt16, quest _: FormID, fromPlugin _: String) {}
 }
 
 /// What `ProgressionCoordinator` reads from the running world.

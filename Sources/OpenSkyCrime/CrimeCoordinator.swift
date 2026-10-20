@@ -71,6 +71,16 @@ public final class CrimeCoordinator {
 
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
+    /// The warning and grace period of the current stay.
+    public internal(set) var trespassWatch = TrespassWatch()
+    /// Crimes charged while no guard knows yet. Session state, as `assaultedActors` is.
+    public internal(set) var pendingReports: [PendingCrimeReport] = []
+    /// The player's stay in jail, from the cell door to release or escape.
+    public internal(set) var jailStay: JailStay?
+    /// Blows between actors other than the player: who struck whom first.
+    var actorFirstStrikes: Set<ActorStrike> = []
+    /// Per crime faction, the actors whose guards fight them.
+    public internal(set) var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// The player stands in a cell whose owner they may not use.
     public internal(set) var isPlayerTrespassing = false {
         didSet { conditionRevision &+= 1 }
@@ -132,6 +142,16 @@ public final class CrimeCoordinator {
         reporter?.onPlayerBounty = { [weak self] faction, gold in
             self?.showBountyNotice(gold: gold, added: true, faction: faction)
         }
+        reporter?.onCrimeCharged = { [weak self] event, outcome, witnesses in
+            self?.track(event, outcome: outcome, witnesses: witnesses)
+        }
+        reporter?.onCrimeRecorded = { [weak self] event, outcome in
+            self?.count(event, outcome: outcome)
+        }
+        pendingReports = []
+        jailStay = nil
+        actorFirstStrikes = []
+        actorCriminals = [:]
         self.pluginName = pluginName
         // A new load order carries different factions for the panel to offer.
         panel.options = nil
@@ -174,8 +194,11 @@ public final class CrimeCoordinator {
         wasHostile: Bool,
         aggressor: ReferenceKey = .player
     ) {
+        guard aggressor == .player else {
+            reportActorAssault(on: target, by: aggressor)
+            return
+        }
         guard
-            aggressor == .player,
             target != .player,
             !wasHostile,
             let reporter,
@@ -205,21 +228,52 @@ public final class CrimeCoordinator {
         return (murders[victim]?.gold ?? 0) > 0 ? .reportedMurder : .murder
     }
 
-    /// Runs every tick; the ownership lookup runs only when the cell changes.
-    /// No warning or 30-second timer (docs/engine/crime.md).
-    public func advanceTrespass() {
+    /// Runs every tick with the real seconds since the last. The ownership lookup
+    /// runs only when the cell changes; then a seen trespasser is warned and, after
+    /// the grace period, charged (`TrespassWatch`).
+    public func advanceTrespass(by seconds: Double = 0) {
         let location = world.currentCellLocation
-        guard lastPlayerCell != location else { return }
-        lastPlayerCell = location
-        isPlayerTrespassing = cellOwner(at: location).map { !crimeActor(.player).mayUse($0) }
-            ?? false
-        reportTrespass(in: location)
+        if lastPlayerCell != location {
+            lastPlayerCell = location
+            trespassWatch.enter(location)
+            let flags = location.map(world.cellTrespassFlags(at:)) ?? CellTrespassFlags()
+            isPlayerTrespassing = !flags.isPublicArea
+                && cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
+        }
+        guard isPlayerTrespassing, let reporter else { return }
+        let step = trespassWatch.step(
+            seconds: seconds,
+            seen: reporter.witnesses.isWitnessed(.player),
+            offLimits: location.map { world.cellTrespassFlags(at: $0).isOffLimits } ?? false,
+            settings: reporter.runtime.settings
+        )
+        switch step {
+        case .none:
+            break
+        case let .warn(remaining):
+            lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
+            pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
+        case .charge:
+            reportTrespass(in: location)
+        }
     }
 
     public func reportTrespass(in location: CellSceneLocation?) {
         guard let reporter, let owner = cellOwner(at: location) else { return }
         guard !crimeActor(.player).mayUse(owner) else { return }
         note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
+    }
+
+    /// A seen pick of a lock the player may not open. UESP "Skyrim:Crime" prices it
+    /// like trespass, 5 gold.
+    @discardableResult
+    public func reportLockpicking(of lock: ReferenceKey) -> Int32 {
+        guard let reporter else { return 0 }
+        let verdict = reporter.verdict(on: lock)
+        guard verdict.isTheft, let owner = verdict.owner else { return 0 }
+        let outcome = reporter.reportTrespass(in: crimeCell(of: lock), owner: owner)
+        note(outcome, as: "Lockpicking")
+        return outcome.gold
     }
 
     func showBountyNotice(gold: Int32, added: Bool, faction: ReferenceKey) {

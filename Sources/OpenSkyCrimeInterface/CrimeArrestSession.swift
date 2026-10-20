@@ -33,4 +33,13 @@ public protocol CrimeArrestSession: AnyObject {
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>?
+
+    /// `Game.ServeTime`: serves the jail sentence. False when the player is not in jail.
+    func serveSentence() -> Bool
+}
+
+extension CrimeArrestSession {
+    public func serveSentence() -> Bool {
+        false
+    }
 }

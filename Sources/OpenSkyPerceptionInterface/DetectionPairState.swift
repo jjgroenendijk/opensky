@@ -22,8 +22,12 @@ nonisolated public enum DetectionState: String, Equatable, Sendable, CaseIterabl
 nonisolated public struct DetectionPairState: Equatable, Sendable {
     /// Accumulated awareness, 0 through `detectedLevel`.
     public var level: Float = 0
-    /// `level` read against the two thresholds.
+    /// The state the target's stealth points leave: detected only once the pool
+    /// runs out or a value passes the instant threshold, else `levelState` below it.
     public var state: DetectionState = .unaware
+    /// `level` read against the two thresholds. Crime witnesses read this: stealth
+    /// points apply only to combat detection (CK wiki "Stealth Points").
+    public var levelState: DetectionState = .unaware
     /// The detection value the last evaluation produced, with its terms.
     public var breakdown: DetectionBreakdown = .none
     /// Distance at the last evaluation, world units.
