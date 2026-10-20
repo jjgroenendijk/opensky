@@ -78,13 +78,18 @@ nonisolated public struct LockpickingPerkValues: Equatable, Sendable {
     public var unbreakable = false
     /// `Mod Lockpicking Key Reward Chance`, in percent. Wax Key sets 100.
     public var keyRewardChance: Float = 0
+    /// `Mod Lockpicking Crime Chance` applied to 1: the chance, 0 to 1, that a seen
+    /// pick is a crime. Quick Hands sets 0.
+    public var crimeChance: Float = 1
 
     public init(
         sweetSpotFactor: Float = 1,
         startingArc: Float = 0,
         unbreakable: Bool = false,
-        keyRewardChance: Float = 0
+        keyRewardChance: Float = 0,
+        crimeChance: Float = 1
     ) {
+        self.crimeChance = crimeChance
         self.sweetSpotFactor = sweetSpotFactor
         self.startingArc = startingArc
         self.unbreakable = unbreakable

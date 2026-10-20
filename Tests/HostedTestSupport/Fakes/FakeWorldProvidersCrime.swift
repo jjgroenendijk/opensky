@@ -73,6 +73,16 @@ extension FakeWorldProviders {
     }
 
     @discardableResult
+    func restockAllVendors() -> CrimeFactionActionOutcome {
+        .restocked(chests: 0)
+    }
+
+    @discardableResult
+    func serveJailSentence() -> CrimeFactionActionOutcome {
+        .notInJail
+    }
+
+    @discardableResult
     func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         crimeFactions.crosshairPicks += 1
         return .subjectSelected("crosshair")

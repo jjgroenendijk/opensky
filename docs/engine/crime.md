@@ -95,6 +95,12 @@ UESP's bounty table gives the same numbers.
 | Murder | `CRVA` murder (1000) | `CRVA`, and UESP "Murder ... 1000" |
 | Trespass | `CRVA` trespass (5) | `CRVA`, and UESP "Trespassing ... 5" |
 
+A faction with the "Use Defaults" flag ignores its own `CRVA` and charges the default prices.
+The Creation Kit's Category:Settings page gives them: `iCrimeGoldMurder` 1000,
+`iCrimeGoldAttack` 40, `iCrimeGoldTrespass` 5, `iCrimeGoldPickpocket` 25, `fCrimeGoldSteal`
+0.5, `iCrimeGoldEscape` 100, and `iCrimeGoldWerewolf` 1000. The install sets only the last two,
+so the others fall back to the wiki's values. A setting a plugin does set wins.
+
 Rounding down makes a one-gold item free. Nothing adds a minimum. A `CRVA` too short to hold a
 steal multiplier (the field came in a later record version) uses a multiplier of 1, so the full
 value is charged. Zero would make every theft from that faction free, which is the worse error.
@@ -135,7 +141,8 @@ in, that cell's `XOWN`, its crime faction, and an item's value. Tests use a fake
 | Theft from a container | Taking from a container session |
 | Assault | The one place every landed hit passes, which names both sides |
 | Murder | The zero-health check, on the hit that killed the actor |
-| Trespass | The world tick, when the player's cell changes |
+| Trespass | The world tick, after the warnings and the grace period |
+| Lockpicking | A seen success or a seen broken pick on a lock the player may not open |
 
 Assault is the first hit on an actor that was not already hostile. UESP: "Self-defense against an
 unprovoked assault is legal and not considered a crime". The session remembers which actors the
@@ -148,6 +155,43 @@ first is a murder victim. This also matches UESP: "if you kill an NPC ... after 
 making them hostile, you can be simultaneously guilty of both assault and murder". A bandit that
 attacked first is not a murder victim.
 
+## Trespass
+
+UESP "Skyrim:Crime": an owner who sees the player in a private place first warns them, and
+charges the trespass if they stay 30 seconds. OpenSky gives `iTrespassWarnings` warnings (2),
+spread over the 30 seconds, then charges once. Each warning is a HUD notice in OpenSky's own words,
+because the game speaks it as dialogue. The clock runs on real seconds, as the game's grace period
+does.
+
+The cell's flags change this (UESP "Skyrim Mod:Mod File Format/CELL"):
+
+- A Public Area cell (`DATA` flag `0x20`), such as an inn, is never trespass.
+- An Off Limits cell (record header flag `0x20000`) charges at once, with no warning.
+
+## Lockpicking
+
+UESP "Skyrim:Lockpicking": a seen success or a seen broken pick on an owned lock is a crime, and it
+costs the trespass price, 5 gold. A broken pick that is seen also closes the lockpicking window.
+The perk entry point `Mod Lockpicking Crime Chance` (86) scales the chance that a seen pick is
+reported. Quick Hands sets it to 0, so nothing is reported.
+
+## The reporting chain
+
+A seen crime charges the bounty at once. The report then stays open until a witness reaches a
+guard. A witness reaches a guard when it is one, or when it stands within
+`iCrimeAlarmRecDistance` (4000 units) of a living guard who polices the crime's faction. If every
+witness dies first, the bounty comes off again and the HUD says so. The Creation Kit's Crime page:
+"If the last Actor who viewed a crime is killed before guards arrive, the crime gold is removed".
+
+The open reports live in the session, not in a save. A loaded save keeps the bounty.
+
+## Crime stats
+
+The journal's Stats page counts "Items Stolen", "Assaults", "Murders", "Trespasses", "Total
+Lifetime Bounty", "Largest Bounty", "Locks Picked", and the jail stats
+([jail](/engine/jail.md)). The names are the Creation Kit's `QueryStat` list. A crime counts
+whether or not it was seen; the bounty stats count only gold that was charged.
+
 A caught [pickpocket](/engine/pickpocket.md) is a theft with the target as witness. It costs the
 `CRVA` pickpocket price, 25 in vanilla, instead of the steal multiplier times the value.
 
@@ -156,10 +200,9 @@ disagree about what is a first strike.
 
 ## Not done yet
 
-- There is no reporting chain. A witness charges the bounty the moment it sees the act. In the
-  original, it walks to a guard and reports. Crimes by followers, animal witnesses, and children
-  telling adults are the same shortcut.
-- Trespass is charged on arrival, not after the warning and the 30 second grace period.
+- A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
+  followers, animal witnesses, and children telling adults are not modelled.
+- "Horses Stolen" and the per-hold bounty stats are not counted.
 - A one-hit kill charges assault and murder. UESP says only murder. The hit is reported before the
   zero-health check notices the death.
 - `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the

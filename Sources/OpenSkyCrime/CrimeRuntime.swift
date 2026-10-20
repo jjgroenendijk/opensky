@@ -22,17 +22,26 @@ public struct CrimeRuntime {
     /// init so a session can attach the perception pass once it exists, exactly
     /// as `HostilityDerivation.crime` is assignable.
     public var witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
+    /// The default prices, the sentence, and the alarm reach, from the load order.
+    public var settings = CrimeSettings.vanilla
 
     private let worldState: WorldStateStore
 
     public init(
         store: WorldStateStore,
         factions: FactionStore,
-        witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
+        witnesses: any CrimeWitnessSource = NoCrimeWitnesses(),
+        settings: CrimeSettings = .vanilla
     ) {
         worldState = store
         self.factions = factions
         self.witnesses = witnesses
+        self.settings = settings
+    }
+
+    /// What one crime faction charges, or nil when it prices nothing.
+    public func prices(of faction: ReferenceKey) -> CrimePrices? {
+        factions.faction(key: faction).flatMap { settings.prices(for: $0.faction) }
     }
 
     // MARK: - Reading
@@ -80,7 +89,7 @@ public struct CrimeRuntime {
             record(event, gold: 0, against: faction)
             return .refused(refusal, faction: faction)
         }
-        let gold = CrimeGoldTable(faction: resolved.faction).bounty(for: event)
+        let gold = CrimeGoldTable(faction: resolved.faction, settings: settings).bounty(for: event)
         record(event, gold: gold, against: faction)
         return CrimeOutcome(gold: gold, faction: faction, recorded: true, refusal: nil)
     }
@@ -94,7 +103,7 @@ public struct CrimeRuntime {
             refusal(for: event, by: resolved.faction, keyed: faction, checkingWitness: false)
             == nil
         else { return 0 }
-        return CrimeGoldTable(faction: resolved.faction).bounty(for: event)
+        return CrimeGoldTable(faction: resolved.faction, settings: settings).bounty(for: event)
     }
 
     /// The same report with witnessing resolved here rather than by the caller,
@@ -263,6 +272,7 @@ nonisolated extension CrimeEvent {
             stolenValue: stolenValue
         )
         seen.isPickpocket = isPickpocket
+        seen.stolenCount = stolenCount
         return seen
     }
 }

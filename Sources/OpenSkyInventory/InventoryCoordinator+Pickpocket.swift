@@ -1,6 +1,6 @@
-// Pickpocketing: a take from a living actor rolls the chance. A success moves the item
-// stolen and teaches Pickpocket by its value; a failure moves nothing and reports the
-// crime. See docs/engine/pickpocket.md.
+// Pickpocketing: a take from a living actor, or a place into its pocket, rolls the
+// chance. A take moves the item stolen and teaches Pickpocket by its value; a failure
+// moves nothing and reports the crime. See docs/engine/pickpocket.md.
 
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -12,6 +12,9 @@ import OpenSkyProgressionInterface
 /// What one pickpocket take did.
 nonisolated public enum PickpocketOutcome: Equatable, Sendable {
     case took(item: String, chance: Int)
+    case placed(item: String, chance: Int)
+    /// The Poisoned perk: a placed poison lands on the target instead.
+    case poisoned(item: String, chance: Int)
     /// The roll failed: the target noticed and the crime was reported.
     case caught(item: String, chance: Int, bounty: Int32)
     /// An equipped item needs a Can Pickpocket Equipped Item perk.
@@ -22,6 +25,8 @@ nonisolated public enum PickpocketOutcome: Equatable, Sendable {
     public var text: String {
         switch self {
         case let .took(item, chance): "Pickpocketed \(item) (\(chance)% chance)."
+        case let .placed(item, chance): "Placed \(item) (\(chance)% chance)."
+        case let .poisoned(item, chance): "Poisoned the target with \(item) (\(chance)% chance)."
         case let .caught(item, chance, bounty):
             "Caught taking \(item) (\(chance)% chance); bounty \(bounty)."
         case let .equipped(item): "\(item) is equipped and cannot be taken."
@@ -57,10 +62,67 @@ extension InventoryCoordinator {
             pickpocketSettings.baseChance(attempt),
             at: .modPickpocketChance,
             on: .player,
-            subjects: PerkEvaluationSubjects(owner: .player, target: target.key),
+            subjects: pickpocketSubjects(item, target: target),
             seams: ConditionContext()
         )
         return pickpocketSettings.clamped(chance)
+    }
+
+    /// The target, and the item for the perks' item tab, such as Cutpurse's gold test
+    /// or Poisoned's `IsPoison`.
+    private func pickpocketSubjects(_ item: FormID, target: InventoryHolder)
+        -> PerkEvaluationSubjects
+    {
+        PerkEvaluationSubjects(owner: .player, target: target.key)
+            .binding(.item, to: runtime?.inventory.baselines.items.conditionSubject(of: item))
+    }
+
+    /// Whether a perk entry point that answers yes or no says yes for `item`.
+    private func pickpocketPerkAllows(
+        _ entryPoint: PerkEntryPoint, item: FormID, target: InventoryHolder
+    ) -> Bool {
+        world.perkModified(
+            0, at: entryPoint, on: .player,
+            subjects: pickpocketSubjects(item, target: target), seams: ConditionContext()
+        ) > 0
+    }
+
+    /// One place into `target`'s pocket. It rolls the take chance, so a heavy item is
+    /// hard to place. With Should Apply Placed Item (the Poisoned perk) a poison lands
+    /// on the target instead of going into the pocket.
+    @discardableResult
+    public func plant(
+        _ item: FormID, count: Int32 = 1, named name: String, into target: InventoryHolder,
+        roll: Float
+    ) -> PickpocketOutcome {
+        guard let runtime else { return .unavailable }
+        let chance = pickpocketChance(of: item, count: count, from: target)
+        guard roll < chance else {
+            let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
+            return .caught(item: name, chance: Int(chance), bounty: bounty)
+        }
+        do {
+            if
+                isPoison(item), pickpocketPerkAllows(
+                    .shouldApplyPlacedItem,
+                    item: item,
+                    target: target
+                )
+            {
+                guard runtime.inventory.count(of: item, in: runtime.player) > 0 else {
+                    return .failed("\(name) is not carried")
+                }
+                guard world.applyPlacedPoison(item, on: target.key) else {
+                    return .failed("the poison did not land on \(target.key)")
+                }
+                try runtime.inventory.remove(item, count: 1, from: runtime.player)
+                return .poisoned(item: name, chance: Int(chance))
+            }
+            try runtime.inventory.transfer(item, count: count, from: runtime.player, to: target)
+        } catch {
+            return .failed(String(describing: error))
+        }
+        return .placed(item: name, chance: Int(chance))
     }
 
     /// One take from `target`'s pocket. `roll` is in 0 to 100; a roll below the
@@ -73,11 +135,7 @@ extension InventoryCoordinator {
         guard let runtime else { return .unavailable }
         if
             runtime.inventory.inventory(of: target).equipped.contains(item),
-            world.perkModified(
-                0, at: .canPickpocketEquippedItem, on: .player,
-                subjects: PerkEvaluationSubjects(owner: .player, target: target.key),
-                seams: ConditionContext()
-            ) <= 0
+            !pickpocketPerkAllows(.canPickpocketEquippedItem, item: item, target: target)
         {
             return .equipped(name)
         }
@@ -93,7 +151,7 @@ extension InventoryCoordinator {
         } catch {
             return .failed(String(describing: error))
         }
-        let value = runtime.inventory.baselines.items.definition(item)?.value ?? 0
+        let value = runtime.inventory.baselines.items.gameValue(of: item)
         let isGold = item == runtime.inventory.goldFormID
         skillUses?.reportSkillUse(SkillUseEvent(
             actor: .player, action: .pickpocket, amount: Float(isGold ? count : value * count)

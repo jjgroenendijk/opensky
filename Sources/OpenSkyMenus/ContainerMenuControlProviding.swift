@@ -49,6 +49,8 @@ nonisolated public struct ContainerMenuControlSnapshot: Equatable, Sendable {
     public let selectedPrice: Int32?
     /// Whether the paying side can cover `selectedPrice`.
     public let canAffordSelection: Bool
+    /// In open pockets: the chance in percent to take, or place, the selected row.
+    public var pickpocketChance: Int?
     /// The price factors in force and where their two GMSTs came from.
     public let priceFactor: Double
     public let pricingSource: String

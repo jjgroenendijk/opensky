@@ -10,6 +10,7 @@ final class FactionVendorSection: CrimeFactionPanelSection {
 
     let overrideControl = NSPopUpButton()
     let barterControl = NSButton(title: "Barter", target: nil, action: nil)
+    let restockControl = NSButton(title: "Restock all", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "FactionVendorStatsLabel")
     private var options: [FactionOption] = []
@@ -32,6 +33,12 @@ final class FactionVendorSection: CrimeFactionPanelSection {
 
     override func makeContentViews() -> [NSView] {
         barterControl.toolTip = "Opens the barter menu with the subject."
+        restockControl.toolTip =
+            "Makes every merchant chest restock, as if iDaysToRespawnVendor had passed."
+        PanelComponents.configureButton(
+            restockControl, target: self, action: #selector(restock),
+            identifier: "FactionRestockControl"
+        )
         PanelComponents.configurePopUp(
             overrideControl, target: self, action: #selector(overrideChanged),
             identifier: "FactionVendorOverrideControl", width: PanelMetrics.contentWidth
@@ -41,13 +48,16 @@ final class FactionVendorSection: CrimeFactionPanelSection {
             identifier: "FactionBarterControl"
         )
         return [
-            PanelComponents.group([overrideControl, barterControl]),
+            PanelComponents.group([
+                overrideControl, PanelComponents.buttonRow([barterControl, restockControl])
+            ]),
             statsLabel
         ]
     }
 
     override func syncControls() {
         barterControl.isEnabled = currentSnapshot?.isAvailable == true
+        restockControl.isEnabled = currentSnapshot?.isAvailable == true
         syncVendors()
     }
 
@@ -83,6 +93,11 @@ final class FactionVendorSection: CrimeFactionPanelSection {
 
     @objc private func barter() {
         provider?.barterWithSocialSubject()
+        finishInteraction()
+    }
+
+    @objc private func restock() {
+        provider?.restockAllVendors()
         finishInteraction()
     }
 }

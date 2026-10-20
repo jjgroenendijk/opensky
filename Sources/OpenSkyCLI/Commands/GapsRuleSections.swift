@@ -115,6 +115,10 @@ extension GapsGatherer {
         _ = StaminaSettings.resolve(store: store)
         _ = BreathSettings.resolve(store: store)
         _ = CellResetSettings.resolve(store: store)
+        _ = CrimeSettings.resolve(store: store)
+        _ = VendorRestockSettings.resolve(store: store)
+        _ = StealthPointSettings.resolve(store: store)
+        _ = EnchantedValueSettings.resolve(store: store)
         return log.editorIDs
     }
 }

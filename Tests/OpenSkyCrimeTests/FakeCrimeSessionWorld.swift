@@ -35,6 +35,44 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var dialogueOpens = false
     var lastDialogueOutcome: String?
     private(set) var spokenTo: [ReferenceKey] = []
+    var trespassFlags: [CellSceneLocation: CellTrespassFlags] = [:]
+    var living: [CrimeObserver] = []
+    var dead: Set<ReferenceKey> = []
+    /// Where `enterJail` puts the player; nil refuses the door.
+    var jailCell: CellSceneLocation?
+    var lockpick: FormID?
+    private(set) var leftJail: [ReferenceKey] = []
+    private(set) var lostProgress: [(days: Int, maximum: Int)] = []
+
+    func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
+        trespassFlags[location] ?? CellTrespassFlags()
+    }
+
+    func livingActors() -> [CrimeObserver] {
+        living.filter { !dead.contains($0.key) }
+    }
+
+    func isDead(_ key: ReferenceKey) -> Bool {
+        dead.contains(key)
+    }
+
+    func enterJail(through _: ReferenceKey) -> Bool {
+        jailCell != nil
+    }
+
+    func leaveJail(to marker: ReferenceKey) -> Bool {
+        leftJail.append(marker)
+        return true
+    }
+
+    func loseJailProgress(days: Int, maximumDays: Int) -> Int {
+        lostProgress.append((days, maximumDays))
+        return 3
+    }
+
+    var lockpickItem: FormID? {
+        lockpick
+    }
 
     func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
         cellOwners[location]

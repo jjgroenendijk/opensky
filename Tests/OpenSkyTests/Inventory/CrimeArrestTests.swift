@@ -134,12 +134,12 @@ struct CrimeArrestTests {
     }
 
     @Test func aSentenceIsADayPerHundredGoldBetweenOneAndSeven() {
-        #expect(CrimeArrest.sentenceDays(bounty: 0) == 0)
-        #expect(CrimeArrest.sentenceDays(bounty: 5) == 1)
-        #expect(CrimeArrest.sentenceDays(bounty: 199) == 1)
-        #expect(CrimeArrest.sentenceDays(bounty: 200) == 2)
-        #expect(CrimeArrest.sentenceDays(bounty: 700) == 7)
-        #expect(CrimeArrest.sentenceDays(bounty: 5000) == 7)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 0) == 0)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 5) == 1)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 199) == 1)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 200) == 2)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 700) == 7)
+        #expect(CrimeSettings.vanilla.sentenceDays(bounty: 5000) == 7)
     }
 
     // MARK: - Confiscation arithmetic

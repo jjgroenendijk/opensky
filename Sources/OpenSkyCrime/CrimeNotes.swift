@@ -7,12 +7,22 @@ nonisolated public enum CrimeNote: Equatable, Sendable {
     case idle
     /// `label` names the crime, such as "Assault"; `faction` is nil when nobody tracks it.
     case recorded(CrimeOutcome, label: String, faction: String?)
+    case trespassWarning(secondsLeft: Int)
+    /// Every witness died before a guard heard: the gold came off again.
+    case reportLost(gold: Int32, faction: String)
+    /// A witness reached a guard, so the bounty stays.
+    case reportDelivered(faction: String, by: String)
 
     public var text: String {
         switch self {
         case .idle: "No crime recorded yet."
         case let .recorded(outcome, label, faction):
             CrimeCore.outcomeText(outcome, label: label, factionName: faction)
+        case let .trespassWarning(seconds): "Trespass warning: \(seconds) s to leave."
+        case let .reportLost(gold, faction):
+            "Every witness died: \(gold) bounty removed from \(faction)."
+        case let .reportDelivered(faction, witness):
+            "\(witness) reported the crime to a \(faction) guard."
         }
     }
 }
@@ -27,6 +37,11 @@ nonisolated public enum GuardNote: Equatable, Sendable {
     case confronted(bounty: Int32, faction: String)
     /// `move` is the movement system's own line.
     case pursuing(faction: String, move: String)
+    case jailed(days: Int, faction: String)
+    /// `skills` is how many skills lost their progress.
+    case served(days: Int, skills: Int, faction: String, moved: Bool)
+    case escaped(gold: Int32, faction: String)
+    case actorCriminal(name: String, faction: String)
 
     public var text: String {
         switch self {
@@ -41,6 +56,14 @@ nonisolated public enum GuardNote: Equatable, Sendable {
         case let .confronted(bounty, faction):
             "Guard confronted the player over a \(bounty) bounty with \(faction)."
         case let .pursuing(faction, move): "Guard of \(faction) pursuing: \(move)."
+        case let .jailed(days, faction): "In the \(faction) jail for \(days) days."
+        case let .served(days, skills, faction, moved):
+            "Served \(days) days in the \(faction) jail; \(skills) skills lost progress"
+                + (moved ? "." : "; the release door is not reachable.")
+        case let .actorCriminal(name, faction):
+            "\(name) struck first in \(faction)'s land; its guards fight them."
+        case let .escaped(gold, faction):
+            "Escaped the \(faction) jail: \(gold) bounty is owed again."
         }
     }
 }

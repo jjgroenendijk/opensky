@@ -120,22 +120,36 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
 nonisolated public struct DetectionTargetReadout: Equatable, Sendable {
     public let name: String
     public let traits: DetectionTargetTraits
+    public let stealthPoints: StealthPointPool?
 
-    public init(name: String, traits: DetectionTargetTraits) {
+    public init(
+        name: String,
+        traits: DetectionTargetTraits,
+        stealthPoints: StealthPointPool? = nil
+    ) {
         self.name = name
         self.traits = traits
+        self.stealthPoints = stealthPoints
     }
 
     public var summaryLine: String {
-        String(
-            format: "%@: light %.2f, armour weight %.1f, muffle %.2f, action %.0f, Sneak %.0f%@",
+        let pool = stealthPoints.map {
+            String(
+                format: ", stealth points %.0f%@", $0.points,
+                $0.isExposed ? " (exposed)" : $0.refillWait > 0
+                    ? String(format: " (refill in %.1f s)", $0.refillWait) : ""
+            )
+        } ?? ""
+        return String(
+            format: "%@: light %.2f, armour weight %.1f, muffle %.2f, action %.0f, Sneak %.0f%@%@",
             name,
             traits.lightLevel,
             traits.equippedWeight,
             traits.muffle,
             traits.actionSound,
             traits.sneakSkill,
-            traits.isInvisible ? ", invisible" : ""
+            traits.isInvisible ? ", invisible" : "",
+            pool
         )
     }
 }

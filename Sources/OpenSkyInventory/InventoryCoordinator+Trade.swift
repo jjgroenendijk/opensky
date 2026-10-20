@@ -38,15 +38,18 @@ extension InventoryCoordinator {
         }
     }
 
-    /// Moves one `item` in the direction `transfer` names. A new session per
+    /// Moves `count` of `item` in the direction `transfer` names. A new session per
     /// call, so a merchant nominated again mid-menu leaves nothing stale.
+    /// `acceptingLess` lets a sale go through for the merchant's last gold.
     public func transfer(
         _ transfer: ContainerTransfer,
         item: FormID,
+        count: Int32 = 1,
         named name: String,
         container: InventoryHolder,
         vendor: Vendor?,
-        merchant: ReferenceKey? = nil
+        merchant: ReferenceKey? = nil,
+        acceptingLess: Bool = false
     ) throws -> TradeOutcome {
         guard let runtime else { return .unavailable }
         switch transfer {
@@ -54,11 +57,11 @@ extension InventoryCoordinator {
             // Through the session, so a single take marks theft the same way
             // "take all" does.
             let session = ContainerSession(runtime: runtime, container: container)
-            let bounty = try session.take(item)
-            reportTaken([InventoryStack(item: item, count: 1)], from: session)
+            let bounty = try session.take(item, count: count)
+            reportTaken([InventoryStack(item: item, count: count)], from: session)
             return .took(item: name, bounty: bounty)
         case .store:
-            try runtime.inventory.transfer(item, count: 1, from: .player, to: container)
+            try runtime.inventory.transfer(item, count: count, from: .player, to: container)
             storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: nil, how: .putInContainer
             ))
@@ -66,7 +69,8 @@ extension InventoryCoordinator {
         case .buy:
             let bought: BarterTransaction
             do {
-                bought = try barterSession(runtime, container, vendor, merchant).buy(item)
+                bought = try barterSession(runtime, container, vendor, merchant)
+                    .buy(item, count: count)
             } catch BarterError.playerCannotAfford {
                 return .tooExpensive
             }
@@ -78,7 +82,8 @@ extension InventoryCoordinator {
         case .sell:
             let sold: BarterTransaction
             do {
-                sold = try barterSession(runtime, container, vendor, merchant).sell(item)
+                sold = try barterSession(runtime, container, vendor, merchant)
+                    .sell(item, count: count, acceptingLess: acceptingLess)
             } catch let BarterError.merchantCannotAfford(price, gold) {
                 return .merchantShort(price: price, gold: gold)
             }

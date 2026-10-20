@@ -176,10 +176,45 @@ struct VendorRulesTests {
         let always = VendorHours(start: 0, end: 24)
         #expect(always.isOpen(atHour: 0) && always.isOpen(atHour: 23.9))
         #expect(VendorHours(start: 0, end: 25).isOpen(atHour: 23.9))
-        #expect(VendorHours(start: 0, end: 0).isOpen(atHour: 12))
+        #expect(!VendorHours(start: 0, end: 0).isOpen(atHour: 12))
+        #expect(!VendorHours(start: 9, end: 9).isOpen(atHour: 9))
 
         let night = VendorHours(start: 20, end: 4)
         #expect(night.isOpen(atHour: 22) && night.isOpen(atHour: 3))
         #expect(!night.isOpen(atHour: 12))
+    }
+
+    @Test func aVendorWithNoHoursIsNeverOpen() throws {
+        let resolver = try Self.resolver()
+        let vendor = try #require(resolver.vendor(memberships: Self.memberships([IDs.pawnbroker])))
+        let hourless = Vendor(
+            faction: vendor.faction, factionName: "Hourless", merchantChest: nil, hours: nil,
+            listKeywords: nil, negatesList: false, buysStolen: false
+        )
+        #expect(!hourless.isOpen(atHour: 3))
+        #expect(!hourless.isOpen(atHour: 12))
+    }
+
+    // MARK: - Location
+
+    @Test func aRadiusRuleAllowsOnlyNearItsTarget() {
+        let rule = VendorLocationRule(place: .nearEditorLocation, radius: 500)
+        let near = VendorPlaceFacts(position: [100, 0, 0], cell: nil, target: [0, 0, 0])
+        let far = VendorPlaceFacts(position: [900, 0, 0], cell: nil, target: [0, 0, 0])
+        #expect(rule.allows(near))
+        #expect(!rule.allows(far))
+        #expect(rule.allows(nil))
+        #expect(VendorLocationRule(place: .nearEditorLocation, radius: 0).allows(far))
+        #expect(rule.allows(VendorPlaceFacts(position: [900, 0, 0], cell: nil, target: nil)))
+    }
+
+    @Test func aCellRuleComparesTheCell() {
+        let shop = Self.key(0x165B3)
+        let rule = VendorLocationRule(place: .inCell(shop), radius: 0)
+        #expect(rule.allows(VendorPlaceFacts(position: .zero, cell: shop, target: nil)))
+        #expect(!rule.allows(VendorPlaceFacts(position: .zero, cell: nil, target: nil)))
+        #expect(VendorPlace(type: 1, link: shop) == .inCell(shop))
+        #expect(VendorPlace(type: 12, link: nil) == .nearSelf)
+        #expect(VendorPlace(type: 5, link: nil) == .unread(type: 5))
     }
 }

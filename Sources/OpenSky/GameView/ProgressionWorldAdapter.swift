@@ -2,6 +2,7 @@
 // runtimes from the provider and answers both ports from the session systems.
 // The rules live in the coordinators (docs/engine/coordinators.md).
 
+import Foundation
 import OpenSkyActors
 import OpenSkyCells
 import OpenSkyCombat
@@ -14,7 +15,9 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyQuests
 import OpenSkyRuntimeState
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldState
@@ -38,6 +41,8 @@ protocol ProgressionWorldHost: AnyObject {
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
+    var journalMenu: JournalMenuController { get }
+    var scripts: ScriptCoordinator { get }
 }
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
@@ -123,6 +128,22 @@ extension ProgressionWorldAdapter: PerkWorld {
         return ActiveEffectPerks.perks(
             of: effects.active(on: holder), effects: effects.effects, perks: perks
         )
+    }
+
+    /// Through the script bridge, as `SetStage` does, so the stage fragment runs. A
+    /// quest of another plugin than the quest store's is not resolved.
+    func setPerkQuestStage(_ stage: UInt16, quest: FormID, fromPlugin plugin: String) {
+        guard
+            let quests = game.journalMenu.questRuntime,
+            plugin
+                .caseInsensitiveCompare(game.worldData?.magicItemPluginName ?? "") == .orderedSame,
+            let key = quests.quests.key(for: quest)
+        else { return }
+        if let bridge = game.scripts.bridge {
+            _ = try? bridge.setQuestStage(stage, for: key)
+        } else {
+            _ = try? quests.setStage(stage, on: quest)
+        }
     }
 
     func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime) {

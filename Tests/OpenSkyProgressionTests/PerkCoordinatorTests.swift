@@ -60,6 +60,20 @@ struct PerkCoordinatorTests {
         #expect(coordinator.ownership(of: .player) == [blocking])
     }
 
+    @Test func addingAQuestPerkSetsItsStageOnce() throws {
+        let world = FakeProgressionWorld()
+        let coordinator = try coordinator(world: world)
+        let perk = PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.questStage)
+
+        #expect(coordinator.add(perk, to: .player))
+        #expect(!coordinator.add(perk, to: .player))
+
+        #expect(world.questStages.count == 1)
+        #expect(world.questStages.first?.stage == 10)
+        #expect(world.questStages.first?.quest == FormID(PerkRuntimeFixture.Perk.investQuest))
+        #expect(world.questStages.first?.plugin == PerkRuntimeFixture.pluginName)
+    }
+
     @Test func removingAPerkReconcilesOnlyWhenItWasOwned() throws {
         let world = FakeProgressionWorld()
         let coordinator = try coordinator(world: world)

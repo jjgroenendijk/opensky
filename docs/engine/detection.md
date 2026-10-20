@@ -153,6 +153,29 @@ has a place to look.
 With these values, a target at full signal is detected in 1 second. A target that disappears
 from a full level drops below suspicious at 3.75 seconds and is forgotten at 5 seconds.
 
+## Stealth points
+
+The level above decides what an observer has noticed. Whether it attacks is a second test, the
+stealth point pool. CK wiki "Stealth Points": each target has a pool, like hit points for staying
+hidden, and the highest detection value of any aggressive observer works on it. An observer is
+aggressive when it is hostile to the target or already fighting. Other observers use the level
+alone.
+
+- A positive value drains `value x fCombatStealthPointDrainMult` points per second (3).
+- After `fCombatStealthPointRegenAlertWaitTime` seconds (10) with no positive value, the pool
+  refills at `fCombatStealthPointRegenMin` (5) plus `fCombatStealthPointRegenMult` (0.2) per point
+  below zero, up to `fCombatStealthPointMax` (100).
+- A value at or over `iCombatStealthPointDetectionThreshold` (25), or
+  `iCombatStealthPointSneakDetectionThreshold` (70) while sneaking, detects at once and empties
+  the pool.
+- At 0 points the target is detected. An observer that detected it keeps it through the alert
+  wait. When the pool starts to refill, the observer loses the target and searches. Until the
+  pool is full again, any positive value detects the target at once.
+
+The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
+because the wiki says the pool is for aggression, not for seeing a theft. The perception
+readout shows each target's points.
+
 ## Sneak training
 
 A crouched target trains Sneak while it stays hidden. Each frame, the target earns

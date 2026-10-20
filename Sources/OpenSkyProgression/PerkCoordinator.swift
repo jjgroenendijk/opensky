@@ -40,7 +40,8 @@ public final class PerkCoordinator {
 
     // MARK: - Ownership
 
-    /// Applies the abilities the perk grants.
+    /// Applies the abilities the perk grants and sets the quest stages its quest
+    /// effects name, such as Investor's merchant dialogue.
     ///
     /// - Returns: true when the perk was not already owned.
     @discardableResult
@@ -50,8 +51,18 @@ public final class PerkCoordinator {
         store(runtime)
         if changed {
             world.reconcileAbilities(on: holder, perks: runtime)
+            setQuestStages(of: perk, in: runtime)
         }
         return changed
+    }
+
+    private func setQuestStages(of perk: ReferenceKey, in runtime: PerkRuntime) {
+        guard let record = runtime.record(perk) else { return }
+        for effect in record.effects {
+            if case let .quest(quest?, stage) = effect.effect.data {
+                world.setPerkQuestStage(stage, quest: quest, fromPlugin: record.sourcePlugin)
+            }
+        }
     }
 
     /// Revokes the abilities the perk granted.

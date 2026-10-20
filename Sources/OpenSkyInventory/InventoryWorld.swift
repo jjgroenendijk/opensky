@@ -45,6 +45,8 @@ public protocol InventoryWorld: AnyObject {
     func pickpocketSkill(of key: ReferenceKey) -> Float?
     /// Whether `observer` has detected the player right now.
     func detectsPlayer(_ observer: ReferenceKey) -> Bool
+    /// Lands the poison `poison` on `target`, from the player. False when nothing landed.
+    func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool
     /// `effect`'s name in the load order's language.
     func magicEffectName(_ effect: ResolvedMagicEffect) -> String
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s
@@ -67,6 +69,10 @@ extension InventoryWorld {
     }
 
     public func detectsPlayer(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func applyPlacedPoison(_: FormID, on _: ReferenceKey) -> Bool {
         false
     }
 

@@ -96,6 +96,8 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumLockEntrySize = 14
     /// Smallest `CRST` entry: an interior cell (5) and the hour (8).
     public static let minimumCellResetEntrySize = 13
+    /// Smallest `VRST` entry: a plugin key with an empty name (7) and the hour (8).
+    public static let minimumVendorRestockEntrySize = 15
     /// Smallest `RLOC` entry: the smallest key and cell (8) and an interior target (5).
     public static let minimumRelocationEntrySize = 13
     /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the

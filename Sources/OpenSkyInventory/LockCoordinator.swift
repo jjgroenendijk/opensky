@@ -27,12 +27,23 @@ public protocol LockWorld: AnyObject, SkillUseReporting {
     /// The player's Filter Activation perks with `reference` bound as the target.
     /// Non-zero blocks the activation.
     func activationFilter(of reference: ReferenceKey) -> Float
+    /// Reports picking `lock` as a crime when it is owned and someone sees it.
+    /// Returns the bounty, 0 when nobody saw or the lock is the player's to open.
+    func reportLockpickingCrime(on lock: ReferenceKey) -> Int32
+    /// Counts one picked lock on the journal's "Locks Picked" stat.
+    func countLockPicked()
 }
 
 extension LockWorld {
     public func activationFilter(of _: ReferenceKey) -> Float {
         0
     }
+
+    public func reportLockpickingCrime(on _: ReferenceKey) -> Int32 {
+        0
+    }
+
+    public func countLockPicked() {}
 }
 
 /// Why a lockpicking session did not start.
@@ -73,6 +84,7 @@ nonisolated public enum LockpickingEntryPoint {
     public static let startingArc = PerkEntryPoint.setLockpickStartingArc
     public static let unbreakable = PerkEntryPoint.makeLockpicksUnbreakable
     public static let keyReward = PerkEntryPoint.modLockpickingKeyRewardChance
+    public static let crimeChance = PerkEntryPoint.modLockpickingCrimeChance
 }
 
 /// The lock a session is picking, as it stood when the session began.
@@ -259,7 +271,8 @@ public final class LockCoordinator {
             sweetSpotFactor: value(1, LockpickingEntryPoint.sweetSpot),
             startingArc: value(0, LockpickingEntryPoint.startingArc),
             unbreakable: value(0, LockpickingEntryPoint.unbreakable) > 0,
-            keyRewardChance: value(0, LockpickingEntryPoint.keyReward)
+            keyRewardChance: value(0, LockpickingEntryPoint.keyReward),
+            crimeChance: value(1, LockpickingEntryPoint.crimeChance)
         )
     }
 }

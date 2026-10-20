@@ -34,7 +34,7 @@ nonisolated extension InventoryMenuModel {
                     name: name(of: stack.item, in: items),
                     count: total,
                     weight: definition?.weight ?? 0,
-                    value: definition?.value ?? 0,
+                    value: items.gameValue(of: stack.item),
                     isEquipped: inventory.isEquipped(stack.item),
                     family: definition?.family,
                     stolenCount: inventory.stolenCount(of: stack.item),

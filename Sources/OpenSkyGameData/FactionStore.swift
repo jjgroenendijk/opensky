@@ -122,6 +122,15 @@ nonisolated public struct FactionStore: Sendable {
         index.resolvedID(id, fromPlugin: pluginName)
     }
 
+    /// One of `faction`'s own links, such as `JOUT`, in the load-order FormID space
+    /// that inventories use.
+    public func linkFormID(_ link: FormID?, of faction: ResolvedFaction) -> FormID? {
+        guard let link, let id = resolvedID(link, fromPlugin: faction.sourcePlugin) else {
+            return nil
+        }
+        return index.resolver(ofPlugin: FormIDResolver.loadOrderSpaceName)?.localFormID(of: id)
+    }
+
     /// One of `faction`'s own links, such as `STOL` or `JAIL`, as a runtime
     /// identity, resolved through the plugin that defined the faction.
     public func linkKey(_ link: FormID?, of faction: ResolvedFaction) -> ReferenceKey? {

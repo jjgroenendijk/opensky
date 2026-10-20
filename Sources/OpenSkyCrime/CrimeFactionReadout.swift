@@ -27,6 +27,9 @@ nonisolated public enum CrimeFactionReadout: Sendable {
         lines.append("Crime faction here: \(snapshot.currentCrimeFaction?.name ?? "none")")
         lines.append("Last crime: \(snapshot.lastCrimeText)")
         lines.append("Last guard: \(snapshot.lastGuardText)")
+        if !snapshot.statusText.isEmpty {
+            lines.append(snapshot.statusText)
+        }
         lines.append(snapshot.lastActionText)
         return lines.joined(separator: "\n")
     }

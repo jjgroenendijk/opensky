@@ -9,6 +9,8 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
     public var names: [CrimeKind: String] = [:]
     public var bountyAdded = "bounty added to"
     public var bountyRemoved = "bounty removed from"
+    /// The owner's warning. The game speaks it as dialogue; no setting holds a text.
+    public var trespassWarning = "You are trespassing. Leave, or you will be reported."
 
     public static let vanilla = Self()
 

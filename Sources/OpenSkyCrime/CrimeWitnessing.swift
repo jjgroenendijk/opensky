@@ -83,6 +83,6 @@ public struct PerceptionCrimeWitnesses: CrimeWitnessSource {
 
     public func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
         guard let perception else { return [] }
-        return perception.observersDetecting(perpetrator).filter { isAlive?($0) ?? true }
+        return perception.observersWitnessing(perpetrator).filter { isAlive?($0) ?? true }
     }
 }

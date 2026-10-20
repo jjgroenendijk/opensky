@@ -34,8 +34,45 @@ The start hour is included and the end hour is not. An end of 24 or more runs to
 start after the end wraps past midnight.
 
 On the local install there are 145 vendor factions. 81 are open `0-24` and 41 are open `8-20`.
-One has `0-0`. OpenSky reads that as always open, because an empty window would make a vendor no
-one can trade with.
+One has `0-0`. The Creation Kit's "Creating a Merchant" page: "If you don't add a start and end
+time, the merchant wont offer services". So `0-0` is no window, and that vendor never trades. At
+3am a vendor open `8-20` refuses too.
+
+## Place and conditions
+
+A vendor also trades only where its `PLVD` rule puts it, within the `VENV` radius, and only while
+its `CITC` and `CTDA` conditions hold. The place types are UESP's FACT page:
+
+| `PLVD` type | Rule |
+| --- | --- |
+| 0 | Near a placed reference |
+| 1 | Inside one cell |
+| 2 | Near where the vendor's current package starts |
+| 3 | Near the vendor's editor location |
+| 6 | Near the reference the vendor links to with a keyword |
+| 12 | Anywhere |
+
+A radius of 0 sets no distance limit. Vanilla vendors author 0 and still trade, so 0 cannot mean
+"on the exact spot". A type OpenSky does not read, such as an alias, never refuses.
+
+An actor in two vendor factions trades as the first one whose hours, place, and conditions hold.
+When none holds, the refusal names the first one's reason.
+
+## Restocking
+
+A merchant chest restocks `iDaysToRespawnVendor` game days (2) after it was last stocked. The
+check runs when the vendor's barter opens: a due chest drops its runtime inventory and tempering,
+so it reads its leveled `CNTO` list again. The time each chest was stocked is the
+`vendorRestock` world-state component, which a save stores in the `VRST` chunk
+([world chunks](/formats/opensky-save-world-chunks.md)).
+
+## Investment and trainers
+
+Neither is part of the vendor faction. Both come from the load order:
+
+- The Speech perk Investor carries a quest-stage perk effect. Adding the perk sets that stage, and
+  the dialogue it starts calls the investment scripts. Master Trader works the same way.
+- Trainers are dialogue that calls `Game.ShowTrainingMenu` ([training](/engine/training.md)).
 
 ## The list
 
@@ -81,14 +118,10 @@ merchant conditions fail. OpenSky refuses instead, and says why.
 
 ## Not done yet
 
-- Vendor conditions and location are not checked. The trailing `CITC` and `CTDA` conditions and
-  the `PLVD` location and radius are decoded but not used. So a vendor trades wherever it stands
-  during its hours.
-- An actor with two vendor factions always uses the first.
-- Stock respawn, investment, and trainers are not modelled.
-- A merchant chest that is not loaded cannot be traded from.
+- A merchant chest that is not loaded cannot be traded from, and so it cannot restock either.
 
 ## Controls
 
 World > Crime & Factions > Vendor shows the chosen actor's vendor faction, chest, hours, list,
-and fence flag. It can choose another vendor faction, and open the barter menu.
+and fence flag. It can choose another vendor faction, open the barter menu, and Restock all makes
+every merchant chest due.

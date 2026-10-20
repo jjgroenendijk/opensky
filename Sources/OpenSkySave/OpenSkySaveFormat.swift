@@ -165,6 +165,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let scriptedStates = "SCRS"
         /// The game hour the player last left each cell, for the cell reset.
         public static let cellResets = "CRST"
+        /// The game hour each merchant chest was last stocked, for the vendor restock.
+        public static let vendorRestocks = "VRST"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

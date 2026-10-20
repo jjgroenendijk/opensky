@@ -1,6 +1,7 @@
 // What a crime is, and what one is worth. Four kinds: theft, assault, murder,
 // and trespass, the ones this engine can observe. Prices come from each crime
-// faction's `CRVA`, not from game settings; they match UESP's bounty table
+// faction's `CRVA`, or from the `iCrimeGold*` settings when the faction sets
+// "Use Defaults"; both match UESP's bounty table
 // (<https://en.uesp.net/wiki/Skyrim:Crime>). See docs/engine/crime.md.
 
 import Foundation
@@ -80,6 +81,8 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     /// A theft caught in the act of pickpocketing, which costs the faction's flat
     /// `CRVA` pickpocket price instead of the stolen value.
     public var isPickpocket = false
+    /// How many items a theft took, for the "Items Stolen" stat.
+    public var stolenCount: Int32 = 0
 
     public init(
         kind: CrimeKind,
@@ -100,37 +103,44 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     }
 }
 
-/// The bounty one faction charges for one crime, from its `CRVA` block.
+/// The bounty one faction charges for one crime: its `CRVA` block, or the game
+/// setting defaults when the faction sets "Use Defaults".
 nonisolated public struct CrimeGoldTable: Equatable, Sendable {
     /// Multiplier used when the record's `CRVA` is too short to carry one. It is 1,
     /// so a 12-byte `CRVA` charges full value; 0 would make every theft free.
     public static let defaultStealMultiplier: Float = 1
 
-    public let values: Faction.CrimeValues?
+    public let prices: CrimePrices?
 
     /// Nothing priced, which is what a faction with no `CRVA` charges: zero for
     /// every kind, and the crime is still counted.
-    public static let unpriced = CrimeGoldTable(values: nil)
+    public static let unpriced = CrimeGoldTable(prices: nil)
 
-    public init(values: Faction.CrimeValues?) {
-        self.values = values
+    public init(prices: CrimePrices?) {
+        self.prices = prices
     }
 
-    public init(faction: Faction) {
-        self.init(values: faction.crimeValues)
+    public init(values: Faction.CrimeValues?) {
+        self.init(prices: values.map {
+            CrimePrices(values: $0, defaults: CrimeSettings.vanilla.defaultPrices)
+        })
+    }
+
+    public init(faction: Faction, settings: CrimeSettings = .vanilla) {
+        self.init(prices: settings.prices(for: faction))
     }
 
     /// What `event` costs, in gold. Theft is the item value times the steal
     /// multiplier, rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>). The other
-    /// three are flat `CRVA` amounts.
+    /// three are flat amounts.
     public func bounty(for event: CrimeEvent) -> Int32 {
-        guard let values else { return 0 }
+        guard let prices else { return 0 }
         return switch event.kind {
-        case .theft where event.isPickpocket: Int32(values.pickpocket)
-        case .theft: Self.stealBounty(of: event.stolenValue, multiplier: values.stealMultiplier)
-        case .assault: Int32(values.assault)
-        case .murder: Int32(values.murder)
-        case .trespass: Int32(values.trespass)
+        case .theft where event.isPickpocket: prices.pickpocket
+        case .theft: Self.stealBounty(of: event.stolenValue, multiplier: prices.stealMultiplier)
+        case .assault: prices.assault
+        case .murder: prices.murder
+        case .trespass: prices.trespass
         }
     }
 

@@ -107,6 +107,33 @@ nonisolated extension StoryEventData {
         return event
     }
 
+    /// `ESJA` (<https://ck.uesp.net/wiki/Escape_Jail>). The player is `R1`.
+    public static func escapeJail(
+        location: ResolvedFormID?,
+        crimeFaction: ReferenceKey
+    ) -> StoryEventData {
+        var event = StoryEventData(event: "ESJA")
+        event.location1 = location
+        event.actor1 = .player
+        event.form = form(of: crimeFaction)
+        return event
+    }
+
+    /// `STIJ` (<https://ck.uesp.net/wiki/OnStoryServedTime_-_Quest>).
+    public static func servedTime(
+        location: ResolvedFormID?,
+        crimeFaction: ReferenceKey,
+        gold: Int32,
+        days: Int
+    ) -> StoryEventData {
+        var event = StoryEventData(event: "STIJ")
+        event.location1 = location
+        event.form = form(of: crimeFaction)
+        event.value1 = Float(gold)
+        event.value2 = Float(days)
+        return event
+    }
+
     public static func crimeGold(
         criminal: ReferenceKey,
         victim: ReferenceKey?,

@@ -25,6 +25,8 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     public let label: ActorLabel
     /// The observer's Sneak skill: a skilled observer notices more.
     public let sneakSkill: Float
+    /// Hostile or fighting. Only these drain stealth points (CK wiki "Stealth Points").
+    public var isAggressive = false
 
     public var name: String {
         label.text

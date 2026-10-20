@@ -1,9 +1,8 @@
 // How an arrest ends: pay the fine or go to jail, per UESP
-// (<https://en.uesp.net/wiki/Skyrim:Crime>). One day per hundred gold, from one
-// to seven, is our reading of "maximum sentence is seven days ... 700 or higher".
+// (<https://en.uesp.net/wiki/Skyrim:Crime>). The sentence is `CrimeSettings`:
+// one day per `iCrimeDaysInPrisonMod` gold, at most `iCrimeMaxNumberofDaysinJail`.
 // The evidence chest is the faction's `STOL`, the release point its `JAIL`.
-// Serving is instant bookkeeping; the jail cell, outfit, escape and skill loss
-// are not modelled. See docs/engine/guard-response.md.
+// See docs/engine/jail.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -14,20 +13,8 @@ import OpenSkyInventoryInterface
 /// The two ways an arrest ends, over the crime ledger and the inventory.
 @MainActor
 public struct CrimeArrest {
-    /// Gold of bounty per day of sentence, and the longest sentence, from
-    /// UESP's "maximum sentence is seven days ... for any bounty 700 or higher".
-    public static let goldPerSentenceDay: Int32 = 100
-    public static let maximumSentenceDays = 7
-
     public let crime: CrimeRuntime
     public let inventory: any InventoryAccess
-
-    /// Days served for `bounty`: one per hundred gold, at least one, at most
-    /// seven.
-    public static func sentenceDays(bounty: Int32) -> Int {
-        guard bounty > 0 else { return 0 }
-        return min(maximumSentenceDays, max(1, Int(bounty / goldPerSentenceDay)))
-    }
 
     /// `Faction.CanPayCrimeGold`: whether the player carries enough gold to
     /// clear the bounty. False when there is no bounty, because there is
@@ -47,6 +34,18 @@ public struct CrimeArrest {
     public func releaseMarker(of faction: ReferenceKey) -> ReferenceKey? {
         guard let resolved = crime.factions.faction(key: faction) else { return nil }
         return crime.factions.linkKey(resolved.faction.exteriorJailMarker, of: resolved)
+    }
+
+    /// The faction's chest for the player's belongings (`PLCN`) as a runtime identity.
+    public func belongingsChest(of faction: ReferenceKey) -> ReferenceKey? {
+        guard let resolved = crime.factions.faction(key: faction) else { return nil }
+        return crime.factions.linkKey(resolved.faction.playerInventoryContainer, of: resolved)
+    }
+
+    /// The faction's jail outfit (`JOUT`), in the load-order space.
+    public func jailOutfit(of faction: ReferenceKey) -> FormID? {
+        guard let resolved = crime.factions.faction(key: faction) else { return nil }
+        return crime.factions.linkFormID(resolved.faction.jailOutfit, of: resolved)
     }
 
     /// `Faction.PlayerPayCrimeGold`: takes the bounty in gold, clears it, and seizes
@@ -98,7 +97,7 @@ public struct CrimeArrest {
             goldPaid: 0,
             confiscated: confiscated,
             evidenceChest: confiscated.isEmpty ? nil : evidence?.key,
-            sentenceDays: Self.sentenceDays(bounty: owed),
+            sentenceDays: crime.settings.sentenceDays(bounty: owed),
             releaseMarker: releaseMarker(of: faction)
         )
     }

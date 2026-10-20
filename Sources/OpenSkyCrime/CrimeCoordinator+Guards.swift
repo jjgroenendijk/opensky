@@ -5,6 +5,7 @@
 // they return. See docs/engine/guard-response.md.
 
 import OpenSkyCrimeInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
@@ -34,8 +35,9 @@ extension CrimeCoordinator {
         }
         let actions = guards.actions(
             guards: guardCandidates(),
-            bounty: { runtime.crimeGold(of: $0) },
+            bounty: { ledger.entry(for: $0) },
             values: { runtime.factions.faction(key: $0)?.faction.crimeValues },
+            settings: runtime.settings,
             now: now
         )
         releasePursuers(except: actions.first.map(CrimeCore.guardKey(of:)))
@@ -48,7 +50,8 @@ extension CrimeCoordinator {
     public func refreshGuardHostility() {
         guard let runtime = reporter?.runtime else { return }
         pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
-            ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted
+            ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted,
+            settings: runtime.settings, actorCriminals: actorCriminals
         )))
     }
 
@@ -151,5 +154,39 @@ extension CrimeCoordinator {
             guards.end(settled: true, now: now)
             world.resumePackage(for: guardKey)
         }
+    }
+}
+
+/// One blow between two actors, by who struck it.
+struct ActorStrike: Hashable {
+    let aggressor: ReferenceKey
+    let target: ReferenceKey
+}
+
+extension CrimeCoordinator {
+    /// An actor other than the player strikes first at someone a crime faction
+    /// protects: its guards fight the aggressor. A blow back is self-defense. UESP
+    /// "Skyrim:Crime": "Self-defense against an unprovoked assault is legal".
+    func reportActorAssault(on target: ReferenceKey, by aggressor: ReferenceKey) {
+        guard target != aggressor, aggressor != .player else { return }
+        let strike = ActorStrike(aggressor: aggressor, target: target)
+        let answered = ActorStrike(aggressor: target, target: aggressor)
+        guard
+            !actorFirstStrikes.contains(answered),
+            actorFirstStrikes.insert(strike).inserted,
+            policedFaction(of: aggressor) == nil,
+            let faction = crimeFaction(in: crimeCell(of: target) ?? world.currentCellLocation),
+            target == .player || protects(faction, target)
+        else { return }
+        actorCriminals[faction, default: []].insert(aggressor)
+        lastGuard = .actorCriminal(name: world.actorName(aggressor), faction: factionName(faction))
+        refreshGuardHostility()
+    }
+
+    /// A faction protects its members and the people of the places it polices.
+    private func protects(_ faction: ReferenceKey, _ target: ReferenceKey) -> Bool {
+        guard let profile = world.socialProfile(of: target) else { return false }
+        return profile.crimeFaction == faction
+            || world.factionMemberships(of: target)?.isMember(of: faction) == true
     }
 }

@@ -47,6 +47,8 @@ nonisolated extension PerkEntryPoint {
     public static let modSellPrices = PerkEntryPoint(rawValue: 60)
     public static let modPickpocketChance = PerkEntryPoint(rawValue: 56)
     public static let canPickpocketEquippedItem = PerkEntryPoint(rawValue: 61)
+    public static let shouldApplyPlacedItem = PerkEntryPoint(rawValue: 84)
+    public static let modLockpickingCrimeChance = PerkEntryPoint(rawValue: 86)
     public static let modPlayerIntimidation = PerkEntryPoint(rawValue: 43)
     public static let modBribeAmount = PerkEntryPoint(rawValue: 46)
     public static let modLockpickSweetSpot = PerkEntryPoint(rawValue: 59)
@@ -77,6 +79,8 @@ nonisolated extension PerkEntryPoint {
         modBribeAmount, modLockpickSweetSpot,
         setLockpickStartingArc, makeLockpicksUnbreakable, modLockpickingKeyRewardChance,
         modAlchemyEffectiveness, modInitialIngredientEffectsLearned, purifyAlchemyIngredients,
-        modPoisonDoseCount, modPotionsCreated
+        modPoisonDoseCount, modPotionsCreated,
+        modPickpocketChance, canPickpocketEquippedItem, shouldApplyPlacedItem,
+        modLockpickingCrimeChance
     ]
 }

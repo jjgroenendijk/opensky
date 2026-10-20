@@ -1,9 +1,8 @@
 // What a guard does about the player's bounty. A guard is a member of the `GFAC`
 // faction (`IsGuardFaction`) whose `CRIF` names the crime faction; all 463 such
 // NPC_ records on this install confirm it. `CRVA` flags choose arrest or attack
-// (<https://ck.uesp.net/wiki/Faction>). No source prices "high enough", so
-// `CrimeResponsePolicy.attackOnSightGold` is our 1000, the murder bounty.
-// See docs/engine/guard-response.md.
+// (<https://ck.uesp.net/wiki/Faction>). "High enough" is `iAttackOnSightViolent`,
+// 2999 (<https://ck.uesp.net/wiki/Category:Settings>). See docs/engine/guard-response.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -24,16 +23,19 @@ nonisolated public enum CrimeResponse: Equatable, Sendable {
 
 /// The `CRVA` flags turned into a response for one bounty.
 nonisolated public enum CrimeResponsePolicy: Sendable {
-    /// The bounty at or above which an attack-on-sight faction stops talking.
-    /// This engine's number, not a documented one; see the file header.
-    public static let attackOnSightGold: Int32 = 1000
-
-    public static func response(bounty: Int32, values: Faction.CrimeValues?) -> CrimeResponse {
-        guard bounty > 0, let values else { return .none }
-        if values.attackOnSight, bounty >= attackOnSightGold {
-            return .attackOnSight(bounty: bounty)
-        }
-        return values.arrest ? .confront(bounty: bounty) : .none
+    /// `entry` is the faction's ledger row; nil owes nothing.
+    public static func response(
+        _ entry: CrimeLedgerEntry?,
+        values: Faction.CrimeValues?,
+        settings: CrimeSettings = .vanilla
+    ) -> CrimeResponse {
+        guard let entry, entry.gold > 0, let values else { return .none }
+        // CK wiki "Creating a Custom Crime Faction": without Arrest, guards "always try
+        // to kill the player on sight if there is a bounty".
+        let pastLine = values.attackOnSight
+            && settings.attacksOnSight(nonViolent: entry.nonViolentGold, violent: entry.violentGold)
+        guard values.arrest, !pastLine else { return .attackOnSight(bounty: entry.gold) }
+        return .confront(bounty: entry.gold)
     }
 }
 
@@ -42,30 +44,42 @@ nonisolated public enum CrimeResponsePolicy: Sendable {
 /// the player resisted arrest. A snapshot, because the derivation is nonisolated.
 nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Equatable, Sendable {
     public let guardFaction: ReferenceKey?
-    /// Bounty per crime faction, which is all the term reads.
-    public let bounties: [ReferenceKey: Int32]
+    /// The ledger row per owed crime faction, which is all the term reads.
+    public let bounties: [ReferenceKey: CrimeLedgerEntry]
     /// Each crime faction's `CRVA`.
     public let crimeValues: [ReferenceKey: Faction.CrimeValues]
     /// Crime factions the player resisted arrest with while owing them.
     public let resisted: Set<ReferenceKey>
+    public let settings: CrimeSettings
+    /// Per crime faction, the actors other than the player that struck one of its
+    /// people first. Its guards fight them.
+    public var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
 
     public func crimeReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
+        if target.key != .player {
+            guard
+                let faction = GuardRecognition.policedFaction(
+                    of: observer, guardFaction: guardFaction
+                ),
+                actorCriminals[faction]?.contains(target.key) == true
+            else { return nil }
+            return .enemy
+        }
         guard
-            target.key == .player,
             let faction = GuardRecognition.policedFaction(
                 of: observer, guardFaction: guardFaction
             ),
-            let bounty = bounties[faction], bounty > 0
+            let bounty = bounties[faction], bounty.gold > 0
         else { return nil }
         if resisted.contains(faction) {
             return .enemy
         }
         if
             case .attackOnSight = CrimeResponsePolicy.response(
-                bounty: bounty, values: crimeValues[faction]
+                bounty, values: crimeValues[faction], settings: settings
             )
         {
             return .enemy
@@ -75,14 +89,16 @@ nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Equatable, 
 
     public init(
         guardFaction: ReferenceKey?,
-        bounties: [ReferenceKey: Int32],
+        bounties: [ReferenceKey: CrimeLedgerEntry],
         crimeValues: [ReferenceKey: Faction.CrimeValues],
-        resisted: Set<ReferenceKey>
+        resisted: Set<ReferenceKey>,
+        settings: CrimeSettings = .vanilla
     ) {
         self.guardFaction = guardFaction
         self.bounties = bounties
         self.crimeValues = crimeValues
         self.resisted = resisted
+        self.settings = settings
     }
 }
 
@@ -150,8 +166,9 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
     /// eligible guard. An attack-on-sight guard is skipped: it is already hostile.
     public func actions(
         guards: [GuardCandidate],
-        bounty: (ReferenceKey) -> Int32,
+        bounty: (ReferenceKey) -> CrimeLedgerEntry?,
         values: (ReferenceKey) -> Faction.CrimeValues?,
+        settings: CrimeSettings = .vanilla,
         now: Double
     ) -> [GuardAction] {
         guard active == nil else { return [] }
@@ -162,8 +179,9 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
                 (cooldownUntil[guardView.guardKey] ?? -.infinity) <= now
             else { return false }
             let response = CrimeResponsePolicy.response(
-                bounty: bounty(guardView.crimeFaction),
-                values: values(guardView.crimeFaction)
+                bounty(guardView.crimeFaction),
+                values: values(guardView.crimeFaction),
+                settings: settings
             )
             return if case .confront = response {
                 true
@@ -180,7 +198,7 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
             return [.confront(
                 guardKey: nearest.guardKey,
                 crimeFaction: nearest.crimeFaction,
-                bounty: bounty(nearest.crimeFaction)
+                bounty: bounty(nearest.crimeFaction)?.gold ?? 0
             )]
         }
         return [.pursue(guardKey: nearest.guardKey, crimeFaction: nearest.crimeFaction)]

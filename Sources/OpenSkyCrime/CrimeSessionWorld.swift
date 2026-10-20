@@ -20,6 +20,8 @@ public protocol CrimeSessionWorld: AnyObject {
     var currentCellLocation: CellSceneLocation? { get }
     /// The `XOWN` of a resident cell.
     func cellOwnership(at location: CellSceneLocation) -> RecordOwnership?
+    /// The Public Area and Off Limits flags of a resident cell.
+    func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags
     /// The `XLCN` of a resident cell, with the plugin that placed the cell.
     func cellLocationLink(at location: CellSceneLocation) -> (link: FormID, plugin: String)?
     /// Zero for a form no loaded plugin describes.
@@ -51,6 +53,8 @@ public protocol CrimeSessionWorld: AnyObject {
     func vendor(faction key: ReferenceKey) -> Vendor?
     func vendor(of actor: ReferenceKey) -> Vendor?
     func openBarter(with actor: ReferenceKey, vendorFaction: ReferenceKey?) -> String
+    /// Makes every stocked merchant chest due. Returns how many.
+    func restockAllVendors() -> Int
 
     // MARK: - Clock and player
 
@@ -62,11 +66,28 @@ public protocol CrimeSessionWorld: AnyObject {
     /// Puts the player on a resident marker. False when it is not resident.
     func movePlayer(toMarker marker: ReferenceKey) -> Bool
 
+    // MARK: - Jail
+
+    /// Goes through the faction's `JAIL` PrisonMarker door into the cell. False when
+    /// the door has no `XTEL` or a transition is already running.
+    func enterJail(through marker: ReferenceKey) -> Bool
+    /// Goes back out through the cell's PrisonMarker door, whose `XTEL` leads to `marker`.
+    func leaveJail(to marker: ReferenceKey) -> Bool
+    /// Gives and wears the `JOUT` pieces. Returns the pieces given.
+    func wearJailOutfit(_ outfit: FormID) -> [FormID]
+    /// The skills a served sentence clears. Returns how many lost progress.
+    func loseJailProgress(days: Int, maximumDays: Int) -> Int
+    /// The one item an inmate keeps, the lockpick. Nil without lock data.
+    var lockpickItem: FormID? { get }
+
     // MARK: - Guards
 
     /// Every living resident actor that detects the player. Empty without a
     /// perception pass.
     func actorsDetectingPlayer() -> [CrimeObserver]
+    /// Every living resident actor, where it stands.
+    func livingActors() -> [CrimeObserver]
+    func isDead(_ key: ReferenceKey) -> Bool
     /// Nil without a streamed world.
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> String?
     func stopActor(_ key: ReferenceKey)
@@ -75,6 +96,44 @@ public protocol CrimeSessionWorld: AnyObject {
     var isDialogueOpen: Bool { get }
     var lastDialogueOutcome: String? { get }
     func beginDialogue(with speaker: ReferenceKey)
+}
+
+extension CrimeSessionWorld {
+    public func cellTrespassFlags(at _: CellSceneLocation) -> CellTrespassFlags {
+        CellTrespassFlags()
+    }
+
+    public func livingActors() -> [CrimeObserver] {
+        []
+    }
+
+    public func isDead(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func restockAllVendors() -> Int {
+        0
+    }
+
+    public func enterJail(through _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func leaveJail(to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func wearJailOutfit(_: FormID) -> [FormID] {
+        []
+    }
+
+    public func loseJailProgress(days _: Int, maximumDays _: Int) -> Int {
+        0
+    }
+
+    public var lockpickItem: FormID? {
+        nil
+    }
 }
 
 /// One actor that sees the player, and where it stands.

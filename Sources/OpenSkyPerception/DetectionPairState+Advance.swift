@@ -32,7 +32,8 @@ extension DetectionPairState {
                 updated.lastKnownPosition = nil
             }
         }
-        updated.state = Self.classify(level: updated.level, settings: settings)
+        updated.levelState = Self.classify(level: updated.level, settings: settings)
+        updated.state = updated.levelState
         return updated
     }
 

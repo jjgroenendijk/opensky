@@ -15,6 +15,7 @@ final class CrimeBountySection: CrimeFactionPanelSection {
     let clearControl = NSButton(title: "Clear", target: nil, action: nil)
     let guardCheckControl = NSButton(title: "Guard check", target: nil, action: nil)
     let resistControl = NSButton(title: "Resist arrest", target: nil, action: nil)
+    let serveControl = NSButton(title: "Serve sentence", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "CrimeBountyStatsLabel")
     private var options: [FactionOption] = []
@@ -44,6 +45,7 @@ final class CrimeBountySection: CrimeFactionPanelSection {
         guardCheckControl.toolTip =
             "Asks the picked actor what it would do, then runs one guard tick."
         resistControl.toolTip = "Makes the faction's guards hostile."
+        serveControl.toolTip = "Serves the jail sentence, as sleeping in the cell does."
         configureControls()
         return [
             PanelComponents.group([
@@ -55,7 +57,8 @@ final class CrimeBountySection: CrimeFactionPanelSection {
                 ),
                 violentControl,
                 PanelComponents.buttonRow([addControl, clearControl]),
-                PanelComponents.buttonRow([guardCheckControl, resistControl])
+                PanelComponents.buttonRow([guardCheckControl, resistControl]),
+                PanelComponents.buttonRow([serveControl])
             ]),
             statsLabel
         ]
@@ -63,7 +66,7 @@ final class CrimeBountySection: CrimeFactionPanelSection {
 
     override func syncControls() {
         let available = currentSnapshot?.isAvailable == true
-        for control in [addControl, clearControl, guardCheckControl, resistControl] {
+        for control in [addControl, clearControl, guardCheckControl, resistControl, serveControl] {
             control.isEnabled = available
         }
         amountControl.isEnabled = available
@@ -118,6 +121,10 @@ final class CrimeBountySection: CrimeFactionPanelSection {
             resistControl, target: self, action: #selector(resistArrest),
             identifier: "CrimeResistArrestControl"
         )
+        PanelComponents.configureButton(
+            serveControl, target: self, action: #selector(serveSentence),
+            identifier: "CrimeServeSentenceControl"
+        )
     }
 
     // MARK: - Actions
@@ -149,6 +156,11 @@ final class CrimeBountySection: CrimeFactionPanelSection {
 
     @objc private func resistArrest() {
         provider?.resistArrestWithSelectedFaction()
+        finishInteraction()
+    }
+
+    @objc private func serveSentence() {
+        provider?.serveJailSentence()
         finishInteraction()
     }
 }
