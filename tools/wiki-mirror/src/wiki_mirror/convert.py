@@ -31,15 +31,38 @@ SAME_PAGE_HREF = re.compile(r'href="(#[^"]*)"')
 PLAIN_PRE = re.compile(r"<pre\b[^>]*>(?!<code)")
 LINK_TITLE = re.compile(r'(<a\b[^>]*?)\stitle="[^"]*"')
 EMPTY_PARAGRAPH = re.compile(r"<p>\s*(?:<br\s*/?>\s*)*</p>")
-LEADING_BREAK = re.compile(r"<p>\s*<br\s*/?>")
+# A line break that starts a block or span becomes a stray backslash line in Markdown.
+LEADING_BREAK = re.compile(r"(<(?:p|div|span|li|td|th|dd)\b[^>]*>)\s*(?:<br\s*/?>\s*)+")
+# A link that edits a page, such as a link to a missing page, keeps only its text.
+EDIT_LINK = re.compile(
+    r'<a\b[^>]*href="[^"]*[?&](?:amp;)?action=edit[^"]*"[^>]*>(.*?)</a>', re.DOTALL
+)
 # A line break that ends a block, or a run of them, becomes a stray backslash line in Markdown.
 TRAILING_BREAKS = re.compile(r"(?:\s*<br\s*/?>)+\s*(?=</(?:p|li|td|th|dd|div)>)")
 REPEATED_BREAKS = re.compile(r"(?:<br\s*/?>\s*){2,}")
 # A table whose first body row holds only header cells: that row becomes the header. The row
 # stops at a nested table, so a layout table does not swallow the header of the table inside it.
 HEADER_ROW = re.compile(
-    r"(<table\b[^>]*>\s*)<tbody>\s*(<tr\b[^>]*>(?:(?!</tr>|<table\b).)*?</tr>)", re.DOTALL
+    r"(<table\b[^>]*>\s*(?:<caption\b.*?</caption>\s*)?)<tbody>\s*(<tr\b[^>]*>(?:(?!</tr>|<table\b).)*?</tr>)",
+    re.DOTALL,
 )
+# Wiki chrome: tables of contents, edit and zoom links, navigation boxes, the desktop copy
+# of the quest navigation bar, the stub notice, and anything the page hides from readers.
+CHROME = [
+    (r'<div[^>]*id="toc"', "div"),
+    (r'<table[^>]*id="toc"', "table"),
+    (r'<span[^>]*class="mw-editsection"', "span"),
+    (r'<div[^>]*class="magnify"', "div"),
+    (r'<table[^>]*class="navbox[\s"]', "table"),
+    (r'<table[^>]*class="[^"]*\bquestNavBar-grid\b', "table"),
+    (r'<div[^>]*class="mw-stubnotice"', "div"),
+    *[(rf'<{tag}\b[^>]*style="[^"]*display:\s*none', tag) for tag in ("span", "div", "tr", "td")],
+]
+# Links point at ids on rows, notes, and spans, which Markdown has no place for. Each id
+# moves to an empty span, which the Lua filter writes as an `<a id>` anchor.
+ROW_ID = re.compile(r'(<tr\b[^>]*?)\sid="([^"]*)"([^>]*>\s*<t[dh]\b[^>]*>)')
+ELEMENT_ID = re.compile(r'<(\w+)\b([^>]*?)\sid="([^"]*)"([^>]*)>')
+HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
 PANDOC_TIMEOUT = 120
 MARKDOWN_FILTER = Path(__file__).with_name("markdown.lua")
 
@@ -77,10 +100,10 @@ def prepare_html(html: str, here: str, links: LinkMap) -> str:
     """Drop wiki chrome, mark code blocks, and point links at mirrored files or the live wiki."""
     site = links.site
     html = re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
-    html = remove_elements(html, r'<div[^>]*id="toc"', "div")
-    html = remove_elements(html, r'<span[^>]*class="mw-editsection"', "span")
-    html = remove_elements(html, r'<div[^>]*class="magnify"', "div")
-    html = remove_elements(html, r'<table[^>]*class="navbox[\s"]', "table")
+    for opening, tag in CHROME:
+        html = remove_elements(html, opening, tag)
+    html = ROW_ID.sub(lambda match: match.group(1) + match.group(3) + _marker(match.group(2)), html)
+    html = ELEMENT_ID.sub(_move_id, html)
     html = HIGHLIGHT_BLOCK.sub(lambda match: _code_opening(match, site), html)
     html = PLAIN_PRE.sub("<pre><code>", html)
     html = re.sub(r"</pre>", "</code></pre>", html)
@@ -92,17 +115,36 @@ def prepare_html(html: str, here: str, links: LinkMap) -> str:
         href = links.local_href(title, fragment, here)
         return f'href="{href or site.url + "/wiki/" + match.group(1) + fragment}"'
 
+    html = EDIT_LINK.sub(r"\1", html)
     html = SAME_PAGE_HREF.sub(lambda match: f'href="{heading_anchor(match.group(1))}"', html)
     html = WIKI_HREF.sub(rewrite, html)
     html = SRCSET.sub("", html)
     html = LINK_TITLE.sub(r"\1", html)
     html = EMPTY_PARAGRAPH.sub("", html)
-    html = LEADING_BREAK.sub("<p>", html)
+    html = LEADING_BREAK.sub(r"\1", html)
     html = TRAILING_BREAKS.sub("", html)
     html = REPEATED_BREAKS.sub("<br>", html)
     html = HEADER_ROW.sub(_promote_header, html)
     html = SCHEME_RELATIVE.sub(r'\1="https://', html)
     return SITE_RELATIVE.sub(lambda match: f'{match.group(1)}="{site.url}/', html)
+
+
+def _marker(element_id: str) -> str:
+    return f'<span id="{heading_anchor("#" + element_id).lstrip("#")}"></span>'
+
+
+def _move_id(match: re.Match[str]) -> str:
+    tag, before, element_id, after = match.groups()
+    if tag.lower() in HEADING_TAGS:
+        return match.group(0)
+    # The Lua filter compares a section id with the anchor GitHub makes from the heading.
+    if "mw-headline" in before + after:
+        anchor = heading_anchor("#" + element_id).lstrip("#")
+        return f'<{tag}{before} id="{anchor}"{after}>'
+    opening = f"<{tag}{before}{after}>"
+    if tag.lower() in {"a", "table", "tbody", "thead", "tfoot", "tr"}:
+        return _marker(element_id) + opening
+    return opening + _marker(element_id)
 
 
 def _code_opening(match: re.Match[str], site: Site) -> str:

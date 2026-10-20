@@ -65,8 +65,9 @@ find "$cache/uesp-wiki" -name '*.md' -not -path '*/.sync/*' | grep -i 'file form
 grep -rli --include='*.md' --exclude-dir=.sync 'OnMagicEffectApply' "$cache/ck-wiki"
 ```
 
-Links between mirrored pages are relative paths, so follow them with Read. A link to a page that
-is not mirrored, such as an image or a talk page, points at the live wiki.
+Links between mirrored pages are relative paths, so follow them with Read. A link with a
+`#anchor` points at a heading or an `<a id="anchor">` in the target file; search for it. A link to
+a page that is not mirrored, such as an image or a talk page, points at the live wiki.
 
 ## Use what you read
 

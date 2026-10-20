@@ -131,23 +131,34 @@ and it sends a user agent that names the project.
 ## Conversion
 
 `.sync/` keeps the rendered HTML of each page. Conversion runs pandoc (`html` to `gfm` without raw
-HTML) with the Lua filter `tools/wiki-mirror/src/wiki_mirror/markdown.lua`. Each step exists
-because the plain conversion lost or garbled content:
+HTML) with the Lua filter `tools/wiki-mirror/src/wiki_mirror/markdown.lua`. The only HTML left in
+a page is an empty anchor, such as `<a id="iron-helmet"></a>`. Each step exists because the plain
+conversion lost or garbled content:
 
 | Step | Why |
 | --- | --- |
-| Remove the table of contents, edit links, and image zoom links | Wiki chrome, not content |
+| Remove the table of contents, edit and zoom links, and the stub notice | Wiki chrome, not content |
 | Remove navigation boxes (UESP `navbox` tables) | Every page in a series repeats the same box of links |
+| Remove elements styled `display:none`, and the desktop copy of the UESP quest navigation bar | The reader never sees them, or sees them twice |
+| Keep a link to a missing page, or to an edit form, as plain text | The link leads to an edit form, not to text |
 | Give scheme-relative links such as `//images.uesp.net/...` an `https:` scheme | Markdown readers do not resolve them |
-| Make a first row of header cells the table header, also in a table inside a layout table | Otherwise the table gets an empty header |
+| Keep an id that is not a heading as an `<a id>` anchor | Links point at table rows, notes, and spans, which Markdown has no place for |
+| Keep a section id as an anchor when the heading text makes a different one | A second `Shields` heading, or one that holds a link or an image |
+| Make a first row of header cells the table header, also after a caption or inside a layout table | Otherwise the table gets an empty header |
+| Write a table caption as a bold line above the table | The gfm writer put it below, with the table's classes as `{.wikitable}` |
 | Fill each position a row or column span covers with an empty cell | The gfm writer drops spans, so the next cells slid into the wrong column |
-| Unwrap a one-row or one-column table into its cells | GFM cannot hold the notice and layout boxes; pandoc wrote `[TABLE]` |
-| Flatten other table cells to one line, `/` between parts | GFM table cells hold one line; pandoc wrote `[TABLE]` |
+| Unwrap a table of one row, one column, or with headings or tables in its cells | It is a page layout or a notice box, not data; pandoc wrote `[TABLE]` |
+| Write a two-column table without a header as a list of `**Label:** value` lines | An infobox; as a pipe table it needs an empty header |
+| Flatten other table cells to one line, `/` between parts, and a nested table row as `a: b` | GFM table cells hold one line; pandoc wrote `[TABLE]` |
+| Write a definition list as a term line followed by its text, and join lists in a row | The gfm writer put a `&nbsp;` line between lists |
 | Fence every code block with its language | The gfm writer drops languages it does not know, such as `papyrus` |
-| Drop line breaks that start or end a block | They became lone `\` lines |
+| Drop line breaks that start or end a block or span, and spacer paragraphs of `&nbsp;` | They became lone `\` or `&nbsp;` lines |
 | Rewrite section links to GitHub heading anchors | MediaWiki ids such as `#Undo_.28CTRL.2BZ.29` match no Markdown heading |
 | Move level 1 headings in a page down one level | The page title stays the only level 1 heading |
 | Drop trailing spaces and repeated blank lines outside code | Noise from the HTML layout |
+
+The UESP "Mod Notes" boxes are hidden on the wiki unless a reader turns them on. The mirror keeps
+them, because they name scripts and record fields.
 
 Fix the output only through the tool, never by editing a mirror file: the next sync overwrites the
 file, and the same fault is on other pages too. After a converter change, run the sync again for
