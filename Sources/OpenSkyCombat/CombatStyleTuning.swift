@@ -83,6 +83,15 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         return Self.clamp(base * 2 * magic / (magic + melee), to: Self.chanceRange)
     }
 
+    /// The out-of-reach cast chance: 1 unless the melee score outweighs the magic
+    /// score, then the magic share of the two, doubled.
+    public func rangedCastChance() -> Float {
+        let magic = Self.finiteNonNegative(magicScoreMultiplier)
+        let melee = Self.finiteNonNegative(meleeScoreMultiplier)
+        guard magic + melee > 0 else { return 1 }
+        return Self.clamp(2 * magic / (magic + melee), to: 0 ... 1)
+    }
+
     private static func finitePositive(_ value: Float, or fallback: Float) -> Float {
         value.isFinite && value > 0 ? value : fallback
     }
@@ -106,6 +115,7 @@ nonisolated extension CombatBehaviorSettings {
         settings.blockSeconds = blockSeconds * scale
         settings.blockChance = tuning.blockChance(base: blockChance)
         settings.castChance = tuning.castChance(base: castChance)
+        settings.rangedCastChance = min(rangedCastChance, tuning.rangedCastChance())
         return settings
     }
 }

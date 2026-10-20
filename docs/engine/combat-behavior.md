@@ -58,8 +58,10 @@ Casting is a phase, not a kind of attack. A swing is timed by the machine and la
 step. A cast is timed by the `SPIT` charge time and lands wherever its delivery takes it
 ([magic](/engine/magic.md)). They share only when they are chosen:
 
-- An actor that cannot reach its target with a weapon casts whenever it can afford a spell that
-  reaches. Otherwise it would walk toward someone while holding something it could have thrown.
+- An actor that cannot reach its target with a weapon casts with probability `rangedCastChance`
+  when it can afford a spell that reaches. The roll is made once per approach, not once per step.
+  At the base value of 1 it always casts, because it would otherwise walk toward someone while
+  holding something it could have thrown. A style that prefers weapons lowers it.
 - An actor inside weapon reach casts with probability `castChance`, and swings otherwise, from the
   same seeded generator as the block roll.
 - The spell is the most expensive one it can both afford and reach with. Ties go by spell order.
@@ -94,6 +96,7 @@ So they are chosen in the open, with a reason each. An actor's
 | Flee break distance | 1,800 units | More than one flee hop, so a path the navmesh cut short is tried again |
 | Search time | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
+| Ranged cast chance | 1 | Out of weapon reach a caster with a spell to throw throws it |
 | Held spell time | 1.5 s | Two applications of a once-a-second effect: long enough to see a beam, short enough to decide again |
 
 ## Combat style
@@ -110,8 +113,12 @@ multipliers to 0.24, so an actor on it attacks less often and blocks less than t
 | Block time | Offensive multiplier | The same scale as the attack interval, so a block still replaces one gap | 0.5 to 2 times the base |
 | Block chance | Defensive multiplier | Base times defensive / 0.5 | 0 to 0.9 |
 | Cast chance | Melee and magic equipment score multipliers | Base times 2 times magic / (magic + melee); equal scores give the base | 0 to 0.9 |
+| Ranged cast chance | Melee and magic equipment score multipliers | 2 times magic / (magic + melee); equal scores and a magic-leaning style keep 1 | 0 to 1 |
 
-A chance never reaches 1, so the other choice stays possible. A member a record leaves out,
+So two bandits with the same spell fight differently: one on a melee style (magic score below
+melee) mostly closes in and swings, and one on a magic style stands off and casts.
+
+The in-reach chances never reach 1, so the other choice stays possible. A member a record leaves out,
 or a value that is not finite or not positive, counts as the neutral value. An actor with no
 style uses the settings unchanged. The `World > Combat Loop` readout shows the selected
 actor's style and the derived numbers.

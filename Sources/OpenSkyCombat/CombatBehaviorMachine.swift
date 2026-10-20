@@ -40,6 +40,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// Seconds since the last movement command, so a chase re-paths on the
     /// stated interval rather than every step.
     private var secondsSinceCommand: Float = 0
+    /// The out-of-reach cast roll, made once per approach so a chase does not
+    /// re-roll every step until it casts.
+    private var approachCasts: Bool?
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -180,7 +183,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     ) -> CombatBehaviorStep {
         guard inputs.distance > inputs.strikingDistance(settings: settings)
         else { return enterSpacing() }
-        if let option = inputs.castableSpell {
+        if let option = inputs.castableSpell, castsFromRange() {
             return startCast(option)
         }
         guard secondsSinceCommand >= settings.commandIntervalSeconds else { return unchanged() }
@@ -209,19 +212,6 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
             return step
         }
         return startAttackOrCast(inputs)
-    }
-
-    /// The one place a swing and a cast are chosen between
-    /// (docs/engine/combat-behavior.md). Out of weapon reach, cast when affordable;
-    /// in reach, cast with probability `castChance`. Uses the seeded block-roll RNG.
-    private mutating func startAttackOrCast(
-        _ inputs: CombatBehaviorInputs
-    ) -> CombatBehaviorStep {
-        guard let option = inputs.castableSpell else { return startAttack() }
-        guard inputs.distance <= inputs.strikingDistance(settings: settings)
-        else { return startCast(option) }
-        let roll = Float(random.percent()) / 100
-        return roll < settings.castChance ? startCast(option) : startAttack()
     }
 
     private mutating func startCast(_ option: CombatSpellOption) -> CombatBehaviorStep {
@@ -366,6 +356,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     // MARK: - Bookkeeping
 
     private mutating func enter(_ next: CombatBehaviorPhase) {
+        if next != phase {
+            approachCasts = nil
+        }
         phase = next
         phaseSeconds = 0
     }
@@ -381,5 +374,32 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 nonisolated extension CombatBehaviorMachine {
     private func unchanged() -> CombatBehaviorStep {
         CombatBehaviorStep(phase: phase)
+    }
+}
+
+nonisolated extension CombatBehaviorMachine {
+    /// The one place a swing and a cast are chosen between
+    /// (docs/engine/combat-behavior.md). Out of weapon reach, cast on the ranged roll;
+    /// in reach, cast with probability `castChance`. Uses the seeded block-roll RNG.
+    private mutating func startAttackOrCast(
+        _ inputs: CombatBehaviorInputs
+    ) -> CombatBehaviorStep {
+        guard let option = inputs.castableSpell else { return startAttack() }
+        guard inputs.distance <= inputs.strikingDistance(settings: settings)
+        else { return startCast(option) }
+        let roll = Float(random.percent()) / 100
+        return roll < settings.castChance ? startCast(option) : startAttack()
+    }
+
+    /// A style that prefers a weapon may close in rather than cast from range.
+    /// A chance of 1 draws nothing, so the seeded sequence stays as it was.
+    private mutating func castsFromRange() -> Bool {
+        guard settings.rangedCastChance < 1 else { return true }
+        if let approachCasts {
+            return approachCasts
+        }
+        let casts = Float(random.percent()) / 100 < settings.rangedCastChance
+        approachCasts = casts
+        return casts
     }
 }

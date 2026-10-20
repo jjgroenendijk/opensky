@@ -30,6 +30,7 @@ struct CombatStyleTuningTests {
         #expect(tuned.blockSeconds == base.blockSeconds)
         #expect(tuned.blockChance == base.blockChance)
         #expect(tuned.castChance == base.castChance)
+        #expect(tuned.rangedCastChance == base.rangedCastChance)
         #expect(base.tuned(by: nil) == base)
     }
 
@@ -48,6 +49,37 @@ struct CombatStyleTuningTests {
         #expect(Self.tuning(melee: 0, magic: 1).castChance(base: 0.4) == 0.8)
         #expect(Self.tuning(melee: 1, magic: 0).castChance(base: 0.4) == 0)
         #expect(Self.tuning(melee: 0, magic: 0).castChance(base: 0.4) == 0.4)
+    }
+
+    @Test func aMeleeStyleCastsLessFromRange() {
+        #expect(Self.tuning(melee: 1, magic: 0).rangedCastChance() == 0)
+        #expect(abs(Self.tuning(melee: 1, magic: 0.5).rangedCastChance() - 2.0 / 3) < 0.0001)
+        #expect(Self.tuning(melee: 1, magic: 1).rangedCastChance() == 1)
+        #expect(Self.tuning(melee: 0, magic: 1).rangedCastChance() == 1)
+        #expect(Self.tuning(melee: 0, magic: 0).rangedCastChance() == 1)
+    }
+
+    /// Two bandits with the same fireball, out of weapon reach for five seconds:
+    /// the one on a melee style walks in, the one on a magic style casts.
+    @Test func twoBanditsWithDifferentStylesFightDifferently() {
+        func fight(_ style: CombatStyleTuning) -> CombatBehaviorMachine {
+            var machine = CombatBehaviorFixture.machine(
+                settings: CombatBehaviorSettings.standard.tuned(by: style)
+            )
+            let inputs = CombatBehaviorFixture.inputs(
+                distance: 1200,
+                casting: CombatBehaviorFixture.casting(
+                    magicka: 100, [CombatBehaviorFixture.fireball]
+                )
+            )
+            CombatBehaviorFixture.run(&machine, seconds: 5, inputs: inputs)
+            return machine
+        }
+        let warrior = fight(Self.tuning(melee: 1, magic: 0))
+        let mage = fight(Self.tuning(melee: 0.2, magic: 1))
+        #expect(warrior.castCount == 0)
+        #expect(warrior.phase == .approaching)
+        #expect(mage.castCount > 0)
     }
 
     @Test func machineUsesTheActorsStyle() {
