@@ -103,6 +103,13 @@ An action whose alias is empty is done at once. The Creation Kit says a scene go
 actor is dead or disabled, and an empty alias is the same case for OpenSky. A dialogue action
 whose topic has no passing response for the speaker is also done at once.
 
+A dialogue action with flag 0x10000 loops. The Creation Kit says "the actor will loop the dialogue in
+this action (within a random time between the specified Min and Max seconds)"
+([Scenes Tab](https://ck.uesp.net/wiki/Scenes_Tab)). OpenSky says the line again after a pause drawn
+from the action's `DMIN` to `DMAX` range, until the action's end phase ends. A looping line does not
+hold its phase: the phase ends when its other actions or its completion conditions say so, and the
+loop stops with it.
+
 ### Package actions
 
 The Creation Kit says a scene's package overrides every other package of the actor. While a

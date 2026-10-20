@@ -1,7 +1,9 @@
 // The actions of one scene's playback. An action on an empty alias is done at
 // once, as the Creation Kit says of dead or disabled actors. A package action is
 // done when its package reaches its Done state, and a line when its voice file ends
-// (<https://ck.uesp.net/wiki/Category:Scenes>, "Completing a Phase").
+// (<https://ck.uesp.net/wiki/Category:Scenes>, "Completing a Phase"). A looping line
+// repeats after a pause between its minimum and maximum until its end phase ends
+// (<https://ck.uesp.net/wiki/Scenes_Tab>).
 
 import Foundation
 import OpenSkyConditions
@@ -102,7 +104,22 @@ extension SceneRuntime.Playback {
         line.seconds = seconds
         note(.line(line))
         state.running.removeAll { $0.action == index }
-        run(index, duration: seconds)
+        run(index, duration: seconds + loopPause(scene.actions[Int(index)]))
+    }
+
+    /// The pause a looping dialogue action waits after each line, or 0.
+    private func loopPause(_ action: SceneAction) -> Float {
+        guard
+            Self.isLooping(action),
+            case let .dialogue(dialogue) = action.payload else { return 0 }
+        let low = max(0, dialogue.loopingMin ?? 0)
+        let high = max(low, dialogue.loopingMax ?? low)
+        return max(0, runtime.loopPause(low ... high))
+    }
+
+    static func isLooping(_ action: SceneAction) -> Bool {
+        guard case .dialogue = action.payload else { return false }
+        return (action.flags ?? 0) & SceneAction.loopingFlag != 0
     }
 
     func actor(of action: SceneAction) -> ReferenceKey? {
@@ -155,6 +172,7 @@ extension SceneRuntime.Playback {
     }
 
     mutating func completeDoneActions() {
+        var finished: [UInt32] = []
         for progress in state.running {
             guard progress.duration != nil else {
                 checkWaiting(progress.action)
@@ -162,8 +180,28 @@ extension SceneRuntime.Playback {
             }
             if progress.isDone(at: runtime.now) {
                 complete(progress.action)
+                finished.append(progress.action)
             }
         }
+        guard !finished.isEmpty, state.phaseEntered else { return }
+        // A phase that ends in this tick takes the looping lines that end with it.
+        let firstLivePhase = phaseDone() != nil ? state.phase + 1 : state.phase
+        for index in finished where Self.endPhase(scene.actions[Int(index)]) >= firstLivePhase {
+            repeatIfLooping(index)
+        }
+    }
+
+    /// Says a looping line again while its action's phases last. It stays completed,
+    /// so it does not hold its phase.
+    private mutating func repeatIfLooping(_ index: UInt32) {
+        let action = scene.actions[Int(index)]
+        guard
+            Self.isLooping(action), state.phase <= Self.endPhase(action),
+            case let .dialogue(dialogue) = action.payload,
+            let speaker = actor(of: action), isAvailable(speaker, alias: action.aliasID)
+        else { return }
+        let topic = entry.translation?(dialogue.topic) ?? dialogue.topic
+        say(index, topic: topic, speaker: speaker, lookAt: lookTarget(of: dialogue))
     }
 
     /// An action with no clock waits on its package or on its voice file.

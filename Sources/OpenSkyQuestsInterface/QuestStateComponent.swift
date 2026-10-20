@@ -65,6 +65,11 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     /// running even if it was completed first.
     public private(set) var isRunning: Bool
     public private(set) var isCompleted: Bool
+    /// Set by a stage item's Fail Quest flag. The journal lists the quest as failed.
+    public private(set) var isFailed: Bool
+    /// The stage whose log entry the journal shows, and the items of it that passed.
+    /// "Only the most recent log entry is displayed" (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
+    public private(set) var journalLog: QuestJournalLog?
     /// Stage indices ever reached, sorted ascending and unique.
     public private(set) var stagesReached: [UInt16]
     /// Objectives whose display state deviates from untouched, sorted by index.
@@ -87,10 +92,14 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
         isRunning: Bool = false,
         isCompleted: Bool = false,
         stagesReached: [UInt16] = [],
-        objectives: [QuestObjectiveState] = []
+        objectives: [QuestObjectiveState] = [],
+        isFailed: Bool = false,
+        journalLog: QuestJournalLog? = nil
     ) {
         self.isRunning = isRunning
         self.isCompleted = isCompleted
+        self.isFailed = isFailed
+        self.journalLog = journalLog
         self.stagesReached = Set(stagesReached).sorted()
         var byIndex: [UInt16: QuestObjectiveState] = [:]
         for objective in objectives where !objective.isUntouched {
@@ -163,6 +172,51 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
         return result
     }
 
+    /// This state with the quest flagged failed. Like completing, it does not stop it.
+    public func failing() -> Self {
+        var result = self
+        result.isFailed = true
+        return result
+    }
+
+    /// Every objective the journal shows, completed ones too, flagged failed
+    /// (<https://ck.uesp.net/wiki/FailAllObjectives_-_Quest>).
+    public func failingAllObjectives() -> Self {
+        var result = self
+        result.objectives = objectives.map { objective in
+            var failed = objective
+            if objective.isDisplayed || objective.isCompleted {
+                failed.isFailed = true
+            }
+            return failed
+        }
+        return result
+    }
+
+    /// The passing stage `items` applied: those with text become the journal's log
+    /// entry, any Complete Quest item completes the quest, and any Fail Quest item
+    /// fails it and its objectives (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
+    public func applying(_ items: [Int], of stage: Quest.Stage) -> Self {
+        let chosen = items.filter(stage.logEntries.indices.contains)
+        var state = self
+        let written = chosen.filter { stage.logEntries[$0].text != nil }
+        if !written.isEmpty {
+            state.journalLog = QuestJournalLog(
+                stage: stage.index, items: written.map { UInt16(clamping: $0) }
+            )
+        }
+        let flags = chosen.reduce(into: Quest.LogEntry.Flags()) {
+            $0.formUnion(stage.logEntries[$1].flags)
+        }
+        if flags.contains(.completeQuest) {
+            state.isCompleted = true
+        }
+        if flags.contains(.failQuest) {
+            state = state.failing().failingAllObjectives()
+        }
+        return state
+    }
+
     /// This state with `index` recorded as reached. Reaching a stage twice
     /// changes nothing, and reaching a lower stage never lowers `currentStage`.
     public func reachingStage(_ index: UInt16) -> Self {
@@ -201,6 +255,27 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
             result.objectives.insert(updated, at: position ?? result.objectives.endIndex)
         }
         return result
+    }
+}
+
+nonisolated extension Quest.Stage {
+    /// The items a stage applies when nothing evaluated their conditions: those with
+    /// none, else the first.
+    public var defaultItems: [Int] {
+        let open = logEntries.indices.filter { logEntries[$0].conditions.isEmpty }
+        return open.isEmpty ? Array(logEntries.indices.prefix(1)) : open
+    }
+}
+
+/// The log entry the journal shows: one stage, and the items of it whose conditions
+/// passed, in record order.
+nonisolated public struct QuestJournalLog: Equatable, Sendable {
+    public let stage: UInt16
+    public let items: [UInt16]
+
+    public init(stage: UInt16, items: [UInt16]) {
+        self.stage = stage
+        self.items = Set(items).sorted()
     }
 }
 

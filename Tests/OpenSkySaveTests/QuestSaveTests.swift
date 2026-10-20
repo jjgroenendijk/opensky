@@ -25,7 +25,9 @@ struct QuestSaveTests {
             objectives: [
                 QuestObjectiveState(index: 20, isCompleted: true),
                 QuestObjectiveState(index: 10, isDisplayed: true, isFailed: true)
-            ]
+            ],
+            isFailed: true,
+            journalLog: QuestJournalLog(stage: 20, items: [0, 2])
         )
     }
 
@@ -70,6 +72,8 @@ struct QuestSaveTests {
         #expect(decoded.objective(10).isFailed)
         #expect(!decoded.objective(10).isCompleted)
         #expect(decoded.objective(20).isCompleted)
+        #expect(decoded.isFailed)
+        #expect(decoded.journalLog == QuestJournalLog(stage: 20, items: [0, 2]))
     }
 
     @Test func decodedEntriesStayInReferenceKeyOrder() throws {
@@ -149,6 +153,21 @@ struct QuestSaveTests {
         #expect(file.snapshot[mainQuest] == nil)
         #expect(file.snapshot[sideQuest] == nil)
         #expect(file.snapshot.dirtyCount == 1)
+    }
+
+    /// A build that does not know `QJLG` keeps the quest state without its log entry.
+    @Test func anUnknownJournalLogChunkLosesOnlyTheLog() throws {
+        let encoded = encode(snapshot())
+        let offset = try #require(OpenSkySaveFixture.offset(
+            ofChunk: OpenSkySaveFormat.ChunkTag.questJournalLogs, in: encoded
+        ))
+        let file = try OpenSkySaveDecoder.decode(OpenSkySaveFixture.patching(
+            encoded, at: offset, with: Array("ZZZZ".utf8)
+        ))
+        let decoded = try #require(file.snapshot[mainQuest]?.component(QuestRuntimeState.self))
+        #expect(decoded.journalLog == nil)
+        #expect(decoded.isFailed)
+        #expect(decoded.stagesReached == [10, 20, 200])
     }
 
     /// The reverse direction: a file written before the chunk existed loads

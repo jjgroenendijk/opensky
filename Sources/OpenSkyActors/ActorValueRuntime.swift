@@ -29,6 +29,10 @@ public struct ActorValueRuntime: ActorValueAccess {
     /// `holder`'s maximums and regen rates, derived from plugin data once per base
     /// record and player level.
     public func baseline(of holder: ActorValueHolder) -> ActorValueBaseline {
+        if holder.subject == .player {
+            let identity = store.component(PlayerIdentityState.self, for: ReferenceKey.player)
+            return baselines.playerBaseline(race: identity?.race)
+        }
         guard case let .actor(base) = holder.subject else {
             return baselines.baseline(for: holder.subject)
         }

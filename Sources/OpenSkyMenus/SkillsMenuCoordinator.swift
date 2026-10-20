@@ -86,6 +86,7 @@ public final class SkillsMenuCoordinator {
     @discardableResult
     public func open() -> Bool {
         guard model == nil, let world, let source = world.skillsMenuSource else { return false }
+        source.skillsMenuWillOpen()
         model = SkillsMenuModel(player: source.skillsMenuPlayer, skills: source.skillsMenuSkills)
         loadTrees(source)
         menuMode.inputConsumer = world.menuInputConsumer

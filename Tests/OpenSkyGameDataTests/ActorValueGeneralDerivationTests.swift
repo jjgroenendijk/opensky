@@ -45,6 +45,20 @@ struct ActorValueGeneralDerivationTests {
         #expect(skills.allSatisfy { values[$0] != nil })
     }
 
+    /// The race chosen in the race menu gives the player its skill bonuses.
+    @Test func thePlayerStartsWithTheChosenRacesSkillBonuses() throws {
+        let race = try Self.raceRecord()
+        let baselines = ActorValueBaselineResolver(resolver: ActorValueResolver(
+            templates: ActorTemplateResolver(actors: [:], leveledActors: [:]),
+            races: [race.formID.rawValue: race]
+        ))
+        let general = baselines.playerBaseline(race: race.formID).general
+        #expect(general[Self.twoHanded] == 25)
+        #expect(general[Self.block] == 20)
+        #expect(general[Self.oneHanded] == 15)
+        #expect(baselines.playerRace(chosen: nil) == nil)
+    }
+
     /// `Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, so Steady Hand has a base to lower.
     @Test func bowSpeedBonusStartsAtTheGameSetting() {
         var settings = ActorValueLevelSettings.documentedDefaults

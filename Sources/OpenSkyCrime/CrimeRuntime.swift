@@ -253,7 +253,7 @@ nonisolated extension CrimeEvent {
     @MainActor
     public func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
         guard !witnessed else { return self }
-        return CrimeEvent(
+        var seen = CrimeEvent(
             kind: kind,
             perpetrator: perpetrator,
             victim: victim,
@@ -262,5 +262,7 @@ nonisolated extension CrimeEvent {
             witnessed: source.isWitnessed(perpetrator),
             stolenValue: stolenValue
         )
+        seen.isPickpocket = isPickpocket
+        return seen
     }
 }

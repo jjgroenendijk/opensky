@@ -188,8 +188,7 @@ struct QuestRuntimeTests {
         }
     }
 
-    /// Every mutation that only means something on a running quest refuses to
-    /// run on a stopped one, and writes nothing when it refuses.
+    /// Completing or hiding on a stopped quest refuses and writes nothing.
     @Test func mutatingAStoppedQuestFailsAndWritesNothing() throws {
         let store = WorldStateStore()
         let quests = try runtime(store)
@@ -197,16 +196,23 @@ struct QuestRuntimeTests {
             try quests.completeQuest(sideQuest)
         }
         #expect(throws: QuestError.questNotRunning(sideQuest)) {
-            try quests.setObjectiveDisplayed(5, on: sideQuest)
-        }
-        // Stage 20 of the main quest is an ordinary stage, so stopping the
-        // quest first makes even a known stage refuse.
-        try quests.stopQuest(mainQuest)
-        #expect(throws: QuestError.questNotRunning(mainQuest)) {
-            try quests.setStage(20, on: mainQuest)
+            try quests.setObjectiveCompleted(5, on: sideQuest)
         }
         #expect(store.component(QuestRuntimeState.self, for: key(0x0200)) == nil)
-        #expect(try quests.state(of: mainQuest).stagesReached.isEmpty)
+    }
+
+    /// Setting any stage, or showing an objective, starts a stopped quest.
+    @Test func aStageOrAShownObjectiveStartsAStoppedQuest() throws {
+        let quests = try runtime()
+        try quests.stopQuest(mainQuest)
+        let staged = try quests.setStage(20, on: mainQuest)
+        #expect(staged.isRunning)
+        #expect(staged.stagesReached == [20])
+        try quests.setObjectiveDisplayed(5, on: sideQuest)
+        #expect(try quests.state(of: sideQuest).isRunning)
+        #expect(throws: QuestError.unknownObjective(quest: sideQuest, objective: 9)) {
+            try quests.setObjectiveDisplayed(9, on: FormID(0x0200))
+        }
     }
 
     // MARK: - Journal, snapshot and reset
@@ -222,17 +228,20 @@ struct QuestRuntimeTests {
         // The first write materializes the baseline, so it has no old value.
         #expect(entries[0].oldValue == nil)
         #expect(entries[0].newValue == QuestRuntimeState(
-            isRunning: true, stagesReached: [10]
+            isRunning: true, stagesReached: [10], journalLog: QuestJournalLog(stage: 10, items: [0])
         ).erased)
         #expect(entries[1].oldValue == entries[0].newValue)
         #expect(entries[1].newValue == QuestRuntimeState(
-            isRunning: true, stagesReached: [10, 20]
+            isRunning: true, stagesReached: [10, 20], journalLog: QuestJournalLog(
+                stage: 20,
+                items: [0]
+            )
         ).erased)
         #expect(entries.allSatisfy { $0.cell == nil })
     }
 
-    /// The M10 two-stores pattern: the same end state reached in different
-    /// mutation orders snapshots identically.
+    /// The same end state reached in different mutation orders snapshots identically.
+    /// Stages keep their order, because the newest stage writes the journal entry.
     @Test func snapshotsAreIndependentOfMutationOrder() throws {
         let ascending = WorldStateStore()
         let first = try runtime(ascending)
@@ -245,8 +254,8 @@ struct QuestRuntimeTests {
         let second = try runtime(descending)
         try second.setObjectiveCompleted(20, on: mainQuest)
         try second.setObjectiveDisplayed(10, on: mainQuest)
-        try second.setStage(20, on: mainQuest)
         try second.setStage(10, on: mainQuest)
+        try second.setStage(20, on: mainQuest)
 
         #expect(ascending.snapshot() == descending.snapshot())
     }

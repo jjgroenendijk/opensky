@@ -10,6 +10,10 @@ import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator: SkillsMenuSource {
+    public func skillsMenuWillOpen() {
+        applyEarnedLevels()
+    }
+
     public var skillsMenuPlayer: SkillsMenuPlayer {
         guard let leveling else { return .empty }
         let state = leveling.state

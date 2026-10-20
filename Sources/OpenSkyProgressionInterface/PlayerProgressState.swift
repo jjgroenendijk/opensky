@@ -17,8 +17,8 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
 
     /// The character level, which is what `GetLevel` reports for the player.
     public private(set) var level: Int
-    /// Character experience banked toward the next level, always below the next
-    /// threshold once a level-up has been run against it.
+    /// Character experience banked toward the next level. It can pass the threshold
+    /// until the skills menu applies the level.
     public private(set) var experience: Float
     /// Perk points earned and not yet spent.
     public private(set) var perkPoints: Int

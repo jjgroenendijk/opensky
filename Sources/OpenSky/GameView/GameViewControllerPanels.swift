@@ -425,6 +425,11 @@ extension GameViewController: ProgressionControlProviding {
     }
 
     @discardableResult
+    func applyBankedLevels() -> ProgressionActionOutcome {
+        progression.applyBankedLevels()
+    }
+
+    @discardableResult
     func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
         progression.chooseAttributePick(kind)
     }

@@ -41,6 +41,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var questAliases: [SaveQuestAliasEntry] = []
         /// Absent QLOC means no persisted location-alias targets.
         public var questLocationAliases: [SaveQuestLocationAliasEntry] = []
+        /// Absent `QJLG`: the journal shows each quest's highest reached stage.
+        public var questJournalLogs: [ReferenceKey: QuestJournalLog] = [:]
         /// Absent `AVAL`: everyone re-derives their maximums and starts full.
         public var actorValues: [SaveActorValueEntry] = []
         /// Absent `AVOV`: everyone re-derives the whole actor-value table.

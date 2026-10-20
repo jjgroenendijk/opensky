@@ -268,10 +268,14 @@ public protocol ProgressionControlProviding: AnyObject {
     @discardableResult
     func incrementSelectedSkill() -> ProgressionActionOutcome
 
-    /// Banks `amount` of character experience and spends it against the level
-    /// curve, which is what a skill point does on the player's behalf.
+    /// Banks `amount` of character experience, which is what a skill point does on
+    /// the player's behalf. The level it buys waits for the skills menu.
     @discardableResult
     func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome
+
+    /// Applies the banked levels, as opening the skills menu does.
+    @discardableResult
+    func applyBankedLevels() -> ProgressionActionOutcome
 
     /// Spends one owed attribute pick on `kind`.
     @discardableResult

@@ -1,4 +1,4 @@
-// Record-authored non-primary actor values. Skills are 15 + race bonus + 8 points
+// Record-authored non-primary actor values. Skills are `iAVDSkillStart` + race bonus + 8 points
 // per level spread by class weight, leftovers by weight with ties in ascending index
 // order (UESP CLAS; the opposite of the attribute rule). RACE DATA and NPC_ ACBS give
 // carry weight, mass, unarmed damage and `Speed Mult`. NPC_ DNAM skills are not read:
@@ -29,7 +29,7 @@ nonisolated extension ActorValueDerivation {
         return values
     }
 
-    /// The eighteen skills: the documented floor, the race's bonuses, and — for
+    /// The eighteen skills: `iAVDSkillStart`, the race's bonuses, and — for
     /// an auto-calc actor — the class's spread of the per-level skill points.
     public static func skillBaseValues(
         inputs: ActorValueInputs,
@@ -38,7 +38,7 @@ nonisolated extension ActorValueDerivation {
     ) -> [Int32: Float] {
         var values: [Int32: Float] = [:]
         for index in ActorValueIdentity.firstSkillIndex ... ActorValueIdentity.lastSkillIndex {
-            values[index] = ActorValueIdentity.skillFloor
+            values[index] = Float(max(0, settings.skillStart))
         }
         for bonus in inputs.race.skillBonuses where ActorValueIdentity.isVanilla(
             index: bonus.actorValue

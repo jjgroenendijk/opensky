@@ -43,6 +43,9 @@ public protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     @discardableResult
     func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool
 
+    /// Flags every shown objective failed, completed ones too.
+    func failAllQuestObjectives(for key: ReferenceKey) throws
+
     /// Shows or hides one journal objective.
     func setQuestObjectiveDisplayed(
         _ objective: UInt16, _ isDisplayed: Bool, for key: ReferenceKey

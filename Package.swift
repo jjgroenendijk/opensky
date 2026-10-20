@@ -610,7 +610,8 @@ targets += feature(
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyEngineTesting", "OpenSkyConditions",
         "OpenSkyDialogueFixtures",
-        "OpenSkyDialogueInterface", "OpenSkyFeaturesTesting", "OpenSkyFormatsESM",
+        "OpenSkyDialogueInterface", "OpenSkyFeaturesTesting", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM",
         "OpenSkyGameData",
         "OpenSkyQuestsInterface", "OpenSkyWorldState"
     ]

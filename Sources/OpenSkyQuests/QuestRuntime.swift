@@ -159,39 +159,45 @@ public struct QuestRuntime: QuestAccess {
 
     // MARK: - Stages
 
-    /// Records `index` as reached. A lower stage reports done without moving the
-    /// current one (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>). The flags of
-    /// every stage with this index count: start-up starts the quest, shut-down stops it.
+    /// Records `index` as reached and, the first time, applies the stage `items` that
+    /// passed: the newest log entry, Complete Quest, and Fail Quest. Nil `items` takes
+    /// `defaultItems`. A stopped quest starts, filling its aliases
+    /// (<https://ck.uesp.net/wiki/Quest_Stages_Tab>). Shut-down stops it after.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    public func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+    public func setStage(
+        _ index: UInt16, on id: FormID, items: [Int]? = nil
+    ) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
         let matching = resolved.quest.stages.filter { $0.index == index }
-        guard !matching.isEmpty else {
+        guard let stage = matching.first else {
             throw QuestError.unknownStage(quest: id, stage: index)
         }
         let flags = matching.reduce(into: Quest.Stage.Flags()) { $0.formUnion($1.flags) }
-        var state = state(of: resolved)
+        let before = state(of: resolved)
+        var state = before
         if !state.isRunning {
-            guard flags.contains(.startUpStage) else {
-                throw QuestError.questNotRunning(id)
-            }
-            // A start-up stage starts the quest, so it fills the aliases too,
-            // and refuses the whole call the same way `startQuest` does.
             try fillAliases(of: resolved.quest, key: resolved.key)
             state = state.starting()
         }
         state = state.reachingStage(index)
+        if !before.isStageDone(index) {
+            state = state.applying(items ?? stage.defaultItems, of: stage)
+        }
         if flags.contains(.shutDownStage) {
             state = state.stopping()
         }
         store.set(state, for: resolved.key)
+        if state.isCompleted, !before.isCompleted {
+            countCompletion(of: resolved.quest)
+        }
         return state
     }
 
     // MARK: - Objectives
 
-    /// Shows or hides one objective in the journal.
+    /// Shows or hides one objective in the journal. Showing one starts a stopped
+    /// quest, as setting a stage does.
     ///
     /// - Throws: `QuestError.unknownObjective`, `QuestError.questNotRunning`.
     /// - Returns: the state as stored afterwards.
@@ -201,6 +207,13 @@ public struct QuestRuntime: QuestAccess {
         _ isDisplayed: Bool = true,
         on id: FormID
     ) throws -> QuestRuntimeState {
+        let resolved = try resolve(id)
+        if isDisplayed, !state(of: resolved).isRunning {
+            guard resolved.quest.objectives.contains(where: { $0.index == index }) else {
+                throw QuestError.unknownObjective(quest: id, objective: index)
+            }
+            try startQuest(id)
+        }
         let state = try applyToObjective(index, on: id) {
             $0.settingObjectiveDisplayed(index, isDisplayed)
         }
@@ -241,6 +254,12 @@ public struct QuestRuntime: QuestAccess {
         on id: FormID
     ) throws -> QuestRuntimeState {
         try applyToObjective(index, on: id) { $0.settingObjectiveFailed(index, isFailed) }
+    }
+
+    /// Flags every shown objective failed, completed ones too.
+    @discardableResult
+    public func failAllObjectives(on id: FormID) throws -> QuestRuntimeState {
+        try apply(to: id) { $0.failingAllObjectives() }
     }
 
     // MARK: - Reset

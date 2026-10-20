@@ -77,6 +77,9 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     /// Total gold value of what was taken, before the steal multiplier. Zero
     /// for every kind but theft.
     public let stolenValue: Int64
+    /// A theft caught in the act of pickpocketing, which costs the faction's flat
+    /// `CRVA` pickpocket price instead of the stolen value.
+    public var isPickpocket = false
 
     public init(
         kind: CrimeKind,
@@ -123,6 +126,7 @@ nonisolated public struct CrimeGoldTable: Equatable, Sendable {
     public func bounty(for event: CrimeEvent) -> Int32 {
         guard let values else { return 0 }
         return switch event.kind {
+        case .theft where event.isPickpocket: Int32(values.pickpocket)
         case .theft: Self.stealBounty(of: event.stolenValue, multiplier: values.stealMultiplier)
         case .assault: Int32(values.assault)
         case .murder: Int32(values.murder)

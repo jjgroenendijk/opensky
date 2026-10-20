@@ -30,6 +30,8 @@ nonisolated public enum DialogueRejection: Equatable, Sendable {
     /// evaluated. File order is selection order, so this is a real outcome
     /// rather than a missing one.
     case notReached
+    /// It passed and went on a Random stack, and another stacked response was picked.
+    case lostRandomPick
 }
 
 /// One response considered for a topic, with the reason it did or did not win.

@@ -108,6 +108,7 @@ struct PlayerProgressSaveTests {
         )
         let runtime = PlayerLevelRuntime(values: values)
         runtime.award(characterExperience: 100)
+        runtime.applyEarnedLevels()
         runtime.chooseAttribute(.health)
 
         let file = try OpenSkySaveDecoder.decode(Self.encode(store.snapshot()))

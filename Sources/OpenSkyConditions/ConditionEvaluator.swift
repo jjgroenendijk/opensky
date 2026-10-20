@@ -158,6 +158,9 @@ nonisolated public struct ConditionEvaluator: Sendable {
     public var context: ConditionContext
     public let registry: ConditionFunctionRegistry
     public private(set) var tally: ConditionTally
+    /// When true, a function the registry lacks holds instead of failing. The failure is
+    /// still tallied, so a census sees it. A perk spend uses this (docs/engine/perks.md).
+    public var unknownFunctionsHold = false
 
     public init(
         context: ConditionContext,
@@ -179,6 +182,9 @@ nonisolated public struct ConditionEvaluator: Sendable {
             return ConditionOutcome(isTrue: isTrue)
         case let .failure(failure):
             tally.note(failure)
+            if unknownFunctionsHold, case .unknownFunction = failure {
+                return ConditionOutcome(isTrue: true, failures: [failure])
+            }
             return ConditionOutcome(isTrue: false, failures: [failure])
         }
     }

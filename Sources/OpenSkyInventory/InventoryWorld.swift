@@ -41,6 +41,10 @@ public protocol InventoryWorld: AnyObject {
     func playerSpeechSkill() -> Float?
     /// The player's `CarryWeight` actor value. Nil without actor values.
     var playerCarryCapacity: Float? { get }
+    /// `key`'s current Pickpocket skill. Nil without actor values.
+    func pickpocketSkill(of key: ReferenceKey) -> Float?
+    /// Whether `observer` has detected the player right now.
+    func detectsPlayer(_ observer: ReferenceKey) -> Bool
     /// `effect`'s name in the load order's language.
     func magicEffectName(_ effect: ResolvedMagicEffect) -> String
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s
@@ -58,6 +62,14 @@ public protocol InventoryWorld: AnyObject {
 }
 
 extension InventoryWorld {
+    public func pickpocketSkill(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func detectsPlayer(_: ReferenceKey) -> Bool {
+        false
+    }
+
     public var gameMonth: Int? {
         nil
     }

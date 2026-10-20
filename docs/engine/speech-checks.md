@@ -40,17 +40,20 @@ actor value 1: 0 Cowardly, 1 Cautious, 2 Average, 3 Brave, 4 Foolhardy.
 ## Game settings
 
 `Skyrim.esm` sets only `fBribeCostCurve` (1.4), `fBribeScale` (0.5), and
-`fBribeSpeechcraftMult` (0.1). A setting the load order does not hold falls back to a value
-OpenSky chose, because no source gives the game's built-in default:
+`fBribeSpeechcraftMult` (0.1). A setting the load order does not hold falls back to the game's
+built-in default from the [CK settings list](https://ck.uesp.net/wiki/Category:Settings):
 
-| Setting | OpenSky value |
+| Setting | Default |
 | --- | --- |
-| `fBribeMoralityMult`, `fBribeNPCLevelMult` | 1 |
-| `fIntimidateSpeechcraftCurve` | 1 |
-| `fIntimidateConfidenceMultCowardly` | 0.5 |
-| `fIntimidateConfidenceMultCautious` | 0.75 |
+| `fBribeMoralityMult` | 1 |
+| `fBribeNPCLevelMult` | 0.1 |
+| `fIntimidateSpeechcraftCurve` | 1.5 |
+| `fIntimidateConfidenceMultCowardly` | 0, so a coward always yields |
+| `fIntimidateConfidenceMultCautious` | 0.5 |
 | `fIntimidateConfidenceMultAverage` | 1 |
-| `fIntimidateConfidenceMultBrave` | 1.25 |
-| `fIntimidateConfidenceMultFoolhardy` | infinite, so a foolhardy NPC is never intimidated |
+| `fIntimidateConfidenceMultBrave` | 1.5 |
+| `fIntimidateConfidenceMultFoolhardy` | 100, so a foolhardy NPC is all but fearless |
+
+A won check teaches Speech ([skill advancement](/engine/skill-advancement.md)).
 
 With no settings or no gold count, both conditions fail with the speech reason.

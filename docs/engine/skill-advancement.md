@@ -109,11 +109,14 @@ into account."
 | Arrow that lands | Archery | The bow's base damage |
 | Blow blocked | Block | Raw damage the block took, times `fBlockSkillUseMult` (2) with a shield or `fWeaponBlockSkillUseMult` (1) with a weapon |
 | Bash that lands | Block | `fShieldBashSkillUseBase` (5) with a shield, `fWeaponBashSkillUseBase` (1) without |
-| Blow taken in armor | Heavy or Light Armor | Raw damage of the blow, times pieces worn |
+| Blow taken in armor | Heavy or Light Armor, by a roll | Raw damage of the blow |
 | Spell cast | The effect's `MGEF` magic skill | Spell base cost times the effect's skill usage multiplier |
 | Held spell, per step | The same | Magicka spent, times the same multiplier |
 | Lock picked | Lockpicking | `fSkillUsageLockPick<band>`: 2, 3, 5, 8, 13 from Novice to Master |
 | Lockpick broken | Lockpicking | `fSkillUsageLockPickBroken`, 0.25 |
+| Item bought or sold | Speech | One copy's base value, once per trade |
+| Speech check won | Speech | 75 times the player's base Speech |
+| Item pickpocketed | Pickpocket | The item's value times the count, or the gold taken |
 
 - A weapon skill counts only when the blow hits something that has health ("against valid
   targets"), and always at base damage: "Boosting weapon damage via skill perks or equipment
@@ -137,16 +140,19 @@ into account."
   effect will give the player" (<https://ck.uesp.net/wiki/Magic_Effect>). A spell with effects of
   two schools raises both.
 
-## Armor: two readings
+## Armor: the slot roll
 
-UESP [Heavy Armor](https://en.uesp.net/wiki/Skyrim:Heavy_Armor): "The number of heavy armor items
-simultaneously worn by the player does increase XP gained ... If the player is wearing a mixed set
-of heavy and light armor, XP will only be awarded to one skill". Two things are left open. OpenSky
-decides them in one place:
+The talk page of UESP [Heavy Armor](https://en.uesp.net/wiki/Skyrim_talk:Heavy_Armor), section
+"Reverse-engineering", describes how one blow picks its skill. OpenSky follows it:
 
-- A mixed set counts for the larger half. Heavy wins a tie.
-- Experience is multiplied by the number of pieces. That more pieces give more is quoted. The exact
-  factor is not, and is not checked against the game.
+- Count the armoured body slots of each kind. A body (torso) piece counts twice. A shield,
+  clothing, and a piece with zero armour value do not count.
+- Roll a whole number from 0 to 5. Below the light count gives Light Armor; below light plus
+  heavy gives Heavy Armor; otherwise the blow teaches nothing.
+- The experience is the blow's alone. More armour raises the chance of a credit, not its size.
+
+This is a community description of observed behaviour, not a quote from the game. It explains the
+main page's "the number of items worn does increase XP gained" and "only one skill" at once.
 
 ## Crossing the threshold
 
@@ -215,12 +221,17 @@ when the session has no progression. Names use the record names too, so the wiki
 `Game.AdvanceSkill("Marksman", 50.0)` raises Archery ([actor values](/engine/actor-values.md) lists
 the names).
 
+UESP [Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) gives the Speech and Pickpocket units: "1
+base XP per gold used in transactions", "75 * Speech level base XP for passing Speech checks", and
+"1 base XP per gold value stolen". OpenSky counts a trade by one copy's base value, not the price
+paid. The CK settings list a `fPickpocketSkillUsesCurve` of 0.8 that UESP does not explain; OpenSky
+does not apply it.
+
 ## Not reported yet
 
 These actions have a skill and a known base experience, but the engine does not perform them yet.
 Each needs one reporting call when its system arrives:
 
-- Pickpocket and Speech: one base experience per gold moved.
 - Smithing, Alchemy, and Enchanting, which need crafting menus.
 - Sneak: `fSkillUsageSneakPerSecond` (0.625) while hidden, and sneak attacks.
 - Restoration by healing done, and Destruction's difficulty change, which needs a difficulty setting.

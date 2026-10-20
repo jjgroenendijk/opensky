@@ -271,6 +271,33 @@ struct SceneRuntimeTests {
         ])
     }
 
+    /// A looping line repeats after its pause while the timer holds the phase, and
+    /// stops when the phase ends.
+    @Test func aLoopingLineRepeatsUntilItsPhaseEnds() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.loopScene()
+        func tick(_ now: Double) throws -> [SceneStep] {
+            var runtime = try SceneFixture.runtime(store: store, scene: scene, now: now)
+            runtime.loopPause = { $0.lowerBound }
+            return try steps(now == 0 ? runtime.start(scene.formID) : runtime.tick())
+        }
+        #expect(try lines(tick(0)).count == 1)
+        #expect(try tick(4).isEmpty)
+        let repeated = try tick(6)
+        #expect(lines(repeated).count == 1)
+        #expect(!repeated.contains {
+            if case .phaseCompleted = $0 {
+                true
+            } else {
+                false
+            }
+        })
+        #expect(try lines(tick(11)).count == 1)
+        let end = try tick(20)
+        #expect(lines(end).isEmpty)
+        #expect(end.last == .ended(.finished))
+    }
+
     private func lines(_ steps: [SceneStep]) -> [Float] {
         steps.compactMap {
             if case let .line(line) = $0 {

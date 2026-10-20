@@ -45,6 +45,8 @@ nonisolated extension PerkEntryPoint {
     public static let modSpellCost = PerkEntryPoint(rawValue: 38)
     public static let modPercentBlocked = PerkEntryPoint(rawValue: 39)
     public static let modSellPrices = PerkEntryPoint(rawValue: 60)
+    public static let modPickpocketChance = PerkEntryPoint(rawValue: 56)
+    public static let canPickpocketEquippedItem = PerkEntryPoint(rawValue: 61)
     public static let modPlayerIntimidation = PerkEntryPoint(rawValue: 43)
     public static let modBribeAmount = PerkEntryPoint(rawValue: 46)
     public static let modLockpickSweetSpot = PerkEntryPoint(rawValue: 59)

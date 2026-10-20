@@ -29,7 +29,9 @@ Two record facts decide what shows:
   controls exactly that. If several flags are set, failed wins over completed, and completed
   wins over displayed.
 
-A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it.
+A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it. A
+quest a Fail Quest stage item failed leaves the active list and is listed with the completed ones,
+marked failed ([quest state](/engine/quest-state.md#stage-items)).
 
 Running misc quests (type 6) share one row at the end of the active list, as in the game. Its
 objectives are the open objectives of all of them, and each keeps its own quest. The row has
@@ -45,9 +47,11 @@ A journal quest is tracked when it first shows an objective, as a new quest is i
 player can untrack it, and it then stays untracked. Tracking is saved in the `QTRK` chunk
 ([world chunks](/formats/opensky-save-world-chunks.md)).
 
-The log entries are the `CNAM` text of every reached stage, in stage order, joined into the
-description. When a stage has several `QSDT` entries, the first in file order is used. The
-vanilla journal chooses by condition, but the page has no condition context.
+The description is the newest log entry only: "Only the most recent log entry is displayed"
+([Quest Stages Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab)). It is the `CNAM` text of the
+items that passed when the last stage was set, one paragraph each. The quest state stores which
+items they were, so the page needs no condition context. A state with no stored entry, such as
+one from an imported save, shows the highest reached stage that has text.
 
 ### Which string table
 

@@ -25,8 +25,7 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// or `fWeaponBashSkillUseBase` setting.
     case bash
     /// A blow the actor took while wearing armour. The amount is the raw damage
-    /// of the strike, before the worn-armour scaling this engine applies when
-    /// it resolves which armour skill is credited.
+    /// of the strike; `WornArmorProfile` picks the armour skill it credits.
     case armorHit
     /// Magicka spent on an effect, credited to the actor value that effect's
     /// MGEF names as its Magic Skill. The amount is already multiplied by the
@@ -44,6 +43,13 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// Time spent crouched and hidden near an observer, credited to Sneak. The
     /// amount is `fSkillUsageSneakPerSecond` times the seconds.
     case hidden
+    /// An item bought or sold, credited to Speech. The amount is one copy's base value.
+    case barter
+    /// A Persuade, Intimidate, or Bribe that worked, credited to Speech.
+    case speechCheck
+    /// An item lifted from a living actor unseen, credited to Pickpocket. The amount
+    /// is the item's value.
+    case pickpocket
 
     /// The skill this action always credits, or nil for `armorHit`, which depends
     /// on the target's armor. Unarmed, staff, torch and shield strikes credit
@@ -69,6 +75,10 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
             ActorValueIdentity.index(named: "Lockpicking")
         case .sneakAttack, .hidden:
             ActorValueIdentity.index(named: "Sneak")
+        case .barter, .speechCheck:
+            ActorValueIdentity.index(named: "Speech")
+        case .pickpocket:
+            ActorValueIdentity.index(named: "Pickpocket")
         case let .spellEffect(skill), let .craft(skill):
             ActorValueIdentity.isSkill(index: skill) ? skill : nil
         }
@@ -116,28 +126,36 @@ nonisolated public struct SkillUseEvent: Equatable, Sendable {
     }
 }
 
-/// What one actor wears, as the armor skills count it: pieces, not rating
-/// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>). Our readings: a mixed set
-/// credits the larger half (heavy wins a tie), and experience scales with the piece count.
+/// What one actor wears, as the armour skills count it: body slots covered, not rating.
+/// A blow rolls 0 to 5; below the light count credits Light Armor, below the total
+/// credits Heavy Armor, else nothing (UESP "Skyrim talk:Heavy Armor", "Reverse-engineering").
 nonisolated public struct WornArmorProfile: Equatable, Sendable {
-    public let heavyPieces: Int
-    public let lightPieces: Int
+    /// The roll's range is 0 up to this, exclusive.
+    public static let rollSides = 6
 
-    public static let none = WornArmorProfile(heavyPieces: 0, lightPieces: 0)
+    /// Body slots covered by heavy armour; the torso counts twice.
+    public let heavyParts: Int
+    public let lightParts: Int
 
-    public init(heavyPieces: Int, lightPieces: Int) {
-        self.heavyPieces = max(0, heavyPieces)
-        self.lightPieces = max(0, lightPieces)
+    public static let none = WornArmorProfile(heavyParts: 0, lightParts: 0)
+
+    public init(heavyParts: Int, lightParts: Int) {
+        self.heavyParts = max(0, heavyParts)
+        self.lightParts = max(0, lightParts)
     }
 
-    /// The armour skill a strike against this actor credits, and how many
-    /// pieces of it are worn — or nil for an actor wearing no armour at all,
-    /// whose strike credits nothing.
-    public var creditedSkill: (index: Int32, pieces: Int)? {
-        guard heavyPieces > 0 || lightPieces > 0 else { return nil }
-        let name = heavyPieces >= lightPieces ? "Heavy Armor" : "Light Armor"
-        guard let index = ActorValueIdentity.index(named: name) else { return nil }
-        return (index, max(heavyPieces, lightPieces))
+    /// The armour skill one blow credits for `roll` (0 to 5), or nil when the roll
+    /// lands past the covered slots.
+    public func creditedSkill(roll: Int) -> Int32? {
+        let name: String
+        if roll < lightParts {
+            name = "Light Armor"
+        } else if roll < lightParts + heavyParts {
+            name = "Heavy Armor"
+        } else {
+            return nil
+        }
+        return ActorValueIdentity.index(named: name)
     }
 }
 

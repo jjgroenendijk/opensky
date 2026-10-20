@@ -47,13 +47,17 @@ public protocol QuestAccess {
     func completeQuest(_ id: FormID) throws -> QuestRuntimeState
 
     /// Records `index` as reached. Setting a lower stage marks it done but keeps the
-    /// current stage (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>). A
-    /// `startUpStage` starts the quest; a `shutDownStage` stops it afterwards.
-    /// - Throws: `QuestError.unknownStage`, or `QuestError.questNotRunning` for a
-    ///   stopped quest and a stage that is not a start-up stage.
+    /// current stage (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>). A stopped quest
+    /// starts; a `shutDownStage` stops it afterwards. The first time, the passing stage
+    /// `items` write the log entry and apply Complete Quest and Fail Quest.
+    /// - Throws: `QuestError.unknownStage`, `QuestError.aliasFillFailed`.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState
+    func setStage(_ index: UInt16, on id: FormID, items: [Int]?) throws -> QuestRuntimeState
+
+    /// Flags every shown objective failed, completed ones too.
+    @discardableResult
+    func failAllObjectives(on id: FormID) throws -> QuestRuntimeState
 
     /// Shows or hides one objective in the journal.
     ///
@@ -124,6 +128,12 @@ public protocol QuestAccess {
 }
 
 extension QuestAccess {
+    /// Sets a stage with the items no condition decided (`Quest.Stage.defaultItems`).
+    @discardableResult
+    public func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+        try setStage(index, on: id, items: nil)
+    }
+
     /// Shows one objective in the journal.
     @discardableResult
     public func setObjectiveDisplayed(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {

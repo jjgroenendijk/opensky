@@ -4,6 +4,7 @@
 // `OpenSkyMenus`. See docs/engine/coordinators.md and docs/engine/dialogue.md.
 
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
@@ -22,6 +23,10 @@ public final class DialogueCoordinator {
     /// `DialogueRuntime.choose` gives the follow-up topics and the goodbye
     /// flag once. Choosing again after the line would run the scripts again.
     public private(set) var followUp: DialogueChoice?
+    private var followInfo: TopicInfo?
+    /// The TWAT topic of the response whose choice list shows, said if the player
+    /// backs out (<https://ck.uesp.net/wiki/Topic_Info>).
+    public private(set) var walkAwayTopic: FormID?
     /// Turned, stopped, and with its package suspended.
     public private(set) var heldSpeaker: ReferenceKey?
     /// The actor the player talks to, which `IsInDialogueWithPlayer` reads.
@@ -116,6 +121,8 @@ public final class DialogueCoordinator {
             let choice = try runtime.choose(id, speaker: speaker)
             selection = choice.next
             followUp = choice
+            followInfo = info
+            walkAwayTopic = nil
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
             spokenLine = Self.line(info, speaker: speaker, greeting: false)
             var commands = [DialogueCommand.spokeToPlayer(speaker)]
@@ -134,14 +141,23 @@ public final class DialogueCoordinator {
     /// just changed it.
     public func finishResponse(speaker: ReferenceKey?) -> DialogueResponseEnd {
         let follow = followUp
+        let info = followInfo
         followUp = nil
+        followInfo = nil
         spokenLine = nil
         if follow?.endsConversation == true {
             return .close
         }
+        if
+            let info, info.flags.contains(.invisibleContinue),
+            let next = follow?.next.offers.first
+        {
+            return .continueWith(next.info)
+        }
         guard let runtime else { return .unchanged }
         if let follow, !follow.next.offers.isEmpty {
-            return .topics(follow.next)
+            walkAwayTopic = info?.flags.contains(.walkAway) == true ? info?.walkAwayTopic : nil
+            return .topics(Self.hidingWalkAway(follow.next, of: info))
         }
         guard let speaker else { return .unchanged }
         selection = runtime.topics(for: speaker)
@@ -150,8 +166,55 @@ public final class DialogueCoordinator {
 
     public func endConversation() {
         followUp = nil
+        followInfo = nil
+        walkAwayTopic = nil
         spokenLine = nil
         conversationSpeaker = nil
+    }
+
+    /// Records the walk-away line of the shown choice list as said and returns it, or
+    /// nil when the list has none. The caller voices it as the conversation ends.
+    public func walkAway(speaker: ReferenceKey) -> FormID? {
+        guard let topic = walkAwayTopic else { return nil }
+        walkAwayTopic = nil
+        return sayAlone(runtime?.topics(linked: [topic], speaker: speaker), speaker: speaker)
+    }
+
+    /// Records the speaker's line for one Favors tab event, such as `SHOW` when a
+    /// follower enters the favour state (<https://ck.uesp.net/wiki/Favors_Tab>).
+    public func favorLine(_ subtype: FourCC, speaker: ReferenceKey) -> FormID? {
+        let selection = runtime?.topics(subtype: subtype, speaker: speaker)
+        return sayAlone(selection, speaker: speaker)
+    }
+
+    /// The blocking greeting that is a Force Goodbye, recorded as said: the speaker
+    /// says it and the menu does not open (<https://ck.uesp.net/wiki/Dialogue_Branch>).
+    public func forcedGoodbye(for speaker: ReferenceKey) -> FormID? {
+        guard let runtime, let info = runtime.forcedGoodbye(for: speaker) else { return nil }
+        return (try? runtime.choose(info, speaker: speaker)) == nil ? nil : info
+    }
+
+    private func sayAlone(_ selection: DialogueSelection?, speaker: ReferenceKey) -> FormID? {
+        guard
+            let runtime, let offer = selection?.offers.first,
+            (try? runtime.choose(offer.info, speaker: speaker)) != nil
+        else { return nil }
+        return offer.info
+    }
+
+    /// Walk Away Invisible in Menu keeps the walk-away topic off the choice list.
+    private static func hidingWalkAway(
+        _ selection: DialogueSelection, of info: TopicInfo?
+    ) -> DialogueSelection {
+        guard
+            let info, info.flags.contains(.walkAwayInvisibleInMenu),
+            let hidden = info.walkAwayTopic
+        else { return selection }
+        return DialogueSelection(
+            offers: selection.offers.filter { $0.topic != hidden },
+            rejected: selection.rejected,
+            tally: selection.tally
+        )
     }
 
     private static func line(

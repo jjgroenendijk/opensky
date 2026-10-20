@@ -1,6 +1,6 @@
 // World > Progression > Character section: level, experience, perk points, and
 // owed attribute picks. The experience award calls `PlayerLevelRuntime.award`,
-// the same call a skill point makes. Not overridden.
+// the same call a skill point makes; Apply levels is what the skills menu does.
 
 import AppKit
 import OpenSkyGameData
@@ -14,6 +14,7 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
 
     let experienceControl = NSTextField(string: "500")
     let awardExperienceControl = NSButton(title: "Award XP", target: nil, action: nil)
+    let applyLevelsControl = NSButton(title: "Apply levels", target: nil, action: nil)
     let attributeControl = NSPopUpButton()
     let chooseAttributeControl = NSButton(title: "Choose", target: nil, action: nil)
     let addPerkPointControl = NSButton(title: "Add point", target: nil, action: nil)
@@ -47,7 +48,8 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
 
     override func makeContentViews() -> [NSView] {
         awardExperienceControl.toolTip =
-            "Adds experience and levels up when the threshold is reached."
+            "Banks experience. The level it earns waits for the skills menu."
+        applyLevelsControl.toolTip = "Applies the earned levels, as opening the skills menu does."
         chooseAttributeControl.toolTip =
             "Spends one level-up on the attribute and refills the bars."
         configureControls()
@@ -59,7 +61,9 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
                 PanelComponents.labeledFieldRow(
                     caption: "Attribute", captionWidth: 70, field: attributeControl
                 ),
-                PanelComponents.buttonRow([awardExperienceControl, chooseAttributeControl]),
+                PanelComponents.buttonRow([
+                    awardExperienceControl, applyLevelsControl, chooseAttributeControl
+                ]),
                 PanelComponents.buttonRow([addPerkPointControl, removePerkPointControl])
             ]),
             statsLabel
@@ -69,7 +73,7 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
     override func syncControls() {
         let available = provider != nil
         for control in [
-            awardExperienceControl, chooseAttributeControl,
+            awardExperienceControl, applyLevelsControl, chooseAttributeControl,
             addPerkPointControl, removePerkPointControl
         ] {
             control.isEnabled = available
@@ -108,6 +112,10 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
             identifier: "ProgressionAwardExperienceControl"
         )
         PanelComponents.configureButton(
+            applyLevelsControl, target: self, action: #selector(applyLevels),
+            identifier: "ProgressionApplyLevelsControl"
+        )
+        PanelComponents.configureButton(
             chooseAttributeControl, target: self, action: #selector(chooseAttribute),
             identifier: "ProgressionChooseAttributeControl"
         )
@@ -132,6 +140,11 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
 
     @objc private func awardExperience() {
         provider?.awardCharacterExperience(experienceAmount)
+        finishInteraction()
+    }
+
+    @objc private func applyLevels() {
+        provider?.applyBankedLevels()
         finishInteraction()
     }
 

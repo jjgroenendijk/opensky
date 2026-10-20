@@ -60,6 +60,9 @@ public struct SkillAdvancementRuntime {
     /// resolution, and an armoured hit then credits nothing rather than
     /// guessing a skill.
     public var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
+    /// The 0 to 5 roll that picks the armour skill a blow credits.
+    public var armorRoll: @MainActor ()
+        -> Int = { Int.random(in: 0 ..< WornArmorProfile.rollSides) }
     /// Character leveling, where banked experience is spent. Nil in a session
     /// without leveling: experience is then reported but not banked.
     public var leveling: PlayerLevelRuntime?
@@ -225,6 +228,52 @@ public struct SkillAdvancementRuntime {
         )
     }
 
+    /// One training session: a whole level's worth of skill experience, which the
+    /// `Mod Skill Use` multipliers raise. It buys one level at most, and experience
+    /// past the next threshold is lost (UESP "Skyrim:Trainers"). Nil at the ceiling.
+    @discardableResult
+    public mutating func train(
+        skill index: Int32,
+        on holder: ActorValueHolder
+    ) -> SkillAdvanceReport? {
+        guard
+            let slot = ActorValueIdentity.skillAdvanceIndex(forSkill: index),
+            let use = parameters.parameters(forSkill: index)
+        else { return increment(skill: index, on: holder) }
+        let previous = level(ofSkill: index, on: holder)
+        guard previous < SkillAdvancement.skillCeiling else { return nil }
+        let cost = threshold(forSkill: index, on: holder)
+        let multiplier = useMultiplier(SkillUsageConditionResolution(skill: index))
+        let gained = cost * (multiplier.isFinite ? max(0, multiplier) : 1)
+        let level = previous + 1
+        let nextCost = SkillAdvancement.threshold(
+            atSkillLevel: level, parameters: use, settings: settings
+        )
+        let left = experience(forSkill: index, on: holder) + gained - cost
+        let carried = level < SkillAdvancement.skillCeiling
+            ? min(max(0, left), nextCost.nextDown) : 0
+        values.advanceSkill(at: index, by: 1, on: holder)
+        values.setBase(at: slot, to: carried, on: holder)
+        let outcome = SkillAdvanceOutcome(
+            levelsGained: 1,
+            level: level,
+            carriedExperience: carried,
+            characterExperience: SkillAdvancement.characterExperience(
+                forSkillLevel: level, settings: settings
+            )
+        )
+        tally.noteAdvances(1)
+        return SkillAdvanceReport(
+            skill: index,
+            experience: gained,
+            previousLevel: previous,
+            level: level,
+            carriedExperience: carried,
+            characterExperience: outcome.characterExperience,
+            levelUp: bank(outcome)
+        )
+    }
+
     // MARK: - Private
 
     /// Hands one advance's character experience to the level runtime and counts
@@ -236,17 +285,21 @@ public struct SkillAdvancementRuntime {
     private mutating func bank(_ outcome: SkillAdvanceOutcome) -> PlayerLevelUpReport? {
         guard let leveling else { return nil }
         leveling.noteSkillIncreases(outcome.levelsGained)
-        let report = leveling.award(characterExperience: outcome.characterExperience)
-        tally.noteCharacterLevels(report.levelsGained)
-        return report
+        return leveling.award(characterExperience: outcome.characterExperience)
+    }
+
+    /// Counts levels the skills menu applied.
+    public mutating func noteCharacterLevels(_ count: Int) {
+        tally.noteCharacterLevels(count)
     }
 
     /// Which skill a use credits and with how much base experience, resolving
     /// the one action that needs the world to answer.
     private func credit(for use: SkillUseEvent) -> (skill: Int32, amount: Float)? {
         if case .armorHit = use.action {
-            guard let worn = wornArmor(use.actor).creditedSkill else { return nil }
-            return (worn.index, use.amount * Float(worn.pieces))
+            let roll = armorRoll()
+            guard let skill = wornArmor(use.actor).creditedSkill(roll: roll) else { return nil }
+            return (skill, use.amount)
         }
         guard let skill = use.action.skillIndex else { return nil }
         return (skill, use.amount)

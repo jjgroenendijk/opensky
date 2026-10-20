@@ -106,6 +106,7 @@ nonisolated public enum DialogueReadout: Sendable {
         case .waitingForReset: "waiting for its reset time"
         case .conditionsFailed: "conditions failed"
         case .notReached: "not reached"
+        case .lostRandomPick: "lost the random pick"
         case .notBranchEntry: "not a branch start"
         case let .blockedByBranch(branch): "blocked by branch \(branch)"
         }

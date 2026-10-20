@@ -57,6 +57,9 @@ nonisolated public struct SceneAction: Equatable, Sendable {
     public var startPhase: UInt32?
     public var endPhase: UInt32?
     public var payload: SceneActionPayload
+
+    /// FNAM bit of a dialogue action that repeats its line.
+    public static let loopingFlag: UInt32 = 0x10000
 }
 
 /// VNAM: per-event behavior for all actors. Each value is 0 normal, 1 pause, 2 end, 3 don't set.

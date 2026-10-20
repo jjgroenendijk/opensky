@@ -82,7 +82,12 @@ final class DialogueMenuController {
     /// A speaker with nothing to say still opens the menu. The condition trace
     /// beside the list says why, and the use key does not seem dead.
     func begin(with speaker: ReferenceKey) {
-        guard !isOpen, let runtime = dialogue.begin(with: speaker) else { return }
+        guard !isOpen else { return }
+        if let goodbye = dialogue.forcedGoodbye(for: speaker) {
+            game.storyWorld.say(goodbye, speaker: speaker)
+            return
+        }
+        guard let runtime = dialogue.begin(with: speaker) else { return }
         model = DialogueMenuModel.build(
             speaker: speaker,
             name: game.dialogueWorld.speakerLabel(for: speaker),
@@ -144,7 +149,15 @@ final class DialogueMenuController {
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
         if case .button(.cancel) = event {
+            let walkAway = model.state == .topicList
+                ? model.speakerKey.flatMap { speaker in
+                    dialogue.walkAway(speaker: speaker).map { ($0, speaker) }
+                }
+                : nil
             close()
+            if let (info, speaker) = walkAway {
+                game.storyWorld.say(info, speaker: speaker)
+            }
             return
         }
         if let renderer = movie.loadedRenderer {
@@ -187,17 +200,21 @@ final class DialogueMenuController {
             dialogue.lastOutcome = "no topic selected"
             return
         }
+        say(entry.info)
+    }
+
+    private func say(_ id: FormID) {
         guard let speaker = model.speakerKey else {
             dialogue.lastOutcome = "no dialogue index loaded"
             return
         }
-        let chosen = dialogue.choose(entry.info, speaker: speaker)
+        let chosen = dialogue.choose(id, speaker: speaker)
         game.dialogueWorld.run(chosen.commands)
         guard let info = chosen.value else { return }
         model.beginResponse(
-            info: entry.info,
+            info: id,
             runs: DialogueMenuModel.responseRuns(
-                dialogue.index?.responseSource(ofInfo: entry.info) ?? info,
+                dialogue.index?.responseSource(ofInfo: id) ?? info,
                 strings: dialogue.strings
             )
         )
@@ -212,6 +229,9 @@ final class DialogueMenuController {
         switch dialogue.finishResponse(speaker: model.speakerKey) {
         case .close:
             close()
+            return
+        case let .continueWith(info):
+            say(info)
             return
         case let .topics(selection):
             if let runtime = dialogue.runtime {

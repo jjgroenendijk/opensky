@@ -83,7 +83,7 @@ struct BarterSessionTests {
 
         let bought = try shop.session.buy(Fixture.cuirass)
 
-        #expect(bought == BarterTransaction(count: 1, gold: 388))
+        #expect(bought == BarterTransaction(count: 1, gold: 388, unitValue: 125))
         #expect(shop.inventory.count(of: Fixture.cuirass, in: .player) == 1)
         #expect(shop.inventory.count(of: Fixture.cuirass, in: shop.merchant) == 2)
         #expect(shop.session.playerGold == 1000 - 388)
@@ -120,7 +120,7 @@ struct BarterSessionTests {
 
         let sold = try shop.session.sell(Fixture.sword)
 
-        #expect(sold == BarterTransaction(count: 1, gold: 8))
+        #expect(sold == BarterTransaction(count: 1, gold: 8, unitValue: 25))
         #expect(shop.inventory.count(of: Fixture.sword, in: .player) == 0)
         #expect(shop.session.playerGold == 1008)
         #expect(shop.session.merchantGold == 1000 + 1 - 8)

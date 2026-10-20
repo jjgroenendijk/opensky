@@ -18,15 +18,21 @@ extension PapyrusWorldStateBridge {
         return try resolved.runtime.state(of: resolved.quest.formID)
     }
 
-    /// Starts the quest and instantiates its scripts, whose `OnInit` then
-    /// fires once ever. A quest that is already running keeps the instances
-    /// and the variables it has.
+    /// Starts the quest, instantiates its scripts, and sets its start-up stage, so
+    /// `Start()` returns with the quest at that stage
+    /// (<https://ck.uesp.net/wiki/Start_-_Quest>). A running quest keeps its instances.
     @discardableResult
     public func startQuest(for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
+        let wasRunning = try resolved.runtime.state(of: resolved.quest.formID).isRunning
         let state = try resolved.runtime.startQuest(resolved.quest.formID)
         attachQuestScripts(resolved.quest, key: key)
-        return state.isRunning
+        guard !wasRunning else { return state.isRunning }
+        if let startUp = resolved.quest.stages.first(where: { $0.flags.contains(.startUpStage) }) {
+            try setQuestStage(startUp.index, for: key)
+        }
+        storyNatives.questStarted?(resolved.quest.formID)
+        return try resolved.runtime.state(of: resolved.quest.formID).isRunning
     }
 
     /// Stops the quest and retires its scripts. Reached stages and the completed flag
@@ -54,29 +60,38 @@ extension PapyrusWorldStateBridge {
         try resolved.runtime.completeQuest(resolved.quest.formID)
     }
 
-    /// Sets one stage, then enqueues its fragments when it was not reached before.
-    /// A start-up stage starts the quest, so scripts attach before fragments queue.
-    /// A shut-down stage stops the quest but keeps its instances, so this call's
-    /// fragments still run; `Stop` retires them.
+    /// Sets one stage, then enqueues the fragments of every item whose conditions pass
+    /// when it was not reached before. A stopped quest starts, so scripts attach before
+    /// fragments queue. A shut-down stage stops the quest but keeps its instances, so
+    /// this call's fragments still run; `Stop` retires them.
     @discardableResult
     public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
         let id = resolved.quest.formID
-        let wasDone = try resolved.runtime.state(of: id).isStageDone(stage)
-        let state = try resolved.runtime.setStage(stage, on: id)
-        if state.isRunning {
+        let before = try resolved.runtime.state(of: id)
+        let items = passingItems(of: resolved.quest, stage: stage)
+        let state = try resolved.runtime.setStage(stage, on: id, items: items)
+        if state.isRunning || !before.isRunning {
             attachQuestScripts(resolved.quest, key: key)
         }
-        if !wasDone {
-            let logEntry = chosenLogEntry(of: resolved.quest, stage: stage)
-            if state.isRunning, Self.completes(resolved.quest, stage: stage, logEntry: logEntry) {
-                try resolved.runtime.completeQuest(id)
-            }
+        if !before.isStageDone(stage) {
+            let chosen = items ?? resolved.quest.stages.first { $0.index == stage }?
+                .defaultItems ?? []
             world?.queueQuestFragments(
-                of: resolved.quest, stage: stage, key: key, logEntry: logEntry
+                of: resolved.quest, stage: stage, key: key,
+                logEntries: Set(chosen.map(Int32.init))
             )
         }
+        if state.isFailed, !before.isFailed {
+            storyNatives.questFailed?(id)
+        }
         return true
+    }
+
+    /// `FailAllObjectives()`: every shown objective, completed ones too.
+    public func failAllQuestObjectives(for key: ReferenceKey) throws {
+        let resolved = try resolveQuest(key)
+        try resolved.runtime.failAllObjectives(on: resolved.quest.formID)
     }
 
     public func setQuestObjectiveDisplayed(
@@ -194,26 +209,16 @@ extension PapyrusWorldStateBridge {
         return ResolvedQuestBridge(quest: quest, runtime: questRuntime)
     }
 
-    /// The first log entry whose conditions pass, as the game runs only that entry's
-    /// fragment. -1 when none passes; nil when there is no evaluator or no choice to make.
-    func chosenLogEntry(of quest: Quest, stage: UInt16) -> Int32? {
+    /// Every stage item whose conditions pass: "The script fragments will be run for all
+    /// entries where the conditions pass" (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
+    /// Nil without an evaluator.
+    func passingItems(of quest: Quest, stage: UInt16) -> [Int]? {
         let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
-        guard
-            entries.count > 1,
-            var evaluator = sessionNatives.conditionEvaluator?() else { return nil }
+        guard var evaluator = sessionNatives.conditionEvaluator?() else { return nil }
         evaluator.context.subject = .player
         evaluator.context.aliasQuest = quest.formID
         evaluator.context.formIDTranslation = questRuntime?.quests.translation(of: quest.formID)
-        let index = entries.firstIndex { evaluator.evaluate($0.conditions).isTrue }
-        return index.map(Int32.init) ?? -1
-    }
-
-    /// True when the log entry the stage runs has the Complete Quest flag. With no
-    /// choice made, that is the first entry.
-    static func completes(_ quest: Quest, stage: UInt16, logEntry: Int32?) -> Bool {
-        let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
-        let index = Int(logEntry ?? 0)
-        return entries.indices.contains(index) && entries[index].flags.contains(.completeQuest)
+        return entries.indices.filter { evaluator.evaluate(entries[$0].conditions).isTrue }
     }
 
     /// In the game a quest's scripts exist whether it runs or not, and a persistent

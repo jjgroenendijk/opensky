@@ -173,7 +173,8 @@ struct QuestAcceptanceTests {
         #expect(state.isRunning)
 
         let entry = try #require(chain.journal().selectedEntry)
-        #expect(entry.logEntries == [Chain.firstJournalText, Chain.secondJournalText])
+        // "Only the most recent log entry is displayed" (CK wiki, Quest Stages Tab).
+        #expect(entry.logEntries == [Chain.secondJournalText])
         #expect(entry.objectives.map(\.state) == [.completed])
         #expect(entry.isCompleted)
     }

@@ -229,19 +229,27 @@ struct SkillAdvancementRuntimeTests {
         #expect(SkillUseAction.weaponHit(.torch).skillIndex == nil)
     }
 
-    /// An armoured hit credits the armour worn, scaled by how much of it there
-    /// is, and a mixed set credits one skill only.
-    @Test func armourWornDecidesWhichSkillAHitCredits() {
+    /// A 0 to 5 roll against the covered slots picks the skill: below the light
+    /// count is Light Armor, below light plus heavy is Heavy Armor, past that nothing.
+    @Test(arguments: [(0, "Light Armor"), (1, "Heavy Armor"), (3, "Heavy Armor"), (4, nil)])
+    func theRollPicksWhichArmourSkillAHitCredits(roll: Int, skill: String?) {
+        let worn = WornArmorProfile(heavyParts: 3, lightParts: 1)
+        #expect(worn.creditedSkill(roll: roll) == skill.flatMap(ActorValueIdentity.index(named:)))
+    }
+
+    /// One blow teaches its base experience, whatever amount of armour is worn.
+    @Test func anArmouredHitTeachesOneBlow() {
         var (runtime, _) = runtime()
-        runtime.wornArmor = { _ in WornArmorProfile(heavyPieces: 3, lightPieces: 1) }
+        runtime.wornArmor = { _ in WornArmorProfile(heavyParts: 3, lightParts: 1) }
+        runtime.armorRoll = { 2 }
 
         let report = runtime.record(SkillUseEvent(
             actor: .player, action: .armorHit, amount: 10
         ))
 
         #expect(report?.skill == Self.heavyArmor)
-        // Three pieces of heavy armour: 3 * 10 base experience at 3.8.
-        #expect(report?.experience == 114)
+        // 10 base experience at 3.8.
+        #expect(report?.experience == 38)
     }
 
     /// An unarmoured character learns nothing from being hit.
@@ -304,6 +312,25 @@ struct SkillAdvancementRuntimeTests {
         #expect(runtime.level(ofSkill: Self.block, on: .player) == 16)
         #expect(runtime.experience(forSkill: Self.block, on: .player) == 81)
         #expect(report?.characterExperience == 16)
+    }
+
+    /// A session gives one level's worth of experience: plain, it lands at the start of
+    /// the next level; with a Rested-like multiplier, the overflow past the next level
+    /// is lost (UESP "Skyrim:Trainers").
+    @Test(arguments: [Float(1), 3])
+    func trainingBuysOneLevel(multiplier: Float) {
+        var (runtime, _) = runtime()
+        runtime.useMultiplier = { _ in multiplier }
+        let cost = runtime.threshold(forSkill: Self.block, on: .player)
+
+        let report = runtime.train(skill: Self.block, on: .player)
+
+        #expect(report?.level == 16)
+        #expect(report?.experience == cost * multiplier)
+        #expect(runtime.level(ofSkill: Self.block, on: .player) == 16)
+        let carried = runtime.experience(forSkill: Self.block, on: .player)
+        #expect(carried < runtime.threshold(forSkill: Self.block, on: .player))
+        #expect((carried == 0) == (multiplier == 1))
     }
 
     /// A skill at the ceiling refuses the point rather than reporting one it

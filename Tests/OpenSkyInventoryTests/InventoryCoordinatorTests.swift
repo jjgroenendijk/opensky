@@ -284,6 +284,74 @@ struct InventoryCoordinatorTests {
     }
 }
 
+// MARK: - Pickpocket
+
+extension InventoryCoordinatorTests {
+    private final class SkillRecorder: SkillUseReporting {
+        var uses: [SkillUseEvent] = []
+
+        func reportSkillUse(_ use: SkillUseEvent) -> Float {
+            uses.append(use)
+            return use.amount
+        }
+    }
+
+    /// Both skills, the weight, and being seen feed the chance (UESP "Skyrim:Pickpocket").
+    @Test func thePickpocketChanceReadsBothSkillsAndDetection() throws {
+        let harness = try Self.harness()
+        let chest = try #require(harness.coordinator.containerHolder(for: Self.chest))
+        harness.world.pickpocketSkills = [.player: 50, chest.key: 30]
+        let weight = harness.coordinator.runtime?.inventory.baselines.items
+            .definition(Fixture.sword)?.weight ?? 0
+        let settings = PickpocketSettings.vanilla
+        let unseen = settings.clamped(settings.baseChance(PickpocketAttempt(
+            thiefSkill: 50, targetSkill: 30, weight: weight
+        )))
+        #expect(harness.coordinator.pickpocketChance(of: Fixture.sword, count: 1, from: chest)
+            == unseen)
+        harness.world.detected = true
+        #expect(harness.coordinator.pickpocketChance(of: Fixture.sword, count: 1, from: chest)
+            == settings.clamped(unseen - settings.detectedPenalty))
+    }
+
+    /// A roll under the chance moves the item, marked stolen, and teaches Pickpocket
+    /// by its value; a roll over it moves nothing.
+    @Test func aPickpocketRollDecidesTheTake() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        let recorder = SkillRecorder()
+        coordinator.skillUses = recorder
+        let chest = try #require(coordinator.containerHolder(for: Self.chest))
+        let inventory = try #require(coordinator.runtime?.inventory)
+        try inventory.add(Fixture.sword, count: 1, to: chest)
+        harness.world.pickpocketSkills = [.player: 100, chest.key: 15]
+
+        let caught = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 99)
+        #expect(caught.wasCaught)
+        #expect(inventory.count(of: Fixture.sword, in: .player) == 0)
+
+        let took = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 0)
+        guard case .took = took else {
+            Issue.record("expected a take, got \(took)")
+            return
+        }
+        #expect(inventory.stolenCount(of: Fixture.sword, in: .player) == 1)
+        let value = inventory.baselines.items.definition(Fixture.sword)?.value ?? 0
+        #expect(recorder.uses.map(\.action) == [.pickpocket])
+        #expect(recorder.uses.first?.amount == Float(value))
+    }
+
+    /// Worn items stay put without a Can Pickpocket Equipped Item perk.
+    @Test func anEquippedItemNeedsThePerk() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player).value)
+        let pocket = try #require(coordinator.runtime?.player)
+        #expect(coordinator.pickpocket(Fixture.cuirass, named: "Cuirass", from: pocket, roll: 0)
+            == .equipped("Cuirass"))
+    }
+}
+
 extension InventoryCoordinatorTests {
     private final class FakeWorld: InventoryWorld {
         var activateLabel: String?
@@ -325,11 +393,21 @@ extension InventoryCoordinatorTests {
         }
 
         var speech: Float?
+        var pickpocketSkills: [ReferenceKey: Float] = [:]
+        var detected = false
         var perkFactors: [PerkEntryPoint: Float] = [:]
         private(set) var perkTargets: [PerkEntryPoint: ReferenceKey] = [:]
 
         func playerSpeechSkill() -> Float? {
             speech
+        }
+
+        func pickpocketSkill(of key: ReferenceKey) -> Float? {
+            pickpocketSkills[key]
+        }
+
+        func detectsPlayer(_: ReferenceKey) -> Bool {
+            detected
         }
 
         func perkModified(

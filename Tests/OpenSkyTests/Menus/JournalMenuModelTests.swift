@@ -160,21 +160,37 @@ struct JournalMenuModelTests {
         #expect(model(runtime).active.isEmpty)
     }
 
-    /// Only reached stages contribute journal paragraphs, oldest first, and the
-    /// description block joins them the way the page shows them.
+    /// The page shows the newest log entry only, the one the last set stage wrote.
     @Test
-    func logEntriesFollowTheReachedStagesInStageOrder() throws {
+    func theJournalShowsTheNewestLogEntry() throws {
         let runtime = try runtime(showingMainQuest: false)
         try runtime.setStage(20, on: mainQuest)
         let partial = try #require(model(runtime).active.first)
         #expect(partial.logEntries == ["I escaped through the keep."])
 
         try runtime.setStage(10, on: mainQuest)
-        let full = try #require(model(runtime).active.first)
-        #expect(full.logEntries == [
-            "A dragon attacked Helgen.", "I escaped through the keep."
-        ])
-        #expect(full.descriptionText.contains("\n\n"))
+        let newest = try #require(model(runtime).active.first)
+        #expect(newest.logEntries == ["A dragon attacked Helgen."])
+        #expect(newest.descriptionText == "A dragon attacked Helgen.")
+    }
+
+    /// A Fail Quest stage item moves the quest to the finished list, marked failed.
+    @Test
+    func aFailedQuestIsListedAsFailed() throws {
+        let store = try QuestFixture.store(QuestFixture.record(
+            formID: 0x0100,
+            fields: QuestFixture.editorID("Doomed") + QuestFixture.general(flags: 0x0001, type: 1)
+                + QuestFixture.stage(10) + QuestFixture.logEntry(text: "It began.")
+                + QuestFixture.stage(90) + QuestFixture.logEntry(flags: 0x02, text: "It failed.")
+        ))
+        let runtime = QuestRuntime(store: WorldStateStore(), quests: store)
+        try runtime.setStage(10, on: FormID(0x0100))
+        try runtime.setStage(90, on: FormID(0x0100))
+        let page = model(runtime)
+        #expect(page.active.isEmpty)
+        let failed = try #require(page.completed.first)
+        #expect(failed.isFailed)
+        #expect(failed.logEntries == ["It failed."])
     }
 
     /// An untouched objective is not on the page; the three display flags map

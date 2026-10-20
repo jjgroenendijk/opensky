@@ -48,6 +48,27 @@ extension DialogueRuntime {
         return nil
     }
 
+    /// What a conversation with a blocking greeting offers: the greeting's choice list,
+    /// or, without one, the starting topic (<https://ck.uesp.net/wiki/Dialogue_Branch>).
+    func blockingChoices(
+        _ offer: DialogueTopicOffer,
+        speaker: ReferenceKey
+    ) -> [DialogueTopicOffer] {
+        let links = dialogue.info(offer.info)?.topicLinks ?? []
+        let choices = links.isEmpty ? [] : topics(linked: links, speaker: speaker).offers
+        return choices.isEmpty ? [offer] : choices
+    }
+
+    /// The blocking greeting of `speaker` when it is a Force Goodbye: the speaker says
+    /// it and no menu opens.
+    public func forcedGoodbye(for speaker: ReferenceKey) -> FormID? {
+        guard
+            let offer = blockingOffer(for: speaker)?.offer,
+            dialogue.info(offer.info)?.flags.contains(.goodbye) == true
+        else { return nil }
+        return offer.info
+    }
+
     /// The offer a topic gets when branching keeps it out: every response
     /// carries `reason`, and no condition is evaluated.
     func scopedOut(_ topic: DialogueTopic, reason: DialogueRejection) -> DialogueTopicOffer {

@@ -1,7 +1,7 @@
 // Dialogue selection: what a speaker has to say right now. It sits beside
 // `WorldStateStore` rather than in it, because the store knows nothing about
-// records. Inside a topic the first INFO in file order whose conditions pass wins.
-// The selection rules are in docs/engine/dialogue.md.
+// records. Inside a topic the first INFO in file order whose conditions pass wins,
+// unless it starts a Random stack. The selection rules are in docs/engine/dialogue.md.
 
 import Foundation
 import OpenSkyConditions
@@ -39,6 +39,8 @@ public struct DialogueRuntime: DialogueAccess {
     /// script runtime, in which case the fragments a response declares are
     /// counted as unrun rather than silently dropped.
     public var fragments: (any DialogueFragmentDispatching)?
+    /// Picks one of `count` stacked Random responses. Tests fix it.
+    public var randomPick: @MainActor (Int) -> Int = { Int.random(in: 0 ..< $0) }
     private let contextSource: LazyConditionContext
     private var contextOverride: ConditionContext?
 
@@ -86,8 +88,7 @@ public struct DialogueRuntime: DialogueAccess {
         return store.component(DialogueRuntimeState.self, for: key) ?? .unsaid
     }
 
-    /// Whether the response has ever been said, which is what the say-once rule
-    /// tests.
+    /// Whether the response has ever been said, by anyone.
     public func hasBeenSaid(_ id: FormID) -> Bool {
         saidState(of: id).hasBeenSaid
     }
@@ -110,11 +111,11 @@ public struct DialogueRuntime: DialogueAccess {
     public func topics(for speaker: ReferenceKey) -> DialogueSelection {
         let player = dialogue.sortedTopics().filter { $0.category == .player }
         if let blocking = blockingOffer(for: speaker) {
-            let others = player.filter { $0.formID != blocking.offer.topic }
+            let offers = blockingChoices(blocking.offer, speaker: speaker)
+            let offered = Set(offers.map(\.topic))
+            let others = player.filter { !offered.contains($0.formID) }
                 .map { scopedOut($0, reason: .blockedByBranch(blocking.branch)) }
-            return DialogueSelection(
-                offers: [blocking.offer], rejected: others, tally: ConditionTally()
-            )
+            return DialogueSelection(offers: offers, rejected: others, tally: ConditionTally())
         }
         let selection = selectTopics(player.filter(isBranchEntry), speaker: speaker)
         let scoped = player.filter { !isBranchEntry($0) }
@@ -183,9 +184,10 @@ public struct DialogueRuntime: DialogueAccess {
         }
     }
 
-    /// Walks one topic's responses in file order and stops recording condition
-    /// outcomes once one has won — the later entries are `.notReached`, which
-    /// is a real outcome because file order *is* selection order.
+    /// Walks one topic's responses in file order. A passing Random response goes on a
+    /// stack, which the next passing response that is not Random, or is Random End,
+    /// closes; one stacked response is then picked
+    /// (<https://ck.uesp.net/wiki/Topic_Info>). Later entries are `.notReached`.
     private func consider(
         topic: DialogueTopic,
         speaker: ReferenceKey,
@@ -215,21 +217,42 @@ public struct DialogueRuntime: DialogueAccess {
             )
         }
         var traces: [DialogueInfoTrace] = []
-        var winner: FormID?
+        var stack: [Int] = []
+        var isClosed = false
         for info in infos {
-            let trace = winner == nil
-                ? evaluate(info: info, topic: topic, speaker: speaker, evaluator: &evaluator)
-                : DialogueInfoTrace(info: info.formID, outcome: nil, rejection: .notReached)
-            if trace.isWinner {
-                winner = info.formID
+            guard !isClosed else {
+                traces.append(DialogueInfoTrace(
+                    info: info.formID,
+                    outcome: nil,
+                    rejection: .notReached
+                ))
+                continue
             }
+            let trace = evaluate(info: info, topic: topic, speaker: speaker, evaluator: &evaluator)
             traces.append(trace)
+            guard trace.isWinner else { continue }
+            stack.append(traces.count - 1)
+            isClosed = !info.flags.contains(.random) || info.flags.contains(.randomEnd)
         }
+        let winner = pick(from: stack, in: &traces)
         return DialogueTopicOffer(
             topic: topic.formID,
             info: winner ?? infos.first?.formID ?? FormID(0),
             considered: traces
         )
+    }
+
+    /// Keeps one stacked response as the winner and marks the others `.lostRandomPick`.
+    private func pick(from stack: [Int], in traces: inout [DialogueInfoTrace]) -> FormID? {
+        guard !stack.isEmpty else { return nil }
+        let chosen = stack[min(max(0, randomPick(stack.count)), stack.count - 1)]
+        for index in stack where index != chosen {
+            let trace = traces[index]
+            traces[index] = DialogueInfoTrace(
+                info: trace.info, outcome: trace.outcome, rejection: .lostRandomPick
+            )
+        }
+        return traces[chosen].info
     }
 
     /// One response: the say-once gate, the reset-time gate, the forced-speaker
@@ -241,7 +264,7 @@ public struct DialogueRuntime: DialogueAccess {
         evaluator: inout ConditionEvaluator
     ) -> DialogueInfoTrace {
         let said = saidState(of: info.formID)
-        if info.flags.contains(.sayOnce), said.hasBeenSaid {
+        if info.flags.contains(.sayOnce), said.hasBeenSaid(by: speaker) {
             return DialogueInfoTrace(info: info.formID, outcome: nil, rejection: .alreadySaid)
         }
         if !said.hasReset(resetHours: info.resetHours, speaker: speaker, onDay: currentDay) {

@@ -79,6 +79,7 @@ struct PapyrusNativeLevelTests {
         )
 
         fixture.levels.award(characterExperience: 400)
+        fixture.levels.applyEarnedLevels()
 
         #expect(
             fixture.registry.invoke(PapyrusWorldFixture.methodCall(
@@ -103,6 +104,7 @@ struct PapyrusNativeLevelTests {
     @Test func getPerkPointsReadsThePool() {
         let fixture = Self.fixture()
         fixture.levels.award(characterExperience: 400)
+        fixture.levels.applyEarnedLevels()
 
         #expect(
             game("GetPerkPoints", fixture, returnType: .integer) == .returned(.integer(3))
@@ -149,6 +151,19 @@ struct PapyrusNativeLevelTests {
         #expect(PapyrusWorldFixture.isInvalidArguments(
             game("AddPerkPoints", Self.fixture(wired: false), arguments: [.integer(1)])
         ))
+    }
+
+    /// "Negative values are ignored" by `AddPerkPoints`; a negative `SetPerkPoints`
+    /// wraps to the 255 cap.
+    @Test func negativePerkPointCountsFollowTheWiki() {
+        let fixture = Self.fixture()
+        game("AddPerkPoints", fixture, arguments: [.integer(3)])
+        game("AddPerkPoints", fixture, arguments: [.integer(-2)])
+        #expect(fixture.levels.perkPoints == 3)
+        game("SetPerkPoints", fixture, arguments: [.integer(7)])
+        #expect(fixture.levels.perkPoints == 7)
+        game("SetPerkPoints", fixture, arguments: [.integer(-1)])
+        #expect(fixture.levels.perkPoints == 255)
     }
 
     /// A session with no character leveling refuses both natives rather than

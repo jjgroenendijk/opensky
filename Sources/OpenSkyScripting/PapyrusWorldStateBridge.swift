@@ -56,6 +56,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var playerNatives = PapyrusPlayerNatives()
     public var perceptionNatives = PapyrusPerceptionNatives()
     public var sessionNatives = PapyrusSessionNatives()
+    public var storyNatives = PapyrusStoryNatives()
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     public var magicEffectStore: MagicEffectStore?

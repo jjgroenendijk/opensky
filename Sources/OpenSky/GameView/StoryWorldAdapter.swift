@@ -46,6 +46,7 @@ protocol StoryWorldHost: AnyObject {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var progression: ProgressionCoordinator { get }
@@ -110,6 +111,19 @@ final class StoryWorldAdapter {
         game.crime.storyEvents = self
         game.magic.storyEvents = self
         game.scripts.bridge?.story = self
+        game.scripts.bridge?.storyNatives.questStarted = { [weak self] quest in
+            self?.scenes.questDidStart(quest)
+        }
+        game.scripts.bridge?.storyNatives.questFailed = { [weak self] quest in
+            self?.questFailed(quest)
+        }
+        game.scripts.bridge?.storyNatives.favorStateChanged = { [weak self] actor, isDoingFavor in
+            guard let self else { return }
+            let event: FourCC = isDoingFavor ? "SHOW" : "FEXT"
+            if let line = game.dialogue.favorLine(event, speaker: actor) {
+                say(line, speaker: actor)
+            }
+        }
         game.scripts.bridge?.menus = game.menuWorld
         game.scripts.bridge?.trapWorld = game.effectsWorld
         game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
@@ -218,6 +232,16 @@ final class StoryWorldAdapter {
     }
 }
 
+extension StoryWorldAdapter {
+    /// The HUD names a quest a Fail Quest stage item failed. The game's own quest
+    /// update banner is not built, so this is a notification.
+    func questFailed(_ quest: FormID) {
+        guard let record = questRuntime?.quests.quest(quest) else { return }
+        let name = game.mapWorld.text(record.name) ?? record.editorID ?? "Quest"
+        game.hud.showNotification("\(name) failed")
+    }
+}
+
 extension StoryWorldAdapter: QuestStarting {
     func startQuest(_ quest: FormID, event: StoryEventData?) throws {
         guard let runtime = questRuntime else { throw QuestError.unknownQuest(quest) }
@@ -318,6 +342,13 @@ extension StoryWorldAdapter: SceneWorld {
                 seconds: line.seconds
             )
         }
+    }
+
+    /// Says an already recorded line outside the menu, looking at the player.
+    func say(_ id: FormID, speaker: ReferenceKey) {
+        guard let info = game.dialogue.runtime?.dialogue.info(id) else { return }
+        let seconds = lineDuration(of: info, speaker: speaker) ?? SceneLine.defaultSeconds
+        speak(info: id, speaker: speaker, lookAt: .player, seconds: seconds)
     }
 
     /// Voices, subtitles, and shows one dialogue line, as a scene or a Say procedure does.

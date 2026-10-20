@@ -168,24 +168,29 @@ struct PapyrusNativeQuestTests {
             "IsRunning", fixture, receiver: fixture.handle, returnType: .boolean
         ) == .returned(.boolean(false)))
         #expect(fixture.session.world.questInstanceKeys.isEmpty)
-        #expect(try PapyrusQuestFixture.state(fixture.session).stagesReached == [20])
+        #expect(try PapyrusQuestFixture.state(fixture.session).stagesReached
+            == [PapyrusQuestFixture.startUpStage, 20].sorted())
     }
 
-    /// A start-up stage is the one stage a stopped quest accepts, and setting
-    /// it starts the quest.
-    @Test func aStartUpStageStartsAStoppedQuest() throws {
+    /// Setting any stage starts a stopped quest and attaches its scripts.
+    @Test func setStageStartsAStoppedQuest() throws {
         let fixture = try fixture(startGameEnabled: false)
-        #expect(PapyrusWorldFixture.isInvalidArguments(call(
-            "SetStage", fixture, receiver: fixture.handle,
-            arguments: [.integer(20)], returnType: .boolean
-        )))
         #expect(call(
             "SetStage", fixture, receiver: fixture.handle,
-            arguments: [.integer(Int32(PapyrusQuestFixture.startUpStage))],
-            returnType: .boolean
+            arguments: [.integer(20)], returnType: .boolean
         ) == .returned(.boolean(true)))
-        #expect(try PapyrusQuestFixture.state(fixture.session).isRunning)
+        let state = try PapyrusQuestFixture.state(fixture.session)
+        #expect(state.isRunning)
+        #expect(state.stagesReached == [20])
         #expect(fixture.session.world.questInstanceKeys.count == 2)
+    }
+
+    /// `Start` returns with the quest at its start-up stage.
+    @Test func startSetsTheStartUpStage() throws {
+        let fixture = try fixture(startGameEnabled: false)
+        call("Start", fixture, receiver: fixture.handle, returnType: .boolean)
+        let state = try PapyrusQuestFixture.state(fixture.session)
+        #expect(state.isStageDone(PapyrusQuestFixture.startUpStage))
     }
 
     /// The three objective setters are independent, each defaulting to true,
@@ -242,6 +247,18 @@ struct PapyrusNativeQuestTests {
         call("FailAllObjectives", fixture, receiver: fixture.handle)
         #expect(read("IsObjectiveFailed") == .returned(.boolean(true)))
         #expect(read("IsObjectiveCompleted") == .returned(.boolean(false)))
+    }
+
+    /// `FailAllObjectives` crosses out a completed objective too.
+    @Test func failAllObjectivesFailsACompletedOne() throws {
+        let fixture = try fixture()
+        let index: [PapyrusValue] = [.integer(Int32(PapyrusQuestFixture.objectiveIndex))]
+        call("SetObjectiveCompleted", fixture, receiver: fixture.handle, arguments: index)
+        call("FailAllObjectives", fixture, receiver: fixture.handle)
+        #expect(call(
+            "IsObjectiveFailed", fixture, receiver: fixture.handle, arguments: index,
+            returnType: .boolean
+        ) == .returned(.boolean(true)))
     }
 
     @Test func isStoppedIsTheOppositeOfRunning() throws {

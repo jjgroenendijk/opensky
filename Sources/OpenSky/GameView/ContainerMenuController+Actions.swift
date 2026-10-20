@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -128,6 +129,36 @@ extension ContainerMenuController {
         open()
     }
 
+    /// Opens `actor`'s pockets, as activating a living actor while sneaking does
+    /// (UESP "Skyrim:Pickpocket"). False when the actor has no inventory to show.
+    @discardableResult
+    func openPickpocket(of actor: ReferenceKey) -> Bool {
+        openInventory(of: actor)
+        guard isOpen, container?.key == actor else { return false }
+        pickpocketTarget = actor
+        note("Pickpocketing \(containerName ?? actor.description).")
+        return true
+    }
+
+    /// A failed take closes the pockets, because the target noticed.
+    private func pickpocket(_ entry: InventoryMenuEntry, from target: InventoryHolder) {
+        let outcome = game.inventory.pickpocket(
+            entry.item, named: entry.name, from: target, roll: Float.random(in: 0 ..< 100)
+        )
+        note(outcome.text)
+        let worldState = game.inventoryWorld.game.worldState
+        if case .took = outcome {
+            worldState.incrementMiscStat("Items Pickpocketed")
+            if !pickedOpenPockets {
+                pickedOpenPockets = true
+                worldState.incrementMiscStat("Pockets Picked")
+            }
+        }
+        if outcome.wasCaught {
+            close()
+        }
+    }
+
     // MARK: - Transactions
 
     /// Take, store, buy or sell, according to the mode and the side.
@@ -138,6 +169,11 @@ extension ContainerMenuController {
         }
         guard game.inventory.runtime != nil, let container else {
             note(InventoryCore.noRuntimeText)
+            return
+        }
+        if pickpocketTarget != nil, mode == .container, model.side == .container {
+            pickpocket(entry, from: container)
+            refreshModel()
             return
         }
         let transfer: ContainerTransfer = switch (mode, model.side) {
@@ -163,8 +199,8 @@ extension ContainerMenuController {
             note(InventoryCore.noRuntimeText)
             return
         }
-        guard mode == .container else {
-            note("Take all is a container action, not a barter one.")
+        guard mode == .container, pickpocketTarget == nil else {
+            note("Take all is a container action, not a barter or pickpocket one.")
             return
         }
         note(game.inventory.takeAll(from: container).text)

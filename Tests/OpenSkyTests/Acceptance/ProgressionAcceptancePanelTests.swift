@@ -89,6 +89,8 @@ struct ProgressionAcceptancePanelTests {
     ) {
         panel.characterSection.experienceControl.stringValue = "5000"
         sendScriptsControl(panel.awardExperienceControl)
+        // The level waits for the skills menu, which "Apply levels" stands in for.
+        sendScriptsControl(panel.characterSection.applyLevelsControl)
 
         let leveled = controller.progressionControlSnapshot
         #expect(leveled.level > 1, "5000 character XP bought no level")

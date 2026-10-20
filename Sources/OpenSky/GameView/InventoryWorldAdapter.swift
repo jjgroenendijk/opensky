@@ -16,6 +16,8 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
@@ -40,6 +42,7 @@ protocol InventoryWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
+    var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
@@ -83,6 +86,7 @@ final class InventoryWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         coordinator.tradeTexts = TradeTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        coordinator.pickpocketSettings = PickpocketSettings.resolve(store: provider.gameSettings)
         coordinator.soulTexts = SoulTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         coordinator.temperingTexts = TemperingTexts
@@ -203,6 +207,19 @@ extension InventoryWorldAdapter: InventoryWorld {
     func playerSpeechSkill() -> Float? {
         guard let speech = ActorValueIdentity.index(named: "Speechcraft") else { return nil }
         return game.actorValues.runtime?.value(at: speech, on: .player)
+    }
+
+    func pickpocketSkill(of key: ReferenceKey) -> Float? {
+        guard
+            let index = ActorValueIdentity.index(named: "Pickpocket"),
+            let runtime = game.actorValues.runtime,
+            let holder = key == .player ? .player : game.actorWorld.actorValueHolder(for: key)
+        else { return nil }
+        return runtime.value(at: index, on: holder)
+    }
+
+    func detectsPlayer(_ observer: ReferenceKey) -> Bool {
+        game.perception.runtime?.state(observer: observer, target: .player).state == .detected
     }
 
     var playerCarryCapacity: Float? {

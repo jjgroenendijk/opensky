@@ -152,7 +152,8 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
                 isRunning: flags & OpenSkySaveFormat.QuestFlag.running != 0,
                 isCompleted: flags & OpenSkySaveFormat.QuestFlag.completed != 0,
                 stagesReached: stages,
-                objectives: objectives
+                objectives: objectives,
+                isFailed: flags & OpenSkySaveFormat.QuestFlag.failed != 0
             )
         )
     }

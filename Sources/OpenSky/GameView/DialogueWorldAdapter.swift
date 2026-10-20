@@ -36,6 +36,7 @@ import simd
 @MainActor
 protocol DialogueWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
+    var containerMenu: ContainerMenuController { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var dialogue: DialogueCoordinator { get }
     var dialogueCamera: DialogueCameraController { get }
@@ -48,6 +49,8 @@ protocol DialogueWorldHost: AnyObject {
     var mapWorld: MapWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perks: PerkCoordinator { get }
+    var player: PlayerCoordinator { get }
+    var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
@@ -77,8 +80,13 @@ final class DialogueWorldAdapter {
         streamer.talk.candidateSource = { [weak self] in
             self?.talkCandidates() ?? []
         }
+        // Activating a living actor while sneaking opens its pockets instead of a talk.
         streamer.talk.activations.add { [weak self] event in
-            self?.game.dialogueMenu.begin(with: event.speaker)
+            guard let game = self?.game else { return }
+            if game.player.isSneaking, game.containerMenu.openPickpocket(of: event.speaker) {
+                return
+            }
+            game.dialogueMenu.begin(with: event.speaker)
         }
     }
 
@@ -253,6 +261,7 @@ extension DialogueWorldAdapter: DialogueWorld {
         event.actor1 = speaker
         game.storyWorld.reportStoryEvent(event)
         game.worldState.incrementMiscStat(challenge.statName)
+        game.progression.reportSpeechCheckWon()
     }
 
     private func spokeToPlayer(_ speaker: ReferenceKey) {
