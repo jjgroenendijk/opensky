@@ -1,7 +1,7 @@
-"""Download or update an offline Markdown copy of the Creation Kit wiki (ck.uesp.net).
+"""Download or update an offline Markdown copy of the Creation Kit wiki or the UESP wiki.
 
 A second run fetches only pages whose revision changed, then converts every stored page
-again. docs/tools/ck-wiki.md has the mirror layout and the reasons behind the two sources.
+again. docs/tools/offline-wikis.md has the mirror layout and the reasons behind the two sources.
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 
 from .client import Http
 from .convert import (
-    LICENSE,
     LinkMap,
     frontmatter,
     link_list,
@@ -27,27 +26,16 @@ from .convert import (
     render_page,
 )
 from .mirror import INDEX_NAME, Entry, Mirror, State, assign_paths
-from .sources import (
-    NAMESPACE_NAMES,
-    SITE,
-    ApiSource,
-    PageRef,
-    Source,
-    SourceError,
-    namespace_of,
-    utc_now,
-)
+from .sites import SITES, Site
+from .sources import ApiSource, PageRef, Source, SourceError, utc_now
 from .wayback import SkippedPageError, WaybackSource
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-# Main, CreationKit (the project pages), Help, and Category. Talk, user, file, and template
-# pages hold no reference text.
-NAMESPACES = [0, 4, 12, 14]
 # A subpage named by a language code, such as "Actor Script/fr". Only English is mirrored.
 TRANSLATION = re.compile(r"/[a-z]{2}(?:-[a-z]+)?$")
-# Seconds between request starts. The wiki is a small community server, so at most five API
+# Seconds between request starts. Both wikis are community servers, so at most five API
 # requests a second; the Wayback Machine asks for about one a second.
 API_DELAY = 0.2
 WAYBACK_DELAY = 1.0
@@ -71,8 +59,8 @@ def git(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]
     return subprocess.run([program, *args], cwd=cwd, capture_output=True, text=True, check=False)
 
 
-def default_out() -> Path:
-    """Return `.cache/ck-wiki` in the main checkout of the current repository.
+def default_out(site: Site) -> Path:
+    """Return `.cache/<site>-wiki` in the main checkout of the current repository.
 
     Every worktree shares it, so the wiki downloads once per machine.
     """
@@ -80,7 +68,7 @@ def default_out() -> Path:
     if result.returncode != 0:
         message = "not inside a git checkout; pass --out"
         raise SourceError(message)
-    return Path(result.stdout.strip()).parent / ".cache" / "ck-wiki"
+    return Path(result.stdout.strip()).parent / ".cache" / f"{site.key}-wiki"
 
 
 def ensure_not_committable(out: Path) -> None:
@@ -100,7 +88,10 @@ def ensure_not_committable(out: Path) -> None:
 def parse_args(argv: list[str]) -> argparse.Namespace:
     """Read the command line."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, help="mirror folder [<main checkout>/.cache/ck-wiki]")
+    parser.add_argument("--site", choices=sorted(SITES), default="ck", help="the wiki to mirror")
+    parser.add_argument(
+        "--out", type=Path, help="mirror folder [<main checkout>/.cache/<site>-wiki]"
+    )
     parser.add_argument(
         "--source",
         choices=["auto", "api", "wayback"],
@@ -110,10 +101,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def choose_source(choice: str) -> Source:
+def choose_source(site: Site, choice: str) -> Source:
     """Return the live API when it answers, else the Wayback Machine (unless `api` was asked)."""
     if choice in {"auto", "api"}:
-        api = ApiSource(Http(API_DELAY))
+        api = ApiSource(site, Http(API_DELAY))
         try:
             api.check()
         except SourceError as error:
@@ -123,7 +114,7 @@ def choose_source(choice: str) -> Source:
             log("[WARNING] Falling back to Wayback Machine snapshots; they can be older.")
         else:
             return api
-    return WaybackSource(Http(WAYBACK_DELAY))
+    return WaybackSource(site, Http(WAYBACK_DELAY))
 
 
 def run_parallel[T, R](
@@ -151,8 +142,10 @@ def run_parallel[T, R](
 class Sync:
     """One run that brings the mirror up to date."""
 
-    def __init__(self, source: Source, mirror: Mirror, pandoc: str) -> None:
+    def __init__(self, site: Site, source: Source, mirror: Mirror, pandoc: str) -> None:
         """Keep what the run needs."""
+        self.site = site
+        self.namespaces = list(site.mirrored)
         self.source = source
         self.mirror = mirror
         self.pandoc = pandoc
@@ -165,10 +158,10 @@ class Sync:
         fetched = self.fetch(listed, state)
         if self.source.complete:
             self.forget_missing(listed, state)
-            state.redirects = self.source.redirects(NAMESPACES)
+            state.redirects = self.source.redirects(self.namespaces)
         present = [title for title in state.pages if self.mirror.has_page(title)]
-        paths = assign_paths(present + self.listless_categories(present, state))
-        links = LinkMap(paths, state.redirects)
+        paths = assign_paths(present + self.listless_categories(present, state), self.site)
+        links = LinkMap(self.site, paths, state.redirects)
         changed = self.convert(list(paths), links, state)
         self.mirror.remove_markdown(set(state.paths.values()) - set(paths.values()))
         self.write_index(list(paths), links)
@@ -178,7 +171,7 @@ class Sync:
 
     def list_pages(self) -> list[PageRef]:
         """List the English pages to mirror."""
-        pages = self.source.list_pages(NAMESPACES)
+        pages = self.source.list_pages(self.namespaces)
         pages = [page for page in pages if not TRANSLATION.search(page.title)]
         log(f"[INFO] {len(pages)} pages listed through the {self.source.name} source")
         return pages
@@ -250,19 +243,20 @@ class Sync:
 
     def write_index(self, present: list[str], links: LinkMap) -> None:
         """Write index.md, which links every mirrored page by namespace."""
+        site = self.site
         fields = {
-            "title": "Creation Kit wiki (offline mirror)",
-            "url": f"{SITE}/wiki/Main_Page",
-            "source": "Creation Kit wiki (ck.uesp.net)",
-            "license": LICENSE,
+            "title": f"{site.name} (offline mirror)",
+            "url": f"{site.url}/wiki/Main_Page",
+            "source": site.source_label,
+            "license": site.license,
             "synced": utc_now(),
             "pages": len(present),
         }
-        sections = [frontmatter(fields), "# Creation Kit wiki"]
-        for namespace in NAMESPACES:
-            titles = [title for title in present if namespace_of(title) == namespace]
+        sections = [frontmatter(fields), f"# {site.name}"]
+        for namespace in dict.fromkeys([*self.namespaces, 14]):
+            titles = [title for title in present if site.namespace_of(title) == namespace]
             if titles:
-                heading = NAMESPACE_NAMES[namespace] or "Main"
+                heading = site.namespace_names[namespace] or "Main"
                 sections.append(f"## {heading}\n\n" + link_list(titles, INDEX_NAME, links))
         self.mirror.write_markdown(INDEX_NAME, "\n\n".join(sections) + "\n")
 
@@ -271,7 +265,7 @@ class Sync:
         log(f"[INFO] {present} pages in {self.mirror.root}")
         log(f"[INFO] {fetched} fetched, {changed} Markdown files written")
         if not self.failures:
-            log("[ OK ] Creation Kit wiki mirror is up to date")
+            log(f"[ OK ] {self.site.name} mirror is up to date")
             return 0
         for failure in self.failures[:SHOWN_FAILURES]:
             log(f"[ERROR] {failure}")
@@ -287,12 +281,13 @@ def main(argv: list[str] | None = None) -> int:
         log("[ERROR] pandoc not found. Install it with `brew install pandoc` or `make bootstrap`.")
         return 1
     try:
-        source = choose_source(args.source)
-        out = (args.out or default_out()).resolve()
+        site = SITES[args.site]
+        source = choose_source(site, args.source)
+        out = (args.out or default_out(site)).resolve()
         ensure_not_committable(out)
         mirror = Mirror(out)
         log(f"[INFO] mirror folder: {mirror.root}")
-        return Sync(source, mirror, pandoc).run()
+        return Sync(site, source, mirror, pandoc).run()
     except SourceError as error:
         log(f"[ERROR] {error}")
         return 1

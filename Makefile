@@ -162,7 +162,7 @@ CLANG_FORMAT     ?= xcrun clang-format
 METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
 # The Python tools are one uv project; uv.lock pins ruff. The uv cache is on
 # the boot disk and the project on the data volume, so uv copies instead of hard-linking.
-PY_PROJECT       := tools/ck-wiki
+PY_PROJECT       := tools/wiki-mirror
 UV_RUN           := UV_LINK_MODE=copy uv run --locked --quiet --project $(PY_PROJECT)
 
 .DEFAULT_GOAL := help
@@ -431,7 +431,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki
+        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki uesp-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -545,7 +545,10 @@ test-perms: ## Check the one-time macOS permission grants tests need
 	@./tools/test-perms.sh
 
 ck-wiki: ## Download or update the offline Creation Kit wiki in Markdown [ARGS='--source wayback']
-	@$(UV_RUN) ck-wiki $(ARGS)
+	@$(UV_RUN) wiki-mirror --site ck $(ARGS)
+
+uesp-wiki: ## Download or update the offline UESP wiki (Skyrim pages) in Markdown [ARGS='--source wayback']
+	@$(UV_RUN) wiki-mirror --site uesp $(ARGS)
 
 coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last `test-unit COVERAGE=1` run
 	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)

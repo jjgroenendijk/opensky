@@ -37,6 +37,9 @@ Quirks that cost time in every format parser session. Each retires when the host
 
 - Observed 2026-07-20: UESP (`en.uesp.net`, `ck.uesp.net`) answers the WebFetch tool with HTTP 403.
   Use `curl -sL -A 'Mozilla/5.0' '<url>'`.
+- Observed 2026-10-20: the MediaWiki API at `https://en.uesp.net/w/api.php` answers `curl` with
+  JSON, `action=parse` included. Read the `Skyrim:` and `Skyrim Mod:` pages from the offline mirror
+  ([offline wikis](/tools/offline-wikis.md)); `make uesp-wiki` keeps it current.
 - Observed 2026-07-20: the `TES5Edit/TES5Edit` default branch is `dev-4.1.6`, not `main` or `dev`.
   Raw file URLs return 404 on the wrong branch. Check with `gh api repos/TES5Edit/TES5Edit`.
 - Observed 2026-09-08: `ck.uesp.net` answers a direct `curl` with a Cloudflare "Just a moment..."
@@ -46,7 +49,7 @@ Quirks that cost time in every format parser session. Each retires when the host
   script is the better source anyway ([actor natives](/engine/papyrus-actor-natives.md)).
 - Observed 2026-10-15: `ck.uesp.net/wiki/<Page>` answers `curl` with HTTP 403, but the MediaWiki
   API at `https://ck.uesp.net/w/api.php` answers with JSON, `action=parse` included. Read pages
-  from the offline mirror ([offline Creation Kit wiki](/tools/ck-wiki.md)); `make ck-wiki` uses
+  from the offline mirror ([offline wikis](/tools/offline-wikis.md)); `make ck-wiki` uses
   the API and falls back to the Wayback Machine.
 - Observed 2026-10-09: `skyrimck.uesp.net` also answers `curl` with the Cloudflare page, and the
   Wayback Machine has no snapshot of `ck.uesp.net/wiki/Papyrus_INI_Settings`. A web search still

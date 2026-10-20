@@ -8,14 +8,14 @@ tags: [decision, tooling, dependency, python]
 
 # Python tools as one uv project
 
-Most tools are POSIX shell scripts. The [offline Creation Kit wiki](/tools/ck-wiki.md) sync does
+Most tools are POSIX shell scripts. The [offline wiki](/tools/offline-wikis.md) sync does
 HTTP with retries, JSON, parallel work, and HTML rewriting. That is too much for shell, and it
 does not belong in the Swift engine or `openskycli`, because it never touches game data.
 
 ## Decision
 
 - Such a tool is Python in a [uv](https://docs.astral.sh/uv/) project, starting with
-  `tools/ck-wiki/`. The tool code uses only the standard library.
+  `tools/wiki-mirror/`. The tool code uses only the standard library.
 - `uv.lock` pins [ruff](https://docs.astral.sh/ruff/) (MIT), which formats and lints with every
   rule on. CI installs only uv, so local runs and CI use the same ruff without a separate pin.
 - `make py-format`, `make py-format-check`, and `make py-lint` run it. They are part of `make fix`

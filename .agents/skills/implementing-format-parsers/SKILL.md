@@ -22,9 +22,9 @@ The root `AGENTS.md` section "Legal & IP boundary" is the contract. This skill i
 
 - A format with a page in `docs/formats/` is already cited and confirmed. Trust the page,
   and go upstream only to extend past it.
-- Otherwise use an open spec: the UESP wiki, xEdit (SSEEdit) `wbDefinitionsTES5.pas`,
-  NifTools `nif.xml`, BSArch notes, the Papyrus docs. Note the exact version or commit
-  you read, because the page cites it.
+- Otherwise use an open spec: the UESP wiki (read its offline mirror, `consulting-uesp-wikis`
+  skill), xEdit (SSEEdit) `wbDefinitionsTES5.pas`, NifTools `nif.xml`, BSArch notes, the
+  Papyrus docs. Note the exact version or commit you read, because the page cites it.
 - No spec covers it -> do not guess. A guessed byte layout is wrong more often than not.
   Write a probe (`probing-real-game-data` skill), and flag the uncertainty in the page.
 - Bethesda code, decompiles, and SKSE internals are off limits.

@@ -51,17 +51,17 @@ if [ -n "$images" ]; then
   exit 1
 fi
 
-# Rule 3: the Creation Kit wiki mirror (docs/tools/ck-wiki.md) is CC BY-SA text that is not
-# ours. Its pages are the only Markdown files with a `fetched_from:` key in the frontmatter.
+# Rule 3: the wiki mirrors (docs/tools/offline-wikis.md) are CC BY-SA text that is not
+# ours. Their pages are the only Markdown files with a `fetched_from:` key in the frontmatter.
 mirrored="$(printf '%s\n' "$files" | grep -E '\.md$' | while IFS= read -r f; do
   [ -f "$f" ] && awk 'NR == 1 && $0 != "---" { exit 1 } NR > 1 && $0 == "---" { exit 1 }
     /^fetched_from: / { found = 1; exit } END { exit !found }' "$f" && printf '%s\n' "$f"
 done || true)"
 if [ -n "$mirrored" ]; then
   {
-    printf '[FAIL] Pages from the Creation Kit wiki mirror are tracked:\n'
+    printf '[FAIL] Pages from a wiki mirror are tracked:\n'
     printf '%s\n' "$mirrored" | indent
-    printf 'The mirror stays in the gitignored .cache/ck-wiki of the main checkout.\n'
+    printf 'The mirrors stay in the gitignored .cache/ck-wiki and .cache/uesp-wiki of the main checkout.\n'
     printf 'Fix: git rm --cached <file>, and cite the url from its frontmatter instead.\n'
   } >&2
   exit 1

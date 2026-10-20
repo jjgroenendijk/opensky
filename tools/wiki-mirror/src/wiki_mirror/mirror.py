@@ -8,10 +8,12 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING
 
-from .sources import NAMESPACE_NAMES, FetchedPage, namespace_of
+from .sources import FetchedPage
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from .sites import Site
 
 STATE_FORMAT = 1
 INDEX_NAME = "index.md"
@@ -38,22 +40,22 @@ class State:
     paths: dict[str, str] = field(default_factory=dict)
 
 
-def page_path(title: str) -> str:
+def page_path(title: str, site: Site) -> str:
     """Return the mirror path for a title: namespace folder, then subpages as folders."""
-    namespace = namespace_of(title)
+    namespace = site.namespace_of(title)
     name = title.partition(":")[2] if namespace else title
     parts = [UNSAFE_NAME.sub("_", part).strip().strip(".") or "_" for part in name.split("/")]
     if namespace:
-        parts.insert(0, NAMESPACE_NAMES[namespace])
+        parts.insert(0, site.namespace_names[namespace])
     return "/".join(parts) + ".md"
 
 
-def assign_paths(titles: list[str]) -> dict[str, str]:
+def assign_paths(titles: list[str], site: Site) -> dict[str, str]:
     """Give every title its own path, also on a case-insensitive file system."""
     used = {INDEX_NAME}
     paths = {}
     for title in sorted(titles):
-        base = page_path(title).removesuffix(".md")
+        base = page_path(title, site).removesuffix(".md")
         path = f"{base}.md"
         number = 2
         while path.casefold() in used:

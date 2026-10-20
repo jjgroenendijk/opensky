@@ -171,7 +171,7 @@ jobs:
             for file in $files; do
               case "$file" in
                 *.md | docs/* | .agents/* | .claude/* | .github/renovate.json) ;;
-                tools/ck-wiki/* | tools/markdown/*) ;;
+                tools/wiki-mirror/* | tools/markdown/*) ;;
                 *) build=true ;;
               esac
             done

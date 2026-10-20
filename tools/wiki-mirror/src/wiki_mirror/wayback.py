@@ -1,15 +1,19 @@
-"""Wayback Machine snapshots of the wiki, for when the live wiki blocks this machine."""
+"""Wayback Machine snapshots of a wiki, for when the live wiki blocks this machine."""
 
 from __future__ import annotations
 
 import json
 import re
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 from urllib.parse import unquote, urlencode, urlsplit
 
 from .client import Http, HttpError
 from .markup import find_element, inner_html
-from .sources import FetchedPage, PageRef, SourceError, namespace_of, page_url, utc_now
+from .sources import FetchedPage, PageRef, SourceError, utc_now
+
+if TYPE_CHECKING:
+    from .sites import Site
 
 WAYBACK = "https://web.archive.org"
 CDX_URL = f"{WAYBACK}/cdx/search/cdx"
@@ -32,20 +36,22 @@ class WaybackSource:
     # The archive misses pages, so a page absent from it may still be on the wiki.
     complete = False
 
-    def __init__(self, http: Http) -> None:
-        """Use `http` for every request."""
+    def __init__(self, site: Site, http: Http) -> None:
+        """Read captures of `site` and use `http` for every request."""
+        self._site = site
         self._http = http
 
     def list_pages(self, namespaces: list[int]) -> list[PageRef]:
         """List the newest successful capture of every page in the given namespaces."""
         newest: dict[str, str] = {}
-        for original, timestamp in self._captures():
-            title = _title_of(original)
-            if title is None or namespace_of(title) not in namespaces:
-                continue
-            newest[title] = max(newest.get(title, ""), timestamp)
+        for prefix in self._url_prefixes(namespaces):
+            for original, timestamp in self._captures(prefix):
+                title = _title_of(original)
+                if title is None or self._site.namespace_of(title) not in namespaces:
+                    continue
+                newest[title] = max(newest.get(title, ""), timestamp)
         return [
-            PageRef(title, namespace_of(title), f"wb:{timestamp}")
+            PageRef(title, self._site.namespace_of(title), f"wb:{timestamp}")
             for title, timestamp in newest.items()
         ]
 
@@ -57,7 +63,7 @@ class WaybackSource:
     def fetch(self, page: PageRef) -> FetchedPage:
         """Fetch the raw capture and cut the page content out of the skin around it."""
         timestamp = page.version.removeprefix("wb:")
-        url = f"{WAYBACK}/web/{timestamp}id_/{page_url(page.title)}"
+        url = f"{WAYBACK}/web/{timestamp}id_/{self._site.page_url(page.title)}"
         try:
             response = self._http.get(url)
         except HttpError as error:
@@ -90,12 +96,21 @@ class WaybackSource:
             html=inner_html(content),
         )
 
-    def _captures(self) -> list[tuple[str, str]]:
+    def _url_prefixes(self, namespaces: list[int]) -> list[str]:
+        # The main namespace has no title prefix, so it needs the whole wiki. Without it, one
+        # listing per namespace skips the captures of every other game on a shared wiki.
+        wiki = f"{self._site.host}/wiki/"
+        if 0 in namespaces:
+            return [wiki]
+        names = self._site.namespace_names
+        return [f"{wiki}{names[number].replace(' ', '_')}:" for number in namespaces]
+
+    def _captures(self, prefix: str) -> list[tuple[str, str]]:
         captures = []
         resume_key = ""
         while True:
             params = {
-                "url": "ck.uesp.net/wiki/*",
+                "url": f"{prefix}*",
                 "output": "json",
                 "fl": "original,timestamp",
                 "filter": ["statuscode:200", "mimetype:text/html"],

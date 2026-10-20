@@ -1,13 +1,13 @@
 [project]
-name = "ck-wiki"
+name = "wiki-mirror"
 version = "1.0.0"
-description = "Download or update an offline Markdown copy of the Creation Kit wiki"
+description = "Download or update offline Markdown copies of the Creation Kit wiki and the UESP wiki"
 requires-python = ">=3.13"
 # Standard library only. Conversion runs the pandoc binary (`brew install pandoc`).
 dependencies = []
 
 [project.scripts]
-ck-wiki = "ck_wiki.cli:main"
+wiki-mirror = "wiki_mirror.cli:main"
 
 [dependency-groups]
 dev = ["ruff>=0.17"]

@@ -1,4 +1,4 @@
-"""Where pages come from: the live MediaWiki API, or Wayback Machine snapshots of the wiki."""
+"""Where pages come from: the live MediaWiki API, or Wayback Machine snapshots of a wiki."""
 
 from __future__ import annotations
 
@@ -8,46 +8,15 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Protocol
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 from .client import Http, HttpError
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-HOST = "ck.uesp.net"
-SITE = f"https://{HOST}"
-API_URL = f"{SITE}/w/api.php"
-# From the wiki's siteinfo. A title prefix outside this table belongs to the main namespace.
-NAMESPACE_NAMES = {
-    -2: "Media",
-    -1: "Special",
-    0: "",
-    1: "Talk",
-    2: "User",
-    3: "User talk",
-    4: "CreationKit",
-    5: "CreationKit talk",
-    6: "File",
-    7: "File talk",
-    8: "MediaWiki",
-    9: "MediaWiki talk",
-    10: "Template",
-    11: "Template talk",
-    12: "Help",
-    13: "Help talk",
-    14: "Category",
-    15: "Category talk",
-    710: "TimedText",
-    711: "TimedText talk",
-    828: "Module",
-    829: "Module talk",
-    2300: "Gadget",
-    2301: "Gadget talk",
-    2302: "Gadget definition",
-    2303: "Gadget definition talk",
-}
-NAMESPACE_IDS = {name: number for number, name in NAMESPACE_NAMES.items() if name}
+    from .sites import Site
+
 MAXLAG_ATTEMPTS = 5
 
 
@@ -97,17 +66,6 @@ class Source(Protocol):
         ...
 
 
-def namespace_of(title: str) -> int:
-    """Return the namespace number a title belongs to."""
-    prefix, colon, _ = title.partition(":")
-    return NAMESPACE_IDS.get(prefix, 0) if colon else 0
-
-
-def page_url(title: str) -> str:
-    """Return the live wiki URL of a title, encoded the way MediaWiki links it."""
-    return f"{SITE}/wiki/{quote(title.replace(' ', '_'), safe=';@$!*(),/~:')}"
-
-
 def utc_now() -> str:
     """Return the current time as an ISO 8601 UTC timestamp."""
     return datetime.now(UTC).replace(microsecond=0).isoformat()
@@ -119,8 +77,9 @@ class ApiSource:
     name = "api"
     complete = True
 
-    def __init__(self, http: Http) -> None:
-        """Use `http` for every request."""
+    def __init__(self, site: Site, http: Http) -> None:
+        """Read `site` and use `http` for every request."""
+        self._site = site
         self._http = http
 
     def check(self) -> None:
@@ -177,7 +136,7 @@ class ApiSource:
             title=data["title"],
             version=f"rev:{data['revid']}",
             source=self.name,
-            source_url=page_url(data["title"]),
+            source_url=self._site.page_url(data["title"]),
             fetched=utc_now(),
             categories=[
                 entry["category"].replace("_", " ")
@@ -198,7 +157,7 @@ class ApiSource:
 
     def _query(self, **params: str | int) -> dict:
         params = {"format": "json", "formatversion": 2, "maxlag": 5, **params}
-        url = f"{API_URL}?{urlencode(params)}"
+        url = f"{self._site.api_url}?{urlencode(params)}"
         for attempt in range(MAXLAG_ATTEMPTS):
             data = self._json(url)
             error = data.get("error")

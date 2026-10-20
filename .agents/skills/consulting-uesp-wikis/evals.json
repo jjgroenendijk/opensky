@@ -1,6 +1,6 @@
 [
   {
-    "skills": ["consulting-creation-kit-wiki"],
+    "skills": ["consulting-uesp-wikis"],
     "query": "What does the CK wiki say about the parameters of ObjectReference.OnHit?",
     "files": [],
     "expected_behavior": [
@@ -10,7 +10,7 @@
     ]
   },
   {
-    "skills": ["consulting-creation-kit-wiki"],
+    "skills": ["consulting-uesp-wikis"],
     "query": "Implement the GetIsID condition function. Check the Creation Kit wiki for how it behaves.",
     "files": [],
     "expected_behavior": [
@@ -20,7 +20,7 @@
     ]
   },
   {
-    "skills": ["consulting-creation-kit-wiki"],
+    "skills": ["consulting-uesp-wikis"],
     "query": "Look up Actor.GetActorValuePercentage on ck.uesp.net.",
     "files": [],
     "expected_behavior": [
@@ -30,21 +30,41 @@
     ]
   },
   {
-    "skills": ["consulting-creation-kit-wiki"],
+    "skills": ["consulting-uesp-wikis"],
+    "query": "What does UESP say about the layout of the NPC_ record in Skyrim plugins?",
+    "files": [],
+    "expected_behavior": [
+      "Reads the Skyrim Mod/Mod File Format/NPC_ page from the .cache/uesp-wiki mirror of the main checkout",
+      "Does not use WebFetch or curl on en.uesp.net",
+      "Treats the layout as a claim to confirm against the real plugin files"
+    ]
+  },
+  {
+    "skills": ["consulting-uesp-wikis"],
+    "query": "How does the Skyrim alchemy skill formula work? Check UESP.",
+    "files": [],
+    "expected_behavior": [
+      "Checks for index.md in .cache/uesp-wiki, and runs make uesp-wiki in a background shell when it is missing",
+      "Reads Skyrim/Alchemy.md, not the CK wiki mirror",
+      "Cites the page's url from the frontmatter"
+    ]
+  },
+  {
+    "skills": ["consulting-uesp-wikis"],
     "query": "Code blocks in the offline CK wiki lose their language. Fix the converter.",
     "files": [],
     "expected_behavior": [
-      "Fixes the converter in tools/ck-wiki without editing any mirror file",
-      "Reconverts with make ck-wiki and searches the whole mirror for the same fault",
+      "Fixes the converter in tools/wiki-mirror without editing any mirror file",
+      "Reconverts with make ck-wiki and make uesp-wiki and searches both mirrors for the same fault",
       "Runs make py-format py-lint and fixes what it reports"
     ]
   },
   {
     "skills": [],
-    "query": "Fix the BSA folder record parser for version 105 archives.",
+    "query": "Fix the shadow acne on terrain in the Metal shadow pass.",
     "files": [],
     "expected_behavior": [
-      "Does not load consulting-creation-kit-wiki, because the CK wiki does not document BSA layouts"
+      "Does not load consulting-uesp-wikis, because neither wiki documents the renderer of OpenSky"
     ]
   }
 ]

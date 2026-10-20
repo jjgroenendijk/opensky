@@ -8,14 +8,19 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote, unquote
 
 from .markup import remove_elements
-from .sources import SITE, FetchedPage, page_url
 
-LICENSE = "CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)"
+if TYPE_CHECKING:
+    from .sites import Site
+    from .sources import FetchedPage
+
 WIKI_HREF = re.compile(r'href="/wiki/([^"#]*)(#[^"]*)?"')
 SITE_RELATIVE = re.compile(r'(href|src)="/(?!/)')
+# Images sit on another host, linked without a scheme: `//images.uesp.net/...`.
+SCHEME_RELATIVE = re.compile(r'(href|src)="//')
 SRCSET = re.compile(r'\ssrcset="[^"]*"')
 HIGHLIGHT_BLOCK = re.compile(
     r'<div[^>]*class="mw-highlight(?:[^"]*?mw-highlight-lang-([\w-]+))?[^"]*"[^>]*>\s*<pre[^>]*>'
@@ -42,6 +47,7 @@ MARKDOWN_FILTER = Path(__file__).with_name("markdown.lua")
 class LinkMap:
     """Where each mirrored title lives, and where each redirect points."""
 
+    site: Site
     paths: dict[str, str]
     redirects: dict[str, str]
 
@@ -68,11 +74,13 @@ def heading_anchor(fragment: str) -> str:
 
 def prepare_html(html: str, here: str, links: LinkMap) -> str:
     """Drop wiki chrome, mark code blocks, and point links at mirrored files or the live wiki."""
+    site = links.site
     html = re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
     html = remove_elements(html, r'<div[^>]*id="toc"', "div")
     html = remove_elements(html, r'<span[^>]*class="mw-editsection"', "span")
     html = remove_elements(html, r'<div[^>]*class="magnify"', "div")
-    html = HIGHLIGHT_BLOCK.sub(_code_opening, html)
+    html = remove_elements(html, r'<table[^>]*class="navbox[\s"]', "table")
+    html = HIGHLIGHT_BLOCK.sub(lambda match: _code_opening(match, site), html)
     html = PLAIN_PRE.sub("<pre><code>", html)
     html = re.sub(r"</pre>", "</code></pre>", html)
     html = re.sub(r"</code></code></pre>", "</code></pre>", html)
@@ -81,7 +89,7 @@ def prepare_html(html: str, here: str, links: LinkMap) -> str:
         title = unquote(match.group(1)).replace("_", " ")
         fragment = match.group(2) or ""
         href = links.local_href(title, fragment, here)
-        return f'href="{href or SITE + "/wiki/" + match.group(1) + fragment}"'
+        return f'href="{href or site.url + "/wiki/" + match.group(1) + fragment}"'
 
     html = SAME_PAGE_HREF.sub(lambda match: f'href="{heading_anchor(match.group(1))}"', html)
     html = WIKI_HREF.sub(rewrite, html)
@@ -92,12 +100,12 @@ def prepare_html(html: str, here: str, links: LinkMap) -> str:
     html = TRAILING_BREAKS.sub("", html)
     html = REPEATED_BREAKS.sub("<br>", html)
     html = HEADER_ROW.sub(_promote_header, html)
-    return SITE_RELATIVE.sub(lambda match: f'{match.group(1)}="{SITE}/', html)
+    html = SCHEME_RELATIVE.sub(r'\1="https://', html)
+    return SITE_RELATIVE.sub(lambda match: f'{match.group(1)}="{site.url}/', html)
 
 
-def _code_opening(match: re.Match[str]) -> str:
-    # The wiki has no Papyrus highlighter, so its Papyrus blocks carry no language class.
-    language = match.group(1) or "papyrus"
+def _code_opening(match: re.Match[str], site: Site) -> str:
+    language = match.group(1) or site.plain_code_language
     return f'<pre><code class="{language}">'
 
 
@@ -164,9 +172,9 @@ def render_page(
     """Return the whole Markdown file for one page."""
     fields: dict[str, object] = {
         "title": page.title,
-        "url": page_url(page.title),
-        "source": "Creation Kit wiki (ck.uesp.net)",
-        "license": LICENSE,
+        "url": links.site.page_url(page.title),
+        "source": links.site.source_label,
+        "license": links.site.license,
         "revision": page.version,
         "fetched_from": page.source,
         "fetched": page.fetched,
@@ -188,9 +196,9 @@ def render_category(title: str, here: str, links: LinkMap, members: list[str]) -
     """Return a member list for a category that the wiki has no page for."""
     fields: dict[str, object] = {
         "title": title,
-        "url": page_url(title),
-        "source": "Creation Kit wiki (ck.uesp.net)",
-        "license": LICENSE,
+        "url": links.site.page_url(title),
+        "source": links.site.source_label,
+        "license": links.site.license,
         "generated": "member list built from the categories of the mirrored pages",
     }
     listing = "## Pages in this category\n\n" + link_list(members, here, links)
@@ -201,7 +209,7 @@ def link_list(titles: list[str], here: str, links: LinkMap) -> str:
     """Return a Markdown list that links each title, locally when it is mirrored."""
     items = []
     for title in sorted(titles, key=str.casefold):
-        href = links.local_href(title, "", here) or page_url(title)
+        href = links.local_href(title, "", here) or links.site.page_url(title)
         items.append(f"- [{_escape(title)}]({href})")
     return "\n".join(items)
 
