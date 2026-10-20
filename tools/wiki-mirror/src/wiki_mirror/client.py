@@ -8,7 +8,7 @@ import time
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit
 
-USER_AGENT = "OpenSky-ck-wiki-sync/1.0 (+https://github.com/jjgroenendijk/opensky)"
+USER_AGENT = "OpenSky-wiki-mirror/1.0 (+https://github.com/jjgroenendijk/opensky)"
 MAX_REDIRECTS = 5
 MAX_ATTEMPTS = 5
 # Status codes worth a retry: rate limits and passing server faults.
