@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, TMPR, CRVG, CPOT, INGK, WPSN, and FAVS chunks in an .osav save.
+  CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, and FAVS chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -162,6 +162,16 @@ int32 quality level per improved copy. Items ascend and levels descend. A level 
 less is dropped. More levels than the owner holds copies is kept; a reader uses only as
 many levels as there are copies ([crafting](/engine/crafting.md)). An older build skips the
 chunk and every copy reads plain. Sizes: 12 bytes minimum per entry, 8 per item, 4 per level.
+
+## ICPY: item copies
+
+Written only for an owner with a copy that holds more than a level: a soul, a charge, or a made
+enchantment ([item copies](/engine/item-copies.md)). Key, cell, uint32 item count, then per
+item: uint32 FormID, uint32 copy count, and per copy an int32 level, a uint8 soul, and a uint8
+flags byte. Flag 1 adds a float32 charge, flag 2 a uint32 enchantment FormID. The same owner
+also gets a `TMPR` entry with its levels, so an older build keeps the quality. On load `ICPY`
+is merged after `TMPR` and replaces that owner's state. Sizes: 12 bytes minimum per entry, 8 per
+item, 6 per copy.
 
 ## CRVG: violent crime gold
 

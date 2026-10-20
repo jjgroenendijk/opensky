@@ -124,6 +124,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Tempered copies: per owner and item, one quality level per improved copy.
         /// A sibling of `INVN`, whose rows have no room for a quality.
         public static let temperedItems = "TMPR"
+        /// Every distinct item copy: quality, soul, charge, and made enchantment. Written
+        /// beside `TMPR`, which older builds still read, and preferred over it.
+        public static let itemCopies = "ICPY"
         /// Potions and poisons brewed at an alchemy lab, which no plugin holds.
         public static let createdPotions = "CPOT"
         /// The ingredient effects the player has learned, one bit per effect.

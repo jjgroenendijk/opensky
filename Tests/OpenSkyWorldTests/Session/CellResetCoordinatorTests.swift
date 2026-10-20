@@ -99,12 +99,12 @@ struct CellResetCoordinatorTests {
         let reset = coordinator { now }
         let scene = try Self.scene([Self.reference(0x10)])
         store.set(ReferenceHarvestState.harvested, for: Self.key(0x10), in: Self.cell)
-        store.set(TemperedItemState(levels: [0x100: [10]]), for: Self.key(0x10), in: Self.cell)
+        store.set(ItemCopyState(levels: [0x100: [10]]), for: Self.key(0x10), in: Self.cell)
         reset.cellDetached(Self.cell)
         now += 240
         #expect(reset.cellAttached(scene) == [Self.key(0x10)])
         #expect(store.component(ReferenceHarvestState.self, for: Self.key(0x10)) == nil)
-        #expect(store.component(TemperedItemState.self, for: Self.key(0x10)) == nil)
+        #expect(store.component(ItemCopyState.self, for: Self.key(0x10)) == nil)
     }
 
     // MARK: - Fixtures

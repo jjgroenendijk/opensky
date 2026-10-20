@@ -117,6 +117,7 @@ chunk cannot read into the next.
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |
 | `TMPR` | tempered quality of each copy | actors |
+| `ICPY` | every distinct item copy | actors |
 | `CPOT` | brewed potions and poisons | actors |
 | `INGK` | known ingredient effects | actors |
 | `WPSN` | poison on each weapon | actors |

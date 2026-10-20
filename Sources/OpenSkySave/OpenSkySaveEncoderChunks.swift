@@ -34,6 +34,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeCrimeLedgers(entries, into: &writer)
         writeStolenGoods(entries, into: &writer)
         OpenSkySaveTemperedItems.write(entries, into: &writer)
+        OpenSkySaveItemCopies.write(entries, into: &writer)
         writeCreatedPotions(entries, into: &writer)
         writeIngredientKnowledge(entries, into: &writer)
         writeWeaponPoisons(entries, into: &writer)

@@ -57,7 +57,7 @@ extension InventoryWorldAdapter {
     }
 
     func restockMerchantChest(_ chest: ReferenceKey) {
-        for kind: WorldStateComponentKind in [.inventory, .temperedItems] {
+        for kind: WorldStateComponentKind in [.inventory, .itemCopies] {
             game.worldState.reset(kind, for: chest)
         }
     }

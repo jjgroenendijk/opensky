@@ -1,6 +1,7 @@
 // TMPR chunk: tempered copies per owner, merged into the `RDLT` deltas by
 // `ReferenceKey`. A sibling of `INVN`, whose rows have no room for a quality.
-// `TemperedItemState.init` drops bad levels, so no content error fails a load.
+// `ICPY` carries the rest of each copy and replaces this chunk's state when present.
+// `ItemCopyState.init` drops bad levels, so no content error fails a load.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -13,7 +14,7 @@ import OpenSkyWorldState
 nonisolated public struct SaveTemperedItemEntry: Equatable, Sendable {
     public let key: ReferenceKey
     public let cell: CellSceneLocation?
-    public let state: TemperedItemState
+    public let state: ItemCopyState
 }
 
 nonisolated extension SaveTemperedItemEntry: SaveDeltaComponentEntry {
@@ -33,10 +34,10 @@ nonisolated public enum OpenSkySaveTemperedItems: Sendable {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        let saved = entries.compactMap { entry -> (WorldStateSnapshotEntry, TemperedItemState)? in
+        let saved = entries.compactMap { entry -> (WorldStateSnapshotEntry, ItemCopyState)? in
             guard
-                let state = entry.delta.component(TemperedItemState.self),
-                !state.isEmpty
+                let state = entry.delta.component(ItemCopyState.self),
+                !state.levels.isEmpty
             else { return nil }
             return (entry, state)
         }
@@ -69,7 +70,7 @@ nonisolated public enum OpenSkySaveTemperedItems: Sendable {
         for _ in 0 ..< count {
             let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
             let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
-            let state = try TemperedItemState(levels: decodeItems(&reader))
+            let state = try ItemCopyState(levels: decodeItems(&reader))
             entries.append(SaveTemperedItemEntry(key: key, cell: cell, state: state))
         }
         return entries

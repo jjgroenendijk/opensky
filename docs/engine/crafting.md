@@ -99,10 +99,9 @@ Fine and skill 100 reaches Flawless. The names come from the string settings
 without a string table the UESP names above stay. A level past the sixth reads as the sixth name
 with the extra levels, such as `Legendary +1`.
 
-Quality is stored per copy, apart from the item counts: per owner and item, one level for
-each improved copy. Copies past that list are plain. A reader uses only as many levels as
-the owner holds copies, so a take or a drop needs no change to the list. The save keeps the
-levels in the `TMPR` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
+Quality is stored per copy, apart from the item counts, in the owner's
+[item copies](/engine/item-copies.md). The save keeps the levels in the `TMPR` chunk
+([save chunks](/formats/opensky-save-actor-chunks.md)).
 
 The player's weapon damage adds the bonus of the best held copy, because the equipped set
 names a base item, not a copy. In the same way, the armour step of combat adds the bonus of the

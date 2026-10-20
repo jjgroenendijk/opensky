@@ -246,6 +246,8 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumTemperedItemSize = 8
     /// Bytes one `TMPR` level occupies.
     public static let temperedLevelSize = 4
+    /// Smallest `ICPY` copy: the level, the soul, and the flags byte.
+    public static let minimumItemCopySize = 6
     /// Smallest `CPOT`, `INGK`, or `WPSN` entry: the smallest key and cell (8) and a
     /// zero row count (4).
     public static let minimumAlchemyEntrySize = 12

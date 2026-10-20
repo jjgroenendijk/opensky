@@ -256,6 +256,8 @@ nonisolated extension OpenSkySaveDecoder {
             body.playerPlace = try decodePlayerPlace(payload)
         case OpenSkySaveFormat.ChunkTag.temperedItems:
             body.temperedItems = try OpenSkySaveTemperedItems.decode(payload)
+        case OpenSkySaveFormat.ChunkTag.itemCopies:
+            body.itemCopies = try OpenSkySaveItemCopies.decode(payload)
         case OpenSkySaveFormat.ChunkTag.relocations:
             body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         default:

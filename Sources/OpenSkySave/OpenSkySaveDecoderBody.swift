@@ -78,6 +78,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var stolenGoods: [SaveStolenGoodsEntry] = []
         /// Absent `TMPR`: every held copy is plain.
         public var temperedItems: [SaveTemperedItemEntry] = []
+        public var itemCopies: [SaveTemperedItemEntry] = []
         /// Absent `CPOT`: the player brewed nothing.
         public var createdPotions: [SaveStoryEntry<CreatedPotionState>] = []
         /// Absent `INGK`: no ingredient effect is known.
