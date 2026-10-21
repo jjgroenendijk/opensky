@@ -106,8 +106,23 @@ already names the two bodies, and a second copy that disagrees would give two an
 
 A joint that fails to decode loses only that joint. The body and its other joints are
 kept, because a ragdoll with one missing limb is better than none. A constraint class that
-OpenSky does not read is counted as unsupported. `bhkBreakableConstraint` and
-`bhkBallSocketConstraintChain` are not read. Neither appears in vanilla.
+OpenSky does not read is counted as unsupported.
+
+`bhkBreakableConstraint` wraps another joint: after its constraint info come the inner type
+(uint32), a repeated constraint info (16 bytes, skipped), the inner data, a float32 break
+threshold, and a uint8 "remove when broken" flag. OpenSky keeps the inner joint with the
+threshold. A ragdoll uses the inner joint; breaking is not simulated.
+
+`bhkBallSocketConstraintChain` joins a list of bodies with one ball-and-socket joint per
+link: a uint32 pivot count, that many `Vector4` pivots (two per link), float32 tau,
+damping, constraint force mixing, and maximum error distance, a Ref list of the chained
+entities, then a constraint info (16 bytes) that repeats the first two entities. Link `i`
+joins entity `i` and entity `i + 1`.
+
+Both classes are in vanilla meshes. On the install, 8 breakable joints are in meshes such
+as `critters\bee\critterbeehive.nif` and `traps\boards\breakableboard01.nif`, and 6 chains
+in traps such as `traps\macetrap\trapmace01.nif` and
+`traps\bonealarm01\trapbonealarmhavok01.nif`.
 
 ## Ragdolls
 

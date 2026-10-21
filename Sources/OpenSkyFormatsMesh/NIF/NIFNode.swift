@@ -11,7 +11,8 @@ nonisolated public struct NIFNode: Sendable {
     /// are absent: drawing every child would stack their alternatives.
     public static let traversedTypes: Set = [
         "NiNode", "BSFadeNode", "BSLeafAnimNode", "BSTreeNode",
-        "BSOrderedNode", "BSMultiBoundNode"
+        "BSOrderedNode", "BSMultiBoundNode", NIFValueNode.typeName,
+        NIFRangeNode.blastType, NIFRangeNode.damageStageType, NIFMasterParticleSystem.typeName
     ]
 
     public let object: NIFObjectPrefix
@@ -30,6 +31,14 @@ nonisolated public struct NIFNode: Sendable {
         children = try Self.readRefs(&reader, label: "child")
         // Effects list + subclass tail fields ignored; the block slice
         // bounds them.
+    }
+
+    /// Reads the whole `NiNode` part, effects list included, so a subclass can
+    /// continue with its own fields.
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+        object = try NIFObjectPrefix(reader: &reader, header: header)
+        children = try Self.readRefs(&reader, label: "child")
+        _ = try Self.readRefs(&reader, label: "effect")
     }
 
     /// A uint32 count, then that many int32 block refs.

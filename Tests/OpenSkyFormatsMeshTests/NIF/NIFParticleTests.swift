@@ -144,7 +144,7 @@ struct NIFParticleTests {
                 NIFFixture.Block("NiParticleSystem", system),
                 NIFFixture.Block("NiPSysData", NIFParticleFixture.psysData(maxParticles: 4)),
                 NIFFixture.Block(
-                    "NiPSysColliderManager",
+                    "NiPSysFieldModifier",
                     NIFParticleFixture.modifierBase() + Data(count: 4)
                 )
             ],
@@ -154,7 +154,7 @@ struct NIFParticleTests {
         let systems = try file.particleSystems()
         try #require(systems.count == 1)
         try #require(systems[0].modifiers.count == 1)
-        #expect(systems[0].modifiers[0].kind == .unsupported(typeName: "NiPSysColliderManager"))
+        #expect(systems[0].modifiers[0].kind == .unsupported(typeName: "NiPSysFieldModifier"))
     }
 
     /// A shader ref that is not a BSEffectShaderProperty (lit particle

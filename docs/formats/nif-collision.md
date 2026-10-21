@@ -67,6 +67,24 @@ solid": layer 15, the "No Collision" bit, or another response also make a body n
 without making it a trigger. Trigger bodies go to the per-cell trigger set for
 `OnTriggerEnter` and `OnTriggerLeave`.
 
+## Shape phantoms
+
+A `bhkSPCollisionObject` holds the same three fields as `bhkCollisionObject`, but its body
+ref names a `bhkSimpleShapePhantom`. A phantom reports overlaps and pushes nothing:
+
+| Field | Type |
+| --- | --- |
+| Shape | Ref |
+| Filter | `HavokFilter` |
+| World object info and unused bytes | 28 bytes |
+| Transform | `Matrix44`, phantom to target node |
+
+OpenSky turns a phantom into a body that is never solid and never simulated: both filter
+copies are the phantom's filter, both responses are `RESPONSE_NONE` (3), and it has no mass.
+So a phantom on layer 12 joins the per-cell trigger set like any trigger body. On the
+install, most phantoms are on layer 12 (trigger) or layer 30 (character controller), and
+their shapes are mostly transform, capsule, convex, and sphere shapes.
+
 ## Shape graph
 
 | Block | What OpenSky does |
@@ -78,9 +96,19 @@ without making it a trigger. Trigger bodies go to the per-cell trigger set for
 | `bhkPackedNiTriStripsShape` | Reads scale and `hkPackedNiTriStripsData` |
 | `bhkNiTriStripsShape` | Reads scale and each `NiTriStripsData` |
 | `bhkConvexVerticesShape` | Reads vertices and planes. Builds the hull faces once per model |
+| `bhkCylinderShape` | Reads the two end points and the radius. Becomes a 12-sided convex prism |
+| `bhkPlaneShape` | Reads the normal, the distance, and a bounding box. Becomes a quad clipped to the box |
 | `bhkBoxShape` | Half extents |
 | `bhkSphereShape` | Radius |
 | `bhkCapsuleShape` | End points and the larger of the stored radii |
+
+`bhkCylinderShape` is a material, 12 unused bytes (shell radius and padding), two
+`Vector4` end points, a float32 radius, and 12 unused bytes. `bhkPlaneShape` is a material,
+12 unused bytes, a `Vector3` normal, a float32 distance from the origin, then `Vector4`
+half extents and a `Vector4` centre. On the install, 70 cylinders are mostly in
+`_resourcepack` meshes, and the one plane is in
+`plants\switchnodechildren\slaughterfisheggcluster01_1.nif`. The prism stands in for the
+round wall so the convex path can collide with it; its sides lie on the cylinder.
 
 An unknown shape type is counted. A broken collision root is recorded, and its sibling
 roots still decode. The walk stops at depth 64 and rejects loops. Every ref, count, index,

@@ -74,6 +74,7 @@ Blocks added on top of the shared [NIF](/formats/nif.md) layouts:
 | `BSMultiBoundNode` | `NiNode` children and effects, int32 multi-bound ref, uint32 culling mode |
 | `BSMultiBound` | int32 data ref |
 | `BSMultiBoundAABB` | float3 center, float3 extent (not negative) |
+| `BSMultiBoundOBB` | float3 center, float3 extent, `Matrix33` rotation |
 
 ## Object BTO
 

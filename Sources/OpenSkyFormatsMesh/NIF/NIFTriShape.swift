@@ -308,6 +308,44 @@ nonisolated extension NIFTriShape {
         )
     }
 
+    /// A shape built from decoded arrays, such as an `NiTriShape`'s data. `refs`
+    /// holds the skin, shader, and alpha property refs.
+    init(
+        object: NIFObjectPrefix, sphere: SIMD4<Float>, refs: SIMD3<Int32>,
+        arrays: VertexArrays, indices: [UInt16]
+    ) {
+        self.object = object
+        boundingSphereCenter = sphere.xyz
+        boundingSphereRadius = sphere.w
+        skinRef = refs.x
+        shaderPropertyRef = refs.y
+        alphaPropertyRef = refs.z
+        var attributes: VertexAttributes = arrays.positions.isEmpty ? [] : .vertex
+        if !arrays.uvs.isEmpty {
+            attributes.insert(.uvs)
+        }
+        if !arrays.normals.isEmpty {
+            attributes.insert(.normals)
+        }
+        if !arrays.tangents.isEmpty {
+            attributes.insert(.tangents)
+        }
+        if !arrays.colors.isEmpty {
+            attributes.insert(.vertexColors)
+        }
+        self.attributes = attributes
+        vertexCount = arrays.positions.count
+        positions = arrays.positions
+        uvs = arrays.uvs
+        normals = arrays.normals
+        tangents = arrays.tangents
+        bitangents = arrays.bitangents
+        colors = arrays.colors
+        boneWeights = arrays.boneWeights
+        boneIndices = arrays.boneIndices
+        self.indices = indices
+    }
+
     /// BSDynamicTriShape keeps its current positions in an appended Vector4
     /// array. All other vertex attributes remain in inherited BSTriShape.
     public init(replacingPositions positions: [SIMD3<Float>], in source: NIFTriShape) {

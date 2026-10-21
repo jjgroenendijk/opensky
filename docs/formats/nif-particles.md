@@ -145,8 +145,8 @@ At most 65,536 vertices are kept per emitter.
 
 The particle system's controller ref starts a chain of `NiTimeController` blocks, linked by
 "Next Controller". OpenSky reads each `NiPSysEmitterCtlr` and
-`BSPSysMultiTargetEmitterCtlr`, and passes over the rest, such as `NiPSysUpdateCtlr`. In
-version 20.2.0.7 its fields are:
+`BSPSysMultiTargetEmitterCtlr` as below, and the other particle controllers in
+[Parameter controllers](#parameter-controllers). In version 20.2.0.7 its fields are:
 
 | Field | Type | Bytes |
 | --- | --- | --- |
@@ -207,21 +207,90 @@ feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names a
 A NIF does not say which sequence plays first; the game starts them from animation events.
 OpenSky's pick is in [particle playback](/rendering/particles.md).
 
+## Parameter controllers
+
+These controllers animate one value of the emitter or modifier their name matches. Each is
+an `NiSingleInterpController` (time controller fields, interpolator Ref), then the
+modifier name (string index). The interpolator is an `NiFloatInterpolator`, or an
+`NiBoolInterpolator` for `NiPSysModifierActiveCtlr`; a manager-controlled one gets its keys
+from the sequence, as above.
+
+| Controller | Value it sets |
+| --- | --- |
+| `NiPSysModifierActiveCtlr` | The modifier or emitter is on or off |
+| `NiPSysEmitterSpeedCtlr` | Emitter speed |
+| `NiPSysEmitterInitialRadiusCtlr` | Emitter initial radius |
+| `NiPSysEmitterLifeSpanCtlr` | Emitter life span |
+| `NiPSysEmitterDeclinationCtlr` | Emitter declination |
+| `NiPSysEmitterPlanarAngleCtlr` | Emitter planar angle |
+| `NiPSysGravityStrengthCtlr` | Gravity strength |
+| `NiPSysInitialRotSpeedCtlr` | Rotation modifier speed |
+
+`NiVisController` on a particle system (an `NiSingleInterpController` with a bool
+interpolator) hides the whole system while its keys say off. `NiPSysUpdateCtlr` has only
+the time controller fields. A system whose controller chain holds no `NiPSysUpdateCtlr`
+does not step its particles. A system with no controller chain at all steps anyway, so
+synthetic test meshes keep working.
+
+## Force modifiers
+
+| Block | Fields after the `NiPSysModifier` part |
+| --- | --- |
+| `NiPSysBombModifier` | Bomb object Ptr, axis (Vector3), decay, delta V (float32), decay type, symmetry type (uint32) |
+| `NiPSysColliderManager` | First collider Ref |
+| `BSPSysRecycleBoundModifier` | Offset (Vector3), extent (Vector3), bound object Ptr |
+| `BSPSysStripUpdateModifier` | Update interval in seconds (float32) |
+
+A collider (`NiPSysPlanarCollider`, `NiPSysSphericalCollider`) is not a modifier. It is a
+bounce factor (float32), spawn on collide and die on collide (bool each), then Refs to a
+spawn modifier, the manager, the next collider, and the collider object. A planar collider
+adds width, height (float32), and its X and Y axes (Vector3 each); a spherical one adds a
+radius. The colliders of a manager form a chain by their next refs.
+
+Each object Ptr names a node; OpenSky places the bomb or collider at that node's origin in
+the system's space, and the simulation moves it to the world with the system. Semantics:
+
+- Bomb: a push of `delta V` per second away from the bomb (negative pulls). Spherical
+  pushes away from the point, cylindrical away from the axis line, planar along the axis
+  on each side. The push fades with no decay (1), linear decay (`1 - d / decay`), or
+  exponential decay (`exp(-d / decay)`).
+- Collider: a particle that crosses the plane rectangle, or enters the sphere, either dies
+  or stops at the surface. Its speed into the surface turns back, times the bounce factor.
+  Spawn on collide is not done; no vanilla collider sets it.
+- Recycle bound: a particle that leaves the box comes back in on the other side, so a
+  system that follows the camera keeps the view filled. OpenSky reads the offset as the
+  box's lowest corner and the extent as its full size, measured from the bound object.
+  Vanilla stores offset (-391, -250, 0) with extent (782, 500, 695), which fits that
+  reading, but it is not confirmed in the game.
+
+Strip particle systems draw as billboards, so the strip update interval reaches only the
+mesh preview.
+
+## Mesh particles
+
+`NiMeshParticleSystem` has the `NiParticleSystem` layout. Its data, `NiMeshPSysData`, is an
+`NiPSysData`, then a uint32 default pool size, a fill-pools-on-load bool, a uint32 count of
+uint32 generation pool sizes, and a Ref to the node whose children are the particle meshes.
+`NiPSysMeshUpdateModifier` holds a Ref list of meshes; `BSPSysHavokUpdateModifier` adds a
+Ref to a modifier it drives. On the install, only
+`effects\dragoncrash\fxdragoncrashfurrow01.nif` uses them: three systems whose particles
+are rock `NiTriShape` meshes. OpenSky simulates these systems like the others and draws
+billboards; drawing the rock meshes per particle is not done.
+
 ## Not read
 
 - Skin and material data. Particles do not need them.
 - Shader properties other than `BSEffectShaderProperty`. For example, a lit particle
   system that uses `BSLightingShaderProperty` gets its material from the mesh material path.
-- Unknown modifier types are marked unsupported and skipped. Vanilla has four:
-  `NiPSysColliderManager`, `NiPSysBombModifier`, `BSPSysRecycleBoundModifier`, and
-  `BSPSysStripUpdateModifier`. Broken bytes inside a known block are an error, and the
-  caller skips the file.
+- An unknown modifier type is marked unsupported and skipped. Vanilla has none. Broken
+  bytes inside a known block are an error, and the caller skips the file.
 
 ## From scene graph to particle system
 
 OpenSky walks the scene graph from the footer roots, the same way as for meshes (see
 [NIF](/formats/nif.md)). It adds up the `NiNode` transforms, stops at depth 64, and stops
-on loops. Each `NiParticleSystem` or `BSStripParticleSystem` becomes one particle system
+on loops. Each `NiParticleSystem`, `BSStripParticleSystem`, or `NiMeshParticleSystem`
+becomes one particle system
 with its world transform, capacity, emitters, modifiers, effect shader, and alpha
 property.
 

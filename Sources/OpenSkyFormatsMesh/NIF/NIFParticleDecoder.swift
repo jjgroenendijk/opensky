@@ -3,6 +3,7 @@
 // throw `NIFError`. See docs/formats/nif-particles.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFFile {
@@ -11,7 +12,7 @@ nonisolated extension NIFFile {
     private static let maxParticleGraphDepth = 64
 
     private static let particleSystemTypes: Set = [
-        "NiParticleSystem", "BSStripParticleSystem"
+        "NiParticleSystem", "BSStripParticleSystem", NIFMeshParticleData.systemTypeName
     ]
 
     /// Flattens the block tree into the particle systems it contains, each in
@@ -88,6 +89,13 @@ nonisolated extension NIFFile {
                         header: file.header
                     )
                     try emitters.append(withMeshGeometry(emitter, systemTransform: systemTransform))
+                } else if
+                    let placed = try placedModifier(
+                        modBlock,
+                        systemTransform: systemTransform
+                    )
+                {
+                    modifiers.append(placed)
                 } else {
                     try modifiers.append(NIFParticleModifierDecoder.modifier(
                         typeName: modBlock.typeName,
@@ -108,10 +116,80 @@ nonisolated extension NIFFile {
                 alphaPropertyRef: system.alphaPropertyRef,
                 effectShader: effectShader(ref: system.shaderPropertyRef),
                 alphaProperty: alphaProperty(ref: system.alphaPropertyRef),
-                emitterControllers: NIFParticleControllerDecoder.emitterControllers(
+                controllers: NIFParticleControllerDecoder.controllers(
                     from: system.object.controllerRef, file: file
                 )
             )
+        }
+
+        /// A modifier whose object refs need the graph: the bomb, the colliders, and
+        /// the recycle bound. Nil for any other type.
+        private func placedModifier(
+            _ block: NIFFile.Block,
+            systemTransform: float4x4
+        ) throws -> ParticleModifier? {
+            var reader = BinaryReader(block.data)
+            let place = { try transform(of: $0, systemTransform: systemTransform) }
+            switch block.typeName {
+            case NIFBombModifier.typeName:
+                let bomb = try NIFBombModifier(reader: &reader, header: file.header)
+                return try ParticleModifier(
+                    bomb.header, kind: .bomb(bomb.bomb(objectTransform: place(bomb.bombObjectRef)))
+                )
+            case NIFRecycleBoundModifier.typeName:
+                let recycle = try NIFRecycleBoundModifier(reader: &reader, header: file.header)
+                let origin = try place(recycle.boundObjectRef).columns.3
+                return ParticleModifier(
+                    recycle.header,
+                    kind: .recycleBound(recycle.bound(objectPosition: SIMD3(
+                        origin.x,
+                        origin.y,
+                        origin.z
+                    )))
+                )
+            case NIFColliderManager.typeName:
+                let manager = try NIFColliderManager(reader: &reader, header: file.header)
+                return try ParticleModifier(
+                    manager.header, kind: .colliders(colliders(
+                        from: manager.colliderRef,
+                        place: place
+                    ))
+                )
+            default:
+                return nil
+            }
+        }
+
+        /// The colliders along the next-collider links from `ref`.
+        private func colliders(
+            from ref: Int32,
+            place: (Int32) throws -> float4x4
+        ) throws -> [ParticleCollider] {
+            var colliders: [ParticleCollider] = []
+            var visited: Set<Int32> = []
+            var next = ref
+            while next >= 0, visited.insert(next).inserted {
+                let block = try block(at: Int(next))
+                let planar = block.typeName == NIFParticleCollider.planarType
+                guard planar || block.typeName == NIFParticleCollider.sphericalType else {
+                    throw NIFError.malformed("particle collider ref \(next) is \(block.typeName)")
+                }
+                var reader = BinaryReader(block.data)
+                let collider = try NIFParticleCollider(reader: &reader, planar: planar)
+                try colliders
+                    .append(collider.collider(objectTransform: place(collider.colliderObjectRef)))
+                next = collider.nextColliderRef
+            }
+            return colliders
+        }
+
+        /// The transform of the object at `ref` in the system's space. Identity for
+        /// no object, or for one the walk did not reach.
+        private func transform(of ref: Int32, systemTransform: float4x4) throws -> float4x4 {
+            guard ref >= 0, let parent = parents[Int(ref)] else { return matrix_identity_float4x4 }
+            var reader = try BinaryReader(block(at: Int(ref)).data)
+            let object = try NIFObjectPrefix(reader: &reader, header: file.header)
+            return systemTransform.inverse * parent * object.localTransform
         }
 
         /// Fills a mesh emitter with its shapes' geometry in the system's space.
@@ -162,6 +240,9 @@ nonisolated extension NIFFile {
             switch dataBlock.typeName {
             case "NiPSysData":
                 return try NIFParticleData(data: dataBlock.data, header: file.header)
+            case NIFMeshParticleData.typeName:
+                var reader = BinaryReader(dataBlock.data)
+                return try NIFMeshParticleData(reader: &reader, header: file.header).data
             case "BSStripPSysData":
                 return try NIFParticleData(
                     data: dataBlock.data,

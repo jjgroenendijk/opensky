@@ -1,6 +1,6 @@
-// Bethesda multi-bound blocks used by terrain/object LOD containers.
-// Reference: NifTools nif.xml (BSMultiBoundNode, BSMultiBound,
-// BSMultiBoundAABB), Skyrim BS stream 100.
+// Bethesda multi-bound blocks: a `BSMultiBoundNode` names a `BSMultiBound`, whose
+// data is a box around the node's subtree. Terrain and object LOD and many
+// interiors use them. Layout: docs/formats/nif.md#multi-bounds.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -24,24 +24,70 @@ nonisolated public struct NIFMultiBoundNode: Sendable {
 }
 
 nonisolated public struct NIFMultiBound: Sendable {
+    public static let typeName = "BSMultiBound"
+
     public let dataRef: Int32
 
     public init(data: Data) throws {
         var reader = BinaryReader(data)
-        dataRef = try Int32(bitPattern: reader.readUInt32())
+        dataRef = try reader.readNIFRef()
     }
 }
 
-nonisolated public struct NIFMultiBoundAABB: Sendable {
-    public let center: SIMD3<Float>
-    public let extent: SIMD3<Float>
+/// `BSMultiBoundAABB` or `BSMultiBoundOBB`: a box in the node's space.
+nonisolated public struct NIFMultiBoundBox: Equatable, Sendable {
+    public static let alignedType = "BSMultiBoundAABB"
+    public static let orientedType = "BSMultiBoundOBB"
 
-    public init(data: Data) throws {
-        var reader = BinaryReader(data)
+    public let center: SIMD3<Float>
+    /// Half the box's size along each of its axes.
+    public let extent: SIMD3<Float>
+    /// The box's axes; identity for an axis-aligned box.
+    public let rotation: simd_float3x3
+
+    public init(center: SIMD3<Float>, extent: SIMD3<Float>, rotation: simd_float3x3) {
+        self.center = center
+        self.extent = extent
+        self.rotation = rotation
+    }
+
+    public init(reader: inout BinaryReader, oriented: Bool) throws {
         center = try reader.readVector3()
         extent = try reader.readVector3()
         guard extent.x >= 0, extent.y >= 0, extent.z >= 0 else {
-            throw NIFError.malformed("multi-bound AABB carries a negative extent")
+            throw NIFError.malformed("multi-bound box carries a negative extent")
+        }
+        // Row-vector storage, read as rows for the column-vector transpose.
+        rotation = oriented
+            ? try simd_float3x3(rows: [
+                reader.readVector3(),
+                reader.readVector3(),
+                reader.readVector3()
+            ])
+            : matrix_identity_float3x3
+    }
+
+    /// The eight corners after `transform`.
+    public func corners(transform: float4x4) -> [SIMD3<Float>] {
+        (0 ..< 8).map { index in
+            let sign = SIMD3<Float>(
+                index & 1 == 0 ? -1 : 1, index & 2 == 0 ? -1 : 1, index & 4 == 0 ? -1 : 1
+            )
+            let local = center + rotation * (extent * sign)
+            let point = transform * SIMD4(local, 1)
+            return SIMD3(point.x, point.y, point.z)
         }
     }
+}
+
+nonisolated extension NIFBlockDecoders {
+    static let bounds: [String: Decode] = [
+        NIFMultiBound.typeName: { reader, _ in try reader.readNIFRef() },
+        NIFMultiBoundBox.alignedType: { reader, _ in
+            try NIFMultiBoundBox(reader: &reader, oriented: false)
+        },
+        NIFMultiBoundBox.orientedType: { reader, _ in
+            try NIFMultiBoundBox(reader: &reader, oriented: true)
+        }
+    ]
 }

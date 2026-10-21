@@ -239,7 +239,7 @@ nonisolated extension CellSceneBuilder {
         geometry: CellGeometryBuild,
         counts: BuildCounts
     ) -> CellScene {
-        var instances = instances
+        var instances = instances + addOnInstances(for: instances)
         let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let doors = animatedDoors(&instances)
         let actors = geometry.actors

@@ -66,14 +66,7 @@ nonisolated struct NIFEffectSceneBuilder {
     }
 
     private mutating func appendShape(_ block: NIFFile.Block, parent: Int?) throws {
-        let shape: NIFTriShape = switch block.typeName {
-        case "BSSubIndexTriShape":
-            try NIFSubIndexTriShape(data: block.data, header: file.header).shape
-        case "BSDynamicTriShape":
-            try NIFDynamicTriShape(data: block.data, header: file.header).shape
-        default:
-            try NIFTriShape(data: block.data, header: file.header)
-        }
+        guard let shape = try NIFTriShape.decode(block, in: file) else { return }
         let node = append(shape.object, parent: parent, billboard: nil)
         guard shape.skinRef < 0, !shape.positions.isEmpty, !shape.indices.isEmpty else { return }
         let shaderBlock = shape.shaderPropertyRef >= 0 ? Int(shape.shaderPropertyRef) : nil

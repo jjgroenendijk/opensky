@@ -155,8 +155,10 @@ The selected row's model turns beside the list. The model path is the record's `
 world model for armour. It is drawn unlit with its diffuse texture, in front of the world, through
 the menu scene that the [crafting menu](/engine/crafting.md#crafting-menu) uses. It
 draws into a thin slice of depth near the camera, so the world cannot cover it. The model turns at
-0.6 radians a second; the game's rate is not measured. A model that fails to load shows its reason
-in the readout and draws nothing.
+0.6 radians a second; the game's rate is not measured. A model with a `BSInvMarker` is first turned
+by the marker's angles, and its fit size is multiplied by the marker's zoom
+([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A model that fails to load shows its
+reason in the readout and draws nothing.
 
 ## Controls
 

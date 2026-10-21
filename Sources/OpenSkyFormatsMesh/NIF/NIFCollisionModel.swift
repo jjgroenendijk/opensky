@@ -54,6 +54,8 @@ nonisolated public struct NIFCollisionFilter: Equatable, Sendable, BitwiseCopyab
 nonisolated public enum NIFCollisionCarrier: String, Sendable {
     case collisionObject = "bhkCollisionObject"
     case blendCollisionObject = "bhkBlendCollisionObject"
+    /// A `bhkSimpleShapePhantom`: never solid and never simulated.
+    case shapePhantom = "bhkSPCollisionObject"
 }
 
 nonisolated public struct NIFCollisionBody: Sendable {
@@ -234,8 +236,9 @@ nonisolated public struct NIFCollisionModel: Sendable {
     /// Every joint in the model, once. A joint binds two bodies and both of
     /// them list it, so the per-body arrays double-count.
     public var constraints: [NIFCollisionConstraint] {
-        var seen: Set<Int> = []
-        return bodies.flatMap(\.constraints).filter { seen.insert($0.block).inserted }
+        var seen: Set<SIMD2<Int>> = []
+        return bodies.flatMap(\.constraints)
+            .filter { seen.insert(SIMD2($0.block, $0.link)).inserted }
     }
 
     /// Rigid-body block index -> the name of the scene object it hangs off.

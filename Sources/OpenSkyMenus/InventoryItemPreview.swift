@@ -53,17 +53,22 @@ nonisolated public struct InventoryItemPreview: Equatable, Sendable {
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
     }
 
-    /// Centres and scales `bounds` so the model fits, then turns it by `yaw`.
-    public static func placement(bounds: (min: SIMD3<Float>, max: SIMD3<Float>), yaw: Float)
-        -> float4x4
-    {
+    /// Turns the model by its `BSInvMarker`, centres and scales `bounds` (taken after
+    /// that turn) so it fits, times the marker's zoom, then turns it by `yaw`.
+    public static func placement(
+        bounds: (min: SIMD3<Float>, max: SIMD3<Float>),
+        yaw: Float,
+        marker: NIFInventoryMarker? = nil
+    ) -> float4x4 {
         let middle = (bounds.min + bounds.max) / 2
         let reach = simd_length(bounds.max - bounds.min) / 2
-        let scale = reach > .ulpOfOne ? radius / reach : 1
+        let zoom = marker.map { $0.zoom > 0 ? $0.zoom : 1 } ?? 1
+        let scale = (reach > .ulpOfOne ? radius / reach : 1) * zoom
         return MatrixMath.translation(centre)
             * float4x4(simd_quatf(angle: yaw, axis: SIMD3(0, 0, 1)))
             * MatrixMath.scale(uniform: scale)
             * MatrixMath.translation(-middle)
+            * float4x4(marker?.orientation ?? simd_quatf(ix: 0, iy: 0, iz: 0, r: 1))
     }
 }
 
@@ -95,7 +100,9 @@ public final class InventoryItemPreviewSource {
         guard let path = preview.modelPath, let entry = model(path, device: device) else {
             return nil
         }
-        let placement = InventoryItemPreview.placement(bounds: entry.bounds, yaw: preview.yaw)
+        let placement = InventoryItemPreview.placement(
+            bounds: entry.bounds, yaw: preview.yaw, marker: entry.marker
+        )
         var scene = MenuScene(
             eye: InventoryItemPreview.eye, target: InventoryItemPreview.centre,
             up: SIMD3(0, 0, 1), fovYRadians: InventoryItemPreview.fovYRadians
@@ -129,11 +136,12 @@ public final class InventoryItemPreviewSource {
                     device: device,
                     textures: library.provider
                 )
-                guard let bounds = Self.bounds(of: model) else {
+                let marker = file.inventoryMarker
+                guard let bounds = Self.bounds(of: model, turnedBy: marker?.orientation) else {
                     failures[path] = "no shape to draw"
                     return nil
                 }
-                let entry = PreviewModel(model: model, bounds: bounds)
+                let entry = PreviewModel(model: model, bounds: bounds, marker: marker)
                 keep(path, entry)
                 return entry
             } catch {
@@ -151,14 +159,18 @@ public final class InventoryItemPreviewSource {
         }
     }
 
-    /// The box around every visible vertex in model space.
-    static func bounds(of model: MenuSceneModel) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
+    /// The box around every visible vertex in model space, after `turn`.
+    static func bounds(
+        of model: MenuSceneModel,
+        turnedBy turn: simd_quatf? = nil
+    ) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
+        let rotation = float4x4(turn ?? simd_quatf(ix: 0, iy: 0, iz: 0, r: 1))
         let pose = NIFEffectPose(scene: model.scene, playing: [])
         var low = SIMD3<Float>(repeating: .infinity)
         var high = SIMD3<Float>(repeating: -.infinity)
         for state in pose.shapes(of: model.scene) where state.isVisible {
             for position in model.scene.shapes[state.shape].positions {
-                let point = state.transform * SIMD4(position, 1)
+                let point = rotation * state.transform * SIMD4(position, 1)
                 let world = SIMD3(point.x, point.y, point.z)
                 low = simd_min(low, world)
                 high = simd_max(high, world)
@@ -170,5 +182,6 @@ public final class InventoryItemPreviewSource {
     private struct PreviewModel {
         let model: MenuSceneModel
         let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
+        let marker: NIFInventoryMarker?
     }
 }

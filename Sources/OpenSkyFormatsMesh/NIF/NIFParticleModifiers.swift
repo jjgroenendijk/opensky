@@ -24,7 +24,7 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
         header: NIFHeader
     ) throws -> ParticleEmitter {
         var reader = BinaryReader(data)
-        let base = try ModifierBase(reader: &reader, header: header)
+        let base = try NIFParticleModifierHeader(reader: &reader, header: header)
         let birth = try EmitterBase(reader: &reader)
         let shape = try readShape(typeName: typeName, reader: &reader)
         return ParticleEmitter(
@@ -54,7 +54,15 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
         header: NIFHeader
     ) throws -> ParticleModifier {
         var reader = BinaryReader(data)
-        let base = try ModifierBase(reader: &reader, header: header)
+        return try modifier(typeName: typeName, reader: &reader, header: header)
+    }
+
+    public static func modifier(
+        typeName: String,
+        reader: inout BinaryReader,
+        header: NIFHeader
+    ) throws -> ParticleModifier {
+        let base = try NIFParticleModifierHeader(reader: &reader, header: header)
         let kind = try readKind(typeName: typeName, reader: &reader)
         return ParticleModifier(
             name: base.name,
@@ -167,6 +175,10 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
                 try scales.append(reader.readFloat32())
             }
             return .scale(scales: scales)
+        case NIFStripUpdateModifier.typeName:
+            return try .stripUpdate(interval: reader.readFloat32())
+        case NIFMeshUpdateModifier.typeName, NIFMeshUpdateModifier.havokTypeName:
+            return try .meshUpdate(meshRefs: reader.readNIFRefs(label: "particle mesh"))
         case "BSPSysLODModifier":
             return try .lod(
                 beginDistance: reader.readFloat32(),
@@ -182,27 +194,22 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
     }
 }
 
-/// Shared NiPSysModifier prefix: name (string ref), order, target ptr
-/// (skipped), active flag.
-nonisolated private struct ModifierBase {
-    let name: String?
-    let order: UInt32
-    let active: Bool
+/// nif.xml `NiPSysModifier`: name, order, target system, and the active flag.
+nonisolated public struct NIFParticleModifierHeader: Equatable, Sendable {
+    public let name: String?
+    public let order: UInt32
+    public let targetRef: Int32
+    public let active: Bool
 
-    init(reader: inout BinaryReader, header: NIFHeader) throws {
-        let nameIndex = try reader.readUInt32()
-        if nameIndex != .max, Int(nameIndex) < header.strings.count {
-            name = header.strings[Int(nameIndex)]
-        } else {
-            name = nil // unnamed or exporter garbage — stay lenient
-        }
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+        name = try reader.readNIFString(header)
         order = try reader.readUInt32()
-        reader.skip(4) // Target ptr (NiParticleSystem parent), unused
+        targetRef = try reader.readNIFRef()
         active = try reader.readUInt8() != 0
     }
 }
 
-/// Shared NiPSysEmitter birth-parameter run, read after ModifierBase.
+/// Shared NiPSysEmitter birth-parameter run, read after `NIFParticleModifierHeader`.
 nonisolated private struct EmitterBase {
     let speed: Float
     let speedVariation: Float

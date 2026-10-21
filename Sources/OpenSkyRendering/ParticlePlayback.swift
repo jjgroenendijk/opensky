@@ -139,10 +139,10 @@ nonisolated public struct ParticleSimulator: Sendable {
 
     public mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         let deltaTime = simd_clamp(deltaTime, 0, 0.1)
-        guard deltaTime > 0 else { return }
+        guard deltaTime > 0, definition.updatesSimulation else { return }
         updateExisting(deltaTime: deltaTime, wind: wind)
         elapsed += deltaTime
-        let emitters = definition.emitters.filter(\.active)
+        let emitters = currentEmitters
         let controlled = emitters.map(controllerRate(for:))
         if controlled.allSatisfy({ $0 == nil }) {
             emit(deltaTime: deltaTime, scale: max(emissionScale, 0))
@@ -204,7 +204,13 @@ nonisolated public struct ParticleSimulator: Sendable {
             wind.direction.y * wind.speed,
             0
         )
-        let activeModifiers = definition.modifiers.filter(\.active).sorted { $0.order < $1.order }
+        let activeModifiers = definition.modifiers
+            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
+            .filter(\.active).sorted { $0.order < $1.order }
+        let field = ParticleForceField(
+            modifiers: activeModifiers,
+            modelTransform: placementTransform * definition.worldTransform
+        )
         for index in particles.indices.reversed() {
             particles[index].age += deltaTime
             if particles[index].age >= particles[index].lifetime {
@@ -230,12 +236,27 @@ nonisolated public struct ParticleSimulator: Sendable {
                     break
                 }
             }
-            particles[index].position += particles[index].velocity * deltaTime
+            guard field.move(&particles[index], deltaTime: deltaTime) else {
+                particles.remove(at: index)
+                continue
+            }
         }
     }
 
+    /// The active emitters, with their parameter controllers applied now.
+    public var currentEmitters: [ParticleEmitter] {
+        definition.emitters
+            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
+            .filter(\.active)
+    }
+
+    /// False while the system's `NiVisController` hides it.
+    public var isVisible: Bool {
+        definition.visibility?.isVisible(at: elapsed) ?? true
+    }
+
     private mutating func emit(deltaTime: Float, scale: Float) {
-        let emitters = definition.emitters.filter(\.active)
+        let emitters = currentEmitters
         guard capacity > 0, !emitters.isEmpty, particles.count < capacity, scale > 0 else { return }
         birthAccumulator += fallbackRate(emitters) * scale * deltaTime
         let births = min(Int(birthAccumulator), capacity - particles.count)
@@ -488,7 +509,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         let simulator = simulator
         var particles = simulator.particles
         let offset = slot * max(capacity, 1) * MemoryLayout<ParticleGPUInstance>.stride
-        guard !particles.isEmpty else { return (offset, 0) }
+        guard !particles.isEmpty, simulator.isVisible else { return (offset, 0) }
         if let viewer, blendMode.dependsOnOrder {
             particles = ParticleDrawOrder.backToFront(particles, viewer: viewer, at: \.position)
         }

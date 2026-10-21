@@ -26,6 +26,22 @@ nonisolated extension NIFCollisionDecoder {
             return try [decodeSphere(block: block, parent: parent)]
         case "bhkCapsuleShape":
             return try [decodeCapsule(block: block, parent: parent)]
+        case NIFCylinderShape.typeName:
+            var reader = BinaryReader(block.data)
+            let cylinder = try NIFCylinderShape(reader: &reader)
+            return [NIFCollisionShape(
+                transform: parent,
+                geometry: cylinder.geometry,
+                material: cylinder.material
+            )]
+        case NIFPlaneShape.typeName:
+            var reader = BinaryReader(block.data)
+            let plane = try NIFPlaneShape(reader: &reader)
+            return [NIFCollisionShape(
+                transform: parent,
+                geometry: plane.geometry,
+                material: plane.material
+            )]
         default:
             unsupported[block.typeName, default: 0] += 1
             return []

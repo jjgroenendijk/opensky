@@ -60,6 +60,10 @@ nonisolated public struct NIFSequenceTrack: Equatable, Sendable {
         /// nif.xml `EffectShaderControlledColor` or `LightingShaderControlledColor`.
         case shaderColor(variable: UInt32, keys: [NIFKey<SIMD3<Float>>])
         case visibility([NIFKey<Bool>])
+        /// `BSNiAlphaPropertyTestRefController`: the alpha test threshold, 0 to 255.
+        case alphaTestReference([NIFKey<Float>])
+        /// `NiFloatExtraDataController`: the value of the `NiFloatExtraData` named.
+        case extraDataFloat(name: String, keys: [NIFKey<Float>])
     }
 
     public let target: Target

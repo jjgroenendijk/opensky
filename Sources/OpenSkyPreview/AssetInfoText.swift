@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 
 nonisolated public enum AssetInfoText: Sendable {
@@ -22,7 +23,32 @@ nonisolated public enum AssetInfoText: Sendable {
                 + counts.map { "\($0.key) \($0.value)" }.joined(separator: ", ")
         )
         lines.append(contentsOf: modelLines(file: file))
+        lines.append(contentsOf: decodedBlockLines(file: file))
         return lines.joined(separator: "\n")
+    }
+
+    /// Every block a whole-block decoder reads, with its decoded fields. Unknown
+    /// types are listed in the block counts above and not here.
+    private static func decodedBlockLines(file: NIFFile) -> [String] {
+        var lines: [String] = []
+        for (index, block) in file.blocks.enumerated() {
+            do {
+                guard let value = try NIFBlockDecoders.decode(block, header: file.header)
+                else { continue }
+                lines.append("block \(index) \(block.typeName):")
+                lines += DecodedValueDump.lines(value) { $0.description }.map { "  " + $0 }
+            } catch {
+                lines
+                    .append(
+                        "[WARNING] block \(index) \(block.typeName): \(String(describing: error))"
+                    )
+            }
+            guard lines.count < DecodedValueDump.lineCap else {
+                lines.append("[INFO] decoded blocks cut at \(DecodedValueDump.lineCap) lines")
+                break
+            }
+        }
+        return lines.isEmpty ? [] : ["decoded blocks:"] + lines
     }
 
     private static func modelLines(file: NIFFile) -> [String] {

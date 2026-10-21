@@ -204,7 +204,7 @@ nonisolated extension RagdollJointDefinition {
                 frameB: placementB.pointFrame(joint.pivotB),
                 limits: .distance(length: joint.length)
             )
-        case .prismatic, .malleable:
+        case .prismatic, .malleable, .breakable:
             // A rail joint and an already-unwrapped malleable wrapper both mean
             // the decode reached something this solver has no limit model for.
             // Dropping the joint is the honest outcome: holding its pivots

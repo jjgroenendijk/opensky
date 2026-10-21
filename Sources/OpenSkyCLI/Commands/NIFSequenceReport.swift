@@ -78,6 +78,8 @@ enum NIFSequenceReport {
         case let .shaderFloat(variable, keys): return "float \(variable) " + keyList(keys, format)
         case let .shaderColor(variable, keys): return "colour \(variable) " + keyList(keys, format)
         case let .visibility(keys): return "visible " + keyList(keys) { $0 ? "on" : "off" }
+        case let .alphaTestReference(keys): return "alpha test " + keyList(keys, format)
+        case let .extraDataFloat(name, keys): return "extra data \(name) " + keyList(keys, format)
         }
     }
 

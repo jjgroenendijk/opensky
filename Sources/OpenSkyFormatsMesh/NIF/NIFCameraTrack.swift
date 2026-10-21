@@ -23,8 +23,12 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
     public let stopTime: Float
     /// Nil when neither the camera nor a node above it has a transform controller.
     public let keys: NIFTransformData?
+    /// Set when an `NiPathInterpolator` moves the animated node instead of keys.
+    public let path: NIFCameraPath?
     /// Horizontal field of view from the frustum, radians.
     public let horizontalFieldOfView: Float
+    /// The camera's `BSFrustumFOVController` keys; nil keeps the frustum's view.
+    public let fieldOfView: NIFFieldOfViewTrack?
 
     /// The first `NiCamera` in the file. Throws when the file has no camera or
     /// a link in the controller chain is broken.
@@ -43,6 +47,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
         reader.skip(8) // frustum top, bottom
         let near = try reader.readFloat32()
         horizontalFieldOfView = near > 0 ? atan((right - left) / 2 / near) * 2 : 0
+        fieldOfView = try NIFFieldOfViewTrack(controllerRef: camera.controllerRef, file: file)
 
         // Walk up from the camera; each node passed on the way adds to the offset.
         let parents = Self.parents(file)
@@ -57,6 +62,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
                 startTime = controller.start
                 stopTime = controller.stop
                 keys = try Self.data(of: controller.interpolator, file)
+                path = try NIFCameraPath(interpolatorRef: controller.interpolator, file: file)
                 restTranslation = node.object.translation
                 restRotation = simd_quatf(node.object.rotation)
                 offsetTranslation = offset.translation
@@ -74,6 +80,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
         startTime = 0
         stopTime = 0
         keys = nil
+        path = nil
         let top = simd_quatf(node.object.rotation)
         restTranslation = node.object.translation + top.act(offset.translation)
         restRotation = top * offset.rotation
@@ -157,13 +164,19 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
 nonisolated extension NIFCameraTrack {
     /// The camera's translation in the mesh at `time` seconds.
     public func translation(at time: Float) -> SIMD3<Float> {
-        let node = NIFKeySampler.vector(keys?.translations ?? [], at: time) ?? restTranslation
+        let node = path?.position(at: time)
+            ?? NIFKeySampler.vector(keys?.translations ?? [], at: time) ?? restTranslation
         return node + nodeRotation(at: time).act(offsetTranslation)
     }
 
     /// The camera's rotation in the mesh at `time` seconds.
     public func rotation(at time: Float) -> simd_quatf {
         nodeRotation(at: time) * offsetRotation
+    }
+
+    /// The horizontal field of view at `time` seconds, radians.
+    public func horizontalFieldOfView(at time: Float) -> Float {
+        fieldOfView?.horizontalFieldOfView(at: time) ?? horizontalFieldOfView
     }
 
     private func nodeRotation(at time: Float) -> simd_quatf {

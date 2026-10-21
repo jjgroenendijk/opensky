@@ -1,6 +1,6 @@
-// The `NiPSysEmitterCtlr` blocks on a particle system's controller chain and
-// the float and bool interpolators they read, directly or through the default
-// controller manager sequence. Other controllers are passed over.
+// The controllers on a particle system's controller chain: emitters, modifier
+// parameters, visibility, and the update controller, with the float and bool
+// keys they read directly or through the default controller manager sequence.
 // Layout: docs/formats/nif-particles.md.
 
 import Foundation
@@ -13,13 +13,11 @@ nonisolated enum NIFParticleControllerDecoder {
     /// nif.xml `#INV_FLT#`: the pose value is unset.
     static let invalidFloat: Float = -3.402823466e+38
 
-    /// Every emitter controller from `ref` along the next-controller links.
-    static func emitterControllers(
-        from ref: Int32,
-        file: NIFFile
-    ) throws -> [ParticleEmitterController] {
-        var controllers: [ParticleEmitterController] = []
-        var feeds: [Int32: SequenceFeed]?
+    /// Every particle controller from `ref` along the next-controller links.
+    static func controllers(from ref: Int32, file: NIFFile) throws -> ParticleControllerSet {
+        // A system with controllers steps only when one is `NiPSysUpdateCtlr`.
+        var set = ParticleControllerSet(updatesSimulation: ref < 0)
+        var feeds = FeedCache()
         var next = ref
         var visited: Set<Int32> = []
         while next >= 0 {
@@ -32,16 +30,80 @@ nonisolated enum NIFParticleControllerDecoder {
             next = try Int32(bitPattern: reader.readUInt32())
             if emitterControllerTypes.contains(block.typeName) {
                 let controller = try emitterController(&reader, file: file)
-                guard controller.isManagerFed else {
-                    controllers.append(controller.decoded)
-                    continue
-                }
-                let all = try feeds ?? NIFControllerSequenceDecoder.defaultFeeds(file: file)
-                feeds = all
-                try controllers.append(controller.fed(by: all[index], file: file))
+                let feed = controller.isManagerFed ? try feeds.feed(index, file) : nil
+                try set.emitters.append(controller.fed(by: feed, file: file))
+            } else if
+                let parameter = ParticleModifierController
+                    .Parameter(rawValue: block.typeName)
+            {
+                var whole = BinaryReader(block.data)
+                let raw = try NIFParticleModifierController(
+                    parameter: parameter, reader: &whole, header: file.header
+                )
+                try set.modifiers.append(modifierController(
+                    raw,
+                    feeds: &feeds,
+                    index: index,
+                    file: file
+                ))
+            } else if block.typeName == visibilityControllerType {
+                var whole = BinaryReader(block.data)
+                let base = try NIFInterpolatedController(reader: &whole)
+                let (timing, ref) = try feeds.source(base, index: index, file: file)
+                set.visibility = try ParticleVisibilityTrack(
+                    timing: timing,
+                    keys: boolKeys(ref, file: file)
+                )
+            } else if block.typeName == NIFParticleUpdateController.typeName {
+                set.updatesSimulation = true
             }
         }
-        return controllers
+        return set
+    }
+
+    static let visibilityControllerType = "NiVisController"
+
+    private static func modifierController(
+        _ raw: NIFParticleModifierController,
+        feeds: inout FeedCache,
+        index: Int32,
+        file: NIFFile
+    ) throws -> ParticleModifierController {
+        let (timing, ref) = try feeds.source(raw.base, index: index, file: file)
+        let isBool = raw.parameter == .active
+        return try ParticleModifierController(
+            parameter: raw.parameter,
+            modifierName: raw.modifierName,
+            timing: timing,
+            floatKeys: isBool ? [] : floatKeys(ref, file: file),
+            boolKeys: isBool ? boolKeys(ref, file: file) : []
+        )
+    }
+
+    /// The default sequence feeds, read once per chain and only when a controller needs them.
+    private struct FeedCache {
+        private var feeds: [Int32: SequenceFeed]?
+
+        mutating func feed(_ index: Int32, _ file: NIFFile) throws -> SequenceFeed? {
+            let all = try feeds ?? NIFControllerSequenceDecoder.defaultFeeds(file: file)
+            feeds = all
+            return all[index]
+        }
+
+        /// The timing and interpolator a one-interpolator controller plays. A sequence
+        /// names a modifier controller's interpolator with no ID, stored under "".
+        mutating func source(
+            _ base: NIFInterpolatedController,
+            index: Int32,
+            file: NIFFile
+        ) throws -> (ControllerTiming, Int32) {
+            guard
+                base.controller.isManagerControlled,
+                let feed = try feed(index, file),
+                let ref = feed.interpolators[""]
+            else { return (base.controller.timing, base.interpolatorRef) }
+            return (feed.timing, ref)
+        }
     }
 
     /// An emitter controller before its keys are chosen.

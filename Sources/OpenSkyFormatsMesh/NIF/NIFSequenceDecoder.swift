@@ -65,6 +65,26 @@ nonisolated struct NIFSequenceDecoder {
         }
     }
 
+    /// An alpha test threshold track, or a float extra data track by the data's name.
+    private func floatTrack(
+        _ controlled: ControlledBlock,
+        type: String,
+        controller: NIFFile.Block?,
+        node: NIFSequenceTrack.Target
+    ) throws -> NIFSequenceTrack? {
+        let keys = try NIFParticleControllerDecoder.floatKeys(controlled.interpolator, file: file)
+        guard type == NIFExtraDataController.typeName else {
+            return NIFSequenceTrack(target: node, channel: .alphaTestReference(keys))
+        }
+        var name = controlled.controllerID
+        if let controller {
+            var reader = BinaryReader(controller.data)
+            name = try NIFExtraDataController(reader: &reader, header: file.header).extraDataName
+        }
+        guard let name else { return nil }
+        return NIFSequenceTrack(target: node, channel: .extraDataFloat(name: name, keys: keys))
+    }
+
     /// Nil for a controller type OpenSky does not play, or an empty interpolator.
     private func track(_ controlled: ControlledBlock) throws -> NIFSequenceTrack? {
         guard controlled.interpolator >= 0 else { return nil }
@@ -83,6 +103,12 @@ nonisolated struct NIFSequenceDecoder {
                 file: file
             )
             return NIFSequenceTrack(target: node, channel: .visibility(keys))
+        }
+        if
+            type == NIFPlainController.Kind.alphaTestReference.rawValue
+            || type == NIFExtraDataController.typeName
+        {
+            return try floatTrack(controlled, type: type, controller: controller, node: node)
         }
         let isFloat = type.hasSuffix("ShaderPropertyFloatController")
         guard isFloat || type.hasSuffix("ShaderPropertyColorController") else { return nil }

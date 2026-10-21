@@ -8,10 +8,10 @@ import Testing
 
 extension NIFCollisionConstraintTests {
     @Test func unknownConstraintClassIsTalliedAndBodiesSurvive() throws {
-        let model = try skeleton(constraint: ("bhkBreakableConstraint", Data(count: 64)))
+        let model = try skeleton(constraint: ("bhkGenericConstraint", Data(count: 64)))
         #expect(model.bodies.count == 2)
         #expect(model.constraints.isEmpty)
-        #expect(model.unsupportedReachableBlocks["bhkBreakableConstraint"] == 2)
+        #expect(model.unsupportedReachableBlocks["bhkGenericConstraint"] == 2)
         #expect(model.decodeFailures.count == 2)
     }
 

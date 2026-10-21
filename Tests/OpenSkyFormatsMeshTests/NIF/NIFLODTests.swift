@@ -58,9 +58,11 @@ struct NIFLODTests {
         for value: Float in [1, 2, 3, 4, 5, 6] {
             aabb.appendFloat32(value)
         }
-        let parsed = try NIFMultiBoundAABB(data: aabb)
+        var reader = BinaryReader(aabb)
+        let parsed = try NIFMultiBoundBox(reader: &reader, oriented: false)
         #expect(parsed.center == SIMD3(1, 2, 3))
         #expect(parsed.extent == SIMD3(4, 5, 6))
+        #expect(parsed.rotation == matrix_identity_float3x3)
     }
 
     @Test func decodesSubIndexSegmentsAndFlattensShape() throws {

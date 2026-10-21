@@ -40,6 +40,11 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
         for block in file.blocks {
             blockTypes.add(block.typeName)
             recordShader(block, header: file.header, failures: &kinds)
+            do {
+                _ = try NIFBlockDecoders.decode(block, header: file.header)
+            } catch {
+                kinds.insert(Self.kind("\(block.typeName) does not decode", error))
+            }
         }
         recordDecoders(file, failures: &kinds)
         for kind in kinds {
@@ -92,6 +97,11 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
             _ = try file.sequences()
         } catch {
             kinds.insert(Self.kind("animation sequences do not decode", error))
+        }
+        do {
+            _ = try file.addOnNodes()
+        } catch {
+            kinds.insert(Self.kind("add-on nodes do not decode", error))
         }
     }
 
