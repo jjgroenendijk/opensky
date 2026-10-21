@@ -71,6 +71,8 @@ extension MagicCoordinator {
             dismissBoundWeapon(action)
         case (.disarm, .began):
             disarm(action.target)
+        case (.summon, _), (.reanimate, _):
+            performCommanding(action)
         case (.cloak, _), (.soulTrap, _), (.slowTime, _), (.stagger, .ended), (
             .spawnHazard,
             .ended
@@ -80,7 +82,7 @@ extension MagicCoordinator {
         }
     }
 
-    private func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
+    func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
         guard let store = effects?.effects, let resolved = store.effect(key: effect) else {
             return nil
         }

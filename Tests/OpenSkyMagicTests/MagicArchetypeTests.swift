@@ -88,7 +88,8 @@ struct MagicArchetypeTests {
         #expect(MagicArchetypeRule.rule(for: .cloak) == .world(.cloak))
         #expect(MagicArchetypeRule.rule(for: .slowTime) == .world(.slowTime))
         #expect(MagicArchetypeRule.rule(for: .invisibility) == .heldFlag(actorValue: 54))
-        #expect(MagicArchetypeRule.rule(for: .summonCreature) == nil)
+        #expect(MagicArchetypeRule.rule(for: .summonCreature) == .world(.summon))
+        #expect(MagicArchetypeRule.rule(for: .light) == nil)
         #expect(MagicArchetypeRule.rule(for: .calm)?.capsTargetLevel == true)
         #expect(MagicArchetypeRule.rule(for: .paralysis)?.capsTargetLevel == false)
     }

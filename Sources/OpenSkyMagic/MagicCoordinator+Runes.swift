@@ -30,6 +30,14 @@ extension MagicCoordinator {
             runes = RuneCore.placing(rune, in: runes, settings: runeSettings)
             return 0
         }
+        if summons(payload) {
+            // The effect runs on the caster; the creature appears at the aim point.
+            summonPoints[payload.caster] = aim.position
+            return applySpellHit(SpellHit(
+                payload: payload, targets: [SpellHitTarget(key: payload.caster)],
+                impact: aim.position
+            )).storedCount
+        }
         let targets = SpellHitTargeting.targets(
             of: payload, at: aim.position, struck: aim.target, candidates: aim.candidates,
             excluding: payload.caster
@@ -93,6 +101,14 @@ extension MagicCoordinator {
         return RuneCore.reach(range: world.perkModified(
             range, at: .modSpellRangeTargetLoc, on: caster, subjects: subjects, seams: seams
         ))
+    }
+
+    private func summons(_ payload: SpellPayload) -> Bool {
+        guard let store = effects?.effects else { return false }
+        return payload.entries.contains { entry in
+            store.resolve(entry.effect, fromPlugin: payload.sourcePlugin)?.effect.data?
+                .archetype == .summonCreature
+        }
     }
 
     private func isRune(_ payload: SpellPayload) -> Bool {

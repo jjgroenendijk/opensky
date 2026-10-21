@@ -110,6 +110,26 @@ final class FakeMagicWorld: MagicWorld {
 
     var shoutKnowledge = ShoutKnowledge()
     var keywords: [String: ReferenceKey] = [:]
+    /// Corpses `reanimate` may raise.
+    var dead: Set<ReferenceKey> = []
+    private(set) var summoned: [(base: FormID, caster: ReferenceKey)] = []
+    private(set) var releasedActors: [CommandedActor] = []
+
+    func summonActor(_ base: FormID, at _: SIMD3<Float>?, for caster: ReferenceKey)
+        -> ReferenceKey?
+    {
+        summoned.append((base: base, caster: caster))
+        return .generated(UInt64(summoned.count))
+    }
+
+    func reanimate(_ corpse: ReferenceKey, for _: ReferenceKey) -> Bool {
+        dead.remove(corpse) != nil
+    }
+
+    func releaseCommandedActor(_ actor: CommandedActor) {
+        releasedActors.append(actor)
+    }
+
     var runeTargets: [MeleeTarget] = []
 
     func keyword(editorID: String) -> ReferenceKey? {

@@ -27,6 +27,10 @@ extension ActiveEffectFixture {
         public static let cloakSpell: UInt32 = 0x40
         public static let soulTrap: UInt32 = 0x41
         public static let slowTime: UInt32 = 0x42
+        public static let reanimate: UInt32 = 0x43
+        /// The `NPC_` the summon effect names.
+        public static let summonedActor: UInt32 = 0x44
+        public static let light: UInt32 = 0x45
         /// `Ward Power` in the vanilla actor-value table.
         public static let wardPower: Int32 = 63
     }
@@ -82,7 +86,14 @@ extension ActiveEffectFixture {
                 formID: Archetype.cloak, editorID: "Cloak",
                 flags: [.recover], archetype: 35, item: Archetype.cloakSpell
             ),
-            ArchetypeSpec(formID: Archetype.summon, editorID: "Summon", flags: [], archetype: 18),
+            ArchetypeSpec(
+                formID: Archetype.summon, editorID: "Summon", flags: [], archetype: 18,
+                item: Archetype.summonedActor
+            ),
+            ArchetypeSpec(
+                formID: Archetype.reanimate, editorID: "Reanimate", flags: [], archetype: 22
+            ),
+            ArchetypeSpec(formID: Archetype.light, editorID: "Light", flags: [], archetype: 12),
             ArchetypeSpec(
                 formID: Archetype.frenzy, editorID: "Frenzy", flags: [.hostile, .recover],
                 archetype: 8

@@ -79,6 +79,10 @@ public final class MagicCoordinator {
     public internal(set) var runes: [PlacedRune] = []
     public var runeSettings = RuneSettings.vanilla
     public internal(set) var detonatedRunes = 0
+    /// Summoned and reanimated actors, oldest first. Not saved.
+    public internal(set) var commanded: [CommandedActor] = []
+    /// Where each caster aimed its last target-location summon.
+    var summonPoints: [ReferenceKey: SIMD3<Float>] = [:]
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.

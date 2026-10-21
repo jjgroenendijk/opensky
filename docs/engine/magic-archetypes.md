@@ -22,8 +22,9 @@ OpenSky. How a timed effect is stored, ticked, and saved is on the
   [Ward](https://en.uesp.net/wiki/Skyrim:Ward), [Cloak](https://en.uesp.net/wiki/Skyrim:Cloak),
   [Calm](https://en.uesp.net/wiki/Skyrim:Calm),
   [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health),
-  [Slow Time](https://en.uesp.net/wiki/Skyrim:Slow_Time), and
-  [Block](https://en.uesp.net/wiki/Skyrim:Block) for Quick Reflexes.
+  [Slow Time](https://en.uesp.net/wiki/Skyrim:Slow_Time),
+  [Block](https://en.uesp.net/wiki/Skyrim:Block) for Quick Reflexes, and
+  [Conjuration](https://en.uesp.net/wiki/Skyrim:Conjuration) for Twin Souls and Dark Souls.
 
 Where the wiki writes "???" or "Not Used", that is all OpenSky knows.
 
@@ -36,7 +37,7 @@ Each archetype has one rule (`MagicArchetypeRule`). The rule decides where the a
 | Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Absorb, Accumulate Magnitude, Invisibility |
 | Influence | The combat loop, through `ActorMagicInfluence` | Calm, Frenzy, Demoralize, Rally, Turn Undead, Paralysis, Etherealize |
 | Effect list | The target's running effects | Dispel, Cure Disease, Cure Poison, Cure Paralysis |
-| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time |
+| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time, Summon Creature, Reanimate |
 
 Script, Concussion, and Cure Addiction are carriers. Script "has no effect other than any
 Papyrus Scripts specified", and the wiki marks the other two "Not Used". A timed carrier is
@@ -132,6 +133,20 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
 - The player's effects tick on the player's clock while time is slow, so an 8 second Slow Time
   ends after 8 seconds of the player's time. [WARNING] UESP also says Slow Time "extends the
   duration of potions on the player", which this does not do.
+- Summon Creature: "Summons the specified creature, placing them under the caster's control. On
+  death, the creature automatically fades out and leaves no corpse." The effect runs on the
+  caster. A target-location summon spell places the associated `NPC_` at the aim point, facing
+  the caster, as a spawned actor in the caster's cell; the next cell build draws it. When the
+  effect ends, the spawn is removed.
+- Reanimate: "If the target is dead, reanimate them, putting them under the caster's control."
+  Its magnitude is the highest level it raises, as for Calm. A living target ends the effect at
+  once. The corpse is resurrected, and it falls dead again when the effect ends. Perk entry
+  point 53 (Apply Reanimate Spell) picks a spell for the raised actor, as Dark Souls does.
+- A caster commands one summoned or reanimated actor at a time. Perk entry point 68 (Mod
+  Commanded Actor Limit) adds to that 1: Twin Souls allows "two atronachs or reanimated
+  zombies". Past the limit, the caster's oldest actor goes and its effect ends.
+- [WARNING] A commanded actor does not follow its caster or fight for it yet, because NPCs do
+  not fight NPCs. Summons are not saved as commanded, and a death does not end the effect.
 
 ## Not done
 
@@ -140,7 +155,7 @@ These archetypes have no rule. Each is counted per effect, and `make gaps` ranks
 
 | Archetype | What is missing |
 | --- | --- |
-| Summon Creature, Reanimate, Command Summoned, Banish | Spawning an actor under the caster's control, and NPC-versus-NPC fights |
+| Command Summoned, Banish | Taking or ending control of another caster's summon |
 | Detect Life, Light | Drawing a shader or a light on an actor |
 | Enhance Weapon | A temporary enchantment on the equipped weapon |
 | Werewolf, Vampire Lord, Werewolf Feed | Changing an actor's race |

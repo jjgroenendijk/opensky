@@ -85,6 +85,20 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func spellHitCandidates() -> [MeleeTarget]
     /// The `explosionProximity` of the payload's `PROJ`; zero when it has none.
     func projectileProximity(of payload: SpellPayload) -> Float
+    /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> [PerkEntryPointChoice]
+    /// Places a new actor of `base` at `point`, or beside `caster` when nil.
+    func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
+        -> ReferenceKey?
+    /// Raises the dead `corpse`. False when it is not dead.
+    func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool
+    /// A summon fades away; a reanimated actor falls dead again.
+    func releaseCommandedActor(_ actor: CommandedActor)
 }
 
 extension MagicWorld {
@@ -148,6 +162,28 @@ extension MagicWorld {
     public func projectileProximity(of _: SpellPayload) -> Float {
         0
     }
+
+    public func perkChoices(
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        []
+    }
+
+    /// A session with no world places no actor.
+    public func summonActor(_: FormID, at _: SIMD3<Float>?, for _: ReferenceKey)
+        -> ReferenceKey?
+    {
+        nil
+    }
+
+    public func reanimate(_: ReferenceKey, for _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func releaseCommandedActor(_: CommandedActor) {}
 
     /// A session with no collision has no walls.
     public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {

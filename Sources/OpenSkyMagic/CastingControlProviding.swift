@@ -110,6 +110,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public var soulLines: [String] = []
     /// The runes waiting on the ground, then how many went off.
     public var runeText = "Runes: none"
+    /// The actors the player's summons and reanimations command.
+    public var commandedText = "Commanded: none"
 
     /// The reading with no runtime attached.
     public static let unavailable = CastingControlSnapshot(

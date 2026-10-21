@@ -132,6 +132,7 @@ extension MagicCoordinator: CastingControlProviding {
         )
         snapshot.soulLines = soulLines()
         snapshot.runeText = runeText
+        snapshot.commandedText = commandedText
         return snapshot
     }
 

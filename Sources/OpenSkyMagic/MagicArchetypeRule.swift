@@ -47,6 +47,10 @@ nonisolated public enum MagicWorldArchetype: Equatable, Sendable {
     /// "Slows time for all but the player by the indicated amount (a multiplier, with 1
     /// being normal time)."
     case slowTime
+    /// "Summons the specified creature, placing them under the caster's control."
+    case summon
+    /// "If the target is dead, reanimate them, putting them under the caster's control."
+    case reanimate
 }
 
 nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
@@ -97,6 +101,8 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
         case .disarm: .world(.disarm)
         case .soulTrap: .world(.soulTrap)
         case .slowTime: .world(.slowTime)
+        case .summonCreature: .world(.summon)
+        case .reanimate: .world(.reanimate)
         default: nil
         }
     }
@@ -119,7 +125,8 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     public var capsTargetLevel: Bool {
         switch self {
         case .influence(.calm), .influence(.frenzy), .influence(.demoralize),
-             .influence(.rally), .influence(.turnUndead), .world(.disarm):
+             .influence(.rally), .influence(.turnUndead), .world(.disarm),
+             .world(.reanimate):
             true
         default:
             false
@@ -140,7 +147,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     public var needsDuration: Bool {
         switch self {
         case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon),
-             .world(.soulTrap), .world(.slowTime):
+             .world(.soulTrap), .world(.slowTime), .world(.summon), .world(.reanimate):
             true
         default: false
         }
