@@ -51,10 +51,23 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
 
     /// How far a touch spell reaches from the caster, world units.
     var touchReach: Float { get }
+
+    /// Lands a target-location cast where the caster aims, or places it as a rune.
+    /// - Returns: how many timed effects were stored.
+    func deliverToLocation(
+        _ payload: SpellPayload, spell: ResolvedSpell, caster: ActorValueHolder
+    ) -> Int
 }
 
 extension CasterWorld {
     public func spellWasCast(_: ReferenceKey, by _: ReferenceKey) {}
+
+    /// A world with no ground lands nothing at a location.
+    public func deliverToLocation(
+        _: SpellPayload, spell _: ResolvedSpell, caster _: ActorValueHolder
+    ) -> Int {
+        0
+    }
 
     /// `fCombatDistance` in `Skyrim.esm`: an unarmed swing's reach, which is where
     /// a hand meets its target.

@@ -1,9 +1,8 @@
-// Casting at something other than yourself. The delivery values come from the
-// MGEF DATA table: 0 Self, 1 Touch, 2 Aimed, 3 Target Actor, 4 Target Location
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>). Aimed fires the
-// PROJ, or for concentration applies to the aim ray target once a second; Target
-// Actor applies within SPIT range; Touch applies to the actor within a hand's reach.
-// Target Location is refused and counted. See docs/engine/spell-delivery.md.
+// Casting at something other than yourself, by the MGEF DATA delivery value
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>). Aimed fires the PROJ,
+// or for concentration applies to the aim ray target once a second. Target Actor and
+// Touch apply to the aimed actor; Target Location lands at the aim point or as a rune.
+// See docs/engine/spell-delivery.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -23,8 +22,8 @@ nonisolated public enum SpellDelivery: Sendable {
     ) -> Bool {
         switch delivery {
         case .selfTarget, .aimed, .touch: true
-        case .targetActor: castingType != .concentration
-        case .targetLocation, .unknown: false
+        case .targetActor, .targetLocation: castingType != .concentration
+        case .unknown: false
         }
     }
 }
@@ -55,7 +54,9 @@ extension CasterRuntime {
             )
         case .touch:
             return applyAtAim(payload, range: world.touchReach, caster: caster.key, world: world)
-        case .selfTarget, .targetLocation, .unknown:
+        case .targetLocation:
+            return world.deliverToLocation(payload, spell: spell, caster: caster)
+        case .selfTarget, .unknown:
             // Unreachable: `SpellDelivery.isImplemented` refused these before
             // the cast started, and self delivery never gets here. Returning
             // zero rather than trapping keeps a mod-authored delivery this

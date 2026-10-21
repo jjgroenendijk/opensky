@@ -29,16 +29,38 @@ Magic Overview describes the shapes:
 | Aimed | Fires the `MGEF`'s `PROJ` | Applies to whatever the aim ray reaches, once a second |
 | Target Actor | Applies to the aimed actor, within `SPIT` range | Refused |
 | Touch | Applies to the aimed actor within touch reach | Applies to the aimed actor within touch reach, once a second |
-| Target Location | Refused | Refused |
+| Target Location | Lands where the caster aims, or waits there as a rune | Refused |
 
-A refusal is the `deliveryUnsupported` failure, with a sentence and a count. The reasons differ:
+A refusal is the `deliveryUnsupported` failure, with a sentence and a count. Holding a beam on a
+named actor, or on a point, needs targeting OpenSky does not do.
 
-- Target Location places an effect on the ground, which vanilla does with an `EXPL` or a rune.
-  Explosions are not run yet, so the effect has nowhere to live.
-- Holding a beam on a named actor needs targeting OpenSky does not do.
+## Target location and runes
+
+A target-location cast lands at the point the caster's aim ray reaches. The reach is the `SPIT`
+range times perk entry point 88 (Mod Spell Range (Target Loc.)), the entry point of Rune Master:
+"Can place runes five times farther away" (<https://en.uesp.net/wiki/Skyrim:Destruction>).
+[WARNING] The range is read as feet, with the foot size below. Fire Rune's range is 20, and 20
+world units would put the rune at the caster's feet, while UESP says it is "cast on a nearby
+surface". No source states the unit.
+
+A spell whose effect carries the `MagicRune` keyword becomes a rune. UESP: a rune is "cast on a
+surface and triggered like a proximity mine". It waits at the point until an actor hostile to
+its caster comes within the `explosionProximity` of the effect's `PROJ` (150 units for
+`RuneFireProjectile`). Then the nearest such actor takes every entry, bystanders inside an
+entry's area take theirs, and the `PROJ`'s explosion goes off at the rune, as a spell
+projectile's impact does. The player keeps at most `iMaxPlayerRunes` runes (1 in the install); a
+new one removes the oldest. UESP names no limit for NPCs, so OpenSky sets none.
+
+Differences from the game:
+
+- A ray that reaches no surface places the rune at the end of the ray, in the air.
+- Runes are not saved, and no rune mesh is drawn.
+
+Any other target-location spell applies at once to the actor the ray struck and to whoever stands
+inside an entry's area.
 
 The install has 1,452 `SPEL` records: 733 self, 451 aimed, 155 touch, 74 target location, and 39
-target actor. So 1,378 of them, 95%, use a delivery OpenSky runs.
+target actor. Every delivery runs except a concentration cast at a target actor or location.
 
 Touch reach is `fCombatDistance`, 141 units in the install, the same reach an unarmed swing has. A
 touch spell lands on the actor the aim ray finds within that reach, at the moment of release. It does

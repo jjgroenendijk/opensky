@@ -68,6 +68,7 @@ nonisolated extension PerkEntryPoint {
     public static let modAppliedEnchantmentsAllowed = PerkEntryPoint(rawValue: 80)
     public static let modShoutOK = PerkEntryPoint(rawValue: 82)
     public static let modPlayerMagicSlowdown = PerkEntryPoint(rawValue: 70)
+    public static let modSpellRangeTargetLoc = PerkEntryPoint(rawValue: 88)
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
@@ -93,6 +94,6 @@ nonisolated extension PerkEntryPoint {
         canDualCastSpell, modWardMagickaAbsorptionPct, modSoulGemRecharge,
         modSoulPctCapturedToWeapon,
         modEnchantmentPower, modAppliedEnchantmentsAllowed, modShoutOK,
-        modPlayerMagicSlowdown
+        modPlayerMagicSlowdown, modSpellRangeTargetLoc
     ]
 }

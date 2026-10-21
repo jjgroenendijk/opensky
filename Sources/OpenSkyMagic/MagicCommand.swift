@@ -1,6 +1,7 @@
 // What the magic coordinator asks the app to do. See docs/engine/coordinators.md.
 
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
 /// One change to the world outside the magic domain, raised by a magic effect.
 nonisolated public enum MagicCommand: Equatable, Sendable {
@@ -10,4 +11,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case spawnHazard(ReferenceKey, at: ReferenceKey)
     /// Raise this event on the player's behaviour graph.
     case playerGraphEvent(String)
+    /// A rune went off: set off its `PROJ`'s explosion at the point.
+    case detonateRune(SpellPayload, at: SIMD3<Float>)
 }

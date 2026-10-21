@@ -219,6 +219,7 @@ final class WorldSessionWiring {
         game.magicWorld.wireCasting(provider: provider, gameSession: gameSession)
         game.magicWorld.wireEnchantments(provider: provider)
         game.magicWorld.wireShouts(provider: provider)
+        game.magicWorld.wireRunes(provider: provider)
         // After the cast loop, which folds spell cost through `Mod Spell Cost`.
         game.progressionWorld.wirePerks(provider: provider)
         // Memberships resolve through the actor-value template chain.

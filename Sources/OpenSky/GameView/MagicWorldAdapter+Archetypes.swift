@@ -22,6 +22,7 @@ extension MagicWorldAdapter {
             case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
             case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
             case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
+            case let .detonateRune(payload, position): detonateRune(payload, at: position)
             }
         }
     }

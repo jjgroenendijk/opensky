@@ -75,6 +75,10 @@ public final class MagicCoordinator {
     /// The shout the machine is voicing, fixed at the press.
     var voicedShout: ReferenceKey?
     public internal(set) var lastShout = ShoutOutcome.idle
+    /// Runes waiting on the ground, oldest first. Not saved.
+    public internal(set) var runes: [PlacedRune] = []
+    public var runeSettings = RuneSettings.vanilla
+    public internal(set) var detonatedRunes = 0
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
@@ -184,6 +188,7 @@ public final class MagicCoordinator {
         guard let caster else { return takeCommands() }
         caster.acceptFrame(isPlayerControlled ? intent : .still, on: .player)
         advanceActorCasts(delta: intent.deltaTime)
+        advanceRunes()
         return takeCommands()
     }
 

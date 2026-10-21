@@ -98,6 +98,7 @@ extension GapsGatherer {
         _ = SoulTexts.resolve(store: store)
         _ = SoulTrapSettings.resolve(store: store)
         _ = ShoutSettings.resolve(store: store)
+        _ = RuneSettings.resolve(store: store)
         _ = SpellCostSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)

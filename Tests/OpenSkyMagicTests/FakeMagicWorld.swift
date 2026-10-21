@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
 
 @MainActor
@@ -108,6 +109,20 @@ final class FakeMagicWorld: MagicWorld {
     }
 
     var shoutKnowledge = ShoutKnowledge()
+    var keywords: [String: ReferenceKey] = [:]
+    var runeTargets: [MeleeTarget] = []
+
+    func keyword(editorID: String) -> ReferenceKey? {
+        keywords[editorID]
+    }
+
+    func runeTriggers(for _: ReferenceKey) -> [MeleeTarget] {
+        runeTargets
+    }
+
+    func spellHitCandidates() -> [MeleeTarget] {
+        runeTargets
+    }
 
     func changeShoutKnowledge(_ change: ShoutKnowledgeChange) {
         switch change {

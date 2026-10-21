@@ -111,6 +111,7 @@ nonisolated public enum CastingControlReadout: Sendable {
             deliveryText(for: snapshot),
             conditionsText(for: snapshot),
             soulsText(for: snapshot),
+            snapshot.runeText,
             lastActionText(for: snapshot)
         ].joined(separator: "\n")
     }

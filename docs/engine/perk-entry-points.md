@@ -104,6 +104,7 @@ potion. A worn or weapon enchantment and a perk ability apply as authored.
 | Entry point | Id | Where |
 | --- | --- | --- |
 | Mod Tempering Health | 76 | a factor on the skill above the offset in the best quality level, item bound |
+| Mod Spell Range (Target Loc.) | 88 | a target-location cast's range, spell bound ([runes](/engine/spell-delivery.md#target-location-and-runes)) |
 | Mod Ingredients Harvested | 87 | how many times a plant's produce is granted, produce bound as the item |
 
 The entry point starts at 1. The steel and advanced smithing perks multiply it by 2 for their

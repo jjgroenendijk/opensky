@@ -108,6 +108,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public let lastActionText: String
     /// One line per carried soul gem copy, then the last soul trap.
     public var soulLines: [String] = []
+    /// The runes waiting on the ground, then how many went off.
+    public var runeText = "Runes: none"
 
     /// The reading with no runtime attached.
     public static let unavailable = CastingControlSnapshot(

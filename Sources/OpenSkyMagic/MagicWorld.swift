@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import simd
 
@@ -76,6 +77,14 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     /// The player's shouts and words, from the script state the natives write.
     var shoutKnowledge: ShoutKnowledge { get }
     func changeShoutKnowledge(_ change: ShoutKnowledgeChange)
+    /// The `KYWD` named `editorID` in the load order.
+    func keyword(editorID: String) -> ReferenceKey?
+    /// Living actors hostile to `caster`, which set off its runes.
+    func runeTriggers(for caster: ReferenceKey) -> [MeleeTarget]
+    /// Every actor a spell landing in the world can reach.
+    func spellHitCandidates() -> [MeleeTarget]
+    /// The `explosionProximity` of the payload's `PROJ`; zero when it has none.
+    func projectileProximity(of payload: SpellPayload) -> Float
 }
 
 extension MagicWorld {
@@ -122,6 +131,23 @@ extension MagicWorld {
     }
 
     public func changeShoutKnowledge(_: ShoutKnowledgeChange) {}
+
+    /// A session with no keyword index finds none, so no spell is a rune.
+    public func keyword(editorID _: String) -> ReferenceKey? {
+        nil
+    }
+
+    public func runeTriggers(for _: ReferenceKey) -> [MeleeTarget] {
+        []
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        []
+    }
+
+    public func projectileProximity(of _: SpellPayload) -> Float {
+        0
+    }
 
     /// A session with no collision has no walls.
     public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {
