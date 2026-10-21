@@ -145,8 +145,9 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
 - A caster commands one summoned or reanimated actor at a time. Perk entry point 68 (Mod
   Commanded Actor Limit) adds to that 1: Twin Souls allows "two atronachs or reanimated
   zombies". Past the limit, the caster's oldest actor goes and its effect ends.
-- [WARNING] A commanded actor does not follow its caster or fight for it yet, because NPCs do
-  not fight NPCs. Summons are not saved as commanded, and a death does not end the effect.
+- A commanded actor follows its caster and fights the caster's foes, and foes fight it back
+  ([combat allies](/engine/combat.md#allies)). A commanded actor that dies ends its effect, so a
+  summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
 
 ## Not done
 

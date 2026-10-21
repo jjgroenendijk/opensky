@@ -70,6 +70,16 @@ struct SummonTests {
         #expect(world.releasedActors.map(\.actor) == [.generated(1)])
     }
 
+    @Test func aSummonThatDiesFadesAndItsEffectEnds() throws {
+        let coordinator = try makeCoordinator()
+        Self.cast(Archetype.summon, on: .player, coordinator)
+        world.dead = [.generated(1)]
+        coordinator.advanceCommanded()
+        #expect(coordinator.commanded.isEmpty)
+        #expect(world.releasedActors.map(\.actor) == [.generated(1)])
+        #expect(coordinator.effects?.active(on: .player).isEmpty == true)
+    }
+
     /// Without Twin Souls a second summon sends the first away and ends its effect.
     @Test func aSecondSummonReplacesTheFirst() throws {
         let coordinator = try makeCoordinator()

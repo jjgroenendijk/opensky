@@ -3,6 +3,7 @@
 // spawn or kills the actor again. See docs/engine/magic-archetypes.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsESM
@@ -45,19 +46,32 @@ extension MagicWorldAdapter {
         let key = game.worldState.allocateGeneratedKey()
         game.worldState.set(spawn, for: key, in: location)
         streamer.requestRebuild(of: location)
+        enlist(key, for: caster)
         return key
     }
 
-    func reanimate(_ corpse: ReferenceKey, for _: ReferenceKey) -> Bool {
+    func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool {
         guard
             game.actorWorld.combatActors().contains(where: { $0.key == corpse && $0.isDead }),
             let bridge = game.scripts.bridge
         else { return false }
-        return bridge.resurrectActor(corpse)
+        guard bridge.resurrectActor(corpse) else { return false }
+        enlist(corpse, for: caster)
+        return true
+    }
+
+    /// The actor takes its caster's side: the player's ally is calm toward the player,
+    /// and an NPC's ally shares its caster's regard for the player.
+    private func enlist(_ actor: ReferenceKey, for caster: ReferenceKey) {
+        guard let loop = game.combat.loop else { return }
+        let regard = caster == .player ? ActorHostility.neutral : loop.hostility(of: caster)
+        loop.setHostility(regard, on: actor)
+        loop.command(actor, by: caster)
     }
 
     /// Summons "fade out and leave no corpse" (CK wiki "Magic Effect").
     func releaseCommandedActor(_ actor: CommandedActor) {
+        game.combat.loop?.dismiss(actor.actor)
         switch actor.kind {
         case .summoned:
             let location = game.worldState.component(ReferenceSpawnState.self, for: actor.actor)?
@@ -69,6 +83,10 @@ extension MagicWorldAdapter {
         case .reanimated:
             _ = game.scripts.bridge?.killActor(actor.actor, killer: nil)
         }
+    }
+
+    func isActorDead(_ key: ReferenceKey) -> Bool {
+        game.combat.combatActor(key: key)?.isDead ?? false
     }
 
     private func feet(of key: ReferenceKey) -> SIMD3<Float>? {

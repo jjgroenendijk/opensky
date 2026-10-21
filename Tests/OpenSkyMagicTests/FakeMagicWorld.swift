@@ -130,6 +130,10 @@ final class FakeMagicWorld: MagicWorld {
         releasedActors.append(actor)
     }
 
+    func isActorDead(_ key: ReferenceKey) -> Bool {
+        dead.contains(key)
+    }
+
     var runeTargets: [MeleeTarget] = []
 
     func keyword(editorID: String) -> ReferenceKey? {

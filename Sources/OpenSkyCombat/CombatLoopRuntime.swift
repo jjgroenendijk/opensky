@@ -59,7 +59,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Human-readable result of the last panel or script action.
     public var lastAction = CombatLoopOutcome.idle
 
-    private weak var world: (any CombatLoopWorld)?
+    private(set) weak var world: (any CombatLoopWorld)?
     private var accumulator: Double = 0
     private var attackID = 0
     /// Targets `StartCombat` named, which engage without waiting to perceive
@@ -72,6 +72,12 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Combat state at the previous step, so music switches on the edge rather
     /// than being re-selected every step.
     private var wasInCombat = false
+    /// Actors that fight for a commander, keyed by actor. See `CombatAllyRule`.
+    public internal(set) var commanders: [ReferenceKey: ReferenceKey] = [:]
+    /// Who each engaged actor fought at the last step.
+    public internal(set) var targets: [ReferenceKey: ReferenceKey] = [:]
+    /// Allies walking back to their commander, with the point each walks to.
+    public internal(set) var following: [ReferenceKey: SIMD3<Float>] = [:]
 
     public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings
@@ -111,7 +117,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Every landed melee hit the player's swing produced: provokes each target,
     /// puts it in the fight, and interrupts whatever it was doing.
     public func notePlayerHits(_ targets: [ReferenceKey]) {
-        for target in targets where target != .player {
+        for target in targets where target != .player && commanders[target] != .player {
             provoke(target)
             provoked.insert(target)
             noteStagger(of: target)
@@ -139,37 +145,6 @@ public final class CombatLoopRuntime: CombatControlling {
         guard machine.stagger() else { return }
         behaviors[key] = machine
         world?.playCombatClip(.stagger, on: key)
-    }
-
-    // MARK: - Script control (scope point 6)
-
-    /// `StartCombat`: makes `actor` fight `target` at once.
-    /// - Returns: true when the actor is now fighting. False for the player as the
-    ///   aggressor, an untracked actor, or a target other than the player.
-    @discardableResult
-    public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
-        guard let world, actor != .player, target == .player else { return false }
-        guard world.combatActor(key: actor)?.isDead == false else { return false }
-        forcedTargets[actor] = target
-        setHostility(.hostile, on: actor)
-        record(.scriptStarted(actor))
-        return true
-    }
-
-    /// `StopCombat`: ends `actor`'s fight and hands it back to its package,
-    /// leaving its stored hostility alone — the wiki's `StopCombat` stops the
-    /// fighting, and `SetRelationshipRank` is what changes how somebody feels.
-    ///
-    /// - Returns: true when there was a fight to stop.
-    @discardableResult
-    public func stopCombat(_ actor: ReferenceKey) -> Bool {
-        guard let world, behaviors[actor]?.isEngaged == true else {
-            forcedTargets.removeValue(forKey: actor)
-            return false
-        }
-        endFight(of: actor, world: world)
-        record(.scriptStopped(actor))
-        return true
     }
 
     // MARK: - Reading
@@ -205,18 +180,23 @@ public final class CombatLoopRuntime: CombatControlling {
         return engaged.isEmpty ? .notFighting : .searching
     }
 
-    /// Every fight is against the player, so an engaged actor targets the player, and
-    /// the player targets the actor the loop picked.
+    /// The player targets the actor the loop picked. Another actor targets whom it
+    /// fought at the last step: the player, or an ally of the player.
     public func combatTarget(of key: ReferenceKey) -> ReferenceKey? {
         guard activity(of: key) != .notFighting else { return nil }
-        return key == .player ? state.target : .player
+        return key == .player ? state.target : targets[key] ?? .player
     }
 
     /// Whether `key` engages without having to perceive its target: a script
-    /// called `StartCombat`, or the player hit it and it has not turned around
-    /// yet.
+    /// called `StartCombat`, the player hit it and it has not turned around yet,
+    /// or it is an ally sent at its commander's foe.
     public func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
-        forcedTargets[key] != nil || provoked.contains(key)
+        forcedTargets[key] != nil || provoked.contains(key) || commanders[key] != nil
+    }
+
+    /// Whether a script named the player as `key`'s target.
+    func isForcedOntoPlayer(_ key: ReferenceKey) -> Bool {
+        forcedTargets[key] != nil
     }
 
     // MARK: - Frames
@@ -264,6 +244,9 @@ public final class CombatLoopRuntime: CombatControlling {
         behaviors = [:]
         forcedTargets = [:]
         provoked = []
+        commanders = [:]
+        targets = [:]
+        following = [:]
         crowdedOutCount = 0
         incomingTrace = []
         incomingHitCount = 0
@@ -333,6 +316,8 @@ public final class CombatLoopRuntime: CombatControlling {
         behaviors.removeValue(forKey: key)
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
+        targets.removeValue(forKey: key)
+        following.removeValue(forKey: key)
     }
 
     /// Records how many hostile living actors the engagement cap refused.
@@ -408,5 +393,38 @@ public final class CombatLoopRuntime: CombatControlling {
             activeRagdolls: trimmedTransients.activeRagdolls + removed.activeRagdolls,
             awakeBodies: trimmedTransients.awakeBodies + removed.awakeBodies
         )
+    }
+}
+
+extension CombatLoopRuntime {
+    // MARK: - Script control (scope point 6)
+
+    /// `StartCombat`: makes `actor` fight `target` at once.
+    /// - Returns: true when the actor is now fighting. False for the player as the
+    ///   aggressor, an untracked actor, or a target other than the player.
+    @discardableResult
+    public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
+        guard let world, actor != .player, target == .player else { return false }
+        guard world.combatActor(key: actor)?.isDead == false else { return false }
+        forcedTargets[actor] = target
+        setHostility(.hostile, on: actor)
+        record(.scriptStarted(actor))
+        return true
+    }
+
+    /// `StopCombat`: ends `actor`'s fight and hands it back to its package,
+    /// leaving its stored hostility alone — the wiki's `StopCombat` stops the
+    /// fighting, and `SetRelationshipRank` is what changes how somebody feels.
+    ///
+    /// - Returns: true when there was a fight to stop.
+    @discardableResult
+    public func stopCombat(_ actor: ReferenceKey) -> Bool {
+        guard let world, behaviors[actor]?.isEngaged == true else {
+            forcedTargets.removeValue(forKey: actor)
+            return false
+        }
+        endFight(of: actor, world: world)
+        record(.scriptStopped(actor))
+        return true
     }
 }

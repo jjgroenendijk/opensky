@@ -99,6 +99,7 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool
     /// A summon fades away; a reanimated actor falls dead again.
     func releaseCommandedActor(_ actor: CommandedActor)
+    func isActorDead(_ key: ReferenceKey) -> Bool
 }
 
 extension MagicWorld {
@@ -184,6 +185,10 @@ extension MagicWorld {
     }
 
     public func releaseCommandedActor(_: CommandedActor) {}
+
+    public func isActorDead(_: ReferenceKey) -> Bool {
+        false
+    }
 
     /// A session with no collision has no walls.
     public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {

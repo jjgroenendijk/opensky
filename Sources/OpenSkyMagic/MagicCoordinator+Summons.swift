@@ -27,6 +27,14 @@ extension MagicCoordinator {
         return limit.isFinite ? max(1, Int(limit.rounded())) : 1
     }
 
+    /// "On death, the creature automatically fades out": a fallen actor ends its effect,
+    /// and the end sends it away.
+    func advanceCommanded() {
+        for actor in commanded where world.isActorDead(actor.actor) {
+            dispel(actor.sequence, on: actor.holder)
+        }
+    }
+
     /// The panel line: who the player commands, against the limit.
     var commandedText: String {
         let mine = commanded.filter { $0.caster == .player }

@@ -45,7 +45,7 @@ extension MagicWorldAdapter {
         } else {
             guard let eye = actorCastOrigin(of: caster) else { return .none }
             origin = eye
-            direction = ProjectileFlight.normalized(playerCastTarget() - eye)
+            direction = ProjectileFlight.normalized(castTarget(of: caster) - eye)
         }
         let combat = game.combat
         let candidates = combat.projectileTargets()
@@ -70,14 +70,14 @@ extension MagicWorldAdapter {
         )
     }
 
-    /// An NPC casts at the player, the only target `StartCombat` accepts.
+    /// An NPC casts at whom it fights: the player, an ally, or a foe of its commander.
     private func spellShooter(for caster: ReferenceKey) -> ProjectileShooter? {
         guard caster != .player else { return game.combat.projectileShooter }
         guard let origin = actorCastOrigin(of: caster) else { return nil }
         return ProjectileShooter(
             key: caster,
             origin: origin,
-            aim: ProjectileFlight.normalized(playerCastTarget() - origin),
+            aim: ProjectileFlight.normalized(castTarget(of: caster) - origin),
             isFirstPerson: false,
             location: game.streamer?.cellLocation(of: caster)
         )
@@ -95,9 +95,15 @@ extension MagicWorldAdapter {
         return feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight * actor.scale)
     }
 
-    /// The middle of the player's capsule, so a miss means the target moved,
+    /// The middle of the target's capsule, so a miss means the target moved,
     /// not that the caster aimed at the floor.
-    private func playerCastTarget() -> SIMD3<Float> {
+    private func castTarget(of caster: ReferenceKey) -> SIMD3<Float> {
+        if
+            let key = game.combat.loop?.combatTarget(of: caster), key != .player,
+            let target = game.combat.combatActor(key: key)
+        {
+            return target.feet + SIMD3(0, 0, target.capsule.height / 2)
+        }
         let player = game.combat.meleeAttacker
         return player.feet + SIMD3(0, 0, player.capsule.height / 2)
     }

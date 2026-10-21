@@ -193,6 +193,7 @@ public final class MagicCoordinator {
         caster.acceptFrame(isPlayerControlled ? intent : .still, on: .player)
         advanceActorCasts(delta: intent.deltaTime)
         advanceRunes()
+        advanceCommanded()
         return takeCommands()
     }
 

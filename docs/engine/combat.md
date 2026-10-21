@@ -87,6 +87,25 @@ the mover for a path, so a ninth would be a fighter whose approach never starts.
 nearest actors win, and the panel shows how many were crowded out. A silent cut would read as
 "nobody else was fighting".
 
+## Allies
+
+A summoned or reanimated actor serves its caster ([magic archetypes](/engine/magic-archetypes.md)).
+The CK wiki puts it "under the caster's control". The loop calls such an actor an ally.
+
+- The player's ally is calm toward the player, and the player's blows do not turn it.
+- It fights the foe nearest to it among the actors that fight the player within 2048 units of the
+  player. It engages without having to see the foe.
+- With no foe, it walks back when it is more than 300 units from the player, and stops 150 units
+  away. These three distances are OpenSky values; no record names them.
+- A foe fights the nearest of the player and the player's allies that it has detected. A foe that a
+  script sent at the player with `StartCombat` keeps the player.
+- A blow on an ally uses the same damage formula as a blow on the player. The player's hit reaction,
+  the hit trace, and the Block skill use stay with blows on the player.
+- An NPC's ally shares its caster's regard for the player, so it fights the player as its caster
+  does, and walks after its caster between fights.
+- An NPC that casts at an ally or a foe aims at that actor, not at the player.
+- Allies take what is left of the engagement cap after the foes.
+
 ## Starting and stopping from a script
 
 `StartCombat(Actor akTarget)` and `StopCombat()` are `Actor` natives
@@ -175,8 +194,8 @@ World > Combat & Physics > Combat Loop:
 - Clear hit trace.
 - Readout: combat state and target, one line per fighting actor (phase, awareness, distance, health,
   and attack, contact, block, search, and cast counts, with how many spells it could cast from where
-  it stands), the number crowded out, hits taken, the damage flash, and transients against their
-  limits.
+  it stands), the number crowded out, the player's allies and what each does, hits taken, the
+  damage flash, and transients against their limits.
 
 World > AI & Navigation > Combat Behavior has a second hostility checkbox for the actor selected
 there. The first one follows the nearest actor, which is useless for following one guard through a
@@ -190,8 +209,7 @@ sidebar dot and no reset undoes them.
 
 - No power attacks, bashing, or dodging.
 - Actors cast only spells, and only the deliveries [magic](/engine/magic.md) carries out. Powers,
-  lesser powers, and shouts are skipped. Summons and reanimation have nowhere to place a second
-  actor.
+  lesser powers, and shouts are skipped.
 - No group tactics or morale. Assistance is decoded and unread.
 - Derived hostility is only asked about the player. The derivation takes any two actors, but
   engagement, perception, and the dialogue filter are all relative to the player.
