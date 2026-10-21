@@ -22,7 +22,7 @@ struct MagicTextsTests {
         #expect(texts.name(of: MagicEffectCastingType.concentration) == "Held")
         #expect(texts.name(of: MagicEffectDelivery.touch) == "Contact")
         #expect(texts.name(of: MagicEffectDelivery.aimed) == MagicEffectDelivery.aimed.description)
-        #expect(MagicTexts.settings.count == 34)
+        #expect(MagicTexts.settings.count == 36)
         let destruction = try #require(ActorValueIdentity.index(named: "Destruction"))
         let health = try #require(ActorValueIdentity.index(named: "Health"))
         #expect(texts.school(of: destruction) == "Ruin")

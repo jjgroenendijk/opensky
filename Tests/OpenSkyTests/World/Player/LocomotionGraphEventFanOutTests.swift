@@ -97,11 +97,11 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(consumer) == ["HitFrame"])
     }
 
-    /// Footsteps, melee, archery, ragdoll, and animation events, registered at construction:
+    /// Footsteps, melee, archery, ragdoll, animation, and magic events, registered at construction:
     /// the queue drops what no cursor can read, so a lazy cursor would find nothing.
     @Test func theBridgeRegistersEveryCursorAtConstruction() {
         let bridge = LocomotionBridge(configuration: .synthetic)
-        #expect(bridge.graphEvents.consumerCount == 5)
+        #expect(bridge.graphEvents.consumerCount == 6)
     }
 
     /// The fourth consumer must not displace the first three either.
