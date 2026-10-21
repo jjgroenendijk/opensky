@@ -132,6 +132,11 @@ target, and the Spellcasting panel counts it.
    magicka equal to its base cost (<https://en.uesp.net/wiki/Skyrim_Mod:Actor_Value_Indices>). A
    spell the target cast on itself is never absorbed, and the `SPEL` flag "Disallow Absorb/Reflect"
    turns it off.
+   Both vanilla sources raise that one value. The Atronach Stone's ability holds it at 50. A
+   Breton's Dragonskin is the greater power `PowerBretonAbsorbSpell` (`Skyrim.esm:0AA022`). Its one
+   effect, `RaceBretonAbsorbSpellChance` (`0E40C6`), is a Peak Value Modifier on Absorb Chance with
+   Recover set, magnitude 50 for 60 seconds. UESP: "a 50% chance to fully block a hostile spell"
+   (<https://en.uesp.net/wiki/Skyrim:Dragonskin>).
 
 UESP says "Spell Absorption is calculated before Magic Resistance", which fixes the order against
 resistance. That a ward comes before absorption is OpenSky's choice; no source orders the two.
