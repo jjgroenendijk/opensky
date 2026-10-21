@@ -1,5 +1,5 @@
 // Flattens a parsed NIF into engine meshes: walks from the footer roots,
-// composes local transforms, and decodes rigid or skinned BSTriShape leaves.
+// composes local transforms, and decodes rigid or skinned shape leaves.
 // Bad refs, cycles, or absurd depth throw `NIFError.malformed`, so the caller
 // skips the asset. See docs/formats/nif.md "Scene graph -> engine mesh".
 
@@ -47,7 +47,8 @@ nonisolated extension NIFFile {
 
         /// Types that carry drawable geometry rather than children.
         public static let shapeTypes: Set = [
-            "BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"
+            "BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape",
+            NIFLegacyTriShape.typeName, NIFLegacyTriShape.lodTypeName
         ]
 
         /// The name of editor-only geometry, such as the box of a lean marker.
@@ -129,14 +130,7 @@ nonisolated extension NIFFile {
             index: Int,
             parent: float4x4
         ) throws {
-            let shape: NIFTriShape = switch block.typeName {
-            case "BSSubIndexTriShape":
-                try NIFSubIndexTriShape(data: block.data, header: file.header).shape
-            case "BSDynamicTriShape":
-                try NIFDynamicTriShape(data: block.data, header: file.header).shape
-            default:
-                try NIFTriShape(data: block.data, header: file.header)
-            }
+            guard let shape = try NIFTriShape.decode(block, in: file) else { return }
             guard !Self.isEditorMarker(shape.object.name) else {
                 editorMarkerShapeCount += 1
                 return
@@ -220,8 +214,8 @@ nonisolated extension NIFFile {
 
 nonisolated extension NIFFile.Flattener {
     /// Resolves a shape's property refs into an engine Material. A water shader gives
-    /// `Material.waterSurface`. A sky shader, an undecodable effect, or no ref gives
-    /// `Material.fallback`.
+    /// `Material.waterSurface`, a sky shader its unlit sky material. An undecodable
+    /// effect or no ref gives `Material.fallback`.
     /// Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
@@ -240,6 +234,10 @@ nonisolated extension NIFFile.Flattener {
             }
             if block.typeName == NIFFile.waterShaderType {
                 return .waterSurface
+            }
+            if block.typeName == NIFSkyShaderProperty.typeName {
+                var reader = BinaryReader(block.data)
+                return try NIFSkyShaderProperty(reader: &reader, header: file.header).material
             }
             if block.typeName == "BSLightingShaderProperty" {
                 let property = try NIFLightingShaderProperty(

@@ -908,7 +908,8 @@ targets += feature(
     ],
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyInventoryInterface",
+        "OpenSkyProgressionInterface",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
         "OpenSkyEngineTesting"

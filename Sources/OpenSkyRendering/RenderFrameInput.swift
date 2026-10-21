@@ -10,6 +10,9 @@ public struct RenderFrameInput {
     public var view: FreeFlyCamera
     public var movementMode = CameraMovementMode.fly
     public var fovYRadians = FirstPersonCamera.defaultFOVYRadians
+    /// A camera mesh's horizontal view; the renderer turns it into `fovYRadians`
+    /// for the drawable's aspect. Nil keeps `fovYRadians`.
+    public var horizontalFOVRadians: Float?
     /// Fractional hour of day in [0, 24).
     public var timeOfDay = RenderFrameInput.defaultTimeOfDay
     /// Wind for precipitation, grass and particles. Calm when no weather is active.

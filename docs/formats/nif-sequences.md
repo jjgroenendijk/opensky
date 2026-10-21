@@ -62,6 +62,12 @@ The controller type string names the target:
 | `NiVisController` | the named node | shown or hidden |
 | `BSEffectShaderPropertyFloatController` | the node's effect shader | one float variable |
 | `BSEffectShaderPropertyColorController` | the node's effect shader | one colour variable |
+| `BSNiAlphaPropertyTestRefController` | the named node's shapes | alpha test threshold, 0 to 255 |
+| `NiFloatExtraDataController` | the extra data it names | one float |
+
+The alpha test threshold changes only a shape whose material already uses an alpha test.
+A float extra data named `hkVis:<node>` shows or hides that node
+([NIF controllers](/formats/nif-controllers.md#what-opensky-does-with-them)).
 
 A shader controller's variable is not in the controlled block. It is the last 4 bytes of
 the controller block itself, after the 26-byte `NiTimeController` part (next controller,

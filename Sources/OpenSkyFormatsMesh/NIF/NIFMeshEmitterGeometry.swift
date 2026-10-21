@@ -10,16 +10,7 @@ nonisolated enum NIFMeshEmitterGeometry {
 
     /// The shape behind an emitter mesh ref; nil for a block type that holds none.
     static func shape(_ block: NIFFile.Block, _ file: NIFFile) throws -> NIFTriShape? {
-        switch block.typeName {
-        case "BSTriShape":
-            try NIFTriShape(data: block.data, header: file.header)
-        case "BSSubIndexTriShape":
-            try NIFSubIndexTriShape(data: block.data, header: file.header).shape
-        case "BSDynamicTriShape":
-            try NIFDynamicTriShape(data: block.data, header: file.header).shape
-        default:
-            nil
-        }
+        try NIFTriShape.decode(block, in: file)
     }
 
     static func append(

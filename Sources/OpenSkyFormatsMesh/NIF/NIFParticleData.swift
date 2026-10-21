@@ -24,6 +24,10 @@ nonisolated public struct NIFParticleData: Sendable {
 
     public init(data: Data, header: NIFHeader, isStrip: Bool = false) throws {
         var reader = BinaryReader(data)
+        try self.init(reader: &reader, header: header, isStrip: isStrip)
+    }
+
+    public init(reader: inout BinaryReader, header: NIFHeader, isStrip: Bool = false) throws {
         let streamVersion = header.bsStream?.version ?? 0
         // BS202 = file version 20.2.0.7 with a Bethesda stream; both Skyrim
         // streams qualify and share this layout.

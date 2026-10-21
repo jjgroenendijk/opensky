@@ -20,6 +20,10 @@ nonisolated public struct NIFParticleSystem: Sendable {
 
     public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
+        try self.init(reader: &reader, header: header)
+    }
+
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(
@@ -51,18 +55,7 @@ nonisolated public struct NIFParticleSystem: Sendable {
         }
 
         worldSpace = try reader.readUInt8() != 0
-        let modifierCount = try Int(reader.readUInt32())
-        guard modifierCount >= 0, modifierCount * 4 <= reader.bytesRemaining else {
-            throw NIFError.malformed(
-                "modifier count \(modifierCount) exceeds block size"
-            )
-        }
-        var refs: [Int32] = []
-        refs.reserveCapacity(modifierCount)
-        for _ in 0 ..< modifierCount {
-            try refs.append(Int32(bitPattern: reader.readUInt32()))
-        }
-        modifierRefs = refs
+        modifierRefs = try reader.readNIFRefs(label: "modifier")
     }
 
     /// nif.xml MaterialData for version 20.2.0.7: material name/extra-data

@@ -123,6 +123,27 @@ After the shared fields:
 purpose. It picks one child by distance, and walking all of them would stack the LOD
 versions on top of each other.
 
+## Node subclasses
+
+These blocks are an `NiNode` with fields appended. Each one draws its children like a plain
+node.
+
+| Block | Appended fields |
+| --- | --- |
+| `BSValueNode` | uint32 value, uint8 flags. An add-on node ([NIF extra data](/formats/nif-extra-data.md#add-on-nodes)) |
+| `BSBlastNode`, `BSDamageStage` | uint8 minimum, maximum, and current stage (`nif.xml` `BSRangeNode`) |
+| `BSMasterParticleSystem` | uint16 maximum emitter objects, then a Ref list of particle systems |
+
+A destructible mesh holds one `BSDamageStage` per stage. The walk draws every stage that is
+not hidden; picking the stage by the object's damage is not done yet.
+
+## Multi-bounds
+
+`BSMultiBoundNode` names a `BSMultiBound`, whose data ref names a box around the subtree.
+`BSMultiBoundAABB` is a centre and a half size (float32 x 3 each). `BSMultiBoundOBB` adds a
+`Matrix33` rotation, stored like the node rotation ([LOD](/formats/lod.md)). The mesh
+preview shows the boxes; culling does not use them yet.
+
 ## NiSwitchNode
 
 A `NiNode` that draws one child, the active one. After the `NiNode` fields:
@@ -243,11 +264,36 @@ the positions in this tail. UVs, normals, colors, and bone weights are in the
 `NiSkinPartition` vertex stream, with the vertex flag cleared. OpenSky joins them by vertex
 index. A wrong byte count, bad values, or a different vertex count rejects the shape.
 
+## NiTriShape
+
+The older geometry block, still used by some Skyrim SE meshes. `BSLODTriShape` is the same
+block with three uint32 triangle counts at the end, one per level of detail. After the
+shared fields (`nif.xml` `NiGeometry` at stream 100):
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| Ref | Data | An `NiTriShapeData` |
+| Ref | Skin instance | |
+| uint32 + pairs | Material names and extra data | Vanilla shapes have none |
+| uint32, uint8 | Active material, material needs update | |
+| Ref | Shader property, alpha property | |
+
+`NiTriShapeData` is a group ID (uint32), a uint16 vertex count, keep and compress flags, then
+a presence byte before each array: vertices, then a uint16 `BSGeometryDataFlags` and a
+uint32 material CRC, normals, tangents and bitangents (with flag bit 12), a bounding
+sphere, colours (RGBA float32), and one UV set when flag bit 0 is set. After a uint16
+consistency flag and an additional data Ref come a uint16 triangle count, a uint32 point
+count, a presence byte, the uint16 triangles, and match groups (skipped). The bitangents
+follow U, as in `BSTriShape`. OpenSky turns the pair into the same shape a `BSTriShape`
+gives, so it draws, collides, and emits particles the same way. All vanilla legacy shapes
+are static.
+
 ## From scene graph to meshes
 
 - The walk starts at the footer roots. It follows node children and composes
-  `parent * local` down the tree. `BSTriShape`, `BSSubIndexTriShape`, and
-  `BSDynamicTriShape` become meshes with their model-space transform.
+  `parent * local` down the tree. `BSTriShape`, `BSSubIndexTriShape`,
+  `BSDynamicTriShape`, `NiTriShape`, and `BSLODTriShape` become meshes with their
+  model-space transform.
 - Materials are shared by (shader property, alpha property) pair.
 - Collision and controller blocks end the walk of their subtree.
 - A shape or node named `EditorMarker` is dropped with its subtree, because the game does
@@ -289,8 +335,11 @@ two keys OpenSky blends linearly: translations mix, quaternions slerp, and XYZ r
 mixes each angle, then applies X, then Y, then Z. It ignores the tangents of quadratic keys,
 so a curved camera path is followed as straight segments between keys.
 
-A chain can start with a `BSFrustumFOVController` before the transform controller. OpenSky
-follows the next-controller links and skips it, so the field of view stays the frustum's. On
+A chain can start with a `BSFrustumFOVController` before the transform controller. Its
+keys are the horizontal field of view in degrees; the shot uses them instead of the
+frustum's value ([NIF controllers](/formats/nif-controllers.md)). A transform controller
+whose interpolator is an `NiPathInterpolator` moves the camera along its path instead of
+along keys. On
 the install, 77 meshes are named by `CAMS` records and one, `killcam_topsideclosea.nif`, is
 not in the archives. Of the other 76, 73 use XYZ rotation keys and 67 move the camera; most
 run from -0.033 to 15.7 seconds.

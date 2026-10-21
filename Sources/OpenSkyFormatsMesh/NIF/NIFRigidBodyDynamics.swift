@@ -120,4 +120,15 @@ nonisolated public struct NIFRigidBodyDynamics: Sendable, BitwiseCopyable {
     public var isSimulated: Bool {
         (motionSystem?.isSimulated ?? false) && mass > 0 && mass.isFinite
     }
+
+    /// A phantom has no mass and a fixed motion: physics never moves it.
+    static let phantom = NIFRigidBodyDynamics(
+        mass: 0, inertiaTensor: float3x3(0), centerOfMass: .zero, linearVelocity: .zero,
+        angularVelocity: .zero, linearDamping: 0, angularDamping: 0, timeFactor: 1,
+        gravityFactor: 0,
+        friction: 0, rollingFrictionMultiplier: 0, restitution: 0, maxLinearVelocity: 0,
+        maxAngularVelocity: 0, penetrationDepth: 0, rawMotionSystem: NIFMotionSystem.fixed.rawValue,
+        rawDeactivatorType: 0, rawSolverDeactivation: 0,
+        rawQualityType: NIFCollisionQuality.fixed.rawValue
+    )
 }

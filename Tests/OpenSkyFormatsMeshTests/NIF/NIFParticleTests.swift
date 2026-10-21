@@ -60,7 +60,10 @@ struct NIFParticleTests {
                     maxParticles: 128, hasRadii: true, hasRotationSpeeds: true
                 )),
                 NIFFixture.Block("NiPSysBoxEmitter", boxEmitter),
-                NIFFixture.Block("NiPSysAgeDeathModifier", NIFParticleFixture.modifierBase()),
+                NIFFixture.Block(
+                    "NiPSysAgeDeathModifier",
+                    NIFParticleFixture.modifierBase() + Data([0, 0xFF, 0xFF, 0xFF, 0xFF])
+                ),
                 NIFFixture.Block("NiPSysGravityModifier", gravity),
                 NIFFixture.Block("BSPSysScaleModifier", scale),
                 NIFFixture.Block("BSPSysLODModifier", lod),
@@ -122,8 +125,10 @@ struct NIFParticleTests {
 
         // Four non-emitter modifiers, in chain order.
         try #require(decoded.modifiers.count == 4)
-        #expect(decoded.modifiers[0].kind == .ageDeath)
-        #expect(decoded.modifiers[1].kind == .gravity(axis: SIMD3(0, 0, -1), strength: 9.8))
+        #expect(decoded.modifiers[0].kind == .ageDeath(spawn: nil))
+        #expect(decoded.modifiers[1].kind == .gravity(ParticleGravity(
+            position: .zero, axis: SIMD3(0, 0, -1), decay: 0, strength: 9.8, force: .planar
+        )))
         #expect(decoded.modifiers[1].order == 4)
         #expect(decoded.modifiers[1].name == "Gravity")
         #expect(decoded.modifiers[2].kind == .scale(scales: [0.1, 0.5, 1.0]))
@@ -144,7 +149,7 @@ struct NIFParticleTests {
                 NIFFixture.Block("NiParticleSystem", system),
                 NIFFixture.Block("NiPSysData", NIFParticleFixture.psysData(maxParticles: 4)),
                 NIFFixture.Block(
-                    "NiPSysColliderManager",
+                    "NiPSysFieldModifier",
                     NIFParticleFixture.modifierBase() + Data(count: 4)
                 )
             ],
@@ -154,7 +159,7 @@ struct NIFParticleTests {
         let systems = try file.particleSystems()
         try #require(systems.count == 1)
         try #require(systems[0].modifiers.count == 1)
-        #expect(systems[0].modifiers[0].kind == .unsupported(typeName: "NiPSysColliderManager"))
+        #expect(systems[0].modifiers[0].kind == .unsupported(typeName: "NiPSysFieldModifier"))
     }
 
     /// A shader ref that is not a BSEffectShaderProperty (lit particle

@@ -8,7 +8,7 @@ import OpenSkyFormatsCore
 /// One sequence's interpolators for one controller, by interpolator ID.
 nonisolated struct SequenceFeed: Equatable {
     let timing: ControllerTiming
-    /// nif.xml `GetInterpolatorID()` -> interpolator block ref.
+    /// nif.xml `GetInterpolatorID()` -> interpolator block ref; "" for no ID.
     var interpolators: [String: Int32] = [:]
 }
 
@@ -61,9 +61,8 @@ nonisolated enum NIFControllerSequenceDecoder {
             let interpolator = try Int32(bitPattern: reader.readUInt32())
             let controller = try Int32(bitPattern: reader.readUInt32())
             reader.skip(1 + 4 * 4) // priority, node, property, controller type, controller ID
-            guard let id = try string(&reader, file), controller >= 0, interpolator >= 0 else {
-                continue
-            }
+            let id = try string(&reader, file) ?? ""
+            guard controller >= 0, interpolator >= 0 else { continue }
             interpolatorsByController[controller, default: [:]][id] = interpolator
         }
         reader.skip(4 + 4) // weight, text keys

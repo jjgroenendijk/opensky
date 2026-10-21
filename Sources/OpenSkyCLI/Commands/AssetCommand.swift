@@ -31,7 +31,7 @@ enum AssetCommand {
                 let offset = node.object.translation
                 print("block \(index): \(block.typeName) \(node.object.name ?? "-") "
                     + "at (\(offset.x), \(offset.y), \(offset.z)) children \(node.children)")
-            } else if let shape = decodedShape(index, block, header: file.header) {
+            } else if let shape = decodedShape(index, block, file: file) {
                 print("block \(index): \(block.typeName) \(shape.object.name ?? "-") "
                     + "\(shape.positions.count) vertices, \(shape.indices.count / 3) triangles")
             }
@@ -54,10 +54,9 @@ enum AssetCommand {
     private static func decodedShape(
         _ index: Int,
         _ block: NIFFile.Block,
-        header: NIFHeader
+        file: NIFFile
     ) -> NIFTriShape? {
-        guard ["BSTriShape", "BSSubIndexTriShape"].contains(block.typeName) else { return nil }
-        return decodedOrWarn(index, block) { try NIFTriShape(data: block.data, header: header) }
+        decodedOrWarn(index, block) { try NIFTriShape.decode(block, in: file) }.flatMap(\.self)
     }
 
     private static func decodedOrWarn<Value>(

@@ -129,7 +129,9 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   purpose, such as water shapes, which have their own pipeline. Shader flag and type names come
   from nif.xml `SkyrimShaderPropertyFlags1/2` and `BSLightingShaderType`.
 - Mesh decode failures list each kind once per mesh, with numbers replaced by `#`. A mesh is
-  built with `model()`, its particles, collision, and animation sequences.
+  built with `model()`, its particles, collision, animation sequences, and add-on nodes. Each
+  block with a whole-block decoder is also decoded alone, and a block whose bytes the decoder
+  does not use up exactly is a failure (`X leaves N bytes unread`).
 - Animation events are clip annotations. The payload after `.` or `@` is folded, so
   `SoundPlay.X` counts as `SoundPlay.*`. An event counts as done when combat, archery, or
   ragdoll code observes it, a footstep (`FSTP` `ANAM`) answers it, or it asks for a sound, a

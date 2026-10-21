@@ -98,3 +98,136 @@ nonisolated public struct ParticleEmitterController: Equatable, Sendable {
         return active.last { $0.time <= time }?.value ?? first.value
     }
 }
+
+/// A controller that animates one parameter of the emitter or modifier it names.
+nonisolated public struct ParticleModifierController: Equatable, Sendable {
+    public enum Parameter: String, CaseIterable, Sendable {
+        case active = "NiPSysModifierActiveCtlr"
+        case emitterSpeed = "NiPSysEmitterSpeedCtlr"
+        case gravityStrength = "NiPSysGravityStrengthCtlr"
+        case initialRadius = "NiPSysEmitterInitialRadiusCtlr"
+        case lifeSpan = "NiPSysEmitterLifeSpanCtlr"
+        case declination = "NiPSysEmitterDeclinationCtlr"
+        case planarAngle = "NiPSysEmitterPlanarAngleCtlr"
+        case initialRotationSpeed = "NiPSysInitialRotSpeedCtlr"
+    }
+
+    public let parameter: Parameter
+    public let modifierName: String?
+    public let timing: ControllerTiming
+    /// Empty for `active`, which uses `boolKeys`.
+    public let floatKeys: [NIFKey<Float>]
+    public let boolKeys: [NIFKey<Bool>]
+
+    public init(
+        parameter: Parameter, modifierName: String?, timing: ControllerTiming,
+        floatKeys: [NIFKey<Float>] = [], boolKeys: [NIFKey<Bool>] = []
+    ) {
+        self.parameter = parameter
+        self.modifierName = modifierName
+        self.timing = timing
+        self.floatKeys = floatKeys
+        self.boolKeys = boolKeys
+    }
+
+    /// The keyed value at `seconds` of playback; nil without keys.
+    public func value(at seconds: Float) -> Float? {
+        NIFKeySampler.float(floatKeys, at: timing.controllerTime(at: seconds))
+    }
+
+    /// The keyed on or off state at `seconds`; nil without keys.
+    public func isActive(at seconds: Float) -> Bool? {
+        NIFKeySampler.step(boolKeys, at: timing.controllerTime(at: seconds))
+    }
+}
+
+/// An `NiVisController` on a particle system: shown or hidden over time.
+nonisolated public struct ParticleVisibilityTrack: Equatable, Sendable {
+    public let timing: ControllerTiming
+    public let keys: [NIFKey<Bool>]
+
+    public init(timing: ControllerTiming, keys: [NIFKey<Bool>]) {
+        self.timing = timing
+        self.keys = keys
+    }
+
+    public func isVisible(at seconds: Float) -> Bool {
+        NIFKeySampler.step(keys, at: timing.controllerTime(at: seconds)) ?? true
+    }
+}
+
+/// Every controller on a particle system's controller chain.
+nonisolated public struct ParticleControllerSet: Equatable, Sendable {
+    public var emitters: [ParticleEmitterController]
+    public var modifiers: [ParticleModifierController]
+    public var visibility: ParticleVisibilityTrack?
+    public var updatesSimulation: Bool
+
+    public init(
+        emitters: [ParticleEmitterController] = [],
+        modifiers: [ParticleModifierController] = [],
+        visibility: ParticleVisibilityTrack? = nil,
+        updatesSimulation: Bool = true
+    ) {
+        self.emitters = emitters
+        self.modifiers = modifiers
+        self.visibility = visibility
+        self.updatesSimulation = updatesSimulation
+    }
+}
+
+nonisolated extension ParticleEmitter {
+    /// The emitter with each controller that names it applied at `seconds`.
+    public func controlled(
+        by controllers: [ParticleModifierController],
+        at seconds: Float
+    ) -> ParticleEmitter {
+        var values = SIMD8<Float>(speed, initialRadius, lifeSpan, declination, planarAngle, 0, 0, 0)
+        var isActive = active
+        for controller in controllers where controller.modifierName == name {
+            switch controller.parameter {
+            case .active: isActive = controller.isActive(at: seconds) ?? isActive
+            case .emitterSpeed: values[0] = controller.value(at: seconds) ?? values[0]
+            case .initialRadius: values[1] = controller.value(at: seconds) ?? values[1]
+            case .lifeSpan: values[2] = controller.value(at: seconds) ?? values[2]
+            case .declination: values[3] = controller.value(at: seconds) ?? values[3]
+            case .planarAngle: values[4] = controller.value(at: seconds) ?? values[4]
+            case .gravityStrength, .initialRotationSpeed: break
+            }
+        }
+        return ParticleEmitter(
+            name: name, order: order, active: isActive, speed: values[0],
+            speedVariation: speedVariation, declination: values[3],
+            declinationVariation: declinationVariation, planarAngle: values[4],
+            planarAngleVariation: planarAngleVariation, initialColor: initialColor,
+            initialRadius: values[1], radiusVariation: radiusVariation,
+            lifeSpan: values[2], lifeSpanVariation: lifeSpanVariation, shape: shape
+        )
+    }
+}
+
+nonisolated extension ParticleModifier {
+    /// The modifier with each controller that names it applied at `seconds`.
+    public func controlled(
+        by controllers: [ParticleModifierController],
+        at seconds: Float
+    ) -> ParticleModifier {
+        var isActive = active
+        var controlledKind = kind
+        for controller in controllers where controller.modifierName == name {
+            switch (controller.parameter, controlledKind) {
+            case (.active, _):
+                isActive = controller.isActive(at: seconds) ?? isActive
+            case var (.gravityStrength, .gravity(gravity)):
+                gravity.strength = controller.value(at: seconds) ?? gravity.strength
+                controlledKind = .gravity(gravity)
+            case var (.initialRotationSpeed, .rotation(rotation)):
+                rotation.speed = controller.value(at: seconds) ?? rotation.speed
+                controlledKind = .rotation(rotation)
+            default:
+                break
+            }
+        }
+        return ParticleModifier(name: name, order: order, active: isActive, kind: controlledKind)
+    }
+}

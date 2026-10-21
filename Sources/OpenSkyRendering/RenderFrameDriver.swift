@@ -36,6 +36,10 @@ extension Renderer {
     /// Replaces the frame's input, at the one point in the frame where game state
     /// enters the renderer. A changed field of view re-projects; changed poses re-merge.
     func adoptFrameInput(_ input: RenderFrameInput) {
+        var input = input
+        if let horizontal = input.horizontalFOVRadians, horizontal > 0, drawableAspectRatio > 0 {
+            input.fovYRadians = 2 * atan(tan(horizontal / 2) / drawableAspectRatio)
+        }
         frameInput = input
         if input.fovYRadians != adoptedFOVYRadians {
             adoptedFOVYRadians = input.fovYRadians

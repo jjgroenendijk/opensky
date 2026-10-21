@@ -139,11 +139,15 @@ indirect nonisolated public enum NIFConstraintData: Sendable {
     case ragdoll(NIFRagdollConstraint)
     case stiffSpring(NIFStiffSpringConstraint)
     case malleable(strength: Float, wrapped: NIFConstraintData)
+    /// Stops holding once a force past `threshold` acts on it.
+    case breakable(threshold: Float, removedWhenBroken: Bool, wrapped: NIFConstraintData)
 
-    /// The joint under any number of malleable wrappers.
+    /// The joint under any number of malleable and breakable wrappers.
     public var unwrapped: NIFConstraintData {
-        guard case let .malleable(_, wrapped) = self else { return self }
-        return wrapped.unwrapped
+        switch self {
+        case let .malleable(_, wrapped), let .breakable(_, _, wrapped): wrapped.unwrapped
+        default: self
+        }
     }
 
     public var type: NIFConstraintType {
@@ -155,6 +159,7 @@ indirect nonisolated public enum NIFConstraintData: Sendable {
         case .ragdoll: .ragdoll
         case .stiffSpring: .stiffSpring
         case .malleable: .malleable
+        case let .breakable(_, _, wrapped): wrapped.type
         }
     }
 }
@@ -173,6 +178,8 @@ nonisolated public struct NIFCollisionConstraint: Sendable {
     /// time of impact.
     public let priority: UInt32
     public let data: NIFConstraintData
+    /// The link of a ball-and-socket chain, which shares one block; 0 otherwise.
+    public internal(set) var link = 0
 
     public var type: NIFConstraintType {
         data.type

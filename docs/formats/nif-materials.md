@@ -143,6 +143,18 @@ A shape with this shader is a piece of placed water, such as a pool under a wate
 does not decode the block. The shape gets the engine water-surface material, and the
 [water pass](/rendering/water.md) draws it with the `WATR` look of its cell.
 
+## BSSkyShaderProperty
+
+The material of a sky mesh, such as the cloud dome, the stars, or a moon. After the
+`NiObjectNET` fields: shader flags 1 and 2 (uint32 each), UV offset and UV scale
+(float32 x 2 each), the source texture (`SizedString`), and the sky object type (uint32,
+`nif.xml` `SkyObjectType`: 0 texture, 1 sun glare, 2 sky, 3 clouds, 5 stars, 7 moon and
+stars mask).
+
+OpenSky draws a sky shape unlit and double-sided, with its texture, UV transform, and
+vertex colours and alpha. Every type but the sky dome itself blends. The weather sky uses
+its own pipeline; this material is what the mesh preview and any other mesh path see.
+
 ## BSShaderTextureSet
 
 A uint32 count, then one SizedString per slot. Slot 0 is diffuse, slot 1 normal and

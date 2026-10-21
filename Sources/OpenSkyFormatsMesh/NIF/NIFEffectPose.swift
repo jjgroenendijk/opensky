@@ -42,6 +42,10 @@ nonisolated public struct NIFEffectPose: Sendable {
     public private(set) var hidden: [Bool]
     private var floats: [Int: [UInt32: Float]] = [:]
     private var colors: [Int: [UInt32: SIMD3<Float>]] = [:]
+    /// Alpha test thresholds by node, 0 to 1.
+    private var alphaTests: [Int: Float] = [:]
+    /// A `NiFloatExtraData` named with this prefix shows or hides the node it names.
+    public static let visibilityExtraDataPrefix = "hkVis:"
 
     /// Later sequences in `playing` win where two animate the same value.
     public init(scene: NIFEffectScene, playing: [Playing]) {
@@ -69,6 +73,8 @@ nonisolated public struct NIFEffectPose: Sendable {
             guard let index = scene.node(named: name), let on = NIFKeySampler.step(keys, at: time)
             else { return }
             hidden[index] = !on
+        case (_, .alphaTestReference), (_, .extraDataFloat):
+            applyAlphaOrVisibility(track, at: time, scene: scene)
         case let (target, .shaderFloat(variable, keys)):
             guard let value = NIFKeySampler.float(keys, at: time) else { return }
             for block in Self.shaderBlocks(target, scene: scene) {
@@ -79,6 +85,33 @@ nonisolated public struct NIFEffectPose: Sendable {
             for block in Self.shaderBlocks(target, scene: scene) {
                 colors[block, default: [:]][variable] = value
             }
+        default:
+            return
+        }
+    }
+
+    /// An alpha test threshold track, or a float extra data track that names a
+    /// node to show or hide.
+    private mutating func applyAlphaOrVisibility(
+        _ track: NIFSequenceTrack, at time: Float, scene: NIFEffectScene
+    ) {
+        switch (track.target, track.channel) {
+        case let (.node(name), .alphaTestReference(keys)):
+            guard
+                let index = scene.node(named: name), let value = NIFKeySampler.float(
+                    keys,
+                    at: time
+                )
+            else { return }
+            alphaTests[index] = simd_clamp(value / 255, 0, 1)
+        case let (_, .extraDataFloat(name, keys)):
+            guard
+                name.hasPrefix(Self.visibilityExtraDataPrefix),
+                let index = scene
+                    .node(named: String(name.dropFirst(Self.visibilityExtraDataPrefix.count))),
+                let value = NIFKeySampler.float(keys, at: time)
+            else { return }
+            hidden[index] = value < 0.5
         default:
             return
         }
@@ -138,6 +171,9 @@ nonisolated public struct NIFEffectPose: Sendable {
     /// falloff, 5 alpha, 6 to 9 the UV offset and scale. Colour 0 is the emissive colour.
     private func material(_ shape: NIFEffectScene.Shape) -> NIFEffectMaterial {
         var material = shape.material
+        if let threshold = alphaTests[shape.node], material.alphaTest != nil {
+            material.alphaTest = threshold
+        }
         guard let block = shape.shaderBlock else { return material }
         for (variable, value) in floats[block] ?? [:] {
             switch variable {

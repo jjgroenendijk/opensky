@@ -17,13 +17,14 @@ struct NIFMeshGapCensusTests {
             .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty(
                 shaderType: 7, shaderFlags1: 0x2001, shaderFlags2: 0
             )),
-            .init("BSXFlags", Data(count: 8))
+            .init("BSXFlags", Data(count: 8)),
+            .init("BSFakeExtraData", Data(count: 4))
         ]))
 
         #expect(census.fileCount == 1)
         #expect(census.blockTypes.uses["BSXFlags"] == 1)
         #expect(census.blockTypes.left(where: NIFBlockTypes.handled.contains).map(\.name)
-            == ["BSXFlags"])
+            == ["BSFakeExtraData"])
         #expect(census.lightingTypes.uses == ["7 Parallax Occ": 1])
         #expect(!NIFMeshGapCensus.readLightingTypes.contains("7 Parallax Occ"))
         #expect(census.lightingFlags.uses.keys.sorted()

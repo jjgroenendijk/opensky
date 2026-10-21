@@ -35,6 +35,12 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     public let alphaProperty: NIFAlphaProperty?
     /// The system's `NiPSysEmitterCtlr` blocks; empty when none drives it.
     public let emitterControllers: [ParticleEmitterController]
+    /// The controllers that animate one emitter or modifier parameter.
+    public let modifierControllers: [ParticleModifierController]
+    /// The system's `NiVisController` track; nil when it is always shown.
+    public let visibility: ParticleVisibilityTrack?
+    /// An `NiPSysUpdateCtlr` is on the system. Without one the game does not step it.
+    public let updatesSimulation: Bool
 
     public init(
         name: String?,
@@ -48,7 +54,8 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
         alphaPropertyRef: Int32,
         effectShader: NIFEffectShaderProperty?,
         alphaProperty: NIFAlphaProperty?,
-        emitterControllers: [ParticleEmitterController] = []
+        emitterControllers: [ParticleEmitterController] = [],
+        controllers: ParticleControllerSet = ParticleControllerSet()
     ) {
         self.name = name
         self.worldTransform = worldTransform
@@ -61,7 +68,10 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
         self.alphaPropertyRef = alphaPropertyRef
         self.effectShader = effectShader
         self.alphaProperty = alphaProperty
-        self.emitterControllers = emitterControllers
+        self.emitterControllers = emitterControllers + controllers.emitters
+        modifierControllers = controllers.modifiers
+        visibility = controllers.visibility
+        updatesSimulation = controllers.updatesSimulation
     }
 }
 
@@ -194,19 +204,29 @@ nonisolated public struct ParticleModifier: Equatable, Sendable {
     /// Concrete modifier type. Unknown/unsupported types are carried by name
     /// so the caller can note + skip them without the decode throwing.
     public enum Kind: Equatable, Sendable {
-        case ageDeath
-        case spawn
-        case gravity(axis: SIMD3<Float>, strength: Float)
-        case rotation
+        /// The spawn a dying particle triggers; nil when death spawns nothing.
+        case ageDeath(spawn: ParticleSpawn?)
+        case spawn(ParticleSpawn)
+        case gravity(ParticleGravity)
+        case rotation(ParticleRotation)
         case position
-        case boundUpdate
-        case drag
+        /// Frames between bound updates; the bound is not used for culling.
+        case boundUpdate(skip: UInt16)
+        case drag(ParticleDrag)
         case simpleColour(ParticleColourRamp)
         case scale(scales: [Float])
         case wind(strength: Float)
-        case inheritVelocity
-        case subTex
+        case inheritVelocity(ParticleInheritVelocity)
+        case subTex(ParticleSubTexture)
         case lod(beginDistance: Float, endDistance: Float, endEmitScale: Float, endSize: Float)
+        case bomb(ParticleBomb)
+        /// The colliders of an `NiPSysColliderManager`, in chain order.
+        case colliders([ParticleCollider])
+        case recycleBound(ParticleRecycleBound)
+        /// Seconds between the points a strip particle adds to its trail.
+        case stripUpdate(interval: Float)
+        /// The shapes a mesh particle system draws for each particle.
+        case meshUpdate(meshRefs: [Int32])
         /// Any modifier type this decoder does not model.
         case unsupported(typeName: String)
     }

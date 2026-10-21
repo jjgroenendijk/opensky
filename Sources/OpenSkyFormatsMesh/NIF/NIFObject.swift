@@ -13,7 +13,7 @@ nonisolated extension BinaryReader {
     }
 }
 
-/// NiObjectNET field run: name, extra data refs (skipped), controller ref.
+/// NiObjectNET field run: name, extra data refs, controller ref.
 /// Property blocks (BSLightingShaderProperty, NiAlphaProperty) start here directly; scene-graph
 /// objects continue with NiAVObject fields
 /// (NIFObjectPrefix).
@@ -23,6 +23,8 @@ nonisolated public struct NIFObjectNET: Sendable {
     /// exporter garbage (docs/formats/nif.md) and a bad name must not reject
     /// the mesh.
     public let name: String?
+    /// `NiExtraData` blocks, such as the root's `BSX` flags (`NIFFile.extraData(of:)`).
+    public let extraDataRefs: [Int32]
     /// The first NiTimeController; -1 = none.
     public let controllerRef: Int32
 
@@ -34,13 +36,7 @@ nonisolated public struct NIFObjectNET: Sendable {
             name = nil
         }
 
-        let extraDataCount = try Int(reader.readUInt32())
-        guard extraDataCount * 4 <= reader.bytesRemaining else {
-            throw NIFError.malformed(
-                "extra data count \(extraDataCount) exceeds block size"
-            )
-        }
-        reader.skip(extraDataCount * 4) // NiExtraData refs, unused
+        extraDataRefs = try reader.readNIFRefs(label: "extra data")
         controllerRef = try Int32(bitPattern: reader.readUInt32())
     }
 }

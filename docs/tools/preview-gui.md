@@ -79,7 +79,8 @@ the costs live in the `MGEF` records.
 ## Previews
 
 - A NIF goes through the same mesh cache the cell build uses, becomes a one-model scene framed on its
-  bounds, and is rendered offscreen.
+  bounds, and is rendered offscreen. Its info text lists every block a whole-block decoder reads,
+  with the decoded fields, such as extra data, controllers, and particle forces.
 - A DDS draws on a quad facing the camera, 1000 units high with the texture's aspect, lit by a black
   sun and white ambient, so the output is the sampled texel unchanged. The preview shows exactly
   what the engine samples, upload rules and sRGB included. The image is capped at 1024 on the long

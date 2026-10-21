@@ -2,6 +2,7 @@
 // placement that centres and fits a model.
 
 import Foundation
+import OpenSkyFormatsMesh
 @testable import OpenSkyMenus
 import simd
 import Testing
@@ -40,5 +41,18 @@ struct InventoryItemPreviewTests {
         #expect(simd_distance(SIMD3(middle.x, middle.y, middle.z), InventoryItemPreview.centre)
             < 0.0001)
         #expect(abs(simd_distance(middle, end) - InventoryItemPreview.radius) < 0.0001)
+    }
+
+    /// The marker turns the model before the fit, and its zoom scales the fit.
+    @Test func theInventoryMarkerTurnsAndZoomsTheModel() {
+        let marker = NIFInventoryMarker(rotation: SIMD3(0, 0, .pi / 2), zoom: 2)
+        let placement = InventoryItemPreview.placement(
+            bounds: (min: SIMD3(-2, 0, 0), max: SIMD3(2, 0, 0)), yaw: 0, marker: marker
+        )
+        let centre = placement * SIMD4<Float>(0, 0, 0, 1)
+        let tip = placement * SIMD4<Float>(0, 2, 0, 1)
+        #expect(abs(simd_distance(centre, tip) - 2 * InventoryItemPreview.radius) < 0.0001)
+        let turned = marker.orientation.act(SIMD3(0, 2, 0))
+        #expect(simd_distance(turned, SIMD3(2, 0, 0)) < 0.0001)
     }
 }

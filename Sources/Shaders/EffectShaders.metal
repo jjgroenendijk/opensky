@@ -21,9 +21,12 @@ vertex ParticleVertexOut particleVertex(
                                    float2(-1, 1),  float2(1, -1), float2(1, 1)};
     const device ParticleInstance &particle = particles[instanceID];
     float2 corner = corners[vertexID];
+    float2 turn = particle.rotation.xy;
+    float2 turned =
+        float2(corner.x * turn.x - corner.y * turn.y, corner.x * turn.y + corner.y * turn.x);
     float3 world =
         particle.positionSize.xyz +
-        (frame.cameraRight * corner.x + frame.cameraUp * corner.y) * particle.positionSize.w;
+        (frame.cameraRight * turned.x + frame.cameraUp * turned.y) * particle.positionSize.w;
     ParticleVertexOut out;
     out.position = frame.viewProjectionMatrix * float4(world, 1.0);
     out.worldPosition = world;

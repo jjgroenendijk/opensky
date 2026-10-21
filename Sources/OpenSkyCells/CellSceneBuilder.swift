@@ -174,6 +174,8 @@ nonisolated public final class CellSceneBuilder {
     public var grassIndex: [UInt32: Grass]?
     public var lightingTemplateIndex: [UInt32: LightingTemplate]?
     public var lightIndex: [UInt32: LightRecord]?
+    /// `ADDN` `DATA` index to the add-on's model path, over the load order.
+    var addOnModelIndex: [UInt32: String]?
     public var materialTypeIndex: MaterialTypeIndex?
     /// Records this builder could not decode, each FormID counted once.
     public private(set) var skippedRecords = SkippedRecords()

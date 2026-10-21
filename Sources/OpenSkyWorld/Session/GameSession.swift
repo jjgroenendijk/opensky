@@ -6,6 +6,7 @@
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyAudio
+import OpenSkyCamera
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
@@ -240,6 +241,7 @@ public final class GameSession: RenderFrameDriver {
         var input = RenderFrameInput(view: freeFlyCamera)
         input.movementMode = movementMode
         input.fovYRadians = sessionFOVYRadians
+        input.horizontalFOVRadians = cinematicCameraState.pose?.horizontalFieldOfView
         input.timeOfDay = timeOfDay
         input.wind = wind
         input.weather = currentResolvedWeather

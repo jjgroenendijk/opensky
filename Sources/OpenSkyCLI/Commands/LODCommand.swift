@@ -109,10 +109,8 @@ enum LODCommand {
             switch block.typeName {
             case "BSMultiBoundNode":
                 _ = try NIFMultiBoundNode(data: block.data, header: file.header)
-            case "BSMultiBound":
-                _ = try NIFMultiBound(data: block.data)
-            case "BSMultiBoundAABB":
-                _ = try NIFMultiBoundAABB(data: block.data)
+            case "BSMultiBound", "BSMultiBoundAABB", "BSMultiBoundOBB":
+                _ = try NIFBlockDecoders.decode(block, header: file.header)
             case "BSSubIndexTriShape":
                 _ = try NIFSubIndexTriShape(data: block.data, header: file.header)
             default:

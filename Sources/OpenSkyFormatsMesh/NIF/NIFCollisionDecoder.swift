@@ -57,11 +57,14 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
         scene: SceneTargets
     ) throws -> NIFCollisionBody? {
         var objectReader = BinaryReader(file.blocks[index].data)
-        let targetRef = try objectReader.readNIFRef()
-        let objectFlags = try objectReader.readUInt16()
-        let bodyRef = try objectReader.readNIFRef()
-        guard let (bodyIndex, bodyBlock) = try resolvedBlock(bodyRef) else {
+        let object = try NIFCollisionObjectBlock(reader: &objectReader)
+        let targetRef = object.targetRef
+        let objectFlags = object.flags
+        guard let (bodyIndex, bodyBlock) = try resolvedBlock(object.bodyRef) else {
             throw NIFError.malformed("collision object \(index) has no rigid body")
+        }
+        if carrier == .shapePhantom {
+            return try phantomBody(object, phantom: (bodyIndex, bodyBlock), scene: scene)
         }
         guard NIFRigidBodyRecord.bodyTypeNames.contains(bodyBlock.typeName) else {
             unsupported[bodyBlock.typeName, default: 0] += 1
@@ -97,6 +100,36 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
         )
     }
 
+    /// A shape phantom as a body that is never solid or simulated: both filter
+    /// copies are the phantom's one filter, and both responses are `RESPONSE_NONE`.
+    private mutating func phantomBody(
+        _ object: NIFCollisionObjectBlock,
+        phantom: (index: Int, block: NIFFile.Block),
+        scene: SceneTargets
+    ) throws -> NIFCollisionBody? {
+        guard phantom.block.typeName == NIFShapePhantom.typeName else {
+            unsupported[phantom.block.typeName, default: 0] += 1
+            return nil
+        }
+        var reader = BinaryReader(phantom.block.data)
+        let record = try NIFShapePhantom(reader: &reader)
+        let target = object.targetRef >= 0
+            ? scene.transforms[Int(object.targetRef)] ?? matrix_identity_float4x4
+            : matrix_identity_float4x4
+        return try NIFCollisionBody(
+            targetBlock: object.targetRef,
+            targetName: object.targetRef >= 0 ? scene.names[Int(object.targetRef)] : nil,
+            bodyBlock: phantom.index, carrier: .shapePhantom, collisionObjectFlags: object.flags,
+            worldFilter: record.filter, rigidBodyFilter: record.filter,
+            entityResponse: Self.noResponse, rigidBodyResponse: Self.noResponse,
+            dynamics: .phantom, constraints: [], bodyFlags: 0,
+            transform: target * record.transform, shapes: decodeShapeGraph(root: record.shapeRef)
+        )
+    }
+
+    /// nif.xml `hkResponseType` `RESPONSE_NONE`.
+    static let noResponse: UInt8 = 3
+
     /// A joint that fails to decode is tallied and dropped; the body and its
     /// sibling joints survive, because a ragdoll missing one limb is more
     /// useful than no ragdoll.
@@ -112,7 +145,7 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
             }
             do {
                 try constraints.append(
-                    NIFConstraintDecoder.decode(block: block, index: index)
+                    contentsOf: NIFConstraintDecoder.decodeAll(block: block, index: index)
                 )
             } catch let NIFError.unsupported(message) {
                 // A constraint class this decoder does not read at all, which

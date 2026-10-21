@@ -19,20 +19,60 @@ nonisolated public enum NIFConstraintDecoder: Sendable {
         "bhkMalleableConstraint": .malleable
     ]
 
-    /// Throws `NIFError.unsupported` for a constraint class outside `types`,
-    /// so the caller tallies it by block type and keeps the body.
-    public static func decode(block: NIFFile.Block, index: Int) throws -> NIFCollisionConstraint {
-        guard let type = types[block.typeName] else {
-            throw NIFError.unsupported("constraint class \(block.typeName)")
-        }
+    /// `bhkBreakableConstraint` wraps a joint of any type in `types`.
+    public static let breakableType = "bhkBreakableConstraint"
+
+    /// Every joint `block` holds: one, or one per link of a ball-and-socket chain.
+    /// Throws `NIFError.unsupported` for a constraint class this decoder does not
+    /// read, so the caller tallies it by block type and keeps the body.
+    public static func decodeAll(
+        block: NIFFile.Block,
+        index: Int
+    ) throws -> [NIFCollisionConstraint] {
         var reader = BinaryReader(block.data)
+        if block.typeName == NIFBallSocketChain.typeName {
+            return try NIFBallSocketChain(reader: &reader).constraints(block: index)
+        }
+        return try [decode(reader: &reader, typeName: block.typeName, index: index)]
+    }
+
+    public static func decode(block: NIFFile.Block, index: Int) throws -> NIFCollisionConstraint {
+        var reader = BinaryReader(block.data)
+        return try decode(reader: &reader, typeName: block.typeName, index: index)
+    }
+
+    static func decode(
+        reader: inout BinaryReader,
+        typeName: String,
+        index: Int
+    ) throws -> NIFCollisionConstraint {
+        let type = types[typeName]
+        guard type != nil || typeName == breakableType else {
+            throw NIFError.unsupported("constraint class \(typeName)")
+        }
         let info = try readConstraintInfo(&reader)
-        return try NIFCollisionConstraint(
+        let data = try type
+            .map { try readData(type: $0, reader: &reader) } ?? readBreakable(&reader)
+        return NIFCollisionConstraint(
             block: index,
             entityA: info.entityA,
             entityB: info.entityB,
             priority: info.priority,
-            data: readData(type: type, reader: &reader)
+            data: data
+        )
+    }
+
+    /// nif.xml `bhkWrappedConstraintData`, then the break threshold and flag.
+    private static func readBreakable(_ reader: inout BinaryReader) throws -> NIFConstraintData {
+        let raw = try reader.readUInt32()
+        guard let inner = NIFConstraintType(rawValue: raw) else {
+            throw NIFError.unsupported("breakable constraint wraps type \(raw)")
+        }
+        reader.skip(16) // repeated bhkConstraintCInfo
+        let wrapped = try readData(type: inner, reader: &reader)
+        return try .breakable(
+            threshold: reader.readFloat32(), removedWhenBroken: reader.readUInt8() != 0,
+            wrapped: wrapped
         )
     }
 

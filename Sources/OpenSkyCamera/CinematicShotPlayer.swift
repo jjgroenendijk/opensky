@@ -58,11 +58,17 @@ nonisolated public struct CinematicCameraPose: Equatable, Sendable {
     /// False for a map view, which looks down through terrain and roofs on
     /// purpose. A shot near the ground pulls its eye in front of geometry.
     public var avoidsGeometry: Bool
+    /// The camera mesh's animated horizontal view, radians; nil keeps the game's.
+    public var horizontalFieldOfView: Float?
 
-    public init(eye: SIMD3<Float>, lookAt: SIMD3<Float>, avoidsGeometry: Bool = true) {
+    public init(
+        eye: SIMD3<Float>, lookAt: SIMD3<Float>, avoidsGeometry: Bool = true,
+        horizontalFieldOfView: Float? = nil
+    ) {
         self.eye = eye
         self.lookAt = lookAt
         self.avoidsGeometry = avoidsGeometry
+        self.horizontalFieldOfView = horizontalFieldOfView
     }
 }
 
@@ -175,12 +181,17 @@ nonisolated public struct CinematicShotPlayer: Sendable {
         let turn = simd_quatf(angle: origin.yaw, axis: [0, 0, 1])
         let offset = stage.track?.translation(at: localTime) ?? Self.fallbackOffset
         let eye = origin.position + turn.act(offset)
+        let view = stage.track?.fieldOfView?.horizontalFieldOfView(at: localTime)
         guard !stage.rotationFollowsTarget, let track = stage.track else {
-            return CinematicCameraPose(eye: eye, lookAt: target.focus)
+            return CinematicCameraPose(eye: eye, lookAt: target.focus, horizontalFieldOfView: view)
         }
         // A Gamebryo camera looks down its local +X axis.
         let forward = (turn * track.rotation(at: localTime)).act([1, 0, 0])
-        return CinematicCameraPose(eye: eye, lookAt: eye + forward * 100)
+        return CinematicCameraPose(
+            eye: eye,
+            lookAt: eye + forward * 100,
+            horizontalFieldOfView: view
+        )
     }
 
     private static let fallbackOffset = SIMD3<Float>(-60, -160, 110)
