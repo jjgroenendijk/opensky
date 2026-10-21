@@ -73,6 +73,9 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func postNotification(_ text: String)
     /// Whether `base`'s worn restriction list names one of `item`'s keywords.
     func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool
+    /// The player's shouts and words, from the script state the natives write.
+    var shoutKnowledge: ShoutKnowledge { get }
+    func changeShoutKnowledge(_ change: ShoutKnowledgeChange)
 }
 
 extension MagicWorld {
@@ -112,6 +115,13 @@ extension MagicWorld {
     public func enchantment(_: ResolvedEnchantment, fits _: FormID) -> Bool {
         true
     }
+
+    /// A session with no scripts knows no shout.
+    public var shoutKnowledge: ShoutKnowledge {
+        ShoutKnowledge()
+    }
+
+    public func changeShoutKnowledge(_: ShoutKnowledgeChange) {}
 
     /// A session with no collision has no walls.
     public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {

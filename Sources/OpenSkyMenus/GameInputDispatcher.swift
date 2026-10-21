@@ -7,7 +7,7 @@ import OpenSkyRendering
 /// One logical action. The raw value is the name `openskycli game input` takes.
 nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case forward, back, left, right, up, down
-    case run, sprint, sneak, jump, activate, attack, block
+    case run, sprint, sneak, jump, activate, attack, block, shout
     case readyWeapon, cameraMode, journal, inventory, skills
     case map, magic, wait, quicksave, quickload, pause
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
@@ -16,7 +16,8 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     /// A held action stays down until released; the rest fire once on press.
     public var isHeld: Bool {
         switch self {
-        case .forward, .back, .left, .right, .up, .down, .run, .sprint, .attack, .block: true
+        case .forward, .back, .left, .right, .up, .down, .run, .sprint, .attack, .block, .shout:
+            true
         default: false
         }
     }
@@ -157,6 +158,7 @@ public struct GameInputDispatcher {
         case .run: input?.setBoost(pressed)
         case .sprint: input?.setSprint(pressed)
         case .block: input?.setBlocking(pressed)
+        case .shout: input?.setShouting(pressed)
         case .attack:
             // One press gives both signals: melee latches on the edge, archery
             // draws while the button stays down.

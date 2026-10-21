@@ -79,6 +79,7 @@ perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
 | Mod Soul Pct Captured to Weapon | 78 | the share of a victim's soul that goes into the killer's weapon, victim as target |
 | Mod Enchantment Power | 77 | the power of a new enchantment, base and item bound ([enchanting](/engine/enchanting.md)) |
 | Mod # Applied Enchantments Allowed | 80 | how many bases one new enchantment may combine |
+| Mod Shout OK | 82 | whether the player may shout, on a base of 0; above 0 allows it ([shouts](/engine/shouts.md)) |
 
 The scaling applies to a cast spell or scroll, on a projectile hit and on a self cast. A drunk
 potion takes Mod Spell Magnitude and Mod Spell Duration from the drinker's perks, with the potion

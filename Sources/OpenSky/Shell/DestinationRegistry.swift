@@ -124,6 +124,7 @@ struct FeaturePanelServices {
     let cinematicCamera: any CinematicCameraControlProviding
     let dialogueBranch: any DialogueBranchControlProviding
     let enchanting: any EnchantingControlProviding
+    let shouts: any ShoutControlProviding
     let explosion: any ExplosionControlProviding
     let hud: any HUDControlProviding
     let headAssembly: any HeadAssemblyControlProviding
@@ -297,6 +298,7 @@ enum DestinationRegistry {
                 panel.actorValueProvider = context.actorValue
                 panel.magicEffectProvider = context.magicEffect
                 panel.castingProvider = context.casting
+                panel.shoutProvider = context.shouts
                 panel.meleeProvider = context.meleeCombat
                 panel.archeryProvider = context.archery
                 panel.ragdollProvider = context.ragdoll

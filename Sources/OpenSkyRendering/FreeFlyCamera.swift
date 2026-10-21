@@ -42,6 +42,8 @@ nonisolated public struct CameraInput: Sendable {
     /// One-shot draw/sheath request. One binding for both directions, because
     /// vanilla binds one key and the graph knows which way it is going.
     public var toggleWeaponDrawn = false
+    /// Shout key held, a level: a tap shouts one word, a longer hold more.
+    public var shout = false
     /// Seconds elapsed since the previous update.
     public var dt: Float = 0
 
@@ -60,6 +62,7 @@ nonisolated public struct CameraInput: Sendable {
         attackHeld: Bool = false,
         block: Bool = false,
         toggleWeaponDrawn: Bool = false,
+        shout: Bool = false,
         dt: Float = 0
     ) {
         self.moveForward = moveForward
@@ -76,6 +79,7 @@ nonisolated public struct CameraInput: Sendable {
         self.attackHeld = attackHeld
         self.block = block
         self.toggleWeaponDrawn = toggleWeaponDrawn
+        self.shout = shout
         self.dt = dt
     }
 

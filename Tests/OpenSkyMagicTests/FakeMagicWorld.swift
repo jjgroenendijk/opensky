@@ -107,6 +107,17 @@ final class FakeMagicWorld: MagicWorld {
         notifications.append(text)
     }
 
+    var shoutKnowledge = ShoutKnowledge()
+
+    func changeShoutKnowledge(_ change: ShoutKnowledgeChange) {
+        switch change {
+        case let .addShout(shout): shoutKnowledge.shouts.insert(shout)
+        case let .equip(shout): shoutKnowledge.equipped = shout
+        case let .teachWord(word): shoutKnowledge.knownWords.insert(word)
+        case let .unlockWord(word): shoutKnowledge.unlockedWords.insert(word)
+        }
+    }
+
     func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
         editorID == "ReusableSoulGem" && reusableGems.contains(item)
     }

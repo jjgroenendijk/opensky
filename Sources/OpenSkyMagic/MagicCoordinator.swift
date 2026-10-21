@@ -63,6 +63,16 @@ public final class MagicCoordinator {
     public internal(set) var lastSoulTrap: SoulTrapOutcome?
     public internal(set) var lastRecharge: RechargeOutcome?
     public internal(set) var lastEnchanting = EnchantingOutcome.idle
+    /// Every SHOU in the load order, by key. Empty until `wireShouts`.
+    public internal(set) var shouts: [ReferenceKey: ResolvedShout] = [:]
+    public var shoutSettings = ShoutSettings.vanilla
+    public internal(set) var shoutMachine = ShoutMachine()
+    var wasShoutHeld = false
+    /// Seconds the panel's Shout button still holds the key.
+    var panelShoutHold: Float?
+    /// The shout the machine is voicing, fixed at the press.
+    var voicedShout: ReferenceKey?
+    public internal(set) var lastShout = ShoutOutcome.idle
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.

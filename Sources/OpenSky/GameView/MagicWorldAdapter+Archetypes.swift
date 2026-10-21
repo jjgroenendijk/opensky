@@ -11,6 +11,8 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyPlayer
+import OpenSkyWorld
 import simd
 
 extension MagicWorldAdapter {
@@ -19,6 +21,7 @@ extension MagicWorldAdapter {
             switch command {
             case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
             case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
+            case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
             }
         }
     }

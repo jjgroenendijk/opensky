@@ -85,6 +85,9 @@ nonisolated public final class LocomotionBridge {
     /// the app fills it from the equipped set.
     public private(set) var archeryIntent: ArcheryIntent = .still
 
+    /// Whether the shout key is held this frame.
+    public internal(set) var isShoutHeld = false
+
     /// A forced gait, or nil (`World > Player & Locomotion > Dev Controls`). It forces the
     /// graph inputs and gait speed only; water, gravity and collision are untouched, so a
     /// forced `swim` swims on dry floor.
@@ -112,6 +115,8 @@ nonisolated public final class LocomotionBridge {
     public let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
     /// The animation event coordinator's cursor: sounds, camera shake, head tracking.
     public let animationEventConsumer: LocomotionGraphEventQueue.Consumer
+    /// The magic coordinator's cursor: the frame a shout or a hand spell fires.
+    public let magicEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
     var wasMoving = false
@@ -146,6 +151,7 @@ nonisolated public final class LocomotionBridge {
         archeryEventConsumer = events.addConsumer()
         ragdollEventConsumer = events.addConsumer()
         animationEventConsumer = events.addConsumer()
+        magicEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
@@ -239,6 +245,7 @@ nonisolated public final class LocomotionBridge {
         intent = .still
         meleeIntent = .still
         archeryIntent = .still
+        isShoutHeld = false
         status = LocomotionStatus(
             graphAvailable: graph != nil,
             firstPersonGraphAvailable: firstPersonGraph != nil
@@ -422,6 +429,7 @@ nonisolated extension LocomotionBridge {
             moveRight: input.moveRight
         )
         archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
+        isShoutHeld = input.shout
         if input.jump {
             pendingJump = true
         }

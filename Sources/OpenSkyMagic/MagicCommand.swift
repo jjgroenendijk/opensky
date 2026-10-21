@@ -8,4 +8,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case stagger(ReferenceKey, magnitude: Float)
     /// A Spawn Hazard effect began: the hazard is placed at the actor.
     case spawnHazard(ReferenceKey, at: ReferenceKey)
+    /// Raise this event on the player's behaviour graph.
+    case playerGraphEvent(String)
 }

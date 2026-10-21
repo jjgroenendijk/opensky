@@ -21,6 +21,7 @@ import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldState
@@ -42,6 +43,7 @@ protocol MagicWorldHost: AnyObject {
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -101,15 +103,23 @@ final class MagicWorldAdapter {
         frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
             guard let coordinator, let gameSession else { return }
             let locomotion = gameSession.locomotion
+            let isPlayerControlled = gameSession.movementMode.isPlayerControlled
+            let delta = locomotion.archeryIntent.deltaTime
             let commands = coordinator.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
-                    deltaTime: locomotion.archeryIntent.deltaTime
+                    deltaTime: delta
                 ),
-                isPlayerControlled: gameSession.movementMode.isPlayerControlled
+                isPlayerControlled: isPlayerControlled
             )
             self?.run(commands)
+            self?.run(coordinator.advanceShout(
+                held: locomotion.isShoutHeld,
+                delta: delta,
+                events: locomotion.graphEvents.drain(locomotion.magicEventConsumer),
+                isPlayerControlled: isPlayerControlled
+            ))
         }
     }
 

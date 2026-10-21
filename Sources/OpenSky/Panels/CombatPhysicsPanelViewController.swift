@@ -11,6 +11,7 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     let actorValuesSection = CombatActorValuesSection()
     let magicEffectsSection = CombatMagicEffectsSection()
     let spellcastingSection = CombatSpellcastingSection()
+    let shoutsSection = ShoutsSection()
     let meleeSection = CombatMeleeSection()
     let archerySection = CombatArcherySection()
     let ragdollSection = CombatRagdollSection()
@@ -30,6 +31,10 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     weak var castingProvider: (any CastingControlProviding)? {
         didSet { spellcastingSection.provider = castingProvider }
+    }
+
+    weak var shoutProvider: (any ShoutControlProviding)? {
+        didSet { shoutsSection.provider = shoutProvider }
     }
 
     weak var meleeProvider: (any MeleeCombatControlProviding)? {
@@ -54,7 +59,8 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     override func makeSections() -> [PanelSectionViewController] {
         [
-            actorValuesSection, magicEffectsSection, spellcastingSection, meleeSection,
+            actorValuesSection, magicEffectsSection, spellcastingSection, shoutsSection,
+            meleeSection,
             archerySection, ragdollSection, loopSection, physicsSection
         ]
     }

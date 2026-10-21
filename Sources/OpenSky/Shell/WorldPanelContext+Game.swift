@@ -75,6 +75,7 @@ extension FeaturePanelServices {
             cinematicCamera: game.cinematicWorld,
             dialogueBranch: game.dialogue,
             enchanting: game.magic,
+            shouts: game.magic,
             explosion: game.effectsWorld,
             hud: game.hud,
             headAssembly: game.headAssembly,

@@ -21,6 +21,7 @@ public final class CameraInputState {
     private var attackRequested = false
     private var attackHeld = false
     private var blocking = false
+    private var shouting = false
     private var weaponToggleRequested = false
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
@@ -85,6 +86,11 @@ public final class CameraInputState {
         blocking = enabled
     }
 
+    /// The shout key is held like block: the shout runtime times the hold.
+    public func setShouting(_ enabled: Bool) {
+        shouting = enabled
+    }
+
     /// Latches one draw/sheath press. A toggle rather than two bindings,
     /// because vanilla binds one key to both and the graph already knows which
     /// way it is going.
@@ -131,6 +137,7 @@ public final class CameraInputState {
         attackRequested = false
         attackHeld = false
         blocking = false
+        shouting = false
         weaponToggleRequested = false
         pendingLookRight = 0
         pendingLookUp = 0
@@ -149,6 +156,7 @@ public final class CameraInputState {
                 sneak: sneaking,
                 attackHeld: attackHeld,
                 block: blocking,
+                shout: shouting,
                 dt: dt
             )
         }
@@ -167,6 +175,7 @@ public final class CameraInputState {
             attackHeld: attackHeld,
             block: blocking,
             toggleWeaponDrawn: weaponToggleRequested,
+            shout: shouting,
             dt: dt
         )
         pendingLookRight = 0

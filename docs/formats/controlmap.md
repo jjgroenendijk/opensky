@@ -67,6 +67,8 @@ of `quest_journal.swf` attaches a clip named `L-Ctrl` or `Slash`, and falls back
   menu event in the file names Jump.
 - A remap is stored in OpenSky's own settings file by `context|event`. A key taken by
   another event in the same context swaps with it, so no event is left without a key.
+- `Shout` (Z by default) is held like Block: a tap shouts one word, a longer hold more
+  ([shouts](/engine/shouts.md)).
 - `Hotkey1` to `Hotkey8` in the gameplay context reach the inventory favourites, keys 1 to 8 by
   default. The inventory menu marks a favourite with Jump, because no menu event names the
   game's F key ([inventory menu](/engine/inventory-menu.md#favourites-and-hotkeys)).
