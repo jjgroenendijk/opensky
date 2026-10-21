@@ -50,6 +50,20 @@ final class FakeCrimeInventory: InventoryAccess {
         return inventory(of: holder)
     }
 
+    /// Every copy is plain: jail tests never temper or fill one.
+    func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy] {
+        Array(repeating: .plain, count: Int(count(of: item, in: holder)))
+    }
+
+    func editCopy(
+        of _: FormID,
+        in _: InventoryHolder,
+        where _: (ItemCopy) -> Bool,
+        _: (inout ItemCopy) -> Void
+    ) -> Bool {
+        false
+    }
+
     func confiscateStolen(
         from _: InventoryHolder,
         to _: InventoryHolder
