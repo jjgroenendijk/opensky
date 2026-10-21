@@ -25,7 +25,7 @@ public enum SoulGemFixture {
     public static let bladeCapacity: Float = 1500
     public static let bladeCostPerUse: Float = 60
 
-    private static var gemRecords: [Data] {
+    public static var gemRecords: [Data] {
         [
             gem(petty, "SoulGemPetty", capacity: 1),
             gem(common, "SoulGemCommon", capacity: 3),

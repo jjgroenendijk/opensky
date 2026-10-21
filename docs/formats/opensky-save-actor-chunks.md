@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, and FAVS chunks in an .osav save.
+  CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -211,3 +211,11 @@ a uint32 hotkey count with rows of a uint8 slot (1 to 8) and a uint32 FormID. Sl
 decoder drops a repeated item, a slot outside 1 to 8, and a hotkey for an item that is not a
 favourite ([inventory menu](/engine/inventory-menu.md#favourites-and-hotkeys)). Sizes: 16 bytes
 minimum per entry, 5 per hotkey.
+
+## ENCK: enchanting
+
+Key (the player), cell, uint32 known count and that many base enchantment keys, then a uint32 made
+count and per made enchantment: uint32 FormID, the name as a string, float32 capacity, float32
+cost per use, uint32 base count, and per base its key and a float32 power. Made enchantments
+ascend by FormID, from `0xFF600000` up ([enchanting](/engine/enchanting.md)). Sizes: 16 bytes
+minimum per entry, 18 minimum per made enchantment, 11 minimum per base.

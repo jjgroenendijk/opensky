@@ -71,6 +71,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool
     /// Shows `text` in the HUD's notification line.
     func postNotification(_ text: String)
+    /// Whether `base`'s worn restriction list names one of `item`'s keywords.
+    func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool
 }
 
 extension MagicWorld {
@@ -103,6 +105,11 @@ extension MagicWorld {
 
     /// A session with no placement treats every actor as facing every source.
     public func actor(_: ReferenceKey, faces _: ReferenceKey) -> Bool {
+        true
+    }
+
+    /// A session with no form lists restricts nothing.
+    public func enchantment(_: ResolvedEnchantment, fits _: FormID) -> Bool {
         true
     }
 

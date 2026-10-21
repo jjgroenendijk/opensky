@@ -123,6 +123,7 @@ struct FeaturePanelServices {
     let audio: any AudioControlProviding
     let cinematicCamera: any CinematicCameraControlProviding
     let dialogueBranch: any DialogueBranchControlProviding
+    let enchanting: any EnchantingControlProviding
     let explosion: any ExplosionControlProviding
     let hud: any HUDControlProviding
     let headAssembly: any HeadAssemblyControlProviding
@@ -390,6 +391,7 @@ enum DestinationRegistry {
                 panel.provider = context.inventoryEquipment
                 panel.craftingProvider = context.crafting
                 panel.alchemyProvider = context.alchemy
+                panel.enchantingProvider = context.enchanting
                 panel.lockProvider = context.lock
                 return panel
             },

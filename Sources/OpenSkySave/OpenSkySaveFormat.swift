@@ -135,6 +135,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let weaponPoisons = "WPSN"
         /// The player's favourite items and the hotkeys bound to them.
         public static let favourites = "FAVS"
+        /// The enchantments the player knows and the ones made at an enchanter.
+        public static let enchanting = "ENCK"
 
         /// Violent crime gold: per faction, the violent part of the `CRIM` row. A sibling,
         /// because `CRIM` rows have a fixed layout; `CRIM` keeps the total.

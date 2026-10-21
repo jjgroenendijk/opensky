@@ -87,4 +87,17 @@ extension MagicWorldAdapter {
         else { return false }
         return keywords.hasKeyword(keyword, on: id) == true
     }
+
+    /// An item fits when it has a keyword the base's worn restriction list names.
+    func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
+        guard
+            let list = base.data?.wornRestrictions,
+            let lists = game.worldData?.formListStore,
+            let keywords = game.worldData?.locationStore?.keywords,
+            let listID = lists.resolvedID(list, fromPlugin: base.sourcePlugin),
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return true }
+        let listed = lists.flattened(listID)?.entries.compactMap(\.self) ?? []
+        return listed.isEmpty || listed.contains { keywords.hasKeyword($0, on: id) == true }
+    }
 }

@@ -122,6 +122,7 @@ chunk cannot read into the next.
 | `INGK` | known ingredient effects | actors |
 | `WPSN` | poison on each weapon | actors |
 | `FAVS` | favourites and hotkeys | actors |
+| `ENCK` | known and made enchantments | actors |
 | `HRVS` | harvested flora and trees | world |
 | `HRVD` | game day of each timed harvest | world |
 | `LOCK` | changed locks | world |

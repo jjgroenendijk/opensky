@@ -11,7 +11,8 @@ tags: [engine, magic, enchantments, combat, inventory]
 
 A weapon's enchantment fires on whatever it hits and spends charge. A worn item's enchantment grants
 its effects while it is worn. A fortify effect from either one moves a damage number. The records are
-on the [enchantment records](/formats/enchantments.md) page.
+on the [enchantment records](/formats/enchantments.md) page. An enchantment the player made at an
+enchanter acts the same way; [enchanting](/engine/enchanting.md) says how it is made.
 
 ## Three shapes
 
@@ -77,7 +78,8 @@ of each soul: 250 petty, 500 lesser, 1000 common, 2000 greater, and 3000 grand
 (<https://en.uesp.net/wiki/Skyrim:Souls>). A black soul counts as grand. A gem with the
 `ReusableSoulGem` keyword, such as Azura's Star, empties and stays. The game lets the player pick
 the gem. The Spellcasting panel picks for them: the smallest filled gem that fills the weapon, or
-the largest gem when none does.
+the largest gem when none does. A recharge gives Enchanting experience by the soul's size
+([enchanting](/engine/enchanting.md#experience)).
 
 Soul Squeezer adds 250 to every soul through `Mod Soul Gem Recharge` (49), as an add-value entry in
 the install. UESP describes it the same way: "This treats all souls as having 250 larger size when

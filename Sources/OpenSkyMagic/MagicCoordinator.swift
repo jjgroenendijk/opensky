@@ -62,6 +62,7 @@ public final class MagicCoordinator {
     public var soulTexts = SoulTexts.vanilla
     public internal(set) var lastSoulTrap: SoulTrapOutcome?
     public internal(set) var lastRecharge: RechargeOutcome?
+    public internal(set) var lastEnchanting = EnchantingOutcome.idle
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.

@@ -2,6 +2,7 @@
 // serves it, so a panel never sees the whole controller graph.
 
 import OpenSkyDialogue
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyScripting
@@ -73,6 +74,7 @@ extension FeaturePanelServices {
             audio: game.audio,
             cinematicCamera: game.cinematicWorld,
             dialogueBranch: game.dialogue,
+            enchanting: game.magic,
             explosion: game.effectsWorld,
             hud: game.hud,
             headAssembly: game.headAssembly,

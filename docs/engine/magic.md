@@ -19,6 +19,7 @@ Related pages:
 - [Spell delivery](/engine/spell-delivery.md): spells that leave the caster, and resistances.
 - [AI spell use](/engine/ai-spell-use.md): NPCs casting in a fight.
 - [Item enchantments](/engine/item-enchantments.md): weapon charge and worn effects.
+- [Enchanting](/engine/enchanting.md): disenchanting and making enchantments.
 
 ## Sources
 

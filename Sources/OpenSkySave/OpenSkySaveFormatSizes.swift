@@ -254,6 +254,11 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `CPOT` potion: FormID, an empty name (2), the poison byte, the value,
     /// and a zero effect count.
     public static let minimumCreatedPotionSize = 15
+    /// Smallest `ENCK` entry: the smallest key and cell (8) and two zero counts (8).
+    public static let minimumEnchantingEntrySize = 16
+    /// Smallest `ENCK` made enchantment: id, an empty name (2), capacity, cost per use,
+    /// and a zero base count.
+    public static let minimumMadeEnchantmentSize = 18
     /// One `CPOT` effect: MGEF, magnitude, area, and duration.
     public static let createdPotionEffectSize = 16
     /// One `INGK` row: the ingredient and its effect bits.

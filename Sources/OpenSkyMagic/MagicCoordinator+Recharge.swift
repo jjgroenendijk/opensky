@@ -43,7 +43,8 @@ extension MagicCoordinator {
             ?? filled.max(by: { worth($0) < worth($1) })
         else { return noteRecharge(.noFilledGem) }
         let amount = worth(gem)
-        spend(gem, in: inventory)
+        spendGem(gem, in: inventory)
+        reportEnchantingUse(EnchantingRules.rechargeExperience(gem.soul))
         let charge = EnchantmentLedger(store: runtime.store, inventory: inventory)
             .recharge(weapon.profile, by: amount, on: .player)
         return noteRecharge(.recharged(item: weapon.profile.item, gem: gem.item, charge: charge))
@@ -92,14 +93,14 @@ extension MagicCoordinator {
         guard let runtime = effects, let equipment = world.equipment else { return nil }
         let ledger = EnchantmentLedger(store: runtime.store, inventory: world.inventory)
         return equipment.equipped(on: InventoryHolder(actor: holder)).lazy
-            .compactMap { self.enchantmentProfile(of: $0) }
+            .compactMap { self.enchantmentProfile(of: $0, on: InventoryHolder(actor: holder)) }
             .filter { !$0.isWorn && (staves || !$0.isStaff) }
             .map { RechargeableWeapon(profile: $0, charge: ledger.charge(of: $0, on: holder)) }
             .first { $0.charge.isMetered && $0.charge.remaining < $0.charge.capacity }
     }
 
     /// A reusable gem, such as Azura's Star, empties and stays; any other gem is used up.
-    private func spend(_ gem: SoulGemCandidate, in inventory: any InventoryAccess) {
+    func spendGem(_ gem: SoulGemCandidate, in inventory: any InventoryAccess) {
         if gem.copy.soul != 0 {
             inventory.editCopy(
                 of: gem.item,

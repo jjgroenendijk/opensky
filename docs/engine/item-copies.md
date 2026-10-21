@@ -15,7 +15,7 @@ An inventory counts items by base form ID. Some facts belong to one copy, not to
 | Temper level | [Crafting](/engine/crafting.md) at a grindstone or workbench | Weapon damage, armour rating, price |
 | Trapped soul | [Soul trap](/engine/soul-trap.md) | Recharging and enchanting |
 | Enchantment charge | A hit with an enchanted weapon | [Item enchantments](/engine/item-enchantments.md) |
-| Made enchantment | The enchanting table | Item enchantments |
+| Made enchantment | [Enchanting](/engine/enchanting.md) | Item enchantments |
 
 The game keeps these in an extra data list on each copy. OpenSky keeps them per owner in one
 component, apart from the counts: per item, a list of the copies that differ from the record.
