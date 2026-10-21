@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -23,6 +24,11 @@ extension MagicWorldAdapter {
             case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
             case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
             case let .detonateRune(payload, position): detonateRune(payload, at: position)
+            case let .castingSound(sound, caster, starts):
+                castingSound(sound, caster: caster, starts: starts)
+            case let .castingArt(art, plugin, caster, starts):
+                game.effectsWorld.effects
+                    .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
             }
         }
     }

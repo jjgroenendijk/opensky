@@ -75,6 +75,12 @@ public final class MagicCoordinator {
     /// The shout the machine is voicing, fixed at the press.
     var voicedShout: ReferenceKey?
     public internal(set) var lastShout = ShoutOutcome.idle
+    /// Each casting hand as the cues saw it last frame; an idle hand is left out.
+    var castingViews: [CastSlot: CastingHandView] = [:]
+    public internal(set) var releaseLatch = SpellReleaseLatch()
+    var wasWeaponsDrawn: Bool?
+    public internal(set) var castingCueCount = 0
+    public internal(set) var lastCastingCue: String?
     /// Runes waiting on the ground, oldest first. Not saved.
     public internal(set) var runes: [PlacedRune] = []
     public var runeSettings = RuneSettings.vanilla
@@ -185,15 +191,21 @@ public final class MagicCoordinator {
     }
 
     /// One frame of casting. A frame in a menu or in free-fly charges nothing
-    /// for the player, but NPC casts still advance.
+    /// for the player, but NPC casts still advance. `events` are the player graph's.
     public func advanceCasting(
-        _ intent: CastingIntent, isPlayerControlled: Bool
+        _ intent: CastingIntent,
+        isPlayerControlled: Bool,
+        events: [String] = [],
+        weaponsDrawn: Bool? = nil
     ) -> [MagicCommand] {
         guard let caster else { return takeCommands() }
-        caster.acceptFrame(isPlayerControlled ? intent : .still, on: .player)
+        caster.acceptFrame(
+            isPlayerControlled ? latched(intent, events: events) : .still, on: .player
+        )
         advanceActorCasts(delta: intent.deltaTime)
         advanceRunes()
         advanceCommanded()
+        advanceCastingCues(weaponsDrawn: weaponsDrawn)
         return takeCommands()
     }
 

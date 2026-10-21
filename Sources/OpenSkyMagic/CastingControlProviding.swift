@@ -112,6 +112,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public var runeText = "Runes: none"
     /// The actors the player's summons and reanimations command.
     public var commandedText = "Commanded: none"
+    /// The casting hands' sounds and art sent, and a release waiting for its event.
+    public var castingCueText = "Casting cues: 0"
 
     /// The reading with no runtime attached.
     public static let unavailable = CastingControlSnapshot(

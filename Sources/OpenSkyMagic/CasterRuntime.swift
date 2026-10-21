@@ -146,6 +146,8 @@ public final class CasterRuntime {
     /// True while a dual cast's effects are being applied, so a self delivery can
     /// mark its effects as dual cast.
     public private(set) var isApplyingDualCast = false
+    /// Casts a release completed since the coordinator last took them, newest last.
+    public private(set) var completedCasts: [CompletedCast] = []
 
     public init(
         spellbook: SpellbookRuntime,
@@ -367,6 +369,8 @@ public final class CasterRuntime {
         let stored = apply(spell, caster: caster, dual: state.isDualCast)
         notePowerSpent(spell, caster: caster)
         tally.noteCast()
+        completedCasts.append(CompletedCast(slot: slot(hand, caster), spell: spell.key))
+        completedCasts = completedCasts.suffix(Self.maximumApplicationsPerAdvance)
         return .cast(SpellCastResult(
             magickaSpent: cost,
             entryCount: spell.record.effects.count,
@@ -431,5 +435,13 @@ public final class CasterRuntime {
             lastOutcome[hand] = outcome
         }
         return outcome
+    }
+}
+
+extension CasterRuntime {
+    /// Hands over the casts completed since the last call.
+    public func takeCompletedCasts() -> [CompletedCast] {
+        defer { completedCasts = [] }
+        return completedCasts
     }
 }

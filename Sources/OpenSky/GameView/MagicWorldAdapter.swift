@@ -108,19 +108,22 @@ final class MagicWorldAdapter {
             let locomotion = gameSession.locomotion
             let isPlayerControlled = gameSession.movementMode.isPlayerControlled
             let delta = locomotion.archeryIntent.deltaTime
+            let events = locomotion.graphEvents.drain(locomotion.magicEventConsumer)
             let commands = coordinator.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
                     deltaTime: delta
                 ),
-                isPlayerControlled: isPlayerControlled
+                isPlayerControlled: isPlayerControlled,
+                events: events,
+                weaponsDrawn: self?.game.combat.melee?.state.drawState.isWeaponInHand
             )
             self?.run(commands)
             self?.run(coordinator.advanceShout(
                 held: locomotion.isShoutHeld,
                 delta: delta,
-                events: locomotion.graphEvents.drain(locomotion.magicEventConsumer),
+                events: events,
                 isPlayerControlled: isPlayerControlled
             ))
         }

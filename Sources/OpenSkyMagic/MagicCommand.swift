@@ -13,4 +13,8 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case playerGraphEvent(String)
     /// A rune went off: set off its `PROJ`'s explosion at the point.
     case detonateRune(SpellPayload, at: SIMD3<Float>)
+    /// Start or stop a casting hand's sound, a load-order `SNDR`, at the caster.
+    case castingSound(FormID, caster: ReferenceKey, starts: Bool)
+    /// Show or hide a casting hand's `ARTO`, written in `plugin`, on the caster.
+    case castingArt(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
 }

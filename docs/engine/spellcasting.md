@@ -86,9 +86,8 @@ anywhere yet.
 
 ## The cast
 
-Melee and archery read their timing from the behavior graph. No casting graph runs yet, so the charge
-is timed against the `SPIT` charge time. When a graph arrives it replaces this clock, and the phases
-stay. UESP states both shapes:
+The charge is timed against the `SPIT` charge time. The release follows the behaviour graph, as a
+shout does ([casting cues](#casting-cues)). UESP states both shapes:
 
 > Some spells will trigger immediately upon being cast and can be maintained as long as held.
 > Others require holding to charge the spell and releasing to cast it. Casting a spell of either
@@ -185,7 +184,34 @@ A held button becomes a begin edge and a release edge, so it does not restart th
 Unequipping during a cast cancels the charge.
 
 The graph is told a spell is out through hand type 9 (`spell`), the value `magicbehavior.hkx` reads
-([combat graph names](/engine/combat-graph-names.md)), even though no casting clip plays yet.
+([combat graph names](/engine/combat-graph-names.md)). `bWantCastLeft` and `bWantCastRight` are true
+while that hand casts, and `IsInCastState` is 1 while either does.
+
+## Casting cues
+
+A released fire-and-forget hand waits for its spell-fire event before the spell leaves:
+`MRh_SpellFire_Event` for the right hand and `MLh_SpellFire_Event` for the left. The release clips
+raise them. While it waits, the hand's `bWantCast` is false, so the graph plays the throw. A graph
+that raises nothing lets the spell go after 0.4 seconds, an OpenSky value. [WARNING] The hand each
+event names is read from its prefix (`MRh`, `MLh`); the third spelling, `Spellfire`, is not acted on.
+
+The spell's costliest effect gives the hand its sounds and art. CK wiki "Magic Effect":
+
+| `SNDD` kind | Plays |
+| --- | --- |
+| 0 Draw/Sheathe | "when the player draws or sheathes their weapons with this spell in either hand" |
+| 1 Charge | for a fire-and-forget spell, from the press until the charge is full |
+| 2 Ready | for a fire-and-forget spell, while it "reaches its 'Ready' state" until the release |
+| 3 Release | "when the player releases the button and successfully casts the spell" |
+| 4 Cast Loop | for a concentration spell, "loops while the button is pressed" |
+| 5 On Hit | "when this effect is applied to its target", at each struck actor |
+
+A looping descriptor plays until the step ends; a one-shot plays once. The casting art is "on the
+hands while preparing to cast": it shows from the press until the hand is idle again. A dual cast
+shows the dual casting art when the effect has one. NPC casters get the same cues.
+
+- [WARNING] No effect anchor names a hand bone, so the art rides the actor.
+- The casting light is not drawn, because no effect places a light on an actor yet.
 
 ## Saving
 
@@ -220,8 +246,9 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
   "Dual cast" when the perk allowed it, and the refusal when it did not.
 - Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
   counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
-  = adjusted`), the count of ability effects the player holds, and a Conditions (player) block with
-  one line per magic condition function.
+  = adjusted`), the count of ability effects the player holds, the casting cues sent with the last
+  one and a release that waits for its event, and a Conditions (player) block with one line per
+  magic condition function.
 
 The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
 `sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,
@@ -246,5 +273,3 @@ For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCast
 (skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
 `fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
 NPC formula; this is OpenSky's reading of the setting names.
-
-Casting animations, hand effects, and sounds are not done yet.
