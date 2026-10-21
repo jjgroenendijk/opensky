@@ -215,9 +215,21 @@ public final class InventoryCoordinator {
                 count: $0.count,
                 name: name(of: $0.item),
                 stolen: $0.stolen,
-                detail: runtime?.inventory.baselines.items.familyDetail($0.item, souls: soulTexts)
+                detail: detail(of: $0.item)
             )
         }
+    }
+
+    /// The record's family line, then the souls the player's own copies hold.
+    private func detail(of item: FormID) -> String? {
+        guard let runtime else { return nil }
+        let souls = runtime.inventory.copies(of: item, in: runtime.player)
+            .filter { $0.soul != 0 }
+            .map { soulTexts.name(of: SoulLevel(rawValue: $0.soul)) }
+        let filled = souls.isEmpty ? nil : "filled copies: " + souls.joined(separator: ", ")
+        let lines = [runtime.inventory.baselines.items.familyDetail(item, souls: soulTexts), filled]
+            .compactMap(\.self)
+        return lines.isEmpty ? nil : lines.joined(separator: "; ")
     }
 
     @discardableResult

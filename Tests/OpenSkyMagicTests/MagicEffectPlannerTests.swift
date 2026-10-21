@@ -142,14 +142,14 @@ struct MagicEffectPlannerTests {
     @Test func unimplementedArchetypeIsCountedNotApplied() throws {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.archetypeRecords)
         let store = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
-        let summon = ActiveEffectFixture.Archetype.summon
+        let light = ActiveEffectFixture.Archetype.light
         let effect = try #require(store.effect(
-            ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: summon)
+            ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: light)
         ))
         let outcome = MagicEffectPlanner.plan(
-            effect: effect, entry: entry(summon, magnitude: 1, duration: 10)
+            effect: effect, entry: entry(light, magnitude: 1, duration: 10)
         )
-        #expect(outcome == .skip(.unimplementedArchetype(.summonCreature)))
+        #expect(outcome == .skip(.unimplementedArchetype(.light)))
     }
 
     /// A held modifier on health applies like any other: the primaries store a

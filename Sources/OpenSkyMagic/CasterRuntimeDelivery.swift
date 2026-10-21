@@ -1,9 +1,8 @@
-// Casting at something other than yourself. The delivery values come from the
-// MGEF DATA table: 0 Self, 1 Touch, 2 Aimed, 3 Target Actor, 4 Target Location
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>). Aimed fires the
-// PROJ, or for concentration applies to the aim ray target once a second; Target
-// Actor applies within SPIT range. Touch and Target Location are refused and
-// counted. See docs/engine/spell-delivery.md.
+// Casting at something other than yourself, by the MGEF DATA delivery value
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>). Aimed fires the PROJ,
+// or for concentration applies to the aim ray target once a second. Target Actor and
+// Touch apply to the aimed actor; Target Location lands at the aim point or as a rune.
+// See docs/engine/spell-delivery.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -22,9 +21,9 @@ nonisolated public enum SpellDelivery: Sendable {
         castingType: MagicEffectCastingType?
     ) -> Bool {
         switch delivery {
-        case .selfTarget, .aimed: true
-        case .targetActor: castingType != .concentration
-        case .touch, .targetLocation, .unknown: false
+        case .selfTarget, .aimed, .touch: true
+        case .targetActor, .targetLocation: castingType != .concentration
+        case .unknown: false
         }
     }
 }
@@ -35,12 +34,12 @@ extension CasterRuntime {
     /// - Returns: how many timed effects were stored, which is zero for a
     ///   projectile — the effects land when it does, not when it is fired.
     public func deliverAway(
-        _ spell: ResolvedSpell,
+        _ payload: SpellPayload,
+        spell: ResolvedSpell,
         delivery: MagicEffectDelivery,
         caster: ActorValueHolder,
         world: any CasterWorld
     ) -> Int {
-        let payload = spell.payload(caster: caster.key)
         switch delivery {
         case .aimed where spell.data?.castingType != .concentration:
             guard world.fireSpellProjectile(payload) else { return 0 }
@@ -53,7 +52,11 @@ extension CasterRuntime {
                 caster: caster.key,
                 world: world
             )
-        case .selfTarget, .touch, .targetLocation, .unknown:
+        case .touch:
+            return applyAtAim(payload, range: world.touchReach, caster: caster.key, world: world)
+        case .targetLocation:
+            return world.deliverToLocation(payload, spell: spell, caster: caster)
+        case .selfTarget, .unknown:
             // Unreachable: `SpellDelivery.isImplemented` refused these before
             // the cast started, and self delivery never gets here. Returning
             // zero rather than trapping keeps a mod-authored delivery this
@@ -83,7 +86,7 @@ extension CasterRuntime {
         )
         guard !targets.isEmpty else { return 0 }
         let report = world.applySpellHit(SpellHit(
-            payload: payload, targets: targets
+            payload: payload, targets: targets, impact: aim.position
         ))
         return report.storedCount
     }

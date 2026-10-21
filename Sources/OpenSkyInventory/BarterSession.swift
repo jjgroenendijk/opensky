@@ -140,7 +140,7 @@ public final class BarterSession {
     private func price(
         of item: FormID, count: Int32, from holder: InventoryHolder, buying: Bool
     ) -> Int64 {
-        var levels = inventory.leavingLevels(count, of: item, in: holder)
+        var levels = inventory.leavingCopies(count, of: item, in: holder).map(\.level)
         levels += Array(repeating: 0, count: max(0, Int(count) - levels.count))
         return levels.reduce(Int64(0)) { total, level in
             let value = value(of: item, level: level)

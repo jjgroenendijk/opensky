@@ -49,6 +49,7 @@ struct FakeCastingState {
     /// assert that a button sent the hand it names.
     var readied: [SpellHand] = []
     var cast: [SpellHand] = []
+    var rechargeCount = 0
 }
 
 extension FakeWorldProviders {
@@ -94,6 +95,18 @@ extension FakeWorldProviders {
     func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
         casting.cast.append(hand)
         return .cast(.ignored)
+    }
+
+    @discardableResult
+    func castReadiedSpellWithBothHands() -> CastingActionOutcome {
+        casting.cast += [.right, .left]
+        return .cast(.ignored)
+    }
+
+    @discardableResult
+    func rechargeEquippedWeapon() -> RechargeOutcome {
+        casting.rechargeCount += 1
+        return .nothingToRecharge
     }
 
     @discardableResult

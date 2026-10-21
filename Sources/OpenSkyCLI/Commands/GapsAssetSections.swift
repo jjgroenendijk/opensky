@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyPlayer
 import OpenSkyProgression
 
@@ -63,6 +64,7 @@ extension GapsGatherer {
         let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
         let handledEvents = Set(
             (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
+                + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
                 + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
                 + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents())
                 .map { $0.lowercased() }

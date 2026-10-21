@@ -77,6 +77,17 @@ public final class EffectsCoordinator {
         return visualEffects.detach(spec, from: anchor)
     }
 
+    /// Casting art is "on the hands while preparing to cast". No anchor names a hand,
+    /// so it rides the actor. Returns false when the art draws nothing.
+    @discardableResult
+    public func showCastingArt(
+        _ art: FormID, fromPlugin plugin: String, on actor: ReferenceKey, shown: Bool
+    ) -> Bool {
+        guard let key = records.resolve(art, fromPlugin: plugin) else { return false }
+        guard shown else { return detach(key, from: .actor(actor)) > 0 }
+        return attach(key, to: .actor(actor), cause: .casting, duration: nil) != nil
+    }
+
     public func removeAll(cause: VisualEffectCause? = nil) {
         visualEffects.removeAll(cause: cause)
     }

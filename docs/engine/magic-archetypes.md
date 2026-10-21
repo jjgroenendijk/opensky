@@ -20,8 +20,11 @@ OpenSky. How a timed effect is stored, ticked, and saved is on the
   ([environment](/tools/environment.md)). Every quote below without another link is from it.
 - UESP spell pages for numbers the wiki does not give:
   [Ward](https://en.uesp.net/wiki/Skyrim:Ward), [Cloak](https://en.uesp.net/wiki/Skyrim:Cloak),
-  [Calm](https://en.uesp.net/wiki/Skyrim:Calm), and
-  [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health).
+  [Calm](https://en.uesp.net/wiki/Skyrim:Calm),
+  [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health),
+  [Slow Time](https://en.uesp.net/wiki/Skyrim:Slow_Time),
+  [Block](https://en.uesp.net/wiki/Skyrim:Block) for Quick Reflexes, and
+  [Conjuration](https://en.uesp.net/wiki/Skyrim:Conjuration) for Twin Souls and Dark Souls.
 
 Where the wiki writes "???" or "Not Used", that is all OpenSky knows.
 
@@ -34,7 +37,7 @@ Each archetype has one rule (`MagicArchetypeRule`). The rule decides where the a
 | Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Absorb, Accumulate Magnitude, Invisibility |
 | Influence | The combat loop, through `ActorMagicInfluence` | Calm, Frenzy, Demoralize, Rally, Turn Undead, Paralysis, Etherealize |
 | Effect list | The target's running effects | Dispel, Cure Disease, Cure Poison, Cure Paralysis |
-| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm |
+| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time, Summon Creature, Reanimate |
 
 Script, Concussion, and Cure Addiction are carriers. Script "has no effect other than any
 Papyrus Scripts specified", and the wiki marks the other two "Not Used". A timed carrier is
@@ -119,6 +122,32 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   actors "hostile to you", and "casting a second will cancel the first". OpenSky casts the
   associated spell once a second on every hostile living actor inside the radius. The rate is
   an OpenSky choice; the wiki names none.
+- Slow Time: "Slows time for all but the player by the indicated amount (a multiplier, with 1
+  being normal time)." Only the player's own Slow Time effects count. UESP: the player is
+  "only slowed down to 70% of normal speed". Perk entry point 70 (Mod Player Magic Slowdown)
+  changes that 70% share; Quick Reflexes sets it to 1, and UESP says it "does not partially
+  slow the player". Two effects stack, so their shares multiply. The player never runs slower
+  than the world, and the world never runs below 1% (an OpenSky floor, so a magnitude of 0
+  cannot stop every clock). The session runs the world sim, animation, and particles at the
+  world share, and the camera at the player's share.
+- The player's effects tick on the player's clock while time is slow, so an 8 second Slow Time
+  ends after 8 seconds of the player's time. [WARNING] UESP also says Slow Time "extends the
+  duration of potions on the player", which this does not do.
+- Summon Creature: "Summons the specified creature, placing them under the caster's control. On
+  death, the creature automatically fades out and leaves no corpse." The effect runs on the
+  caster. A target-location summon spell places the associated `NPC_` at the aim point, facing
+  the caster, as a spawned actor in the caster's cell; the next cell build draws it. When the
+  effect ends, the spawn is removed.
+- Reanimate: "If the target is dead, reanimate them, putting them under the caster's control."
+  Its magnitude is the highest level it raises, as for Calm. A living target ends the effect at
+  once. The corpse is resurrected, and it falls dead again when the effect ends. Perk entry
+  point 53 (Apply Reanimate Spell) picks a spell for the raised actor, as Dark Souls does.
+- A caster commands one summoned or reanimated actor at a time. Perk entry point 68 (Mod
+  Commanded Actor Limit) adds to that 1: Twin Souls allows "two atronachs or reanimated
+  zombies". Past the limit, the caster's oldest actor goes and its effect ends.
+- A commanded actor follows its caster and fights the caster's foes, and foes fight it back
+  ([combat allies](/engine/combat.md#allies)). A commanded actor that dies ends its effect, so a
+  summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
 
 ## Not done
 
@@ -127,11 +156,9 @@ These archetypes have no rule. Each is counted per effect, and `make gaps` ranks
 
 | Archetype | What is missing |
 | --- | --- |
-| Summon Creature, Reanimate, Command Summoned, Banish | Spawning an actor under the caster's control, and NPC-versus-NPC fights |
+| Command Summoned, Banish | Taking or ending control of another caster's summon |
 | Detect Life, Light | Drawing a shader or a light on an actor |
-| Slow Time | A time scale for everything except the player |
 | Enhance Weapon | A temporary enchantment on the equipped weapon |
-| Soul Trap | Filling a soul gem when the target dies |
 | Werewolf, Vampire Lord, Werewolf Feed | Changing an actor's race |
 | Telekinesis, Grab Actor | Holding an object or actor in front of the caster |
 | Guide, Spawn Scripted Ref, Lock, Open, Disguise, Value and Parts | Each is rare in vanilla; the wiki gives no rule for Disguise or Value and Parts |

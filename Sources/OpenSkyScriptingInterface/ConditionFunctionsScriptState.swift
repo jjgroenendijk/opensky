@@ -56,6 +56,21 @@ nonisolated public enum ScriptedStateName: Sendable {
     /// On the player: the last actor that attacked them.
     public static let lastHostileActor = "lastHostileActor"
 
+    /// On the player: `Game.TeachWord` learned the word of power.
+    public static func wordKnown(_ word: ReferenceKey) -> String {
+        "wordKnown:\(word)"
+    }
+
+    /// On the player: the word is unlocked, by `Game.UnlockWord` or a dragon soul.
+    public static func wordUnlocked(_ word: ReferenceKey) -> String {
+        "wordUnlocked:\(word)"
+    }
+
+    /// On an actor: `Actor.AddShout` gave it the shout.
+    public static func shout(_ shout: ReferenceKey) -> String {
+        "shout:\(shout)"
+    }
+
     /// The value `Location.SetKeywordData` stores for one keyword.
     public static func keywordData(_ keyword: ReferenceKey) -> String {
         "keywordData:\(keyword)"

@@ -26,6 +26,7 @@ public enum SpellHitApplication {
         using runtime: inout ActiveEffectRuntime,
         settings: MagicAreaSettings = .documentedDefaults,
         resistances: ActorResistanceSettings = .documentedDefaults,
+        defences: SpellHitDefences = .none,
         perkScaling: ([MagicItemEffect], ReferenceKey) -> [MagicItemEffect] = { entries, _ in
             entries
         }
@@ -37,6 +38,20 @@ public enum SpellHitApplication {
                 entries(of: hit.payload, reaching: target, settings: settings), target.key
             )
             guard !reaching.isEmpty else { continue }
+            switch defences.defend(
+                target, holder: holder, entries: reaching, hit: hit, runtime: runtime
+            ) {
+            case .lands: break
+            case .blockedByWall:
+                report.noteBlockedByWall()
+                continue
+            case .absorbed:
+                report.noteAbsorbed()
+                continue
+            case let .warded(_, broken, _):
+                report.noteWarded(target.key, broken: broken)
+                continue
+            }
             let scaled = scale(
                 reaching,
                 of: hit.payload,

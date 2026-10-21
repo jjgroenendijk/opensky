@@ -59,7 +59,7 @@ extension CraftingSession {
         let skill = station.skill.flatMap { conditions?.skillLevel(at: $0) } ?? 0
         return TemperTarget(
             item: item,
-            copies: inventory.temperedItems(of: player).copies(of: item, held: held),
+            copies: inventory.itemCopies(of: player).levels(of: item, held: held),
             maximum: Tempering.maximumLevel(
                 smithing: skill, perk: (conditions?.temperingFactor(for: item) ?? 1) - 1
             )
@@ -76,7 +76,7 @@ extension CraftingSession {
         try inventory.apply(removing: consumed, adding: [], on: player, usingUp: true)
         let held = inventory.count(of: target.item, in: player)
         if
-            let improved = inventory.temperedItems(of: player)
+            let improved = inventory.itemCopies(of: player)
                 .improving(target.item, held: held, from: from, to: target.maximum)
         {
             inventory.store.set(improved, for: player.key, in: player.cell)

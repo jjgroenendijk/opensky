@@ -16,6 +16,21 @@ extension PapyrusNativeFunctions {
         installSpellEquip(into: &registry)
         installSpellEffects(into: &registry)
         installSpellCast(into: &registry)
+        installSoulTrap(into: &registry)
+    }
+
+    /// `bool TrapSoul(Actor akTarget)`: fills a gem the calling actor carries
+    /// (<https://ck.uesp.net/wiki/TrapSoul_-_Actor>).
+    private static func installSoulTrap(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor",
+            functionName: "TrapSoul"
+        ) { call, context in
+            spellTarget(call, context) { actor, target in
+                let trap = (actor.world as? PapyrusWorldStateBridge)?.magicNatives.trapSoul
+                return .returned(.boolean(trap?(target, actor.key) ?? false))
+            }
+        })
     }
 
     /// `bool AddSpell(Spell akSpell, bool abVerbose = true)`,

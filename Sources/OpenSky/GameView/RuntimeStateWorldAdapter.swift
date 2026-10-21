@@ -374,9 +374,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
-        // them. Player only: other actors have no holder until their cells
-        // stream back in (docs/engine/magic.md).
-        game.magic.withEffects { $0.reestablishModifiers(on: .player) }
+        // them: the player now, every other actor when its cell streams back in.
+        game.magic.noteEffectsRestored()
         if let place = file.playerPlace {
             game.menuWorld.restorePlayerPlace(place)
         }

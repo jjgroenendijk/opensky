@@ -220,7 +220,7 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
-        game.magic.enchantmentProfile(of: item)
+        game.magic.enchantmentProfile(of: item, on: .player)
     }
 
     func temperLevel(of item: FormID) -> Int32 {

@@ -73,6 +73,16 @@ perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
 | Mod Spell Duration | 30 | each effect's duration, caster's perk, target bound |
 | Mod Incoming Spell Magnitude | 41 | each effect's magnitude, target's perk |
 | Mod Spell Cost | 38 | the magicka cost |
+| Can Dual Cast Spell | 75 | whether both hands cast the spell as one dual cast; above 0 allows it |
+| Mod Player Magic Slowdown | 70 | the player's share of normal speed under Slow Time, on a base of 0.7 ([archetypes](/engine/magic-archetypes.md#world)) |
+| Mod Commanded Actor Limit | 68 | how many summoned or reanimated actors a caster commands, on a base of 1 ([archetypes](/engine/magic-archetypes.md#world)) |
+| Apply Reanimate Spell | 53 | a spell on the actor a Reanimate effect raised, caster's perk |
+| Mod Ward Magicka Absorption Pct | 71 | the share of a warded spell given back as magicka, ward holder's perk |
+| Mod Soul Gem Recharge | 49 | the charge a soul gem gives back, the recharged weapon bound as the item |
+| Mod Soul Pct Captured to Weapon | 78 | the share of a victim's soul that goes into the killer's weapon, victim as target |
+| Mod Enchantment Power | 77 | the power of a new enchantment, base and item bound ([enchanting](/engine/enchanting.md)) |
+| Mod # Applied Enchantments Allowed | 80 | how many bases one new enchantment may combine |
+| Mod Shout OK | 82 | whether the player may shout, on a base of 0; above 0 allows it ([shouts](/engine/shouts.md)) |
 
 The scaling applies to a cast spell or scroll, on a projectile hit and on a self cast. A drunk
 potion takes Mod Spell Magnitude and Mod Spell Duration from the drinker's perks, with the potion
@@ -96,6 +106,7 @@ potion. A worn or weapon enchantment and a perk ability apply as authored.
 | Entry point | Id | Where |
 | --- | --- | --- |
 | Mod Tempering Health | 76 | a factor on the skill above the offset in the best quality level, item bound |
+| Mod Spell Range (Target Loc.) | 88 | a target-location cast's range, spell bound ([runes](/engine/spell-delivery.md#target-location-and-runes)) |
 | Mod Ingredients Harvested | 87 | how many times a plant's produce is granted, produce bound as the item |
 
 The entry point starts at 1. The steel and advanced smithing perks multiply it by 2 for their

@@ -37,8 +37,32 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     /// FULL name or editor ID, for the readout. Never empty.
     public let name: String
 
+    /// Both hands cast it, so `entries` already carry the dual cast scaling.
+    public var isDualCast = false
+    /// The magicka an absorbing target gains: the spell's base cost.
+    public var baseCost: Float = 0
+    /// `SPIT` "Disallow Spell Absorb/Reflect": an absorption chance never stops it.
+    public var disallowsAbsorb = false
+    /// `SPIT` "Area Effect Ignores LOS": bystanders behind a wall are caught too.
+    public var areaIgnoresLineOfSight = false
+
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
+    }
+
+    /// This payload carrying a dual cast's `entries`, or itself for nil.
+    public func dualCast(_ entries: [MagicItemEffect]?) -> SpellPayload {
+        guard let entries else { return self }
+        var payload = SpellPayload(
+            spell: spell, sourcePlugin: sourcePlugin, caster: caster, entries: entries,
+            isHostile: isHostile, ignoresResistance: ignoresResistance,
+            projectile: projectile, name: name
+        )
+        payload.isDualCast = true
+        payload.baseCost = baseCost
+        payload.disallowsAbsorb = disallowsAbsorb
+        payload.areaIgnoresLineOfSight = areaIgnoresLineOfSight
+        return payload
     }
 }
 
@@ -65,10 +89,14 @@ nonisolated public struct SpellHit: Equatable, Sendable {
     public let payload: SpellPayload
     /// Every actor it reached, direct target first.
     public let targets: [SpellHitTarget]
+    /// Where it landed, which a bystander's line of sight is measured from. Nil
+    /// when the delivery has no point, such as a script's direct cast.
+    public let impact: SIMD3<Float>?
 
-    public init(payload: SpellPayload, targets: [SpellHitTarget]) {
+    public init(payload: SpellPayload, targets: [SpellHitTarget], impact: SIMD3<Float>? = nil) {
         self.payload = payload
         self.targets = targets
+        self.impact = impact
     }
 }
 
@@ -124,8 +152,44 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
     public private(set) var entryCount = 0
     /// Every hostile entry's resistance adjustment, in application order.
     public private(set) var adjustments: [SpellMagnitudeAdjustment] = []
+    /// Targets a defence stopped: a wall, an absorption chance, or a ward.
+    public private(set) var blockedByWallCount = 0
+    public private(set) var absorbedCount = 0
+    public private(set) var wardedCount = 0
+    /// Ward holders whose ward this spell broke, in target order.
+    public private(set) var brokenWards: [ReferenceKey] = []
 
     public static let none = SpellHitReport()
+
+    /// One line per kind of defence that stopped this spell, for the readout.
+    public var defenceLines: [String] {
+        var lines: [String] = []
+        if wardedCount > 0 {
+            lines.append("warded: \(wardedCount), broken: \(brokenWards.count)")
+        }
+        if absorbedCount > 0 {
+            lines.append("absorbed: \(absorbedCount)")
+        }
+        if blockedByWallCount > 0 {
+            lines.append("behind a wall: \(blockedByWallCount)")
+        }
+        return lines
+    }
+
+    public mutating func noteBlockedByWall() {
+        blockedByWallCount += 1
+    }
+
+    public mutating func noteAbsorbed() {
+        absorbedCount += 1
+    }
+
+    public mutating func noteWarded(_ holder: ReferenceKey, broken: Bool) {
+        wardedCount += 1
+        if broken {
+            brokenWards.append(holder)
+        }
+    }
 
     public var didApply: Bool {
         targetCount > 0

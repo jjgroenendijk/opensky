@@ -31,6 +31,10 @@ nonisolated public struct MagicWorldAction: Equatable, Sendable {
     public let effect: ReferenceKey
     public let target: ActorValueHolder
     public let magnitude: Float
+    /// Who cast the effect, where one is known.
+    public var caster: ReferenceKey?
+    /// The stored effect's sequence on `target`; zero for an effect that acts once.
+    public var sequence: UInt64 = 0
 
     public init(
         phase: Phase,
@@ -223,13 +227,16 @@ extension ActiveEffectRuntime {
     ) -> MagicWorldAction? {
         guard let rule = rule(of: effect), case let .world(archetype) = rule, !rule.actsOnce
         else { return nil }
-        return MagicWorldAction(
+        var action = MagicWorldAction(
             phase: phase,
             archetype: archetype,
             effect: effect.effect,
             target: holder,
             magnitude: effect.peakMagnitude
         )
+        action.caster = effect.caster
+        action.sequence = effect.sequence
+        return action
     }
 
     /// Grows each Accumulate Magnitude effect's held value toward its magnitude.

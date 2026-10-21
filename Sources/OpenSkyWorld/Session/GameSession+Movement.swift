@@ -64,6 +64,7 @@ extension GameSession {
         // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
         // while the clock keeps its mark fresh (resume carries no time jump).
         let dt = cameraClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
+            * playerTimeScale
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         var frameInput = input.makeInput(dt: dt)
         if isPlayerParalysed, movementMode.isPlayerControlled {

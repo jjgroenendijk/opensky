@@ -29,10 +29,11 @@ nonisolated public struct CombatStyleReadout: Equatable, Sendable {
     public var settingsText: String {
         String(
             format: "Attack gap: %.2f s (base %.2f), block: %.0f%% (base %.0f%%), "
-                + "cast: %.0f%% (base %.0f%%)",
+                + "cast: %.0f%% (base %.0f%%), from range: %.0f%% (base %.0f%%)",
             derived.attackIntervalSeconds, base.attackIntervalSeconds,
             derived.blockChance * 100, base.blockChance * 100,
-            derived.castChance * 100, base.castChance * 100
+            derived.castChance * 100, base.castChance * 100,
+            derived.rangedCastChance * 100, base.rangedCastChance * 100
         )
     }
 }

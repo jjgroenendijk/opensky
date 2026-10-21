@@ -126,12 +126,21 @@ nonisolated public enum ActorValueIdentity: Sendable {
     }
 
     /// What an actor reads for `index` when nothing authored a value, or nil
-    /// outside the table. Zero except for skills: an actor value accumulates
-    /// from zero. See docs/engine/actor-value-names.md.
+    /// outside the table. Zero except for skills and the multipliers below.
+    /// See docs/engine/actor-value-names.md.
     public static func defaultValue(at index: Int32) -> Float? {
         guard isVanilla(index: index) else { return nil }
+        if let value = multiplierDefaults[index] {
+            return value
+        }
         return isSkill(index: index) ? skillFloor : 0
     }
+
+    /// UESP "Skyrim:Fortify Shouts": Fortify Shouts lowers `ShoutRecoveryMult` "from its
+    /// base value of 1.0".
+    private static let multiplierDefaults: [Int32: Float] = [
+        index(named: "Shout Recovery Mult") ?? noneIndex: 1
+    ]
 
     /// Vanilla name of `index`, or nil when no vanilla actor value carries it.
     /// `noneIndex` reports nil like any other number outside the table: "none"

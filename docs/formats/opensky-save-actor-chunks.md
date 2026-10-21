@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, TMPR, CRVG, CPOT, INGK, WPSN, and FAVS chunks in an .osav save.
+  CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -163,6 +163,16 @@ less is dropped. More levels than the owner holds copies is kept; a reader uses 
 many levels as there are copies ([crafting](/engine/crafting.md)). An older build skips the
 chunk and every copy reads plain. Sizes: 12 bytes minimum per entry, 8 per item, 4 per level.
 
+## ICPY: item copies
+
+Written only for an owner with a copy that holds more than a level: a soul, a charge, or a made
+enchantment ([item copies](/engine/item-copies.md)). Key, cell, uint32 item count, then per
+item: uint32 FormID, uint32 copy count, and per copy an int32 level, a uint8 soul, and a uint8
+flags byte. Flag 1 adds a float32 charge, flag 2 a uint32 enchantment FormID. The same owner
+also gets a `TMPR` entry with its levels, so an older build keeps the quality. On load `ICPY`
+is merged after `TMPR` and replaces that owner's state. Sizes: 12 bytes minimum per entry, 8 per
+item, 6 per copy.
+
 ## CRVG: violent crime gold
 
 Key, uint32 row count, then rows of the faction key and int32 violent gold. A bounty has a
@@ -201,3 +211,11 @@ a uint32 hotkey count with rows of a uint8 slot (1 to 8) and a uint32 FormID. Sl
 decoder drops a repeated item, a slot outside 1 to 8, and a hotkey for an item that is not a
 favourite ([inventory menu](/engine/inventory-menu.md#favourites-and-hotkeys)). Sizes: 16 bytes
 minimum per entry, 5 per hotkey.
+
+## ENCK: enchanting
+
+Key (the player), cell, uint32 known count and that many base enchantment keys, then a uint32 made
+count and per made enchantment: uint32 FormID, the name as a string, float32 capacity, float32
+cost per use, uint32 base count, and per base its key and a float32 power. Made enchantments
+ascend by FormID, from `0xFF600000` up ([enchanting](/engine/enchanting.md)). Sizes: 16 bytes
+minimum per entry, 18 minimum per made enchantment, 11 minimum per base.

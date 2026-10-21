@@ -74,8 +74,9 @@ final class PlayerWorldAdapter {
                 inputs.rightHandType = melee.weapon.handType.rawValue
             }
             inputs.isBowDrawn = game.combat.archery?.state.phase.isFullyDrawn ?? false
-            inputs.castingLeft = game.magic.caster?.phase(of: .left).isCasting ?? false
-            inputs.castingRight = game.magic.caster?.phase(of: .right).isCasting ?? false
+            inputs.castingLeft = game.magic.wantsCast(.left)
+            inputs.castingRight = game.magic.wantsCast(.right)
+            inputs.wantsVoice = game.magic.shoutMachine.wantsVoice
             inputs.headTracking = game.headTracking.isEnabled
             locomotion.actorState = inputs
         }

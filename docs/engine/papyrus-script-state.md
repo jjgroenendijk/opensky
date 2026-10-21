@@ -76,7 +76,7 @@ and in `GetReaction` ([hostility](/engine/hostility.md)).
 player, and `Game.IsWordUnlocked` reads the second. `Actor.AddShout`, `RemoveShout`,
 `EquipShout`, `UnequipShout`, and `GetEquippedShout` keep the shouts an actor knows and wears.
 `RemoveShout` answers whether the actor knew the shout, and takes it off when it was equipped.
-OpenSky casts no shout yet, so nothing else reads these.
+The [shout runtime](/engine/shouts.md) reads them to know which words the player may shout.
 
 ## Ownership
 

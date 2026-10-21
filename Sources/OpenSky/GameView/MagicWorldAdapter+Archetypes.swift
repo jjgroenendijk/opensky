@@ -7,10 +7,13 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyPlayer
+import OpenSkyWorld
 import simd
 
 extension MagicWorldAdapter {
@@ -19,6 +22,13 @@ extension MagicWorldAdapter {
             switch command {
             case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
             case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
+            case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
+            case let .detonateRune(payload, position): detonateRune(payload, at: position)
+            case let .castingSound(sound, caster, starts):
+                castingSound(sound, caster: caster, starts: starts)
+            case let .castingArt(art, plugin, caster, starts):
+                game.effectsWorld.effects
+                    .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
             }
         }
     }
@@ -77,5 +87,27 @@ extension MagicWorldAdapter {
             else { return false }
             return keywords.hasKeyword(keyword, on: id) == true
         }
+    }
+
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        guard
+            let keywords = game.worldData?.locationStore?.keywords,
+            let keyword = keywords.keyword(editorID: editorID)?.id,
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return false }
+        return keywords.hasKeyword(keyword, on: id) == true
+    }
+
+    /// An item fits when it has a keyword the base's worn restriction list names.
+    func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
+        guard
+            let list = base.data?.wornRestrictions,
+            let lists = game.worldData?.formListStore,
+            let keywords = game.worldData?.locationStore?.keywords,
+            let listID = lists.resolvedID(list, fromPlugin: base.sourcePlugin),
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return true }
+        let listed = lists.flattened(listID)?.entries.compactMap(\.self) ?? []
+        return listed.isEmpty || listed.contains { keywords.hasKeyword($0, on: id) == true }
     }
 }

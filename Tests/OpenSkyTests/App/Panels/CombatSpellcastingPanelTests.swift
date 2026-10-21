@@ -12,7 +12,7 @@ struct CombatSpellcastingPanelTests {
     private func snapshot(
         spells: [KnownSpellReadout] = [],
         failures: [String] = [],
-        unheldAbilityEntries: Int = 0,
+        abilityEffectCount: Int = 0,
         projectileCount: Int = 0,
         deliveryLines: [String] = [],
         lastHitAdjustments: [String] = [],
@@ -32,7 +32,7 @@ struct CombatSpellcastingPanelTests {
             concentrationSeconds: 4,
             failureCount: failures.count,
             failureLines: failures,
-            unheldAbilityEntries: unheldAbilityEntries,
+            abilityEffectCount: abilityEffectCount,
             projectileCount: projectileCount,
             deliveryLines: deliveryLines,
             lastHitTargets: lastHitAdjustments.isEmpty ? 0 : 1,
@@ -140,13 +140,13 @@ struct CombatSpellcastingPanelTests {
         let text = CastingControlReadout.coverageText(
             for: snapshot(
                 failures: ["aimed delivery is not implemented yet x 3"],
-                unheldAbilityEntries: 2
+                abilityEffectCount: 2
             )
         )
 
         #expect(text.contains("Refused casts: 1"))
         #expect(text.contains("aimed delivery is not implemented yet x 3"))
-        #expect(text.contains("2 permanent ability effect(s) skipped"))
+        #expect(text.contains("2 ability effect(s) held"))
     }
 
     /// The resistance line proves the documented multiplier was used; a moving

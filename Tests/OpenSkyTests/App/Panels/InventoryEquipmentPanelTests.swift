@@ -52,10 +52,11 @@ struct InventoryEquipmentPanelTests {
         let sections = panel.makeSections()
         #expect(sections.map(\.sectionIdentifier) == [
             "inventoryGrants", "itemOwnership", "equipmentInspection", "crafting", "harvest",
-            "alchemy", "locks"
+            "alchemy", "enchanting", "locks"
         ])
         #expect(sections.map(\.sectionTitle) == [
-            "Grants", "Ownership", "Equipment", "Crafting", "Harvest", "Alchemy", "Locks"
+            "Grants", "Ownership", "Equipment", "Crafting", "Harvest", "Alchemy", "Enchanting",
+            "Locks"
         ])
     }
 

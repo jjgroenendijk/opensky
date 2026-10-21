@@ -48,10 +48,32 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
 
     /// Called once per cast that spent its cost, for the `CAST` story event.
     func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey)
+
+    /// How far a touch spell reaches from the caster, world units.
+    var touchReach: Float { get }
+
+    /// Lands a target-location cast where the caster aims, or places it as a rune.
+    /// - Returns: how many timed effects were stored.
+    func deliverToLocation(
+        _ payload: SpellPayload, spell: ResolvedSpell, caster: ActorValueHolder
+    ) -> Int
 }
 
 extension CasterWorld {
     public func spellWasCast(_: ReferenceKey, by _: ReferenceKey) {}
+
+    /// A world with no ground lands nothing at a location.
+    public func deliverToLocation(
+        _: SpellPayload, spell _: ResolvedSpell, caster _: ActorValueHolder
+    ) -> Int {
+        0
+    }
+
+    /// `fCombatDistance` in `Skyrim.esm`: an unarmed swing's reach, which is where
+    /// a hand meets its target.
+    public var touchReach: Float {
+        141
+    }
 }
 
 /// One cast in flight, identified by who is casting and in which hand.
@@ -121,6 +143,11 @@ public final class CasterRuntime {
     public var perks: (any PerkAccess)?
     /// How skill lowers a cost before the perks act. See `CasterRuntimePerkCost.swift`.
     public var costSettings = SpellCostSettings.vanilla
+    /// True while a dual cast's effects are being applied, so a self delivery can
+    /// mark its effects as dual cast.
+    public private(set) var isApplyingDualCast = false
+    /// Casts a release completed since the coordinator last took them, newest last.
+    public private(set) var completedCasts: [CompletedCast] = []
 
     public init(
         spellbook: SpellbookRuntime,
@@ -178,12 +205,18 @@ public final class CasterRuntime {
         if let refusal = refusal(for: spell, key: key, caster: caster) {
             return record(hand, on: caster, .failed(refusal))
         }
+        if joinDualCast(hand, spell: spell, caster: caster) {
+            let lead = state(of: hand.other, on: caster.key)
+            return record(hand, on: caster, .charging(
+                spell: key, chargeTime: max(0, chargeTime(of: spell, dual: true) - lead.charged)
+            ))
+        }
         var state = SpellCastState()
         state.beginCharge(key)
         casts[slot(hand, caster)] = state
-        let chargeTime = max(0, spell.data?.chargeTime ?? 0)
-        guard chargeTime <= 0 else {
-            return record(hand, on: caster, .charging(spell: key, chargeTime: chargeTime))
+        let charge = chargeTime(of: spell, dual: false)
+        guard charge <= 0 else {
+            return record(hand, on: caster, .charging(spell: key, chargeTime: charge))
         }
         return record(hand, on: caster, finishCharge(hand, spell: spell, caster: caster))
     }
@@ -191,6 +224,7 @@ public final class CasterRuntime {
     /// Releases the cast input in `hand`.
     @discardableResult
     public func release(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
+        let hand = leadHand(of: hand, on: caster.key)
         var state = state(of: hand, on: caster.key)
         guard let key = state.spell, let spell = spellbook.record(key) else {
             casts[slot(hand, caster)] = SpellCastState()
@@ -200,8 +234,9 @@ public final class CasterRuntime {
         case .idle:
             return .ignored
         case .charging:
-            let remaining = max(0, (spell.data?.chargeTime ?? 0) - state.charged)
+            let remaining = max(0, chargeTime(of: spell, dual: state.isDualCast) - state.charged)
             casts[slot(hand, caster)] = SpellCastState()
+            endDualPartner(of: hand, lead: state, caster: caster)
             return record(hand, on: caster, .failed(.notCharged(remaining: remaining)))
         case .ready:
             return record(hand, on: caster, cast(hand, spell: spell, caster: caster))
@@ -217,6 +252,9 @@ public final class CasterRuntime {
 
     /// Ends whatever `hand` is doing without casting it.
     public func cancel(_ hand: SpellHand, on caster: ActorValueHolder) {
+        if state(of: hand, on: caster.key).isDualCast {
+            casts[slot(hand.other, caster)] = SpellCastState()
+        }
         casts[slot(hand, caster)] = SpellCastState()
     }
 
@@ -260,16 +298,25 @@ public final class CasterRuntime {
         return nil
     }
 
+    /// The `SPIT` charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
+    func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
+        let single = max(0, spell.data?.chargeTime ?? 0)
+        return dual ? single * max(0, costSettings.dualCastTimeMult) : single
+    }
+
     private func advance(_ hand: SpellHand, delta: Float, on caster: ActorValueHolder) {
         var state = state(of: hand, on: caster.key)
         guard let key = state.spell, let spell = spellbook.record(key) else { return }
+        state.addAge(delta)
+        casts[slot(hand, caster)] = state
+        guard state.dualRole != .partner else { return }
         switch state.phase {
         case .idle, .ready:
             return
         case .charging:
             state.addCharge(delta)
             casts[slot(hand, caster)] = state
-            guard state.charged >= max(0, spell.data?.chargeTime ?? 0) else { return }
+            guard state.charged >= chargeTime(of: spell, dual: state.isDualCast) else { return }
             record(hand, on: caster, finishCharge(hand, spell: spell, caster: caster))
         case .concentrating:
             record(hand, on: caster, maintain(hand, spell: spell, delta: delta, caster: caster))
@@ -296,7 +343,8 @@ public final class CasterRuntime {
         // maintained heal starts healing when it starts costing.
         applyOnce(hand, spell: spell, caster: caster)
         return .concentrating(
-            spell: spell.key, costPerSecond: cost(of: spell, caster: caster)
+            spell: spell.key,
+            costPerSecond: castCost(of: spell, dual: state.isDualCast, caster: caster)
         )
     }
 
@@ -306,23 +354,28 @@ public final class CasterRuntime {
         spell: ResolvedSpell,
         caster: ActorValueHolder
     ) -> SpellCastOutcome {
-        let cost = cost(of: spell, caster: caster)
+        let state = state(of: hand, on: caster.key)
+        let cost = castCost(of: spell, dual: state.isDualCast, caster: caster)
         let available = values.current(of: caster).magicka
+        casts[slot(hand, caster)] = SpellCastState()
+        endDualPartner(of: hand, lead: state, caster: caster)
         guard cost <= available else {
-            casts[slot(hand, caster)] = SpellCastState()
             return .failed(.insufficientMagicka(cost: cost, available: available))
         }
         values.damage(.magicka, by: cost, on: caster)
+        // UESP: "Dual-casting a spell gives the same experience per cast as one-handed cast."
         noteSkillUse(of: spell, amount: baseSkillUseAmount(of: spell), caster: caster)
         world?.spellWasCast(spell.key, by: caster.key)
-        let stored = apply(spell, caster: caster)
-        casts[slot(hand, caster)] = SpellCastState()
+        let stored = apply(spell, caster: caster, dual: state.isDualCast)
         notePowerSpent(spell, caster: caster)
         tally.noteCast()
+        completedCasts.append(CompletedCast(slot: slot(hand, caster), spell: spell.key))
+        completedCasts = completedCasts.suffix(Self.maximumApplicationsPerAdvance)
         return .cast(SpellCastResult(
             magickaSpent: cost,
             entryCount: spell.record.effects.count,
-            storedCount: stored
+            storedCount: stored,
+            isDualCast: state.isDualCast
         ))
     }
 
@@ -330,19 +383,28 @@ public final class CasterRuntime {
     /// other deliveries live in `CasterRuntimeDelivery.swift`.
     /// - Returns: how many timed effects were stored.
     public func apply(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Int {
+        apply(spell, caster: caster, dual: false)
+    }
+
+    /// One application, with a dual cast's scaled entries when `dual` is set.
+    public func apply(_ spell: ResolvedSpell, caster: ActorValueHolder, dual: Bool) -> Int {
         guard let world else { return 0 }
         let delivery = spell.data?.delivery ?? .selfTarget
         tally.note(delivery: delivery)
+        let entries = dual ? dualCastEntries(of: spell) : spell.record.effects
+        isApplyingDualCast = dual
+        defer { isApplyingDualCast = false }
         guard delivery != .selfTarget else {
             return world.applyCastEffects(
-                spell.record.effects,
+                entries,
                 fromPlugin: spell.sourcePlugin,
                 source: ActiveEffectSource(kind: .spell, record: spell.key),
                 caster: caster.key,
                 on: caster
             )
         }
-        return deliverAway(spell, delivery: delivery, caster: caster, world: world)
+        let payload = spell.payload(caster: caster.key).dualCast(dual ? entries : nil)
+        return deliverAway(payload, spell: spell, delivery: delivery, caster: caster, world: world)
     }
 
     private func notePowerSpent(_ spell: ResolvedSpell, caster: ActorValueHolder) {
@@ -373,5 +435,13 @@ public final class CasterRuntime {
             lastOutcome[hand] = outcome
         }
         return outcome
+    }
+}
+
+extension CasterRuntime {
+    /// Hands over the casts completed since the last call.
+    public func takeCompletedCasts() -> [CompletedCast] {
+        defer { completedCasts = [] }
+        return completedCasts
     }
 }

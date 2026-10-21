@@ -54,6 +54,8 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
     /// UESP: "Each Greater Power can only be used once per game day."
     /// (<https://en.uesp.net/wiki/Skyrim:Powers>)
     case powerAlreadyUsedToday(day: Int32)
+    /// Both hands began the spell, but no perk lets this caster dual cast it.
+    case notDualCastable
 
     public var describedReason: String {
         switch self {
@@ -67,6 +69,7 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
             "\(delivery) delivery is not implemented yet"
         case .abilityNotCastable: "an ability is carried, not cast"
         case let .powerAlreadyUsedToday(day): "this power was already used on day \(day)"
+        case .notDualCastable: "no dual casting perk covers this spell"
         }
     }
 }
@@ -124,6 +127,14 @@ nonisolated public struct SpellCastResult: Equatable, Sendable {
     /// Timed effects it stored. Zero for a spell whose entries are all instant,
     /// which is what a restore-health cast is.
     public let storedCount: Int
+    /// Both hands cast it together.
+    public var isDualCast = false
+}
+
+/// The two hands of one dual cast.
+nonisolated public enum DualCastRole: String, Equatable, Sendable {
+    case lead
+    case partner
 }
 
 /// One hand's cast, advanced by time.
@@ -150,6 +161,17 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// True once the input was released but the concentration has not yet
     /// reached the SPIT minimum cast duration.
     public private(set) var isReleasing = false
+    /// The hand's part in a dual cast, nil for a single cast. The lead hand runs the
+    /// cast; the partner only holds the spell, so the cast pays and applies once.
+    public private(set) var dualRole: DualCastRole?
+
+    public var isDualCast: Bool {
+        dualRole != nil
+    }
+
+    public mutating func joinDualCast(as role: DualCastRole) {
+        dualRole = role
+    }
 
     /// Starts a charge.
     public mutating func beginCharge(_ spell: ReferenceKey) {
@@ -166,6 +188,14 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// Moves a fully charged concentration cast to maintenance.
     public mutating func beginConcentration() {
         phase = .concentrating
+    }
+
+    /// Seconds since the cast began, whatever its phase. A dual cast may join only a
+    /// young one.
+    public private(set) var age: Float = 0
+
+    public mutating func addAge(_ delta: Float) {
+        age += delta
     }
 
     public mutating func addCharge(_ delta: Float) {

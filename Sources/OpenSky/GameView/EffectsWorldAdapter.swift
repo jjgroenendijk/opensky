@@ -77,12 +77,28 @@ final class EffectsWorldAdapter {
         game.magic.onSpellHit = { [weak self, weak gameSession] event in
             guard let self, let gameSession else { return }
             effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
+            playHitSounds(of: event, director: gameSession.soundDirector)
         }
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
             guard let self, let gameSession else { return }
             cameraPosition = position
             tick(gameSession: gameSession, streamer: streamer)
+        }
+    }
+
+    /// Each effect's On Hit sound, at each struck actor.
+    private func playHitSounds(of event: SpellHitEvent, director: WorldAudioSoundDirector?) {
+        guard let director else { return }
+        for sound in event.links.compactMap(\.hitSound) {
+            for target in event.hit.targets {
+                guard let transform = effectTransform(of: target.key) else { continue }
+                let origin = transform.columns.3
+                director.forcePlaySound(
+                    formID: sound,
+                    position: SIMD3(origin.x, origin.y, origin.z)
+                )
+            }
         }
     }
 

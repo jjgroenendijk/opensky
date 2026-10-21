@@ -19,7 +19,7 @@ extension MagicCoordinator {
         let keys = [ReferenceKey.player]
             + world.residentActorKeys().filter { $0 != .player }
         for key in keys {
-            states[key] = MagicConditionState(
+            var state = MagicConditionState(
                 spellbook: caster.spellbook.state(of: conditionHolder(for: key)),
                 effects: caster.spellbook.store.component(ActiveEffectState.self, for: key)
                     ?? ActiveEffectState(),
@@ -28,6 +28,12 @@ extension MagicCoordinator {
                 }),
                 record: caster.spellbook.record
             )
+            state.isDualCasting = SpellHand.allCases.contains { hand in
+                let cast = caster.state(of: hand, on: key)
+                return cast.isDualCast && cast.phase.isCasting
+            }
+            state.wardState = wardState(of: key).rawValue
+            states[key] = state
         }
         return MagicConditionResolution(
             spells: caster.spellbook.spells,

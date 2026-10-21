@@ -40,5 +40,10 @@ Every entry in the table is stored ([actor value store](/engine/actor-value-stor
 miss left is an index outside the table. A condition reports it as a false with a reason and a tally
 bucket. A Papyrus native reports a failure and returns the call's declared default.
 
+A value nothing authored reads 0, a skill reads the skill floor, and `Shout Recovery Mult` reads
+
+1. UESP gives 1.0 as its base (<https://en.uesp.net/wiki/Skyrim:Fortify_Shouts>), and a
+Fortify Shouts effect lowers it from there ([shouts](/engine/shouts.md)).
+
 `Skyrim.esm` has 607 `GetActorValue` and `GetActorValuePercent` conditions. 68 name a primary and 539
 name another actor value, and all of them resolve their parameter.

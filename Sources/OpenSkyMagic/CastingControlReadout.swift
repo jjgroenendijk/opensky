@@ -54,8 +54,8 @@ nonisolated public enum CastingControlReadout: Sendable {
         } else {
             "Refused casts: none"
         }
-        if snapshot.unheldAbilityEntries > 0 {
-            text += "; \(snapshot.unheldAbilityEntries) permanent ability effect(s) skipped"
+        if snapshot.abilityEffectCount > 0 {
+            text += "; \(snapshot.abilityEffectCount) ability effect(s) held"
         }
         return text
     }
@@ -68,7 +68,7 @@ nonisolated public enum CastingControlReadout: Sendable {
             ? "nothing cast yet"
             : snapshot.deliveryLines.joined(separator: ", ")
         var text = "Delivery: \(snapshot.projectileCount) projectile(s) — \(deliveries)"
-        guard snapshot.lastHitTargets > 0 else {
+        guard snapshot.lastHitTargets > 0 || !snapshot.lastHitAdjustments.isEmpty else {
             return text + "; no hits yet"
         }
         text += "; last hit reached \(snapshot.lastHitTargets) actor(s)"
@@ -90,6 +90,12 @@ nonisolated public enum CastingControlReadout: Sendable {
         return "Conditions (player):\n\(lines)"
     }
 
+    /// The player's soul gems and what the last soul trap did.
+    public static func soulsText(for snapshot: CastingControlSnapshot) -> String {
+        guard snapshot.isAvailable, !snapshot.soulLines.isEmpty else { return "Soul gems: none" }
+        return "Soul gems:\n" + snapshot.soulLines.map { "  \($0)" }.joined(separator: "\n")
+    }
+
     public static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
@@ -104,6 +110,10 @@ nonisolated public enum CastingControlReadout: Sendable {
             coverageText(for: snapshot),
             deliveryText(for: snapshot),
             conditionsText(for: snapshot),
+            soulsText(for: snapshot),
+            snapshot.runeText,
+            snapshot.commandedText,
+            snapshot.castingCueText,
             lastActionText(for: snapshot)
         ].joined(separator: "\n")
     }

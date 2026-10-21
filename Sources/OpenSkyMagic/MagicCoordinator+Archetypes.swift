@@ -27,6 +27,9 @@ extension MagicCoordinator {
             runtime.sourceCategory = { [weak self] source in
                 self?.category(of: source) ?? .other
             }
+            runtime.entryConditions = { [weak self] effect in
+                self?.entryConditions(of: effect)
+            }
         }
     }
 
@@ -68,12 +71,18 @@ extension MagicCoordinator {
             dismissBoundWeapon(action)
         case (.disarm, .began):
             disarm(action.target)
-        case (.cloak, _), (.stagger, .ended), (.spawnHazard, .ended), (.disarm, .ended):
+        case (.summon, _), (.reanimate, _):
+            performCommanding(action)
+        case (.cloak, _), (.soulTrap, _), (.slowTime, _), (.stagger, .ended), (
+            .spawnHazard,
+            .ended
+        ),
+        (.disarm, .ended):
             break
         }
     }
 
-    private func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
+    func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
         guard let store = effects?.effects, let resolved = store.effect(key: effect) else {
             return nil
         }
@@ -177,7 +186,7 @@ extension MagicCoordinator {
                 ? .disease : .other
         case .potion:
             isPoison(source.record) ? .poison : .other
-        case .ingredient, .enchantment, .perk:
+        case .ingredient, .enchantment, .perk, .ability:
             .other
         }
     }

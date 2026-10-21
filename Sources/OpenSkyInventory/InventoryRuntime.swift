@@ -86,8 +86,8 @@ public struct InventoryRuntime: InventoryAccess {
     // MARK: - Mutating
 
     /// Gives `holder` `count` more of `item`. The first write stores the whole
-    /// baseline, so three lockpicks plus one stores four. `levels` are the quality
-    /// levels of tempered copies among them; the rest arrive plain.
+    /// baseline, so three lockpicks plus one stores four. `copies` are the copies
+    /// among them that differ from the record; the rest arrive plain.
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.countOverflow`.
     @discardableResult
@@ -96,12 +96,12 @@ public struct InventoryRuntime: InventoryAccess {
         count: Int32,
         to holder: InventoryHolder,
         stolen: Bool = false,
-        levels: [Int32] = []
+        copies: [ItemCopy] = []
     ) throws -> ReferenceInventoryState {
         let before = inventory(of: holder)
         let updated = try before.adding(item, count: count, owner: holder.key, stolen: stolen)
         store.set(updated, for: holder.key, in: holder.cell)
-        retemper(item, in: holder, before: before.count(of: item), arriving: levels)
+        recopy(item, in: holder, before: before.count(of: item), arriving: copies)
         return updated
     }
 
@@ -140,7 +140,7 @@ public struct InventoryRuntime: InventoryAccess {
         }
         store.set(updated, for: holder.key, in: holder.cell)
         for stack in consumed {
-            retemper(
+            recopy(
                 stack.item, in: holder, before: before.count(of: stack.item), taken: stack.count
             )
         }
@@ -158,7 +158,7 @@ public struct InventoryRuntime: InventoryAccess {
         let before = inventory(of: holder)
         let updated = try before.removing(item, count: count, owner: holder.key)
         store.set(updated, for: holder.key, in: holder.cell)
-        retemper(item, in: holder, before: before.count(of: item), taken: count)
+        recopy(item, in: holder, before: before.count(of: item), taken: count)
         return updated
     }
 
@@ -183,12 +183,12 @@ public struct InventoryRuntime: InventoryAccess {
         let taken = try sourceInventory.removing(item, count: count, owner: source.key)
         let destinationInventory = inventory(of: destination)
         let given = try destinationInventory.adding(item, split: split, owner: destination.key)
-        let levels = leavingLevels(count, of: item, in: source)
+        let moving = leavingCopies(count, of: item, in: source)
         store.set(taken, for: source.key, in: source.cell)
         store.set(given, for: destination.key, in: destination.cell)
-        retemper(item, in: source, before: sourceInventory.count(of: item), taken: count)
-        retemper(
-            item, in: destination, before: destinationInventory.count(of: item), arriving: levels
+        recopy(item, in: source, before: sourceInventory.count(of: item), taken: count)
+        recopy(
+            item, in: destination, before: destinationInventory.count(of: item), arriving: moving
         )
     }
 
@@ -226,38 +226,38 @@ public struct InventoryRuntime: InventoryAccess {
             receiver = try receiver.removing(taken.item, count: taken.amount, owner: second.key)
             giver = try giver.adding(taken.item, split: split, owner: first.key)
         }
-        let givenLevels = leavingLevels(max(0, given.amount), of: given.item, in: first)
-        let takenLevels = leavingLevels(max(0, taken.amount), of: taken.item, in: second)
+        let givenCopies = leavingCopies(max(0, given.amount), of: given.item, in: first)
+        let takenCopies = leavingCopies(max(0, taken.amount), of: taken.item, in: second)
         store.set(giver, for: first.key, in: first.cell)
         store.set(receiver, for: second.key, in: second.cell)
         if given.amount > 0 {
-            moveLevels(
-                givenLevels, of: given.item,
+            moveCopies(
+                givenCopies, of: given.item,
                 from: (first, giverBefore), to: (second, receiverBefore)
             )
         }
         if taken.amount > 0 {
-            moveLevels(
-                takenLevels, of: taken.item,
+            moveCopies(
+                takenCopies, of: taken.item,
                 from: (second, receiverBefore), to: (first, giverBefore)
             )
         }
     }
 
     /// The quality half of one exchange leg, with each side's inventory before the leg.
-    private func moveLevels(
-        _ levels: [Int32],
+    private func moveCopies(
+        _ copies: [ItemCopy],
         of item: FormID,
         from source: (holder: InventoryHolder, before: ReferenceInventoryState),
         to destination: (holder: InventoryHolder, before: ReferenceInventoryState)
     ) {
-        retemper(
+        recopy(
             item, in: source.holder, before: source.before.count(of: item),
-            taken: Int32(levels.count)
+            taken: Int32(copies.count)
         )
-        retemper(
+        recopy(
             item, in: destination.holder, before: destination.before.count(of: item),
-            arriving: levels
+            arriving: copies
         )
     }
 
@@ -283,11 +283,11 @@ public struct InventoryRuntime: InventoryAccess {
                 stack.item, count: stack.count, owner: destination.key, stolen: true
             )
         }
-        let levels = taken.map { leavingLevels($0.count, of: $0.item, in: source) }
+        let moving = taken.map { leavingCopies($0.count, of: $0.item, in: source) }
         store.set(remaining, for: source.key, in: source.cell)
         store.set(receiver, for: destination.key, in: destination.cell)
-        for (stack, moved) in zip(taken, levels) {
-            moveLevels(
+        for (stack, moved) in zip(taken, moving) {
+            moveCopies(
                 moved, of: stack.item,
                 from: (source, sourceBefore), to: (destination, receiverBefore)
             )

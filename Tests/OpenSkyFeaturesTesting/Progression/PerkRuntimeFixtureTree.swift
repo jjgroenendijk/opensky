@@ -2,6 +2,7 @@
 // Split from `PerkRuntimeFixture.swift` for the body-length cap.
 
 import Foundation
+import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 
 @MainActor
@@ -53,11 +54,30 @@ extension PerkRuntimeFixture {
 
     /// A SPEL with an authored manual cost, an optional half-cost perk link and
     /// an optional effect list.
+    /// `Can Dual Cast Spell` set to 1 with no conditions.
+    public static var dualCastingPerkRecord: Data {
+        PerkFixture.perkRecord(
+            formID: Perk.dualCasting,
+            fields: PerkFixture.fields(
+                editorID: "DualCasting",
+                name: "Dual Casting",
+                effects: [PerkFixture.entryPointEffect(
+                    entryPoint: canDualCastSpell.rawValue,
+                    function: 1, // set value
+                    tabs: [(runOn: 0, conditions: [])],
+                    functionType: 1,
+                    functionData: PerkFixture.float(1)
+                )]
+            )
+        )
+    }
+
     public static func spellRecord(
         formID: UInt32,
         editorID: String,
         baseCost: UInt32,
         halfCostPerk: UInt32 = 0,
+        castingType: UInt32 = 0,
         effects: [EffectSpec] = []
     ) -> Data {
         var spit = Data()
@@ -65,7 +85,12 @@ extension PerkRuntimeFixture {
         // Bit 0 is "Manual Cost Calc", so the authored cost above is the one
         // the runtime charges and every assertion is arithmetic on one number.
         spit.appendUInt32(1)
-        for _ in 0 ..< 6 {
+        // Type and charge time, then the casting type, then delivery, cast
+        // duration and range.
+        spit.appendUInt32(0)
+        spit.appendUInt32(0)
+        spit.appendUInt32(castingType)
+        for _ in 0 ..< 3 {
             spit.appendUInt32(0)
         }
         spit.appendUInt32(halfCostPerk)

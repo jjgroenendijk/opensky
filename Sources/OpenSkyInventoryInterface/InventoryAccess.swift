@@ -39,6 +39,18 @@ public protocol InventoryAccess {
     func remove(_ item: FormID, count: Int32, from holder: InventoryHolder) throws
         -> ReferenceInventoryState
 
+    /// Each held copy of `item`, best first. See docs/engine/item-copies.md.
+    func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy]
+
+    /// Changes the first held copy of `item` that `matches`. False when none matches.
+    @discardableResult
+    func editCopy(
+        of item: FormID,
+        in holder: InventoryHolder,
+        where matches: (ItemCopy) -> Bool,
+        _ edit: (inout ItemCopy) -> Void
+    ) -> Bool
+
     /// Moves every stolen stack from `source` to `destination`.
     func confiscateStolen(
         from source: InventoryHolder,

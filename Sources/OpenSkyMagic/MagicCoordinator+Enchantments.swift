@@ -13,8 +13,11 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         guard let owner = world.actorValueHolder(for: hit.attacker) else { return nil }
         let holders = residentHolders(of: hit.targets)
+        let inventory = world.inventory
         return withEffects { runtime in
-            WeaponEnchantmentApplication.apply(hit, owner: owner, holders: holders, using: &runtime)
+            WeaponEnchantmentApplication.apply(
+                hit, owner: owner, holders: holders, using: &runtime, inventory: inventory
+            )
         }.flatMap(\.self)
     }
 
@@ -105,8 +108,13 @@ extension MagicCoordinator {
     }
 
     /// One carried item's enchantment, or nil when it has none or the session
-    /// has no ENCH index. Cached after the first ask.
-    public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
+    /// has no ENCH index. `holder`'s best copy may carry a made one.
+    public func enchantmentProfile(
+        of item: FormID, on holder: InventoryHolder? = nil
+    ) -> ItemEnchantmentProfile? {
+        if let holder, let made = madeProfile(of: item, on: holder) {
+            return made
+        }
         let store = enchantmentStore
         let items = world.inventory?.baselines.items
         return profiles.profile(of: item) { item in
@@ -120,8 +128,12 @@ extension MagicCoordinator {
         of item: FormID,
         on holder: ActorValueHolder
     ) -> EnchantmentCharge? {
-        guard let runtime = effects, let profile = enchantmentProfile(of: item) else { return nil }
-        return EnchantmentLedger(store: runtime.store).charge(of: profile, on: holder)
+        guard
+            let runtime = effects,
+            let profile = enchantmentProfile(of: item, on: InventoryHolder(actor: holder))
+        else { return nil }
+        return EnchantmentLedger(store: runtime.store, inventory: world.inventory)
+            .charge(of: profile, on: holder)
     }
 
     /// Brings magic in line after `holder`'s worn set changed: readied spells
@@ -142,7 +154,9 @@ extension MagicCoordinator {
             let equipment = world.equipment,
             let values = world.actorValueHolder(for: holder.key)
         else { return .none }
-        let worn = equipment.equipped(on: holder).compactMap { enchantmentProfile(of: $0) }
+        let worn = equipment.equipped(on: holder).compactMap {
+            enchantmentProfile(of: $0, on: holder)
+        }
         return withEffects { runtime in
             WornEnchantmentApplication.reconcile(worn: worn, on: values, using: &runtime)
         } ?? .none
@@ -151,7 +165,8 @@ extension MagicCoordinator {
     /// One item's enchantment and charge as words, so every readout agrees.
     /// Without a holder the full charge is reported.
     public func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String? {
-        guard let profile = enchantmentProfile(of: item) else { return nil }
+        let owner = holder.map(InventoryHolder.init(actor:))
+        guard let profile = enchantmentProfile(of: item, on: owner) else { return nil }
         let charge = holder.flatMap { enchantmentCharge(of: item, on: $0) } ?? profile.fullCharge
         let shape = profile.isWorn ? "worn" : (profile.isStaff ? "staff" : "on hit")
         return "\(profile.name) (\(shape)): \(charge.describedLine)"

@@ -31,6 +31,8 @@ public struct PapyrusMagicNatives {
     /// The seam projectiles and enchantments share, so `Spell.Cast` at a named target
     /// resists exactly as a fireball does.
     public var applySpellHit: ((SpellHit) -> SpellHitReport)?
+    /// `Actor.TrapSoul`: the victim, then the caster; answers whether a gem filled.
+    public var trapSoul: ((ReferenceKey, ReferenceKey) -> Bool)?
 
     public init() {}
 }

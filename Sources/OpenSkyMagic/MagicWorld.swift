@@ -8,7 +8,9 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
+import simd
 
 /// What `MagicCoordinator` reads from the running world. Skill uses pass
 /// through to the session's skill runtime.
@@ -43,6 +45,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey]
     /// Whether `holder`'s base record or race carries the keyword `editorID`.
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool
+    /// Whether `item`'s base record carries the keyword named `editorID`.
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool
     /// One condition function's value as a readout word. The registry lives
     /// above this module, so the app runs the probe.
     func conditionText(of function: UInt16, parameter: UInt32, in context: ConditionContext)
@@ -62,6 +66,40 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int
     /// The player ate `item`, an ingredient, which teaches its first effect.
     func playerAteIngredient(_ item: FormID)
+    /// Whether `target` faces `source` within a ward's front arc.
+    func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool
+    /// Whether no placed geometry stands between `point` and `target`.
+    func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool
+    /// Shows `text` in the HUD's notification line.
+    func postNotification(_ text: String)
+    /// Whether `base`'s worn restriction list names one of `item`'s keywords.
+    func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool
+    /// The player's shouts and words, from the script state the natives write.
+    var shoutKnowledge: ShoutKnowledge { get }
+    func changeShoutKnowledge(_ change: ShoutKnowledgeChange)
+    /// The `KYWD` named `editorID` in the load order.
+    func keyword(editorID: String) -> ReferenceKey?
+    /// Living actors hostile to `caster`, which set off its runes.
+    func runeTriggers(for caster: ReferenceKey) -> [MeleeTarget]
+    /// Every actor a spell landing in the world can reach.
+    func spellHitCandidates() -> [MeleeTarget]
+    /// The `explosionProximity` of the payload's `PROJ`; zero when it has none.
+    func projectileProximity(of payload: SpellPayload) -> Float
+    /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> [PerkEntryPointChoice]
+    /// Places a new actor of `base` at `point`, or beside `caster` when nil.
+    func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
+        -> ReferenceKey?
+    /// Raises the dead `corpse`. False when it is not dead.
+    func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool
+    /// A summon fades away; a reanimated actor falls dead again.
+    func releaseCommandedActor(_ actor: CommandedActor)
+    func isActorDead(_ key: ReferenceKey) -> Bool
 }
 
 extension MagicWorld {
@@ -84,4 +122,76 @@ extension MagicWorld {
 
     /// A session with no alchemy learns nothing.
     public func playerAteIngredient(_: FormID) {}
+
+    public func postNotification(_: String) {}
+
+    /// A session with no keyword index finds none.
+    public func itemHasKeyword(_: String, on _: FormID) -> Bool {
+        false
+    }
+
+    /// A session with no placement treats every actor as facing every source.
+    public func actor(_: ReferenceKey, faces _: ReferenceKey) -> Bool {
+        true
+    }
+
+    /// A session with no form lists restricts nothing.
+    public func enchantment(_: ResolvedEnchantment, fits _: FormID) -> Bool {
+        true
+    }
+
+    /// A session with no scripts knows no shout.
+    public var shoutKnowledge: ShoutKnowledge {
+        ShoutKnowledge()
+    }
+
+    public func changeShoutKnowledge(_: ShoutKnowledgeChange) {}
+
+    /// A session with no keyword index finds none, so no spell is a rune.
+    public func keyword(editorID _: String) -> ReferenceKey? {
+        nil
+    }
+
+    public func runeTriggers(for _: ReferenceKey) -> [MeleeTarget] {
+        []
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        []
+    }
+
+    public func projectileProximity(of _: SpellPayload) -> Float {
+        0
+    }
+
+    public func perkChoices(
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        []
+    }
+
+    /// A session with no world places no actor.
+    public func summonActor(_: FormID, at _: SIMD3<Float>?, for _: ReferenceKey)
+        -> ReferenceKey?
+    {
+        nil
+    }
+
+    public func reanimate(_: ReferenceKey, for _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func releaseCommandedActor(_: CommandedActor) {}
+
+    public func isActorDead(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// A session with no collision has no walls.
+    public func point(_: SIMD3<Float>, canSee _: ReferenceKey) -> Bool {
+        true
+    }
 }

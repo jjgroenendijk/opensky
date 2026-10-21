@@ -44,6 +44,21 @@ extension WorldAudioSoundDirector {
         return true
     }
 
+    /// Plays the descriptor `formID` for `source`; a loop runs until `stopSound`.
+    @discardableResult
+    public func playSound(formID: FormID, source: ReferenceKey, at position: SIMD3<Float>) -> Bool {
+        guard let editorID = soundStore?.descriptor(formID)?.editorID else {
+            lastSFXError = "no SNDR \(formID)"
+            return false
+        }
+        return playAnimationSound(editorID: editorID, source: source, at: position)
+    }
+
+    public func stopSound(formID: FormID, source: ReferenceKey) {
+        guard let editorID = soundStore?.descriptor(formID)?.editorID else { return }
+        stopAnimationSound(editorID: editorID, source: source)
+    }
+
     /// Ends the loop of `editorID` that `source` started. A loop still loading never starts.
     public func stopAnimationSound(editorID: String, source: ReferenceKey) {
         stopAnimationLoop(AnimationSoundKey(source: source, editorID: editorID.lowercased()))

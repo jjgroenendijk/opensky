@@ -145,10 +145,10 @@ public final class WorldItemRuntime {
         // Asked before the item moves, because once it is in the inventory the
         // reference is gone and there is nothing left to ask about.
         let verdict = crime?.verdict(on: entry.key) ?? .unowned
-        let levels = store.component(TemperedItemState.self, for: entry.key)?
+        let copies = store.component(ItemCopyState.self, for: entry.key)?
             .copies(of: interaction.base, held: count) ?? []
         try inventory.add(
-            interaction.base, count: count, to: player, stolen: verdict.isTheft, levels: levels
+            interaction.base, count: count, to: player, stolen: verdict.isTheft, copies: copies
         )
         // Reported before the reference leaves the world, for the reason the
         // verdict is read before the item moves: the crime is located by where
@@ -190,7 +190,7 @@ public final class WorldItemRuntime {
             store.reset(key)
             return
         }
-        store.reset(TemperedItemState.componentKind, for: key)
+        store.reset(ItemCopyState.componentKind, for: key)
         store.set(ReferenceDeletionState.deleted, for: key, in: cell)
     }
 
@@ -208,7 +208,7 @@ public final class WorldItemRuntime {
         count: Int32 = 1,
         at placement: DropPlacement
     ) throws -> ReferenceKey {
-        let levels = inventory.leavingLevels(count, of: item, in: player)
+        let copies = inventory.leavingCopies(count, of: item, in: player)
         try inventory.remove(item, count: count, from: player)
         let key = store.allocateGeneratedKey()
         store.set(
@@ -224,9 +224,9 @@ public final class WorldItemRuntime {
             in: placement.location
         )
         // A dropped Legendary sword is still Legendary when picked up again.
-        let tempered = TemperedItemState(levels: [item.rawValue: levels])
-        if !tempered.isEmpty {
-            store.set(tempered, for: key, in: placement.location)
+        let distinct = ItemCopyState(copies: [item.rawValue: copies])
+        if !distinct.isEmpty {
+            store.set(distinct, for: key, in: placement.location)
         }
         return key
     }

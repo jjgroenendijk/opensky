@@ -18,6 +18,8 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var rightHandType: Int32 = 0
     public var castingLeft = false
     public var castingRight = false
+    /// The player holds the shout key and may shout.
+    public var wantsVoice = false
     /// The Head tracking setting.
     public var headTracking = true
     public var cameraPosition = SIMD3<Float>()
@@ -101,6 +103,7 @@ nonisolated public enum ActorStateGraphCore: Sendable {
             (ActorStateGraphNames.wantBlock, .int(wantsBlock ? 1 : 0)),
             (ActorStateGraphNames.wantCastLeft, .bool(inputs.castingLeft)),
             (ActorStateGraphNames.wantCastRight, .bool(inputs.castingRight)),
+            (ActorStateGraphNames.wantCastVoice, .bool(inputs.wantsVoice)),
             (ActorStateGraphNames.inCastState, .real(casting ? 1 : 0))
         ]
         if let stateValue {

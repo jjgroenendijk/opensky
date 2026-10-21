@@ -51,6 +51,8 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     public var selectedTemperament: CombatTemperament?
     /// The selected actor's Assistance actor value, when it is known.
     public var selectedAssistance: CombatAssistance?
+    /// One line per ally of the player: its name and what it does.
+    public var allies: [String] = []
 
     /// The reading with no runtime attached.
     public static let unavailable = CombatLoopSnapshot(

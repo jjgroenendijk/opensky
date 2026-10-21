@@ -113,7 +113,7 @@ enum MagicPanelFixture {
         concentrationSeconds: 0,
         failureCount: 0,
         failureLines: [],
-        unheldAbilityEntries: 0,
+        abilityEffectCount: 0,
         projectileCount: 1,
         deliveryLines: ["aimed x 1"],
         lastHitTargets: 1,

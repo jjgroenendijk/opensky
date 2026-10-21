@@ -70,9 +70,12 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     public var fleeBreakDistance: Float = 1800
 
     /// The chance, 0 through 1, that an actor within weapon reach casts rather than
-    /// swings. Out of reach it always casts when it can pay. Even odds, so a caster
-    /// neither freezes when closed on nor never casts.
+    /// swings. Even odds, so a caster neither freezes when closed on nor never casts.
     public var castChance: Float = 0.5
+
+    /// The chance, rolled once per approach, that an actor out of weapon reach casts
+    /// rather than closes in. A combat style that prefers weapons lowers it.
+    public var rangedCastChance: Float = 1
 
     /// How long an NPC holds a concentration cast, in seconds. Ours: the player's
     /// trigger sets the duration (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>).

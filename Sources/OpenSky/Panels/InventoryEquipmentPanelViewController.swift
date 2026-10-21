@@ -1,11 +1,12 @@
 // World > Inventory & Equipment. Sections follow the loop: place an item, ask
 // who owns the target, see what an equip did to an actor, then make and gather
-// items at a station, a lab, or a plant, and open locks. Take, drop, and
+// items at a station, a lab, an enchanter, or a plant, and open locks. Take, drop, and
 // equip live under `World > HUD & Interaction > Items`; barter lives under
 // `World > Container Menu`. One control has one sidebar path.
 
 import AppKit
 import OpenSkyInventory
+import OpenSkyMagic
 
 final class InventoryEquipmentPanelViewController: InspectorPanelViewController {
     let grantsSection = InventoryGrantsSection()
@@ -14,6 +15,7 @@ final class InventoryEquipmentPanelViewController: InspectorPanelViewController 
     let craftingSection = CraftingSection()
     let harvestSection = HarvestSection()
     let alchemySection = AlchemySection()
+    let enchantingSection = EnchantingSection()
     let lockSection = LockSection()
 
     /// Live bridge. Weak: the game controller owns this panel's parent and the
@@ -37,6 +39,10 @@ final class InventoryEquipmentPanelViewController: InspectorPanelViewController 
         didSet { alchemySection.provider = alchemyProvider }
     }
 
+    weak var enchantingProvider: (any EnchantingControlProviding)? {
+        didSet { enchantingSection.provider = enchantingProvider }
+    }
+
     weak var lockProvider: (any LockControlProviding)? {
         didSet { lockSection.provider = lockProvider }
     }
@@ -44,7 +50,7 @@ final class InventoryEquipmentPanelViewController: InspectorPanelViewController 
     override func makeSections() -> [PanelSectionViewController] {
         [
             grantsSection, ownershipSection, equipmentSection, craftingSection, harvestSection,
-            alchemySection, lockSection
+            alchemySection, enchantingSection, lockSection
         ]
     }
 }

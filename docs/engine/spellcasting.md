@@ -86,9 +86,8 @@ anywhere yet.
 
 ## The cast
 
-Melee and archery read their timing from the behavior graph. No casting graph runs yet, so the charge
-is timed against the `SPIT` charge time. When a graph arrives it replaces this clock, and the phases
-stay. UESP states both shapes:
+The charge is timed against the `SPIT` charge time. The release follows the behaviour graph, as a
+shout does ([casting cues](#casting-cues)). UESP states both shapes:
 
 > Some spells will trigger immediately upon being cast and can be maintained as long as held.
 > Others require holding to charge the spell and releasing to cast it. Casting a spell of either
@@ -116,8 +115,29 @@ cast duration is a minimum: a release inside it keeps the cast going until it en
 out, the cast ends with the insufficient magicka refusal and takes what was left. The same
 one-millisecond slack as for effects keeps a held spell from skipping an application each second.
 
-Dual casting is not implemented. UESP documents 2.2 times the effect for 2.8 times the cost, but it
-is a perk, so two hands casting the same spell are two casts.
+## Dual casting
+
+UESP "Skyrim:Magic Overview" (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>): "once a
+dual-casting perk has been taken, relevant spells can be 'overcharged' by casting with both the
+right and left hands at the same time, resulting in a single, more powerful effect. The formula
+seems to be: 2.2x spell effectiveness for 2.8x spell cost".
+
+- The same spell must be readied in both hands, and the second hand must begin within 0.25 s of the
+  first. The window is OpenSky's choice; no record states one.
+- A perk must pass `Can Dual Cast Spell` for the spell. Each vanilla school perk, such as
+  `DestructionDualCasting`, sets it to 1 when `EPMagic_SpellHasSkill` names its school. Without
+  such a perk, the two hands stay two casts.
+- The first hand leads. The second only holds the spell, so the cast pays and applies once. Letting
+  go of either hand releases it.
+- The cost is `fMagicDualCastingCostMult` (2.8 in `Skyrim.esm`) times one cast. The charge time is
+  `fMagicDualCastingTimeMult` (1) times one charge.
+- Each entry's magnitude is multiplied by `fMagicDualCastingEffectivenessBase` (2.2) when its MGEF
+  has Power Affects Magnitude, and its duration when it has Power Affects Duration. A spell with
+  the `SPIT` flag No Dual Cast Modifications keeps its entries as authored.
+- The skill use is that of one cast: "Dual-casting a spell gives the same experience per cast as
+  one-handed cast."
+
+The values are read from the install with `openskycli gmst list --prefix fMagicDualCasting`.
 
 ## What refuses a cast
 
@@ -139,11 +159,13 @@ in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#re
 
 ## Abilities and powers
 
-An ability (`SPIT` type ability) is not cast. The actor has it. All abilities the actor knows are
-applied through the effect runtime. Vanilla gives most ability entries zero duration, meaning "as
-long as the actor has it". The effect runtime has no permanent mode for spells, and a zero-duration
-entry there applies once. For a resistance that would be a one-off nudge wearing the name of a
-permanent bonus. So those entries are counted and not applied. Timed entries apply normally.
+An ability (`SPIT` type ability) is not cast. The actor has it. Vanilla gives most ability entries
+zero duration, meaning "as long as the actor has it". So every entry of an ability is stored as a
+constant effect, whatever its duration, with the source kind `ability`. Once a second the effects
+are reconciled with the abilities each loaded actor knows: a new ability is applied, and a forgotten
+one is dispelled. A racial resistance therefore holds while the race keeps it. An entry with
+conditions, such as a night-only bonus, is suspended while they fail
+([conditions](/engine/magic.md#conditions)).
 
 A greater power works once per game day. The spellbook records the whole day number each power was
 last used, and a second cast that day is refused. Lesser powers have no limit: "Unlike Greater
@@ -162,7 +184,34 @@ A held button becomes a begin edge and a release edge, so it does not restart th
 Unequipping during a cast cancels the charge.
 
 The graph is told a spell is out through hand type 9 (`spell`), the value `magicbehavior.hkx` reads
-([combat graph names](/engine/combat-graph-names.md)), even though no casting clip plays yet.
+([combat graph names](/engine/combat-graph-names.md)). `bWantCastLeft` and `bWantCastRight` are true
+while that hand casts, and `IsInCastState` is 1 while either does.
+
+## Casting cues
+
+A released fire-and-forget hand waits for its spell-fire event before the spell leaves:
+`MRh_SpellFire_Event` for the right hand and `MLh_SpellFire_Event` for the left. The release clips
+raise them. While it waits, the hand's `bWantCast` is false, so the graph plays the throw. A graph
+that raises nothing lets the spell go after 0.4 seconds, an OpenSky value. [WARNING] The hand each
+event names is read from its prefix (`MRh`, `MLh`); the third spelling, `Spellfire`, is not acted on.
+
+The spell's costliest effect gives the hand its sounds and art. CK wiki "Magic Effect":
+
+| `SNDD` kind | Plays |
+| --- | --- |
+| 0 Draw/Sheathe | "when the player draws or sheathes their weapons with this spell in either hand" |
+| 1 Charge | for a fire-and-forget spell, from the press until the charge is full |
+| 2 Ready | for a fire-and-forget spell, while it "reaches its 'Ready' state" until the release |
+| 3 Release | "when the player releases the button and successfully casts the spell" |
+| 4 Cast Loop | for a concentration spell, "loops while the button is pressed" |
+| 5 On Hit | "when this effect is applied to its target", at each struck actor |
+
+A looping descriptor plays until the step ends; a one-shot plays once. The casting art is "on the
+hands while preparing to cast": it shows from the press until the hand is idle again. A dual cast
+shows the dual casting art when the effect has one. NPC casters get the same cues.
+
+- [WARNING] No effect anchor names a hand bone, so the art rides the actor.
+- The casting light is not drawn, because no effect places a light on an actor yet.
 
 ## Saving
 
@@ -193,9 +242,13 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
 - Cast right and Cast left: each runs a whole cast without holding a button. The charge is skipped
   ahead, then the cast is released. Holding the button in walk mode reaches the same states over real
   frames.
+- Dual cast: begins both hands together and runs the whole cast. The readout's last line says
+  "Dual cast" when the perk allowed it, and the refusal when it did not.
 - Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
   counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
-  = adjusted`), and a Conditions (player) block with one line per magic condition function.
+  = adjusted`), the count of ability effects the player holds, the casting cues sent with the last
+  one and a release that waits for its event, and a Conditions (player) block with one line per
+  magic condition function.
 
 The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
 `sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,
@@ -220,7 +273,3 @@ For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCast
 (skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
 `fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
 NPC formula; this is OpenSky's reading of the setting names.
-
-Dual casting is not built, so the `fMagicDualCasting*` settings stay unread.
-
-Casting animations, hand effects, and sounds are not done yet.

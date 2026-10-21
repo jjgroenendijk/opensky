@@ -48,8 +48,47 @@ public final class MagicCoordinator {
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
+    /// The player's accumulator while Slow Time splits the clocks.
+    var playerAccumulator: Double = 0
     /// Seconds since the last cloak pulse.
     var cloakClock: Float = 0
+    /// Seconds since the last ability reconcile.
+    var abilityClock: Float = 0
+    /// Actors a load gave timed effects whose modifiers are not rebuilt yet.
+    var pendingModifierRebuild: Set<ReferenceKey> = []
+    /// Seconds each broken ward stays in `IsWardState` 2.
+    var brokenWardSeconds: [ReferenceKey: Float] = [:]
+    /// The absorption roll, in 0 ..< 100. A test fixes it.
+    public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
+    public var soulTrapSettings = SoulTrapSettings.vanilla
+    public var soulTexts = SoulTexts.vanilla
+    public internal(set) var lastSoulTrap: SoulTrapOutcome?
+    public internal(set) var lastRecharge: RechargeOutcome?
+    public internal(set) var lastEnchanting = EnchantingOutcome.idle
+    /// Every SHOU in the load order, by key. Empty until `wireShouts`.
+    public internal(set) var shouts: [ReferenceKey: ResolvedShout] = [:]
+    public var shoutSettings = ShoutSettings.vanilla
+    public internal(set) var shoutMachine = ShoutMachine()
+    var wasShoutHeld = false
+    /// Seconds the panel's Shout button still holds the key.
+    var panelShoutHold: Float?
+    /// The shout the machine is voicing, fixed at the press.
+    var voicedShout: ReferenceKey?
+    public internal(set) var lastShout = ShoutOutcome.idle
+    /// Each casting hand as the cues saw it last frame; an idle hand is left out.
+    var castingViews: [CastSlot: CastingHandView] = [:]
+    public internal(set) var releaseLatch = SpellReleaseLatch()
+    var wasWeaponsDrawn: Bool?
+    public internal(set) var castingCueCount = 0
+    public internal(set) var lastCastingCue: String?
+    /// Runes waiting on the ground, oldest first. Not saved.
+    public internal(set) var runes: [PlacedRune] = []
+    public var runeSettings = RuneSettings.vanilla
+    public internal(set) var detonatedRunes = 0
+    /// Summoned and reanimated actors, oldest first. Not saved.
+    public internal(set) var commanded: [CommandedActor] = []
+    /// Where each caster aimed its last target-location summon.
+    var summonPoints: [ReferenceKey: SIMD3<Float>] = [:]
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
@@ -122,13 +161,24 @@ public final class MagicCoordinator {
     /// and the resident actors. A menu-paused frame delivers delta 0.
     public func advanceEffects(delta: Float) -> [MagicCommand] {
         guard var runtime = effects else { return takeCommands() }
-        runtime.advance(
-            delta: delta,
-            accumulator: &accumulator,
-            over: world.regeneratingHolders()
-        )
+        let holders = world.regeneratingHolders()
+        let scales = timeScales
+        if scales.isSlowed {
+            // The player's effects run on the player's clock, so Slow Time ends on time.
+            let split = Dictionary(grouping: holders) { $0.key == .player }
+            runtime.advance(delta: delta, accumulator: &accumulator, over: split[false] ?? [])
+            runtime.advance(
+                delta: delta * scales.player / scales.world,
+                accumulator: &playerAccumulator,
+                over: split[true] ?? []
+            )
+        } else {
+            runtime.advance(delta: delta, accumulator: &accumulator, over: holders)
+            playerAccumulator = accumulator
+        }
         effects = runtime
         performWorldActions()
+        maintainCarriedEffects(delta: delta)
         pulseCloaks(delta: delta)
         return takeCommands()
     }
@@ -141,13 +191,21 @@ public final class MagicCoordinator {
     }
 
     /// One frame of casting. A frame in a menu or in free-fly charges nothing
-    /// for the player, but NPC casts still advance.
+    /// for the player, but NPC casts still advance. `events` are the player graph's.
     public func advanceCasting(
-        _ intent: CastingIntent, isPlayerControlled: Bool
+        _ intent: CastingIntent,
+        isPlayerControlled: Bool,
+        events: [String] = [],
+        weaponsDrawn: Bool? = nil
     ) -> [MagicCommand] {
         guard let caster else { return takeCommands() }
-        caster.acceptFrame(isPlayerControlled ? intent : .still, on: .player)
+        caster.acceptFrame(
+            isPlayerControlled ? latched(intent, events: events) : .still, on: .player
+        )
         advanceActorCasts(delta: intent.deltaTime)
+        advanceRunes()
+        advanceCommanded()
+        advanceCastingCues(weaponsDrawn: weaponsDrawn)
         return takeCommands()
     }
 
@@ -221,7 +279,7 @@ public final class MagicCoordinator {
             caster.spellbook.resolve(baseline.all, fromPlugin: spellPluginName),
             to: holder
         )
-        caster.applyAbilities(on: holder)
+        reconcileAbilities(on: holder)
     }
 
     /// The carried items, in FormID order, that `transform` maps to a value.
@@ -255,8 +313,11 @@ extension MagicCoordinator: CasterWorld {
         let scaled = source.kind == .spell
             ? perkScaled(entries, of: source.record, caster: caster, on: target.key)
             : entries
+        let isDualCast = self.caster?.isApplyingDualCast == true
         let stored = withEffects { runtime in
-            runtime.apply(
+            runtime.application.isDualCast = isDualCast
+            defer { runtime.application = MagicApplicationContext() }
+            return runtime.apply(
                 scaled, fromPlugin: pluginName, source: source, caster: caster, on: target
             )
         }
@@ -293,8 +354,12 @@ extension MagicCoordinator: CasterWorld {
         let holders = residentHolders(of: hit.targets)
         guard
             let report = withEffects({ runtime in
-                SpellHitApplication
-                    .apply(hit, holders: holders, using: &runtime) { entries, target in
+                runtime.application.isDualCast = hit.payload.isDualCast
+                defer { runtime.application = MagicApplicationContext() }
+                return SpellHitApplication
+                    .apply(
+                        hit, holders: holders, using: &runtime, defences: spellHitDefences()
+                    ) { entries, target in
                         self.perkScaled(
                             entries, of: hit.payload.spell, caster: hit.payload.caster, on: target
                         )
@@ -302,6 +367,7 @@ extension MagicCoordinator: CasterWorld {
             })
         else { return .none }
         lastHit = report
+        breakWards(report.brokenWards)
         if !hit.targets.isEmpty, let onSpellHit, let store = effects?.effects {
             onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
         }

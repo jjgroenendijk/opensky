@@ -19,7 +19,7 @@ public final class CellResetCoordinator {
     /// What resets. Enable state, created references, quest and script state do not.
     public static let resetKinds: [WorldStateComponentKind] = [
         .death, .actorValues, .combat, .inventory, .activation, .lock, .deletion, .transform,
-        .relocation, .harvest, .temperedItems
+        .relocation, .harvest, .itemCopies
     ]
 
     public let store: WorldStateStore

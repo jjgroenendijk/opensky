@@ -10,11 +10,10 @@ nonisolated public struct CastingTally: Equatable, Sendable {
     public private(set) var castCount = 0
     public private(set) var concentrationSeconds = 0
     public private(set) var failureCounts: [String: Int] = [:]
-    /// Ability effect entries that carry no duration and so could not be held.
-    /// See `applyAbilities(on:)` for why they are counted rather than applied.
-    public private(set) var unheldAbilityEntries = 0
     /// Spell projectiles launched.
     public private(set) var projectileCount = 0
+    /// Casts both hands began together.
+    public private(set) var dualCastCount = 0
     /// Casts per delivery kind, so the ground each delivery covers is measured
     /// rather than assumed from the refusal counts alone.
     public private(set) var deliveryCounts: [String: Int] = [:]
@@ -31,8 +30,8 @@ nonisolated public struct CastingTally: Equatable, Sendable {
         failureCounts[failure.describedReason, default: 0] += 1
     }
 
-    public mutating func noteUnheldAbilityEntries(_ count: Int) {
-        unheldAbilityEntries += count
+    public mutating func noteDualCast() {
+        dualCastCount += 1
     }
 
     public mutating func noteProjectile() {

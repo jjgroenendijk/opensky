@@ -25,6 +25,8 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     /// A cast is wanted in that hand; `BSEventOnFalseToTrueModifier` starts it. Bool.
     public static let wantCastLeft = "bWantCastLeft"
     public static let wantCastRight = "bWantCastRight"
+    /// A shout is wanted; `0_master.hkx` turns the rise into `BeginCastVoice`. Bool.
+    public static let wantCastVoice = "bWantCastVoice"
     /// 1 while a hand casts, else 0. Real.
     public static let inCastState = "IsInCastState"
     /// The actor's state, as the value of one `iState_*` constant. Int32.
@@ -33,7 +35,7 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     /// Every input, in write order.
     public static let inputs = [
         headTracking, targetLocation, cameraFromX, cameraFromY, cameraFromZ, pitch,
-        sprintOK, wantBlock, wantCastLeft, wantCastRight, inCastState, state
+        sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState, state
     ]
 
     // MARK: - Outputs the graph publishes

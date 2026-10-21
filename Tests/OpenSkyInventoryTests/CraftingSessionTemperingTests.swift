@@ -31,11 +31,11 @@ extension CraftingSessionTests {
         #expect(first.improved == TemperStep(from: 0, to: 1))
         #expect(harness.inventory.count(of: Items.sword, in: .player) == 2)
         #expect(harness.inventory.count(of: Items.lockpick, in: .player) == 2)
-        #expect(harness.inventory.temperedItems(of: .player).copies(of: Items.sword, held: 2)
+        #expect(harness.inventory.itemCopies(of: .player).levels(of: Items.sword, held: 2)
             == [1, 0])
         #expect(harness.inventory.temperLevel(of: Items.sword, in: .player) == 1)
         try harness.session.craft(Self.swordRecipe)
-        #expect(harness.inventory.temperedItems(of: .player).copies(of: Items.sword, held: 2)
+        #expect(harness.inventory.itemCopies(of: .player).levels(of: Items.sword, held: 2)
             == [1, 1])
         #expect(harness.skills.uses.count == 2)
         let gain = Tempering.valueMultiplier(level: 1) - Tempering.valueMultiplier(level: 0)
@@ -87,11 +87,11 @@ struct TemperingTests {
 
     @Test func heldCopiesClampTheTemperedList() throws {
         let item = FormID(0x200)
-        let state = TemperedItemState(levels: [item.rawValue: [0, 2, 5]])
-        #expect(state.copies(of: item, held: 1) == [5])
-        #expect(state.copies(of: item, held: 3) == [5, 2, 0])
+        let state = ItemCopyState(levels: [item.rawValue: [0, 2, 5]])
+        #expect(state.levels(of: item, held: 1) == [5])
+        #expect(state.levels(of: item, held: 3) == [5, 2, 0])
         let improved = try #require(state.improving(item, held: 3, from: 0, to: 3))
-        #expect(improved.copies(of: item, held: 3) == [5, 3, 2])
+        #expect(improved.levels(of: item, held: 3) == [5, 3, 2])
         #expect(state.improving(item, held: 3, from: 4, to: 5) == nil)
     }
 }

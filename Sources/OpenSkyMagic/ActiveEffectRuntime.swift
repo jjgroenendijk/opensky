@@ -51,6 +51,14 @@ public struct ActiveEffectRuntime {
     public var sourceCategory: (ActiveEffectSource) -> ActiveEffectSourceCategory = { _ in .other }
     /// Whether an actor carries `ActorTypeUndead`, for Turn Undead.
     public var isUndead: (ActorValueHolder) -> Bool = { _ in false }
+    /// The spell-side `CTDA` list of the entry a stored effect came from, which is
+    /// checked again every second. Nil when the source is not known here.
+    public var entryConditions: (ActiveEffect) -> ConditionList? = { _ in nil }
+    /// Seconds toward the next condition check. Internal for the tick file.
+    var conditionClock: Float = 0
+    /// What the effects being applied right now came from, for `EffectWasDualCast`
+    /// and the absorb step. The caller sets it around one `apply`.
+    public var application = MagicApplicationContext()
 
     public init(
         values: any ActorValueAccess,
@@ -105,7 +113,16 @@ public struct ActiveEffectRuntime {
                 tally.noteUnresolvedEffect()
                 continue
             }
-            guard allows(entry.conditions, on: target) else {
+            // "Effect-side conditions are checked when an effect is applied and
+            // determine whether an actor will ever receive the effect, while
+            // spell-side conditions determine when the effect is active."
+            // (<https://ck.uesp.net/wiki/Magic_Effect>)
+            guard allows(resolved.effect.conditions, on: target) else {
+                tally.noteEffectConditionSkipped()
+                continue
+            }
+            let entryHolds = allows(entry.conditions, on: target)
+            guard entryHolds || isConstant else {
                 tally.noteConditionSkipped()
                 continue
             }
@@ -126,7 +143,9 @@ public struct ActiveEffectRuntime {
                     tally.note(reason)
                     continue
                 }
-                actOnce(application, caster: caster, on: target)
+                if entryHolds {
+                    actOnce(application, caster: caster, on: target)
+                }
                 if application.isInstant {
                     tally.noteInstant()
                 } else if
@@ -134,7 +153,8 @@ public struct ActiveEffectRuntime {
                         application,
                         source: source,
                         caster: caster,
-                        on: target
+                        on: target,
+                        suspended: !entryHolds
                     )
                 {
                     stored.append(effect)
@@ -192,7 +212,7 @@ public struct ActiveEffectRuntime {
     /// list this engine cannot evaluate is false and is counted, never a silent
     /// pass. Both run-ons name the target: an effect entry's conditions are
     /// asked about the actor receiving the effect.
-    private mutating func allows(
+    mutating func allows(
         _ list: ConditionList,
         on target: ActorValueHolder
     ) -> Bool {
@@ -200,6 +220,7 @@ public struct ActiveEffectRuntime {
         var context = conditions
         context.subject = target.key
         context.target = target.key
+        context.magicApplication = application
         var evaluator = ConditionEvaluator(context: context, registry: conditionRegistry)
         let outcome = evaluator.evaluate(list)
         conditions.random = evaluator.context.random
@@ -213,7 +234,8 @@ public struct ActiveEffectRuntime {
         _ application: MagicEffectApplication,
         source: ActiveEffectSource,
         caster: ReferenceKey?,
-        on target: ActorValueHolder
+        on target: ActorValueHolder,
+        suspended: Bool = false
     ) -> ActiveEffect? {
         if application.refusesRecast, state(of: target).hasEffect(application.effect) {
             tally.noteRecastRefused()
@@ -246,11 +268,14 @@ public struct ActiveEffectRuntime {
             values: application.values,
             stackKeyword: application.stackKeyword
         )
-        if application.mode.ownsModifierSlot, !grows(application) {
+        effect.wasDualCast = self.application.isDualCast
+        if suspended {
+            effect = effect.suspended(true)
+        } else if application.mode.ownsModifierSlot, !grows(application) {
             effect = effect.owningModifiers(claim(effect, on: target))
         }
         write(state.adding(effect), for: target)
-        if let action = worldAction(.began, of: effect, on: target) {
+        if !suspended, let action = worldAction(.began, of: effect, on: target) {
             worldActions.append(action)
         }
         tally.noteApplied()
@@ -258,13 +283,13 @@ public struct ActiveEffectRuntime {
     }
 
     /// Whether the held value starts at zero and grows on each tick.
-    private func grows(_ application: MagicEffectApplication) -> Bool {
+    func grows(_ application: MagicEffectApplication) -> Bool {
         application.rule == .accumulate && application.mode != .constant
     }
 
     /// Adds each of `effect`'s values to the temporary modifier slot, reporting
     /// what it now owns.
-    private func claim(_ effect: ActiveEffect, on target: ActorValueHolder) -> [Int32: Float] {
+    func claim(_ effect: ActiveEffect, on target: ActorValueHolder) -> [Int32: Float] {
         var owned: [Int32: Float] = [:]
         for value in effect.values where ActorValueIdentity.isVanilla(index: value.index) {
             let delta = effect.delta(of: value)

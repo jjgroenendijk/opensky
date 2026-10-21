@@ -24,7 +24,8 @@ extension CombatLoopRuntime {
         let player = world.combatPlayer.key
         for actor in actors {
             guard
-                !actor.isDead, actor.key != player, hostility[actor.key] == .neutral,
+                !actor.isDead, actor.key != player, commanders[actor.key] == nil,
+                hostility[actor.key] == .neutral,
                 !ignoring.contains(actor.key), behaviors[actor.key]?.isEngaged != true
             else { continue }
             let ally = fighting.first { other in

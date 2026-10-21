@@ -60,6 +60,17 @@ nonisolated extension PerkEntryPoint {
     public static let purifyAlchemyIngredients = PerkEntryPoint(rawValue: 73)
     public static let modPoisonDoseCount = PerkEntryPoint(rawValue: 83)
     public static let modPotionsCreated = PerkEntryPoint(rawValue: 89)
+    public static let canDualCastSpell = PerkEntryPoint(rawValue: 75)
+    public static let modWardMagickaAbsorptionPct = PerkEntryPoint(rawValue: 71)
+    public static let modSoulGemRecharge = PerkEntryPoint(rawValue: 49)
+    public static let modSoulPctCapturedToWeapon = PerkEntryPoint(rawValue: 78)
+    public static let modEnchantmentPower = PerkEntryPoint(rawValue: 77)
+    public static let modAppliedEnchantmentsAllowed = PerkEntryPoint(rawValue: 80)
+    public static let modShoutOK = PerkEntryPoint(rawValue: 82)
+    public static let modPlayerMagicSlowdown = PerkEntryPoint(rawValue: 70)
+    public static let modSpellRangeTargetLoc = PerkEntryPoint(rawValue: 88)
+    public static let modCommandedActorLimit = PerkEntryPoint(rawValue: 68)
+    public static let applyReanimateSpell = PerkEntryPoint(rawValue: 53)
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
@@ -81,6 +92,11 @@ nonisolated extension PerkEntryPoint {
         modAlchemyEffectiveness, modInitialIngredientEffectsLearned, purifyAlchemyIngredients,
         modPoisonDoseCount, modPotionsCreated,
         modPickpocketChance, canPickpocketEquippedItem, shouldApplyPlacedItem,
-        modLockpickingCrimeChance
+        modLockpickingCrimeChance,
+        canDualCastSpell, modWardMagickaAbsorptionPct, modSoulGemRecharge,
+        modSoulPctCapturedToWeapon,
+        modEnchantmentPower, modAppliedEnchantmentsAllowed, modShoutOK,
+        modPlayerMagicSlowdown, modSpellRangeTargetLoc, modCommandedActorLimit,
+        applyReanimateSpell
     ]
 }

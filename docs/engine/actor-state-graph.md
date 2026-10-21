@@ -30,6 +30,7 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `bSprintOK` | bool | False when the stamina gate refuses a sprint | Sprint transition conditions |
 | `iWantBlock` | int32 | 1 while the block key is held | Block and bow zoom conditions |
 | `bWantCastLeft`, `bWantCastRight` | bool | True while that hand casts | `BSEventOnFalseToTrueModifier` |
+| `bWantCastVoice` | bool | True while the player inhales a shout ([shouts](/engine/shouts.md)) | `BSEventOnFalseToTrueModifier` raising `BeginCastVoice` |
 | `IsInCastState` | real | 1 while either hand casts, else 0 | Cast blends |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
 

@@ -91,6 +91,7 @@ final class CombatLoopSection: PanelSectionViewController {
         statsLabel.stringValue = [
             CombatLoopReadout.stateText(for: snapshot),
             CombatLoopReadout.actorsText(for: snapshot),
+            CombatLoopReadout.alliesText(for: snapshot),
             CombatLoopReadout.castingText(for: snapshot),
             CombatLoopReadout.hostilityText(for: snapshot),
             CombatLoopReadout.temperamentText(for: snapshot),

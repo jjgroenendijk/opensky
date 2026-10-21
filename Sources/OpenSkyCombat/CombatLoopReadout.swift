@@ -83,6 +83,14 @@ nonisolated public enum CombatLoopReadout: Sendable {
             .joined(separator: "\n")
     }
 
+    /// The player's allies, such as summons, and what each does.
+    public static func alliesText(for snapshot: CombatLoopSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Allies: unavailable" }
+        guard !snapshot.allies.isEmpty else { return "Allies: none" }
+        return (["Allies: \(snapshot.allies.count)"] + snapshot.allies.map { "  \($0)" })
+            .joined(separator: "\n")
+    }
+
     /// One fighting actor as a readout line.
     public static func actorLine(for actor: CombatActorReadout) -> String {
         let situation = String(

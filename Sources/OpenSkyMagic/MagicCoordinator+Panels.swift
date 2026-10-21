@@ -86,6 +86,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
         case .ingredient: "sIngredient"
         case .spell: "sMagicTypeSpell"
         case .enchantment: "sMagicTypeEnchantment"
+        case .ability: "sMagicTypeAbility"
         case .perk: nil
         }
         return setting.map { magicTexts.word($0, or: kind.describedName) } ?? kind.describedName
@@ -105,7 +106,7 @@ extension MagicCoordinator: CastingControlProviding {
         guard let caster else { return .unavailable }
         let book = caster.spellbook.state(of: .player)
         let tally = caster.tally
-        return CastingControlSnapshot(
+        var snapshot = CastingControlSnapshot(
             isAvailable: true,
             knownSpells: playerKnownSpells().map { readout($0, book: book) },
             selectedSpellName: selectedKnownSpell()?.displayName,
@@ -119,14 +120,21 @@ extension MagicCoordinator: CastingControlProviding {
             concentrationSeconds: tally.concentrationSeconds,
             failureCount: tally.failureCount,
             failureLines: tally.failureLines,
-            unheldAbilityEntries: tally.unheldAbilityEntries,
+            abilityEffectCount: effects?.active(on: .player)
+                .filter { $0.source.kind == .ability }.count ?? 0,
             projectileCount: tally.projectileCount,
             deliveryLines: tally.deliveryLines,
             lastHitTargets: lastHit?.targetCount ?? 0,
-            lastHitAdjustments: lastHit?.adjustments.map(\.line) ?? [],
+            lastHitAdjustments: (lastHit?.defenceLines ?? [])
+                + (lastHit?.adjustments.map(\.line) ?? []),
             conditionLines: magicConditionLines(),
             lastActionText: lastCastingAction.text
         )
+        snapshot.soulLines = soulLines()
+        snapshot.runeText = runeText
+        snapshot.commandedText = commandedText
+        snapshot.castingCueText = castingCueText
+        return snapshot
     }
 
     @discardableResult
@@ -134,7 +142,7 @@ extension MagicCoordinator: CastingControlProviding {
         guard let caster else { return recordCasting(.unavailable) }
         let race = caster.spellbook.resolve(world.playerRaceSpells(), fromPlugin: pluginName)
         let granted = caster.spellbook.grantStartSpells(to: .player, additional: race)
-        let held = caster.applyAbilities(on: .player)
+        let held = reconcileAbilities(on: .player).storedCount
         return recordCasting(.learnedStartSpells(granted: granted, held: held))
     }
 
@@ -201,6 +209,25 @@ extension MagicCoordinator: CastingControlProviding {
             caster.advance(delta: 1, on: .player)
         }
         return recordCasting(.cast(caster.release(hand, on: .player)))
+    }
+
+    @discardableResult
+    public func castReadiedSpellWithBothHands() -> CastingActionOutcome {
+        guard let caster else { return recordCasting(.unavailable) }
+        caster.begin(.right, on: .player)
+        let outcome = caster.begin(.left, on: .player)
+        guard caster.state(of: .right).isDualCast else {
+            caster.cancel(.right, on: .player)
+            caster.cancel(.left, on: .player)
+            return recordCasting(.cast(outcome.failure.map(SpellCastOutcome.failed)
+                    ?? .failed(.notDualCastable)))
+        }
+        let charge = caster.state(of: .right).phase == .charging ? MagicCore.panelChargeStep : 0
+        caster.advance(delta: charge, on: .player)
+        if caster.phase(of: .right) == .concentrating {
+            caster.advance(delta: 1, on: .player)
+        }
+        return recordCasting(.cast(caster.release(.right, on: .player)))
     }
 
     // MARK: - Reads

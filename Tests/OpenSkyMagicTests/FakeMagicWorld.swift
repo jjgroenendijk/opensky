@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
 
 @MainActor
@@ -26,9 +27,18 @@ final class FakeMagicWorld: MagicWorld {
     var nearbyHostiles: [ReferenceKey] = []
     /// Every actor's perks at an entry point, as a factor on the value.
     var perkFactors: [PerkEntryPoint: Float] = [:]
+    /// Every actor's perks at an entry point, as a value that replaces the input.
+    var perkValues: [PerkEntryPoint: Float] = [:]
     private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
+    /// Items with `ReusableSoulGem`.
+    var reusableGems: Set<FormID> = []
     private(set) var bookRaises: [(skill: Int32, points: Int)] = []
     var undead: Set<ReferenceKey> = []
+    /// Actors with `ActorTypeNPC`, whose souls are black.
+    var npcs: Set<ReferenceKey> = []
+    /// Resident actors beside the player.
+    var holders: [ReferenceKey: ActorValueHolder] = [:]
+    private(set) var notifications: [String] = []
     private(set) var cloakRadii: [Float] = []
 
     @discardableResult
@@ -38,7 +48,7 @@ final class FakeMagicWorld: MagicWorld {
     }
 
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
-        key == .player ? .player : nil
+        key == .player ? .player : holders[key]
     }
 
     func regeneratingHolders() -> [ActorValueHolder] {
@@ -90,8 +100,65 @@ final class FakeMagicWorld: MagicWorld {
         return nearbyHostiles
     }
 
-    func actorHasKeyword(_: String, on holder: ActorValueHolder) -> Bool {
-        undead.contains(holder.key)
+    func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
+        editorID == "ActorTypeNPC" ? npcs.contains(holder.key) : undead.contains(holder.key)
+    }
+
+    func postNotification(_ text: String) {
+        notifications.append(text)
+    }
+
+    var shoutKnowledge = ShoutKnowledge()
+    var keywords: [String: ReferenceKey] = [:]
+    /// Corpses `reanimate` may raise.
+    var dead: Set<ReferenceKey> = []
+    private(set) var summoned: [(base: FormID, caster: ReferenceKey)] = []
+    private(set) var releasedActors: [CommandedActor] = []
+
+    func summonActor(_ base: FormID, at _: SIMD3<Float>?, for caster: ReferenceKey)
+        -> ReferenceKey?
+    {
+        summoned.append((base: base, caster: caster))
+        return .generated(UInt64(summoned.count))
+    }
+
+    func reanimate(_ corpse: ReferenceKey, for _: ReferenceKey) -> Bool {
+        dead.remove(corpse) != nil
+    }
+
+    func releaseCommandedActor(_ actor: CommandedActor) {
+        releasedActors.append(actor)
+    }
+
+    func isActorDead(_ key: ReferenceKey) -> Bool {
+        dead.contains(key)
+    }
+
+    var runeTargets: [MeleeTarget] = []
+
+    func keyword(editorID: String) -> ReferenceKey? {
+        keywords[editorID]
+    }
+
+    func runeTriggers(for _: ReferenceKey) -> [MeleeTarget] {
+        runeTargets
+    }
+
+    func spellHitCandidates() -> [MeleeTarget] {
+        runeTargets
+    }
+
+    func changeShoutKnowledge(_ change: ShoutKnowledgeChange) {
+        switch change {
+        case let .addShout(shout): shoutKnowledge.shouts.insert(shout)
+        case let .equip(shout): shoutKnowledge.equipped = shout
+        case let .teachWord(word): shoutKnowledge.knownWords.insert(word)
+        case let .unlockWord(word): shoutKnowledge.unlockedWords.insert(word)
+        }
+    }
+
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        editorID == "ReusableSoulGem" && reusableGems.contains(item)
     }
 
     func perkModified(
@@ -102,7 +169,7 @@ final class FakeMagicWorld: MagicWorld {
         seams _: ConditionContext
     ) -> Float {
         perkOwners[entryPoint] = key
-        return value * (perkFactors[entryPoint] ?? 1)
+        return perkValues[entryPoint] ?? value * (perkFactors[entryPoint] ?? 1)
     }
 
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {

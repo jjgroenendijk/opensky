@@ -14,6 +14,9 @@ nonisolated public struct SpellHitEffectLinks: Equatable, Sendable {
     public let hitShader: FormID?
     public let hitEffectArt: FormID?
     public let explosion: FormID?
+    /// The MGEF's On Hit sound, a load-order `SNDR`: it "plays when this effect is
+    /// applied to its target" (CK wiki "Magic Effect").
+    public var hitSound: FormID?
     /// The spell entry's area, feet. A non-zero area sets off the explosion.
     public let area: UInt32
     /// The spell entry's duration, seconds. Zero means the hit is instant.
@@ -50,6 +53,9 @@ nonisolated public struct SpellHitEvent: Equatable, Sendable {
 }
 
 nonisolated extension MagicEffectStore {
+    /// `SNDD` kind 5, On Hit (UESP "Skyrim Mod:Mod File Format/MGEF").
+    static let onHitSoundKind: UInt32 = 5
+
     /// The links of every entry in `payload` whose MGEF resolves.
     public func hitEffectLinks(of payload: SpellPayload) -> [SpellHitEffectLinks] {
         payload.entries.compactMap { entry -> SpellHitEffectLinks? in
@@ -57,7 +63,7 @@ nonisolated extension MagicEffectStore {
                 let resolved = resolve(entry, fromPlugin: payload.sourcePlugin),
                 let effect = resolved.effect.data
             else { return nil }
-            return SpellHitEffectLinks(
+            var links = SpellHitEffectLinks(
                 plugin: resolved.sourcePlugin,
                 imageSpaceModifier: effect.imageSpaceModifier,
                 hitShader: effect.hitShader,
@@ -66,6 +72,11 @@ nonisolated extension MagicEffectStore {
                 area: entry.area,
                 duration: entry.duration
             )
+            links.hitSound = resolved.effect.sounds.first { $0.kind == Self.onHitSoundKind }
+                .flatMap(\.descriptor)
+                .flatMap { resolvedID($0, fromPlugin: resolved.sourcePlugin) }
+                .flatMap(loadOrderFormID)
+            return links
         }
     }
 }

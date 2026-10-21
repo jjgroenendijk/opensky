@@ -22,6 +22,8 @@ nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, 
     /// A SPEL an owned PERK grants as a constant ability. Not `spell`, because
     /// losing the perk removes it, not a dispel.
     case perk = 4
+    /// A SPEL of type ability the actor knows. It lasts while the spell is known.
+    case ability = 5
 
     public var describedName: String {
         switch self {
@@ -30,6 +32,7 @@ nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, 
         case .spell: "spell"
         case .enchantment: "enchantment"
         case .perk: "perk"
+        case .ability: "ability"
         }
     }
 }
@@ -136,6 +139,11 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
     /// Peak Value Modifier's second associated item: the keyword two effects
     /// must share before the weaker of them is dispelled.
     public let stackKeyword: ReferenceKey?
+    /// The entry's conditions failed at the last check, so the effect holds no
+    /// slot and pays nothing until they pass. Not saved: the next check sets it.
+    public private(set) var isSuspended = false
+    /// The cast was dual, which `EffectWasDualCast` reads.
+    public var wasDualCast = false
 
     public init(
         sequence: UInt64,
@@ -226,6 +234,16 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         copy.values = values.map { value in
             guard let amount = amounts[value.index] else { return value }
             return value.owning(amount)
+        }
+        return copy
+    }
+
+    /// This effect suspended or resumed. A suspended effect owns no slot.
+    public func suspended(_ suspended: Bool) -> ActiveEffect {
+        var copy = self
+        copy.isSuspended = suspended
+        if suspended {
+            copy.values = values.map { $0.owning(0) }
         }
         return copy
     }

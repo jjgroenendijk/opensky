@@ -31,6 +31,8 @@ public enum PerkRuntimeFixture {
         /// Investor's shape: a quest effect that sets stage 10 of `investQuest`.
         public static let questStage: UInt32 = 0x0109
         public static let investQuest: UInt32 = 0x0400
+        /// `Can Dual Cast Spell`, set to 1 with no conditions.
+        public static let dualCasting: UInt32 = 0x010A
     }
 
     /// AVIF identities. One record, carrying the One-Handed perk tree the
@@ -56,18 +58,23 @@ public enum PerkRuntimeFixture {
         /// A spell whose SPIT names the perk that *also* hooks `Mod Spell Cost`,
         /// which is the shape every vanilla school perk has.
         public static let selfHalving: UInt32 = 0x0212
+        /// Fire and forget, self, cost 10: one entry of `poweredFortify`, 10 for 30 s.
+        public static let dualCastable: UInt32 = 0x0213
     }
 
     /// The keyword the damage chain's weapon tab asks for. No KYWD record is
     /// authored behind it: the tab exists to be *unbindable*, which is the
     /// documented gap the runtime counts.
     public static let weaponKeyword: UInt32 = 0x0030
+    /// Fortify Resist Fire whose magnitude and duration both scale with power.
+    public static let poweredFortify: UInt32 = 0x0041
 
     /// Entry points the fixture hooks, by their documented ids.
     public static let attackDamage = PerkEntryPoint(rawValue: 35)
     public static let percentBlocked = PerkEntryPoint(rawValue: 39)
     public static let spellCost = PerkEntryPoint(rawValue: 38)
     public static let modSkillUse = PerkEntryPoint(rawValue: 22)
+    public static let canDualCastSpell = PerkEntryPoint(rawValue: 75)
 
     public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
@@ -100,15 +107,26 @@ public enum PerkRuntimeFixture {
         try PerkFixture.plugin(
             perks: perkRecords,
             spells: spellRecords,
-            magicEffects: [SpellbookFixture.magicEffect(
-                formID: SpellbookFixture.fortifyResistFire,
-                editorID: "FortifyResistFire",
-                data: SpellbookFixture.effectData(
-                    flags: [.recover],
-                    archetype: 0,
-                    primaryValue: ActorValueIndex.resistFire
+            magicEffects: [
+                SpellbookFixture.magicEffect(
+                    formID: SpellbookFixture.fortifyResistFire,
+                    editorID: "FortifyResistFire",
+                    data: SpellbookFixture.effectData(
+                        flags: [.recover],
+                        archetype: 0,
+                        primaryValue: ActorValueIndex.resistFire
+                    )
+                ),
+                SpellbookFixture.magicEffect(
+                    formID: poweredFortify,
+                    editorID: "PoweredFortify",
+                    data: SpellbookFixture.effectData(
+                        flags: [.recover, .powerAffectsMagnitude, .powerAffectsDuration],
+                        archetype: 0,
+                        primaryValue: ActorValueIndex.resistFire
+                    )
                 )
-            )],
+            ],
             actorValues: [actorValueInformationRecord]
         )
     }
@@ -126,6 +144,13 @@ public enum PerkRuntimeFixture {
                 editorID: "SelfHalving",
                 baseCost: 20,
                 halfCostPerk: Perk.spellCost
+            ),
+            spellRecord(
+                formID: Spell.dualCastable,
+                editorID: "DualCastable",
+                baseCost: 10,
+                castingType: 1,
+                effects: [EffectSpec(effect: poweredFortify, magnitude: 10, duration: 30)]
             ),
             spellRecord(
                 formID: Spell.stoneskin,
@@ -216,6 +241,7 @@ public enum PerkRuntimeFixture {
                     )]
                 )
             ),
+            dualCastingPerkRecord,
             PerkFixture.perkRecord(
                 formID: Perk.ability,
                 fields: PerkFixture.fields(

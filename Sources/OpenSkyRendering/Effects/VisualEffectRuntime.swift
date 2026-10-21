@@ -17,7 +17,7 @@ nonisolated public enum EffectAnchor: Hashable, Sendable {
 
 /// Why an effect is live, for the readout and for removing one source's effects.
 nonisolated public enum VisualEffectCause: String, Equatable, Sendable, CaseIterable {
-    case race, spellHit, explosion, impact, script, debug
+    case race, spellHit, explosion, impact, script, casting, debug
 }
 
 /// The resolved look of one `RFCT` (or one `EFSH` alone).

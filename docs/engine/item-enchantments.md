@@ -11,7 +11,8 @@ tags: [engine, magic, enchantments, combat, inventory]
 
 A weapon's enchantment fires on whatever it hits and spends charge. A worn item's enchantment grants
 its effects while it is worn. A fortify effect from either one moves a damage number. The records are
-on the [enchantment records](/formats/enchantments.md) page.
+on the [enchantment records](/formats/enchantments.md) page. An enchantment the player made at an
+enchanter acts the same way; [enchanting](/engine/enchanting.md) says how it is made.
 
 ## Three shapes
 
@@ -70,18 +71,35 @@ gives "about 1.7 times the uses documented here". Its formula for a player-made 
 Enchanting skill instead. The two disagree about which skill counts, and 1.7 has no formula. So
 OpenSky charges the base cost, the number the tables print.
 
-An empty weapon stays empty. Recharging with soul gems is not implemented, and neither is enchanting
-an item.
+## Recharging
+
+A soul gem puts its soul's charge back, up to the full charge, and is used up. UESP gives the charge
+of each soul: 250 petty, 500 lesser, 1000 common, 2000 greater, and 3000 grand
+(<https://en.uesp.net/wiki/Skyrim:Souls>). A black soul counts as grand. A gem with the
+`ReusableSoulGem` keyword, such as Azura's Star, empties and stays. The game lets the player pick
+the gem. The Spellcasting panel picks for them: the smallest filled gem that fills the weapon, or
+the largest gem when none does. A recharge gives Enchanting experience by the soul's size
+([enchanting](/engine/enchanting.md#experience)).
+
+Soul Squeezer adds 250 to every soul through `Mod Soul Gem Recharge` (49), as an add-value entry in
+the install. UESP describes it the same way: "This treats all souls as having 250 larger size when
+used for recharging" (<https://en.uesp.net/wiki/Skyrim:Enchanting>).
+
+Soul Siphon recharges the killer's weapon at a killing blow. `Mod Soul Pct Captured to Weapon` (78)
+is a set-value entry of 0.05, and its target tab requires `HasKeyword ActorTypeNPC == 0` on the
+victim. So the data itself leaves people out, which matches UESP: "Death blows to creatures, but not
+people". The weapon gets that share of the victim's soul charge, sized as [soul trap](/engine/soul-trap.md)
+sizes it. UESP says it does not work with staves, so a staff is skipped. OpenSky does not know
+which weapon dealt the blow, so the killer's first equipped weapon that is short of charge gets it.
 
 ## Where charge is stored
 
-Charge is part of the owner's enchanted item component ([runtime state](/engine/runtime-state.md)),
-per item, with the effects each worn item applied.
-
-Charge belongs to one item, but OpenSky has no identity per item instance yet. An item stack is keyed
-by base form ID, so charge is too. So one owner holding two of the same enchanted weapon shares one
-charge between them. Every access goes through a charge lookup by item, so only those signatures
-change when a stack key includes more than the base.
+Charge is kept on the weapon's best held [item copy](/engine/item-copies.md). Two of the same
+enchanted sword each have their own charge, and a hit spends the first one. A full copy stores
+nothing. An item the owner does not hold, as in a test with no inventory, keeps its charge per base
+item in the owner's enchanted item component ([runtime state](/engine/runtime-state.md)). That
+component also holds the effects each worn item applied. A charge an older save kept per base item
+is read, then moved onto the copy at the next hit or recharge.
 
 ## A landed hit
 
@@ -172,11 +190,8 @@ into a multiplier would be a different formula.
 
 ## Saving
 
-Charge and worn effects go in the `ECHG` chunk ([save
-chunks](/formats/opensky-save-actor-chunks.md)). Charge is not in `INVN`: inventory entries are
-counts, and charge is a float per item that changes on a hit, not on a transfer. The worn effect
-list is the other half of the same fact, which `AEFF` effects each worn item owns. Splitting them
-would let a load restore effects that nothing could take off.
+A copy's charge goes in the `ICPY` chunk with the rest of the copy. The worn effect lists, and any
+charge kept per base item, go in the `ECHG` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
 
 ## Where it shows
 

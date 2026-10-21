@@ -117,25 +117,25 @@ nonisolated extension ConditionFunctions {
                         .contains { spells?.spell(key: $0)?.spellType == .disease })
             }
         })
-        installUnreachedMagic(&registry)
+        installCastStateMagic(&registry)
     }
 
-    /// OpenSky casts with one hand at a time and has no ward state, so these read
-    /// the run-on's magic and answer the single-hand, no-ward value.
-    private static func installUnreachedMagic(_ registry: inout ConditionFunctionRegistry) {
-        for (index, name) in [(UInt16(627), "IsDualCasting"), (724, "EffectWasDualCast")] {
-            registry.register(ConditionFunction(index: index, name: name) { call in
-                magicState(call).map { _ in 0 }
-            })
-        }
-        // Ward state 0 is "none".
+    /// `IsDualCasting` and `IsWardState` read the run-on's magic; `EffectWasDualCast`
+    /// reads the cast behind the effect whose conditions are being checked.
+    private static func installCastStateMagic(_ registry: inout ConditionFunctionRegistry) {
+        registry.register(ConditionFunction(index: 627, name: "IsDualCasting") { call in
+            magicState(call).map { Self.isTrue($0.isDualCasting) }
+        })
+        registry.register(ConditionFunction(index: 724, name: "EffectWasDualCast") { call in
+            .success(Self.isTrue(call.context.magicApplication.isDualCast))
+        })
         registry
             .register(ConditionFunction(
                 index: 602,
                 name: "IsWardState",
                 parameter1: .integer
             ) { call in
-                magicState(call).map { _ in Self.isTrue(call.parameter1?.asInt32 == 0) }
+                magicState(call).map { Self.isTrue(call.parameter1?.asInt32 == $0.wardState) }
             })
         for (index, name) in [(UInt16(500), "EPAlchemyGetMakingPoison"), (721, "IsPoison")] {
             registry.register(ConditionFunction(index: index, name: name) { call in

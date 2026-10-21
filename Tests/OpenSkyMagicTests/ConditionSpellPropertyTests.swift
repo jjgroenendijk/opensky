@@ -19,18 +19,21 @@ struct ConditionSpellPropertyTests {
         _ function: UInt16, equals value: Float,
         parameter1: UInt32 = 0, parameter2: UInt32 = 0,
         evaluating spell: UInt32? = nil,
-        potionKeywords: Set<ReferenceKey>? = nil
+        potionKeywords: Set<ReferenceKey>? = nil,
+        wardState: Int32 = 0
     ) throws -> ConditionOutcome {
         let index = try SpellbookFixture.index()
         let effects = SpellbookFixture.effectStore(index: index)
         let spells = SpellStore(index: index, effects: effects)
         var context = try ConditionEvaluatorFixture.populatedContext()
+        var state = MagicConditionState(
+            knownSpells: [SpellbookFixture.key(SpellbookFixture.Spell.fastHealing)],
+            handSpells: [.right: SpellbookFixture.key(SpellbookFixture.Spell.fastHealing)]
+        )
+        state.wardState = wardState
         context.magic = MagicConditionResolution(
             spells: spells, effects: effects, sourcePlugin: SpellbookFixture.pluginName,
-            states: [subject: MagicConditionState(
-                knownSpells: [SpellbookFixture.key(SpellbookFixture.Spell.fastHealing)],
-                handSpells: [.right: SpellbookFixture.key(SpellbookFixture.Spell.fastHealing)]
-            )]
+            states: [subject: state]
         )
         context.spellEvaluation = SpellEvaluationResolution(
             spell: spell.flatMap { spells.spell(key: SpellbookFixture.key($0)) },
@@ -75,6 +78,13 @@ struct ConditionSpellPropertyTests {
         #expect(try Self.evaluate(627, equals: 0) == .true)
         #expect(try Self.evaluate(602, equals: 1, parameter1: 0) == .true)
         #expect(try Self.evaluate(602, equals: 0, parameter1: 1) == .true)
+    }
+
+    /// `IsWardState` compares its parameter with the state the session publishes.
+    @Test func aHeldWardAnswersItsState() throws {
+        #expect(try Self.evaluate(602, equals: 1, parameter1: 1, wardState: 1) == .true)
+        #expect(try Self.evaluate(602, equals: 0, parameter1: 0, wardState: 2) == .true)
+        #expect(try Self.evaluate(602, equals: 1, parameter1: 2, wardState: 2) == .true)
     }
 
     @Test func alchemyNeedsAnAlchemyEvaluation() throws {

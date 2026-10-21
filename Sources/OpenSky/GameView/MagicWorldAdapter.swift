@@ -15,11 +15,13 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldState
@@ -36,10 +38,12 @@ protocol MagicWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
+    var messages: MessageCoordinator { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -71,6 +75,9 @@ final class MagicWorldAdapter {
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
             gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
+            let scales = coordinator?.timeScales ?? .normal
+            gameSession?.magicTimeScale = scales.world
+            gameSession?.playerTimeScale = scales.player
         }
     }
 
@@ -99,15 +106,26 @@ final class MagicWorldAdapter {
         frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
             guard let coordinator, let gameSession else { return }
             let locomotion = gameSession.locomotion
+            let isPlayerControlled = gameSession.movementMode.isPlayerControlled
+            let delta = locomotion.archeryIntent.deltaTime
+            let events = locomotion.graphEvents.drain(locomotion.magicEventConsumer)
             let commands = coordinator.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
-                    deltaTime: locomotion.archeryIntent.deltaTime
+                    deltaTime: delta
                 ),
-                isPlayerControlled: gameSession.movementMode.isPlayerControlled
+                isPlayerControlled: isPlayerControlled,
+                events: events,
+                weaponsDrawn: self?.game.combat.melee?.state.drawState.isWeaponInHand
             )
             self?.run(commands)
+            self?.run(coordinator.advanceShout(
+                held: locomotion.isShoutHeld,
+                delta: delta,
+                events: events,
+                isPlayerControlled: isPlayerControlled
+            ))
         }
     }
 
@@ -115,6 +133,9 @@ final class MagicWorldAdapter {
         game.magic.magicTexts = MagicTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
+        game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
+        game.magic.soulTexts = SoulTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.wireEnchantments(store: provider.enchantmentStore)
     }
 }
@@ -182,6 +203,10 @@ extension MagicWorldAdapter: MagicWorld {
 
     func playerAteIngredient(_ item: FormID) {
         game.inventory.learnEatenIngredient(item)
+    }
+
+    func postNotification(_ text: String) {
+        _ = game.messages.postNotification(text)
     }
 
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {

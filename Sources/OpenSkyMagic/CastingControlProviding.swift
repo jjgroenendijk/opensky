@@ -88,9 +88,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public let failureCount: Int
     /// The refusals seen, most frequent first, already spelled `reason x count`.
     public let failureLines: [String]
-    /// Ability effect entries carrying no duration, which the active-effect
-    /// runtime has no permanent mode to hold.
-    public let unheldAbilityEntries: Int
+    /// Effects the player's known abilities hold right now.
+    public let abilityEffectCount: Int
     /// Spell projectiles launched this session.
     public let projectileCount: Int
     /// Casts per delivery kind, most frequent first, already spelled
@@ -107,6 +106,14 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     public let conditionLines: [String]
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// One line per carried soul gem copy, then the last soul trap.
+    public var soulLines: [String] = []
+    /// The runes waiting on the ground, then how many went off.
+    public var runeText = "Runes: none"
+    /// The actors the player's summons and reanimations command.
+    public var commandedText = "Commanded: none"
+    /// The casting hands' sounds and art sent, and a release waiting for its event.
+    public var castingCueText = "Casting cues: 0"
 
     /// The reading with no runtime attached.
     public static let unavailable = CastingControlSnapshot(
@@ -123,7 +130,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         concentrationSeconds: 0,
         failureCount: 0,
         failureLines: [],
-        unheldAbilityEntries: 0,
+        abilityEffectCount: 0,
         projectileCount: 0,
         deliveryLines: [],
         lastHitTargets: 0,
@@ -146,7 +153,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         concentrationSeconds: Int,
         failureCount: Int,
         failureLines: [String],
-        unheldAbilityEntries: Int,
+        abilityEffectCount: Int,
         projectileCount: Int,
         deliveryLines: [String],
         lastHitTargets: Int,
@@ -167,7 +174,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         self.concentrationSeconds = concentrationSeconds
         self.failureCount = failureCount
         self.failureLines = failureLines
-        self.unheldAbilityEntries = unheldAbilityEntries
+        self.abilityEffectCount = abilityEffectCount
         self.projectileCount = projectileCount
         self.deliveryLines = deliveryLines
         self.lastHitTargets = lastHitTargets
@@ -205,4 +212,13 @@ public protocol CastingControlProviding: AnyObject {
     /// alone can verify it. Returns a readable outcome the panel shows verbatim.
     @discardableResult
     func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome
+
+    /// Begins both hands together and runs the whole cast, so a dual cast can be
+    /// checked without two buttons.
+    @discardableResult
+    func castReadiedSpellWithBothHands() -> CastingActionOutcome
+
+    /// Recharges the equipped enchanted weapon from a carried filled soul gem.
+    @discardableResult
+    func rechargeEquippedWeapon() -> RechargeOutcome
 }

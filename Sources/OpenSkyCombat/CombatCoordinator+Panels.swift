@@ -258,12 +258,24 @@ extension CombatCoordinator: CombatLoopControlProviding {
             lastActionText: loop.lastAction.text
         )
         snapshot.usesTemperament = usesTemperament
+        snapshot.allies = loop.allies(of: .player).map { allyLine($0, loop: loop) }
         if let selected, selected != .player {
             snapshot.selectedTemperament = combatTemperament(of: selected, toward: .player)
             snapshot.selectedAssistance = world.actorValues(of: selected)?(Self.assistanceIndex)
                 .map(CombatAssistance.init(value:))
         }
         return snapshot
+    }
+
+    private func allyLine(_ key: ReferenceKey, loop: CombatLoopRuntime) -> String {
+        let doing = if loop.behaviors[key]?.isEngaged == true, let foe = loop.targets[key] {
+            "fighting \(actorName(foe))"
+        } else if loop.following[key] != nil {
+            "following the player"
+        } else {
+            "beside the player"
+        }
+        return "\(actorName(key)): \(doing)"
     }
 
     /// Reads the persisted Confidence and Assistance switch.

@@ -45,7 +45,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & DialogueBranchControlProviding
     & DialogueCameraControlProviding
     & DialogueControlProviding
-    & ExplosionControlProviding
+    & EnchantingControlProviding & ExplosionControlProviding
     & FaceMorphControlProviding
     & FirstPersonControlProviding
     & FrameStatsProviding
@@ -85,6 +85,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ScriptControlProviding
     & SequenceDoorControlProviding
     & ShadowControlProviding
+    & ShoutControlProviding
     & SkillsMenuControlProviding
     & StoryManagerControlProviding
     & SurfaceShadingControlProviding
@@ -172,6 +173,8 @@ extension FeaturePanelServices {
             audio: providers,
             cinematicCamera: providers,
             dialogueBranch: providers,
+            enchanting: providers,
+            shouts: providers,
             explosion: providers,
             hud: providers,
             headAssembly: providers,
