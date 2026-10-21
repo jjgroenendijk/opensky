@@ -122,8 +122,8 @@ nonisolated extension NIFFile {
             )
         }
 
-        /// A modifier whose object refs need the graph: the bomb, the colliders, and
-        /// the recycle bound. Nil for any other type.
+        /// A modifier whose refs need the graph: the bomb, gravity, drag, age death, the
+        /// colliders, and the recycle bound. Nil for any other type.
         private func placedModifier(
             _ block: NIFFile.Block,
             systemTransform: float4x4
@@ -147,6 +147,20 @@ nonisolated extension NIFFile {
                         origin.z
                     )))
                 )
+            case NIFGravityModifier.typeName:
+                let gravity = try NIFGravityModifier(reader: &reader, header: file.header)
+                return try ParticleModifier(gravity.header, kind: .gravity(
+                    gravity.gravity.transformed(by: place(gravity.gravityObjectRef))
+                ))
+            case NIFDragModifier.typeName:
+                let drag = try NIFDragModifier(reader: &reader, header: file.header)
+                return try ParticleModifier(drag.header, kind: .drag(
+                    drag.drag.transformed(by: place(drag.dragObjectRef))
+                ))
+            case NIFAgeDeathModifier.typeName:
+                let death = try NIFAgeDeathModifier(reader: &reader, header: file.header)
+                let spawn = death.spawnsOnDeath ? try spawn(at: death.spawnModifierRef) : nil
+                return ParticleModifier(death.header, kind: .ageDeath(spawn: spawn))
             case NIFColliderManager.typeName:
                 let manager = try NIFColliderManager(reader: &reader, header: file.header)
                 return try ParticleModifier(
@@ -158,6 +172,18 @@ nonisolated extension NIFFile {
             default:
                 return nil
             }
+        }
+
+        /// The parameters of the spawn modifier at `ref`; nil for no modifier.
+        private func spawn(at ref: Int32) throws -> ParticleSpawn? {
+            guard ref >= 0 else { return nil }
+            let block = try block(at: Int(ref))
+            guard block.typeName == NIFSpawnModifier.typeName else {
+                throw NIFError.malformed("spawn modifier ref \(ref) is \(block.typeName)")
+            }
+            var reader = BinaryReader(block.data)
+            _ = try NIFParticleModifierHeader(reader: &reader, header: file.header)
+            return try NIFSpawnModifier.body(&reader)
         }
 
         /// The colliders along the next-collider links from `ref`.

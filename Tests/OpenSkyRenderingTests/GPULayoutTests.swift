@@ -12,6 +12,7 @@ struct GPULayoutTests {
         #expect(Host.offset(of: \.positionSize) == Shader.offset(of: \.positionSize))
         #expect(Host.offset(of: \.color) == Shader.offset(of: \.color))
         #expect(Host.offset(of: \.uvRect) == Shader.offset(of: \.uvRect))
+        #expect(Host.offset(of: \.rotation) == Shader.offset(of: \.rotation))
     }
 
     @Test func skinVertexMatchesDescriptorOffsets() {

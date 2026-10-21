@@ -27,12 +27,13 @@ struct ParticleSimulationTests {
             ],
             modelTransform: lifted
         )
+        var random = ParticleRandom(seed: 1)
         var pushed = particle(at: SIMD3(1.5, 0, 4), velocity: .zero)
-        #expect(field.move(&pushed, deltaTime: 0.1))
+        #expect(field.move(&pushed, deltaTime: 0.1, random: &random))
         #expect(pushed.velocity.z > 0)
         #expect(pushed.position.x < 1)
         var doomed = particle(at: SIMD3(0, 0, 7), velocity: SIMD3(0, 0, 100))
-        #expect(!field.move(&doomed, deltaTime: 0.1))
+        #expect(!field.move(&doomed, deltaTime: 0.1, random: &random))
     }
 
     @Test func aSystemWithoutAnUpdateControllerStandsStill() {

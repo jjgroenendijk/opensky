@@ -1,12 +1,14 @@
-// The modifiers that push, stop, or wrap a particle as it moves: bombs and
-// colliders placed in the world for one step, and recycle bounds kept in the
-// system's own space. Semantics: docs/formats/nif-particles.md.
+// The modifiers that push, slow, stop, or wrap a particle as it moves: bombs,
+// gravity, drag, and colliders placed in the world for one step, and recycle
+// bounds kept in the system's own space. Semantics: docs/formats/nif-particles.md.
 
 import OpenSkyFormatsMesh
 import simd
 
 nonisolated struct ParticleForceField {
     private var bombs: [ParticleBomb] = []
+    private var gravities: [ParticleGravity] = []
+    private var drags: [ParticleDrag] = []
     private var colliders: [ParticleCollider] = []
     private var recycleBounds: [ParticleRecycleBound] = []
     private let toSystem: float4x4
@@ -19,6 +21,8 @@ nonisolated struct ParticleForceField {
         for modifier in modifiers {
             switch modifier.kind {
             case let .bomb(bomb): bombs.append(bomb.transformed(by: modelTransform))
+            case let .gravity(gravity): gravities.append(gravity.transformed(by: modelTransform))
+            case let .drag(drag): drags.append(drag.transformed(by: modelTransform))
             case let .colliders(list): colliders += list.map { $0.transformed(by: modelTransform) }
             case let .recycleBound(bound): recycleBounds.append(bound)
             default: break
@@ -27,13 +31,27 @@ nonisolated struct ParticleForceField {
     }
 
     var isEmpty: Bool {
-        bombs.isEmpty && colliders.isEmpty && recycleBounds.isEmpty
+        bombs.isEmpty && gravities.isEmpty && drags.isEmpty && colliders.isEmpty
+            && recycleBounds.isEmpty
     }
 
     /// Steps `particle` by its velocity. False when a collider kills it.
-    func move(_ particle: inout SimulatedParticle, deltaTime: Float) -> Bool {
+    func move(
+        _ particle: inout SimulatedParticle,
+        deltaTime: Float,
+        random: inout ParticleRandom
+    ) -> Bool {
         for bomb in bombs {
             particle.velocity += bomb.acceleration(at: particle.position) * deltaTime
+        }
+        for gravity in gravities {
+            particle.velocity += gravity.acceleration(at: particle.position) * deltaTime
+            guard gravity.turbulence > 0 else { continue }
+            let push = SIMD3(random.signed(), random.signed(), random.signed())
+            particle.velocity += push * gravity.turbulence * gravity.turbulenceScale * deltaTime
+        }
+        for drag in drags {
+            particle.velocity *= drag.retained(at: particle.position, deltaTime: deltaTime)
         }
         let start = particle.position
         var end = start + particle.velocity * deltaTime

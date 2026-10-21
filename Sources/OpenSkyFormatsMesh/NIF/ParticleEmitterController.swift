@@ -218,11 +218,12 @@ nonisolated extension ParticleModifier {
             switch (controller.parameter, controlledKind) {
             case (.active, _):
                 isActive = controller.isActive(at: seconds) ?? isActive
-            case let (.gravityStrength, .gravity(axis, strength)):
-                controlledKind = .gravity(
-                    axis: axis,
-                    strength: controller.value(at: seconds) ?? strength
-                )
+            case var (.gravityStrength, .gravity(gravity)):
+                gravity.strength = controller.value(at: seconds) ?? gravity.strength
+                controlledKind = .gravity(gravity)
+            case var (.initialRotationSpeed, .rotation(rotation)):
+                rotation.speed = controller.value(at: seconds) ?? rotation.speed
+                controlledKind = .rotation(rotation)
             default:
                 break
             }

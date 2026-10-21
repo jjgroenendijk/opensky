@@ -12,6 +12,7 @@
 // this directory, so `#import "ShaderTypes.h"` resolves the same file the module exports.
 module OpenSkyShaderTypes {
     header "ShaderTypesPrelude.h"
+    header "EffectShaderTypes.h"
     header "ScreenShaderTypes.h"
     header "MenuSceneShaderTypes.h"
     header "ShaderTypes.h"

@@ -116,12 +116,12 @@ Blocks OpenSky reads:
 
 - Emitters: `NiPSysBoxEmitter` (width, height, depth), `NiPSysCylinderEmitter` (radius,
   height), `NiPSysSphereEmitter` (radius), `NiPSysMeshEmitter` (see below).
-- Modifiers known by type only: `NiPSysAgeDeathModifier`, `NiPSysSpawnModifier`,
-  `NiPSysRotationModifier`, `NiPSysPositionModifier`, `NiPSysBoundUpdateModifier`,
-  `NiPSysDragModifier`, `BSPSysInheritVelocityModifier`, `BSPSysSubTexModifier`.
-- Modifiers with values: `NiPSysGravityModifier` (axis, strength), `BSWindModifier`
-  (strength), `BSPSysScaleModifier` (scale list), `BSPSysLODModifier` (begin and end
-  distance, end emit scale, end size).
+- `NiPSysPositionModifier` has no fields. It moves each particle by its velocity, which
+  the simulation always does.
+- Modifiers with values: `BSWindModifier` (strength), `BSPSysScaleModifier` (scale list),
+  `BSPSysLODModifier` (begin and end distance, end emit scale, end size).
+- Age death, spawn, gravity, rotation, bound update, drag, inherit velocity, and sub-texture:
+  see [Parameter modifiers](#parameter-modifiers).
 - `BSPSysSimpleColorModifier`: fade in, fade out, colour 1 end, colour 2 start, colour 2
   end, colour 3 start (6 x float32, each a fraction of the particle's life), then three
   RGBA colours (12 x float32). A particle holds colour 1, blends to colour 2, holds it, then
@@ -206,6 +206,57 @@ feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names a
 
 A NIF does not say which sequence plays first; the game starts them from animation events.
 OpenSky's pick is in [particle playback](/rendering/particles.md).
+
+## Parameter modifiers
+
+Each layout follows the modifier header. `bool` is one byte.
+
+| Block | Fields |
+| --- | --- |
+| `NiPSysAgeDeathModifier` | bool spawn on death, spawn modifier Ref |
+| `NiPSysSpawnModifier` | uint16 generations, float32 percentage, uint16 minimum and maximum count, float32 speed variation, direction variation, life span, life span variation |
+| `NiPSysGravityModifier` | gravity object Ptr, Vector3 axis, float32 decay, strength, uint32 force type (0 planar, 1 spherical), float32 turbulence, turbulence scale, bool world aligned |
+| `NiPSysRotationModifier` | float32 speed, speed variation, angle, angle variation, bool random speed sign, bool random axis, Vector3 axis |
+| `NiPSysBoundUpdateModifier` | uint16 update skip |
+| `NiPSysDragModifier` | drag object Ptr, Vector3 axis, float32 percentage, range, range falloff |
+| `BSPSysInheritVelocityModifier` | inherit object Ptr, float32 chance, multiplier, variation |
+| `BSPSysSubTexModifier` | float32 start frame, start frame fudge, end frame, loop start frame, loop start frame fudge, frame count, frame count fudge |
+
+What OpenSky does with them. nif.xml names the fields but not their exact effect, so the
+items marked "inferred" are OpenSky's reading, not confirmed against the game:
+
+- Gravity. A planar pull adds `axis * strength` to the velocity each second. A spherical
+  pull points at the gravity object and fades by `exp(-decay * distance)` (inferred). The
+  axis turns with the gravity object unless the modifier is world aligned. Turbulence adds a
+  random push of up to `turbulence * turbulenceScale` per second on each axis (inferred).
+- Drag. A particle within `range` of the drag object, measured along the axis, loses
+  `percentage` of its speed each 1/30 second (inferred). Past the range the drag fades to
+  none over `rangeFalloff`. Vanilla ranges are `FLT_MAX`, so the drag applies everywhere.
+- Rotation. Each particle starts at the angle plus or minus its variation, and spins at the
+  speed plus or minus its variation. With random speed sign, half spin the other way. The
+  billboard turns in the screen plane; the axis is ignored, because a billboard has one
+  free turn.
+- Sub-texture. A particle picks its start frame, loop start frame, and frame count, each
+  plus up to its fudge at random (inferred). It plays the frame count over its life. Past
+  the end frame it goes back to the loop start frame. The frames index the subtexture
+  offsets of `NiPSysData`.
+- Inherit velocity. A new particle in a world-space system takes, with the given chance in
+  percent, the emitter's velocity times the multiplier plus or minus the variation. OpenSky
+  uses the velocity of the particle system, not of the inherit object.
+- Age death and spawn. A particle dies at the end of its life. With spawn on death set, it
+  first spawns children that start at its place and speed. A particle spawns while its
+  generation is at most the generation count, so a count of 0 spawns once (inferred). On the
+  install, every age death modifier has spawn on death off, so no vanilla particle spawns.
+- Bound update. The skip count is read and shown in the mesh preview. OpenSky does not cull
+  particle systems by their bound.
+- `NiPSysGravityStrengthCtlr` sets the gravity strength, and `NiPSysInitialRotSpeedCtlr`
+  sets the rotation speed of new particles.
+
+Values seen on the install: gravity uses both force types and every one names an object.
+Drag percentages are 0.02 to 0.1 on the x, y, or z axis. Inherit chances are 50 to 100,
+multipliers 0.05 to 1. The rotation modifiers sampled set random axis, with axis (1, 0, 0).
+Sub-texture examples, as start, start fudge, end, loop start, loop fudge, count, count
+fudge: (0, 4, 3, 0, 0, 30, 10) and (0, 64, 63, 0, 0, 256, 0).
 
 ## Parameter controllers
 

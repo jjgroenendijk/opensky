@@ -54,12 +54,19 @@ nonisolated public struct SimulatedParticle: Equatable, Sendable {
     public let initialRadius: Float
     public var radius: Float
     public var age: Float
-    public let lifetime: Float
-    public let atlasIndex: Int
+    public var lifetime: Float
+    public var atlasIndex: Int
+    /// Radians the billboard is turned, and radians per second.
+    public var rotation: Float = 0
+    public var rotationSpeed: Float = 0
+    /// The number of spawns before this particle.
+    public var generation: UInt16 = 0
+    /// The sub-texture start frame, loop start frame, and frame count this particle drew.
+    public var frames = SIMD3<Float>.zero
 }
 
 /// Deterministic generator: stable frames/tests across processes and machines.
-nonisolated private struct ParticleRandom {
+nonisolated struct ParticleRandom {
     private var generator: SplitMix64
 
     init(seed: UInt64) {
@@ -91,7 +98,12 @@ nonisolated public struct ParticleSimulator: Sendable {
     public var spawnScale = PrecipitationScale.identity
     /// Seconds simulated since the last reset; the controllers' clock.
     public private(set) var elapsed: Float = 0
-    private var random: ParticleRandom
+    var random: ParticleRandom
+    /// The active modifiers of the current step, with their controllers applied.
+    private(set) var activeModifiers: [ParticleModifier] = []
+    /// World units per second the emitter moved during the last step.
+    private(set) var emitterVelocity = SIMD3<Float>.zero
+    private var pendingDisplacement = SIMD3<Float>.zero
     private var birthAccumulator: Float = 0
     private var controlledAccumulators: [Float] = []
     private var nextEmitter = 0
@@ -111,6 +123,9 @@ nonisolated public struct ParticleSimulator: Sendable {
         controlledAccumulators.removeAll()
         nextEmitter = 0
         elapsed = 0
+        activeModifiers = []
+        emitterVelocity = .zero
+        pendingDisplacement = .zero
     }
 
     /// Re-centers a camera-following emitter and its existing particles by
@@ -127,6 +142,7 @@ nonisolated public struct ParticleSimulator: Sendable {
     /// system's particles move and turn with it.
     public mutating func move(to placement: float4x4) {
         let change = placement * placementTransform.inverse
+        pendingDisplacement += SIMD3(change.columns.3.x, change.columns.3.y, change.columns.3.z)
         placementTransform = placement
         guard !definition.worldSpace else { return }
         for index in particles.indices {
@@ -140,6 +156,11 @@ nonisolated public struct ParticleSimulator: Sendable {
     public mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         let deltaTime = simd_clamp(deltaTime, 0, 0.1)
         guard deltaTime > 0, definition.updatesSimulation else { return }
+        emitterVelocity = pendingDisplacement / deltaTime
+        pendingDisplacement = .zero
+        activeModifiers = definition.modifiers
+            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
+            .filter(\.active).sorted { $0.order < $1.order }
         updateExisting(deltaTime: deltaTime, wind: wind)
         elapsed += deltaTime
         let emitters = currentEmitters
@@ -199,47 +220,54 @@ nonisolated public struct ParticleSimulator: Sendable {
     }
 
     private mutating func updateExisting(deltaTime: Float, wind: WindState) {
-        let windVector = SIMD3(
-            wind.direction.x * wind.speed,
-            wind.direction.y * wind.speed,
-            0
-        )
-        let activeModifiers = definition.modifiers
-            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
-            .filter(\.active).sorted { $0.order < $1.order }
+        let windVector = SIMD3(wind.direction.x * wind.speed, wind.direction.y * wind.speed, 0)
         let field = ParticleForceField(
             modifiers: activeModifiers,
             modelTransform: placementTransform * definition.worldTransform
         )
+        var children: [SimulatedParticle] = []
         for index in particles.indices.reversed() {
             particles[index].age += deltaTime
             if particles[index].age >= particles[index].lifetime {
+                children += spawned(from: particles[index])
                 particles.remove(at: index)
                 continue
             }
+            particles[index].rotation += particles[index].rotationSpeed * deltaTime
             for modifier in activeModifiers {
-                switch modifier.kind {
-                case let .gravity(axis, strength):
-                    particles[index].velocity += axis * strength * deltaTime
-                case let .wind(strength):
-                    particles[index].velocity += windVector * strength * deltaTime
-                case let .simpleColour(ramp):
-                    particles[index].color = particles[index].initialColor
-                        * ramp.colour(at: particles[index].age / particles[index].lifetime)
-                case let .scale(scales):
-                    particles[index].radius = scaledRadius(
-                        initial: particles[index].initialRadius,
-                        scales: scales,
-                        fraction: particles[index].age / particles[index].lifetime
-                    )
-                default:
-                    break
-                }
+                apply(modifier, to: &particles[index], wind: windVector * deltaTime)
             }
-            guard field.move(&particles[index], deltaTime: deltaTime) else {
+            guard field.move(&particles[index], deltaTime: deltaTime, random: &random) else {
                 particles.remove(at: index)
                 continue
             }
+        }
+        particles += children.prefix(max(capacity - particles.count, 0))
+    }
+
+    /// Applies a modifier that changes a live particle by its age. `wind` is this step's push.
+    private func apply(
+        _ modifier: ParticleModifier,
+        to particle: inout SimulatedParticle,
+        wind: SIMD3<Float>
+    ) {
+        let fraction = particle.age / particle.lifetime
+        switch modifier.kind {
+        case let .wind(strength):
+            particle.velocity += wind * strength
+        case let .simpleColour(ramp):
+            particle.color = particle.initialColor * ramp.colour(at: fraction)
+        case let .scale(scales):
+            particle.radius = scaledRadius(
+                initial: particle.initialRadius, scales: scales, fraction: fraction
+            )
+        case let .subTex(subTexture):
+            particle.atlasIndex = subTexture.frame(
+                at: fraction, start: particle.frames.x, loopStart: particle.frames.y,
+                frames: particle.frames.z, frameTotal: definition.subtextureOffsets.count
+            )
+        default:
+            break
         }
     }
 
@@ -268,46 +296,7 @@ nonisolated public struct ParticleSimulator: Sendable {
         }
     }
 
-    private mutating func makeParticle(emitter: ParticleEmitter) -> SimulatedParticle {
-        let modelTransform = placementTransform * definition.worldTransform
-        let birth = sampleBirth(shape: emitter.shape)
-        let worldPosition4 = modelTransform * SIMD4(birth.position, 1)
-        let declination = emitter.declination + random.signed() * emitter.declinationVariation
-        let planar = emitter.planarAngle + random.signed() * emitter.planarAngleVariation
-        let localDirection = birth.direction ?? SIMD3(
-            sin(declination) * cos(planar),
-            sin(declination) * sin(planar),
-            cos(declination)
-        )
-        let worldVelocity4 = modelTransform * SIMD4(localDirection, 0)
-        let transformedDirection = SIMD3(
-            worldVelocity4.x, worldVelocity4.y, worldVelocity4.z
-        )
-        let directionLength = simd_length(transformedDirection)
-        let direction = directionLength > .ulpOfOne
-            ? transformedDirection / directionLength : SIMD3<Float>(0, 0, 1)
-        let speed = max(emitter.speed + random.signed() * emitter.speedVariation, 0)
-            * spawnScale.speed
-        let lifetime = max(emitter.lifeSpan + random.signed() * emitter.lifeSpanVariation, 0.01)
-            / spawnScale.speed
-        let radius = max(emitter.initialRadius + random.signed() * emitter.radiusVariation, 0.01)
-            * spawnScale.size
-        let atlasCount = max(definition.subtextureOffsets.count, 1)
-        let initialRampColour = colourRamp?.colour(at: 0) ?? SIMD4(repeating: 1)
-        return SimulatedParticle(
-            position: SIMD3(worldPosition4.x, worldPosition4.y, worldPosition4.z),
-            velocity: direction * speed,
-            initialColor: emitter.initialColor,
-            color: emitter.initialColor * initialRampColour,
-            initialRadius: radius,
-            radius: radius,
-            age: 0,
-            lifetime: lifetime,
-            atlasIndex: min(Int(random.unit() * Float(atlasCount)), atlasCount - 1)
-        )
-    }
-
-    private var colourRamp: ParticleColourRamp? {
+    var colourRamp: ParticleColourRamp? {
         for modifier in definition.modifiers where modifier.active {
             if case let .simpleColour(ramp) = modifier.kind {
                 return ramp
@@ -328,61 +317,13 @@ nonisolated public struct ParticleSimulator: Sendable {
     }
 }
 
-nonisolated extension ParticleSimulator {
-    /// Birth position in system space, and a start direction when the shape sets one.
-    private mutating func sampleBirth(
-        shape: ParticleEmitter.Shape
-    ) -> (position: SIMD3<Float>, direction: SIMD3<Float>?) {
-        guard case let .mesh(source) = shape else {
-            return (samplePosition(shape: shape), nil)
-        }
-        let sampler = MeshEmitterSampler(source: source)
-        let point = sampler.sample { random.unit() }
-        let direction: SIMD3<Float>? = switch source.velocity {
-        case .normals: point.normal
-        case .direction: source.emissionAxis
-        case .random: randomDirection()
-        }
-        return (point.position, direction)
-    }
-
-    private mutating func randomDirection() -> SIMD3<Float> {
-        let z = random.signed()
-        let angle = random.unit() * 2 * Float.pi
-        let xy = sqrt(max(1 - z * z, 0))
-        return SIMD3(xy * cos(angle), xy * sin(angle), z)
-    }
-
-    private mutating func samplePosition(shape: ParticleEmitter.Shape) -> SIMD3<Float> {
-        switch shape {
-        case let .box(width, height, depth):
-            return SIMD3(random.signed() * width, random.signed() * height, random.signed() * depth)
-                * 0.5
-        case let .cylinder(radius, height):
-            let angle = random.unit() * 2 * Float.pi
-            let distance = sqrt(random.unit()) * radius
-            return SIMD3(
-                cos(angle) * distance,
-                sin(angle) * distance,
-                random.signed() * height * 0.5
-            )
-        case let .sphere(radius):
-            let z = random.signed()
-            let angle = random.unit() * 2 * Float.pi
-            let radial = pow(random.unit(), 1 / 3 as Float) * radius
-            let xy = sqrt(max(1 - z * z, 0))
-            return SIMD3(xy * cos(angle), xy * sin(angle), z) * radial
-        case .mesh:
-            return .zero
-        }
-    }
-}
-
 /// Layout mirrored by ParticleInstance in ShaderTypes.h.
 nonisolated public struct ParticleGPUInstance: Sendable {
     public let positionSize: SIMD4<Float>
     public let color: SIMD4<Float>
     public let uvRect: SIMD4<Float>
+    /// The cosine and sine of the billboard turn in x and y.
+    public let rotation: SIMD4<Float>
 }
 
 nonisolated public final class ParticlePlayback: Sendable {
@@ -521,7 +462,8 @@ nonisolated public final class ParticlePlayback: Sendable {
             return ParticleGPUInstance(
                 positionSize: SIMD4(particle.position, particle.radius),
                 color: particle.color * SIMD4(1, 1, 1, max(fade, 0)),
-                uvRect: uv
+                uvRect: uv,
+                rotation: SIMD4(cos(particle.rotation), sin(particle.rotation), 0, 0)
             )
         }
         instances.withUnsafeBytes { bytes in

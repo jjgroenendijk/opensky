@@ -120,32 +120,24 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
         }
     }
 
-    /// Modifier types with no parameters this decoder keeps: identity alone.
-    private static let simpleKinds: [String: ParticleModifier.Kind] = [
-        "NiPSysAgeDeathModifier": .ageDeath,
-        "NiPSysSpawnModifier": .spawn,
-        "NiPSysRotationModifier": .rotation,
-        "NiPSysPositionModifier": .position,
-        "NiPSysBoundUpdateModifier": .boundUpdate,
-        "NiPSysDragModifier": .drag,
-        "BSPSysInheritVelocityModifier": .inheritVelocity,
-        "BSPSysSubTexModifier": .subTex
+    /// Every non-emitter modifier type `modifier(typeName:reader:header:)` reads.
+    public static let modifierTypes: Set = [
+        "NiPSysAgeDeathModifier", NIFSpawnModifier.typeName, NIFGravityModifier.typeName,
+        NIFRotationModifier.typeName, "NiPSysPositionModifier", "NiPSysBoundUpdateModifier",
+        NIFDragModifier.typeName, NIFInheritVelocityModifier.typeName,
+        NIFSubTexModifier.typeName, "BSPSysSimpleColorModifier", "BSWindModifier",
+        "BSPSysScaleModifier", NIFStripUpdateModifier.typeName, NIFMeshUpdateModifier.typeName,
+        "BSPSysLODModifier"
     ]
 
     private static func readKind(
         typeName: String,
         reader: inout BinaryReader
     ) throws -> ParticleModifier.Kind {
-        if let simple = simpleKinds[typeName] {
-            return simple
+        if let parameters = try parameterKind(typeName: typeName, reader: &reader) {
+            return parameters
         }
         switch typeName {
-        case "NiPSysGravityModifier":
-            reader.skip(4) // Gravity Object ptr
-            let axis = try reader.readVector3()
-            reader.skip(4) // Decay
-            let strength = try reader.readFloat32()
-            return .gravity(axis: axis, strength: strength)
         case "BSPSysSimpleColorModifier":
             let fades = try SIMD2(reader.readFloat32(), reader.readFloat32())
             let stops = try SIMD4(

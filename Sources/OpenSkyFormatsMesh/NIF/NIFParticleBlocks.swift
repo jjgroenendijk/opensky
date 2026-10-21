@@ -196,7 +196,15 @@ nonisolated public enum NIFParticleUpdateController {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let particles: [String: Decode] = modifierControllers.merging([
+    static let particles: [String: Decode] = modifierControllers.merging(modifiers) { first, _ in
+        first
+    }.merging([
+        NIFAgeDeathModifier.typeName: { try NIFAgeDeathModifier(reader: &$0, header: $1) },
+        NIFGravityModifier.typeName: { try NIFGravityModifier(reader: &$0, header: $1) },
+        NIFDragModifier.typeName: { try NIFDragModifier(reader: &$0, header: $1) },
+        NIFInheritVelocityModifier.typeName: {
+            try NIFInheritVelocityModifier(reader: &$0, header: $1)
+        },
         NIFParticleUpdateController
             .typeName: { reader, _ in try NIFTimeController(reader: &reader) },
         NIFBombModifier.typeName: { try NIFBombModifier(reader: &$0, header: $1) },
@@ -218,7 +226,19 @@ nonisolated extension NIFBlockDecoders {
         },
         NIFMeshParticleData.typeName: { try NIFMeshParticleData(reader: &$0, header: $1) },
         NIFMeshParticleData.systemTypeName: { try NIFParticleSystem(reader: &$0, header: $1) }
-    ]) { first, _ in first }
+    ]) { _, raw in raw }
+
+    /// Each modifier as the engine reads it. The raw blocks above replace four of them,
+    /// so the preview keeps their object refs.
+    private static let modifiers = Dictionary(
+        uniqueKeysWithValues: NIFParticleModifierDecoder.modifierTypes.map { typeName in
+            (typeName, { reader, header in
+                try NIFParticleModifierDecoder.modifier(
+                    typeName: typeName, reader: &reader, header: header
+                )
+            } as Decode)
+        }
+    )
 
     private static let modifierControllers = Dictionary(
         uniqueKeysWithValues: ParticleModifierController.Parameter.allCases.map { parameter in
