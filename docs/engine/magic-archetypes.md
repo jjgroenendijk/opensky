@@ -20,8 +20,10 @@ OpenSky. How a timed effect is stored, ticked, and saved is on the
   ([environment](/tools/environment.md)). Every quote below without another link is from it.
 - UESP spell pages for numbers the wiki does not give:
   [Ward](https://en.uesp.net/wiki/Skyrim:Ward), [Cloak](https://en.uesp.net/wiki/Skyrim:Cloak),
-  [Calm](https://en.uesp.net/wiki/Skyrim:Calm), and
-  [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health).
+  [Calm](https://en.uesp.net/wiki/Skyrim:Calm),
+  [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health),
+  [Slow Time](https://en.uesp.net/wiki/Skyrim:Slow_Time), and
+  [Block](https://en.uesp.net/wiki/Skyrim:Block) for Quick Reflexes.
 
 Where the wiki writes "???" or "Not Used", that is all OpenSky knows.
 
@@ -34,7 +36,7 @@ Each archetype has one rule (`MagicArchetypeRule`). The rule decides where the a
 | Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Absorb, Accumulate Magnitude, Invisibility |
 | Influence | The combat loop, through `ActorMagicInfluence` | Calm, Frenzy, Demoralize, Rally, Turn Undead, Paralysis, Etherealize |
 | Effect list | The target's running effects | Dispel, Cure Disease, Cure Poison, Cure Paralysis |
-| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap |
+| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time |
 
 Script, Concussion, and Cure Addiction are carriers. Script "has no effect other than any
 Papyrus Scripts specified", and the wiki marks the other two "Not Used". A timed carrier is
@@ -119,6 +121,17 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   actors "hostile to you", and "casting a second will cancel the first". OpenSky casts the
   associated spell once a second on every hostile living actor inside the radius. The rate is
   an OpenSky choice; the wiki names none.
+- Slow Time: "Slows time for all but the player by the indicated amount (a multiplier, with 1
+  being normal time)." Only the player's own Slow Time effects count. UESP: the player is
+  "only slowed down to 70% of normal speed". Perk entry point 70 (Mod Player Magic Slowdown)
+  changes that 70% share; Quick Reflexes sets it to 1, and UESP says it "does not partially
+  slow the player". Two effects stack, so their shares multiply. The player never runs slower
+  than the world, and the world never runs below 1% (an OpenSky floor, so a magnitude of 0
+  cannot stop every clock). The session runs the world sim, animation, and particles at the
+  world share, and the camera at the player's share.
+- The player's effects tick on the player's clock while time is slow, so an 8 second Slow Time
+  ends after 8 seconds of the player's time. [WARNING] UESP also says Slow Time "extends the
+  duration of potions on the player", which this does not do.
 
 ## Not done
 
@@ -129,7 +142,6 @@ These archetypes have no rule. Each is counted per effect, and `make gaps` ranks
 | --- | --- |
 | Summon Creature, Reanimate, Command Summoned, Banish | Spawning an actor under the caster's control, and NPC-versus-NPC fights |
 | Detect Life, Light | Drawing a shader or a light on an actor |
-| Slow Time | A time scale for everything except the player |
 | Enhance Weapon | A temporary enchantment on the equipped weapon |
 | Werewolf, Vampire Lord, Werewolf Feed | Changing an actor's race |
 | Telekinesis, Grab Actor | Holding an object or actor in front of the caster |

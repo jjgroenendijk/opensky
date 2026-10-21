@@ -59,7 +59,7 @@ extension GameSession {
         let delta = worldSimClock.advance(
             to: renderer.wallClock.now, paused: worldSimPaused
         )
-        updateWorldSim(deltaTime: delta * worldTimeScale)
+        updateWorldSim(deltaTime: delta * effectiveWorldTimeScale)
     }
 
     /// Seconds of menu pause since the last call; zero while the world runs.

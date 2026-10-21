@@ -39,6 +39,8 @@ nonisolated public struct ShoutControlSnapshot: Equatable, Sendable {
     public var phase = ShoutPhase.idle
     public var cooldown: Float = 0
     public var lastShout = ShoutOutcome.idle
+    /// What the player's Slow Time effects set.
+    public var timeScales = MagicTimeScales.normal
 
     public static let unavailable = Self()
 
@@ -53,8 +55,15 @@ nonisolated public struct ShoutControlSnapshot: Equatable, Sendable {
             "Shouting allowed (entry point 82): \(isAllowed ? "yes" : "no")",
             "Equipped: \(equippedName)   Dragon souls: \(dragonSouls)",
             "Phase: \(phase.text)   Cooldown: " + String(format: "%.1f s", cooldown),
-            "Last: \(lastShout.text)"
+            "Last: \(lastShout.text)",
+            "Slow Time (entry point 70): \(timeScales.text)"
         ].joined(separator: "\n")
+    }
+}
+
+nonisolated extension MagicTimeScales {
+    public var text: String {
+        String(format: "world %.0f%%, player %.0f%%", world * 100, player * 100)
     }
 }
 
@@ -131,6 +140,7 @@ extension MagicCoordinator: ShoutControlProviding {
         snapshot.phase = shoutMachine.phase
         snapshot.cooldown = shoutMachine.cooldown
         snapshot.lastShout = lastShout
+        snapshot.timeScales = timeScales
         return snapshot
     }
 

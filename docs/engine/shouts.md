@@ -39,6 +39,9 @@ thing.
 - Unlocking a learned word spends one `Dragon Souls`, the same actor value the Dragonborn altar
   spends.
 
+The Shouts section also shows how fast the world and the player run while a Slow Time effect is
+on the player ([Slow Time](/engine/magic-archetypes.md#world)).
+
 ## One shout, step by step
 
 1. The key goes down. The shout is refused when Mod Shout OK (entry point 82) is not above 0, when

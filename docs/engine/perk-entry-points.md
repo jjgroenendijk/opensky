@@ -74,6 +74,7 @@ perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
 | Mod Incoming Spell Magnitude | 41 | each effect's magnitude, target's perk |
 | Mod Spell Cost | 38 | the magicka cost |
 | Can Dual Cast Spell | 75 | whether both hands cast the spell as one dual cast; above 0 allows it |
+| Mod Player Magic Slowdown | 70 | the player's share of normal speed under Slow Time, on a base of 0.7 ([archetypes](/engine/magic-archetypes.md#world)) |
 | Mod Ward Magicka Absorption Pct | 71 | the share of a warded spell given back as magicka, ward holder's perk |
 | Mod Soul Gem Recharge | 49 | the charge a soul gem gives back, the recharged weapon bound as the item |
 | Mod Soul Pct Captured to Weapon | 78 | the share of a victim's soul that goes into the killer's weapon, victim as target |

@@ -75,6 +75,9 @@ final class MagicWorldAdapter {
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
             gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
+            let scales = coordinator?.timeScales ?? .normal
+            gameSession?.magicTimeScale = scales.world
+            gameSession?.playerTimeScale = scales.player
         }
     }
 

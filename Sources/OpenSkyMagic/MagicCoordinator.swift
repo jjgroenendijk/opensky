@@ -48,6 +48,8 @@ public final class MagicCoordinator {
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
+    /// The player's accumulator while Slow Time splits the clocks.
+    var playerAccumulator: Double = 0
     /// Seconds since the last cloak pulse.
     var cloakClock: Float = 0
     /// Seconds since the last ability reconcile.
@@ -145,11 +147,21 @@ public final class MagicCoordinator {
     /// and the resident actors. A menu-paused frame delivers delta 0.
     public func advanceEffects(delta: Float) -> [MagicCommand] {
         guard var runtime = effects else { return takeCommands() }
-        runtime.advance(
-            delta: delta,
-            accumulator: &accumulator,
-            over: world.regeneratingHolders()
-        )
+        let holders = world.regeneratingHolders()
+        let scales = timeScales
+        if scales.isSlowed {
+            // The player's effects run on the player's clock, so Slow Time ends on time.
+            let split = Dictionary(grouping: holders) { $0.key == .player }
+            runtime.advance(delta: delta, accumulator: &accumulator, over: split[false] ?? [])
+            runtime.advance(
+                delta: delta * scales.player / scales.world,
+                accumulator: &playerAccumulator,
+                over: split[true] ?? []
+            )
+        } else {
+            runtime.advance(delta: delta, accumulator: &accumulator, over: holders)
+            playerAccumulator = accumulator
+        }
         effects = runtime
         performWorldActions()
         maintainCarriedEffects(delta: delta)

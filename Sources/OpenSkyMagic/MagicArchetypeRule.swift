@@ -44,6 +44,9 @@ nonisolated public enum MagicWorldArchetype: Equatable, Sendable {
     /// "If the target dies while this effect is active, fills a soul gem carried by
     /// the caster."
     case soulTrap
+    /// "Slows time for all but the player by the indicated amount (a multiplier, with 1
+    /// being normal time)."
+    case slowTime
 }
 
 nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
@@ -93,6 +96,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
         case .boundWeapon: .world(.boundWeapon)
         case .disarm: .world(.disarm)
         case .soulTrap: .world(.soulTrap)
+        case .slowTime: .world(.slowTime)
         default: nil
         }
     }
@@ -136,7 +140,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     public var needsDuration: Bool {
         switch self {
         case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon),
-             .world(.soulTrap):
+             .world(.soulTrap), .world(.slowTime):
             true
         default: false
         }

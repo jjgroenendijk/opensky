@@ -42,6 +42,15 @@ public final class GameSession: RenderFrameDriver {
     public var worldSimPaused = false
     /// Slows animation, particles, and the world sim, not the camera. A kill cam sets it below 1.
     public var worldTimeScale: Float = 1
+    /// A Slow Time effect's share of normal speed for the world, on top of `worldTimeScale`.
+    public var magicTimeScale: Float = 1
+    /// The player's own share while Slow Time runs; the camera and the player's steps take it.
+    public var playerTimeScale: Float = 1
+
+    /// What the world sim, animation, and particles run at.
+    public var effectiveWorldTimeScale: Float {
+        worldTimeScale * magicTimeScale
+    }
 
     public var walkController: WalkController
     /// Current resident terrain lookup, wired by GameViewController. nil in
@@ -243,7 +252,7 @@ public final class GameSession: RenderFrameDriver {
         )
         input.ui = uiScene
         input.isPaused = worldSimPaused
-        input.timeScale = worldTimeScale
+        input.timeScale = effectiveWorldTimeScale
         input.collisionQuery = collisionQuery
         return input
     }

@@ -9,6 +9,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyProgressionInterface
 import Testing
 
 @MainActor
@@ -85,6 +86,7 @@ struct MagicArchetypeTests {
         #expect(MagicArchetypeRule.rule(for: .calm) == .influence(.calm))
         #expect(MagicArchetypeRule.rule(for: .cureDisease) == .dispel(.disease))
         #expect(MagicArchetypeRule.rule(for: .cloak) == .world(.cloak))
+        #expect(MagicArchetypeRule.rule(for: .slowTime) == .world(.slowTime))
         #expect(MagicArchetypeRule.rule(for: .invisibility) == .heldFlag(actorValue: 54))
         #expect(MagicArchetypeRule.rule(for: .summonCreature) == nil)
         #expect(MagicArchetypeRule.rule(for: .calm)?.capsTargetLevel == true)
@@ -219,6 +221,45 @@ struct MagicArchetypeTests {
         Self.cast(Archetype.cloak, magnitude: 300, duration: 60, on: coordinator)
         let cloaks = coordinator.effects?.active(on: .player) ?? []
         #expect(cloaks.map(\.peakMagnitude) == [300])
+    }
+
+    // MARK: - Slow Time
+
+    /// UESP "Skyrim:Slow Time": the world runs at the magnitude, the player at 70%.
+    @Test func slowTimeSlowsTheWorldMoreThanThePlayer() throws {
+        let coordinator = try makeCoordinator()
+        #expect(coordinator.timeScales == .normal)
+        Self.cast(Archetype.slowTime, magnitude: 0.3, duration: 8, on: coordinator)
+        #expect(coordinator.timeScales == MagicTimeScales(world: 0.3, player: 0.7))
+    }
+
+    /// Quick Reflexes sets entry point 70 to 1: the player is not slowed at all.
+    @Test func entryPoint70SetsThePlayersShare() throws {
+        let coordinator = try makeCoordinator()
+        world.perkValues[.modPlayerMagicSlowdown] = 1
+        Self.cast(Archetype.slowTime, magnitude: 0.05, duration: 1, on: coordinator)
+        #expect(coordinator.timeScales == MagicTimeScales(world: 0.05, player: 1))
+    }
+
+    @Test func slowTimeEffectsStack() {
+        let scales = SlowTimeRule.scales([(world: 0.3, player: 0.7), (world: 0.5, player: 1)])
+        #expect(abs(scales.world - 0.15) < 1e-6)
+        #expect(abs(scales.player - 0.7) < 1e-6)
+        let stopped = SlowTimeRule.scales([(world: 0, player: 0)])
+        #expect(stopped.world == SlowTimeRule.minimumWorldShare)
+    }
+
+    /// The player's effects run on the player's clock, so an 8 s Slow Time ends after
+    /// 8 s of the player's time, not 8 s of the slowed world's.
+    @Test func slowTimeEndsOnThePlayersClock() throws {
+        let coordinator = try makeCoordinator()
+        Self.cast(Archetype.slowTime, magnitude: 0.3, duration: 8, on: coordinator)
+        // 4 s of world time in small frames: 9.3 s on the player's clock.
+        for _ in 0 ..< 200 {
+            _ = coordinator.advanceEffects(delta: 0.02)
+        }
+        #expect(coordinator.timeScales == .normal)
+        #expect(coordinator.effects?.active(on: .player).isEmpty == true)
     }
 
     // MARK: - Readout
