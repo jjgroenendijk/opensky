@@ -117,6 +117,9 @@ extension MagicCoordinator {
     @discardableResult
     func beginShout() -> ShoutOutcome {
         if let refusal = shoutRefusal() {
+            if refusal == .casting {
+                pendingCommands.append(.notice(castNotices[.shoutWhileCasting]))
+            }
             return noteShout(.refused(refusal))
         }
         voicedShout = world.shoutKnowledge.equipped

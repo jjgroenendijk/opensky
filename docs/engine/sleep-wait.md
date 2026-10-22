@@ -23,6 +23,7 @@ menu `sNoWait...`. OpenSky checks them in this order:
 | --- | --- |
 | In combat, or a hostile actor nearby | `HostileActorsNear` |
 | Guards are pursuing the player | `WhileAlarm` |
+| A guard has told the trespassing player to leave | `WarnToLeave` |
 | The player stands in a cell they may not enter | `Trespass` |
 | The bed belongs to someone else (sleep only) | `InOwnedBed` |
 | Not on the ground | `InAir` |
@@ -39,7 +40,7 @@ time, and timed effects do not run out.
 A bed's owner comes from the same ownership rule as theft ([crime](/engine/crime.md)). A bed
 the player owns, or that the player's faction owns at a rank they hold, is allowed.
 
-The settings `sNoSleepInCell`, `sNoWaitInCell`, `sNoSleepWarnToLeave`, and `sNoWaitDefault`
+The settings `sNoSleepInCell`, `sNoWaitInCell`, `sNoSleepDefault`, and `sNoWaitDefault`
 also exist in `Skyrim.esm`. OpenSky does not use them, because no observed rule says when they
 apply. Sleeping
 sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).

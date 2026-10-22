@@ -44,6 +44,7 @@ protocol InventoryWorldHost: AnyObject {
     var mapWorld: MapWorldAdapter { get }
     var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
+    var player: PlayerCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -70,6 +71,7 @@ final class InventoryWorldAdapter {
         baselines.items.enchantedValueSettings = EnchantedValueSettings
             .resolve(store: provider.gameSettings)
         let coordinator = game.inventory
+        coordinator.activationTexts = game.mapWorld.settingTexts()
         coordinator.wire(
             inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
             references: streamer,
@@ -167,6 +169,14 @@ final class InventoryWorldAdapter {
 extension InventoryWorldAdapter: InventoryWorld {
     var crosshairInteraction: PlacedInteraction? {
         game.hud.interactionTarget?.interaction
+    }
+
+    func isBook(_ base: FormID) -> Bool {
+        game.menuScreens.book.isBook(base)
+    }
+
+    var isPlayerSneaking: Bool {
+        game.player.isSneaking
     }
 
     func dropPlacement() -> DropPlacement? {

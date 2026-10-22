@@ -125,6 +125,8 @@ public final class CasterRuntime {
     /// readout, and letting every actor in a fight overwrite this would make
     /// the panel line say whatever the last skeever did.
     public private(set) var lastOutcome: [SpellHand: SpellCastOutcome] = [:]
+    /// The player's refused casts since the coordinator last took them.
+    public private(set) var playerFailures: [SpellCastFailure] = []
 
     /// The world a cast happens in. Readable across the satellites for the
     /// reason `tally` is settable across them.
@@ -433,12 +435,20 @@ public final class CasterRuntime {
         }
         if caster.key == .player {
             lastOutcome[hand] = outcome
+            if let failure = outcome.failure {
+                playerFailures.append(failure)
+            }
         }
         return outcome
     }
 }
 
 extension CasterRuntime {
+    public func takePlayerFailures() -> [SpellCastFailure] {
+        defer { playerFailures = [] }
+        return playerFailures
+    }
+
     /// Hands over the casts completed since the last call.
     public func takeCompletedCasts() -> [CompletedCast] {
         defer { completedCasts = [] }

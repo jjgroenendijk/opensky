@@ -59,6 +59,12 @@ integer field.
 A string setting holds a string-table ID in a localized plugin. It resolves through the string
 table of the plugin that set it ([string tables](/formats/strings.md)).
 
+A feature that shows several string settings lists them as one enum, whose raw values are the
+editor IDs, and reads them through `GameSettingTexts`. Each case carries OpenSky's own words
+as a fallback, for a load order without the setting. Examples: `RestText` (`sNoSleep...`),
+`ActivationText` (`sTake`, `sSteal`), `SaveNoticeText` (`sAutoSaving`), and `CastNoticeText`
+(`sMagicCastInsufficientMagicka`).
+
 ## Settings the game never uses
 
 `Skyrim.esm` keeps settings of older games, and texts of consoles and online services. The

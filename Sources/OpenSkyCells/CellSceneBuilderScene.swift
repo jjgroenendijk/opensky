@@ -115,7 +115,7 @@ nonisolated extension CellSceneBuilder {
             let name = resolvedText(base.name)
                 .flatMap { $0.isEmpty ? nil : $0 }
             let seats = base.recordType == "FURN" ? seats(of: base, at: ref) : []
-            // The game's text is `sFurnitureSleep`, which the build cannot read.
+            // The game's verbs are string settings; `ActivationPrompt` lays them on at run time.
             let isBed = seats.contains { $0.animationType == FurnitureSeat.sleepAnimation }
             var interaction = PlacedInteraction(
                 reference: ref.formID,
@@ -133,6 +133,7 @@ nonisolated extension CellSceneBuilder {
                 lock: action == .open || action == .search ? ref.lock : nil
             )
             interaction.seats = seats
+            interaction.hasLabelOverride = override != nil
             if base.isAutomaticDoor {
                 guard let area = Self.automaticArea(of: base, at: ref) else { continue }
                 interaction.automaticArea = area

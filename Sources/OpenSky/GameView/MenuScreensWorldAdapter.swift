@@ -71,11 +71,6 @@ final class MenuScreensWorldAdapter {
     func showHUDNotification(_ text: String) {
         game.hud.showNotification(text)
     }
-
-    /// A string game setting from the load order, or nil when it has none.
-    func settingText(_ editorID: String) -> String? {
-        game.mapWorld.text(game.mapWorld.records?.menuTexts[editorID])
-    }
 }
 
 extension MenuScreensWorldAdapter: SleepWaitWorld {
@@ -90,6 +85,7 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         context.hostilesNear = combat.hostileCount > 0
         context.alarmed = game.crime.isPlayerPursued
         context.trespassing = game.crime.isPlayerTrespassing
+        context.warnedToLeave = game.crime.isPlayerWarnedToLeave
         if let bed, let key = game.streamer?.referenceEntry(formID: bed)?.key {
             // The theft rule decides whose a bed is, as it does for an item.
             context.bedOwnedByOther = game.crime.ownershipVerdict(on: key).isTheft
@@ -97,8 +93,7 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
         guard let refusal = RestRule.refusal(context) else { return nil }
-        return settingText(refusal.settingEditorID(sleeping: sleeping))
-            ?? refusal.fallbackText(sleeping: sleeping)
+        return game.mapWorld.settingTexts(RestText.self)[refusal.text(sleeping: sleeping)]
     }
 
     /// The clock moves in 15-minute steps. Each step ages the weather and runs the

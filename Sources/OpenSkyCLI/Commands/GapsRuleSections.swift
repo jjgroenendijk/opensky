@@ -11,6 +11,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyScripting
@@ -123,6 +124,17 @@ extension GapsGatherer {
         _ = VendorRestockSettings.resolve(store: store)
         _ = StealthPointSettings.resolve(store: store)
         _ = EnchantedValueSettings.resolve(store: store)
+        settingTextsRead(store: store)
         return log.editorIDs
+    }
+}
+
+extension GapsGatherer {
+    /// Every `GameSettingTexts` key enum a feature shows.
+    static func settingTextsRead(store: GameSettingStore) {
+        _ = GameSettingTexts<RestText>.resolve(store: store)
+        _ = GameSettingTexts<ActivationText>.resolve(store: store)
+        _ = GameSettingTexts<SaveNoticeText>.resolve(store: store)
+        _ = GameSettingTexts<CastNoticeText>.resolve(store: store)
     }
 }

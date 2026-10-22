@@ -87,8 +87,7 @@ follows the [interior](/engine/interiors.md) path. Without one, it still sends t
 no open animation yet.
 
 A bed is a `FURN` whose model has a sleep marker (animation type 2). Its prompt reads "Sleep",
-and using it opens the [rest menu](/engine/sleep-wait.md). The game's prompt text is the
-`sFurnitureSleep` setting, which the cell build does not read yet.
+and using it opens the [rest menu](/engine/sleep-wait.md).
 
 ### Automatic doors
 
@@ -196,10 +195,23 @@ page.
 The vanilla `hudmenu.swf` bridge listens for target changes. It only stores the new target. The
 renderer applies the prompt, compass marker, and heading together between frames.
 
-The prompt is the action word and the name, for example `Open <door name>`. The compass marker is at
-the reference's position, not the hit point, so it stays steady while the ray moves over the object.
-No target hides the prompt and removes the marker. The HUD only listens. It is not a second
-interaction system.
+The prompt is the action word and the name, for example `Open <door name>`. The action word is a
+string setting, chosen at run time:
+
+| Target | Setting |
+| --- | --- |
+| An item or a container that is not the player's to take | `sSteal`, `sStealFrom` |
+| A book | `sRead` |
+| An actor while the player sneaks | `sPickpocket` |
+| A bed, a seat, other furniture | `sFurnitureSleep`, `sSit`, `sActivate` |
+| Anything else | `sTake`, `sSearch`, `sOpen`, `sHarvest`, `sTalk`, `sActivate` |
+
+The steal texts carry their own red `<font>` markup, which the HUD movie's crosshair text field
+shows. An `ACTI` with its own `RNAM` verb keeps it. Lock and harvest labels apply on top.
+
+The compass marker is at the reference's position, not the hit point, so it stays steady while
+the ray moves over the object. No target hides the prompt and removes the marker. The HUD only
+listens. It is not a second interaction system.
 
 ## Controls
 

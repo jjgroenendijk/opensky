@@ -12,6 +12,7 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyWorld
 import simd
@@ -26,6 +27,7 @@ extension MagicWorldAdapter {
             case let .detonateRune(payload, position): detonateRune(payload, at: position)
             case let .castingSound(sound, caster, starts):
                 castingSound(sound, caster: caster, starts: starts)
+            case let .notice(text): game.hud.showNotification(text)
             case let .castingArt(art, plugin, caster, starts):
                 game.effectsWorld.effects
                     .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)

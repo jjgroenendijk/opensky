@@ -41,6 +41,9 @@ public final class MagicCoordinator {
     public var onSpellCast: ((ReferenceKey, ReferenceKey) -> Void)?
     /// The spell words the spellcasting panel shows.
     public var magicTexts = MagicTexts.vanilla
+    public var castNotices = GameSettingTexts<CastNoticeText>.vanilla
+    /// The hands pressed last frame, so a press during a shout is refused once.
+    var castPressed: Set<SpellHand> = []
     public var spellCostSettings = SpellCostSettings.vanilla {
         didSet { caster?.costSettings = spellCostSettings }
     }
@@ -199,9 +202,14 @@ public final class MagicCoordinator {
         weaponsDrawn: Bool? = nil
     ) -> [MagicCommand] {
         guard let caster else { return takeCommands() }
-        caster.acceptFrame(
-            isPlayerControlled ? latched(intent, events: events) : .still, on: .player
-        )
+        let playerIntent = isPlayerControlled
+            ? refusingCastsDuringShout(latched(intent, events: events)) : .still
+        caster.acceptFrame(playerIntent, on: .player)
+        for failure in caster.takePlayerFailures() {
+            if let text = CastNoticeText.notice(for: failure) {
+                pendingCommands.append(.notice(castNotices[text]))
+            }
+        }
         advanceActorCasts(delta: intent.deltaTime)
         advanceRunes()
         advanceCommanded()
@@ -381,5 +389,36 @@ extension MagicCoordinator: CasterWorld {
             holders[target.key] = world.actorValueHolder(for: target.key)
         }
         return holders
+    }
+}
+
+extension MagicCoordinator {
+    /// A hand pressed while the player shouts does not begin its cast, and a new press
+    /// says why. A cast already running is left to finish.
+    func refusingCastsDuringShout(_ intent: CastingIntent) -> CastingIntent {
+        var refused = intent
+        let shouting = !shoutMachine.isIdle
+        for hand in SpellHand.allCases {
+            let pressed = intent.isHeld(hand)
+            defer {
+                if pressed {
+                    castPressed.insert(hand)
+                } else {
+                    castPressed.remove(hand)
+                }
+            }
+            guard
+                shouting, pressed, hasReadiedSpell(in: hand),
+                !(caster?.phase(of: hand).isCasting ?? false)
+            else { continue }
+            if !castPressed.contains(hand) {
+                pendingCommands.append(.notice(castNotices[.castWhileShouting]))
+            }
+            switch hand {
+            case .left: refused.leftHeld = false
+            case .right: refused.rightHeld = false
+            }
+        }
+        return refused
     }
 }

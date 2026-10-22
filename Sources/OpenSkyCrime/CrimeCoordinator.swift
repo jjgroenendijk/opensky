@@ -231,6 +231,11 @@ public final class CrimeCoordinator {
     /// Runs every tick with the real seconds since the last. The ownership lookup
     /// runs only when the cell changes; then a seen trespasser is warned and, after
     /// the grace period, charged (`TrespassWatch`).
+    /// Warned to leave a trespassed cell, with the grace period still running.
+    public var isPlayerWarnedToLeave: Bool {
+        isPlayerTrespassing && trespassWatch.sinceWarning != nil && !trespassWatch.isCharged
+    }
+
     public func advanceTrespass(by seconds: Double = 0) {
         let location = world.currentCellLocation
         if lastPlayerCell != location {

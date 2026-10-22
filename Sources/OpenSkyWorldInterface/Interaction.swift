@@ -70,6 +70,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public var seats: [FurnitureSeat] = []
     /// An automatic DOOR's area; walking into it activates the door. Nil for other bases.
     public var automaticArea: AutomaticDoorArea?
+    /// The base authors its own verb (`ACTI` `RNAM`), which the game's verbs never replace.
+    public var hasLabelOverride = false
 
     /// A FURN with a sleep marker. Using it opens the rest menu.
     public var isBed: Bool {
