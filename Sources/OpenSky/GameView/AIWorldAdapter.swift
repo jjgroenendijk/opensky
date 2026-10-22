@@ -489,6 +489,8 @@ extension AIWorldAdapter: PerceptionSessionWorld {
                 sneakSkill: sneakSkill(of: actor.key)
             )
             observer.isSleeping = sleepers.contains(actor.key)
+            observer.blindness = blindness(of: actor.key)
+            observer.combatTarget = game.combat.loop?.combatTarget(of: actor.key)
             return PerceptionCandidate(
                 observer: observer,
                 isDead: actor.isDead,

@@ -25,12 +25,17 @@ extension AIWorldAdapter {
     /// `Sneak`, `Invisibility`, and `Movement Noise Mult` in the vanilla table.
     private static let sneakIndex: Int32 = 15
     private static let invisibilityIndex: Int32 = 54
+    private static let blindnessIndex: Int32 = 84
     private static let movementNoiseMultIndex: Int32 = 92
     /// Point lights the sample sums; the nearest ones carry nearly all the light.
     private static let sampledPointLights = 8
 
     func sneakSkill(of actor: ReferenceKey) -> Float {
         actorValue(Self.sneakIndex, of: actor) ?? DetectionTargetTraits.startingSkill
+    }
+
+    func blindness(of actor: ReferenceKey) -> Float {
+        actorValue(Self.blindnessIndex, of: actor) ?? 0
     }
 
     /// The player's detection perks apply once a frame, with no observer bound:

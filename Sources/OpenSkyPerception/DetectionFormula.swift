@@ -93,18 +93,37 @@ nonisolated public enum DetectionFormula: Sendable {
         return settings.soundsMult.value * (movement + action) * occlusion
     }
 
-    /// The visual term, before distance attenuation. Zero without a clear sight
-    /// line, outside the cone, or for a sleeping observer, whose blindness the CK
-    /// wiki sets to full; there is no partial seeing in this model.
+    /// The CK wiki's visual term before distance attenuation: light, movement, the
+    /// observer's blindness, and invisibility. Zero without a clear sight line, outside
+    /// the cone, or for a sleeping observer, whose blindness the CK wiki sets to full.
     public static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        guard
-            inputs.hasLineOfSight, inputs.isInViewCone, !inputs.traits.isInvisible,
-            !inputs.observer.isSleeping
-        else {
+        guard inputs.hasLineOfSight, inputs.isInViewCone, !inputs.observer.isSleeping else {
             return 0
         }
         let crouch = inputs.isSneaking ? max(0, settings.sneakVisualMult.value) : 1
-        return lightFactor(inputs: inputs, settings: settings) * crouch
+        let invisibility = inputs.traits.isInvisible ? max(0, settings.stealthBoyMult.value) : 1
+        return lightFactor(inputs: inputs, settings: settings)
+            * movementFactor(inputs: inputs, settings: settings)
+            * blindnessFactor(inputs.observer.blindness)
+            * invisibility * crouch
+    }
+
+    /// `1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult`, with moving
+    /// and running as 0 or 1. A sprint counts as running.
+    public static func movementFactor(
+        inputs: DetectionInputs, settings: DetectionSettings
+    ) -> Float {
+        guard let gait = inputs.gait else { return 1 }
+        let isRunning = gait == .run || gait == .sprint
+        return max(
+            0, 1 + settings.lightMoveMult.value + (isRunning ? settings.lightRunMult.value : 0)
+        )
+    }
+
+    /// `(100 - int(Blindness)) / 100`, so 100 Blindness sees nothing.
+    static func blindnessFactor(_ blindness: Float) -> Float {
+        let points = blindness.isFinite ? blindness.rounded(.towardZero) : 0
+        return min(max((100 - points) / 100, 0), 1)
     }
 
     /// `GetLightLevel` of the target: its 0...1 light times 100, plus
@@ -142,17 +161,24 @@ nonisolated public enum DetectionFormula: Sendable {
     }
 
     /// The observer's skill factor, times `1 + alert * fSneakAlertMod + sleeping *
-    /// fSneakSleepBonus` (CK wiki "Category:Detection").
-    public static func noticerFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    /// fSneakSleepBonus + notCombatTarget * fSneakCombatMod` (CK wiki "Category:Detection").
+    public static func noticerFactor(
+        inputs: DetectionInputs,
+        settings: DetectionSettings
+    ) -> Float {
         let state = inputs.observer
         let mod = 1 + (state.isAlert ? settings.alertMod.value : 0)
             + (state.isSleeping ? settings.sleepBonus.value : 0)
+            + (state.isFightingAnother ? settings.combatMod.value : 0)
         return skillFactor(level: inputs.noticerSkill, settings: settings) * max(0, mod)
     }
 
     /// The target's skill factor. The player's is `fPlayerDetectionSneakBase +
     /// fPlayerDetectionSneakMult * skill`, with the skill clamped as for any actor.
-    public static func sneakerFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    public static func sneakerFactor(
+        inputs: DetectionInputs,
+        settings: DetectionSettings
+    ) -> Float {
         guard inputs.isPlayerTarget else {
             return skillFactor(level: inputs.traits.sneakSkill, settings: settings)
         }

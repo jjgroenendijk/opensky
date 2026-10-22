@@ -67,6 +67,14 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     public var playerDetectFloor: MovementSetting
     /// `fSneakFlyingDistanceMult`: what a flying observer's range is multiplied by.
     public var flyingDistanceMult: MovementSetting
+    /// `fSneakLightMoveMult` and `fSneakLightRunMult`: a moving or running target is
+    /// easier to see, `1 + moving * move + running * run` (CK wiki "Category:Detection").
+    public var lightMoveMult: MovementSetting
+    public var lightRunMult: MovementSetting
+    /// `fSneakStealthBoyMult`: the visual term of an invisible target is multiplied by it.
+    public var stealthBoyMult: MovementSetting
+    /// `fSneakCombatMod`: weights the skill of an observer that fights someone else.
+    public var combatMod: MovementSetting
 
     // MARK: - OpenSky's own
 
@@ -174,6 +182,10 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
         func vanilla(_ editorID: String, _ fallback: Float) -> MovementSetting {
             override(editorID) ?? MovementSetting(value: fallback, source: loadOrderSource)
         }
+        // A setting `Skyrim.esm` does not override, so the engine default applies.
+        func engineDefault(_ editorID: String, _ fallback: Float) -> MovementSetting {
+            override(editorID) ?? MovementSetting(value: fallback, source: "CK wiki default")
+        }
         return DetectionSettings(
             sneakBaseValue: vanilla("fSneakBaseValue", -15),
             maxDistance: vanilla("fSneakMaxDistance", 2500),
@@ -199,6 +211,10 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             playerSneakMult: vanilla("fPlayerDetectionSneakMult", 0.4),
             playerDetectFloor: vanilla("fPlayerDetectActorValue", -30),
             flyingDistanceMult: vanilla("fSneakFlyingDistanceMult", 3),
+            lightMoveMult: engineDefault("fSneakLightMoveMult", 0.01),
+            lightRunMult: engineDefault("fSneakLightRunMult", 0.2),
+            stealthBoyMult: engineDefault("fSneakStealthBoyMult", 0),
+            combatMod: engineDefault("fSneakCombatMod", -0.4),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),

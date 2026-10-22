@@ -31,6 +31,11 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     public var isSleeping = false
     /// A flying observer's range is multiplied by `fSneakFlyingDistanceMult`.
     public var isFlying = false
+    /// The `Blindness` actor value; 100 sees nothing.
+    public var blindness: Float = 0
+    /// Who the observer fights, if anyone. Another target than the one judged weights
+    /// its skill by `fSneakCombatMod`.
+    public var combatTarget: ReferenceKey?
 
     public var name: String {
         label.text

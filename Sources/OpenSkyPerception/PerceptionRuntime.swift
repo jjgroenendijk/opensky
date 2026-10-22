@@ -320,7 +320,9 @@ public final class PerceptionRuntime {
         inputs.observer = DetectionObserverState(
             isAlert: previous.state == .suspicious,
             isSleeping: observer.isSleeping,
-            isFlying: observer.isFlying
+            isFlying: observer.isFlying,
+            blindness: observer.blindness,
+            isFightingAnother: observer.combatTarget.map { $0 != target.key } ?? false
         )
         inputs.isPlayerTarget = target.key == .player
         pairs[key] = previous.advanced(

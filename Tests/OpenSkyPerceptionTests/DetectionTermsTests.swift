@@ -79,4 +79,43 @@ struct DetectionTermsTests {
         pool.advance(highestValue: -10, overThreshold: false, by: 0.5, settings: stealth)
         #expect(pool.points == drained)
     }
+
+    @Test func movementMakesATargetEasierToSee() {
+        let still = DetectionInputs(distance: 0)
+        let base = DetectionFormula.visualFactor(inputs: still, settings: settings)
+        let walking = DetectionInputs(distance: 0, gait: .walk)
+        let running = DetectionInputs(distance: 0, gait: .sprint)
+        let walk = DetectionFormula.visualFactor(inputs: walking, settings: settings)
+        let run = DetectionFormula.visualFactor(inputs: running, settings: settings)
+        #expect(abs(walk - base * 1.01) < 1e-4)
+        #expect(abs(run - base * 1.21) < 1e-4)
+    }
+
+    @Test func blindnessDimsTheObserversSight() {
+        var inputs = DetectionInputs(distance: 0)
+        let clear = DetectionFormula.visualFactor(inputs: inputs, settings: settings)
+        inputs.observer.blindness = 25.9
+        let dim = DetectionFormula.visualFactor(inputs: inputs, settings: settings)
+        #expect(abs(dim - clear * 0.75) < 1e-4)
+        inputs.observer.blindness = 100
+        #expect(DetectionFormula.visualFactor(inputs: inputs, settings: settings) == 0)
+    }
+
+    @Test func invisibilityScalesSightByTheStealthBoySetting() {
+        let inputs = DetectionInputs(distance: 0, traits: DetectionTargetTraits(isInvisible: true))
+        #expect(DetectionFormula.visualFactor(inputs: inputs, settings: settings) == 0)
+        var tuned = settings
+        tuned.stealthBoyMult = MovementSetting(value: 0.5, source: "test")
+        let visible = DetectionFormula.visualFactor(
+            inputs: DetectionInputs(distance: 0), settings: tuned
+        )
+        let half = DetectionFormula.visualFactor(inputs: inputs, settings: tuned)
+        #expect(abs(half - visible * 0.5) < 1e-4)
+    }
+
+    @Test func anObserverFightingSomeoneElseNoticesLess() {
+        var inputs = DetectionInputs(distance: 0, noticerSkill: 40)
+        inputs.observer.isFightingAnother = true
+        #expect(abs(DetectionFormula.noticerFactor(inputs: inputs, settings: settings) - 12) < 1e-4)
+    }
 }
