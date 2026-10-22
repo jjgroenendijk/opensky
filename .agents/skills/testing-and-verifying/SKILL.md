@@ -57,7 +57,7 @@ The loops, from cheapest up:
 
 1. `make compile` while fixing compile errors in package modules: `swift build` of the
    changed modules and their dependents, without Xcode.
-2. `make test-package T='Target[/Suite[/test()]]'` for one package test target: `swift test`,
+2. `make test-package T='Target[/Suite[/test()]],...'` for package test targets: `swift test`,
    no Xcode, no app. The first run compiles every package test target; later runs are
    incremental.
 3. `make test-unit PLAN=<plan> [T=...]` builds and runs one plan through xcodebuild. `Quick`
@@ -71,8 +71,9 @@ The loops, from cheapest up:
 
 Rules that hold across all four:
 
-- `T='Target/Suite'` runs a whole suite; `T='Target/Suite/method()'` one test. A selector
-  that matches nothing runs zero tests and still passes, so read the count.
+- `T='Target/Suite'` runs a whole suite; `T='Target/Suite/method()'` one test. A comma
+  list, `T='Target/SuiteA,Target/SuiteB'`, runs them all in one run. A selector that
+  matches no test fails the run and names that selector.
 - At the end, build only the Xcode products the change reaches, one target each:
   `make build-app`, `make build-cli`, and `make build-tests` (every bundle of a plan,
   `PLAN=UnitTests` by default, without running a test).
