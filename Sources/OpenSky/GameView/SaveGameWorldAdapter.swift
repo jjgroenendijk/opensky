@@ -129,7 +129,16 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     func quickload() {
+        let notices = game.mapWorld.settingTexts(SaveNoticeText.self)
         Task {
+            if !hasListed {
+                await refreshSaveRows()
+            }
+            guard listings.contains(where: { $0.slot == AutosavePolicy.quicksaveSlot }) else {
+                game.hud.showNotification(notices[.noSave])
+                return
+            }
+            game.hud.showNotification(notices[.quickloading])
             do {
                 try await loadGame(slot: AutosavePolicy.quicksaveSlot)
             } catch {
@@ -146,6 +155,7 @@ final class SaveGameWorldAdapter: SaveGameService {
             ? autosaves.shouldSaveOnPause(settings: settings, lastSave: lastSaveDate, now: Date())
             : autosaves.isEnabled(trigger, settings: settings)
         guard due else { return }
+        game.hud.showNotification(game.mapWorld.settingTexts(SaveNoticeText.self)[.autosaving])
         Task {
             if !hasListed {
                 await refreshSaveRows()

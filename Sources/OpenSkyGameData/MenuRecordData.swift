@@ -8,23 +8,18 @@ import OpenSkyFormatsESM
 nonisolated public struct MenuMapSettings: Equatable, Sendable {
     public var revealDistance: Float
     public var visibleDistance: Float
-    public var discoveryExperience: Int
     /// `fFastTravelSpeedMult`. Skyrim.esm has no record of it, so the engine
     /// default of 1 applies unless a plugin adds one.
     public var fastTravelSpeedMultiplier: Float
 
-    /// Measured in the install: 1000, 12500, and 10.
-    public static let vanilla = Self(
-        revealDistance: 1000, visibleDistance: 12500, discoveryExperience: 10
-    )
+    /// Measured in the install: 1000 and 12500.
+    public static let vanilla = Self(revealDistance: 1000, visibleDistance: 12500)
 
     public init(
-        revealDistance: Float, visibleDistance: Float, discoveryExperience: Int,
-        fastTravelSpeedMultiplier: Float = 1
+        revealDistance: Float, visibleDistance: Float, fastTravelSpeedMultiplier: Float = 1
     ) {
         self.revealDistance = revealDistance
         self.visibleDistance = visibleDistance
-        self.discoveryExperience = discoveryExperience
         self.fastTravelSpeedMultiplier = fastTravelSpeedMultiplier
     }
 
@@ -40,9 +35,6 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
         self.init(
             revealDistance: number("iMapMarkerRevealDistance", vanilla.revealDistance),
             visibleDistance: number("iMapMarkerVisibleDistance", vanilla.visibleDistance),
-            discoveryExperience: Int(number(
-                "iXPRewardDiscoverMapMarker", Float(vanilla.discoveryExperience)
-            )),
             fastTravelSpeedMultiplier: number(
                 "fFastTravelSpeedMult", vanilla.fastTravelSpeedMultiplier
             )

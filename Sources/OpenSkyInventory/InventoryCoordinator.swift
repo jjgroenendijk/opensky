@@ -45,6 +45,8 @@ public final class InventoryCoordinator {
     /// The experience formulas a crafting session reports with.
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
     public var menuTexts = InventoryMenuTexts.vanilla
+    /// The crosshair's verbs.
+    public var activationTexts = GameSettingTexts<ActivationText>.vanilla
     public var tradeTexts = TradeTexts.vanilla
     public var pickpocketSettings = PickpocketSettings.vanilla
     public var soulTexts = SoulTexts.vanilla

@@ -153,6 +153,11 @@ Every refusal has a sentence, is counted, and is shown on the panel. Nothing fai
 | `abilityNotCastable` | An ability is carried, not cast |
 | `powerAlreadyUsedToday` | The once-per-day rule |
 
+A player refusal also shows a HUD notice from a string setting: `sMagicCastInsufficientMagicka`
+or `sMagicCastPowerUsed`. While a shout runs, a new press of a hand with a readied spell is
+refused with `sMagicCastCastWhileShouting`. A shout begun during a cast shows
+`sMagicCastShoutWhileCasting`. The notice shows once per press, not each frame of a held cast.
+
 UESP: "Magicka will not regenerate while you are casting a spell." So a casting player stops only
 magicka; health and stamina keep going. An NPC follows `bRegenNPCMagickaDuringCast`, which is false
 in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#regeneration)).

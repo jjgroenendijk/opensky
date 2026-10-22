@@ -77,6 +77,13 @@ final class MapWorldAdapter {
         loadedStrings?.scoped(to: setting.sourcePlugin).resolve(setting.text)
     }
 
+    /// One feature's string settings, or its fallbacks before the data has loaded.
+    func settingTexts<Key: GameSettingTextKey>(_: Key.Type = Key.self) -> GameSettingTexts<Key> {
+        game.worldData.map {
+            GameSettingTexts<Key>.resolve(store: $0.gameSettings) { [weak self] in self?.text($0) }
+        } ?? .vanilla
+    }
+
     private var loadedStrings: LocalizedStrings? {
         if strings == nil {
             strings = game.localizedStringsLoader?()
@@ -191,10 +198,6 @@ extension MapWorldAdapter: MapMenuWorld {
 
     func showNotification(_ text: String) {
         game.hud.showNotification(text)
-    }
-
-    func awardExperience(_ amount: Int) {
-        _ = game.progression.awardCharacterExperience(Float(amount))
     }
 
     func incrementStat(_ name: String) {

@@ -19,11 +19,12 @@ and can travel to. Without a component the `FNAM` flags apply.
 | --- | --- | --- |
 | `iMapMarkerRevealDistance` | 1000 | Closer than this discovers a marker |
 | `iMapMarkerVisibleDistance` | 12500 | Closer than this shows it on the compass |
-| `iXPRewardDiscoverMapMarker` | 10 | Character experience for a discovery |
 
-Discovery runs each time the player has moved 128 units. A discovered marker is visible and
-a travel target, and the HUD names it. `ObjectReference.AddToMap` shows a marker and makes
-it a travel target only when asked.
+Discovery runs each time the player has moved 128 units. It gives no level experience:
+UESP "Skyrim:Leveling" (<https://en.uesp.net/wiki/Skyrim:Leveling>) gives level experience
+only for skill increases, so `iXPRewardDiscoverMapMarker` is a Fallout leftover. A discovered
+marker is visible and a travel target, and the HUD names it. `ObjectReference.AddToMap` shows a
+marker and makes it a travel target only when asked.
 
 ## World map
 

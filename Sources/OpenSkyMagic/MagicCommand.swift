@@ -17,4 +17,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case castingSound(FormID, caster: ReferenceKey, starts: Bool)
     /// Show or hide a casting hand's `ARTO`, written in `plugin`, on the caster.
     case castingArt(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
+    /// Show this line on the HUD, such as a refused cast's.
+    case notice(String)
 }

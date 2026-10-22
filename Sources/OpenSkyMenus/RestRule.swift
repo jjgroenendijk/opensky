@@ -3,10 +3,13 @@
 // "Category:Settings" page. See docs/engine/sleep-wait.md.
 
 import Foundation
+import OpenSkyGameData
 
 nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
     case hostileActorsNear = "HostileActorsNear"
     case alarm = "WhileAlarm"
+    /// A trespass warning was given and the player has not left yet.
+    case warnedToLeave = "WarnToLeave"
     case trespass = "Trespass"
     /// Sleep only: the bed belongs to someone else.
     case ownedBed = "InOwnedBed"
@@ -15,19 +18,50 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
 
     /// The game setting that holds the text, such as `sNoWaitInAir`.
     public func settingEditorID(sleeping: Bool) -> String {
-        "sNo\(sleeping ? "Sleep" : "Wait")\(rawValue)"
+        text(sleeping: sleeping).rawValue
     }
 
-    /// The text when the load order has no such setting.
-    public func fallbackText(sleeping: Bool) -> String {
-        let verb = sleeping ? "sleep" : "wait"
+    public func text(sleeping: Bool) -> RestText {
+        switch self {
+        case .hostileActorsNear: sleeping ? .sleepHostileActorsNear : .waitHostileActorsNear
+        case .alarm: sleeping ? .sleepWhileAlarm : .waitWhileAlarm
+        case .warnedToLeave: sleeping ? .sleepWarnToLeave : .waitWarnToLeave
+        case .trespass: sleeping ? .sleepTrespass : .waitTrespass
+        case .ownedBed: .sleepInOwnedBed
+        case .inAir: sleeping ? .sleepInAir : .waitInAir
+        case .takingHealthDamage: sleeping ? .sleepTakingHealthDamage : .waitTakingHealthDamage
+        }
+    }
+}
+
+/// The refusal texts of the rest and wait menus.
+nonisolated public enum RestText: String, GameSettingTextKey {
+    case sleepHostileActorsNear = "sNoSleepHostileActorsNear"
+    case sleepWhileAlarm = "sNoSleepWhileAlarm"
+    case sleepWarnToLeave = "sNoSleepWarnToLeave"
+    case sleepTrespass = "sNoSleepTrespass"
+    case sleepInOwnedBed = "sNoSleepInOwnedBed"
+    case sleepInAir = "sNoSleepInAir"
+    case sleepTakingHealthDamage = "sNoSleepTakingHealthDamage"
+    case waitHostileActorsNear = "sNoWaitHostileActorsNear"
+    case waitWhileAlarm = "sNoWaitWhileAlarm"
+    case waitWarnToLeave = "sNoWaitWarnToLeave"
+    case waitTrespass = "sNoWaitTrespass"
+    case waitInAir = "sNoWaitInAir"
+    case waitTakingHealthDamage = "sNoWaitTakingHealthDamage"
+
+    public var fallback: String {
+        let verb = rawValue.hasPrefix("sNoSleep") ? "rest" : "wait"
         return switch self {
-        case .hostileActorsNear: "You cannot \(verb) when enemies are nearby."
-        case .alarm: "You cannot \(verb) while guards are pursuing you."
-        case .trespass: "You cannot \(verb) while trespassing."
-        case .ownedBed: "You cannot sleep in an owned bed."
-        case .inAir: "You cannot \(verb) in the air."
-        case .takingHealthDamage: "You cannot \(verb) while taking health damage."
+        case .sleepHostileActorsNear, .waitHostileActorsNear:
+            "Enemies are near; you cannot \(verb)."
+        case .sleepWhileAlarm, .waitWhileAlarm: "Guards are after you; you cannot \(verb)."
+        case .sleepWarnToLeave, .waitWarnToLeave: "You were told to leave; you cannot \(verb)."
+        case .sleepTrespass, .waitTrespass: "You are trespassing; you cannot \(verb)."
+        case .sleepInOwnedBed: "This bed is not yours."
+        case .sleepInAir, .waitInAir: "You cannot \(verb) in the air."
+        case .sleepTakingHealthDamage, .waitTakingHealthDamage:
+            "You are losing health; you cannot \(verb)."
         }
     }
 }
@@ -37,6 +71,8 @@ nonisolated public struct RestContext: Equatable, Sendable {
     public var hostilesNear = false
     public var alarmed = false
     public var trespassing = false
+    /// A trespass warning is running and the grace period has not ended.
+    public var warnedToLeave = false
     /// The bed the player chose belongs to someone else. False for the wait key.
     public var bedOwnedByOther = false
     public var inAir = false
@@ -64,6 +100,9 @@ nonisolated public enum RestRule {
         }
         if context.alarmed {
             return .alarm
+        }
+        if context.warnedToLeave {
+            return .warnedToLeave
         }
         if context.trespassing {
             return .trespass

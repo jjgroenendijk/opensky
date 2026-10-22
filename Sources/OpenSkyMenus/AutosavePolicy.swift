@@ -61,3 +61,19 @@ public struct AutosavePolicy: Equatable {
             ?? Self.slot(1)
     }
 }
+
+/// The HUD notices of saving and loading outside the menu.
+nonisolated public enum SaveNoticeText: String, GameSettingTextKey {
+    case autosaving = "sAutoSaving"
+    case quickloading = "sQuickLoading"
+    /// The quickload key found no quicksave.
+    case noSave = "sSaveNotAvailable"
+
+    public var fallback: String {
+        switch self {
+        case .autosaving: "Autosaving"
+        case .quickloading: "Quickloading"
+        case .noSave: "There is no save to load."
+        }
+    }
+}

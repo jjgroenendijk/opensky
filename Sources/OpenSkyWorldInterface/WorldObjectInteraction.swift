@@ -53,6 +53,7 @@ nonisolated extension PlacedInteraction {
         )
         copy.seats = seats
         copy.automaticArea = automaticArea
+        copy.hasLabelOverride = hasLabelOverride
         return copy
     }
 }

@@ -128,6 +128,9 @@ struct RestStepTests {
         context.trespassing = true
         #expect(RestRule.refusal(context) == .trespass)
         #expect(RestRefusal.trespass.settingEditorID(sleeping: false) == "sNoWaitTrespass")
+        context.warnedToLeave = true
+        #expect(RestRule.refusal(context) == .warnedToLeave)
+        #expect(RestRefusal.warnedToLeave.settingEditorID(sleeping: true) == "sNoSleepWarnToLeave")
         context.alarmed = true
         #expect(RestRule.refusal(context) == .alarm)
     }

@@ -63,6 +63,9 @@ struct GameSettingValuesTests {
         #expect(GameSettingsUnused.reason(for: "fVATSPlaybackDelay") == .vats)
         #expect(GameSettingsUnused.reason(for: "SKINECTCANTINIT") == .consoles)
         #expect(GameSettingsUnused.reason(for: "fCombatDistance") == nil)
+        #expect(GameSettingsUnused.reason(for: "iXPRewardPickLock") == .rewardXP)
+        #expect(GameSettingsUnused.reason(for: "iSpeechChallengeDifficultyHard") == .speechGlobals)
+        #expect(GameSettingsUnused.reason(for: "sActorFade") == .movieLabel)
     }
 
     @Test func regenerationSettingsComeFromTheLoadOrder() throws {

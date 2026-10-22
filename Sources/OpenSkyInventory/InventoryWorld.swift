@@ -52,6 +52,9 @@ public protocol InventoryWorld: AnyObject {
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s
     /// prompt, such as a werewolf's "Feed". Nil keeps the authored label.
     func perkActivateLabel(for reference: FormID) -> String?
+    /// Whether `base` is a `BOOK`, which the crosshair offers to read.
+    func isBook(_ base: FormID) -> Bool
+    var isPlayerSneaking: Bool { get }
     /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
     /// the live conditions.
     func perkModified(
@@ -95,6 +98,14 @@ extension InventoryWorld {
 
     public func perkActivateLabel(for _: FormID) -> String? {
         nil
+    }
+
+    public func isBook(_: FormID) -> Bool {
+        false
+    }
+
+    public var isPlayerSneaking: Bool {
+        false
     }
 
     /// A session with no perks leaves every value as it is.

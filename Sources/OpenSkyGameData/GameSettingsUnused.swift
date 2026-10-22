@@ -24,6 +24,15 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     case creations
     /// Xbox, Kinect, and console storage and profile texts.
     case consoles
+    /// Labels and prompts of the settings and save pages. The SE journal movie builds
+    /// those pages with its own `$` texts and has no row or prompt that uses these.
+    case movieLabel
+    /// Fallout experience for kills, locks, and speech challenges, and its Bloody Mess
+    /// limb bursts. Skyrim gives level experience only for skill increases.
+    case rewardXP
+    /// Speech challenge difficulties. A Skyrim persuasion line tests Speech against the
+    /// globals `SpeechVeryEasy` to `SpeechVeryHard` in its own conditions.
+    case speechGlobals
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -46,7 +55,10 @@ nonisolated public enum GameSettingsUnused: Sendable {
         .oblivion: oblivionSettings,
         .wikiUnused: wikiUnusedSettings,
         .creations: creationsSettings,
-        .consoles: consolesSettings
+        .consoles: consolesSettings,
+        .movieLabel: movieLabelSettings,
+        .rewardXP: rewardXPSettings,
+        .speechGlobals: speechGlobalsSettings
     ]
 }
 

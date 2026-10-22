@@ -34,6 +34,7 @@ protocol MagicWorldHost: AnyObject {
     var combat: CombatCoordinator { get }
     var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
+    var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
@@ -132,8 +133,10 @@ final class MagicWorldAdapter {
     func wireEnchantments(provider: WorldDataStores) {
         game.magic.magicTexts = MagicTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        game.magic.castNotices = game.mapWorld.settingTexts()
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
         game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
+        game.magic.enchantingSettings = EnchantingSettings.resolve(store: provider.gameSettings)
         game.magic.soulTexts = SoulTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.wireEnchantments(store: provider.enchantmentStore)

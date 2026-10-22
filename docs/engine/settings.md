@@ -45,3 +45,6 @@ The two subtitle settings choose which lines the HUD shows
 Autosaves rotate over three slots, `Autosave 1` to `Autosave 3`: an empty slot first,
 else the oldest. Quicksave writes the slot `Quicksave`. A pause save waits until the
 chosen number of minutes has passed since the last save of any kind.
+
+The HUD shows `sAutoSaving` when an autosave is written and `sQuickLoading` when a quickload
+starts. A quickload with no quicksave shows `sSaveNotAvailable` instead.
