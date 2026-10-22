@@ -21,6 +21,7 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public var timescale: Float?
     public var isWorldSimPaused = false
     public var musicStore: MusicRecordStore?
+    public var globalStore: GlobalStore?
     public var cellResetReadout = "Cells left behind: 0"
     public private(set) var cellResetForces = 0
     public private(set) var timeOfDayWrites: [Float] = []

@@ -22,7 +22,8 @@ struct RuntimeStateCoordinatorTests {
     /// Reference and global writes share one sequence counter, so the merged
     /// tail is in the order the session wrote them.
     @Test func journalTailInterleavesReferenceAndGlobalWritesBySequence() throws {
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         store.set(ReferenceEnableState(isEnabled: false), for: Self.referenceKey)
         coordinator.setGlobalValue(120, editorID: "TimeScale")
         store.set(ReferenceEnableState(isEnabled: true), for: Self.referenceKey)
@@ -40,7 +41,8 @@ struct RuntimeStateCoordinatorTests {
     }
 
     @Test func snapshotReportsTheOverriddenGlobalCount() throws {
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         #expect(coordinator.runtimeStateSnapshot.overriddenGlobalCount == 0)
         coordinator.setGlobalValue(120, editorID: "TimeScale")
         #expect(coordinator.runtimeStateSnapshot.overriddenGlobalCount == 1)
@@ -50,7 +52,8 @@ struct RuntimeStateCoordinatorTests {
 
     /// The cap applies to the merged log, not to either ring alone.
     @Test func mergedTailIsCappedAtTheSnapshotLimit() throws {
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         for step in 1 ... 6 {
             store.set(
                 ReferenceEnableState(isEnabled: step.isMultiple(of: 2)),
@@ -66,7 +69,8 @@ struct RuntimeStateCoordinatorTests {
 
     /// A short global rounds onto its type, and the line shows the stored value.
     @Test func globalJournalLineShowsTheCoercedValue() throws {
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         coordinator.setGlobalValue(3.7, editorID: "TimeScale")
         #expect(coordinator.runtimeStateSnapshot.journalTail == ["1 set global TimeScale = 4"])
     }
@@ -102,7 +106,8 @@ struct RuntimeStateCoordinatorTests {
     /// journalled and redirected into the clock.
     @Test func hourScrubGoesThroughTheTimeGlobal() throws {
         world.gameClock = GameClock()
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         coordinator.setGameClockHour(6)
         #expect(world.projectedGlobals.map(\.0) == [.gameHour])
         #expect(world.timeOfDayWrites.isEmpty)
@@ -125,7 +130,8 @@ struct RuntimeStateCoordinatorTests {
     }
 
     @Test func attachingGlobalsSeedsTheRendererAndRerollsOnWrites() throws {
-        try coordinator.attach(globals: Self.globals())
+        world.globalStore = try Self.globals()
+        coordinator.reloadGlobals()
         coordinator.setGlobalValue(30, editorID: "TimeScale")
         #expect(world.appliedResolutions == [false, true])
     }

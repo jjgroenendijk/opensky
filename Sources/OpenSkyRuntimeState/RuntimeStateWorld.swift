@@ -31,6 +31,8 @@ public protocol RuntimeStateWorld: AnyObject {
     func makeCellResetsDue() -> Int
 
     var musicStore: MusicRecordStore? { get }
+    /// GLOB defaults of the loaded plugins, nil without game data.
+    var globalStore: GlobalStore? { get }
     /// The live condition context, with the crosshair as subject and target. `indexing`
     /// adds resident references a run-on must find, such as a perk's target.
     func conditionContext(

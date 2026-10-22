@@ -11,7 +11,10 @@ import OpenSkyWorldState
 public final class RuntimeStateCoordinator {
     /// GLOB defaults of the loaded plugins. Nil without game data; a clock
     /// scrub then writes the renderer's clock directly.
-    public private(set) var globalStore: GlobalStore?
+    public var globalStore: GlobalStore? {
+        world?.globalStore
+    }
+
     public private(set) var lastSaveOutcome = RuntimeStateSaveOutcome.none
     /// The words of the in-game date line.
     public var calendarTexts = CalendarTexts.vanilla
@@ -34,24 +37,27 @@ public final class RuntimeStateCoordinator {
     public init(store: WorldStateStore, world: any RuntimeStateWorld) {
         worldState = store
         self.world = world
-    }
-
-    /// A global write hands weather and the clock fresh values instead of
-    /// rebuilding cells. The five time globals write into the clock.
-    public func attach(globals store: GlobalStore?) {
-        globalStore = store
-        globalNamesByKey = nil
-        globalEditorIDs = nil
-        world?.applyGlobalResolution(worldState.globalResolution(defaults: store), reroll: false)
-        worldState.onTimeGlobalWrite = { [weak self] timeGlobal, value in
+        // A global write hands weather and the clock fresh values instead of
+        // rebuilding cells. The five time globals write into the clock.
+        store.onTimeGlobalWrite = { [weak self] timeGlobal, value in
             self?.world?.projectTimeGlobal(timeGlobal, value: value)
         }
-        worldState.onGlobalMutation = { [weak self] _ in
+        store.onGlobalMutation = { [weak self] _ in
             guard let self else { return }
-            world?.applyGlobalResolution(
-                worldState.globalResolution(defaults: store), reroll: true
+            self.world?.applyGlobalResolution(
+                worldState.globalResolution(defaults: globalStore), reroll: true
             )
         }
+    }
+
+    /// The world's globals changed with a new data load: drop the cached names
+    /// and hand weather and the clock the new values.
+    public func reloadGlobals() {
+        globalNamesByKey = nil
+        globalEditorIDs = nil
+        world?.applyGlobalResolution(
+            worldState.globalResolution(defaults: globalStore), reroll: false
+        )
     }
 
     /// The reference a selector names. Only a resident reference resolves,
