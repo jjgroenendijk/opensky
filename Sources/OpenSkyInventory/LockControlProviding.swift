@@ -36,6 +36,8 @@ nonisolated public struct LockControlSnapshot: Equatable, Sendable {
     public let lastAction: LockActionOutcome
     /// The names the readout uses, from the load order's game settings.
     public let texts: LockTexts
+    /// How the lockpicking menu draws the lock, set by the app's menu.
+    public var menuLock: String?
 
     public static let unavailable = LockControlSnapshot(
         isAvailable: false, locks: [], selected: nil, carriesEveryKey: false, lockpicks: 0,
@@ -121,11 +123,14 @@ extension LockCoordinator {
     }
 
     private func row(_ interaction: PlacedInteraction) -> LockReadoutRow? {
-        guard let state = lock(of: interaction)?.state else { return nil }
+        guard let lock = lock(of: interaction) else { return nil }
+        let state = lock.state
+        let shown = texts.name(of: difficulty(of: lock.shown))
         return LockReadoutRow(
             reference: interaction.reference,
             name: interaction.name,
-            difficulty: texts.name(of: difficulty(of: state)),
+            difficulty: lock.isLeveled
+                ? "\(shown) (leveled from \(texts.name(of: difficulty(of: state))))" : shown,
             key: state.key.map { world.itemName($0) } ?? "none",
             isLocked: state.isLocked
         )
@@ -149,6 +154,7 @@ nonisolated public enum LockReadout {
             "Selected: \(snapshot.selectedRow.map(line) ?? "none")",
             "Lockpicks: \(snapshot.lockpicks)",
             "Carries every key: \(snapshot.carriesEveryKey ? "yes" : "no")",
+            "Menu lock: \(snapshot.menuLock ?? "unknown")",
             "Last session: \(outcomeText(snapshot.lastOutcome))",
             "Last: \(snapshot.texts.text(for: snapshot.lastAction))"
         ]

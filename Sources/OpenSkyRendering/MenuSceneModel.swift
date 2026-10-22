@@ -48,8 +48,17 @@ public final class MenuSceneModel {
         playing: [NIFEffectPose.Playing], placement: float4x4, eye: SIMD3<Float>,
         up: SIMD3<Float>
     ) -> [MenuSceneDraw] {
-        let pose = NIFEffectPose(scene: scene, playing: playing)
-        return pose.shapes(of: scene).compactMap { state in
+        draws(
+            pose: NIFEffectPose(scene: scene, playing: playing), placement: placement, eye: eye,
+            up: up
+        )
+    }
+
+    /// The visible shapes of a pose built by the caller, such as one with a node it moves.
+    public func draws(
+        pose: NIFEffectPose, placement: float4x4, eye: SIMD3<Float>, up: SIMD3<Float>
+    ) -> [MenuSceneDraw] {
+        pose.shapes(of: scene).compactMap { state in
             guard state.isVisible else { return nil }
             var transform = placement * state.transform
             if let billboard = state.billboard {

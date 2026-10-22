@@ -83,6 +83,10 @@ extension LockWorldAdapter: LockWorld {
         return game.actorValues.runtime?.value(at: index, on: .player) ?? 0
     }
 
+    var playerLevel: Int {
+        game.actorValues.runtime?.baselines.playerLevel.level ?? 1
+    }
+
     func perkValue(
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
     ) -> Float {

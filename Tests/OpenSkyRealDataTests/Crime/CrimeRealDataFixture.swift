@@ -161,7 +161,7 @@ extension CrimeRealDataTests {
             scene.references[key] == nil ? nil : scene.location
         }
 
-        func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
+        func activateChildren(of key: ReferenceKey) -> [ActivateChild] {
             scene.references[key].map {
                 scene.references.sortedEntries().activateChildren(of: $0.formID)
             } ?? []

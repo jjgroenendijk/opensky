@@ -75,7 +75,7 @@ extension LockCoordinator {
         guard let target = sessionLock else { return [] }
         let commands = write(target.state, locked: false, for: target.key)
         sessionExperience += report(
-            uses: settings.successUses[difficulty(of: target.state)] ?? 0, action: .lockpickSuccess
+            uses: settings.successUses[target.difficulty] ?? 0, action: .lockpickSuccess
         )
         let rewarded = rewardKey(target)
         if let items {
@@ -121,7 +121,7 @@ extension LockCoordinator {
     private func finish(opened: Bool, keyRewarded: Bool) {
         guard let target = sessionLock else { return }
         lastOutcome = LockpickingOutcome(
-            difficulty: difficulty(of: target.state),
+            difficulty: target.difficulty,
             opened: opened,
             picksBroken: session?.picksBroken ?? 0,
             experience: sessionExperience,

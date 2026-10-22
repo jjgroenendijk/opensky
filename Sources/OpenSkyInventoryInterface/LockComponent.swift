@@ -30,6 +30,18 @@ nonisolated public enum LockDifficulty: Int, CaseIterable, Comparable, Sendable 
         self != .requiresKey
     }
 
+    /// The `XLOC` level the Creation Kit writes for the band.
+    public var authoredLevel: UInt8 {
+        switch self {
+        case .novice: 1
+        case .apprentice: 25
+        case .adept: 50
+        case .expert: 75
+        case .master: 100
+        case .requiresKey: 255
+        }
+    }
+
     /// English names. The install's `sLockLevelName*` settings are lstrings.
     public var name: String {
         switch self {

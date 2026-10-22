@@ -195,6 +195,13 @@ extension Renderer {
             renderDebug = .production
         }
         defer { renderDebug = requestedDebug }
+        // Passes with their own camera, such as the menu scene, read the drawable's
+        // aspect; offscreen, the target is the drawable.
+        let liveAspectRatio = drawableAspectRatio
+        if let target = descriptor.colorAttachments[0].texture, target.height > 0 {
+            drawableAspectRatio = Float(target.width) / Float(target.height)
+        }
+        defer { drawableAspectRatio = liveAspectRatio }
         // The world runs on a fixed step, so the Papyrus VM is deterministic offscreen,
         // in the live frame's order: world and weather, then animation, then audio.
         adoptFrameInput(frameDriver?.prepareOffscreenFrame(

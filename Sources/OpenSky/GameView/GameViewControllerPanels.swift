@@ -142,7 +142,9 @@ extension GameViewController: AlchemyControlProviding {
 
 extension GameViewController: LockControlProviding {
     var lockSnapshot: LockControlSnapshot {
-        inventory.locks.lockSnapshot
+        var snapshot = inventory.locks.lockSnapshot
+        snapshot.menuLock = lockpickingMenu.lockModelState
+        return snapshot
     }
 
     func selectLock(_ reference: FormID?) {
