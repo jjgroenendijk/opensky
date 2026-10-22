@@ -9,9 +9,9 @@ tags: [decision, architecture, modules, swiftpm, lint]
 # The Modular Architecture
 
 OpenSky follows [The Modular Architecture](https://tuist.dev/en/docs/guides/features/projects/tma-architecture)
-(TMA). A feature is a set of targets: `Feature`, `FeatureInterface`, `FeatureTesting`, and
-`FeatureTests`, plus an optional `FeatureFixtures` (see below). A feature uses another
-feature only through its Interface. The app and `OpenSkyCLI` build the implementations and
+(TMA). A feature is a set of targets: `Feature`, `FeatureInterface`, and `FeatureTests`, plus
+an optional `FeatureFixtures` (see below). A feature uses another feature only through its
+Interface. The app and `OpenSkyCLI` build the implementations and
 pass them in (dependency injection).
 [Swift modules](/tools/modules.md) describes the layout and the `Package.swift` helpers.
 
@@ -22,6 +22,13 @@ pass them in (dependency injection).
 - The Interface is the public API. What another feature may call is one small module, not
   every `public` declaration in the implementation.
 - A test uses a fake from a `Testing` library instead of the real runtime.
+
+## Why one Testing library for all features
+
+TMA gives each feature its own `FeatureTesting` target. OpenSky keeps the fakes of every feature
+Interface in one library, `OpenSkyFeaturesTesting`, as it keeps one testing library per layer
+([tests](/tools/modules.md#tests)). Every target costs manifest and graph time on each build, and
+a fake depends only on Interfaces, so one shared library builds no feature implementation.
 
 ## Why no Tuist
 
@@ -49,7 +56,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 3. Thin Interface | An Interface depends on lower modules and other Interfaces only | Gate |
 | 4. Testing -> Interface | A `Testing` library depends on no feature implementation and no `Fixtures` library. A `Fixtures` library depends on no implementation but its own feature's | Gate |
 | 5. Tests -> own feature | `FeatureTests` depends on no feature implementation and no `Fixtures` library but its own. A test that needs two real implementations goes in `OpenSkyTests` | Gate |
-| 6. Complete sets | Every feature has all four targets, or an exception with a reason | Gate |
+| 6. Complete sets | Every feature has its `Interface` and `Tests` targets, or an exception with a reason. Every Interface has its feature | Gate |
 | 7. Declared imports | Every `import` of a package module names the target itself or a declared dependency | Gate |
 | 8. Composition | `OpenSkyPreview`, the app, and the CLI may depend on anything | Allowed |
 | 9. World domains | A domain of the world feature depends on lower modules, Interfaces, and earlier domains. Of the features, only `OpenSkyWorld` depends on a domain. Every domain has a `Tests` target | Gate |
@@ -80,20 +87,12 @@ A fixture that needs two implementations is integration support. It goes in
 
 ## The layers
 
-The lower modules, lowest first. The list is `LAYERS` in the script.
+The lower modules sit in layers, and the one list of them is `LAYERS` at the top of
+`tools/lint/module-graph.sh`, lowest layer first. A new lower module goes into that list.
 
-1. `OpenSkyShaderTypes`, `CFFmpeg`
-2. `OpenSkyFormatsCore`
-3. The format families: `OpenSkyFormatsESM`, `Mesh`, `Animation`, `Audio`, `PEX`, `SWF`
-4. `OpenSkyGameData`
-5. `OpenSkyBehavior`
-6. `OpenSkyPhysics`, `OpenSkyDiagnostics`
-7. `OpenSkyRendering`, `OpenSkyAudio`, `OpenSkyWorldState`
-8. `OpenSkyConditions`
-
-Every other target under `Sources/` is an Interface, a world domain, a feature, or a
-composition module. The script tells them apart by name: an Interface ends in `Interface`, a
-domain is listed in `DOMAINS`, and a composition module is listed in `COMPOSITION`
+A target outside it is an Interface, a world domain, a feature, or a composition module. The
+script tells them apart by name: an Interface ends in `Interface`, a domain is listed in
+`DOMAINS`, and a composition module is listed in `COMPOSITION`
 ([world domains](/tools/modules.md#world-domains)). Anything else is a feature, so a new
 module must bring its full set or an exception.
 
@@ -102,11 +101,7 @@ module must bring its full set or an exception.
 | Missing target | Reason |
 | --- | --- |
 | `OpenSkyMenusInterface` | Nothing depends on menus |
-| `OpenSkyMenusTesting` | No other module's tests need menu fakes |
 | `OpenSkySaveInterface` | Nothing depends on saves |
-| `OpenSkyCombatTesting` | Its fakes fake seams the implementation declares, so they are in `OpenSkyCombatFixtures` |
-| `OpenSkySaveTesting` | Nothing depends on saves |
-| `OpenSkyScriptingTesting` | Its fixtures run the Papyrus implementation, so they are in `OpenSkyScriptingFixtures` |
 
 The list is `MISSING` in the script. An exception whose target now exists fails the check, so
 the list never goes stale.
