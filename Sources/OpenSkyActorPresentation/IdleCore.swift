@@ -55,6 +55,8 @@ nonisolated public struct IdleActorPresence: Sendable {
     /// The procedure of the actor's current package, nil without one.
     public let procedure: PackageProcedureKind?
     public let isDead: Bool
+    /// A sandbox's area; nil looks round the actor's feet.
+    public var area: IdleSearchArea?
 
     public init(
         key: ReferenceKey,
@@ -66,6 +68,36 @@ nonisolated public struct IdleActorPresence: Sendable {
         self.feet = feet
         self.procedure = procedure
         self.isDead = isDead
+    }
+}
+
+/// Where a sandboxing actor takes idle markers: a cylinder round its package's place.
+nonisolated public struct IdleSearchArea: Equatable, Sendable {
+    public let center: SIMD3<Float>
+    public let radius: Float
+    /// Height below the centre, as a negative number, and above it.
+    public let below: Float
+    public let above: Float
+    /// The next marker is at least this far from `previous`, the one the actor left.
+    public let minimumStep: Float
+    public var previous: SIMD3<Float>?
+    public var allowsMarkers = true
+
+    public init(
+        center: SIMD3<Float>, radius: Float, height: ClosedRange<Float>, minimumStep: Float
+    ) {
+        self.center = center
+        self.radius = radius
+        below = height.lowerBound
+        above = height.upperBound
+        self.minimumStep = minimumStep
+    }
+
+    public func contains(_ point: SIMD3<Float>) -> Bool {
+        let offset = point - center
+        let tooClose = previous.map { simd_distance($0, point) < minimumStep } ?? false
+        return simd_length(SIMD2(offset.x, offset.y)) <= radius
+            && offset.z >= below && offset.z <= above && !tooClose
     }
 }
 
@@ -86,18 +118,20 @@ nonisolated public enum IdleCore {
         }
     }
 
-    /// The nearest marker within `claimRadius` that nobody holds and that is
-    /// not in `excluded`. Ties go to the lower reference key.
+    /// The nearest marker inside `area`, or within `claimRadius` without one, that
+    /// nobody holds and that is not in `excluded`. Ties go to the lower reference key.
     public static func nearestFreeMarker(
         to feet: SIMD3<Float>,
         among markers: [IdleMarkerPlacement],
         claimed: Set<ReferenceKey>,
-        excluded: Set<ReferenceKey> = []
+        excluded: Set<ReferenceKey> = [],
+        area: IdleSearchArea? = nil
     ) -> IdleMarkerPlacement? {
         markers
             .filter { !claimed.contains($0.reference) && !excluded.contains($0.reference) }
+            .filter { area?.contains($0.position) ?? true }
             .map { (marker: $0, distance: simd_distance($0.position, feet)) }
-            .filter { $0.distance <= claimRadius }
+            .filter { area != nil || $0.distance <= claimRadius }
             .min { ($0.distance, $0.marker.reference) < ($1.distance, $1.marker.reference) }?
             .marker
     }
