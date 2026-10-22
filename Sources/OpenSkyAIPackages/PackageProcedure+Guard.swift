@@ -6,11 +6,6 @@ import OpenSkyWorldInterface
 import simd
 
 nonisolated extension PackageProcedureMachine {
-    /// `iGuardWarnings`: the most warnings a guard gives before it attacks.
-    static let guardWarnings = 2
-    /// `FAITrespassWarningTimer`: seconds between two warnings.
-    static let trespassWarningSeconds: Float = 5
-
     /// True while the guard has warned an intruder that is still in its warn radius.
     public var isWarning: Bool {
         kind == .guardArea && warnings > 0
@@ -32,11 +27,11 @@ nonisolated extension PackageProcedureMachine {
             return act(.standDown)
         }
         guard warnCooldown <= 0 else { return [] }
-        if warnings >= Self.guardWarnings {
+        if warnings >= max(0, setup.guardWarnings.warnings) {
             return attack(watched)
         }
         warnings += 1
-        warnCooldown = Self.trespassWarningSeconds
+        warnCooldown = max(0, setup.guardWarnings.warningSeconds)
         return act(.warn(watched, level: warnings))
     }
 

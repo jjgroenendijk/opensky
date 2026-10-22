@@ -3,6 +3,7 @@
 // menu model and the movie stay in the app, because they live in
 // `OpenSkyMenus`. See docs/engine/coordinators.md and docs/engine/dialogue.md.
 
+import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -37,6 +38,10 @@ public final class DialogueCoordinator {
     public var lastOutcome: String?
     /// Subtype names the Dialogue panel shows beside a topic.
     public var topicSubtypes = TopicSubtypeTexts.vanilla
+    /// How often NPCs speak outside a conversation; the app sets the install's values.
+    public var speechTimers = SpeechTimerSettings.vanilla
+    var speechClock = NPCSpeechClock()
+    var speechRandom = ConditionRandom()
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false
 
@@ -194,7 +199,7 @@ public final class DialogueCoordinator {
         return (try? runtime.choose(info, speaker: speaker)) == nil ? nil : info
     }
 
-    private func sayAlone(_ selection: DialogueSelection?, speaker: ReferenceKey) -> FormID? {
+    func sayAlone(_ selection: DialogueSelection?, speaker: ReferenceKey) -> FormID? {
         guard
             let runtime, let offer = selection?.offers.first,
             (try? runtime.choose(offer.info, speaker: speaker)) != nil

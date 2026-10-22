@@ -214,6 +214,8 @@ public final class PackageCoordinator {
     var paces: [ReferenceKey: LocomotionGait] = [:]
     var nextMoveTicket = 0
     public var seats = PackageSeatLedger()
+    /// The Guard procedure's warnings; the app sets the install's values.
+    public var guardWarnings = GuardWarningSettings.vanilla
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 

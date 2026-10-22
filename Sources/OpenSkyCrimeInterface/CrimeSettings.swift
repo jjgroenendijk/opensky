@@ -67,6 +67,9 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
     public var trespassGraceSeconds: Double = 30
     /// `iTrespassWarnings`: how many times an owner warns before the grace period.
     public var trespassWarnings = 2
+    /// `fAITrespassWarningTimer`: "Time before an NPC will call the guards when the player
+    /// is trespassing in their home". OpenSky waits this long after the last warning.
+    public var trespassCallGuardsSeconds: Float = 5
     /// `iAttackOnSightViolent`: violent gold above this makes an attack-on-sight
     /// faction's guards fight instead of talking.
     public var attackOnSightViolent: Int32 = 2999
@@ -123,6 +126,7 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
         store.read("iCrimeDaysInPrisonMod", into: &settings, \.goldPerJailDay)
         store.read("iCrimeMaxNumberofDaysinJail", into: &settings, \.maximumJailDays)
         store.read("iTrespassWarnings", into: &settings, \.trespassWarnings)
+        store.read("fAITrespassWarningTimer", into: &settings, \.trespassCallGuardsSeconds)
         store.read("iCrimeAlarmRecDistance", into: &settings, \.alarmDistance)
         return settings
     }

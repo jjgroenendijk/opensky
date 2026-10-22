@@ -142,6 +142,7 @@ final class AIWorldAdapter {
 
     func wirePackages(provider: WorldDataStores, gameSession: GameSession) {
         guard let store = provider.packageStore else { return }
+        game.packages.guardWarnings = GuardWarningSettings.resolve(store: provider.gameSettings)
         game.packages.wire(store: store)
         let packages = game.packages
         gameSession.worldTick.register(.packages) { [weak packages] delta in

@@ -216,3 +216,19 @@ struct CrimeReportingTests {
         #expect(stay.step(playerCell: Self.shop) == .escaped)
     }
 }
+
+struct TrespassWatchTests {
+    @Test func theOwnerWaitsTheWarningTimerAfterALateWarning() {
+        var settings = CrimeSettings()
+        settings.trespassGraceSeconds = 10
+        settings.trespassWarnings = 2
+        settings.trespassCallGuardsSeconds = 5
+        var watch = TrespassWatch()
+        #expect(watch.step(seconds: 0, seen: true, offLimits: false, settings: settings)
+            == .warn(remaining: 10))
+        #expect(watch.step(seconds: 6, seen: true, offLimits: false, settings: settings)
+            == .warn(remaining: 5))
+        #expect(watch.step(seconds: 4, seen: true, offLimits: false, settings: settings) == .none)
+        #expect(watch.step(seconds: 1, seen: true, offLimits: false, settings: settings) == .charge)
+    }
+}

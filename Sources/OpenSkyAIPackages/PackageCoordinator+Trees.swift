@@ -131,13 +131,15 @@ extension PackageCoordinator {
         let execution = executions[actor].flatMap {
             $0.package == current.package.formID ? $0 : nil
         }
-        return PackageTreeSession(
+        var session = PackageTreeSession(
             world: world, actor: actor, aliasQuest: runtime.hold(for: actor)?.aliasQuest,
             package: current,
             values: execution?.values ?? PackageOverrideExecution.values(of: current),
             clock: clock,
             translation: store?.translation(of: current.definition.formID)
         )
+        session.guardWarnings = guardWarnings
+        return session
     }
 
     /// True while the actor's current package has the Ignore Combat flag, or came from

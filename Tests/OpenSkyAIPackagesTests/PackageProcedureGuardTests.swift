@@ -12,8 +12,11 @@ struct PackageProcedureGuardTests {
     private static let intruder = ReferenceKey.player
 
     /// A guard at the origin: attack inside 100 units, warn inside 500.
-    private func guardMachine() -> PackageProcedureMachine {
+    private func guardMachine(
+        warnings: GuardWarningSettings = .vanilla
+    ) -> PackageProcedureMachine {
         var setup = PackageProcedureSetup(kind: .guardArea, center: .zero, destination: .zero)
+        setup.guardWarnings = warnings
         setup.watched = Self.intruder
         setup.near = 100
         setup.far = 500
@@ -47,10 +50,23 @@ struct PackageProcedureGuardTests {
         #expect(sense(&machine, at: 300) == [.act(.warn(Self.intruder, level: 1))])
         _ = machine.handle(.acted(.done))
         #expect(sense(&machine, at: 300).isEmpty)
-        _ = machine.handle(.tick(PackageProcedureMachine.trespassWarningSeconds))
+        _ = machine.handle(.tick(GuardWarningSettings.vanilla.warningSeconds))
         #expect(sense(&machine, at: 300) == [.act(.warn(Self.intruder, level: 2))])
         _ = machine.handle(.acted(.done))
-        _ = machine.handle(.tick(PackageProcedureMachine.trespassWarningSeconds))
+        _ = machine.handle(.tick(GuardWarningSettings.vanilla.warningSeconds))
+        #expect(sense(&machine, at: 300) == [.act(.attack(Self.intruder, startsCombat: true))])
+    }
+
+    @Test func iGuardWarningsSetsHowOftenAGuardWarns() {
+        var settings = GuardWarningSettings.vanilla
+        settings.warnings = 1
+        settings.warningSeconds = 2
+        var machine = guardMachine(warnings: settings)
+        #expect(sense(&machine, at: 300) == [.act(.warn(Self.intruder, level: 1))])
+        _ = machine.handle(.acted(.done))
+        _ = machine.handle(.tick(1))
+        #expect(sense(&machine, at: 300).isEmpty)
+        _ = machine.handle(.tick(1))
         #expect(sense(&machine, at: 300) == [.act(.attack(Self.intruder, startsCombat: true))])
     }
 

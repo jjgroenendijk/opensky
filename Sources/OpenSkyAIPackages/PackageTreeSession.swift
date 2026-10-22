@@ -16,6 +16,7 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     let values: [Int8: Package.DataValue]
     let translation: FormIDTranslation?
     let seed: UInt64
+    var guardWarnings = GuardWarningSettings.vanilla
     /// Read once, on the first branch condition, because a context costs a world walk.
     private var context: ConditionContext?
 
@@ -49,11 +50,13 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     func setup(
         for leaf: PackageProcedureLeaf, objectLists: [Int8: [ReferenceKey]]
     ) -> PackageLeafSetup {
-        PackageProcedureInputs(
+        var result = PackageProcedureInputs(
             leaf: leaf, values: values, objectLists: objectLists,
             start: world.packageActorPosition(actor) ?? .zero,
             seed: seed &+ UInt64(leaf.node)
         ).build(resolver: self)
+        result.setup.guardWarnings = guardWarnings
+        return result
     }
 
     func senses(watching watched: ReferenceKey) -> PackageSenses? {
