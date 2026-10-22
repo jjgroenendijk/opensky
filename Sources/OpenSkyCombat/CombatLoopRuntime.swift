@@ -7,6 +7,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
@@ -42,6 +43,12 @@ public final class CombatLoopRuntime: CombatControlling {
     public var behaviorSettings = CombatBehaviorSettings.standard
     /// The Block experience of a blow the player blocks.
     public var skillUses = MeleeSkillUseSettings.vanilla
+    /// Stagger strength and chance of an NPC blow.
+    public var staggers = StaggerSettings.vanilla
+    /// Flee distances and the ally follow radius.
+    public var combatAI = CombatAISettings.vanilla
+    /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
+    var staggerRandom = ConditionRandom()
 
     public private(set) var state = CombatLoopState.calm
     /// One machine per actor that is fighting or has fought, keyed by actor.
@@ -114,16 +121,6 @@ public final class CombatLoopRuntime: CombatControlling {
         return setHostility(.hostile, on: key)
     }
 
-    /// Every landed melee hit the player's swing produced: provokes each target,
-    /// puts it in the fight, and interrupts whatever it was doing.
-    public func notePlayerHits(_ targets: [ReferenceKey]) {
-        for target in targets where target != .player && commanders[target] != .player {
-            provoke(target)
-            provoked.insert(target)
-            noteStagger(of: target)
-        }
-    }
-
     /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
     /// hostile and engages without first having to see the player.
     func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
@@ -188,7 +185,7 @@ public final class CombatLoopRuntime: CombatControlling {
     }
 
     /// Whether `key` engages without having to perceive its target: a script
-    /// called `StartCombat`, the player hit it and it has not turned around yet,
+    /// called `StartCombat`, the player hit it and it has not detected the player yet,
     /// or it is an ally sent at its commander's foe.
     public func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
         forcedTargets[key] != nil || provoked.contains(key) || commanders[key] != nil
@@ -277,7 +274,7 @@ public final class CombatLoopRuntime: CombatControlling {
         var machine = behaviors[key] ?? makeMachine(for: key)
         let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
         behaviors[key] = machine
-        if machine.isEngaged {
+        if machine.isEngaged, inputs.awareness.isDetected {
             provoked.remove(key)
         }
         return step
@@ -286,7 +283,10 @@ public final class CombatLoopRuntime: CombatControlling {
     /// A new machine for `key`, with its combat style folded into the settings.
     public func makeMachine(for key: ReferenceKey) -> CombatBehaviorMachine {
         CombatBehaviorMachine(
-            settings: behaviorSettings.tuned(by: styleTuning(of: key)),
+            settings: combatAI.applyingFlee(
+                to: behaviorSettings.tuned(by: styleTuning(of: key)),
+                interior: world?.combatInInterior ?? false
+            ),
             seed: CombatBehaviorMachine.seed(for: key)
         )
     }
@@ -426,5 +426,24 @@ extension CombatLoopRuntime {
         endFight(of: actor, world: world)
         record(.scriptStopped(actor))
         return true
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Every landed melee hit the player's swing produced: provokes each target and
+    /// puts it in the fight. A hit that staggered also interrupts what it was doing.
+    public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
+        for target in targets where target != .player && commanders[target] != .player {
+            provoke(target)
+            provoked.insert(target)
+            if staggered.contains(target) {
+                noteStagger(of: target)
+            }
+        }
+    }
+
+    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
+    public func rollsStagger() -> Bool {
+        staggerRandom.percent() < staggers.attackChance
     }
 }

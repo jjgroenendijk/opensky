@@ -96,7 +96,7 @@ struct PerceptionRuntimeTests {
             let world = FakePerceptionWorld(
                 observers: [PerceptionFixture.observer(feet: SIMD3(0, 0, 0))],
                 targets: [PerceptionFixture.target(
-                    feet: SIMD3(600, 0, 0),
+                    feet: SIMD3(300, 0, 0),
                     gait: sneaking ? .sneak : .walk,
                     isSneaking: sneaking
                 )]

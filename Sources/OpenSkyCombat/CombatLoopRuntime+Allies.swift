@@ -62,15 +62,21 @@ extension CombatLoopRuntime {
                 parkBehavior(of: actor.key)
                 targets.removeValue(forKey: actor.key)
             }
-            follow(actor, to: home, world: world)
+            let distance = combatAI.followDistance(leaderIsPlayer: commander == player.key)
+            follow(actor, to: home, within: distance, world: world)
         }
     }
 
     /// A walk is asked for again only when the commander has moved on from its end.
     private func follow(
-        _ actor: CombatActorObservation, to home: SIMD3<Float>, world: any CombatLoopWorld
+        _ actor: CombatActorObservation, to home: SIMD3<Float>, within distance: Float,
+        world: any CombatLoopWorld
     ) {
-        guard let point = CombatAllyRule.followPoint(ally: actor.feet, commander: home) else {
+        guard
+            let point = CombatAllyRule.followPoint(
+                ally: actor.feet, commander: home, followDistance: distance
+            )
+        else {
             if following.removeValue(forKey: actor.key) != nil {
                 world.stopCombatMovement(of: actor.key)
             }

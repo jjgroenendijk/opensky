@@ -46,7 +46,10 @@ extension CellStreamerTests {
             ),
             scene: Fixture.cellScene(location: .interior(FormID(0x138CA)))
         )))
-        streamer.update(cameraPosition: Fixture.center)
+        // The finished build waits out `fTeleportDoorActivateDelayTimer`, 0.6 s.
+        streamer.update(cameraPosition: Fixture.center, frameTime: 0.3)
+        #expect(phases == [.motionStarted])
+        streamer.update(cameraPosition: Fixture.center, frameTime: 0.4)
 
         #expect(phases == [.motionStarted, .closed])
     }
@@ -57,6 +60,7 @@ extension CellStreamerTests {
 
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
+        streamer.doors.teleportDelay = 0
         var phases: [InteractionAnimationPhase] = []
         streamer.onInteractionAnimation = { phases.append($0.phase) }
         streamer.update(cameraPosition: Fixture.center)
@@ -80,6 +84,7 @@ extension CellStreamerTests {
 
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
+        streamer.doors.teleportDelay = 0
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -102,6 +107,7 @@ extension CellStreamerTests {
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0) { _, camera in
             cameras.append(camera)
         }
+        streamer.doors.teleportDelay = 0
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(

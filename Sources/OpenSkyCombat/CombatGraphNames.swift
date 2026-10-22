@@ -117,7 +117,7 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let leftHandType = "iLeftHandType"
 
     /// Every variable the combat loop writes: the struck player's recoil.
-    public static let loopVariables = [recoilMagnitude]
+    public static let loopVariables = [recoilMagnitude, staggerMagnitude]
 
     /// Every variable the melee runtime writes, in write order.
     public static let variables = [

@@ -228,6 +228,31 @@ loading the rest. A session where nobody spoke writes no chunk
 An entry is a key plus a `UInt32` count. The starting state is never written, and an entry that
 decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 
+## Speech timers
+
+Some lines an NPC says on its own, outside a conversation. Game settings from the install hold
+them back. The CK wiki "Category:Settings" (<https://ck.uesp.net/wiki/Category:Settings>)
+describes the first two; how the others apply is OpenSky's reading of their names.
+
+| Setting | Install | Use |
+| --- | --- | --- |
+| `fGameplayVoiceFilePadding` | 0.5 s | "seconds of silence that Skyrim inserts between consecutive voice lines": added to every line's length. The wiki lists 0.25, the engine default; `Skyrim.esm` sets 0.5 |
+| `fAIForceGreetingTimer` | 3 s | "Time until an NPC can initialize a force greeting again": a package's force greet waits this long per speaker |
+| `fCombatDialogueAttackMinElapsedTime`, `...Max...` | 5 s, 10 s | After a combat line, the speaker's next one of that kind waits a seeded time in this window |
+| `fCombatSpeakAttackChance` | 0.01 | The chance an NPC's landed blow speaks an `ATCK` line |
+| `fCombatSpeakHitChance` | 0.01 | The chance an NPC hit by a blow speaks a `HIT_` line |
+
+A combat line is picked from the topics of its `DIAL` subtype, as the speaker's conditions allow,
+and is voiced without turning the speaker's head. The clock is the scene clock: game seconds over
+the timescale. The Dialogue section of the sidebar shows the values.
+
+These timers have no system to hold back yet, so OpenSky does not read them: taunts
+(`fCombatDialogueTaunt*`), idle chatter (`fIdleChatterCommentTimer*`), comments on the player
+(`fCommentOnPlayer*`), bump reactions (`fBumpReaction*`), random scenes (`fRandomSceneAgain*`), the
+hello greeting (`fAIGreetingTimer`, `fAIExclusiveGreetingTimer`), and the speech delays
+(`fSpeechDelay`, `fSubtitleSpeechDelay`, `fDialogSpeechDelaySeconds`). `fCombatSpeakHitThreshold`
+needs the damage of a hit, which the hit event does not carry.
+
 ## Not done yet
 
 - Topics are scoped by branch, not by dialogue view (`DLVW`). Views are an editor layout, and no

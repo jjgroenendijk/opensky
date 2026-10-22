@@ -44,10 +44,9 @@ struct CombatLoopDisengageTests {
         Fixture.run(runtime, seconds: 1)
         #expect(runtime.phase(of: Fixture.opponent) == .fleeing)
 
-        world.place(
-            Fixture.opponent,
-            at: SIMD3(CombatBehaviorSettings.standard.fleeBreakDistance + 100, 0, 0)
-        )
+        // The flee distance comes from `fFleeDistanceExterior`.
+        let breakDistance = runtime.makeMachine(for: Fixture.opponent).settings.fleeBreakDistance
+        world.place(Fixture.opponent, at: SIMD3(breakDistance + 100, 0, 0))
         Fixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds * 2)
 
         #expect(runtime.phase(of: Fixture.opponent) == .disengaged)

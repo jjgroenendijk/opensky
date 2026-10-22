@@ -256,9 +256,20 @@ struct CombatLoopRuntimeTests {
         Fixture.engage(runtime, world)
         Fixture.run(runtime, seconds: CombatBehaviorSettings.standard.attackIntervalSeconds)
 
-        runtime.notePlayerHits([Fixture.opponent])
+        runtime.notePlayerHits([Fixture.opponent], staggered: [Fixture.opponent])
 
         #expect(runtime.phase(of: Fixture.opponent) == .staggered)
         #expect(world.clips.contains { $0.clip == .stagger && $0.key == Fixture.opponent })
+    }
+
+    @Test func aHitThatDidNotStaggerLeavesTheAttackRunning() {
+        let (runtime, world) = Fixture.session()
+        Fixture.engage(runtime, world)
+        Fixture.run(runtime, seconds: CombatBehaviorSettings.standard.attackIntervalSeconds)
+
+        runtime.notePlayerHits([Fixture.opponent])
+
+        #expect(runtime.phase(of: Fixture.opponent) != .staggered)
+        #expect(!world.clips.contains { $0.clip == .stagger && $0.key == Fixture.opponent })
     }
 }

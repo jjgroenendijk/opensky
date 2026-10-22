@@ -67,10 +67,14 @@ extension CombatCoordinator {
         world.ownsPerk(editorID: "PowerBash", on: .player)
     }
 
+    public func combatBlockSkill(of key: ReferenceKey) -> Float {
+        ActorValueIdentity.index(named: "Block")
+            .flatMap { world.actorValues(of: key)?($0) } ?? MeleeDamage.defaultBlockSkill
+    }
+
     /// UESP "Skyrim:Block": a shield bash uses the shield's base rating, without tempering.
     public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
-        let skill = ActorValueIdentity.index(named: "Block")
-            .flatMap { world.actorValues(of: .player)?($0) } ?? MeleeDamage.defaultBlockSkill
+        let skill = combatBlockSkill(of: .player)
         let shield = world.equippedItems(of: .player).lazy.compactMap { worn -> Float? in
             guard
                 let armor = self.items?.armor[worn.item.rawValue],

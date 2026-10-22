@@ -14,7 +14,7 @@ struct DetectionLightTests {
         )
         #expect(abs(sample.luminance(at: origin) - 0.4) < 1e-5)
         #expect(abs(sample.level(at: origin, fullLuminance: 1) - 0.4) < 1e-5)
-        #expect(abs(sample.level(at: origin, fullLuminance: 0.2) - 1) < 1e-5)
+        #expect(abs(sample.level(at: origin, fullLuminance: 0.2) - 2) < 1e-5)
     }
 
     @Test func aPointLightFallsOffToNothingAtItsRadius() {

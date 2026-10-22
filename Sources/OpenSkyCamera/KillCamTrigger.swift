@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 nonisolated public struct KillCamCandidate: Equatable, Sendable {
@@ -33,10 +34,24 @@ nonisolated public struct KillCamSettings: Equatable, Sendable {
     public var enabled = true
     /// fKillCamBaseOdds; the install sets 1, so every eligible kill plays.
     public var baseOdds: Float = 1
+    /// The player's own kill cam chance, 0...1, which scales `baseOdds`. The sidebar sets it.
+    public var playerOdds: Float = 1
     /// Vanilla plays a kill cam only on the last enemy; off allows every kill.
     public var lastEnemyOnly = true
 
     public init() {}
+
+    /// The chance a qualifying kill plays a kill cam, 0...1.
+    public var odds: Float {
+        let odds = baseOdds * playerOdds
+        return odds.isFinite ? min(max(odds, 0), 1) : 0
+    }
+
+    public static func resolve(store: GameSettingStore) -> Self {
+        var settings = Self()
+        store.read("fKillCamBaseOdds", into: &settings, \.baseOdds)
+        return settings
+    }
 }
 
 nonisolated public enum KillCamTrigger {
@@ -50,7 +65,7 @@ nonisolated public enum KillCamTrigger {
         if settings.lastEnemyOnly, remainingHostiles > 0 {
             return false
         }
-        let odds = min(max(settings.baseOdds, 0), 1)
+        let odds = settings.odds
         return odds >= 1 || Float(random.percent()) < odds * 100
     }
 

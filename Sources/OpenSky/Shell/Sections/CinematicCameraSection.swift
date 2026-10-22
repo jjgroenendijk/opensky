@@ -18,6 +18,8 @@ final class CinematicCameraSection: PanelSectionViewController {
     let stopControl = NSButton(title: "Stop", target: nil, action: nil)
     let shakeControl = NSButton(title: "Shake", target: nil, action: nil)
     let enabledControl = NSButton(checkboxWithTitle: "Kill cams", target: nil, action: nil)
+    let oddsControl = NSSlider(value: 1, minValue: 0, maxValue: 1, target: nil, action: nil)
+    private let oddsLabel = PanelComponents.valueLabel(width: 44)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "CinematicCameraStatsLabel")
     private var shotNames: [String] = []
@@ -62,6 +64,11 @@ final class CinematicCameraSection: PanelSectionViewController {
             enabledControl, target: self, action: #selector(toggleEnabled),
             identifier: "KillCamEnabledControl"
         )
+        oddsControl.toolTip = "The player's kill cam chance, which scales fKillCamBaseOdds."
+        PanelComponents.configureSlider(
+            oddsControl, target: self, action: #selector(changeOdds),
+            identifier: "KillCamOddsControl", width: 150
+        )
         return [
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
@@ -75,7 +82,12 @@ final class CinematicCameraSection: PanelSectionViewController {
                     stopControl,
                     shakeControl
                 ]),
-                enabledControl
+                enabledControl,
+                PanelComponents.labeledFieldRow(
+                    caption: "Chance",
+                    captionWidth: 60,
+                    field: PanelComponents.sliderRow(slider: oddsControl, valueLabel: oddsLabel)
+                )
             ]),
             statsLabel
         ]
@@ -97,11 +109,14 @@ final class CinematicCameraSection: PanelSectionViewController {
             killCamControl,
             stopControl,
             shakeControl,
-            enabledControl
+            enabledControl,
+            oddsControl
         ] {
             control.isEnabled = snapshot.isAvailable
         }
         enabledControl.state = snapshot.killCamsEnabled ? .on : .off
+        oddsControl.floatValue = snapshot.killCamPlayerOdds
+        oddsLabel.stringValue = String(format: "%.0f%%", snapshot.killCamPlayerOdds * 100)
     }
 
     override func refreshReadout() {
@@ -129,6 +144,11 @@ final class CinematicCameraSection: PanelSectionViewController {
 
     @objc private func shake() {
         provider?.shakeCamera()
+        finishInteraction()
+    }
+
+    @objc private func changeOdds() {
+        provider?.killCamPlayerOdds = oddsControl.floatValue
         finishInteraction()
     }
 

@@ -101,6 +101,33 @@ public final class PerceptionRuntime {
             .sorted()
     }
 
+    // MARK: - Events
+
+    /// `target` struck someone: its pool waits `fCombatStealthPointRegenAttackedWaitTime`.
+    public func noteAttack(by target: ReferenceKey) {
+        holdRefill(of: target, for: stealthPoints.attackedWait)
+    }
+
+    /// A detection event of `owner` at `position`, such as a landed arrow (CK wiki
+    /// "Category:Detection"). An aggressive observer within range makes the pool wait.
+    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
+        let heard = observers.contains { observer in
+            observer.isAggressive && observer.key != owner
+                && DetectionFormula.isInRange(
+                    distance: simd_distance(observer.feet, position), settings: settings,
+                    isExterior: observer.isExterior, isFlying: observer.isFlying
+                )
+        }
+        guard heard else { return }
+        holdRefill(of: owner, for: stealthPoints.detectedEventWait)
+    }
+
+    private func holdRefill(of target: ReferenceKey, for seconds: Float) {
+        var pool = pools[target] ?? StealthPointPool(settings: stealthPoints)
+        pool.holdRefill(for: seconds)
+        pools[target] = pool
+    }
+
     // MARK: - Frames
 
     /// Advances perception by a wall delta, running whole fixed steps only. A zero,
@@ -269,7 +296,8 @@ public final class PerceptionRuntime {
         let hasLineOfSight: Bool
         if
             DetectionFormula.isInRange(
-                distance: distance, settings: settings, isExterior: observer.isExterior
+                distance: distance, settings: settings, isExterior: observer.isExterior,
+                isFlying: observer.isFlying
             )
         {
             lineOfSightQueryCount += 1
@@ -277,7 +305,7 @@ public final class PerceptionRuntime {
         } else {
             hasLineOfSight = false
         }
-        let inputs = DetectionInputs(
+        var inputs = DetectionInputs(
             distance: distance,
             hasLineOfSight: hasLineOfSight,
             isInViewCone: PerceptionSight.isInViewCone(
@@ -289,6 +317,14 @@ public final class PerceptionRuntime {
             traits: target.traits,
             noticerSkill: observer.sneakSkill
         )
+        inputs.observer = DetectionObserverState(
+            isAlert: previous.state == .suspicious,
+            isSleeping: observer.isSleeping,
+            isFlying: observer.isFlying,
+            blindness: observer.blindness,
+            isFightingAnother: observer.combatTarget.map { $0 != target.key } ?? false
+        )
+        inputs.isPlayerTarget = target.key == .player
         pairs[key] = previous.advanced(
             inputs: inputs,
             targetPosition: target.feet,

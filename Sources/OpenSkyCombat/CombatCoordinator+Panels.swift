@@ -258,6 +258,8 @@ extension CombatCoordinator: CombatLoopControlProviding {
             lastActionText: loop.lastAction.text
         )
         snapshot.usesTemperament = usesTemperament
+        snapshot.combatAI = combatAI
+        snapshot.isInInterior = world.isInInterior
         snapshot.allies = loop.allies(of: .player).map { allyLine($0, loop: loop) }
         if let selected, selected != .player {
             snapshot.selectedTemperament = combatTemperament(of: selected, toward: .player)

@@ -8,6 +8,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
@@ -55,6 +56,10 @@ public final class MeleeCombatRuntime {
     public var powerAttacks = PowerAttackSettings.vanilla
     /// The Block experience of a blocked blow and a bash.
     public var skillUses = MeleeSkillUseSettings.vanilla
+    /// Stagger strength and chance.
+    public var staggers = StaggerSettings.vanilla
+    /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
+    var staggerRandom = ConditionRandom()
     /// What the swing in progress is, set when its start event is raised.
     public internal(set) var strikeKind = MeleeStrikeKind.normal
     /// The direction of the power attack in progress, nil for any other strike.

@@ -3,6 +3,7 @@
 // and regard for the player. See docs/engine/combat.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
 
@@ -121,11 +122,28 @@ nonisolated public enum CombatLoopReadout: Sendable {
         guard let temperament = snapshot.selectedTemperament else { return "Confidence: unknown" }
         let names = ["cowardly", "cautious", "average", "brave", "foolhardy"]
         let level = names[min(max(Int(temperament.confidence.rounded()), 0), names.count - 1)]
-        let strength = String(format: "%.2f", temperament.strengthRatio)
+        let strength = String(
+            format: "%.2f (breaks off below %.3f)",
+            temperament.strengthRatio, temperament.breakOffStrength
+        )
         let decision = temperament.breaksOff ? "would flee" : "would fight"
         let assistance = snapshot.selectedAssistance.map(assistanceText(for:)) ?? "unknown"
         return "Confidence: \(level), strength \(strength), \(decision)\n"
             + "Assistance: \(assistance)"
+    }
+
+    /// The game's combat AI settings the fight runs on, by where it is.
+    public static func combatAIText(for snapshot: CombatLoopSnapshot) -> String {
+        let settings = snapshot.combatAI
+        let place = snapshot.isInInterior ? "interior" : "exterior"
+        return String(
+            format: "Flee: %.0f units (%@), ally follow radius: %.0f, "
+                + "confidence nudge %.2f to %.2f",
+            settings.fleeDistance(interior: snapshot.isInInterior), place,
+            settings.followDistance(leaderIsPlayer: true),
+            settings.confidenceModifierRange.lowerBound,
+            settings.confidenceModifierRange.upperBound
+        )
     }
 
     static func assistanceText(for assistance: CombatAssistance) -> String {

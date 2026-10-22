@@ -8,6 +8,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case powerUsed = "sMagicCastPowerUsed"
     case shoutWhileCasting = "sMagicCastShoutWhileCasting"
     case castWhileShouting = "sMagicCastCastWhileShouting"
+    case playerDisarmed = "sPlayerDisarmedMessage"
 
     public var fallback: String {
         switch self {
@@ -15,6 +16,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .powerUsed: "This power is spent for today."
         case .shoutWhileCasting: "You cannot shout during a cast."
         case .castWhileShouting: "You cannot cast during a shout."
+        case .playerDisarmed: "You have been disarmed!"
         }
     }
 

@@ -29,6 +29,9 @@ final class DialogueSection: PanelSectionViewController {
     private let movieLabel = PanelComponents.statsLabel(
         identifier: "DialogueMovieStatsLabel"
     )
+    private let speechTimersLabel = PanelComponents.statsLabel(
+        identifier: "DialogueSpeechTimersStatsLabel"
+    )
 
     var topicsReadout: String {
         topicsLabel.stringValue
@@ -74,7 +77,8 @@ final class DialogueSection: PanelSectionViewController {
             PanelComponents.buttonRow([upControl, downControl, chooseControl]),
             topicsLabel,
             conditionsLabel,
-            movieLabel
+            movieLabel,
+            speechTimersLabel
         ]
     }
 
@@ -140,11 +144,13 @@ final class DialogueSection: PanelSectionViewController {
             topicsLabel.stringValue = "Dialogue: unavailable"
             conditionsLabel.stringValue = ""
             movieLabel.stringValue = ""
+            speechTimersLabel.stringValue = ""
             return
         }
         topicsLabel.stringValue = DialogueReadout.topicsText(for: snapshot)
             + "\n" + DialogueReadout.outcomeText(for: snapshot)
         conditionsLabel.stringValue = DialogueReadout.conditionsText(for: snapshot)
         movieLabel.stringValue = DialogueReadout.movieText(for: snapshot)
+        speechTimersLabel.stringValue = provider?.speechTimerReadout ?? ""
     }
 }

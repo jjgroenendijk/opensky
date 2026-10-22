@@ -8,6 +8,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
@@ -249,10 +250,15 @@ extension CombatLoopRuntime {
         ))
         guard target == world.combatPlayer.key else { return }
         noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)
+        if damage.wasBlocked {
+            noteBlockRecoil(of: actor.key, blockedBy: target, world: world)
+        }
         // The magnitude is written before the event so the recoil behavior
         // reads this blow's number rather than the previous one's, which is the
         // same write-then-raise order the melee runtime uses for a stagger.
-        let played = damage.applied > 0 && raiseRecoil(magnitude: damage.applied, world: world)
+        let played = damage.applied > 0
+            && (raiseStagger(weapon: weapon, damage: damage, world: world)
+                || raiseRecoil(magnitude: damage.applied, world: world))
         append(CombatIncomingHit(
             aggressor: actor.key,
             damage: damage,
@@ -296,6 +302,35 @@ extension CombatLoopRuntime {
     ///
     /// - Returns: whether the graph declared the event, which is the graph's own
     ///   answer rather than an assumption about it.
+    /// An NPC blow staggers the player by `StaggerRule`, the player's mass included.
+    private func raiseStagger(
+        weapon: MeleeWeaponProfile, damage: MeleeDamageResult, world: any CombatLoopWorld
+    ) -> Bool {
+        var hit = StaggerHit(weaponStagger: weapon.stagger)
+        hit.perkMultiplier = damage.strike.staggerMultiplier
+        hit.wasBlocked = damage.wasBlocked
+        hit.isPlayerTarget = true
+        let magnitude = StaggerRule.magnitude(hit, settings: staggers)
+        let roll = staggerRandom.percent()
+        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
+        else { return false }
+        world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.staggerMagnitude)
+        return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: nil)
+    }
+
+    /// A swing the player blocked recoils its attacker by the player's Block skill.
+    private func noteBlockRecoil(
+        of attacker: ReferenceKey, blockedBy blocker: ReferenceKey, world: any CombatLoopWorld
+    ) {
+        let magnitude = StaggerRule.blockRecoil(
+            blockerSkill: world.combatBlockSkill(of: blocker), settings: staggers
+        )
+        let roll = staggerRandom.percent()
+        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
+        else { return }
+        noteStagger(of: attacker)
+    }
+
     private func raiseRecoil(magnitude: Float, world: any CombatLoopWorld) -> Bool {
         world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.recoilMagnitude)
         return world.raiseCombatEvent(CombatGraphNames.recoilStart, on: nil)

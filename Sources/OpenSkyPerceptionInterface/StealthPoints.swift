@@ -21,6 +21,12 @@ nonisolated public struct StealthPointSettings: Equatable, Sendable {
     /// `fCombatStealthPointRegenAlertWaitTime`: seconds without a positive detection
     /// before the pool refills.
     public var refillWait: Float = 10
+    /// `fCombatStealthPointRegenAttackedWaitTime`: the wait after the target strikes
+    /// an aggressive observer.
+    public var attackedWait: Float = 15
+    /// `fCombatStealthPointRegenDetectedEventWaitTime`: the wait after an aggressive
+    /// observer perceives a detection event of the target, such as an arrow landing.
+    public var detectedEventWait: Float = 10
     /// `iCombatStealthPointDetectionThreshold`: a detection value at or above this
     /// detects a standing target at once, whatever the pool holds.
     public var detectionThreshold: Float = 25
@@ -38,6 +44,13 @@ nonisolated public struct StealthPointSettings: Equatable, Sendable {
         store.read("fCombatStealthPointRegenMin", into: &settings, \.regenMin)
         store.read("fCombatStealthPointRegenMult", into: &settings, \.regenMult)
         store.read("fCombatStealthPointRegenAlertWaitTime", into: &settings, \.refillWait)
+        store.read(
+            "fCombatStealthPointRegenAttackedWaitTime", into: &settings, \.attackedWait
+        )
+        store.read(
+            "fCombatStealthPointRegenDetectedEventWaitTime",
+            into: &settings, \.detectedEventWait
+        )
         store.read(
             "iCombatStealthPointDetectionThreshold", into: &settings, \.detectionThreshold
         )
@@ -79,7 +92,7 @@ nonisolated public struct StealthPointPool: Equatable, Sendable {
         }
         if highestValue > 0 {
             points = max(0, points - highestValue * max(0, settings.drainMult) * seconds)
-            refillWait = max(0, settings.refillWait)
+            refillWait = max(refillWait, settings.refillWait, 0)
         } else if refillWait > 0 {
             refillWait = max(0, refillWait - seconds)
         } else {
@@ -91,6 +104,12 @@ nonisolated public struct StealthPointPool: Equatable, Sendable {
         } else if points >= maximum {
             isExposed = false
         }
+    }
+
+    /// Holds the refill for at least `seconds`, as an attack or a detection event does.
+    public mutating func holdRefill(for seconds: Float) {
+        guard seconds.isFinite else { return }
+        refillWait = max(refillWait, seconds)
     }
 
     /// Whether one observer detects the target now. `value` is its detection value

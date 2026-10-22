@@ -8,6 +8,7 @@ import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyCells
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -322,6 +323,10 @@ extension GameViewController: CrimeFactionControlProviding {
 extension GameViewController: DialogueControlProviding {
     var dialogueSnapshot: DialogueControlSnapshot {
         dialogueMenu.snapshot
+    }
+
+    var speechTimerReadout: String {
+        dialogue.speechTimers.readout
     }
 
     func openDialogue() {

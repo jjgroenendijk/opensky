@@ -136,6 +136,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// The blocker's fortify and perk multiplier for an incoming blow, which is
     /// `MeleeDamage`'s `bonusMultiplier`. Defaults to 1.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
+    /// The Block skill of `key`, which a blocked swing's recoil reads.
+    func combatBlockSkill(of key: ReferenceKey) -> Float
 
     /// The skill, sneak-attack, armour, and perk terms of `blow` on `target`.
     func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
@@ -169,6 +171,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
 
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
+    /// True while the fight is in an interior cell.
+    var combatInInterior: Bool { get }
 
     /// What `key` could cast right now and what it can pay for. The session holds
     /// the spellbook and magicka. A world with no caster runtime answers `.none`, so
@@ -270,6 +274,10 @@ nonisolated extension CombatLoopWorld {
         1
     }
 
+    public func combatBlockSkill(of _: ReferenceKey) -> Float {
+        MeleeDamage.defaultBlockSkill
+    }
+
     /// A session with no skills and no armour scales nothing.
     public func combatStrike(_: CombatBlow, on _: ReferenceKey) -> WeaponStrike {
         .plain
@@ -283,6 +291,10 @@ nonisolated extension CombatLoopWorld {
     public func applyCombatBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}
 
     /// A session that resolves no combat styles fights with the base settings.
+    public var combatInInterior: Bool {
+        false
+    }
+
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         nil
     }

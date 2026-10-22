@@ -29,6 +29,10 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
     public let traits: DetectionTargetTraits
     /// The observer's Sneak skill, which UESP calls the noticer skill.
     public let noticerSkill: Float
+    /// How the observer is: searching, asleep, flying, blind, or fighting someone else.
+    public var observer = DetectionObserverState()
+    /// The player as target, whose sneaker skill uses the `fPlayerDetection` settings.
+    public var isPlayerTarget = false
 
     public init(
         distance: Float,
@@ -51,6 +55,29 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
     }
 }
 
+/// The observer-side states the CK wiki's skill and visual terms read.
+nonisolated public struct DetectionObserverState: Equatable, Sendable {
+    /// Searching for the target, the CK wiki's Alert state.
+    public var isAlert = false
+    public var isSleeping = false
+    public var isFlying = false
+    /// The `Blindness` actor value, 0 to 100.
+    public var blindness: Float = 0
+    /// In combat with an actor other than the target, the CK wiki's NotCombatTarget.
+    public var isFightingAnother = false
+
+    public init(
+        isAlert: Bool = false, isSleeping: Bool = false, isFlying: Bool = false,
+        blindness: Float = 0, isFightingAnother: Bool = false
+    ) {
+        self.isAlert = isAlert
+        self.isSleeping = isSleeping
+        self.isFlying = isFlying
+        self.blindness = blindness
+        self.isFightingAnother = isFightingAnother
+    }
+}
+
 /// The target-side inputs that do not come from geometry. `neutral` is a
 /// target with nothing equipped, fully lit, unmuffled, silent, and at the
 /// starting skill.
@@ -61,7 +88,7 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
 
     /// Combined weight of the armour the target wears.
     public var equippedWeight: Float
-    /// How lit the target is: 0 is dark, 1 is fully lit.
+    /// How lit the target is, as `GetLightLevel` over 100: 0 is dark, 1 a lit day.
     public var lightLevel: Float
     /// The summed Muffle magnitude, the `Movement Noise Mult` actor value.
     /// 1 or more silences the armour.

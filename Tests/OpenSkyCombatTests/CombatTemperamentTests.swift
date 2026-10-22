@@ -19,12 +19,29 @@ struct CombatTemperamentTests {
     @Test func eachConfidenceBreaksOffBelowItsOwnStrength() {
         #expect(temperament(0, strength: 10).breaksOff)
         #expect(!temperament(4, strength: 0.01).breaksOff)
-        #expect(temperament(1, strength: 0.9).breaksOff)
-        #expect(!temperament(1, strength: 1.1).breaksOff)
-        #expect(temperament(2, strength: 0.4).breaksOff)
-        #expect(!temperament(2, strength: 0.6).breaksOff)
-        #expect(temperament(3, strength: 0.2).breaksOff)
-        #expect(!temperament(3, strength: 0.3).breaksOff)
+        #expect(temperament(1, strength: 0.3).breaksOff)
+        #expect(!temperament(1, strength: 0.45).breaksOff)
+        #expect(temperament(2, strength: 0.1).breaksOff)
+        #expect(!temperament(2, strength: 0.2).breaksOff)
+        #expect(temperament(3, strength: 0.03).breaksOff)
+        #expect(!temperament(3, strength: 0.05).breaksOff)
+    }
+
+    @Test func aNudgedConfidenceBlendsTheTwoLevelsAroundIt() {
+        let settings = CombatAISettings.vanilla
+        let halfway = settings.breakOffStrength(confidence: 1.5)
+        #expect(abs(halfway - (0.375 + 0.15) / 2) < 0.0001)
+        #expect(settings.breakOffStrength(confidence: 5) == 0.0375)
+        #expect(settings.confidenceModifierRange == -0.25 ... 1)
+    }
+
+    @Test func theFleeAndFollowDistancesComeFromTheSettings() {
+        let settings = CombatAISettings.vanilla
+        let fled = settings.applyingFlee(to: .standard, interior: true)
+        #expect(fled.fleeDistance == 3000)
+        #expect(fled.fleeBreakDistance == 3400)
+        #expect(settings.fleeDistance(interior: false) == 5000)
+        #expect(settings.followDistance(leaderIsPlayer: true) == 423)
     }
 
     @Test func aLowLevelActorAtFullHealthStillFightsAStrongerTarget() {

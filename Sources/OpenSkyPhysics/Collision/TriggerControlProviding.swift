@@ -22,6 +22,8 @@ nonisolated public struct TriggerStatsSnapshot: Equatable, Sendable {
     /// Transitions recorded since the log was last cleared, including any the
     /// bounded ring has already dropped.
     public let recordedTransitionCount: Int
+    /// The automatic doors near the player and the door distances, as one readout line.
+    public var automaticDoors = "Automatic doors: none resident"
 
     public static let unavailable = TriggerStatsSnapshot(
         streamerAvailable: false,

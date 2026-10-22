@@ -191,6 +191,9 @@ public protocol DialogueControlProviding: AnyObject {
     /// `DialogueControlSnapshot.empty` when the session has no dialogue index.
     var dialogueSnapshot: DialogueControlSnapshot { get }
 
+    /// The install's NPC speech waits and chances, one readout line.
+    var speechTimerReadout: String { get }
+
     /// Starts a conversation with the actor the crosshair is on, which is what
     /// the use key does. Records why it could not when there is no such actor,
     /// rather than doing nothing silently.

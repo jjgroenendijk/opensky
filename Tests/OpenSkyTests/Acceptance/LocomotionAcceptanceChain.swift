@@ -303,7 +303,10 @@ final class LocomotionAcceptanceChain {
             ),
             scene: scene
         )))
-        streamer.update(cameraPosition: controller.cameraPosition)
+        // One frame as long as `fTeleportDoorActivateDelayTimer`, which the door waits out.
+        streamer.update(
+            cameraPosition: controller.cameraPosition, frameTime: streamer.doors.teleportDelay
+        )
         reseat(at: placement)
     }
 

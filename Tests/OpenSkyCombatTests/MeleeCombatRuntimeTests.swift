@@ -247,6 +247,7 @@ struct MeleeCombatRuntimeTests {
         world.attacker = MeleeAttacker(key: attacker, feet: SIMD3<Float>(), facing: 0)
         let runtime = MeleeCombatRuntime(settings: .synthetic, world: world)
         runtime.weapon = MeleeWeaponProfile(damage: damage, reach: 1, stagger: stagger)
+        runtime.staggers.attackChance = 100
         return runtime
     }
 

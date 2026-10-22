@@ -80,6 +80,8 @@ nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
     public var startsCombat = false
     /// False when the procedure has no place or target to walk to, so it acts where it is.
     public var walks = true
+    /// A Guard procedure's warning count and spacing, from the install.
+    public var guardWarnings = GuardWarningSettings.vanilla
 
     public init(
         kind: PackageProcedureKind, center: SIMD3<Float>, destination: SIMD3<Float>? = nil,

@@ -7,6 +7,9 @@ import OpenSkyGameData
 nonisolated public struct CinematicCameraSnapshot: Equatable, Sendable {
     public var isAvailable = false
     public var killCamsEnabled = true
+    /// The player's kill cam chance, 0...1, and the chance a kill plays one after it.
+    public var killCamPlayerOdds: Float = 1
+    public var killCamOdds: Float = 1
     public var shotNames: [String] = []
     public var activeShot: String?
     public var stage = 0
@@ -27,6 +30,7 @@ nonisolated public struct CinematicCameraSnapshot: Equatable, Sendable {
 public protocol CinematicCameraControlProviding: AnyObject {
     var cinematicSnapshot: CinematicCameraSnapshot { get }
     var killCamsEnabled: Bool { get set }
+    var killCamPlayerOdds: Float { get set }
     /// Plays one CAMS from the player toward the selected actor.
     func playCameraShot(editorID: String)
     /// Picks a kill cam for the selected actor as if the player had just killed it.
@@ -40,6 +44,8 @@ extension CinematicCameraCoordinator {
         var snapshot = CinematicCameraSnapshot()
         snapshot.isAvailable = cameraShotNames != nil
         snapshot.killCamsEnabled = settings.enabled
+        snapshot.killCamPlayerOdds = settings.playerOdds
+        snapshot.killCamOdds = settings.odds
         snapshot.shotNames = cameraShotNames ?? []
         if let player, let stage = player.currentStage, !player.isFinished {
             snapshot.activeShot = stage.shot.record.editorID ?? stage.shot.id.description
@@ -63,7 +69,11 @@ extension CinematicCameraCoordinator {
 nonisolated public enum CinematicCameraReadout {
     public static func text(for snapshot: CinematicCameraSnapshot) -> String {
         guard snapshot.isAvailable else { return "Kill cams: no game data" }
-        var lines = [shotLine(snapshot), "Kill cams played: \(snapshot.playedCount)"]
+        var lines = [
+            shotLine(snapshot),
+            String(format: "Kill cam chance: %.0f%%", snapshot.killCamOdds * 100),
+            "Kill cams played: \(snapshot.playedCount)"
+        ]
         if snapshot.isShaking {
             lines.append("Camera shake: on")
         }
@@ -121,6 +131,11 @@ extension CinematicCameraControlForwarding {
     public var killCamsEnabled: Bool {
         get { cinematicCamera.settings.enabled }
         set { cinematicCamera.settings.enabled = newValue }
+    }
+
+    public var killCamPlayerOdds: Float {
+        get { cinematicCamera.settings.playerOdds }
+        set { cinematicCamera.settings.playerOdds = min(max(newValue, 0), 1) }
     }
 
     public func playCameraShot(editorID: String) {

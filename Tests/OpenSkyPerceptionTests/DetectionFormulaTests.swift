@@ -24,7 +24,7 @@ struct DetectionFormulaTests {
         #expect(ours.map(\.editorID) == [
             "distanceAttenuationExponent", "equippedWeightBase", "equippedWeightMult",
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
-            "visualBaseValue", "sneakVisualMult", "normalActionSound", "loudActionSound",
+            "sneakVisualMult", "normalActionSound", "loudActionSound",
             "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
             "decayPerSecond", "suspiciousLevel", "detectedLevel", "skillUseRange"
         ])
@@ -108,8 +108,10 @@ struct DetectionFormulaTests {
     }
 
     @Test func visualTermNeedsBothASightLineAndTheCone() {
+        // A lit target outdoors: (15 + 100) * 0.33, halved by fSneakLightExteriorMult.
         let seen = DetectionInputs(distance: 0)
-        #expect(DetectionFormula.visualFactor(inputs: seen, settings: settings) == 40)
+        let lit = DetectionFormula.visualFactor(inputs: seen, settings: settings)
+        #expect(abs(lit - 115 * 0.33 * 0.5) < 1e-4)
         #expect(DetectionFormula.visualFactor(
             inputs: DetectionInputs(distance: 0, hasLineOfSight: false), settings: settings
         ) == 0)
@@ -118,9 +120,10 @@ struct DetectionFormulaTests {
         ) == 0)
         // Crouching halves the silhouette, which is OpenSky's lever because
         // vanilla spends the Sneak skill instead.
-        #expect(DetectionFormula.visualFactor(
+        let crouched = DetectionFormula.visualFactor(
             inputs: DetectionInputs(distance: 0, isSneaking: true), settings: settings
-        ) == 20)
+        )
+        #expect(abs(crouched - lit / 2) < 1e-4)
     }
 
     @Test func skillTermWeightsTheClampedLevelAndTheGapMovesTheValue() {
@@ -196,9 +199,11 @@ struct DetectionFormulaTests {
                 inputs: DetectionInputs(distance: 0, traits: traits), settings: settings
             )
         }
-        #expect(visual(DetectionTargetTraits(lightLevel: 0.25)) == 10)
-        #expect(visual(DetectionTargetTraits(lightLevel: 0)) == 0)
-        #expect(visual(DetectionTargetTraits(lightLevel: 4)) == 40)
+        // Outdoors: (fDetectionSneakLightMod + level) * fSneakLightMult * 0.5.
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0.25)) - 40 * 0.165) < 1e-4)
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0)) - 15 * 0.165) < 1e-4)
+        // iLightLevelMax caps the level at 300.
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 4)) - 315 * 0.165) < 1e-4)
         #expect(visual(DetectionTargetTraits(isInvisible: true)) == 0)
         // Invisible, but still heard.
         #expect(DetectionFormula.soundFactor(
@@ -213,12 +218,12 @@ struct DetectionFormulaTests {
 
     @Test func sneakingLowersTheDetectionValueAgainstTheSameStandingPose() {
         let standing = DetectionFormula.breakdown(
-            inputs: DetectionInputs(distance: 500, isExterior: true, gait: .walk),
+            inputs: DetectionInputs(distance: 500, isExterior: false, gait: .walk),
             settings: settings
         )
         let sneaking = DetectionFormula.breakdown(
             inputs: DetectionInputs(
-                distance: 500, isExterior: true, isSneaking: true, gait: .sneak
+                distance: 500, isExterior: false, isSneaking: true, gait: .sneak
             ),
             settings: settings
         )
@@ -228,8 +233,8 @@ struct DetectionFormulaTests {
         // Both terms moved, not just one: crouching is quieter *and* smaller.
         #expect(sneaking.soundFactor < standing.soundFactor)
         #expect(sneaking.visualFactor < standing.visualFactor)
-        // Standing in the open at 500 units is well past the full-rate signal,
-        // so a standing player is picked up as fast as the model allows.
+        // Standing in a lit room at 500 units is past the full-rate signal,
+        // so a standing target is picked up as fast as the model allows.
         #expect(standing.value > settings.fullDetectionValue.value)
     }
 

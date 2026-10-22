@@ -4,8 +4,10 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
+import OpenSkyCamera
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
+import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -16,6 +18,7 @@ import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyScripting
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension GapsGatherer {
@@ -84,6 +87,11 @@ extension GapsGatherer {
         _ = CombatSettings.resolve(store: store)
         _ = WeaponDamageSettings.resolve(store: store)
         _ = PowerAttackSettings.resolve(store: store)
+        _ = StaggerSettings.resolve(store: store)
+        _ = CombatAISettings.resolve(store: store)
+        _ = DoorSettings.resolve(store: store)
+        _ = GuardWarningSettings.resolve(store: store)
+        _ = SpeechTimerSettings.resolve(store: store)
         _ = MeleeSkillUseSettings.resolve(store: store)
         _ = ArrowSettings.resolve(store: store)
         _ = TrainingSettings.resolve(store: store)
@@ -128,6 +136,7 @@ extension GapsGatherer {
         _ = CrimeSettings.resolve(store: store)
         _ = VendorRestockSettings.resolve(store: store)
         _ = StealthPointSettings.resolve(store: store)
+        _ = KillCamSettings.resolve(store: store)
         _ = EnchantedValueSettings.resolve(store: store)
         settingTextsRead(store: store)
         return log.editorIDs

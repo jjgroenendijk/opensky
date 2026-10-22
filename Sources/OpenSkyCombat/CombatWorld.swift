@@ -44,6 +44,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func selectedActor() -> ReferenceKey?
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
+    /// True while the fight is in an interior cell, which shortens a flee.
+    var isInInterior: Bool { get }
 
     func hostility(of key: ReferenceKey) -> ActorHostility
     @discardableResult
@@ -141,6 +143,11 @@ extension CombatWorld {
     /// A search of the whole list, for a session without a lookup by key.
     public func residentActor(key: ReferenceKey) -> CombatActorObservation? {
         residentActors().first { $0.key == key }
+    }
+
+    /// A session without cells fights outdoors.
+    public var isInInterior: Bool {
+        false
     }
 
     /// A session with no magic forces no behaviour.

@@ -30,7 +30,7 @@ extension PapyrusNativeFunctions {
                 .flatMap(bridge.objectHandle(for:))
             return .returned(handle.map { .object($0) } ?? .none)
         }
-        // The wiki gives 0 to 150. Detection's 0...1 level times 100 is a guess at that scale.
+        // Detection's light is this value over 100 (docs/engine/detection.md#light-level).
         withActorBridge("GetLightLevel", into: &registry) { call, bridge, actor in
             guard
                 let light = bridge.perceptionNatives.lightLevel, let feet = position(

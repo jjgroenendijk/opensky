@@ -13,6 +13,10 @@ extension FakeWorldProviders {
         dialogue.dialogueSnapshot
     }
 
+    var speechTimerReadout: String {
+        dialogue.speechTimerReadout
+    }
+
     func openDialogue() {
         dialogue.openDialogue()
     }

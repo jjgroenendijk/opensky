@@ -13,6 +13,18 @@ import simd
 
 extension CellStreamer {
     /// Returns true only when a successful transition replaced current view.
+    /// The finished door builds, held until `fTeleportDoorActivateDelayTimer` has passed
+    /// since the player used the door. A rebuild does not wait.
+    func drainDoorTransitions(frameTime: Float) -> [DoorTransitionBuildResult] {
+        heldDoorTransitions += runner.drainCompletedDoorTransitions()
+        if frameTime.isFinite, frameTime > 0 {
+            doorTransitionHold = max(0, doorTransitionHold - frameTime)
+        }
+        guard doorTransitionHold <= 0 || interiorRebuildInFlight else { return [] }
+        defer { heldDoorTransitions = [] }
+        return heldDoorTransitions
+    }
+
     public func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
         transitionInFlight = nil
@@ -85,6 +97,7 @@ extension CellStreamer {
     public func requestDoorTransition(from sourceDoor: FormID) -> Bool {
         guard transitionInFlight == nil else { return false }
         transitionInFlight = sourceDoor
+        doorTransitionHold = 0
         interiorRebuildInFlight = false
         // Built against the live store, so a changed interior comes back changed.
         runner.enqueueDoorTransition(from: sourceDoor, state: stateSource())

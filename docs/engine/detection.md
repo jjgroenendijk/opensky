@@ -19,6 +19,10 @@ Sources:
   (<https://en.uesp.net/wiki/Skyrim:Sneak>): the detection value, the attenuation, and the sound
   factor with its settings.
 - UESP, "Skyrim:Skills" (<https://en.uesp.net/wiki/Skyrim:Skills>): the starting skill level.
+- CK wiki, "Category:Detection" (<https://ck.uesp.net/wiki/Category:Detection>): the visual factor,
+  the modified noticer skill, and detection events.
+- CK wiki, "GetLightLevel" (<https://ck.uesp.net/wiki/GetLightLevel>) and "Perk Entry Point",
+  Mod Detection Light (<https://ck.uesp.net/wiki/Perk_Entry_Point>): the light level scale.
 - xEdit `Core/wbDefinitionsTES5.pas`: the condition function indices.
 - Creation Kit wiki: what `GetDistance`, `GetLineOfSight`, and `GetDetected` return.
 
@@ -66,6 +70,23 @@ Both skill factors are a Sneak skill, clamped to `fSneakPerceptionSkillMin` to
 sneaker is the target. So a skilled sneaker lowers the value at every distance, through the last
 term.
 
+The CK wiki weights the noticer skill by the observer's state:
+
+```text
+Noticer = skill factor * (1 + Alert * fSneakAlertMod + Sleeping * fSneakSleepBonus
+                            + NotCombatTarget * fSneakCombatMod)
+```
+
+Alert is a suspicious pair. Sleeping is an observer running a sleep package. NotCombatTarget is an
+observer that fights an actor other than this target. On the install the alert and sleep settings
+are 0 and `fSneakCombatMod` is -0.4, so only a busy fighter notices less.
+
+When the target is the player, the sneaker factor is `fPlayerDetectionSneakBase +
+fPlayerDetectionSneakMult * skill`, with the skill clamped as above, and the whole value never falls
+below `fPlayerDetectActorValue`. A sleeping observer adds `fSneakSleepMod` to the value. No source
+says where these three apply. Their names say whom they are for, so the placement is OpenSky's
+reading.
+
 At or past the maximum distance the value is `fSneakBaseValue` alone, so nothing is perceived. The
 last term is not attenuated. Without this cut, an observer with a much higher Sneak skill than the
 target would detect it at any range. UESP does not say how the game limits this; OpenSky's rule
@@ -82,28 +103,38 @@ weapon's `WEAP` `VNAM` level, and a cast uses the casting sound level of the spe
 The sound lasts as long as the swing or the cast.
 
 Outdoors, the attenuation range is multiplied by `fSneakExteriorDistanceMult`. So the same
-distance counts for less in the open than in a corridor.
+distance counts for less in the open than in a corridor. A flying observer's range is also
+multiplied by `fSneakFlyingDistanceMult`. No actor flies yet, so this term waits for flight.
 
-UESP describes the visual factor only in words: light level drives it. So this shape is OpenSky's
-own:
+The visual factor follows the CK wiki:
 
 ```text
-Visual Factor = 0 without a sight line, outside the view cone, or while invisible
-              = visualBaseValue * lightLevel * (sneakVisualMult while crouched)
+Visual Factor = 0 without a sight line, outside the view cone, or for a sleeping observer
+              = Light * Movement * Blindness * Invisibility * (sneakVisualMult while crouched)
+Light         = (fDetectionSneakLightMod + light level) * fSneakLightMult
+                * (fSneakLightExteriorMult outdoors)
+Movement      = 1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult
+Blindness     = (100 - int(observer Blindness)) / 100
+Invisibility  = fSneakStealthBoyMult when the target's Invisibility is above 0, else 1
 ```
 
-There is no partial seeing. A target outside the cone, behind a wall, or with an `Invisibility`
-actor value above zero can only be heard.
+The wiki names the light offset `fSneakDetectionLightMult`. The install has no such setting, but
+it has `fDetectionSneakLightMod`, which OpenSky reads in its place. The exterior factor is
+OpenSky's reading of `fSneakLightExteriorMult`, whose use no source states. Moving and running are
+0 or 1; a sprint counts as running. The crouch factor `sneakVisualMult` is OpenSky's own: the wiki's
+visual factor has none. `fSneakStealthBoyMult` is 0 on the install, so an invisible target can
+still only be heard.
 
 ### Light level
 
 The light level is sampled at the middle of the target's body from the light the scene pass shades
 it with: the ambient colour, the sun (or the cell's directional light indoors), and the 8 nearest
 point lights with the shader's `(1 - d / r) ^ falloff`. The Rec. 709 luminance of that sum,
-divided by `fullLightLuminance`, clamped to 0 to 1, is the level. There is no shadow test and no
-facing term. So a target in the shade of a wall at noon still counts as lit. [WARNING] OpenSky's own
-shape: the install has `fSneakLightMult`, `fSneakLightExteriorMult`, and `fDetectionSneakLightMod`,
-but no source says how the game combines them.
+divided by `fullLightLuminance`, times 100, is the level. Indoors `iLightLevelInteriorMod` (25) is
+added. The level is capped at `iLightLevelMax` (300). The CK wiki gives the scale: `GetLightLevel`
+reads about 100 for a lit day outdoors, and Mod Detection Light names the interior offset and the
+cap. Mapping one luminance unit to level 100 is OpenSky's own choice. There is no shadow test and
+no facing term. So a target in the shade of a wall at noon still counts as lit.
 
 ### Gait multipliers
 
@@ -171,6 +202,12 @@ alone.
 - At 0 points the target is detected. An observer that detected it keeps it through the alert
   wait. When the pool starts to refill, the observer loses the target and searches. Until the
   pool is full again, any positive value detects the target at once.
+- When the target lands a blow, its pool waits `fCombatStealthPointRegenAttackedWaitTime` (15)
+  before it refills.
+- A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10). The
+  CK wiki says a projectile that hits something makes a detection event. OpenSky makes one when
+  the target's projectile lands and an aggressive observer is in detection range of the impact.
+  The wiki also has the event put the observer in its Alert state; OpenSky does not do that yet.
 
 The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
 because the wiki says the pool is for aggression, not for seeing a theft. The perception

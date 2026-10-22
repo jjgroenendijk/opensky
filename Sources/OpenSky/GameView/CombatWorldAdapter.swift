@@ -11,6 +11,7 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsESM
@@ -36,6 +37,7 @@ protocol CombatWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
@@ -55,6 +57,7 @@ protocol CombatWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var sessionWiring: WorldSessionWiring { get }
+    var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
@@ -81,6 +84,8 @@ final class CombatWorldAdapter {
         combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
         combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
         combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
+        combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
+        combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
@@ -157,6 +162,8 @@ final class CombatWorldAdapter {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
             case let .playImpact(impact, position): playImpact(impact, at: position)
+            case let .detectionEvent(owner, position):
+                game.perception.runtime?.noteDetectionEvent(owner: owner, at: position)
             case let .removeReference(key): game.worldState.reset(key)
             case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)

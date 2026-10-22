@@ -44,6 +44,10 @@ public final class CombatCoordinator {
     public var powerAttacks = PowerAttackSettings.vanilla
     /// The Block experience of blocks and bashes; the app sets it before `wireMelee`.
     public var skillUses = MeleeSkillUseSettings.vanilla
+    /// Stagger and disarm chances; the app sets them before `wireMelee` and `wireLoop`.
+    public var staggers = StaggerSettings.vanilla
+    /// The game's combat AI settings; the app sets them before `wireLoop`.
+    public var combatAI = CombatAISettings.vanilla
     /// What a landed arrow does; the app sets it before `wireArchery`.
     public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
@@ -68,6 +72,7 @@ public final class CombatCoordinator {
         runtime.impacts = impacts
         runtime.powerAttacks = powerAttacks
         runtime.skillUses = skillUses
+        runtime.staggers = staggers
         self.items = items ?? self.items
         melee = runtime
     }
@@ -89,6 +94,8 @@ public final class CombatCoordinator {
     public func wireLoop(settings: CombatSettings) {
         let runtime = CombatLoopRuntime(settings: settings, world: self)
         runtime.skillUses = skillUses
+        runtime.staggers = staggers
+        runtime.combatAI = combatAI
         loop = runtime
     }
 
@@ -104,7 +111,7 @@ public final class CombatCoordinator {
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
         melee.acceptFrame(CombatCore.meleeIntent(intent, readied: readied))
-        noteHits(melee.handleGraphEvents(events).map(\.target))
+        noteHits(melee.handleGraphEvents(events))
         return pendingCommands
     }
 
@@ -129,7 +136,11 @@ public final class CombatCoordinator {
         }
         // Every arrow provokes, a spell only when its effects are hostile.
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
-        noteHits(struck.compactMap(\.target))
+        let targets = struck.compactMap(\.target)
+        if !targets.isEmpty, let loop {
+            let staggered = targets.filter { _ in loop.rollsStagger() }
+            loop.notePlayerHits(targets, staggered: Set(staggered))
+        }
         return pendingCommands
     }
 
@@ -175,9 +186,11 @@ public final class CombatCoordinator {
         loop.record(.hostility(actor: actorName(key), hostile: hostile))
     }
 
-    func noteHits(_ targets: [ReferenceKey]) {
-        guard !targets.isEmpty else { return }
-        loop?.notePlayerHits(targets)
+    func noteHits(_ hits: [MeleeHitRecord]) {
+        guard !hits.isEmpty else { return }
+        loop?.notePlayerHits(
+            hits.map(\.target), staggered: Set(hits.filter(\.staggered).map(\.target))
+        )
     }
 
     func readiedHands() -> ReadiedHands {

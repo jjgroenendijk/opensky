@@ -41,6 +41,11 @@ extension FakeWorldProviders {
         set { presentationState.cinematic.killCamsEnabled = newValue }
     }
 
+    var killCamPlayerOdds: Float {
+        get { presentationState.cinematic.killCamPlayerOdds }
+        set { presentationState.cinematic.killCamPlayerOdds = newValue }
+    }
+
     func playCameraShot(editorID: String) {
         presentationState.playedShots.append(editorID)
     }

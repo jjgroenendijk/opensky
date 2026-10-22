@@ -69,13 +69,16 @@ extension CombatCoordinator: CombatLoopWorld {
         else { return nil }
         return CombatTemperament(
             confidence: confidence,
-            modifier: CombatTemperament.modifier(for: key),
+            modifier: CombatTemperament.modifier(
+                for: key, range: combatAI.confidenceModifierRange
+            ),
             strengthRatio: CombatTemperament.strengthRatio(
                 level: world.level(of: key) ?? 1,
                 healthFraction: combatHealthFraction(of: key),
                 targetLevel: world.level(of: target) ?? 1,
                 targetHealthFraction: combatHealthFraction(of: target)
-            )
+            ),
+            settings: combatAI
         )
     }
 
@@ -135,6 +138,10 @@ extension CombatCoordinator: CombatLoopWorld {
 
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         world.combatStyle(of: key)
+    }
+
+    public var combatInInterior: Bool {
+        world.isInInterior
     }
 
     public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {

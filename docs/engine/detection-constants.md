@@ -29,6 +29,28 @@ Every constant keeps its source, shown by `openskycli gmst detection` and the pa
 | `fSneakPerceptionSkillMin` | 0 | Bottom of the skill clamp |
 | `fSneakPerceptionSkillMax` | 100 | Top of the skill clamp |
 | `iSoundLevelSilent` | 10 | Action sound of a silent weapon or spell |
+| `fSneakLightMult` | 0.33 | Scales the light term |
+| `fSneakLightExteriorMult` | 0.5 | Scales the light term outdoors (OpenSky's reading) |
+| `fDetectionSneakLightMod` | 15 | Added to the light level in the light term |
+| `iLightLevelInteriorMod` | 25 | Added to an interior light level |
+| `iLightLevelMax` | 300 | Cap on the light level |
+| `fSneakLightMoveMult` | 0.01 | Visual term bonus for a moving target |
+| `fSneakLightRunMult` | 0.2 | Visual term bonus for a running target |
+| `fSneakStealthBoyMult` | 0 | Visual term of an invisible target |
+| `fSneakAlertMod` | 0 | Noticer skill weight of a suspicious observer |
+| `fSneakSleepBonus` | 0 | Noticer skill weight of a sleeping observer |
+| `fSneakCombatMod` | -0.4 | Noticer skill weight of an observer fighting someone else |
+| `fSneakSleepMod` | 0 | Added to a sleeping observer's value (OpenSky's reading) |
+| `fPlayerDetectionSneakBase` | 10 | Base of the player's sneaker factor (OpenSky's reading) |
+| `fPlayerDetectionSneakMult` | 0.4 | Skill weight of the player's sneaker factor (OpenSky's reading) |
+| `fPlayerDetectActorValue` | -30 | Lowest value against the player (OpenSky's reading) |
+| `fSneakFlyingDistanceMult` | 3 | Range multiplier of a flying observer |
+
+The values are from `openskycli gmst list` on the local install. `Skyrim.esm` does not set
+`fSneakLightMoveMult`, `fSneakLightRunMult`, `fSneakStealthBoyMult`, or `fSneakCombatMod`, so the
+engine's own default applies. Those four values are the defaults in the CK wiki's
+"Category:Settings" table (<https://ck.uesp.net/wiki/Category:Settings>), and the panel names that
+source. A plugin that sets one wins. "OpenSky's reading" marks a setting whose use no source states.
 
 ## OpenSky's own constants
 
@@ -43,12 +65,11 @@ cone, how loud a crouching target is, how fast a guard decides, or how long it t
 | `sneakMovementMult` | 0.75 | Movement noise while crouched |
 | `sprintMovementMult` | 3 | Movement noise while sprinting |
 | `viewConeHalfAngleDegrees` | 90 | Half the view cone angle |
-| `visualBaseValue` | 40 | Visual term for a lit, standing target in the open |
-| `sneakVisualMult` | 0.5 | Visual term while crouched |
+| `sneakVisualMult` | 0.5 | Visual term while crouched; the CK wiki's visual factor has none |
 | `normalActionSound` | 25 | Action sound at the normal level |
 | `loudActionSound` | 50 | Action sound at the loud level |
 | `veryLoudActionSound` | 100 | Action sound at the very loud level |
-| `fullLightLuminance` | 1 | Light luminance that counts as fully lit |
+| `fullLightLuminance` | 1 | Light luminance that reads as light level 100 |
 | `fullDetectionValue` | 25 | Value at which the level climbs at full speed |
 | `gainPerSecond` | 100 | Level gained per second at full speed |
 | `decayPerSecond` | 20 | Level lost per second when nothing is noticed |
@@ -71,6 +92,9 @@ enum implies: silent, normal, loud, very loud.
 | Both skill levels | The `Sneak` actor value of the observer and of the target |
 | Muffle | The target's `Movement Noise Mult` actor value |
 | Invisibility | The target's `Invisibility` actor value, above zero |
+| Blindness | The observer's `Blindness` actor value |
+| Fighting another | The observer's combat target is not the judged target |
+| Sleeping | The observer runs a sleep package |
 | Armour weight | The sum of the `ARMO` weights the target has equipped |
 | Action sound | The swing's `WEAP` `VNAM`, or the cast's first `MGEF` casting sound level |
 | Light level | The scene light at the target ([light level](/engine/detection.md#light-level)) |

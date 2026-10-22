@@ -132,10 +132,15 @@ extension MagicCoordinator {
     private func disarm(_ target: ActorValueHolder) {
         guard let inventory = world.inventory, let equipment = world.equipment else { return }
         let holder = InventoryHolder(actor: target)
+        var unequipped = false
         for item in equipment.equipped(on: holder)
             where inventory.baselines.items.weapon(item) != nil
         {
             equipment.unequip(item, on: holder)
+            unequipped = true
+        }
+        if unequipped, case .player = target.subject {
+            pendingCommands.append(.notice(castNotices[.playerDisarmed]))
         }
     }
 
