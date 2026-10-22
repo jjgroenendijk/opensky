@@ -1,8 +1,8 @@
 ---
 type: Subsystem
 title: Locks and lockpicking
-description: How XLOC lock data gates the use key, how keys and Papyrus change a lock, the
-  lockpicking model with its sources, and the 2D lockpicking menu.
+description: How XLOC lock data gates the use key, how keys and Papyrus change a lock, how a
+  leveled lock scales, the lockpicking model with its sources, and the 3D lockpicking menu.
 tags: [engine, interaction, inventory, progression]
 ---
 
@@ -32,8 +32,39 @@ between two rows falls in the higher band, so Papyrus `SetLockLevel(30)` is Adep
 come from the `sLockLevelName*` string settings, and the prompt verb from `sUnlock`. Without
 string tables the English names above stay.
 
-[WARNING] Flag 0x04 marks a leveled lock. No open source says how the game scales it, so
-OpenSky uses the authored level.
+## Leveled locks
+
+`XLOC` flag 0x04 marks a leveled lock. The CK wiki "Reference" page
+(<https://ck.uesp.net/wiki/Reference>) says: "A leveled lock starts with the specified lock
+level when the player is level one, and becomes harder as the player's level increases."
+No open source gives the step.
+
+[WARNING] The step is OpenSky's choice: the lock rises one band for every 10 player levels
+above level 1, and stops at Master. A "requires key" lock does not scale.
+
+| Authored | Player level 1 to 10 | 11 to 20 | 21 to 30 | 31 to 40 | 41 and up |
+| --- | --- | --- | --- | --- | --- |
+| Novice | Novice | Apprentice | Adept | Expert | Master |
+| Apprentice | Apprentice | Adept | Expert | Master | Master |
+| Expert | Expert | Master | Master | Master | Master |
+
+The level is worked out each time a band is chosen: for the prompt, the gate, the
+lockpicking session, and the perk conditions. The stored level stays the authored one, so a
+picked and relocked lock keeps scaling. UESP "Skyrim:Lockpicking" notes that a leveled lock
+can give experience again "if the lock has leveled up since when it was first picked",
+which fits a level worked out again later. Papyrus `SetLockLevel` to another level stops the
+scaling. Papyrus `GetLockLevel` answers the stored level.
+
+What the install and UESP show:
+
+- The vanilla masters hold 146 leveled locks: 142 in `Skyrim.esm` and 4 in `Dragonborn.esm`.
+  Most are Thieves Guild strongboxes (`TGRStrongbox`), jail evidence chests, and city doors.
+- Viola Giordano's front door in Windhelm is a leveled Adept lock. UESP
+  "Skyrim:That Was Always There" calls it "a difficult leveled lock (Expert or Master
+  level)", so it shows one or two bands above its authored level. The rule above gives
+  Expert from player level 11 and Master from level 21.
+- No UESP page gives the band of one leveled lock at several player levels, which would fix
+  the step. That observation needs the game itself.
 
 ## The use-key gate
 
@@ -118,9 +149,29 @@ An opened lock reports `fSkillUsageLockPick<band>` uses (2, 3, 5, 8, 13). A brok
 
 ## The menu
 
-The game draws a 3D lock from a NIF. OpenSky draws a 2D overlay with the immediate-mode UI
-layer instead: the arc as dots, the pick, the keyhole turning with the lock, a turn bar, a pick
-health bar, the pick count, and the difficulty. The world pauses under it.
+The menu draws the install's 3D lock in the [menu scene](/rendering/menu-scene.md), over the
+paused world:
+
+| Mesh | Holds | Sequences |
+| --- | --- | --- |
+| `meshes\interface\lockpicking\lockpickshiv01.nif` | The lock, its cylinder `LockPickLockTumble`, and the shiv | `Intro`, `Rotate` |
+| `meshes\interface\lockpicking\lockpick01.nif` | The pick, node `LockPick01` | `Intro`, `PickDamage`, `PickBreak` |
+
+- Both `Intro` sequences play when the menu opens. The pick's `Intro` plays again for each
+  fresh pick.
+- The lock turn holds `Rotate` at a time: 0 at rest, and the time of the cylinder's largest
+  turn when open. That time is found by sampling `Rotate`.
+- The engine turns `LockPick01` by the pick angle, about the view axis through the node's
+  own origin, which sits in the keyhole after `Intro`. `Rotate` turns the cylinder a quarter
+  turn clockwise, and the pick turns with it, as it sits in the cylinder.
+- `PickDamage` loops while the pick strains. `PickBreak` plays for 0.7 s after a pick
+  breaks; that is where its flight ends.
+
+The meshes do not hold the game's camera. The camera numbers are OpenSky's framing. The
+lock is drawn unlit, with its diffuse texture, as every menu-scene mesh is. Below the lock,
+the overlay keeps a turn bar, a pick health bar, the pick count, and the difficulty. When
+the meshes fail to load, the overlay draws a 2D lock instead: the arc as dots, the pick, and
+the keyhole turning with the lock.
 
 | Input | Action |
 | --- | --- |
@@ -135,7 +186,7 @@ These bindings are OpenSky's. The sounds are the install's `SNDR` records, found
 ## Lockpicking menu
 
 `Interface\lockpickingmenu.swf` draws the panel beside the lock: the skill meter, the lock
-level, the picks left, and the button bar. The lock itself stays the overlay above. The
+level, the picks left, and the button bar. The lock itself is the 3D lock above. The
 engine calls `InitExtensions` and `SetPlatform(0, false)` once, then:
 
 | Call | Arguments |
@@ -156,5 +207,7 @@ The `LOCK` chunk holds every changed lock ([save format](/formats/opensky-save.m
 World > Inventory & Equipment > Locks lists the locks in the loaded cells. The selected lock
 gets a yellow marker in the world. The section can unlock and relock it, open the lockpicking
 menu on it, and let the player carry every key. The readout shows the last session: whether
-the lock opened, the picks broken, and the experience given. The record views in the Asset
+the lock opened, the picks broken, and the experience given. A leveled lock's row shows its
+band now and its authored band. "Menu lock" says whether the menu drew the 3D lock, or why it
+fell back to the 2D lock. The record views in the Asset
 Browser show a reference's `XLOC` level and key.
