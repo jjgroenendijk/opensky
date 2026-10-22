@@ -69,6 +69,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ObjectAnimationControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
+    & PerkActivationControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
     & PlayerSettingsControlProviding
@@ -186,6 +187,7 @@ extension FeaturePanelServices {
             menuScreens: providers,
             message: providers,
             objectAnimation: providers,
+            perkActivation: providers,
             playerSettings: providers,
             raceMenu: providers,
             runtimeState: providers,

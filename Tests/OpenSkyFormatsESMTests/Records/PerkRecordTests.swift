@@ -225,6 +225,27 @@ struct PerkRecordTests {
         #expect(flags.fragmentIndex == 3)
     }
 
+    /// The `VMAD` tail names the fragment script and each fragment by its uint16 index,
+    /// which is what `EPF3` points at.
+    @Test
+    func readsThePerkFragmentTableByIndex() throws {
+        let fields = PerkFixture.fields(editorID: "FeedPerk")
+            + PerkFixture.fragmentVMAD(
+                fileName: "PRKF_FeedPerk_00000800",
+                fragments: [(index: 0, function: "Fragment_0"), (index: 1, function: "Fragment_15")]
+            )
+
+        let perk = try Perk(record: PerkFixture.record(fields: fields), localized: false)
+        let section = try #require(perk.script.recordFragments)
+
+        #expect(perk.skipped.total == 0)
+        #expect(perk.script.skipped.total == 0)
+        #expect(section.fileName == "PRKF_FeedPerk_00000800")
+        #expect(section.fragment(slot: 1)?.functionName == "Fragment_15")
+        #expect(section.fragment(slot: 1)?.scriptName == "PRKF_FeedPerk_00000800")
+        #expect(section.fragment(slot: 2) == nil)
+    }
+
     /// Builds a one-effect perk around one EPFD payload and hands back what it
     /// decoded to, which is what every function-data case here is checking.
     private func decodeFunctionData(

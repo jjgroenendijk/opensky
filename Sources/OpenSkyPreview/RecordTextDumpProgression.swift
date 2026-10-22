@@ -130,6 +130,14 @@ nonisolated extension RecordTextDump {
         for (offset, effect) in perk.effects.enumerated() {
             lines.append(contentsOf: perkEffectLines(effect, index: offset, context: context))
         }
+        if let section = perk.script.recordFragments {
+            lines.append("  fragments: \(section.fileName) (\(section.fragments.count))")
+            for fragment in section.fragments {
+                lines.append(
+                    "    \(fragment.slot): \(fragment.scriptName).\(fragment.functionName)"
+                )
+            }
+        }
         return lines.joined(separator: "\n")
     }
 

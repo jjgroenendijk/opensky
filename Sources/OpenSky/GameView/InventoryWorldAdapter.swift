@@ -43,6 +43,7 @@ protocol InventoryWorldHost: AnyObject {
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
     var perception: PerceptionCoordinator { get }
+    var perkActivation: PerkActivationCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
     var progression: ProgressionCoordinator { get }
@@ -270,6 +271,9 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     func perkActivateLabel(for reference: FormID) -> String? {
         guard let key = game.streamer?.referenceEntry(formID: reference)?.key else { return nil }
+        if let label = game.perkActivation.promptLabel(on: key) {
+            return label
+        }
         let choice = game.perks.choices(
             at: .setActivateLabel,
             on: .player,

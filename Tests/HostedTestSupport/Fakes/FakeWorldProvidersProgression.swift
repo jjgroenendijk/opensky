@@ -3,6 +3,7 @@
 // `World > Progression` without renderer or game data.
 
 @testable import OpenSkyGameData
+import OpenSkyMenus
 @testable import OpenSkyProgression
 
 /// The progression half of the fake's stored state.
@@ -27,12 +28,25 @@ struct FakeProgressionState {
     var revokeCount = 0
     var legendaryCount = 0
     var resetTreeCount = 0
+    var perkChoices = PerkActivationSnapshot(target: nil, rows: [], lastRun: nil)
+    /// Every perk choice row the panel ran, in order.
+    var perkChoiceRuns: [Int] = []
 }
 
 /// The conformance itself is declared by `WorldControlProviders` on the class,
 /// so this is a plain extension: restating it here would be a redundant
 /// conformance.
 extension FakeWorldProviders {
+    var perkActivationSnapshot: PerkActivationSnapshot {
+        progression.perkChoices
+    }
+
+    @discardableResult
+    func runPerkChoice(at index: Int) -> Bool {
+        progression.perkChoiceRuns.append(index)
+        return progression.perkChoices.rows.indices.contains(index)
+    }
+
     var progressionControlSnapshot: ProgressionControlSnapshot {
         progression.snapshotReads += 1
         return progression.snapshot

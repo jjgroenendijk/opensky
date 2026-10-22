@@ -93,7 +93,7 @@ extension PerkRuntime {
     ) -> [PerkEntryPointChoice] {
         tally.noteEvaluation()
         return passingEffects(at: entryPoint, on: holder, subjects: subjects)
-            .compactMap { PerkEntryPointChoice(effect: $0.effect) }
+            .compactMap { PerkEntryPointChoice(effect: $0.effect, perk: $0.perk) }
     }
 
     private mutating func passingEffects(

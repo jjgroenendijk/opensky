@@ -1,14 +1,16 @@
 // World > Progression: the character sheet. It is its own destination because
 // it is about what the player has become, not what an actor is worth in a
-// fight. Sections follow progression: character, skills, perks.
+// fight. Sections follow progression: character, skills, perks, perk choices.
 
 import AppKit
+import OpenSkyMenus
 import OpenSkyProgression
 
 final class ProgressionPanelViewController: InspectorPanelViewController {
     let characterSection = ProgressionCharacterSection()
     let skillsSection = ProgressionSkillsSection()
     let perkTreeSection = ProgressionPerkTreeSection()
+    let perkChoicesSection = PerkActivationSection()
 
     /// Weak, for the reason every other panel holds its providers weakly: the
     /// game controller owns this panel's parent, so the panel must not retain
@@ -27,8 +29,14 @@ final class ProgressionPanelViewController: InspectorPanelViewController {
         false
     }
 
+    weak var perkActivation: (any PerkActivationControlProviding)? {
+        didSet {
+            perkChoicesSection.provider = perkActivation
+        }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        progressionSections
+        progressionSections + [perkChoicesSection]
     }
 
     /// Builds the tick's snapshot once for all three sections. The hand-down is

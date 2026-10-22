@@ -136,6 +136,7 @@ struct FeaturePanelServices {
     let menuScreens: any MenuScreensControlProviding
     let message: any MessageControlProviding
     let objectAnimation: any ObjectAnimationControlProviding
+    let perkActivation: any PerkActivationControlProviding
     let playerSettings: any PlayerSettingsControlProviding
     let raceMenu: any RaceMenuControlProviding
     let runtimeState: any RuntimeStateControlProviding

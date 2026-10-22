@@ -39,6 +39,8 @@ public final class MessageCoordinator {
     public var lastPanelOutcome: String?
     private var frame: UInt64 = 0
     private var nextToken: UInt64 = 1
+    /// Engine menus waiting on a button, by token. A token not here is a script's.
+    private var choiceHandlers: [UInt64: (Int) -> Void] = [:]
     /// The box the movie was last sent, so a highlight change does not resend it.
     private var movieRequest: MessageBoxRequest?
     private let menuMode: MenuModeController
@@ -172,6 +174,23 @@ public final class MessageCoordinator {
         return posted ? .posted(editorID) : .noText(editorID)
     }
 
+    /// A box the engine itself asks, such as the perk activate menu. `answer` gets the
+    /// picked button's index.
+    public func presentChoices(
+        title: String?, text: String, buttons: [String], answer: @escaping (Int) -> Void
+    ) {
+        let token = nextToken
+        nextToken += 1
+        choiceHandlers[token] = answer
+        open(MessageBoxRequest(
+            title: title,
+            text: text,
+            buttons: buttons.enumerated()
+                .map { MessageBoxButton(index: $0.offset, text: $0.element) },
+            token: token
+        ))
+    }
+
     private func open(_ request: MessageBoxRequest) {
         guard boxes.enqueue(request) else { return }
         menuMode.inputConsumer = world?.menuInputConsumer
@@ -183,7 +202,11 @@ public final class MessageCoordinator {
         guard let answer else { return }
         lastAnswer = answer
         if let token = answer.token {
-            world?.answerMessage(token: token, buttonIndex: answer.buttonIndex)
+            if let handler = choiceHandlers.removeValue(forKey: token) {
+                handler(answer.buttonIndex)
+            } else {
+                world?.answerMessage(token: token, buttonIndex: answer.buttonIndex)
+            }
         }
         if !boxes.isOpen {
             menuMode.dismiss(Self.identifier)

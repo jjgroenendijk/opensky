@@ -87,6 +87,7 @@ extension FeaturePanelServices {
             menuScreens: game.menuScreens,
             message: game.messages,
             objectAnimation: game.objectAnimationWorld,
+            perkActivation: game.perkActivation,
             playerSettings: game.menuWorld,
             raceMenu: game.raceMenu,
             runtimeState: game.runtimeState,

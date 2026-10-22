@@ -13,9 +13,11 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
     public let spell: ResolvedSpell?
     /// The `EPFD` text of a select-text or set-text effect.
     public let text: PerkFunctionData?
+    /// The add-activate-choice button, its flags, and the perk whose fragment it runs.
+    public let activation: PerkActivateChoice?
 
     /// Nil when the effect's function computes a number.
-    public init?(effect: ResolvedPerkEffect) {
+    public init?(effect: ResolvedPerkEffect, perk: ResolvedPerk? = nil) {
         guard case let .entryPoint(payload) = effect.effect.data, Self.carries(payload.function)
         else { return nil }
         spell = effect.spell
@@ -25,18 +27,30 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
         default:
             text = nil
         }
+        activation = payload.function == .addActivateChoice
+            ? PerkActivateChoice(effect: effect.effect, perk: perk)
+            : nil
     }
 
     /// A select-spell choice, as a fake world answers one.
     public init(spell: ResolvedSpell) {
         self.spell = spell
         text = nil
+        activation = nil
     }
 
     /// A select-text choice, as a fake world answers one.
     public init(text: String) {
         spell = nil
         self.text = .text(text)
+        activation = nil
+    }
+
+    /// An activate choice, as a fake world answers one.
+    public init(activation: PerkActivateChoice, spell: ResolvedSpell? = nil) {
+        self.spell = spell
+        text = nil
+        self.activation = activation
     }
 
     /// Whether a choice reader carries out `function`. `Add Leveled List` is not one:

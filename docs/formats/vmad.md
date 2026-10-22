@@ -199,8 +199,13 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbVMADFragmentedPERK`, `wbVMADFra
 
 | Record | Layout |
 | --- | --- |
-| `PERK` | int8 version, file name, uint16 count; per fragment: uint32 index, 1 unused byte, script name, function name |
+| `PERK` | int8 version, file name, uint16 count; per fragment: uint16 index, 3 unused bytes, script name, function name |
 | `PACK` | int8 version, uint8 flags, file name; per set flag bit (0x01 begin, 0x02 end, 0x04 change): 1 unused byte, script name, function name |
 | `SCEN` | int8 version, uint8 flags, file name; per set flag bit (0x01 begin, 0x02 end): 1 unused byte, script name, function name; then uint16 count of phase fragments, each: uint8 phase flag (0x01 start, 0x02 completion), uint32 phase index, 1 unused byte, script name, function name |
 
 A flag bit outside the listed ones fails the tail, so it is skipped and counted.
+
+The `PERK` index is a uint16, as UESP "VMAD Field" has it
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field>). xEdit reads it and the
+next int16 as one uint32. A perk effect's `EPF3` names its fragment by this uint16 index
+([perks](perks.md)).

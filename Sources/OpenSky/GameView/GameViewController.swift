@@ -192,6 +192,11 @@ final class GameViewController: NSViewController {
     )
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     lazy var lockWorld = LockWorldAdapter(game: self)
+    /// The player's Activate perk choices on a use-key press.
+    lazy var perkActivation = PerkActivationCoordinator(
+        messages: messages, world: perkActivationWorld
+    )
+    lazy var perkActivationWorld = PerkActivationWorldAdapter(game: self)
     lazy var hazards = HazardCoordinator()
     lazy var hazardWorld = HazardWorldAdapter(HazardWorldDependencies(
         hazards: hazards,
