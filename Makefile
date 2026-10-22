@@ -460,7 +460,8 @@ XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
 # the slow and GPU tests, so it builds no app. A layer plan (Formats, Engine,
 # Features, App) builds only its bundles. UnitTests is everything, as CI runs it.
 # GPU selects the GPU tag across every bundle. N hunts a flaky test: it reruns
-# until the first failure, at most N times.
+# until the first failure, at most N times. The `test` action writes no .xctestrun,
+# so the run builds and tests as two actions, and test-rerun can reuse the build.
 PLAN             ?= Quick
 UNIT_PLANS       := Quick Formats Engine Features App UnitTests GPU
 check_plan = $(if $(filter $(PLAN),$(UNIT_PLANS)),,$(error PLAN must be one of: $(UNIT_PLANS)))
@@ -468,9 +469,9 @@ test-unit: link-shared $(SHADER_LIBRARY) ## Run a unit plan [PLAN=Quick|Formats|
 	@$(check_plan)TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit-$(PLAN)) \
 		-testPlan $(PLAN) $(call only_testing,OpenSkyTests) $(coverage_flag) \
-		$(if $(N),-run-tests-until-failure -test-iterations $(N)) test
+		$(if $(N),-run-tests-until-failure -test-iterations $(N)) build-for-testing test-without-building
 
-# The .xctestrun that the last test or build-for-testing run of PLAN wrote. A rerun
+# The .xctestrun that the last test-unit or build-tests run of PLAN wrote. A rerun
 # through it skips the build system: seconds instead of minutes. It runs the
 # products as built, so an edit since then needs `make test-unit` again.
 xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME)_$(PLAN)_*.xctestrun)))

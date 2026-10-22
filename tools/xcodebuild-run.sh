@@ -63,9 +63,10 @@ mark() {
 [ -z "${OPENSKY_MAKE_STARTED:-}" ] || printf '%s make\n' "$OPENSKY_MAKE_STARTED" >>"$phases"
 mark wrapper
 
-# test-without-building compiles nothing, so it cannot meet a stale module.
+# test-without-building alone compiles nothing, so it cannot meet a stale module.
 compiles="yes"
 case " $* " in
+    *" build-for-testing "*) ;;
     *" test-without-building "*) compiles="" ;;
 esac
 

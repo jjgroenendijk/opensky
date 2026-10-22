@@ -107,7 +107,8 @@ stops at the first failure. It is a make target and not a plan configuration on 
 failure a flaky hunt is looking for. `make lint-test-plans` fails a plan that sets either.
 
 `make test-rerun PLAN=<plan>` runs `xcodebuild test-without-building` on the `.xctestrun` file
-that the last `xcodebuild test` or `build-for-testing` of that plan wrote under `Build/Products/`.
+that the last `build-for-testing` of that plan wrote under `Build/Products/`. The `test` action
+writes no such file, so `make test-unit` runs `build-for-testing test-without-building` instead.
 It skips the build system, so one suite reruns in seconds instead of the start-up cost below. It
 tests the products as they were built: the target warns when a source under `Sources/` or `Tests/`
 is newer than the file, and the warning means the result is for the old code.
