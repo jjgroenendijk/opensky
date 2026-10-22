@@ -75,6 +75,9 @@ nonisolated public struct MenuRecordData: Sendable {
     public let chargen: ChargenRecords
     /// The `fStats` float GMSTs that shape the skills menu's perk sky.
     public let statsSettings: [String: Float]
+    /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Filled
+    /// from the install after the records load.
+    public var chargenTypes: [ChargenTypeKey: [Int: Int]] = [:]
 
     /// Every plugin's records; a later plugin's override wins.
     public init(loadOrder: LoadOrderPlugins, settings: GameSettingStore) {
@@ -118,6 +121,34 @@ nonisolated public struct MenuRecordData: Sendable {
             else { return }
             values[resolved.setting.editorID] = value
         }
+    }
+}
+
+/// One race and sex, the unit a chargen TRI belongs to.
+nonisolated public struct ChargenTypeKey: Hashable, Sendable {
+    public let race: FormID
+    public let isFemale: Bool
+
+    public init(race: FormID, isFemale: Bool) {
+        self.race = race
+        self.isFemale = isFemale
+    }
+}
+
+nonisolated extension MenuRecordData {
+    /// The chargen TRI path of each race and sex's default face part.
+    public var chargenTRIPaths: [ChargenTypeKey: String] {
+        let parts = Dictionary(chargen.headParts.map { ($0.formID, $0) }) { first, _ in first }
+        var paths: [ChargenTypeKey: String] = [:]
+        for race in playableRaces {
+            for (isFemale, list) in [(false, race.maleHeadParts), (true, race.femaleHeadParts)] {
+                let face = list.compactMap { parts[$0] }.first { $0.partType == .face }
+                if let path = face?.morphPaths.first(where: { $0.kind == .chargen })?.path {
+                    paths[ChargenTypeKey(race: race.formID, isFemale: isFemale)] = path
+                }
+            }
+        }
+        return paths
     }
 }
 

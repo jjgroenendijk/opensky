@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One playable race the menu offers.
 nonisolated public struct RaceChoice: Equatable, Sendable {
@@ -35,7 +36,8 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         "Chin Length", "Chin Forward", "Eye Depth"
     ]
     public static let morphCount = 19
-    /// Measured: the female chargen TRI has 30 nose, 28 eye, and 30 lip targets.
+    /// Measured: the female chargen TRI has 30 nose, 28 eye, and 30 lip targets. Used
+    /// when the race's own TRI was not read; the morph count settings narrow either.
     public static let partRanges: [Int: ClosedRange<Int32>] = [
         0: 0 ... 30,
         2: 0 ... 28,
@@ -46,6 +48,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
     public internal(set) var identity: PlayerIdentityState
     public let races: [RaceChoice]
     public var labels = RaceMenuLabels()
+    public var morphCounts = FaceMorphCounts.vanilla
     /// What the current race and sex offer. The coordinator replaces it after a change.
     public internal(set) var options: RaceMenuOptions
     /// `ShowLimitedRaceMenu`: no name or sex change, and the race locks once

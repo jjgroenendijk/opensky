@@ -81,6 +81,8 @@ public final class RaceMenuCoordinator {
     public static let identifier: MenuIdentifier = "RaceSex Menu"
 
     public internal(set) var model: RaceMenuModel?
+    /// The type counts the menu may offer; set from the game settings.
+    public var morphCounts = FaceMorphCounts.vanilla
     public private(set) var isEditingName = false
     /// The face shot, or the whole body after the movie's `ZoomPC(false)`.
     public internal(set) var isZoomedIn = true
@@ -133,6 +135,7 @@ public final class RaceMenuCoordinator {
             options: world.raceMenuOptions(race: identity.race, isFemale: identity.isFemale)
         )
         model?.labels = world.raceMenuLabels
+        model?.morphCounts = morphCounts
         isEditingName = false
         isZoomedIn = true
         menuMode.inputConsumer = world.menuInputConsumer
