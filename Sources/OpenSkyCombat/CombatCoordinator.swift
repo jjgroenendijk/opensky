@@ -72,6 +72,7 @@ public final class CombatCoordinator {
         melee = runtime
     }
 
+        runtime.staggers = staggers
     public func wireArchery(
         settings: ArcherySettings,
         items: ItemDefinitionStore?,
@@ -104,7 +105,7 @@ public final class CombatCoordinator {
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
         melee.acceptFrame(CombatCore.meleeIntent(intent, readied: readied))
-        noteHits(melee.handleGraphEvents(events).map(\.target))
+        noteHits(melee.handleGraphEvents(events))
         return pendingCommands
     }
 
@@ -129,7 +130,11 @@ public final class CombatCoordinator {
         }
         // Every arrow provokes, a spell only when its effects are hostile.
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
-        noteHits(struck.compactMap(\.target))
+        let targets = struck.compactMap(\.target)
+        if !targets.isEmpty, let loop {
+            let staggered = targets.filter { _ in loop.rollsStagger() }
+            loop.notePlayerHits(targets, staggered: Set(staggered))
+        }
         return pendingCommands
     }
 
@@ -175,9 +180,11 @@ public final class CombatCoordinator {
         loop.record(.hostility(actor: actorName(key), hostile: hostile))
     }
 
-    func noteHits(_ targets: [ReferenceKey]) {
-        guard !targets.isEmpty else { return }
-        loop?.notePlayerHits(targets)
+    func noteHits(_ hits: [MeleeHitRecord]) {
+        guard !hits.isEmpty else { return }
+        loop?.notePlayerHits(
+            hits.map(\.target), staggered: Set(hits.filter(\.staggered).map(\.target))
+        )
     }
 
     func readiedHands() -> ReadiedHands {

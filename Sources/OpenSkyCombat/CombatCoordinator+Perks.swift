@@ -108,9 +108,11 @@ extension CombatCoordinator {
             entryPoint = .applyCombatHitSpell
             subjects = attackSubjects(blow, on: target)
         }
+        let disarmChance = blow.kind.isBash
+            ? staggers.blockDisarmChance : staggers.attackDisarmChance
         return applyChosenSpell(
             at: entryPoint, owner: blow.attacker, subjects: subjects, caster: blow.attacker,
-            on: target
+            on: target, disarmChance: disarmChance
         )
     }
 
@@ -198,13 +200,17 @@ extension CombatCoordinator {
         owner: ReferenceKey,
         subjects: PerkEvaluationSubjects,
         caster: ReferenceKey,
-        on target: ReferenceKey
+        on target: ReferenceKey,
+        disarmChance: Int = 100
     ) -> SpellHitReport? {
         guard
             let spell = world.perkChoices(
                 at: entryPoint, on: owner, subjects: subjects, seams: ConditionContext()
             ).lazy.compactMap(\.spell).first
         else { return nil }
+        // `iPerkAttackDisarmChance` and `iPerkBlockDisarmChance` gate a disarm spell.
+        let disarms = spell.effects.contains { $0.effect?.effect.data?.archetype == .disarm }
+        if disarms, strikeRandom.percent() >= disarmChance { return nil }
         return world.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: target)]
         ))

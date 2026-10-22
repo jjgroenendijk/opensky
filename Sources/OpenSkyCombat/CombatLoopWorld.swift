@@ -136,6 +136,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// The blocker's fortify and perk multiplier for an incoming blow, which is
     /// `MeleeDamage`'s `bonusMultiplier`. Defaults to 1.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
+    /// The Block skill of `key`, which a blocked swing's recoil reads.
+    func combatBlockSkill(of key: ReferenceKey) -> Float
 
     /// The skill, sneak-attack, armour, and perk terms of `blow` on `target`.
     func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
@@ -272,6 +274,10 @@ nonisolated extension CombatLoopWorld {
 
     /// A session with no skills and no armour scales nothing.
     public func combatStrike(_: CombatBlow, on _: ReferenceKey) -> WeaponStrike {
+    public func combatBlockSkill(of _: ReferenceKey) -> Float {
+        MeleeDamage.defaultBlockSkill
+    }
+
         .plain
     }
 

@@ -7,6 +7,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
@@ -114,13 +115,15 @@ public final class CombatLoopRuntime: CombatControlling {
         return setHostility(.hostile, on: key)
     }
 
-    /// Every landed melee hit the player's swing produced: provokes each target,
-    /// puts it in the fight, and interrupts whatever it was doing.
-    public func notePlayerHits(_ targets: [ReferenceKey]) {
+    /// Every landed melee hit the player's swing produced: provokes each target and
+    /// puts it in the fight. A hit that staggered also interrupts what it was doing.
+    public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
         for target in targets where target != .player && commanders[target] != .player {
             provoke(target)
             provoked.insert(target)
-            noteStagger(of: target)
+            if staggered.contains(target) {
+                noteStagger(of: target)
+            }
         }
     }
 
@@ -130,6 +133,11 @@ public final class CombatLoopRuntime: CombatControlling {
         guard provoke(actor) else { return }
         provoked.insert(actor)
         record(.assisted(actor, ally: ally))
+    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
+    public func rollsStagger() -> Bool {
+        staggerRandom.percent() < staggers.attackChance
+    }
+
     }
 
     /// Interrupts `key`'s attack and plays its stagger clip.

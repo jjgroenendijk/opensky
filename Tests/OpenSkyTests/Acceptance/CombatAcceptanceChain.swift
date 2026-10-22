@@ -183,6 +183,8 @@ final class CombatAcceptanceChain {
         // asserts on rather than one that spent a gap with its guard up. The
         // block half of the loop is `CombatLoopRuntimeTests`'.
         combat.behaviorSettings = CombatBehaviorSettings(blockChance: 0)
+        // Every hit staggers, so the gate does not depend on the stagger roll.
+        melee.staggers.attackChance = 100
         melee.weapon = MeleeWeaponProfile(
             damage: Self.weaponDamage, reach: 1, stagger: 0.5, handType: .sword
         )
@@ -300,7 +302,10 @@ final class CombatAcceptanceChain {
     private func advanceMelee() {
         let events = bridge.graphEvents.drain(bridge.meleeEventConsumer)
         melee.acceptFrame(bridge.meleeIntent)
-        combat.notePlayerHits(melee.handleGraphEvents(events).map(\.target))
+        let hits = melee.handleGraphEvents(events)
+        combat.notePlayerHits(
+            hits.map(\.target), staggered: Set(hits.filter(\.staggered).map(\.target))
+        )
     }
 
     /// Archery, on the simulated delta. Projectiles advance unconditionally,
@@ -313,7 +318,7 @@ final class CombatAcceptanceChain {
         archery.handleGraphEvents(events)
         let struck = archery.advanceProjectiles(by: dt).compactMap(\.target)
         if !struck.isEmpty {
-            combat.notePlayerHits(struck)
+            combat.notePlayerHits(struck, staggered: Set(struck))
         }
     }
 
