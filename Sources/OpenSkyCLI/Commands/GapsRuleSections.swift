@@ -83,17 +83,7 @@ extension GapsGatherer {
         var store = GameSettingStore(plugins: plugins.plugins.map { ($0.name, $0.file) })
         let log = GameSettingReadLog()
         store.readLog = log
-        _ = ArcherySettings.resolve(store: store)
-        _ = CombatSettings.resolve(store: store)
-        _ = WeaponDamageSettings.resolve(store: store)
-        _ = PowerAttackSettings.resolve(store: store)
-        _ = StaggerSettings.resolve(store: store)
-        _ = CombatAISettings.resolve(store: store)
-        _ = DoorSettings.resolve(store: store)
-        _ = GuardWarningSettings.resolve(store: store)
-        _ = SpeechTimerSettings.resolve(store: store)
-        _ = MeleeSkillUseSettings.resolve(store: store)
-        _ = ArrowSettings.resolve(store: store)
+        actorSettingsRead(store: store)
         _ = TrainingSettings.resolve(store: store)
         _ = CraftingSkillUseSettings.resolve(store: store)
         _ = CalendarTexts.resolve(store: store)
@@ -144,6 +134,22 @@ extension GapsGatherer {
 }
 
 extension GapsGatherer {
+    /// The readers of combat, AI package, and NPC settings.
+    static func actorSettingsRead(store: GameSettingStore) {
+        _ = ArcherySettings.resolve(store: store)
+        _ = CombatSettings.resolve(store: store)
+        _ = WeaponDamageSettings.resolve(store: store)
+        _ = PowerAttackSettings.resolve(store: store)
+        _ = StaggerSettings.resolve(store: store)
+        _ = CombatAISettings.resolve(store: store)
+        _ = DoorSettings.resolve(store: store)
+        _ = GuardWarningSettings.resolve(store: store)
+        _ = SpeechTimerSettings.resolve(store: store)
+        _ = MeleeSkillUseSettings.resolve(store: store)
+        _ = ArrowSettings.resolve(store: store)
+        _ = SandboxSettings.resolve(store: store)
+    }
+
     /// Every `GameSettingTexts` key enum a feature shows.
     static func settingTextsRead(store: GameSettingStore) {
         _ = GameSettingTexts<RestText>.resolve(store: store)
