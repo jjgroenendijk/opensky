@@ -31,18 +31,40 @@ nonisolated extension BehaviorGraphInstance {
         return nil
     }
 
-    /// `BSSynchronizedClipGenerator`: runs and syncs its wrapped clip. The paired part
-    /// (`m_SyncAnimPrefix`, `m_fGetToMarkTime`) needs a second actor, so each evaluation
-    /// adds a tally entry instead of an invented alignment.
+    /// `BSSynchronizedClipGenerator`: runs its wrapped clip on this actor's tracks of a
+    /// paired clip (`m_SyncAnimPrefix`, BehaviorPairedClip.swift). The alignment of the
+    /// two actors (`m_fGetToMarkTime`) needs the other actor, so it is tallied instead.
     public func evaluateSynchronizedClip(
         _ generator: BSSynchronizedClipGenerator,
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
         tally.note(.synchronizedClipMarkerIgnored)
+        let outer = syncTrackPrefix
+        syncTrackPrefix = generator.syncAnimPrefix ?? ""
+        defer { syncTrackPrefix = outer }
         return evaluateGenerator(
             at: generator.clipGenerator, depth: depth, deltaTime: deltaTime
         )
+    }
+
+    /// This actor's view of `clip` while a synchronized clip runs: its own tracks,
+    /// found by bone name. A clip with no track names is used as it is.
+    func pairedView(of clip: any BehaviorClip, named name: String?) -> any BehaviorClip {
+        guard
+            let prefix = syncTrackPrefix,
+            !skeleton.boneNames.isEmpty,
+            clip.trackNames.contains(where: { $0 != nil })
+        else { return clip }
+        let key = prefix + "|" + (name ?? "")
+        if let cached = pairedClips[key] {
+            return cached
+        }
+        let paired = PairedBehaviorClip(clip, map: PairedTrackMap(
+            trackNames: clip.trackNames, prefix: prefix, boneNames: skeleton.boneNames
+        ))
+        pairedClips[key] = paired
+        return paired
     }
 
     /// The phase a sync master imposes on its siblings, applied every update.

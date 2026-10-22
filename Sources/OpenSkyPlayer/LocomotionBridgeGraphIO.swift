@@ -41,9 +41,9 @@ nonisolated extension LocomotionBridge {
     /// The player's identity, the step, and its placement. Placement turns Havok's
     /// model forward (+Y) onto OpenSky's yaw, which counts from +X.
     func writeCharacterVariables(state: LocomotionStepState) {
-        write(.bool(true), to: LocomotionGraphNames.isPlayer)
-        write(.int(1), to: LocomotionGraphNames.isPlayerInt)
-        write(.bool(false), to: LocomotionGraphNames.isNPC)
+        write(.bool(isPlayerGraph), to: LocomotionGraphNames.isPlayer)
+        write(.int(isPlayerGraph ? 1 : 0), to: LocomotionGraphNames.isPlayerInt)
+        write(.bool(!isPlayerGraph), to: LocomotionGraphNames.isNPC)
         write(.real(state.dt), to: LocomotionGraphNames.timeDelta)
         write(.real(state.verticalVelocity), to: LocomotionGraphNames.velocityZ)
         let context = BehaviorCharacterContext(

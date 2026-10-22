@@ -125,6 +125,8 @@ public struct NPCMovementRuntime {
     /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
     /// budget the cap protects does not apply to it.
     private var facings: [ReferenceKey: NPCFacingHold] = [:]
+    /// Mounts the player rides. Nothing else moves or turns them.
+    private var ridden: [ReferenceKey: NPCRiddenHold] = [:]
 
     public init() {}
 
@@ -142,7 +144,7 @@ public struct NPCMovementRuntime {
     }
 
     public mutating func start(_ start: NPCMoveStart) -> Bool {
-        guard hasRoom(for: start.actor) else { return false }
+        guard ridden[start.actor] == nil, hasRoom(for: start.actor) else { return false }
         movers[start.actor] = NPCMover(
             start: start,
             drawnPlacement: drawnPlacement(of: start.actor)
@@ -161,6 +163,7 @@ public struct NPCMovementRuntime {
     /// re-aimed rather than restarted, so a player circling a speaker mid
     /// conversation is followed smoothly instead of snapping on every update.
     public mutating func face(_ start: NPCFaceStart) {
+        guard ridden[start.actor] == nil else { return }
         if var hold = facings[start.actor] {
             hold.aim(at: start.target)
             facings[start.actor] = hold
@@ -253,10 +256,15 @@ public struct NPCMovementRuntime {
             guard let hold = facings[key] else { continue }
             onPersist?(hold.persistence(reason: .save))
         }
+        for key in ridden.keys.sorted() {
+            guard let hold = ridden[key] else { continue }
+            onPersist?(hold.persistence(reason: .save))
+        }
     }
 
     /// A vehicle carried `actor`, so where it got off replaces where it last walked.
     public mutating func rest(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
+        guard ridden[actor] == nil else { return }
         movers[actor] = nil
         facings[actor] = nil
         guard let old = parked[actor] else { return }
@@ -275,7 +283,53 @@ public struct NPCMovementRuntime {
     }
 
     public func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
-        movers[actor]?.transform ?? facings[actor]?.transform ?? parked[actor]?.transform
+        ridden[actor]?.transform ?? movers[actor]?.transform ?? facings[actor]?.transform
+            ?? parked[actor]?.transform
+    }
+
+    /// Takes `actor` for the player to ride, where it stands now.
+    public mutating func takeRidden(_ start: NPCFaceStart) -> NPCRiddenHold {
+        let settled = facings[start.actor]?.readout ?? parked[start.actor]?.readout
+            ?? movers[start.actor]?.readout
+        let drawn = drawnPlacement(of: start.actor) ?? start.placement
+        stop(start.actor)
+        facings[start.actor] = nil
+        parked[start.actor] = nil
+        let hold = NPCRiddenHold(
+            actor: start.actor, formID: start.formID, placement: drawn, scale: start.scale,
+            feetPosition: settled?.feetPosition ?? start.placement.position,
+            yaw: settled?.yaw ?? NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
+        )
+        ridden[start.actor] = hold
+        return hold
+    }
+
+    /// Moves a ridden actor. A cell crossing persists it, as a walk's does.
+    public mutating func steerRidden(
+        _ actor: ReferenceKey, to feet: SIMD3<Float>, yaw: Float, cell: CellSceneLocation?
+    ) {
+        guard var hold = ridden[actor] else { return }
+        let crossed = hold.move(to: feet, yaw: yaw, cell: cell)
+        ridden[actor] = hold
+        if crossed {
+            onPersist?(hold.persistence(reason: .cellHandoff))
+        }
+    }
+
+    /// Parks a ridden actor where the player left it.
+    @discardableResult
+    public mutating func releaseRidden(_ actor: ReferenceKey) -> Bool {
+        guard let hold = ridden.removeValue(forKey: actor) else { return false }
+        parked[actor] = NPCParkedMovement(
+            readout: hold.readout, transform: hold.transform, formID: hold.formID,
+            scale: hold.scale, drawnPlacement: hold.authoredPlacement
+        )
+        onPersist?(hold.persistence(reason: .halt))
+        return true
+    }
+
+    public func isRidden(_ actor: ReferenceKey) -> Bool {
+        ridden[actor] != nil
     }
 
     /// Where an actor stands: its movement pose, else the pose a cell build draws
@@ -299,6 +353,7 @@ public struct NPCMovementRuntime {
 
     public func readouts() -> [NPCMovementReadout] {
         let live = movers.values.map(\.readout) + facings.values.map(\.readout)
+            + ridden.values.map(\.readout)
         let held = parked.filter { facings[$0.key] == nil }.values.map(\.readout)
         return (live + held).sorted { $0.actor < $1.actor }
     }
@@ -309,7 +364,8 @@ public struct NPCMovementRuntime {
         let resting = parked.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        return Dictionary(resting + moving + turning) { _, later in later }
+        let riding = ridden.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        return Dictionary(resting + moving + turning + riding) { _, later in later }
     }
 
     /// Records that `actor`'s cell is now built with it at `placement`, so its draw
@@ -318,12 +374,13 @@ public struct NPCMovementRuntime {
         parked[actor]?.drawnPlacement = placement
         movers[actor]?.authoredPlacement = placement
         facings[actor]?.authoredPlacement = placement
+        ridden[actor]?.authoredPlacement = placement
     }
 
     /// Where the current build draws `actor`, when a mover, hold or rest knows it.
     private func drawnPlacement(of actor: ReferenceKey) -> PlacedReference.Placement? {
         movers[actor]?.authoredPlacement ?? facings[actor]?.authoredPlacement
-            ?? parked[actor]?.drawnPlacement
+            ?? ridden[actor]?.authoredPlacement ?? parked[actor]?.drawnPlacement
     }
 
     private func publish(_ emissions: NPCMoverEmissions) {

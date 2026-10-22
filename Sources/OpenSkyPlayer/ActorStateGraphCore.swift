@@ -27,6 +27,8 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var lookTarget = SIMD3<Float>()
     /// Radians, positive looks up.
     public var cameraPitch: Float = 0
+    /// The player sits on a mount, and whether the mount sprints. Nil on foot.
+    public var riding: RiderGait?
 
     public init() {}
 
@@ -41,13 +43,23 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     }
 }
 
+/// How the mount under the player moves, as `iState` sees it.
+nonisolated public enum RiderGait: Equatable, Sendable {
+    case riding
+    case sprinting
+}
+
 nonisolated public enum ActorStateGraphCore: Sendable {
-    /// The state `iState` reports. The order is ours: an attack wins over a guard, a
-    /// guard over a drawn bow, and a cast over movement. Bleedout, horse, drunk, quick
-    /// shot, and shield charge have no OpenSky system, so no step picks them.
+    /// The state `iState` reports. The order is ours: riding wins over everything, an
+    /// attack over a guard, a guard over a drawn bow, and a cast over movement.
+    /// Bleedout, drunk, quick shot, and shield charge have no OpenSky system, so no
+    /// step picks them.
     public static func state(
         for inputs: ActorStateGraphInputs, gait: LocomotionGait
     ) -> ActorGraphState {
+        if let riding = inputs.riding {
+            return riding == .sprinting ? .horseSprint : .npcHorse
+        }
         let twoHanded = inputs.rightHandType == 5 || inputs.rightHandType == 6
         if inputs.isAttacking {
             if inputs.isPowerAttacking {
@@ -104,7 +116,11 @@ nonisolated public enum ActorStateGraphCore: Sendable {
             (ActorStateGraphNames.wantCastLeft, .bool(inputs.castingLeft)),
             (ActorStateGraphNames.wantCastRight, .bool(inputs.castingRight)),
             (ActorStateGraphNames.wantCastVoice, .bool(inputs.wantsVoice)),
-            (ActorStateGraphNames.inCastState, .real(casting ? 1 : 0))
+            (ActorStateGraphNames.inCastState, .real(casting ? 1 : 0)),
+            (
+                ActorStateGraphNames.combatStance,
+                .int(MountGraphNames.combatStanceValue(inputs.weaponDrawn))
+            )
         ]
         if let stateValue {
             writes.append((ActorStateGraphNames.state, .int(stateValue)))

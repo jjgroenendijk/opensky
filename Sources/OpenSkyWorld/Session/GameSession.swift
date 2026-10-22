@@ -79,6 +79,9 @@ public final class GameSession: RenderFrameDriver {
     public var playerBody: PlayerBody?
     /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
     public var playerSeat: float4x4?
+    /// The player's mount; while one is under the player it moves instead of the
+    /// player (docs/engine/riding.md).
+    public weak var playerMount: (any PlayerMountDriving)?
     /// The waypoints a package walks the player along, empty without a walk
     /// (`PlayerPackageWalk`).
     public var playerWalkPath: [SIMD3<Float>] = []

@@ -201,6 +201,10 @@ nonisolated public final class BehaviorGraphInstance {
     public var unboundEvents: [String] = []
     /// True when the update in progress reached a clip that is still loading.
     public var isWaitingForClip = false
+    /// The sync prefix of the synchronized clip being evaluated, nil outside one.
+    var syncTrackPrefix: String?
+    /// This actor's views of the paired clips it played, by prefix and clip name.
+    var pairedClips: [String: PairedBehaviorClip] = [:]
     /// The bones of the last update that had every clip it reached, held while
     /// a clip loads so the character keeps its pose instead of snapping to rest.
     private var lastCompleteBones: [HKABonePose]?
@@ -387,7 +391,7 @@ nonisolated public final class BehaviorGraphInstance {
             }
             return nil
         }
-        return found
+        return pairedView(of: found, named: name)
     }
 
     /// Marks `target` as reached this update, activating it on the first reach.

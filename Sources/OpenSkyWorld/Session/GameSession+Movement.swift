@@ -77,6 +77,9 @@ extension GameSession {
         switch movementMode {
         case .fly:
             freeFlyCamera.update(frameInput)
+        case .walk where playerMount?.isMountActive == true,
+             .thirdPerson where playerMount?.isMountActive == true:
+            advanceMounted(frameInput)
         case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
             // The vehicle places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
@@ -143,10 +146,41 @@ extension GameSession {
         frameInput.lookRight = 0
     }
 
+    /// One input frame on a mount: the view turns, the mount moves, and the rider's
+    /// graph follows. The vehicle pass places the rider on the saddle.
+    private func advanceMounted(_ frameInput: CameraInput) {
+        freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
+        if let limit = playerMount?.maximumLookDown {
+            freeFlyCamera.pitch = max(freeFlyCamera.pitch, -limit)
+        }
+        locomotion.actorState.setCamera(
+            position: freeFlyCamera.position,
+            forward: freeFlyCamera.forward,
+            pitch: freeFlyCamera.pitch
+        )
+        let rider = MountRules.riderInput(
+            frameInput, rightHandType: locomotion.actorState.rightHandType
+        )
+        locomotion.acceptFrame(rider)
+        let world = MountStepWorld(
+            sampleGround: terrainSampler ?? { _ in nil },
+            collisionQuery: collisionQuery ?? { _ in [] }
+        )
+        let step = playerMount?.advanceMount(
+            input: frameInput, cameraYaw: freeFlyCamera.yaw,
+            weaponDrawn: locomotion.actorState.weaponDrawn, world: world
+        )
+        locomotion.advanceRiding(
+            deltaTime: lastCameraDelta, feet: walkController.feetPosition,
+            yaw: step?.yaw ?? freeFlyCamera.yaw, mount: step?.motion ?? .still
+        )
+    }
+
     /// One input frame of simulated player movement, shared by `.walk` and
     /// `.thirdPerson`: the same capsule, the same locomotion bridge, and the
     /// same behavior graph. Only where the eye ends up differs.
     private func advancePlayer(_ frameInput: CameraInput) {
+        locomotion.actorState.riding = nil
         locomotion.actorState.setCamera(
             position: freeFlyCamera.position,
             forward: freeFlyCamera.forward,

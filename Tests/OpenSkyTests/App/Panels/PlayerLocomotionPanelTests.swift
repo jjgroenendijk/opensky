@@ -274,7 +274,7 @@ struct PlayerLocomotionPanelTests {
     // MARK: - Fixtures
 
     @MainActor
-    private static func panel(
+    static func panel(
         providers: FakeWorldProviders
     ) throws -> PlayerLocomotionPanelViewController {
         let descriptor = try #require(DestinationRegistry.destination(id: "playerLocomotion"))
@@ -314,7 +314,7 @@ struct PlayerLocomotionPanelTests {
     }
 }
 
-private enum PlayerLocomotionPanelTestError: Error {
+enum PlayerLocomotionPanelTestError: Error {
     case notAWorldInspector
 }
 

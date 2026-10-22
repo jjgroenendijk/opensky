@@ -21,6 +21,11 @@ nonisolated public enum HKASplineAnimationError: Error, Equatable, Sendable {
 nonisolated public struct HKABoneTransformSample: Sendable {
     public let boneIndex: Int
     public let pose: HKABonePose
+
+    public init(boneIndex: Int, pose: HKABonePose) {
+        self.boneIndex = boneIndex
+        self.pose = pose
+    }
 }
 
 /// Decoded spline clip. `localTransforms` preserves transform-track order;

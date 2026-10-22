@@ -86,6 +86,7 @@ extension FeaturePanelServices {
             mapMenu: game.mapMenu,
             menuScreens: game.menuScreens,
             message: game.messages,
+            mount: game.mountWorld,
             objectAnimation: game.objectAnimationWorld,
             perkActivation: game.perkActivation,
             playerSettings: game.menuWorld,

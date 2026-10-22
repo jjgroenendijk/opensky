@@ -8,6 +8,7 @@ import OpenSkyPhysics
 
 nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {
+        guard isPlayerGraph else { return }
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,
@@ -15,8 +16,18 @@ nonisolated extension LocomotionBridge {
             wantsBlock: meleeIntent.block,
             stateValue: actorStateConstants[state]
         )
-        for (name, value) in writes {
+        for (name, value) in writes where name != ActorStateGraphNames.combatStance
+            || declaresCombatStance
+        {
             write(value, to: name)
+        }
+        wasCombatStance = actorState.weaponDrawn
+    }
+
+    /// Only the horse graphs read `iCombatStance`; a character graph is not told it.
+    private var declaresCombatStance: Bool {
+        [graph, firstPersonGraph].contains {
+            $0?.variable(named: ActorStateGraphNames.combatStance) != nil
         }
     }
 

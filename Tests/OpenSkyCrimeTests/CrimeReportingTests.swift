@@ -128,6 +128,16 @@ struct CrimeReportingTests {
         #expect(coordinator.pendingReports.isEmpty)
     }
 
+    @Test func ridingSomebodyElsesHorseIsATheftOfTheHorseValue() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world, witnesses: [Self.guardKey])
+        let horse = ReferenceKey.generated(77)
+        let outcome = coordinator.reporter?.reportHorseTheft(of: horse, owner: nil)
+        #expect(CrimeSettings.vanilla.stolenHorseValue == 100)
+        #expect(outcome?.gold ?? 0 > 0)
+        #expect(coordinator.crimeGold(of: Self.hold) > 0)
+    }
+
     // MARK: - Jail
 
     private static func jailedWorld() throws -> (FakeCrimeSessionWorld, FakeCrimeInventory) {

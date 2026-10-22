@@ -400,6 +400,9 @@ final class FakeWorldProviders: WorldControlProviders {
     /// CrimeFactionControlProviding state; the conformance lives
     /// in `FakeWorldProvidersCrime.swift`.
     var crimeFactions = FakeCrimeFactionState()
+    /// MountControlProviding state; the conformance lives in
+    /// `FakeWorldProvidersMount.swift`.
+    var mount = FakeMountState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

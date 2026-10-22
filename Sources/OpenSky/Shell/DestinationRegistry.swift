@@ -135,6 +135,7 @@ struct FeaturePanelServices {
     let mapMenu: any MapMenuControlProviding
     let menuScreens: any MenuScreensControlProviding
     let message: any MessageControlProviding
+    let mount: any MountControlProviding
     let objectAnimation: any ObjectAnimationControlProviding
     let perkActivation: any PerkActivationControlProviding
     let playerSettings: any PlayerSettingsControlProviding
@@ -284,6 +285,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = PlayerLocomotionPanelViewController()
                 panel.provider = context.playerLocomotion
+                panel.mountProvider = context.mount
                 panel.cameraProvider = context.camera
                 return panel
             },

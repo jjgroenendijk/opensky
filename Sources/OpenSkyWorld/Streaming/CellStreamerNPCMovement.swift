@@ -176,6 +176,40 @@ extension CellStreamer {
         return released
     }
 
+    /// Takes a resident actor for the player to ride. Nil when it is not resident or a
+    /// vehicle carries it.
+    public func takeRiddenActor(_ actor: ReferenceKey) -> NPCRiddenHold? {
+        guard
+            npcMovementState.carried[actor] == nil,
+            let entry = referenceEntry(key: actor), entry.placedActor != nil
+        else { return nil }
+        bindNPCMovementCallbacks()
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let hold = holdingRests {
+            npcMovement.takeRidden(NPCFaceStart(
+                actor: actor, formID: entry.formID, placement: standing.placement,
+                scale: standing.scale, target: standing.position
+            ))
+        }
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+        return hold
+    }
+
+    public func steerRiddenActor(_ actor: ReferenceKey, to feet: SIMD3<Float>, yaw: Float) {
+        bindNPCMovementCallbacks()
+        let cell = navigationCell(at: feet)
+        holdingRests { npcMovement.steerRidden(actor, to: feet, yaw: yaw, cell: cell) }
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+    }
+
+    @discardableResult
+    public func releaseRiddenActor(_ actor: ReferenceKey) -> Bool {
+        bindNPCMovementCallbacks()
+        let released = holdingRests { npcMovement.releaseRidden(actor) }
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+        return released
+    }
+
     /// What one actor is turning towards, for the gate readout.
     public func npcFacing(for actor: ReferenceKey) -> NPCFacingHold? {
         npcMovement.facing(for: actor)

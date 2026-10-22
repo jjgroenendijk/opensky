@@ -83,8 +83,11 @@ These read what a native or the dialogue stored in the actor's
   mount. `IsBeingRidden` (714) is 1 for the mount under such a rider.
 - `IsPlayersLastRiddenMount` (339) is the horse the player sat on last, kept after they get
   off.
+- `IsOnFlyingMount` (730) is 1 while the player sits on a dragon ([riding](/engine/riding.md)).
+- `IsHorseStolen` (282) is always 0. The Creation Kit wiki says the function does nothing
+  (<https://ck.uesp.net/wiki/IsHorseStolen>).
 - `GetFlyingState` (633) is 0, `FLY_STATE_NONE`. `CanFlyHere` (731), the land requests
-  (646, 647), and the flying-mount functions (730, 732, 733) are 0. No actor flies yet.
+  (646, 647), and the other flying-mount functions (732, 733) are 0. No actor flies yet.
 
 ## Crime
 

@@ -207,7 +207,8 @@ disagree about what is a first strike.
 
 - A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
   followers, animal witnesses, and children telling adults are not modelled.
-- "Horses Stolen" and the per-hold bounty stats are not counted.
+- "Horses Stolen" and the per-hold bounty stats are not counted. Riding a horse the player
+  does not own is a theft worth `iCrimeGoldStealHorse` ([riding](/engine/riding.md)).
 - A one-hit kill charges assault and murder. UESP says only murder. The hit is reported before the
   zero-health check notices the death.
 - `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the

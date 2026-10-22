@@ -50,13 +50,23 @@ The state is picked in a fixed order. The first match wins:
 2. A guard (`iState_NPCBlocking`).
 3. A fully drawn bow (`iState_NPCBowDrawn`).
 4. A cast in either hand (`iState_NPCMagicCasting`).
-5. A sprint or sneak gait.
-6. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
+5. Riding: `iState_HorseSprint` while the mount sprints, else `iState_NPCHorse`. `bIsRiding` is
+   true while the player sits on a mount ([riding](/engine/riding.md)).
+6. A sprint or sneak gait.
+7. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
    spell. The type uses the `iRightHandType` encoding ([combat graph names](/engine/combat-graph-names.md)).
-7. Otherwise `iState_NPCDefault`.
+8. Otherwise `iState_NPCDefault`.
 
-[INFO] This order is OpenSky's own. No source states the game's order. Bleedout, horse riding,
+[INFO] This order is OpenSky's own. No source states the game's order. Bleedout,
 drunk, quick shot, and shield charge have no OpenSky system yet, so no step picks them.
+
+## How `iCombatStance` is encoded
+
+Only the horse graphs read `iCombatStance`. It picks the start state of `StandingIdleBehavior`:
+0 starts `NonCombat`, 1 starts `Combat`. The transitions between them fire on `combatStanceStart`
+and `combatStanceStop`. The engine writes 1 while the rider's (or the horse's own) weapon is drawn,
+and raises the event on the edge. Every actor graph gets the same write, so an NPC horse follows
+its rider too.
 
 ## Outputs the graph publishes
 
@@ -71,7 +81,7 @@ system acts on them yet.
 These are on the Creation Kit list or bound to an engine-facing member, but no OpenSky system can
 supply them yet, or their encoding is unknown:
 
-- `iCombatStance` (used only by horse graphs), `iRightHandEquipped`, `iLeftHandEquipped`,
+- `iRightHandEquipped`, `iLeftHandEquipped`,
   `iGetUpType`, `IsBeastRace`, `iCharacterSelector`, `bWantCastVoice` (no shout runtime).
 - Tuning values the graph reads but the game sets from data OpenSky does not know: `PitchOffset`,
   `PitchLook`, `PitchAcc`, `PitchThresh`, `PitchDefault`, `TurnMin`, `RotMax`, `SpeedAcc`,

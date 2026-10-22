@@ -25,6 +25,11 @@ nonisolated public protocol BehaviorClip {
     /// which is where Skyrim's `FootLeft` and `FootRight` come from, so a clip
     /// that drops these is silent underfoot (see HKAAnnotationTrack.swift).
     var annotations: [HKAAnnotation] { get }
+    /// The name of each transform track, in track order, where the clip names them.
+    /// A paired clip names its tracks after the bones of both actors.
+    var trackNames: [String?] { get }
+    /// The annotations of the tracks in `tracks` only, earliest first.
+    func annotations(onTracks tracks: Set<Int>) -> [HKAAnnotation]
 }
 
 nonisolated extension BehaviorClip {
@@ -37,6 +42,14 @@ nonisolated extension BehaviorClip {
     /// Unannotated unless the clip says otherwise, so a test clip built in code
     /// stays a bone source and nothing else.
     public var annotations: [HKAAnnotation] {
+        []
+    }
+
+    public var trackNames: [String?] {
+        []
+    }
+
+    public func annotations(onTracks _: Set<Int>) -> [HKAAnnotation] {
         []
     }
 }
@@ -91,6 +104,18 @@ nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
 
     public var annotations: [HKAAnnotation] {
         animation.annotations
+    }
+
+    /// Havok exports one annotation track per transform track, named after its bone.
+    public var trackNames: [String?] {
+        animation.annotationTracks.map(\.name)
+    }
+
+    public func annotations(onTracks tracks: Set<Int>) -> [HKAAnnotation] {
+        animation.annotationTracks.enumerated()
+            .filter { tracks.contains($0.offset) }
+            .flatMap(\.element.annotations)
+            .sorted { $0.time < $1.time }
     }
 
     public func samples(at time: Float) -> [HKABoneTransformSample] {

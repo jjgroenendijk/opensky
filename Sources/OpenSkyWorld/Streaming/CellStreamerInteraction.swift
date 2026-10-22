@@ -165,7 +165,7 @@ extension CellStreamer {
                 position: hit.candidate.feet,
                 name: hit.candidate.name,
                 action: .talk,
-                actionLabel: InteractionAction.talk.defaultLabel,
+                actionLabel: hit.candidate.actionLabel ?? InteractionAction.talk.defaultLabel,
                 sounds: nil
             ),
             hitPosition: hit.position,

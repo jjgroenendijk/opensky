@@ -10,6 +10,8 @@ import OpenSkyWorldState
 public struct PapyrusPlayerNatives {
     /// For `GetPlayersLastRiddenHorse`.
     public var playersLastMount: (() -> ReferenceKey?)?
+    /// For `Actor.Dismount`: true when a dismount started.
+    public var dismount: ((ReferenceKey) -> Bool)?
     /// For `StartSneaking`.
     public var togglePlayerSneaking: (() -> Void)?
     /// Shows or hides the HUD, for `Debug.ToggleMenus`.

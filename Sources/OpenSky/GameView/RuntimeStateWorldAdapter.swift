@@ -53,6 +53,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var menuMode: MenuModeController { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
+    var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var renderer: Renderer? { get }

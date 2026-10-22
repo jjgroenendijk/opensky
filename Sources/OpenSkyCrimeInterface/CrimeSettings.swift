@@ -79,6 +79,9 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
     /// `iAttackOnSightNonViolent`, the same for non-violent gold. Its default 0 is
     /// read as "off", because guards arrest a thief with any bounty.
     public var attackOnSightNonViolent: Int32 = 0
+    /// `iCrimeGoldStealHorse`: the stolen value of riding a horse somebody else owns.
+    /// The theft multiplier applies to it, so 100 at 0.5 is UESP's bounty of 50.
+    public var stolenHorseValue: Int32 = 100
 
     public static let vanilla = Self()
 
@@ -126,6 +129,7 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
         settings.attackOnSightNonViolent = gold(
             "iAttackOnSightNonViolent", settings.attackOnSightNonViolent
         )
+        settings.stolenHorseValue = gold("iCrimeGoldStealHorse", settings.stolenHorseValue)
         store.read("iCrimeDaysInPrisonMod", into: &settings, \.goldPerJailDay)
         store.read("iCrimeMaxNumberofDaysinJail", into: &settings, \.maximumJailDays)
         store.read("iTrespassWarnings", into: &settings, \.trespassWarnings)

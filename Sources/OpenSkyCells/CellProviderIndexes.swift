@@ -53,6 +53,8 @@ nonisolated public struct CellProviderIndexes {
     /// Every GMST-derived tuning, resolved off one load of the settings table.
     struct SettingIndexes: Sendable {
         let movement: PlayerMovementConfiguration
+        /// A ridden horse's gaits.
+        let mountMovement: PlayerMovementConfiguration
         let barter: BarterPricing
         let combat: CombatSettings
         let difficulty: DifficultySettings
@@ -68,10 +70,11 @@ nonisolated public struct CellProviderIndexes {
 
         init(plugins: [(name: String, file: ESMFile)]) {
             let settings = GameSettingStore(plugins: plugins)
+            let movementTypes = MovementTypeStore(plugins: plugins)
             movement = PlayerMovementConfiguration.resolve(
-                store: settings,
-                movementTypes: MovementTypeStore(plugins: plugins)
+                store: settings, movementTypes: movementTypes
             )
+            mountMovement = .mount(movementTypes: movementTypes, rider: movement)
             barter = BarterPricing.resolve(store: settings)
             combat = CombatSettings.resolve(store: settings)
             difficulty = DifficultySettings.resolve(store: settings)
@@ -199,6 +202,7 @@ nonisolated public struct CellProviderIndexes {
         stores.encounterZoneStore = records.world.encounterZones
         stores.speechCheckSettings = tuning.speechChecks
         stores.gameSettings = tuning.store
+        stores.mountMovementConfiguration = tuning.mountMovement
         return stores
     }
 }

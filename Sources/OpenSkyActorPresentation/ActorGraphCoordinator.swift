@@ -102,6 +102,8 @@ public final class ActorGraphCoordinator {
         var steps = 0
         var rate = ActorGraphStepRate.full
         var recentEvents: [String] = []
+        /// The player's mount drive steps this graph while it is lent.
+        var isLent = false
 
         init(project: Project, instance: BehaviorGraphInstance) {
             self.project = project
@@ -163,7 +165,7 @@ public final class ActorGraphCoordinator {
         guard deltaTime > 0 else { return }
         let viewer = world.actorGraphViewer
         for candidate in candidates {
-            guard let entry = running[candidate.key] else { continue }
+            guard let entry = running[candidate.key], !entry.isLent else { continue }
             let distance = viewer.map { simd_distance($0, candidate.feet) } ?? 0
             guard let interval = cutoff.stepInterval(atDistance: distance) else {
                 entry.rate = .stopped
@@ -288,8 +290,12 @@ public final class ActorGraphCoordinator {
         if !result.bones.isEmpty {
             entry.pose.publish(result.bones)
         }
-        let names = result.firedEvents.compactMap(\.name) + result.unboundEvents
-        guard !names.isEmpty else { return }
+        report(result.firedEvents.compactMap(\.name) + result.unboundEvents, from: actor)
+    }
+
+    /// Sends the events an actor's graph fired to the readout, the listeners, and the waits.
+    public func report(_ names: [String], from actor: ReferenceKey) {
+        guard !names.isEmpty, let entry = running[actor] else { return }
         entry.recentEvents = Array((entry.recentEvents + names).suffix(Self.recentEventLimit))
         for name in names {
             onAnimationEvent?(actor, name)
