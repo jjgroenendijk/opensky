@@ -24,25 +24,25 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-19 by `make gaps`.
+Measured on 2026-10-22 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
-| Papyrus natives | 448 | 60 | 508 | 88% |
+| Papyrus natives | 450 | 58 | 508 | 88% |
 | Papyrus events | 54 | 14 | 68 | 79% |
 | Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
-| Game settings | 707 | 941 | 1648 | 42% |
-| Magic effect archetypes | 21 | 16 | 37 | 56% |
-| Perk entry points | 44 | 24 | 68 | 64% |
+| Game settings | 859 | 789 | 1648 | 52% |
+| Magic effect archetypes | 25 | 12 | 37 | 67% |
+| Perk entry points | 64 | 4 | 68 | 94% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
 | Behavior node classes | 52 | 2 | 54 | 96% |
 | Behavior features ignored | - | 256 | - | - |
 | Havok classes | 71 | 29 | 100 | 71% |
-| Animation events | 97 | 47 | 144 | 67% |
-| Behavior graph variables | 645 | 51 | 696 | 92% |
+| Animation events | 101 | 43 | 144 | 70% |
+| Behavior graph variables | 646 | 50 | 696 | 92% |
 | NIF block types | 145 | 0 | 145 | 100% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
 | Lighting shader flags | 38 | 0 | 38 | 100% |
@@ -52,7 +52,7 @@ Measured on 2026-10-19 by `make gaps`.
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 23 | 0 | 23 | 100% |
-| AS2 runtime | - | 222 | - | - |
+| AS2 runtime | - | 221 | - | - |
 | SWF tags | 28 | 0 | 28 | 100% |
 
 <!-- gaps:end -->

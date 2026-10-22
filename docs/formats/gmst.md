@@ -85,6 +85,9 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Marked unused | `sHeavyArmorSink` | The wiki says "Unused"; `sHairColor0` to `15` hold their own names |
 | Creations | `sReportModConfirm` | The Bethesda.net Creations manager. OpenSky does not connect to it |
 | Consoles | `sKinectCantInit`, `sNoDeviceSelected` | Xbox, Kinect, and console storage texts |
+| Movie labels | `sActorFade`, `sConfirmSave` | `interface\quest_journal.swf` builds the settings and save pages from its own `$` keys, such as `$Actor Fade`, in `interface\translate_english.txt` |
+| Reward XP | `iXPRewardPickLock`, `sRewardXP` | UESP [Skyrim:Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) gives level experience only for skill increases. A picked lock trains Lockpicking through `fSkillUsageLockPick` |
+| Speech globals | `iSpeechChallengeDifficultyEasy` | UESP [Skyrim:Speech](https://en.uesp.net/wiki/Skyrim:Speech) gives the persuasion thresholds 10, 25, 50, 75, 100. A line tests the globals `SpeechVeryEasy` and so on ([CK tutorial](https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks)) |
 
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.
