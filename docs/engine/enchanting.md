@@ -92,7 +92,7 @@ scales:
 | Action | Base experience |
 | --- | --- |
 | Enchant an item | 1 |
-| Disenchant | 1 per 400 gold of enchantment value |
+| Disenchant | `fDisenchantSkillUse` (0.0025) per gold of enchantment value: 1 per 400 gold |
 | Recharge a weapon | 0.05 petty, 0.1 lesser, 0.2 common, 0.4 greater, 0.6 grand |
 
 The enchantment value is the item's game value minus its record value: what the

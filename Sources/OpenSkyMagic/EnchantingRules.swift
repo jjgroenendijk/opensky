@@ -110,8 +110,6 @@ nonisolated public enum EnchantingRules {
 
     /// UESP "Skyrim:Leveling": 1 per item enchanted.
     public static let enchantExperience: Float = 1
-    /// UESP "Skyrim:Leveling": 1 per 400 gold of enchantment value disenchanted.
-    public static let disenchantGoldPerExperience: Float = 400
 
     /// UESP "Skyrim:Leveling": what recharging a weapon from a soul of this size gives.
     public static func rechargeExperience(_ soul: SoulLevel) -> Float {

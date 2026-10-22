@@ -91,7 +91,7 @@ extension MagicCoordinator {
         let itemName = world.itemName(item)
         _ = try? inventory.remove(item, count: 1, from: .player)
         writeEnchanting(state.learning(base))
-        reportEnchantingUse(Float(max(0, worth)) / EnchantingRules.disenchantGoldPerExperience)
+        reportEnchantingUse(enchantingSettings.disenchantExperience(worth: worth))
         return noteEnchanting(.learned(item: itemName, base: root.displayName))
     }
 

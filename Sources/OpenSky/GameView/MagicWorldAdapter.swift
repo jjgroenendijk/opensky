@@ -136,6 +136,7 @@ final class MagicWorldAdapter {
         game.magic.castNotices = game.mapWorld.settingTexts()
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
         game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
+        game.magic.enchantingSettings = EnchantingSettings.resolve(store: provider.gameSettings)
         game.magic.soulTexts = SoulTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.magic.wireEnchantments(store: provider.enchantmentStore)

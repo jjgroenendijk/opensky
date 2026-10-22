@@ -64,6 +64,7 @@ public final class MagicCoordinator {
     /// The absorption roll, in 0 ..< 100. A test fixes it.
     public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
     public var soulTrapSettings = SoulTrapSettings.vanilla
+    public var enchantingSettings = EnchantingSettings.vanilla
     public var soulTexts = SoulTexts.vanilla
     public internal(set) var lastSoulTrap: SoulTrapOutcome?
     public internal(set) var lastRecharge: RechargeOutcome?
