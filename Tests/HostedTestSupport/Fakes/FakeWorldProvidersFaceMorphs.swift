@@ -33,6 +33,7 @@ extension FakeWorldProviders {
 struct FakeFaceState {
     var snapshot = FaceMorphControlSnapshot.empty
     var automaticBlinkingEnabled = true
+    var eyeMovementEnabled = true
     var dialogueExpressionsEnabled = true
     var headTrackingEnabled = true
     var headTrackingReadout = ""
@@ -47,6 +48,11 @@ extension FakeWorldProviders {
     var automaticBlinkingEnabled: Bool {
         get { faceState.automaticBlinkingEnabled }
         set { faceState.automaticBlinkingEnabled = newValue }
+    }
+
+    var eyeMovementEnabled: Bool {
+        get { faceState.eyeMovementEnabled }
+        set { faceState.eyeMovementEnabled = newValue }
     }
 
     var dialogueExpressionsEnabled: Bool {

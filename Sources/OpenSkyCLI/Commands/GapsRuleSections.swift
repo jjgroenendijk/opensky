@@ -101,6 +101,7 @@ extension GapsGatherer {
         _ = SoulTrapSettings.resolve(store: store)
         _ = EnchantingSettings.resolve(store: store)
         _ = HeadTrackingSettings.resolve(store: store)
+        _ = FaceAnimationSettings.resolve(store: store)
         _ = ShoutSettings.resolve(store: store)
         _ = RuneSettings.resolve(store: store)
         _ = SpellCostSettings.resolve(store: store)

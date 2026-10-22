@@ -62,6 +62,7 @@ final class GraphicsPageViewController: NSViewController {
     }
 
     let blinkingControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
+    let eyeMovementControl = NSButton(checkboxWithTitle: "Eye movement", target: nil, action: nil)
     let expressionsControl = NSButton(
         checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
     )
@@ -170,7 +171,8 @@ final class GraphicsPageViewController: NSViewController {
             ]),
             layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [
-                layout.toggle(blinkingControl), layout.toggle(expressionsControl),
+                layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),
+                layout.toggle(expressionsControl),
                 layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl),
                 layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl)
             ]),
@@ -222,6 +224,7 @@ final class GraphicsPageViewController: NSViewController {
         lightAnimationControl.state = store.bool(.lightAnimation) ? .on : .off
         particleSortingControl.state = store.bool(.particleSorting) ? .on : .off
         blinkingControl.state = store.bool(.characterBlinking) ? .on : .off
+        eyeMovementControl.state = store.bool(.characterEyeMovement) ? .on : .off
         expressionsControl.state = store.bool(.characterDialogueExpressions) ? .on : .off
         headTrackingControl.state = store.bool(.characterHeadTracking) ? .on : .off
         objectAnimationControl.state = store.bool(.objectAnimation) ? .on : .off
