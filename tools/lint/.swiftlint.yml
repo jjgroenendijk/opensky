@@ -133,10 +133,10 @@ custom_rules:
     excluded: '(Tests/.*|Sources/OpenSky(AIPackages/SandboxSettings|CrimeInterface/(CrimeTexts|CrimeSettings)|CombatInterface/(Archery|Arrow|Combat|CombatAI|Difficulty|MeleeSkillUse|PowerAttack|Stagger|WeaponDamage)Settings|Camera/KillCamTrigger|AIPackages/GuardWarningSettings|Dialogue/SpeechTimerSettings|WorldInterface/DoorSettings|GameData/(ActorValueDerivation|FaceMorphCounts|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemDefinitionStore\+EnchantedValue|ItemNoticeTexts|MagicTexts|MenuRecordData|PickpocketSettings|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|Inventory/AlchemyRules|ActorPresentation/(FaceAnimationSettings|HeadTrackingSettings)|Magic/(EnchantingSettings|RuneCore|ShoutCore|SoulTrap)|InventoryInterface/(LockpickingSettings|LockTexts|TemperingTexts|VendorRestock)|PerceptionInterface/(DetectionSettings|StealthPoints)|Player/(PlayerBreath|PlayerMovementConfiguration)|WorldState/CellResetLedger)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
-  # attach(world:), wire(host:), setWorld(_:), and the like.
+  # attach(world:), wire(host:), attach(seam:), attach(globals store:), and the like.
   late_attached_world:
     name: "Late-attached world"
-    regex: '\bfunc\s+(attach|wire|connect|bind|set|install)\w*\s*(<[^>]*>)?\(\s*(_\s+)?(\w+World|world|host|\w+Host|port|game|session)\s*:'
+    regex: '\bfunc\s+(attach|wire|connect|bind|set|install)\w*\s*(<[^>]*>)?\(\s*(_\s+)?(\w+World|world|host|\w+Host|port|\w+Port|seam|\w+Seam|globals|game|session)(\s+\w+)?\s*:'
     included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
     message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
     severity: error
@@ -191,6 +191,37 @@ custom_rules:
     excluded: 'Sources/OpenSky(World/Session/FrameSchedule|/(Shell|Panels|Launcher)/.*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Join the frame through a phase of a FrameSchedule, not a callback (docs/engine/architecture.md)"
+    severity: error
+  # docs/decisions/concurrency.md, "Rules for new code".
+  unchecked_sendable:
+    name: "Unchecked Sendable"
+    regex: '@unchecked\s+Sendable\b'
+    included: 'Sources/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Keep shared state in a Mutex or make the type a Sendable value (docs/decisions/concurrency.md)"
+    severity: error
+  detached_task:
+    name: "Detached task"
+    regex: '\bTask\.detached\b'
+    included: 'Sources/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Load through a serial worker or a @concurrent function (docs/decisions/concurrency.md)"
+    severity: error
+  main_queue_or_semaphore:
+    name: "Main queue or semaphore"
+    regex: '\bDispatchQueue\.main\b|\bDispatchSemaphore\b'
+    included: 'Sources/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "The main actor never waits for a worker; drain a Mutex mailbox instead (docs/decisions/concurrency.md)"
+    severity: error
+  # Each excluded file creates a queue that has its row in docs/decisions/concurrency.md.
+  new_dispatch_queue:
+    name: "New dispatch queue"
+    regex: '\bDispatchQueue\s*\(|\bDispatchQueue\.global\b'
+    included: 'Sources/.*\.swift$'
+    excluded: 'Sources/(OpenSkyGameData/AssetLoader|OpenSkyAudio/WorldAudioEngine|OpenSkyCells/CellBuildRunner)\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Use an existing worker; a new queue needs a row in docs/decisions/concurrency.md and its file in this rule"
     severity: error
 
 reporter: "xcode"
