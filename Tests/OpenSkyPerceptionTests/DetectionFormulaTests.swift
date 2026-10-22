@@ -24,7 +24,7 @@ struct DetectionFormulaTests {
         #expect(ours.map(\.editorID) == [
             "distanceAttenuationExponent", "equippedWeightBase", "equippedWeightMult",
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
-            "visualBaseValue", "sneakVisualMult", "normalActionSound", "loudActionSound",
+            "sneakVisualMult", "normalActionSound", "loudActionSound",
             "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
             "decayPerSecond", "suspiciousLevel", "detectedLevel", "skillUseRange"
         ])
@@ -196,9 +196,11 @@ struct DetectionFormulaTests {
                 inputs: DetectionInputs(distance: 0, traits: traits), settings: settings
             )
         }
-        #expect(visual(DetectionTargetTraits(lightLevel: 0.25)) == 10)
-        #expect(visual(DetectionTargetTraits(lightLevel: 0)) == 0)
-        #expect(visual(DetectionTargetTraits(lightLevel: 4)) == 40)
+        // Outdoors: (fDetectionSneakLightMod + level) * fSneakLightMult * 0.5.
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0.25)) - 40 * 0.165) < 1e-4)
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0)) - 15 * 0.165) < 1e-4)
+        // iLightLevelMax caps the level at 300.
+        #expect(abs(visual(DetectionTargetTraits(lightLevel: 4)) - 315 * 0.165) < 1e-4)
         #expect(visual(DetectionTargetTraits(isInvisible: true)) == 0)
         // Invisible, but still heard.
         #expect(DetectionFormula.soundFactor(

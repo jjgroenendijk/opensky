@@ -15,88 +15,108 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// `fSneakBaseValue` — the constant every detection value starts from. It
     /// is negative, which is what makes a distant, silent, unseen target
     /// undetected rather than marginally detected.
-    public let sneakBaseValue: MovementSetting
+    public var sneakBaseValue: MovementSetting
     /// `fSneakMaxDistance` — the range past which sight and hearing both
     /// attenuate to nothing, world units.
-    public let maxDistance: MovementSetting
+    public var maxDistance: MovementSetting
     /// `fSneakExteriorDistanceMult` — what that range is multiplied by outdoors,
     /// where there are no walls to stop either sense.
-    public let exteriorDistanceMult: MovementSetting
+    public var exteriorDistanceMult: MovementSetting
     /// `fSneakSoundsMult` — what the whole sound term is multiplied by.
-    public let soundsMult: MovementSetting
+    public var soundsMult: MovementSetting
     /// `fSneakSoundLosMult` — what the sound term is multiplied by when nothing
     /// can see through to the target. Sound reaches around a corner; it just
     /// reaches less.
-    public let soundLosMult: MovementSetting
+    public var soundLosMult: MovementSetting
     /// `fSneakRunningMult` — how much louder a running target is than a walking
     /// one.
-    public let runningMult: MovementSetting
+    public var runningMult: MovementSetting
     /// `fSneakActionMult` — what an action sound is multiplied by.
-    public let actionMult: MovementSetting
+    public var actionMult: MovementSetting
     /// `fSneakSkillMult` — what a skill level is multiplied by to become a skill
     /// factor.
-    public let skillMult: MovementSetting
+    public var skillMult: MovementSetting
     /// `fSneakPerceptionSkillMin` and `fSneakPerceptionSkillMax` — the range a
     /// skill level is clamped to before it is weighted.
-    public let perceptionSkillMin: MovementSetting
-    public let perceptionSkillMax: MovementSetting
+    public var perceptionSkillMin: MovementSetting
+    public var perceptionSkillMax: MovementSetting
     /// `iSoundLevelSilent` — the action sound of a silent weapon or spell.
-    public let silentActionSound: MovementSetting
+    public var silentActionSound: MovementSetting
     /// `fSkillUsageSneakPerSecond` — Sneak skill uses per second spent hidden
     /// near an observer.
-    public let skillUsePerSecond: MovementSetting
+    public var skillUsePerSecond: MovementSetting
+    /// `fSneakLightMult`, `fSneakLightExteriorMult`, and `fDetectionSneakLightMod`: the
+    /// light term is `(mod + light level) * mult`, times the exterior mult outdoors.
+    public var lightMult: MovementSetting
+    public var lightExteriorMult: MovementSetting
+    public var lightMod: MovementSetting
+    /// `iLightLevelInteriorMod` is added to an interior light level, and `iLightLevelMax`
+    /// caps it (CK wiki "Perk Entry Point", Mod Detection Light).
+    public var lightLevelInteriorMod: MovementSetting
+    public var lightLevelMax: MovementSetting
+    /// `fSneakAlertMod` and `fSneakSleepBonus` weight the noticer skill factor of an
+    /// alert or a sleeping observer (CK wiki "Category:Detection").
+    public var alertMod: MovementSetting
+    public var sleepBonus: MovementSetting
+    /// `fSneakSleepMod`, added to a sleeping observer's detection value.
+    public var sleepMod: MovementSetting
+    /// `fPlayerDetectionSneakBase` and `fPlayerDetectionSneakMult` make the player's
+    /// sneaker skill factor; `fPlayerDetectActorValue` is the lowest value against it.
+    public var playerSneakBase: MovementSetting
+    public var playerSneakMult: MovementSetting
+    public var playerDetectFloor: MovementSetting
+    /// `fSneakFlyingDistanceMult`: what a flying observer's range is multiplied by.
+    public var flyingDistanceMult: MovementSetting
 
     // MARK: - OpenSky's own
 
     /// The exponent the distance attenuation is raised to. UESP names an
     /// `fSneakDistanceAttenuationExponent` of 2; no GMST of that editor ID
     /// exists on the install, so the exponent is ours and says so.
-    public let distanceAttenuationExponent: MovementSetting
+    public var distanceAttenuationExponent: MovementSetting
     /// The `fSneakEquippedWeightBase` term of the movement-noise formula — what
     /// a target counts as wearing before anything is equipped. UESP names it as
     /// a setting; the install carries no GMST by that editor ID.
-    public let equippedWeightBase: MovementSetting
+    public var equippedWeightBase: MovementSetting
     /// The `fSneakEquippedWeightMult` term, noise per point of equipped weight,
     /// on the same terms.
-    public let equippedWeightMult: MovementSetting
+    public var equippedWeightMult: MovementSetting
     /// What movement noise is multiplied by while the target is sneaking.
     /// Vanilla's movement term has no crouch factor, but the sneak walk is
     /// slower and softer than a walk, so it is quieter here too.
-    public let sneakMovementMult: MovementSetting
+    public var sneakMovementMult: MovementSetting
     /// The same for a sprinting target, one step above `fSneakRunningMult`.
-    public let sprintMovementMult: MovementSetting
+    public var sprintMovementMult: MovementSetting
     /// Half-angle of an observer's view cone, degrees off its facing. 90 makes
     /// the cone a forward hemisphere: a target directly beside an observer is on
     /// the edge of sight and one behind it is not seen at all.
-    public let viewConeHalfAngleDegrees: MovementSetting
-    /// The visual term a lit, upright target in plain sight contributes. Scaled
-    /// to sit alongside the sound term, whose vanilla base is 12.
-    public let visualBaseValue: MovementSetting
+    public var viewConeHalfAngleDegrees: MovementSetting
     /// What the visual term is multiplied by while the target is sneaking.
-    public let sneakVisualMult: MovementSetting
+    public var sneakVisualMult: MovementSetting
     /// The action sounds of the other three sound levels. The install has a
     /// game setting only for the silent level.
-    public let normalActionSound: MovementSetting
-    public let loudActionSound: MovementSetting
-    public let veryLoudActionSound: MovementSetting
-    /// The luminance of the light reaching a target that counts as fully lit.
-    public let fullLightLuminance: MovementSetting
+    public var normalActionSound: MovementSetting
+    public var loudActionSound: MovementSetting
+    public var veryLoudActionSound: MovementSetting
+    /// The luminance of the light that reads as light level 100, a lit day outdoors
+    /// (CK wiki "GetLightLevel").
+    public var fullLightLuminance: MovementSetting
     /// Detection value at which the level climbs at its full rate. A stronger
     /// signal than this does not climb faster.
-    public let fullDetectionValue: MovementSetting
+    public var fullDetectionValue: MovementSetting
     /// Detection level gained per second at a full-rate signal, out of 100.
-    public let gainPerSecond: MovementSetting
+    public var gainPerSecond: MovementSetting
     /// Detection level lost per second while nothing is perceived.
-    public let decayPerSecond: MovementSetting
+    public var decayPerSecond: MovementSetting
     /// Level at or above which an observer is suspicious and has somewhere to
     /// investigate.
-    public let suspiciousLevel: MovementSetting
+    public var suspiciousLevel: MovementSetting
     /// Level at which an observer has detected the target outright. The top of
     /// the scale, so "detected" and "certain" are the same state.
-    public let detectedLevel: MovementSetting
+    public var detectedLevel: MovementSetting
     /// How near an observer must be for hiding to train Sneak. UESP: "within
     /// ~45 feet", about 960 units.
-    public let skillUseRange: MovementSetting
+    public var skillUseRange: MovementSetting
 
     /// Values for synthetic scenes and tests: the numbers the install carries
     /// plus OpenSky's own, stated explicitly so a test never depends on an
@@ -167,13 +187,24 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             perceptionSkillMax: vanilla("fSneakPerceptionSkillMax", 100),
             silentActionSound: vanilla("iSoundLevelSilent", 10),
             skillUsePerSecond: vanilla("fSkillUsageSneakPerSecond", 0.625),
+            lightMult: vanilla("fSneakLightMult", 0.33),
+            lightExteriorMult: vanilla("fSneakLightExteriorMult", 0.5),
+            lightMod: vanilla("fDetectionSneakLightMod", 15),
+            lightLevelInteriorMod: vanilla("iLightLevelInteriorMod", 25),
+            lightLevelMax: vanilla("iLightLevelMax", 300),
+            alertMod: vanilla("fSneakAlertMod", 0),
+            sleepBonus: vanilla("fSneakSleepBonus", 0),
+            sleepMod: vanilla("fSneakSleepMod", 0),
+            playerSneakBase: vanilla("fPlayerDetectionSneakBase", 10),
+            playerSneakMult: vanilla("fPlayerDetectionSneakMult", 0.4),
+            playerDetectFloor: vanilla("fPlayerDetectActorValue", -30),
+            flyingDistanceMult: vanilla("fSneakFlyingDistanceMult", 3),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),
             sneakMovementMult: ours(0.75),
             sprintMovementMult: ours(3),
             viewConeHalfAngleDegrees: ours(90),
-            visualBaseValue: ours(40),
             sneakVisualMult: ours(0.5),
             normalActionSound: ours(25),
             loudActionSound: ours(50),

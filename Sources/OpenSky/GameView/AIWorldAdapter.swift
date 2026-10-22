@@ -473,20 +473,23 @@ extension AIWorldAdapter: NPCAnimationWorld {
 
 extension AIWorldAdapter: PerceptionSessionWorld {
     func perceptionCandidates() -> [PerceptionCandidate] {
-        let packaged = Set(game.packages.readouts().filter { $0.currentPackage != nil }
-            .map(\.actor))
+        let readouts = game.packages.readouts().filter { $0.currentPackage != nil }
+        let packaged = Set(readouts.map(\.actor))
+        let sleepers = Set(readouts.filter { $0.procedure == .sleep }.map(\.actor))
         let isExterior = game.streamer?.interiorScene == nil
         return game.actorWorld.combatActors().map { actor in
-            PerceptionCandidate(
-                observer: PerceptionObserver(
-                    key: actor.key,
-                    feet: actor.feet,
-                    eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
-                    facing: actor.facing,
-                    isExterior: isExterior,
-                    label: actor.label,
-                    sneakSkill: sneakSkill(of: actor.key)
-                ),
+            var observer = PerceptionObserver(
+                key: actor.key,
+                feet: actor.feet,
+                eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
+                facing: actor.facing,
+                isExterior: isExterior,
+                label: actor.label,
+                sneakSkill: sneakSkill(of: actor.key)
+            )
+            observer.isSleeping = sleepers.contains(actor.key)
+            return PerceptionCandidate(
+                observer: observer,
                 isDead: actor.isDead,
                 isHostile: game.factions.hostility(of: actor.key) == .hostile,
                 isEngaged: game.combat.loop?.phase(of: actor.key)?.isEngaged == true,

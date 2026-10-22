@@ -38,6 +38,9 @@ extension CombatWorldAdapter: CombatWorld {
     func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
         let wasHostile = hostility(of: hit.target) == .hostile
         game.crime.reportAssault(on: hit.target, wasHostile: wasHostile, aggressor: hit.aggressor)
+        if hit.aggressor == .player {
+            game.perception.runtime?.noteAttack(by: .player)
+        }
         game.scripts.bridge?.recordHit(hit, targetWasHostile: wasHostile)
         return game.scripts.runtime?.queueOnHit(hit) ?? 0
     }

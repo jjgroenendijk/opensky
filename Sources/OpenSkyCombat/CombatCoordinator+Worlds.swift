@@ -188,6 +188,7 @@ extension CombatCoordinator: ProjectileWorld {
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         pendingCommands.append(.playImpact(impact, at: position))
+        pendingCommands.append(.detectionEvent(owner: .player, at: position))
     }
 
     /// False on an empty quiver, which is ordinary play: the shot does not happen.

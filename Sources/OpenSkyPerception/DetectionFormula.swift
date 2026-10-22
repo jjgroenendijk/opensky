@@ -1,7 +1,6 @@
 // The detection value, as pure arithmetic. The shape is UESP "Skyrim:Sneak",
-// "Remaining Undetected", with constants from `DetectionSettings`. The visual
-// factor's shape is ours, because UESP describes it only in words.
-// See docs/engine/detection.md.
+// "Remaining Undetected", and CK wiki "Category:Detection", with constants from
+// `DetectionSettings`. See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyPerceptionInterface
@@ -10,19 +9,30 @@ import simd
 
 nonisolated public enum DetectionFormula: Sendable {
     /// The range this pair's senses attenuate over, world units.
-    public static func maximumDistance(settings: DetectionSettings, isExterior: Bool) -> Float {
-        let base = max(0, settings.maxDistance.value)
-        return isExterior ? base * max(0, settings.exteriorDistanceMult.value) : base
+    public static func maximumDistance(
+        settings: DetectionSettings, isExterior: Bool, isFlying: Bool = false
+    ) -> Float {
+        var range = max(0, settings.maxDistance.value)
+        if isExterior {
+            range *= max(0, settings.exteriorDistanceMult.value)
+        }
+        if isFlying {
+            range *= max(0, settings.flyingDistanceMult.value)
+        }
+        return range
     }
 
     /// Whether `distance` is short enough for either sense to reach.
     public static func isInRange(
         distance: Float,
         settings: DetectionSettings,
-        isExterior: Bool
+        isExterior: Bool,
+        isFlying: Bool = false
     ) -> Bool {
         distance.isFinite && distance >= 0
-            && distance < maximumDistance(settings: settings, isExterior: isExterior)
+            && distance < maximumDistance(
+                settings: settings, isExterior: isExterior, isFlying: isFlying
+            )
     }
 
     /// `((max - distance) / max) ^ exponent`, clamped to 0...1.
@@ -33,12 +43,20 @@ nonisolated public enum DetectionFormula: Sendable {
     public static func attenuation(
         distance: Float,
         settings: DetectionSettings,
-        isExterior: Bool
+        isExterior: Bool,
+        isFlying: Bool = false
     ) -> Float {
-        guard isInRange(distance: distance, settings: settings, isExterior: isExterior) else {
+        guard
+            isInRange(
+                distance: distance, settings: settings, isExterior: isExterior,
+                isFlying: isFlying
+            )
+        else {
             return 0
         }
-        let maximum = maximumDistance(settings: settings, isExterior: isExterior)
+        let maximum = maximumDistance(
+            settings: settings, isExterior: isExterior, isFlying: isFlying
+        )
         let linear = (maximum - distance) / maximum
         return powf(linear, max(0, settings.distanceAttenuationExponent.value))
     }
@@ -76,15 +94,34 @@ nonisolated public enum DetectionFormula: Sendable {
     }
 
     /// The visual term, before distance attenuation. Zero without a clear sight
-    /// line or outside the cone; there is no partial seeing in this model, and
-    /// the docs page says so.
+    /// line, outside the cone, or for a sleeping observer, whose blindness the CK
+    /// wiki sets to full; there is no partial seeing in this model.
     public static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        guard inputs.hasLineOfSight, inputs.isInViewCone, !inputs.traits.isInvisible else {
+        guard
+            inputs.hasLineOfSight, inputs.isInViewCone, !inputs.traits.isInvisible,
+            !inputs.observer.isSleeping
+        else {
             return 0
         }
         let crouch = inputs.isSneaking ? max(0, settings.sneakVisualMult.value) : 1
-        let light = min(finiteNonNegative(inputs.traits.lightLevel), 1)
-        return max(0, settings.visualBaseValue.value) * light * crouch
+        return lightFactor(inputs: inputs, settings: settings) * crouch
+    }
+
+    /// `GetLightLevel` of the target: its 0...1 light times 100, plus
+    /// `iLightLevelInteriorMod` indoors, capped at `iLightLevelMax`.
+    public static func lightLevel(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+        let interior = inputs.isExterior ? 0 : settings.lightLevelInteriorMod.value
+        let level = finiteNonNegative(inputs.traits.lightLevel) * 100 + interior
+        return min(max(0, level), max(0, settings.lightLevelMax.value))
+    }
+
+    /// The CK wiki's light term, `(fDetectionSneakLightMod + light level) * fSneakLightMult`,
+    /// halved outdoors by `fSneakLightExteriorMult`.
+    public static func lightFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+        let exterior = inputs.isExterior ? max(0, settings.lightExteriorMult.value) : 1
+        let light = (settings.lightMod.value + lightLevel(inputs: inputs, settings: settings))
+            * settings.lightMult.value * exterior
+        return max(0, light)
     }
 
     /// One skill level, clamped and weighted into a skill factor.
@@ -92,12 +129,35 @@ nonisolated public enum DetectionFormula: Sendable {
         level: Float = DetectionTargetTraits.startingSkill,
         settings: DetectionSettings
     ) -> Float {
+        clampedSkill(level, settings: settings) * settings.skillMult.value
+    }
+
+    /// A skill level clamped to `fSneakPerceptionSkillMin...Max`.
+    static func clampedSkill(_ level: Float, settings: DetectionSettings) -> Float {
         let level = level.isFinite ? level : DetectionTargetTraits.startingSkill
-        let clamped = min(
+        return min(
             max(level, settings.perceptionSkillMin.value),
             settings.perceptionSkillMax.value
         )
-        return clamped * settings.skillMult.value
+    }
+
+    /// The observer's skill factor, times `1 + alert * fSneakAlertMod + sleeping *
+    /// fSneakSleepBonus` (CK wiki "Category:Detection").
+    public static func noticerFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+        let state = inputs.observer
+        let mod = 1 + (state.isAlert ? settings.alertMod.value : 0)
+            + (state.isSleeping ? settings.sleepBonus.value : 0)
+        return skillFactor(level: inputs.noticerSkill, settings: settings) * max(0, mod)
+    }
+
+    /// The target's skill factor. The player's is `fPlayerDetectionSneakBase +
+    /// fPlayerDetectionSneakMult * skill`, with the skill clamped as for any actor.
+    public static func sneakerFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+        guard inputs.isPlayerTarget else {
+            return skillFactor(level: inputs.traits.sneakSkill, settings: settings)
+        }
+        let skill = clampedSkill(inputs.traits.sneakSkill, settings: settings)
+        return settings.playerSneakBase.value + settings.playerSneakMult.value * skill
     }
 
     private static func finiteNonNegative(_ value: Float) -> Float {
@@ -111,8 +171,10 @@ nonisolated public enum DetectionFormula: Sendable {
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> DetectionBreakdown {
+        let isFlying = inputs.observer.isFlying
         let attenuation = attenuation(
-            distance: inputs.distance, settings: settings, isExterior: inputs.isExterior
+            distance: inputs.distance, settings: settings, isExterior: inputs.isExterior,
+            isFlying: isFlying
         )
         let sound = soundFactor(inputs: inputs, settings: settings)
         let visual = visualFactor(inputs: inputs, settings: settings)
@@ -120,18 +182,23 @@ nonisolated public enum DetectionFormula: Sendable {
             isInRange(
                 distance: inputs.distance,
                 settings: settings,
-                isExterior: inputs.isExterior
+                isExterior: inputs.isExterior,
+                isFlying: isFlying
             )
         else {
             return DetectionBreakdown(
                 soundFactor: sound, visualFactor: visual, value: settings.sneakBaseValue.value
             )
         }
-        let noticer = skillFactor(level: inputs.noticerSkill, settings: settings)
-        let sneaker = skillFactor(level: inputs.traits.sneakSkill, settings: settings)
-        let value = settings.sneakBaseValue.value
+        let noticer = noticerFactor(inputs: inputs, settings: settings)
+        let sneaker = sneakerFactor(inputs: inputs, settings: settings)
+        var value = settings.sneakBaseValue.value
             + (sound + visual + noticer) * attenuation
             + (noticer - sneaker)
+            + (inputs.observer.isSleeping ? settings.sleepMod.value : 0)
+        if inputs.isPlayerTarget {
+            value = max(value, settings.playerDetectFloor.value)
+        }
         return DetectionBreakdown(
             soundFactor: sound,
             visualFactor: visual,

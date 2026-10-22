@@ -54,9 +54,10 @@ nonisolated public struct DetectionLightSample: Equatable, Sendable {
         return luminance.isFinite ? max(luminance, 0) : 0
     }
 
-    /// The light level detection reads: luminance over `fullLuminance`, in 0...1.
+    /// The light level detection reads: luminance over `fullLuminance`, so 1 is a lit
+    /// day. Above 1 is brighter; the formula caps it at `iLightLevelMax`.
     public func level(at position: SIMD3<Float>, fullLuminance: Float) -> Float {
         guard fullLuminance > 0, fullLuminance.isFinite else { return 1 }
-        return min(luminance(at: position) / fullLuminance, 1)
+        return luminance(at: position) / fullLuminance
     }
 }

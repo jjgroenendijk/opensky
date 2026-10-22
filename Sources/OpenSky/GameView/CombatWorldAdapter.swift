@@ -159,6 +159,8 @@ final class CombatWorldAdapter {
             case let .playImpact(impact, position): playImpact(impact, at: position)
             case let .removeReference(key): game.worldState.reset(key)
             case .resetRagdolls: game.ragdoll.runtime?.reset()
+            case let .detectionEvent(owner, position):
+                game.perception.runtime?.noteDetectionEvent(owner: owner, at: position)
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             }
         }
