@@ -15,6 +15,8 @@
 # so the next build compiles them whole. When a failed build
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
+# A test run fails when an -only-testing selector matched no test
+# (tools/test-selectors.sh).
 #
 # The transcript goes to .logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
@@ -61,9 +63,10 @@ mark() {
 [ -z "${OPENSKY_MAKE_STARTED:-}" ] || printf '%s make\n' "$OPENSKY_MAKE_STARTED" >>"$phases"
 mark wrapper
 
-# test-without-building compiles nothing, so it cannot meet a stale module.
+# test-without-building alone compiles nothing, so it cannot meet a stale module.
 compiles="yes"
 case " $* " in
+    *" build-for-testing "*) ;;
     *" test-without-building "*) compiles="" ;;
 esac
 
@@ -148,7 +151,27 @@ while [ "$status" -ne 0 ] && [ -n "$compiles" ] && [ "$retry" -lt "$max_retries"
     run_once "$@"
 done
 
-if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ] \
+# xcodebuild passes a run whose -only-testing selector matched nothing.
+selected=""
+for arg in "$@"; do
+    case "$arg" in
+        -only-testing:*) selected="yes" ;;
+    esac
+done
+if [ -n "$selected" ] && [ -e "$bundle/Info.plist" ]; then
+    for arg in "$@"; do
+        shift
+        case "$arg" in
+            -only-testing:*) set -- "$@" "${arg#-only-testing:}" ;;
+        esac
+    done
+    if ! "$root/tools/test-selectors.sh" "$bundle" "$@" && [ "$status" -eq 0 ]; then
+        status=1
+        unmatched="yes"
+    fi
+fi
+
+if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ] && [ -z "${unmatched:-}" ] \
     && ! grep -qE 'error: |failed|errored|^✘' "$shown_file"; then
     printf '[INFO] no diagnostic matched; last 40 transcript lines:\n'
     tail -n 40 "$log"

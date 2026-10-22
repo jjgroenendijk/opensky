@@ -428,17 +428,19 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 
 # Each kind of test has one target named test-<kind> (tools/lint/test-targets.sh).
 # Each is one plain `xcodebuild test` call on one test plan, so Xcode decides what
-# runs. T adds -only-testing. A typo in T runs zero tests and still passes.
+# runs. T adds -only-testing. T takes a comma list, one -only-testing per entry,
+# and a run fails when an entry matched no test (tools/test-selectors.sh).
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
         coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki uesp-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
-# -only-testing for T. A T that does not start with an OpenSky*Tests target
-# resolves under the bundle in $(1).
-only_testing = $(if $(T),-only-testing:'$(if $(filter OpenSky%Tests,$(firstword \
-	$(subst /, ,$(T)))),,$(1)/)$(T)')
+# One -only-testing per entry of T. An entry that does not start with an
+# OpenSky*Tests target resolves under the bundle in $(1).
+comma := ,
+only_testing = $(foreach sel,$(subst $(comma), ,$(T)),-only-testing:'$(if $(filter \
+	OpenSky%Tests,$(firstword $(subst /, ,$(sel)))),,$(1)/)$(sel)')
 # One test host, watched by the memory watchdog: a real-data run once reached
 # 30 GB and locked the machine. $(1) is the default cap in MB, CAP overrides it.
 # $(3) is the run's derived data: the watchdog only watches processes built there.
@@ -458,21 +460,22 @@ XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
 # the slow and GPU tests, so it builds no app. A layer plan (Formats, Engine,
 # Features, App) builds only its bundles. UnitTests is everything, as CI runs it.
 # GPU selects the GPU tag across every bundle. N hunts a flaky test: it reruns
-# until the first failure, at most N times.
+# until the first failure, at most N times. The `test` action writes no .xctestrun,
+# so the run builds and tests as two actions, and test-rerun can reuse the build.
 PLAN             ?= Quick
 UNIT_PLANS       := Quick Formats Engine Features App UnitTests GPU
 check_plan = $(if $(filter $(PLAN),$(UNIT_PLANS)),,$(error PLAN must be one of: $(UNIT_PLANS)))
-test-unit: link-shared $(SHADER_LIBRARY) ## Run a unit plan [PLAN=Quick|Formats|Engine|Features|App|UnitTests|GPU] [T='Target/Suite/test()'] [N=100] [COVERAGE=1]
+test-unit: link-shared $(SHADER_LIBRARY) ## Run a unit plan [PLAN=Quick|Formats|Engine|Features|App|UnitTests|GPU] [T='Target/Suite/test(),...'] [N=100] [COVERAGE=1]
 	@$(check_plan)TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit-$(PLAN)) \
 		-testPlan $(PLAN) $(call only_testing,OpenSkyTests) $(coverage_flag) \
-		$(if $(N),-run-tests-until-failure -test-iterations $(N)) test
+		$(if $(N),-run-tests-until-failure -test-iterations $(N)) build-for-testing test-without-building
 
-# The .xctestrun that the last test or build-for-testing run of PLAN wrote. A rerun
+# The .xctestrun that the last test-unit or build-tests run of PLAN wrote. A rerun
 # through it skips the build system: seconds instead of minutes. It runs the
 # products as built, so an edit since then needs `make test-unit` again.
 xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME)_$(PLAN)_*.xctestrun)))
-test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test()']
+test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test(),...']
 	@$(check_plan)test -n "$(xctestrun)" || { \
 		echo "[ERROR] no built $(PLAN) plan under $(DERIVED_DATA): run make test-unit PLAN=$(PLAN) first" >&2; exit 2; }
 	@newer="$$(find Sources Tests config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
@@ -481,27 +484,14 @@ test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|..
 		-destination '$(DESTINATION)' $(call test_bundle,rerun-$(PLAN)) \
 		$(call only_testing,OpenSkyTests) $(coverage_flag) test-without-building
 
-# One package test target through `swift test`: no Xcode, no app, no other bundle.
-# The package keeps its own build tree in .build/. A filter that matches nothing
-# still exits 0, so the recipe counts what ran.
-test-package: link-shared $(SHADER_LIBRARY) ## Run one package test target with swift test [T='OpenSkyFormatsESMTests[/Suite[/test()]]']
-	@test -n "$(T)" || { echo "[ERROR] usage: make test-package T='Target[/Suite[/test()]]'" >&2; exit 2; }
-	@target="$(firstword $(subst /, ,$(T)))"; rest="$(T)"; rest="$${rest#"$$target"}"; rest="$${rest#/}"; \
-		[ -d "Tests/$$target" ] || { echo "[ERROR] no package test target $$target (no Tests/$$target/)" >&2; exit 2; }; \
-		filter="^$$target\\.$$(printf '%s' "$$rest" | sed 's/[()]/\\&/g')"; \
-		run="$$($(RUN_DIR) test-package)"; log="$$run/test-package.log"; \
-		echo "[INFO] swift test --filter $$filter"; status=0; \
-		. ./tools/xcodebuild-lib.sh; opensky_build_lock; \
-		swift test --filter "$$filter" >"$$log" 2>&1 || status=$$?; opensky_build_unlock; \
-		[ "$$status" -eq 0 ] || opensky_drop_failed_records . "$$log" .build/out; \
-		grep -E '(error|warning): |^✘|Test run with' "$$log" || true; \
-		echo "[INFO] full transcript: $$log"; [ "$$status" -eq 0 ] || exit "$$status"; \
-		ran="$$(sed -n 's/.*Test run with \([0-9][0-9]*\) test.*/\1/p' "$$log" | tail -n 1)"; \
-		[ -n "$$ran" ] && [ "$$ran" -gt 0 ] || { echo "[ERROR] selector matched no test: $(T)" >&2; exit 1; }
+# Package test targets through `swift test`: no Xcode, no app, no other bundle.
+# The package keeps its own build tree in .build/.
+test-package: link-shared $(SHADER_LIBRARY) ## Run package test targets with swift test [T='OpenSkyFormatsESMTests[/Suite[/test()]],...']
+	@./tools/test-package.sh "$(T)"
 
 # A timeout in "enabling automation mode" means Automation Mode asks for a
 # password: run make test-perms.
-test-ui: link-shared ## Run the UI tests (launches and drives the app) [T='Suite/test()']
+test-ui: link-shared ## Run the UI tests (launches and drives the app) [T='Suite/test(),...']
 	@$(XCB_RUN) test-ui $(XCB_TEST) $(call test_bundle,ui) -testPlan UITests \
 		$(call only_testing,OpenSkyUITests) $(coverage_flag) test
 
@@ -530,7 +520,7 @@ test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanit
 # outside it. Xcode passes TEST_RUNNER_ variables to the test process.
 real_env = TEST_RUNNER_OPENSKY_CHECKOUT="$(CURDIR)" \
 	TEST_RUNNER_OPENSKY_SKYRIM_SAVES="$(OPENSKY_SKYRIM_SAVES)"
-test-real: link-shared ## Run the real-data smoke plan [ALL=1] [T='Suite/test()'] [CAP=MB] [PERF=1]
+test-real: link-shared ## Run the real-data smoke plan [ALL=1] [T='Suite/test(),...'] [CAP=MB] [PERF=1]
 	@$(call guarded,6144,$(if $(PERF), \
 		$(real_env) $(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
 		$(real_env) $(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan $(if $(ALL),RealDataAll,RealData)) \

@@ -36,9 +36,9 @@ a test there would run in both bundles. It holds only fixtures that need the app
 
 | Command | What it does |
 | --- | --- |
-| `make test-unit [PLAN=Quick] [T='Target/Suite/test()'] [N=100]` | One test plan, `Quick` by default: every package bundle without the slow and GPU tests, so the app is not built. `PLAN=Formats`, `Engine`, `Features`, or `App` builds one layer; `GPU` runs the `.gpu` tests; `UnitTests` is the whole plan CI runs. `T` picks a suite or test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky. `COVERAGE=1` gathers coverage |
+| `make test-unit [PLAN=Quick] [T='Target/Suite/test()'] [N=100]` | One test plan, `Quick` by default: every package bundle without the slow and GPU tests, so the app is not built. `PLAN=Formats`, `Engine`, `Features`, or `App` builds one layer; `GPU` runs the `.gpu` tests; `UnitTests` is the whole plan CI runs. `T` picks a suite or test, or a comma list of them, and a run fails when an entry matches no test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky. `COVERAGE=1` gathers coverage |
 | `make test-rerun [PLAN=Quick] [T=...]` | Reruns the plan as last built, from its `.xctestrun`, without the build system. It warns when a source changed after that build |
-| `make test-package T='Target[/Suite[/test()]]'` | One package test target through `swift test`: no Xcode, no app, and no other bundle |
+| `make test-package T='Target[/Suite[/test()]],...'` | Package test targets through `swift test`: no Xcode, no app, and no other bundle |
 | `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
 | `make build-app`, `make build-cli` | Builds the app, or `openskycli`, alone [CONFIG] |
 | `make build-tests [PLAN=UnitTests]` | Compiles every bundle of a plan without running a test. Hosted bundles build the app they run in. Needs no install |

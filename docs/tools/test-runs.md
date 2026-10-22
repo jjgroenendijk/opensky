@@ -107,15 +107,19 @@ stops at the first failure. It is a make target and not a plan configuration on 
 failure a flaky hunt is looking for. `make lint-test-plans` fails a plan that sets either.
 
 `make test-rerun PLAN=<plan>` runs `xcodebuild test-without-building` on the `.xctestrun` file
-that the last `xcodebuild test` or `build-for-testing` of that plan wrote under `Build/Products/`.
+that the last `build-for-testing` of that plan wrote under `Build/Products/`. The `test` action
+writes no such file, so `make test-unit` runs `build-for-testing test-without-building` instead.
 It skips the build system, so one suite reruns in seconds instead of the start-up cost below. It
 tests the products as they were built: the target warns when a source under `Sources/` or `Tests/`
 is newer than the file, and the warning means the result is for the old code.
 
-`make test-package T='Target/Suite'` runs `swift test --filter` for one package test target. It
-needs no Xcode and no app. SwiftPM links every package test target into one bundle, so the first
-run compiles them all, under the build lock; later runs recompile only what changed. It shares
-the `swift build` products of `make compile`.
+`make test-package T='Target/Suite'` runs `swift test --filter` for package test targets. `T`
+takes a comma list, and all entries run in one `swift test` call. `swift test` also exits 0 for a
+filter that matches nothing, so the target first lists the tests with `swift test list` and fails
+on an entry that matches none, before any test runs. It needs no Xcode and no app. SwiftPM links
+every package test target into one bundle, so the first run compiles them all, under the build
+lock; later runs recompile only what changed. It shares the `swift build` products of
+`make compile`.
 
 ## Attachments
 
@@ -128,8 +132,11 @@ output, the failures, and the per-test durations stay in the bundle.
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
-`T=...` adds `-only-testing` on top of the target's plan. A misspelled Swift Testing selector runs
-zero tests and still exits 0, so check the count in the output.
+`T=...` adds `-only-testing` on top of the target's plan. `T` takes a comma list, for example
+`T='OpenSkyTests/SuiteA,OpenSkyTests/SuiteB'`, and each entry becomes its own `-only-testing` flag
+in one `xcodebuild` call. `xcodebuild` exits 0 when a selector matches no test, so after the run
+`tools/test-selectors.sh` reads the result bundle and fails the run for each entry that matched
+nothing, with `selector matched no test: <entry>`.
 
 No plan lists the UI bundle beside an app-hosted bundle, and this is on purpose. All three unit
 bundles are hosted by `OpenSky.app`. Put either in the same session as the UI runner,
