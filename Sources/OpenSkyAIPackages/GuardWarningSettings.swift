@@ -1,13 +1,13 @@
 // How often a Guard procedure warns an intruder before it attacks, from `iGuardWarnings`
-// and `fWarningTimer` (<https://ck.uesp.net/wiki/Guard_(Procedure)>). That
-// `fWarningTimer` is the wait between two warnings is OpenSky's reading of its name.
+// and `fAITrespassWarningTimer` (<https://ck.uesp.net/wiki/Guard_(Procedure)>).
 
 import OpenSkyGameData
 
 nonisolated public struct GuardWarningSettings: Equatable, Sendable {
     /// `iGuardWarnings`: the most warnings a guard gives before it attacks.
     public var warnings = 2
-    /// `fWarningTimer`: seconds between two warnings.
+    /// `fAITrespassWarningTimer`: "the time between warnings on a Trespass Package or Guard
+    /// Package" (<https://ck.uesp.net/wiki/FAITrespassWarningTimer>).
     public var warningSeconds: Float = 5
 
     public static let vanilla = Self()
@@ -17,7 +17,7 @@ nonisolated public struct GuardWarningSettings: Equatable, Sendable {
     public static func resolve(store: GameSettingStore) -> Self {
         var settings = vanilla
         store.read("iGuardWarnings", into: &settings, \.warnings)
-        store.read("fWarningTimer", into: &settings, \.warningSeconds)
+        store.read("fAITrespassWarningTimer", into: &settings, \.warningSeconds)
         return settings
     }
 }
