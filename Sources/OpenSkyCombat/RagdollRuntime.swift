@@ -135,16 +135,10 @@ public final class RagdollRuntime: DeathReporting {
     public var contactEvent: String?
     public private(set) var contactEventsRaised = 0
 
-    private weak var seam: (any RagdollWorldSeam)?
+    private weak let seam: (any RagdollWorldSeam)?
 
-    public init(seam: (any RagdollWorldSeam)? = nil) {
+    public init(seam: any RagdollWorldSeam) {
         self.seam = seam
-    }
-
-    /// Attaches (or detaches) the session this runtime resolves against.
-    public func attach(seam: (any RagdollWorldSeam)?) {
-        self.seam = seam
-        reset()
     }
 
     // MARK: - Death

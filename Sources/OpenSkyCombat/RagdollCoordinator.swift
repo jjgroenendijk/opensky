@@ -43,9 +43,7 @@ public final class RagdollCoordinator {
 
     func wire(loadDefinition: DefinitionLoader?) {
         self.loadDefinition = loadDefinition
-        let runtime = RagdollRuntime()
-        self.runtime = runtime
-        runtime.attach(seam: self)
+        runtime = RagdollRuntime(seam: self)
     }
 
     /// One frame: zero-health actors die, `events` hand off, live ragdolls step.
