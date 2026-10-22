@@ -350,11 +350,15 @@ extension CellStreamer {
         activate(interactionTarget)
     }
 
-    /// One activation of `target`: the gate first, then the event, talk, and door.
-    /// The lockpicking menu calls this again after a lock opens.
-    public func activate(_ target: InteractionTarget) {
+    /// One activation of `target`: the gate first, then the perk choices, the event,
+    /// talk, and door. The lockpicking menu calls this again after a lock opens, and
+    /// the perk choice menu with `offeringPerkChoices` false.
+    public func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
         if let refusal = activationGate.gate?(target) {
             activationGate.refusals(ActivationRefusalEvent(target: target, refusal: refusal))
+            return
+        }
+        if offeringPerkChoices, activationGate.perkChoices?(target) == true {
             return
         }
         onInteraction(InteractionEvent(target: target))

@@ -24,6 +24,7 @@ extension GameViewController: @MainActor InventoryWorldHost {}
 extension GameViewController: @MainActor JournalMenuHost {}
 extension GameViewController: @MainActor LoadingScreenWorldHost {}
 extension GameViewController: @MainActor LockWorldHost {}
+extension GameViewController: @MainActor PerkActivationWorldHost {}
 extension GameViewController: @MainActor LockpickingMenuHost {}
 extension GameViewController: @MainActor MagicWorldHost {}
 extension GameViewController: @MainActor MapWorldHost {}

@@ -14,6 +14,7 @@ extension DestinationRegistry {
             content: .worldInspector { context in
                 let panel = ProgressionPanelViewController()
                 panel.provider = context.progression
+                panel.perkActivation = context.perkActivation
                 return panel
             }
         )

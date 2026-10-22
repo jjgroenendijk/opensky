@@ -40,6 +40,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var inventoryWorld: InventoryWorldAdapter { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockWorld: LockWorldAdapter { get }
+    var perkActivationWorld: PerkActivationWorldAdapter { get }
     var magicWorld: MagicWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
     var messageWorld: MessageWorldAdapter { get }
@@ -126,6 +127,7 @@ final class WorldSessionWiring {
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
         game.lockWorld.wireLocks(provider: provider, streamer: streamer, gameSession: gameSession)
+        game.perkActivationWorld.wire(streamer: streamer)
         // After the item runtime, which owns the equipped set of the body.
         game.playerWorld.wirePlayerBody(session: session, gameSession: gameSession)
         wireActorSystems(provider: provider, gameSession: gameSession)

@@ -175,6 +175,42 @@ So the header halving applies only when the named perk does not itself hook `Mod
 source says which one the game reads. This rule gives the observed cost either way, and still
 works for a mod that sets only the header field.
 
+## Activate choices
+
+The `Activate` entry point (14) lets a perk add a choice to the use key. Each passing effect
+with the `Add Activate Choice` function is one choice. Its condition tabs run on the perk owner
+and on the target (UESP "Skyrim Mod:Mod File Format/PERK"). Vanilla uses it for vampire and
+werewolf feeding, Namira's ring, and the Harvest Blood quest.
+
+`EPF3` holds two flags and a fragment index ([perks](/formats/perks.md)):
+
+- "Run immediately": the choice runs on the press, with no menu.
+- "Replace default": the target's own action does not run.
+
+One press works like this:
+
+1. Every run-now choice runs.
+2. No other choice: the target's own action runs, unless a choice replaced it.
+3. One other choice, and a choice replaced the action: that choice runs with no menu. The
+   prompt shows its label instead of the target's verb.
+4. Otherwise a message box lists the choices by their `EPF2` label, then the target's verb,
+   unless a choice replaced it.
+
+On the local install, `VampireFeed` has two choices with no flags, so a sleeping target gets a
+menu with "Feed" and the normal action. `PlayerWerewolfFeed` has both flags set and names a
+spell, so it runs at once and the normal action does not. The CK wiki says only the player runs
+these choices ("Perk Fragments", <https://ck.uesp.net/wiki/Perk_Fragments>), so only the
+player's perks are asked.
+
+A choice runs the fragment that its index names in the perk's `VMAD` fragment table
+([VMAD](/formats/vmad.md)), as `Fragment_N(ObjectReference akTargetRef, Actor akActor)`. The
+compiled `PRKF_VampireFeedBeds_000CF02C` script lists `akTargetRef` before `akActor`, which
+agrees with that order. A choice that names a spell (`EPFT` 4) also casts it on the target, with
+the player as the caster.
+
+The Progression panel's Perk Choices section lists the choices of the target under the crosshair
+and runs one.
+
 ## Abilities
 
 An ability perk effect grants a `SPEL` while the perk is owned. A reconcile step makes the
