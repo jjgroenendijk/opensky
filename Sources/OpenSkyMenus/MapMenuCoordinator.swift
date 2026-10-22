@@ -25,7 +25,6 @@ public protocol MapMenuWorld: AnyObject {
     func clearMapView()
     var localMapFog: LocalMapFogState { get set }
     func showNotification(_ text: String)
-    func awardExperience(_ amount: Int)
     /// Counts one misc stat for the journal's Stats page.
     func incrementStat(_ name: String)
     var fastTravelContext: FastTravelContext { get }
@@ -99,7 +98,6 @@ public final class MapMenuCoordinator {
             else { continue }
             world.storeMarkerState(site.state, for: key)
             world.showNotification("Discovered \(name)")
-            world.awardExperience(settings.discoveryExperience)
             world.incrementStat("Locations Discovered")
             discoveredCount += 1
         }

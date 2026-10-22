@@ -23,7 +23,6 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var questTargets: [QuestTargetMarker] = []
     var view: (eye: SIMD3<Float>, lookAt: SIMD3<Float>)?
     var notifications: [String] = []
-    var experience = 0
     var stats: [String] = []
     var shownMarkers: [SIMD3<Float>] = []
     var travelled: [String] = []
@@ -71,10 +70,6 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
         notifications.append(text)
     }
 
-    func awardExperience(_ amount: Int) {
-        experience += amount
-    }
-
     func incrementStat(_ name: String) {
         stats.append(name)
     }
@@ -109,7 +104,7 @@ struct MapMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func walkingCloseDiscoversOnceWithExperienceAndFog() {
+    func walkingCloseDiscoversOnceWithFog() {
         let world = FakeMapWorld(sites: [
             Self.site(1, "Riverwood", at: 900),
             Self.site(2, "Whiterun", at: 5000)
@@ -117,7 +112,6 @@ struct MapMenuCoordinatorTests {
         let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.tick()
         #expect(world.notifications == ["Discovered Riverwood"])
-        #expect(world.experience == 10)
         #expect(world.stats == ["Locations Discovered"])
         #expect(world.sites[0].state.canTravelTo)
         #expect(!world.sites[1].state.isVisible)

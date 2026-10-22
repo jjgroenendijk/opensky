@@ -193,10 +193,6 @@ extension MapWorldAdapter: MapMenuWorld {
         game.hud.showNotification(text)
     }
 
-    func awardExperience(_ amount: Int) {
-        _ = game.progression.awardCharacterExperience(Float(amount))
-    }
-
     func incrementStat(_ name: String) {
         game.worldState.incrementMiscStat(name)
     }
