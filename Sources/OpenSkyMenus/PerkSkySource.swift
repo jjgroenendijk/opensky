@@ -3,7 +3,6 @@
 
 import Foundation
 @preconcurrency import Metal
-import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 
@@ -19,52 +18,25 @@ public final class PerkSkySource {
         public let line: MenuSceneModel
     }
 
-    private let files: AssetLoader<String, NIFFile>
-    private let fileSystem: any GameFileSource
-    private var textures: TextureLibrary?
-    public private(set) var models: Models?
-    public private(set) var failure: String?
+    private let loader: MenuSceneModelLoader
 
     /// `immediate` loads inside the request, for tests and tools.
     public init(fileSystem: any GameFileSource, immediate: Bool = false) {
-        let load: @Sendable (String) throws -> NIFFile = { path in
-            try NIFFile(data: fileSystem.contents(forPath: path))
-        }
-        files = immediate
-            ? AssetLoader(worker: ImmediateAssetLoadWorker(load: load))
-            : AssetLoader(load: load)
-        self.fileSystem = fileSystem
+        loader = MenuSceneModelLoader(
+            paths: Self.paths, fileSystem: fileSystem, immediate: immediate
+        )
+    }
+
+    public var models: Models? {
+        loader.models.map { Models(dome: $0[0], star: $0[1], line: $0[2]) }
+    }
+
+    public var failure: String? {
+        loader.failure
     }
 
     /// The models once all three files are in; nil while they load or after a failure.
     public func models(device: MTLDevice) -> Models? {
-        if models != nil || failure != nil {
-            return models
-        }
-        for path in Self.paths {
-            files.prefetch(path)
-        }
-        files.drain()
-        var parsed: [NIFFile] = []
-        for path in Self.paths {
-            switch files.state(of: path) {
-            case .loading: return nil
-            case let .failed(error):
-                failure = "\(path): \(error)"
-                return nil
-            case let .ready(file): parsed.append(file)
-            }
-        }
-        do {
-            let library = try textures ?? TextureLibrary(fileSystem: fileSystem, device: device)
-            textures = library
-            let built = try parsed.map {
-                try MenuSceneModel(file: $0, device: device, textures: library.provider)
-            }
-            models = Models(dome: built[0], star: built[1], line: built[2])
-        } catch {
-            failure = String(describing: error)
-        }
-        return models
+        loader.models(device: device).map { Models(dome: $0[0], star: $0[1], line: $0[2]) }
     }
 }

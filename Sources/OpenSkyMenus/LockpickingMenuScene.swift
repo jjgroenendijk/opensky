@@ -1,6 +1,6 @@
 // The lockpicking overlay as a 2D `UIScene`: the pick's arc as dots, the pick,
-// the keyhole turning with the lock, and health and pick counts. OpenSky's
-// own layout; vanilla draws a 3D lock. See docs/engine/locks.md.
+// the keyhole turning with the lock, and health and pick counts. With the 3D lock
+// shown, only the bars and text stay, below it. See docs/engine/locks.md.
 
 import Foundation
 import OpenSkyInventoryInterface
@@ -22,6 +22,9 @@ nonisolated extension LockpickingMenuPresentation {
     private static let text = SIMD4<Float>(0.92, 0.94, 1, 1)
 
     public var scene: UIScene {
+        if drawsLockModel {
+            return UIScene(nodes: barNodes + labelNodes)
+        }
         var nodes = [UINode(
             anchor: .center,
             content: .panel(
@@ -59,16 +62,25 @@ nonisolated extension LockpickingMenuPresentation {
     }
 
     private var barNodes: [UINode] {
-        bar(fraction: lockRotation, y: 40, color: Self.bright)
-            + bar(fraction: pickHealth, y: 60, color: isStraining ? Self.strain : Self.dim)
+        bar(fraction: lockRotation, y: textY(40), color: Self.bright)
+            + bar(fraction: pickHealth, y: textY(60), color: isStraining ? Self.strain : Self.dim)
     }
 
     private var labelNodes: [UINode] {
         [
-            label("\(title) (\(difficulty.name))", y: -150, size: 16),
-            label("Lockpicks: \(picksRemaining)", y: 84, size: 13),
-            label(Self.hint, y: 140, size: 11)
+            label("\(title) (\(difficulty.name))", y: drawsLockModel ? -190 : -150, size: 16),
+            label("Lockpicks: \(picksRemaining)", y: textY(84), size: 13),
+            label(Self.hint, y: textY(140), size: 11)
         ]
+    }
+
+    /// Beside the 3D lock the text sits near the bottom edge, below the lock.
+    private var textAnchor: UIAnchor {
+        drawsLockModel ? .bottom : .center
+    }
+
+    private func textY(_ centred: Float) -> Float {
+        drawsLockModel ? centred - 180 : centred
     }
 
     private func dot(angle: Float, radius: Float, size: Float, color: SIMD4<Float>) -> UINode {
@@ -83,13 +95,13 @@ nonisolated extension LockpickingMenuPresentation {
     private func bar(fraction: Float, y: Float, color: SIMD4<Float>) -> [UINode] {
         let filled = Self.barWidth * min(max(fraction, 0), 1)
         let track = UINode(
-            anchor: .center,
+            anchor: textAnchor,
             offset: UIPoint(x: 0, y: y),
             content: .marker(size: UISize(width: Self.barWidth, height: 6), color: Self.dim * 0.5)
         )
         guard filled > 0 else { return [track] }
         let fill = UINode(
-            anchor: .center,
+            anchor: textAnchor,
             offset: UIPoint(x: (filled - Self.barWidth) / 2, y: y),
             content: .marker(size: UISize(width: filled, height: 6), color: color)
         )
@@ -100,7 +112,7 @@ nonisolated extension LockpickingMenuPresentation {
         let font = UIFont(pointSize: size)
         let width = Self.panelSize.width - 32
         return UINode(
-            anchor: .center,
+            anchor: textAnchor,
             offset: UIPoint(x: 0, y: y),
             content: .label(UILabel(text: string, font: font, color: Self.text, maxWidth: width))
         )

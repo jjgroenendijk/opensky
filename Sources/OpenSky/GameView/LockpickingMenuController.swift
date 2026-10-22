@@ -3,6 +3,7 @@
 // The rules live in the coordinator. See docs/engine/locks.md.
 
 import Foundation
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface
@@ -25,6 +26,7 @@ protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
 }
 
 /// Holds the open lockpicking session's input and overlay for `game`.
@@ -43,6 +45,12 @@ final class LockpickingMenuController {
         movies: game.swfMovies, hud: game.hud, label: "lockpicking movie"
     ) { [weak self] in self?.game.renderer }
     private var movieInfo: LockpickingMovieInfo?
+    private var lockSource: LockpickingLockSource?
+    private var openedAt: Date?
+    /// When the pick in hand went in, so its intro plays again after a break.
+    private var pickStartedAt: Date?
+    private var brokeAt: Date?
+    private(set) var drawsLockModel = false
 
     init(game: any LockpickingMenuHost) {
         self.game = game
@@ -55,6 +63,15 @@ final class LockpickingMenuController {
             return "movie"
         }
         return movie.error.map { "overlay, \($0)" } ?? "overlay"
+    }
+
+    /// The readout of the 3D lock: "3D lock", or why the overlay draws the lock.
+    var lockModelState: String {
+        guard let lockSource else { return "not opened yet" }
+        if lockSource.models != nil {
+            return "3D lock"
+        }
+        return lockSource.failure.map { "2D lock, \($0)" } ?? "2D lock, loading"
     }
 
     private var locks: LockCoordinator {
@@ -80,6 +97,10 @@ final class LockpickingMenuController {
         controls = LockpickingMenuControls()
         lastFrame = nil
         wasTurning = false
+        let now = Date()
+        openedAt = now
+        pickStartedAt = now
+        brokeAt = nil
         game.menuMode.inputConsumer = game
         game.menuMode.present(Self.identifier)
         play(.enter)
@@ -127,6 +148,10 @@ final class LockpickingMenuController {
         locks.closeLockpicking()
         presentation = nil
         movie.stop()
+        if drawsLockModel {
+            game.renderer?.setMenuScene(nil)
+            drawsLockModel = false
+        }
         game.gameSession?.uiScene = .empty
         game.menuMode.dismiss(Self.identifier)
         // The press that met the lock goes through now that it is open.
@@ -162,7 +187,9 @@ final class LockpickingMenuController {
             .run(locks.stepLockpicking(min(seconds, Self.longestStep), input: input))
         for event in events {
             switch event {
-            case .pickBroke: play(.pickBreak)
+            case .pickBroke:
+                play(.pickBreak)
+                brokeAt = now
             case .opened: play(.unlock)
             case .outOfPicks, .cancelled: break
             }
@@ -171,7 +198,34 @@ final class LockpickingMenuController {
             close()
             return
         }
+        if let brokeAt, now.timeIntervalSince(brokeAt) > Double(LockpickingLockPose.breakSeconds) {
+            self.brokeAt = nil
+            pickStartedAt = now
+        }
         publish(straining: session.isStraining(input))
+        drawLock(now: now)
+    }
+
+    /// Draws the install's lock and pick in the menu scene once both meshes are in.
+    private func drawLock(now: Date) {
+        guard let frame = presentation, let renderer = game.renderer else { return }
+        if lockSource == nil, let files = game.worldData?.scriptFileSystem {
+            lockSource = LockpickingLockSource(fileSystem: files)
+        }
+        guard let models = lockSource?.models(device: renderer.device) else { return }
+        func seconds(since date: Date?) -> Float {
+            Float(date.map { now.timeIntervalSince($0) } ?? 0)
+        }
+        let pose = LockpickingLockPose(
+            pickSeconds: seconds(since: pickStartedAt), lockSeconds: seconds(since: openedAt),
+            pickAngle: frame.pickAngle, lockRotation: frame.lockRotation,
+            isStraining: frame.isStraining,
+            brokenSeconds: brokeAt == nil ? nil : seconds(since: brokeAt)
+        )
+        renderer.setMenuScene(LockpickingLockSource.scene(pose, models: models))
+        guard !drawsLockModel else { return }
+        drawsLockModel = true
+        publish(straining: frame.isStraining)
     }
 
     private func publish(straining: Bool = false) {
@@ -184,7 +238,8 @@ final class LockpickingMenuController {
             lockRotation: session.lockRotation,
             pickHealth: session.pickHealth,
             picksRemaining: session.picksRemaining,
-            isStraining: straining
+            isStraining: straining,
+            drawsLockModel: drawsLockModel
         )
         guard next != presentation else { return }
         presentation = next

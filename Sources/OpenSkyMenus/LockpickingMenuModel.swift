@@ -73,6 +73,8 @@ nonisolated public struct LockpickingMenuPresentation: Equatable, Sendable {
     public var pickHealth: Float
     public var picksRemaining: Int32
     public var isStraining: Bool
+    /// The install's 3D lock draws in the menu scene, so the overlay draws no lock.
+    public var drawsLockModel: Bool
 
     public init(
         title: String,
@@ -82,7 +84,8 @@ nonisolated public struct LockpickingMenuPresentation: Equatable, Sendable {
         lockRotation: Float,
         pickHealth: Float,
         picksRemaining: Int32,
-        isStraining: Bool
+        isStraining: Bool,
+        drawsLockModel: Bool = false
     ) {
         self.title = title
         self.difficulty = difficulty
@@ -92,6 +95,7 @@ nonisolated public struct LockpickingMenuPresentation: Equatable, Sendable {
         self.pickHealth = pickHealth
         self.picksRemaining = picksRemaining
         self.isStraining = isStraining
+        self.drawsLockModel = drawsLockModel
     }
 }
 

@@ -59,6 +59,12 @@ nonisolated public struct NIFEffectPose: Sendable {
         }
     }
 
+    /// Replaces one node's local transform, for a node the engine drives itself.
+    public mutating func setLocal(_ transform: float4x4, of node: Int) {
+        guard locals.indices.contains(node) else { return }
+        locals[node] = transform
+    }
+
     private mutating func apply(_ track: NIFSequenceTrack, at time: Float, scene: NIFEffectScene) {
         switch (track.target, track.channel) {
         case let (.node(name), .transform(channel)):
