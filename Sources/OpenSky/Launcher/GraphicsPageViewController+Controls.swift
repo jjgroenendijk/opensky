@@ -63,10 +63,7 @@ extension GraphicsPageViewController {
             "The eye adapts to dark and bright scenes; follows the weather's image space"
         )
         configureCharacterCheckboxes()
-        checkbox(
-            impactEffectsControl, "ImpactEffects",
-            "Dust under a step, sparks or blood spray where a hit lands"
-        )
+        configureEffectCheckboxes()
         checkbox(
             lightAnimationControl, "LightAnimation",
             "Torches and fires flicker; some lights pulse"
@@ -85,6 +82,16 @@ extension GraphicsPageViewController {
         )
         checkbox(fullScreenControl, "FullScreen", "Play opens full screen")
         configureShadingCheckboxes()
+    }
+
+    private func configureEffectCheckboxes() {
+        checkbox(
+            impactEffectsControl, "ImpactEffects",
+            "Dust under a step, sparks or blood spray where a hit lands"
+        )
+        checkbox(
+            screenBloodControl, "ScreenBlood", "A hit on the player splashes blood on the screen"
+        )
     }
 
     private func configureShadingCheckboxes() {
@@ -118,6 +125,10 @@ extension GraphicsPageViewController {
         checkbox(
             combatTemperamentControl, "CombatTemperament",
             "Confidence decides who flees, and Assistance brings allies into a fight"
+        )
+        checkbox(
+            combatGameSettingsControl, "CombatGameSettings",
+            "Fights use the install's advance, range, heal, shout, and flight settings"
         )
     }
 
@@ -168,20 +179,26 @@ extension GraphicsPageViewController {
 
     private var checkboxSettings: [(NSButton, PlayerSettingID)] {
         [
-            (frameInterpolationControl, .frameInterpolation), (
-                rayTracedShadowsControl,
-                .rayTracedShadows
-            ),
-            (meshShaderGrassControl, .meshShaderGrass), (gpuCullingControl, .gpuCulling),
-            (roomCullingControl, .roomCulling),
+            (frameInterpolationControl, .frameInterpolation),
+            (rayTracedShadowsControl, .rayTracedShadows),
+            (meshShaderGrassControl, .meshShaderGrass)
+        ] + plainCheckboxSettings
+    }
+
+    /// The checkboxes that show their setting as it is, with no device check.
+    var plainCheckboxSettings: [(NSButton, PlayerSettingID)] {
+        [
+            (gpuCullingControl, .gpuCulling), (roomCullingControl, .roomCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
-            (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
+            (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
+            (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
             (blinkingControl, .characterBlinking), (eyeMovementControl, .characterEyeMovement),
             (expressionsControl, .characterDialogueExpressions),
             (headTrackingControl, .characterHeadTracking),
             (objectAnimationControl, .objectAnimation), (actorGraphsControl, .actorGraphs),
             (combatTemperamentControl, .combatTemperament),
+            (combatGameSettingsControl, .combatGameSettings),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }

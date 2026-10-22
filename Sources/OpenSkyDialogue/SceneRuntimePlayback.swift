@@ -64,6 +64,10 @@ extension SceneRuntime {
 
         /// Moves through phases until one waits on a running action or the scene ends.
         mutating func advance() {
+            if let due = runtime.pendingLines.repeatsAt[entry.formID] {
+                guard runtime.now >= due else { return }
+                runtime.pendingLines.repeatsAt[entry.formID] = nil
+            }
             guard applyActorBehavior() else { return }
             var repeated = false
             var budget = scene.phases.count * 2 + 4
@@ -78,7 +82,9 @@ extension SceneRuntime {
                         repeated = true
                         note(.repeated)
                         state = SceneRuntimeState()
-                        continue
+                        let pause = Double(runtime.loopPause(runtime.repeatPause))
+                        runtime.pendingLines.repeatsAt[entry.formID] = runtime.now + max(pause, 0)
+                        return
                     }
                     end(.finished)
                     return

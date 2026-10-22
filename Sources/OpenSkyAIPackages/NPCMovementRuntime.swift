@@ -74,6 +74,8 @@ public struct NPCMoveStart {
     public var ignoresStatics = false
     /// The gait a package asks for. Nil picks it by the length of each leg.
     public var gait: LocomotionGait?
+    /// A follower's walk slows as it arrives, by these settings; nil keeps full speed.
+    public var runSlowdown: FollowSettings?
 
     public init(
         actor: ReferenceKey,

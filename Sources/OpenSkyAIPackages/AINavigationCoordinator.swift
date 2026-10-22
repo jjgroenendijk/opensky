@@ -80,6 +80,9 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         snapshot.procedure = runner?.primary
         snapshot.runningProcedures = runner?.runningMachines ?? []
         snapshot.carrier = selected.flatMap(world.vehicleCarrier(of:))
+        snapshot.socialText = AIPackageReadout.socialText(
+            bumps: packages.bumps, bump: packages.bumpSettings, follow: packages.followSettings
+        )
         return snapshot
     }
 

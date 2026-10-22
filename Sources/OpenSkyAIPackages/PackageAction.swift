@@ -50,6 +50,10 @@ nonisolated public struct PackageSenses: Equatable, Sendable {
     public let watched: SIMD3<Float>?
     /// How the watched reference moves, so a follower can sprint or sneak with it.
     public let watchedGait: LocomotionGait?
+    /// Where the other followers of the same reference stand, and the room a follower
+    /// keeps from them (`fFollowSpaceBetweenFollowers`).
+    public var fellows: [SIMD3<Float>] = []
+    public var followerSpacing: Float = 0
 
     public init(
         actor: SIMD3<Float>, watched: SIMD3<Float>?, watchedGait: LocomotionGait? = nil

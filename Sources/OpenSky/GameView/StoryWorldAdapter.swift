@@ -19,6 +19,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyPerception
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
@@ -38,6 +39,7 @@ protocol StoryWorldHost: AnyObject {
     var audioFileSystem: (any GameFileSource)? { get }
     var combat: CombatCoordinator { get }
     var crime: CrimeCoordinator { get }
+    var perception: PerceptionCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var effectsWorld: EffectsWorldAdapter { get }
@@ -73,6 +75,10 @@ final class StoryWorldAdapter {
     private var voiceTimer: SceneVoiceTimer?
     /// Voice file paths for scene and menu lines. Nil without game data.
     private var voiceLocator: VoiceLineLocator?
+    /// Lines waiting out `fSpeechDelay`, and the ambient speech pass's frame count.
+    var delayedLines: [DelayedLine] = []
+    var framesSinceAmbientSpeech = 0
+    var lastAmbientSpeechSeconds: Double?
 
     /// Scene playback over the dialogue runtime.
     lazy var scenes = SceneCoordinator(dialogue: game.dialogue, world: self)
@@ -139,6 +145,7 @@ final class StoryWorldAdapter {
         }
         gameSession.worldTick.register(.story) { [weak self] _ in
             self?.voiceTimer?.drain()
+            self?.tickAmbientSpeech()
             self?.run(self?.scenes.tick() ?? [])
             self?.run(self?.storyManager.social.tick() ?? [])
             self?.checkPlayerLocation()
@@ -299,10 +306,13 @@ extension StoryWorldAdapter: SceneWorld {
     /// The line's seconds plus `fGameplayVoiceFilePadding`, the gap before the next line.
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
         let texts = responseTexts(of: info)
+        let speech = game.dialogue.speechTimers
         let seconds = voiceTimer.map {
-            $0.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
-        } ?? SceneCore.lineDuration(texts: texts)
-        return seconds.map(game.dialogue.speechTimers.padded)
+            $0.duration(
+                of: info, voiceType: voiceTypeName(of: speaker), texts: texts, speech: speech
+            )
+        } ?? SceneCore.lineDuration(texts: texts, speech: speech)
+        return seconds.map { speech.padded($0) + max(speech.speechDelay, 0) }
     }
 
     /// A shared INFO (`DNAM`) says its target's text.
@@ -354,8 +364,21 @@ extension StoryWorldAdapter: SceneWorld {
         speak(info: id, speaker: speaker, lookAt: .player, seconds: seconds)
     }
 
-    /// Voices, subtitles, and shows one dialogue line, as a scene or a Say procedure does.
+    /// Voices, subtitles, and shows one dialogue line, as a scene or a Say procedure does,
+    /// after the `fSpeechDelay` pause.
     func speak(info id: FormID, speaker: ReferenceKey, lookAt: ReferenceKey?, seconds: Float) {
+        let delay = Double(max(game.dialogue.speechTimers.speechDelay, 0))
+        guard delay > 0 else {
+            startLine(info: id, speaker: speaker, lookAt: lookAt, seconds: seconds)
+            return
+        }
+        delayedLines.append(DelayedLine(
+            due: sceneSeconds + delay, info: id, speaker: speaker, lookAt: lookAt,
+            seconds: max(seconds - Float(delay), 0)
+        ))
+    }
+
+    func startLine(info id: FormID, speaker: ReferenceKey, lookAt: ReferenceKey?, seconds: Float) {
         guard game.dialogueWorld.headPosition(of: speaker) != nil else { return }
         game.audio.speak(voicePaths(of: id, speaker: speaker), speaker: speaker)
         let info = game.dialogue.runtime?.dialogue.info(id)

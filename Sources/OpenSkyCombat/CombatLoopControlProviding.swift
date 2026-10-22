@@ -148,6 +148,10 @@ public protocol CombatLoopControlProviding: AnyObject {
     /// Whether Confidence decides fleeing and Assistance brings allies in. On by default.
     var usesCombatTemperament: Bool { get set }
 
+    /// Whether new fights use the game's advance, range, healing, shout, and flight
+    /// settings. On by default.
+    var appliesCombatGameSettings: Bool { get set }
+
     /// Empties the incoming-hit trace and its count, without disturbing the
     /// fight.
     func clearCombatTrace()

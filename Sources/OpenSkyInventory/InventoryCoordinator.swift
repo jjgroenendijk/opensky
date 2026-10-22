@@ -202,6 +202,24 @@ public final class InventoryCoordinator {
         }
     }
 
+    /// A dead actor's drawn weapon falls to `placement`, out of its inventory.
+    /// - Returns: the item dropped, or nil when the actor holds no drawn weapon.
+    @discardableResult
+    public func dropWeapon(of holder: InventoryHolder, at placement: DropPlacement) -> FormID? {
+        guard
+            let runtime, let equipment,
+            let weapon = equipment.equipped(on: holder).first(where: { item in
+                equipment.catalog.item(item)?.animationType != nil
+                    && equipment.catalog.item(item)?.occupancy.hands.contains(.rightHand) == true
+            }),
+            (try? runtime.drop(weapon, count: 1, from: holder, at: placement)) != nil
+        else { return nil }
+        storyEvents?.reportStoryEvent(.removeItem(
+            weapon, reference: nil, owner: nil, how: .dropped
+        ))
+        return weapon
+    }
+
     // MARK: - Names
 
     public func name(of item: FormID) -> String {

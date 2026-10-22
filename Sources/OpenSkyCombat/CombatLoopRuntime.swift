@@ -47,6 +47,9 @@ public final class CombatLoopRuntime: CombatControlling {
     public var staggers = StaggerSettings.vanilla
     /// Flee distances and the ally follow radius.
     public var combatAI = CombatAISettings.vanilla
+    /// Whether the advance, range, healing, shout, and flight settings reach the machines.
+    /// Off keeps OpenSky's own numbers, which the older behaviour tests pin.
+    public var applyingGameSettings = false
     /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
     var staggerRandom = ConditionRandom()
 
@@ -282,9 +285,12 @@ public final class CombatLoopRuntime: CombatControlling {
 
     /// A new machine for `key`, with its combat style folded into the settings.
     public func makeMachine(for key: ReferenceKey) -> CombatBehaviorMachine {
-        CombatBehaviorMachine(
+        let tuning = styleTuning(of: key)
+        let tuned = behaviorSettings.tuned(by: tuning)
+        return CombatBehaviorMachine(
             settings: combatAI.applyingFlee(
-                to: behaviorSettings.tuned(by: styleTuning(of: key)),
+                to: applyingGameSettings ? combatAI
+                    .applyingRanges(to: tuned, tuning: tuning) : tuned,
                 interior: world?.combatInInterior ?? false
             ),
             seed: CombatBehaviorMachine.seed(for: key)

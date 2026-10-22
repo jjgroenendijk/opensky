@@ -9,11 +9,14 @@ import MetalKit
 import OpenSkyShaderTypes
 import simd
 
-/// What a membrane covers: the player's body or one placed actor.
+/// What a membrane covers: the player's body or one placed actor, or only the
+/// unskinned meshes, such as a held weapon, of either.
 nonisolated public enum MembraneTarget: Hashable, Sendable {
     case player
     /// The `ACHR` FormID the actor's placements carry as `RenderPlacement.owner`.
     case actor(UInt32)
+    case playerWeapon
+    case actorWeapon(UInt32)
 }
 
 /// One membrane overlay for one frame. Colors are linear and already scaled by alpha.
@@ -77,6 +80,8 @@ public final class EffectLayer {
     let decalPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
     let uniformBuffer: MTLBuffer
+    /// Screen blood quads (`ScreenBlood.swift`).
+    public let screenBlood: ScreenBloodLayer
 
     init(
         device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache
@@ -97,6 +102,9 @@ public final class EffectLayer {
         decalPipeline = try Self.makeDecalPipeline(
             library: library, compiler: compiler, view: view
         )
+        screenBlood = try ScreenBloodLayer(
+            device: device, library: library, view: view, compiler: compiler
+        )
         menuScene = try MenuSceneResources(
             device: device, library: library, view: view, compiler: compiler
         )
@@ -116,6 +124,11 @@ public final class EffectLayer {
         else { throw RendererError.bufferAllocationFailed }
         buffer.label = "MembraneUniforms"
         uniformBuffer = buffer
+    }
+
+    /// The buffers that stay resident for the renderer's life.
+    var residentBuffers: [MTLAllocation] {
+        [uniformBuffer, screenBlood.vertexBuffer]
     }
 
     /// Blends over the surface by the decal's alpha.

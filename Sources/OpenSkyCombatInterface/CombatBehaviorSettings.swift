@@ -89,6 +89,29 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// short enough that a hidden player is not pinned in place by it.
     public var searchSeconds: Float = 8
 
+    /// Inside this distance an approach walks instead of running. 0 always runs.
+    public var walkRadius: Float = 0
+    /// A caster closer than this backs off before it casts from range. 0 never backs off.
+    public var backOffRadius: Float = 0
+    /// How long a caster may back off before it casts anyway. Ours.
+    public var backOffSeconds: Float = 2
+    /// A fighter in reach keeps waiting for its next swing until the target is farther
+    /// than its striking distance times this.
+    public var weaponRangeHoldMult: Float = 1
+    /// An actor that chose to close in casts anyway past its striking distance times this.
+    public var weaponAbsoluteRangeMult: Float = .infinity
+    /// No spell is cast at a target farther than this.
+    public var spellRangeCap: Float = .infinity
+    /// Below this health fraction an actor casts a healing spell on itself. 0 never heals.
+    public var restoreHealthFraction: Float = 0
+    /// A shout aims at least this long and releases only within this angle, in radians.
+    /// A shout that missed its aim waits the retry time.
+    public var shoutAimSeconds: Float = 2
+    public var shoutToleranceRadians: Float = 5 * .pi / 180
+    public var shoutRetrySeconds: Float = 4
+    /// The stage times of a flying actor.
+    public var flight = CombatFlightSettings()
+
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()
 
@@ -108,4 +131,16 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
         concentrationSeconds: 0.15,
         searchSeconds: 0.8
     )
+}
+
+/// How long a flying actor spends in each stage of its fight, and how far it circles.
+nonisolated public struct CombatFlightSettings: Equatable, Sendable {
+    public var orbitDistance: Float = 4000
+    public var groundSeconds: Float = 12.5
+    public var airSeconds: Float = 5.5
+    public var perchSeconds: Float = 4
+    /// The chance, 0 to 1, that an air stage ends on a perch instead of the ground.
+    public var perchChance: Float = 0.5
+
+    public init() {}
 }

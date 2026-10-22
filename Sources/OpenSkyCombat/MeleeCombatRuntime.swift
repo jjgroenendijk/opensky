@@ -306,7 +306,8 @@ public final class MeleeCombatRuntime {
             target: hit.target,
             aggressor: world.meleeAttacker.key,
             source: weapon.weapon,
-            isBlocked: damage.wasBlocked
+            isBlocked: damage.wasBlocked,
+            damage: landed ? damage.applied : 0
         ))
         let staggered = stagger(hit.target, damage: damage, world: world)
         // A swing only strikes actors; the race's impact material picks the entry.
@@ -316,6 +317,8 @@ public final class MeleeCombatRuntime {
         impact?.target = hit.target
         if let impact {
             world.playMeleeImpact(impact, at: hit.position)
+        } else {
+            world.showDefaultBlood(on: hit.target, at: hit.position, melee: true)
         }
         let record = MeleeHitRecord(
             target: hit.target,

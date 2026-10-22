@@ -183,7 +183,10 @@ nonisolated extension PackageProcedureMachine {
         let distance = simd_distance(senses.actor, target)
         switch kind {
         case .follow, .followTo:
-            return follow(target, distance: distance, targetGait: senses.watchedGait)
+            let goal = FollowSettings.spacedGoal(
+                target, fellows: senses.fellows, spacing: senses.followerSpacing
+            )
+            return follow(goal, distance: distance, targetGait: senses.watchedGait)
         case .escort:
             return escort(distance: distance)
         case .flee where setup.flag:
@@ -197,9 +200,9 @@ nonisolated extension PackageProcedureMachine {
         }
     }
 
-    /// Walks to the target when it is farther than the maximum radius, and walks again
-    /// once it moved on or changed gait. It sneaks while the target sneaks, and sprints
-    /// while the target sprints or is far ahead.
+    /// Walks to the target, kept apart from the other followers, when it is farther than
+    /// the maximum radius, and walks again once it moved on or changed gait. It sneaks
+    /// while the target sneaks, and sprints while the target sprints or is far ahead.
     private mutating func follow(
         _ target: SIMD3<Float>, distance: Float, targetGait: LocomotionGait?
     ) -> [PackageProcedureCommand] {

@@ -60,6 +60,12 @@ public protocol ImpactControlProviding: AnyObject {
     @discardableResult
     func repeatLastImpact() -> Bool
     var impactSnapshot: ImpactSnapshot { get }
+    /// The graphics option: a hit on the player splashes blood on the screen.
+    var screenBloodEnabled: Bool { get set }
+    /// Splashes the blood of a hit of `damage`, as if the player was struck.
+    @discardableResult
+    func splatterScreenBlood(damage: Float) -> Int
+    var bloodText: String { get }
 }
 
 nonisolated public struct ImpactSnapshot: Equatable, Sendable {

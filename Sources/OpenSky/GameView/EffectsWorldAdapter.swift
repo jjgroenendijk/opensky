@@ -31,6 +31,7 @@ protocol EffectsWorldHost: AnyObject {
     var hazardWorld: HazardWorldAdapter { get }
     var hazards: HazardCoordinator { get }
     var magic: MagicCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -77,6 +78,7 @@ final class EffectsWorldAdapter {
         game.magic.onSpellHit = { [weak self, weak gameSession] event in
             guard let self, let gameSession else { return }
             effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
+            noteSpellHit(event.hit)
             playHitSounds(of: event, director: gameSession.soundDirector)
         }
         let frameSteps = gameSession.frameSteps
@@ -84,6 +86,21 @@ final class EffectsWorldAdapter {
             guard let self, let gameSession else { return }
             cameraPosition = position
             tick(gameSession: gameSession, streamer: streamer)
+        }
+    }
+
+    /// A hostile spell's push on a body it kills: the sum of its magnitudes as the
+    /// damage, from where it landed. OpenSky's reading (docs/engine/ragdoll.md).
+    private func noteSpellHit(_ hit: SpellHit) {
+        guard hit.payload.isHostile else { return }
+        let damage = hit.payload.entries.reduce(0) { $0 + max($1.magnitude, 0) }
+        for target in hit.targets {
+            game.ragdoll.noteHit(
+                CombatHitRecord(
+                    damage: damage, kind: .spell, attacker: hit.payload.caster, origin: hit.impact
+                ),
+                on: target.key
+            )
         }
     }
 

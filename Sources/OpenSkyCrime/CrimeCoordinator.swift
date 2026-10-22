@@ -258,6 +258,9 @@ public final class CrimeCoordinator {
         case let .warn(remaining):
             lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
             pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
+            if let witness = reporter.witnesses.witnesses(of: .player).first {
+                pendingCommands.append(.speakTrespassWarning(by: witness))
+            }
         case .charge:
             reportTrespass(in: location)
         }

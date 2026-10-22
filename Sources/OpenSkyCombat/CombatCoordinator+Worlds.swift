@@ -118,7 +118,11 @@ extension CombatCoordinator: MeleeCombatWorld {
     /// The player's own swing: the melee runtime only ever swings for the player.
     @discardableResult
     public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: meleeAttacker.key)
+        let standingPower = melee?.strikeKind == .power && melee?.powerDirection == .inPlace
+        let severs = standingPower && melee.map { canSever(handType: $0.weapon.handType) } == true
+        return applyHealthDamage(
+            amount, to: target, attacker: meleeAttacker.key, kind: .melee, canSever: severs
+        )
     }
 
     /// Every weapon, arrow, and explosion hit passes here, so difficulty scales
@@ -126,7 +130,11 @@ extension CombatCoordinator: MeleeCombatWorld {
     /// actor deals and takes none.
     @discardableResult
     public func applyHealthDamage(
-        _ amount: Float, to target: ReferenceKey, attacker: ReferenceKey?
+        _ amount: Float,
+        to target: ReferenceKey,
+        attacker: ReferenceKey?,
+        kind: CombatHitKind = .other,
+        canSever: Bool = false
     ) -> Bool {
         guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
         else { return false }
@@ -138,7 +146,30 @@ extension CombatCoordinator: MeleeCombatWorld {
         if landed, attacker == .player, target != .player {
             playerStruckTarget = target
         }
+        if landed {
+            let hit = CombatHitRecord(
+                damage: scaled, kind: kind, attacker: attacker, canSever: canSever
+            )
+            world.recordHealthHit(hit, on: target)
+            if kind != .other {
+                pendingCommands.append(.drewBlood(hit, target: target))
+            }
+        }
         return landed
+    }
+
+    /// UESP "Skyrim:One-handed" and "Skyrim:Two-handed": Savage Strike and Devastating
+    /// Blow let a standing power attack decapitate. Maces and warhammers count, as in
+    /// the unpatched game.
+    func canSever(handType: CombatHandType, attacker: ReferenceKey = .player) -> Bool {
+        switch handType {
+        case .sword, .dagger, .axe, .mace:
+            world.ownsPerk(editorID: "SavageStrike", on: attacker)
+        case .greatsword, .battleaxe:
+            world.ownsPerk(editorID: "DevastatingBlow", on: attacker)
+        default:
+            false
+        }
     }
 
     private func isEthereal(_ key: ReferenceKey) -> Bool {
@@ -147,6 +178,10 @@ extension CombatCoordinator: MeleeCombatWorld {
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         pendingCommands.append(.playImpact(impact, at: position))
+    }
+
+    public func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool) {
+        pendingCommands.append(.showDefaultBlood(on: target, at: position, melee: melee))
     }
 
     public func impactMaterial(of target: ReferenceKey) -> FormID? {
@@ -179,7 +214,9 @@ extension CombatCoordinator: ProjectileWorld {
         )
         let strike = strike(blow, on: target)
         reportSneakAttack(strike, ranged: true)
-        let landed = applyHealthDamage(strike.damage(base: amount), to: target, attacker: shooter)
+        let landed = applyHealthDamage(
+            strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged
+        )
         if landed {
             applyPerkHitSpell(blow, on: target)
         }

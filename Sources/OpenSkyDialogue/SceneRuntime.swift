@@ -48,6 +48,8 @@ nonisolated public enum ScenePackageState: Equatable, Sendable {
 @MainActor
 public final class ScenePendingLines {
     var lines: [ScenePackageOwner: SceneLine] = [:]
+    /// When each repeating scene may play again, in scene seconds.
+    var repeatsAt: [FormID: Double] = [:]
 
     public init() {}
 
@@ -68,6 +70,9 @@ public struct SceneRuntime {
     public var now: Double
     /// The pause after a looping line, between the action's minimum and maximum. Tests fix it.
     public var loopPause: @MainActor (ClosedRange<Float>) -> Float = { Float.random(in: $0) }
+    /// `fRandomSceneAgainMinTime` to `...MaxTime`: the wait before a scene flagged
+    /// "Repeat while true" plays again. Drawn through `loopPause`.
+    public var repeatPause: ClosedRange<Float> = 10 ... 30
 
     public init(
         catalog: SceneCatalog,

@@ -7,8 +7,10 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -28,6 +30,7 @@ extension MagicWorldAdapter {
             case let .castingSound(sound, caster, starts):
                 castingSound(sound, caster: caster, starts: starts)
             case let .notice(text): game.hud.showNotification(text)
+            case .playerShouted: game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
             case let .castingArt(art, plugin, caster, starts):
                 game.effectsWorld.effects
                     .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)

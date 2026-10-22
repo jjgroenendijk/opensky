@@ -41,6 +41,7 @@ protocol MagicWorldHost: AnyObject {
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var perks: PerkCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }

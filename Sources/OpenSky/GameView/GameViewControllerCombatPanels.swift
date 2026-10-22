@@ -80,6 +80,11 @@ extension GameViewController: CombatLoopControlProviding {
         set { playerSettingsStore.set(.combatTemperament, to: newValue ? 1 : 0) }
     }
 
+    var appliesCombatGameSettings: Bool {
+        get { combat.appliesCombatGameSettings }
+        set { playerSettingsStore.set(.combatGameSettings, to: newValue ? 1 : 0) }
+    }
+
     func clearCombatTrace() {
         combat.clearCombatTrace()
     }
@@ -167,5 +172,14 @@ extension GameViewController: RagdollControlProviding {
 
     func clearRagdolls() {
         ragdollWorld.run(ragdoll.clearRagdolls())
+    }
+
+    @discardableResult
+    func dismemberSelectedActor() -> Bool {
+        ragdoll.dismemberSelected()
+    }
+
+    var deathEffectsText: String {
+        ragdoll.deathSettings.readout + "\n" + ragdoll.deathEffects.readout
     }
 }

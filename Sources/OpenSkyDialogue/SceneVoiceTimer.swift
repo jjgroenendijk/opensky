@@ -29,11 +29,14 @@ public final class SceneVoiceTimer {
 
     /// Seconds for the whole line, or nil while a voice file loads. `texts` holds
     /// one resolved text per response, for the responses with no voice file.
-    public func duration(of info: TopicInfo, voiceType: String?, texts: [String?]) -> Float? {
-        guard let voiceType else { return SceneCore.lineDuration(texts: texts) }
+    public func duration(
+        of info: TopicInfo, voiceType: String?, texts: [String?],
+        speech: SpeechTimerSettings = .vanilla
+    ) -> Float? {
+        guard let voiceType else { return SceneCore.lineDuration(texts: texts, speech: speech) }
         let lines = locator.lines(info: info, voiceType: voiceType)
         guard !lines.isEmpty, lines.count == texts.count else {
-            return SceneCore.lineDuration(texts: texts)
+            return SceneCore.lineDuration(texts: texts, speech: speech)
         }
         var total: Float = 0
         var isLoading = false
@@ -41,7 +44,7 @@ public final class SceneVoiceTimer {
             switch loader.state(of: line.path) {
             case .loading: isLoading = true
             case let .ready(seconds): total += seconds
-            case .failed: total += SceneCore.lineDuration(texts: [text])
+            case .failed: total += SceneCore.lineDuration(texts: [text], speech: speech)
             }
         }
         return isLoading ? nil : total

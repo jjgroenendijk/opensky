@@ -14,6 +14,7 @@ import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -86,6 +87,10 @@ final class CombatWorldAdapter {
         combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
         combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
         combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
+        game.ragdoll.deathSettings = DeathSettings.resolve(store: provider.gameSettings)
+        game.effects.applyBloodSettings(BloodEffectSettings.resolve(
+            store: provider.gameSettings
+        ) { [game] in game.mapWorld.text($0) })
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
@@ -147,7 +152,7 @@ final class CombatWorldAdapter {
         combat.load(settings: store)
         // The launcher page writes the switch while a session runs.
         store.observe { [weak combat, weak store] id in
-            guard id == .combatTemperament, let store else { return }
+            guard id == .combatTemperament || id == .combatGameSettings, let store else { return }
             combat?.load(settings: store)
         }
         gameSession.worldTick.register(.combatLoop) { [weak combat, weak self] delta in
@@ -167,6 +172,11 @@ final class CombatWorldAdapter {
             case let .removeReference(key): game.worldState.reset(key)
             case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
+            case let .playerAttackedOutsideCombat(use):
+                game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
+            case let .drewBlood(hit, target): drewBlood(hit, target: target)
+            case let .showDefaultBlood(target, position, melee):
+                showDefaultBlood(on: target, at: position, melee: melee)
             }
         }
     }

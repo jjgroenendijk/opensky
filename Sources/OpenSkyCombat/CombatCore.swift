@@ -51,6 +51,8 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
     public let isHostile: Bool
     /// Its ETYP lets the cast hand ready it.
     public let fitsHand: Bool
+    /// An effect raises the target's Health: a restore or a heal over time.
+    public let restoresHealth: Bool
 
     public init(
         option: CombatSpellOption,
@@ -58,7 +60,8 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
         targetsSelf: Bool,
         isDeliverable: Bool,
         isHostile: Bool,
-        fitsHand: Bool
+        fitsHand: Bool,
+        restoresHealth: Bool = false
     ) {
         self.option = option
         self.isSpell = isSpell
@@ -66,6 +69,7 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
         self.isDeliverable = isDeliverable
         self.isHostile = isHostile
         self.fitsHand = fitsHand
+        self.restoresHealth = restoresHealth
     }
 }
 
@@ -157,10 +161,28 @@ nonisolated public enum CombatCore {
         return candidate.option
     }
 
+    /// Nil unless the spell is a deliverable, hand-cast heal the caster aims at itself
+    /// (docs/engine/combat-behavior.md#game-settings).
+    public static func healOption(_ candidate: CombatSpellCandidate) -> CombatSpellOption? {
+        guard
+            candidate.isSpell,
+            candidate.targetsSelf,
+            candidate.isDeliverable,
+            !candidate.isHostile,
+            candidate.restoresHealth,
+            candidate.fitsHand
+        else { return nil }
+        var option = candidate.option
+        option.purpose = .heal
+        return option
+    }
+
     public static func castingProfile(_ facts: CombatCastingFacts) -> CombatCastingProfile {
         CombatCastingProfile(
             magicka: facts.magicka,
-            options: facts.spells.compactMap(spellOption).sorted { $0.spell < $1.spell }
+            options: facts.spells.compactMap(spellOption).sorted { $0.spell < $1.spell },
+            heals: facts.spells.compactMap(healOption).sorted { $0.spell < $1.spell },
+            shouts: facts.shouts.sorted { $0.spell < $1.spell }
         )
     }
 

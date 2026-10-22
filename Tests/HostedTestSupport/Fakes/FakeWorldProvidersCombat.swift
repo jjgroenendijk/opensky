@@ -192,6 +192,7 @@ struct FakeCombatLoopState {
     /// Whether fighters may cast. On, matching the app.
     var allowsCasting = true
     var usesTemperament = true
+    var appliesGameSettings = true
 }
 
 extension FakeWorldProviders {
@@ -212,6 +213,11 @@ extension FakeWorldProviders {
     var usesCombatTemperament: Bool {
         get { combatLoop.usesTemperament }
         set { combatLoop.usesTemperament = newValue }
+    }
+
+    var appliesCombatGameSettings: Bool {
+        get { combatLoop.appliesGameSettings }
+        set { combatLoop.appliesGameSettings = newValue }
     }
 
     func clearCombatTrace() {

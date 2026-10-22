@@ -232,26 +232,52 @@ decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 
 Some lines an NPC says on its own, outside a conversation. Game settings from the install hold
 them back. The CK wiki "Category:Settings" (<https://ck.uesp.net/wiki/Category:Settings>)
-describes the first two; how the others apply is OpenSky's reading of their names.
+describes the first three; how the others apply is OpenSky's reading of their names.
 
 | Setting | Install | Use |
 | --- | --- | --- |
 | `fGameplayVoiceFilePadding` | 0.5 s | "seconds of silence that Skyrim inserts between consecutive voice lines": added to every line's length. The wiki lists 0.25, the engine default; `Skyrim.esm` sets 0.5 |
 | `fAIForceGreetingTimer` | 3 s | "Time until an NPC can initialize a force greeting again": a package's force greet waits this long per speaker |
-| `fCombatDialogueAttackMinElapsedTime`, `...Max...` | 5 s, 10 s | After a combat line, the speaker's next one of that kind waits a seeded time in this window |
+| `fAIGreetingTimer` | 5 s | "Time until an NPC can greet again": one speaker's next hello (`HELO`) |
+| `fAIExclusiveGreetingTimer` | 2.5 s | After any hello, no other NPC greets for this long |
+| `fAIMinGreetingDistance` | 150 | A hello needs the player this close. Not in `Skyrim.esm`; the wiki value |
+| `fCombatDialogueAttackMinElapsedTime`, `...Max...` | 5 s, 10 s | After an attack or hit line, the speaker's next one of that kind waits a seeded time in this window |
+| `fCombatDialogueTauntMinElapsedTime`, `...Max...` | 10 s, 30 s | The same window for taunts (`TAUT`) |
 | `fCombatSpeakAttackChance` | 0.01 | The chance an NPC's landed blow speaks an `ATCK` line |
 | `fCombatSpeakHitChance` | 0.01 | The chance an NPC hit by a blow speaks a `HIT_` line |
+| `fCombatSpeakHitThreshold` | 0.01 | A blow or arrow speaks a hit line only when its damage is at least this share of the target's maximum health. A spell hit carries no damage, so it always may |
+| `fCombatSpeakTauntChance` | 0.01 | Read as a chance per 1/60 s, so a fighter taunts about once every 1.7 s of open window. Not in `Skyrim.esm`; the wiki value |
+| `fIdleChatterCommentTimer`, `...Max` | 10 s, 20 s | After one NPC near the player says an idle line (`IDLE`), every NPC waits a seeded time in this window |
+| `fCommentOnPlayerActionsTimer` | 20 s | After a comment on the player, no NPC comments on the same kind of act for this long |
+| `fCommentOnPlayerKnockingThings` | 40 s | The same, for the player pushing a loose object (`KNOO`) |
+| `fBumpReactionSmallWaitTimer` | 3 s | One speaker's next bump line (`ACAC`); the bump rule is in [bump reactions](/engine/bump-reactions.md) |
+| `fSpeechDelay` | 0.1 s | A line said outside a conversation starts this long after it is chosen |
+| `fDialogSpeechDelaySeconds`, `fSubtitleSpeechDelay` | 2 s, 8 s | A line with no voice file stays up for its reading time, kept inside this window |
+| `fRandomSceneAgainMinTime`, `...MaxTime` | 10 s, 30 s | The wait before a scene flagged "Repeat while true" plays again ([scenes](/engine/scenes.md)) |
 
-A combat line is picked from the topics of its `DIAL` subtype, as the speaker's conditions allow,
-and is voiced without turning the speaker's head. The clock is the scene clock: game seconds over
-the timescale. The Dialogue section of the sidebar shows the values.
+`fCombatSpeakTauntChance` and `fAIMinGreetingDistance` are the CK wiki table values; the
+wiki's Scenes category also gives 150 units for the greeting distance
+(<https://ck.uesp.net/wiki/Category:Scenes>).
 
-These timers have no system to hold back yet, so OpenSky does not read them: taunts
-(`fCombatDialogueTaunt*`), idle chatter (`fIdleChatterCommentTimer*`), comments on the player
-(`fCommentOnPlayer*`), bump reactions (`fBumpReaction*`), random scenes (`fRandomSceneAgain*`), the
-hello greeting (`fAIGreetingTimer`, `fAIExclusiveGreetingTimer`), and the speech delays
-(`fSpeechDelay`, `fSubtitleSpeechDelay`, `fDialogSpeechDelaySeconds`). `fCombatSpeakHitThreshold`
-needs the damage of a hit, which the hit event does not carry.
+A line is picked from the topics of its `DIAL` subtype, as the speaker's conditions allow. The
+clock is the scene clock: game seconds over the timescale. The Dialogue section of the sidebar
+shows the values.
+
+Who speaks:
+
+- A hello comes from the nearest NPC that detects the player inside the greeting distance, is not
+  fighting, not in a scene or the conversation, and whose package allows hellos (`PKDT` interrupt
+  flag 0x01). It looks at the player.
+- An idle line comes from a free NPC within 1000 units of the player, in a seeded order. The
+  distance is OpenSky's; no setting names it. No hello and no idle line plays while the player is
+  in a conversation.
+- A taunt comes from any fighting NPC that is free, with no head turn.
+- A comment on the player comes from the nearest free NPC within 1000 units that detects the
+  player. The acts that start one: a shout (`PCSH`), a melee swing out of combat (`SWMW`), a bow
+  shot out of combat (`FIWE`), and pushing a loose object (`KNOO`).
+
+The ambient pass runs every 15 frames. A line chosen while the delay of `fSpeechDelay` runs is
+queued; the queue is not saved.
 
 ## Not done yet
 

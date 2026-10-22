@@ -145,9 +145,12 @@ final class AIWorldAdapter {
         game.packages.guardWarnings = GuardWarningSettings.resolve(store: provider.gameSettings)
         game.packages.wire(store: store)
         game.packages.sandboxSettings = SandboxSettings.resolve(store: provider.gameSettings)
+        game.packages.bumpSettings = BumpReactionSettings.resolve(store: provider.gameSettings)
+        game.packages.followSettings = FollowSettings.resolve(store: provider.gameSettings)
         let packages = game.packages
-        gameSession.worldTick.register(.packages) { [weak packages] delta in
+        gameSession.worldTick.register(.packages) { [weak self, weak packages] delta in
             packages?.advance(by: Float(delta))
+            self?.advanceBumps()
         }
     }
 
@@ -300,8 +303,10 @@ extension AIWorldAdapter {
         if actor == .player {
             return walkPlayer(to: point, direct: direct) ? .started : .failed
         }
-        let result = game.streamer?.moveActor(actor, to: point, direct: direct, gait: gait)
-            ?? .actorNotResident
+        let result = game.streamer?.moveActor(
+            actor, to: point, direct: direct, gait: gait,
+            runSlowdown: game.packages.followRunSlowdown(for: actor)
+        ) ?? .actorNotResident
         game.packages.recordMove(result, for: actor)
         switch result {
         case .started: return .started

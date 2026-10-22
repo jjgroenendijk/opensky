@@ -372,8 +372,8 @@ public final class Renderer: NSObject {
                 shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
                 uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
                 swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
-                imageSpacePass.luminanceBuffer, effects.uniformBuffer, blackCube
-            ]
+                imageSpacePass.luminanceBuffer, blackCube
+            ] + effects.residentBuffers
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)

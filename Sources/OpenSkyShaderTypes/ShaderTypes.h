@@ -124,6 +124,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// The FaceGen tint or the multi-layer inner layer.
     TextureIndexSurfaceLayer = 6,
     TextureIndexSurfaceBackLight = 7,
+    /// Screen blood: the splatter colour and its alpha mask, or the flare alone.
+    TextureIndexScreenBloodColor = 0,
+    TextureIndexScreenBloodAlpha = 1,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers

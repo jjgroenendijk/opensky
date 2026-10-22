@@ -33,14 +33,55 @@ nonisolated extension CombatBehaviorInputs {
         return healthFraction.isFinite && healthFraction <= settings.fleeHealthFraction
     }
 
+    /// The distance a fighter in reach keeps waiting at before it closes again.
+    public func holdDistance(settings: CombatBehaviorSettings) -> Float {
+        strikingDistance(settings: settings) * max(1, settings.weaponRangeHoldMult)
+    }
+
     /// The spell this actor would cast now: the costliest it can afford and reach, ties
     /// by spell order. Cost stands in for strength, because no record ranks spells.
     /// Nil when nothing qualifies.
-    public var castableSpell: CombatSpellOption? {
-        casting.options
-            .filter { $0.cost <= casting.magicka && distance <= $0.range }
-            .sorted { ($0.cost, $1.spell) > ($1.cost, $0.spell) }
-            .first
+    public func castableSpell(settings: CombatBehaviorSettings) -> CombatSpellOption? {
+        Self.costliest(casting.options.filter {
+            $0.cost <= casting.magicka && distance <= min($0.range, settings.spellRangeCap)
+        })
+    }
+
+    /// The healing spell an actor below its heal threshold casts on itself, or nil.
+    public func healSpell(settings: CombatBehaviorSettings) -> CombatSpellOption? {
+        guard healthFraction.isFinite, healthFraction < settings.restoreHealthFraction
+        else { return nil }
+        return Self.costliest(casting.heals.filter { $0.cost <= casting.magicka })
+    }
+
+    /// The first shout that reaches the target, or nil.
+    public func shout(settings: CombatBehaviorSettings) -> CombatSpellOption? {
+        casting.shouts.first { distance <= min($0.range, settings.spellRangeCap) }
+    }
+
+    /// A point straight away from the target that is `radius` from it.
+    public func retreatPoint(to radius: Float) -> SIMD3<Float> {
+        actorPosition + awayFromTarget * max(0, radius - distance)
+    }
+
+    /// A point `radius` from the target, `step` radians further round than the actor.
+    public func orbitPoint(radius: Float, step: Float) -> SIMD3<Float> {
+        let away = awayFromTarget
+        let turned = SIMD3(
+            away.x * cos(step) - away.y * sin(step), away.x * sin(step) + away.y * cos(step), 0
+        )
+        return targetPosition + turned * max(0, radius)
+    }
+
+    private var awayFromTarget: SIMD3<Float> {
+        let offset = actorPosition - targetPosition
+        let planar = SIMD2(offset.x, offset.y)
+        let direction = simd_length(planar) > 0 ? simd_normalize(planar) : SIMD2<Float>(1, 0)
+        return SIMD3(direction.x, direction.y, 0)
+    }
+
+    private static func costliest(_ options: [CombatSpellOption]) -> CombatSpellOption? {
+        options.sorted { ($0.cost, $1.spell) > ($1.cost, $0.spell) }.first
     }
 
     /// A point `fleeDistance` away along target-to-actor, turned by `turn` radians. Turned,

@@ -24,6 +24,32 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
     /// than `combatDistance` times this from its leader walks back.
     public var followRadiusMult: Float = 3
     public var teammateFollowRadiusMult: Float = 3
+    /// `fCombatAdvanceInnerRadiusMin`, `...Mid`, `...Max`: how far a caster backs off before
+    /// it casts, picked by the style's defense.
+    public var advanceInnerRadius = CombatRadii(low: 0, mid: 0, high: 256)
+    /// `fCombatAdvanceOuterRadiusMin`, `...Mid`, `...Max`: inside this an approach walks,
+    /// picked by the style's offense.
+    public var advanceOuterRadius = CombatRadii(low: 128, mid: 256, high: 512)
+    /// `fCombatAbsoluteMaxRangeMult`: past reach times this, a weapon is out of range.
+    public var absoluteMaxRangeMult: Float = 4
+    /// `fCombatCurrentWeaponAbsoluteMaxRangeMult`: the weapon in use keeps to reach times this.
+    public var currentWeaponAbsoluteMaxRangeMult: Float = 1.25
+    /// `fAIUseWeaponDistance`: no ranged attack starts farther than this.
+    public var useWeaponDistance: Float = 15000
+    /// `iAICombatRestoreHealthPercentage`: an NPC heals itself below this share of health.
+    public var restoreHealthPercentage = 60
+    /// `fAIShoutMinAimSeconds`, `fAIShoutToleranceDegrees`, `fAIShoutRetryDelaySeconds`.
+    public var shoutMinAimSeconds: Float = 2
+    public var shoutToleranceDegrees: Float = 5
+    public var shoutRetryDelaySeconds: Float = 4
+    /// `fCombatOrbitDistance`: how far a flying actor circles from its target.
+    public var orbitDistance: Float = 4000
+    /// `fCombatHoverTimeMin`, `fCombatPerchAttackTimeMin`, `fCombatGroundAttackTimeMin`,
+    /// `...Max`: the times of a flying actor's air, perch, and ground stages.
+    public var hoverTimeMin: Float = 5.5
+    public var perchAttackTimeMin: Float = 4
+    public var groundAttackTimeMin: Float = 8
+    public var groundAttackTimeMax: Float = 17
 
     public static let vanilla = Self()
 
@@ -41,6 +67,7 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
         store.read("fCombatDistance", into: &settings, \.combatDistance)
         store.read("fCombatFollowRadiusMult", into: &settings, \.followRadiusMult)
         store.read("fCombatTeammateFollowRadiusMult", into: &settings, \.teammateFollowRadiusMult)
+        settings.readRanges(store: store)
         return settings
     }
 
@@ -83,5 +110,55 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
         settings.fleeDistance = fleeDistance(interior: interior)
         settings.fleeBreakDistance = settings.fleeDistance + margin
         return settings
+    }
+}
+
+/// Three radii a combat style picks between: `low` at a multiplier of 0, `mid` at the
+/// neutral 0.5, and `high` at 1, blended in between.
+nonisolated public struct CombatRadii: Equatable, Sendable {
+    public var low: Float
+    public var mid: Float
+    public var high: Float
+
+    public init(low: Float, mid: Float, high: Float) {
+        self.low = low
+        self.mid = mid
+        self.high = high
+    }
+
+    /// The radius for a style multiplier, clamped to 0...1. Never negative.
+    public func radius(at level: Float) -> Float {
+        let level = level.isFinite ? min(max(level, 0), 1) : 0.5
+        let (from, to, blend) = level < 0.5 ? (low, mid, level * 2) : (mid, high, level * 2 - 1)
+        let radius = from + (to - from) * blend
+        return radius.isFinite ? max(radius, 0) : 0
+    }
+}
+
+nonisolated extension CombatAISettings {
+    mutating func readRanges(store: GameSettingStore) {
+        let ranges: [(String, WritableKeyPath<Self, Float>)] = [
+            ("fCombatAdvanceInnerRadiusMin", \.advanceInnerRadius.low),
+            ("fCombatAdvanceInnerRadiusMid", \.advanceInnerRadius.mid),
+            ("fCombatAdvanceInnerRadiusMax", \.advanceInnerRadius.high),
+            ("fCombatAdvanceOuterRadiusMin", \.advanceOuterRadius.low),
+            ("fCombatAdvanceOuterRadiusMid", \.advanceOuterRadius.mid),
+            ("fCombatAdvanceOuterRadiusMax", \.advanceOuterRadius.high),
+            ("fCombatAbsoluteMaxRangeMult", \.absoluteMaxRangeMult),
+            ("fCombatCurrentWeaponAbsoluteMaxRangeMult", \.currentWeaponAbsoluteMaxRangeMult),
+            ("fAIUseWeaponDistance", \.useWeaponDistance),
+            ("fAIShoutMinAimSeconds", \.shoutMinAimSeconds),
+            ("fAIShoutToleranceDegrees", \.shoutToleranceDegrees),
+            ("fAIShoutRetryDelaySeconds", \.shoutRetryDelaySeconds),
+            ("fCombatOrbitDistance", \.orbitDistance),
+            ("fCombatHoverTimeMin", \.hoverTimeMin),
+            ("fCombatPerchAttackTimeMin", \.perchAttackTimeMin),
+            ("fCombatGroundAttackTimeMin", \.groundAttackTimeMin),
+            ("fCombatGroundAttackTimeMax", \.groundAttackTimeMax)
+        ]
+        for (editorID, keyPath) in ranges {
+            store.read(editorID, into: &self, keyPath)
+        }
+        store.read("iAICombatRestoreHealthPercentage", into: &self, \.restoreHealthPercentage)
     }
 }

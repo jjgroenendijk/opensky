@@ -1,6 +1,7 @@
 // The NPC speech waits and chances from `SpeechTimerSettings`, and the per-speaker clock
 // that holds a line back until its wait has passed (docs/engine/dialogue.md#speech-timers).
 
+import Foundation
 import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -72,6 +73,69 @@ struct SpeechTimerTests {
 
     @Test func theReadoutNamesEachValue() {
         #expect(SpeechTimerSettings.vanilla.readout == "Speech timers: force greet 3.0 s · "
-            + "combat line 5.0-10.0 s · attack 1% · hit 1% · voice gap 0.50 s")
+            + "hello 5.0 s (gap 2.5 s) · combat line 5.0-10.0 s · taunt 10-30 s · "
+            + "attack 1% · hit 1% · taunt 1% · idle 10-20 s · comment 20 s · voice gap 0.50 s")
+    }
+
+    @Test func aHelloHoldsBackEveryOtherSpeakerForTheExclusiveGap() {
+        let settings = SpeechTimerSettings.vanilla
+        var clock = NPCSpeechClock()
+        clock.note(
+            .hello, speaker: guardKey, now: 0, wait: settings.wait(after: .hello, unit: 0),
+            sharedWait: settings.sharedWait(after: .hello, unit: 0)
+        )
+        #expect(!clock.isReady(.hello, speaker: bandit, now: 2))
+        #expect(clock.isReady(.hello, speaker: bandit, now: 2.5))
+        #expect(!clock.isReady(.hello, speaker: guardKey, now: 4.9))
+        #expect(clock.isReady(.hello, speaker: guardKey, now: 5))
+    }
+
+    @Test func idleChatterAndCommentsShareOneWait() {
+        let settings = SpeechTimerSettings.vanilla
+        #expect(settings.sharedWait(after: .idleChatter, unit: 1) == 20)
+        #expect(settings.sharedWait(after: .knockOver, unit: 0) == 40)
+        #expect(settings.sharedWait(after: .playerAction("PCSH"), unit: 0) == 20)
+        #expect(settings.sharedWait(after: .combatTaunt, unit: 0) == nil)
+        #expect(settings.sharedWait(after: .bump, unit: 0) == nil)
+    }
+
+    @Test func aSilentLineStaysInsideTheWindow() {
+        let settings = SpeechTimerSettings.vanilla
+        #expect(settings.silentLineSeconds(readingSeconds: 0.5) == 2)
+        #expect(settings.silentLineSeconds(readingSeconds: 5) == 5)
+        #expect(settings.silentLineSeconds(readingSeconds: 30) == 8)
+        #expect(settings.silentLineSeconds(readingSeconds: .nan) == 2)
+    }
+
+    @Test func theTauntChanceIsPerSixtiethOfASecond() {
+        let settings = SpeechTimerSettings.vanilla
+        #expect(settings.tauntChance(over: 0) == 0)
+        let oneSecond = settings.tauntChance(over: 1)
+        #expect(abs(oneSecond - (1 - pow(0.99, 60))) < 1e-5)
+        #expect(settings.tauntChance(over: 2) > oneSecond)
+    }
+
+    @Test func aWeakHitDoesNotSpeak() {
+        let settings = SpeechTimerSettings.vanilla
+        #expect(!settings.hitSpeaks(damage: 0.5, maximumHealth: 100))
+        #expect(settings.hitSpeaks(damage: 1, maximumHealth: 100))
+        #expect(settings.hitSpeaks(damage: 1, maximumHealth: 0))
+        #expect(!settings.hitSpeaks(damage: 0, maximumHealth: 0))
+    }
+
+    @Test func theSceneRepeatWindowIsOrdered() {
+        var settings = SpeechTimerSettings.vanilla
+        #expect(settings.sceneRepeatPause == 10 ... 30)
+        settings.sceneRepeatMinSeconds = 40
+        #expect(settings.sceneRepeatPause == 30 ... 40)
+    }
+
+    @Test func eachLineNamesItsTopicSubtype() {
+        #expect(NPCSpeechLine.hello.subtype == "HELO")
+        #expect(NPCSpeechLine.combatTaunt.subtype == "TAUT")
+        #expect(NPCSpeechLine.idleChatter.subtype == "IDLE")
+        #expect(NPCSpeechLine.knockOver.subtype == "KNOO")
+        #expect(NPCSpeechLine.bump.subtype == "ACAC")
+        #expect(NPCSpeechLine.playerAction("PCSH").subtype == "PCSH")
     }
 }

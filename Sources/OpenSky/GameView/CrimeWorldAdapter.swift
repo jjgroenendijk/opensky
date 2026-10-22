@@ -11,6 +11,7 @@ import OpenSkyCrimeInterface
 import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFactionsInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -35,6 +36,7 @@ protocol CrimeWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var storyWorld: StoryWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
@@ -86,6 +88,8 @@ final class CrimeWorldAdapter {
                     name,
                     by: amount
                 )
+            case let .speakTrespassWarning(witness):
+                game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
             case let .raiseStat(name, value):
                 let current = game.worldState.miscStats.value(name)
                 if value > current {

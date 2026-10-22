@@ -135,6 +135,8 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
 
     /// Plays one resolved impact at the contact point.
     func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
+    /// The default blood of a hit on an actor whose impact data resolved nothing.
+    func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool)
 
     /// Raises one census-named event on a graph: the player's when `target` is
     /// nil, otherwise that actor's.
@@ -167,6 +169,8 @@ nonisolated extension MeleeCombatWorld {
     }
 
     public func applyMeleeHitSpell(_: CombatBlow, on _: ReferenceKey) {}
+
+    public func showDefaultBlood(on _: ReferenceKey, at _: SIMD3<Float>, melee _: Bool) {}
 
     public func meleePowerAttackStamina(_ cost: Float, weapon _: FormID?) -> Float {
         cost

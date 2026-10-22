@@ -27,6 +27,9 @@ import simd
 // MARK: - Melee
 
 extension CombatAcceptanceChain: MeleeCombatWorld {
+    /// Both combat worlds declare it; one answer settles which default applies.
+    func showDefaultBlood(on _: ReferenceKey, at _: SIMD3<Float>, melee _: Bool) {}
+
     var meleeAttacker: MeleeAttacker {
         MeleeAttacker(
             key: Self.player,

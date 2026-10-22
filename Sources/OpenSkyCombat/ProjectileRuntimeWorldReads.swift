@@ -15,8 +15,12 @@ extension ProjectileRuntime {
         // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
         // so an AMMO impact link is a one-line change.
         let material = impact.material ?? impact.target.flatMap { world.impactMaterial(of: $0) }
-        guard var resolved = impacts.resolve(weapon: .unarmed, material: material)
-        else { return nil }
+        guard var resolved = impacts.resolve(weapon: .unarmed, material: material) else {
+            if let target = impact.target {
+                world.showDefaultBlood(on: target, at: impact.position, melee: false)
+            }
+            return nil
+        }
         resolved.target = impact.target
         resolved.surfaceNormal = impact.normal
         world.playProjectileImpact(resolved, at: impact.position)

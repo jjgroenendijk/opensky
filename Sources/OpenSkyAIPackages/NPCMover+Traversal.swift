@@ -63,7 +63,15 @@ extension NPCMover {
         let distance = simd_length(delta)
         let byLeg: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
         let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
-        let speed = speed(of: nextGait)
+        var speed = speed(of: nextGait)
+        if
+            let runSlowdown, nextGait == .run || nextGait == .sprint,
+            waypointIndex == path.waypoints.count - 1
+        {
+            speed *= runSlowdown.runSpeedScale(
+                remaining: distance, slowingDistance: NPCMovementRuntime.runDistance
+            )
+        }
         let targetYaw = distance > 0 ? atan2f(delta.y, delta.x) : yaw
         let turnedYaw = NPCYawMath.turn(
             from: yaw,

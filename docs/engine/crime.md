@@ -162,9 +162,11 @@ charges the trespass if they stay 30 seconds. OpenSky gives `iTrespassWarnings` 
 spread over the 30 seconds, then charges once. The charge comes no sooner than
 `fAITrespassWarningTimer` (5 s) after the last warning. The CK wiki "Category:Settings" describes
 it as the "Time before an NPC will call the guards when the player is trespassing in their home"
-(<https://ck.uesp.net/wiki/Category:Settings>). Each warning is a HUD notice in OpenSky's own words,
-because the game speaks it as dialogue. The clock runs on real seconds, as the game's grace period
-does.
+(<https://ck.uesp.net/wiki/Category:Settings>). Two warnings are at least `fWarningTimer` (5 s)
+apart, and a warning that would come after the grace period is not given. The wiki names no use for
+`fWarningTimer`; this one is OpenSky's reading. Each warning is a HUD notice in OpenSky's own words,
+and the first witness also speaks its trespass line (`DIAL` subtype `TRES`) when one passes its
+conditions. The clock runs on real seconds, as the game's grace period does.
 
 The cell's flags change this (UESP "Skyrim Mod:Mod File Format/CELL"):
 

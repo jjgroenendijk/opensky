@@ -53,6 +53,29 @@ extension MagicCoordinator {
             byKey[ReferenceKey(resolved: id)] = shout
         }
         shouts = byKey
+        shoutStore = store
+    }
+
+    /// The shouts on an NPC's own and race spell lists (`SPLO` entries that name a `SHOU`).
+    public func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout] {
+        guard let shoutStore, let spellBaselines, let spellPluginName else { return [] }
+        return spellBaselines.baseline(for: holder.subject).all.compactMap {
+            shoutStore.resolve($0, fromPlugin: spellPluginName)
+        }
+    }
+
+    /// An NPC shouts `spell`, a word's spell, along its facing. No cooldown is kept here;
+    /// the combat machine keeps the word's recovery time.
+    @discardableResult
+    public func npcShout(_ spell: ReferenceKey, by holder: ActorValueHolder) -> Bool {
+        guard
+            let caster,
+            let word = shouts.values.lazy.flatMap(\.words).first(where: { $0.spell?.key == spell }),
+            let resolved = word.spell
+        else { return false }
+        _ = caster.apply(resolved, caster: holder)
+        spellWasCast(spell, by: holder.key)
+        return true
     }
 
     /// Entry point 82 on a base of 0: `AllowShoutingPerk` adds 1 once its quest stage is done.
@@ -152,6 +175,7 @@ extension MagicCoordinator {
             recovery: shout.words[words - 1].entry.recoveryTime, multiplier: multiplier
         )
         shoutMachine.startCooldown(cooldown)
+        pendingCommands.append(.playerShouted)
         noteShout(.shouted(shout: shout.displayName, words: words, cooldown: cooldown))
     }
 

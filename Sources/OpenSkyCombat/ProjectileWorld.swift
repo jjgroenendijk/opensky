@@ -167,6 +167,8 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
 
     /// Plays one resolved impact at the contact point.
     func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
+    /// The default blood of a hit on an actor whose impact data resolved nothing.
+    func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool)
 
     /// Removes one arrow of `ammunition` from the player's inventory.
     /// - Returns: true when one was removed. False stops the shot: an empty quiver must
@@ -207,6 +209,8 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
 }
 
 extension ProjectileWorld {
+    public func showDefaultBlood(on _: ReferenceKey, at _: SIMD3<Float>, melee _: Bool) {}
+
     /// Puts one arrow into `target`'s inventory. False where nothing holds items.
     @discardableResult
     public func giveRecoveredArrow(_: FormID, to _: ReferenceKey) -> Bool {

@@ -193,6 +193,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
+        row("rendering.screenBlood", .opensky, .toggle, "Screen blood", 1, applied: true),
         row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
         row(
             "rendering.particleSorting", .opensky, .toggle, "Sort particles far to near", 1,
@@ -332,6 +333,8 @@ nonisolated extension PlayerSettingID {
     public static let terrainNormalMaps = Self("rendering.terrainNormalMaps")
     /// A hit or a step shows its impact model: dust, sparks, or blood spray.
     public static let impactEffects = Self("rendering.impactEffects")
+    /// A hit on the player splashes blood on the screen.
+    public static let screenBlood = Self("rendering.screenBlood")
     /// Placed lights flicker and pulse as their light records ask.
     public static let lightAnimation = Self("rendering.lightAnimation")
     /// Blended particles and their systems draw far to near.
@@ -374,6 +377,8 @@ nonisolated extension PlayerSettingID {
     public static let actorGraphDistance = Self("characters.actorGraphDistance")
     /// Confidence decides who flees, and Assistance brings allies into a fight.
     public static let combatTemperament = Self("combat.temperament")
+    /// Fights use the game's advance, range, healing, shout, and flight settings.
+    public static let combatGameSettings = Self("combat.gameSettings")
     /// An index into `PlayerSettingsCatalog.frameRateCapOptions`.
     public static let frameRateCap = Self("window.frameRateCap")
 
@@ -400,6 +405,10 @@ nonisolated extension PlayerSettingsCatalog {
         row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true),
         row(
             "combat.temperament", .opensky, .toggle, "Confidence and Assistance", 1,
+            applied: true
+        ),
+        row(
+            "combat.gameSettings", .opensky, .toggle, "Game combat settings", 1,
             applied: true
         ),
         row(

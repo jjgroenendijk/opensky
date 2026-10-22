@@ -147,6 +147,11 @@ Where OpenSky differs from the game:
   is more than 300 units behind (`fFollowStartSprintDistance`,
   <https://ck.uesp.net/wiki/Follow_(Procedure)>). Only the player's gait is known, so a
   follower of an NPC sprints only to catch up.
+- Followers of one leader keep `fFollowSpaceBetweenFollowers` (192 units) apart: a follower's goal
+  moves away from each other follower that stands closer. A running follower slows on its last
+  leg, down to `fFollowRunMinSlowdownMultiplier` (0.75) of its running speed. The CK wiki table
+  names both settings with no use, so both uses are OpenSky's reading.
+- A bumped actor leaves its package for a short time ([bump reactions](/engine/bump-reactions.md)).
 - Find sees only references that are loaded now.
 - Find selects by object type with the `PTDA` object type codes. Their names are not in an
   open spec. OpenSky reads them from how the vanilla templates use them: 10 furniture,

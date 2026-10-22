@@ -1,6 +1,7 @@
-// World > Combat & Physics > Death & Ragdoll section: the ragdoll trigger, with
-// bone-body and constraint-iteration readouts. Trigger and Clear are buttons;
-// Freeze is a checkbox. No override: a corpse is world state the user made.
+// World > Combat & Physics > Death & Ragdoll section: the ragdoll and dismember
+// triggers, with bone-body, constraint-iteration, and death-effect readouts. The
+// triggers are buttons; Freeze is a checkbox. No override: a corpse is world state
+// the user made.
 
 import AppKit
 import OpenSkyCombat
@@ -17,6 +18,7 @@ final class CombatRagdollSection: PanelSectionViewController {
 
     let triggerControl = NSButton(title: "Ragdoll selected actor", target: nil, action: nil)
     let clearControl = NSButton(title: "Clear ragdolls", target: nil, action: nil)
+    let dismemberControl = NSButton(title: "Dismember selected actor", target: nil, action: nil)
     let freezeControl = NSButton(
         checkboxWithTitle: "Freeze ragdoll stepping", target: nil, action: nil
     )
@@ -38,6 +40,7 @@ final class CombatRagdollSection: PanelSectionViewController {
 
     override func makeContentViews() -> [NSView] {
         triggerControl.toolTip = "Kills the crosshair target so it falls as a ragdoll."
+        dismemberControl.toolTip = "Kills the crosshair target and cuts off its head."
         freezeControl.toolTip = "Stops the bodies where they are."
         selfCollisionControl.toolTip = "Stops limbs from passing through the body."
         PanelComponents.configureButton(
@@ -47,6 +50,10 @@ final class CombatRagdollSection: PanelSectionViewController {
         PanelComponents.configureButton(
             clearControl, target: self, action: #selector(clear),
             identifier: "RagdollClearControl"
+        )
+        PanelComponents.configureButton(
+            dismemberControl, target: self, action: #selector(dismember),
+            identifier: "RagdollDismemberControl"
         )
         PanelComponents.configureCheckbox(
             freezeControl, target: self, action: #selector(toggleFreeze),
@@ -59,6 +66,7 @@ final class CombatRagdollSection: PanelSectionViewController {
         return [
             PanelComponents.group([
                 PanelComponents.buttonRow([triggerControl, clearControl]),
+                PanelComponents.buttonRow([dismemberControl]),
                 freezeControl,
                 selfCollisionControl
             ]),
@@ -67,7 +75,10 @@ final class CombatRagdollSection: PanelSectionViewController {
     }
 
     override func syncControls() {
-        for control in [triggerControl, clearControl, freezeControl, selfCollisionControl] {
+        let controls = [
+            triggerControl, clearControl, dismemberControl, freezeControl, selfCollisionControl
+        ]
+        for control in controls {
             control.isEnabled = provider != nil
         }
         let snapshot = provider?.ragdollStatsSnapshot
@@ -86,12 +97,18 @@ final class CombatRagdollSection: PanelSectionViewController {
             RagdollReadout.boneBodyText(for: snapshot),
             RagdollReadout.solverText(for: snapshot),
             RagdollReadout.selfCollisionText(for: snapshot),
-            RagdollReadout.recoveryText(for: snapshot)
+            RagdollReadout.recoveryText(for: snapshot),
+            provider.deathEffectsText
         ].joined(separator: "\n")
     }
 
     @objc private func trigger() {
         provider?.triggerRagdoll()
+        finishInteraction()
+    }
+
+    @objc private func dismember() {
+        provider?.dismemberSelectedActor()
         finishInteraction()
     }
 

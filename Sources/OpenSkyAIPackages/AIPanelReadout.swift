@@ -100,17 +100,32 @@ nonisolated public enum AIPackageReadout: Sendable {
     public static func packageText(for snapshot: AINavigationSnapshot) -> String {
         guard snapshot.isAvailable else { return "Package: unavailable" }
         let header = "Packages: \(snapshot.packagedActorCount) actors keeping a schedule"
+        let social = snapshot.socialText.map { "\n\($0)" } ?? ""
         guard let package = snapshot.package else {
-            return "\(header)\nPackage: \(snapshot.selectedActorName) has none registered."
+            return "\(header)\nPackage: \(snapshot.selectedActorName) has none registered.\(social)"
         }
         let lines = [
             header, selectionText(for: package), scheduleText(for: package.schedule),
             listText(for: package),
             snapshot.procedure.map(procedureStateText(for:)),
             runningText(for: snapshot.runningProcedures),
-            snapshot.carrier.map { "Riding: \($0)" }
+            snapshot.carrier.map { "Riding: \($0)" },
+            snapshot.socialText
         ]
         return lines.compactMap(\.self).joined(separator: "\n")
+    }
+
+    /// Bumps now and since the session began, and the follower spacing.
+    public static func socialText(
+        bumps: BumpReactions, bump: BumpReactionSettings, follow: FollowSettings
+    ) -> String {
+        String(
+            format: "Bumps: %d reacting, %d since load (step %.0f u, hold %.1f s)"
+                + " · followers %.0f u apart, run slowdown to %.0f%%",
+            bumps.reactingActors.count, bumps.reactionCount, bump.moveDistance,
+            bump.waitSeconds, follow.spaceBetweenFollowers,
+            follow.runMinSlowdownMultiplier * 100
+        )
     }
 
     /// Which list the package came from, and the situation the actor is in.

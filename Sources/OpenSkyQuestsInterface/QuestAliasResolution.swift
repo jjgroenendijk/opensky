@@ -39,6 +39,11 @@ nonisolated public struct QuestAliasResolution: Sendable {
         return tables[key] ?? .empty
     }
 
+    /// Whether any quest's alias holds `key`, so the quest still needs it.
+    public func holds(_ key: ReferenceKey) -> Bool {
+        tables.values.contains { $0.holds(key) }
+    }
+
     /// The filled table of the quest stored under `key`, empty when nothing filled it.
     public func table(forKey key: ReferenceKey) -> QuestAliasState {
         tables[key] ?? .empty

@@ -98,6 +98,13 @@ extension Renderer {
             return body.render.opaque + body.render.alphaTested
         case let .actor(owner):
             return actorGroupsByOwner[owner] ?? []
+        case .playerWeapon:
+            let body = isPlayerBodyVisible ? frameInput.rigs.body?.render : nil
+            return [frameInput.rigs.arms?.render, body].compactMap(\.self)
+                .flatMap { $0.opaque + $0.alphaTested }
+                .filter { !$0.mesh.isSkinned }
+        case let .actorWeapon(owner):
+            return (actorGroupsByOwner[owner] ?? []).filter { !$0.mesh.isSkinned }
         }
     }
 }

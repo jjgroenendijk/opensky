@@ -168,7 +168,8 @@ struct SceneRuntimeTests {
 
     @Test func lineDurationGrowsWithText() {
         #expect(SceneCore.lineDuration(texts: []) == SceneRuntime.defaultLineDuration)
-        #expect(SceneCore.lineDuration(texts: ["Hi"]) == 1.5)
+        #expect(SceneCore.lineDuration(texts: ["Hi"]) == 2)
+        #expect(SceneCore.lineDuration(texts: [String(repeating: "a", count: 300)]) == 8)
         #expect(SceneCore.lineDuration(texts: [String(repeating: "a", count: 30), nil]) == 5)
     }
 

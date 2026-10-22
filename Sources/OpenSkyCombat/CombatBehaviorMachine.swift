@@ -33,16 +33,20 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// The spell being charged right now, or nil when nothing is. Readable so
     /// the runtime can drop the cast behind a stagger or a park, which happen
     /// outside `step(seconds:inputs:)`.
-    public private(set) var pendingCast: CombatSpellOption?
+    public internal(set) var pendingCast: CombatSpellOption?
 
     /// Seeded per actor, drawn from only for the block roll.
-    private var random: ConditionRandom
+    var random: ConditionRandom
     /// Seconds since the last movement command, so a chase re-paths on the
     /// stated interval rather than every step.
-    private var secondsSinceCommand: Float = 0
+    var secondsSinceCommand: Float = 0
     /// The out-of-reach cast roll, made once per approach so a chase does not
     /// re-roll every step until it casts.
-    private var approachCasts: Bool?
+    var approachCasts: Bool?
+    /// The air, perch, and ground stages of a flying actor's fight.
+    public internal(set) var flight = CombatFlightCycle()
+    /// Seconds until the actor may shout again.
+    public internal(set) var shoutCooldown: Float = 0
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -74,6 +78,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         guard seconds > 0, seconds.isFinite else { return unchanged() }
         phaseSeconds += seconds
         secondsSinceCommand += seconds
+        shoutCooldown = max(0, shoutCooldown - seconds)
+        advanceFlight(seconds: seconds, inputs: inputs)
         var step = advance(inputs)
         // A released cast cleared `pendingCast` itself, so what is left here is
         // exactly a charge the machine walked away from.
@@ -124,6 +130,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         pendingCast = nil
         enter(.idle)
         secondsSinceCommand = 0
+        flight.reset()
     }
 
     // MARK: - Waiting
@@ -139,13 +146,13 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         guard isAfraid || !inputs.shouldFlee(settings: settings) else { return unchanged() }
         guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
         fightCount += 1
+        flight.reset()
         if isAfraid {
             return enterFlee(inputs)
         }
         enter(.approaching)
-        var step = unchanged()
+        var step = approach(inputs)
         step.startedFight = true
-        step.command = command(.approach(inputs.targetPosition))
         return step
     }
 
@@ -160,11 +167,14 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         if !inputs.awareness.isDetected, !inputs.isForced {
             return enterSearch(inputs)
         }
+        if inputs.flies, flight.stage != .ground, phase.isWaitingToAttack {
+            return advanceAirborne(inputs)
+        }
         switch phase {
         case .approaching: return advanceApproaching(inputs)
         case .spacing: return advanceSpacing(inputs)
         case .blocking: return advanceBlocking(inputs)
-        case .casting: return advanceCasting()
+        case .casting: return advanceCasting(inputs)
         case .windup: return advanceWindup()
         case .contact:
             enter(.recovery)
@@ -183,21 +193,20 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     ) -> CombatBehaviorStep {
         guard inputs.distance > inputs.strikingDistance(settings: settings)
         else { return enterSpacing() }
-        if let option = inputs.castableSpell, castsFromRange() {
-            return startCast(option)
+        if let special = startSpecialCast(inputs) {
+            return special
+        }
+        if let option = inputs.castableSpell(settings: settings), castsFromRange(inputs) {
+            return backOff(inputs) ?? startCast(option)
         }
         guard secondsSinceCommand >= settings.commandIntervalSeconds else { return unchanged() }
-        var step = unchanged()
-        step.command = command(.approach(inputs.targetPosition))
-        return step
+        return approach(inputs)
     }
 
     private mutating func advanceSpacing(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard inputs.distance <= inputs.strikingDistance(settings: settings) else {
+        guard inputs.distance <= inputs.holdDistance(settings: settings) else {
             enter(.approaching)
-            var step = unchanged()
-            step.command = command(.approach(inputs.targetPosition))
-            return step
+            return approach(inputs)
         }
         guard phaseSeconds >= settings.attackIntervalSeconds else { return unchanged() }
         return startAttackOrCast(inputs)
@@ -205,16 +214,14 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     private mutating func advanceBlocking(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard phaseSeconds >= settings.blockSeconds else { return unchanged() }
-        guard inputs.distance <= inputs.strikingDistance(settings: settings) else {
+        guard inputs.distance <= inputs.holdDistance(settings: settings) else {
             enter(.approaching)
-            var step = unchanged()
-            step.command = command(.approach(inputs.targetPosition))
-            return step
+            return approach(inputs)
         }
         return startAttackOrCast(inputs)
     }
 
-    private mutating func startCast(_ option: CombatSpellOption) -> CombatBehaviorStep {
+    mutating func startCast(_ option: CombatSpellOption) -> CombatBehaviorStep {
         castCount += 1
         pendingCast = option
         enter(.casting)
@@ -227,8 +234,11 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// Charging, and for a maintained spell holding it afterwards. The charge is the
     /// record's `chargeTime`; the hold time is ours. A target leaving range does not
     /// cancel the cast.
-    private mutating func advanceCasting() -> CombatBehaviorStep {
+    private mutating func advanceCasting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard let option = pendingCast else { return enterSpacing() }
+        if option.purpose == .shout {
+            return advanceShout(option, inputs: inputs)
+        }
         let hold = max(0, option.chargeSeconds)
             + (option.isConcentration ? settings.concentrationSeconds : 0)
         guard phaseSeconds >= hold else { return unchanged() }
@@ -257,7 +267,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         return unchanged()
     }
 
-    private mutating func startAttack() -> CombatBehaviorStep {
+    mutating func startAttack() -> CombatBehaviorStep {
         attackCount += 1
         enter(.windup)
         var step = unchanged()
@@ -268,7 +278,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// Enters the gap between attacks, either waiting it out or spending it
     /// with the guard up. Rolled once here rather than once per step, so the
     /// stated probability is per attack cycle and not per sixtieth of a second.
-    private mutating func enterSpacing() -> CombatBehaviorStep {
+    mutating func enterSpacing() -> CombatBehaviorStep {
         let roll = Float(random.percent()) / 100
         guard roll < settings.blockChance else {
             enter(.spacing)
@@ -334,9 +344,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     ) -> CombatBehaviorStep {
         if inputs.awareness.isDetected || inputs.isForced {
             enter(.approaching)
-            var step = unchanged()
-            step.command = command(.approach(inputs.targetPosition))
-            return step
+            return approach(inputs)
         }
         guard phaseSeconds >= settings.searchSeconds else { return unchanged() }
         return endPursuit()
@@ -355,7 +363,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     // MARK: - Bookkeeping
 
-    private mutating func enter(_ next: CombatBehaviorPhase) {
+    mutating func enter(_ next: CombatBehaviorPhase) {
         if next != phase {
             approachCasts = nil
         }
@@ -365,14 +373,14 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// Records that a command was issued this step and returns it, so the
     /// re-path interval is reset in exactly one place.
-    private mutating func command(_ issued: CombatMovementCommand) -> CombatMovementCommand {
+    mutating func command(_ issued: CombatMovementCommand) -> CombatMovementCommand {
         secondsSinceCommand = 0
         return issued
     }
 }
 
 nonisolated extension CombatBehaviorMachine {
-    private func unchanged() -> CombatBehaviorStep {
+    func unchanged() -> CombatBehaviorStep {
         CombatBehaviorStep(phase: phase)
     }
 }
@@ -384,17 +392,26 @@ nonisolated extension CombatBehaviorMachine {
     private mutating func startAttackOrCast(
         _ inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
-        guard let option = inputs.castableSpell else { return startAttack() }
+        if let special = startSpecialCast(inputs) {
+            return special
+        }
+        guard let option = inputs.castableSpell(settings: settings) else { return startAttack() }
         guard inputs.distance <= inputs.strikingDistance(settings: settings)
         else { return startCast(option) }
         let roll = Float(random.percent()) / 100
         return roll < settings.castChance ? startCast(option) : startAttack()
     }
 
-    /// A style that prefers a weapon may close in rather than cast from range.
-    /// A chance of 1 draws nothing, so the seeded sequence stays as it was.
-    private mutating func castsFromRange() -> Bool {
+    /// A style that prefers a weapon may close in rather than cast from range, unless
+    /// the target is out of its weapon's absolute range. A chance of 1 draws nothing,
+    /// so the seeded sequence stays as it was.
+    private mutating func castsFromRange(_ inputs: CombatBehaviorInputs) -> Bool {
         guard settings.rangedCastChance < 1 else { return true }
+        let absolute = inputs.strikingDistance(settings: settings) * settings
+            .weaponAbsoluteRangeMult
+        if inputs.distance > absolute {
+            return true
+        }
         if let approachCasts {
             return approachCasts
         }

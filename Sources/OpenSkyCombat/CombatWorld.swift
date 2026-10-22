@@ -20,10 +20,15 @@ import simd
 nonisolated public struct CombatCastingFacts: Equatable, Sendable {
     public let magicka: Float
     public let spells: [CombatSpellCandidate]
+    /// The actor's shouts, each as its strongest word's spell.
+    public let shouts: [CombatSpellOption]
 
-    public init(magicka: Float, spells: [CombatSpellCandidate]) {
+    public init(
+        magicka: Float, spells: [CombatSpellCandidate], shouts: [CombatSpellOption] = []
+    ) {
         self.magicka = magicka
         self.spells = spells
+        self.shouts = shouts
     }
 }
 
@@ -77,6 +82,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
     func damageStamina(by amount: Float, of key: ReferenceKey)
+    /// A landed health hit, kept for the death effects of the actor it may kill.
+    func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
     func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
 
@@ -104,6 +111,16 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 
     @discardableResult
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
+    /// The same with a gait; nil picks it by the length of each leg.
+    @discardableResult
+    func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool
+    /// Turns `key` in place to face `point`.
+    func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
+    /// Whether `key`'s race flies (`RACE` flag 0x80).
+    func actorFlies(_ key: ReferenceKey) -> Bool
+    /// `key` shouts the word spell `spell` along its facing. True when it went off.
+    @discardableResult
+    func shout(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool
     func stopActor(_ key: ReferenceKey)
     func resumePackage(for key: ReferenceKey)
 
@@ -140,6 +157,24 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 }
 
 extension CombatWorld {
+    @discardableResult
+    public func moveActor(
+        _ key: ReferenceKey, to point: SIMD3<Float>, gait _: LocomotionGait?
+    ) -> Bool {
+        moveActor(key, to: point)
+    }
+
+    public func faceActor(_: ReferenceKey, toward _: SIMD3<Float>) {}
+
+    public func actorFlies(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    @discardableResult
+    public func shout(_: ReferenceKey, by _: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A search of the whole list, for a session without a lookup by key.
     public func residentActor(key: ReferenceKey) -> CombatActorObservation? {
         residentActors().first { $0.key == key }
@@ -170,6 +205,8 @@ extension CombatWorld {
 
     /// A session with no stamina pays nothing to block.
     public func damageStamina(by _: Float, of _: ReferenceKey) {}
+
+    public func recordHealthHit(_: CombatHitRecord, on _: ReferenceKey) {}
 
     @discardableResult
     public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {

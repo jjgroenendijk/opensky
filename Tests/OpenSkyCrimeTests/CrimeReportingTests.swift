@@ -231,4 +231,27 @@ struct TrespassWatchTests {
         #expect(watch.step(seconds: 4, seen: true, offLimits: false, settings: settings) == .none)
         #expect(watch.step(seconds: 1, seen: true, offLimits: false, settings: settings) == .charge)
     }
+
+    @Test func theWarningTimerSpacesTwoWarnings() {
+        var settings = CrimeSettings()
+        settings.trespassGraceSeconds = 10
+        settings.trespassWarnings = 2
+        settings.trespassWarningInterval = 8
+        var watch = TrespassWatch()
+        _ = watch.step(seconds: 0, seen: true, offLimits: false, settings: settings)
+        #expect(watch.step(seconds: 6, seen: true, offLimits: false, settings: settings) == .none)
+        #expect(watch.step(seconds: 2, seen: true, offLimits: false, settings: settings)
+            == .warn(remaining: 5))
+    }
+
+    @Test func aWarningTimerPastTheGraceLeavesOneWarning() {
+        var settings = CrimeSettings()
+        settings.trespassGraceSeconds = 10
+        settings.trespassWarnings = 3
+        settings.trespassWarningInterval = 12
+        var watch = TrespassWatch()
+        _ = watch.step(seconds: 0, seen: true, offLimits: false, settings: settings)
+        #expect(watch.step(seconds: 9, seen: true, offLimits: false, settings: settings) == .none)
+        #expect(watch.warnings == 1)
+    }
 }
