@@ -34,6 +34,13 @@ extension PackageCoordinator {
             if machine?.kind == .sandbox, let hours {
                 step(actor, with: .clock(hours: hours), leaf: leaf)
             }
+            // The idle runtime can give a marker after the walk ended.
+            if
+                executions[actor]?.runner.running[leaf]?.machine.state == .sandboxing(.wandering),
+                arrivesAtIdleMarker(actor, leaf: leaf)
+            {
+                step(actor, with: .arrivedAtIdleMarker, leaf: leaf)
+            }
             step(actor, with: .tick(delta), leaf: leaf)
         }
     }

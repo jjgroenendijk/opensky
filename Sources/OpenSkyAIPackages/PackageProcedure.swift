@@ -194,8 +194,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             guard state == .moving else { return [] }
             return handleArrival()
         case .arrivedAtIdleMarker:
-            guard state == .moving else { return [] }
-            return kind == .sandbox ? beginSandboxActivity(.idleMarker) : handleArrival()
+            return handleArrivalAtIdleMarker()
         case let .clock(hours):
             return handleClock(hours)
         case let .tick(delta):

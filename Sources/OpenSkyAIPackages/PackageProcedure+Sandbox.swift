@@ -63,6 +63,15 @@ nonisolated extension PackageProcedureMachine {
             && offset.z >= settings.cylinderBottom && offset.z <= settings.cylinderTop
     }
 
+    /// The idle runtime gave the actor a marker, at the end of a walk or while it wandered.
+    mutating func handleArrivalAtIdleMarker() -> [PackageProcedureCommand] {
+        if state == .sandboxing(.wandering) {
+            return beginSandboxActivity(.idleMarker)
+        }
+        guard state == .moving else { return [] }
+        return kind == .sandbox ? beginSandboxActivity(.idleMarker) : handleArrival()
+    }
+
     /// Starts `activity`, or a meal when one is due, and rolls how long it lasts.
     mutating func beginSandboxActivity(_ activity: SandboxActivity) -> [PackageProcedureCommand] {
         let chosen = mealIsDue ? SandboxActivity.eatStanding : activity

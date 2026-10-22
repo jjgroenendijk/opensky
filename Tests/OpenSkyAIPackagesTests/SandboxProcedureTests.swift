@@ -75,6 +75,15 @@ struct SandboxProcedureTests {
         #expect(machine.state == .moving)
     }
 
+    @Test func aMarkerGivenWhileWanderingStartsAnIdleMarkerActivity() {
+        var machine = Self.machine()
+        _ = machine.start()
+        #expect(machine.state == .sandboxing(.wandering))
+        #expect(machine.handle(.arrivedAtIdleMarker).isEmpty)
+        #expect(machine.state == .sandboxing(.idleMarker))
+        #expect(machine.sandbox.hoursLeft > 0.2625 * 0.74)
+    }
+
     @Test func aDueMealCutsTheActivityShort() {
         var settings = SandboxSettings.vanilla
         settings.meals = [SandboxMealWindow(earliest: 12, latest: 12)]
