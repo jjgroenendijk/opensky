@@ -170,6 +170,7 @@ changes the cast's sound is not known; OpenSky plays it unchanged.
 | --- | --- | --- |
 | Filter Activation | 74 | the use-key gate, before the lock check, activated reference bound as the target |
 | Set Activate Label | 81 | the prompt label of the crosshair target, target bound |
+| Allow Mount Actor | 91 | above 0, the player may mount a dragon, dragon bound as the target ([riding](/engine/riding.md)) |
 
 A non-zero Filter Activation value blocks the press. No event follows, as for a locked door,
 but no lock notice shows. Vanilla uses it to stop a werewolf opening doors and containers.

@@ -94,10 +94,13 @@ A clip forced onto another clip's phase reports no root motion for that update. 
 there, so the difference between its samples is not travel.
 
 `BSSynchronizedClipGenerator` plays its wrapped clip and takes part in phase sync like any clip,
-because the wrapped generator is a plain `hkbClipGenerator`. The half that needs a second character
-is still owed: `m_SyncAnimPrefix` names the partner's half of a paired animation, and
-`m_fGetToMarkTime` says how long this character has to reach the shared marker. Each evaluation
-counts one `synchronizedClipMarkerIgnored`.
+because the wrapped generator is a plain `hkbClipGenerator`. A paired clip holds the tracks of
+both characters. `m_SyncAnimPrefix` names the partner's half: the horse's mount clip reads the
+tracks named `2_` plus a bone name, and the rider's graph reads the plain names. Each character
+maps the tracks to its own bones by name ([riding](/engine/riding.md)). `m_fGetToMarkTime`, how
+long this character has to reach the shared marker, is not used: the player is linked to the
+mount's root for the whole clip, so both start at the same marker. Each evaluation counts one
+`synchronizedClipMarkerIgnored`.
 
 ## Blending
 

@@ -109,6 +109,8 @@ clips in `meshes\actors\character\animations\horse_rider\`: `idle.hkx` while the
 follow the horse's own folder; `idle.hkx` was seen on the install. A clip that does not load leaves
 the rider in the clip it plays.
 
+The player mounts and steers a horse through the mount coordinator ([riding](/engine/riding.md)).
+
 ## Where the rest of the engine sees a rider
 
 A rider's vehicle pose is its live pose. Every system that asks where an actor is reads it: the

@@ -109,8 +109,8 @@ each use is OpenSky's reading:
   destination is shown only once this time has passed. A rebuild of the same interior does not
   wait.
 
-The game refuses an automatic door to a rider with `sNotAllowedToUseAutoDoorsWhileonHorse`.
-OpenSky has no riding yet, so it does not show that message.
+The game refuses a door to a rider with `sNotAllowedToUseAutoDoorsWhileonHorse`. OpenSky refuses
+every door while the player sits on a mount, and posts that message ([riding](/engine/riding.md)).
 
 ### Activate parents
 

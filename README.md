@@ -32,9 +32,9 @@ Measured on 2026-10-22 by `make gaps`.
 | Papyrus events | 54 | 14 | 68 | 79% |
 | Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
-| Game settings | 966 | 682 | 1648 | 58% |
+| Game settings | 1045 | 603 | 1648 | 63% |
 | Magic effect archetypes | 25 | 12 | 37 | 67% |
-| Perk entry points | 65 | 3 | 68 | 95% |
+| Perk entry points | 66 | 2 | 68 | 97% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
@@ -42,7 +42,7 @@ Measured on 2026-10-22 by `make gaps`.
 | Behavior features ignored | - | 256 | - | - |
 | Havok classes | 71 | 29 | 100 | 71% |
 | Animation events | 101 | 43 | 144 | 70% |
-| Behavior graph variables | 646 | 50 | 696 | 92% |
+| Behavior graph variables | 647 | 49 | 696 | 92% |
 | NIF block types | 145 | 0 | 145 | 100% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
 | Lighting shader flags | 38 | 0 | 38 | 100% |
