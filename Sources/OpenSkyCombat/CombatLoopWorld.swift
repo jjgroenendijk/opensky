@@ -124,6 +124,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// health by one path.
     @discardableResult
     func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool
+    /// `applyCombatDamage` for one NPC blow, so the hit keeps who struck and how.
+    @discardableResult
+    func applyCombatBlow(_ amount: Float, to key: ReferenceKey, blow: CombatBlow) -> Bool
 
     /// What `key` is blocking with, or nil when it is not blocking.
     ///
@@ -279,6 +282,11 @@ extension CombatLoopWorld {
 
     public func combatFlies(_: ReferenceKey) -> Bool {
         false
+    }
+
+    @discardableResult
+    public func applyCombatBlow(_ amount: Float, to key: ReferenceKey, blow _: CombatBlow) -> Bool {
+        applyCombatDamage(amount, to: key)
     }
 
     /// A search of the whole list, for a session without a lookup by key.

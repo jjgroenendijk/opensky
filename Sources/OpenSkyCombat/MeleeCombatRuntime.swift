@@ -317,6 +317,8 @@ public final class MeleeCombatRuntime {
         impact?.target = hit.target
         if let impact {
             world.playMeleeImpact(impact, at: hit.position)
+        } else {
+            world.showDefaultBlood(on: hit.target, at: hit.position, melee: true)
         }
         let record = MeleeHitRecord(
             target: hit.target,

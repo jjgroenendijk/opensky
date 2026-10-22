@@ -240,7 +240,7 @@ extension CombatLoopRuntime {
             bonusMultiplier: world.combatBlockMultiplier(of: target),
             strike: world.combatStrike(blow, on: target)
         )
-        let landed = world.applyCombatDamage(damage.applied, to: target)
+        let landed = world.applyCombatBlow(damage.applied, to: target, blow: blow)
         if landed {
             world.applyCombatHitSpell(blow, on: target)
         }

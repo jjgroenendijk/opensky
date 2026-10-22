@@ -5,9 +5,11 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyCamera
+import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyDialogue
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -150,6 +152,8 @@ extension GapsGatherer {
         _ = SandboxSettings.resolve(store: store)
         _ = BumpReactionSettings.resolve(store: store)
         _ = FollowSettings.resolve(store: store)
+        _ = DeathSettings.resolve(store: store)
+        _ = BloodEffectSettings.resolve(store: store)
     }
 
     /// Every `GameSettingTexts` key enum a feature shows.

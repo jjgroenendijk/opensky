@@ -29,6 +29,8 @@ nonisolated public struct RagdollActor: Sendable {
     /// How fast the whole actor was moving when it died, so a corpse keeps its
     /// momentum.
     public let velocity: SIMD3<Float>
+    /// The killing hit's push on the heaviest body, in Havok impulse units.
+    public let impulse: SIMD3<Float>
 
     public init(
         key: ReferenceKey,
@@ -37,7 +39,8 @@ nonisolated public struct RagdollActor: Sendable {
         definition: RagdollDefinition,
         animatedBoneMatrices: [float4x4],
         actorToWorld: float4x4,
-        velocity: SIMD3<Float> = .zero
+        velocity: SIMD3<Float> = .zero,
+        impulse: SIMD3<Float> = .zero
     ) {
         self.key = key
         self.cell = cell
@@ -46,6 +49,7 @@ nonisolated public struct RagdollActor: Sendable {
         self.animatedBoneMatrices = animatedBoneMatrices
         self.actorToWorld = actorToWorld
         self.velocity = velocity
+        self.impulse = impulse
     }
 }
 
@@ -229,6 +233,7 @@ public final class RagdollRuntime: DeathReporting {
             )
         else { return false }
         instance.motor = motor
+        instance.applyImpulse(actor.impulse)
         world.add(instance, for: key, in: actor.cell)
         pendingHandOffs.remove(key)
         return true
@@ -291,6 +296,12 @@ public final class RagdollRuntime: DeathReporting {
     @discardableResult
     public func trim(to limit: Int) -> Int {
         world.trim(to: limit)
+    }
+
+    /// Stops simulating one corpse, such as a body the excess-dead rule removed.
+    public func removeRagdoll(_ key: ReferenceKey) {
+        world.remove(key)
+        pendingHandOffs.remove(key)
     }
 
     /// Stops simulating every corpse whose cell left `resident`. The death and its

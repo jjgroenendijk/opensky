@@ -87,6 +87,10 @@ final class CombatWorldAdapter {
         combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
         combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
         combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
+        game.ragdoll.deathSettings = DeathSettings.resolve(store: provider.gameSettings)
+        game.effects.applyBloodSettings(BloodEffectSettings.resolve(
+            store: provider.gameSettings
+        ) { [game] in game.mapWorld.text($0) })
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
@@ -170,6 +174,9 @@ final class CombatWorldAdapter {
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             case let .playerAttackedOutsideCombat(use):
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
+            case let .drewBlood(hit, target): drewBlood(hit, target: target)
+            case let .showDefaultBlood(target, position, melee):
+                showDefaultBlood(on: target, at: position, melee: melee)
             }
         }
     }

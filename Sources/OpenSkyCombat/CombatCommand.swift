@@ -21,6 +21,10 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     /// The player began a swing or loosed an arrow while no one fights it, which a
     /// witness may comment on.
     case playerAttackedOutsideCombat(CombatWeaponUse)
+    /// An attack drew blood: screen blood on a struck player, blood on a melee weapon.
+    case drewBlood(CombatHitRecord, target: ReferenceKey)
+    /// A hit on an actor with no impact data of its own: the default blood effects.
+    case showDefaultBlood(on: ReferenceKey, at: SIMD3<Float>, melee: Bool)
 }
 
 /// What the player did with a weapon outside a fight.

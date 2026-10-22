@@ -47,6 +47,12 @@ public final class EffectsCoordinator {
     var effectParticles: [Int: EffectParticles] = [:]
     var meshes: MeshLibrary?
     private var drewModels = false
+    /// Blood that lasts: on the screen after the player is hit, and on weapons.
+    public internal(set) var screenBlood = ScreenBloodRuntime()
+    public internal(set) var weaponBlood = WeaponBloodRuntime()
+    public internal(set) var bloodSettings = BloodEffectSettings.vanilla
+    var screenBloodTextures: ScreenBloodTextures?
+    var drewScreenBlood = false
 
     public init() {}
 
@@ -165,6 +171,7 @@ public final class EffectsCoordinator {
         renderer: Renderer
     ) throws {
         visualEffects.advance(seconds)
+        stepBlood(seconds, renderer: renderer)
         let world = world
         let models = visualEffects.models(camera: world?.effectCamera) { anchor in
             switch anchor {
@@ -182,7 +189,7 @@ public final class EffectsCoordinator {
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }
             return world?.membraneTarget(of: key)
-        })
+        } + weaponBlood.membranes)
     }
 
     private func attachHitEffects(_ link: SpellHitEffectLinks, to targets: [ReferenceKey]) -> Int {

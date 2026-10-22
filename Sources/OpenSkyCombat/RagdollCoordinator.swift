@@ -4,6 +4,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyBehavior
+import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -30,6 +31,21 @@ public final class RagdollCoordinator {
     private var definitions: [String: RagdollDefinition] = [:]
     /// Keys that produced no ragdoll, so they are not decoded once per frame.
     private var unresolvableSkeletons: Set<String> = []
+    /// The install's death settings. Read at session start.
+    public var deathSettings = DeathSettings.vanilla
+    /// Seconds of simulated time since wiring, the clock of hits and deaths.
+    var clock: Float = 0
+    /// Each actor's last landed hit and when it landed.
+    var recentHits: [ReferenceKey: (hit: CombatHitRecord, time: Float)] = [:]
+    /// The push of a death in progress, read when the ragdoll spawns, which waits
+    /// for the death graph's hand-off.
+    var deathImpulses: [ReferenceKey: SIMD3<Float>] = [:]
+    /// Nodes hidden on a body this session: a dropped weapon's.
+    var hiddenNodes: [ReferenceKey: Set<String>] = [:]
+    /// When each dead actor died, or was first seen dead.
+    var deathTimes: [ReferenceKey: Float] = [:]
+    var deathRandom = ConditionRandom()
+    public internal(set) var deathEffects = DeathEffectCounts()
 
     public init(store: WorldStateStore, world: any RagdollSessionWorld) {
         self.store = store
@@ -53,11 +69,15 @@ public final class RagdollCoordinator {
         events: [String], controls: RagdollGraphControls, delta: Float
     ) -> [RagdollCommand] {
         guard let runtime else { return [] }
+        clock += max(delta.isFinite ? delta : 0, 0)
         runtime.retainRagdolls(in: world.residentRagdollCells)
         let murders = killZeroHealthActors(runtime: runtime)
+        removeExcessDead(runtime: runtime)
         for key in runtime.pendingHandOffs.sorted() {
             runtime.handleGraphEvents(events, on: key)
         }
+        // A graph-driven death spawns its ragdoll frames later; keep its push until then.
+        deathImpulses = deathImpulses.filter { runtime.pendingHandOffs.contains($0.key) }
         runtime.blendDuration = controls.blendDuration
             ?? HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
         runtime.motor = controls.powered.map(RagdollMotor.init)
@@ -69,7 +89,10 @@ public final class RagdollCoordinator {
     /// Rebuilt each frame, so a corpse whose cell unloaded stops being drawn as
     /// a ragdoll once its instance is gone.
     public func publishPoses() -> [RagdollCommand] {
-        guard let runtime, !runtime.world.ragdolls.isEmpty || hasPublishedPoses else { return [] }
+        guard let runtime else { return [] }
+        let hidden = hiddenNodesByResident()
+        guard !runtime.world.ragdolls.isEmpty || !hidden.isEmpty || hasPublishedPoses
+        else { return [] }
         var poses: [UInt32: [String: float4x4]] = [:]
         for entry in runtime.world.ragdolls {
             guard
@@ -80,19 +103,26 @@ public final class RagdollCoordinator {
                 animated: animated, worldToActor: actor.actorToWorld.inverse
             )
         }
+        hidePoseNodes(hidden, in: &poses)
         hasPublishedPoses = !poses.isEmpty
         return [.publishPoses(poses)]
     }
 
     /// A sweep, not a hook, because health reaches zero from several places.
     /// `noteZeroHealth(of:)` is true only for the call that killed the actor,
-    /// so each murder is reported once.
+    /// so each murder is reported once. The last hit names the killer and pushes the body.
     private func killZeroHealthActors(runtime: RagdollRuntime) -> [RagdollCommand] {
-        world.ragdollResidents.compactMap { resident in
-            guard world.hasZeroHealth(resident.key), runtime.noteZeroHealth(of: resident.key)
-            else { return nil }
-            return .reportMurder(resident.key)
+        var murders: [RagdollCommand] = []
+        for resident in world.ragdollResidents where world.hasZeroHealth(resident.key) {
+            let key = resident.key
+            guard !runtime.isDead(key) else { continue }
+            let hit = recentHit(on: key)
+            deathImpulses[key] = hit.map { impulse(of: $0, on: resident) }
+            guard runtime.noteZeroHealth(of: key, killer: hit?.attacker) else { continue }
+            murders.append(.reportMurder(key))
+            applyDeathEffects(of: hit, to: key)
         }
+        return murders
     }
 
     func definition(for pose: RagdollActorPose) -> RagdollDefinition? {
@@ -138,7 +168,8 @@ extension RagdollCoordinator: RagdollWorldSeam {
             reference: pose.reference,
             definition: definition,
             animatedBoneMatrices: pose.animatedBoneMatrices,
-            actorToWorld: pose.actorToWorld
+            actorToWorld: pose.actorToWorld,
+            impulse: deathImpulses[key] ?? .zero
         )
     }
 

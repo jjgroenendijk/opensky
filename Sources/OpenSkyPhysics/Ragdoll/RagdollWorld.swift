@@ -84,6 +84,23 @@ public protocol RagdollControlProviding: AnyObject {
     /// Drops every live ragdoll. The corpses stay dead; they stop simulating and
     /// fall back to their recorded resting pose.
     func clearRagdolls()
+    /// Kills the selected actor when it lives and cuts off its head.
+    /// - Returns: false when nothing is selected or its race has no head part.
+    @discardableResult
+    func dismemberSelectedActor() -> Bool
+    /// The death settings and what the deaths did, for the readout.
+    var deathEffectsText: String { get }
+}
+
+extension RagdollControlProviding {
+    @discardableResult
+    public func dismemberSelectedActor() -> Bool {
+        false
+    }
+
+    public var deathEffectsText: String {
+        "Death effects: unavailable"
+    }
 }
 
 nonisolated public struct RagdollWorld: Sendable {

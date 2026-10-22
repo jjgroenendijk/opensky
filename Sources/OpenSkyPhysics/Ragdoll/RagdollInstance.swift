@@ -241,6 +241,20 @@ nonisolated public struct RagdollInstance: Sendable {
     }
 
     /// Wakes every bone, which is what a dev trigger and a fresh impact both do.
+    /// Pushes the heaviest body, the torso on a person, by `impulse` in Havok units
+    /// (kg m/s); the joints carry the push to the rest.
+    public mutating func applyImpulse(_ impulse: SIMD3<Float>) {
+        guard
+            simd_length_squared(impulse) > 0, impulse.x.isFinite, impulse.y.isFinite,
+            impulse.z.isFinite,
+            let index = bodies.indices.max(by: {
+                bodies[$0].definition.mass < bodies[$1].definition.mass
+            })
+        else { return }
+        bodies[index].linearVelocity += impulse * bodies[index].definition.inverseMass
+            * NIFCollisionModel.havokToEngineScale
+    }
+
     public mutating func wake() {
         for index in bodies.indices {
             bodies[index].wake()

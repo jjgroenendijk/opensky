@@ -197,7 +197,7 @@ public final class WorldItemRuntime {
     // MARK: - Drop
 
     /// Removes `count` of `item` from the player and spawns it in the world at
-    /// `placement`.
+    /// `placement`. The spawned stack keeps the item's distinct copies.
     ///
     /// - Returns: the generated key the new reference is addressed by.
     /// - Throws: `InventoryError.insufficientCount` when the player holds
@@ -208,8 +208,19 @@ public final class WorldItemRuntime {
         count: Int32 = 1,
         at placement: DropPlacement
     ) throws -> ReferenceKey {
-        let copies = inventory.leavingCopies(count, of: item, in: player)
-        try inventory.remove(item, count: count, from: player)
+        try drop(item, count: count, from: player, at: placement)
+    }
+
+    /// `drop(_:count:at:)` from any holder, such as a dead actor's weapon falling.
+    @discardableResult
+    public func drop(
+        _ item: FormID,
+        count: Int32 = 1,
+        from holder: InventoryHolder,
+        at placement: DropPlacement
+    ) throws -> ReferenceKey {
+        let copies = inventory.leavingCopies(count, of: item, in: holder)
+        try inventory.remove(item, count: count, from: holder)
         let key = store.allocateGeneratedKey()
         store.set(
             ReferenceSpawnState(

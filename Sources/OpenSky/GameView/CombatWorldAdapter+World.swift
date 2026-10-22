@@ -333,6 +333,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.gameSession?.locomotion.write(value, to: name)
     }
 
+    func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey) {
+        game.ragdoll.noteHit(hit, on: key)
+    }
+
     /// A playback failure is logged by the engine and leaves the hit silent. The
     /// file loads off the main actor and is kept, so a repeated impact does not read it.
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

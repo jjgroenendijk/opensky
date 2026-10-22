@@ -19,6 +19,8 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
     /// Whether the corpse has been searched at least once, so a looted body can
     /// be told from an untouched one without reading its inventory.
     public var wasLooted: Bool
+    /// The skeleton node a decapitation cut off, such as `NPC Head [Head]`, or nil.
+    public var severedNode: String?
 
     /// The value an actor takes the moment it dies, before anything has settled.
     public static let justDied = ActorDeathState(isDead: true)
@@ -30,30 +32,30 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
     public init(
         isDead: Bool,
         restingTransform: ReferenceTransformOverride? = nil,
-        wasLooted: Bool = false
+        wasLooted: Bool = false,
+        severedNode: String? = nil
     ) {
         self.isDead = isDead
         self.restingTransform = restingTransform
         self.wasLooted = wasLooted
+        self.severedNode = severedNode
     }
 
     /// This state with the ragdoll's settled root pose recorded.
     public func settled(at position: SIMD3<Float>, orientation: simd_quatf) -> Self {
-        ActorDeathState(
-            isDead: isDead,
-            restingTransform: ReferenceTransformOverride(
-                position: position,
-                rotation: MatrixMath.eulerAngles(of: orientation)
-            ),
-            wasLooted: wasLooted
+        var state = self
+        state.restingTransform = ReferenceTransformOverride(
+            position: position,
+            rotation: MatrixMath.eulerAngles(of: orientation)
         )
+        return state
     }
 
     /// This state marked as searched.
     public var looted: Self {
-        ActorDeathState(
-            isDead: isDead, restingTransform: restingTransform, wasLooted: true
-        )
+        var state = self
+        state.wasLooted = true
+        return state
     }
 }
 

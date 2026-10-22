@@ -63,10 +63,7 @@ extension GraphicsPageViewController {
             "The eye adapts to dark and bright scenes; follows the weather's image space"
         )
         configureCharacterCheckboxes()
-        checkbox(
-            impactEffectsControl, "ImpactEffects",
-            "Dust under a step, sparks or blood spray where a hit lands"
-        )
+        configureEffectCheckboxes()
         checkbox(
             lightAnimationControl, "LightAnimation",
             "Torches and fires flicker; some lights pulse"
@@ -85,6 +82,16 @@ extension GraphicsPageViewController {
         )
         checkbox(fullScreenControl, "FullScreen", "Play opens full screen")
         configureShadingCheckboxes()
+    }
+
+    private func configureEffectCheckboxes() {
+        checkbox(
+            impactEffectsControl, "ImpactEffects",
+            "Dust under a step, sparks or blood spray where a hit lands"
+        )
+        checkbox(
+            screenBloodControl, "ScreenBlood", "A hit on the player splashes blood on the screen"
+        )
     }
 
     private func configureShadingCheckboxes() {
@@ -183,7 +190,8 @@ extension GraphicsPageViewController {
         [
             (gpuCullingControl, .gpuCulling), (roomCullingControl, .roomCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
-            (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
+            (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
+            (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
             (blinkingControl, .characterBlinking), (eyeMovementControl, .characterEyeMovement),
             (expressionsControl, .characterDialogueExpressions),

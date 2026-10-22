@@ -25,6 +25,8 @@ struct FakeEffectsState {
     var decalsEnabled = true
     var decalsCleared = 0
     var impactRepeats = 0
+    var screenBloodEnabled = true
+    var bloodSplashes = 0
 }
 
 extension FakeWorldProviders {
@@ -128,6 +130,20 @@ extension FakeWorldProviders {
     func repeatLastImpact() -> Bool {
         effectsState.impactRepeats += 1
         return true
+    }
+
+    var screenBloodEnabled: Bool {
+        get { effectsState.screenBloodEnabled }
+        set { effectsState.screenBloodEnabled = newValue }
+    }
+
+    func splatterScreenBlood(damage _: Float) -> Int {
+        effectsState.bloodSplashes += 1
+        return 2
+    }
+
+    var bloodText: String {
+        "Blood: \(effectsState.bloodSplashes) splashes"
     }
 
     var impactSnapshot: ImpactSnapshot {

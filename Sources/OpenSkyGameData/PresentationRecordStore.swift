@@ -1,7 +1,7 @@
-// The load-order records behind cameras, combat styles, and messages: CAMS and
-// CPTH, CSTY, MESG, and LSCR with the STAT models loading screens show.
-// Built once off one `RecordIndex`. See docs/formats/camera-records.md,
-// combat-style.md, and messages.md.
+// The load-order records behind cameras, combat styles, messages, and body parts:
+// CAMS and CPTH, CSTY, MESG, LSCR with the STAT models loading screens show, and
+// BPTD. Built once off one `RecordIndex`. See docs/formats/camera-records.md,
+// combat-style.md, messages.md, and body-parts.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 
 nonisolated public struct PresentationRecordStore: Sendable {
     public static let recordTypes: Set<FourCC> = CameraPathStore.types
-        .union(["CSTY", "MESG", "LSCR", "STAT"])
+        .union(["CSTY", "MESG", "LSCR", "STAT", "BPTD"])
 
     public let cameras: CameraPathStore
     public let combatStyles: TypedRecordStore<CombatStyle>
@@ -17,6 +17,8 @@ nonisolated public struct PresentationRecordStore: Sendable {
     public let loadScreens: TypedRecordStore<LoadScreen>
     /// The `MODL` path of each STAT, for a loading screen's `NNAM` object.
     public let staticModels: TypedRecordStore<String>
+    /// The hit, sever, and explode parts a race's `GNAM` names.
+    public let bodyParts: TypedRecordStore<BodyPartData>
 
     public init(index: RecordIndex) {
         cameras = CameraPathStore(index: index)
@@ -37,6 +39,11 @@ nonisolated public struct PresentationRecordStore: Sendable {
         staticModels = TypedRecordStore(
             index: index, types: ["STAT"],
             decode: { try Self.modelPath(of: $0.record) }, editorID: { _ in nil }
+        )
+        bodyParts = TypedRecordStore(
+            index: index, types: ["BPTD"],
+            decode: { try BodyPartData(record: $0.record, localized: $0.localized) },
+            editorID: \.editorID
         )
     }
 

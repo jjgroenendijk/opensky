@@ -5,8 +5,10 @@
 
 import OpenSkyActorPresentation
 import OpenSkyActors
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -32,14 +34,18 @@ protocol RagdollWorldHost: AnyObject {
     var cinematicWorld: CinematicCameraWorldAdapter { get }
     var containerMenu: ContainerMenuController { get }
     var crime: CrimeCoordinator { get }
+    var effects: EffectsCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
+    var menuWorld: MenuWorldAdapter { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.

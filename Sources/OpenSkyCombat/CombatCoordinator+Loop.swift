@@ -51,6 +51,18 @@ extension CombatCoordinator: CombatLoopWorld {
         applyHealthDamage(amount, to: key, attacker: nil)
     }
 
+    /// An NPC's blow keeps its attacker, so its death push points away from it.
+    @discardableResult
+    public func applyCombatBlow(_ amount: Float, to key: ReferenceKey, blow: CombatBlow) -> Bool {
+        let severs = blow.kind == .power && canSever(
+            handType: blow.handType,
+            attacker: blow.attacker
+        )
+        return applyHealthDamage(
+            amount, to: key, attacker: blow.attacker, kind: .melee, canSever: severs
+        )
+    }
+
     public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
         world.magicInfluence(of: key)
     }

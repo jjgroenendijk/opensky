@@ -74,10 +74,39 @@ public protocol RagdollSessionWorld: AnyObject {
     func searchCorpse(_ key: ReferenceKey) -> Bool
     /// The plugin cell of an actor that no loaded cell holds, or nil.
     func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation?
+    /// Moves the dead actor's weapon from its hand to the ground.
+    /// - Returns: the skeleton nodes the weapon hung from, to hide; empty when none dropped.
+    func dropWeapon(of key: ReferenceKey) -> [String]
+    /// The node a decapitation cuts off, from the race's body part data; nil when
+    /// the actor has no head part.
+    func severableNode(of key: ReferenceKey) -> String?
+    /// The blood and gore of a cut at `node`, at the node's world `position`.
+    func showDismemberment(of key: ReferenceKey, node: String, at position: SIMD3<Float>)
+    /// A body a quest still needs, which the excess-dead rule keeps.
+    func isCorpseKept(_ key: ReferenceKey) -> Bool
+    /// Removes a body from the world for good.
+    func removeCorpse(_ key: ReferenceKey)
 }
 
 extension RagdollSessionWorld {
     public func unloadedActorHome(of _: ReferenceKey) -> CellSceneLocation? {
         nil
     }
+
+    public func dropWeapon(of _: ReferenceKey) -> [String] {
+        []
+    }
+
+    public func severableNode(of _: ReferenceKey) -> String? {
+        nil
+    }
+
+    public func showDismemberment(of _: ReferenceKey, node _: String, at _: SIMD3<Float>) {}
+
+    /// A world that cannot tell keeps every body.
+    public func isCorpseKept(_: ReferenceKey) -> Bool {
+        true
+    }
+
+    public func removeCorpse(_: ReferenceKey) {}
 }

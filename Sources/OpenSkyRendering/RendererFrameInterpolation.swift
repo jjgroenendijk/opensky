@@ -108,6 +108,7 @@ extension Renderer {
         encodeComposite(interpolation.frame, encoder: encoder, frameOffset: frameOffset)
         // The overlays draw again, sharp, instead of being interpolated.
         var overlay = ScenePassState(encoder: encoder, slot: state.slot, frustum: state.frustum)
+        encodeScreenBlood(descriptor: target, state: &overlay)
         encodeSWF(descriptor: target, state: &overlay)
         encodeUI(descriptor: target, state: &overlay)
         encoder.endEncoding()

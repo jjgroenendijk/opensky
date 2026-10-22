@@ -48,6 +48,7 @@ final class GraphicsPageViewController: NSViewController {
     let impactEffectsControl = NSButton(
         checkboxWithTitle: "Impact effects", target: nil, action: nil
     )
+    let screenBloodControl = NSButton(checkboxWithTitle: "Screen blood", target: nil, action: nil)
     let lightAnimationControl = NSButton(
         checkboxWithTitle: "Flickering lights", target: nil, action: nil
     )
@@ -167,7 +168,8 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(meshShaderGrassControl), layout.toggle(gpuCullingControl),
                 layout.toggle(roomCullingControl),
                 layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
-                layout.toggle(impactEffectsControl), layout.toggle(toneMappingControl),
+                layout.toggle(impactEffectsControl), layout.toggle(screenBloodControl),
+                layout.toggle(toneMappingControl),
                 layout.toggle(lightAnimationControl), layout.toggle(particleSortingControl),
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl])

@@ -173,4 +173,13 @@ extension GameViewController: RagdollControlProviding {
     func clearRagdolls() {
         ragdollWorld.run(ragdoll.clearRagdolls())
     }
+
+    @discardableResult
+    func dismemberSelectedActor() -> Bool {
+        ragdoll.dismemberSelected()
+    }
+
+    var deathEffectsText: String {
+        ragdoll.deathSettings.readout + "\n" + ragdoll.deathEffects.readout
+    }
 }

@@ -514,6 +514,7 @@ extension Renderer {
         }
         // SWF layer before the dev UI overlay so stats/readouts stay on top. Both draw
         // at the frame size, also when the scene was upscaled.
+        encodeScreenBlood(descriptor: target, state: &state)
         encodeSWF(descriptor: target, state: &state)
         encodeUI(descriptor: target, state: &state)
         lastDrawStats = state.stats

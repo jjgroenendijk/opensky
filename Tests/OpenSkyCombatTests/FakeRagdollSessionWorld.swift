@@ -33,6 +33,12 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var acceptsCorpseSearch = true
     private(set) var searchedCorpses: [ReferenceKey] = []
     var ragdollStepWorld = DynamicStepWorld()
+    /// The nodes a death's weapon drop hides; empty drops nothing.
+    var droppedWeaponNodes: [String] = []
+    var severable: String?
+    var keptCorpses: Set<ReferenceKey> = []
+    private(set) var removedCorpses: [ReferenceKey] = []
+    private(set) var dismemberments: [(ReferenceKey, String)] = []
 
     func hasZeroHealth(_ key: ReferenceKey) -> Bool {
         zeroHealth.contains(key)
@@ -69,6 +75,26 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     func searchCorpse(_ key: ReferenceKey) -> Bool {
         searchedCorpses.append(key)
         return acceptsCorpseSearch
+    }
+
+    func dropWeapon(of _: ReferenceKey) -> [String] {
+        droppedWeaponNodes
+    }
+
+    func severableNode(of _: ReferenceKey) -> String? {
+        severable
+    }
+
+    func showDismemberment(of key: ReferenceKey, node: String, at _: SIMD3<Float>) {
+        dismemberments.append((key, node))
+    }
+
+    func isCorpseKept(_ key: ReferenceKey) -> Bool {
+        keptCorpses.contains(key)
+    }
+
+    func removeCorpse(_ key: ReferenceKey) {
+        removedCorpses.append(key)
     }
 
     static func reference(of key: ReferenceKey) -> FormID {

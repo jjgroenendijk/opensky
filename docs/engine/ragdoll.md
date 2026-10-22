@@ -114,10 +114,55 @@ The contact listener fires once when a ragdoll begins touching the world. It fir
 after the ragdoll has left the ground. OpenSky counts contacts per ragdoll, not per bone, so the
 modifier's `m_bones` list is not used.
 
+## Death effects
+
+The install's game settings drive what a death leaves besides the fall. The Creation Kit wiki
+lists their values but not their rules (<https://ck.uesp.net/wiki/Category:Settings>), so each
+use below is OpenSky's reading. Confirm the look in a play test.
+
+| Setting | Value in `Skyrim.esm` | OpenSky's use |
+| --- | --- | --- |
+| `fDeathForceDamageMin`, `...Max` | 1, 40 | Melee damage range of the push |
+| `fDeathForceForceMin`, `...Max` | 4, 12 | Push for that range, blended and held at the ends |
+| `fDeathForceRanged...` | 1, 50; 10, 30 | The same for arrows and bolts |
+| `fDeathForceSpellImpactMult` | 2 | A spell pushes as a ranged hit times this |
+| `iDeathDropWeaponChance` | 100 | Chance in percent that the dead drop a drawn weapon |
+| `iCombatDismemberPartChance` | 50 | Chance in percent that a qualifying kill cuts the head |
+| `iRemoveExcessDeadCount` | 15 | More dead than this loaded, and the oldest go |
+| `fRemoveExcessDeadTime` | 10 | Seconds a body must be dead before it can go |
+
+The push:
+
+- The last landed hit counts for 2 seconds. A later death, such as from bleeding, pushes nothing.
+- A spell's damage is the sum of its magnitudes. It pushes from where it landed.
+- The push is a Havok impulse on the heaviest bone body. It points away from the attacker and
+  leans up by a quarter, so the body lifts a little as it falls back.
+
+The weapon drop puts the right-hand weapon on the ground under the hand. The visuals of an NPC
+are built once, so the weapon's node and its sheath node are shrunk to a point in the published
+pose instead of the mesh being rebuilt.
+
+Decapitation is the only dismemberment in Skyrim. The head is body part type 1
+(<https://ck.uesp.net/wiki/Skyrim_bodyparts_number>). In the game, a standing power attack can
+decapitate when the attacker has the Savage Strike (one-handed) or Devastating Blow (two-handed)
+perk (<https://en.uesp.net/wiki/Skyrim:One-handed>, <https://en.uesp.net/wiki/Skyrim:Two-handed>).
+OpenSky rolls `iCombatDismemberPartChance` on such a kill, with any blade, axe, or mace. The cut:
+
+- The node of the race's `BPTD` head part, with every bone under it, is shrunk to a point. The
+  node is kept in the death state, so a loaded save shows the body without its head.
+- The part's severable explosion plays unless the race has the no-blood-spray flag.
+- The race's `NAM7` decapitation art is attached. Without it, `sDismemberParticleDefault` plays,
+  which `Skyrim.esm` leaves empty.
+- The default blood decal goes on the ground unless the race has the no-blood-decal flag.
+
+A body is kept from removal while any quest alias holds it. Removal deletes the reference.
+
 ## Not done yet
 
 - Ragdolls without death, such as paralysis or a knockdown.
-- Dismemberment.
+- The neck stump armour of the race (`DNAM`) and the flying head. The NPC visuals do not rebuild
+  when equipment changes.
+- The skin partitions of `BSDismemberSkinInstance` are not used; the cut hides bones instead.
 
 ## Controls
 
@@ -125,9 +170,11 @@ World > Combat & Physics > Death & Ragdoll:
 
 - Ragdoll selected actor: kills and hands off the crosshair target, or else the nearest loaded
   actor. It calls the same function as a death in a fight, so the two cannot differ.
+- Dismember selected actor: kills the actor when it lives, then cuts off its head.
 - Clear ragdolls: removes every live ragdoll. The deaths stay.
 - Freeze ragdoll stepping: stops the solver with the corpses where they are.
 - Bones collide with each other: turns self-collision on or off for the allowed pairs, and wakes
   every corpse so the change shows.
 - Readout: live and settled counts, bone bodies and joints, solver iterations and errors, allowed
-  pairs and bones touching, and final pose corrections.
+  pairs and bones touching, and final pose corrections. Below them: the death settings, and how
+  many bodies were pushed, weapons dropped, heads cut, and bodies removed.

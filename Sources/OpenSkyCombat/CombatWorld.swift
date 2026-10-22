@@ -82,6 +82,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
     func damageStamina(by amount: Float, of key: ReferenceKey)
+    /// A landed health hit, kept for the death effects of the actor it may kill.
+    func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
     func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
 
@@ -203,6 +205,8 @@ extension CombatWorld {
 
     /// A session with no stamina pays nothing to block.
     public func damageStamina(by _: Float, of _: ReferenceKey) {}
+
+    public func recordHealthHit(_: CombatHitRecord, on _: ReferenceKey) {}
 
     @discardableResult
     public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {

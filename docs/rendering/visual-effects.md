@@ -56,6 +56,37 @@ Each alpha curve fades in, holds at the full ratio, then fades out to the persis
 with an optional sine pulse. A shader with the no-membrane flag (0x01) or without a fill color
 draws no membrane.
 
+## Blood
+
+The blood game settings name textures and numbers but not the rules
+(<https://ck.uesp.net/wiki/Category:Settings>), so each use is OpenSky's reading.
+
+Screen blood: a melee or ranged hit on the player places splatters.
+
+- Count: `fBloodSplatterCountBase` plus `fBloodSplatterCountDamageMult` per point of damage
+  above `fBloodSplatterCountDamageBase`, varied by up to `fBloodSplatterCountRandomMargin`.
+  `Skyrim.esm` does not set these four; OpenSky uses the wiki values 2, 0, 0.1, and 1. At most
+  `iBloodSplatterMaxCount` (25) show at once.
+- Size: between `fBloodSplatterMinSize` and `...MaxSize`, as a share of the screen height.
+- Opacity: between `fBloodSplatterMinOpacity` and `...MaxOpacity`. With chance
+  `fBloodSplatterOpacityChance`, the fainter `...Opacity2` range instead.
+- Fade: full for `fBloodSplatterFadeStart` of `fBloodSplatterDuration`, then down to nothing.
+- Look: `sBloodSplatterColor01OPTFilename` gives the colour, and the alpha channel of
+  `sBloodSplatterAlpha01OPTFilename` the shape. Each splatter has a flare
+  (`sBloodSplatterFlare01Filename`) of `fBloodSplatterFlareSize`, offset by
+  `fBloodSplatterFlareOffsetScale` splatter sizes, at `fBloodSplatterFlareMult` opacity.
+- The quads draw after the world and before the SWF menus and the UI.
+
+Weapon blood: a melee hit on an actor whose race lacks the no-weapon-blood flag reddens the
+attacker's weapon. It is a dark red membrane on the holder's unskinned meshes, full for
+`fWeaponBloodLifetime`, fading over `fWeaponBloodFadeDuration`, and gone below
+`fWeaponBloodFalloffThreshold`.
+
+Default blood: a hit on an actor that its impact data shows nothing for plays
+`sBloodParticleMeleeDefault` or `sBloodParticleDefault` and places the `sBloodTextureDefault`
+decal on the ground. `Skyrim.esm` leaves both models empty. The decal is 24 to 48 units wide,
+OpenSky's numbers.
+
 ## Approximations
 
 - The membrane and particle textures of the `EFSH` are not sampled. The membrane is a flat
@@ -69,10 +100,14 @@ draws no membrane.
   index is not used.
 - [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
   `VisualEffect.Play` does not pass its facing object on yet.
-- An actor's membrane covers every mesh drawn for that actor, including worn armor.
+- An actor's membrane covers every mesh drawn for that actor, including worn armor. Weapon blood
+  covers every unskinned mesh, which may include a helmet or a shield.
 
 ## Checking it in the app
 
 `World > Effects > Visual Effects` holds a record picker (`VisualEffectNameControl`) with the
 record's details, buttons to attach it to the player or the nearest actor, a clear button, and
-the live effects (`VisualEffectStatsLabel`).
+the live effects (`VisualEffectStatsLabel`). `World > Effects > Impacts & Decals` turns screen
+blood on and off (`ScreenBloodControl`), splashes it as if the player was hit
+(`ScreenBloodSplashControl`), and lists the blood settings. The launcher's Graphics page has the
+same Screen blood option.

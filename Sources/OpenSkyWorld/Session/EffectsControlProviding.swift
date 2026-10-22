@@ -113,6 +113,22 @@ extension EffectsControlForwarding {
         effects.clearDecals()
     }
 
+    public var screenBloodEnabled: Bool {
+        get { effects.screenBloodEnabled }
+        set {
+            effects.screenBloodEnabled = newValue
+            playerSettingsStore.set(.screenBlood, to: newValue ? 1 : 0)
+        }
+    }
+
+    public func splatterScreenBlood(damage: Float) -> Int {
+        effects.splatterScreen(damage: damage)
+    }
+
+    public var bloodText: String {
+        effects.bloodReadout
+    }
+
     public func repeatLastImpact() -> Bool {
         effects.repeatLastImpact()
     }

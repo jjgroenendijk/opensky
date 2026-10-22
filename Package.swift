@@ -711,8 +711,8 @@ targets += domain(
 targets += domain(
     "OpenSkyEffects",
     dependencies: [
-        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyAudio",
-        "OpenSkyRendering", "OpenSkyShaderTypes", "OpenSkyMagicInterface"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyAudio", "OpenSkyRendering", "OpenSkyShaderTypes", "OpenSkyMagicInterface"
     ],
     tests: worldTestBase
 )
