@@ -63,19 +63,23 @@ nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
     /// Parent per bone, -1 for a root. Empty means every bone is a root, which
     /// only the bone modifiers that work in model space notice.
     public let parentIndices: [Int]
+    /// Name per bone. A paired clip finds its bones by these names.
+    public let boneNames: [String]
 
     public init(
-        referencePose: [HKABonePose], rootBoneIndex: Int = 0, parentIndices: [Int] = []
+        referencePose: [HKABonePose], rootBoneIndex: Int = 0, parentIndices: [Int] = [],
+        boneNames: [String] = []
     ) {
         self.referencePose = referencePose
         self.rootBoneIndex = rootBoneIndex
         self.parentIndices = parentIndices
+        self.boneNames = boneNames
     }
 
     public init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
         self.init(
             referencePose: skeleton.referencePose, rootBoneIndex: rootBoneIndex,
-            parentIndices: skeleton.parentIndices
+            parentIndices: skeleton.parentIndices, boneNames: skeleton.boneNames
         )
     }
 
