@@ -32,9 +32,9 @@ Measured on 2026-10-22 by `make gaps`.
 | Papyrus events | 54 | 14 | 68 | 79% |
 | Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
-| Game settings | 859 | 789 | 1648 | 52% |
+| Game settings | 966 | 682 | 1648 | 58% |
 | Magic effect archetypes | 25 | 12 | 37 | 67% |
-| Perk entry points | 64 | 4 | 68 | 94% |
+| Perk entry points | 65 | 3 | 68 | 95% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
