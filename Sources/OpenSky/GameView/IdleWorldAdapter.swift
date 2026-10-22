@@ -89,9 +89,11 @@ extension IdleWorldAdapter: IdleWorld {
             uniquingKeysWith: { first, _ in first }
         )
         let actors = game.actorWorld.combatActors().map {
-            IdleActorPresence(
+            var presence = IdleActorPresence(
                 key: $0.key, feet: $0.feet, procedure: packages[$0.key], isDead: $0.isDead
             )
+            presence.area = game.packages.sandboxArea(of: $0.key)
+            return presence
         }
         // The player has no package, so it takes no marker; a script idle still plays.
         let player = game.gameSession.map {

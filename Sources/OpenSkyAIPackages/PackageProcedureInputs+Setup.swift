@@ -45,7 +45,20 @@ extension PackageProcedureInputs {
             result.setup.destination = seat.seat.position
             result.setup.walks = true
         }
+        if leaf.kind == .sandbox {
+            result.setup.sandbox = sandbox()
+        }
         return result
+    }
+
+    /// The vanilla `Sandbox` template's ten inputs by `BNAM` name, which differ from the
+    /// wiki's twelve: Allow Eating 1, Allow Idle Markers 4, Energy 8 (docs/engine/sandbox.md).
+    private func sandbox() -> PackageSandboxSetup {
+        var sandbox = PackageSandboxSetup(settings: sandboxSettings, start: start)
+        sandbox.eats = (number(at: 1) ?? 0) != 0
+        sandbox.usesIdleMarkers = (number(at: 4) ?? 1) != 0
+        sandbox.energy = min(max(number(at: 8) ?? sandbox.energy, 0), 100)
+        return sandbox
     }
 
     private var height: SIMD3<Float> {
@@ -117,6 +130,9 @@ extension PackageProcedureInputs {
             radius: Float(place?.radius ?? 0)
         )
         setup.seed = seed
+        if leaf.kind == .sandbox {
+            setup.sandbox = PackageSandboxSetup(settings: sandboxSettings, start: start)
+        }
         var result = PackageLeafSetup(setup: setup, seat: seat)
         if leaf.kind == .patrol {
             let flags = all.compactMap { value -> Bool? in

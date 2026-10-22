@@ -101,6 +101,8 @@ public final class IdleCoordinator {
     var reports: [ReferenceKey: IdleReport] = [:]
     /// Markers an actor could not path to, so it does not retry every frame.
     private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// The marker each sandboxing actor last left, which it does not take again at once.
+    var previousMarkers: [ReferenceKey: IdleMarkerPlacement] = [:]
     private(set) var markers: [IdleMarkerPlacement] = []
     private var markersRefreshAt: Float = 0
     /// The world context one `advance` shares between its actors.
@@ -210,10 +212,16 @@ public final class IdleCoordinator {
         for key in actors.keys.sorted() {
             guard
                 let actor = actors[key], sessions[key]?.marker == nil, !actor.isDead,
-                IdleCore.usesMarkers(actor.procedure),
+                IdleCore.usesMarkers(actor.procedure), actor.area?.allowsMarkers != false
+            else { continue }
+            let previous = previousMarkers[key]
+            var area = actor.area
+            area?.previous = previous?.position
+            guard
                 let marker = IdleCore.nearestFreeMarker(
                     to: actor.feet, among: markers, claimed: claimed,
-                    excluded: unreachable[key] ?? []
+                    excluded: (unreachable[key] ?? []).union(previous.map { [$0.reference] } ?? []),
+                    area: area
                 )
             else { continue }
             let arrived = simd_distance(actor.feet, marker.position) <= IdleCore.arrivalRadius
@@ -222,6 +230,7 @@ public final class IdleCoordinator {
                 continue
             }
             claimed.insert(marker.reference)
+            previousMarkers[key] = nil
             var session = sessions[key] ?? Session()
             session.marker = marker
             session.arrived = arrived

@@ -67,6 +67,8 @@ public protocol PackageWorld: AnyObject {
     func packageMoverHasRoom(for actor: ReferenceKey) -> Bool
     /// True while the idle runtime holds an idle marker for the actor.
     func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool
+    /// A sandbox activity's time ran out, so the actor lets go of its idle marker.
+    func packageSandboxActivityEnded(_ activity: SandboxActivity, actor: ReferenceKey)
 }
 
 /// Whether an actor is free to run the package its schedule picked.
@@ -144,6 +146,8 @@ extension PackageWorld {
     public func packageActorHoldsIdleMarker(_: ReferenceKey) -> Bool {
         false
     }
+
+    public func packageSandboxActivityEnded(_: SandboxActivity, actor _: ReferenceKey) {}
 }
 
 /// The begin, end, or change of one actor's package, which runs the package's fragment.
@@ -216,6 +220,7 @@ public final class PackageCoordinator {
     public var seats = PackageSeatLedger()
     /// The Guard procedure's warnings; the app sets the install's values.
     public var guardWarnings = GuardWarningSettings.vanilla
+    public var sandboxSettings = SandboxSettings.vanilla
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
@@ -399,7 +404,8 @@ public final class PackageCoordinator {
         }
         let rider = mounts.first { $0.value == actor }?.key ?? actor
         guard let mover = executions[rider]?.runner.mover else { return }
-        step(rider, with: event, leaf: mover)
+        let atMarker = event == .arrived && arrivesAtIdleMarker(rider, leaf: mover)
+        step(rider, with: atMarker ? .arrivedAtIdleMarker : event, leaf: mover)
     }
 
     /// Runs the end fragment once for each time the package ended since `before`.

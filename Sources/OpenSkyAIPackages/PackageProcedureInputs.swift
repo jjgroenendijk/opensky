@@ -77,6 +77,7 @@ public struct PackageProcedureInputs {
     public let objectLists: [Int8: [ReferenceKey]]
     public let start: SIMD3<Float>
     public let seed: UInt64
+    public var sandboxSettings = SandboxSettings.vanilla
 
     public init(
         leaf: PackageProcedureLeaf, values: [Int8: Package.DataValue],

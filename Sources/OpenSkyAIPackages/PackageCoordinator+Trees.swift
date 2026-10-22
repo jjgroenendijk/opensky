@@ -139,6 +139,7 @@ extension PackageCoordinator {
             translation: store?.translation(of: current.definition.formID)
         )
         session.guardWarnings = guardWarnings
+        session.sandboxSettings = sandboxSettings
         return session
     }
 

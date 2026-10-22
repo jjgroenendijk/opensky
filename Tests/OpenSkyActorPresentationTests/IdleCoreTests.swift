@@ -48,6 +48,24 @@ struct IdleCoreTests {
         ) == nil)
     }
 
+    @Test func aSandboxTakesMarkersInsideItsCylinderAwayFromTheLastOne() throws {
+        let inside = try Self.marker(1, at: SIMD3(400, 0, 0))
+        let besideLast = try Self.marker(2, at: SIMD3(-450, 0, 0))
+        let high = try Self.marker(3, at: SIMD3(10, 0, 300))
+        let outside = try Self.marker(4, at: SIMD3(700, 0, 0))
+        let markers = [inside, besideLast, high, outside]
+        var area = IdleSearchArea(
+            center: .zero, radius: 500, height: -100 ... 150, minimumStep: 100
+        )
+        area.previous = SIMD3(-480, 0, 0)
+        #expect(IdleCore.nearestFreeMarker(
+            to: SIMD3(-480, 0, 0), among: markers, claimed: [], area: area
+        )?.reference == inside.reference)
+        #expect(IdleCore.nearestFreeMarker(
+            to: .zero, among: markers, claimed: [inside.reference], area: area
+        ) == nil)
+    }
+
     @Test func markerFlagsSetTheOrderAndDoOnce() throws {
         let plain = try Self.marker(1, at: .zero)
         let flagged = try Self.marker(2, at: .zero, flags: 0x05)

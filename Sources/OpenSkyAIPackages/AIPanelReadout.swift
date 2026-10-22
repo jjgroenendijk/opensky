@@ -135,7 +135,10 @@ nonisolated public enum AIPackageReadout: Sendable {
     /// Where the current package's procedure is, such as
     /// `Procedure: patrol, moving, point 3 of 32`.
     public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
-        let state = stateText(for: machine.state)
+        var state = stateText(for: machine.state)
+        if case .sandboxing = machine.state {
+            state += String(format: ", %.2f game hours left", machine.sandbox.hoursLeft)
+        }
         guard !machine.path.isEmpty else { return "Procedure: \(machine.kind.name), \(state)" }
         return "Procedure: \(machine.kind.name), \(state), point \(machine.pathIndex + 1) of "
             + "\(machine.path.count + 1)"
@@ -158,6 +161,7 @@ nonisolated public enum AIPackageReadout: Sendable {
         case .waiting: "waiting"
         case .searching: "searching"
         case .acting: "acting"
+        case let .sandboxing(activity): activity.rawValue
         case .complete: "done"
         case .failed: "failed"
         }
