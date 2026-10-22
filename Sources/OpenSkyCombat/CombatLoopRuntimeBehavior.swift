@@ -8,6 +8,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics

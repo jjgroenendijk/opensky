@@ -121,23 +121,6 @@ public final class CombatLoopRuntime: CombatControlling {
         return setHostility(.hostile, on: key)
     }
 
-    /// Every landed melee hit the player's swing produced: provokes each target and
-    /// puts it in the fight. A hit that staggered also interrupts what it was doing.
-    public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
-        for target in targets where target != .player && commanders[target] != .player {
-            provoke(target)
-            provoked.insert(target)
-            if staggered.contains(target) {
-                noteStagger(of: target)
-            }
-        }
-    }
-
-    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
-    public func rollsStagger() -> Bool {
-        staggerRandom.percent() < staggers.attackChance
-    }
-
     /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
     /// hostile and engages without first having to see the player.
     func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
@@ -202,7 +185,7 @@ public final class CombatLoopRuntime: CombatControlling {
     }
 
     /// Whether `key` engages without having to perceive its target: a script
-    /// called `StartCombat`, the player hit it and it has not turned around yet,
+    /// called `StartCombat`, the player hit it and it has not detected the player yet,
     /// or it is an ally sent at its commander's foe.
     public func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
         forcedTargets[key] != nil || provoked.contains(key) || commanders[key] != nil
@@ -291,7 +274,7 @@ public final class CombatLoopRuntime: CombatControlling {
         var machine = behaviors[key] ?? makeMachine(for: key)
         let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
         behaviors[key] = machine
-        if machine.isEngaged {
+        if machine.isEngaged, inputs.awareness.isDetected {
             provoked.remove(key)
         }
         return step
@@ -443,5 +426,24 @@ extension CombatLoopRuntime {
         endFight(of: actor, world: world)
         record(.scriptStopped(actor))
         return true
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Every landed melee hit the player's swing produced: provokes each target and
+    /// puts it in the fight. A hit that staggered also interrupts what it was doing.
+    public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
+        for target in targets where target != .player && commanders[target] != .player {
+            provoke(target)
+            provoked.insert(target)
+            if staggered.contains(target) {
+                noteStagger(of: target)
+            }
+        }
+    }
+
+    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
+    public func rollsStagger() -> Bool {
+        staggerRandom.percent() < staggers.attackChance
     }
 }

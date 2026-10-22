@@ -3,6 +3,7 @@
 // condition tab names, and the sources: docs/engine/perks.md.
 
 import OpenSkyActorsInterface
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -210,7 +211,9 @@ extension CombatCoordinator {
         else { return nil }
         // `iPerkAttackDisarmChance` and `iPerkBlockDisarmChance` gate a disarm spell.
         let disarms = spell.effects.contains { $0.effect?.effect.data?.archetype == .disarm }
-        if disarms, strikeRandom.percent() >= disarmChance { return nil }
+        if disarms, strikeRandom.percent() >= disarmChance {
+            return nil
+        }
         return world.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: target)]
         ))

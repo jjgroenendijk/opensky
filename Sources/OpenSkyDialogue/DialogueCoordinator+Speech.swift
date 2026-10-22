@@ -1,6 +1,7 @@
 // Lines an NPC says on its own: a force greet and the combat lines, each held back by
 // its `SpeechTimerSettings` wait. See docs/engine/dialogue.md#speech-timers.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 extension DialogueCoordinator {

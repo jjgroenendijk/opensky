@@ -83,15 +83,14 @@ nonisolated public struct StaggerHit: Equatable, Sendable {
 nonisolated public enum StaggerRule {
     /// The magnitude written to `staggerMagnitude` before `staggerStart`.
     public static func magnitude(_ hit: StaggerHit, settings: StaggerSettings) -> Float {
-        var magnitude: Float
-        switch hit.kind {
+        var magnitude: Float = switch hit.kind {
         case .swing, .power:
-            magnitude = hit.weaponStagger
+            hit.weaponStagger
         case let .bash(shieldRating?):
-            magnitude = settings.blockAttackShieldBase
+            settings.blockAttackShieldBase
                 + settings.blockAttackShieldMult * finite(shieldRating)
         case .bash(nil):
-            magnitude = hit.weaponStagger
+            hit.weaponStagger
                 * max(0, 1 + settings.blockAttackMult * finite(hit.attackerBlockSkill))
         }
         magnitude *= finite(hit.perkMultiplier)

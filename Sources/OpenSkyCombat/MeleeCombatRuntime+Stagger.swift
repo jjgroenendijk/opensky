@@ -2,6 +2,7 @@
 
 import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 extension MeleeCombatRuntime {
