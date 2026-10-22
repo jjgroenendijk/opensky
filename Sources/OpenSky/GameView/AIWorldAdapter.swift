@@ -144,6 +144,7 @@ final class AIWorldAdapter {
         guard let store = provider.packageStore else { return }
         game.packages.guardWarnings = GuardWarningSettings.resolve(store: provider.gameSettings)
         game.packages.wire(store: store)
+        game.packages.sandboxSettings = SandboxSettings.resolve(store: provider.gameSettings)
         let packages = game.packages
         gameSession.worldTick.register(.packages) { [weak packages] delta in
             packages?.advance(by: Float(delta))
@@ -283,6 +284,14 @@ extension AIWorldAdapter {
 
     func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool {
         game.idleWorld.idles.holdsMarker(actor)
+    }
+
+    func packageSandboxActivityEnded(_ activity: SandboxActivity, actor: ReferenceKey) {
+        switch activity {
+        case .idleMarker: game.idleWorld.idles.leaveMarker(actor)
+        case .wandering: game.idleWorld.idles.allowPreviousMarker(actor)
+        default: break
+        }
     }
 
     func movePackageActor(

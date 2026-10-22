@@ -216,8 +216,11 @@ struct PackageRuntimeTests {
             )
             #expect(first.start() == second.start())
             #expect(first.handle(.arrived).isEmpty)
-            #expect(!first.handle(.tick(4)).isEmpty)
         }
+        var wander = PackageProcedureMachine(kind: .wander, center: .zero, radius: 10, seed: 42)
+        _ = wander.start()
+        _ = wander.handle(.arrived)
+        #expect(!wander.handle(.tick(1)).isEmpty)
     }
 
     @Test func waitHoldsInPlace() {

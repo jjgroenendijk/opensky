@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 extension PackageCoordinator {
     /// Feeds one event to one running procedure. A procedure that ends moves the tree on.
@@ -21,6 +22,7 @@ extension PackageCoordinator {
         guard let execution = executions[actor], let session = session(for: actor) else {
             return
         }
+        let hours = world?.packageClock.map { $0.totalGameSeconds / GameClock.secondsPerHour }
         for leaf in execution.runner.runningNodes {
             let machine = executions[actor]?.runner.running[leaf]?.machine
             if
@@ -28,6 +30,9 @@ extension PackageCoordinator {
                 let senses = session.senses(watching: watched)
             {
                 step(actor, with: .sensed(senses), leaf: leaf)
+            }
+            if machine?.kind == .sandbox, let hours {
+                step(actor, with: .clock(hours: hours), leaf: leaf)
             }
             step(actor, with: .tick(delta), leaf: leaf)
         }
@@ -40,9 +45,8 @@ extension PackageCoordinator {
             case let .move(point):
                 // The idle runtime walks a sandboxing actor to its marker, so the
                 // sandbox's own walk counts as done.
-                let leaf = executions[actor]?.runner.running[tagged.leaf]?.leaf
-                if leaf?.kind == .sandbox, world?.packageActorHoldsIdleMarker(actor) == true {
-                    step(actor, with: .arrived, leaf: tagged.leaf)
+                if arrivesAtIdleMarker(actor, leaf: tagged.leaf) {
+                    step(actor, with: .arrivedAtIdleMarker, leaf: tagged.leaf)
                 } else {
                     requestMove(actor, to: point)
                 }
@@ -62,7 +66,17 @@ extension PackageCoordinator {
                 paces[actor] = gait
             case .playLoop:
                 continue
+            case let .endActivity(activity):
+                world?.packageSandboxActivityEnded(activity, actor: actor)
             }
         }
+    }
+
+    /// A sandboxing actor that holds an idle marker uses it as its next activity.
+    func arrivesAtIdleMarker(_ actor: ReferenceKey, leaf: Int) -> Bool {
+        let running = executions[actor]?.runner.running[leaf]
+        return running?.leaf.kind == .sandbox
+            && running?.setup.setup.sandbox?.usesIdleMarkers != false
+            && world?.packageActorHoldsIdleMarker(actor) == true
     }
 }

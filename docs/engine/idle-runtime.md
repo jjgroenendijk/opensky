@@ -26,12 +26,15 @@ An actor looks for a marker when its current package is a sandbox package, or a 
 whose procedure name contains `IdleMarker`. A dead actor does not look.
 
 - The actor takes the nearest marker within 1024 units (about 15 m) that no other actor
-  holds. A tie goes to the lower reference.
+  holds. A tie goes to the lower reference. A sandboxing actor looks in its package's place
+  instead, a cylinder whose height comes from `fSandboxCylinderBottom` and
+  `fSandboxCylinderTop` ([sandbox](/engine/sandbox.md)).
 - The actor walks to the marker through the normal move command. A marker it cannot reach
   is skipped for that actor, so it does not retry every frame.
 - The actor has arrived when it stands within 48 units of the marker.
 - The actor lets go of the marker when it dies, leaves the loaded cells, or changes to a
   package that does not use markers. A playing idle finishes first.
+- A sandboxing actor also lets go when its activity time runs out. Its idle stops at once.
 
 World > AI & Navigation > Idles lists the markers of the loaded cells. Its checkbox "Send
 sandboxing actors to markers" turns the claim off for every actor. "Play idle" plays a

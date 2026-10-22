@@ -20,6 +20,8 @@ nonisolated extension PackageProcedureMachine {
         case act
         /// Stand near the target until it moves away again.
         case follow
+        /// Start the next sandbox activity.
+        case sandbox
     }
 
     private static let arrivals: [PackageProcedureKind: Arrival] = [
@@ -27,7 +29,7 @@ nonisolated extension PackageProcedureMachine {
         .followTo: .complete, .escort: .complete, .flee: .complete,
         .patrol: .nextPoint, .orbit: .nextPoint,
         .sleep: .loop(.sleep), .eat: .loop(.eat), .sit: .sit,
-        .wander: .idle(wanderIdleSeconds), .sandbox: .idle(sandboxIdleSeconds),
+        .wander: .idle(wanderIdleSeconds), .sandbox: .sandbox,
         .holdPosition: .hold, .guardArea: .hold, .flightGrab: .hold, .wait: .hold,
         .keepAnEyeOn: .hold,
         .activate: .act, .acquire: .act, .dialogueActivate: .act, .useWeapon: .act,
@@ -70,8 +72,10 @@ nonisolated extension PackageProcedureMachine {
 
     private mutating func startMoving() -> [PackageProcedureCommand] {
         switch kind {
-        case .wander, .sandbox:
+        case .wander:
             return move(to: nextWanderPoint())
+        case .sandbox:
+            return startSandbox()
         case .wait, .keepAnEyeOn:
             state = .waiting
             timer = kind == .wait && setup.seconds > 0 ? setup.seconds : nil
@@ -116,6 +120,8 @@ nonisolated extension PackageProcedureMachine {
         case .hold, .follow:
             state = .waiting
             return []
+        case .sandbox:
+            return beginSandboxActivity(.wandering)
         case .act:
             guard let action = arrivalAction() else {
                 state = .failed

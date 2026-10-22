@@ -114,7 +114,7 @@ input names of the vanilla templates.
 | Orbit | Walk eight points round a circle between the two radii, as a patrol |
 | Hover | Move to the place, raised by the height input, then finish |
 | Wander | Pick seeded random points in a radius, wait 1 second, repeat |
-| Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
+| Sandbox | Timed activities in the place, and meals ([sandbox](/engine/sandbox.md)) |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
 | Sit | Move to a free seat of the target furniture, then sit; done when seated |

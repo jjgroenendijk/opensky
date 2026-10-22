@@ -26,6 +26,8 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case searching(retrySeconds: Float)
     /// Waits for the world to finish an act, such as a spoken line.
     case acting(secondsRemaining: Float?)
+    /// A sandbox does one activity until its game-hour timer runs out.
+    case sandboxing(SandboxActivity)
     case complete
     case failed
 }
@@ -40,14 +42,20 @@ nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case act(PackageAction)
     /// Stop walking where the actor is.
     case stop
+    /// A sandbox activity's time ran out; the world lets go of what it used.
+    case endActivity(SandboxActivity)
 }
 
 nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
     case arrived
+    /// A sandbox walk ended because the idle runtime gave the actor an idle marker.
+    case arrivedAtIdleMarker
     case movementFailed
     case tick(Float)
     case acted(PackageActionResult)
     case sensed(PackageSenses)
+    /// The game clock, in game hours since the calendar's start.
+    case clock(hours: Double)
 }
 
 /// What one procedure needs, read from its parameters by `PackageProcedureInputs`.
@@ -82,6 +90,7 @@ nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
     public var walks = true
     /// A Guard procedure's warning count and spacing, from the install.
     public var guardWarnings = GuardWarningSettings.vanilla
+    public var sandbox: PackageSandboxSetup?
 
     public init(
         kind: PackageProcedureKind, center: SIMD3<Float>, destination: SIMD3<Float>? = nil,
@@ -96,7 +105,6 @@ nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
 
 nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     static let wanderIdleSeconds: Float = 1
-    static let sandboxIdleSeconds: Float = 4
     static let findRetrySeconds: Float = 2
     /// How far a watched reference may move before a follower walks again.
     static let followSlack: Float = 128
@@ -122,6 +130,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     /// The warnings a guard gave the intruder now in its warn radius.
     public internal(set) var warnings = 0
     var warnCooldown: Float = 0
+    public internal(set) var sandbox = SandboxProgress()
 
     public var kind: PackageProcedureKind {
         setup.kind
@@ -184,6 +193,11 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         case .arrived:
             guard state == .moving else { return [] }
             return handleArrival()
+        case .arrivedAtIdleMarker:
+            guard state == .moving else { return [] }
+            return kind == .sandbox ? beginSandboxActivity(.idleMarker) : handleArrival()
+        case let .clock(hours):
+            return handleClock(hours)
         case let .tick(delta):
             return handleTick(max(0, delta))
         case let .acted(result):
