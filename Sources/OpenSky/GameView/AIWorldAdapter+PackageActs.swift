@@ -132,8 +132,11 @@ extension AIWorldAdapter {
     }
 
     /// The conversation opens with the actor's greeting. The package's own topic is not
-    /// forced: the greeting is picked as when the player talks to the actor.
+    /// forced: the greeting is picked as when the player talks to the actor. An actor waits
+    /// `fAIForceGreetingTimer` before it may force greet again.
     func greet(_ actor: ReferenceKey) -> PackageActionResult {
+        guard game.dialogue.claimForceGreet(speaker: actor, now: game.storyWorld.sceneSeconds)
+        else { return .failed }
         game.dialogueMenu.begin(with: actor)
         return game.dialogueMenu.isOpen ? .done : .failed
     }

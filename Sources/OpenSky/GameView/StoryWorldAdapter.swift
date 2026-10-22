@@ -296,10 +296,13 @@ extension StoryWorldAdapter: SceneWorld {
         return clock.totalGameSeconds / Double(max(timescale, 1))
     }
 
+    /// The line's seconds plus `fGameplayVoiceFilePadding`, the gap before the next line.
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
         let texts = responseTexts(of: info)
-        guard let voiceTimer else { return SceneCore.lineDuration(texts: texts) }
-        return voiceTimer.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
+        let seconds = voiceTimer.map {
+            $0.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
+        } ?? SceneCore.lineDuration(texts: texts)
+        return seconds.map(game.dialogue.speechTimers.padded)
     }
 
     /// A shared INFO (`DNAM`) says its target's text.

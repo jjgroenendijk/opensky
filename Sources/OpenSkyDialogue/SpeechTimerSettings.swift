@@ -42,6 +42,17 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
         return settings
     }
 
+    /// The waits and chances for the Dialogue panel.
+    public var readout: String {
+        let percent = { (line: NPCSpeechLine) in Int((chance(of: line) * 100).rounded()) }
+        return String(
+            format: "Speech timers: force greet %.1f s · combat line %.1f-%.1f s · "
+                + "attack %d%% · hit %d%% · voice gap %.2f s",
+            forceGreetingSeconds, attackLineMinSeconds, attackLineMaxSeconds,
+            percent(.combatAttack), percent(.combatHit), voiceFilePadding
+        )
+    }
+
     /// A voiced line's seconds with the gap the next line waits for.
     public func padded(_ seconds: Float) -> Float {
         seconds + (voiceFilePadding.isFinite ? max(voiceFilePadding, 0) : 0)

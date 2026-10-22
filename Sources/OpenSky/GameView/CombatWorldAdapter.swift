@@ -11,6 +11,7 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsESM
@@ -36,6 +37,7 @@ protocol CombatWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var crime: CrimeCoordinator { get }
+    var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
@@ -55,6 +57,7 @@ protocol CombatWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var sessionWiring: WorldSessionWiring { get }
+    var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }

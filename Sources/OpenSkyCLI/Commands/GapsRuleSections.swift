@@ -7,6 +7,7 @@ import OpenSkyAIPackages
 import OpenSkyCamera
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
+import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -90,6 +91,7 @@ extension GapsGatherer {
         _ = CombatAISettings.resolve(store: store)
         _ = DoorSettings.resolve(store: store)
         _ = GuardWarningSettings.resolve(store: store)
+        _ = SpeechTimerSettings.resolve(store: store)
         _ = MeleeSkillUseSettings.resolve(store: store)
         _ = ArrowSettings.resolve(store: store)
         _ = TrainingSettings.resolve(store: store)

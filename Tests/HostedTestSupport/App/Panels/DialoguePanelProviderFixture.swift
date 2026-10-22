@@ -72,6 +72,7 @@ final class FakeDialogueProvider: DialogueControlProviding {
     private(set) var openCount = 0
     private(set) var closeCount = 0
     private(set) var events: [MenuInputEvent] = []
+    var speechTimerReadout = "Speech timers: test"
 
     var dialogueSnapshot: DialogueControlSnapshot {
         snapshot

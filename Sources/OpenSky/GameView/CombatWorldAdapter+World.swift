@@ -11,6 +11,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -42,7 +43,28 @@ extension CombatWorldAdapter: CombatWorld {
             game.perception.runtime?.noteAttack(by: .player)
         }
         game.scripts.bridge?.recordHit(hit, targetWasHostile: wasHostile)
+        speakCombatLines(for: hit)
         return game.scripts.runtime?.queueOnHit(hit) ?? 0
+    }
+
+    /// An NPC aggressor may call out its attack and an NPC target its hurt, each held back
+    /// by its own `SpeechTimerSettings` window and chance.
+    private func speakCombatLines(for hit: ScriptHitEvent) {
+        let now = game.storyWorld.sceneSeconds
+        let lines: [(NPCSpeechLine, ReferenceKey)] = [
+            (.combatAttack, hit.aggressor), (.combatHit, hit.target)
+        ]
+        for (line, speaker) in lines where speaker != .player {
+            guard
+                let id = game.dialogue.combatLine(line, speaker: speaker, now: now),
+                let info = game.dialogue.runtime?.dialogue.info(id)
+            else { continue }
+            let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
+            game.storyWorld.speak(
+                info: id, speaker: speaker, lookAt: nil,
+                seconds: seconds ?? SceneLine.defaultSeconds
+            )
+        }
     }
 
     @discardableResult
