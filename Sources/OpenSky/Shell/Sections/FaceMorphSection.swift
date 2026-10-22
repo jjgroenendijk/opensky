@@ -18,6 +18,9 @@ final class FaceMorphSection: PanelSectionViewController {
     let weightControl = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
     let resetControl = NSButton(title: "Reset weights", target: nil, action: nil)
     let blinkControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
+    let eyeMovementControl = NSButton(
+        checkboxWithTitle: "Eye movement", target: nil, action: nil
+    )
     let expressionControl = NSButton(
         checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
     )
@@ -43,12 +46,13 @@ final class FaceMorphSection: PanelSectionViewController {
         guard let provider else { return false }
         return provider.faceMorphSnapshot.weights.values.contains(where: { $0 != 0 })
             || !provider.automaticBlinkingEnabled || !provider.dialogueExpressionsEnabled
-            || !provider.headTrackingEnabled
+            || !provider.headTrackingEnabled || !provider.eyeMovementEnabled
     }
 
     static func resetToDefaults(provider: (any FaceMorphControlProviding)?) {
         provider?.resetFaceMorphWeights()
         provider?.automaticBlinkingEnabled = true
+        provider?.eyeMovementEnabled = true
         provider?.dialogueExpressionsEnabled = true
         provider?.headTrackingEnabled = true
     }
@@ -84,6 +88,11 @@ final class FaceMorphSection: PanelSectionViewController {
             identifier: "FaceMorphBlinkControl"
         )
         PanelComponents.configureCheckbox(
+            eyeMovementControl, target: self, action: #selector(eyeMovementChanged),
+            identifier: "FaceMorphEyeMovementControl"
+        )
+        eyeMovementControl.toolTip = "Eyes drift by the emotion the face shows."
+        PanelComponents.configureCheckbox(
             expressionControl, target: self, action: #selector(expressionChanged),
             identifier: "FaceMorphExpressionControl"
         )
@@ -99,7 +108,9 @@ final class FaceMorphSection: PanelSectionViewController {
                 PanelComponents.sliderRow(slider: weightControl, valueLabel: weightLabel),
                 resetControl
             ]),
-            PanelComponents.group([blinkControl, expressionControl, headTrackingControl]),
+            PanelComponents.group([
+                blinkControl, eyeMovementControl, expressionControl, headTrackingControl
+            ]),
             statsLabel
         ]
     }
@@ -123,10 +134,12 @@ final class FaceMorphSection: PanelSectionViewController {
         weightControl.isEnabled = available
         resetControl.isEnabled = snapshot.actor != nil
         blinkControl.state = provider?.automaticBlinkingEnabled ?? true ? .on : .off
+        eyeMovementControl.state = provider?.eyeMovementEnabled ?? true ? .on : .off
         expressionControl.state = provider?.dialogueExpressionsEnabled ?? true ? .on : .off
         headTrackingControl.state = provider?.headTrackingEnabled ?? true ? .on : .off
         headTrackingControl.isEnabled = provider != nil
         blinkControl.isEnabled = provider != nil
+        eyeMovementControl.isEnabled = provider != nil
         expressionControl.isEnabled = provider != nil
         updateWeightLabel()
     }
@@ -166,6 +179,11 @@ final class FaceMorphSection: PanelSectionViewController {
 
     @objc private func blinkChanged() {
         provider?.automaticBlinkingEnabled = blinkControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func eyeMovementChanged() {
+        provider?.eyeMovementEnabled = eyeMovementControl.state == .on
         finishInteraction()
     }
 

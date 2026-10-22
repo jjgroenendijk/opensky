@@ -23,7 +23,10 @@ nonisolated extension RaceMenuModel {
         case .slider: return (-1 ... 1, Self.sliderStep)
         case let .part(index):
             guard let range = Self.partRanges[index] else { return nil }
-            return (Float(range.lowerBound) ... Float(range.upperBound), 1)
+            let held = options.partTypes[index].map { Int32($0) } ?? range.upperBound
+            let counted = morphCounts.count(partIndex: index).map { Int32($0 - 1) } ?? held
+            let upper = max(min(held, counted), range.lowerBound)
+            return (Float(range.lowerBound) ... Float(upper), 1)
         case .headPreset: return choices(options.presets.count)
         case let .headPart(type):
             let count = options.headParts[type]?.count ?? 0

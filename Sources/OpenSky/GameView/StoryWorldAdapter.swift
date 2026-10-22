@@ -357,7 +357,9 @@ extension StoryWorldAdapter: SceneWorld {
         game.audio.speak(voicePaths(of: id, speaker: speaker), speaker: speaker)
         let info = game.dialogue.runtime?.dialogue.info(id)
         if let lookAt {
-            game.headTracking.setLookTarget(lookAt, for: speaker, seconds: seconds)
+            game.headTracking.setLookTarget(
+                lookAt, for: speaker, seconds: seconds, dialogue: true
+            )
         }
         if
             let response = info?.responses.first,

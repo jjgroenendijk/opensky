@@ -46,6 +46,8 @@ nonisolated public struct RaceMenuOptions: Equatable, Sendable {
     public var tintMasks: [RaceMenuTintMask]
     /// `FTSM` or `FTSF`, face texture sets.
     public var complexions: [FormID]
+    /// The highest type the race and sex's chargen TRI holds, by `NAMA` index.
+    public var partTypes: [Int: Int] = [:]
 
     public init(
         presets: [RacePreset] = [], headParts: [HeadPart.PartType: [FormID]] = [:],

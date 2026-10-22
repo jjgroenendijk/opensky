@@ -46,6 +46,8 @@ public protocol FaceMorphControlProviding: AnyObject {
     var faceMorphSnapshot: FaceMorphControlSnapshot { get }
     /// Every loaded face blinks on its own.
     var automaticBlinkingEnabled: Bool { get set }
+    /// Every loaded face's eyes drift by the emotion it shows.
+    var eyeMovementEnabled: Bool { get set }
     /// A speaker's face shows the emotion of the line it says.
     var dialogueExpressionsEnabled: Bool { get set }
     /// Actors turn their heads toward what they look at.

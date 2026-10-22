@@ -1,18 +1,11 @@
-// The automatic face: a dialogue emotion held on the speaker's face, and blinking.
-// Target names are the expression TRI's own (`DialogueAnger`, `BlinkLeft`, ...), read
-// from the head TRI on the install. The blink timing is OpenSky's own.
-// See docs/engine/face-morphs.md.
+// The automatic face: a dialogue emotion held on the speaker's face, blinking, and eye
+// drift. Target names are the expression TRI's own (`DialogueAnger`, `BlinkLeft`,
+// `LookLeft`, ...), read from the head TRI on the install. See docs/engine/face-morphs.md.
 
 import Foundation
 import OpenSkyFormatsESM
 
 nonisolated public enum FacialExpressionCore {
-    /// Seconds one blink takes, closed at its middle.
-    public static let blinkSeconds: Float = 0.2
-    /// Blinks come every 3 to 6 seconds, at a gap each actor keeps.
-    public static let shortestBlinkGap: Float = 3
-    public static let blinkGapSpread: Float = 3
-
     /// The TRI target an `INFO` `TRDT` emotion shows, at `value` out of 100.
     /// Neutral shows nothing.
     public static func emotionWeights(
@@ -32,27 +25,76 @@ nonisolated public enum FacialExpressionCore {
         return [name: Float(min(value, 100)) / 100]
     }
 
-    /// How closed both eyes are at `time`, 0 to 1. `seed` spreads actors apart, so a
-    /// crowd does not blink together.
-    public static func blink(at time: Float, seed: UInt32) -> Float {
-        guard time.isFinite else { return 0 }
-        let mixed = seed &* 2_654_435_761
-        let gap = shortestBlinkGap + Float(mixed % 1000) / 1000 * blinkGapSpread
-        let offset = Float((mixed >> 10) % 1000) / 1000 * gap
-        let phase = (time + offset).truncatingRemainder(dividingBy: gap)
-        guard phase >= 0, phase < blinkSeconds else { return 0 }
-        let half = blinkSeconds / 2
-        return phase < half ? phase / half : (blinkSeconds - phase) / half
+    /// How closed both eyes are `elapsed` seconds into a blink, 0 to 1: closing over the
+    /// down time, then opening over the up time.
+    public static func blinkClosure(elapsed: Float, settings: FaceAnimationSettings) -> Float {
+        let down = max(settings.blinkDownTime, 0)
+        let up = max(settings.blinkUpTime, 0)
+        guard elapsed.isFinite, elapsed >= 0, elapsed < down + up else { return 0 }
+        if elapsed < down {
+            return elapsed / down
+        }
+        return up > 0 ? 1 - (elapsed - down) / up : 0
+    }
+
+    /// The eye drift at `time` for one emotion's range, in radians: a new point in the
+    /// range every `interval` seconds. `seed` gives each actor its own drift.
+    public static func eyeOffset(
+        at time: Float, seed: UInt32, range: EyeOffsetRange, interval: Float
+    ) -> HeadLook {
+        guard time.isFinite, time >= 0, interval > 0 else { return .forward }
+        let cycle = UInt32(truncatingIfNeeded: Int((time / interval).rounded(.down)))
+        let roll = SeededRoll(seed: seed, cycle: cycle)
+        return HeadLook(
+            yaw: HeadTrackingCore.lerp(range.headingMin, range.headingMax, roll.value(5)),
+            pitch: HeadTrackingCore.lerp(range.pitchMin, range.pitchMax, roll.value(6))
+        )
+    }
+
+    /// The `Look` targets that show `offset`; a full weight is the eye track limit.
+    public static func eyeWeights(
+        _ offset: HeadLook, settings: FaceAnimationSettings
+    ) -> [String: Float] {
+        func weight(_ angle: Float, limit: Float) -> Float {
+            limit > 0 ? min(abs(angle) * 180 / .pi / limit, 1) : 0
+        }
+        var weights: [String: Float] = [:]
+        let heading = weight(offset.yaw, limit: settings.eyeTrackXY)
+        let pitch = weight(offset.pitch, limit: settings.eyeTrackZ)
+        if heading > 0 {
+            weights[offset.yaw > 0 ? "LookLeft" : "LookRight"] = heading
+        }
+        if pitch > 0 {
+            weights[offset.pitch > 0 ? "LookUp" : "LookDown"] = pitch
+        }
+        return weights
+    }
+
+    /// `current` moved toward `goal` by at most `step` on each target; a target missing
+    /// from one side counts as 0.
+    public static func ease(
+        _ current: [String: Float], toward goal: [String: Float], step: Float
+    ) -> [String: Float] {
+        var result: [String: Float] = [:]
+        for name in Set(current.keys).union(goal.keys) {
+            let from = current[name] ?? 0
+            let to = goal[name] ?? 0
+            let next = from + min(max(to - from, -step), step)
+            if next > 0 {
+                result[name] = next
+            }
+        }
+        return result
     }
 
     public static func blinkWeights(_ closed: Float) -> [String: Float] {
         closed > 0 ? ["BlinkLeft": closed, "BlinkRight": closed] : [:]
     }
 
-    /// One frame's automatic weights: the emotion, plus a blink on top.
+    /// One frame's automatic weights: the emotion and the eyes, plus a blink on top.
     public static func weights(
-        emotion: [String: Float], blink: Float
+        emotion: [String: Float], eyes: [String: Float] = [:], blink: Float
     ) -> [String: Float] {
-        emotion.merging(blinkWeights(blink)) { max($0, $1) }
+        emotion.merging(eyes) { max($0, $1) }.merging(blinkWeights(blink)) { max($0, $1) }
     }
 }

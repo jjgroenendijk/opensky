@@ -50,8 +50,28 @@ test list (`racesex_menu.swf`, `FaceChanges`), which names the callbacks the gam
 - A control the race offers nothing for is left out, so its slider does not show.
 - The 19th `NAM9` value is the vampire morph; the menu does not show it.
 
-The type ranges come from the chargen TRI of the female head: 30 nose targets, 28 eye
-targets, and 30 lip targets.
+The type ranges come from the chargen TRI of the race and sex's default face part. The world
+load reads each TRI once and keeps its highest `NoseType`, `EyesType`, and `LipType` target.
+Type 0 is the base shape. Measured on the install:
+
+| Chargen TRI | Nose | Eyes | Lips |
+| --- | --- | --- | --- |
+| Human and elf male | 0 to 30 | 0 to 37 | 0 to 30 |
+| Human and elf female (`FemaleHeadCharGen.tri`) | 0 to 30 | 0 to 28 | 0 to 30 |
+| Khajiit and Argonian | 0 to 5 | 0 to 5 | 0 to 4 or 5 |
+
+A TRI that cannot be read falls back to the female human ranges.
+
+The game settings `iNoseMorphCount` (31), `iEyeMorphCount` (38), and `iLipMorphCount` (31)
+count the types with type 0 included. They can only narrow a range, so a plugin that lowers a
+count shortens its row. `iBrowMorphCount` (20) has no TRI targets to check, because brows are
+head parts.
+
+The real-data suite `FaceMorphCountRealDataTests` (`make test-real ALL=1`) checks every playable
+race's chargen TRI against the counts and writes each difference to `.logs/face-morph-counts/`.
+No TRI holds more types than its count allows. Each race's `MPAV` fields (UESP "Skyrim
+Mod:Mod File Format/RACE", <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE>) set every
+bit of their first two flag words in vanilla, so they do not limit the types.
 
 [WARNING] The vanilla Head category also has an Age control (`sRSMAge`). No record names what it
 changes, so OpenSky leaves it out. A lead: each race's `FTSM`/`FTSF` list mixes complexion

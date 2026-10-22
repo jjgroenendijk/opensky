@@ -99,7 +99,7 @@ final class DialogueMenuController {
             game.dialogueWorld.run(dialogue.recordGreeting(info, speaker: speaker))
             speakCurrentRun()
         }
-        game.headTracking.setLookTarget(.player, for: speaker)
+        game.headTracking.setLookTarget(.player, for: speaker, dialogue: true)
         dialogue.lastOutcome = DialogueCore.openedText(
             speaker: model.speaker,
             topicCount: model.topics.count,
