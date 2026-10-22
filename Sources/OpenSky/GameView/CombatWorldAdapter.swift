@@ -148,7 +148,7 @@ final class CombatWorldAdapter {
         combat.load(settings: store)
         // The launcher page writes the switch while a session runs.
         store.observe { [weak combat, weak store] id in
-            guard id == .combatTemperament, let store else { return }
+            guard id == .combatTemperament || id == .combatGameSettings, let store else { return }
             combat?.load(settings: store)
         }
         gameSession.worldTick.register(.combatLoop) { [weak combat, weak self] delta in

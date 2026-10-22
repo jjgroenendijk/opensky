@@ -25,6 +25,9 @@ final class CombatLoopSection: PanelSectionViewController {
     let temperamentControl = NSButton(
         checkboxWithTitle: "Confidence and Assistance", target: nil, action: nil
     )
+    let gameSettingsControl = NSButton(
+        checkboxWithTitle: "Game combat settings", target: nil, action: nil
+    )
     let clearTraceControl = NSButton(title: "Clear hit trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "CombatLoopStatsLabel")
@@ -49,6 +52,12 @@ final class CombatLoopSection: PanelSectionViewController {
             temperamentControl, target: self, action: #selector(temperamentChanged),
             identifier: "CombatTemperamentControl"
         )
+        gameSettingsControl.toolTip = "New fights use the install's advance, range, heal, shout, "
+            + "and flight settings."
+        PanelComponents.configureCheckbox(
+            gameSettingsControl, target: self, action: #selector(gameSettingsChanged),
+            identifier: "CombatGameSettingsControl"
+        )
         PanelComponents.configureCheckbox(
             hostilityControl, target: self, action: #selector(hostilityChanged),
             identifier: "CombatHostilityControl"
@@ -66,6 +75,7 @@ final class CombatLoopSection: PanelSectionViewController {
                 hostilityControl,
                 castingControl,
                 temperamentControl,
+                gameSettingsControl,
                 PanelComponents.buttonRow([clearTraceControl])
             ]),
             statsLabel
@@ -74,9 +84,14 @@ final class CombatLoopSection: PanelSectionViewController {
 
     override func syncControls() {
         let available = provider != nil
-        for control in [hostilityControl, castingControl, temperamentControl, clearTraceControl] {
+        let controls = [
+            hostilityControl, castingControl, temperamentControl, gameSettingsControl,
+            clearTraceControl
+        ]
+        for control in controls {
             control.isEnabled = available
         }
+        gameSettingsControl.state = provider?.appliesCombatGameSettings == false ? .off : .on
         hostilityControl.state = provider?.selectedActorIsHostile == true ? .on : .off
         castingControl.state = provider?.isActorCastingEnabled == true ? .on : .off
         temperamentControl.state = provider?.usesCombatTemperament == false ? .off : .on
@@ -96,8 +111,12 @@ final class CombatLoopSection: PanelSectionViewController {
             CombatLoopReadout.hostilityText(for: snapshot),
             CombatLoopReadout.temperamentText(for: snapshot),
             CombatLoopReadout.combatAIText(for: snapshot),
-            provider.selectedCombatStyle
-                .map { "\($0.styleText)\n\($0.settingsText)" } ?? "Style: none",
+            provider.selectedCombatStyle.map {
+                "\($0.styleText)\n\($0.settingsText)\n"
+                    + $0.gameSettingsText(
+                        snapshot.combatAI, isOn: provider.appliesCombatGameSettings
+                    )
+            } ?? "Style: none",
             CombatLoopReadout.incomingText(for: snapshot),
             CombatLoopReadout.transientText(for: snapshot),
             snapshot.lastActionText
@@ -118,6 +137,11 @@ final class CombatLoopSection: PanelSectionViewController {
 
     @objc private func temperamentChanged() {
         provider?.usesCombatTemperament = temperamentControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func gameSettingsChanged() {
+        provider?.appliesCombatGameSettings = gameSettingsControl.state == .on
         finishInteraction()
     }
 

@@ -374,6 +374,8 @@ nonisolated extension PlayerSettingID {
     public static let actorGraphDistance = Self("characters.actorGraphDistance")
     /// Confidence decides who flees, and Assistance brings allies into a fight.
     public static let combatTemperament = Self("combat.temperament")
+    /// Fights use the game's advance, range, healing, shout, and flight settings.
+    public static let combatGameSettings = Self("combat.gameSettings")
     /// An index into `PlayerSettingsCatalog.frameRateCapOptions`.
     public static let frameRateCap = Self("window.frameRateCap")
 
@@ -400,6 +402,10 @@ nonisolated extension PlayerSettingsCatalog {
         row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true),
         row(
             "combat.temperament", .opensky, .toggle, "Confidence and Assistance", 1,
+            applied: true
+        ),
+        row(
+            "combat.gameSettings", .opensky, .toggle, "Game combat settings", 1,
             applied: true
         ),
         row(

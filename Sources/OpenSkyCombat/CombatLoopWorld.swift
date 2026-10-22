@@ -201,6 +201,13 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     ///   unreachable point or a full mover cap; the machine then tries another point.
     @discardableResult
     func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
+    /// The same with a gait; nil lets the mover pick it.
+    @discardableResult
+    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool
+    /// Turns `key` in place towards `point`, such as to aim a shout.
+    func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
+    /// Whether `key`'s race flies.
+    func combatFlies(_ key: ReferenceKey) -> Bool
 
     /// Stops `key` where it stands, which is what an actor does when it is in
     /// reach, blocking, staggered or done fighting.
@@ -261,6 +268,19 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
 }
 
 extension CombatLoopWorld {
+    @discardableResult
+    public func moveCombatActor(
+        _ key: ReferenceKey, to point: SIMD3<Float>, gait _: LocomotionGait?
+    ) -> Bool {
+        moveCombatActor(key, to: point)
+    }
+
+    public func turnCombatActor(_: ReferenceKey, toward _: SIMD3<Float>) {}
+
+    public func combatFlies(_: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A search of the whole list, for a session without a lookup by key.
     public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
         combatActors().first { $0.key == key }

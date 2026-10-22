@@ -34,4 +34,17 @@ extension CombatWorldAdapter {
         else { return nil }
         return races[race.rawValue]?.details.materialType
     }
+
+    /// The actor's RACE `DATA` flags, or nil without a resolved race.
+    func raceFlags(of actor: ReferenceKey) -> Race.Flags? {
+        guard
+            let race = game.menuWorld.race(of: actor),
+            let races = game.worldData?.actorValueBaselines?.resolver?.races
+        else { return nil }
+        return races[race.rawValue]?.flags
+    }
+
+    func actorFlies(_ actor: ReferenceKey) -> Bool {
+        raceFlags(of: actor)?.contains(.flies) ?? false
+    }
 }

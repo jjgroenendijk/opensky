@@ -149,13 +149,60 @@ game uses them, so each use is OpenSky's reading.
 | `fCombatDistance` | 141 | The base spacing the follow radius scales |
 | `fCombatFollowRadiusMult` | 3 | An NPC's ally farther than spacing times this walks back |
 | `fCombatTeammateFollowRadiusMult` | 3 | The same for the player's allies |
+| `fCombatAdvanceOuterRadius...` | 128, 256, 512 | An approach walks inside this; note 1 |
+| `fCombatAdvanceInnerRadius...` | 0, 0, 256 | A caster backs off to this first; note 2 |
+| `fCombatCurrentWeaponAbsoluteMaxRangeMult` | 1.25 | Striking distance times this keeps a fighter waiting |
+| `fCombatAbsoluteMaxRangeMult` | 4 | Past striking distance times this, a closer casts |
+| `fAIUseWeaponDistance` | 15,000 | No spell or shout at a target farther than this |
+| `iAICombatRestoreHealthPercentage` | 60 | Below this health share an actor heals itself |
+| `fAIShoutMinAimSeconds` | 2 s | A shout aims at least this long |
+| `fAIShoutToleranceDegrees` | 5 | A shout needs the target inside this angle |
+| `fAIShoutRetryDelaySeconds` | 4 s | A shout that missed its aim waits this long |
+| `fCombatOrbitDistance` | 4,000 | How far a flying actor circles from its target |
+| `fCombatHoverTimeMin` | 5.5 s | The shortest air stage of a flying actor |
+| `fCombatPerchAttackTimeMin` | 4 s | The shortest perch stage |
+| `fCombatGroundAttackTimeMin`, `...Max` | 8 s, 17 s | The ground stage, by the style's ground time |
 
-The game has many more combat AI settings that OpenSky does not read yet, because the behaviour
-they tune is not built: the advance radii, the weapon range caps (`fCombatAbsoluteMaxRangeMult`,
-`fCombatCurrentWeaponAbsoluteMaxRangeMult`, `fAIUseWeaponDistance`), self-healing below
-`iAICombatRestoreHealthPercentage` (NPCs do not cast on themselves yet), flying combat
-(`fCombatHover*`, `fCombatPerch*`, `fCombatGroundAttack*`, `fCombatOrbitDistance`), and shouts
-(`fAIShout*`).
+Note 1: the three radii are `Min`, `Mid`, and `Max`. Offense 1 picks `Min`, 0.5 `Mid`, and 0
+`Max`, blended in between.
+
+Note 2: defense 0 picks `Min`, 0.5 `Mid`, and 1 `Max`. The back-off lasts at most 2 s, which is
+OpenSky's own number.
+
+The advance, range, healing, shout, and flight settings reach the fights that start while the
+switch "Game combat settings" is on. It is on by default, saved with the player settings, and
+sits in `World > Combat Loop` and on the launcher's Graphics page. Off keeps OpenSky's own
+numbers, which is what the older behaviour tests run on.
+
+Healing: a spell counts as a heal when it is a hand-cast spell aimed at the caster, carries no
+hostile effect, and one of its effects is a value modifier on Health that is not detrimental, such
+as Healing. The costliest heal the actor can pay for wins. The game also lets NPCs drink potions
+below the same threshold; OpenSky's NPCs do not drink potions yet.
+
+Shouts: a shout on the NPC's own or race spell list (`SPLO` entries that name a `SHOU`) goes off
+as its strongest word. The actor stands, turns to its target, and lets go once the aim time has
+passed and it faces the target within the tolerance. Facing away for twice the aim time drops the
+shout. After a shout the actor waits the word's recovery time; an NPC has no Shout Recovery Mult.
+A shout needs no magicka and no hand, and comes before a spell or a swing.
+
+## Flying combat
+
+An actor whose race flies (`RACE` `DATA` flag 0x80, UESP "Skyrim Mod:Mod File Format/RACE") fights
+in three stages: in the air, on a perch, and on the ground. A fight starts in the air.
+
+- Air: the actor circles its target at the orbit distance and casts from range, but does not
+  swing. It lasts `fCombatHoverTimeMin` times the style's hover time over its 0.5 default, never
+  less than the minimum.
+- Perch: after an air stage, with the style's perch attack chance, the actor stops and casts from
+  where it stands. It lasts like the air stage, from `fCombatPerchAttackTimeMin` and the style's
+  perch attack time.
+- Ground: otherwise the actor lands and fights as any actor does, for a time between the two
+  ground settings by the style's ground attack time (`CSFL`,
+  [combat style](/formats/combat-style.md)).
+
+After a perch or ground stage the actor goes back to the air. OpenSky has no flight movement yet,
+so "in the air" moves the actor on the ground around its target. The stage order and the time
+mapping are OpenSky's reading.
 
 ## Fleeing
 

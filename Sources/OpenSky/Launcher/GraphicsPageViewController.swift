@@ -78,6 +78,9 @@ final class GraphicsPageViewController: NSViewController {
     let combatTemperamentControl = NSButton(
         checkboxWithTitle: "Confidence and Assistance", target: nil, action: nil
     )
+    let combatGameSettingsControl = NSButton(
+        checkboxWithTitle: "Game combat settings", target: nil, action: nil
+    )
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
@@ -174,7 +177,8 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),
                 layout.toggle(expressionsControl),
                 layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl),
-                layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl)
+                layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl),
+                layout.toggle(combatGameSettingsControl)
             ]),
             layout.group("Texture memory", [
                 layout.toggle(textureStreamingControl),
@@ -215,29 +219,11 @@ final class GraphicsPageViewController: NSViewController {
         frameInterpolationControl.isEnabled = interpolationUnsupportedReason == nil
         frameInterpolationControl.state = interpolationUnsupportedReason == nil
             && store.bool(.frameInterpolation) ? .on : .off
-        gpuCullingControl.state = store.bool(.gpuCulling) ? .on : .off
-        roomCullingControl.state = store.bool(.roomCulling) ? .on : .off
-        waterDepthControl.state = store.bool(.waterDepth) ? .on : .off
-        terrainNormalMapsControl.state = store.bool(.terrainNormalMaps) ? .on : .off
-        impactEffectsControl.state = store.bool(.impactEffects) ? .on : .off
-        toneMappingControl.state = store.bool(.toneMapping) ? .on : .off
-        lightAnimationControl.state = store.bool(.lightAnimation) ? .on : .off
-        particleSortingControl.state = store.bool(.particleSorting) ? .on : .off
-        blinkingControl.state = store.bool(.characterBlinking) ? .on : .off
-        eyeMovementControl.state = store.bool(.characterEyeMovement) ? .on : .off
-        expressionsControl.state = store.bool(.characterDialogueExpressions) ? .on : .off
-        headTrackingControl.state = store.bool(.characterHeadTracking) ? .on : .off
-        objectAnimationControl.state = store.bool(.objectAnimation) ? .on : .off
-        actorGraphsControl.state = store.bool(.actorGraphs) ? .on : .off
-        combatTemperamentControl.state = store.bool(.combatTemperament) ? .on : .off
-        for (button, setting) in surfaceShadingControls {
-            button.state = store.bool(setting.id) ? .on : .off
+        for (button, setting) in plainCheckboxSettings {
+            button.state = store.bool(setting) ? .on : .off
         }
-        pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
-        textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))
         textureBudgetLabel.stringValue = Self.budgetLine(store: store)
-        fullScreenControl.state = store.bool(.fullScreen) ? .on : .off
         frameRateCapControl.selectItem(at: Int(store.value(.frameRateCap)))
     }
 

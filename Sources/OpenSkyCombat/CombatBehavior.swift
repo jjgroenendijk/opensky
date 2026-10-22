@@ -106,20 +106,36 @@ nonisolated public struct CombatSpellOption: Equatable, Sendable {
     /// True for a concentration spell, which is maintained rather than
     /// released the instant it finishes charging.
     public let isConcentration: Bool
+    /// What the cast is for: an attack, a heal on the caster, or a shout.
+    public var purpose: CombatSpellPurpose
+    /// For a shout, the word's recovery time before the actor shouts again.
+    public let cooldownSeconds: Float
 
     public init(
         spell: ReferenceKey,
         cost: Float,
         range: Float,
         chargeSeconds: Float = 0,
-        isConcentration: Bool = false
+        isConcentration: Bool = false,
+        purpose: CombatSpellPurpose = .attack,
+        cooldownSeconds: Float = 0
     ) {
         self.spell = spell
         self.cost = cost
         self.range = range
         self.chargeSeconds = chargeSeconds
         self.isConcentration = isConcentration
+        self.purpose = purpose
+        self.cooldownSeconds = cooldownSeconds
     }
+}
+
+nonisolated public enum CombatSpellPurpose: String, Equatable, Sendable {
+    case attack
+    /// A healing spell the actor casts on itself.
+    case heal
+    /// A shout: aimed by facing the target, released without a hand.
+    case shout
 }
 
 /// What one actor can pay for and what it could cast.
@@ -130,14 +146,23 @@ nonisolated public struct CombatCastingProfile: Equatable, Sendable {
     /// The hostile spells the actor knows that this build can actually deliver,
     /// in ascending spell order.
     public var options: [CombatSpellOption] = []
+    /// Healing spells the actor can cast on itself, in ascending spell order.
+    public var heals: [CombatSpellOption] = []
+    /// The shouts the actor knows, in ascending spell order.
+    public var shouts: [CombatSpellOption] = []
 
     /// An actor that knows nothing castable — every actor before 19.10, and
     /// every warrior after it.
     public static let none = CombatCastingProfile()
 
-    public init(magicka: Float = 0, options: [CombatSpellOption] = []) {
+    public init(
+        magicka: Float = 0, options: [CombatSpellOption] = [],
+        heals: [CombatSpellOption] = [], shouts: [CombatSpellOption] = []
+    ) {
         self.magicka = magicka
         self.options = options
+        self.heals = heals
+        self.shouts = shouts
     }
 }
 
@@ -169,6 +194,10 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     public var influence: ActorMagicInfluence
     /// The actor's Confidence beside its target. Nil keeps the health-fraction rule.
     public var temperament: CombatTemperament?
+    /// Radians between where the actor faces and the target, for aiming a shout.
+    public var facingError: Float = 0
+    /// The actor's race flies (`RACE` flag 0x80).
+    public var flies = false
 
     public init(
         actorPosition: SIMD3<Float>,
@@ -261,4 +290,6 @@ nonisolated public struct CombatBehaviorStep: Equatable, Sendable {
     /// Where the actor should be heading, or nil when this step asked for no
     /// change in movement.
     public var command: CombatMovementCommand?
+    /// True when the command's approach walks rather than runs.
+    public var walks = false
 }

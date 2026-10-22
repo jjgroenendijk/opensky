@@ -83,8 +83,8 @@ nonisolated public struct Race: Sendable {
         }
     }
 
-    /// DATA uint32 flags at offset 0x20 (UESP RACE) — only the
-    /// appearance-relevant bits are named.
+    /// DATA uint32 flags at offset 0x20 (UESP RACE) — only the bits OpenSky reads
+    /// are named.
     public struct Flags: OptionSet, Equatable, Sendable {
         public let rawValue: UInt32
 
@@ -97,6 +97,10 @@ nonisolated public struct Race: Sendable {
         /// clear on creature races like cow/dog/bear.
         public static let faceGenHead = Flags(rawValue: 0x0000_0002)
         public static let child = Flags(rawValue: 0x0000_0004)
+        public static let flies = Flags(rawValue: 0x0000_0080)
+        public static let noBloodSpray = Flags(rawValue: 0x0000_2000)
+        public static let noBloodDecal = Flags(rawValue: 0x0000_4000)
+        public static let noWeaponBlood = Flags(rawValue: 0x0200_0000)
     }
 
     /// Level-1 starting attributes and their regen rates. Regen is a percentage

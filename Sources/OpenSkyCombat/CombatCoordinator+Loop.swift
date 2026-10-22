@@ -149,14 +149,16 @@ extension CombatCoordinator: CombatLoopWorld {
         return CombatCore.castingProfile(facts)
     }
 
+    /// A shout takes no hand, so there is nothing to ready.
     @discardableResult
     public func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        world.beginCast(option.spell, by: key)
+        option.purpose == .shout || world.beginCast(option.spell, by: key)
     }
 
     @discardableResult
     public func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        let finished = world.releaseCast(by: key)
+        let finished = option.purpose == .shout
+            ? world.shout(option.spell, by: key) : world.releaseCast(by: key)
         actorCastCount += finished ? 1 : 0
         return finished
     }
@@ -168,6 +170,21 @@ extension CombatCoordinator: CombatLoopWorld {
     @discardableResult
     public func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
         world.moveActor(key, to: point)
+    }
+
+    @discardableResult
+    public func moveCombatActor(
+        _ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?
+    ) -> Bool {
+        world.moveActor(key, to: point, gait: gait)
+    }
+
+    public func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
+        world.faceActor(key, toward: point)
+    }
+
+    public func combatFlies(_ key: ReferenceKey) -> Bool {
+        world.actorFlies(key)
     }
 
     public func stopCombatMovement(of key: ReferenceKey) {

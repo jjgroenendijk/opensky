@@ -303,6 +303,15 @@ extension CombatWorldAdapter: CombatWorld {
         game.streamer?.moveActor(key, to: point) == .started
     }
 
+    @discardableResult
+    func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool {
+        game.streamer?.moveActor(key, to: point, gait: gait) == .started
+    }
+
+    func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
+        _ = game.streamer?.faceActor(key, towards: point)
+    }
+
     func stopActor(_ key: ReferenceKey) {
         game.streamer?.stopActor(key)
     }

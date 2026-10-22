@@ -132,7 +132,7 @@ extension CombatLoopRuntime {
     ) {
         targets[actor.key] = target.key
         let weapon = world.combatWeapon(of: actor.key)
-        let step = stepBehavior(of: actor.key, inputs: CombatBehaviorInputs(
+        var inputs = CombatBehaviorInputs(
             actorPosition: actor.feet,
             targetPosition: target.feet,
             awareness: world.combatAwareness(of: actor.key, toward: target.key),
@@ -145,7 +145,13 @@ extension CombatLoopRuntime {
             casting: world.combatCasting(of: actor.key),
             influence: influence,
             temperament: world.combatTemperament(of: actor.key, toward: target.key)
-        ))
+        )
+        inputs.facingError = facingError(of: actor, toward: target.feet)
+        inputs.flies = world.combatFlies(actor.key)
+        let step = stepBehavior(of: actor.key, inputs: inputs)
+        if behaviors[actor.key]?.pendingCast?.purpose == .shout {
+            world.turnCombatActor(actor.key, toward: target.feet)
+        }
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
             world.applyCombatSwingSpell(blow(by: actor.key, weapon: weapon), at: target.key)
@@ -158,7 +164,7 @@ extension CombatLoopRuntime {
             world.resumeCombatPackage(for: actor.key)
         }
         if let command = step.command {
-            route(command, actor: actor.key, world: world)
+            route(command, walks: step.walks, actor: actor.key, world: world)
         }
     }
 
@@ -186,6 +192,7 @@ extension CombatLoopRuntime {
     /// re-path interval is what asks again.
     private func route(
         _ command: CombatMovementCommand,
+        walks: Bool,
         actor: ReferenceKey,
         world: any CombatLoopWorld
     ) {
@@ -193,7 +200,7 @@ extension CombatLoopRuntime {
             world.stopCombatMovement(of: actor)
             return
         }
-        world.moveCombatActor(actor, to: destination)
+        world.moveCombatActor(actor, to: destination, gait: walks ? .walk : nil)
     }
 
     /// The contact step: sweep the actor's reach at its target and apply
@@ -337,12 +344,17 @@ extension CombatLoopRuntime {
         return world.raiseCombatEvent(CombatGraphNames.recoilStart, on: nil)
     }
 
+    /// Radians from where `actor` faces to `point`, in -pi...pi.
+    private func facingError(
+        of actor: CombatActorObservation,
+        toward point: SIMD3<Float>
+    ) -> Float {
+        let turn = facing(from: actor.feet, toward: point, fallback: actor.facing) - actor.facing
+        return atan2f(sinf(turn), cosf(turn))
+    }
+
     /// Yaw from `origin` toward `target` in the locomotion bridge's convention,
     /// falling back to the placement facing when the two are on the same spot.
-    ///
-    /// A fighting actor turns to face what it is swinging at because it decided
-    /// to close on it; the dev target turned here because it had no decisions,
-    /// and the note that said so is gone with it.
     private func facing(
         from origin: SIMD3<Float>,
         toward target: SIMD3<Float>,

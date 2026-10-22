@@ -48,6 +48,12 @@ public final class CombatCoordinator {
     public var staggers = StaggerSettings.vanilla
     /// The game's combat AI settings; the app sets them before `wireLoop`.
     public var combatAI = CombatAISettings.vanilla
+    /// Whether fights that start from now on use the game's advance, range, healing,
+    /// shout, and flight settings. Off keeps OpenSky's own numbers.
+    public var appliesCombatGameSettings = false {
+        didSet { loop?.applyingGameSettings = appliesCombatGameSettings }
+    }
+
     /// What a landed arrow does; the app sets it before `wireArchery`.
     public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
@@ -96,6 +102,7 @@ public final class CombatCoordinator {
         runtime.skillUses = skillUses
         runtime.staggers = staggers
         runtime.combatAI = combatAI
+        runtime.applyingGameSettings = appliesCombatGameSettings
         loop = runtime
     }
 

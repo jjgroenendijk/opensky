@@ -24,7 +24,28 @@ extension CombatWorldAdapter {
         return CombatCastingFacts(
             magicka: values.current(of: holder).magicka,
             spells: runtime.spellbook.knownSpells(of: holder)
-                .map { candidate($0, runtime: runtime) }
+                .map { candidate($0, runtime: runtime) },
+            shouts: game.magic.npcShouts(of: holder).compactMap(shoutOption)
+        )
+    }
+
+    @discardableResult
+    func shout(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool {
+        guard let holder = game.actorWorld.actorValueHolder(for: key) else { return false }
+        return game.magic.npcShout(spell, by: holder)
+    }
+
+    /// A shout as its strongest word with a spell. An NPC has no Shout Recovery Mult, so
+    /// the word's own recovery time is the cooldown.
+    private func shoutOption(_ shout: ResolvedShout) -> CombatSpellOption? {
+        guard let word = shout.words.last(where: { $0.spell != nil }), let spell = word.spell
+        else { return nil }
+        return CombatSpellOption(
+            spell: spell.key,
+            cost: 0,
+            range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
+            purpose: .shout,
+            cooldownSeconds: ShoutCore.cooldown(recovery: word.entry.recoveryTime, multiplier: 1)
         )
     }
 
@@ -80,7 +101,16 @@ extension CombatWorldAdapter {
             isHostile: spell.effects.contains {
                 $0.effect?.effect.data?.flags.contains(.hostile) == true
             },
-            fitsHand: runtime.spellbook.occupancy(of: spell, in: Self.castHand) != nil
+            fitsHand: runtime.spellbook.occupancy(of: spell, in: Self.castHand) != nil,
+            restoresHealth: spell.effects.contains(where: Self.restoresHealth)
         )
+    }
+
+    /// A value modifier on Health that is not detrimental, such as Healing.
+    private static func restoresHealth(_ effect: ResolvedSpellEffect) -> Bool {
+        guard let data = effect.effect?.effect.data else { return false }
+        return data.archetype == .valueModifier
+            && data.relatedActorValue == ActorValueIdentity.index(named: "Health")
+            && !data.flags.contains(.detrimental) && !data.flags.contains(.hostile)
     }
 }

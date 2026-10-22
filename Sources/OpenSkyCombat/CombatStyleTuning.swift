@@ -22,8 +22,20 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     public var defensiveMultiplier: Float
     public var meleeScoreMultiplier: Float
     public var magicScoreMultiplier: Float
+    /// `CSFL` hover, ground attack, and perch attack times, and the perch chance, 0 to 1.
+    /// UESP gives 0.5 as the default of each.
+    public var flight = FlightStyle()
     /// The style's editor ID, for the readout.
     public var name: String?
+
+    nonisolated public struct FlightStyle: Equatable, Sendable {
+        public var hoverTime: Float = 0.5
+        public var groundAttackTime: Float = 0.5
+        public var perchAttackChance: Float = 0.5
+        public var perchAttackTime: Float = 0.5
+
+        public init() {}
+    }
 
     /// The neutral style: every derived setting equals its base.
     public static let neutral = CombatStyleTuning(
@@ -59,6 +71,10 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
                 ?? neutral.magicScoreMultiplier,
             name: style.editorID
         )
+        flight.hoverTime = style.value(.hoverTime) ?? flight.hoverTime
+        flight.groundAttackTime = style.value(.groundAttackTime) ?? flight.groundAttackTime
+        flight.perchAttackChance = style.value(.perchAttackChance) ?? flight.perchAttackChance
+        flight.perchAttackTime = style.value(.perchAttackTime) ?? flight.perchAttackTime
     }
 
     /// The attack interval divides by offense over neutral: twice the offense,

@@ -280,9 +280,10 @@ extension CombatCoordinator: CombatLoopControlProviding {
         return "\(actorName(key)): \(doing)"
     }
 
-    /// Reads the persisted Confidence and Assistance switch.
+    /// Reads the persisted Confidence and Assistance and game combat settings switches.
     public func load(settings store: PlayerSettingsStore) {
         usesTemperament = store.bool(.combatTemperament)
+        appliesCombatGameSettings = store.bool(.combatGameSettings)
     }
 
     public var usesCombatTemperament: Bool {

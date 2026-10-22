@@ -80,6 +80,11 @@ extension GameViewController: CombatLoopControlProviding {
         set { playerSettingsStore.set(.combatTemperament, to: newValue ? 1 : 0) }
     }
 
+    var appliesCombatGameSettings: Bool {
+        get { combat.appliesCombatGameSettings }
+        set { playerSettingsStore.set(.combatGameSettings, to: newValue ? 1 : 0) }
+    }
+
     func clearCombatTrace() {
         combat.clearCombatTrace()
     }

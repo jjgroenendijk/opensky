@@ -125,6 +125,11 @@ nonisolated public struct ShoutStore: Sendable {
         shoutTable.value(editorID: editorID)
     }
 
+    /// The shout a plugin's FormID names, such as an entry of an actor's `SPLO` list.
+    public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedShout? {
+        index.resolvedID(id, fromPlugin: pluginName).flatMap(shoutTable.value)
+    }
+
     /// Joins one shout's SNAM run against the word index and the spell store.
     /// Public so the text dump gets the same names the store holds.
     public func join(

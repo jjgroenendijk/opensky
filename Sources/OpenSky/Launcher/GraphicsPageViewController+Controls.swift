@@ -119,6 +119,10 @@ extension GraphicsPageViewController {
             combatTemperamentControl, "CombatTemperament",
             "Confidence decides who flees, and Assistance brings allies into a fight"
         )
+        checkbox(
+            combatGameSettingsControl, "CombatGameSettings",
+            "Fights use the install's advance, range, heal, shout, and flight settings"
+        )
     }
 
     /// `name` becomes the id `Graphics<name>Control`.
@@ -168,12 +172,16 @@ extension GraphicsPageViewController {
 
     private var checkboxSettings: [(NSButton, PlayerSettingID)] {
         [
-            (frameInterpolationControl, .frameInterpolation), (
-                rayTracedShadowsControl,
-                .rayTracedShadows
-            ),
-            (meshShaderGrassControl, .meshShaderGrass), (gpuCullingControl, .gpuCulling),
-            (roomCullingControl, .roomCulling),
+            (frameInterpolationControl, .frameInterpolation),
+            (rayTracedShadowsControl, .rayTracedShadows),
+            (meshShaderGrassControl, .meshShaderGrass)
+        ] + plainCheckboxSettings
+    }
+
+    /// The checkboxes that show their setting as it is, with no device check.
+    var plainCheckboxSettings: [(NSButton, PlayerSettingID)] {
+        [
+            (gpuCullingControl, .gpuCulling), (roomCullingControl, .roomCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
@@ -182,6 +190,7 @@ extension GraphicsPageViewController {
             (headTrackingControl, .characterHeadTracking),
             (objectAnimationControl, .objectAnimation), (actorGraphsControl, .actorGraphs),
             (combatTemperamentControl, .combatTemperament),
+            (combatGameSettingsControl, .combatGameSettings),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
