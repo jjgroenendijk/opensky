@@ -169,6 +169,12 @@ public final class CellStreamer {
     /// Automatic doors whose area held the player's feet last frame. Nil until the first
     /// frame in a scene, so arriving inside a door's area does not send the player back.
     public var automaticDoorOccupancy: Set<FormID>?
+    /// Automatic door distances and the teleport delay; the app sets the install's values.
+    public var doors = DoorSettings.vanilla
+    /// Seconds a used load door still waits before its finished build is shown.
+    var doorTransitionHold: Float = 0
+    /// Finished door builds held back by `doorTransitionHold`.
+    var heldDoorTransitions: [DoorTransitionBuildResult] = []
     /// Recent trigger edges for `World > World > Triggers`, filled by a subscriber
     /// registered in `init`.
     public let triggerLog = TriggerEventLog()
@@ -232,7 +238,7 @@ public final class CellStreamer {
             activeBuild = nil
         }
         let completedLOD = runner.drainCompletedDistantLOD().filter(builtHere)
-        if finishDoorTransition(runner.drainCompletedDoorTransitions()) {
+        if finishDoorTransition(drainDoorTransitions(frameTime: frameTime)) {
             return
         }
         let isInside = updateInteriorIfNeeded(

@@ -62,7 +62,8 @@ final class TriggerVolumeSection: PanelSectionViewController {
             "Dropped: excluded \(stats.excludedPrimitiveCount)"
                 + "  degenerate \(stats.degenerateVolumeCount)"
                 + "  unkeyed \(stats.unkeyedReferenceCount)",
-            "Occupancy: \(Self.occupancyGateText(snapshot))"
+            "Occupancy: \(Self.occupancyGateText(snapshot))",
+            snapshot.automaticDoors
         ].joined(separator: "\n")
         eventsLabel.stringValue = Self.transitionsText(snapshot)
     }

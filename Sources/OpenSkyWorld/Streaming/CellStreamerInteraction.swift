@@ -150,7 +150,7 @@ extension CellStreamer {
             ),
             actor.distance < (hit?.distance ?? .greatestFiniteMagnitude)
         else {
-            return (solid, nil)
+            return (solid ?? nearestAutomaticDoor(to: ray.origin), nil)
         }
         return (Self.talkTarget(actor), actor.candidate.key)
     }
@@ -373,6 +373,7 @@ extension CellStreamer {
         guard target.interaction.action == .open else { return }
         guard requestDoorTransition(activeDoor(reference: target.interaction.reference))
         else { return }
+        doorTransitionHold = max(0, doors.teleportDelay)
         doorMotionInteraction = target.interaction
         onInteractionAnimation?(InteractionAnimationEvent(
             interaction: target.interaction,

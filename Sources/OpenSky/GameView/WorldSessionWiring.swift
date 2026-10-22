@@ -99,6 +99,7 @@ final class WorldSessionWiring {
             }
         )
         streamer.placedRecords = provider.placedRecords
+        streamer.doors = DoorSettings.resolve(store: provider.gameSettings)
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(gameSession: gameSession)
         wireMenuMovies(gameSession: gameSession)

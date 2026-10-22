@@ -331,7 +331,7 @@ extension WorldRenderControls: FrameStatsProviding, SceneStatsProviding {
 extension WorldRenderControls: TriggerControlProviding, PhysicsControlProviding {
     public var triggerStatsSnapshot: TriggerStatsSnapshot {
         guard let streamer else { return .unavailable }
-        return TriggerStatsSnapshot(
+        var snapshot = TriggerStatsSnapshot(
             streamerAvailable: true,
             stats: streamer.triggerStats(),
             occupiedCount: streamer.occupiedTriggers.count,
@@ -339,6 +339,8 @@ extension WorldRenderControls: TriggerControlProviding, PhysicsControlProviding 
             recentTransitions: streamer.triggerLog.lines,
             recordedTransitionCount: streamer.triggerLog.recordedCount
         )
+        snapshot.automaticDoors = streamer.automaticDoorReadout
+        return snapshot
     }
 
     public func clearTriggerLog() {

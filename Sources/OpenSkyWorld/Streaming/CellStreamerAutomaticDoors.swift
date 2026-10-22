@@ -1,6 +1,7 @@
 // Automatic doors: the CK wiki "Door" page says such a door is activated when the
 // player enters its space rather than by the use key. See docs/engine/interaction.md.
 
+import Foundation
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyWorldInterface
@@ -15,7 +16,10 @@ extension CellStreamer {
             return
         }
         let inside = residentScenes.flatMap { scene in
-            scene.interactions.values.filter { $0.automaticArea?.contains(feet) == true }
+            scene.interactions.values.filter {
+                $0.automaticArea?.contains(feet) == true
+                    && simd_distance($0.position, feet) <= doors.autoActivateDistance
+            }
         }
         let previous = automaticDoorOccupancy
         automaticDoorOccupancy = Set(inside.map(\.reference))
@@ -25,5 +29,41 @@ extension CellStreamer {
                 .first(where: { !previous.contains($0.reference) })
         else { return }
         activate(InteractionTarget(interaction: entered, hitPosition: feet, distance: 0))
+    }
+
+    /// The automatic door count and the `DoorSettings` distances, for World > Triggers.
+    public var automaticDoorReadout: String {
+        let count = residentScenes.reduce(0) { total, scene in
+            total + scene.interactions.values.count { $0.automaticArea != nil }
+        }
+        let occupied = automaticDoorOccupancy?.count ?? 0
+        return String(
+            format: "Automatic doors: %d resident  Occupied: %d\n"
+                + "Doors: open %.0f  name %.0f  load delay %.1f s",
+            count, occupied, doors.autoActivateDistance, doors.autoDisplayDistance,
+            doors.teleportDelay
+        )
+    }
+
+    /// The nearest automatic door within `fAutoDoorDisplayDistance`, which the HUD names
+    /// when the crosshair is on nothing else.
+    func nearestAutomaticDoor(to origin: SIMD3<Float>) -> InteractionTarget? {
+        let range = doors.autoDisplayDistance
+        let near = residentScenes.flatMap { scene in
+            scene.interactions.values.filter {
+                $0.automaticArea != nil && simd_distance($0.position, origin) <= range
+            }
+        }
+        let nearest = near.min { lhs, rhs in
+            let left = simd_distance(lhs.position, origin)
+            let right = simd_distance(rhs.position, origin)
+            return left == right ? lhs.reference.rawValue < rhs.reference.rawValue : left < right
+        }
+        return nearest.map {
+            InteractionTarget(
+                interaction: $0, hitPosition: $0.position,
+                distance: simd_distance($0.position, origin)
+            )
+        }
     }
 }
