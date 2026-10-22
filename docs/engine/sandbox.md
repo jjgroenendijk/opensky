@@ -56,6 +56,12 @@ and energy multiplier of furniture, idle markers, and eating. The others, such a
 the game's executable. OpenSky uses the defaults from the Creation Kit wiki table
 <https://ck.uesp.net/wiki/Category:Settings>, and a plugin that adds one overrides it.
 
+The wiki's procedure page also lists meal and sleep times as `iSandbox...` settings, such as
+`iSandboxLunchMin` (11) and `iSandboxLunchMax` (14), each with its own page
+(<https://ck.uesp.net/wiki/ISandboxLunchMin>). `Skyrim.esm` holds no setting with these
+names, and the settings table has the `fSandbox...` names with other values (lunch 11.5 to
+12.5). OpenSky reads only the `fSandbox...` names.
+
 Where OpenSky differs from the game:
 
 - The game picks each activity from a weighted list of nearby objects. OpenSky only has idle
