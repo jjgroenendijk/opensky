@@ -188,8 +188,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         switch event {
         case .movementFailed:
             guard state == .moving else { return [] }
-            state = .failed
-            return []
+            return handleMovementFailure()
         case .arrived:
             guard state == .moving else { return [] }
             return handleArrival()
@@ -215,6 +214,15 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     mutating func act(_ action: PackageAction) -> [PackageProcedureCommand] {
         state = .acting(secondsRemaining: nil)
         return [.act(action)]
+    }
+
+    /// A sandbox never completes, so it waits where it stands and then tries a new point.
+    private mutating func handleMovementFailure() -> [PackageProcedureCommand] {
+        if kind == .sandbox {
+            return beginSandboxActivity(.wandering)
+        }
+        state = .failed
+        return []
     }
 
     private mutating func handleTick(_ delta: Float) -> [PackageProcedureCommand] {

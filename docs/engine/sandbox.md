@@ -33,6 +33,8 @@ Wandering. Example: an idle marker with Energy 50 lasts 0.2 x 1.5 x (1 + 50 x 0.
 - After a walk, the actor stands for a Wandering activity. When the idle runtime gave it an
   idle marker, it uses the marker for an IdleMarker activity instead. A marker that the idle
   runtime gives during a Wandering activity ends it and starts an IdleMarker activity.
+- A walk that fails starts a Wandering activity where the actor stands. The wiki says the
+  procedure never completes, so a point the actor cannot reach does not end it.
 - When an activity ends, the actor leaves its marker and walks to a new random point. The
   idle runtime does not give it the same marker, or one closer than
   `fSandBoxInterMarkerMinDist` to it, until it has done one Wandering activity.

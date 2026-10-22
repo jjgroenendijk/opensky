@@ -84,6 +84,14 @@ struct SandboxProcedureTests {
         #expect(machine.sandbox.hoursLeft > 0.2625 * 0.74)
     }
 
+    @Test func aFailedWalkWandersInPlaceInsteadOfEndingTheSandbox() {
+        var machine = Self.machine(start: SIMD3(5000, 0, 0))
+        _ = machine.start()
+        #expect(machine.handle(.movementFailed).isEmpty)
+        #expect(machine.state == .sandboxing(.wandering))
+        #expect(!machine.isFinished)
+    }
+
     @Test func aDueMealCutsTheActivityShort() {
         var settings = SandboxSettings.vanilla
         settings.meals = [SandboxMealWindow(earliest: 12, latest: 12)]
