@@ -31,6 +31,11 @@ nonisolated public struct RecordFragmentSection: Equatable, Sendable {
     public let fragments: [ScriptFragment]
     /// SCEN only.
     public let phaseFragments: [ScenePhaseFragment]
+
+    /// The fragment for `slot`: a flag bit for SCEN and PACK, an index for PERK.
+    public func fragment(slot: UInt32) -> ScriptFragment? {
+        fragments.first { $0.slot == slot }
+    }
 }
 
 nonisolated extension ScriptDataDecoder {
@@ -60,11 +65,13 @@ nonisolated extension ScriptDataDecoder {
                 minimumSize: 9,
                 context: "fragments"
             )
+            // UESP: uint16 index, int16 and int8 unknowns. xEdit reads the first
+            // two as one uint32; EPF3 names the index as a uint16.
             let fragments = try (0 ..< count).map { _ in
-                let index = try reader.readUInt32()
-                reader.skip(1)
+                let index = try reader.readUInt16()
+                reader.skip(3)
                 return try ScriptFragment(
-                    slot: index,
+                    slot: UInt32(index),
                     scriptName: readString(),
                     functionName: readString()
                 )

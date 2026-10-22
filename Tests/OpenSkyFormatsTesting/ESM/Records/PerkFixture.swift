@@ -196,6 +196,28 @@ public enum PerkFixture: Sendable {
         return try ESMFile(data: data)
     }
 
+    /// A PERK `VMAD` with the fragment tail: int8 version 2, file name, uint16 count,
+    /// then per fragment uint16 index, 3 unused bytes, script name, function name.
+    public static func fragmentVMAD(
+        fileName: String,
+        fragments: [(index: UInt16, function: String)],
+        scripts: [VMADFixture.Script] = []
+    ) -> Data {
+        var tail = Data([2]) + wstring(fileName)
+        tail.appendUInt16(UInt16(fragments.count))
+        for fragment in fragments {
+            tail.appendUInt16(fragment.index)
+            tail += Data([0, 0, 1]) + wstring(fileName) + wstring(fragment.function)
+        }
+        return ESMFixture.field("VMAD", VMADFixture.payload(scripts: scripts, tail: tail))
+    }
+
+    private static func wstring(_ value: String) -> Data {
+        var data = Data()
+        data.appendUInt16(UInt16(value.utf8.count))
+        return data + Data(value.utf8)
+    }
+
     public static func perkRecord(formID: UInt32, fields: Data) -> Data {
         ESMFixture.record("PERK", formID: formID, data: fields)
     }
