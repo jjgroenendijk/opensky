@@ -102,32 +102,10 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     /// Capsule bottom at the previous shove, for deriving the player's velocity
     /// from how far it walked. Nil before the first walk-mode frame.
     public var lastPushFeetPosition: SIMD3<Float>?
+    /// Bodies the player's last shove moved, which a witness may comment on.
+    public private(set) var lastPushCount = 0
     public var isFrozen = false
     public private(set) var lastStats = DynamicStepStats()
-
-    public var bodyCount: Int {
-        bodies.count
-    }
-
-    public var activeBodyCount: Int {
-        bodies.count(where: { !$0.isSleeping })
-    }
-
-    public var sleepingBodyCount: Int {
-        bodies.count(where: \.isSleeping)
-    }
-
-    public var statsSnapshot: DynamicBodyStatsSnapshot {
-        DynamicBodyStatsSnapshot(
-            bodyCount: bodies.count,
-            activeBodyCount: activeBodyCount,
-            sleepingBodyCount: sleepingBodyCount,
-            contactCount: lastStats.contactCount,
-            substepCount: lastStats.substepCount,
-            recoveredBodyCount: lastStats.recoveredBodyCount,
-            isFrozen: isFrozen
-        )
-    }
 
     // MARK: - Lifecycle
 
@@ -388,6 +366,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         feetPosition: SIMD3<Float>,
         velocity: SIMD3<Float>
     ) {
+        lastPushCount = 0
         let horizontal = SIMD3<Float>(velocity.x, velocity.y, 0)
         let speed = simd_length(horizontal)
         guard speed > Float.ulpOfOne else { return }
@@ -413,6 +392,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
             guard approach > Float.ulpOfOne else { continue }
             let impulse = direction * approach * body.definition.mass * Self.pushEfficiency
             bodies[index].applyImpulse(impulse, at: near)
+            lastPushCount += 1
         }
     }
 
@@ -422,4 +402,30 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     public static let pushEfficiency: Float = 0.35
 
     public init() {}
+}
+
+nonisolated extension DynamicBodyWorld {
+    public var bodyCount: Int {
+        bodies.count
+    }
+
+    public var activeBodyCount: Int {
+        bodies.count(where: { !$0.isSleeping })
+    }
+
+    public var sleepingBodyCount: Int {
+        bodies.count(where: \.isSleeping)
+    }
+
+    public var statsSnapshot: DynamicBodyStatsSnapshot {
+        DynamicBodyStatsSnapshot(
+            bodyCount: bodies.count,
+            activeBodyCount: activeBodyCount,
+            sleepingBodyCount: sleepingBodyCount,
+            contactCount: lastStats.contactCount,
+            substepCount: lastStats.substepCount,
+            recoveredBodyCount: lastStats.recoveredBodyCount,
+            isFrozen: isFrozen
+        )
+    }
 }

@@ -35,6 +35,8 @@ public final class SceneCoordinator {
     public private(set) var trace: [SceneEvent] = []
     public private(set) var lines: [SceneLine] = []
     public var lastOutcome: String?
+    /// The wait before a repeating scene plays again; the app sets the install's window.
+    public var repeatPause: ClosedRange<Float> = 10 ... 30
     /// Scenes known to be playing, so a frame with none builds no runtime.
     public private(set) var playing: Set<FormID> = []
     private var ticksSinceScan = 0
@@ -58,7 +60,7 @@ public final class SceneCoordinator {
     /// Built per call, like the dialogue runtime it wraps.
     public var runtime: SceneRuntime? {
         guard let dialogueRuntime = dialogue.runtime else { return nil }
-        return SceneRuntime(
+        var runtime = SceneRuntime(
             catalog: catalog,
             dialogue: dialogueRuntime,
             fragments: world.sceneFragments,
@@ -66,6 +68,8 @@ public final class SceneCoordinator {
             pendingLines: pendingLines,
             now: world.sceneSeconds
         )
+        runtime.repeatPause = repeatPause
+        return runtime
     }
 
     /// `force` stops the scenes that share an actor first, as `ForceStart()` does.

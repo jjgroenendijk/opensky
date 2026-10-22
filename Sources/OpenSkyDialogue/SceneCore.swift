@@ -5,17 +5,19 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 
 public enum SceneCore {
-    /// Characters read per second, and the shortest a response lasts. OpenSky's
-    /// estimate, for a response with no voice file.
+    /// Characters read per second, OpenSky's estimate for a response with no voice file.
     static let charactersPerSecond: Float = 15
-    static let shortestResponse: Float = 1.5
 
     /// Seconds the responses take, one text each; nil text counts as the default line.
-    public static func lineDuration(texts: [String?]) -> Float {
+    /// A text's reading time stays inside the silent line window of `speech`.
+    public static func lineDuration(
+        texts: [String?], speech: SpeechTimerSettings = .vanilla
+    ) -> Float {
         guard !texts.isEmpty else { return SceneRuntime.defaultLineDuration }
         return texts.reduce(0) { total, text in
             guard let text else { return total + SceneRuntime.defaultLineDuration }
-            return total + max(shortestResponse, Float(text.count) / charactersPerSecond)
+            let reading = Float(text.count) / charactersPerSecond
+            return total + speech.silentLineSeconds(readingSeconds: reading)
         }
     }
 

@@ -246,7 +246,8 @@ extension CombatLoopRuntime {
             target: target,
             aggressor: actor.key,
             source: weapon.weapon,
-            isBlocked: damage.wasBlocked
+            isBlocked: damage.wasBlocked,
+            damage: landed ? damage.applied : 0
         ))
         guard target == world.combatPlayer.key else { return }
         noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)

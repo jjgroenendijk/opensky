@@ -30,6 +30,9 @@ nonisolated public struct ScriptHitEvent: Equatable, Sendable {
     public let isSneakAttack: Bool
     public let isBashAttack: Bool
     public let isBlocked: Bool
+    /// Health damage the blow did, for the engine's own readers such as the death push
+    /// and the hit line threshold. Scripts never see it; 0 where the path does not know.
+    public let damage: Float
 
     public init(
         target: ReferenceKey,
@@ -39,7 +42,8 @@ nonisolated public struct ScriptHitEvent: Equatable, Sendable {
         isPowerAttack: Bool = false,
         isSneakAttack: Bool = false,
         isBashAttack: Bool = false,
-        isBlocked: Bool = false
+        isBlocked: Bool = false,
+        damage: Float = 0
     ) {
         self.target = target
         self.aggressor = aggressor
@@ -49,7 +53,22 @@ nonisolated public struct ScriptHitEvent: Equatable, Sendable {
         self.isSneakAttack = isSneakAttack
         self.isBashAttack = isBashAttack
         self.isBlocked = isBlocked
+        self.damage = damage
     }
+
+    /// How the blow arrived: a projectile with no source form is a spell, any other
+    /// projectile an arrow or bolt, and no projectile a swing.
+    public var delivery: CombatHitDelivery {
+        guard projectile != nil else { return .melee }
+        return source == nil ? .spell : .ranged
+    }
+}
+
+/// How a landed blow arrived.
+nonisolated public enum CombatHitDelivery: Equatable, Sendable {
+    case melee
+    case ranged
+    case spell
 }
 
 /// How a combat runtime tells the script layer that a blow landed.

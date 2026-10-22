@@ -29,6 +29,7 @@ public struct NPCMover {
     public var currentCell: CellSceneLocation?
     public let ignoresStatics: Bool
     public let preferredGait: LocomotionGait?
+    let runSlowdown: FollowSettings?
     /// The other actors near this one for the step in progress.
     private var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
@@ -49,6 +50,7 @@ public struct NPCMover {
         path = start.path
         ignoresStatics = start.ignoresStatics
         preferredGait = start.gait
+        runSlowdown = start.runSlowdown
         legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(

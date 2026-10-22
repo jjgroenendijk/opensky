@@ -78,6 +78,7 @@ final class DialogueWorldAdapter {
         game.dialogue.topicSubtypes = TopicSubtypeTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.dialogue.speechTimers = SpeechTimerSettings.resolve(store: provider.gameSettings)
+        game.storyWorld.scenes.repeatPause = game.dialogue.speechTimers.sceneRepeatPause
         game.headTracking.settings = HeadTrackingSettings.resolve(store: provider.gameSettings)
         game.faceMorphs.settings = FaceAnimationSettings.resolve(store: provider.gameSettings)
         streamer.talk.candidateSource = { [weak self] in

@@ -85,7 +85,9 @@ completed actions:
 4. Finishing completes the actions that should end by now, runs the phase's end fragments, and
    moves to the next phase.
 5. After the last phase, a scene with flag 0x08 (repeat while true) starts again from phase 1
-   when its scene conditions pass. Otherwise it ends.
+   when its scene conditions pass. It first waits a random time between
+   `fRandomSceneAgainMinTime` and `fRandomSceneAgainMaxTime` (10 to 30 s in `Skyrim.esm`); the
+   wait is OpenSky's reading of the names. Otherwise it ends.
 
 Conditions are checked with the player as subject, no target, and the scene's quest as the
 alias quest. Several phases can pass in one tick. A tick takes at most twice as many steps as
@@ -138,8 +140,10 @@ is the playing time in the xWMA packet table. The voice type is the speaker's `V
 file is read off the main actor, and the line's clock starts when the length is known. So the
 next line starts in the tick this one ends: no gap and no overlap.
 
-A response with no voice file lasts the time of its text: one second per 15 characters, at
-least 1.5 seconds. A line with no text lasts 3 seconds. This is OpenSky's estimate. A save
+A response with no voice file lasts the time of its text: one second per 15 characters, kept
+between `fDialogSpeechDelaySeconds` (2 s) and `fSubtitleSpeechDelay` (8 s). The reading rate is
+OpenSky's estimate, and the window is OpenSky's reading of the two names
+([speech timers](/engine/dialogue.md#speech-timers)). A line with no text lasts 3 seconds. A save
 loaded while a line waits for its voice file ends that line at once.
 
 ## Time
@@ -170,6 +174,8 @@ loaded cells.
 A save stores the playing scenes in the `SCNS` chunk, and the pause time of each paused scene
 in the `SCNP` chunk ([world chunks](/formats/opensky-save-world-chunks.md)). After a load, a
 scene goes on from the same phase with the same running actions, still paused if it was.
+The wait before a repeat is not saved: a save made during it plays the scene again at once after
+the load.
 
 ## Observed on the install
 

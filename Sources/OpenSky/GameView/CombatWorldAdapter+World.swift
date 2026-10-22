@@ -48,12 +48,18 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     /// An NPC aggressor may call out its attack and an NPC target its hurt, each held back
-    /// by its own `SpeechTimerSettings` window and chance.
+    /// by its own `SpeechTimerSettings` window and chance. A hit below
+    /// `fCombatSpeakHitThreshold` of the target's health stays silent; a spell hit carries
+    /// no damage yet, so it is not held back.
     private func speakCombatLines(for hit: ScriptHitEvent) {
         let now = game.storyWorld.sceneSeconds
-        let lines: [(NPCSpeechLine, ReferenceKey)] = [
-            (.combatAttack, hit.aggressor), (.combatHit, hit.target)
-        ]
+        let maximum = health(of: hit.target)?.maximum ?? 0
+        let hurtSpeaks = hit.delivery == .spell
+            || game.dialogue.speechTimers.hitSpeaks(damage: hit.damage, maximumHealth: maximum)
+        var lines: [(NPCSpeechLine, ReferenceKey)] = [(.combatAttack, hit.aggressor)]
+        if hurtSpeaks {
+            lines.append((.combatHit, hit.target))
+        }
         for (line, speaker) in lines where speaker != .player {
             guard
                 let id = game.dialogue.combatLine(line, speaker: speaker, now: now),

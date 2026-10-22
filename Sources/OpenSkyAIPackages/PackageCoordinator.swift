@@ -221,6 +221,11 @@ public final class PackageCoordinator {
     /// The Guard procedure's warnings; the app sets the install's values.
     public var guardWarnings = GuardWarningSettings.vanilla
     public var sandboxSettings = SandboxSettings.vanilla
+    /// How a bumped NPC steps aside; the app sets the install's values.
+    public var bumpSettings = BumpReactionSettings.vanilla
+    /// Follower spacing and slowdown; the app sets the install's values.
+    public var followSettings = FollowSettings.vanilla
+    public internal(set) var bumps = BumpReactions()
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
@@ -244,6 +249,7 @@ public final class PackageCoordinator {
         self.store = store
         runtime = ActorPackageRuntime(store: store)
         registeredActors = [:]
+        bumps.reset()
     }
 
     /// Reconciles residency, then evaluates scheduled boundaries. An actor

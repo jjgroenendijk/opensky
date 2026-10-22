@@ -18,4 +18,13 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case removeReference(ReferenceKey)
     case resetRagdolls
     case setCombatMusic(active: Bool)
+    /// The player began a swing or loosed an arrow while no one fights it, which a
+    /// witness may comment on.
+    case playerAttackedOutsideCombat(CombatWeaponUse)
+}
+
+/// What the player did with a weapon outside a fight.
+nonisolated public enum CombatWeaponUse: Equatable, Sendable {
+    case swing
+    case shot
 }

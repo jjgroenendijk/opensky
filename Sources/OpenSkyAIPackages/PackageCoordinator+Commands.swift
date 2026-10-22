@@ -27,8 +27,12 @@ extension PackageCoordinator {
             let machine = executions[actor]?.runner.running[leaf]?.machine
             if
                 let machine, machine.watchesTarget, let watched = machine.setup.watched,
-                let senses = session.senses(watching: watched)
+                var senses = session.senses(watching: watched)
             {
+                if machine.kind == .follow || machine.kind == .followTo {
+                    senses.fellows = fellowFollowers(of: watched, excluding: actor)
+                    senses.followerSpacing = followSettings.spaceBetweenFollowers
+                }
                 step(actor, with: .sensed(senses), leaf: leaf)
             }
             if machine?.kind == .sandbox, let hours {

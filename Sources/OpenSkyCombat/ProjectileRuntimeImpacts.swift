@@ -24,7 +24,8 @@ extension ProjectileRuntime {
             target: target,
             aggressor: projectile.shooter,
             source: arrow.weapon,
-            projectile: projectile.profile.projectile
+            projectile: projectile.profile.projectile,
+            damage: arrow.damage.applied
         ))
         // Archery levels on the bow's base WEAP damage
         // (<https://en.uesp.net/wiki/Skyrim:Leveling>), and the target takes the armor

@@ -86,7 +86,7 @@ struct ShoutTests {
         var casts: [ReferenceKey] = []
         trial.coordinator.onSpellCast = { spell, _ in casts.append(spell) }
         let commands = trial.shout(holding: Self.frame)
-        #expect(commands == [.playerGraphEvent(ShoutGraphNames.release)])
+        #expect(commands == [.playerGraphEvent(ShoutGraphNames.release), .playerShouted])
         #expect(casts == [spell(ShoutPluginFixture.Form.spell1)])
         #expect(trial.coordinator.shoutMachine.cooldownTotal == 20)
     }

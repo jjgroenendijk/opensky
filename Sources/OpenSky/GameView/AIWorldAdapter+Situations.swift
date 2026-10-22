@@ -39,15 +39,8 @@ extension AIWorldAdapter {
     func warn(_ intruder: ReferenceKey, from guardKey: ReferenceKey) -> PackageActionResult {
         _ = game.actorGraphWorld.graphs.raise(Self.drawWeaponEvent, on: guardKey)
         guard
-            let runtime = game.dialogue.runtime,
-            let offer = runtime.topics(subtype: "TRES", speaker: guardKey).offers.first,
-            (try? runtime.choose(offer.info, speaker: guardKey)) != nil,
-            let info = runtime.dialogue.info(offer.info)
+            let seconds = game.storyWorld.sayTopic("TRES", speaker: guardKey, lookAt: intruder)
         else { return .done }
-        let seconds = game.storyWorld.lineDuration(of: info, speaker: guardKey) ?? 3
-        game.storyWorld.speak(
-            info: offer.info, speaker: guardKey, lookAt: intruder, seconds: seconds
-        )
         return .lasts(seconds: seconds)
     }
 

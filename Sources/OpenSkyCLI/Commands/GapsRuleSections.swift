@@ -148,6 +148,8 @@ extension GapsGatherer {
         _ = MeleeSkillUseSettings.resolve(store: store)
         _ = ArrowSettings.resolve(store: store)
         _ = SandboxSettings.resolve(store: store)
+        _ = BumpReactionSettings.resolve(store: store)
+        _ = FollowSettings.resolve(store: store)
     }
 
     /// Every `GameSettingTexts` key enum a feature shows.

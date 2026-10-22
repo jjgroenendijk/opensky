@@ -19,4 +19,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case castingArt(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
     /// Show this line on the HUD, such as a refused cast's.
     case notice(String)
+    /// The player's shout went off, which a witness may comment on.
+    case playerShouted
 }

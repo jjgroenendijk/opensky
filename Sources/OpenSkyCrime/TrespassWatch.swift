@@ -36,7 +36,8 @@ nonisolated public struct TrespassWatch: Equatable, Sendable {
     /// One tick of `seconds`. `seen` says whether anyone detects the player now.
     /// `iTrespassWarnings` warnings spread over the grace period; the charge
     /// comes at its end, but no sooner than `fAITrespassWarningTimer` after the last
-    /// warning, or at once in an Off Limits cell.
+    /// warning, or at once in an Off Limits cell. Two warnings are at least
+    /// `fWarningTimer` apart.
     public mutating func step(
         seconds: Double, seen: Bool, offLimits: Bool, settings: CrimeSettings
     ) -> TrespassStep {
@@ -62,8 +63,9 @@ nonisolated public struct TrespassWatch: Equatable, Sendable {
             return .charge
         }
         let count = max(1, settings.trespassWarnings)
-        let nextWarning = grace * Double(warnings) / Double(count)
-        guard warnings < count, since >= nextWarning else { return .none }
+        let spaced = lastWarning + Double(max(0, settings.trespassWarningInterval))
+        let nextWarning = max(grace * Double(warnings) / Double(count), spaced)
+        guard warnings < count, since >= nextWarning, nextWarning < grace else { return .none }
         warnings += 1
         lastWarning = since
         return .warn(remaining: max(grace - since, callDelay))

@@ -14,6 +14,7 @@ import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -167,6 +168,8 @@ final class CombatWorldAdapter {
             case let .removeReference(key): game.worldState.reset(key)
             case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
+            case let .playerAttackedOutsideCombat(use):
+                game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
             }
         }
     }

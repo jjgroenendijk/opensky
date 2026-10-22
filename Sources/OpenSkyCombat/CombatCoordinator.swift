@@ -110,8 +110,10 @@ public final class CombatCoordinator {
         let hands = CombatCore.hands(worn: wornItems(), readied: readied)
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
+        let swing = melee.state.swingID
         melee.acceptFrame(CombatCore.meleeIntent(intent, readied: readied))
         noteHits(melee.handleGraphEvents(events))
+        noteWeaponUse(.swing, changed: melee.state.swingID != swing)
         return pendingCommands
     }
 
@@ -131,8 +133,10 @@ public final class CombatCoordinator {
             archery.attackMultiplier = archeryAttackMultiplier()
             var intent = intent
             intent.hasBowEquipped = archery.bow.weapon != nil
+            let shots = archery.state.shotCount
             archery.acceptFrame(intent)
             archery.handleGraphEvents(events)
+            noteWeaponUse(.shot, changed: archery.state.shotCount != shots)
         }
         // Every arrow provokes, a spell only when its effects are hostile.
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
@@ -184,6 +188,11 @@ public final class CombatCoordinator {
         }
         loop.setHostility(hostile ? .hostile : .neutral, on: key)
         loop.record(.hostility(actor: actorName(key), hostile: hostile))
+    }
+
+    private func noteWeaponUse(_ use: CombatWeaponUse, changed: Bool) {
+        guard changed, loop?.isPlayerInCombat != true else { return }
+        pendingCommands.append(.playerAttackedOutsideCombat(use))
     }
 
     func noteHits(_ hits: [MeleeHitRecord]) {

@@ -66,6 +66,8 @@ nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
     public var runningProcedures: [PackageProcedureMachine] = []
     /// What the selected actor rides, such as a cart, or nil.
     public var carrier: ReferenceKey?
+    /// The bump and follower spacing line (docs/engine/bump-reactions.md).
+    public var socialText: String?
 
     /// The reading with no streamed cell attached.
     public static let unavailable = AINavigationSnapshot(

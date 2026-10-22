@@ -92,7 +92,7 @@ extension CellStreamer {
     @discardableResult
     public func moveActor(
         _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false,
-        gait: LocomotionGait? = nil
+        gait: LocomotionGait? = nil, runSlowdown: FollowSettings? = nil
     ) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
@@ -107,7 +107,7 @@ extension CellStreamer {
             guard case let .miss(reason) = result else { return .noPath(.disconnected) }
             return .noPath(reason)
         }
-        let started = npcMovement.start(NPCMoveStart(
+        var start = NPCMoveStart(
             actor: actor,
             formID: entry.formID,
             placement: standing.placement,
@@ -117,7 +117,9 @@ extension CellStreamer {
             path: path,
             ignoresStatics: direct,
             gait: gait
-        ))
+        )
+        start.runSlowdown = runSlowdown
+        let started = npcMovement.start(start)
         return started ? .started : .moverCapReached
     }
 
