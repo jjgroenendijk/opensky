@@ -15,6 +15,8 @@ import OpenSkyWorldState
 public protocol LockWorld: AnyObject, SkillUseReporting {
     /// The player's current Lockpicking skill.
     var lockpickingSkill: Float { get }
+    /// The player's character level, which raises a leveled lock.
+    var playerLevel: Int { get }
     /// What the player's perks make of `value` at `entryPoint`, with `lock` bound as the
     /// locked reference and `level` answering its `GetLockLevel`.
     func perkValue(
@@ -90,8 +92,26 @@ nonisolated public enum LockpickingEntryPoint {
 /// The lock a session is picking, as it stood when the session began.
 nonisolated struct LockpickingTarget: Sendable {
     let key: ReferenceKey
+    /// As stored, so opening it does not fix a leveled lock's level.
     let state: ReferenceLockState
+    let difficulty: LockDifficulty
     let perks: LockpickingPerkValues
+}
+
+/// A reference's lock as stored, and the level it shows now.
+nonisolated public struct ResolvedLock: Sendable {
+    public let key: ReferenceKey
+    public let state: ReferenceLockState
+    /// Differs from `state.level` only on a leveled lock the player has outgrown.
+    public let shownLevel: UInt8
+    public let isLeveled: Bool
+
+    /// `state` with the shown level, for every rule that picks a band.
+    public var shown: ReferenceLockState {
+        var shown = state
+        shown.level = shownLevel
+        return shown
+    }
 }
 
 @MainActor
@@ -128,16 +148,21 @@ public final class LockCoordinator {
 
     // MARK: - Lock state
 
-    /// The lock of the reference behind `interaction`, or nil when it has none.
-    public func lock(
-        of interaction: PlacedInteraction
-    ) -> (key: ReferenceKey, state: ReferenceLockState)? {
+    /// The lock of the reference behind `interaction`, or nil when it has none. A
+    /// leveled lock scales only while it keeps its authored level; Papyrus
+    /// `SetLockLevel` fixes it.
+    public func lock(of interaction: PlacedInteraction) -> ResolvedLock? {
         guard let items, let entry = items.references?.referenceEntry(formID: interaction.reference)
         else { return nil }
         let delta = items.store.component(ReferenceLockState.self, for: entry.key)
         guard let state = ReferenceLockState.resolve(baseline: interaction.lock, delta: delta)
         else { return nil }
-        return (entry.key, state)
+        let baseline = interaction.lock
+        let isLeveled = baseline?.isLeveled == true && baseline?.level.rawValue == state.level
+        let shown = isLeveled
+            ? LockCore.leveledLevel(authored: state.level, playerLevel: world.playerLevel)
+            : state.level
+        return ResolvedLock(key: entry.key, state: state, shownLevel: shown, isLeveled: isLeveled)
     }
 
     public func carriesKey(_ key: FormID?) -> Bool {
@@ -160,7 +185,7 @@ public final class LockCoordinator {
             return InventoryResult(.filteredByPerk)
         }
         guard let lock = lock(of: target.interaction) else { return InventoryResult(nil) }
-        switch LockCore.decide(lock: lock.state, carriesKey: carriesKey(lock.state.key)) {
+        switch LockCore.decide(lock: lock.shown, carriesKey: carriesKey(lock.state.key)) {
         case .proceed:
             return InventoryResult(nil)
         case let .unlockWithKey(key):
@@ -172,7 +197,7 @@ public final class LockCoordinator {
             return InventoryResult(nil, commands: unlocked + [.showNotice(notice)])
         case let .refuse(refusal):
             lastAction = .refused(
-                name: target.interaction.name, difficulty: difficulty(of: lock.state)
+                name: target.interaction.name, difficulty: difficulty(of: lock.shown)
             )
             return InventoryResult(refusal)
         }
@@ -190,7 +215,7 @@ public final class LockCoordinator {
 
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
         LockCore.labelled(
-            interaction, lock: lock(of: interaction)?.state,
+            interaction, lock: lock(of: interaction)?.shown,
             texts: texts, noviceMaximum: settings.noviceMaximum
         )
     }
@@ -239,11 +264,11 @@ public final class LockCoordinator {
             throw .unknownReference(target.interaction.reference)
         }
         guard lock.state.isLocked else { throw .notLocked }
-        let difficulty = difficulty(of: lock.state)
+        let difficulty = difficulty(of: lock.shown)
         guard difficulty.isPickable else { throw .requiresKey }
         let picks = lockpickCount
         guard picks > 0 else { throw .noLockpicks }
-        let perks = perkValues(lock: lock.key, level: lock.state.level)
+        let perks = perkValues(lock: lock.key, level: lock.shownLevel)
         let parameters = LockpickingParameters.make(
             difficulty: difficulty,
             skill: world.lockpickingSkill,
@@ -258,7 +283,9 @@ public final class LockCoordinator {
             startingOffset: random.uniform(in: -1 ... 1)
         )
         sessionTarget = target
-        sessionLock = LockpickingTarget(key: lock.key, state: lock.state, perks: perks)
+        sessionLock = LockpickingTarget(
+            key: lock.key, state: lock.state, difficulty: difficulty, perks: perks
+        )
         sessionExperience = 0
         lastAction = .picking(name: target.interaction.name, difficulty: difficulty)
     }

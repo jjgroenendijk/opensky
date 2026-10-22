@@ -17,6 +17,7 @@ import Testing
 @MainActor
 final class FakeLockWorld: LockWorld {
     var lockpickingSkill: Float = 0
+    var playerLevel = 1
     var perks: [PerkEntryPoint: Float] = [:]
     var filter: Float = 0
     private(set) var filtered: [ReferenceKey] = []
