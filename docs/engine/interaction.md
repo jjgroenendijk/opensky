@@ -95,9 +95,22 @@ A `DOOR` with `FNAM` bit 0x02 ("Automatic") opens when the player walks into it,
 use key. The Creation Kit wiki page "Door" (<https://ck.uesp.net/wiki/Door>) says it is
 activated when the player enters its space. OpenSky takes that space as the base's `OBND` box
 at the reference's position, rotation, and scale. A door without bounds is left out. The door
-fires once when the feet enter the box, and again only after they leave it. The crosshair
-never picks an automatic door. In `Skyrim.esm` the automatic doors are the
-`AutoLoadDoor01` family, invisible load doors at the mouth of some caves.
+fires once when the feet enter the box, and again only after they leave it. In `Skyrim.esm` the
+automatic doors are the `AutoLoadDoor01` family, invisible load doors at the mouth of some caves.
+
+Three game settings from the install tune them. No source says how the game applies them, so
+each use is OpenSky's reading:
+
+- `fAutoDoorActivateDistance`: the door opens only while the feet are inside its box and within
+  this distance of the door's reference.
+- `fAutoDoorDisplayDistance`: when the crosshair is on nothing else, the HUD names the nearest
+  automatic door within this distance. The crosshair never picks one directly.
+- `fTeleportDoorActivateDelayTimer` (0.6 s): after the player uses a load door, the finished
+  destination is shown only once this time has passed. A rebuild of the same interior does not
+  wait.
+
+The game refuses an automatic door to a rider with `sNotAllowedToUseAutoDoorsWhileonHorse`.
+OpenSky has no riding yet, so it does not show that message.
 
 ### Activate parents
 

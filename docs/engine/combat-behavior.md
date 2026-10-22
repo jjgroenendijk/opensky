@@ -92,8 +92,8 @@ So they are chosen in the open, with a reason each. An actor's
 | Reach slack | 24 units | More than the mover's 12-unit waypoint tolerance, so a target at the edge of reach does not cause back and forth |
 | Command interval | 0.5 s | Sixteen path queries a second at the engagement limit, inside the navigation budget |
 | Flee health | 0.2 of maximum | Visible before the kill, not set off by the first blow |
-| Flee distance | 1,400 units | About 20 m per flee request |
-| Flee break distance | 1,800 units | More than one flee hop, so a path the navmesh cut short is tried again |
+| Flee distance | from the install | See [game settings](#game-settings) |
+| Flee break distance | flee distance + 400 units | More than one flee hop, so a path the navmesh cut short is tried again |
 | Search time | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
 | Ranged cast chance | 1 | Out of weapon reach a caster with a spell to throw throws it |
@@ -132,6 +132,31 @@ same damage formula.
 The block roll happens once per attack cycle, when the actor enters the gap, not once per step. So
 the block chance means what it says: per attack, not per sixtieth of a second.
 
+## Game settings
+
+These come from the install. The CK wiki "Category:Settings" table
+(<https://ck.uesp.net/wiki/Category:Settings>) lists most of them, but says nothing about how the
+game uses them, so each use is OpenSky's reading.
+
+| Setting | Install | OpenSky's use |
+| --- | --- | --- |
+| `fConfidenceCautious` | 0.375 | A cautious actor breaks off below this strength |
+| `fConfidenceAverage` | 0.15 | The same for average |
+| `fConfidenceBrave` | 0.0375 | The same for brave |
+| `fCombatConfidenceModifierMin`, `...Max` | -0.25, 1 | The range of the per-actor confidence nudge |
+| `fFleeDistanceInterior` | 3,000 | How far a fleeing actor runs indoors |
+| `fFleeDistanceExterior` | 5,000 | The same outdoors |
+| `fCombatDistance` | 141 | The base spacing the follow radius scales |
+| `fCombatFollowRadiusMult` | 3 | An NPC's ally farther than spacing times this walks back |
+| `fCombatTeammateFollowRadiusMult` | 3 | The same for the player's allies |
+
+The game has many more combat AI settings that OpenSky does not read yet, because the behaviour
+they tune is not built: the advance radii, the weapon range caps (`fCombatAbsoluteMaxRangeMult`,
+`fCombatCurrentWeaponAbsoluteMaxRangeMult`, `fAIUseWeaponDistance`), self-healing below
+`iAICombatRestoreHealthPercentage` (NPCs do not cast on themselves yet), flying combat
+(`fCombatHover*`, `fCombatPerch*`, `fCombatGroundAttack*`, `fCombatOrbitDistance`), and shouts
+(`fAIShout*`).
+
 ## Fleeing
 
 When its Confidence breaks it off (see Confidence and Assistance), or without one at or below
@@ -157,10 +182,11 @@ The actor compares its strength with its target's:
 
 - strength = own health fraction / target health fraction × √(level ratio)
 - the level ratio is clamped to 0.5 through 2, so a low-level wolf at full health still fights
-- it breaks off below 2^(1 − confidence − modifier): cautious unless stronger (1), average
-  when much weaker (0.5), brave when overwhelmingly weaker (0.25)
-- the modifier is fixed per actor in −0.5 to 0.5, the range of `fCombatConfidenceModifierMin`
-  and `...Max`, so a crowd of one record does not run at one moment
+- it breaks off below the `fConfidence*` strength of its level: cautious 0.375, average 0.15,
+  brave 0.0375 ([game settings](#game-settings))
+- the modifier is fixed per actor in the range of `fCombatConfidenceModifierMin` and `...Max`,
+  so a crowd of one record does not run at one moment. A nudged confidence between two levels
+  blends their strengths
 
 An actor whose Confidence breaks it off flees as soon as it detects its enemy, instead of
 starting a fight. Without actor values, the flee health fraction below is the rule.

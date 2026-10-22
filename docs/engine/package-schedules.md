@@ -21,8 +21,9 @@ SuspiciousOf is usually `PlayerFaction`, which names no single reference.
 
 - Inside the immediate attack radius, the guard starts combat at once.
 - Inside the warn radius, it draws its weapon (graph event `WeapEquip`) and says a `TRES`
-  trespass line. It warns again every 5 seconds (`FAITrespassWarningTimer`), and attacks
-  after 2 warnings (`iGuardWarnings`).
+  trespass line. It warns again every `fAITrespassWarningTimer` seconds (5), and attacks after
+  `iGuardWarnings` warnings (2). Both come from the install. The CK wiki pages
+  "FAITrespassWarningTimer" and "IGuardWarnings" give both uses.
 - When the intruder leaves the warn radius, the count goes back to 0 and the guard sheathes
   (`Unequip`). Both event names were read from the human graph of the install.
 

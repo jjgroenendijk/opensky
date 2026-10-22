@@ -159,7 +159,10 @@ attacked first is not a murder victim.
 
 UESP "Skyrim:Crime": an owner who sees the player in a private place first warns them, and
 charges the trespass if they stay 30 seconds. OpenSky gives `iTrespassWarnings` warnings (2),
-spread over the 30 seconds, then charges once. Each warning is a HUD notice in OpenSky's own words,
+spread over the 30 seconds, then charges once. The charge comes no sooner than
+`fAITrespassWarningTimer` (5 s) after the last warning. The CK wiki "Category:Settings" describes
+it as the "Time before an NPC will call the guards when the player is trespassing in their home"
+(<https://ck.uesp.net/wiki/Category:Settings>). Each warning is a HUD notice in OpenSky's own words,
 because the game speaks it as dialogue. The clock runs on real seconds, as the game's grace period
 does.
 
