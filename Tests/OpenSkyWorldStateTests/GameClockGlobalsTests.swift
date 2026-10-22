@@ -31,7 +31,7 @@ struct GameClockGlobalsTests {
     }
 
     /// A store whose time-global writes drive `clock`, wired the same way
-    /// `RuntimeStateCoordinator.attach(globals:)` wires the renderer's clock.
+    /// `RuntimeStateCoordinator` wires the renderer's clock.
     private func makeStoreAndClock() throws -> (WorldStateStore, () -> GameClock) {
         let world = WorldStateStore()
         let box = ClockBox()

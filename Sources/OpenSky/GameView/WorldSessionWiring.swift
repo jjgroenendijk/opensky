@@ -105,7 +105,7 @@ final class WorldSessionWiring {
         wireAnimationAssets(gameSession: gameSession)
         wireMenuMovies(gameSession: gameSession)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
-        game.runtimeState.attach(globals: provider.globalStore)
+        game.runtimeState.reloadGlobals()
         game.runtimeState.calendarTexts = CalendarTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.raceMenu.morphCounts = FaceMorphCounts.resolve(store: provider.gameSettings)

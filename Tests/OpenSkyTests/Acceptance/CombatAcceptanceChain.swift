@@ -101,7 +101,7 @@ final class CombatAcceptanceChain {
         projectiles: ProjectileRuntime(settings: .synthetic, world: self),
         world: self
     )
-    let ragdolls = RagdollRuntime()
+    private(set) lazy var ragdolls = RagdollRuntime(seam: self)
     private(set) lazy var combat = CombatLoopRuntime(settings: .synthetic, world: self)
 
     private(set) var camera: FreeFlyCamera
@@ -172,13 +172,12 @@ final class CombatAcceptanceChain {
         try wire()
     }
 
-    /// Attaches the ragdolls to this chain as their seam, seeds the two
-    /// inventories, and brings the start cell up the way the app does.
+    /// Activates the graphs, seeds the two inventories, and brings the start
+    /// cell up the way the app does.
     private func wire() throws {
         bridge.attach(graph: graph)
         graph.activate()
         opponentGraph.activate()
-        ragdolls.attach(seam: self)
         // The block roll is pinned off, so the gate's fight is the cadence it
         // asserts on rather than one that spent a gap with its guard up. The
         // block half of the loop is `CombatLoopRuntimeTests`'.

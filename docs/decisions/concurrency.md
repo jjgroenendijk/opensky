@@ -132,7 +132,10 @@ than Release, so the numbers are an upper bound.
 ## The shared play-time worker
 
 Every load during play uses one serial queue, `nl.jjgroenendijk.opensky.assetload`. One queue
-keeps these loads from competing with the cell build worker for cores. A load that something
+keeps these loads from competing with the cell build worker for cores. Bulk loads that only add
+detail, such as every clip an actor graph can reach, use a second serial queue at a lower
+priority, `nl.jjgroenendijk.opensky.assetload.background`, so they do not delay the loads a
+frame needs. A load that something
 waits for now runs before a prefetch. Each loader keeps its finished values and its failures on
 the main actor, and `GameSession.assetDrains` drains them all at the start of the world update.
 
@@ -181,3 +184,8 @@ stream. Cancel cancels the task. A stage that already runs finishes, and no new 
   queue.
 - Shared state off the main actor lives in a `Mutex`, so the compiler checks it.
 - Data that crosses threads is a `nonisolated` `Sendable` value type.
+
+The SwiftLint rules `unchecked_sendable`, `detached_task`, and `main_queue_or_semaphore` fail
+the first three in `Sources/`. The rule `new_dispatch_queue` fails a queue created outside the
+files that hold the queues in the table above. A new queue adds its row here and its file to
+that rule. Tests may still use a semaphore to hold a worker at a known point.

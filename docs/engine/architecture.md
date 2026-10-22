@@ -165,4 +165,6 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |
 | The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |
 | A system joins the frame only through a `FrameSchedule` phase | SwiftLint `frame_callback_property` |
+| No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
+| A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
 | A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |

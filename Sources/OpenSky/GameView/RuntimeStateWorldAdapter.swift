@@ -265,6 +265,10 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.worldData?.musicStore
     }
 
+    var globalStore: GlobalStore? {
+        game.worldData?.globalStore
+    }
+
     /// `aliasQuest` stays nil, because a music condition belongs to no quest.
     /// The references hold the crosshair and every resident actor, so a
     /// combat-target run-on resolves.
