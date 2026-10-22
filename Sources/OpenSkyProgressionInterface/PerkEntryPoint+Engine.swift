@@ -72,6 +72,7 @@ nonisolated extension PerkEntryPoint {
     public static let modCommandedActorLimit = PerkEntryPoint(rawValue: 68)
     public static let applyReanimateSpell = PerkEntryPoint(rawValue: 53)
     public static let activate = PerkEntryPoint(rawValue: 14)
+    public static let allowMountActor = PerkEntryPoint(rawValue: 91)
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
@@ -98,6 +99,6 @@ nonisolated extension PerkEntryPoint {
         modSoulPctCapturedToWeapon,
         modEnchantmentPower, modAppliedEnchantmentsAllowed, modShoutOK,
         modPlayerMagicSlowdown, modSpellRangeTargetLoc, modCommandedActorLimit,
-        applyReanimateSpell, activate
+        applyReanimateSpell, activate, allowMountActor
     ]
 }

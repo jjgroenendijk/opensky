@@ -115,6 +115,20 @@ struct MessageCoordinatorTests {
         #expect(menuMode.topMenu == nil)
     }
 
+    @Test func anEngineQuestionAnswersItsCallbackNotAScript() {
+        let world = Self.world()
+        let messages = MessageCoordinator(menuMode: MenuModeController(), world: world)
+        var answer: Int?
+        messages.presentChoices(
+            title: nil, text: "Do you want to steal this horse?", buttons: ["Yes", "No"]
+        ) { answer = $0 }
+        #expect(messages.boxes.isOpen)
+        messages.choose(row: 0)
+        #expect(answer == 0)
+        #expect(world.answers.isEmpty)
+        #expect(!messages.boxes.isOpen)
+    }
+
     @Test func notificationsReachTheHUDInOrder() {
         let world = Self.world()
         let messages = MessageCoordinator(menuMode: MenuModeController(), world: world)

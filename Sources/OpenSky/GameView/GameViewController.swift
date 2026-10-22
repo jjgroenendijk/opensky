@@ -281,6 +281,8 @@ final class GameViewController: NSViewController {
     lazy var idleWorld = IdleWorldAdapter(game: self)
     /// Carts, riders, and the actor AI natives.
     lazy var vehicleWorld = VehicleWorldAdapter(game: self)
+    /// The player's horse or dragon.
+    lazy var mountWorld = MountWorldAdapter(game: self)
     /// Traps, doors, and levers that a behaviour graph runs.
     lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
     /// The behaviour graph each loaded NPC and creature runs.

@@ -121,6 +121,7 @@ extension GapsGatherer {
         _ = TemperingTexts.resolve(store: store)
         _ = DetectionSettings.resolve(store: store)
         _ = PlayerMovementConfiguration.resolve(store: store)
+        _ = MountSettings.resolve(store: store)
         _ = RegenerationSettings.resolve(store: store)
         _ = StaminaSettings.resolve(store: store)
         _ = BreathSettings.resolve(store: store)

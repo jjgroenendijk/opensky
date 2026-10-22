@@ -52,6 +52,8 @@ nonisolated public struct TalkCandidate: Equatable, Sendable {
     /// FULL name when one resolves, else something that still names the actor.
     /// Never empty, so the crosshair prompt always reads as a sentence.
     public let name: String
+    /// The prompt's verb, such as `sRide` on a mount. Nil reads "Talk to".
+    public let actionLabel: String?
 
     public init(
         key: ReferenceKey,
@@ -59,8 +61,10 @@ nonisolated public struct TalkCandidate: Equatable, Sendable {
         base: FormID,
         feet: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
-        name: String
+        name: String,
+        actionLabel: String? = nil
     ) {
+        self.actionLabel = actionLabel
         self.key = key
         self.reference = reference
         self.base = base

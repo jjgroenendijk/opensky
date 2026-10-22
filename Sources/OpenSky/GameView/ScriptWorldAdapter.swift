@@ -59,6 +59,7 @@ protocol ScriptWorldHost: AnyObject {
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var vehicleWorld: VehicleWorldAdapter { get }
+    var mountWorld: MountWorldAdapter { get }
     var worldState: WorldStateStore { get }
 }
 
@@ -94,6 +95,9 @@ final class ScriptWorldAdapter {
         bridge.music = self
         bridge.playerNatives
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
+        bridge.playerNatives.dismount = { [weak game] actor in
+            game?.mountWorld.dismount(actor) ?? false
+        }
         bridge.playerNatives
             .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
         bridge.playerNatives

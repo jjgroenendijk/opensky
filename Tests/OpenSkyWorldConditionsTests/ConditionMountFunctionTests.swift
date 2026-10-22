@@ -39,9 +39,21 @@ struct ConditionMountFunctionTests {
         #expect(try Self.outcome(327, equals: 0, mounts: ridden) == .true)
     }
 
+    @Test func aRiderOnADragonIsOnAFlyingMount() throws {
+        let dragon = MountConditionResolution(
+            mounts: [Self.subject: Self.target], playersLastMount: nil,
+            flyingMounts: [Self.target]
+        )
+        #expect(try Self.outcome(730, equals: 1, mounts: dragon) == .true)
+        let horse = MountConditionResolution(
+            mounts: [Self.subject: Self.target], playersLastMount: nil
+        )
+        #expect(try Self.outcome(730, equals: 0, mounts: horse) == .true)
+    }
+
     @Test func flightReadsTheGroundedValue() throws {
         let grounded = MountConditionResolution(mounts: [:], playersLastMount: nil)
-        for function: UInt16 in [633, 646, 647, 730, 731, 732, 733] {
+        for function: UInt16 in [282, 633, 646, 647, 730, 731, 732, 733] {
             #expect(try Self.outcome(function, equals: 0, mounts: grounded) == .true)
         }
         #expect(try Self.outcome(327, equals: 0, mounts: .empty)

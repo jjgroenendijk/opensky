@@ -31,11 +31,14 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     public static let inCastState = "IsInCastState"
     /// The actor's state, as the value of one `iState_*` constant. Int32.
     public static let state = "iState"
+    /// 1 while a weapon is drawn: the riding graph's combat idle (MountGraphNames.swift).
+    public static let combatStance = MountGraphNames.combatStance
 
     /// Every input, in write order.
     public static let inputs = [
         headTracking, targetLocation, cameraFromX, cameraFromY, cameraFromZ, pitch,
-        sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState, state
+        sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState,
+        combatStance, state
     ]
 
     // MARK: - Outputs the graph publishes

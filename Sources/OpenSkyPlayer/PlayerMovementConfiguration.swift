@@ -138,12 +138,12 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     }
 
     /// Which of a movement type's two forward speeds a gait reads.
-    private enum GaitSlot: String {
+    enum GaitSlot: String {
         case walk
         case run
     }
 
-    private static func gait(
+    static func gait(
         editorID: String,
         slot: GaitSlot,
         store: MovementTypeStore,

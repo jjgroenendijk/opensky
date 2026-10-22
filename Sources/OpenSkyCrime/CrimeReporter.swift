@@ -95,6 +95,21 @@ public final class CrimeReporter: CrimeReporting {
         )
     }
 
+    /// Reports riding `horse`, which `owner` owns: a theft of `iCrimeGoldStealHorse`.
+    @discardableResult
+    public func reportHorseTheft(
+        of horse: ReferenceKey, owner: ReferenceOwner?, by actor: ReferenceKey = .player
+    ) -> CrimeOutcome {
+        let cell = world?.crimeCell(of: horse)
+        var event = CrimeEvent(
+            kind: .theft, perpetrator: actor, victim: owner.map(\.key),
+            crimeFaction: world?.crimeFaction(in: cell), cell: cell,
+            stolenValue: Int64(runtime.settings.stolenHorseValue)
+        )
+        event.stolenCount = 1
+        return record(event)
+    }
+
     /// Reports the first blow against an actor that was not already hostile
     /// (<https://en.uesp.net/wiki/Skyrim:Crime>). The combat runtime knows both
     /// facts, so this records what it is told.

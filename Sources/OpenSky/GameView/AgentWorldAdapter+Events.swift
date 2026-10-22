@@ -94,6 +94,8 @@ extension AgentWorldAdapter {
                 data["lockLevel"] = .init(Int(level))
             } else if event.refusal == .filteredByPerk {
                 data["reason"] = "perk"
+            } else if event.refusal == .mounted {
+                data["reason"] = "mounted"
             }
             self?.tap.append(AgentEventKind.activationRefused, data)
         }

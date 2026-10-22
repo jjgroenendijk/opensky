@@ -47,7 +47,8 @@ extension RuntimeStateWorldAdapter {
         context.places = placeResolution(references: context.references)
         let vehicles = game.vehicleWorld.vehicles
         context.mounts = MountConditionResolution(
-            mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount
+            mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
+            flyingMounts: game.mountWorld.flyingMounts
         )
         context.menus = MenuConditionResolution(
             isMenuOpen: game.menuMode.topMenu != nil,

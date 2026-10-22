@@ -118,6 +118,8 @@ nonisolated public struct WorldDataStores {
     public var characterLevelSettings: CharacterLevelSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     public var movementConfiguration: PlayerMovementConfiguration = .synthetic
+    /// A ridden horse's gaits, from its movement types.
+    public var mountMovementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
     /// Speech value, defaulting to the documented vanilla numbers.
     public var barterPricing: BarterPricing = .vanilla

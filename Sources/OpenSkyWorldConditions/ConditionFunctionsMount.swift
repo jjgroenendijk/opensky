@@ -1,5 +1,5 @@
 // Mount and flight condition functions, indices from xEdit wbDefinitionsTES5.pas:
-// 327 IsRidingMount, 339 IsPlayersLastRiddenMount, 714 IsBeingRidden, 633
+// 282 IsHorseStolen, 327 IsRidingMount, 339 IsPlayersLastRiddenMount, 714 IsBeingRidden, 633
 // GetFlyingState, 646 GetIsCrashLandRequest, 647 GetIsHastyLandRequest, 730
 // IsOnFlyingMount, 731 CanFlyHere, 732 IsFlyingMountPatrolQueud, 733
 // IsFlyingMountFastTravelling.
@@ -16,10 +16,16 @@ nonisolated public struct MountConditionResolution: ConditionResolution, Sendabl
     /// Rider to mount. Nil when nothing was wired.
     public let mounts: [ReferenceKey: ReferenceKey]?
     public let playersLastMount: ReferenceKey?
+    /// The mounts that fly, such as a tamed dragon.
+    public let flyingMounts: Set<ReferenceKey>
 
-    public init(mounts: [ReferenceKey: ReferenceKey]?, playersLastMount: ReferenceKey?) {
+    public init(
+        mounts: [ReferenceKey: ReferenceKey]?, playersLastMount: ReferenceKey?,
+        flyingMounts: Set<ReferenceKey> = []
+    ) {
         self.mounts = mounts
         self.playersLastMount = playersLastMount
+        self.flyingMounts = flyingMounts
     }
 }
 
@@ -41,11 +47,21 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(index: 339, name: "IsPlayersLastRiddenMount") { call in
             mount(call) { _, key, last in Self.isTrue(last == key) }
         })
-        // OpenSky has no flying actors or flying mounts yet, so every flight read is the
-        // grounded value: state 0 is FLY_STATE_NONE.
+        // The CK wiki: "This function is a no-op and always returns 0."
+        registry.register(ConditionFunction(index: 282, name: "IsHorseStolen") { _ in
+            .success(0)
+        })
+        registry.register(ConditionFunction(index: 730, name: "IsOnFlyingMount") { call in
+            let flying = call.context.mounts.flyingMounts
+            return mount(call) { mounts, key, _ in
+                Self.isTrue(mounts[key].map(flying.contains) ?? false)
+            }
+        })
+        // No actor flies yet, so every other flight read is the grounded value: state 0
+        // is FLY_STATE_NONE.
         let flight: [String: UInt16] = [
             "GetFlyingState": 633, "GetIsCrashLandRequest": 646,
-            "GetIsHastyLandRequest": 647, "IsOnFlyingMount": 730, "CanFlyHere": 731,
+            "GetIsHastyLandRequest": 647, "CanFlyHere": 731,
             "IsFlyingMountPatrolQueud": 732, "IsFlyingMountFastTravelling": 733
         ]
         for (name, index) in flight.sorted(by: { $0.key < $1.key }) {

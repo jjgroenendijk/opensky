@@ -27,6 +27,15 @@ struct ActorGraphCoreTests {
         #expect(ActorGraphCore.events(from: .still, to: .still).isEmpty)
     }
 
+    @Test func theCombatStanceIsAnIntAndAChangeRaisesItsEvent() {
+        let drawn = ActorGraphMotion(isInCombatStance: true)
+        #expect(ActorGraphCore.events(from: .still, to: drawn) == ["combatStanceStart"])
+        #expect(ActorGraphCore.events(from: drawn, to: .still) == ["combatStanceStop"])
+        let input = ActorGraphStepInput(motion: drawn, speed: 0, turnDelta: 0, deltaTime: 0.1)
+        let stance = ActorGraphCore.variables(input).first { $0.name == "iCombatStance" }?.value
+        #expect(stance == .int(1))
+    }
+
     @Test func aStandingActorWritesNoSpeed() {
         let input = ActorGraphStepInput(motion: .still, speed: 120, turnDelta: 0, deltaTime: 0.1)
         let speed = ActorGraphCore.variables(input).first { $0.name == "Speed" }?.value

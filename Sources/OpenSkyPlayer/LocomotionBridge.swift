@@ -67,7 +67,7 @@ nonisolated public final class LocomotionBridge {
     public var sampleWater: ((SIMD2<Float>) -> Float?)?
     /// The pose the last graph update produced, published here because only this steps
     /// the graph, on the simulation clock (PlayerAnimationPlayback.swift).
-    public let pose = PlayerPoseBuffer()
+    public let pose: PlayerPoseBuffer
     /// The same, for the first-person rig. A separate buffer because the two
     /// graphs pose two different skeletons and a shared one would hand the
     /// arms the body's bones.
@@ -99,6 +99,9 @@ nonisolated public final class LocomotionBridge {
     /// What combat, magic, and the camera report this frame, for the actor-state
     /// graph inputs (ActorStateGraphCore.swift).
     public var actorState = ActorStateGraphInputs()
+    /// False for a mount's bridge: a horse graph is not the player's, and it tags its
+    /// own `iState`.
+    public var isPlayerGraph = true
 
     public private(set) var status: LocomotionStatus
     /// Third-person graph events awaiting consumers. Only that graph feeds it, or every
@@ -117,10 +120,14 @@ nonisolated public final class LocomotionBridge {
     public let animationEventConsumer: LocomotionGraphEventQueue.Consumer
     /// The magic coordinator's cursor: the frame a shout or a hand spell fires.
     public let magicEventConsumer: LocomotionGraphEventQueue.Consumer
+    /// The mount coordinator's cursor: the paired clips' end events.
+    public let mountEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
     var wasMoving = false
-    private var wasSprinting = false
+    var wasSprinting = false
+    /// The `iCombatStance` the riding graph was last told about.
+    var wasCombatStance = false
     private var wasSneaking = false
     private var wasSwimming = false
     /// The swim edge the graph was last told about. Kept apart from
@@ -142,8 +149,10 @@ nonisolated public final class LocomotionBridge {
     public init(
         configuration: PlayerMovementConfiguration,
         graph: BehaviorGraphInstance? = nil,
-        sampleWater: ((SIMD2<Float>) -> Float?)? = nil
+        sampleWater: ((SIMD2<Float>) -> Float?)? = nil,
+        pose: PlayerPoseBuffer = PlayerPoseBuffer()
     ) {
+        self.pose = pose
         let events = LocomotionGraphEventQueue()
         graphEvents = events
         footstepEventConsumer = events.addConsumer()
@@ -152,6 +161,7 @@ nonisolated public final class LocomotionBridge {
         ragdollEventConsumer = events.addConsumer()
         animationEventConsumer = events.addConsumer()
         magicEventConsumer = events.addConsumer()
+        mountEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
@@ -234,6 +244,7 @@ nonisolated public final class LocomotionBridge {
         previousYaw = nil
         wasMoving = false
         wasSprinting = false
+        wasCombatStance = false
         wasSneaking = false
         wasSwimming = false
         wasGraphSwimming = false

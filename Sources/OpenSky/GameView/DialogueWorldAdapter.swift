@@ -47,6 +47,7 @@ protocol DialogueWorldHost: AnyObject {
     var inventory: InventoryCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var mapWorld: MapWorldAdapter { get }
+    var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
@@ -87,6 +88,9 @@ final class DialogueWorldAdapter {
         // Activating a living actor while sneaking opens its pockets instead of a talk.
         streamer.talk.activations.add { [weak self] event in
             guard let game = self?.game else { return }
+            if game.mountWorld.mountOnActivation(event.speaker) {
+                return
+            }
             if game.player.isSneaking, game.containerMenu.openPickpocket(of: event.speaker) {
                 return
             }
@@ -127,7 +131,8 @@ final class DialogueWorldAdapter {
                 reference: entry.formID,
                 base: actor.base,
                 feet: observation.feet,
-                name: speakerName(entry: entry, fallback: observation.name)
+                name: speakerName(entry: entry, fallback: observation.name),
+                actionLabel: game.mountWorld.promptLabel(for: observation.key)
             )
         }
     }

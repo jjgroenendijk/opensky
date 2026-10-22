@@ -36,17 +36,20 @@ nonisolated public struct ActorGraphMotion: Equatable, Sendable {
     public var isRunning: Bool
     public var isSprinting: Bool
     public var isSneaking: Bool
+    /// The horse graphs' `iCombatStance`: the actor, or its rider, has a weapon out.
+    public var isInCombatStance: Bool
 
     public static let still = ActorGraphMotion()
 
     public init(
         isMoving: Bool = false, isRunning: Bool = false,
-        isSprinting: Bool = false, isSneaking: Bool = false
+        isSprinting: Bool = false, isSneaking: Bool = false, isInCombatStance: Bool = false
     ) {
         self.isMoving = isMoving
         self.isRunning = isRunning
         self.isSprinting = isSprinting
         self.isSneaking = isSneaking
+        self.isInCombatStance = isInCombatStance
     }
 }
 
@@ -71,6 +74,12 @@ nonisolated public enum ActorGraphNames {
     public static let sprintStop = "SprintStop"
     public static let sneakStart = "SneakStart"
     public static let sneakStop = "SneakStop"
+
+    /// The start state of `StandingIdleBehavior` in both horse graphs: 0 is
+    /// `NonCombatIdleState`, 1 is `CombatIdleState` (docs/engine/riding.md). Int32.
+    public static let combatStance = "iCombatStance"
+    public static let combatStanceStart = "combatStanceStart"
+    public static let combatStanceStop = "combatStanceStop"
 }
 
 /// What one actor's graph is fed in one step.
@@ -104,6 +113,9 @@ nonisolated public enum ActorGraphCore {
         if old.isSneaking != new.isSneaking {
             events.append(new.isSneaking ? Names.sneakStart : Names.sneakStop)
         }
+        if old.isInCombatStance != new.isInCombatStance {
+            events.append(new.isInCombatStance ? Names.combatStanceStart : Names.combatStanceStop)
+        }
         return events
     }
 
@@ -125,6 +137,7 @@ nonisolated public enum ActorGraphCore {
             (Names.isPlayer, .bool(false)),
             (Names.isPlayerInt, .int(0)),
             (Names.isNPC, .bool(true)),
+            (Names.combatStance, .int(input.motion.isInCombatStance ? 1 : 0)),
             (Names.timeDelta, .real(input.deltaTime))
         ]
     }

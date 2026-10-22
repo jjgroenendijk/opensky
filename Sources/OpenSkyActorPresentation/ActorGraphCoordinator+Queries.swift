@@ -43,4 +43,30 @@ extension ActorGraphCoordinator {
         graphs[.player] = player.map(ActorGraphVariables.init(store:))
         return GraphVariableResolution(graphs: graphs)
     }
+
+    /// Hands the actor's graph to the player's mount drive, which steps it until
+    /// `giveBack`. Nil when the actor runs no graph.
+    public func lend(_ actor: ReferenceKey) -> ActorGraphLoan? {
+        guard let entry = running[actor] else { return nil }
+        entry.isLent = true
+        return ActorGraphLoan(instance: entry.instance, pose: entry.pose)
+    }
+
+    /// The coordinator steps the graph again, from the actor's drive.
+    public func giveBack(_ actor: ReferenceKey) {
+        guard let entry = running[actor], entry.isLent else { return }
+        entry.isLent = false
+        entry.lastFeet = nil
+        entry.lastRotation = nil
+        // The ridden graph may be left moving: stop events return it to the drive's state.
+        let lent = ActorGraphMotion(isMoving: true, isSprinting: true, isInCombatStance: true)
+        entry.motion = motions[actor] ?? .still
+        entry.pendingEvents += ActorGraphCore.events(from: lent, to: entry.motion)
+    }
+}
+
+/// A graph lent to the player's mount drive, and the pose buffer its playback draws.
+public struct ActorGraphLoan {
+    public let instance: BehaviorGraphInstance
+    public let pose: PlayerPoseBuffer
 }

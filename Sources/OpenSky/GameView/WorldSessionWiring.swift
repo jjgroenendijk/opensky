@@ -38,6 +38,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var hud: HUDCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventoryWorld: InventoryWorldAdapter { get }
+    var mountWorld: MountWorldAdapter { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockWorld: LockWorldAdapter { get }
     var perkActivationWorld: PerkActivationWorldAdapter { get }
@@ -198,11 +199,16 @@ final class WorldSessionWiring {
         }
         let input = game.cameraInput
         let frameSteps = gameSession.frameSteps
+        let mounts = game.mountWorld
+        let mountTakesPress = { [weak mounts] in mounts?.takeActivation() == true }
         frameSteps.register(.streaming) { [weak streamer, weak gameSession, weak input] position in
+            // A rider's use key dismounts instead of activating the world.
+            let pressed = input?.consumeActivation() ?? false
+            let activate = pressed && !mountTakesPress()
             streamer?.update(
                 cameraPosition: position,
                 interactionRay: gameSession.flatMap(Self.interactionRay(of:)),
-                activate: input?.consumeActivation() ?? false,
+                activate: activate,
                 playerCapsule: gameSession.flatMap(Self.playerCapsule(of:)),
                 frameTime: gameSession?.lastCameraDelta ?? 0
             )
@@ -247,6 +253,8 @@ final class WorldSessionWiring {
         game.idleWorld.wireIdles(provider: provider, gameSession: gameSession)
         game.actorGraphWorld.wire(gameSession: gameSession)
         game.vehicleWorld.wireVehicles(gameSession: gameSession)
+        // After the locks, whose activation gate it wraps.
+        game.mountWorld.wireMounts(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
         animationEvents.wire(gameSession: gameSession)
         // The perception pass answers "did anybody see it" for every crime.

@@ -196,6 +196,8 @@ nonisolated public enum ActivationRefusal: Equatable, Sendable {
     case locked(level: UInt8, key: FormID?)
     /// A Filter Activation perk of the player blocks it.
     case filteredByPerk
+    /// The player rides, and a rider cannot use a door.
+    case mounted
 }
 
 /// A use-key press the activation gate refused. No `InteractionEvent` follows it.

@@ -8,6 +8,7 @@ import OpenSkyPhysics
 
 nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {
+        guard isPlayerGraph else { return }
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,
@@ -18,6 +19,7 @@ nonisolated extension LocomotionBridge {
         for (name, value) in writes {
             write(value, to: name)
         }
+        wasCombatStance = actorState.weaponDrawn
     }
 
     /// The value of each `iState_*` constant the graph declares. The third-person

@@ -45,6 +45,7 @@ extension GameViewController: @MainActor SkyrimSaveImportHost {}
 extension GameViewController: @MainActor ScriptWorldHost {}
 extension GameViewController: @MainActor StoryWorldHost {}
 extension GameViewController: @MainActor VehicleWorldHost {}
+extension GameViewController: @MainActor MountWorldHost {}
 extension GameViewController: @MainActor WorldSessionWiringHost {}
 
 extension GameViewController {

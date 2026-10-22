@@ -66,6 +66,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & MeleeCombatControlProviding
     & MenuScreensControlProviding
     & MessageControlProviding
+    & MountControlProviding
     & ObjectAnimationControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
@@ -186,6 +187,7 @@ extension FeaturePanelServices {
             mapMenu: providers,
             menuScreens: providers,
             message: providers,
+            mount: providers,
             objectAnimation: providers,
             perkActivation: providers,
             playerSettings: providers,
