@@ -44,6 +44,20 @@ struct KillCamTriggerTests {
         var never = settings
         never.baseOdds = 0
         #expect(!KillCamTrigger.shouldPlay(settings: never, remainingHostiles: 0, random: &random))
+        var playerOff = settings
+        playerOff.playerOdds = 0
+        #expect(!KillCamTrigger.shouldPlay(
+            settings: playerOff, remainingHostiles: 0, random: &random
+        ))
+    }
+
+    @Test func thePlayerChanceScalesTheBaseOdds() {
+        var settings = KillCamSettings()
+        settings.baseOdds = 0.5
+        settings.playerOdds = 0.5
+        #expect(settings.odds == 0.25)
+        settings.playerOdds = 4
+        #expect(settings.odds == 1)
     }
 
     @Test func arrowPicksTheNearestActorItKills() {
