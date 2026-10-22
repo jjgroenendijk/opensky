@@ -1,8 +1,10 @@
-// The automatic face: dialogue emotions map to the expression TRI's names, and blinks
-// are short, spread out, and never stack past fully closed.
+// The automatic face: dialogue emotions map to the expression TRI's names, blinks follow
+// the blink settings, and the eyes drift inside the emotion's range.
 
 @testable import OpenSkyActorPresentation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import Testing
 
 @MainActor
@@ -13,25 +15,64 @@ struct FacialExpressionCoreTests {
         #expect(FacialExpressionCore.emotionWeights(.neutral, value: 80).isEmpty)
     }
 
-    @Test func aBlinkIsShortAndComesBack() {
-        var closedSamples = 0
-        var peak: Float = 0
-        for step in 0 ..< 1200 {
-            let closed = FacialExpressionCore.blink(at: Float(step) * 0.01, seed: 7)
-            #expect(closed >= 0 && closed <= 1)
-            peak = max(peak, closed)
-            if closed > 0 {
-                closedSamples += 1
-            }
+    @Test func aBlinkClosesOverTheDownTimeAndOpensOverTheUpTime() {
+        let settings = FaceAnimationSettings.vanilla
+        func closed(_ elapsed: Float) -> Float {
+            FacialExpressionCore.blinkClosure(elapsed: elapsed, settings: settings)
         }
-        // Twelve seconds hold two to four blinks of 0.2 s each.
-        #expect(closedSamples > 0 && closedSamples <= 4 * 20 + 4)
-        #expect(peak > 0.8)
+        #expect(abs(closed(0.02) - 0.5) < 0.001)
+        #expect(abs(closed(0.04) - 1) < 0.001)
+        #expect(abs(closed(0.11) - 0.5) < 0.001)
+        #expect(closed(0.18) == 0)
+        #expect(closed(-1) == 0)
+    }
+
+    @Test func eyesDriftInsideTheEmotionsRange() {
+        let settings = FaceAnimationSettings.vanilla
+        let range = settings.eyeRange(for: .sad)
+        #expect(range == settings.eyeRanges["Sad"])
+        #expect(settings.eyeRange(for: .puzzled) == settings.eyeRanges["Neutral"])
+        for step in 0 ..< 20 {
+            let offset = FacialExpressionCore.eyeOffset(
+                at: Float(step), seed: 3, range: range, interval: 2
+            )
+            #expect(offset.yaw >= range.headingMin && offset.yaw <= range.headingMax)
+            #expect(offset.pitch <= -0.015 && offset.pitch >= -0.05)
+        }
+        let weights = FacialExpressionCore.eyeWeights(
+            HeadLook(yaw: 0.1, pitch: -0.05), settings: settings
+        )
+        #expect(abs((weights["LookLeft"] ?? 0) - 0.1 * 180 / .pi / 28) < 0.0001)
+        #expect(abs((weights["LookDown"] ?? 0) - 0.05 * 180 / .pi / 20) < 0.0001)
+        #expect(weights["LookRight"] == nil && weights["LookUp"] == nil)
+    }
+
+    @Test func aSpeakingEmotionEasesInAtTheChangeSpeed() {
+        let settings = FaceAnimationSettings.vanilla
+        let rate = settings.speakingEmotionRate(rolls: (0.3, 0.7))
+        #expect(abs(rate - 1 / 1.5) < 0.0001, "100 points over 1.5 seconds")
+        let half = FacialExpressionCore.ease([:], toward: ["DialogueHappy": 1], step: 0.5)
+        #expect(half == ["DialogueHappy": 0.5])
+        let gone = FacialExpressionCore.ease(half, toward: [:], step: 1)
+        #expect(gone.isEmpty)
+    }
+
+    @Test func theFaceSettingsComeFromTheGame() throws {
+        let store = try GameSettingFixture.store([
+            "fBlinkDelayMax": .float(4), "fEyePitchMaxOffsetEmotionSad": .float(0.2),
+            "fGameplaySpeakingEmotionMaxChangeValue": .float(3)
+        ])
+        let settings = FaceAnimationSettings.resolve(store: store)
+        #expect(settings.blinkDelayMax == 4 && settings.blinkDelayMin == 0.5)
+        #expect(settings.eyeRanges["Sad"]?.pitchMax == 0.2)
+        #expect(settings.speakingChangeMax == 3)
     }
 
     @Test func aBlinkIsAddedOnTopOfAnEmotion() {
-        let weights = FacialExpressionCore.weights(emotion: ["DialogueSad": 0.4], blink: 1)
-        #expect(weights == ["DialogueSad": 0.4, "BlinkLeft": 1, "BlinkRight": 1])
+        let weights = FacialExpressionCore.weights(
+            emotion: ["DialogueSad": 0.4], eyes: ["LookUp": 0.2], blink: 1
+        )
+        #expect(weights == ["DialogueSad": 0.4, "LookUp": 0.2, "BlinkLeft": 1, "BlinkRight": 1])
     }
 
     @Test func aTimedEmotionEndsOnItsOwn() {

@@ -23,6 +23,7 @@ nonisolated extension CellProviderIndexes {
         let loadOrder: LoadOrderPlugins
         let tuning: SettingIndexes
         let progress: WorldLoadProgress
+        let fileSystem: any GameFileSource
     }
 
     /// Builds the whole set and returns the session over it. Throws
@@ -56,7 +57,8 @@ nonisolated extension CellProviderIndexes {
             plugins: plugins,
             loadOrder: activeLoadOrder.plugins,
             tuning: tuning,
-            progress: progress
+            progress: progress,
+            fileSystem: fileSystem
         )
         async let records = RecordStores.load(context)
         let built = try progress.measure(.assetLibraries) {
@@ -213,10 +215,11 @@ nonisolated extension CellProviderIndexes.RecordStores {
             (IdleStore(plugins: context.plugins), EffectRecordStore(plugins: context.plugins))
         }
         async let menus = progress.measure(.menusAndMessages) {
-            (
-                PresentationRecordStore(plugins: context.plugins),
-                MenuRecordData(loadOrder: context.loadOrder, settings: context.tuning.store)
+            var menuData = MenuRecordData(
+                loadOrder: context.loadOrder, settings: context.tuning.store
             )
+            menuData.chargenTypes = menuData.readChargenTypes(fileSystem: context.fileSystem)
+            return (PresentationRecordStore(plugins: context.plugins), menuData)
         }
         let (idleStore, effects) = try await idles
         let (presentation, menuData) = try await menus

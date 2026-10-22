@@ -49,6 +49,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var perception: PerceptionCoordinator { get }
     var playerWorld: PlayerWorldAdapter { get }
     var progressionWorld: ProgressionWorldAdapter { get }
+    var raceMenu: RaceMenuCoordinator { get }
     var ragdollWorld: RagdollWorldAdapter { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scriptWorld: ScriptWorldAdapter { get }
@@ -106,6 +107,7 @@ final class WorldSessionWiring {
         game.runtimeState.attach(globals: provider.globalStore)
         game.runtimeState.calendarTexts = CalendarTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        game.raceMenu.morphCounts = FaceMorphCounts.resolve(store: provider.gameSettings)
         game.aiWorld.wireNPCMovement(gameSession: gameSession, streamer: streamer)
         streamer.bind(to: game.worldState)
         wireFrame(gameSession: gameSession, streamer: streamer)

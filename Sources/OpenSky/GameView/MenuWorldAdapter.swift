@@ -211,12 +211,15 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
             let record = records.playableRaces.first(where: { $0.formID == race })
         else { return .empty }
         let chargen = records.chargen
-        return RaceMenuOptions.build(
+        var options = RaceMenuOptions.build(
             head: isFemale ? record.details.headData.female : record.details.headData.male,
             parts: { chargen.parts($0, race: race, isFemale: isFemale).map(\.formID) },
             color: { chargen.colors[$0.rawValue]?.color },
             presets: racePresets(race: race, isFemale: isFemale)
         )
+        options.partTypes = records
+            .chargenTypes[ChargenTypeKey(race: race, isFemale: isFemale)] ?? [:]
+        return options
     }
 
     func applyPlayerIdentity(_ identity: PlayerIdentityState) {

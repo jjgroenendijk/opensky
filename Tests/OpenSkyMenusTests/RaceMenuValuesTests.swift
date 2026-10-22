@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyMenus
 import Testing
 
@@ -27,6 +28,18 @@ struct RaceMenuValuesTests {
             complexions: [FormID(0xC1), FormID(0xC2)]
         )
         return RaceMenuModel(identity: identity, races: [], limited: false, options: options)
+    }
+
+    @Test func theMorphCountSettingsNarrowTheTypeRanges() {
+        var model = Self.model()
+        #expect(model.range(.part(2))?.bounds == 0 ... 28, "the TRI holds fewer than 38")
+        model.morphCounts.eye = 10
+        model.morphCounts.nose = 0
+        #expect(model.range(.part(2))?.bounds == 0 ... 9)
+        #expect(model.range(.part(0))?.bounds == 0 ... 0)
+        model.options.partTypes = [2: 5, 3: 37]
+        #expect(model.range(.part(2))?.bounds == 0 ... 5, "the race's own TRI holds 5")
+        #expect(model.range(.part(3))?.bounds == 0 ... 30, "iLipMorphCount stops at 30")
     }
 
     @Test func anOptionalPartCountsNoneAsZero() {

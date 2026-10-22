@@ -96,6 +96,10 @@ extension GraphicsPageViewController {
     private func configureCharacterCheckboxes() {
         checkbox(blinkingControl, "CharacterBlinking", "Actors blink on their own")
         checkbox(
+            eyeMovementControl, "CharacterEyeMovement",
+            "Actors' eyes drift by the emotion they show"
+        )
+        checkbox(
             expressionsControl, "CharacterExpressions",
             "A speaker's face shows the emotion of the line it says"
         )
@@ -173,7 +177,7 @@ extension GraphicsPageViewController {
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
-            (blinkingControl, .characterBlinking),
+            (blinkingControl, .characterBlinking), (eyeMovementControl, .characterEyeMovement),
             (expressionsControl, .characterDialogueExpressions),
             (headTrackingControl, .characterHeadTracking),
             (objectAnimationControl, .objectAnimation), (actorGraphsControl, .actorGraphs),

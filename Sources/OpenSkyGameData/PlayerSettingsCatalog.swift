@@ -358,6 +358,8 @@ nonisolated extension PlayerSettingID {
     public static let fullScreen = Self("window.fullScreen")
     /// Actors blink on their own.
     public static let characterBlinking = Self("characters.blinking")
+    /// Actors' eyes drift by the emotion they show.
+    public static let characterEyeMovement = Self("characters.eyeMovement")
     /// A speaker's face shows the emotion of the line it says.
     public static let characterDialogueExpressions = Self("characters.dialogueExpressions")
     /// Actors turn their heads toward what they look at.
@@ -389,6 +391,7 @@ nonisolated extension PlayerSettingID {
 nonisolated extension PlayerSettingsCatalog {
     private static let characterRows: [PlayerSettingDefinition] = [
         row("characters.blinking", .opensky, .toggle, "Blinking", 1, applied: true),
+        row("characters.eyeMovement", .opensky, .toggle, "Eye movement", 1, applied: true),
         row(
             "characters.dialogueExpressions", .opensky, .toggle, "Dialogue expressions", 1,
             applied: true
