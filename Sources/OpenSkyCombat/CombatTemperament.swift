@@ -1,9 +1,10 @@
 // How an actor's Confidence decides whether it engages or breaks off, from how strong
-// it is beside its target (<https://ck.uesp.net/wiki/AI_Data_Tab>). The wiki words each
-// level; the strength thresholds below are OpenSky's reading of them
+// it is beside its target (<https://ck.uesp.net/wiki/AI_Data_Tab>). The strengths come
+// from the `fConfidence*` settings; how they apply is OpenSky's reading
 // (docs/engine/combat-behavior.md, "Confidence and Assistance").
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -15,18 +16,23 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
     public var modifier: Float
     /// Health fraction over the target's, scaled by the square root of the level ratio.
     public var strengthRatio: Float
+    /// The strength below which this actor breaks off, from its nudged Confidence.
+    public var breakOffStrength: Float
 
-    public init(confidence: Float, modifier: Float = 0, strengthRatio: Float) {
+    public init(
+        confidence: Float, modifier: Float = 0, strengthRatio: Float,
+        settings: CombatAISettings = .vanilla
+    ) {
         self.confidence = confidence
         self.modifier = modifier
         self.strengthRatio = strengthRatio
+        breakOffStrength = settings.breakOffStrength(confidence: confidence + modifier)
     }
 
-    public static let modifierRange: ClosedRange<Float> = -0.5 ... 0.5
+    public static let modifierRange = CombatAISettings.vanilla.confidenceModifierRange
 
     /// Cowardly "will always flee", foolhardy "will never flee". Between them the actor
-    /// breaks off below a strength ratio that halves per level: cautious unless stronger
-    /// (1), average when much weaker (0.5), brave when overwhelmingly weaker (0.25).
+    /// breaks off below its `breakOffStrength`: 0.375 cautious, 0.15 average, 0.0375 brave.
     public var breaksOff: Bool {
         if confidence >= 4 {
             return false
@@ -35,7 +41,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
             return true
         }
         guard strengthRatio.isFinite else { return false }
-        return strengthRatio < pow(2, 1 - (confidence + modifier))
+        return strengthRatio < breakOffStrength
     }
 
     /// The level ratio is clamped to 0.5 through 2 and softened by its square root, so
@@ -50,7 +56,9 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 
     /// A fixed value per actor, spread over `modifierRange`. Built from the key's own
     /// numbers, because `hashValue` changes between launches.
-    public static func modifier(for key: ReferenceKey) -> Float {
+    public static func modifier(
+        for key: ReferenceKey, range: ClosedRange<Float> = modifierRange
+    ) -> Float {
         let seed: UInt64 = switch key {
         case let .plugin(name, objectID):
             name.utf8.reduce(UInt64(objectID)) { ($0 &* 31) &+ UInt64($1) }
@@ -59,8 +67,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
         var hash = seed &* 0x9E37_79B9_7F4A_7C15
         hash ^= hash >> 29
         let unit = Float(hash & 0xFFFF) / Float(UInt16.max)
-        return modifierRange
-            .lowerBound + unit * (modifierRange.upperBound - modifierRange.lowerBound)
+        return range.lowerBound + unit * (range.upperBound - range.lowerBound)
     }
 }
 

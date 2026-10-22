@@ -44,6 +44,10 @@ public final class CombatCoordinator {
     public var powerAttacks = PowerAttackSettings.vanilla
     /// The Block experience of blocks and bashes; the app sets it before `wireMelee`.
     public var skillUses = MeleeSkillUseSettings.vanilla
+    /// Stagger and disarm chances; the app sets them before `wireMelee` and `wireLoop`.
+    public var staggers = StaggerSettings.vanilla
+    /// The game's combat AI settings; the app sets them before `wireLoop`.
+    public var combatAI = CombatAISettings.vanilla
     /// What a landed arrow does; the app sets it before `wireArchery`.
     public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
@@ -68,11 +72,11 @@ public final class CombatCoordinator {
         runtime.impacts = impacts
         runtime.powerAttacks = powerAttacks
         runtime.skillUses = skillUses
+        runtime.staggers = staggers
         self.items = items ?? self.items
         melee = runtime
     }
 
-        runtime.staggers = staggers
     public func wireArchery(
         settings: ArcherySettings,
         items: ItemDefinitionStore?,
@@ -90,6 +94,8 @@ public final class CombatCoordinator {
     public func wireLoop(settings: CombatSettings) {
         let runtime = CombatLoopRuntime(settings: settings, world: self)
         runtime.skillUses = skillUses
+        runtime.staggers = staggers
+        runtime.combatAI = combatAI
         loop = runtime
     }
 

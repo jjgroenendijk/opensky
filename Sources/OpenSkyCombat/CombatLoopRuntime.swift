@@ -43,6 +43,12 @@ public final class CombatLoopRuntime: CombatControlling {
     public var behaviorSettings = CombatBehaviorSettings.standard
     /// The Block experience of a blow the player blocks.
     public var skillUses = MeleeSkillUseSettings.vanilla
+    /// Stagger strength and chance of an NPC blow.
+    public var staggers = StaggerSettings.vanilla
+    /// Flee distances and the ally follow radius.
+    public var combatAI = CombatAISettings.vanilla
+    /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
+    var staggerRandom = ConditionRandom()
 
     public private(set) var state = CombatLoopState.calm
     /// One machine per actor that is fighting or has fought, keyed by actor.
@@ -127,17 +133,17 @@ public final class CombatLoopRuntime: CombatControlling {
         }
     }
 
+    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
+    public func rollsStagger() -> Bool {
+        staggerRandom.percent() < staggers.attackChance
+    }
+
     /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
     /// hostile and engages without first having to see the player.
     func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
         guard provoke(actor) else { return }
         provoked.insert(actor)
         record(.assisted(actor, ally: ally))
-    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
-    public func rollsStagger() -> Bool {
-        staggerRandom.percent() < staggers.attackChance
-    }
-
     }
 
     /// Interrupts `key`'s attack and plays its stagger clip.
@@ -294,7 +300,10 @@ public final class CombatLoopRuntime: CombatControlling {
     /// A new machine for `key`, with its combat style folded into the settings.
     public func makeMachine(for key: ReferenceKey) -> CombatBehaviorMachine {
         CombatBehaviorMachine(
-            settings: behaviorSettings.tuned(by: styleTuning(of: key)),
+            settings: combatAI.applyingFlee(
+                to: behaviorSettings.tuned(by: styleTuning(of: key)),
+                interior: world?.combatInInterior ?? false
+            ),
             seed: CombatBehaviorMachine.seed(for: key)
         )
     }

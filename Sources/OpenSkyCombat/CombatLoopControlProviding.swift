@@ -3,6 +3,7 @@
 // single observation while a fight runs.
 
 import Foundation
+import OpenSkyCombatInterface
 
 /// One observation of the combat loop.
 nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
@@ -53,6 +54,9 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     public var selectedAssistance: CombatAssistance?
     /// One line per ally of the player: its name and what it does.
     public var allies: [String] = []
+    /// The game's combat AI settings and whether the fight is indoors.
+    public var combatAI = CombatAISettings.vanilla
+    public var isInInterior = false
 
     /// The reading with no runtime attached.
     public static let unavailable = CombatLoopSnapshot(

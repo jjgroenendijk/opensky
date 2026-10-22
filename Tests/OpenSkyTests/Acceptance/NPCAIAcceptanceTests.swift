@@ -185,13 +185,13 @@ struct NPCAIAcceptanceTests {
 
         // Past the break distance the pursuit ends like a finished search. The
         // player moves instead of the guard, because the arena's navmesh is
-        // 200 units long and the flee distance is 1,400. The break is a distance
-        // test, so either side may open the gap.
-        chain.playerFeet = chain.guardFeet
-            + SIMD3(CombatBehaviorSettings.standard.fleeBreakDistance + 100, 0, 0)
+        // 200 units long and the flee distance is 5,000 outdoors. The break is a
+        // distance test, so either side may open the gap.
+        let fled = CombatAISettings.vanilla.applyingFlee(to: .standard, interior: false)
+        chain.playerFeet = chain.guardFeet + SIMD3(fled.fleeBreakDistance + 100, 0, 0)
         #expect(
             chain.run(frames: 600) { chain.combat.phase(of: Chain.guardKey) == .disengaged },
-            "the guard stayed in a fight with a player two thousand units away"
+            "the guard stayed in a fight with a player past the flee break distance"
         )
         #expect(chain.packageResumes.count == 2, "the second exit handed it back too")
     }

@@ -81,6 +81,8 @@ final class CombatWorldAdapter {
         combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
         combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
         combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
+        combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
+        combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),
@@ -157,10 +159,10 @@ final class CombatWorldAdapter {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
             case let .playImpact(impact, position): playImpact(impact, at: position)
-            case let .removeReference(key): game.worldState.reset(key)
-            case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .detectionEvent(owner, position):
                 game.perception.runtime?.noteDetectionEvent(owner: owner, at: position)
+            case let .removeReference(key): game.worldState.reset(key)
+            case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             }
         }

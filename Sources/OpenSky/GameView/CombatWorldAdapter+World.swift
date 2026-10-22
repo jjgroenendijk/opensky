@@ -151,6 +151,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.perks.choices(at: entryPoint, on: key, subjects: { _ in subjects }, seams: seams)
     }
 
+    var isInInterior: Bool {
+        game.streamer?.interiorScene != nil
+    }
+
     /// ZNAM after template inheritance, read through the load-order CSTY store.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         guard

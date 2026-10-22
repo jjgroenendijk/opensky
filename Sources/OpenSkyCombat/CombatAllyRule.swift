@@ -1,14 +1,18 @@
 // Allies as pure rules: an actor a spell put under a commander walks after it and
 // fights the foes that fight it. CK wiki "Magic Effect": a summon is "under the
-// caster's control". The distances are OpenSky values. See docs/engine/combat.md.
+// caster's control". The follow distance comes from `CombatAISettings`; the other
+// distances are OpenSky values. See docs/engine/combat.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyPhysics
 import simd
 
 nonisolated public enum CombatAllyRule {
-    /// An ally farther than this from its commander walks back.
-    public static let followDistance: Float = 300
+    /// An ally farther than this from its commander walks back: `fCombatDistance` times
+    /// `fCombatTeammateFollowRadiusMult` in the install.
+    public static let followDistance = CombatAISettings.vanilla
+        .followDistance(leaderIsPlayer: true)
     /// How close to the commander an ally stops.
     public static let keepDistance: Float = 150
     /// An ally defends its commander against foes this close to the commander.
@@ -16,11 +20,11 @@ nonisolated public enum CombatAllyRule {
 
     /// Where `ally` walks to stay near `commander`, or nil when it is near enough.
     public static func followPoint(
-        ally: SIMD3<Float>, commander: SIMD3<Float>
+        ally: SIMD3<Float>, commander: SIMD3<Float>, followDistance: Float = followDistance
     ) -> SIMD3<Float>? {
         let offset = ally - commander
         let distance = simd_length(offset)
-        guard distance > followDistance else { return nil }
+        guard distance > max(followDistance, keepDistance) else { return nil }
         return commander + offset / distance * keepDistance
     }
 

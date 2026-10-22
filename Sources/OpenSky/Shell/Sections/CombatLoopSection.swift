@@ -95,6 +95,7 @@ final class CombatLoopSection: PanelSectionViewController {
             CombatLoopReadout.castingText(for: snapshot),
             CombatLoopReadout.hostilityText(for: snapshot),
             CombatLoopReadout.temperamentText(for: snapshot),
+            CombatLoopReadout.combatAIText(for: snapshot),
             provider.selectedCombatStyle
                 .map { "\($0.styleText)\n\($0.settingsText)" } ?? "Style: none",
             CombatLoopReadout.incomingText(for: snapshot),
