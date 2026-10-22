@@ -36,6 +36,7 @@ public final class HeadTrackingCoordinator {
     public static let eyeHeight: Float = 120
 
     weak var world: (any HeadTrackingWorld)?
+    public var settings = HeadTrackingSettings.vanilla
     public var isEnabled = true {
         didSet {
             guard !isEnabled else { return }
@@ -48,12 +49,17 @@ public final class HeadTrackingCoordinator {
     private struct HeldTarget {
         let target: ReferenceKey
         let until: Float?
+        let isDialogue: Bool
     }
 
     private var targets: [ReferenceKey: HeldTarget] = [:]
     /// Actors whose clip sent `HeadTrackingOff`: they look ahead until `HeadTrackingOn`.
     public private(set) var heldForward: Set<ReferenceKey> = []
     private var clock: Float = 0
+    /// Heads still turning toward their goal; the rest wait out the dead zone.
+    private var turning: Set<ReferenceKey> = []
+    /// When each actor last had the player within its notice distance.
+    private var lastNoticed: [ReferenceKey: Float] = [:]
     public private(set) var looks: [ReferenceKey: HeadLook] = [:]
     /// The target each actor looked at in the last tick, for the readout.
     public private(set) var lookTargets: [ReferenceKey: ReferenceKey] = [:]
@@ -78,11 +84,15 @@ public final class HeadTrackingCoordinator {
     }
 
     /// Makes `actor` look at `target`, or with nil hands it back to the default. With
-    /// `seconds`, the target lets go on its own.
+    /// `seconds`, the target lets go on its own. In `dialogue` the speaker glances by the
+    /// dialogue settings.
     public func setLookTarget(
-        _ target: ReferenceKey?, for actor: ReferenceKey, seconds: Float? = nil
+        _ target: ReferenceKey?, for actor: ReferenceKey, seconds: Float? = nil,
+        dialogue: Bool = false
     ) {
-        targets[actor] = target.map { HeldTarget(target: $0, until: seconds.map { clock + $0 }) }
+        targets[actor] = target.map {
+            HeldTarget(target: $0, until: seconds.map { clock + $0 }, isDialogue: dialogue)
+        }
     }
 
     /// A clip's `HeadTrackingOff` holds the head forward, so an attack aims where the body
@@ -99,24 +109,48 @@ public final class HeadTrackingCoordinator {
         clock += max(deltaTime, 0)
         targets = targets.filter { $0.value.until.map { $0 > clock } ?? true }
         guard isEnabled, let world else { return }
-        let step = HeadTrackingCore.turnSpeed * max(deltaTime, 0)
         var nextLooks: [ReferenceKey: HeadLook] = [:]
         var nextTargets: [ReferenceKey: ReferenceKey] = [:]
         let player = world.headPosition(of: .player)
         for subject in world.headTrackingSubjects {
             let target = chosenTarget(of: subject, player: player)
-            let goal = target.flatMap { key in
+            let aim = target.flatMap { key in
                 world.headPosition(of: key).flatMap { look(of: subject, toward: $0) }
-            } ?? .forward
-            let look = HeadTrackingCore.approach(
-                looks[subject.key] ?? .forward, goal, step: step
+            }
+            let goal = aim.map { withGlance($0, subject: subject.key) } ?? .forward
+            let step = HeadTrackingCore.turn(
+                looks[subject.key] ?? .forward, toward: goal,
+                isTurning: turning.contains(subject.key) || aim == nil,
+                deltaTime: deltaTime, settings: settings
             )
-            subject.playback.headLook = look
-            nextLooks[subject.key] = look
-            nextTargets[subject.key] = goal == .forward ? nil : target
+            if step.isTurning {
+                turning.insert(subject.key)
+            } else {
+                turning.remove(subject.key)
+            }
+            subject.playback.headLook = step.look
+            nextLooks[subject.key] = step.look
+            nextTargets[subject.key] = aim == nil ? nil : target
         }
         looks = nextLooks
         lookTargets = nextTargets
+        turning.formIntersection(nextLooks.keys)
+        lastNoticed = lastNoticed.filter { clock - $0.value <= settings.holdDefault }
+    }
+
+    private func withGlance(_ aim: HeadLook, subject: ReferenceKey) -> HeadLook {
+        let timing = targets[subject]?.isDialogue == true ? settings.dialogue : settings.idle
+        let seed: UInt32 = switch subject {
+        case let .plugin(_, objectID): objectID
+        case let .generated(number): UInt32(truncatingIfNeeded: number)
+        }
+        let spread = Float(seed % 1000) / 1000 * timing.resetPosition
+        let glance = HeadTrackingCore.glance(at: clock + spread, seed: seed, timing: timing)
+        guard glance != .forward else { return aim }
+        return HeadTrackingCore.limited(
+            HeadLook(yaw: aim.yaw + glance.yaw, pitch: aim.pitch + glance.pitch),
+            settings: settings
+        )
     }
 
     private func chosenTarget(
@@ -130,13 +164,17 @@ public final class HeadTrackingCoordinator {
         guard subject.key != .player, let player else { return nil }
         let origin = subject.worldFromActor.columns.3
         let distance = simd_distance(SIMD2(origin.x, origin.y), SIMD2(player.x, player.y))
-        return distance <= Self.noticeDistance ? .player : nil
+        if distance <= Self.noticeDistance {
+            lastNoticed[subject.key] = clock
+        }
+        return lastNoticed[subject.key] != nil ? .player : nil
     }
 
     private func look(of subject: HeadTrackingSubject, toward point: SIMD3<Float>) -> HeadLook? {
         let local = subject.worldFromActor.inverse * SIMD4(point, 1)
         return HeadTrackingCore.look(
-            from: SIMD3(0, 0, Self.eyeHeight), at: SIMD3(local.x, local.y, local.z)
+            from: SIMD3(0, 0, Self.eyeHeight), at: SIMD3(local.x, local.y, local.z),
+            settings: settings
         )
     }
 }
