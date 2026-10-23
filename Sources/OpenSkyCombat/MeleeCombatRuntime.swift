@@ -295,9 +295,7 @@ public final class MeleeCombatRuntime {
         noteSkillUse(hit, damage: damage, landed: landed, world: world)
         if landed {
             world.applyMeleeHitSpell(blow(world: world), on: hit.target)
-            world.applyWeaponPoison(WeaponPoisonHit(
-                attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: hit.target
-            ))
+            applyWeaponRiders(on: hit.target, world: world)
         }
         let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
@@ -373,5 +371,17 @@ public final class MeleeCombatRuntime {
             at: hit.position,
             candidates: world.meleeTargets()
         ))
+    }
+}
+
+extension MeleeCombatRuntime {
+    /// A landed hit carries the weapon's poison and any Enhance Weapon enchantment.
+    private func applyWeaponRiders(on target: ReferenceKey, world: any MeleeCombatWorld) {
+        world.applyWeaponPoison(WeaponPoisonHit(
+            attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: target
+        ))
+        if weapon.weapon != nil {
+            world.applyWeaponEnhancement(attacker: world.meleeAttacker.key, target: target)
+        }
     }
 }

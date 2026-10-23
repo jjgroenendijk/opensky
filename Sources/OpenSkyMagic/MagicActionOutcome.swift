@@ -14,6 +14,7 @@ nonisolated public enum MagicEffectActionOutcome: Equatable, Sendable {
     case dispelled(removed: Int)
     case boundWeaponFailed(reason: String)
     case boundWeaponStayed(reason: String)
+    case raceChangeFailed(actor: String)
 
     public var text: String {
         switch self {
@@ -25,6 +26,7 @@ nonisolated public enum MagicEffectActionOutcome: Equatable, Sendable {
         case let .dispelled(removed): MagicCore.dispelText(removed: removed)
         case let .boundWeaponFailed(reason): "Bound weapon failed: " + reason
         case let .boundWeaponStayed(reason): "Bound weapon stayed: " + reason
+        case let .raceChangeFailed(actor): "Race change failed: \(actor) cannot change race"
         }
     }
 }

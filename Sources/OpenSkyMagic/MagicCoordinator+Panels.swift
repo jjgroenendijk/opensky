@@ -34,6 +34,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
             },
             lastActionText: lastEffectAction.text
         )
+        snapshot.worldEffectLines = holdLines + lightLines
         snapshot.playerInfluence = runtime.influence(on: .player)
         snapshot.nearestActorInfluence = nearest.map { runtime.influence(on: $0) } ?? .none
         return snapshot
@@ -71,13 +72,36 @@ extension MagicCoordinator: MagicEffectControlProviding {
             valueNames: effect.values
                 .filter { ActorValueIdentity.isVanilla(index: $0.index) }
                 .map { ActorValueIdentity.description(of: $0.index) },
-            archetype: runtime.effects.effect(key: effect.effect)?.effect.data?
-                .archetype.description ?? "unknown"
+            archetype: archetypeText(of: effect, runtime: runtime)
         )
         if effect.duration > 0 {
             readout.timeLeftText = magicTexts.timeLeft(effect.remaining)
         }
         return readout
+    }
+
+    /// The archetype and what it does, such as "light: carries a light".
+    private func archetypeText(of effect: ActiveEffect, runtime: ActiveEffectRuntime) -> String {
+        guard let archetype = runtime.effects.effect(key: effect.effect)?.effect.data?.archetype
+        else { return "unknown" }
+        guard let rule = MagicArchetypeRule.rule(for: archetype) else {
+            return archetype.description
+        }
+        return "\(archetype.description): \(rule.summary)"
+    }
+
+    /// One line per light the Light archetype placed.
+    private var lightLines: [String] {
+        magicLights.map { light in
+            switch light.anchor {
+            case let .actor(key): "light \(light.light) on \(key)"
+            case let .point(point):
+                String(
+                    format: "light %@ at (%.0f, %.0f, %.0f), %.0fs left",
+                    "\(light.light)", point.x, point.y, point.z, light.remaining ?? 0
+                )
+            }
+        }
     }
 
     private func sourceName(_ kind: ActiveEffectSourceKind) -> String {

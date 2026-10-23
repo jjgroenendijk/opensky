@@ -107,6 +107,9 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     public var playerInfluence = ActorMagicInfluence.none
     /// What the nearest actor's effects force on it, such as fear.
     public var nearestActorInfluence = ActorMagicInfluence.none
+    /// Running holds and placed lights: Detect Life paint, Telekinesis, Grab Actor,
+    /// Guide, and Light.
+    public var worldEffectLines: [String] = []
 
     /// The reading with no runtime attached.
     public static let unavailable = MagicEffectControlSnapshot(

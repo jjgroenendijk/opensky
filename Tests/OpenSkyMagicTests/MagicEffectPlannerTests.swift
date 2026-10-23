@@ -140,6 +140,48 @@ struct MagicEffectPlannerTests {
 
     /// Every archetype with no rule is counted rather than approximated.
     @Test func unimplementedArchetypeIsCountedNotApplied() throws {
+        let file = try ActiveEffectFixture.plugin(records: [
+            ActiveEffectFixture.magicEffect(
+                formID: 0x52, editorID: "Unused13", name: "Unused",
+                data: ActiveEffectFixture.data(archetype: 13)
+            )
+        ])
+        let store = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
+        let effect = try #require(store.effect(
+            ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: 0x52)
+        ))
+        let outcome = MagicEffectPlanner.plan(
+            effect: effect, entry: entry(0x52, magnitude: 1, duration: 10)
+        )
+        #expect(outcome == .skip(.unimplementedArchetype(.unknown13)))
+    }
+
+    /// Value and Parts scales its value and changes the seven body-part conditions.
+    @Test func valueAndPartsAlsoChangesEachBodyPart() throws {
+        let file = try ActiveEffectFixture.plugin(records: [
+            ActiveEffectFixture.magicEffect(
+                formID: 0x53, editorID: "Stimpak", name: "Stimpak",
+                data: ActiveEffectFixture.data(archetype: 31, primaryValue: 24)
+            )
+        ])
+        let store = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
+        let effect = try #require(store.effect(
+            ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: 0x53)
+        ))
+        let outcome = MagicEffectPlanner.plan(
+            effect: effect, entry: entry(0x53, magnitude: 10, duration: 0),
+            valueAndParts: MagicValueAndPartsScale(value: 2, parts: 0.5)
+        )
+        guard case let .apply(application) = outcome else {
+            Issue.record("expected an application, got \(outcome)")
+            return
+        }
+        #expect(application.values.map(\.index) == [24] + Array(46 ... 52))
+        #expect(application.values.map(\.magnitude) == [20] + Array(repeating: 5, count: 7))
+    }
+
+    /// A light only shines while it runs.
+    @Test func aLightWithNoDurationIsCounted() throws {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.archetypeRecords)
         let store = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
         let light = ActiveEffectFixture.Archetype.light
@@ -147,9 +189,9 @@ struct MagicEffectPlannerTests {
             ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: light)
         ))
         let outcome = MagicEffectPlanner.plan(
-            effect: effect, entry: entry(light, magnitude: 1, duration: 10)
+            effect: effect, entry: entry(light, magnitude: 1, duration: 0)
         )
-        #expect(outcome == .skip(.unimplementedArchetype(.light)))
+        #expect(outcome == .skip(.needsDuration(.light)))
     }
 
     /// A held modifier on health applies like any other: the primaries store a

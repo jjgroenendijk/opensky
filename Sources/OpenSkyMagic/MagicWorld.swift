@@ -15,7 +15,7 @@ import simd
 /// What `MagicCoordinator` reads from the running world. Skill uses pass
 /// through to the session's skill runtime.
 @MainActor
-public protocol MagicWorld: AnyObject, SkillUseReporting {
+public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     /// `GameClock.daysPassed`. Zero without a renderer.
     var gameDaysPassed: Float { get }
     /// Every inventory. Nil without an item runtime.

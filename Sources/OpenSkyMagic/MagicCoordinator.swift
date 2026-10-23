@@ -93,6 +93,14 @@ public final class MagicCoordinator {
     public internal(set) var detonatedRunes = 0
     /// Summoned and reanimated actors, oldest first. Not saved.
     public internal(set) var commanded: [CommandedActor] = []
+    /// Detect Life paint, Telekinesis and Grab Actor holds, and Guide trails. Not saved.
+    public internal(set) var holds: [MagicHold] = []
+    /// Lights the Light archetype placed. Not saved.
+    public internal(set) var magicLights: [MagicLight] = []
+    public var holdSettings = MagicHoldSettings.vanilla {
+        didSet { effects?.valueAndParts = holdSettings.valueAndParts }
+    }
+
     /// Where each caster aimed its last target-location summon.
     var summonPoints: [ReferenceKey: SIMD3<Float>] = [:]
     var profiles = ItemEnchantmentProfileCache()
@@ -186,6 +194,8 @@ public final class MagicCoordinator {
         performWorldActions()
         maintainCarriedEffects(delta: delta)
         pulseCloaks(delta: delta)
+        advanceHolds(delta: delta)
+        advanceLights(delta: delta)
         return takeCommands()
     }
 

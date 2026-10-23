@@ -88,7 +88,10 @@ extension ProjectileRuntime {
             excluding: projectile.shooter,
             settings: areaSettings
         )
-        guard !targets.isEmpty else { return nil }
+        guard !targets.isEmpty else {
+            world.spellLanded(payload, at: impact.position)
+            return nil
+        }
         if let struck = impact.target {
             // `akSource` is left nil rather than filled with the spell: the
             // event carries a `FormID` and a cast spell is addressed by

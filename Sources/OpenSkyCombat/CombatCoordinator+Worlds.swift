@@ -42,6 +42,15 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
         world.applyWeaponPoison(hit)
     }
 
+    @discardableResult
+    public func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
+        world.applyWeaponEnhancement(attacker: attacker, target: target)
+    }
+
+    public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
+        world.spellLanded(payload, at: point)
+    }
+
     /// Only the player carries a behavior graph, so an event on an NPC
     /// answers false.
     @discardableResult

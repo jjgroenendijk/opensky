@@ -64,6 +64,9 @@ extension MagicCoordinator {
             CastingCueRule.drawCues(drawn: wasWeaponsDrawn, now: weaponsDrawn, readied: readied),
             by: .player
         )
+        if wasWeaponsDrawn == true, weaponsDrawn == false {
+            dismissBoundWeaponsOnSheathe(of: .player)
+        }
         wasWeaponsDrawn = weaponsDrawn
     }
 

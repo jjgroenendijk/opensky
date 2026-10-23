@@ -113,4 +113,15 @@ public protocol WeaponEnchantmentApplying {
     /// Delivers one dose of the poison on the weapon, if it carries one.
     @discardableResult
     func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport?
+    /// Lands the attacker's running Enhance Weapon enchantments on the struck actor.
+    /// Returns the effects stored.
+    @discardableResult
+    func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int
+}
+
+extension WeaponEnchantmentApplying {
+    @discardableResult
+    public func applyWeaponEnhancement(attacker _: ReferenceKey, target _: ReferenceKey) -> Int {
+        0
+    }
 }

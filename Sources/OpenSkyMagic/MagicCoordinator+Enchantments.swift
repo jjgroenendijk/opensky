@@ -143,6 +143,9 @@ extension MagicCoordinator {
         if let caster, let values = world.actorValueHolder(for: holder.key) {
             caster.spellbook.releaseHands(wornBy: holder, on: values)
         }
+        if let values = world.actorValueHolder(for: holder.key) {
+            endWeaponEnhancement(on: values)
+        }
         return refreshWornEnchantments(on: holder)
     }
 

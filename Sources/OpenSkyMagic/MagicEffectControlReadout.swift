@@ -52,6 +52,14 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
         return set.isEmpty ? "none" : set.joined(separator: ", ")
     }
 
+    /// The holds and lights the world archetypes keep running.
+    public static func worldEffectsText(for snapshot: MagicEffectControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "World effects: unavailable" }
+        guard !snapshot.worldEffectLines.isEmpty else { return "World effects: none running" }
+        let lines = snapshot.worldEffectLines.map { "  \($0)" }.joined(separator: "\n")
+        return "World effects (\(snapshot.worldEffectLines.count)):\n\(lines)"
+    }
+
     /// What the runtime has done this session.
     public static func activityText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Applied: unavailable" }
@@ -83,6 +91,7 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
             effectsText(for: snapshot),
             nearestActorEffectsText(for: snapshot),
             influenceText(for: snapshot),
+            worldEffectsText(for: snapshot),
             activityText(for: snapshot),
             coverageText(for: snapshot),
             lastActionText(for: snapshot)

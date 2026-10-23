@@ -131,6 +131,9 @@ public final class Renderer: NSObject {
     var earlyFrameParts: GPUFrameParts?
     /// Joined once per frame, before the first pass.
     var frameDrawGroups = FrameDrawGroups()
+    /// Lights that move every frame, such as a spell's light. Each draw takes them
+    /// before the scene's nearest lights.
+    public var transientPointLights: [RenderPointLight] = []
     /// Nearest point lights by lighting center, valid for the current scene.
     var pointLightPicks: [SIMD3<Float>: PointLightPick] = [:]
     static let pointLightPickCacheLimit = 16384
