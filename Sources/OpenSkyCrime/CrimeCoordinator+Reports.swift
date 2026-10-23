@@ -91,6 +91,11 @@ extension CrimeCoordinator {
         switch event.kind {
         case .theft where !event.isPickpocket && event.stolenCount > 0:
             pendingCommands.append(.incrementStat("Items Stolen", by: event.stolenCount))
+            if let faction = event.crimeFaction, event.stolenValue > 0 {
+                pendingCommands.append(.stoleFromFaction(
+                    faction, value: event.stolenValue, witnessed: event.witnessed
+                ))
+            }
         case .assault: pendingCommands.append(.incrementStat("Assaults", by: 1))
         case .murder: pendingCommands.append(.incrementStat("Murders", by: 1))
         case .trespass: pendingCommands.append(.incrementStat("Trespasses", by: 1))

@@ -167,9 +167,28 @@ reaches the reference's scripts as `OnActivate`, and the shipped script decides 
 disarms. OpenSky adds no disarm rule. A spent trap is a script state too: a tripwire stays in
 `active` after it fires, and a plate goes to `DoNothing` while an actor stands on it.
 
+## Trap contact
+
+A trap whose scripts handle `OnTrapHitStart`, `OnTrapHit`, or `OnTrapHitStop` is checked every
+frame while its animation graph runs. The world positions of its skeleton bones come from the
+current pose. A bone that moves faster than a minimum speed and comes close to an actor's capsule
+hits that actor:
+
+- The first hit sends `OnTrapHitStart` and then `OnTrapHit` with `abInitialHit` true.
+- While contact lasts, `OnTrapHit` repeats at a fixed interval with `abInitialHit` false.
+- When no bone is near the actor any more, `OnTrapHitStop` follows.
+
+The velocity argument is the bone's velocity over the last frame. The material argument is 0,
+and the motion type is keyframed. Sources: the Creation Kit wiki pages
+[OnTrapHit](https://ck.uesp.net/wiki/OnTrapHit_-_ObjectReference) and
+[OnTrapHitStart](https://ck.uesp.net/wiki/OnTrapHitStart_-_ObjectReference).
+
+The game reads contact from the trap's collision bodies. OpenSky has no collision body that
+follows a bone, so it measures bone points against capsules. The reach, minimum speed, and repeat
+interval are OpenSky's own numbers; no open source gives the game's.
+
 ## Not done
 
-A swinging blade or a battering ram swings, but its blade does not hit: the graph moves the
-mesh, not a collision body, so `ProcessTrapHit` comes only from the trigger. `SetMotionType`
+A swinging blade or a battering ram reports its hits through bone contact, not a collision body. `SetMotionType`
 stays stubbed: OpenSky cannot turn a static object into a dynamic body at runtime.
 `Weapon.Fire` stays stubbed: projectiles fire only from actors.

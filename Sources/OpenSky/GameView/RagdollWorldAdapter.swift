@@ -28,6 +28,7 @@ import simd
 @MainActor
 protocol RagdollWorldHost: AnyObject {
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var audioFileSystem: (any GameFileSource)? { get }
@@ -86,6 +87,10 @@ final class RagdollWorldAdapter {
                 game.cinematicWorld.actorDied(key)
             case let .publishPoses(poses):
                 game.renderer?.scene.ragdollPoses = poses
+            case let .enterBleedout(key):
+                enterBleedout(key)
+            case let .leaveBleedout(key):
+                leaveBleedout(key)
             }
         }
     }
@@ -106,14 +111,20 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     func hasZeroHealth(_ key: ReferenceKey) -> Bool {
+        guard let values = game.actorValues.runtime, let holder = holder(of: key) else {
+            return false
+        }
+        return values.hasZeroHealth(holder)
+    }
+
+    func holder(of key: ReferenceKey) -> ActorValueHolder? {
         guard
             let streamer = game.streamer,
-            let values = game.actorValues.runtime,
             let actor = streamer.referenceEntry(key: key)?.placedActor
-        else { return false }
-        return values.hasZeroHealth(ActorValueHolder(
+        else { return nil }
+        return ActorValueHolder(
             key: key, subject: .actor(base: actor.base), cell: streamer.cellLocation(of: key)
-        ))
+        )
     }
 
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose? {

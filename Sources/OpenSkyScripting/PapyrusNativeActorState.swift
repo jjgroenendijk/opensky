@@ -47,9 +47,13 @@ extension PapyrusNativeFunctions {
         scriptState("Actor", "IsAIEnabled", into: &registry) { _, bridge, key in
             .returned(.boolean(bridge.scriptedState(of: key).flag(aiDisabledName) != true))
         }
-        // OpenSky has no bleedout and no commanded actors, so nobody is either.
-        for name in ["IsBleedingOut", "IsCommandedActor"] {
-            scriptState("Actor", name, into: &registry) { _, _, _ in .returned(.boolean(false)) }
+        scriptState("Actor", "IsBleedingOut", into: &registry) { _, bridge, key in
+            .returned(.boolean(bridge.scriptedState(of: key)
+                    .flag(ScriptedStateName.bleedingOut) == true))
+        }
+        // OpenSky has no commanded actors, so nobody is one.
+        scriptState("Actor", "IsCommandedActor", into: &registry) { _, _, _ in
+            .returned(.boolean(false))
         }
         // `AddAchievement(int)`: OpenSky reports to no platform, so nothing happens.
         registry.register(PapyrusNativeFunction(

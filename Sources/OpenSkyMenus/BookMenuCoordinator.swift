@@ -23,10 +23,13 @@ nonisolated public struct BookContent: Equatable, Sendable {
 /// A book read where it lies: the bar offers to take it.
 public struct BookTakeOffer {
     public var isTheft: Bool
+    /// The placed book, so its scripts get `OnRead`.
+    public var reference: FormID?
     public var take: () -> Void
 
-    public init(isTheft: Bool, take: @escaping () -> Void) {
+    public init(isTheft: Bool, reference: FormID? = nil, take: @escaping () -> Void) {
         self.isTheft = isTheft
+        self.reference = reference
         self.take = take
     }
 }
@@ -38,6 +41,12 @@ public protocol BookMenuWorld: MenuScreenWorld {
     func readBook(_ item: FormID) -> String?
     /// The books and notes the player carries.
     var carriedBooks: [FormID] { get }
+    /// The book opened: Papyrus `OnRead` on the placed `reference`, or on the item.
+    func noteBookRead(_ item: FormID, reference: FormID?)
+}
+
+extension BookMenuWorld {
+    public func noteBookRead(_: FormID, reference _: FormID?) {}
 }
 
 public final class BookMenuCoordinator: MenuScreen<Never> {
@@ -79,6 +88,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
         if let notice = world?.readBook(item) {
             notify(notice)
         }
+        world?.noteBookRead(item, reference: takeOffer?.reference)
         lastResult = "Reading: \(content.title)"
         present(path: BookMenuMovieBridge.moviePath, activate: { runtime in
             BookMenuMovieBridge.activate(

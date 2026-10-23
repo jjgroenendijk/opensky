@@ -66,13 +66,11 @@ nonisolated extension ConditionFunctions {
                 }
             })
         }
-        // OpenSky has no bleedout and no commanded actors yet, so nobody is either; the
-        // `Actor` natives of the same names answer the same.
-        for (index, name) in [(UInt16(580), "IsBleedingOut"), (700, "IsCommandedActor")] {
-            registry.register(ConditionFunction(index: index, name: name) { call in
-                call.actorState().map { _ in 0 }
-            })
-        }
+        // OpenSky has no commanded actors yet, so nobody is one; the `Actor` native of the
+        // same name answers the same.
+        registry.register(ConditionFunction(index: 700, name: "IsCommandedActor") { call in
+            call.actorState().map { _ in 0 }
+        })
         installRecordFlags(&registry)
     }
 

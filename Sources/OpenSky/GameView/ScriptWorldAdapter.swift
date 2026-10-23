@@ -9,6 +9,7 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -53,6 +54,12 @@ protocol ScriptWorldHost: AnyObject {
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var combatWorld: CombatWorldAdapter { get }
+    var effects: EffectsCoordinator { get }
+    var menuWorld: MenuWorldAdapter { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    func quitToMainMenu()
+    func quitApplication()
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
@@ -65,6 +72,11 @@ protocol ScriptWorldHost: AnyObject {
 
 final class ScriptWorldAdapter {
     unowned let game: any ScriptWorldHost
+    /// Each model's node origins in model space, keyed by lowercased node name.
+    var modelNodes: AssetLoader<String, [String: SIMD3<Float>]>?
+    /// Node lookups that wait for their model to load.
+    var nodeWaits: [ModelNodeWait] = []
+    var nextNodeToken = ModelNodeWait.firstToken
 
     init(game: any ScriptWorldHost) {
         self.game = game
@@ -88,6 +100,10 @@ final class ScriptWorldAdapter {
         wireActorNatives(bridge: bridge)
         wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
+        wireSky(bridge: bridge)
+        wireModelNodes(provider: provider, gameSession: gameSession)
+        wireGameNatives(bridge: bridge, provider: provider)
+        bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         let resolver = provider.scriptFormIDResolver
         bridge.formIDResolver = resolver
         bridge.effectPresenter = game.effectsWorld
@@ -203,6 +219,21 @@ final class ScriptWorldAdapter {
             guard let game else { return nil }
             guard key != .player else { return game.gameSession?.locomotion.status.feetPosition }
             return game.actorWorld.combatActor(key: key)?.feet
+        }
+    }
+
+    /// Decoded once per base form, because each equip asks again.
+    private static func itemScripts(
+        _ lookup: PlacedRecordLookup?
+    ) -> (ReferenceKey) -> [AttachedScript] {
+        var cache: [ReferenceKey: [AttachedScript]] = [:]
+        return { base in
+            if let known = cache[base] {
+                return known
+            }
+            let scripts = lookup?.scripts(ofBase: base) ?? []
+            cache[base] = scripts
+            return scripts
         }
     }
 

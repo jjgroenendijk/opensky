@@ -13,7 +13,11 @@ extension PapyrusWorldRuntime {
         handle: PapyrusObjectHandle, sender: ReferenceKey, name: String
     ) -> Bool {
         guard let key = keysByHandle[handle] else { return false }
-        animationEventListeners[sender, default: [:]][name.lowercased(), default: []].insert(key)
+        let folded = name.lowercased()
+        animationEventListeners[sender, default: [:]][folded, default: []].insert(key)
+        if animationEventSpellings[folded] == nil {
+            animationEventSpellings[folded] = name
+        }
         return true
     }
 
@@ -39,5 +43,31 @@ extension PapyrusWorldRuntime {
             ))
         }
         return live.count
+    }
+
+    /// The graphs of `senders` unloaded: drops their registrations and queues
+    /// `OnAnimationEventUnregistered(akSource, asEventName)` on each live listener
+    /// (<https://ck.uesp.net/wiki/OnAnimationEventUnregistered_-_Form>). Returns the count.
+    @discardableResult
+    func dropAnimationEvents(of senders: some Sequence<ReferenceKey>) -> Int {
+        var queued = 0
+        for sender in senders.sorted() {
+            guard let byName = animationEventListeners.removeValue(forKey: sender) else {
+                continue
+            }
+            for (folded, listeners) in byName.sorted(by: { $0.key < $1.key }) {
+                let name = animationEventSpellings[folded] ?? folded
+                for key in listeners.sorted() where instancesByKey[key] != nil {
+                    enqueue(PapyrusScriptEvent(
+                        target: key,
+                        functionName: PapyrusEngineEvents.onAnimationEventUnregistered,
+                        arguments: [.object(objectHandle(for: sender)), .string(name)],
+                        activationDepth: 0
+                    ))
+                    queued += 1
+                }
+            }
+        }
+        return queued
     }
 }

@@ -157,6 +157,32 @@ OpenSky rolls `iCombatDismemberPartChance` on such a kill, with any blade, axe, 
 
 A body is kept from removal while any quest alias holds it. Removal deletes the reference.
 
+## Bleedout
+
+An essential actor does not die. When its health share falls to the "Bleedout Default" ratio of its
+class, or its health reaches zero, it kneels in bleedout instead (Creation Kit wiki
+[Class](https://ck.uesp.net/wiki/Class)). A protected actor does the same, unless the player dealt
+the last blow. A kneeling actor leaves combat, and its scripts get `OnEnterBleedout()`. A script's
+`SetEssential` or `SetProtected` wins over the base flag. After `fEssentialDeathTime` seconds the
+actor stands up with full health (UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs").
+An actor whose class is unknown uses `fBleedoutDefault` as its ratio. No open source defines the
+two settings; OpenSky reads them from their names. `fBleedoutMin`, `fBleedoutRate`, and
+`fBleedoutRecover` are not read. Sources for the events: the Creation Kit wiki pages
+[OnEnterBleedout](https://ck.uesp.net/wiki/OnEnterBleedout_-_Actor) and
+[StartDeferredKill](https://ck.uesp.net/wiki/StartDeferredKill_-_Actor).
+
+`SetNoBleedoutRecovery(true)` keeps a kneeling actor down until a script clears it.
+
+`StartDeferredKill` holds the death of an actor at zero health. The actor stays alive until a
+script calls `EndDeferredKill`; the next zero-health frame after that kills it.
+
+To see it in the running game, set an essential actor's health near zero with
+`openskycli game debug av Health --value 1 --ref <id>`, then read its `bleedingOut` flag with
+`openskycli game state scripts --ref <id>`.
+
+The player does not bleed out yet, and a quest alias that makes an actor essential or protected
+is not read.
+
 ## Not done yet
 
 - Ragdolls without death, such as paralysis or a knockdown.

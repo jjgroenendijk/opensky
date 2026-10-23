@@ -22,6 +22,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -46,6 +47,7 @@ protocol CrimeWorldHost: AnyObject {
     var perception: PerceptionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
 }
@@ -87,6 +89,8 @@ final class CrimeWorldAdapter {
                     name,
                     by: amount
                 )
+            case let .stoleFromFaction(faction, value, witnessed):
+                game.scripts.bridge?.noteStolenValue(value, from: faction, witnessed: witnessed)
             case let .speakTrespassWarning(witness):
                 game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
             case let .raiseStat(name, value):

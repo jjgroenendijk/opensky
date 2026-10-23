@@ -14,8 +14,10 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPlayer
+import OpenSkyScripting
 import OpenSkyWorld
 import simd
 
@@ -24,7 +26,12 @@ extension MagicWorldAdapter {
         for command in commands {
             switch command {
             case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
+            case let .wardHit(hit, caster, spell):
+                game.scripts.runtime?.queueWardHit(
+                    holder: hit.holder, caster: caster, spell: spell, status: hit.status.rawValue
+                )
             case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
+            case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
             case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
             case let .detonateRune(payload, position): detonateRune(payload, at: position)
             case let .castingSound(sound, caster, starts):

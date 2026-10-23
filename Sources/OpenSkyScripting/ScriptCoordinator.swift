@@ -113,6 +113,7 @@ public final class ScriptCoordinator {
         bridge?.advanceTranslations(by: delta)
         bridge?.queueTriggerRepeats(after: delta)
         bridge?.advanceDelayedActivations(by: delta)
+        bridge?.updateSunGaze()
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 

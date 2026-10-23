@@ -158,6 +158,8 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
     public private(set) var wardedCount = 0
     /// Ward holders whose ward this spell broke, in target order.
     public private(set) var brokenWards: [ReferenceKey] = []
+    /// Every target with a ward up, and what the spell did to the ward, in target order.
+    public private(set) var wardHits: [SpellWardHit] = []
 
     public static let none = SpellHitReport()
 
@@ -189,6 +191,12 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
         if broken {
             brokenWards.append(holder)
         }
+        wardHits.append(SpellWardHit(holder: holder, status: broken ? .broken : .absorbed))
+    }
+
+    /// A spell that is not hostile passed through `holder`'s ward.
+    public mutating func noteFriendlyWardHit(_ holder: ReferenceKey) {
+        wardHits.append(SpellWardHit(holder: holder, status: .friendly))
     }
 
     public var didApply: Bool {
@@ -315,5 +323,23 @@ nonisolated public enum SpellHitTargeting: Sendable {
             segment.first
         }
         return max(0, simd_distance(position, closest) - max(0, target.capsule.radius))
+    }
+}
+
+/// One spell meeting a ward, with Papyrus `OnWardHit`'s `aiStatus`
+/// (<https://ck.uesp.net/wiki/OnWardHit_-_ObjectReference>).
+nonisolated public struct SpellWardHit: Equatable, Sendable {
+    nonisolated public enum Status: Int32, Sendable {
+        case friendly = 0
+        case absorbed = 1
+        case broken = 2
+    }
+
+    public let holder: ReferenceKey
+    public let status: Status
+
+    public init(holder: ReferenceKey, status: Status) {
+        self.holder = holder
+        self.status = status
     }
 }

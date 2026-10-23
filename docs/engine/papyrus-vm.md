@@ -22,7 +22,8 @@ the core, and none of them knows about the world:
 The [Papyrus world runtime](/engine/papyrus-world.md) puts this core inside the engine loop. The
 world natives are on the [activation](/engine/papyrus-activation.md),
 [actor and faction](/engine/papyrus-actor-natives.md), [spell](/engine/papyrus-spell-natives.md),
-[timer](/engine/papyrus-timers.md), and [quest](/engine/papyrus-quests.md) pages.
+[timer](/engine/papyrus-timers.md), [quest](/engine/papyrus-quests.md), and
+[session](/engine/papyrus-session-natives.md) pages.
 
 Language rules come from the Creation Kit wiki: the
 [Papyrus category](https://ck.uesp.net/wiki/Category:Papyrus), the

@@ -46,6 +46,12 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let doingFavor = "doingFavor"
     public static let talkedToPlayer = "talkedToPlayer"
     public static let eaten = "eaten"
+    /// An actor kneeling at zero health instead of dying.
+    public static let bleedingOut = "bleedingOut"
+    /// `Actor.SetNoBleedoutRecovery(true)` keeps a kneeling actor down.
+    public static let noBleedoutRecovery = "noBleedoutRecovery"
+    /// `Actor.StartDeferredKill` holds the actor's death until `EndDeferredKill`.
+    public static let deferredKill = "deferredKill"
     /// Who killed an actor, set on the victim as it dies.
     public static let killer = "killer"
     public static let destroyed = "destroyed"
@@ -89,7 +95,9 @@ nonisolated extension ConditionFunctions {
             "IsAllowedToFly": (698, ScriptedStateName.allowFlying),
             "IsInFavorState": (635, ScriptedStateName.doingFavor),
             "GetTalkedToPC": (50, ScriptedStateName.talkedToPlayer),
-            "HasBeenEaten": (127, ScriptedStateName.eaten)
+            "HasBeenEaten": (127, ScriptedStateName.eaten),
+            "IsBleedingOut": (580, ScriptedStateName.bleedingOut),
+            "GetNoBleedoutRecovery": (694, ScriptedStateName.noBleedoutRecovery)
         ]
         for (name, entry) in flags.sorted(by: { $0.key < $1.key }) {
             registry.register(ConditionFunction(index: entry.index, name: name) { call in

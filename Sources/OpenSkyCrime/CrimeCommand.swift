@@ -14,4 +14,7 @@ nonisolated public enum CrimeCommand: Equatable, Sendable {
     case raiseStat(String, to: Int32)
     /// A witness of a trespass speaks its warning (`TRES`).
     case speakTrespassWarning(by: ReferenceKey)
+    /// The player stole this much from a faction: Papyrus `GetStolenItemValueCrime`
+    /// counts the witnessed thefts and `GetStolenItemValueNoCrime` the others.
+    case stoleFromFaction(ReferenceKey, value: Int64, witnessed: Bool)
 }

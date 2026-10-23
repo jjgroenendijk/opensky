@@ -57,6 +57,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var perceptionNatives = PapyrusPerceptionNatives()
     public var sessionNatives = PapyrusSessionNatives()
     public var storyNatives = PapyrusStoryNatives()
+    public var gameNatives = PapyrusGameNatives()
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     public var magicEffectStore: MagicEffectStore?
@@ -99,6 +100,9 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var statsJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
+    /// `Game.SetSunGazeImageSpaceModifier`'s modifier, or nil for none.
+    public internal(set) var sunGazeModifier: ReferenceKey?
+    var wasSunGazing = false
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
 
@@ -155,6 +159,12 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Resolves through the session's master-list resolver, then the reference index for
     /// synthetic sessions. One resolver per session, as in the cell builder, so another
     /// plugin's FormID spelling resolves wrongly.
+    /// The load-order FormID of `key`, or nil for a key outside the load order.
+    public func localFormID(of key: ReferenceKey) -> FormID? {
+        guard case let .plugin(plugin, objectID) = key else { return nil }
+        return formIDResolver?.localFormID(of: ResolvedFormID(plugin: plugin, objectID: objectID))
+    }
+
     public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
         if let formIDResolver, let key = ReferenceKey.resolve(formID, using: formIDResolver) {
             return key

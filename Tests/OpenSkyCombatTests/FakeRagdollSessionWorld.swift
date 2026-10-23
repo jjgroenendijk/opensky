@@ -40,6 +40,18 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     private(set) var removedCorpses: [ReferenceKey] = []
     private(set) var dismemberments: [(ReferenceKey, String)] = []
 
+    /// Actors that kneel at zero health instead of dying.
+    var essentials: Set<ReferenceKey> = []
+    var healthFractions: [ReferenceKey: Float] = [:]
+
+    func healthFraction(of key: ReferenceKey) -> Float? {
+        healthFractions[key]
+    }
+
+    func zeroHealthOutcome(of key: ReferenceKey, killer _: ReferenceKey?) -> ZeroHealthOutcome {
+        essentials.contains(key) ? .bleedsOut : .dies
+    }
+
     func hasZeroHealth(_ key: ReferenceKey) -> Bool {
         zeroHealth.contains(key)
     }

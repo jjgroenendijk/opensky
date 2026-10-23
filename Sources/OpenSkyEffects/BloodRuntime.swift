@@ -55,6 +55,16 @@ nonisolated public struct ScreenBloodRuntime: Equatable, Sendable {
         return added
     }
 
+    /// Places `count` splatters, as Papyrus `TriggerScreenBlood` asks. Returns how many fit.
+    @discardableResult
+    public mutating func splatter(count: Int) -> Int {
+        let added = min(max(count, 0), max(settings.maxCount - splatters.count, 0))
+        for _ in 0 ..< added {
+            splatters.append(makeSplatter())
+        }
+        return added
+    }
+
     public mutating func advance(_ seconds: Float) {
         guard seconds > 0 else { return }
         for index in splatters.indices {

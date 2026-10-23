@@ -53,6 +53,12 @@ These are kept, as the wiki lists:
 
 Quest-alias protection is not modelled: a quest item in a chest that resets is lost.
 
+## A script reset
+
+Papyrus `Cell.Reset` flags an interior cell. The cell resets on its next load, whatever the
+clock and the encounter zone say (<https://ck.uesp.net/wiki/Reset_-_Cell>). Leaving the cell
+again keeps the flag. An exterior cell is not reset by a script yet.
+
 ## Scripts
 
 A reset reference's scripts start again with fresh variables. `OnInit` runs again, then

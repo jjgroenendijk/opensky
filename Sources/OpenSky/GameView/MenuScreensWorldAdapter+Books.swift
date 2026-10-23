@@ -9,6 +9,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyScripting
 
 extension MenuScreensWorldAdapter: BookMenuWorld {
     private var items: ItemDefinitionStore? {
@@ -26,6 +27,15 @@ extension MenuScreensWorldAdapter: BookMenuWorld {
 
     func readBook(_ item: FormID) -> String? {
         game.magic.readBook(item)?.text
+    }
+
+    func noteBookRead(_ item: FormID, reference: FormID?) {
+        guard let bridge = game.scripts.bridge else { return }
+        if let reference, let key = bridge.referenceKey(forFormID: reference) {
+            game.scripts.runtime?.queueRead(on: key)
+        } else if let base = bridge.referenceKey(forFormID: item) {
+            bridge.queueItemScriptEvent(PapyrusEngineEvents.onRead, base: base, arguments: [])
+        }
     }
 
     var carriedBooks: [FormID] {

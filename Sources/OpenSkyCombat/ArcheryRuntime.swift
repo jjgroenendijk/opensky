@@ -23,6 +23,8 @@ public final class ArcheryRuntime {
     /// The hold time of the last shot that was loosed, so a readout can explain
     /// a damage number after the button has already come back up.
     public private(set) var lastHeldSeconds: Float = 0
+    /// The draw share of the last shot, below 1 for a dud: Papyrus `OnPlayerBowShot`'s power.
+    public private(set) var lastDrawFraction: Float = 1
     /// Draws the engine asked for, and shots the graph actually loosed. The two
     /// differ by every draw that was cancelled.
     public private(set) var drawRequestCount = 0
@@ -110,14 +112,13 @@ public final class ArcheryRuntime {
     public func loose(consumesArrow: Bool = true) -> LiveProjectile? {
         guard let arrow else { return nil }
         lastHeldSeconds = heldSeconds
+        lastDrawFraction = ArcheryDamage.drawFraction(heldSeconds: heldSeconds, speed: bow.speed)
         let shot = ProjectileShot.arrow(
             profile: arrow.profile,
             damage: ArcheryDamage.resolve(
                 bowDamage: bow.damage,
                 arrowDamage: arrow.damage,
-                drawFraction: ArcheryDamage.drawFraction(
-                    heldSeconds: heldSeconds, speed: bow.speed
-                ),
+                drawFraction: lastDrawFraction,
                 bonusMultiplier: attackMultiplier
             ),
             weapon: bow.weapon,

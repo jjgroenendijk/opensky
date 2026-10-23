@@ -143,6 +143,25 @@ final class SaveGameWorldAdapter: SaveGameService {
         }
     }
 
+    /// Papyrus `RequestSave` and `RequestAutoSave`: a save the script asked for, written
+    /// whatever the autosave settings say. False when no session is running.
+    func requestSave(autosave: Bool) -> Bool {
+        guard game.streamer != nil else { return false }
+        Task {
+            if !hasListed {
+                await refreshSaveRows()
+            }
+            let dates = Dictionary(ownRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
+            do {
+                try await saveGame(slot: autosave ? autosaves.nextSlot(saved: dates) : nil)
+            } catch {
+                Self.logger
+                    .error("[ERROR] script save: \(String(describing: error), privacy: .public)")
+            }
+        }
+        return true
+    }
+
     /// Writes an autosave when the player's settings ask for one.
     func autosave(_ trigger: AutosaveTrigger) {
         let settings = game.playerSettings.store

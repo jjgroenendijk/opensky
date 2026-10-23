@@ -43,6 +43,42 @@ extension PapyrusWorldRuntime {
             + queueActorEvent(PapyrusEngineEvents.onDeath, on: actor, arguments: arguments)
     }
 
+    /// Queues `OnEnterBleedout()` on each script of `actor`. Returns the count.
+    @discardableResult
+    public func queueEnterBleedout(actor: ReferenceKey) -> Int {
+        queueActorEvent(PapyrusEngineEvents.onEnterBleedout, on: actor, arguments: [])
+    }
+
+    /// `OnWardHit(akCaster, akSpell, aiStatus)` on each script of the ward's `holder`
+    /// (<https://ck.uesp.net/wiki/OnWardHit_-_ObjectReference>).
+    @discardableResult
+    public func queueWardHit(
+        holder: ReferenceKey, caster: ReferenceKey, spell: ReferenceKey, status: Int32
+    ) -> Int {
+        queueActorEvent(
+            PapyrusEngineEvents.onWardHit, on: holder,
+            arguments: [
+                .object(objectHandle(for: caster)), .object(objectHandle(for: spell)),
+                .integer(status)
+            ]
+        )
+    }
+
+    /// `OnRead()` on each script of a placed book the player opened where it lies
+    /// (<https://ck.uesp.net/wiki/OnRead_-_ObjectReference>).
+    @discardableResult
+    public func queueRead(on book: ReferenceKey) -> Int {
+        queueActorEvent(PapyrusEngineEvents.onRead, on: book, arguments: [])
+    }
+
+    /// `OnGrab()` or `OnRelease()` on each script of a body the player took hold of
+    /// (<https://ck.uesp.net/wiki/OnGrab_-_ObjectReference>).
+    @discardableResult
+    public func queueGrab(of body: ReferenceKey, held: Bool) -> Int {
+        let name = held ? PapyrusEngineEvents.onGrab : PapyrusEngineEvents.onRelease
+        return queueActorEvent(name, on: body, arguments: [])
+    }
+
     /// Queues `OnRaceSwitchComplete()` on each script of `actor`, after the race menu
     /// changed the player's race. Returns the count.
     @discardableResult
@@ -83,7 +119,7 @@ extension PapyrusWorldRuntime {
     /// A base record as a `Form` argument: an opaque handle when this session
     /// can name the FormID, Papyrus `None` when it cannot and when the caller
     /// had none to give.
-    private func formValue(_ formID: FormID?) -> PapyrusValue {
+    func formValue(_ formID: FormID?) -> PapyrusValue {
         guard
             let formID,
             let key = formIDResolver.flatMap({ ReferenceKey.resolve(formID, using: $0) })

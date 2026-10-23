@@ -35,6 +35,14 @@ extension ProjectileRuntime {
         attached.expiry[key] = attached.now + age
     }
 
+    /// Pulls out every arrow standing in `host`: Papyrus `ClearExtraArrows`. Returns the count.
+    @discardableResult
+    public func removeArrows(stuckIn host: FormID) -> Int {
+        let held = stuck.indices.filter { stuck[$0].arrow.host == host }
+        removeStuckArrows(held)
+        return held.count
+    }
+
     /// Pulls out every arrow whose time in an actor has run out.
     func ageAttachedArrows(by frameTime: Float) {
         attached.now += frameTime.isFinite ? max(0, frameTime) : 0

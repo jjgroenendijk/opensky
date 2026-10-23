@@ -86,6 +86,14 @@ public protocol RagdollSessionWorld: AnyObject {
     func isCorpseKept(_ key: ReferenceKey) -> Bool
     /// Removes a body from the world for good.
     func removeCorpse(_ key: ReferenceKey)
+    /// Whether zero health kills the actor now, holds the death, or starts a bleedout.
+    func zeroHealthOutcome(of key: ReferenceKey, killer: ReferenceKey?) -> ZeroHealthOutcome
+    /// Current health over maximum health, or nil when unknown.
+    func healthFraction(of key: ReferenceKey) -> Float?
+    /// The class's bleedout ratio (CK "Class"), or nil when the class is unknown.
+    func bleedoutThreshold(of key: ReferenceKey) -> Float?
+    /// Papyrus `SetNoBleedoutRecovery(true)` keeps the actor kneeling.
+    func blocksBleedoutRecovery(of key: ReferenceKey) -> Bool
 }
 
 extension RagdollSessionWorld {
@@ -109,4 +117,24 @@ extension RagdollSessionWorld {
     }
 
     public func removeCorpse(_: ReferenceKey) {}
+
+    /// A world that cannot tell lets every actor die.
+    public func zeroHealthOutcome(
+        of _: ReferenceKey,
+        killer _: ReferenceKey?
+    ) -> ZeroHealthOutcome {
+        .dies
+    }
+
+    public func healthFraction(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func bleedoutThreshold(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func blocksBleedoutRecovery(of _: ReferenceKey) -> Bool {
+        false
+    }
 }

@@ -1,6 +1,6 @@
 // The graph event names death and ragdoll bind to, read from the behavior
-// census over the install, never from memory. Raised: `bleedOutStart` and
-// `DeathAnim`. Observed: `AddRagdollToWorld`, `NPCAddRagdollToWorld`,
+// census over the install, never from memory. Raised: `bleedOutStart`, `bleedOutStop`,
+// and `DeathAnim`. Observed: `AddRagdollToWorld`, `NPCAddRagdollToWorld`,
 // `Ragdoll`, and `RagdollInstant`, the hand-off to physics.
 // See docs/engine/ragdoll.md.
 
@@ -12,6 +12,8 @@ nonisolated public enum RagdollGraphNames: Sendable {
     /// Entry to the bleedout behavior, which is the state a vanilla actor
     /// reaches at zero health before the death clip plays.
     public static let bleedOutStart = "bleedOutStart"
+    /// The stand-up out of bleedout, for an actor that recovers instead of dying.
+    public static let bleedOutStop = "bleedOutStop"
     /// The death animation itself.
     public static let deathAnim = "DeathAnim"
 

@@ -133,7 +133,7 @@ reaches them.
 
 The Papyrus bridge gets its collaborators as one value per native family:
 `actorNatives`, `magicNatives`, `progressionNatives`, `crimeNatives`, `playerNatives`,
-`perceptionNatives`, `sessionNatives`, and `factionNatives`. Each member is an optional
+`perceptionNatives`, `sessionNatives`, `gameNatives`, and `factionNatives`. Each member is an optional
 closure. The default value answers nothing, which matches a load without that data, so a
 native refuses rather than reading a half-wired family. A new collaborator goes in a family.
 The lint rule `papyrus_loose_closure` fails a closure property on the bridge itself.
