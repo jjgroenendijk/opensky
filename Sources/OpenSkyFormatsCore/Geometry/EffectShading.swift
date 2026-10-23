@@ -20,6 +20,14 @@ nonisolated public struct EffectShading: Hashable, Sendable {
     public var falloff: SIMD4<Float>?
     public var vertexColors: Bool
     public var vertexAlpha: Bool
+    /// Depth in world units over which the shape fades in where it meets the scene; nil = hard.
+    public var softFalloffDepth: Float?
+    /// Share of the scene light the shape takes, 0 to 1; nil = unlit.
+    public var lightingInfluence: Float?
+    /// The placed reference's emittance colour stands in for the scene light.
+    public var externalEmittance: Bool
+    /// Blood on a weapon: hidden until the weapon hits a bleeding actor.
+    public var weaponBlood: Bool
 
     public init(
         baseColor: SIMD4<Float>,
@@ -29,7 +37,11 @@ nonisolated public struct EffectShading: Hashable, Sendable {
         paletteAlpha: Bool,
         falloff: SIMD4<Float>?,
         vertexColors: Bool,
-        vertexAlpha: Bool
+        vertexAlpha: Bool,
+        softFalloffDepth: Float? = nil,
+        lightingInfluence: Float? = nil,
+        externalEmittance: Bool = false,
+        weaponBlood: Bool = false
     ) {
         self.baseColor = baseColor
         self.baseColorScale = baseColorScale
@@ -39,5 +51,9 @@ nonisolated public struct EffectShading: Hashable, Sendable {
         self.falloff = falloff
         self.vertexColors = vertexColors
         self.vertexAlpha = vertexAlpha
+        self.softFalloffDepth = softFalloffDepth
+        self.lightingInfluence = lightingInfluence
+        self.externalEmittance = externalEmittance
+        self.weaponBlood = weaponBlood
     }
 }

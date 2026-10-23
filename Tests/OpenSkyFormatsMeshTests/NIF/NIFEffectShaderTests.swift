@@ -111,6 +111,7 @@ final class NIFEffectShaderTests: XCTestCase {
         XCTAssertEqual(property.uvScale, SIMD2(2, 4))
         XCTAssertEqual(property.sourceTexture, "textures/effects/glow.dds")
         XCTAssertEqual(property.textureClampMode, 3)
+        XCTAssertEqual(property.lightingInfluence, 255)
         XCTAssertEqual(property.falloffStartAngle, 0.1)
         XCTAssertEqual(property.falloffStopAngle, 0.9)
         XCTAssertEqual(property.falloffStartOpacity, 0.2)
@@ -140,6 +141,32 @@ final class NIFEffectShaderTests: XCTestCase {
         XCTAssertEqual(property83.baseColor, property100.baseColor)
         XCTAssertEqual(property83.softFalloffDepth, property100.softFalloffDepth)
         XCTAssertEqual(property83.shaderFlags1, property100.shaderFlags1)
+    }
+
+    /// Soft, effect-lit, and external-emittance flags reach the shading with their values.
+    func testShadingCarriesSoftLightAndEmittance() throws {
+        var fixture = EffectFixture()
+        fixture.shaderFlags1 = 0x6000_0000 // Soft_Effect, External_Emittance
+        fixture.shaderFlags2 = 0x4000_0000 // Effect_Lighting
+        fixture.lightingInfluence = 191
+        fixture.softFalloffDepth = 32
+        let shading = try NIFEffectShaderProperty(data: fixture.data(), header: header()).shading
+        XCTAssertEqual(shading.softFalloffDepth, 32)
+        XCTAssertEqual(try XCTUnwrap(shading.lightingInfluence), 191 / 255, accuracy: 1e-6)
+        XCTAssertTrue(shading.externalEmittance)
+        XCTAssertFalse(shading.weaponBlood)
+
+        // nif.xml: Own_Emit "will not absorb light", so it keeps the shape unlit.
+        fixture.shaderFlags1 |= 0x400000
+        let ownEmit = try NIFEffectShaderProperty(data: fixture.data(), header: header()).shading
+        XCTAssertNil(ownEmit.lightingInfluence)
+
+        fixture.shaderFlags1 = 0
+        fixture.shaderFlags2 = 0
+        let plain = try NIFEffectShaderProperty(data: fixture.data(), header: header()).shading
+        XCTAssertNil(plain.softFalloffDepth)
+        XCTAssertNil(plain.lightingInfluence)
+        XCTAssertFalse(plain.externalEmittance)
     }
 
     func testFlagAccessorsBitByBit() throws {

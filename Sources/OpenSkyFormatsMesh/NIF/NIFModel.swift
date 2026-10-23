@@ -275,6 +275,7 @@ nonisolated extension NIFFile.Flattener {
             alphaBlend: alpha?.blendEnabled ?? false,
             alphaTestThreshold: (alpha?.testEnabled ?? false)
                 ? alpha?.testThreshold : nil,
+            additiveBlend: alpha?.additiveBlend,
             tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
             tintsSkin: shader?.isSkinTint ?? false,
             shading: shader?.surfaceShading(textures: textures) ?? .plain,
@@ -302,8 +303,8 @@ nonisolated extension NIFFile.Flattener {
         }
     }
 
-    /// The static path has no additive blend and no texture-less effect look, so those
-    /// effect shapes are skipped. Drawn anyway, they show as flat cards.
+    /// The static path has no texture-less effect look, so such effect shapes are
+    /// skipped. Drawn anyway, they show as flat cards.
     func isUndrawableShape(_ shape: NIFTriShape) throws -> Bool {
         guard shape.shaderPropertyRef >= 0 else { return false }
         let block = try block(at: Int(shape.shaderPropertyRef))
@@ -311,13 +312,11 @@ nonisolated extension NIFFile.Flattener {
             block.typeName == NIFFile.effectShaderType,
             let effect = try? NIFEffectShaderProperty(data: block.data, header: file.header)
         else { return false }
-        let alphaRef = shape.alphaPropertyRef >= 0 ? Int(shape.alphaPropertyRef) : nil
-        let isAdditive = try alphaProperty(at: alphaRef)?.isAdditive ?? false
-        return effect.sourceTexturePath == nil || isAdditive
+        return effect.sourceTexturePath == nil
     }
 
-    /// The static path draws an effect shape unlit, with its source texture,
-    /// palette, and alpha property. Additive blending is not modeled.
+    /// The static path draws an effect shape with its source texture, palette, and
+    /// alpha property, additive blends included.
     func effectMaterial(block: NIFFile.Block, alphaBlock: Int?) throws -> Material {
         let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
         let alpha = try alphaProperty(at: alphaBlock)
@@ -335,6 +334,7 @@ nonisolated extension NIFFile.Flattener {
             doubleSided: effect.isDoubleSided,
             alphaBlend: alpha?.blendEnabled ?? false,
             alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil,
+            additiveBlend: alpha?.additiveBlend,
             effect: shading,
             drawState: effect.drawState
         )
