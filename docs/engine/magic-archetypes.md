@@ -2,7 +2,7 @@
 type: Subsystem
 title: Magic effect archetypes
 description: What each MGEF archetype does in OpenSky, where each rule comes from, how the
-  archetypes reach the combat loop and the world, and which archetypes still do nothing.
+  archetypes reach the combat loop and the world, and where OpenSky differs from the game.
 tags: [engine, magic, effects, combat, actors]
 ---
 
@@ -24,7 +24,14 @@ OpenSky. How a timed effect is stored, ticked, and saved is on the
   [Absorb Health](https://en.uesp.net/wiki/Skyrim:Absorb_Health),
   [Slow Time](https://en.uesp.net/wiki/Skyrim:Slow_Time),
   [Block](https://en.uesp.net/wiki/Skyrim:Block) for Quick Reflexes, and
-  [Conjuration](https://en.uesp.net/wiki/Skyrim:Conjuration) for Twin Souls and Dark Souls.
+  [Conjuration](https://en.uesp.net/wiki/Skyrim:Conjuration) for Twin Souls and Dark Souls,
+  [Magelight](https://en.uesp.net/wiki/Skyrim:Magelight),
+  [Telekinesis](https://en.uesp.net/wiki/Skyrim:Telekinesis),
+  [Command Daedra](https://en.uesp.net/wiki/Skyrim:Command_Daedra), and
+  [Banish Daedra](https://en.uesp.net/wiki/Skyrim:Banish_Daedra).
+- The Creation Kit wiki's [SetRace](https://ck.uesp.net/wiki/SetRace_-_Actor) page, for the
+  script that turns a werewolf back.
+- The game settings named below, read from the vanilla plugins with `openskycli gmst list`.
 
 Where the wiki writes "???" or "Not Used", that is all OpenSky knows.
 
@@ -34,13 +41,16 @@ Each archetype has one rule (`MagicArchetypeRule`). The rule decides where the a
 
 | Kind | Where it acts | Archetypes |
 | --- | --- | --- |
-| Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Absorb, Accumulate Magnitude, Invisibility |
+| Actor values | The target's actor values, in the effect runtime | Value Modifier, Dual Value Modifier, Peak Value Modifier, Value and Parts, Absorb, Accumulate Magnitude, Invisibility |
 | Influence | The combat loop, through `ActorMagicInfluence` | Calm, Frenzy, Demoralize, Rally, Turn Undead, Paralysis, Etherealize |
 | Effect list | The target's running effects | Dispel, Cure Disease, Cure Poison, Cure Paralysis |
-| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time, Summon Creature, Reanimate |
+| World | The session, through `MagicWorld` | Stagger, Spawn Hazard, Cloak, Bound Weapon, Disarm, Soul Trap, Slow Time, Summon Creature, Reanimate, Banish, Command Summoned, Werewolf, Vampire Lord, Werewolf Feed, Light, Enhance Weapon, Detect Life, Telekinesis, Grab Actor, Guide |
 
-Script, Concussion, and Cure Addiction are carriers. Script "has no effect other than any
-Papyrus Scripts specified", and the wiki marks the other two "Not Used". A timed carrier is
+Script, Concussion, Cure Addiction, Lock, Open, Disguise, and Spawn Scripted Ref are
+carriers. Script "has no effect other than any Papyrus Scripts specified". The wiki marks
+Concussion and Cure Addiction "Not Used", says Lock and Open cannot target objects, and gives
+"???" for Disguise. Spawn Scripted Ref's one vanilla effect, Throw Voice, acts through its
+projectile's explosion, so the effect itself carries nothing. A timed carrier is
 stored, so `HasMagicEffect` sees it. Magic effect scripts do not run yet, so a Script effect
 does nothing else.
 
@@ -61,6 +71,11 @@ An effect that acts on no actor value still stores one value at index -1 (none) 
 - Invisibility holds the `Invisibility` actor value at 1, which detection reads. "This effect
   is automatically dispelled when the invisibility is broken". Casting a spell breaks it.
   Attacking and activating do not break it yet.
+- Value and Parts: "A Fallout leftover used for stimpaks." It changes the related actor value
+  by the magnitude times `fMagicVACPartTargetedMult`, and each of the seven body-part
+  conditions (`PerceptionCondition` to `BrainCondition`, indices 46 to 52) by the magnitude
+  times `fMagicVACNoPartTargetedMult`. No vanilla effect uses it, and no vanilla plugin sets
+  either setting, so OpenSky uses 1 for both.
 - Paralysis holds the `Paralysis` actor value at 1, as the wiki says, and is also an influence.
   "This archetype only works if the 'Recover' flag is set", so an effect without Recover is
   counted and does nothing.
@@ -114,7 +129,8 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   path as Papyrus `PlaceAtMe`. The wiki's magnitude scaling of the hazard spell is not done.
 - Bound Weapon: "Creates the specified Weapon, and dispels it when the duration expires or the
   weapon is sheathed." The weapon is added and equipped, then unequipped and removed when the
-  effect ends. Sheathing does not end it yet.
+  effect ends. Sheathing the player's weapons ends every bound weapon effect the player
+  holds.
 - Disarm: unequips every weapon the target holds. In the game the weapon falls to the ground.
   OpenSky keeps it in the inventory, because nothing drops an actor's item yet.
 - Cloak: "While this spell is active, casts an effect spell on all targets in the area. ...
@@ -149,16 +165,62 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   ([combat allies](/engine/combat.md#allies)). A commanded actor that dies ends its effect, so a
   summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
 
-## Not done
+## Summons, races, and feeding
 
-These archetypes have no rule. Each is counted per effect, and `make gaps` ranks them
-([gap report](/tools/gaps.md)).
+- Banish: "Banishes Summoned Actors up to level `<MAG>`." The summon goes, and the effect that
+  held it ends. Command Summoned: "Takes control of Summoned Actors up to level `<MAG>`." The
+  summon follows its new caster for the time its own effect has left; UESP's Command Daedra
+  spell has a duration of 0. Both refuse an actor that nobody summoned, and both cap the level.
+- Werewolf and Vampire Lord: "Changes the target's race to the specified race." A script
+  turns the actor back with `SetRace`. "None - The default will set the actors race back to
+  the original race", so OpenSky keeps the player's race from before the change. Only the
+  player changes race. [WARNING] An NPC's body is built from its records, so an NPC target is
+  counted as a failed race change.
+- Werewolf Feed: "When cast on a dead actor, sets the HasBeenEaten property on actor from 0 to
+  1." A living target is refused.
 
-| Archetype | What is missing |
-| --- | --- |
-| Command Summoned, Banish | Taking or ending control of another caster's summon |
-| Detect Life, Light | Drawing a shader or a light on an actor |
-| Enhance Weapon | A temporary enchantment on the equipped weapon |
-| Werewolf, Vampire Lord, Werewolf Feed | Changing an actor's race |
-| Telekinesis, Grab Actor | Holding an object or actor in front of the caster |
-| Guide, Spawn Scripted Ref, Lock, Open, Disguise, Value and Parts | Each is rare in vanilla; the wiki gives no rule for Disguise or Value and Parts |
+## Light and Enhance Weapon
+
+- Light: "Creates the specified light object." The `LIGH` shines for the effect's duration.
+  A self-cast light floats beside the caster at `fMagicLightForwardOffset` (13),
+  `fMagicLightSideOffset` (-28), and `fMagicLightHeightOffset` (-60) from the eye, along the
+  flat facing. An aimed light, such as Magelight, "sticks where it lands" and stays there until
+  its duration ends. The renderer draws it as one more point light. [WARNING] The wiki says the
+  light comes from the Hit Effect Art; OpenSky places it at the offsets instead.
+- Enhance Weapon: "Any equipped (melee) weapon receives the specified enchantment until
+  unequipped or until the effect wears off." The effect also holds its related actor value;
+  Elemental Fury's is `WeaponSpeedMult`. Each melee hit applies the `ENCH`'s effects to the
+  target, as a weapon enchantment does, without charge. A bow, staff, or crossbow, a bound
+  weapon, or an enchanted weapon is refused with `sMagicEnhanceWeaponNoWeapon` or
+  `sMagicEnhanceWeaponWeaponEnchanted`. Unequipping the weapon ends the effect.
+
+## Held effects
+
+Detect Life, Telekinesis, Grab Actor, and Guide are concentration spells in vanilla. A
+concentration spell lands once a second with a duration of 0, so each landing renews a hold.
+A hold no landing renews ends after 1.5 seconds, an OpenSky number. The magic panel lists the
+running holds and lights.
+
+- Detect Life: "Applies a visual effect to all valid targets in range." The range is the
+  effect's area. A valid target passes the effect's own conditions as the subject: vanilla uses
+  them to split the living from the undead and the indoor from the outdoor version. Each
+  painted actor gets the effect's hit shader until a landing no longer finds it.
+- Telekinesis: "Applies the Telekinesis effect to the target object ... This will also set the
+  boolean actor value Telekinesis to 1". The first landing takes the nearest loose body on the
+  aim ray, within `fMagicTelekinesisBaseDistance` times `fMagicTelekinesiDistanceMult` (2100).
+  The body floats 150 units in front of the caster, never nearer than
+  `fMagicTelekinesisDistanceMin` (64). When the hold ends, the body is thrown along the aim at
+  1,200 units a second. [WARNING] The hold distance and throw speed are OpenSky numbers. UESP
+  says an item "will fall to the ground" when the spell wears off; OpenSky cannot tell that
+  from a release, so both throw.
+- Grab Actor: "Can pick up and throw selected NPC. ... Distance at which the target is held is
+  based on the GrabActorOffset actor value of the caster." The actor is held on the aim ray at
+  that distance, never nearer than `fMagicGrabActorMinDistance` (120). The `Grabbed` actor value
+  is 1, and the actor counts as paralysed. When the hold ends, a grabbed player is knocked back
+  with `fMagicGrabActorThrowForce` (15) times 100 units a second, the scale `PushActorAway`
+  uses. [WARNING] An NPC has no outside velocity yet, so it is set down instead of thrown. The
+  wiki's list of actors it does not affect is not checked.
+- Guide: "Creates a trail of Hazard objects from the caster to the nearest quest target." The
+  trail follows the navmesh path to the nearest tracked quest target, one hazard every
+  `fMagicGuideSpacing` (46) units, at most `iMagicGuideWaypoints` (44). With no target the
+  player sees `sMagicGuideNoMarker`, and with no path `sMagicGuideNoPath`.
