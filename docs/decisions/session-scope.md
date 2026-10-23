@@ -1,0 +1,233 @@
+---
+type: Decision
+title: Session scope
+description: How coordinators get their dependencies - an app scope and a session scope, built
+  by hand with full initializers, the kinds of dependency and the target for each, declared
+  frame and event order, the alternatives that lost, and the checks that keep the design.
+tags: [decision, architecture, coordinators, dependency-injection, lint]
+---
+
+# Session scope
+
+A coordinator gets every dependency in its initializer. All objects that belong to one loaded
+game are built together in one place, the **session scope**, and are dropped together when the
+game ends. There is no dependency-injection framework and no late setter.
+
+Words used on this page:
+
+- A **dependency** is an object or value that a coordinator needs to do its work, such as a
+  record store or another feature's seam.
+- A **late setter** is a method or a settable property that gives a coordinator a dependency
+  after its initializer has run, such as `wire(store:)` or `storyEvents = self`.
+- A **scope** is a group of objects with one lifetime. They are built together and released
+  together.
+- The **composition root** is the one place that builds the object graph. It is the only code
+  that knows the concrete types.
+
+## Why late setters must go
+
+Today most coordinators are `lazy var` properties of the game view controller. A panel or a
+host protocol can build one before the world data is wired. So the data arrives later, through
+`wire...` methods and settable properties. This has four costs:
+
+- A coordinator is half built until every setter runs. Every method checks for a missing
+  runtime and returns nothing.
+- A forgotten setter fails silently. Nothing crashes; a behaviour is missing.
+- The order of the setter calls matters, and only comments say so. Example: "After `wireSkills`:
+  the skill runtime banks into this one."
+- A test that forgets a setter can pass without testing anything.
+
+## The fact the design builds on
+
+The world loads before the game view exists. The launcher loads the data root, the plugins,
+and the cell session. Only then does the app build the game view and hand it the loaded world.
+A Settings change that needs new data builds a new game view after a new load. So when the
+game objects are built, their data is already there. Nothing needs to wait for it.
+
+The early build has one other reason: the sidebar panels hold coordinators for the whole run.
+The development-mode view will be rewritten, so the design does not keep that reason.
+
+## The decision
+
+Two scopes, each built by hand by a composition root:
+
+| Scope | Lifetime | Holds |
+| --- | --- | --- |
+| App | From launch to quit | The launcher, the data root locator, the asset cache, player settings, save-game files, agent control, the pipeline cache |
+| Session | From one loaded world and its Metal view to the end of that game view | The loaded stores, the file source, the world state store, the cell streamer, the frame session and renderer, every coordinator, every world adapter, every menu controller |
+
+The session scope is one final class. Its initializer takes the loaded world, the Metal view,
+and the app services it needs. It builds the frame session, the streamer, and every coordinator
+with full initializers. The app builds it at the one point where the loaded world and the view
+both exist. Today that point is where the session systems are wired, when the view loads.
+
+Rules:
+
+- A coordinator's initializer takes everything it needs. Nothing it needs is optional only
+  because it arrives later. A store that the load order really lacks stays optional, and the
+  coordinator says what it does without it.
+- The session scope builds a dependency before the object that needs it. The compiler checks
+  this order: code cannot pass a value that does not exist yet. No comment explains an order.
+- An object in the app scope never holds an object of the session scope. When the session
+  ends, releasing the session scope releases every game object.
+- The game view holds the session scope and keeps only the view, the input, and the draw loop.
+  Without game data there is no session scope. The renderer draws the demo scene, and every
+  panel shows that no game is loaded.
+- Only the composition roots build coordinators: the session scope in the app, and a test
+  fixture in a test. `openskycli` builds no coordinator today; if it needs one, it builds a
+  session scope the same way.
+
+## The kinds of dependency
+
+Each dependency is one of seven kinds. The kind decides how it arrives.
+
+| Kind | Example | How it arrives |
+| --- | --- | --- |
+| World port | `CombatWorld`, `VendorWorld` | An initializer parameter, answered by a world adapter, as today |
+| Feature seam | Crime witnesses from perception, story events | An initializer parameter. Build the feature that answers it first |
+| Session data | Record stores, game settings, texts resolved from `GMST` | An initializer parameter, often grouped in one value per coordinator |
+| Session object | The actor-value runtime, the streamer, the clip loader, the Papyrus VM | An initializer parameter, built earlier in the same scope |
+| Event | A spell hit, an idle's animation event, the audio engine start | A command the coordinator returns, or a handler in a declared event schedule |
+| Late asset | The player's behaviour graphs, idle clips | Requested at start and drained from a mailbox in the frame ([concurrency](/decisions/concurrency.md)) |
+| Live input | A player setting changed in the launcher, the selected panel row | A method argument, or a port member read each time. Never stored as a dependency |
+
+A world adapter reads the session through its host protocol and holds the session scope
+`unowned`, as adapters hold the view controller today. The session scope conforms to the host
+protocols instead of the view controller.
+
+A setting the player changes while the game runs is live input, not a dependency. Example: the
+combat temperament switch calls `combat.load(settings:)` with the new value. That stays.
+
+## Cycles
+
+Two coordinators that need each other cannot both take the other in the initializer. Break the
+cycle in this order of preference:
+
+1. **A command.** The coordinator returns what it wants, and the app runs it. Most cross-domain
+   changes already work this way ([coordinators](/engine/coordinators.md#commands)).
+2. **A port answered by an adapter.** The coordinator takes a port. The adapter that answers it
+   holds the session scope `unowned` and asks the other coordinator at call time. The session
+   scope builds its members as `lazy` properties, so an adapter may be built before the
+   coordinator it later reads.
+3. **An event schedule.** The coordinator reports an event, and the other side registers a
+   handler in a declared phase (below).
+
+A setter is never the way out of a cycle.
+
+## Frame order and event order
+
+The frame order is already declared. A frame hook is a `FrameSchedule` over a phase enum, and
+the enum order is the run order ([architecture](/engine/architecture.md#isolation-per-subsystem)).
+
+Event multicast is not declared yet. A `CallbackFanOut` delivers in registration order, so the
+order of the wiring statements decides which handler runs first. Example: the streamer's
+interaction event must reach audio first and the item pickup last, and only comments say so.
+The same holds for the activation gate and the cell attach that cell reset wraps.
+
+Target: each multicast event gets a phase enum, like a frame hook. A handler registers in its
+phase, and the enum order is the delivery order. One phase takes one handler, so a second
+registration is a wiring bug and traps, as in `FrameSchedule`. Then the session scope may
+register handlers in any order.
+
+## The development-mode view and the game UI
+
+- A menu controller and the HUD belong to the session scope. They are built with it and read
+  their coordinators through initializer parameters.
+- A sidebar panel reads one panel context, built from the session scope when the panel is
+  shown. The panel holds the context only while it is on screen. When the session ends, the
+  shell drops every panel that holds one.
+- With no session scope, a destination shows an empty state that says no game is loaded.
+- The rewritten development view follows the same rule: it receives the session scope, or the
+  narrow context built from it, and never keeps it past the session.
+
+## How other engines and apps do it
+
+- **Unreal Engine** gives each subsystem the lifetime of an outer object: the engine, the game
+  instance, the world, or a local player. A subsystem is built and destroyed with its outer
+  object, and it may ask for another subsystem to start first. OpenSky copies the scopes: the
+  app scope is the engine, the session scope is the world. Unreal finds subsystems by type at
+  run time; OpenSky does not copy that, because the compiler can check our smaller graph.
+  Source: [Programming Subsystems](https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-subsystems-in-unreal-engine).
+- **Bevy** runs systems over shared resources and orders them with explicit sets and
+  `before`/`after` rules, not by the order they were added. OpenSky copies the declared order
+  through phase enums. It does not copy resource lookup: a missing resource fails at run time.
+  Source: [`bevy_ecs` schedules](https://docs.rs/bevy/latest/bevy/ecs/schedule/index.html).
+- **Godot** autoloads are global singletons that any script reaches by name. That is a
+  service locator, and it hides which object needs which. Not copied. Source:
+  [Singletons (Autoload)](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html).
+- **Pure DI with a composition root** builds the whole graph by hand in one place, at the
+  program's entry. This is the chosen design. Source:
+  [Composition Root](https://blog.ploeh.dk/2011/07/28/CompositionRoot/).
+- **Uber Needle** checks a scoped Swift graph at compile time with a code generator. Our graph
+  has about 40 coordinators, and a hand-written root gives the same compile-time check without
+  a generator in the build. Source: [Needle](https://github.com/uber/needle).
+- **Point-Free `swift-dependencies`** reads a dependency from a task-local environment with a
+  default value. A missing dependency gets the default, which is the silent failure this page
+  removes. Source: [swift-dependencies](https://github.com/pointfreeco/swift-dependencies).
+
+## Alternatives and why each lost
+
+| Alternative | Why it lost |
+| --- | --- |
+| Keep late setters and add a debug check per coordinator that every setter ran | The object is still half built. The check runs only at run time, and only on the paths a run takes |
+| One `load(_:)` per coordinator that takes all session data as one value | One setter instead of many, but the state is still optional until it runs. It only helps when data arrives after the coordinator, and it does not |
+| A runtime container (Swinject, Factory, Resolver) with scopes | A missing registration fails at run time. The graph hides in registrations. It adds a dependency, and its global registry fights Swift 6 isolation |
+| A compile-time container with code generation (Needle) | Same check as a hand-written root, plus a generator in the build and a new dependency. The size of our graph does not need it |
+| A task-local environment or a service locator (`swift-dependencies`, Godot autoloads, singletons) | Dependencies are hidden in the body, not the signature. A default value hides a missing dependency |
+| Coordinators read stores from one shared `WorldDataStores` port on demand | Every read can fail, so every method keeps the missing-data branch. It moves the late setter into a lookup |
+
+## The current late setters
+
+Each late setter in a package module, its kind, and its target. Settable properties that the app
+assigns once after build, such as `combat.staggers` or `game.dialogue.index`, follow the row of
+their coordinator.
+
+| Late setter | Kind | Target |
+| --- | --- | --- |
+| `ActorValueCoordinator.wire(baselines:regeneration:stamina:)` | Session data | Initializer |
+| `FactionCoordinator.wire(factions:relationships:baselines:pluginName:)` | Session data | Initializer |
+| `PerceptionCoordinator.wire(settings:stealthPoints:)` | Session data | Initializer |
+| `PackageCoordinator.wire(store:)` and its settings properties | Session data | Initializer |
+| `IdleCoordinator.wire(store:files:clips:planWorker:)` | Session data, session object | Initializer; the clip loader is built first |
+| `IdleCoordinator.onAnimationEvent` | Event | Returned command or event schedule |
+| `RagdollCoordinator.wire(collisionModels:)` and `deathSettings` | Session data | Initializer |
+| `CombatCoordinator.wireMelee`, `wireArchery`, `wireLoop`, and its settings properties | Session data | One initializer that builds all three runtimes |
+| `MagicCoordinator.wireEffects`, `wireCasting` | Session data, session object | Initializer; the actor-value runtime and the spellbook are built first |
+| `MagicCoordinator.wireEnchantments`, `wireShouts`, and its settings and texts | Session data | Initializer |
+| `MagicCoordinator.onSpellHit` | Event | Returned command |
+| `PerkCoordinator.wire(_:baselines:pluginName:)` | Session data | Initializer; live conditions through its port |
+| `ProgressionCoordinator.wireSkills`, `wireLeveling`, `training`, `texts` | Session data, session object | One initializer that builds both runtimes, so their order is internal |
+| `InventoryCoordinator.wire(inventory:references:catalog:pricing:cellReset:)` | Session data, session object | Initializer; the streamer is built first |
+| `InventoryCoordinator.wireCrafting(catalog:conditions:skills:)` | Session data, feature seam | Initializer |
+| `InventoryCoordinator.wireAlchemy(effects:pluginName:settings:texts:)` | Session data | Initializer |
+| `InventoryCoordinator.vendors`, and the crime reporter set on its runtime | Session object, feature seam | Initializer |
+| `LockCoordinator.wire(items:)` | Session object | Built by the inventory coordinator with its item runtime |
+| `CrimeCoordinator.wire(runtime:locations:pluginName:)` and `crimeTexts` | Session data | Initializer |
+| `CrimeCoordinator.attachWitnesses(_:)` | Feature seam | Initializer; perception is built first |
+| `storyEvents` on the crime, inventory, lock, magic, and progression coordinators | Feature seam | Initializer, answered by the story adapter |
+| `EffectsCoordinator.wire(records:meshes:)`, `world`, and the explosion world | Session data, world port | Initializer |
+| `ScriptCoordinator.install(runtime:bridge:)` | Session object | Initializer; the VM and bridge are built first |
+| `ScriptCoordinator.attachQuests(_:)`, and the bridge's inventory and alchemy seams | Feature seam | Initializer of the bridge |
+| `DialogueCoordinator.index` and its texts and timers | Session data | Initializer |
+| `SubtitleCoordinator.attach(presenter:)` | Feature seam | Initializer; the HUD is built first |
+| `SystemMenuCoordinator.attach(settings:)` and `saves` on the system and title menus | App object | Initializer |
+| `AudioCoordinator.onEngineBuilt` | Event | Event schedule |
+| `PlayerCoordinator.wireBody(source:)` | Late asset | Request at start, drain the mailbox; the coordinator is whole without the graph |
+| `CallbackFanOut` registrations on the streamer, the activation gate, and talk targeting | Event order | Phase enum per event |
+
+The `Papyrus` bridge's native families stay as they are. Each family is a value with optional
+closures, and a missing family answers nothing on purpose, so a native refuses instead of
+reading a half-wired family ([coordinators](/engine/coordinators.md)). The session scope fills
+every family when it builds the bridge.
+
+## What the checks enforce afterwards
+
+- A lint rule fails a method in a package module whose name starts with `wire` or `install`.
+  The existing rule `late_attached_world` keeps failing `attach(world:)` and the like.
+- A lint rule fails a coordinator property that is settable from outside its module and holds a
+  dependency: a type ending in `Store`, `Settings`, `Texts`, `Runtime`, `Catalog`, `Resolver`,
+  `World`, `Seam`, `Reporting`, or `Presenting`, or a closure named `on...`.
+- A lint rule fails a coordinator built under `Sources/` outside the session scope's files.
+- `CallbackFanOut` is deleted when the last event has a phase enum, so the compiler rejects a
+  new registration-ordered multicast.
+- A unit test builds the session scope from a synthetic load and checks that it builds.
