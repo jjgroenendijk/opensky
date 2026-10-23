@@ -1,13 +1,12 @@
-// Journal seam for `World > Quests & Journal` (docs/engine/journal.md). The
-// panel reads one snapshot and calls one mutation per action, like
+// Journal snapshot (docs/engine/journal.md). The
+// readout reads one snapshot and calls one mutation per action, like
 // `ScriptControlProviding`. Alias text reuses `ScriptsReadout.questAliasText`
-// so the two panels cannot disagree.
+// so the two readouts cannot disagree.
 
 import Foundation
 import OpenSkyRendering
-import OpenSkyScriptingInterface
 
-/// One quest as the panel lists it — running state, current stage, and the
+/// One quest as the readout lists it — running state, current stage, and the
 /// display state of each objective the record declares.
 nonisolated public struct JournalQuestRow: Equatable, Sendable {
     public let editorID: String
@@ -50,7 +49,7 @@ nonisolated public struct JournalQuestRow: Equatable, Sendable {
 /// Everything the journal readouts show, captured in one value.
 nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
     /// Rows a snapshot carries. A real install runs a hundred-odd quests at
-    /// once, and the panel shows the ones the user asked about plus the running
+    /// once, and the readout shows the ones the user asked about plus the running
     /// set, not the whole index.
     public static let rowLimit = 12
 
@@ -92,7 +91,7 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
     public let questCount: Int
     public let runningCount: Int
     public let completedCount: Int
-    /// The rows the panel shows, at most `rowLimit` of them.
+    /// The rows the readout shows, at most `rowLimit` of them.
     public let rows: [JournalQuestRow]
     public let droppedRowCount: Int
     /// Quest the dev controls act on, trimmed. Empty means none picked.
@@ -195,59 +194,4 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
         self.movieUnhandledInvokes = movieUnhandledInvokes
         self.movieDrawStats = movieDrawStats
     }
-}
-
-/// Live-renderer seam for the World > Quests & Journal panel.
-@MainActor
-public protocol JournalControlProviding: AnyObject {
-    /// One sample of everything the readouts show.
-    /// `JournalControlSnapshot.empty` when the session has no quest index.
-    var journalSnapshot: JournalControlSnapshot { get }
-
-    /// Quest the dev controls and the alias readout act on. Setting it to a
-    /// quest the plugin does not define leaves the readouts saying so rather
-    /// than failing.
-    var journalQuestEditorID: String { get set }
-
-    /// Editor IDs of every quest the journal would list, sorted. Empty when the
-    /// session has no quest index.
-    var journalQuestEditorIDs: [String] { get }
-
-    /// Opens the journal on its Quests page, pushing the engine menu stack.
-    /// No-op when it is already open.
-    func openJournal()
-
-    /// Closes it and pops the stack. No-op when it is not open.
-    func closeJournal()
-
-    /// Routes one menu event through the same path as the live keys, so the
-    /// panel buttons and the keyboard cannot diverge.
-    func sendJournalInput(_ event: MenuInputEvent)
-
-    /// Switches the page between the active and completed quest lists.
-    func setJournalShowsCompleted(_ flag: Bool)
-
-    /// Starts the selected quest, filling its aliases. Records the outcome,
-    /// including a refused start, in `lastOutcome`.
-    func startSelectedQuest()
-
-    /// Stops the selected quest, clearing its alias table.
-    func stopSelectedQuest()
-
-    /// Sets one stage on the selected quest.
-    func setSelectedQuestStage(_ index: Int)
-
-    /// Shows or hides one objective of the selected quest, which is what puts a
-    /// line on the page without a script.
-    func setSelectedQuestObjective(_ index: Int, displayed: Bool)
-
-    /// The selected quest's alias table, or nil when no loaded plugin defines
-    /// a quest with that editor ID.
-    func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection?
-
-    /// Tracks or untracks the selected quest, as the page's own toggle does.
-    func toggleSelectedQuestTracking()
-
-    /// Opens the map on the selected quest's first target.
-    func showSelectedQuestOnMap()
 }

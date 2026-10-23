@@ -1,4 +1,4 @@
-// The pure rules of the crime coordinator: readout sentences, the panel's
+// The pure rules of the crime coordinator: readout sentences, the readout's
 // faction lists, and what the hostility derivation reads about the player's
 // bounties. Values in, values out. See docs/engine/coordinators.md.
 
@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import simd
 
-/// The three faction lists the panel's popups offer, sorted by name.
+/// The three faction lists the readout's popups offer, sorted by name.
 nonisolated public struct CrimeFactionOptions: Equatable, Sendable {
     public let all: [FactionOption]
     public let crime: [FactionOption]

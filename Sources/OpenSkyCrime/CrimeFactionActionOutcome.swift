@@ -1,4 +1,4 @@
-// What the last `World > Crime & Factions` control did, as a value. Only `text`
+// What the last crime or faction action did, as a value. Only `text`
 // builds the line.
 
 nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {

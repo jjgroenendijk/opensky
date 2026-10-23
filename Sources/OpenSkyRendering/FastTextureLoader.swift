@@ -30,7 +30,7 @@ nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
     public init() {}
 }
 
-/// The on/off switch and the counters, shared between the build queue and the panel.
+/// The on/off switch and the counters, shared between the build queue and the readout.
 nonisolated public final class FastTextureLoadControl: Sendable {
     private let enabled: Atomic<Bool>
     private let meshesEnabled: Atomic<Bool>

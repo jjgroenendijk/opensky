@@ -36,7 +36,7 @@ public final class DialogueCoordinator {
     public private(set) var spokenLine: DialogueSpokenLine?
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
-    /// Subtype names the Dialogue panel shows beside a topic.
+    /// Subtype names the Dialogue readout shows beside a topic.
     public var topicSubtypes = TopicSubtypeTexts.vanilla
     /// How often NPCs speak outside a conversation; the app sets the install's values.
     public var speechTimers = SpeechTimerSettings.vanilla

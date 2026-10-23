@@ -1,11 +1,9 @@
-// The World panels' renderer controls with no renderer and no streamer: the
+// The World readouts' renderer controls with no renderer and no streamer: the
 // state a machine without Metal 4 ends up in. Every read must fall back to its
 // stated default without a GPU.
 
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
-@testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyRuntimeState
 @testable import OpenSkyWorld
@@ -29,30 +27,6 @@ struct WorldRenderControlsTests {
         controls.movementMode = .walk
         // No renderer holds the change, so the getter keeps the default.
         #expect(controls.movementMode == .fly)
-    }
-
-    @Test func cameraPoseDescriptionIsFormattedForABugReport() {
-        let description = controls.cameraPoseDescription
-        #expect(description.contains("camera fly"))
-        #expect(description.contains("position 0.0, 0.0, 0.0"))
-        #expect(description.contains("cell 0, 0"))
-    }
-
-    /// The protocol extension is the one formatter, so a fake reads the same.
-    @Test func cameraPoseDescriptionReadsTheSnapshotItIsGiven() {
-        let provider = StubCameraProvider()
-        provider.cameraPose = CameraPoseSnapshot(
-            position: SIMD3<Float>(4096, -8192, 512),
-            yaw: .pi / 2,
-            pitch: 0,
-            cell: CellCoordinate(x: 1, y: -2),
-            movementMode: .walk
-        )
-        let description = provider.cameraPoseDescription
-        #expect(description.contains("camera walk"))
-        #expect(description.contains("position 4096.0, -8192.0, 512.0"))
-        #expect(description.contains("yaw 90.0 deg"))
-        #expect(description.contains("cell 1, -2"))
     }
 
     @Test func statsZeroOutWithoutARendererOrStreamer() {
@@ -100,17 +74,9 @@ private final class EmptyRenderControlWorld: RenderControlWorld {
     let renderer: Renderer? = nil
     let gameSession: GameSession? = nil
     let streamer: CellStreamer? = nil
-    let terrainLODConfigurationStore = TerrainLODConfigurationStore.fallback()
-    let playerSettingsStore = PlayerSettingsStore(persistence: nil)
     private(set) var refocusCount = 0
 
     func refocusGameView() {
         refocusCount += 1
     }
-}
-
-private final class StubCameraProvider: CameraControlProviding {
-    var cameraPose = CameraPoseSnapshot.unavailable
-    var movementMode = CameraMovementMode.fly
-    var movementConfiguration = PlayerMovementConfiguration.synthetic
 }

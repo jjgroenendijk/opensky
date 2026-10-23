@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import simd
 
-/// One observer's regard for one target, as a panel or a transcript shows it.
+/// One observer's regard for one target, as a readout or a transcript shows it.
 nonisolated public struct DetectionPairReadout: Equatable, Sendable {
     public let observer: ReferenceKey
     public let observerName: String
@@ -92,7 +92,7 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
     )
 
     /// Every pair involving `actor` on either side, which is what a
-    /// per-selected-actor panel shows.
+    /// per-selected-actor readout shows.
     public func pairs(involving actor: ReferenceKey) -> [DetectionPairReadout] {
         pairs.filter { $0.observer == actor || $0.target == actor }
     }

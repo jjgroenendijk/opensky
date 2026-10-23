@@ -119,9 +119,3 @@ merchant conditions fail. OpenSky refuses instead, and says why.
 ## Not done yet
 
 - A merchant chest that is not loaded cannot be traded from, and so it cannot restock either.
-
-## Controls
-
-World > Crime & Factions > Vendor shows the chosen actor's vendor faction, chest, hours, list,
-and fence flag. It can choose another vendor faction, open the barter menu, and Restock all makes
-every merchant chest due.

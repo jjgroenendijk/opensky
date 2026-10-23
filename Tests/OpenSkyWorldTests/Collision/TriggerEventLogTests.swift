@@ -1,4 +1,4 @@
-// The trigger log behind World > World > Triggers: line format, newest last,
+// The trigger log: line format, newest last,
 // the bounded ring, and the true total a truncated ring still reports.
 
 @testable import OpenSkyFormatsESM

@@ -154,21 +154,3 @@ shot.
 ## Not done yet
 
 Crossbows and bolts, explosive projectiles, AI archery, and picking up spent arrows.
-
-## Controls
-
-World > Combat & Physics > Archery:
-
-- Fire one arrow: fires from the current aim without using an arrow. It calls the same loose
-  function as the graph, so the two cannot differ.
-- Despawn in flight: removes everything in the air, resolving nothing.
-- Clear stuck arrows.
-- Clear shot trace.
-- Readout: the shot state, bow and arrow, `PROJ` flight numbers, the live count, and the last
-  shot's spawn point, impact point, flight time, path length, and drop.
-
-All four controls are buttons, because drawing is held input with no state to set. The section has
-no reset: an arrow in the air is world state.
-
-`openskycli gmst archery` prints the three range settings with their sources.
-`openskycli archery [--census] [--ammo <substring>]` walks `AMMO` to `PROJ` and prints the census.

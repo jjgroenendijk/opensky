@@ -313,7 +313,7 @@ workflow-lint: #| Lint the GitHub Actions workflows with actionlint
 comment-length: #| Check no comment block is over the line limit
 	@./tools/lint/comment-length.sh
 
-panel-text: #| Check app panels hold no prose paragraphs or long tooltips
+panel-text: #| Check launcher and Settings pages hold no prose paragraphs or long tooltips
 	@./tools/lint/panel-text.sh
 
 load-order-only: #| Check engine code opens plugins only through the whole load order

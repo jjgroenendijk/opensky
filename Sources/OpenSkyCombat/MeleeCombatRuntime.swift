@@ -109,9 +109,9 @@ public final class MeleeCombatRuntime {
         }
     }
 
-    /// Latches one swing. What the panel's Attack button calls; the mouse
+    /// Latches one swing. What the readout's Attack button calls; the mouse
     /// button reaches the same latch through `acceptFrame(_:)`, so a swing
-    /// requested from the sidebar is indistinguishable from one the player
+    /// requested by agent control is indistinguishable from one the player
     /// made.
     public func requestAttack() {
         pendingAttack = true
@@ -127,14 +127,6 @@ public final class MeleeCombatRuntime {
     public func setWeaponDrawn(_ drawn: Bool) {
         guard drawn != state.drawState.isWeaponInHand else { return }
         requestWeaponToggle()
-    }
-
-    /// Empties the trace and both counts without disturbing anything the
-    /// player can feel, which is what the panel's own clear control does.
-    public func clearTrace() {
-        trace = []
-        swingCount = 0
-        hitCount = 0
     }
 
     // MARK: - Graph events
@@ -176,7 +168,7 @@ public final class MeleeCombatRuntime {
 
     // MARK: - Readout
 
-    /// Where the swing would reach right now, for the panel and the tests.
+    /// Where the swing would reach right now, for the readout and the tests.
     public var currentReach: Float {
         MeleeSwing.reach(
             weapon: weapon,

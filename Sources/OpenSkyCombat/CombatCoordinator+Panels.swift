@@ -1,4 +1,4 @@
-// The readouts and controls of the Combat & Physics panel and the AI combat
+// The readouts and controls of the Combat & Physics readout and the AI combat
 // section, read off the runtimes `CombatCoordinator` owns.
 
 import Foundation
@@ -10,7 +10,7 @@ import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 
-extension CombatCoordinator: MeleeCombatControlProviding {
+extension CombatCoordinator {
     public var isWeaponDrawn: Bool {
         get { melee?.state.drawState.isWeaponInHand ?? false }
         set { melee?.setWeaponDrawn(newValue) }
@@ -43,16 +43,6 @@ extension CombatCoordinator: MeleeCombatControlProviding {
     @discardableResult
     public func requestMeleeAttack() -> MeleeActionOutcome {
         requestMelee(power: false)
-    }
-
-    @discardableResult
-    public func requestMeleePowerAttack() -> MeleeActionOutcome {
-        requestMelee(power: true)
-    }
-
-    public func clearMeleeTrace() {
-        melee?.clearTrace()
-        lastMeleeAction = .clearedTrace
     }
 
     private func requestMelee(power: Bool) -> MeleeActionOutcome {
@@ -135,7 +125,7 @@ extension CombatCoordinator: MeleeCombatControlProviding {
     }
 }
 
-extension CombatCoordinator: ArcheryControlProviding {
+extension CombatCoordinator {
     public var archerySnapshot: ArcherySnapshot {
         guard let archery else { return .unavailable }
         let projectiles = archery.projectiles
@@ -170,7 +160,7 @@ extension CombatCoordinator: ArcheryControlProviding {
     }
 
     /// Fires through the same `loose` the graph's `arrowRelease` uses, so a
-    /// sidebar shot is the same downstream as a player shot.
+    /// forced shot is the same downstream as a player shot.
     @discardableResult
     public func spawnDevProjectile() -> ArcheryActionOutcome {
         guard let archery else { return .unavailable }
@@ -187,21 +177,6 @@ extension CombatCoordinator: ArcheryControlProviding {
             id: projectile.id, speed: simd_length(projectile.state.velocity)
         )
         return lastArcheryAction
-    }
-
-    public func despawnProjectiles() {
-        archery?.projectiles.despawnAll()
-        lastArcheryAction = .despawned
-    }
-
-    public func clearStuckProjectiles() {
-        archery?.projectiles.clearStuckArrows()
-        lastArcheryAction = .clearedStuck
-    }
-
-    public func clearProjectileTrace() {
-        archery?.projectiles.clearTrace()
-        lastArcheryAction = .clearedTrace
     }
 
     /// The editor ID when the item index resolves one, else the FormID.
@@ -230,7 +205,7 @@ extension CombatCoordinator: ArcheryControlProviding {
     }
 }
 
-extension CombatCoordinator: CombatLoopControlProviding {
+extension CombatCoordinator {
     public var combatLoopSnapshot: CombatLoopSnapshot {
         guard let loop else { return .unavailable }
         let selected = world.selectedActor()
@@ -302,15 +277,6 @@ extension CombatCoordinator: CombatLoopControlProviding {
     public var isActorCastingEnabled: Bool {
         get { allowsActorCasting }
         set { setActorCasting(newValue) }
-    }
-
-    public func clearCombatTrace() {
-        loop?.clearTrace()
-    }
-
-    public var selectedCombatStyle: CombatStyleReadout? {
-        guard let loop, let key = world.selectedActor() else { return nil }
-        return loop.styleReadout(of: key)
     }
 
     /// One line per actor with a behavior machine, nearest first, from the same

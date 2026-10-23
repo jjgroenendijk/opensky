@@ -115,32 +115,3 @@ nonisolated public struct InventoryMenuExtras: Equatable, Sendable {
         self.previewLine = previewLine
     }
 }
-
-@MainActor
-public protocol InventoryMenuControlProviding: AnyObject {
-    var inventoryMenuIsOpen: Bool { get }
-    /// Drives the vanilla `Interface\inventorymenu.swf` presentation layer. Off
-    /// keeps the engine-side row list working with the gameplay HUD on screen.
-    var inventoryMenuMovieEnabled: Bool { get set }
-    func openInventoryMenu()
-    func closeInventoryMenu()
-    /// Routes one menu event through the same path as keyboard input, so the
-    /// panel buttons and the live keys cannot diverge.
-    func sendInventoryMenuInput(_ event: MenuInputEvent)
-    /// Applies the selected row's action. Equip toggles, so a row that is
-    /// already equipped unequips instead.
-    func activateInventoryMenuSelection()
-    func dropInventoryMenuSelection()
-    /// Eats or drinks one unit of the selected row and applies its effects.
-    /// A row that is not ALCH or INGR reports that and changes nothing.
-    func consumeInventoryMenuSelection()
-    /// Drops `count` of the selected row at once, with no quantity prompt.
-    func dropInventoryMenuSelection(count: Int32)
-    func toggleInventoryMenuFavourite()
-    /// Binds number key `slot` to the selected row, which becomes a favourite.
-    func bindInventoryMenuHotkey(_ slot: Int)
-    /// What number key `slot` does in play.
-    func useInventoryHotkey(_ slot: Int)
-    var inventoryMenuPreviewEnabled: Bool { get set }
-    var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
-}

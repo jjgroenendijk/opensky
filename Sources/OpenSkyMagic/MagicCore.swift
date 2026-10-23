@@ -1,4 +1,4 @@
-// The pure rules of the magic shell: cast reach, the game day, the panel's
+// The pure rules of the magic shell: cast reach, the game day, the readout's
 // spell selection, the condition probes, and the outcome sentences. Values in,
 // values out. See docs/engine/coordinators.md.
 
@@ -7,7 +7,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 
-/// One condition function the Spellcasting panel probes against the player.
+/// One condition function the Spellcasting readout probes against the player.
 nonisolated public struct MagicConditionProbe: Equatable, Sendable {
     public let function: UInt16
     public let name: String
@@ -26,7 +26,7 @@ nonisolated public enum MagicCore {
     /// not aim at infinity.
     public static let fallbackReach: Float = 12288
 
-    /// Seconds one panel cast fast-forwards the charge. Longer than any vanilla
+    /// Seconds one readout cast fast-forwards the charge. Longer than any vanilla
     /// SPIT charge time; the cast loop clamps it to the spell's own.
     static let panelChargeStep: Float = 4
 
@@ -64,7 +64,7 @@ nonisolated public enum MagicCore {
     }
 
     /// The eight magic functions in registry order. The record-taking ones probe
-    /// the readied spell and its first effect, the records the panel shows.
+    /// the readied spell and its first effect, the records the readout shows.
     static func conditionProbes(readied record: ResolvedSpell?) -> [MagicConditionProbe] {
         let spellID = record?.id.objectID ?? 0
         let effectID = record?.record.effects.first?.effect.rawValue ?? 0

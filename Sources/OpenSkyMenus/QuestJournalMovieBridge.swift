@@ -9,7 +9,7 @@ import Foundation
 import OpenSkyFormatsSWF
 
 /// The three tallies a Quests-page bring-up is gated on. Zero of each is the
-/// gate passing; the panel and the CLI probe print all three even at zero, so a
+/// gate passing; the readout and the CLI probe print all three even at zero, so a
 /// passing gate cannot be mistaken for a missing readout.
 nonisolated public struct QuestJournalDiagnostics: Equatable, Sendable {
     public let faults: Int

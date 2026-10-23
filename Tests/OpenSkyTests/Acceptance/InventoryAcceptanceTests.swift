@@ -199,7 +199,7 @@ struct InventoryAcceptanceTests {
 
     // MARK: - Ownership
 
-    /// `XOWN` and `XRNK` survive the decode and reach the panel's readout, and
+    /// `XOWN` and `XRNK` survive the decode and reach the readout's readout, and
     /// an unowned reference reads as unowned rather than as owned by form zero.
     @Test("the gate reports who owns what the loop takes")
     func ownershipReachesTheReadout() throws {

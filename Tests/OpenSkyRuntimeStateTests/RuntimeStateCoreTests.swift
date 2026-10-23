@@ -1,4 +1,4 @@
-// The pure rules of the Runtime State panel. Synthetic values only.
+// The pure rules of the Runtime State readout. Synthetic values only.
 
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM

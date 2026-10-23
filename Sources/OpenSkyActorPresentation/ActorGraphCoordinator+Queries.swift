@@ -20,10 +20,6 @@ extension ActorGraphCoordinator {
         running[actor]?.instance.raiseEvent(named: event) ?? false
     }
 
-    public func isRunning(_ actor: ReferenceKey) -> Bool {
-        running[actor] != nil
-    }
-
     public func variable(named name: String, on actor: ReferenceKey) -> BehaviorVariableValue? {
         running[actor]?.instance.variable(named: name)
     }

@@ -39,7 +39,7 @@ public protocol ProgressionWorld: AnyObject {
     func wornArmor(of key: ReferenceKey) -> WornArmorProfile
     /// The live context a perk's own conditions are checked in.
     func conditionContext() -> ConditionContext
-    /// One perk condition as the panel prints it.
+    /// One perk condition as the readout prints it.
     func conditionText(_ condition: Condition) -> String
     /// The player's name and race as the skills menu card prints them.
     func playerIdentity() -> (name: String, race: String)

@@ -1,4 +1,4 @@
-// Main-app progression inspection seam for the `World > Progression` panel. One
+// Progression inspection snapshot. One
 // snapshot value, so level, experience, and perk points come from one
 // observation. AppKit-free.
 
@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// One of the eighteen skills, as the panel spells it.
+/// One of the eighteen skills, as the readout spells it.
 nonisolated public struct SkillProgressReadout: Equatable, Sendable {
     /// The AVIF record's name when the load order resolves one, else the
     /// vanilla actor-value name. Never empty.
@@ -98,7 +98,7 @@ nonisolated public struct PerkTreeNodeReadout: Equatable, Sendable {
 }
 
 /// The selected box's resolved PERK record: what a user checks a perk's
-/// numbers against without leaving the panel.
+/// numbers against without leaving the readout.
 nonisolated public struct PerkInspection: Equatable, Sendable {
     public let name: String
     public let editorID: String
@@ -142,7 +142,7 @@ nonisolated public struct PerkInspection: Equatable, Sendable {
 /// One observation of the progression runtime.
 nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     /// False when no progression runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather
+    /// scene. Every other field is then empty and the readout says so rather
     /// than showing a convincing zero.
     public let isAvailable: Bool
     /// The character level `GetLevel` reports for the player.
@@ -172,7 +172,7 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     public let selectedNode: UInt32
     /// The selected box's record, or nil when the box grants nothing.
     public let perk: PerkInspection?
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
     /// What the "Mod Skill Use" perks multiply the selected skill's experience by now.
     public let experienceRate: Float
@@ -245,69 +245,4 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
         self.perk = perk
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol ProgressionControlProviding: AnyObject {
-    var progressionControlSnapshot: ProgressionControlSnapshot { get }
-
-    /// Which skill the skill controls and the perk tree act on, by vanilla
-    /// actor-value index.
-    var progressionSkillSelection: Int32 { get set }
-
-    /// Which box of that skill's tree the perk controls act on, by `INAM`.
-    var progressionNodeSelection: UInt32 { get set }
-
-    /// Reports `amount` of skill use on the selected skill, which is
-    /// `Game.AdvanceSkill`'s own unit and the same call every swing makes.
-    @discardableResult
-    func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome
-
-    /// Raises the selected skill by a whole point, which is
-    /// `Game.IncrementSkill`.
-    @discardableResult
-    func incrementSelectedSkill() -> ProgressionActionOutcome
-
-    /// Banks `amount` of character experience, which is what a skill point does on
-    /// the player's behalf. The level it buys waits for the skills menu.
-    @discardableResult
-    func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome
-
-    /// Applies the banked levels, as opening the skills menu does.
-    @discardableResult
-    func applyBankedLevels() -> ProgressionActionOutcome
-
-    /// Spends one owed attribute pick on `kind`.
-    @discardableResult
-    func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome
-
-    /// Adds or removes perk points, which is `Game.ModPerkPoints`.
-    @discardableResult
-    func changePerkPoints(by delta: Int) -> ProgressionActionOutcome
-
-    /// Spends one perk point on the selected box, after the tree, the rank
-    /// order and the perk's own conditions have all agreed.
-    @discardableResult
-    func spendPointOnSelectedPerk() -> ProgressionActionOutcome
-
-    /// Gives the player the selected box's perk outright, bypassing the point
-    /// and the tree — the dev control behind reading what a perk does.
-    @discardableResult
-    func grantSelectedPerk() -> ProgressionActionOutcome
-
-    /// Takes the selected box's perk away again.
-    @discardableResult
-    func revokeSelectedPerk() -> ProgressionActionOutcome
-
-    /// Makes the selected skill legendary: back to its reset level, its tree refunded.
-    @discardableResult
-    func makeSelectedSkillLegendary() -> ProgressionActionOutcome
-
-    /// The Dragonborn altar: one dragon soul refunds the selected skill's tree.
-    @discardableResult
-    func resetSelectedPerkTree() -> ProgressionActionOutcome
-
-    /// Buys one training session from the nearest trainer.
-    @discardableResult
-    func trainWithNearestTrainer() -> ProgressionActionOutcome
 }

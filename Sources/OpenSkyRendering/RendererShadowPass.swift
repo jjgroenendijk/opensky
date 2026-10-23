@@ -10,7 +10,7 @@ import OpenSkyShaderTypes
 import simd
 
 /// Sun-shadow quality tier. Drives cascade count, shadow range, and
-/// PCF tap count; the app sidebar selects it. `.off` renders no shadow pass
+/// PCF tap count; `debug shadows` selects it. `.off` renders no shadow pass
 /// (equivalent to `sunShadowsEnabled = false`, but a persisted user choice).
 nonisolated public enum ShadowQuality: String, CaseIterable, Sendable {
     case off

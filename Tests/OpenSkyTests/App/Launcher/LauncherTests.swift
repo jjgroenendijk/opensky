@@ -1,5 +1,5 @@
-// The launcher's registry ids, its page cache, its mode buttons, the start
-// options, the new game options, Continue, the load panel, and the install check on
+// The launcher's registry ids, its page cache, its Play button, the start
+// options, the new game options, Continue, the load readout, and the install check on
 // Settings. The unit test host withholds the install, so play stays disabled here.
 
 import AppKit
@@ -15,14 +15,14 @@ import Testing
 @MainActor
 struct LauncherTests {
     private final class RecordingActions: LauncherActions {
-        var started: [LaunchMode] = []
+        var plays = 0
         var continued: [String] = []
         var folderChanges = 0
         var cancels = 0
         var benchmarks: [BenchmarkRequest] = []
 
-        func start(_ mode: LaunchMode) {
-            started.append(mode)
+        func play() {
+            plays += 1
         }
 
         func continueGame(slot: String) {
@@ -43,15 +43,10 @@ struct LauncherTests {
     }
 
     @Test func registryIdsArePinned() {
-        #expect(LauncherRegistry.modes.map(\.controlIdentifier) == [
-            "LaunchPlayControl", "LaunchDeveloperControl"
-        ])
-        #expect(LauncherRegistry.modes.map(\.mode) == LaunchMode.allCases)
         #expect(LauncherRegistry.pages.map(\.sidebarIdentifier) == [
             "LauncherPage-launch", "LauncherPage-assetOptimisation", "LauncherPage-graphics",
             "LauncherPage-benchmark", "LauncherPage-diagnostics", "LauncherPage-settings"
         ])
-        #expect(LauncherRegistry.modes.allSatisfy { !$0.summary.isEmpty })
         #expect(LauncherRegistry.page(id: LauncherRegistry.defaultPageID) != nil)
     }
 
@@ -93,24 +88,20 @@ struct LauncherTests {
         #expect(page.resultLabel.accessibilityIdentifier() == "BenchmarkResultStatsLabel")
     }
 
-    @Test func modeButtonsFollowTheGameFolder() throws {
+    @Test func playFollowsTheGameFolder() throws {
         let actions = RecordingActions()
         let page = LaunchPageViewController(context: LauncherContext(actions: actions))
         page.loadViewIfNeeded()
         let status = GameFolderStatus()
         let play = try #require(button("LaunchPlayControl", in: page.view))
-        let developer = try #require(button("LaunchDeveloperControl", in: page.view))
-        #expect(play.isEnabled == status.canStart(.play))
-        #expect(developer.isEnabled)
+        #expect(play.isEnabled == status.isFound)
+        #expect(find("LaunchPlaySummaryStatsLabel", in: page.view) != nil)
         #expect(find("LauncherGameFolderStatsLabel", in: page.view) != nil)
         #expect(find("LauncherSettingsLinkControl", in: page.view) != nil)
         #expect(find("LauncherChooseGameFolderControl", in: page.view) == nil)
-
-        developer.performClick(nil)
-        #expect(actions.started == [.developer])
     }
 
-    @Test func loadPanelReplacesTheModeButtonsUntilTheLoadEnds() throws {
+    @Test func loadPanelReplacesThePlayButtonUntilTheLoadEnds() throws {
         let actions = RecordingActions()
         let page = LaunchPageViewController(context: LauncherContext(actions: actions))
         page.loadViewIfNeeded()
@@ -198,7 +189,7 @@ struct LauncherTests {
         ))
         #expect(label.stringValue == "Lydia, level 12")
         let status = GameFolderStatus()
-        #expect(page.continueButton.isEnabled == status.canStart(.play))
+        #expect(page.continueButton.isEnabled == status.isFound)
         if page.continueButton.isEnabled {
             page.continueButton.performClick(nil)
             #expect(actions.continued == ["quick"])

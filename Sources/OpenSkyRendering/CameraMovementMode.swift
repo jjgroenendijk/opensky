@@ -13,7 +13,7 @@ nonisolated public enum CameraMovementMode: Equatable, CaseIterable, Sendable {
         self != .fly
     }
 
-    /// The next mode in the cycle the camera key and the panel selector share.
+    /// The next mode in the cycle the camera key and the readout selector share.
     public var next: CameraMovementMode {
         switch self {
         case .fly: .walk

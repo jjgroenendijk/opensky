@@ -6,7 +6,6 @@ import Metal
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyLoading
 import OpenSkyRendering
 
 public enum ColdCellBuilder {

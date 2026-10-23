@@ -8,8 +8,7 @@ tags: [engine, menu, input]
 
 # Text entry
 
-The text entry screen is a one-line field with Accept and Cancel buttons. OpenSky opens it
-from the sidebar (HUD & Interaction > Menu screens, "Text entry"). No source names the game
+The text entry screen is a one-line field with Accept and Cancel buttons. No source names the game
 action that opens it, so no game action opens it in OpenSky yet.
 
 ## The movie

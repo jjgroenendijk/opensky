@@ -20,7 +20,7 @@ struct SWFRuntimePropertyTests {
 
     @Test func positionReadsAndWritesInPixelsOverTwips() throws {
         let (runtime, panel) = try startedPanel()
-        // The fixture places the panel at 400/300 twips = 20/15 pixels.
+        // The fixture places the readout at 400/300 twips = 20/15 pixels.
         #expect(runtime.displayProperty(.positionX, of: panel) == .number(20))
         #expect(runtime.displayProperty(.positionY, of: panel) == .number(15))
         #expect(runtime.setDisplayProperty(.positionX, of: panel, to: .number(12.5)))

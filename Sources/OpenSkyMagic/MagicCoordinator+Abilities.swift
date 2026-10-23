@@ -3,7 +3,6 @@
 // modifier rebuild for actors whose effects came back from a save.
 // See docs/engine/magic.md and docs/engine/spellcasting.md.
 
-import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData

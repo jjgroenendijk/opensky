@@ -1,4 +1,4 @@
-// The one SWF layer that the HUD, the menus, and the UI Lab take turns to own.
+// The one SWF layer that the HUD and the menus take turns to own.
 
 import OpenSkyFormatsSWF
 import OpenSkyGameData

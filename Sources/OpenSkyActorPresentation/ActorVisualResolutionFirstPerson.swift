@@ -2,7 +2,7 @@
 // views. The skeleton becomes `PlayerBehaviorGraph.firstPersonRigPath`, each part uses
 // MOD4/MOD5, and the FaceGen head goes. A part without MOD4 is dropped, not given MOD2:
 // in Skyrim.esm no head, hair or feet armature has one, so absence means "not visible
-// from the eye". Iron gauntlets lose their glove as a result; the panel reports it.
+// from the eye". Iron gauntlets lose their glove as a result; the readout reports it.
 
 import Foundation
 

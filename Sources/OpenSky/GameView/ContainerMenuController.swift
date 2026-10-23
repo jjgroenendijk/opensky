@@ -126,17 +126,6 @@ final class ContainerMenuController {
         }
     }
 
-    func setMovieEnabled(_ enabled: Bool) {
-        guard enabled != movieEnabled else { return }
-        movieEnabled = enabled
-        guard isOpen else { return }
-        if enabled {
-            startMovie()
-        } else {
-            movie.stop()
-        }
-    }
-
     /// Binds the menu to `holder`. `vendor` is nil for a plain container.
     func target(
         _ holder: InventoryHolder,
@@ -241,7 +230,7 @@ final class ContainerMenuController {
     }
 
     /// Left and right swap sides, because the horizontal axis of a two-pane
-    /// menu picks the owner. Category still moves through the panel.
+    /// menu picks the owner. Category still moves through the readout.
     private func move(_ direction: MenuInputEvent.Direction) {
         switch direction {
         case .left, .right:

@@ -25,13 +25,6 @@ struct CLIContext {
         VirtualFileSystem(root: root)
     }
 
-    func makeTerrainLODConfigurationStore() -> TerrainLODConfigurationStore {
-        TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(
-            root: root,
-            settings: PlayerSettingsFile.savedData()
-        ))
-    }
-
     /// Every active plugin. Commands read records through this, never one plugin alone.
     func loadOrder() throws -> ActiveLoadOrder {
         do {

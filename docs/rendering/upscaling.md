@@ -27,11 +27,10 @@ or 100 percent. Off draws at full size and creates no scaler. 100 percent keeps 
 still runs the scaler, which then works as temporal anti-aliasing. MetalFX on Apple silicon
 upscales at most two times on each axis, so 50 percent is the lowest choice.
 
-The player settings `rendering.renderScale` and `rendering.upscaler` store the choices, so the
-next launch starts with them. Upscaling is off by default, because on the M1 it measured
-slower than native rendering (see When it pays). `Developer > Rendering Performance > Upscaling`
-writes the settings, and a change there applies on the next frame. The launcher's Graphics
-page writes the same settings before the game starts.
+The player settings `rendering.renderScale` and `rendering.upscaler` store the choices, so the next
+launch starts with them. Upscaling is off by default, because on the M1 it measured slower than
+native rendering (see When it pays). The launcher's Graphics page writes the same settings before
+the game starts.
 
 ## When it pays
 
@@ -82,8 +81,8 @@ scaler inside a frame:
 
 1. A frame that needs a scaler it does not have starts a `@concurrent` build task and draws the
    scene at full size.
-2. Later frames keep drawing at full size. The Upscaling readout says the scaler is still being
-   built, and frame interpolation reports that it waits for it.
+2. Later frames keep drawing at full size. Frame interpolation reports that it waits for the
+   scaler.
 3. The task stores the scaler when MetalFX returns. The next frame takes it, makes the input
    and output textures, and starts upscaling with a fresh history.
 
@@ -102,15 +101,11 @@ of the old view.
 - A moving shadow on still ground lags a little: the ground pixel has no motion, so the
   scaler blends in the old shadow for a few frames. A reactive mask could fix it.
 - Particles and other blended effects draw before the scaler and have no motion of their own.
-- A GPU without the chosen MetalFX scaler shows the reason in the panel and draws at full
-  size. So does a size MetalFX refuses.
+- A GPU without the chosen MetalFX scaler draws at full size. So does a size MetalFX refuses.
 - The spatial scaler rejects an sRGB input with a non-sRGB output, so its output uses the
   scene's color format. The temporal scaler writes 16-bit float.
 
 ## Checking it
 
-`Developer > Rendering Performance > Upscaling` has the render scale (`RenderScaleControl`)
-and the scaler (`UpscalerControl`), and a readout (`UpscalingStatsLabel`): the input and
-output sizes, the history resets, and whether the scaler is still being built.
-`make benchmark ARGS='--set rendering.renderScale=67%'` measures the GPU time against a native
-run, and `--set rendering.upscaler=spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).
+`make benchmark ARGS='--set rendering.renderScale=67%'` measures the GPU time against a native run,
+and `--set rendering.upscaler=spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).

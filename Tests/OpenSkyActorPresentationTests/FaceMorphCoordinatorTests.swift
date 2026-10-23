@@ -1,4 +1,4 @@
-// The Face Morphs panel shell: it acts on the playback of the selected actor only.
+// The Face Morphs readout shell: it acts on the playback of the selected actor only.
 
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM

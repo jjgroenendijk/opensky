@@ -7,7 +7,6 @@
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldInterface
-import OpenSkyWorldTesting
 import simd
 
 @MainActor

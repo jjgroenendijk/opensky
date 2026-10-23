@@ -17,7 +17,7 @@ extension Renderer {
         set { swf.enabled = newValue }
     }
 
-    /// Centered SWF presentation scale. The HUD acceptance panel uses this for
+    /// Centered SWF presentation scale. The HUD acceptance readout uses this for
     /// live A/B checks without mutating the movie's display list.
     public var swfScale: Float {
         get { swf.scale }

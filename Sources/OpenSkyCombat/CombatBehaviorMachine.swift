@@ -19,7 +19,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// Seconds spent in the current phase.
     public private(set) var phaseSeconds: Float = 0
     /// Fights entered, attacks started, contact steps reached, guards raised and
-    /// searches begun since construction. The panel reads all five; the first
+    /// searches begun since construction. The readout reads all five; the first
     /// two differ only by an attack a stagger interrupted before it connected.
     public private(set) var fightCount = 0
     public private(set) var attackCount = 0
@@ -136,7 +136,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     // MARK: - Waiting
 
     /// Not in a fight: engage when the target is perceived or a script says so.
-    /// Hostility itself is still entered only by a blow, the panel, or a script. An
+    /// Hostility itself is still entered only by a blow, the readout, or a script. An
     /// actor under the flee threshold does not start a fight. A frightened actor
     /// "will not flee until combat begins", and then runs at once; so does an actor
     /// whose Confidence breaks it off, such as a coward.

@@ -10,7 +10,6 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))

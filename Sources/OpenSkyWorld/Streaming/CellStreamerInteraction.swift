@@ -155,7 +155,7 @@ extension CellStreamer {
         return (Self.talkTarget(actor), actor.candidate.key)
     }
 
-    /// One picked actor as a crosshair target, so HUD prompt, compass and panel read it the
+    /// One picked actor as a crosshair target, so HUD prompt, compass and readout read it the
     /// usual way. No sounds: a greeting is voice, not the base record's activation sound.
     private static func talkTarget(_ hit: TalkHit) -> InteractionTarget {
         InteractionTarget(
@@ -262,7 +262,7 @@ extension CellStreamer {
     }
 
     /// The resident ACHR closest to `position`, or nil when none is loaded. The
-    /// equipment sidebar uses it. Linear over resident actors, with deterministic
+    /// equipment readout uses it. Linear over resident actors, with deterministic
     /// ties through `actorEntries()`.
     public func nearestActorEntry(to position: SIMD3<Float>) -> RuntimeReferenceEntry? {
         residentActorEntries().min { lhs, rhs in
@@ -320,7 +320,7 @@ extension CellStreamer {
 
     /// The appearance skips the last build reported for one ACHR, matched on the
     /// "ACHR <id>: " prefix. Empty when the actor resolved cleanly or is not
-    /// resident; the panel tells those apart.
+    /// resident; the readout tells those apart.
     public func appearanceSkipReasons(forActor formID: FormID) -> [String] {
         let prefix = "ACHR \(formID): "
         let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
@@ -328,12 +328,6 @@ extension CellStreamer {
             .flatMap(\.actorAppearanceSkipReasons)
             .filter { $0.hasPrefix(prefix) }
             .map { String($0.dropFirst(prefix.count)) }
-    }
-
-    /// The head the last build gave one ACHR, or nil when it is not resident.
-    public func actorHead(forActor formID: FormID) -> ActorHeadReadout? {
-        let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
-        return summaries.lazy.compactMap { $0.actorHeads[formID] }.first
     }
 
     /// Which resident cell holds a reference, so a Papyrus world write can be

@@ -94,7 +94,7 @@ struct RagdollRuntimeTests {
         #expect(runtime.world.ragdollCount == 1)
     }
 
-    /// The dev trigger kills and hands off in one call, which is what the panel
+    /// The dev trigger kills and hands off in one call, which is what the readout
     /// button does.
     @Test
     func theDevTriggerKillsAndHandsOff() {

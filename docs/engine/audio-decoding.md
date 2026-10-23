@@ -94,18 +94,9 @@ A new line for the same actor cuts off the old one, and so does a closed convers
 gets a call when the last file plays out, not when the line is cut off. With audio off, nothing is
 said, and the scene still times the line by its voice file length.
 
-The voice stays where it started. A speaker who walks during a long line is not followed. The
-Voice section's speech readout lists each speaking actor, its file, and its place in the line.
+The voice stays where it started. A speaker who walks during a long line is not followed.
 
-## Voice controls
-
-World > Dialogue & Voice > Voice has a filter field, a file picker, and Play line. The archives hold
-75,408 voice files, so the picker lists the first 200 matches of the filter, and the readout always
-says how many matched in total. A short list that looked like the whole set would mislead. The
-filter starts with a voice type folder, so the picker is useful before anything is typed. Play line
-starts the file the same way a conversation does: framed as `.fuz`, positional, ahead of the
-camera, in the Voice category. The readout shows the line, its duration and lip byte count, and the
-playback position.
+## Checking it
 
 `openskycli audio voice-sweep` frames every `.fuz` entry and checks that every voice file name can
 be rebuilt from the records.

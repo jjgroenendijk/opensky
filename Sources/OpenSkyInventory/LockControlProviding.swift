@@ -69,18 +69,6 @@ nonisolated public struct LockControlSnapshot: Equatable, Sendable {
     }
 }
 
-@MainActor
-public protocol LockControlProviding: AnyObject {
-    var lockSnapshot: LockControlSnapshot { get }
-    func selectLock(_ reference: FormID?)
-    @discardableResult
-    func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome
-    func setPlayerCarriesEveryKey(_ enabled: Bool)
-    /// Opens the lockpicking menu on the selected lock.
-    @discardableResult
-    func pickSelectedLock() -> LockActionOutcome
-}
-
 extension LockCoordinator {
     public var lockSnapshot: LockControlSnapshot {
         guard items != nil else { return .unavailable }

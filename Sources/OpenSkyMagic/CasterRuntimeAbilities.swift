@@ -5,7 +5,6 @@
 // docs/engine/spellcasting.md#abilities-and-powers.
 
 import Foundation
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface

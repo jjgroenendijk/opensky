@@ -17,18 +17,12 @@ page.
 
 A kill cam plays when all of these are true:
 
-- Kill cams are on (`World > Kill Cam > Kill cams`).
 - The player made the kill. OpenSky learns of a death in the ragdoll death sweep, which
   does not record the killer, so it treats the player as the attacker of every hostile death.
 - The dead actor was hostile to the player.
 - No other hostile actor in combat is left. Vanilla shows kill cams only on the last enemy.
 - A roll against `fKillCamBaseOdds` times the player's own chance passes. The install sets
-  `fKillCamBaseOdds` to 1. The player's chance is the "Chance" slider in
-  `World > Kill Cam`, 100% by default, so every eligible kill plays unless the player lowers it.
-  This stands in for the game's kill cam frequency option.
-
-The sidebar can force a kill cam on the nearest actor. That skips the odds and the
-last-enemy rule.
+  `fKillCamBaseOdds` to 1. This stands in for the game's kill cam frequency option.
 
 Differences from the game:
 

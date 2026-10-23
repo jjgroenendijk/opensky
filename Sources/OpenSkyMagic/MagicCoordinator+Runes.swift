@@ -69,7 +69,7 @@ extension MagicCoordinator {
         }
     }
 
-    /// The panel line: placed runes against the player's limit, and how many went off.
+    /// The readout line: placed runes against the player's limit, and how many went off.
     var runeText: String {
         let mine = runes.count { $0.payload.caster == .player }
         return "Runes: \(mine) of \(runeSettings.maximumPlayerRunes) placed by the player, "

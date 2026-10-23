@@ -55,7 +55,7 @@ extension CrimeCoordinator {
         )))
     }
 
-    /// Every guard of `faction` turns hostile. The panel's resist control and
+    /// Every guard of `faction` turns hostile. The readout's resist control and
     /// a closed arrest conversation both come through here.
     public func resistArrest(with faction: ReferenceKey) {
         if case let .confront(guardKey, _, _) = guards.active {

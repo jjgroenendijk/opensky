@@ -192,17 +192,6 @@ extension MagicWorldAdapter: MagicWorld {
         game.inventory.name(of: item)
     }
 
-    /// The race the actor-value baseline derives from, so a session cannot
-    /// have one race's attributes and another race's powers.
-    func playerRaceSpells() -> [FormID] {
-        guard
-            let baselines = game.actorValues.runtime?.baselines,
-            let raceID = baselines.playerRace(chosen: game.menuWorld.playerIdentity?.race),
-            let race = baselines.resolver?.races[raceID.rawValue]
-        else { return [] }
-        return race.spells
-    }
-
     func conditionText(
         of function: UInt16,
         parameter: UInt32,

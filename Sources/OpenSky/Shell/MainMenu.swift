@@ -8,42 +8,8 @@ enum MainMenu {
         let mainMenu = NSMenu()
         mainMenu.addItem(submenuItem(makeAppMenu(target: target)))
         mainMenu.addItem(submenuItem(makeGameMenu(target: target)))
-        mainMenu.addItem(submenuItem(makeViewMenu()))
         mainMenu.addItem(submenuItem(makeEditMenu()))
         return mainMenu
-    }
-
-    /// Every action here resolves on the responder chain to the shell's
-    /// split-view controller, which also validates them.
-    static func makeViewMenu() -> NSMenu {
-        let viewMenu = NSMenu(title: "View")
-        viewMenu.addItem(item(
-            title: "Hide Sidebar",
-            action: #selector(NSSplitViewController.toggleSidebar(_:)),
-            keyEquivalent: "s",
-            modifiers: [.control, .command]
-        ))
-        viewMenu.addItem(item(
-            title: "Show Frame HUD",
-            action: #selector(AppShellViewController.toggleFrameHUD(_:)),
-            keyEquivalent: "h",
-            modifiers: [.option, .command]
-        ))
-        viewMenu.addItem(item(
-            title: "Hide Inspector",
-            action: #selector(AppShellViewController.toggleInspectorColumn(_:)),
-            keyEquivalent: "i",
-            modifiers: [.option, .command]
-        ))
-        viewMenu.addItem(.separator())
-        let resetItem = NSMenuItem(
-            title: "Reset all overrides",
-            action: #selector(AppShellViewController.resetAllOverrides(_:)),
-            keyEquivalent: ""
-        )
-        resetItem.identifier = NSUserInterfaceItemIdentifier("ResetAllOverridesCommand")
-        viewMenu.addItem(resetItem)
-        return viewMenu
     }
 
     private static func makeAppMenu(target: AppDelegate) -> NSMenu {

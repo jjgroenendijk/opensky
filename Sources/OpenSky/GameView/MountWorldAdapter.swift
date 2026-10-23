@@ -3,7 +3,6 @@
 // live in `MountRules` (docs/engine/riding.md).
 
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
@@ -42,8 +41,6 @@ protocol MountWorldHost: AnyObject {
 final class MountWorldAdapter {
     unowned let game: any MountWorldHost
     private(set) lazy var mounts = MountCoordinator(world: self)
-    /// How far the sidebar's "Mount nearest" looks. OpenSky's value.
-    static let nearestDistance: Float = 1024
     static let dragonKeyword = "ActorTypeDragon"
 
     init(game: any MountWorldHost) {
@@ -216,18 +213,6 @@ extension MountWorldAdapter: MountWorld {
         return candidate
     }
 
-    func nearestMountCandidate() -> ReferenceKey? {
-        guard let feet = game.gameSession?.walkController.feetPosition else { return nil }
-        return game.actorWorld.combatActors()
-            .filter { simd_distance($0.feet, feet) <= Self.nearestDistance }
-            .sorted { simd_distance($0.feet, feet) < simd_distance($1.feet, feet) }
-            .first { actor in
-                guard case .mount = MountRules.decide(mountCandidate(actor.key), isRiding: false)
-                else { return false }
-                return true
-            }?.key
-    }
-
     func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
     {
@@ -268,25 +253,5 @@ extension MountWorldAdapter: PlayerMountDriving {
         ))
         guard let drive = mounts.drive else { return nil }
         return (drive.motion, drive.heading)
-    }
-}
-
-/// World > Player & Locomotion > Mount reads the adapter.
-extension MountWorldAdapter: MountControlProviding {
-    var mountSnapshot: MountControlSnapshot {
-        let readout = mounts.readout
-        let keys = [readout.mount, readout.nearest, readout.lastMount].compactMap(\.self)
-        let names = Dictionary(keys.map { key in
-            (key, game.actorWorld.combatActor(key: key)?.name ?? key.description)
-        }) { first, _ in first }
-        return MountControlSnapshot(readout: readout, names: names)
-    }
-
-    func mountNearest() {
-        run(mounts.mountNearest())
-    }
-
-    func dismountPlayer() {
-        run(mounts.dismount())
     }
 }

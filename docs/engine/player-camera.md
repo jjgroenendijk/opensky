@@ -13,13 +13,11 @@ is, and how the player's body is drawn.
 
 ## Camera modes
 
-There are three modes, and `G` cycles them: fly, walk (first person), and third person. The
-World > World > Camera selector lists the same three in the same order, so the key and the panel
-reach the same modes ([main-app UI](/tools/app-ui.md)).
+There are three modes, and `G` cycles them: fly, walk (first person), and third person.
 
 First and third person are the same simulated player: one capsule, one movement bridge, and one
 behavior graph. Only the eye differs. Everything that needs a player (the use-key ray, the trigger
-capsule, the movement readout) asks "is the player in control?", not "is this walk mode?". So third
+capsule, the movement state) asks "is the player in control?", not "is this walk mode?". So third
 person keeps all of it.
 
 Switching between the two player modes does not move the capsule. Only entering from fly places it
@@ -112,14 +110,4 @@ the vanilla `0_master.hkx`, with the character skeleton from `skeleton.hkx` and 
 demand from the animation archive. It is attached to the running movement bridge once the scene
 provider exists. A bridge with no graph is a supported setup and queues nothing.
 
-The body is rebuilt when the player's equipped set changes, whether the panel, a container menu, or
-a script changed it. The wiring watches the resulting set, not any one caller.
-
-## Controls
-
-- World > World > Camera: the mode selector. The readout names the live mode, so a bug report
-  carries the camera that made the frame. It also shows walk and run speed, step height, and where
-  each value came from.
-- World > First person: the arms toggle, the field of view slider, and a readout of the
-  first-person graph, the arm meshes, the camera bone, and any name the first-person graph does not
-  declare ([first person](/engine/first-person.md)).
+The wiring watches the resulting set, not any one caller.

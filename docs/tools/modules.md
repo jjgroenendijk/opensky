@@ -83,7 +83,7 @@ before inventory is split, so `interface("OpenSkyInventory", ...)` comes first, 
 A fourth helper, `composition`, declares a module that the app and `OpenSkyCLI` share. It may
 import feature implementations, because it is part of the composition roots, and no module may
 import it. Example: `OpenSkyPreview` prints records with the whole-game condition registry, and
-both the Preview panel and `openskycli record` use it.
+`openskycli record` and `openskycli preview` use it.
 
 A fifth helper, `domain`, declares one domain of the world feature: a module below
 `OpenSkyWorld`, such as `OpenSkyPlayer` or `OpenSkyCells`.
@@ -170,7 +170,7 @@ OpenSkyQuests             quest runtime, alias filler, story manager, start-game
 OpenSkyDialogue           dialogue runtime, branches, scenes, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
 OpenSkySave               OpenSky save files: encoder, decoders, store; Skyrim save import
-OpenSkyMenus              menu models, movie bridges, panel seams that name several features
+OpenSkyMenus              menu models, movie bridges, HUD and system menu coordinators
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
@@ -263,7 +263,7 @@ A lower module never imports a higher one. These patterns keep it that way:
   The implementation conforms, and the app hands it over as that protocol.
 
   The app is the composition root, so it may downcast to the implementation it built, for
-  example `questRuntime as? QuestRuntime` for the journal panel.
+  example `questRuntime as? QuestRuntime` for the journal menu.
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime`, `ActiveEffectRuntime`, and `DialogueRuntime` take their
   `ConditionFunctionRegistry` as a parameter, and the caller passes `.standard`, which lives

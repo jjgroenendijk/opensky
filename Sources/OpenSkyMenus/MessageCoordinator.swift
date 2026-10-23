@@ -1,5 +1,5 @@
-// HUD notifications, help messages, and message boxes for scripts and the
-// sidebar. The rules live in `NotificationQueue`, `HelpMessageLedger`, and
+// HUD notifications, help messages, and message boxes for scripts and
+// agent control. The rules live in `NotificationQueue`, `HelpMessageLedger`, and
 // `MessageBoxMenuModel`; this shell moves their output to the HUD and the
 // overlay. See docs/engine/messages.md.
 
@@ -21,7 +21,7 @@ public protocol MessageWorld: SWFLayerWorld {
     func setHUDHelpMessage(_ text: String?)
     func shakeCamera(source: ReferenceKey?, strength: Float, duration: Float) -> Bool
     func forceCameraMode(firstPerson: Bool) -> Bool
-    /// Every MESG editor ID, sorted, for the panel picker.
+    /// Every MESG editor ID, sorted, for the readout picker.
     var messageEditorIDs: [String] { get }
     func messageKey(editorID: String) -> ReferenceKey?
     /// Receives keys while a box is open.
@@ -35,8 +35,6 @@ public final class MessageCoordinator {
     public private(set) var help = HelpMessageLedger()
     public private(set) var boxes = MessageBoxMenuModel()
     public private(set) var lastAnswer: MessageBoxAnswer?
-    /// What the last panel action did, for the readout.
-    public var lastPanelOutcome: String?
     private var frame: UInt64 = 0
     private var nextToken: UInt64 = 1
     /// Engine menus waiting on a button, by token. A token not here is a script's.
@@ -65,10 +63,6 @@ public final class MessageCoordinator {
         self.movies = movies
         self.hud = hud
         self.world = world
-    }
-
-    public var movieLoaded: Bool {
-        movie.isLoaded
     }
 
     /// Reads the help counts again, after a save loads.
@@ -101,12 +95,6 @@ public final class MessageCoordinator {
         if wasVisible != help.visibleText {
             world?.setHUDHelpMessage(help.visibleText)
         }
-    }
-
-    public func resetAllHelpMessages() {
-        help.resetAll()
-        storeHelpRecords()
-        world?.setHUDHelpMessage(nil)
     }
 
     private func storeHelpRecords() {
@@ -149,8 +137,8 @@ public final class MessageCoordinator {
         publish()
     }
 
-    /// Shows a MESG from the panel as a notification or as a box, as the
-    /// panel asks. No script waits on a box opened here.
+    /// Shows a MESG from the readout as a notification or as a box, as the
+    /// readout asks. No script waits on a box opened here.
     @discardableResult
     public func show(editorID: String, asBox: Bool) -> MessageShowOutcome {
         guard
@@ -319,7 +307,7 @@ extension MessageCoordinator: PapyrusPresenting {
     }
 }
 
-/// What one panel `show` did. Only `text` builds the readout line.
+/// What one readout `show` did. Only `text` builds the readout line.
 nonisolated public enum MessageShowOutcome: Equatable, Sendable {
     case notFound(String)
     case opened(String)

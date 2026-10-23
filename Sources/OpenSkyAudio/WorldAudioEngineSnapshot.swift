@@ -1,10 +1,10 @@
 // Published Equatable snapshot of the world audio graph — the only value that
-// crosses from the engine to the World > Audio readout (2 Hz ticker).
+// crosses from the engine to the audio readout.
 
 import AVFAudio
 
 extension WorldAudioEngine {
-    /// Output device format line for the panel readout.
+    /// Output device format line for the readout.
     public var outputFormatDescription: String {
         let format = engine.outputNode.outputFormat(forBus: 0)
         return "\(Int(format.sampleRate)) Hz, \(format.channelCount) ch"

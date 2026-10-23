@@ -1,6 +1,5 @@
 // The HUD notice of a refused cast, and the disenchanting experience setting.
 
-import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import Testing

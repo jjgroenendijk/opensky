@@ -41,7 +41,7 @@ nonisolated public struct LipSyncSnapshot: Equatable, Sendable {
     public let unmappedActiveSlots: [Int]
     public let isDecaying: Bool
     /// How the active track framed itself: header size, tuple width, vocabulary and slot
-    /// stride. The corpus has several of each, so the panel shows which one this used.
+    /// stride. The corpus has several of each, so the readout shows which one this used.
     public let layout: String?
     public let head: LipHeadMotion
 }

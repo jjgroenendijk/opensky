@@ -73,10 +73,6 @@ nonisolated public struct ShoutMachine: Equatable, Sendable {
         phase = .inhaling(held: 0)
     }
 
-    public mutating func cancel() {
-        phase = .idle
-    }
-
     public mutating func startCooldown(_ seconds: Float) {
         cooldown = max(0, seconds)
         cooldownTotal = cooldown

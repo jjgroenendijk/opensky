@@ -1,5 +1,5 @@
-// Asks one condition function directly, for inspection panels. The comparison is `>= 0`
-// and the run-on is the subject, set once here so two panels agree on "current value".
+// Asks one condition function directly, for inspection readouts. The comparison is `>= 0`
+// and the run-on is the subject, set once here so two readouts agree on "current value".
 // Returns the value or why there is none. See docs/engine/conditions.md.
 
 import Foundation

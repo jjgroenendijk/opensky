@@ -234,7 +234,7 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     public var actorAnimationFailureCount = 0
     public var actorAnimationFailureReasons: [String] = []
     /// "ACHR <id>: <reason> (<subject>)". Not failures, so outside the identities;
-    /// read by the `World > Inventory & Equipment` inspection.
+    /// read by the inventory and equipment inspection.
     public var actorAppearanceSkipReasons: [String] = []
     /// What each drawn humanoid's head is built from, by ACHR.
     public var actorHeads: [FormID: ActorHeadReadout] = [:]

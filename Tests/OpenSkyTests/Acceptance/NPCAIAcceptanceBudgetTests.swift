@@ -127,7 +127,7 @@ struct NPCAIAcceptanceBudgetTests {
 
     /// The crowd cap is what makes the mover slice a fixed cost rather than a
     /// per-NPC one. The ninth simultaneous request is refused, and refusing it
-    /// is an answer the panel prints rather than a silent drop.
+    /// is an answer the readout prints rather than a silent drop.
     @Test
     func theCrowdCapRefusesTheNinthMoverAndSaysSo() {
         var runtime = NPCMovementRuntime()

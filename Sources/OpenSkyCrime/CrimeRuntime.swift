@@ -183,7 +183,7 @@ public struct CrimeRuntime {
     }
 
     /// Drops `key`'s whole ledger, bounties and counts alike. The reset a dev
-    /// panel and a new game both need.
+    /// readout and a new game both need.
     ///
     /// - Returns: true when there was a ledger to drop.
     @discardableResult

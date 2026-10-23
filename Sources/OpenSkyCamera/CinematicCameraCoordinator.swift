@@ -61,7 +61,7 @@ public final class CinematicCameraCoordinator {
     }
 
     /// Picks and starts a kill cam on `target`. `force` skips the odds and the
-    /// last-enemy rule, for the sidebar.
+    /// last-enemy rule, for state reads.
     @discardableResult
     public func playKillCam(
         attacker: ReferenceKey, target: ReferenceKey, remainingHostiles: Int, force: Bool = false
@@ -99,28 +99,6 @@ public final class CinematicCameraCoordinator {
         )
     }
 
-    /// Plays one CAMS on its own, for the sidebar. False when no shot has that editor ID.
-    @discardableResult
-    public func playShot(editorID: String, attacker: ReferenceKey, target: ReferenceKey?) -> Bool {
-        guard let world, let shot = world.cameraPaths?.shots.record(editorID: editorID) else {
-            return note("no camera shot \(editorID)")
-        }
-        let track = shot.record.model.flatMap { world.cameraTrack(model: $0.path) }
-        self.attacker = attacker
-        self.target = target
-        player = CinematicShotPlayer(stages: [CinematicStage(shot: shot, track: track)])
-        playedCount += 1
-        startStageEffects()
-        return note("playing 1 shot: \(editorID)")
-    }
-
-    /// Walks the camera paths for a pair without playing, so the panel shows which pass.
-    public func inspectPaths(attacker: ReferenceKey, target: ReferenceKey?) {
-        guard let world, let store = world.cameraPaths else { return }
-        let check = pathCheck(world, attacker: attacker, target: target)
-        lastSelection = CameraShotSelector(store: store, check: check).select { _ in 0 }
-    }
-
     private func pathCheck(
         _ world: any CinematicCameraWorld, attacker: ReferenceKey, target: ReferenceKey?
     ) -> CameraShotSelector.Check {
@@ -131,11 +109,6 @@ public final class CinematicCameraCoordinator {
             attacker: attacker,
             target: target
         )
-    }
-
-    public func stop() {
-        player?.stop()
-        finish()
     }
 
     // MARK: - Shake

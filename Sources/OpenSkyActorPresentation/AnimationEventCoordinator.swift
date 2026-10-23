@@ -24,9 +24,9 @@ public final class AnimationEventCoordinator {
     let world: any AnimationEventWorld
     /// Off drops every action, so the graph's own events still run.
     public var isEnabled = true
-    /// Actions run, by kind, for the panel.
+    /// Actions run, by kind, for the readout.
     public private(set) var counts: [String: Int] = [:]
-    /// The last annotation acted on, and its source, for the panel.
+    /// The last annotation acted on, and its source, for the readout.
     public private(set) var lastEvent: String?
     /// Sound editor IDs a clip named that no `SNDR` has.
     public private(set) var missingSounds: Set<String> = []
@@ -60,7 +60,7 @@ public final class AnimationEventCoordinator {
         return action
     }
 
-    /// One panel line per action kind, in name order.
+    /// One readout line per action kind, in name order.
     public var readout: [String] {
         counts.keys.sorted().map { "\($0): \(counts[$0] ?? 0)" }
     }

@@ -1,4 +1,4 @@
-// The text of the World > Audio reverb readout, kept out of the panel so a
+// The text of the reverb readout, kept as a pure function so a
 // unit test can pin it.
 
 import Foundation

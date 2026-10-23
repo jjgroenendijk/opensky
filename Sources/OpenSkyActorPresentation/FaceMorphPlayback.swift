@@ -1,6 +1,6 @@
 // Actor-local FaceGen expression composition and frame-safe GPU upload.
 // TRI deltas are composed on the CPU because the named target set is sparse
-// and controlled by the developer panel; the vertex shader consumes one
+// and controlled by the developer readout; the vertex shader consumes one
 // position/normal delta pair per face vertex before skinning.
 
 import Foundation

@@ -52,13 +52,6 @@ thin vertical box. The narrow phase tests triangle soups, convex hull faces, and
 both sides. Curved shapes use their world box, which is safe. Any hit clears the volume until the
 ray is open again. This is a single-point roof test on purpose.
 
-## Where to see it
-
-`World > Environment > Weather` can force any decoded `WTHR`, has Clear, Rain, and Snow shortcuts,
-and can pause the weather transition (particles keep playing). Precipitation has its own on and off
-switch. The readout shows the main type, the blended intensity, rain and snow counts, and whether the
-camera is under a roof.
-
 ## Not done
 
 - Roof masks from several rays, precipitation collision, splashes, and snow building up.

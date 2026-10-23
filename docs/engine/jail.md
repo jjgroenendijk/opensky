@@ -89,7 +89,3 @@ belongings stay in the `PLCN` chest for the player to find.
 - Quest items are moved to the chest like any other item. The game hides them instead.
 - Followers do not go to the `WAIT` marker.
 - Cidhna Mine's pickaxe-and-ore way of serving time is a quest script, not part of this.
-
-## Controls
-
-World > Crime & Factions > Bounty shows the stay, and has Serve sentence.

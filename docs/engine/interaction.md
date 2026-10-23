@@ -131,9 +131,8 @@ name gains the difficulty, such as "Chest (Adept)". See [locks](/engine/locks.md
 
 ## Taking and dropping
 
-World items need no menu. Taking an object is a world change. The panel buttons and the menus call
-the same three operations as the use key. Each is one world state write, so the change log, the cell
-rebuild, and the save all see it with no extra work.
+World items need no menu. Taking an object is a world change. Each is one world state write, so the
+change log, the cell rebuild, and the save all see it with no extra work.
 
 | Operation | Inventory | World |
 | --- | --- | --- |
@@ -188,10 +187,6 @@ A harvested plant grows back when its cell resets ([cell reset](/engine/cell-res
 player leaves the cell, stays away for `iHoursToRespawnCell` game hours, and comes back. The
 install has 240 hours, which is 10 game days.
 
-World > Inventory & Equipment > Harvest shows the wait for the plant under the crosshair. Its
-`Grow back` button makes the one plant grow back now. World > Runtime State makes every cell
-reset due.
-
 ## Where a drop lands
 
 A dropped object lands one step in front of the camera and one standing height below it. These are
@@ -225,17 +220,3 @@ shows. An `ACTI` with its own `RNAM` verb keeps it. Lock and harvest labels appl
 The compass marker is at the reference's position, not the hit point, so it stays steady while
 the ray moves over the object. No target hides the prompt and removes the marker. The HUD only
 listens. It is not a second interaction system.
-
-## Controls
-
-World > HUD & Interaction:
-
-- Target: shows the `REFR` and base FormIDs, action, name, distance, positions, the exact prompt sent
-  to the movie, and the headings. It only shows live values. It has no fake target that could hide a
-  real failure.
-- Items: Take target, Search target, Take all, Close container, and Drop (a FormID and a count, or the
-  player's first stack). The readout shows the target, the player's stacks, weight and gold, the open
-  container, spawned objects, and the last result.
-
-The Items section has no reset of its own. Takes and drops are world changes, and World > Runtime
-State already resets those. Two resets would give the same changes two owners.

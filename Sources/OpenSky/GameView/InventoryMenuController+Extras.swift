@@ -19,10 +19,6 @@ extension InventoryMenuController {
         perform { game.inventory.toggleFavourite($0.item).text }
     }
 
-    func bindHotkey(_ slot: Int) {
-        perform { game.inventory.bindHotkey(slot, to: $0.item).text }
-    }
-
     /// A number key in play: equips or unequips the bound item, or uses a potion,
     /// food, ingredient, or poison, as activating its row would.
     func useHotkey(_ slot: Int) {
@@ -98,13 +94,6 @@ extension InventoryMenuController {
     }
 
     // MARK: - Preview
-
-    func setPreviewEnabled(_ enabled: Bool) {
-        previewEnabled = enabled
-        if !enabled {
-            hidePreview()
-        }
-    }
 
     /// Each frame while the menu is open: turns the selected row's model.
     func tick(now: Double) {

@@ -1,6 +1,6 @@
 // Detonates explosions: damage with falloff, both sounds, the image-space
 // modifier at the viewer's strength, a placed hazard, and thrown debris. One
-// entry point serves projectiles, area spells, and the sidebar.
+// entry point serves projectiles, area spells, and agent control.
 // See docs/formats/explosions.md, section "Runtime".
 
 import Foundation
@@ -76,7 +76,7 @@ public final class ExplosionRuntime {
         return report
     }
 
-    /// Throws `count` pieces of one DEBR record at `position`, for the sidebar.
+    /// Throws `count` pieces of one DEBR record at `position`, for a forced test.
     @discardableResult
     public func throwDebris(_ key: ReferenceKey, at position: SIMD3<Float>, force: Float) -> Int {
         guard let record = records.debris.record(key)?.record else { return 0 }
@@ -90,11 +90,6 @@ public final class ExplosionRuntime {
     public func advance(_ seconds: Float) {
         guard !debris.isEmpty else { return }
         debris = DebrisSelection.step(debris, seconds: seconds)
-    }
-
-    public func clear() {
-        debris = []
-        reports = []
     }
 
     private func startImageSpace(_ spec: ExplosionSpec, at position: SIMD3<Float>) -> Float? {

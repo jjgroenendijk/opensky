@@ -14,10 +14,9 @@ player ([face morphs](/engine/face-morphs.md)). The track format is on the
 
 ## Starting a line
 
-Starting a `.fuz` voice line decodes its `.lip` part, if there is one. The line goes to the
-speaker of the open conversation, or else to the actor under the crosshair. That actor's player
-starts. Missing lip data, no chosen actor, or bad input is logged and shown in the panel. It never
-stops the audio.
+Starting a `.fuz` voice line decodes its `.lip` part, if there is one. The line goes to the speaker
+of the open conversation, or else to the actor under the crosshair. That actor's player starts. It
+never stops the audio.
 
 Starting another line replaces the current one.
 
@@ -44,9 +43,3 @@ straight line to the bind pose over 0.15 seconds.
 The file stores numbered slots, not names. So the mapping is made visible. A snapshot shows the
 actor, the line, which clock is in use, the track time, the live mapped weights, active slots
 with no mapping, and whether the release fade is running.
-
-## Controls
-
-World > Dialogue & Voice > Voice: pick a voice file, play it, and turn lip sync on or off. The
-readouts show the voice line, the voice submix (distance and playback clock, or silence), and the
-lip sync snapshot.

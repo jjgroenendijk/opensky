@@ -1,8 +1,7 @@
-// The shell of the `World > AI & Navigation` panel: one actor selection for
+// AI and navigation inspection: one actor selection for
 // every section, the crosshair pick, and the move, stop and reevaluate actions.
 // The rules live in `AINavigationCore`. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyPhysics
@@ -17,7 +16,7 @@ public protocol AINavigationWorld: AnyObject {
     var isStreaming: Bool { get }
     /// Nil without a renderer.
     var camera: AICameraPose? { get }
-    /// The same actor list the fight uses, so both panels agree.
+    /// The same actor list the fight uses, so both readouts agree.
     func actorCandidates() -> [AIActorCandidate]
     /// The nearest collision the ray hits, over every collision candidate.
     func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit?
@@ -41,7 +40,7 @@ extension AINavigationWorld {
 }
 
 @MainActor
-public final class AINavigationCoordinator: AINavigationControlProviding {
+public final class AINavigationCoordinator {
     public private(set) var lastAction = AINavigationActionOutcome.idle
 
     /// Nil follows the nearest resident actor. A chosen actor that stops being
@@ -174,34 +173,6 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         packages.restart(key)
         let readout = packages.readout(for: key) ?? AINavigationCore.emptyPackageReadout(key)
         lastAction = .reevaluated(actor: name, readout)
-    }
-
-    /// `AddScriptPackage` on the selected actor, by editor ID or hexadecimal FormID.
-    /// Nil or empty removes it, as `RemoveScriptPackage` does.
-    public func setSelectedAIActorScriptPackage(_ name: String?) {
-        let actors = actorOptions()
-        guard let key = AINavigationCore.resolve(chosenActor, in: actors) else {
-            lastAction = .noActor(verb: "add a script package")
-            return
-        }
-        let actor = AINavigationCore.name(of: key, in: actors)
-        guard packages.registeredActors[key] != nil else {
-            lastAction = .noPackageStack(actor: actor)
-            return
-        }
-        guard let name, !name.isEmpty else {
-            packages.setScriptPackage(nil, for: key)
-            lastAction = .scriptPackage(actor: actor, package: nil)
-            return
-        }
-        guard
-            let package = packages.store?.packageID(named: name),
-            packages.setScriptPackage(package, for: key)
-        else {
-            lastAction = .unknownPackage(name)
-            return
-        }
-        lastAction = .scriptPackage(actor: actor, package: name)
     }
 
     private func actorOptions() -> [AIActorOption] {

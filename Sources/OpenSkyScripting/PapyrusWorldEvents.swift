@@ -8,7 +8,7 @@ import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {
     /// Runs one fixed step: resumes due latent calls, then drains events up to
-    /// the budget. It ignores `isPaused`, so the sidebar can step a paused VM.
+    /// the budget. It ignores `isPaused`, so agent control can step a paused VM.
     /// All scripts share `budget.instructions`; once it is spent, a new event
     /// yields before its first instruction and waits its turn in the scheduler.
     @discardableResult

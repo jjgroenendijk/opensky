@@ -30,11 +30,6 @@ nonisolated struct ParticleForceField {
         }
     }
 
-    var isEmpty: Bool {
-        bombs.isEmpty && gravities.isEmpty && drags.isEmpty && colliders.isEmpty
-            && recycleBounds.isEmpty
-    }
-
     /// Steps `particle` by its velocity. False when a collider kills it.
     func move(
         _ particle: inout SimulatedParticle,

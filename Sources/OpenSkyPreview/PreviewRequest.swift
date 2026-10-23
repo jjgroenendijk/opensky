@@ -1,5 +1,5 @@
-// What a preview renders: one target, a stage, and the camera views. The CLI and the
-// sidebar both build this value, so they render the same thing. Pure values.
+// What a preview renders: one target, a stage, and the camera views. The CLI builds
+// this value. Pure values.
 // Pipeline: docs/tools/preview-render.md.
 
 import Foundation

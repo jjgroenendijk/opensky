@@ -1,5 +1,5 @@
 // Mesh-shader grass: the meshlets of each grass mesh, the pipeline that culls and draws
-// them, and the counts the panel shows. See docs/rendering/mesh-shader-grass.md.
+// them, and the counts the readout shows. See docs/rendering/mesh-shader-grass.md.
 
 import Metal
 import MetalKit
@@ -112,7 +112,7 @@ nonisolated public struct MeshletCounts: Equatable, Sendable {
     }
 }
 
-/// What the Rendering Performance panel shows for mesh-shader grass.
+/// What the rendering performance readout shows for mesh-shader grass.
 nonisolated public struct MeshShaderGrassStatus: Equatable, Sendable {
     public var enabled = false
     /// Why this GPU or this run cannot use it; nil when it can.
@@ -126,23 +126,6 @@ nonisolated public struct MeshShaderGrassStatus: Equatable, Sendable {
         self.enabled = enabled
         self.unavailableReason = unavailableReason
         self.counts = counts
-    }
-}
-
-nonisolated extension RenderPerformanceReadout {
-    public static func meshShaderGrassText(_ status: MeshShaderGrassStatus) -> String {
-        if let reason = status.unavailableReason {
-            return "Grass path: classic\nUnavailable: \(reason)"
-        }
-        guard status.enabled else {
-            return "Grass path: classic"
-        }
-        let counts = status.counts
-        return """
-        Grass path: mesh shader
-        Meshes: \(counts.meshes)  Meshlets tested: \(counts.tested)
-        Drawn: \(counts.drawn)  Culled: \(max(counts.tested - counts.drawn, 0))
-        """
     }
 }
 

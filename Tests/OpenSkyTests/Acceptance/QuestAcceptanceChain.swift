@@ -170,7 +170,7 @@ struct QuestAcceptanceChain {
     }
 
     /// The journal page as the player would see it, built from live quest state
-    /// through the same `JournalMenuModel.build` the app's panel calls.
+    /// through the same `JournalMenuModel.build` the app's readout calls.
     ///
     /// `strings: nil` because the fixture plugin's header does not say
     /// localized, so its text is written inline and there is no table to

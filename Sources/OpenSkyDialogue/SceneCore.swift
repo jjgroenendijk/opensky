@@ -21,17 +21,6 @@ public enum SceneCore {
         }
     }
 
-    public static func listRow(_ entry: CatalogScene, isPlaying: Bool) -> SceneListRow {
-        let aliases = Set(entry.scene.actions.compactMap(\.aliasID))
-        return SceneListRow(
-            editorID: entry.editorID,
-            phaseCount: entry.scene.phases.count,
-            actionCount: entry.scene.actions.count,
-            actorCount: aliases.count,
-            isPlaying: isPlaying
-        )
-    }
-
     public static func playingRow(
         _ entry: CatalogScene,
         state: SceneRuntimeState

@@ -1,4 +1,4 @@
-// Why a World > Audio panel trigger did not start its sound. A trigger returns nil
+// Why an audio trigger did not start its sound. A trigger returns nil
 // when the sound started or waits for its file.
 
 import OpenSkyFormatsESM

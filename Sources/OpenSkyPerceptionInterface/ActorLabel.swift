@@ -1,5 +1,5 @@
 // The name a readout shows for one resident actor, kept as parts and formatted
-// only when read. Per-frame rosters copy it; only panels and overlays read the text.
+// only when read. Per-frame rosters copy it; only readouts and overlays read the text.
 
 import OpenSkyFormatsESM
 

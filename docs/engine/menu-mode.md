@@ -95,7 +95,3 @@ Drawing is not paused. A paused frame still encodes, presents, and draws the
 
 - The [system menu](/engine/system-menu.md) is a menu consumer. Esc, Return, and the move keys
   drive its choices while the world is paused.
-- Developer > UI Lab has a menu mode preview. Push, Pop, and Clear open and close placeholder
-  menus named `UILabMenu1`, `UILabMenu2`, and so on, so repeated pushes never hit the duplicate
-  rule. It shows menu mode, the top menu, the depth, and the pause state. It attaches no consumer,
-  so its events are swallowed.

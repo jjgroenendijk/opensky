@@ -15,7 +15,6 @@ final class FakeLoadingWorld: LoadingScreenWorld {
     var presentationRecords: PresentationRecordStore?
     var frames: [LoadingCoverFrame?] = []
     var paused: [Bool] = []
-    var currentLocation: ResolvedFormID?
 
     func loadingConditionContext() -> ConditionContext {
         ConditionContext()

@@ -72,7 +72,7 @@ nonisolated public struct CombatSettings: Equatable, Sendable {
     }
 
     /// Every setting paired with its editor ID, for the CLI report and the
-    /// panel readout. Ordered as the formulas use them.
+    /// readout. Ordered as the formulas use them.
     public var report: [(editorID: String, setting: MovementSetting)] {
         [
             ("fCombatDistance", combatDistance),

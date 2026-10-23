@@ -2,8 +2,7 @@
 type: Subsystem
 title: Global variables
 description: How runtime GLOB values are stored beside reference state, the rounding rule for
-  integer globals, the journal and callback split, the one lookup seam every reader uses, and the
-  Time, Globals, and Conditions sections of the Runtime State panel.
+  integer globals, the journal and callback split, and the one lookup seam every reader uses.
 tags: [engine, world, globals, conditions, game-clock, runtime-state]
 ---
 
@@ -40,8 +39,8 @@ values.
 ## Writes, resets, and the journal
 
 - Writing the value already stored does nothing and returns false, like a component write.
-- Reset removes the override, so the global reads its plugin default again. Reset all goes in key
-  order, so the journal stays the same on every run.
+- Reset removes the override, so the global reads its plugin default again. Resetting every global goes
+  in key order, so the journal stays the same on every run.
 - Every write and reset is journaled in its own bounded window, sharing the one sequence counter with
   component changes. Merging the two by sequence gives the real causal order.
 - Global writes fire their own callback, not the reference change callback. The reference callback
@@ -71,32 +70,3 @@ evaluator treats that as a failure, not as a comparison with zero
 The first reader was weather: each climate weather chance can name a global, so changing that global
 changes which weather the pick returns ([weather](/engine/weather.md)). The weather store stays
 read-only. A new seam is handed to it on every global change, and it picks again.
-
-## Controls
-
-World > Runtime State has three sections for time, globals, and conditions. Their order follows how
-a session uses them: read the store, then time, then globals, then conditions, which read both.
-
-- Time: an hour slider; a day, month, and year applied together; and the timescale. The readout
-  shows the time, date, days passed, timescale, and whether the world is paused.
-- Globals: an editor ID box that completes over every loaded `GLOB`, a value field, Set, and Reset.
-  The readout states the plugin default, the current value, and whether an override is in force, as
-  three separate facts.
-- Conditions: a source box over the condition lists the session can evaluate (the music tracks with
-  `CTDA` conditions), and Evaluate. One readout gives the verdict with a reason per condition. The
-  other gives the session's running tally.
-
-Pause is a readout, not a checkbox. The menu mode controller owns it
-([menu mode](/engine/menu-mode.md)), so a panel toggle would be overwritten the next time a menu
-opened or closed. World > System Menu keeps the toggle. The Time section reports it, because a clock
-that seems stuck otherwise has no explanation.
-
-The timescale marks the panel as changed, and elapsed time does not. The timescale is the
-`TimeScale` global, written like any global. A clock that moved is a world that was played, not a
-setting left away from its default.
-
-The reasons per condition come from evaluating each condition once, then combining the results with
-the same OR grouping the evaluator uses. The list evaluator returns one verdict and a flat failure
-list, which cannot say which condition caused which failure. Evaluating both ways would count every
-condition twice in the tally and draw twice from the random generator, so `GetRandomPercent` would
-disagree with itself between the verdict and the reasons.

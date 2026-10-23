@@ -72,17 +72,6 @@ public final class HeadTrackingCoordinator {
         }
     }
 
-    /// One panel line: what `actor` looks at and how far its head turns.
-    public func readout(for actor: ReferenceKey?) -> String {
-        guard let actor else { return "no selected actor" }
-        let look = looks[actor] ?? .forward
-        let target = lookTargets[actor].map { "\($0)" } ?? "ahead"
-        return String(
-            format: "looks at %@, yaw %.0f°, pitch %.0f°",
-            target, look.yaw * 180 / .pi, look.pitch * 180 / .pi
-        )
-    }
-
     /// Makes `actor` look at `target`, or with nil hands it back to the default. With
     /// `seconds`, the target lets go on its own. In `dialogue` the speaker glances by the
     /// dialogue settings.

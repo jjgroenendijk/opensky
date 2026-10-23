@@ -46,10 +46,8 @@ not read the GPU blocks or the model.
 - If the IO command buffer fails, every buffer of the batch is filled on the CPU from the
   same entry.
 
-The setting `assetOptimisation.directLoad.meshes` is off by default. It is the Meshes switch
-under "Direct GPU loading" on the launcher's Asset Optimisation page, and in World > Asset
-Optimisation. `make benchmark ARGS='--set assetOptimisation.directLoad.meshes=on'`
-measures it.
+The setting `assetOptimisation.directLoad.meshes` is off by default. `make benchmark ARGS='--set
+assetOptimisation.directLoad.meshes=on'` measures it.
 
 ## Measured
 

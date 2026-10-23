@@ -14,7 +14,7 @@ import simd
 
 @MainActor
 public final class ProjectileRuntime {
-    /// How many finished shots the trace keeps. A handful, because the panel
+    /// How many finished shots the trace keeps. A handful, because the readout
     /// shows the newest and a reader is looking at the last thing they did.
     public static let traceLimit = 16
     /// How many arrows may stay stuck in the world at once. UESP "Skyrim:Archery":
@@ -145,23 +145,7 @@ public final class ProjectileRuntime {
         accumulatedTime = 0
     }
 
-    /// Everything: live projectiles, stuck arrows, trace, counts.
-    public func reset() {
-        despawnAll()
-        clearStuckArrows()
-        clearTrace()
-    }
-
-    /// Empties the trace and both counts without disturbing anything in the
-    /// world, which is what the panel's own clear control means.
-    public func clearTrace() {
-        trace = []
-        firedCount = 0
-        impactCount = 0
-    }
-
-    /// Pulls every stuck arrow back out of the world. The panel's clean-up
-    /// control, and what a full reset runs.
+    /// Pulls every stuck arrow back out of the world, as a full reset does.
     public func clearStuckArrows() {
         removeStuckArrows(Array(stuck.indices))
     }

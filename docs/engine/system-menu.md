@@ -45,17 +45,12 @@ consumer. That push is what pauses the world. The menu does not own the pause. I
 on the stack.
 
 The control map's Pause key, Esc, opens the menu. While the mouse is captured, the first Esc
-releases it instead. The menu also opens from its panel, so no feature needs a hidden key.
-Opening it may write a pause autosave. `J` opens the [quest journal](/engine/journal.md).
+releases it instead. Opening it may write a pause autosave. `J` opens the [quest
+journal](/engine/journal.md).
 
 ## Settings
 
-The sidebar settings use the systems that already own them, so the menu can never disagree
-with them.
-
-- Game data folder: shown, not changed here. It is found once through the
-  [game data locator](/engine/game-data-locator.md) and cached, because finding it walks the disk
-  and the panel refreshes twice a second. Change it in the Settings window (Cmd+,).
+- Game data folder: shown, not changed here. Change it in the Settings window (Cmd+,).
 - Master volume: the value in the player settings store, which the audio engine follows.
 
 ## The vanilla movie
@@ -95,10 +90,8 @@ it returns. Sending input to the runtime directly changes the movie's selection 
 
 The renderer has one SWF layer. The system menu takes it from the HUD while the movie is up, and
 gives it back on Resume. The movie is on by default, so play mode shows the menu as the game does.
-The sidebar can turn it off; the engine selector then remains the only surface.
 
-No movie problem throws out of a control. A missing install, a movie that does not decode, or a
-call the runtime cannot answer becomes a message in the panel readout.
+No movie problem throws out of a control.
 
 ## The movie's own pages
 
@@ -116,11 +109,10 @@ calls the engine, and the engine answers with data, as the game does. Calls meas
 | `ResetControlsToDefaults` | Restores the default bindings and fills the list again |
 | `QuitToMainMenu`, `QuitToDesktop` | Opens the title menu, or quits |
 
-A mapping entry's key art is the key's name in `interface\controls\pc\keyboard_english.txt`,
-such as `L-Ctrl` or `Mouse1` ([control map](/formats/controlmap.md), "Key names"). The movie
-draws the button with that name. The engine reads the page's `iCurrentState` each frame, so the
-sidebar readout follows the page the movie shows. The X key deletes a save and T lists the
-characters, as in the movie's own key handler.
+A mapping entry's key art is the key's name in `interface\controls\pc\keyboard_english.txt`, such as
+`L-Ctrl` or `Mouse1` ([control map](/formats/controlmap.md), "Key names"). The movie draws the
+button with that name. The X key deletes a save and T lists the characters, as in the movie's own
+key handler.
 
 The save and load pages, their questions, and the progress line read string settings:
 `sMenuDisplayNewSave` names the new-save row, `sSaveOverSaveGame` and `sDeleteSaveGame` ask before
@@ -131,14 +123,6 @@ there is no cell. Without game data, the pages keep OpenSky's English words.
 
 The Settings page stays the engine's, because its values are the
 [player settings](/engine/settings.md).
-
-## Controls
-
-World > System Menu has a Menu section (Open, Resume, Up, Down, Activate, vanilla movie on and off),
-a Page section (Left, Right, Back, Delete Save, and the page rows), and a Settings section
-(master volume). The readout shows the selection with a `>` marker, the open
-menus, the pause state, the last row used, and the movie's draws, faults, and missing calls. An open
-menu or an active movie marks the panel as changed, and Reset returns to gameplay.
 
 ## Not done yet
 

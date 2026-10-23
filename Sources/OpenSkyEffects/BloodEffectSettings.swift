@@ -105,7 +105,7 @@ nonisolated public struct BloodEffectSettings: Equatable, Sendable {
         return settings
     }
 
-    /// The Effects panel's settings line.
+    /// The Effects readout's settings line.
     public var readout: String {
         String(
             format: "Blood settings: up to %d splatters · %.0f s, fading after %.0f%% · "

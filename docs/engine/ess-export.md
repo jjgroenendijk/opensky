@@ -20,9 +20,7 @@ header's file time and save number come from the clock and the folder.
 ## Where a user meets it
 
 - The in-game Save page ends with an `Export to Skyrim` row.
-- World > Runtime State > Save & Load has an `Export to Skyrim` button. Its readout shows
-  the file name and the report.
-- Both write into the Skyrim saves folder setting (see
+- It writes into the Skyrim saves folder setting (see
   [the saves folder](/engine/ess-import.md#the-saves-folder)). Each export is a new file,
   `OpenSky Export N.ess`, with the first free number. The write fails rather than replace
   a file, so a save the game wrote is never overwritten.

@@ -1,9 +1,8 @@
-// The World > Scripts sidebar's VM seam: one `ScriptsSnapshot` per refresh, one call per
+// The Papyrus VM state: one `ScriptsSnapshot` per refresh, one call per
 // action, built by `PapyrusWorldRuntime.scriptsSnapshot`. No AppKit, so the CLI builds it.
 // See docs/engine/papyrus-world.md.
 
 // One native function name and how often the session called it.
-import OpenSkyScriptingInterface
 
 nonisolated public struct ScriptsNativeCount: Equatable, Sendable {
     /// Qualified native name, as `PapyrusNativeCall.qualifiedName` spells it.
@@ -14,10 +13,10 @@ nonisolated public struct ScriptsNativeCount: Equatable, Sendable {
 /// Everything the Scripts readout shows, captured in one value.
 ///
 /// A struct rather than a set of individual protocol properties, for the same
-/// reason `RuntimeStateSnapshot` is one: the panel refreshes all of these
+/// reason `RuntimeStateSnapshot` is one: the readout refreshes all of these
 /// together, so the readout stays a pure function of a single engine sample.
 nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
-    /// Unimplemented natives a snapshot names, most-called first. The panel
+    /// Unimplemented natives a snapshot names, most-called first. The readout
     /// shows the worst offenders, not the whole tally, which runs to hundreds
     /// of names on a real install.
     public static let topUnimplementedNativeLimit = 5
@@ -63,11 +62,11 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public let instanceCount: Int
     /// `ReferenceKey.description` of the current interaction target, or nil
     /// when nothing is targeted. A `String` rather than a `ReferenceKey` so
-    /// the panel needs no formatting logic, matching
+    /// the readout needs no formatting logic, matching
     /// `RuntimeStateSnapshot.currentTargetDescription`.
     public let targetDescription: String?
     /// Script names attached to that target, sorted. Empty both when nothing
-    /// is targeted and when the target carries no scripts; the panel tells
+    /// is targeted and when the target carries no scripts; the readout tells
     /// those apart by `targetDescription` being nil.
     public let targetScripts: [String]
 
@@ -130,7 +129,7 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     /// Per-tick dispatch ceiling in interpreted instructions.
     public let budgetInstructions: Int
 
-    // Fields of `PapyrusWorldRuntime.lastTickReport`, flattened so the panel
+    // Fields of `PapyrusWorldRuntime.lastTickReport`, flattened so the readout
     // reads scalars rather than reaching into an engine value type.
 
     public let lastTickSteps: Int
@@ -162,40 +161,4 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public var usesGameTiming = true
     /// Native calls that the latest fixed step made wait for the next step.
     public var lastStepDelayedCalls = 0
-}
-
-/// Live-renderer seam for the World > Scripts panel.
-@MainActor
-public protocol ScriptControlProviding: AnyObject {
-    /// One sample of everything the readout shows. `ScriptsSnapshot.empty`
-    /// when the session has no VM, which is what a synthetic scene or an
-    /// install carrying no compiled scripts leaves behind.
-    var scriptsSnapshot: ScriptsSnapshot { get }
-
-    /// Freezes or resumes the VM's own tick. A paused VM accumulates no time,
-    /// so resuming never replays the pause as catch-up steps. No-op when the
-    /// session has no VM.
-    func setScriptsPaused(_ paused: Bool)
-
-    /// Sets the instructions all scripts share per fixed step. Values below one
-    /// become one, so scripts always move. No-op when the session has no VM.
-    func setScriptInstructionBudget(_ instructions: Int)
-
-    /// True makes natives take the game's frame timing; false lets each call run to its
-    /// end at once. No-op when the session has no VM.
-    func setScriptGameTiming(_ enabled: Bool)
-
-    /// Runs `ticks` fixed steps immediately, whether or not the VM is paused.
-    /// Values below one do nothing; the implementation caps the count so a
-    /// stray value cannot hang the frame.
-    func stepScripts(ticks: Int)
-
-    /// Editor IDs of every quest that declares at least one alias, sorted.
-    /// Empty when the session has no quest index. Quests without aliases are
-    /// left out because the inspector would have nothing to say about them.
-    var questAliasQuestEditorIDs: [String] { get }
-
-    /// One quest's alias table, or nil when no loaded plugin defines a quest
-    /// with that editor ID.
-    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection?
 }

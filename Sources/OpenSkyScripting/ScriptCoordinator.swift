@@ -1,5 +1,5 @@
-// The session's Papyrus VM, its world bridge, and the World > Scripts panel.
-// Without game data there is no VM, and the panel shows `ScriptsSnapshot.empty`.
+// The session's Papyrus VM, its world bridge, and its state reads.
+// Without game data there is no VM, and the readout shows `ScriptsSnapshot.empty`.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -210,7 +210,7 @@ public final class ScriptCoordinator {
     )
 }
 
-extension ScriptCoordinator: ScriptControlProviding {
+extension ScriptCoordinator {
     /// Targets the crosshair. An unresolved FormID still shows as itself, so the
     /// readout never goes blank while the crosshair is on something.
     public var scriptsSnapshot: ScriptsSnapshot {
@@ -287,14 +287,6 @@ extension ScriptCoordinator: ScriptControlProviding {
     /// The runtime clamps `ticks`, so a stray value cannot stall the frame.
     public func stepScripts(ticks: Int) {
         runtime?.burst(ticks: ticks, gameClock: world?.gameClock)
-    }
-
-    public func setScriptInstructionBudget(_ instructions: Int) {
-        runtime?.budget.instructions = max(1, instructions)
-    }
-
-    public func setScriptGameTiming(_ enabled: Bool) {
-        runtime?.runtime.nativeTiming = enabled ? .game : .runToEnd
     }
 }
 

@@ -10,7 +10,7 @@ import simd
 /// A free enum over an `inout ActiveEffectRuntime` rather than a type of its own,
 /// for the reason `SpellHitApplication` is one: the effect runtime is a value over
 /// a shared store whose tally advances as it works, and a copy held here would grow
-/// a tally the panel never sees.
+/// a tally the readout never sees.
 @MainActor
 public enum WeaponEnchantmentApplication {
     /// Spends `hit`'s charge and applies its effects to every actor it reached. The

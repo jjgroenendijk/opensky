@@ -1,6 +1,6 @@
 // Combat acceptance: one key-and-mouse fight. Draw, hit, block by formula,
 // arrow kill, ragdoll death, loot, settled clutter, then save and load bring
-// it all back. Each step checks engine state. Pixel, panel, and real-data
+// it all back. Each step checks engine state. Pixel, readout, and real-data
 // halves are gated; this runs without a device or install.
 
 import Foundation

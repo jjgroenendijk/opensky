@@ -105,8 +105,8 @@ wanted bed if ambience is on and the engine runs. So turning ambience off stops 
 Turning it on starts the last bed without waiting for a cell change. A context that arrives while
 ambience is off is kept, not lost. A loop whose file arrives after it was stopped does not start.
 
-The readout comes from the live sources, not the wanted bed. Sources the engine already stopped
-are removed first. So the readout never claims a bed plays when it does not.
+The ambience state comes from the live sources, not the wanted bed. Sources the engine already
+stopped are removed first. So the state never claims a bed plays when it does not.
 
 ## Sound resolution
 
@@ -139,18 +139,6 @@ A loop or ambience bed that was stopped in the meantime does not start. Streamin
 the engine's decode queue. Nothing from OpenSky runs on the audio render thread. The sound, weather,
 and acoustic space stores are immutable after they are built.
 
-## Controls
+## Settings
 
-World > Audio > SFX & Ambience:
-
-- SFX enabled (on by default).
-- Ambience enabled (on by default).
-- Stop ambience: stops the current bed. The next cell change starts it again.
-- Readout: the last sound played, the last error, and the current bed's FormIDs, or "none".
-
-Reset all on the Audio destination clears this section and the Output section. Sound starts with
-the game. World > Audio > Output > Enabled and the Sound setting turn it off and on.
-
-A manual check: walk through a Whiterun exterior cell (its regions have beds),
-press F on a door (open sound), and enter an interior (a bed from `XCAS`). Turning off SFX must
-mute the door sounds but not the bed.
+Sound starts with the game. The Sound setting turns it off and on.

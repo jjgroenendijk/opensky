@@ -47,6 +47,5 @@ explains what each one does in Skyrim.
 | `fBlockMaximumDistance` | Outer distance of far terrain |
 | `fTreeLoadDistance` | Outer distance of tree billboards |
 
-All four must be finite and positive, with level 0 <= level 1 <= maximum. If one is bad,
-all four use the defaults 35000, 70000, 250000, and 75000 world units. The sidebar writes
-all four OpenSky overrides together.
+All four must be finite and positive, with level 0 <= level 1 <= maximum. If one is bad, all four
+use the defaults 35000, 70000, 250000, and 75000 world units.

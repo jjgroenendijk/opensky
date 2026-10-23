@@ -6,13 +6,13 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyRendering
 
-/// One container the panel can nominate as the merchant. Vanilla merchants sell
+/// One container the readout can nominate as the merchant. Vanilla merchants sell
 /// from a faction-linked chest, and that faction data is not decoded, so a
 /// developer picks the container.
 nonisolated public struct ContainerMenuMerchantOption: Equatable, Sendable {
     public let reference: FormID
     public let name: String
-    /// How many individual items the container holds right now, so the panel
+    /// How many individual items the container holds right now, so the readout
     /// can tell a stocked chest from an empty one before opening it.
     public let itemCount: Int
     public let gold: Int32
@@ -56,7 +56,7 @@ nonisolated public struct ContainerMenuControlSnapshot: Equatable, Sendable {
     public let pricingSource: String
     public let lastActionText: String?
 
-    /// Containers the panel offers as merchants, and which one is nominated.
+    /// Containers the readout offers as merchants, and which one is nominated.
     public let merchantOptions: [ContainerMenuMerchantOption]
     public let selectedMerchant: FormID?
 
@@ -135,63 +135,5 @@ nonisolated public struct ContainerMenuControlSnapshot: Equatable, Sendable {
         self.movieUnhandledInvokes = movieUnhandledInvokes
         self.movieEntryTitles = movieEntryTitles
         self.movieVendorGold = movieVendorGold
-    }
-}
-
-@MainActor
-public protocol ContainerMenuControlProviding: AnyObject {
-    var containerMenuIsOpen: Bool { get }
-    /// Container transfer or merchant barter. Changing it while the menu is
-    /// open reopens it against the other movie, because the two menus are two
-    /// movies rather than two states of one.
-    var containerMenuMode: ContainerMenuModel.Mode { get set }
-    /// Drives the vanilla movie. Off keeps the engine-side list working with
-    /// the gameplay HUD on screen.
-    var containerMenuMovieEnabled: Bool { get set }
-    func openContainerMenu()
-    func closeContainerMenu()
-    /// Routes one menu event through the same path as keyboard input.
-    func sendContainerMenuInput(_ event: MenuInputEvent)
-    /// Swaps which owner's items the list shows.
-    func switchContainerMenuSide()
-    /// Takes, stores, buys or sells the selected row, according to the mode and
-    /// the side. A refusal — nothing stocked, nobody can pay — lands in the
-    /// readout rather than throwing.
-    func activateContainerMenuSelection()
-    func takeAllFromContainerMenu()
-
-    // MARK: - Merchant nomination
-
-    /// Nominates one as the active merchant, or says why it refused.
-    @discardableResult
-    func selectContainerMenuMerchant(_ reference: FormID) -> MerchantNomination
-    /// Nominates whatever container the crosshair is on, which is the path a
-    /// developer standing in front of a chest actually uses.
-    @discardableResult
-    func selectContainerMenuMerchantFromInteraction() -> MerchantNomination
-
-    var containerMenuSnapshot: ContainerMenuControlSnapshot { get }
-}
-
-/// One merchant nomination. Only `text` builds the readout line.
-nonisolated public enum MerchantNomination: Equatable, Sendable {
-    case nominated(String)
-    case noCell
-    case notResident(FormID)
-    case crosshairNotOnContainer
-    case noHolder
-
-    public var text: String {
-        switch self {
-        case let .nominated(name): "Merchant: \(name)."
-        case .noCell: refusal("no cell is loaded")
-        case let .notResident(reference): refusal("\(reference) is not a resident container")
-        case .crosshairNotOnContainer: refusal("the crosshair is not on a container")
-        case .noHolder: refusal("world items are unavailable, or nothing resident holds it")
-        }
-    }
-
-    private func refusal(_ reason: String) -> String {
-        "Cannot nominate a merchant: \(reason)."
     }
 }

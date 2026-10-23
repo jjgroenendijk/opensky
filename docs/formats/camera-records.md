@@ -125,9 +125,8 @@ For a kill, the coordinator fills these facts:
 - A few conditions run on the target, such as the left-side room of `F12BulletTime03Near`.
   OpenSky measures room around the attacker only.
 
-With these facts, a bow kill on the real install picks `PlayerActionShot01RBasic02` and plays
-its shoot, fly, and hit stages. The `World > Kill Cam` panel lists the first failing function
-of each path.
+With these facts, a bow kill on the real install picks `PlayerActionShot01RBasic02` and plays its
+shoot, fly, and hit stages.
 
 The other functions the vanilla paths use, named by the same xEdit table. The Creation Kit
 number is the index plus 4096:

@@ -173,15 +173,6 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
         game.hud.setCovered(frame != nil)
     }
 
-    var currentLocation: ResolvedFormID? {
-        guard
-            let streamer = game.streamer,
-            let cell = streamer.currentCellLocation,
-            let scene = streamer.residentScene(at: cell)
-        else { return nil }
-        return location(of: scene)
-    }
-
     func setLoadingPaused(_ paused: Bool) {
         if paused {
             game.menuMode.inputConsumer = game

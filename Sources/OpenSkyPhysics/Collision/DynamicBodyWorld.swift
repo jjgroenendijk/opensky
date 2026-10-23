@@ -34,7 +34,7 @@ nonisolated public struct DynamicBodyPlacement: Sendable {
     }
 }
 
-/// Counts for one refresh of the physics panel.
+/// Counts for one refresh of the physics readout.
 nonisolated public struct DynamicBodyStatsSnapshot: Equatable, Sendable {
     public var bodyCount = 0
     public var activeBodyCount = 0
@@ -42,7 +42,7 @@ nonisolated public struct DynamicBodyStatsSnapshot: Equatable, Sendable {
     public var contactCount = 0
     public var substepCount = 0
     public var recoveredBodyCount = 0
-    /// True while stepping is suspended by the panel's freeze control.
+    /// True while stepping is suspended by the readout's freeze control.
     public var isFrozen = false
 
     public init(
@@ -70,23 +70,10 @@ nonisolated public struct SettledDynamicBodyTransform: Sendable {
     public let placingCell: CellSceneLocation
 }
 
-/// The panel seam for `World > Combat & Physics`: one `Equatable` snapshot out,
-/// plain actions in.
-@MainActor
-public protocol PhysicsControlProviding: AnyObject {
-    var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot { get }
-    /// Suspends and resumes integration without discarding the bodies, so a
-    /// developer can inspect a scene mid-fall.
-    func setPhysicsFrozen(_ frozen: Bool)
-    /// Returns every body to the pose its cell build placed it at and clears
-    /// its velocity. Action-only; it leaves no provider state behind.
-    func resetDynamicBodies()
-}
-
 nonisolated public struct DynamicBodyWorld: Sendable {
     /// Bodies in ascending `ReferenceKey` order — the solver's iteration order.
     public private(set) var bodies: [DynamicBody] = []
-    /// Pose each body was placed at, for the panel's reset action.
+    /// Pose each body was placed at, for the readout's reset action.
     private var placedPoses: [ReferenceKey: (position: SIMD3<Float>, orientation: simd_quatf)] = [:]
     /// Resting poses observed since the last drain, for persistence.
     private var settled: [ReferenceKey: PlacedReference.Placement] = [:]

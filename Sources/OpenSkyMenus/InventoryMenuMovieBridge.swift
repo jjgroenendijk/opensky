@@ -95,7 +95,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// installed by the placed `InventoryMenuObj` instance.
     ///
     /// Nothing here throws. A movie that does not match the measured contract
-    /// leaves entries in the missing-API tally, which the panel reports.
+    /// leaves entries in the missing-API tally, which the readout reports.
     public static func activate(
         runtime: SWFMovieRuntime,
         onAction: @escaping @MainActor @Sendable (InventoryMenuAction) -> Void

@@ -140,27 +140,3 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
         game.actorPlayback(for: actor)
     }
 }
-
-/// The Behaviour Graphs section reads the adapter.
-extension ActorGraphWorldAdapter: ActorGraphControlProviding {
-    func actorGraphSnapshot(for actor: ReferenceKey?) -> ActorGraphControlSnapshot {
-        graphs.snapshot(for: actor)
-    }
-
-    func setActorGraphsEnabled(_ enabled: Bool) {
-        graphs.isEnabled = enabled
-        game.playerSettingsStore.set(.actorGraphs, to: enabled ? 1 : 0)
-    }
-
-    func setActorGraphCutoff(_ cutoff: ActorGraphCutoff) {
-        graphs.cutoff = cutoff
-        game.playerSettingsStore.set(
-            .actorGraphFullRateDistance, to: Double(cutoff.fullRateDistance)
-        )
-        game.playerSettingsStore.set(.actorGraphDistance, to: Double(cutoff.maximumDistance))
-    }
-
-    func sendActorGraphEvent(_ event: String, to actor: ReferenceKey) -> Bool {
-        graphs.raise(event, on: actor)
-    }
-}

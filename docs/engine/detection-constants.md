@@ -9,12 +9,10 @@ tags: [engine, ai, perception, detection, stealth, gmst]
 # Detection constants
 
 The formula that uses these is on the [perception and detection](/engine/detection.md) page.
-Every constant keeps its source, shown by `openskycli gmst detection` and by the panel.
 
 ## Settings from the load order
 
-Every constant keeps its source, shown by `openskycli gmst detection` and the panel. Values from
-`openskycli gmst list --prefix fsneak` on the local install:
+Values from `openskycli gmst list --prefix fsneak` on the local install:
 
 | Editor ID | Value | Meaning |
 | --- | --- | --- |
@@ -48,9 +46,8 @@ Every constant keeps its source, shown by `openskycli gmst detection` and the pa
 
 The values are from `openskycli gmst list` on the local install. `Skyrim.esm` does not set
 `fSneakLightMoveMult`, `fSneakLightRunMult`, `fSneakStealthBoyMult`, or `fSneakCombatMod`, so the
-engine's own default applies. Those four values are the defaults in the CK wiki's
-"Category:Settings" table (<https://ck.uesp.net/wiki/Category:Settings>), and the panel names that
-source. A plugin that sets one wins. "OpenSky's reading" marks a setting whose use no source states.
+engine's own default applies. A plugin that sets one wins. "OpenSky's reading" marks a setting whose
+use no source states.
 
 ## OpenSky's own constants
 

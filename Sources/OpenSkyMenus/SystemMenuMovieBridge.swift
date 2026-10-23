@@ -64,7 +64,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     /// placed `QuestJournalBase` instance.
     ///
     /// Nothing here throws. A movie that does not match the measured contract
-    /// leaves entries in the missing-API tally, which the panel reports.
+    /// leaves entries in the missing-API tally, which the readout reports.
     public static func activate(
         runtime: SWFMovieRuntime,
         onClose: @escaping @MainActor @Sendable () -> Void

@@ -65,7 +65,3 @@ uses soul gems.
 (<https://ck.uesp.net/wiki/TrapSoul_-_Actor>). It answers true only when a gem was filled.
 
 ## Where it shows
-
-World > Combat & Physics > Spellcasting lists each soul gem copy the player carries with its
-soul, and the last trap. The inventory panels add the souls of the player's filled copies to a
-gem's line.

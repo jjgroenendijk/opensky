@@ -238,7 +238,7 @@ public struct SpellbookRuntime: SpellbookAccess {
     ///
     /// Empty without an equipment runtime or without an inventory holder to act
     /// on, which is the synthetic-session case: spells then arbitrate against
-    /// spells and nothing else, and the panel says so.
+    /// spells and nothing else, and the readout says so.
     private func unequipItems(
         occupying hands: HandSlots,
         inventory: InventoryHolder?

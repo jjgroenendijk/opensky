@@ -3,7 +3,7 @@
 
 import Foundation
 
-/// What the sidebar shows about the server.
+/// What the server reports about itself.
 nonisolated public struct AgentControlSnapshot: Equatable, Sendable {
     public var enabled: Bool
     public var socketPath: String
@@ -27,21 +27,6 @@ nonisolated public struct AgentControlSnapshot: Equatable, Sendable {
         self.recentCommands = recentCommands
         self.timeline = timeline
     }
-
-    /// What a game view without a host shows.
-    public static let unavailable = AgentControlSnapshot(
-        enabled: false, socketPath: "", connections: 0, lastError: "no agent control host",
-        recentCommands: [], timeline: nil
-    )
-}
-
-/// The sidebar seam over the coordinator.
-@MainActor
-public protocol AgentControlProviding: AnyObject {
-    var agentControlSnapshot: AgentControlSnapshot { get }
-    var isAgentControlEnabled: Bool { get set }
-    var isAgentSimulationPaused: Bool { get set }
-    func stepAgentSimulation(frames: Int)
 }
 
 @MainActor
@@ -228,14 +213,9 @@ public final class AgentControlCoordinator {
     }
 }
 
-extension AgentControlCoordinator: AgentControlProviding {
+extension AgentControlCoordinator {
     public var agentControlSnapshot: AgentControlSnapshot {
         snapshot
-    }
-
-    public var isAgentControlEnabled: Bool {
-        get { isEnabled }
-        set { setEnabled(newValue) }
     }
 
     public var isAgentSimulationPaused: Bool {
@@ -253,31 +233,5 @@ extension AgentControlCoordinator: AgentControlProviding {
         guard let world = router.world, frames > 0 else { return }
         world.pauseSimulation()
         world.requestSteps(frames, seconds: AgentCommandRouter.defaultStepSeconds)
-    }
-}
-
-/// Lets a host conform to `AgentControlProviding` in one line.
-@MainActor
-public protocol AgentControlForwarding: AgentControlProviding {
-    var agentControl: AgentControlCoordinator? { get }
-}
-
-extension AgentControlForwarding {
-    public var agentControlSnapshot: AgentControlSnapshot {
-        agentControl?.snapshot ?? .unavailable
-    }
-
-    public var isAgentControlEnabled: Bool {
-        get { agentControl?.isAgentControlEnabled ?? false }
-        set { agentControl?.isAgentControlEnabled = newValue }
-    }
-
-    public var isAgentSimulationPaused: Bool {
-        get { agentControl?.isAgentSimulationPaused ?? false }
-        set { agentControl?.isAgentSimulationPaused = newValue }
-    }
-
-    public func stepAgentSimulation(frames: Int) {
-        agentControl?.stepAgentSimulation(frames: frames)
     }
 }

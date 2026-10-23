@@ -1,4 +1,4 @@
-// Live-renderer seam for the `World > Player & Locomotion` destination: one
+// Live player locomotion state: one
 // Equatable snapshot polled at 2 Hz, plus the actions the sections invoke. It
 // covers the sprint, sneak, and jump bindings, the live graph, the motion
 // trace, and the dev controls. See docs/engine/locomotion-graph.md.
@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyBehavior
 import OpenSkyPhysics
 
-/// One key binding as the panel presents it. `label` is what the control shows;
+/// One key binding as the readout presents it. `label` is what the control shows;
 /// `isActive` is whether that input is asserted right now, so a user can press
 /// the key and watch the row light up rather than trusting the label.
 nonisolated public struct LocomotionBindingSnapshot: Equatable, Sendable {
@@ -49,7 +49,7 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     public let walkModeActive: Bool
     public let status: LocomotionStatus
     public let bindings: [LocomotionBindingSnapshot]
-    /// Resolved gait speeds and their provenance, so the panel can say which
+    /// Resolved gait speeds and their provenance, so the readout can say which
     /// number came from the install and which is an OpenSky fallback.
     public let configuration: PlayerMovementConfiguration
     /// The state path the third-person graph resolved on its last update, from
@@ -113,27 +113,4 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
         self.bodyFailureReason = bodyFailureReason
         self.actorState = actorState
     }
-}
-
-@MainActor
-public protocol PlayerLocomotionControlProviding: AnyObject {
-    var playerLocomotionSnapshot: PlayerLocomotionSnapshot { get }
-    /// Sneak is a toggle, so the panel offers it as one. Sprint and jump are
-    /// momentary and are exercised by pressing their keys, which the snapshot
-    /// reflects.
-    var isSneaking: Bool { get set }
-    /// The gait the dev control holds, or nil for ordinary resolution. This is
-    /// the destination's one overridden-ness: a forced gait is a setting the
-    /// sidebar's reset has to be able to undo, and everything else on the panel
-    /// either reads state or acts once.
-    var forcedLocomotionGait: LocomotionGait? { get set }
-    /// Requests one jump, exactly as the jump key does. Action-only: it leaves
-    /// no provider state behind, so it is not an override.
-    func requestJump()
-    /// Raises one event on the live graph by name, through the same path the
-    /// bridge's own edges use. Answers whether the graph declared it.
-    @discardableResult
-    func raiseLocomotionEvent(named name: String) -> Bool
-    /// Empties the root-motion trace and its running totals.
-    func clearLocomotionTrace()
 }

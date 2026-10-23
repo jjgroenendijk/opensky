@@ -177,8 +177,7 @@ name. So a fill outside the loaded area keeps its tag.
 
 ## Opening the journal
 
-`J` in world mode opens the journal. It is the same call as the Open journal button in the
-sidebar, so it is a shortcut for a listed control ([main-app UI](/tools/app-ui.md)).
+`J` in world mode opens the journal.
 
 Opening pushes the menu `Journal`, which pauses the world, then starts the movie and switches to
 `PAGE_QUEST`. The movie's life cycle calls (`SetPlatform`, `InitExtensions`, `ShowMenu`,
@@ -243,22 +242,3 @@ the one its name gives: main quests count "Main Quests Completed", Dawnguard que
 - Vanilla quests move forward through dialogue. The page shows what the stage says, whatever
   set it.
 - The Stats page counts only the stats in the table above.
-
-## Controls
-
-World > Quests & Journal has these sections:
-
-- Quests: every running or completed quest with its type, state, and stage, and the display state
-  of each objective of the chosen quest.
-- Quest controls: choose a quest, start, stop, set a stage, show or hide an objective, track
-  or untrack it, and show its target on the map. The alias table is the same text as in
-  World > Scripts, so the two cannot disagree.
-- Page: open, close, up, down, activate, and show completed quests. The readout shows the menu
-  stack, the rows and selection, the movie's title field, the objective frames, and the fault,
-  opcode, and invoke counts, even at zero.
-
-An open journal counts as a change on the destination, so Reset closes it. Starting or advancing
-a quest does not count. That is world state, and Reset all must not undo it.
-
-No control throws. A missing install, a movie that does not decode, or a quest error becomes a
-message in a readout.

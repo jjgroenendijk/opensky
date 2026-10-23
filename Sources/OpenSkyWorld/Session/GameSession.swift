@@ -291,7 +291,7 @@ public final class GameSession: RenderFrameDriver {
 extension PlayerBody: RenderRig {
     /// The player's contribution to the per-frame animation pass. Mirrors what
     /// `RenderScene.updateAnimations` does for cell-owned actors, including the
-    /// `World > Environment` animation A/B toggle.
+    /// Actor animation switch.
     public func publishAnimation(enabled: Bool) -> Int {
         enabled ? animation.update(at: 0) : animation.resetToBindPose()
     }

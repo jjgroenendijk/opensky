@@ -1,4 +1,4 @@
-// The rows and summary the Load Order panel shows, built here so the strings are
+// The rows and summary the Settings window shows, built here so the strings are
 // unit-tested. The index is the runtime top byte a console FormID starts with: hex for
 // a full plugin, `FE` and a slot for a light one (docs/formats/formid.md).
 

@@ -114,7 +114,7 @@ public final class PlayerCoordinator {
         rebuildBody()
     }
 
-    /// Equipment changes come from the panel, a menu, or a script, so the body
+    /// Equipment changes come from the readout, a menu, or a script, so the body
     /// watches the resulting set. One array comparison per frame.
     public func refreshBody() {
         for animation in rigAnimations.values {

@@ -340,7 +340,7 @@ typedef struct
     /// FunctionConstantDebugView; DebugViewModeOff outside the Render Debug
     /// section.
     unsigned int debugMode;
-    /// ShadingTerm bits the frame allows; the sidebar turns each off.
+    /// ShadingTerm bits the frame allows; each can be turned off.
     unsigned int shadingTerms;
     /// x, y: projection m22 and m32, to turn stored depth into view depth. z: 1 when
     /// the scene depth copy is bound at TextureIndexSceneDepth.

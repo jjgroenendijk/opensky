@@ -14,7 +14,7 @@ nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// carried as a field so the matrix is complete and the test can pin it.
     public let castsArmShadow: Bool
 
-    /// The rig policy for `mode`. `armsEnabled` is the panel toggle. In a conversation
+    /// The rig policy for `mode`. `armsEnabled` is the control toggle. In a conversation
     /// the arms hide, and a first-person body stays hidden: the eye sits just behind
     /// the head, so the head and helmet would fill the view, and the game hides them too.
     /// A camera that frames the player, as the race menu's does, draws the body.

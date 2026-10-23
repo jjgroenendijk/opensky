@@ -103,7 +103,7 @@ extension MagicCoordinator {
         return outcome
     }
 
-    /// One line per carried soul gem copy, then the last trap, for the panel.
+    /// One line per carried soul gem copy, then the last trap, for the readout.
     func soulLines() -> [String] {
         guard let inventory = world.inventory else { return [] }
         let gems = carriedGems(inventory).map { gem in

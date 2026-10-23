@@ -1,9 +1,9 @@
-// The seam for `Developer > Rendering Performance`: what each GPU performance feature
+// Rendering performance: what each GPU performance feature
 // costs and saves, without `Renderer`.
 
 import Foundation
 
-/// What the Rendering Performance panel reads.
+/// What the rendering performance readout reads.
 nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public let renderTargets: RenderTargetMemory
     public let pipelineCache: PipelineCacheStats
@@ -61,37 +61,6 @@ nonisolated public struct UpscaleStatus: Equatable, Sendable {
     }
 }
 
-@MainActor
-public protocol RenderPerformanceControlProviding: AnyObject {
-    /// Nil without a renderer.
-    var renderPerformanceSnapshot: RenderPerformanceSnapshot? { get }
-    /// Applies on the next launch, because the renderer builds its pipelines once.
-    var pipelineCacheEnabled: Bool { get set }
-    /// Deletes the saved archives. Returns how many files it deleted.
-    @discardableResult
-    func clearPipelineCache() -> Int
-    /// Culls the scene's static groups on the GPU. Off culls them on the CPU.
-    var gpuCullingEnabled: Bool { get set }
-    /// An interior draws only the rooms the camera sees through portals.
-    var roomCullingEnabled: Bool { get set }
-    /// Large textures loaded from now on keep only the levels the camera needs. Off
-    /// raises every streamed texture to its full size.
-    var textureStreamingEnabled: Bool { get set }
-    /// An index into `TextureBudget.choiceTitles`: 0 is Automatic.
-    var textureBudgetIndex: Int { get set }
-    /// Applies at once where the GPU traces rays in hardware; elsewhere it stays off.
-    var rayTracedShadowsEnabled: Bool { get set }
-    /// Draws the traced shadow alone. Not saved.
-    var rayTracedShadowView: Bool { get set }
-    /// The share of the display size the scene renders at before MetalFX upscales it.
-    var renderScale: RenderScale { get set }
-    var upscaler: UpscalerKind { get set }
-    /// Runs only with the temporal upscaler, on a GPU MetalFX supports.
-    var frameInterpolationEnabled: Bool { get set }
-    /// Draws grass through object and mesh shaders; off draws it the classic way.
-    var meshShaderGrassEnabled: Bool { get set }
-}
-
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
 /// wording is unit-testable.
 nonisolated public enum RenderPerformanceReadout: Sendable {
@@ -102,49 +71,6 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
             lines.append("\(entry.name): \(value)")
         }
         return lines.joined(separator: "\n")
-    }
-
-    public static func pipelineCacheText(_ stats: PipelineCacheStats) -> String {
-        let archive = switch stats.archive {
-        case .none: "off"
-        case .missing: "none yet"
-        case .loaded: "loaded"
-        case .unreadable: "unreadable, rebuilt"
-        }
-        return """
-        Archive: \(archive)\(stats.saved ? ", saved" : "")
-        Loaded: \(stats.hits)  Compiled: \(stats.misses)
-        """
-    }
-
-    public static func cullingText(cpu: CullCounts, gpu: CullCounts) -> String {
-        """
-        Camera CPU: \(cpu.cameraVisible) drawn, \(cpu.cameraCulled) culled
-        Camera GPU: \(gpu.cameraVisible) drawn, \(gpu.cameraCulled) culled
-        Shadows CPU: \(cpu.shadowVisible) drawn, \(cpu.shadowCulled) culled
-        Shadows GPU: \(gpu.shadowVisible) drawn, \(gpu.shadowCulled) culled
-        """
-    }
-
-    public static func textureStreamingText(_ stats: TextureStreamingStats) -> String {
-        """
-        Streamed: \(stats.streamedTextures) textures, \(stats.pendingReads) reads pending
-        Mapped: \(megabytes(stats.usedBytes)) of \(megabytes(stats.budgetBytes))
-        Heaps: \(megabytes(stats.reservedBytes))
-        Levels: \(stats.levelsLoaded) loaded, \(stats.levelsDropped) dropped
-        """
-    }
-
-    public static func rayTracedShadowText(
-        _ availability: RayTracingAvailability, stats: RayTracedShadowStats
-    ) -> String {
-        if let reason = availability.reason {
-            return "Unavailable: \(reason)"
-        }
-        return """
-        Meshes: \(stats.meshes)  Instances: \(stats.instances)
-        Structures: \(megabytes(stats.bytes))
-        """
     }
 
     public static func upscalingText(scale: RenderScale, status: UpscaleStatus) -> String {

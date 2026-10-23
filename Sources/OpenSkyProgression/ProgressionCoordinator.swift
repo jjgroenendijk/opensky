@@ -23,9 +23,9 @@ public final class ProgressionCoordinator {
     /// Where each perk sits in a skill's tree. Empty without game data, and
     /// every spend is then refused with `.notInPerkTree`.
     public private(set) var trees = PerkTreeIndex.empty
-    /// The AVIF index the panel browses a skill's perk tree out of.
+    /// The AVIF index the readout browses a skill's perk tree out of.
     public private(set) var information: ActorValueInformationStore?
-    /// The panel asks twice a second; walking eighteen trees each time is
+    /// The readout asks twice a second; walking eighteen trees each time is
     /// about nine hundred record lookups for numbers that rarely move.
     var treeCounts = PerkTreeCountCache()
     /// By vanilla actor-value index. Change it with `selectSkill(_:)`.

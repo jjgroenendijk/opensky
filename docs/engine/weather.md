@@ -189,20 +189,3 @@ The `Weather` natives reach the weather system through the script world adapter
   codes from the `DATA` flags, and -1 for none.
 
 `abAccelerate` is not used: the transition takes its normal time.
-
-## Controls
-
-World > Environment > Weather:
-
-- Enabled: turns the weather on and off. Off gives no weather look and calm wind. The selection
-  state stays for when it is turned on again.
-- Weather: Auto, or any weather by editor ID. Choosing one forces it with a transition. Auto
-  returns to automatic selection.
-- Clear, Rain, Snow: force the shortcut weathers above, with a transition.
-- Pause transitions: freezes only the blend progress.
-- Time of day: a slider from 0 to 24 hours. It sets the game clock hour through the `GameHour`
-  global, so the change is journaled and the clock stays the one source of the time. The value is
-  kept between runs, with 13:00 as the default.
-- Clouds: draws the cloud layers, on by default.
-- Readout: the current weather, the blend percent, the wind speed and heading, and how many cloud
-  layers draw.

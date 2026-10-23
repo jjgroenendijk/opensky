@@ -88,6 +88,19 @@ struct AgentCommandParsingTests {
             == ["limited": true])
     }
 
+    @Test func theDebugChannelIsAPositionalMode() throws {
+        let request = try AgentCommandLine.request(["debug", "channel", "wireframe"])
+        #expect(request.args == ["mode": "wireframe"])
+        #expect(try AgentDebugCommand.parse("channel", args(["mode": "wireframe"]))
+            == .channel("wireframe"))
+    }
+
+    @Test func theShadowQualityIsPositional() throws {
+        let request = try AgentCommandLine.request(["debug", "shadows", "low"])
+        #expect(request.args == ["quality": "low"])
+        #expect(try AgentDebugCommand.parse("shadows", args(["quality": "low"])) == .shadows("low"))
+    }
+
     @Test func aNegativeItemCountRemoves() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "Gold001", "count": -5]))
             == .removeItem(reference: "player", item: "Gold001", count: 5))

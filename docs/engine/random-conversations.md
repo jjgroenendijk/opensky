@@ -73,8 +73,3 @@ is in a conversation, because the CK says random conversations wait for importan
 - The timers, the pairs that talked, and the bodies found are not saved. A loaded game starts
   the timers again.
 - Observing combat is not known yet, so flag 0x04 does nothing.
-
-## Controls
-
-World > Quests & Journal, in the Story Manager section, shows the count of each social event
-sent and the latest events. Its "Run social pass" button runs one pass at once.

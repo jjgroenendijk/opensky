@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyRuntimeState
 
 nonisolated public enum IdleReadout {
     public static func markersText(for snapshot: IdleControlSnapshot) -> String {
@@ -15,45 +14,6 @@ nonisolated public enum IdleReadout {
         }
         return (["Idle markers: \(snapshot.markers.count), actors idling: "
                 + "\(snapshot.idlingActorCount)"] + lines).joined(separator: "\n")
-    }
-
-    public static func markerText(_ marker: IdleMarkerReadout?) -> String {
-        guard let marker else { return "Marker: none" }
-        let order = marker.inSequence ? "in sequence" : "random"
-        let once = marker.doOnce ? ", once" : ""
-        let idles = marker.idles.isEmpty ? "none" : marker.idles.joined(separator: ", ")
-        return """
-        Marker: \(marker.editorID) (\(order)\(once), timer \(seconds(marker.timer)))
-        Idles: \(idles)
-        """
-    }
-
-    public static func treeText(_ lines: [IdleTreeLine]) -> String {
-        guard !lines.isEmpty else { return "Tree: none" }
-        return (["Tree:"] + lines.map { line in
-            String(repeating: "  ", count: line.depth + 1) + line.editorID
-                + (line.event.map { " -> \($0)" } ?? "")
-        }).joined(separator: "\n")
-    }
-
-    public static func reportText(_ report: IdleReport?) -> String {
-        guard let report else { return "Last pick: none" }
-        var lines = ["Last pick (\(report.source)): \(report.chosen ?? "nothing")"]
-        if let plan = report.plan {
-            lines.append("Event: \(plan.event ?? "none") · served by \(pathText(plan.path))")
-            lines.append("Prop: \(propText(plan.prop)) · plays \(seconds(report.seconds))")
-            if !plan.animationObjects.isEmpty {
-                let objects = plan.animationObjects.map {
-                    $0.prop == .none ? "\($0.editorID), no ANIO record" : propText($0.prop)
-                }
-                lines.append("Clip objects: " + objects.joined(separator: ", "))
-            }
-        }
-        if let failure = report.failure {
-            lines.append("Result: \(failure)")
-        }
-        lines += report.trace.map(traceLine)
-        return lines.joined(separator: "\n")
     }
 
     public static func traceLine(_ trace: IdleCandidateTrace) -> String {
@@ -90,52 +50,9 @@ nonisolated public enum IdleReadout {
         case .noAnimation: "no animation"
         }
     }
-
-    private static func seconds(_ value: Float) -> String {
-        String(format: "%.1f s", value)
-    }
 }
 
 nonisolated public enum HeadAssemblyReadout {
-    public static func text(for snapshot: HeadAssemblySnapshot) -> String {
-        guard snapshot.actor != nil else { return "Head: no actor selected" }
-        guard let head = snapshot.head else { return "Head: actor not drawn" }
-        let shown = head.source == .assembled
-            ? "assembled, \(head.loadedPartCount) of \(head.parts.parts.count) parts loaded"
-            : head.hasBakedHead ? "baked FaceGen" : "none"
-        var lines = ["Head: \(shown)"]
-        if snapshot.requested != head.source {
-            lines.append("Requested: \(sourceText(snapshot.requested)), applies on rebuild")
-        }
-        lines += head.parts.parts.map(partText)
-        lines += head.parts.misses.map { "Missing \($0.formID): \(missText($0.reason))" }
-        return lines.joined(separator: "\n")
-    }
-
-    public static func sourceText(_ source: ActorHeadSource) -> String {
-        switch source {
-        case .baked: "baked"
-        case .assembled: "assembled"
-        }
-    }
-
-    static func partText(_ part: ResolvedHeadPart) -> String {
-        let type = part.partType.map { "\($0)" } ?? "untyped"
-        let tint = part.tint.map {
-            String(format: " · tint %.2f %.2f %.2f", $0.x, $0.y, $0.z)
-        } ?? ""
-        return "\(part.editorID ?? part.formID.description): \(type), "
-            + "\(originText(part.origin))\(tint)"
-    }
-
-    static func originText(_ origin: HeadPartOrigin) -> String {
-        switch origin {
-        case .raceDefault: "race default"
-        case .npcOverride: "NPC choice"
-        case .extraPart: "extra part"
-        }
-    }
-
     static func missText(_ reason: HeadPartMiss.Reason) -> String {
         switch reason {
         case .missingRecord: "no such head part"

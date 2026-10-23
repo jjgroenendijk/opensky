@@ -48,7 +48,7 @@ nonisolated public struct SkillAdvanceReport: Equatable, Sendable {
 /// What skill advancement did and declined to do.
 ///
 /// Shaped like `PerkRuntimeTally`: every gap is a counter rather than a log
-/// line, so a sweep asserts a number and a panel prints one.
+/// line, so a sweep asserts a number and a readout prints one.
 nonisolated public struct SkillAdvancementTally: Equatable, Sendable {
     /// Uses converted into experience.
     public private(set) var uses = 0

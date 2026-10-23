@@ -1,4 +1,4 @@
-// The World > Audio picker, trigger, and readout rules, with plain values.
+// The audio picker, trigger, and readout rules, with plain values.
 
 import Foundation
 @testable import OpenSkyAudio

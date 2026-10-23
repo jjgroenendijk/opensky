@@ -1,6 +1,6 @@
 // App side of `ScriptCoordinator`: builds the world bridge, gives its natives
 // their collaborators, binds script lifetime to cell streaming, and ticks the
-// VM from the renderer. The panel logic lives in the coordinator.
+// VM from the renderer. The readout logic lives in the coordinator.
 
 import OpenSkyActorPresentation
 import OpenSkyActors

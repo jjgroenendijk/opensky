@@ -2,7 +2,6 @@
 // advance, and the suspend and resume latch. Synthetic records only.
 
 @testable import OpenSkyAIPackages
-@testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData

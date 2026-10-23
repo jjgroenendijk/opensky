@@ -56,7 +56,7 @@ nonisolated public struct ThirdPersonCamera: Equatable, Sendable {
     public static let minimumDistance = shoulderOffset
 
     /// The distance the last resolve settled on, after collision. Kept so the
-    /// panel can report a camera that is being squeezed by geometry, and so a
+    /// readout can report a camera that is being squeezed by geometry, and so a
     /// test can assert the pull-in happened.
     public private(set) var resolvedDistance = orbitDistance
     /// True when the last resolve was shortened by world geometry.

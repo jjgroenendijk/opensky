@@ -106,13 +106,3 @@ for the altar: it reads `DragonSouls`, refuses a tree with no perks, removes eac
 The legendary counts are saved in their own `PLGD` chunk beside `PLVL`
 ([save chunks](/formats/opensky-save.md#chunks)). `PLVL` entries carry no length, so a new
 field there would break older readers.
-
-## Controls
-
-World > Character > Skills Menu opens the menu and sends each key. It also switches between
-the movies and OpenSky's rows; the readout shows the rows in either case. Sky shows or hides
-the perk sky, and the readout's sky line gives its draw count, its turn, and whether the
-ring or a tree is in view.
-
-World > Progression > Skills has Make legendary and Reset tree for the chosen skill, and
-shows each skill's legendary count and the current experience rate.

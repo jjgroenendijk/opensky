@@ -1,5 +1,5 @@
 // Main-app dialogue seam: the Talk target, the menu's stack presence and pause
-// policy, the topics on offer, and why a missing topic lost. The panel reads
+// policy, the topics on offer, and why a missing topic lost. The readout reads
 // one snapshot and calls one mutation per action, like
 // `JournalControlProviding`. The condition trace reduces `DialogueSelection`
 // to lines here, so the wording is testable without a window
@@ -8,7 +8,7 @@
 import Foundation
 import OpenSkyFormatsESM
 
-/// One topic as the panel lists it.
+/// One topic as the readout lists it.
 nonisolated public struct DialogueTopicRow: Equatable, Sendable {
     /// The INFO that won the topic, which is what choosing the row delivers.
     public let info: FormID
@@ -43,7 +43,7 @@ nonisolated public struct DialogueRejectionRow: Equatable, Sendable {
 /// Everything the dialogue readouts show, captured in one value.
 nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// Rows a snapshot carries. A speaker can offer more topics than a readout
-    /// is worth, and the panel states how many it dropped rather than growing
+    /// is worth, and the readout states how many it dropped rather than growing
     /// without bound.
     public static let rowLimit = 12
 
@@ -115,7 +115,7 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// Condition calls the evaluator could not answer while selecting, which is
     /// the number that says how much of the trace is real.
     public let unresolvedConditionCount: Int
-    /// Result of the last panel control, worded for the readout.
+    /// Result of the last control, worded for the readout.
     public let lastOutcome: String?
 
     // MARK: Movie
@@ -182,27 +182,4 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
         self.movieMenuState = movieMenuState
         self.movieDiagnostics = movieDiagnostics
     }
-}
-
-/// Live-renderer seam for the dialogue section.
-@MainActor
-public protocol DialogueControlProviding: AnyObject {
-    /// One sample of everything the readouts show.
-    /// `DialogueControlSnapshot.empty` when the session has no dialogue index.
-    var dialogueSnapshot: DialogueControlSnapshot { get }
-
-    /// The install's NPC speech waits and chances, one readout line.
-    var speechTimerReadout: String { get }
-
-    /// Starts a conversation with the actor the crosshair is on, which is what
-    /// the use key does. Records why it could not when there is no such actor,
-    /// rather than doing nothing silently.
-    func openDialogue()
-
-    /// Ends the conversation and pops the menu stack. No-op when none is open.
-    func closeDialogue()
-
-    /// Routes one menu event through the same path as the live keys, so the
-    /// panel buttons and the keyboard cannot diverge.
-    func sendDialogueInput(_ event: MenuInputEvent)
 }

@@ -187,7 +187,7 @@ struct RagdollSelfCollisionTests {
         #expect(RagdollFixture.isFinite(first))
     }
 
-    /// The panel line names the admitted set, so "nothing is touching" reads
+    /// The readout line names the admitted set, so "nothing is touching" reads
     /// differently from "nothing was ever allowed to".
     @Test
     func theReadoutNamesTheAdmittedSet() {

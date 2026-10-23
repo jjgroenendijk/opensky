@@ -3,11 +3,10 @@
 // and regard for the player. See docs/engine/combat.md.
 
 import Foundation
-import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
 
-/// One fighting actor as the panel shows it.
+/// One fighting actor as the readout shows it.
 nonisolated public struct CombatActorReadout: Equatable, Sendable {
     public let key: ReferenceKey
     /// FULL name when one resolves, else the editor ID, else the FormID.
@@ -59,118 +58,6 @@ nonisolated public struct CombatActorReadout: Equatable, Sendable {
 }
 
 nonisolated public enum CombatLoopReadout: Sendable {
-    /// Whether the player is fighting, and whom.
-    public static func stateText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Combat: unavailable" }
-        guard snapshot.isPlayerInCombat else {
-            return "Combat: out of combat"
-                + " (\(snapshot.hostileCount) hostile, \(snapshot.deadCount) dead nearby)"
-        }
-        return "Combat: in combat with \(snapshot.targetName)"
-            + String(format: " at %.0f u", snapshot.targetDistance)
-            + " (\(snapshot.engagedCount) engaged, \(snapshot.searchingCount) searching,"
-            + " \(snapshot.hostileCount) hostile, \(snapshot.deadCount) dead)"
-    }
-
-    /// One line per actor with a combat machine, newest state each frame.
-    public static func actorsText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Fighters: unavailable" }
-        guard !snapshot.actors.isEmpty else { return "Fighters: none" }
-        let crowded = snapshot.crowdedOutCount > 0
-            ? " (\(snapshot.crowdedOutCount) over the engagement cap)"
-            : ""
-        let header = "Fighters: \(snapshot.actors.count)\(crowded)"
-        return ([header] + snapshot.actors.map { "  \(actorLine(for: $0))" })
-            .joined(separator: "\n")
-    }
-
-    /// The player's allies, such as summons, and what each does.
-    public static func alliesText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Allies: unavailable" }
-        guard !snapshot.allies.isEmpty else { return "Allies: none" }
-        return (["Allies: \(snapshot.allies.count)"] + snapshot.allies.map { "  \($0)" })
-            .joined(separator: "\n")
-    }
-
-    /// One fighting actor as a readout line.
-    public static func actorLine(for actor: CombatActorReadout) -> String {
-        let situation = String(
-            format: "%.0f u, health %.0f%%", actor.distance, actor.healthFraction * 100
-        )
-        let counts = "\(actor.attackCount) attacks, \(actor.contactCount) swings,"
-            + " \(actor.blockCount) blocks, \(actor.searchCount) searches,"
-            + " \(actor.castCount) casts (\(actor.spellOptionCount) castable)"
-        return "\(actor.name): \(actor.phase.rawValue), \(actor.awareness.rawValue), "
-            + situation + " — " + counts
-    }
-
-    /// Whether fighters may cast, and what casting they have done.
-    public static func castingText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "AI casting: unavailable" }
-        guard snapshot.isActorCastingEnabled else {
-            return "AI casting: off — fighters swing only"
-        }
-        let armed = snapshot.actors.filter { $0.spellOptionCount > 0 }.count
-        return "AI casting: on — \(armed) of \(snapshot.actors.count) fighters armed,"
-            + " \(snapshot.actorCastCount) spells cast"
-    }
-
-    /// The selected actor's Confidence and Assistance, and whether it would break off.
-    public static func temperamentText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Confidence: unavailable" }
-        guard snapshot.usesTemperament else { return "Confidence: off, fighters flee when hurt" }
-        guard let temperament = snapshot.selectedTemperament else { return "Confidence: unknown" }
-        let names = ["cowardly", "cautious", "average", "brave", "foolhardy"]
-        let level = names[min(max(Int(temperament.confidence.rounded()), 0), names.count - 1)]
-        let strength = String(
-            format: "%.2f (breaks off below %.3f)",
-            temperament.strengthRatio, temperament.breakOffStrength
-        )
-        let decision = temperament.breaksOff ? "would flee" : "would fight"
-        let assistance = snapshot.selectedAssistance.map(assistanceText(for:)) ?? "unknown"
-        return "Confidence: \(level), strength \(strength), \(decision)\n"
-            + "Assistance: \(assistance)"
-    }
-
-    /// The game's combat AI settings the fight runs on, by where it is.
-    public static func combatAIText(for snapshot: CombatLoopSnapshot) -> String {
-        let settings = snapshot.combatAI
-        let place = snapshot.isInInterior ? "interior" : "exterior"
-        return String(
-            format: "Flee: %.0f units (%@), ally follow radius: %.0f, "
-                + "confidence nudge %.2f to %.2f",
-            settings.fleeDistance(interior: snapshot.isInInterior), place,
-            settings.followDistance(leaderIsPlayer: true),
-            settings.confidenceModifierRange.lowerBound,
-            settings.confidenceModifierRange.upperBound
-        )
-    }
-
-    static func assistanceText(for assistance: CombatAssistance) -> String {
-        switch assistance {
-        case .helpsNobody: "helps nobody"
-        case .helpsAllies: "helps allies"
-        case .helpsFriendsAndAllies: "helps friends and allies"
-        }
-    }
-
-    /// What the hostility toggle acts on, and where it stands.
-    public static func hostilityText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Hostility: unavailable" }
-        let regard = snapshot.selectedActorIsHostile ? "hostile" : "neutral"
-        return "Hostility: \(snapshot.selectedActorName) is \(regard)"
-    }
-
-    /// Blows the player has taken, newest last.
-    public static func incomingText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Hits taken: unavailable" }
-        guard snapshot.incomingHitCount > 0 else { return "Hits taken: none" }
-        let flash = String(format: "%.2f", snapshot.damageFlash)
-        let header = "Hits taken: \(snapshot.incomingHitCount) (flash \(flash))"
-        guard !snapshot.incomingTrace.isEmpty else { return header }
-        return ([header] + snapshot.incomingTrace.map { "  \($0)" }).joined(separator: "\n")
-    }
-
     /// One incoming hit as a trace line.
     public static func traceLine(for hit: CombatIncomingHit) -> String {
         let blocked = hit.damage.wasBlocked
@@ -180,24 +67,5 @@ nonisolated public enum CombatLoopReadout: Sendable {
         return "attack \(hit.attackID) from \(hit.aggressor)"
             + String(format: ": %.1f damage", hit.damage.applied)
             + blocked + reaction
-    }
-
-    /// Live transients against their ceilings, and what the caps have removed.
-    public static func transientText(for snapshot: CombatLoopSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Transients: unavailable" }
-        let live = snapshot.transients
-        let caps = snapshot.limits
-        let trimmed = snapshot.trimmedTransients
-        let populations = [
-            "arrows in flight \(live.liveProjectiles)/\(caps.liveProjectiles)",
-            "stuck \(live.stuckProjectiles)/\(caps.stuckProjectiles)",
-            "ragdolls \(live.activeRagdolls)/\(caps.activeRagdolls)",
-            "awake bodies \(live.awakeBodies)/\(caps.awakeBodies)"
-        ].joined(separator: ", ")
-        let removed = trimmed == .none
-            ? "nothing trimmed"
-            : "trimmed \(trimmed.liveProjectiles)/\(trimmed.stuckProjectiles)"
-            + "/\(trimmed.activeRagdolls)/\(trimmed.awakeBodies)"
-        return "Transients: \(populations) — \(removed)"
     }
 }

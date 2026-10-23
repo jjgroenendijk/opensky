@@ -3,7 +3,7 @@
 
 import OpenSkyFormatsESM
 
-/// One placed idle marker, as the panel lists it.
+/// One placed idle marker, as the readout lists it.
 nonisolated public struct IdleMarkerReadout: Equatable, Sendable {
     public let reference: ReferenceKey
     public let editorID: String
@@ -18,17 +18,10 @@ nonisolated public struct IdleMarkerReadout: Equatable, Sendable {
     public let claimedBy: ReferenceKey?
 }
 
-/// One line of the related-idle tree below an idle.
-nonisolated public struct IdleTreeLine: Equatable, Sendable {
-    public let editorID: String
-    public let depth: Int
-    public let event: String?
-}
-
 /// What the last selection for one actor did.
 nonisolated public struct IdleReport: Sendable {
     public let actor: ReferenceKey
-    /// The marker's editor ID, or "fired" for a panel request.
+    /// The marker's editor ID, or "fired" for a readout request.
     public let source: String
     public let trace: [IdleCandidateTrace]
     public let chosen: String?
@@ -41,45 +34,24 @@ nonisolated public struct IdleReport: Sendable {
 
 nonisolated public struct IdleControlSnapshot: Sendable {
     public let isAvailable: Bool
-    public let usesIdleMarkers: Bool
     public let markers: [IdleMarkerReadout]
     /// Actors standing at a marker.
     public let idlingActorCount: Int
     public let report: IdleReport?
 
     public static let unavailable = IdleControlSnapshot(
-        isAvailable: false, usesIdleMarkers: false, markers: [], idlingActorCount: 0, report: nil
+        isAvailable: false, markers: [], idlingActorCount: 0, report: nil
     )
 
     public init(
         isAvailable: Bool,
-        usesIdleMarkers: Bool,
         markers: [IdleMarkerReadout],
         idlingActorCount: Int,
         report: IdleReport?
     ) {
         self.isAvailable = isAvailable
-        self.usesIdleMarkers = usesIdleMarkers
         self.markers = markers
         self.idlingActorCount = idlingActorCount
         self.report = report
     }
-}
-
-@MainActor
-public protocol IdleControlProviding: AnyObject {
-    /// The snapshot with `actor`'s last report.
-    func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot
-    /// Off stops sending sandboxing actors to markers; a playing idle finishes.
-    func setUsesIdleMarkers(_ enabled: Bool)
-    func idleTree(below idle: ResolvedFormID) -> [IdleTreeLine]
-    /// Plays one idle on `actor`. Its conditions run, and a failure plays
-    /// nothing unless `ignoringConditions`.
-    @discardableResult
-    func fireIdle(
-        _ idle: ResolvedFormID, on actor: ReferenceKey, ignoringConditions: Bool
-    ) -> IdleReport?
-    /// Runs the marker's selection for `actor` where it stands, and plays the result.
-    @discardableResult
-    func pickIdle(at marker: ReferenceKey, for actor: ReferenceKey) -> IdleReport?
 }

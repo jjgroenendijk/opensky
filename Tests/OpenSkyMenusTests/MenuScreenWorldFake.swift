@@ -5,7 +5,6 @@ import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 import OpenSkyRendering
-import OpenSkyWorldInterface
 
 @MainActor
 final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {

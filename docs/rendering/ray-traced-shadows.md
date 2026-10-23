@@ -45,12 +45,8 @@ freed when it turns off.
 
 ## Settings and checking it
 
-The player setting `rendering.rayTracedShadows` turns it on. The launcher's Graphics page
-and `Developer > Rendering Performance > Ray-Traced Shadows` write it
-(`GraphicsRayTracedShadowsControl`, `RayTracedShadowsEnabledControl`). The section also has
-`RayTracedShadowsViewControl`, which draws the traced shadow alone: white is lit, black is
-shadowed. Its readout (`RayTracedShadowsStatsLabel`) shows the reason when the GPU cannot run
-it, and otherwise the number of meshes, instances, and structure memory.
+The player setting `rendering.rayTracedShadows` turns it on, from the launcher's Graphics
+page.
 
 The effect and its frame cost have not been checked on an M3 or later Mac yet. The
 [benchmark](/tools/benchmark.md) records that cost once one is available.

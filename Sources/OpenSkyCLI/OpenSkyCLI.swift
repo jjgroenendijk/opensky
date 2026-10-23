@@ -41,7 +41,7 @@ enum OpenSkyCLI {
     /// Older builds wrote these to the CLI's own domain instead of the shared one.
     private static func migrateSettings() {
         SettingsStore.shared.migrate(
-            [TimeOfDaySettings.defaultsKey, ShadowQualitySettings.defaultsKey],
+            [TimeOfDaySettings.defaultsKey],
             from: .standard
         )
     }

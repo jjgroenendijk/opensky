@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 public final class CreationClubMenuCoordinator: MenuScreen<CreationClubMovieEvent> {
     public static let identifier: MenuIdentifier = "Creation Club Menu"

@@ -92,10 +92,9 @@ flag means the plugin removed the record, which is handled when references are c
 
 ## The change journal
 
-The journal is an ordered log of every change. The save layer uses it, the Runtime State panel shows
-it, and Papyrus needs a causal order for its events. Each entry has a store-wide sequence number
-that only grows (starting at 1), the key, the kind, the old and new values, and the cell. The old
-value is empty when the slot was clean. The new value is empty for a reset.
+The journal is an ordered log of every change. Each entry has a store-wide sequence number that only
+grows (starting at 1), the key, the kind, the old and new values, and the cell. The old value is
+empty when the slot was clean. The new value is empty for a reset.
 
 A running game changes state forever, so the journal is bounded: 4,096 entries by default, and at
 least 1. It is a fixed-size ring, so recording is constant time and memory is fixed. When it is full
@@ -227,20 +226,3 @@ running `OnInit` again on load.
 A round trip gives the same deltas, maybe in a different store, driving the same cells to rebuild.
 The save format is deterministic, so a test can compare the restored snapshot to the original by
 equality.
-
-## Controls
-
-World > Runtime State:
-
-- Inspect: loaded reference count, dirty count, allocator position, dropped journal entries, and the
-  newest journal entries. Component and global changes are shown in one list, merged by their shared
-  sequence number, so the order is the real order of the writes.
-- Change: a target (a typed hex form ID, or the current interaction target), and Disable, Enable, and
-  Nudge.
-- Reset: reset the target or everything.
-- Save: a slot name, Save, and Load. The readout lists the slots on disk and the last result,
-  including a failed load's error text.
-
-The Time, Globals, and Conditions sections are on the [global variables](/engine/global-variables.md)
-page. The destination counts as changed while any reference is dirty, any global is overridden, or
-the timescale is not its default. The sidebar reset clears all three.

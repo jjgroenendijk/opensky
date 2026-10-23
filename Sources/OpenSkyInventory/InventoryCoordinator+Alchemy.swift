@@ -140,13 +140,6 @@ extension InventoryCoordinator {
         return noteAlchemy(.picked(itemName, preview: previewText))
     }
 
-    @discardableResult
-    public func clearAlchemyIngredients() -> AlchemyActionOutcome {
-        guard alchemySelection != nil else { return noteAlchemy(.noLab) }
-        alchemySelection = []
-        return noteAlchemy(.cleared)
-    }
-
     /// What the chosen ingredients make now. Nil with fewer than two chosen.
     public var alchemyPreview: AlchemyPreview? {
         guard let chosen = alchemySelection, chosen.count >= 2 else { return nil }

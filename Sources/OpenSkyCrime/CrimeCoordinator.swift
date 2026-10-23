@@ -1,5 +1,5 @@
 // The shell of the crime domain: owns the bounty reporter, ownership, guard
-// response, and the `World > Crime & Factions` panel state. It is the
+// response, and the crime and faction state. It is the
 // reporter's `CrimeWorld`. The rules live in `CrimeCore`, `CrimeRuntime`, and
 // `GuardResponseState`. See docs/engine/coordinators.md and docs/engine/crime.md.
 
@@ -12,7 +12,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-/// What the panel has selected. A nil selection falls back to the first
+/// What the readout has selected. A nil selection falls back to the first
 /// option the snapshot offers, which is what the popups show.
 public struct CrimeFactionPanelState {
     public var bountyFaction: ReferenceKey?
@@ -153,7 +153,7 @@ public final class CrimeCoordinator {
         actorFirstStrikes = []
         actorCriminals = [:]
         self.pluginName = pluginName
-        // A new load order carries different factions for the panel to offer.
+        // A new load order carries different factions for the readout to offer.
         panel.options = nil
         ownership = OwnershipResolver(factions: runtime.factions, pluginName: pluginName)
         crimeFactions = locations.map {

@@ -10,7 +10,6 @@ import MetalKit
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 

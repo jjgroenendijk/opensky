@@ -87,24 +87,6 @@ extension InventoryCoordinator {
         return harvest(interaction)
     }
 
-    public func resetHarvestOfInteractionTarget() -> InventoryResult<ItemActionOutcome> {
-        guard let runtime else { return InventoryResult(.unavailable) }
-        guard let interaction = world.crosshairInteraction else {
-            return InventoryResult(note(.nothingUnderCrosshair(verb: "reset")))
-        }
-        do {
-            try runtime.resetHarvest(interaction)
-            return InventoryResult(
-                note(.grewBack(interaction.name)), commands: [.refreshInteractionTarget]
-            )
-        } catch {
-            return InventoryResult(note(.failed(
-                action: "Reset",
-                reason: String(describing: error)
-            )))
-        }
-    }
-
     // MARK: - Crafting
 
     /// Opens a session for a station activation, replacing any open one.
@@ -128,27 +110,6 @@ extension InventoryCoordinator {
         }
         let count = crafting?.recipes.count ?? 0
         return noteCraft(.opened(station: event.interaction.name, recipes: count))
-    }
-
-    /// The dev control: a session at a station base, without walking to one.
-    @discardableResult
-    public func openCraftingSession(station editorID: String) -> CraftingActionOutcome {
-        guard let choice = craftingCatalog?.stations.first(where: { $0.editorID == editorID })
-        else { return noteCraft(.noStationNamed(editorID)) }
-        let interaction = PlacedInteraction(
-            reference: choice.base,
-            base: choice.base,
-            position: .zero,
-            name: choice.editorID,
-            action: .use,
-            actionLabel: InteractionAction.use.defaultLabel,
-            sounds: nil,
-            station: CraftingStation(workbench: choice.workbench, keywords: choice.keywords)
-        )
-        guard let event = CraftingActivationEvent(interaction: interaction) else {
-            return noteCraft(.notAStation(editorID))
-        }
-        return openCraftingSession(event)
     }
 
     @discardableResult

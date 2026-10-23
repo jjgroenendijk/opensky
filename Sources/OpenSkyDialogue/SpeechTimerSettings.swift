@@ -5,7 +5,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
@@ -91,7 +90,7 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
         return settings
     }
 
-    /// The waits and chances for the Dialogue panel.
+    /// The waits and chances for the Dialogue readout.
     public var readout: String {
         let percent = { (line: NPCSpeechLine) in Int((chance(of: line) * 100).rounded()) }
         return String(

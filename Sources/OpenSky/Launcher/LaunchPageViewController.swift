@@ -38,8 +38,21 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let survivalModeAskControl = NSButton(
         checkboxWithTitle: "Ask when a new game starts", target: nil, action: nil
     )
-    private(set) var modeButtons: [(LaunchMode, NSButton)] = []
-    private var modeRow = NSView()
+    private(set) lazy var playButton: LauncherButton = {
+        let button = LauncherButton(
+            title: "Play",
+            image: NSImage(systemSymbolName: "play.fill", accessibilityDescription: nil)
+                ?? NSImage(),
+            target: self,
+            action: #selector(play)
+        )
+        button.isPrimary = true
+        button.toolTip = "Start the game"
+        button.setAccessibilityIdentifier("LaunchPlayControl")
+        return button
+    }()
+
+    private var playRow = NSView()
     let assetStatus = LauncherStatusView(name: "LauncherAssetOptimisation")
     let assetLinkButton = LauncherButton(
         title: "Open Asset Optimisation",
@@ -59,7 +72,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     }
 
     override func loadView() {
-        modeRow = makeModeRow()
+        playRow = makePlayRow()
         loadPanel.isHidden = true
         loadPanel.onCancel = { [weak self] in self?.context.actions?.cancelLoad() }
         configureStartControls()
@@ -68,7 +81,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             layout.group("Continue", [continueLabel, layout.buttons([continueButton])]),
             makeStartGroup(),
             makeNewGameGroup(),
-            modeRow,
+            playRow,
             loadPanel,
             makeBeforeYouPlayGroup()
         ])
@@ -94,19 +107,16 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             ?? "Game folder: not found. Choose it in Settings"
         folderLabel.toolTip = status.isFound ? status.path : status.note
         folderLabel.textColor = status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
-        refreshModes()
+        refreshPlay()
     }
 
-    /// Play needs a valid start; both modes need the game folder.
-    func refreshModes() {
-        let status = GameFolderStatus()
-        let lastMode = LaunchPreferences.lastMode()
+    /// Play needs the game folder and a valid start.
+    func refreshPlay() {
+        let isFound = GameFolderStatus().isFound
         let startIsValid = (try? startForm.validate().get()) != nil
-        for (mode, button) in modeButtons {
-            button.isEnabled = status.canStart(mode) && (mode != .play || startIsValid)
-            button.keyEquivalent = mode == lastMode && button.isEnabled ? "\r" : ""
-        }
-        continueButton.isEnabled = continueOffer.isEnabled && status.canStart(.play)
+        playButton.isEnabled = isFound && startIsValid
+        playButton.keyEquivalent = playButton.isEnabled ? "\r" : ""
+        continueButton.isEnabled = continueOffer.isEnabled && isFound
     }
 
     func refreshAssetStatus() {
@@ -134,49 +144,24 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     /// The folder cannot change under a running load, so its buttons pause too.
     private func setLoading(_ loading: Bool) {
         guard isViewLoaded, loadPanel.isHidden == loading else { return }
-        modeRow.isHidden = loading
+        playRow.isHidden = loading
         loadPanel.isHidden = !loading
         for button in [settingsLinkButton, continueButton] {
             button.isEnabled = !loading
         }
         if !loading {
-            refreshModes()
+            refreshPlay()
         }
     }
 
     // MARK: - Layout
 
-    private func makeModeRow() -> NSView {
-        let columns = LauncherRegistry.modes.map { descriptor -> NSView in
-            let button = LauncherButton(
-                title: descriptor.title,
-                image: NSImage(
-                    systemSymbolName: descriptor.symbolName,
-                    accessibilityDescription: nil
-                )
-                    ?? NSImage(),
-                target: self,
-                action: #selector(startMode(_:))
-            )
-            button.isPrimary = true
-            button.toolTip = descriptor.toolTip
-            button.setAccessibilityIdentifier(descriptor.controlIdentifier)
-            button.widthAnchor.constraint(equalToConstant: 260).isActive = true
-            modeButtons.append((descriptor.mode, button))
-            let summary = layout.note(descriptor.summary)
-            summary.widthAnchor.constraint(equalToConstant: 260).isActive = true
-            summary.setAccessibilityIdentifier(
-                descriptor.controlIdentifier.replacingOccurrences(
-                    of: "Control",
-                    with: "SummaryStatsLabel"
-                )
-            )
-            return PanelComponents.group([button, summary])
-        }
-        let row = NSStackView(views: columns)
-        row.alignment = .top
-        row.spacing = 20
-        return row
+    private func makePlayRow() -> NSView {
+        playButton.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        let summary = layout.note("The game, from the start you choose")
+        summary.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        summary.setAccessibilityIdentifier("LaunchPlaySummaryStatsLabel")
+        return PanelComponents.group([playButton, summary])
     }
 
     private func makeBeforeYouPlayGroup() -> NSView {
@@ -198,9 +183,8 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     // MARK: - Actions
 
-    @objc private func startMode(_ sender: NSButton) {
-        guard let mode = modeButtons.first(where: { $0.1 === sender })?.0 else { return }
-        context.actions?.start(mode)
+    @objc private func play() {
+        context.actions?.play()
     }
 
     @objc private func openAssetOptimisation() {

@@ -64,9 +64,7 @@ The tangent frame follows the UVs: +u is east (+X) and +v is north (+Y). Green p
 test (the change of red along v against the change of green along u) only holds with green
 along +v. The other two are almost flat and give no answer.
 
-Ray-traced shadows still test the vertex normal. `World > Environment > Terrain` and the
-launcher's graphics page hold the switch, and the panel counts the quadrants that have a
-normal map.
+Ray-traced shadows still test the vertex normal.
 
 ## Placement
 

@@ -57,7 +57,7 @@ enum RenderCommand {
             camera: zoomed(camera, zoom: options.zoom),
             size: options.size,
             timeOfDay: options.timeOfDay,
-            uiScene: options.uiSample ? .labSample : .empty,
+            uiScene: options.uiSample ? .overlaySample : .empty,
             navigationOverlayGraph: options.navmeshOverlay
                 ? makeNavigationGraph(cellScenes) : nil,
             detectionOverlay: detection?.runtime,
@@ -218,26 +218,6 @@ enum RenderCommand {
             throw CLIError.usage("--size expects WxH (each 1-8192), got \(value)")
         }
         return (width, height)
-    }
-
-    /// Shared with BenchCommand: one cell, fresh libraries.
-    static func buildScene(
-        context: CLIContext,
-        device: MTLDevice,
-        worldspace: String,
-        gridX: Int32,
-        gridY: Int32
-    ) throws -> CellScene {
-        let builder = try makeBuilder(context: context, device: device)
-        do {
-            return try builder.buildScene(
-                worldspaceEditorID: worldspace,
-                gridX: gridX,
-                gridY: gridY
-            )
-        } catch let error as CellSceneError {
-            throw CLIError.failure(String(describing: error))
-        }
     }
 
     /// One VFS + ESM + MeshLibrary/TextureLibrary/CellSceneBuilder trio.

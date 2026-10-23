@@ -56,8 +56,6 @@ one transform write, when the move ends or stops.
 While a move runs, `GetPositionX`, `GetAngleZ`, `GetDistance`, and the other script reads see the
 live pose. A walking actor's position still comes from its locomotion.
 
-The World > Scripts panel shows how many references are moving now, as "Scripted moves".
-
 ## Where OpenSky differs from the game
 
 | Behaviour | What OpenSky does | Why |

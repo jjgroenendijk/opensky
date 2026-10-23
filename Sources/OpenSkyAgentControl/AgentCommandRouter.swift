@@ -126,8 +126,7 @@ public final class AgentCommandRouter {
             "protocolVersion": .init(AgentProtocol.version),
             "running": .bool(world != nil),
             "worldReady": .bool(status?.worldReady ?? false),
-            "dataRoot": .init(status?.dataRoot),
-            "mode": .init(status?.mode)
+            "dataRoot": .init(status?.dataRoot)
         ]
         if let timeline = world?.agentTimeline {
             fields["time"] = timeline.json

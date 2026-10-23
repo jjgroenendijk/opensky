@@ -137,7 +137,7 @@ chunk cannot read into the next.
 `HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
 means harvested, so it has no other field. `HRVD` is a uint32 entry count, then one key and a
 float32 game day per harvest with a known day. A decoder applies it after `HRVS` and ignores a key
-that `HRVS` does not name. The day is kept for the readout; a plant grows back when its cell
+that `HRVS` does not name. The day is kept; a plant grows back when its cell
 resets ([cell reset](/engine/cell-reset.md)), not on a day count.
 
 `LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or

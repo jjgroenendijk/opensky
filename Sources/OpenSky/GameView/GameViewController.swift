@@ -48,19 +48,19 @@ final class GameViewController: NSViewController {
     /// Loaded off the main actor before the view loads, on the system default
     /// device the view also uses. Nil falls back to `DemoScene`.
     var cellSession: CellSession?
-    /// The stage times of the load that built `cellSession`, for World > World Load.
+    /// The stage times of the load that built `cellSession`.
     var worldLoadReport: WorldLoadReport?
-    /// The session's asset cache, for World > Asset Cache.
+    /// The session's asset cache.
     var assetCache: AssetCacheReader?
     var fastTextureLoad: FastTextureLoadControl?
-    /// Times the work between the load and the first frame, for World > World Load.
+    /// Times the work between the load and the first frame.
     let sessionStart = SessionStartRecorder()
     /// Times the streamer's builds by asset phase; set only when a benchmark tour will run.
     var benchmarkLoadPhases: LoadPhaseRecorder?
     /// The benchmark tour through the live window (docs/tools/benchmark.md).
     lazy var benchmarkWorld = BenchmarkWorldAdapter(game: self)
 
-    /// Thread-safe effective INI/sidebar LOD values shared with the off-main
+    /// Thread-safe effective INI and settings LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
     var terrainLODConfigurationStore = TerrainLODConfigurationStore(
         snapshot: TerrainLODConfigurationSnapshot(
@@ -89,7 +89,7 @@ final class GameViewController: NSViewController {
     lazy var scripts = ScriptCoordinator(world: scriptWorld)
 
     lazy var scriptWorld = ScriptWorldAdapter(game: self)
-    /// The renderer and streamer controls of the World panels.
+    /// The renderer and streamer controls of agent control.
     lazy var renderControls = WorldRenderControls(runtimeState: runtimeState, world: self)
 
     lazy var sessionWiring = WorldSessionWiring(game: self)
@@ -112,15 +112,13 @@ final class GameViewController: NSViewController {
     /// The session stores the audio, crime and faction bridges read. The build
     /// runner holds the builder half, so the two share nothing mutable.
     var worldData: WorldDataStores?
-    /// The audio engine, the world directors and the World > Audio lab state.
+    /// The audio engine, the world directors and the audio picker state.
     lazy var audio = AudioCoordinator(world: audioWorld)
 
     lazy var audioWorld = AudioWorldAdapter(game: self)
     /// The SWF movie loader; the AppDelegate sets its factory.
     let swfMovies = SWFMovieSource()
     lazy var hud = HUDCoordinator(movies: swfMovies, world: self)
-    lazy var swfLab = SWFLabCoordinator(movies: swfMovies, hud: hud, world: self)
-    lazy var uiLab = UILabCoordinator(menuMode: menuMode, world: self)
 
     lazy var systemMenu = menuRouter.makeSystemMenu()
 
@@ -152,7 +150,7 @@ final class GameViewController: NSViewController {
 
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)
-    /// The quest the journal panel names and the quest changes it runs.
+    /// The quest the journal readout names and the quest changes it runs.
     lazy var journal = JournalCoordinator(world: journalMenu)
 
     lazy var journalMenu = JournalMenuController(game: self)
@@ -167,7 +165,7 @@ final class GameViewController: NSViewController {
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
     lazy var containerMenu = ContainerMenuController(game: self)
     lazy var lockpickingMenu = LockpickingMenuController(game: self)
-    /// Notifications, help messages, and message boxes for scripts and the sidebar.
+    /// Notifications, help messages, and message boxes for scripts and agent control.
     lazy var messages = MessageCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, world: messageWorld
     )
@@ -212,17 +210,17 @@ final class GameViewController: NSViewController {
         worldState: worldState,
         streamer: { [unowned self] in streamer }
     ))
-    /// The player graphs, the body, and the locomotion and first-person panels.
+    /// The player graphs, the body, and the locomotion and first-person readouts.
     lazy var player = PlayerCoordinator(input: cameraInput, world: playerWorld)
 
     lazy var playerWorld = PlayerWorldAdapter(game: self)
-    /// The Face Morphs panel, over the actor in conversation.
+    /// The Face Morphs readout, over the actor in conversation.
     lazy var faceMorphs = FaceMorphCoordinator(world: playerWorld, settings: playerSettings.store)
 
     lazy var headTracking =
         HeadTrackingCoordinator(world: playerWorld, settings: playerSettings.store)
 
-    /// Actor values: damage, restore, regeneration, and the panel controls.
+    /// Actor values: damage, restore, regeneration, and the control controls.
     lazy var actorValues = ActorValueCoordinator(store: worldState, world: actorWorld)
 
     lazy var actorWorld = ActorWorldAdapter(game: self)
@@ -243,11 +241,11 @@ final class GameViewController: NSViewController {
         actors: actorWorld,
         streamer: { [unowned self] in streamer }
     ))
-    /// Bounties, ownership, guard response and the Crime & Factions panel.
+    /// Bounties, ownership, guard response and the Crime & Factions readout.
     lazy var crime = CrimeCoordinator(world: crimeWorld)
     lazy var crimeWorld = CrimeWorldAdapter(game: self)
 
-    /// Skill advancement, character leveling, and the Progression panel.
+    /// Skill advancement, character leveling, and the Progression readout.
     lazy var progression = ProgressionCoordinator(perks: perks, world: progressionWorld)
 
     lazy var progressionWorld = ProgressionWorldAdapter(game: self)
@@ -265,9 +263,6 @@ final class GameViewController: NSViewController {
 
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
     lazy var perception = PerceptionCoordinator(world: aiWorld)
-
-    /// The AI & Navigation panel's shared actor selection and its last outcome line.
-    lazy var aiNavigation = AINavigationCoordinator(packages: packages, world: aiWorld)
 
     /// The gait clip each NPC mover plays.
     lazy var npcAnimation = NPCAnimationCoordinator(world: aiWorld)
@@ -328,7 +323,6 @@ final class GameViewController: NSViewController {
                 )
             }
             let newRenderer = newGameSession.renderer
-            newRenderer.shadowQuality = ShadowQualitySettings.load()
             newGameSession.applyGraphicsSettings(playerSettings.store)
             effects.applyGraphicsSettings(playerSettings.store)
             newGameSession.timeOfDay = TimeOfDaySettings.load()
@@ -401,11 +395,6 @@ extension GameViewController {
             }
         }
     }
-
-    static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "CellStream"
-    )
 
     private func wireInput(_ gameView: GameMetalView) {
         gameView.input = cameraInput
@@ -488,8 +477,6 @@ extension GameViewController {
     }
 }
 
-extension GameViewController: WorldLoadReportProviding, AssetCacheControlProviding {}
-
 extension GameViewController: @MainActor SystemMenuWorld {
     var viewCamera: FreeFlyCamera? {
         gameSession?.freeFlyCamera
@@ -541,23 +528,7 @@ extension GameViewController: RenderControlWorld {
 }
 
 extension GameViewController {
-    var canWriteScreenshot: Bool {
-        renderer != nil
-    }
-
     var scenes: SceneCoordinator {
         storyWorld.scenes
-    }
-
-    var storyManager: StoryManagerCoordinator {
-        storyWorld.storyManager
-    }
-
-    var idles: IdleCoordinator {
-        idleWorld.idles
-    }
-
-    var headAssembly: HeadAssemblyCoordinator {
-        idleWorld.headAssembly
     }
 }

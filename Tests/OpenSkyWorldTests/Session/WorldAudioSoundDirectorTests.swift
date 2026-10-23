@@ -1,5 +1,5 @@
 // WorldAudioSoundDirector coverage over the offline-render engine: interaction
-// SFX, the panel force-trigger, and resolve failures. Ambience-bed behavior
+// SFX, the readout force-trigger, and resolve failures. Ambience-bed behavior
 // lives in WorldAudioDirectorAmbienceTests. Fixtures come from
 // WorldAudioDirectorFixture — synthetic plugins and a stubbed file loader, no
 // real audio device and no VFS. See docs/engine/world-sfx.md.
@@ -10,7 +10,6 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
-import OpenSkyWorldTesting
 import simd
 import Testing
 

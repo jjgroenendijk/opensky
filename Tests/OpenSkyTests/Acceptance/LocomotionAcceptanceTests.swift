@@ -1,7 +1,7 @@
 // Locomotion acceptance: one key-driven route enters idle, walk, run, sprint,
 // jump, land, sneak, and swim; root motion resolves on flat ground, slope, and
 // water; a cell crossing and a door round trip keep state; a zero frame does
-// nothing; first person matches third. Pixel and panel halves are gated.
+// nothing; first person matches third. Pixel and readout halves are gated.
 
 import Foundation
 @testable import OpenSkyBehavior

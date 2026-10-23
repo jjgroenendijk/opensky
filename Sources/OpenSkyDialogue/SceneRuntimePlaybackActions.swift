@@ -6,7 +6,6 @@
 // (<https://ck.uesp.net/wiki/Scenes_Tab>).
 
 import Foundation
-import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData

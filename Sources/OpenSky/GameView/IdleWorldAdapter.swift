@@ -39,8 +39,6 @@ final class IdleWorldAdapter {
     unowned let game: any IdleWorldHost
     /// Ambient idles at idle markers, with their props.
     private(set) lazy var idles = IdleCoordinator(world: self)
-    /// The per-actor switch between the baked and the assembled head.
-    private(set) lazy var headAssembly = HeadAssemblyCoordinator(world: self)
 
     init(game: any IdleWorldHost) {
         self.game = game
@@ -142,28 +140,5 @@ extension IdleWorldAdapter: IdleWorld {
         }
         game.player.playIdle(named: name, state: state)
         return true
-    }
-}
-
-extension IdleWorldAdapter: HeadAssemblyWorld {
-    func updatePresentation(
-        of actor: ReferenceKey,
-        _ change: (inout ActorPresentationState) -> Void
-    ) {
-        game.worldState.updatePresentation(
-            of: actor, in: game.streamer?.cellLocation(of: actor), change
-        )
-    }
-
-    func actorHead(for actor: ReferenceKey) -> ActorHeadReadout? {
-        guard
-            let streamer = game.streamer,
-            let placed = streamer.referenceEntry(key: actor)?.placedActor
-        else { return nil }
-        return streamer.actorHead(forActor: placed.formID)
-    }
-
-    func presentation(of actor: ReferenceKey) -> ActorPresentationState? {
-        game.worldState.component(ActorPresentationState.self, for: actor)
     }
 }

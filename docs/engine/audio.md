@@ -47,9 +47,8 @@ others. Applying it at both would square it. Distance fading comes after all of 
 positional sources.
 
 Mute and solo are two more filters inside the category factor. One function gives the category's
-volume when it is audible, and zero when it is muted or another category is soloed. The submix
-volumes, the player node volumes, and the panel's gain column all read that one function, so they
-cannot disagree. Changing a filter applies it again to sources that are already playing.
+volume when it is audible, and zero when it is muted or another category is soloed. Changing a
+filter applies it again to sources that are already playing.
 
 - Mute and solo are separate filters, and both must pass. Soloing a muted category leaves it
   silent. Only unmuting makes it audible.
@@ -57,7 +56,7 @@ cannot disagree. Changing a filter applies it again to sources that are already 
 - Solo is one optional category, so only one can be soloed at a time.
 
 The engine starts with the game, unless the Sound setting is off
-([settings](/engine/settings.md)). A start failure, such as no output device, is shown in the readout.
+([settings](/engine/settings.md)). A start failure, such as no output device, leaves the game silent.
 It never crashes and never blocks rendering.
 
 The four categories are the four vanilla `SNCT` nodes marked for menu display: Effects, Voice,
@@ -98,8 +97,7 @@ Three places run code, with one crossing each:
    there itself. Nothing from OpenSky allocates, locks, or logs on it.
 
 Main to queue is a start or stop request, with no waiting. Queue to main is one locked "finished"
-flag the tick checks. Engine to panel is a snapshot value read twice a second. The main actor never
-waits for the decode queue.
+flag the tick checks. The main actor never waits for the decode queue.
 
 ## Budget and cleanup
 
@@ -137,8 +135,7 @@ gain, a target, a duration in seconds, and elapsed time. This is the crossfade t
 ## Distance
 
 Distance fading is provisional: the inverse model, reference distance 2 m, maximum distance 60 m
-(about one exterior cell), and rolloff 1. The game's own values come from `SNDR` and `SDSC`. These
-exist so the panel is clearly distance-dependent.
+(about one exterior cell), and rolloff 1. The game's own values come from `SNDR` and `SDSC`.
 
 ## Per-frame cost
 
@@ -153,22 +150,3 @@ audio engine so the tick really runs, and check this budget. The measured floor,
 sources, is about 35 times under the p95 limit. The rest grows with live sources, which the limit
 caps at 8. So the budget is reasoned headroom over a measured floor. A frame that does no audio work
 records zero.
-
-## Controls
-
-World > Audio has five sections: Output, Sources, Voice, Footsteps, SFX & Ambience, and Music.
-
-- Output: Enabled, master volume, a volume slider per category, and per category a mute and a
-  solo checkbox. Solo is a checkbox, not a radio group, because clicking the soloed category again
-  clears solo, which a radio group cannot do. A muted or soloed category counts as a change, so the
-  sidebar dot lights and the reset clears both. The readout ends with a line like
-  `Mute: Effects, Music  Solo: Voice`, or `Mute: none  Solo: none`.
-- Sources: pick an `.xwm` file and play it, or stop all. The file plays 700 units (about 10 m)
-  ahead of the camera as an effect, so turning or strafing pans it at once. The readout lists live
-  sources with file, category, position, distance, gain, and playback time. The time reads `--`
-  until the source renders its first buffer, which is a real state, not zero.
-
-A manual check: turn on audio, play any `music\...` file, then turn and strafe. The sound must pan
-between ears as it passes the view axis, and fade as you fly away. Mute Effects and check that the
-effect goes silent while music plays. Solo Music and check that everything else stops. Reset, and
-check that the mix returns.

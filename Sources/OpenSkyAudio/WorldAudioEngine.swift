@@ -39,7 +39,7 @@ nonisolated public final class VoicePlaybackClock: Sendable, Equatable {
     }
 }
 
-/// Provisional distance-attenuation defaults, in meters. Tuned only so World > Audio
+/// Provisional distance-attenuation defaults, in meters. Tuned only so the audio checks
 /// is audibly direction- and distance-dependent until sound descriptors supply values.
 nonisolated public enum ProvisionalAttenuation: Sendable {
     /// Distance at which a source plays at full gain (~2 m).
@@ -84,7 +84,7 @@ public final class WorldAudioEngine {
     /// dialogue subtitle lifecycle and the menu's auto-advance. Never fires
     /// for a source that was stopped, evicted or purged.
     public var onSourceFinished: ((Int) -> Void)?
-    /// Why the graph is not running, for the panel readout. nil while healthy.
+    /// Why the graph is not running, for the readout. nil while healthy.
     public private(set) var unavailableReason: String?
     /// Listener pose in world space, kept for the snapshot's distance column.
     public private(set) var listenerWorldPosition = SIMD3<Float>.zero
@@ -92,7 +92,7 @@ public final class WorldAudioEngine {
     public var reverb = ReverbRamp()
 
     /// Off by default: no audio engine starts (and no output device is touched)
-    /// until the user enables it in World > Audio.
+    /// until something enables it.
     public var isEnabled = false {
         didSet {
             guard isEnabled != oldValue else { return }
@@ -119,7 +119,7 @@ public final class WorldAudioEngine {
     private var categoryVolumes: [AudioCategory: Float] =
         Dictionary(uniqueKeysWithValues: AudioCategory.allCases.map { ($0, 1) })
 
-    /// Categories the user silenced in World > Audio. Held separately from
+    /// Categories that are silenced. Held separately from
     /// `categoryVolumes` so unmuting restores the slider value the user had
     /// dialled in rather than snapping back to full.
     private var mutedCategories: Set<AudioCategory> = []
@@ -172,7 +172,7 @@ public final class WorldAudioEngine {
     /// The category factor the graph actually applies: the category's volume
     /// when it is audible, and zero when it is muted or when a different
     /// category is soloed. Every gain path folds mute and solo in here, so the
-    /// submixes, the positional node volumes and the panel's reported
+    /// submixes, the positional node volumes and the readout's reported
     /// `effectiveGain` can never disagree.
     public func audibleVolume(for category: AudioCategory) -> Float {
         guard !mutedCategories.contains(category) else { return 0 }

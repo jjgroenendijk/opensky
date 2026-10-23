@@ -60,17 +60,6 @@ public final class SocialEventCoordinator {
         pendingCommands += events.map(SocialEventCommand.reportStoryEvent)
     }
 
-    /// The readout: what each code sent, then the latest events.
-    public var lines: [String] {
-        let codes: [FourCC] = ["ADIA", "AHEL", "DEAD"]
-        let counts = codes.map { "\($0) \(sentCounts[$0] ?? 0)" }
-        return ["Social events sent: " + counts.joined(separator: ", ")]
-            + recent.reversed().map { event in
-                "\(event.event): \(event.actor1?.description ?? "-") to "
-                    + (event.actor2?.description ?? "-")
-            }
-    }
-
     /// Forgets timers and found bodies, after a load or a new game.
     public func reset() {
         state = SocialState()

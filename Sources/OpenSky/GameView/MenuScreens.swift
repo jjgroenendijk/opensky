@@ -3,8 +3,6 @@
 
 import Foundation
 import OpenSkyMenus
-import OpenSkyRendering
-import OpenSkyWorld
 
 /// What `MenuScreens` reads from the session. `GameViewController` conforms.
 @MainActor
@@ -114,45 +112,4 @@ final class MenuScreens {
         CraftingMenuCoordinator.identifier, TextEntryMenuCoordinator.identifier,
         CreationClubMenuCoordinator.identifier
     ]
-}
-
-extension MenuScreens: MenuScreensControlProviding {
-    var menuScreenReadouts: [MenuScreenReadout] {
-        MenuScreenKind.allCases.map { kind in
-            let (state, result) = readout(of: kind)
-            return MenuScreenReadout(kind: kind, state: state, lastResult: result)
-        }
-    }
-
-    private func readout(of kind: MenuScreenKind) -> (String, String) {
-        switch kind {
-        case .wait, .rest: (sleepWait.movieState, sleepWait.lastResult)
-        case .training: (training.movieState, training.lastResult)
-        case .book: (book.movieState, book.lastResult)
-        case .help: (tutorial.movieState, tutorial.lastResult)
-        case .magic: (magic.movieState, magic.lastResult)
-        case .gift: (gift.movieState, gift.lastResult)
-        case .crafting: (crafting.movieState, crafting.lastResult)
-        case .map: (mapMovie.movieState, mapMovie.map.lastResult ?? "none")
-        case .textEntry: (textEntry.movieState, textEntry.lastResult)
-        case .creationClub: (creationClub.movieState, creationClub.lastResult)
-        }
-    }
-
-    @discardableResult
-    func openMenuScreen(_ kind: MenuScreenKind) -> Bool {
-        switch kind {
-        case .wait: sleepWait.open(sleeping: false)
-        case .rest: sleepWait.open(sleeping: true)
-        case .training: training.openNearest()
-        case .book: book.openFirstCarried()
-        case .help: tutorial.openFirstTopic()
-        case .magic: magic.open()
-        case .gift: gift.openNearest()
-        case .crafting: crafting.open()
-        case .map: mapMovie.map.open()
-        case .textEntry: textEntry.open(title: "Name")
-        case .creationClub: creationClub.open()
-        }
-    }
 }

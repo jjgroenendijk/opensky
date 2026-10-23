@@ -101,8 +101,7 @@ function replaces each `[Event]` tag, such as `[Activate]`, with the key: it ask
 engine `GetButtonFromUserEvent(event)`, and OpenSky answers with the key bound to that
 control. The exit button calls `CloseMenu`.
 
-The game opens a topic from the Help page of the journal. OpenSky opens the first topic
-from the sidebar (HUD & Interaction > Menu screens).
+The game opens a topic from the Help page of the journal.
 
 ## Differences from the game
 

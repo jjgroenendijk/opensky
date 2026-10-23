@@ -6,7 +6,7 @@ import OpenSkyBehavior
 
 /// Readout rows built from plain values.
 nonisolated public enum PlayerCore {
-    /// Every gameplay key with its live state, so the panel lists each binding.
+    /// Every gameplay key with its live state, so the readout lists each binding.
     public static func bindings(
         run: Bool,
         sprint: Bool,
@@ -22,7 +22,7 @@ nonisolated public enum PlayerCore {
     }
 
     /// A name the graph does not declare gets a nil value, so a spelling
-    /// mismatch shows on the panel.
+    /// mismatch shows on the readout.
     public static func variables(of graph: BehaviorGraphInstance?) -> [LocomotionVariableSnapshot] {
         let names = LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
         return names.map { name in

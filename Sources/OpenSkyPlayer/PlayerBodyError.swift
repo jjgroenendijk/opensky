@@ -2,7 +2,7 @@ import Foundation
 import OpenSkyFormatsESM
 
 /// Why the player has no body. Every case is reported rather than swallowed:
-/// a bodiless player in third person looks like a rendering bug, and the panel
+/// a bodiless player in third person looks like a rendering bug, and the readout
 /// has to be able to say which of these it actually is.
 nonisolated public enum PlayerBodyError: LocalizedError, Equatable {
     case noFileSystem

@@ -36,10 +36,6 @@ whose procedure name contains `IdleMarker`. A dead actor does not look.
   package that does not use markers. A playing idle finishes first.
 - A sandboxing actor also lets go when its activity time runs out. Its idle stops at once.
 
-World > AI & Navigation > Idles lists the markers of the loaded cells. Its checkbox "Send
-sandboxing actors to markers" turns the claim off for every actor. "Play idle" plays a
-chosen idle on the selected actor, and "Pick at marker" runs the marker's own choice.
-
 ## Selection
 
 The marker's `IDLA` list is the list of candidates.
@@ -53,9 +49,8 @@ The marker's `IDLA` list is the list of candidates.
   itself only when no child passes.
 - A candidate without an animation event (`ENAM`) never plays itself.
 
-Every candidate gets a verdict in the trace: chosen, passed, failed (with the name of the
-first failing condition function), not reached, already played, or no animation. The
-sidebar shows the trace of the last pick.
+Every candidate gets a verdict in the trace: chosen, passed, failed (with the name of the first
+failing condition function), not reached, already played, or no animation.
 
 The next pick happens after the longer of the clip time and the marker timer (`IDLT`),
 and at least one second later.
@@ -98,9 +93,6 @@ names, relative to the project folder:
 [WARNING] The second rule is a naming pattern observed on the install, not a confirmed engine
 rule. `0_master.hkx` lists these events, but no state machine transition in `0_master.hkx`,
 `idlebehavior.hkx`, or `mt_behavior.hkx` fires on them. How the game routes them is unknown.
-
-The sidebar reports which path served the idle: "graph event", "clip named after the event",
-or "nothing" with the reason.
 
 On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through the graph, and
 213 have no event because they only group other idles. 10 play through the second name rule.

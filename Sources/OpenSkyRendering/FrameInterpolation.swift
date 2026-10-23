@@ -94,7 +94,7 @@ nonisolated enum FrameInterpolationPacing {
     }
 }
 
-/// What frame interpolation did; the Rendering Performance panel reads it.
+/// What frame interpolation did; the rendering performance readout reads it.
 nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
     public var enabled = false
     /// Why this GPU can never run it; the switch stays off and disabled.
@@ -138,12 +138,6 @@ nonisolated public struct PresentPacing: Equatable, Sendable {
     public var longestGapMS: Double
     /// Gaps over 1.5 times the median gap: an image that stayed on screen too long.
     public var hitches: Int
-
-    public init(averageGapMS: Double, longestGapMS: Double, hitches: Int) {
-        self.averageGapMS = averageGapMS
-        self.longestGapMS = longestGapMS
-        self.hitches = hitches
-    }
 
     /// Nil without a gap. `gapsMS` are in present order.
     public init?(gapsMS: [Double]) {
@@ -210,34 +204,5 @@ nonisolated final class PresentLatencyInbox: Sendable {
             window.gapsMS.removeAll(keepingCapacity: true)
             return window.last
         }
-    }
-}
-
-nonisolated extension RenderPerformanceReadout {
-    public static func frameInterpolationText(_ status: FrameInterpolationStatus) -> String {
-        let latency = status.presentLatencyMS.map { String(format: "%.1f ms", $0) } ?? "n/a"
-        let shown = String(
-            format: "Real: %.0f fps  Shown: %.0f fps", status.realFPS, status.shownFPS
-        )
-        let rates = status.pacing.map {
-            shown + String(
-                format: "\nFrame gap: %.1f ms, longest %.1f ms, %d hitches",
-                $0.averageGapMS, $0.longestGapMS, $0.hitches
-            )
-        } ?? shown
-        if let reason = status.unsupportedReason {
-            return "Frame interpolation: unavailable\n\(reason)"
-        }
-        guard status.enabled else {
-            return "Frame interpolation: off\n\(rates)\nInput to screen: \(latency)"
-        }
-        if let reason = status.unavailableReason {
-            return "Frame interpolation: unavailable\n\(reason)"
-        }
-        return """
-        Frame interpolation: on, \(status.interpolatedFrames) frames built
-        \(rates)
-        Input to screen: \(latency)
-        """
     }
 }

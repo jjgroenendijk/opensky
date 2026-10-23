@@ -1,5 +1,5 @@
-// The app's top-level windows: the launcher and one window per launch mode.
-// All share the dark theme, so a mode switch never flashes a light frame.
+// The app's top-level windows: the launcher and the game window. Both share
+// the dark theme, so a switch between them never flashes a light frame.
 
 import AppKit
 
@@ -11,15 +11,6 @@ enum AppWindows {
         window.appearance = NSAppearance(named: .darkAqua)
         window.backgroundColor = LauncherStyle.sidebarBackground
         window.setFrameAutosaveName("OpenSkyLauncherWindow")
-        return window
-    }
-
-    static func makeDeveloper(shell: AppShellViewController) -> NSWindow {
-        let window = makeWindow(size: NSSize(width: 1280, height: 720), content: shell)
-        window.title = "OpenSky — Developer Mode"
-        window.toolbarStyle = .unifiedCompact
-        window.toolbar = shell.makeToolbar()
-        window.titlebarAppearsTransparent = true
         return window
     }
 

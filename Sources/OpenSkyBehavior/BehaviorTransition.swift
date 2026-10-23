@@ -123,7 +123,7 @@ nonisolated public struct BehaviorMachineState: Equatable, Sendable {
 }
 
 /// What one machine is doing now, in names rather than ids. Published per update, so a
-/// test or the sidebar can check a state path without reaching into the evaluator.
+/// test or a state read can check a state path without reaching into the evaluator.
 nonisolated public struct BehaviorActiveState: Equatable, Sendable {
     public let machineName: String?
     public let stateId: Int

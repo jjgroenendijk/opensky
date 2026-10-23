@@ -18,9 +18,7 @@ Source for the rules: the Creation Kit wiki, <https://ck.uesp.net/wiki/Category:
 
 ## Starting
 
-A scene starts when its quest starts and the scene has flag 0x01 (begin on quest start), when
-a script calls `Scene.Start()` or `Scene.ForceStart()`, or from the Scenes control in the
-sidebar. A scene starts only while its quest runs. A scene that already plays is left as it is.
+A scene starts only while its quest runs. A scene that already plays is left as it is.
 
 Starting runs the begin fragment, then enters phase 1.
 
@@ -153,9 +151,8 @@ clock runs. It stops when the game clock stops, for example in a menu.
 
 ## Ending
 
-A scene ends after its last phase, when a script or the sidebar stops it, or when its quest
-stops. Each way runs the end fragment. A scene with flag 0x02 (stop quest on end) stops its
-quest, but only when it finished on its own.
+Each way runs the end fragment. A scene with flag 0x02 (stop quest on end) stops its quest, but only
+when it finished on its own.
 
 ## Fragments
 

@@ -60,8 +60,6 @@ nonisolated public enum DebrisSelection {
     public static let gravity: Float = 686
     /// Pieces one detonation throws.
     public static let pieceCount = 6
-    /// The launch force of a sidebar throw: a mid-size explosion's.
-    public static let panelForce: Float = 400
 
     /// `count` models drawn by their DEBR percentage, with replacement. The same seed
     /// draws the same models in the same order. A zero total weight draws evenly.

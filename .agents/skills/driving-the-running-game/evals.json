@@ -30,7 +30,7 @@
     "query": "openskycli game status says notRunning. Fix it.",
     "files": [],
     "expected_behavior": [
-      "Explains the server is off by default and starts it with openskycli game launch or the Agent Control sidebar toggle",
+      "Explains the server is off by default and starts it with openskycli game launch or OPENSKY_AGENT_CONTROL=1",
       "Does not try to connect to a network port or edit the socket permissions"
     ]
   },

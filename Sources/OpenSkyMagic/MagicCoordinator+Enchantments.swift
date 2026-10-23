@@ -102,7 +102,7 @@ private struct PoisonDose {
 }
 
 extension MagicCoordinator {
-    /// What the inventory panel shows about the profile cache.
+    /// What the inventory readout shows about the profile cache.
     public var enchantmentCacheReadout: EnchantmentCacheReadout {
         profiles.readout
     }

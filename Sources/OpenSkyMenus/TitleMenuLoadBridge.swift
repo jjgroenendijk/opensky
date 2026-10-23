@@ -108,7 +108,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
         )
     }
 
-    /// Fills the movie's `entryList` and tells the save panel the batch is done.
+    /// Fills the movie's `entryList` and tells the save readout the batch is done.
     public static func fillSaves(
         _ saves: [SaveSlotRow], list: AS2Value?, listPath: String, runtime: SWFMovieRuntime
     ) {

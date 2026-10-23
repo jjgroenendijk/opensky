@@ -144,8 +144,6 @@ types the import uses and keeps the others as bytes.
 | 6 | Weather | The first six `refID`s (climate, weather, previous weather, two unnamed, region weather) and three `float32`s (hour, start, transition). The rest is undocumented |
 | 1001 | Papyrus | [ESS Papyrus](/formats/ess-papyrus.md) |
 
-The other types are listed by name in the inspector and kept undecoded.
-
 ## Confirmed on real data
 
 Not yet. No Skyrim save exists on the development machine

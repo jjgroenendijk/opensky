@@ -82,26 +82,6 @@ final class JournalMenuController {
         movie.stop()
     }
 
-    /// Selects the quest the panel names. The page then shows its objectives.
-    func setEditorID(_ editorID: String) {
-        guard editorID != journal.editorID else { return }
-        journal.editorID = editorID
-        refreshModel()
-        publishModel()
-    }
-
-    func setShowsCompleted(_ flag: Bool) {
-        model.setShowsCompleted(flag)
-        publishModel()
-    }
-
-    /// Rebuilds the page after a quest change that ran.
-    func applied(_ ran: Bool) {
-        guard ran else { return }
-        refreshModel()
-        publishModel()
-    }
-
     /// Keeps the current selection and list.
     private func refreshModel() {
         guard let runtime = journal.runtime else {
@@ -179,7 +159,7 @@ final class JournalMenuController {
         }
     }
 
-    /// Without a movie the panel's Up and Down still move the selection.
+    /// Without a movie the readout's Up and Down still move the selection.
     private func applyFallback(_ event: MenuInputEvent) {
         switch event {
         case .move(.up): model.moveSelection(by: -1)

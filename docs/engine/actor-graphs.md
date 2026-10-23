@@ -75,10 +75,3 @@ graph when the reference has no object graph.
 An idle on a graph-driven actor is sent as its graph event, and the graph plays it. A held idle
 ends with `IdleForceDefaultState`. No open spec names that event. The human graph of the install
 declares it, next to `WeapEquip` (draw) and `Unequip` (sheathe).
-
-## Controls
-
-World > AI & Navigation > Behaviour Graphs turns the graphs on and off and sets both distances.
-The launcher's graphics page has the same switch. The readout shows how many graphs run at each
-rate, the selected actor's active states and last events, and graphs that failed to load. A text
-field sends any event to the selected actor's graph.

@@ -175,8 +175,7 @@ FaceGen head, because the baked head belongs to the record's race and face.
 
 ## The race menu movie
 
-The panel's Movie toggle shows `interface\racesex_menu.swf` over the world. Its calls were
-measured with `openskycli swf movie-probe`.
+Its calls were measured with `openskycli swf movie-probe`.
 
 | Engine calls | Values |
 | --- | --- |
@@ -204,9 +203,8 @@ The engine calls these back:
 Each `Set...List` call clears its list with `entryList.splice(0, entryList.length)` before
 it fills it, so sending the lists again leaves one copy of each row.
 
-Each change goes through the same model as the panel rows, so the head updates the same way.
-A race, sex, preset, or war paint change moves other controls, so the engine sends the
-sliders again.
+A race, sex, preset, or war paint change moves other controls, so the engine sends the sliders
+again.
 
 The interface translation file has `$RACE` but no `$BODY` or `$HEAD`, and the movie only uses
 `$RACE` as placeholder text, so the names must arrive as plain text. The movie does not change
@@ -227,9 +225,8 @@ movie's key handler moves between categories only on a gamepad, with the trigger
 `W`, and `S` move inside the open list, and `Tab` moves focus to the second list. While the race
 menu or the title menu is open, the engine frees the mouse cursor so a click reaches the movie.
 
-Before it sends the lists, the engine checks that the movie built its category list. When
-it did not, the movie closes and the engine rows stay in charge. The sidebar race menu panel
-shows those rows, and the arrow keys move them.
+Before it sends the lists, the engine checks that the movie built its category list. When it did
+not, the movie closes and the engine rows stay in charge.
 
 ## The camera
 

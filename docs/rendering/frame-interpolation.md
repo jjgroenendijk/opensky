@@ -21,14 +21,13 @@ Reference: Apple, "MetalFX" framework documentation (`MTLFXFrameInterpolatorDesc
 - It is off by default, because it adds input lag (below). The player setting
   `rendering.frameInterpolation` stores the switch.
 - It needs the temporal upscaler at any render scale, 100 percent included
-  ([upscaling](/rendering/upscaling.md)). The interpolator reads the scaler's depth and
-  motion vectors, so it uses the same jitter and motion conventions. With the render scale
-  off, or with the spatial scaler, the panel says what it needs and nothing is built.
+  ([upscaling](/rendering/upscaling.md)). The interpolator reads the scaler's depth and motion
+  vectors, so it uses the same jitter and motion conventions. With the render scale off, or with
+  the spatial scaler, nothing is built.
 - A GPU without the Metal 4 frame interpolator
-  (`MTLFXFrameInterpolatorDescriptor.supportsMetal4FX`) keeps the switch off and disabled,
-  and the panel and the launcher say why. The M1 supports it.
-- If MetalFX refuses an interpolator for a size, upscaling goes on without it and the panel
-  shows the reason.
+  (`MTLFXFrameInterpolatorDescriptor.supportsMetal4FX`) keeps the switch off and disabled, and
+  the launcher says why. The M1 supports it.
+- If MetalFX refuses an interpolator for a size, upscaling goes on without it.
 
 ## One frame
 
@@ -60,12 +59,11 @@ Each frame takes two drawables from a pool of three, so a frame can wait for one
 off the screen. The frame takes its drawables after the simulation step, so that wait
 overlaps work instead of adding to it.
 
-Even pacing needs every real frame to finish within two display intervals (33 ms at
-60 Hz). A slower frame shows the built image for one interval and the real image for two or
-more, and the camera judders. So interpolation pauses while the smoothed work time of a
-real frame is over that budget, and the panel shows the reason. The work time leaves out
-the wait for a drawable, because interpolation itself causes that wait. It resumes below
-80 percent of the budget, because a paused frame skips the interpolator's own cost.
+Even pacing needs every real frame to finish within two display intervals (33 ms at 60 Hz). A slower
+frame shows the built image for one interval and the real image for two or more, and the camera
+judders. The work time leaves out the wait for a drawable, because interpolation itself causes that
+wait. It resumes below 80 percent of the budget, because a paused frame skips the interpolator's own
+cost.
 
 Measured on an M1 at 60 Hz, moving through the Whiterun exterior: real frames took 45 to
 100 ms, mostly in the simulation step, so interpolation stays paused there.
@@ -79,20 +77,12 @@ interpolation:
 - plus the interpolator's GPU time;
 - and the real frame rate is half, so input waits longer for the next frame.
 
-The panel measures the time from the start of a real frame to the moment it shows on screen
-(`addPresentedHandler`), with interpolation on and off, so the two can be compared on any
-display.
-
 ## Checking it
 
-`Developer > Rendering Performance > Frame Interpolation` has the switch
-(`FrameInterpolationControl`) and a readout (`FrameInterpolationStatsLabel`): the frames
-built, the real and shown frame rates, the gaps between shown images, and the
-input-to-screen time. A hitch is a gap over 1.5 times the median gap: one image that stayed
-on screen too long. The gaps are measured with interpolation off too, to compare. The launcher's Graphics
-page has the same switch (`GraphicsFrameInterpolationControl`).
-`openskycli game state frame` reports the same numbers under `interpolation`
-(`frameGapMS`, `longestFrameGapMS`, `hitches`), so the lag and the pacing can be measured
-from a script.
-`make benchmark ARGS='--set rendering.renderScale=100% --set rendering.frameInterpolation=on'`
-measures the GPU time of both frames ([benchmark](/tools/benchmark.md)).
+A hitch is a gap over 1.5 times the median gap: one image that stayed on screen too long. The gaps
+are measured with interpolation off too, to compare. The launcher's Graphics page has the
+switch. `openskycli game state frame` reports the same numbers
+under `interpolation` (`frameGapMS`, `longestFrameGapMS`, `hitches`), so the lag and the pacing can
+be measured from a script. `make benchmark ARGS='--set rendering.renderScale=100% --set
+rendering.frameInterpolation=on'` measures the GPU time of both frames
+([benchmark](/tools/benchmark.md)).

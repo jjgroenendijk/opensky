@@ -1,4 +1,4 @@
-// The device-free half of the World > Inventory & Equipment surface:
+// The device-free half of the inventory and equipment readout:
 // every line the three sections show is a pure function of one
 // snapshot, so it can be asserted without AppKit, without a Metal device and
 // without a game install.

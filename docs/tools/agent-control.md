@@ -14,10 +14,8 @@ is in the `driving-the-running-game` skill; this page explains how the parts fit
 
 ## The server
 
-The server is off by default. Two things turn it on:
-
-- `openskycli game launch`, which opens the app with `OPENSKY_AGENT_CONTROL=1`.
-- Developer > Agent Control > Agent control server, in the sidebar.
+The server is off by default. `OPENSKY_AGENT_CONTROL=1` in the app's environment turns it on.
+`openskycli game launch` opens the app with it set, and with `OPENSKY_SKIP_LAUNCHER=1`.
 
 `game launch` also sets `OPENSKY_SURVIVAL_MODE`, from `--survival-mode on|off|ask` with `off` as
 the default. So the Survival Mode question never stops an agent session unless the script asks
@@ -116,7 +114,7 @@ This session pauses, walks one second, and checks a quest stage and an actor val
 
 ```text
 $ openskycli game launch
-{"dataRoot":"/Volumes/data/steam/steamapps/common/Skyrim Special Edition/Data","mode":"play",...,"worldReady":true}
+{"dataRoot":"/Volumes/data/steam/steamapps/common/Skyrim Special Edition/Data",...,"worldReady":true}
 $ openskycli game time pause
 {"eventSeq":3,"frame":420,"id":1,"ok":true,"paused":true,"result":{"frame":420,"paused":true,...}}
 $ openskycli game input hold forward --frames 60

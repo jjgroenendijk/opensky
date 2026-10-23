@@ -1,5 +1,5 @@
-// A World > Crime & Factions reading with a bounty, a stolen stack, a guard
-// subject and a vendor, shared by the readout suite and the panel suite.
+// A crime and faction reading with a bounty, a stolen stack, a guard
+// subject and a vendor, shared by the readout suites.
 
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface

@@ -1,7 +1,7 @@
 // M15 acceptance, pixel half: weapon draw and swing change the drawn frame, and
 // the advanced frame is byte-identical to one built at that state. Arrows in
 // flight and ragdolls are not drawn on the player rig, so `CombatAcceptanceTests`
-// covers them with numbers (docs/tools/sidebar-acceptance.md). Needs Metal 4
+// covers them with numbers (docs/tools/acceptance-record.md). Needs Metal 4
 // and the install; frames go to gitignored `.logs/`.
 
 import Foundation

@@ -22,7 +22,6 @@ import OpenSkyPlayer
 import OpenSkyWorldConditions
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import simd
 
 @MainActor

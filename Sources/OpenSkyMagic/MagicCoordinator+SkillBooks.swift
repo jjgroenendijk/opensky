@@ -10,18 +10,6 @@ import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
 extension MagicCoordinator {
-    /// Reads the first skill book the player carries and has not read.
-    @discardableResult
-    public func readFirstUnreadSkillBook() -> CastingActionOutcome {
-        guard let caster else { return .unavailable }
-        let book = caster.spellbook.state(of: .player)
-        let unread = carriedItems { items, item in
-            items.teachesSkill(item).map { (item: item, skill: $0) }
-        }.first { bookKey($0.item).map { !book.hasRead($0) } ?? false }
-        guard let unread else { return recordCasting(.noUnreadSkillBook) }
-        return readSkillBook(unread.item, skill: unread.skill)
-    }
-
     /// What reading `item` does: a skill book raises its skill, a spell tome teaches its
     /// spell. Nil for a book that teaches nothing.
     @discardableResult

@@ -13,8 +13,8 @@ A coordinator owns the state and the logic of one game domain, such as vendors o
 is a class in that domain's feature module, for example `OpenSkyInventory`. The package tests
 and `openskycli` can use it, because it imports no AppKit.
 
-`GameViewController` keeps only the view, the input, the render loop, and the panel wiring.
-It holds the coordinators and forwards to them.
+`GameViewController` keeps only the view, the input, and the render loop. It holds the
+coordinators and forwards to them.
 
 The reference example is the vendor domain in `Sources/OpenSkyInventory/`: `VendorCore` and
 `VendorCoordinator`. Their tests are `VendorCoreTests` and `VendorCoordinatorTests` in
@@ -57,12 +57,11 @@ may not import `OpenSkyFactions`.
 The audio domain has `AudioLabCore` in `Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
 port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
 coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns live
-there. It is also the panel's `AudioControlProviding`, so the panel
-reads the coordinator itself.
+there.
 The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `Sources/OpenSkyCombat/`,
 answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is the runtime's
 `RagdollWorldSeam`. The player has `PlayerCore`, `PlayerCoordinator`, and `PlayerWorld` in
-`Sources/OpenSkyPlayer/`, and the Face Morphs panel has `FaceMorphCoordinator` and
+`Sources/OpenSkyPlayer/`, and face morphs have `FaceMorphCoordinator` and
 `FaceMorphWorld`. `PlayerWorldAdapter` answers both ports.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
 `Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
@@ -82,37 +81,30 @@ with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigat
 `Sources/OpenSkyAIPackages/`. `PerceptionCoordinator` with `PerceptionCore` and
 `PerceptionSessionWorld` lives in `Sources/OpenSkyPerception/`. The perception coordinator is
 the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
-The Runtime State panel has `RuntimeStateCore`, `RuntimeStateCoordinator`, and
+Runtime state has `RuntimeStateCore`, `RuntimeStateCoordinator`, and
 `RuntimeStateWorld` in `Sources/OpenSkyRuntimeState/`, answered by `RuntimeStateWorldAdapter`.
 The coordinator owns the `GlobalStore` and the clock scrubs. Save and load go through the port,
 because `OpenSkyRuntimeState` may not import `OpenSkySave`. The adapter also builds the live condition
 context, because it reads every feature's runtime. Papyrus has `ScriptCoordinator` and
 `ScriptWorld` in `Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
 the natives their collaborators. `WorldRenderControls` in `Sources/OpenSkyWorld/Session/` holds
-the renderer and streamer controls of the World panels. It has no core, because it only reads
+the renderer and streamer controls that agent control uses. It has no core, because it only reads
 and writes the renderer. `WorldSessionWiring` in the app builds the streamer and runs every wire
 function in order.
-
-A panel reaches the game through `WorldPanelContext`, which has one field per panel protocol.
-`WorldPanelContext(game:)` fills each field with the object that serves it: a coordinator
-when the coordinator conforms, a world adapter when the answer joins several coordinators,
-and the view controller only for the protocols it still answers itself. A panel never sees
-the whole controller, and a test fills the context from one fake.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and
 every transaction it runs is a coordinator call. `DialogueMenuController` and
 `JournalMenuController` work the same way. `DialogueCameraController` holds the camera's
-panel state and asks the dialogue coordinator to hold the speaker.
+state and asks the dialogue coordinator to hold the speaker.
 
-The HUD, the developer UI Lab, and the system menu have `HUDCoordinator`, `SWFLabCoordinator`,
-`UILabCoordinator`, and `SystemMenuCoordinator` in `Sources/OpenSkyMenus/`. They share one
+The HUD and the system menu have `HUDCoordinator` and `SystemMenuCoordinator` in
+`Sources/OpenSkyMenus/`. They share one
 `SWFMovieSource`, and their port `SWFLayerWorld` gives them the renderer. The renderer has one
 SWF layer, so a menu that shows a movie calls `HUDCoordinator.suspend()` first and
 `HUDCoordinator.start()` when it closes. The HUD rules are in `HUDCore`. `SystemMenuWorld`
 adds the audio state and quitting. The view controller is the one `MenuInputConsumer`, and it
-routes each event by the top of the menu stack. Each menu coordinator conforms to its panel
-protocol directly. The shell, not a panel protocol, gives key focus back to the game view.
+routes each event by the top of the menu stack.
 
 A port is a protocol that names what the coordinator reads from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes a
@@ -146,19 +138,17 @@ closure. The default value answers nothing, which matches a load without that da
 native refuses rather than reading a half-wired family. A new collaborator goes in a family.
 The lint rule `papyrus_loose_closure` fails a closure property on the bridge itself.
 
-The coordinator returns values, not text. The app turns a value into a readout line and runs
+The coordinator returns values, not text. The app turns a value into text and runs
 the menu or camera change. Example: `counterparty(for:vendorFaction:)` returns
 `.failure(.chestNotResident(factionName:))`, and the app writes "... merchant chest is not
 streamed in."
 
-Every panel action returns a typed outcome, such as `ItemActionOutcome` or
-`LockActionOutcome`, and the coordinator keeps the last one. The outcome's `text` writes the
-readout line. An outcome whose words come from the load order takes them as an argument,
-such as `text(training:)` or `text(texts:)`. A test compares outcomes, not English
-sentences. The lint rule `action_returns_text` fails a `@discardableResult` function that
-returns `String` in a package module. The lint rule `panel_action_returns_text` fails a
-requirement of a `ControlProviding` protocol that returns `String` or `String?`. Example: the
-World > Audio triggers return an `AudioTriggerRefusal`, and the panel writes its `text`.
+Every action returns a typed outcome, such as `ItemActionOutcome` or
+`LockActionOutcome`. The outcome's `text` gives the line the app shows. An outcome whose
+words come from the load order takes them as an argument, such as `text(training:)` or
+`text(texts:)`. A test compares outcomes, not English sentences. The lint rule
+`action_returns_text` fails a `@discardableResult` function that returns `String` in a package
+module.
 
 ## Commands
 
@@ -170,8 +160,7 @@ as `InventoryCommand`. Example: an equip returns
 
 - An action that changes the world returns its answer and its commands together, such as
   `InventoryResult<Value>`. An action without an answer returns the command list.
-- Every caller in the app passes the result through the adapter's `run(_:)`. A panel protocol
-  whose action now returns commands is answered by the app, not by the coordinator.
+- Every caller in the app passes the result through the adapter's `run(_:)`.
 - A call that must answer at once, such as reporting skill use for the experience it gives,
   stays a port member, because a command has no answer.
 - An effect that must land before the next line of the same step also stays a port member.
@@ -179,8 +168,8 @@ as `InventoryCommand`. Example: an equip returns
   applies its abilities before the next formula reads them.
 - A test compares the returned commands. It needs no fake that records calls.
 
-A frame step returns its commands. When other calls also raise commands, such as a panel
-action or a hit report, the coordinator collects them in `pendingCommands`, and the frame
+A frame step returns its commands. When other calls also raise commands, such as a hit
+report, the coordinator collects them in `pendingCommands`, and the frame
 step returns them through `takeCommands()`. Such a command waits at most one frame. Crime,
 combat, magic, progression, scenes, and the social pass work this way. A frame step that
 only computes a pose returns a value instead: `CinematicCameraCoordinator.tick(realSeconds:)`
@@ -231,7 +220,7 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 ## Moving a domain
 
 1. Pick the logic in the `GameViewController+X` file that decides something. Leave view,
-   input, and panel code in the app.
+   and input code in the app.
 2. Write the core in the feature module. Every decision goes here, as a pure function or a
    state machine.
 3. Write the coordinator and its port beside it. Every read of `streamer`, `renderer`, or

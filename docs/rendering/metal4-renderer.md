@@ -59,10 +59,9 @@ can stay in that tile memory: it is memoryless, and it costs no GPU memory and n
 | Offscreen color | shared | the CPU reads it back |
 | Grade copy and grade depth | private, made on first use | only a split grade needs them |
 
-The [image space pass](/rendering/image-space.md) grades in tile memory, so most frames keep
-depth memoryless. A grade with blur or double vision reads other pixels, so it splits the scene
-pass in two. The first half then stores depth into the grade depth target. `Developer > Rendering
-Performance > Render Targets` shows what each target costs.
+The [image space pass](/rendering/image-space.md) grades in tile memory, so most frames keep depth
+memoryless. A grade with blur or double vision reads other pixels, so it splits the scene pass in
+two. The first half then stores depth into the grade depth target.
 
 ## Pipelines and shading
 
@@ -138,11 +137,10 @@ Command-buffer timestamps (`writeTimestamp`) are not used. On Apple GPUs they re
 0.2 ms for frames that took several milliseconds, because the passes did not run between them.
 
 Frame stats log one line per 120-frame window, and emit a signpost per frame for Instruments. Live
-readouts use a separate 30-frame window, so reading it never moves the logged window. The counters
+reads use a separate 30-frame window, so reading it never moves the logged window. The counters
 stay on the render thread, and only the finished snapshot crosses threads, behind a lock. So a 2 Hz
 poll never sees a half-updated window. Before the first window closes, the snapshot says
-"measuring", not zero frames per second. The frame HUD and the World panel read the same snapshot,
-so they cannot disagree.
+"measuring", not zero frames per second.
 
 ## Offscreen render
 

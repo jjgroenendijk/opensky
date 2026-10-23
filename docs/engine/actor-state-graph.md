@@ -73,8 +73,7 @@ its rider too.
 The graph writes these through `BSIsActiveModifier`, a state machine's `isActive` or
 `currentStateId`, a sync variable ([behavior state machines](/engine/behavior-state-machines.md)),
 or an expression assignment. Examples: `bAnimationDriven`, `bAllowRotation`, `bEquipOK`,
-`IsRecoiling`, `bIsSynced`, `iSyncIdleLocomotion`. The engine reads them for the panel. No engine
-system acts on them yet.
+`IsRecoiling`, `bIsSynced`, `iSyncIdleLocomotion`. No engine system acts on them yet.
 
 ## Variables left unwritten
 
@@ -90,9 +89,3 @@ supply them yet, or their encoding is unknown:
 
 Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable; the
 combat runtime writes them while the perk applies.
-
-## The panel
-
-World > Player & Locomotion > Actor State shows `iState` with the constant that holds its value,
-every input with the value the graph holds, and every output. A name the graph does not declare
-reads `<not declared by the graph>`.

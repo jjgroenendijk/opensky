@@ -63,7 +63,7 @@ into an open merchant chest adds to its stock.
 
 ## Ownership
 
-`XOWN` and `XRNK` are decoded on each reference. The readout for the crosshair target says
+`XOWN` and `XRNK` are decoded on each reference. For the crosshair target, OpenSky works out
 whether taking it would be theft for the player now. This uses the reference's owner, the cell's
 owner, and the player's faction ranks. It also shows the bounty if someone sees the take. See
 [crime and bounty](/engine/crime.md).
@@ -142,35 +142,15 @@ one fixed answer for weapons. Casting is on the [magic](/engine/magic.md) page.
 
 ## Carry weight
 
-The player is over-encumbered when the carried weight is above the `CarryWeight` actor value
-([UESP Carry Weight](https://en.uesp.net/wiki/Skyrim:Carry_Weight)). Worn armour counts at its
-perk weight ([perk entry points](/engine/perk-entry-points.md#armour-weight)). An
-over-encumbered player can only walk: run and sprint fall back to walking. The HUD shows
-`sOverEncumbered` once, when the state starts. Fast travel is refused too
-([world map](/engine/world-map.md)). The check runs every frame, so dropping an item or raising the
-actor value lifts the state at once. World > HUD & Interaction > Items shows the weight against
-the actor value, and says when the player can only walk.
+The player is over-encumbered when the carried weight is above the `CarryWeight` actor value ([UESP
+Carry Weight](https://en.uesp.net/wiki/Skyrim:Carry_Weight)). Worn armour counts at its perk weight
+([perk entry points](/engine/perk-entry-points.md#armour-weight)). An over-encumbered player can
+only walk: run and sprint fall back to walking. The HUD shows `sOverEncumbered` once, when the state
+starts. Fast travel is refused too ([world map](/engine/world-map.md)). The check runs every frame,
+so dropping an item or raising the actor value lifts the state at once.
 
 ## Not done yet
 
 - A dropped object with a simulated Havok body falls and settles
   ([dynamic rigid bodies](/engine/dynamic-bodies.md)). One without a dynamic body stays where
   it was placed.
-
-## Controls
-
-World > Inventory & Equipment has three sections:
-
-- Grants: a FormID, a count, and a target (player or open container).
-- Ownership: the theft verdict for the crosshair target.
-- Equipment inspection: the equipped set and appearance skips of the player or the nearest NPC.
-  The player is the default.
-
-The rest of the loop lives in one place each, so no control has two owners:
-
-- take, search, take all, drop, equip, unequip: World > HUD & Interaction > Items;
-- merchants, buying, and selling: World > Container Menu;
-- save and load: World > Runtime State > Save.
-
-A grant does not mark the panel as changed. A grant is a world change, and World > Runtime State
-already resets those.

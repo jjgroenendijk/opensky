@@ -7,7 +7,6 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import simd
 
 public enum ShadowSceneFixtureError: Error {

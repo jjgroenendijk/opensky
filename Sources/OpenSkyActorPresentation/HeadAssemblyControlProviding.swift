@@ -1,7 +1,6 @@
 // The Head Assembly section's seam: the head part set of one actor and the
 // switch between its baked and assembled head.
 
-import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyRuntimeState
 
@@ -40,25 +39,4 @@ nonisolated public struct ActorHeadReadout: Equatable, Sendable {
             loadedPartCount: loaded
         )
     }
-}
-
-nonisolated public struct HeadAssemblySnapshot: Equatable, Sendable {
-    public let actor: ReferenceKey?
-    /// Nil when the actor is not resident or has no humanoid head.
-    public let head: ActorHeadReadout?
-    /// The source the panel asked for, which the next build applies.
-    public let requested: ActorHeadSource
-
-    public init(actor: ReferenceKey?, head: ActorHeadReadout?, requested: ActorHeadSource) {
-        self.actor = actor
-        self.head = head
-        self.requested = requested
-    }
-}
-
-@MainActor
-public protocol HeadAssemblyControlProviding: AnyObject {
-    func headAssemblySnapshot(for actor: ReferenceKey?) -> HeadAssemblySnapshot
-    /// Rebuilds the actor's cell with the chosen head.
-    func setHeadSource(_ source: ActorHeadSource, for actor: ReferenceKey)
 }

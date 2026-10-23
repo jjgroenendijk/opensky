@@ -1,4 +1,4 @@
-// The Dialogue panel's sample of the conversation and the live movie.
+// The Dialogue readout's sample of the conversation and the live movie.
 
 import Foundation
 import OpenSkyConditions

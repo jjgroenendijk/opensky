@@ -25,11 +25,6 @@ public protocol RuntimeStateWorld: AnyObject {
     /// Hands weather and the clock fresh global values.
     func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool)
 
-    /// How many cells wait to reset, and the last reset.
-    var cellResetReadout: String { get }
-    /// Makes every cell the player left reset on the next visit. Returns the count.
-    func makeCellResetsDue() -> Int
-
     var musicStore: MusicRecordStore? { get }
     /// GLOB defaults of the loaded plugins, nil without game data.
     var globalStore: GlobalStore? { get }

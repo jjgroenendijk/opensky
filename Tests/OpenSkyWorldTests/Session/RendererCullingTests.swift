@@ -9,7 +9,6 @@ import OpenSkyEngineTesting
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 

@@ -1,6 +1,5 @@
-// The overlay toggle and the stop button of a running benchmark tour. The
-// Developer toolbar always carries them; the Play window gets a toolbar with only
-// these two for the length of a run.
+// The overlay toggle and the stop button of a running benchmark tour. The game
+// window gets a toolbar with only these two for the length of a run.
 
 import AppKit
 

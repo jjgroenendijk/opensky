@@ -22,7 +22,6 @@ protocol ObjectAnimationWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var playerSettings: PlayerSettingsCoordinator { get }
-    var playerSettingsStore: PlayerSettingsStore { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
@@ -66,16 +65,6 @@ final class ObjectAnimationWorldAdapter {
         }
         gameSession.worldTick.register(.objectAnimation) { [weak self] delta in
             self?.advance(delta)
-        }
-    }
-
-    /// Off holds every object and door in its pose. Persisted.
-    var isEnabled: Bool {
-        get { objects.isEnabled }
-        set {
-            objects.isEnabled = newValue
-            doors.isEnabled = newValue
-            game.playerSettingsStore.set(.objectAnimation, to: newValue ? 1 : 0)
         }
     }
 
@@ -191,43 +180,5 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
                 game.streamer?.sequenceDoorLeaves[reference] = deltas
             }
         }
-    }
-
-    /// The panel's open and close: the same world-state write as `SetOpen`.
-    func setDoorOpen(_ open: Bool, reference: UInt32) -> Bool {
-        guard
-            let streamer = game.streamer,
-            let entry = streamer.referenceEntry(formID: FormID(reference))
-        else { return false }
-        var state = game.worldState.resolvedState(for: entry).activation
-        state.isOpen = open
-        game.worldState.set(state, for: entry.key, in: streamer.cellLocation(of: entry.key))
-        return true
-    }
-}
-
-/// The Animated Objects and Animated Doors sections read the adapter.
-extension ObjectAnimationWorldAdapter: ObjectAnimationControlProviding,
-    SequenceDoorControlProviding
-{
-    var objectAnimationEnabled: Bool {
-        get { isEnabled }
-        set { isEnabled = newValue }
-    }
-
-    var objectAnimationRows: [ObjectAnimationRow] {
-        objects.rows
-    }
-
-    func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
-        objects.send(event, to: reference)
-    }
-
-    var sequenceDoorRows: [SequenceDoorRow] {
-        doors.rows
-    }
-
-    func setSequenceDoorOpen(_ open: Bool, reference: UInt32) -> Bool {
-        setDoorOpen(open, reference: reference)
     }
 }

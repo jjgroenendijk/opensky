@@ -52,10 +52,10 @@ same value.
 
 Choices on top of the formula:
 
-- Both settings are read from the load order ([game settings](/formats/gmst.md)), so a plugin
-  that changes barter changes OpenSky. Only a missing, non-finite, or non-positive setting falls
-  back to the vanilla default. A zero factor would divide the sell price by zero, and a negative
-  one would pay the player to buy. The panel shows which plugin each value came from.
+- Both settings are read from the load order ([game settings](/formats/gmst.md)), so a plugin that
+  changes barter changes OpenSky. Only a missing, non-finite, or non-positive setting falls back to
+  the vanilla default. A zero factor would divide the sell price by zero, and a negative one would
+  pay the player to buy.
 - Speech is the player's live Speech skill. Without actor values it is 15, the vanilla starting
   skill and the value UESP lists.
 - The buy and sell modifiers are the player's `Mod Buy Prices` and `Mod Sell Prices` perk results,
@@ -198,15 +198,8 @@ navigation step, and one transaction from each side:
 - Category changes are made by the engine, as in the inventory menu, for the same measured
   reason.
 
-## Controls
+## Checking it
 
-World > Container Menu has two sections:
-
-- Merchant: choose any loaded container as the merchant, from a list or under the crosshair. A
-  chosen container trades with no vendor rules.
-- Container menu: open, close, up, down, switch side, transfer, take all, barter, and show the
-  movie. Every button sends the same menu input as the keyboard.
-
-To repeat a run without the test host:
+To repeat a run without the app:
 `make run-cli ARGS="swf container-menu --mode barter --side player --down 2 --transfer 1"`.
 Frames go to the gitignored `.logs/` folder.

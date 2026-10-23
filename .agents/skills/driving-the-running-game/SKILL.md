@@ -26,7 +26,7 @@ needs time, input, or game state.
 ## Workflow
 
 1. Tell the user a game window will open, then start it:
-   `openskycli game launch` (play mode) or `game launch --mode developer`. It waits until
+   `openskycli game launch`. It waits until
    the world is loaded. The app opens a real window on the user's screen.
 2. Pause before you act: `game time pause`. A paused game only moves when you step it, so
    every result is the same on every run. Running time depends on the machine.
@@ -48,9 +48,8 @@ scripts in `.logs/`: they need the user's install, so no tracked suite runs them
 
 ## When it fails
 
-- `notRunning`: the server is off by default. `game launch` turns it on, or the user
-  ticks Developer > Agent Control > Agent control server in the sidebar. There is no
-  network port.
+- `notRunning`: the server is off by default. `game launch` turns it on, or the app is
+  started with `OPENSKY_AGENT_CONTROL=1`. There is no network port.
 - `versionMismatch`: the app and the CLI come from different builds. Rebuild both.
 - `notReady`: the world is still loading or a door is opening. Wait with
   `events --until cell.loaded`, then retry.

@@ -103,16 +103,6 @@ public final class SkillsMenuCoordinator {
         menuMode.dismiss(Self.identifier)
     }
 
-    public func setMovieEnabled(_ enabled: Bool) {
-        guard enabled != movieEnabled else { return }
-        movieEnabled = enabled
-        if enabled {
-            syncMovie()
-        } else {
-            stopMovie()
-        }
-    }
-
     public func route(_ event: MenuInputEvent) {
         guard var model else { return }
         model.message = nil
@@ -212,36 +202,5 @@ public final class SkillsMenuCoordinator {
         let rank = perk.rankCount > 1 ? " \(perk.ownedRank)/\(perk.rankCount)" : ""
         let state = perk.refusal.map { " - \($0)" } ?? " - available"
         return "\(perk.name)\(rank)\(state)"
-    }
-}
-
-/// The sidebar's view of the skills menu.
-public protocol SkillsMenuControlProviding: AnyObject {
-    var skillsMenuSnapshot: SkillsMenuSnapshot { get }
-    func openSkillsMenu()
-    func sendSkillsMenuInput(_ event: MenuInputEvent)
-    func setSkillsMenuMovieEnabled(_ enabled: Bool)
-    func setSkillsMenuSkyEnabled(_ enabled: Bool)
-}
-
-extension SkillsMenuCoordinator: SkillsMenuControlProviding {
-    public var skillsMenuSnapshot: SkillsMenuSnapshot {
-        snapshot
-    }
-
-    public func openSkillsMenu() {
-        open()
-    }
-
-    public func sendSkillsMenuInput(_ event: MenuInputEvent) {
-        route(event)
-    }
-
-    public func setSkillsMenuMovieEnabled(_ enabled: Bool) {
-        setMovieEnabled(enabled)
-    }
-
-    public func setSkillsMenuSkyEnabled(_ enabled: Bool) {
-        setSkyEnabled(enabled)
     }
 }

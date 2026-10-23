@@ -90,16 +90,6 @@ extension MagicCoordinator {
         world.shoutKnowledge.equipped.flatMap { shouts[$0] }
     }
 
-    /// A shout counts as known once `AddShout` gave it or one of its words is known.
-    public var knownShouts: [ReferenceKey] {
-        let knowledge = world.shoutKnowledge
-        return shouts.filter { key, shout in
-            knowledge.shouts.contains(key) || wordKeys(of: shout).contains {
-                $0.map(knowledge.knownWords.contains) ?? false
-            }
-        }.keys.sorted()
-    }
-
     public func unlockedWordCount(of shout: ResolvedShout) -> Int {
         ShoutCore.unlockedWordCount(
             wordKeys(of: shout),

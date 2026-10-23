@@ -80,11 +80,6 @@ extension EffectsCoordinator {
         showModel(bloodSettings.dismemberParticleModel, at: position, cause: .impact)
     }
 
-    public var bloodReadout: String {
-        "Blood: \(screenBlood.splatters.count) splatters on screen · "
-            + "\(weaponBlood.ages.count) bloody weapons\n\(bloodSettings.readout)"
-    }
-
     /// Ages the blood and hands the renderer the splatters.
     func stepBlood(_ seconds: Float, renderer: Renderer) {
         screenBlood.advance(seconds)

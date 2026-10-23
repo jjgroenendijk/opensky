@@ -48,21 +48,3 @@ nonisolated extension TextureLibrary {
         return ReadyTexture(dds: dds)
     }
 }
-
-/// Reads levels on the calling thread. For the CLI and tests, where loads run in line.
-nonisolated public final class InlineTextureLevelReader: TextureLevelReading {
-    private let library: TextureLibrary
-
-    public init(library: TextureLibrary) {
-        self.library = library
-    }
-
-    public func requestTextureLevels(
-        _ request: TextureLevelRequest,
-        mailbox: TextureStreamMailbox
-    ) {
-        if let levels = library.readLevels(request) {
-            mailbox.post(levels: levels, for: request.texture)
-        }
-    }
-}

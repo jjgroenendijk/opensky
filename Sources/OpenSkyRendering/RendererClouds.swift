@@ -66,17 +66,3 @@ extension Renderer {
         return moved - moved.rounded(.down)
     }
 }
-
-extension Renderer {
-    /// The sidebar's cloud line.
-    public var cloudReadout: String {
-        guard cloudsEnabled else { return "off" }
-        guard let skyClouds else { return "no game data" }
-        if let failure = skyClouds.failedPaths.last {
-            return "failed \(failure)"
-        }
-        guard skyClouds.dome != nil else { return "loading \(SkyClouds.domePath)" }
-        let wanted = frameCloudLayers.filter { $0.alpha > 0.001 }.count
-        return "\(skyClouds.drawnLayerCount) of \(wanted) layers"
-    }
-}

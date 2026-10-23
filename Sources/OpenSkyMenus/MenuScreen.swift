@@ -13,11 +13,11 @@ public protocol MenuScreenWorld: SWFLayerWorld {
     func showHUDNotification(_ text: String)
 }
 
-/// A screen subclass sets what its movie and panel show; the base runs the plumbing.
+/// A screen subclass sets what its movie and readout show; the base runs the plumbing.
 public class MenuScreen<Event> {
     public let identifier: MenuIdentifier
     public private(set) var isOpen = false
-    /// What the last action did, for the sidebar readout.
+    /// What the last action did.
     public var lastResult = "none"
     /// The movie reads the arrow keys itself, as a slider or a list does.
     let movieReadsKeys: Bool
@@ -39,15 +39,6 @@ public class MenuScreen<Event> {
         movie = MenuMovieDriver(
             movies: layer.movies, hud: layer.hud, label: "\(identifier.name) movie"
         ) { [weak world] in world?.renderer }
-    }
-
-    /// "movie", or why the text panel draws instead.
-    public var movieState: String {
-        guard isOpen else { return "closed" }
-        if movie.isLoaded {
-            return "movie"
-        }
-        return movie.error.map { "text panel, \($0)" } ?? "text panel"
     }
 
     /// Opens the screen with `path`; `activate` runs once the movie is up.

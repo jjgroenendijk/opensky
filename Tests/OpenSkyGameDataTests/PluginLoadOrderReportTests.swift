@@ -1,4 +1,4 @@
-// The strings the Load Order panel and the Settings window show. They live in
+// The strings the Settings window and `openskycli plugins` show. They live in
 // the engine so they are assertable without driving AppKit.
 
 import Foundation

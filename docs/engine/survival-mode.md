@@ -67,9 +67,7 @@ Before the scripts run in each frame, OpenSky reads the globals:
 - An answer that differs from the setting: the setting takes the session's answer. This covers
   a Yes in the plugin's question and a save loaded with the mode on.
 
-A change of the Survival Mode setting, in the game's Gameplay page or the sidebar, writes the
-toggle and the prompted flag at once. The plugin starts or stops the mode at its next update, as
-the question's text promises.
+The plugin starts or stops the mode at its next update, as the question's text promises.
 
 Without the plugin, none of the globals exist, and nothing happens.
 
@@ -77,9 +75,3 @@ Without the plugin, none of the globals exist, and nothing happens.
 
 - The game keeps the answer only in the save. OpenSky also keeps it in the settings, so a new
   game uses the last answer.
-
-## Controls
-
-World > Settings > Survival Mode shows the answer, whether the plugin has asked, the chosen
-value, whether the mode runs, and whether the plugin allows the choice yet. Its buttons pick on,
-off, or ask.

@@ -21,14 +21,11 @@ functions (`[[object]]`, `[[mesh]]`, `mesh_grid_properties`), and the Metal 4 AP
 ## When it runs
 
 - It is off by default. The player setting `rendering.meshShaderGrass` stores the switch.
-  It is in `Developer > Rendering Performance > Mesh-Shader Grass` and on the launcher
-  Graphics page, under Grass.
 - It needs a GPU with mesh shaders: Apple7 (M1) or Mac2. Other GPUs keep the switch
   disabled and say why.
 - Render debug views keep the classic path, because only the classic path has their
   pipelines.
-- The pipeline is built the first time the path draws. If it fails, the panel shows the
-  error and the classic path draws.
+- The pipeline is built the first time the path draws. If it fails, the classic path draws.
 
 ## How it works
 
@@ -48,8 +45,7 @@ functions (`[[object]]`, `[[mesh]]`, `mesh_grid_properties`), and the Metal 4 AP
 5. Each mesh threadgroup runs the same vertex code as the classic path (`grassVertexOut`),
    so sway, lighting inputs, and fog match. The fragment shader is the classic one.
 
-Two atomic counters per frame slot count the meshlets tested and drawn. The CPU reads them
-when the slot comes round again, so the panel numbers are a few frames late.
+Two atomic counters per frame slot count the meshlets tested and drawn.
 
 Grass is double-sided in Skyrim, so the normal cone culls almost nothing there. The gain,
 if any, comes from the frustum test per meshlet: the classic path keeps or drops whole

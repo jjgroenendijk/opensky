@@ -1,4 +1,4 @@
-// Text for the `World > Crime & Factions` readouts, kept out of AppKit so the
+// Text for the crime and faction readouts, kept out of AppKit so the
 // wording is unit-testable.
 
 import Foundation

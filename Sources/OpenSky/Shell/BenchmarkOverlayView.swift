@@ -13,10 +13,6 @@ final class BenchmarkOverlayView: NSView {
         didSet { isHidden = !isOverlayEnabled }
     }
 
-    var readout: String {
-        label.stringValue
-    }
-
     init() {
         super.init(frame: NSRect(x: 0, y: 0, width: 320, height: 64))
         wantsLayer = true

@@ -19,10 +19,6 @@ private final class FakeMountWorld: MountWorld {
         candidates[key]
     }
 
-    func nearestMountCandidate() -> ReferenceKey? {
-        candidates.keys.first
-    }
-
     func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
     {

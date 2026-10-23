@@ -1,4 +1,4 @@
-// Value types the Runtime State panel reads: a game-clock sample, a global sample, and a
+// Value types the Runtime State readout reads: a game-clock sample, a global sample, and a
 // condition report. Each is one sample, so the readout comes from one observation.
 // See docs/engine/runtime-state.md.
 
@@ -55,13 +55,6 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
             day: clock.day, month: clock.month, year: clock.year
         )
     }
-
-    /// The vanilla start moment at the default timescale, running. Used as the
-    /// panel's "no provider yet" reading, and as the fake provider's default so
-    /// a fresh session reads as not overridden.
-    public static let empty = RuntimeStateClockSnapshot(
-        clock: GameClock(), timescale: GameClock.defaultTimescale, isPaused: false
-    )
 
     /// Twenty-four-hour wall spelling of `hourOfDay`, minutes truncated rather
     /// than rounded so a readout never shows the next hour before it arrives.
@@ -155,11 +148,6 @@ nonisolated public struct RuntimeStateConditionReport: Equatable, Sendable {
         self.tallyLines = tallyLines
         self.message = message
     }
-
-    public static let empty = RuntimeStateConditionReport(
-        source: "", isSatisfied: false, lines: [], tallyLines: [],
-        message: "No condition list evaluated yet."
-    )
 
     /// A stated non-answer, so a missing record reads as a reason rather than
     /// as an empty list that looks like a satisfied condition.

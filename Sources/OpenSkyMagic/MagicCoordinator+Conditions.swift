@@ -1,5 +1,5 @@
 // The magic condition seam: this session's spellbooks, active effects and casts
-// as the snapshot `ConditionContext.magic` carries, and the panel's probe of
+// as the snapshot `ConditionContext.magic` carries, and the readout's probe of
 // the eight magic functions against the player.
 
 import OpenSkyActorsInterface

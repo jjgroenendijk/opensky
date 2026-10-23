@@ -1,5 +1,5 @@
-// The options of a preview as a person gives them, on the command line or in the
-// sidebar, and the one rule that turns them into a `PreviewRequest`.
+// The options of a preview as a person gives them, on the command line, and the
+// one rule that turns them into a `PreviewRequest`.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -83,20 +83,16 @@ nonisolated public struct PreviewOptions: Equatable, Sendable {
     }
 }
 
-/// The kinds of target the sidebar offers, in its menu order.
+/// The kinds of preview target, in a fixed order.
 nonisolated public enum PreviewTargetKind: String, CaseIterable, Sendable {
     case record
     case reference
     case mesh
     case cell
-
-    public var title: String {
-        rawValue.prefix(1).uppercased() + rawValue.dropFirst()
-    }
 }
 
 nonisolated extension PreviewOptions {
-    /// The sidebar's fields: one target text of `kind`, and an optional cell text
+    /// The input fields: one target text of `kind`, and an optional cell text
     /// that names the cell a record, reference, or mesh stands in.
     public init(kind: PreviewTargetKind, target: String, inCell: String) throws(PreviewError) {
         self.init()

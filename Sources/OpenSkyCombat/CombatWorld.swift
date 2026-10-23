@@ -45,7 +45,7 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func residentActors() -> [CombatActorObservation]
     /// The resident actor `key`, as `residentActors()` lists it.
     func residentActor(key: ReferenceKey) -> CombatActorObservation?
-    /// The actor the panel's hostility control acts on.
+    /// The actor the readout's hostility control acts on.
     func selectedActor() -> ReferenceKey?
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?

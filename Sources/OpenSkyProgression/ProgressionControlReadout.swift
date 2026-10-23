@@ -124,7 +124,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
         return lines.joined(separator: "\n")
     }
 
-    /// What one granted use or point did, which is what the panel prints as
+    /// What one granted use or point did, which is what the readout prints as
     /// its last-action line: the experience it was worth, the level it moved,
     /// and the character level it bought.
     public static func advanceText(_ report: SkillAdvanceReport, skillName: String) -> String {

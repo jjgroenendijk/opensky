@@ -1,4 +1,4 @@
-// The sidebar seam over a synthetic lock: the lock list, selection, forced relock,
+// Lock controls over a synthetic lock: the lock list, selection, forced relock,
 // the key override, and the readout text.
 
 import Foundation

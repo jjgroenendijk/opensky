@@ -7,15 +7,6 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-/// One scene as the list shows it.
-nonisolated public struct SceneListRow: Equatable, Sendable {
-    public let editorID: String
-    public let phaseCount: Int
-    public let actionCount: Int
-    public let actorCount: Int
-    public let isPlaying: Bool
-}
-
 /// One playing scene with its phase and actions.
 nonisolated public struct ScenePlayingRow: Equatable, Sendable {
     public let editorID: String
@@ -48,16 +39,7 @@ nonisolated public struct SceneControlSnapshot: Equatable, Sendable {
     public let lastOutcome: String?
 }
 
-@MainActor
-public protocol SceneControlProviding: AnyObject {
-    var sceneSnapshot: SceneControlSnapshot { get }
-    /// Scenes whose editor ID contains `filter`, at most `SceneControlSnapshot.rowLimit`.
-    func sceneRows(matching filter: String) -> [SceneListRow]
-    func startScene(editorID: String)
-    func stopScene(editorID: String)
-}
-
-extension SceneCoordinator: SceneControlProviding {
+extension SceneCoordinator {
     public var sceneSnapshot: SceneControlSnapshot {
         let limit = SceneControlSnapshot.rowLimit
         let playingRows = catalog.all.compactMap { entry -> ScenePlayingRow? in
@@ -72,29 +54,5 @@ extension SceneCoordinator: SceneControlProviding {
             lines: lines.suffix(limit).map(SceneCore.text(line:)),
             lastOutcome: lastOutcome
         )
-    }
-
-    public func sceneRows(matching filter: String) -> [SceneListRow] {
-        let needle = filter.trimmingCharacters(in: .whitespaces).lowercased()
-        return catalog.all.lazy
-            .filter { needle.isEmpty || $0.editorID.lowercased().contains(needle) }
-            .prefix(SceneControlSnapshot.rowLimit)
-            .map { SceneCore.listRow($0, isPlaying: self.playing.contains($0.formID)) }
-    }
-
-    public func startScene(editorID: String) {
-        guard let entry = catalog.scene(editorID: editorID) else {
-            lastOutcome = "no scene named \(editorID)"
-            return
-        }
-        start(entry.formID)
-    }
-
-    public func stopScene(editorID: String) {
-        guard let entry = catalog.scene(editorID: editorID) else {
-            lastOutcome = "no scene named \(editorID)"
-            return
-        }
-        stop(entry.formID)
     }
 }

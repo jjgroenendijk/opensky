@@ -1,4 +1,4 @@
-// World > Runtime State: reference mutations, save slots, game time, globals,
+// Runtime state: reference mutations, save slots, game time, globals,
 // and condition lists. A mutation records against no cell, which rebuilds every
 // resident cell: correct, but broader than needed.
 
@@ -89,7 +89,7 @@ public final class RuntimeStateCoordinator {
     }
 }
 
-extension RuntimeStateCoordinator: RuntimeStateControlProviding {
+extension RuntimeStateCoordinator {
     public var runtimeStateSnapshot: RuntimeStateSnapshot {
         RuntimeStateSnapshot(
             residentReferenceCount: world?.residentReferenceCount ?? 0,
@@ -105,15 +105,6 @@ extension RuntimeStateCoordinator: RuntimeStateControlProviding {
             currentTargetDescription: currentTargetDescription,
             overriddenGlobalCount: worldState.overriddenGlobalCount
         )
-    }
-
-    public var cellResetReadout: String {
-        world?.cellResetReadout ?? "Cell reset: unavailable"
-    }
-
-    @discardableResult
-    public func makeCellResetsDue() -> Int {
-        world?.makeCellResetsDue() ?? 0
     }
 
     /// A listing failure reads as "no slots": the list is a readout.
@@ -151,10 +142,6 @@ extension RuntimeStateCoordinator: RuntimeStateControlProviding {
     public func resetReferenceState(target: RuntimeStateTargetSelector) -> Bool {
         guard let entry = entry(for: target) else { return false }
         return worldState.reset(entry.key)
-    }
-
-    public func resetAllReferenceState() {
-        worldState.resetAll()
     }
 
     public func saveWorldState(slot: String) {

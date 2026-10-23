@@ -47,7 +47,7 @@ nonisolated public enum InventoryCore {
         }?.item
     }
 
-    /// "body|forearms" plus hands, so a conflict reads off the panel without
+    /// "body|forearms" plus hands, so a conflict reads off the readout without
     /// decoding a bitfield.
     public static func describe(_ occupancy: EquipmentOccupancy) -> String {
         let namedSlots = BodySlots.namedSlots.filter { occupancy.slots.contains($0.slots) }

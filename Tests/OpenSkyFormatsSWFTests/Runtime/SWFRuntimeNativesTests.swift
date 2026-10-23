@@ -106,7 +106,7 @@ struct SWFRuntimeNativesTests {
     @Test func hitTestUsesTheTransformedBoundingBox() throws {
         let runtime = try started()
         let panel = try #require(runtime.root.child(named: "panel"))
-        // The panel covers 400..2400 x 300..1500 twips = 20..120 x 15..75 px.
+        // The readout covers 400..2400 x 300..1500 twips = 20..120 x 15..75 px.
         #expect(try call(runtime, "hitTest", on: panel, [.number(30), .number(20)]) ==
             .boolean(true))
         #expect(

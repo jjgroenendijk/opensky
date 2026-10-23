@@ -1,6 +1,6 @@
 // Dialogue speech: an actor says the voice files of one line in order, at its
 // head, with its mouth driven by the line's lip track. Scenes and the dialogue
-// menu speak through it; the World > Audio voice lab stays separate.
+// menu speak through it; the voice picker stays separate.
 // See docs/engine/audio-decoding.md.
 
 import Foundation

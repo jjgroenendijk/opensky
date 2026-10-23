@@ -12,7 +12,6 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 

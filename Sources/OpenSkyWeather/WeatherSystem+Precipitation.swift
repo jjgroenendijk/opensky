@@ -18,25 +18,4 @@ nonisolated extension WeatherSystem {
             .compactMap { records.shaderParticles.resolve($0, fromPlugin: plugin)?.record }
             .first
     }
-
-    /// The editor ID of the `HNAM` record the heaviest weather names for the
-    /// time-of-day slot that weighs most at `hour`.
-    public func volumetricLighting(
-        in records: EffectRecordStore,
-        plugin: String,
-        hour: Float
-    ) -> String? {
-        guard
-            let heaviest = blendedWeathers.max(by: { $0.weight < $1.weight }),
-            let slots = store.weather(heaviest.weather)?.sky.volumetricLighting
-        else { return nil }
-        let weights = timeOfDayWeights(hour: hour)
-        let slot = [
-            (weights.sunrise, slots.sunrise), (weights.day, slots.day),
-            (weights.sunset, slots.sunset), (weights.night, slots.night)
-        ].max { $0.0 < $1.0 }.flatMap(\.1)
-        return records.volumetricLighting.resolve(slot, fromPlugin: plugin).map {
-            $0.record.editorID ?? "\($0.id)"
-        }
-    }
 }

@@ -5,7 +5,7 @@ import OpenSkyAudio
 import OpenSkyFormatsESM
 
 extension WorldAudioSoundDirector {
-    /// The bed the panel readout shows. Reports "none" unless one of this director's
+    /// The bed the readout shows. Reports "none" unless one of this director's
     /// region sources is still alive in the engine.
     public var currentAmbienceDescription: String {
         pruneRetiredAmbienceSources()
@@ -25,7 +25,7 @@ extension WorldAudioSoundDirector {
     }
 
     /// Single path from wanted state to playing state, shared by the context
-    /// change and the panel toggle so the two cannot drift apart.
+    /// change and the control toggle so the two cannot drift apart.
     func applyAmbienceState() {
         retireAmbience()
         guard ambienceEnabled, engine.isRunning else { return }

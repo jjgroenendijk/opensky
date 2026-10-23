@@ -1,4 +1,4 @@
-// The text of the explosion and hazard readout, kept out of the panel so a
+// The text of the explosion and hazard readout, kept out of the readout so a
 // unit test can pin it.
 
 import Foundation

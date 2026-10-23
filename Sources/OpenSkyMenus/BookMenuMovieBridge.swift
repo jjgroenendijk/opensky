@@ -18,8 +18,4 @@ nonisolated public enum BookMenuMovieBridge: Sendable {
         let step = isNote ? 1 : 2
         runtime.callMovie("TurnPage", arguments: [.integer(forward ? step : -step)])
     }
-
-    public static func prepareForClose(runtime: SWFMovieRuntime) {
-        runtime.callMovie("PrepForClose")
-    }
 }

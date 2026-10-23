@@ -1,11 +1,10 @@
-// The seam `World > Inventory & Equipment` reads: grant an item, show who owns the
+// Inventory and equipment controls: grant an item, show who owns the
 // reference under the crosshair, and show what an actor wears. Taking, trading
-// and dropping have their own panels. One snapshot value, so the readout comes
+// and dropping have their own readouts. One snapshot value, so the readout comes
 // from a single observation. See docs/engine/inventory-equipment.md.
 
 import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
@@ -58,13 +57,13 @@ nonisolated public struct EquipInspectReadout: Equatable, Sendable {
 /// One observation of everything the gate destination shows.
 nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
     /// False when no inventory runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather
+    /// scene. Every other field is then empty and the readout says so rather
     /// than showing a convincing zero.
     public let isAvailable: Bool
 
     // MARK: Grants
 
-    /// Whether a container session is open, so the panel can lock the
+    /// Whether a container session is open, so the readout can lock the
     /// open-container grant target rather than offer a grant that would be
     /// refused.
     public let hasOpenContainer: Bool
@@ -141,23 +140,4 @@ nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
         self.enchantmentCache = enchantmentCache
         self.lastActionText = lastActionText
     }
-}
-
-/// Live-renderer seam for the `World > Inventory & Equipment` panel.
-@MainActor
-public protocol InventoryEquipmentControlProviding: AnyObject {
-    /// Which owner the equipment inspection reads. Settable because the
-    /// selector is the section's only control and the snapshot has to reflect
-    /// it on the next tick.
-    var inventoryEquipmentInspectionTarget: EquipmentTargetSelector { get set }
-
-    var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot { get }
-
-    /// Puts `count` of `item` into `target`'s inventory: a dev control. Plausibility
-    /// is not checked, but an unknown form or a non-positive count is refused.
-    /// - Returns: a readable outcome, with the reason for a refusal.
-    @discardableResult
-    func grantItem(
-        _ item: FormID, count: Int32, to target: InventoryGrantTarget
-    ) -> GrantActionOutcome
 }

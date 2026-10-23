@@ -208,9 +208,6 @@ compiled `PRKF_VampireFeedBeds_000CF02C` script lists `akTargetRef` before `akAc
 agrees with that order. A choice that names a spell (`EPFT` 4) also casts it on the target, with
 the player as the caster.
 
-The Progression panel's Perk Choices section lists the choices of the target under the crosshair
-and runs one.
-
 ## Abilities
 
 An ability perk effect grants a `SPEL` while the perk is owned. A reconcile step makes the

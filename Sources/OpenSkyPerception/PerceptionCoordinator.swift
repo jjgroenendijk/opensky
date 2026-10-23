@@ -56,7 +56,7 @@ nonisolated public enum PerceptionCore {
     }
 }
 
-/// Without detection settings the runtime stays nil, and the panel reports
+/// Without detection settings the runtime stays nil, and the readout reports
 /// itself unavailable rather than showing a convincing zero.
 @MainActor
 public final class PerceptionCoordinator {
@@ -115,7 +115,7 @@ extension PerceptionCoordinator: PerceptionWorld {
     }
 }
 
-extension PerceptionCoordinator: PerceptionControlProviding {
+extension PerceptionCoordinator {
     public var perceptionSnapshot: PerceptionControlSnapshot {
         guard let runtime else { return .unavailable }
         return PerceptionControlSnapshot(

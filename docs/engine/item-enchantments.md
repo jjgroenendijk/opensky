@@ -77,8 +77,7 @@ A soul gem puts its soul's charge back, up to the full charge, and is used up. U
 of each soul: 250 petty, 500 lesser, 1000 common, 2000 greater, and 3000 grand
 (<https://en.uesp.net/wiki/Skyrim:Souls>). A black soul counts as grand. A gem with the
 `ReusableSoulGem` keyword, such as Azura's Star, empties and stays. The game lets the player pick
-the gem. The Spellcasting panel picks for them: the smallest filled gem that fills the weapon, or
-the largest gem when none does. A recharge gives Enchanting experience by the soul's size
+the gem. A recharge gives Enchanting experience by the soul's size
 ([enchanting](/engine/enchanting.md#experience)).
 
 Soul Squeezer adds 250 to every soul through `Mod Soul Gem Recharge` (49), as an add-value entry in
@@ -127,10 +126,10 @@ modifier, and nothing takes it back by itself. 618 of the 620 effect entries beh
 constant-effect enchantments have an `EFIT` duration of zero, so reading zero as "apply once" would
 be wrong here. A constant effect never expires.
 
-Applying and removing is a reconcile, not an equip hook. The engine equips from several places: the
-inventory menu, the Items panel, and a load. Hooking each one would be one missed call away from an
-effect that never comes off. The reconcile takes who is wearing what and makes the stored constant
-effects match. Running it twice changes nothing, and every equip path runs it afterwards.
+Applying and removing is a reconcile, not an equip hook. Hooking each one would be one missed call
+away from an effect that never comes off. The reconcile takes who is wearing what and makes the
+stored constant effects match. Running it twice changes nothing, and every equip path runs it
+afterwards.
 
 Removal is exact, because the effects each item applied are recorded per item. A helmet and a
 necklace can carry the same `ENCH`, as vanilla robes and circlets do, so removing by source record
@@ -196,11 +195,9 @@ charge kept per base item, go in the `ECHG` chunk ([save chunks](/formats/opensk
 ## Where it shows
 
 Charge is a fact about an equipped item, so it shows where equipped item details already show: World
-> HUD & Interaction > Items, World > Inventory & Equipment > Equipment inspection, and the "Enchanted
-equipment" block of World > Inventory Menu > Menu. One formatter makes all three lines (name, worn,
-on-hit, or staff, and `remaining/capacity charge, N use(s) left`), so they cannot disagree.
+> One formatter makes all three lines (name, worn, on-hit, or staff, and `remaining/capacity charge,
+> N use(s) left`), so they cannot disagree.
 
 A resolved enchantment depends only on two records, which nothing changes at runtime. So each item's
 answer, including "no enchantment", is cached until the item store is replaced. The frame hooks ask
-every frame for every equipped weapon and the bow. World > Inventory & Equipment > Equipment shows the
-cache size and how many asks it served.
+every frame for every equipped weapon and the bow.

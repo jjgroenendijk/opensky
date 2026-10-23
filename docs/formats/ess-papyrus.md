@@ -25,9 +25,8 @@ Types are listed in [ESS](/formats/ess.md#basic-types).
 
 After this, every string is a `uint16` index into the table.
 
-Object and array ids are 4 bytes in UESP. Some saves are said to use 8. OpenSky reads the
-table with 4-byte ids first and, only if that fails, with 8-byte ids. The width that read
-cleanly is kept and shown in the inspector.
+Object and array ids are 4 bytes in UESP. Some saves are said to use 8. OpenSky reads the table with
+4-byte ids first and, only if that fails, with 8-byte ids.
 
 ## Sections in order
 

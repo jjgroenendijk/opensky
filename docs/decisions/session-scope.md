@@ -26,8 +26,8 @@ Words used on this page:
 
 ## Why late setters must go
 
-Today most coordinators are `lazy var` properties of the game view controller. A panel or a
-host protocol can build one before the world data is wired. So the data arrives later, through
+Today most coordinators are `lazy var` properties of the game view controller. A host
+protocol can build one before the world data is wired. So the data arrives later, through
 `wire...` methods and settable properties. This has four costs:
 
 - A coordinator is half built until every setter runs. Every method checks for a missing
@@ -44,8 +44,8 @@ and the cell session. Only then does the app build the game view and hand it the
 A Settings change that needs new data builds a new game view after a new load. So when the
 game objects are built, their data is already there. Nothing needs to wait for it.
 
-The early build has one other reason: the sidebar panels hold coordinators for the whole run.
-The development-mode view will be rewritten, so the design does not keep that reason.
+The early build had one other reason: a developer view held coordinators for the whole run.
+That view is gone, so the reason is gone too.
 
 ## The decision
 
@@ -71,8 +71,8 @@ Rules:
 - An object in the app scope never holds an object of the session scope. When the session
   ends, releasing the session scope releases every game object.
 - The game view holds the session scope and keeps only the view, the input, and the draw loop.
-  Without game data there is no session scope. The renderer draws the demo scene, and every
-  panel shows that no game is loaded.
+  Without game data there is no session scope. The renderer draws the demo scene, and agent
+  control answers that no game is loaded.
 - Only the composition roots build coordinators: the session scope in the app, and a test
   fixture in a test. `openskycli` builds no coordinator today; if it needs one, it builds a
   session scope the same way.
@@ -89,7 +89,7 @@ Each dependency is one of seven kinds. The kind decides how it arrives.
 | Session object | The actor-value runtime, the streamer, the clip loader, the Papyrus VM | An initializer parameter, built earlier in the same scope |
 | Event | A spell hit, an idle's animation event, the audio engine start | A command the coordinator returns, or a handler in a declared event schedule |
 | Late asset | The player's behaviour graphs, idle clips | Requested at start and drained from a mailbox in the frame ([concurrency](/decisions/concurrency.md)) |
-| Live input | A player setting changed in the launcher, the selected panel row | A method argument, or a port member read each time. Never stored as a dependency |
+| Live input | A player setting changed in the launcher, an agent command's argument | A method argument, or a port member read each time. Never stored as a dependency |
 
 A world adapter reads the session through its host protocol and holds the session scope
 `unowned`, as adapters hold the view controller today. The session scope conforms to the host
@@ -129,16 +129,13 @@ phase, and the enum order is the delivery order. One phase takes one handler, so
 registration is a wiring bug and traps, as in `FrameSchedule`. Then the session scope may
 register handlers in any order.
 
-## The development-mode view and the game UI
+## The game UI and agent control
 
 - A menu controller and the HUD belong to the session scope. They are built with it and read
   their coordinators through initializer parameters.
-- A sidebar panel reads one panel context, built from the session scope when the panel is
-  shown. The panel holds the context only while it is on screen. When the session ends, the
-  shell drops every panel that holds one.
-- With no session scope, a destination shows an empty state that says no game is loaded.
-- The rewritten development view follows the same rule: it receives the session scope, or the
-  narrow context built from it, and never keeps it past the session.
+- Agent control (`openskycli game`) reads the session scope through the world adapters, one
+  command at a time. It keeps nothing past the session.
+- With no session scope, an agent command answers that no game is loaded.
 
 ## How other engines and apps do it
 

@@ -6,7 +6,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 /// One recipe of the open station.
 nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {

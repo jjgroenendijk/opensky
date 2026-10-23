@@ -53,7 +53,7 @@ struct ShapeSweepTests {
     @Test
     func aCapsuleCastIsBlockedByGeometryOnlyItsFarEndReaches() throws {
         // The segment runs up the Z axis; only its top end is level with the
-        // wall panel, which sits above z = 100.
+        // wall readout, which sits above z = 100.
         let query = ShapeSweepQuery.capsule(
             first: SIMD3(0, 0, 10),
             second: SIMD3(0, 0, 130),

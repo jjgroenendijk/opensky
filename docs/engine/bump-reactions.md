@@ -34,8 +34,3 @@ fighting, not in a scene, and not the one the player talks to.
 
 An NPC that is already reacting does not start a second reaction. The timers run on the scene
 clock: game seconds over the timescale. A reaction is not saved; a load drops it.
-
-## Controls
-
-World > AI & Navigation > Package shows how many NPCs react now, how many reactions ran since the
-load, the step distance, the hold time, and the follower spacing.

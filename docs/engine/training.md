@@ -17,8 +17,7 @@ level the trainer teaches up to. A level of 0 means the class trains nothing
 ([actor records](/formats/actors.md)). UESP lists three trainer levels: up to 50, 75, and 90.
 
 The game opens training from the trainer's dialogue: the topic's script fragment calls
-`Game.ShowTrainingMenu` (see [training menu](#training-menu)). The panel's Train control in
-World > Progression > Skills trains with the nearest actor, without the dialogue.
+`Game.ShowTrainingMenu` (see [training menu](#training-menu)).
 
 ## Cost
 

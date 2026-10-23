@@ -3,7 +3,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-extension IdleCoordinator: IdleControlProviding {
+extension IdleCoordinator {
     public func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot {
         guard let store, world?.idleReferencePlacements() != nil else { return .unavailable }
         let holders = Dictionary(
@@ -12,7 +12,6 @@ extension IdleCoordinator: IdleControlProviding {
         )
         return IdleControlSnapshot(
             isAvailable: true,
-            usesIdleMarkers: usesIdleMarkers,
             markers: markers.map { placement in
                 let idles = store.idles(of: placement.marker)
                 let record = placement.marker.record
@@ -35,27 +34,6 @@ extension IdleCoordinator: IdleControlProviding {
     /// True while `actor` has claimed an idle marker, walking to it or playing there.
     public func holdsMarker(_ actor: ReferenceKey) -> Bool {
         sessions[actor]?.marker != nil
-    }
-
-    public func setUsesIdleMarkers(_ enabled: Bool) {
-        usesIdleMarkers = enabled
-    }
-
-    public func idleTree(below idle: ResolvedFormID) -> [IdleTreeLine] {
-        guard let store else { return [] }
-        var lines: [IdleTreeLine] = []
-        var visited: Set<ResolvedFormID> = []
-        func visit(_ id: ResolvedFormID, depth: Int) {
-            guard visited.insert(id).inserted, let record = store.idles.record(id) else { return }
-            lines.append(IdleTreeLine(
-                editorID: record.record.editorID ?? id.description,
-                depth: depth,
-                event: record.record.animationEvent
-            ))
-            store.forest.children(of: id).forEach { visit($0, depth: depth + 1) }
-        }
-        visit(idle, depth: 0)
-        return lines
     }
 
     @discardableResult
@@ -82,14 +60,5 @@ extension IdleCoordinator: IdleControlProviding {
             )
         }
         return report
-    }
-
-    @discardableResult
-    public func pickIdle(at marker: ReferenceKey, for actor: ReferenceKey) -> IdleReport? {
-        guard
-            let placement = markers.first(where: { $0.reference == marker }),
-            let now = world?.idleAnimationTime
-        else { return nil }
-        return select(at: placement, for: actor, now: now)
     }
 }

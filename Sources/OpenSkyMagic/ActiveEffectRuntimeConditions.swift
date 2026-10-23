@@ -5,8 +5,6 @@
 // See docs/engine/magic.md#conditions.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface

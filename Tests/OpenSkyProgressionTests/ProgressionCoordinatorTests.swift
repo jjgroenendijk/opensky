@@ -1,4 +1,4 @@
-// The progression shell over the fixture tree: the panel's selections, the
+// The progression shell over the fixture tree: the readout's selections, the
 // perk-point spend and its refusals, and the world reads it makes.
 
 import OpenSkyActorsInterface

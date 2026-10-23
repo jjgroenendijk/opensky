@@ -1,4 +1,4 @@
-// The effect records the Effects panel can pick by name, with one-line
+// The effect records the Effects readout can pick by name, with one-line
 // details for its inspector. See docs/rendering/visual-effects.md.
 
 import Foundation

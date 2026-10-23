@@ -1,4 +1,4 @@
-// The pure readout rules behind the locomotion and first-person panels.
+// The pure readout rules behind the locomotion and first-person readouts.
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyPlayer

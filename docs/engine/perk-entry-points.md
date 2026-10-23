@@ -181,7 +181,6 @@ but no lock notice shows. Vanilla uses it to stop a werewolf opening doors and c
 | --- | --- | --- |
 | Adjust Book Skill Points | 5 | the levels a first read of a skill book adds, book bound as the item |
 
-A skill book raises its skill one level the first time it is read (UESP "Skyrim:Skill Books").
-The entry point starts at 1; the Black Book reward adds 1. The read mark is the spellbook's, so a
-book counts once per save. The spellcasting panel's `Read skill book` button reads the first
-unread one the player carries; there is no book menu yet.
+A skill book raises its skill one level the first time it is read (UESP "Skyrim:Skill Books"). The
+entry point starts at 1; the Black Book reward adds 1. The read mark is the spellbook's, so a book
+counts once per save.

@@ -1,4 +1,4 @@
-// The journal shell over two synthetic quests: what each panel control does or
+// The journal shell over two synthetic quests: what each control does or
 // why it refuses, and the quest list the readouts show.
 
 import OpenSkyEngineTesting

@@ -1,6 +1,6 @@
 // The one owner of the player's settings at runtime. A write is clamped, saved,
 // and announced to every observer, so a subsystem applies the new value at once
-// and the sidebar and the menu read the same value.
+// and every reader sees the same value.
 
 import Foundation
 import OpenSkyFormatsCore

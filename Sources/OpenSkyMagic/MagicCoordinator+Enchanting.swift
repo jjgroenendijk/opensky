@@ -39,7 +39,7 @@ nonisolated public enum EnchantingOutcome: Equatable, Sendable {
     case unavailable
 }
 
-/// One known base enchantment, for the panel.
+/// One known base enchantment, for the readout.
 nonisolated public struct EnchantingBaseReadout: Equatable, Sendable {
     public let key: ReferenceKey
     public let name: String

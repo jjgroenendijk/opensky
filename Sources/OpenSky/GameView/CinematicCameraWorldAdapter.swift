@@ -182,18 +182,3 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         return game.effects.startModifier(key, strength: 1, on: &gameSession.imageSpace)
     }
 }
-
-/// The Cinematic Camera section acts on the nearest actor.
-extension CinematicCameraWorldAdapter: CinematicCameraControlForwarding {
-    var cinematicCamera: CinematicCameraCoordinator {
-        game.cinematicCamera
-    }
-
-    var cinematicSelectedActor: ReferenceKey? {
-        game.actorWorld.nearestActorValueHolder()?.key
-    }
-
-    var cinematicRemainingHostiles: Int {
-        game.combat.combatLoopSnapshot.hostileCount
-    }
-}

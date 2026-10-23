@@ -1,4 +1,4 @@
-// The audio engine, the three world directors, and the World > Audio lab
+// The audio engine, the three world directors, and the audio picker
 // state. Rules live in `AudioLabCore`; the app answers `AudioWorld`
 // (docs/engine/coordinators.md).
 
@@ -83,7 +83,7 @@ public final class AudioCoordinator {
         footstepDirector?.updateFootstepSet(feetArmatures: feetArmatures)
     }
 
-    /// Empty until the list is built; the panel refreshes and then shows it.
+    /// Empty until the list is built; the readout refreshes and then shows it.
     public var selectableAudioFileNames: [String] {
         if let musicFileNames {
             return musicFileNames

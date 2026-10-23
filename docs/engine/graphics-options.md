@@ -31,10 +31,8 @@ runtime and are never copied into the repository or a test fixture.
 
 ## What OpenSky applies
 
-OpenSky applies the four terrain distances today: `fBlockLevel0Distance`,
-`fBlockLevel1Distance`, `fBlockMaximumDistance`, and `fTreeLoadDistance`. They feed the
-distant terrain the same way the INI keys do, and the terrain LOD override of the developer
-sidebar still wins over them. It also applies `bDecals` and `uMaxDecals`
+OpenSky applies the four terrain distances today: `fBlockLevel0Distance`, `fBlockLevel1Distance`,
+`fBlockMaximumDistance`, and `fTreeLoadDistance`. It also applies `bDecals` and `uMaxDecals`
 ([impacts and decals](/rendering/decals.md)).
 
 Every other option is shown, saved, and disabled, with one line that says why it does

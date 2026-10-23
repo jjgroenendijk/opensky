@@ -76,7 +76,7 @@ nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIter
     case outOfRange
     /// Ran out its PROJ `lifetime`.
     case expired
-    /// Removed by a reset — a teleport, a world-state reload, the panel's clear.
+    /// Removed by a reset — a teleport, a world-state reload, the readout's clear.
     case cancelled
     /// Set off in the air by its PROJ explosion timer or proximity.
     case detonated
@@ -87,7 +87,7 @@ nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIter
     }
 }
 
-/// One finished shot, kept for the panel's last-trajectory readout: spawn
+/// One finished shot, kept for the readout's last-trajectory readout: spawn
 /// point, impact point, and flight time.
 nonisolated public struct ProjectileTrace: Equatable, Sendable {
     public let id: Int

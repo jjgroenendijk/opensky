@@ -102,12 +102,5 @@ that weapon spends one dose and applies the poison's effects to the target. The 
 
 ## Where OpenSky differs
 
-- The game has an alchemy menu. OpenSky has no lab movie yet; the sidebar drives the lab.
+- The game has an alchemy menu.
 - Stolen copies of an ingredient are used up first, so the stolen mark leaves with them.
-
-## Controls
-
-World > Inventory & Equipment > Alchemy opens a lab from the list of lab bases, lists the
-carried ingredients with their known effects, picks up to three, shows what they make, and
-brews. It also eats an ingredient to learn from it, and puts a carried poison on the drawn
-weapon. The readout shows the poison on each weapon and its doses.

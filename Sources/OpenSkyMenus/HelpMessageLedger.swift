@@ -90,11 +90,6 @@ nonisolated public struct HelpMessageLedger: Equatable, Sendable {
         }
     }
 
-    public mutating func resetAll() {
-        records.removeAll()
-        active = nil
-    }
-
     /// Event names match the way input events do, without case.
     static func key(_ event: String) -> String {
         event.lowercased()

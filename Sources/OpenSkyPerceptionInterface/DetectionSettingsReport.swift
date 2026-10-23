@@ -1,5 +1,5 @@
 // The reporting half of `DetectionSettings`. One ordered table, so
-// `openskycli gmst detection` and the panel show the same rows in the same order.
+// `openskycli gmst detection` and the readout show the same rows in the same order.
 
 import Foundation
 import OpenSkyPhysics

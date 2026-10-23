@@ -1,18 +1,15 @@
-// The dialogue camera and its panel controls. The camera frames the speaker's
+// The dialogue camera and its control controls. The camera frames the speaker's
 // head every frame, because the head moves. The speaker focus that holds the
 // speaker still is a `DialogueCoordinator` call. See docs/engine/dialogue-camera.md.
 
 import Foundation
-import OpenSkyAIPackages
 import OpenSkyDialogue
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
-import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -22,21 +19,18 @@ protocol DialogueCameraHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
-    var packages: PackageCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
 }
 
-/// Holds the panel's force toggle and target for `game`.
+/// Holds the readout's force toggle and target for `game`.
 final class DialogueCameraController {
     unowned let game: any DialogueCameraHost
     /// Frames the selected actor with no conversation open.
     private(set) var isForced = false
     private(set) var target: DialogueCameraTarget = .crosshair
-    /// Kept across readout refreshes, so the user sees what they just did.
-    private(set) var lastOutcome: String?
     /// The player's facing when the race menu opened. Read once, because the
     /// framed pose turns the view and would move the shot every frame.
     private var portraitYaw: Float?
@@ -137,62 +131,5 @@ final class DialogueCameraController {
         }
     }
 
-    func setForced(_ forced: Bool) {
-        isForced = forced
-        refreshFocus()
-        lastOutcome = forced ? forcedOutcome() : "released the forced camera"
-    }
-
-    func setTarget(_ newTarget: DialogueCameraTarget) {
-        target = newTarget
-        refreshFocus()
-        guard isForced else { return }
-        lastOutcome = forcedOutcome()
-    }
-
-    private func forcedOutcome() -> String {
-        guard let speaker = speaker() else {
-            return "no actor to force onto: \(target.label.lowercased()) picked nobody"
-        }
-        return "forced onto \(game.dialogueWorld.speakerLabel(for: speaker))"
-    }
-
     // MARK: - Snapshot
-
-    var snapshot: DialogueCameraSnapshot {
-        guard let gameSession = game.gameSession else { return .empty }
-        let speaker = speaker()
-        return DialogueCameraSnapshot(
-            isAvailable: true,
-            isEngaged: gameSession.isDialogueCameraEngaged,
-            isForced: isForced,
-            target: target,
-            speakerName: speaker.map { game.dialogueWorld.speakerLabel(for: $0) },
-            speakerKey: speaker,
-            pose: gameSession.dialogueCameraPose,
-            restoreMode: gameSession.dialogueCameraRestoreMode,
-            restoreFOVYDegrees: MatrixMath.degrees(
-                fromRadians: gameSession.dialogueCameraRestoreFOVYRadians
-            ),
-            speakerFocus: speakerFocusRow(),
-            lastOutcome: lastOutcome
-        )
-    }
-
-    private func speakerFocusRow() -> DialogueSpeakerFocusRow? {
-        guard let speaker = game.dialogue.heldSpeaker, let streamer = game.streamer else {
-            return nil
-        }
-        let hold = streamer.npcFacing(for: speaker)
-        let readout = streamer.npcMovementReadouts().first { $0.actor == speaker }
-        let package = game.packages.readout(for: speaker)
-        return DialogueSpeakerFocusRow(
-            movementState: readout?.state.rawValue ?? "none",
-            yawDegrees: MatrixMath.degrees(fromRadians: hold?.yaw ?? readout?.yaw ?? 0),
-            targetYawDegrees: MatrixMath.degrees(fromRadians: hold?.targetYaw ?? 0),
-            isSettled: hold?.isSettled ?? false,
-            isPackageSuspended: package?.isSuspended ?? false,
-            packageEditorID: package?.editorID
-        )
-    }
 }

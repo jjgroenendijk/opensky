@@ -91,11 +91,6 @@ final class SaveGameWorldAdapter: SaveGameService {
         }
     }
 
-    func startSkyrimExport() {
-        guard lastSkyrimExport != .running else { return }
-        Task { _ = try? await exportSkyrimSave() }
-    }
-
     /// Play time continues from the loaded save. A Skyrim save starts it from zero.
     func loadGame(slot: String) async throws {
         if SkyrimSaveImportAdapter.isImport(slot) {

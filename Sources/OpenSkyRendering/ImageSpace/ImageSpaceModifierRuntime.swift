@@ -56,10 +56,6 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         instances.removeAll { $0.key == key }
     }
 
-    public mutating func stopAll() {
-        instances.removeAll()
-    }
-
     /// Ages every instance and drops the one-shots past their duration.
     public mutating func advance(_ seconds: Float) {
         guard seconds.isFinite, seconds > 0 else { return }

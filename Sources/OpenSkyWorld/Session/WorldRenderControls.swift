@@ -1,4 +1,4 @@
-// The renderer and streamer controls behind the World panels: shadows, terrain
+// The renderer and streamer controls behind agent control: shadows, terrain
 // LOD, render debug, camera, frame and scene stats, triggers, and physics.
 // Without a renderer or a streamer every read degrades to a stated default.
 
@@ -19,9 +19,6 @@ public protocol RenderControlWorld: AnyObject {
     var gameSession: GameSession? { get }
     /// Nil without game data.
     var streamer: CellStreamer? { get }
-    var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
-    /// The player settings, for the switches that apply on the next launch.
-    var playerSettingsStore: PlayerSettingsStore { get }
     func refocusGameView()
 }
 
@@ -50,30 +47,7 @@ public final class WorldRenderControls {
     }
 }
 
-extension WorldRenderControls: ShadowControlProviding {
-    /// Not persisted: an A/B flip is a short comparison, and a shadowless world
-    /// on the next launch would read as a bug.
-    public var sunShadowsEnabled: Bool {
-        get { renderer?.sunShadowsEnabled ?? true }
-        set { renderer?.sunShadowsEnabled = newValue }
-    }
-
-    public var shadowQuality: ShadowQuality {
-        get { renderer?.shadowQuality ?? ShadowQualitySettings.load() }
-        set {
-            renderer?.shadowQuality = newValue
-            ShadowQualitySettings.store(newValue)
-        }
-    }
-
-    public var shadowDrawStats: ShadowDrawStats {
-        renderer?.combinedShadowDrawStats ?? ShadowDrawStats()
-    }
-
-    public var shadowUpdateMS: Double {
-        renderer?.lastShadowUpdateMS ?? 0
-    }
-
+extension WorldRenderControls {
     public var shadowsActive: Bool {
         renderer?.shadowRenders ?? false
     }
@@ -83,39 +57,7 @@ extension WorldRenderControls: ShadowControlProviding {
     }
 }
 
-extension WorldRenderControls: TerrainLODControlProviding {
-    public var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot {
-        world?.terrainLODConfigurationStore.snapshot() ?? TerrainLODConfigurationSnapshot(
-            configuration: .fallback, source: "safe defaults"
-        )
-    }
-
-    public var terrainLODOverrideActive: Bool {
-        TerrainLODSettings.hasOverride()
-    }
-
-    public func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool {
-        guard configuration.isValid else { return false }
-        TerrainLODSettings.store(configuration)
-        world?.terrainLODConfigurationStore.replace(with: TerrainLODConfigurationSnapshot(
-            configuration: configuration,
-            source: "OpenSky sidebar override"
-        ))
-        streamer?.invalidateDistantLOD()
-        return true
-    }
-
-    public func resetTerrainLODConfiguration() {
-        TerrainLODSettings.clearOverride()
-        let root = try? GameDataLocator.locate()
-        world?.terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(
-            root: root, settings: PlayerSettingsFile.savedData()
-        ))
-        streamer?.invalidateDistantLOD()
-    }
-}
-
-extension WorldRenderControls: RenderDebugControlProviding {
+extension WorldRenderControls {
     public var renderDebugMode: RenderDebugMode {
         get { renderer?.renderDebug.mode ?? .off }
         set { renderer?.renderDebug.mode = newValue }
@@ -125,19 +67,9 @@ extension WorldRenderControls: RenderDebugControlProviding {
         get { renderer?.renderDebug.layers ?? .all }
         set { renderer?.renderDebug.layers = newValue }
     }
-
-    public var renderDebugSnapshot: RenderDebugControlSnapshot {
-        RenderDebugControlSnapshot(
-            mode: renderDebugMode,
-            layers: renderDebugLayers,
-            effectiveLayers: renderer?.effectiveRenderLayers ?? .all,
-            stats: renderer?.combinedDrawStats() ?? SceneDrawStats(),
-            shadowStats: renderer?.combinedShadowDrawStats ?? ShadowDrawStats()
-        )
-    }
 }
 
-extension WorldRenderControls: RenderPerformanceControlProviding {
+extension WorldRenderControls {
     public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
         guard let renderer else { return nil }
         let camera = renderer.lastDrawStats
@@ -162,130 +94,9 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
         return snapshot
     }
-
-    /// Applies at once and is saved, so the next launch starts with it.
-    public var rayTracedShadowsEnabled: Bool {
-        get {
-            renderer?.rayTracedShadows.enabled
-                ?? world?.playerSettingsStore.bool(.rayTracedShadows) ?? false
-        }
-        set {
-            renderer?.rayTracedShadows.enabled = newValue
-            world?.playerSettingsStore.set(.rayTracedShadows, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var rayTracedShadowView: Bool {
-        get { renderer?.rayTracedShadows.showOnly ?? false }
-        set { renderer?.rayTracedShadows.showOnly = newValue }
-    }
-
-    /// Applies at once to textures loaded from now on, and is saved.
-    public var textureStreamingEnabled: Bool {
-        get {
-            renderer?.textureStreaming.enabled
-                ?? world?.playerSettingsStore.bool(.textureStreaming) ?? true
-        }
-        set {
-            renderer?.textureStreaming.enabled = newValue
-            world?.playerSettingsStore.set(.textureStreaming, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var textureBudgetIndex: Int {
-        get { Int(world?.playerSettingsStore.value(.textureBudget) ?? 0) }
-        set {
-            guard let store = world?.playerSettingsStore else { return }
-            store.set(.textureBudget, to: Double(newValue))
-            renderer?.textureStreaming.budgetBytes = Renderer.textureBudgetBytes(
-                store: store, device: renderer?.device
-            )
-        }
-    }
-
-    /// Applies at once and is saved, so the next launch starts with it.
-    public var renderScale: RenderScale {
-        get {
-            if let renderer {
-                return renderer.renderScale
-            }
-            return world.map { RenderScale(store: $0.playerSettingsStore) } ?? .off
-        }
-        set {
-            renderer?.renderScale = newValue
-            world?.playerSettingsStore.set(.renderScale, to: Double(newValue.settingIndex))
-        }
-    }
-
-    public var upscaler: UpscalerKind {
-        get {
-            if let renderer {
-                return renderer.upscaler
-            }
-            return world.map { UpscalerKind(store: $0.playerSettingsStore) } ?? .temporal
-        }
-        set {
-            renderer?.upscaler = newValue
-            world?.playerSettingsStore.set(.upscaler, to: Double(newValue.rawValue))
-        }
-    }
-
-    public var meshShaderGrassEnabled: Bool {
-        get {
-            renderer?.meshShaderGrassEnabled
-                ?? world?.playerSettingsStore.bool(.meshShaderGrass) ?? false
-        }
-        set {
-            renderer?.meshShaderGrassEnabled = newValue
-            world?.playerSettingsStore.set(.meshShaderGrass, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var frameInterpolationEnabled: Bool {
-        get {
-            renderer?.frameInterpolationEnabled
-                ?? world?.playerSettingsStore.bool(.frameInterpolation) ?? false
-        }
-        set {
-            renderer?.frameInterpolationEnabled = newValue
-            world?.playerSettingsStore.set(.frameInterpolation, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var gpuCullingEnabled: Bool {
-        get { renderer?.gpuCullingEnabled ?? world?.playerSettingsStore.bool(.gpuCulling) ?? true }
-        set {
-            renderer?.gpuCullingEnabled = newValue
-            world?.playerSettingsStore.set(.gpuCulling, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var roomCullingEnabled: Bool {
-        get { renderer?.roomCullingEnabled ?? world?.playerSettingsStore.bool(.roomCulling) ?? true
-        }
-        set {
-            renderer?.roomCullingEnabled = newValue
-            world?.playerSettingsStore.set(.roomCulling, to: newValue ? 1 : 0)
-        }
-    }
-
-    /// Read at renderer setup, so a change applies on the next launch.
-    public var pipelineCacheEnabled: Bool {
-        get { world?.playerSettingsStore.bool(.pipelineCacheEnabled) ?? true }
-        set { world?.playerSettingsStore.set(.pipelineCacheEnabled, to: newValue ? 1 : 0) }
-    }
-
-    @discardableResult
-    public func clearPipelineCache() -> Int {
-        guard
-            let store = world?.playerSettingsStore,
-            let folder = PipelineCache.archiveFolder(store: store)
-        else { return 0 }
-        return (try? PipelineCacheFolder.clear(folder: folder)) ?? 0
-    }
 }
 
-extension WorldRenderControls: CameraControlProviding {
+extension WorldRenderControls {
     public var cameraPose: CameraPoseSnapshot {
         guard let gameSession else { return .unavailable }
         let camera = gameSession.freeFlyCamera
@@ -302,13 +113,9 @@ extension WorldRenderControls: CameraControlProviding {
         get { gameSession?.movementMode ?? .fly }
         set { gameSession?.setMovementMode(newValue) }
     }
-
-    public var movementConfiguration: PlayerMovementConfiguration {
-        gameSession?.walkController.configuration ?? .synthetic
-    }
 }
 
-extension WorldRenderControls: FrameStatsProviding, SceneStatsProviding {
+extension WorldRenderControls {
     public var frameStatsSnapshot: FrameStatsSnapshot {
         renderer?.frameStats.snapshot() ?? .empty
     }
@@ -328,7 +135,7 @@ extension WorldRenderControls: FrameStatsProviding, SceneStatsProviding {
 
 /// Without a streamer the trigger snapshot says so, instead of zeros that would
 /// read as "no cell authors a trigger".
-extension WorldRenderControls: TriggerControlProviding, PhysicsControlProviding {
+extension WorldRenderControls {
     public var triggerStatsSnapshot: TriggerStatsSnapshot {
         guard let streamer else { return .unavailable }
         var snapshot = TriggerStatsSnapshot(
@@ -343,19 +150,7 @@ extension WorldRenderControls: TriggerControlProviding, PhysicsControlProviding 
         return snapshot
     }
 
-    public func clearTriggerLog() {
-        streamer?.triggerLog.clear()
-    }
-
     public var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot {
         streamer?.dynamicBodies.statsSnapshot ?? DynamicBodyStatsSnapshot()
-    }
-
-    public func setPhysicsFrozen(_ frozen: Bool) {
-        streamer?.dynamicBodies.isFrozen = frozen
-    }
-
-    public func resetDynamicBodies() {
-        streamer?.dynamicBodies.reset()
     }
 }

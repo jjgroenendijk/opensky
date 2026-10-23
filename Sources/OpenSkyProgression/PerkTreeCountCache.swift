@@ -1,4 +1,4 @@
-// Memoized per-skill perk-tree counts for the `World > Progression` panel, which
+// Memoized per-skill perk-tree counts for progression reads, which
 // refreshes twice a second; one walk is about 900 `PerkStore.resolve` calls.
 // A tree's key list changes only on a rewire (`invalidate()`). The owned count is
 // recounted when the owned list differs from the last one, which costs one short

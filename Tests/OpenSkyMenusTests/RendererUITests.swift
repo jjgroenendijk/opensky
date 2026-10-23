@@ -18,14 +18,14 @@ struct RendererUITests {
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
-    func labSampleChangesPixelsOverBaseline() throws {
+    func overlaySampleChangesPixelsOverBaseline() throws {
         let renderer = try Self.canvas.makeRenderer()
         renderer.frameInput.ui = .empty
         let base = try Self.canvas.render(renderer)
-        renderer.frameInput.ui = .labSample
+        renderer.frameInput.ui = .overlaySample
         let withUI = try Self.canvas.render(renderer)
         let changed = OffscreenRendererFixture.changedPixels(base, withUI)
-        // Filled panel alone covers thousands of pixels.
+        // Filled readout alone covers thousands of pixels.
         #expect(changed > 2000, "UI overlay changed only \(changed) pixels")
     }
 
@@ -33,7 +33,7 @@ struct RendererUITests {
     @MainActor
     func disabledUIMatchesEmptyBaselineExactly() throws {
         let renderer = try Self.canvas.makeRenderer()
-        renderer.frameInput.ui = .labSample
+        renderer.frameInput.ui = .overlaySample
         renderer.uiEnabled = false
         let disabled = try Self.canvas.render(renderer)
         renderer.frameInput.ui = .empty
@@ -47,7 +47,7 @@ struct RendererUITests {
     @MainActor
     func sameSceneRendersByteIdentical() throws {
         let renderer = try Self.canvas.makeRenderer()
-        renderer.frameInput.ui = .labSample
+        renderer.frameInput.ui = .overlaySample
         // Warm the glyph atlas so no upload happens between the compared frames.
         _ = try Self.canvas.render(renderer)
         let first = try Self.canvas.render(renderer)
@@ -59,7 +59,7 @@ struct RendererUITests {
     @MainActor
     func scaleChangesPixels() throws {
         let renderer = try Self.canvas.makeRenderer()
-        renderer.frameInput.ui = .labSample
+        renderer.frameInput.ui = .overlaySample
         renderer.uiScale = 1
         let atOne = try Self.canvas.render(renderer)
         renderer.uiScale = 2
@@ -72,7 +72,7 @@ struct RendererUITests {
     @MainActor
     func statsCountDrawAndGlyphs() throws {
         let renderer = try Self.canvas.makeRenderer()
-        renderer.frameInput.ui = .labSample
+        renderer.frameInput.ui = .overlaySample
         _ = try Self.canvas.render(renderer)
         let stats = renderer.lastUIDrawStats
         #expect(stats.drawCalls == 1)

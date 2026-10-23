@@ -141,7 +141,7 @@ The values are read from the install with `openskycli gmst list --prefix fMagicD
 
 ## What refuses a cast
 
-Every refusal has a sentence, is counted, and is shown on the panel. Nothing fails silently.
+Nothing fails silently.
 
 | Refusal | Why |
 | --- | --- |
@@ -230,32 +230,13 @@ used-power entry for a forgotten spell are all cleaned up by the component's ini
 
 Eight condition functions read a magic snapshot per actor ([conditions](/formats/conditions.md)).
 
-Eleven Papyrus natives, the `Actor` spell family and `Spell.Cast`, go through the spellbook, effect,
-and caster runtimes, so a script's `AddSpell` and the panel's Learn button write the same component
-([Papyrus spell natives](/engine/papyrus-spell-natives.md)).
-
 `HasMagicEffect` and its keyword forms are documented as testing whether an actor carries an effect
 a spell could apply, active or not. The OpenSky component holds only what was applied, so all four
 answer whether the effect is acting.
 
-## Controls
+## Spell names
 
-World > Combat & Physics > Spellcasting, below Magic Effects, because that is where a cast lands.
-
-- Learn, Read tome, and a spell selector.
-- Ready right and Ready left.
-- Cast right and Cast left: each runs a whole cast without holding a button. The charge is skipped
-  ahead, then the cast is released. Holding the button in walk mode reaches the same states over real
-  frames.
-- Dual cast: begins both hands together and runs the whole cast. The readout's last line says
-  "Dual cast" when the perk allowed it, and the refusal when it did not.
-- Readout: the spellbook, both hands, the last cast and refusal, projectiles fired, the delivery
-  counts, one line per hostile entry of the last landed spell (`effect on target: base x multiplier
-  = adjusted`), the count of ability effects the player holds, the casting cues sent with the last
-  one and a release that waits for its event, and a Conditions (player) block with one line per
-  magic condition function.
-
-The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
+A spell's type, casting, and delivery are named with the magic menu's own words: the
 `sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,
 `sMagicFireAndForget`, `sMagicConcentration`, the five `sMagicDelivery*` settings, and the five
 `sMagicSchool*` settings for the school of the costliest effect. Without a

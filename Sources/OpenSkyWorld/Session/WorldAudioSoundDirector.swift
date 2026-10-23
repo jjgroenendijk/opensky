@@ -63,7 +63,7 @@ public final class WorldAudioSoundDirector {
     var soundIDsByEditorID: [String: FormID]?
 
     /// SFX on use-key activation. Off by default until the user enables audio;
-    /// the panel control writes back here.
+    /// the control writes back here.
     public var sfxEnabled = true
     /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
     /// it takes effect immediately: switching off retires the playing bed,
@@ -84,7 +84,7 @@ public final class WorldAudioSoundDirector {
     /// or unrelated effects.
     private var interactionLoopSourceIDs: [FormID: Int] = [:]
 
-    /// Most recent SFX outcome, surfaced through the World > Audio readout.
+    /// Most recent SFX outcome, surfaced through the audio readout.
     public private(set) var lastSFXDescription: String?
     public internal(set) var lastSFXError: String?
     /// The routing the last one-shot took, and why, for the readout.
@@ -215,10 +215,10 @@ public final class WorldAudioSoundDirector {
         engine.applyReverb(setting)
     }
 
-    // MARK: - Panel entry points (Phase 3 verification surface)
+    // MARK: - Readout entry points (Phase 3 verification surface)
 
     /// Forces a one-shot SFX for any resolved SNDR FormID. Used by the World >
-    /// Audio panel to verify SFX without relying on a walk-mode interaction.
+    /// Audio readout to verify SFX without relying on a walk-mode interaction.
     public func forcePlaySound(formID: FormID, position: SIMD3<Float>) {
         guard engine.isRunning else {
             lastSFXError = "engine not running"

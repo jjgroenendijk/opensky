@@ -144,25 +144,19 @@ and the blink, brow, look, and squint targets of the face, and it turns the head
 to the automatic blinks, clamped like any other weight. When the line ends the lip weights fade
 out over 0.15 seconds.
 
-## Controls
+## Settings
 
-World > Dialogue & Voice > Face Morphs follows the current dialogue speaker, or else the actor
-under the crosshair. It has a target list, a weight slider, a reset button, and a readout of
-targets, active weights, file pairs, missing pairs, writes to unknown names, and the automatic
-expression. Checkboxes turn blinking, eye movement, dialogue expressions, and
-[head tracking](/engine/head-tracking.md) on or off. A nonzero weight or a checkbox turned off
-marks the panel as changed, and the panel's reset clears all weights and turns all four on.
-The launcher's Graphics page has the same four switches under Characters. Both places write
-one persisted player setting each, so a choice survives a restart.
+The launcher's Graphics page turns blinking, eye movement, dialogue expressions, and
+[head tracking](/engine/head-tracking.md) on or off under Characters. Each switch writes one
+persisted player setting, so a choice survives a restart.
 
 ## Failures
 
 A TRI parse or pairing failure affects only that actor. The actor and its baked head still draw.
-The failures are kept for the readout. Any pair that worked still morphs.
+Any pair that worked still morphs.
 
 ## Not done yet
 
 - Race sliders and character creation morphs.
 - Body morphs other than weight ([actor resolution](/engine/actor-resolution.md)).
 - Mood and combat expressions (`Mood*`, `CombatAnger`, `CombatShout`).
-- Keeping panel weights after the actor unloads, or in saves.

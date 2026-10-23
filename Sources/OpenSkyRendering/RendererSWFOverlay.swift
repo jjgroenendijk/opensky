@@ -12,10 +12,6 @@ nonisolated public struct SWFOverlayLayer {
 }
 
 extension Renderer {
-    public var swfOverlayRuntime: SWFMovieRuntime? {
-        swf.overlay?.runtime
-    }
-
     /// Builds and starts `scene` as the overlay, or clears the overlay for nil. `prepare`
     /// runs before `start()`, as for the main movie.
     @discardableResult

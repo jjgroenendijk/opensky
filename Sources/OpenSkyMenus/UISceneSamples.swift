@@ -1,12 +1,12 @@
-// Built-in UI sample scenes. `labSample` has heading and body text, a wrapped
+// Built-in UI sample scenes. `overlaySample` has heading and body text, a wrapped
 // paragraph, a bordered panel, and corner markers. Tests render it offscreen;
-// UI Lab displays it.
+// overlay sample draws it.
 
 import OpenSkyRendering
 import simd
 
 nonisolated extension UIScene {
-    public static let labSample = UIScene(nodes: [
+    public static let overlaySample = UIScene(nodes: [
         // Filled panel + light border, top-left.
         UINode(
             anchor: .topLeft,

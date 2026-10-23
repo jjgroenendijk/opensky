@@ -40,7 +40,7 @@ struct ScriptingAcceptanceEngineTests {
         )
         #expect(source.session.world.updateTimers.pendingCount == 1)
 
-        let directory = try RuntimeStateAcceptanceTests.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = OpenSkySaveStore(directory: directory)
         try store.save(

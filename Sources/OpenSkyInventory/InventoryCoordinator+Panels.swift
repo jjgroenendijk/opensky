@@ -1,4 +1,4 @@
-// The Items panel and the Inventory & Equipment panel read and write the
+// The Items readout and the Inventory & Equipment readout read and write the
 // coordinator through these two providers. Ownership is reported, never
 // enforced.
 
@@ -36,12 +36,7 @@ extension InventoryCoordinator {
     }
 }
 
-extension InventoryCoordinator: InventoryEquipmentControlProviding {
-    public var inventoryEquipmentInspectionTarget: EquipmentTargetSelector {
-        get { inspectionTarget }
-        set { inspectionTarget = newValue }
-    }
-
+extension InventoryCoordinator {
     public var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {
         guard let runtime else { return .unavailable }
         let container = session?.container

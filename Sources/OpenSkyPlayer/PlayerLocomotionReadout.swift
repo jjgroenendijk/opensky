@@ -1,43 +1,11 @@
-// World > Player & Locomotion readout text. Each line is a pure function of
+// Player locomotion readout text. Each line is a pure function of
 // one `PlayerLocomotionSnapshot`, so the wording is testable without AppKit, a
 // Metal device, or an install. No AppKit import: the CLI builds it too.
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyPhysics
 
 nonisolated public enum PlayerLocomotionReadout: Sendable {
-    /// Where the player is and what is moving them.
-    public static func stateText(for snapshot: PlayerLocomotionSnapshot) -> String {
-        guard snapshot.rendererAvailable else {
-            return "Locomotion: no renderer"
-        }
-        guard snapshot.walkModeActive else {
-            return "Camera: fly\nThe player is not simulated in fly mode; "
-                + "the values below are the last simulated step."
-        }
-        let status = snapshot.status
-        let plan = status.lastPlan
-        let water: String = status.waterSurfaceHeight.map { format($0) } ?? "none"
-        let forced: String = snapshot.forcedGait == nil ? "" : "  (forced)"
-        let impulse: String = plan.jumpImpulse.map { format($0) } ?? "none"
-        let gait = "Gait: \(status.gait.rawValue)  Motion: \(name(of: status.motionSource))"
-        let place = "Feet: \(format(status.feetPosition))"
-        let vertical = "Vertical: \(format(status.verticalVelocity)) u/s"
-        let grounded = "Grounded: \(status.isGrounded ? "yes" : "no")"
-        let swimming = "Swimming: \(status.isSwimming ? "yes" : "no")"
-        let step = "Step displacement: \(format(plan.horizontalDisplacement)) u"
-        return [
-            gait + forced,
-            place + "  " + vertical,
-            grounded + "  " + swimming + "  Water surface: " + water,
-            step + "  Jump impulse: " + impulse,
-            gaitSpeedLine(snapshot.configuration),
-            "Walk speed source: \(snapshot.configuration.walkSpeed.source)",
-            breathLine(snapshot.breath)
-        ].joined(separator: "\n")
-    }
-
     /// The breath left under water, and whether the player is drowning.
     public static func breathLine(_ breath: PlayerBreath?) -> String {
         guard let breath else { return "Breath: unavailable" }
@@ -46,17 +14,6 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         guard breath.isSubmerged else { return "Breath: \(left)  (above water)" }
         return "Breath: \(left)" +
             (breath.remainingSeconds > 0 ? "  (under water)" : "  (drowning)")
-    }
-
-    /// The resolved gait speeds on one line, built piece by piece so the
-    /// expression stays cheap to type-check.
-    private static func gaitSpeedLine(_ configuration: PlayerMovementConfiguration) -> String {
-        var line = "Gaits: walk \(format(configuration.walkSpeed.value))"
-        line += "  run \(format(configuration.runSpeed.value))"
-        line += "  sprint \(format(configuration.sprintSpeed.value))"
-        line += "  sneak \(format(configuration.sneakSpeed.value))"
-        line += "  swim \(format(configuration.swimSpeed.value))"
-        return line
     }
 
     /// What the behavior graph is doing: the state path, the variables the
@@ -82,60 +39,6 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
             + variableLines(snapshot.variables)
             + eventLines(status)
             + tallyLines(snapshot.tally)).joined(separator: "\n")
-    }
-
-    /// The bindings the milestone added, and whether each input is asserted
-    /// right now.
-    public static func bindingsText(for snapshot: PlayerLocomotionSnapshot) -> String {
-        guard !snapshot.bindings.isEmpty else {
-            return "No binding is published."
-        }
-        let rows = snapshot.bindings.map { binding -> String in
-            let state: String = binding.isActive ? "active" : "idle"
-            return "  \(binding.label) — \(binding.key)  \(state)"
-        }
-        return (["Bindings:"] + rows).joined(separator: "\n")
-    }
-
-    /// Where each motion source has carried the capsule, and the steps at which
-    /// the answer changed.
-    public static func motionText(for snapshot: PlayerLocomotionSnapshot) -> String {
-        let status = snapshot.status
-        var header = "Travel: root motion \(format(status.rootMotionDistance)) u"
-        header += "  configured speed \(format(status.configuredSpeedDistance)) u"
-        // States the rule the two totals are split by, so a reader can tell a
-        // zero root-motion total from a broken one. Every vanilla animation
-        // leaves `m_extractedMotion` null, so on an unmodded install the first
-        // total stays at zero for the whole session.
-        let rule = "Root motion drives the capsule only for a clip whose data carries "
-            + "extracted motion; vanilla clips animate in place, so the gait drives it."
-        guard !status.motionTrace.isEmpty else {
-            return "\(header)\n\(rule)\nNo step has planned motion yet."
-        }
-        let rows = status.motionTrace.map(traceLine)
-        return ([header, rule, "Changes (oldest first):"] + rows).joined(separator: "\n")
-    }
-
-    private static func traceLine(_ sample: LocomotionMotionSample) -> String {
-        var line = "  \(sample.gait.rawValue) via \(name(of: sample.source))"
-        line += " at \(format(sample.feetPosition))"
-        line += "  step \(format(sample.displacement)) u"
-        line += sample.isGrounded ? "" : "  airborne"
-        line += sample.isSwimming ? "  swimming" : ""
-        return line
-    }
-
-    /// What the two dev controls have done, stated even when they have done
-    /// nothing: "no gait forced" is the default the sidebar's reset restores.
-    public static func devText(
-        for snapshot: PlayerLocomotionSnapshot,
-        lastEvent: String?
-    ) -> String {
-        let forced: String = snapshot.forcedGait
-            .map { "Forced gait: \($0.rawValue)" }
-            ?? "Forced gait: none (player input resolves it)"
-        let event: String = lastEvent.map { "Last event: \($0)" } ?? "No event raised yet."
-        return [forced, event].joined(separator: "\n")
     }
 
     // MARK: - Sections of the graph readout
@@ -206,23 +109,7 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         names.isEmpty ? "none" : names.joined(separator: ", ")
     }
 
-    public static func name(of source: LocomotionMotionSource) -> String {
-        switch source {
-        case .rootMotion: "root motion"
-        case .configuredSpeed: "configured speed"
-        case .idle: "idle"
-        }
-    }
-
     private static func format(_ value: Float) -> String {
         String(format: "%.1f", value)
-    }
-
-    private static func format(_ value: SIMD2<Float>) -> String {
-        String(format: "%.1f, %.1f", value.x, value.y)
-    }
-
-    private static func format(_ value: SIMD3<Float>) -> String {
-        String(format: "%.1f, %.1f, %.1f", value.x, value.y, value.z)
     }
 }

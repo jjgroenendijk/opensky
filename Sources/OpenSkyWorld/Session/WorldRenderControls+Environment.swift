@@ -1,16 +1,14 @@
-// The World > Environment controls: weather, animation, particles,
+// Environment controls: weather, animation, particles,
 // precipitation, and grass.
 
-import OpenSkyActorPresentation
 import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyWeather
 import simd
 
-extension WorldRenderControls: WeatherControlProviding {
+extension WorldRenderControls {
     public var weatherEnabled: Bool {
         get { gameSession?.weatherEnabled ?? true }
         set { gameSession?.weatherEnabled = newValue }
@@ -30,216 +28,29 @@ extension WorldRenderControls: WeatherControlProviding {
         weather.forceWeather(match?.formID, transition: .timed)
     }
 
-    public func forceWeather(_ preset: WeatherPreset) {
-        guard
-            let weather = gameSession?.weather,
-            let match = weather.store.weather(for: preset)
-        else { return }
-        weather.forceWeather(match.formID, transition: .timed)
-    }
-
     public var currentWeatherName: String? {
         gameSession?.weather?.currentWeatherEditorID
-    }
-
-    public var weatherOverrideActive: Bool {
-        gameSession?.weather?.forced != nil
     }
 
     public var weatherTransitionFraction: Float {
         gameSession?.weather?.transitionFraction ?? 1
     }
 
-    public var weatherRerollInterval: Float? {
-        gameSession?.weather?.rerollInterval
-    }
-
-    public var weatherTransitionsPaused: Bool {
-        get { gameSession?.weather?.transitionsPaused ?? false }
-        set { gameSession?.weather?.transitionsPaused = newValue }
-    }
-
-    public var windState: WindState {
-        gameSession?.wind ?? .calm
-    }
-
-    /// The same scrub as the Runtime State panel's hour control.
+    /// The same scrub as the Runtime State readout's hour control.
     public var timeOfDay: Float {
         get { gameSession?.timeOfDay ?? TimeOfDaySettings.load() }
         set { runtimeState.setGameClockHour(newValue) }
     }
-
-    public var cloudsEnabled: Bool {
-        get { renderer?.cloudsEnabled ?? true }
-        set { renderer?.cloudsEnabled = newValue }
-    }
-
-    public var cloudReadout: String {
-        renderer?.cloudReadout ?? "no renderer"
-    }
 }
 
-extension WorldRenderControls: AnimationControlProviding {
-    public var actorAnimationsEnabled: Bool {
-        get { renderer?.actorAnimationsEnabled ?? true }
-        set { renderer?.actorAnimationsEnabled = newValue }
-    }
-
-    public var lightAnimationEnabled: Bool {
-        get { renderer?.lightAnimationEnabled ?? true }
-        set {
-            renderer?.lightAnimationEnabled = newValue
-            world?.playerSettingsStore.set(.lightAnimation, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var animatedLightCount: Int {
-        (renderer?.scene.pointLights ?? []).count { $0.animation != nil }
-    }
-
-    public var animationEventsEnabled: Bool {
-        get { gameSession?.animationEvents?.isEnabled ?? true }
-        set { gameSession?.animationEvents?.isEnabled = newValue }
-    }
-
-    public var animationEventReadout: [String] {
-        guard let events = gameSession?.animationEvents else { return [] }
-        return events.readout + [
-            "Last event: \(events.lastEvent ?? "none")",
-            "Sounds not found: \(events.missingSounds.count)"
-        ]
-    }
-
-    public func sendPlayerAnimationEvent(_ name: String) -> Bool {
-        gameSession?.animationEvents?.handle(name, from: .player) != nil
-    }
-
-    public var animationSnapshot: AnimationControlSnapshot {
-        AnimationControlSnapshot(
-            playbackCount: renderer?.scene.animations.count ?? 0,
-            updatedBoneCount: renderer?.lastAnimationUpdatedBoneCount ?? 0,
-            updateMS: renderer?.lastAnimationUpdateMS ?? 0
-        )
-    }
-}
-
-extension WorldRenderControls: ParticleControlProviding {
-    public var particlesEnabled: Bool {
-        get { renderer?.particlesEnabled ?? true }
-        set { renderer?.particlesEnabled = newValue }
-    }
-
-    public var particlesFrozen: Bool {
-        get { renderer?.particlesFrozen ?? false }
-        set { renderer?.particlesFrozen = newValue }
-    }
-
+extension WorldRenderControls {
     public var particleEmissionScale: Float {
         get { renderer?.particleEmissionScale ?? 1 }
         set { renderer?.particleEmissionScale = simd_clamp(newValue, 0, 2) }
     }
-
-    public var particleSortingEnabled: Bool {
-        get { renderer?.particleSortingEnabled ?? true }
-        set {
-            renderer?.particleSortingEnabled = newValue
-            world?.playerSettingsStore.set(.particleSorting, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var controlledParticleSystemCount: Int {
-        (renderer?.scene.particles ?? []).count {
-            $0.simulator.definition.emitterControllers.contains { !$0.birthRate.isEmpty }
-        }
-    }
-
-    public var particleSnapshot: ParticleControlSnapshot {
-        let playbacks = renderer?.scene.particles ?? []
-        return ParticleControlSnapshot(
-            systemCount: playbacks.count,
-            emitterCount: playbacks.reduce(0) { $0 + $1.emitterCount },
-            liveCount: playbacks.reduce(0) { $0 + $1.liveCount },
-            offscreenCount: renderer?.offscreenParticleSystemCount ?? 0
-        )
-    }
 }
 
-extension WorldRenderControls: WaterControlProviding {
-    public var waterDepthEnabled: Bool {
-        get { renderer?.waterDepth.enabled ?? world?.playerSettingsStore.bool(.waterDepth) ?? true }
-        set {
-            renderer?.waterDepth.enabled = newValue
-            world?.playerSettingsStore.set(.waterDepth, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var waterSurfaceCount: Int {
-        renderer?.scene.water.count ?? 0
-    }
-}
-
-extension WorldRenderControls: TerrainShadingControlProviding {
-    public var terrainNormalMapsEnabled: Bool {
-        get {
-            renderer?.terrainNormalMapsEnabled
-                ?? world?.playerSettingsStore.bool(.terrainNormalMaps) ?? true
-        }
-        set {
-            renderer?.terrainNormalMapsEnabled = newValue
-            world?.playerSettingsStore.set(.terrainNormalMaps, to: newValue ? 1 : 0)
-        }
-    }
-
-    public var terrainQuadrantCount: Int {
-        renderer?.scene.terrain.count ?? 0
-    }
-
-    public var terrainNormalMapCount: Int {
-        renderer?.scene.terrain.reduce(0) { $0 + $1.normals.resolvedCount } ?? 0
-    }
-}
-
-extension WorldRenderControls: PrecipitationControlProviding {
-    public var precipitationEnabled: Bool {
-        get { renderer?.precipitationEnabled ?? true }
-        set { renderer?.precipitationEnabled = newValue }
-    }
-
-    public var precipitationSnapshot: PrecipitationRuntimeSnapshot {
-        renderer?.precipitation.snapshot ?? PrecipitationRuntimeSnapshot(
-            state: .none,
-            roofOccluded: false,
-            rainLiveCount: 0,
-            snowLiveCount: 0
-        )
-    }
-
-    public var precipitationTuning: PrecipitationTuning {
-        renderer?.precipitation.tuning ?? .fallback
-    }
-
-    public var weatherVolumetricLighting: String? {
-        guard
-            let gameSession, let weather = gameSession.weather,
-            let links = gameSession.imageSpaceLinks
-        else { return nil }
-        return weather.volumetricLighting(
-            in: links.records, plugin: links.weatherPlugin, hour: gameSession.timeOfDay
-        )
-    }
-}
-
-extension WorldRenderControls: GrassControlProviding {
-    public var grassEnabled: Bool {
-        get { renderer?.grassEnabled ?? true }
-        set { renderer?.grassEnabled = newValue }
-    }
-
-    public var grassDensityScale: Float {
-        get { renderer?.grassDensityScale ?? 1 }
-        set { renderer?.grassDensityScale = simd_clamp(newValue, 0, 1) }
-    }
-
+extension WorldRenderControls {
     public var grassDrawDistance: Float {
         get { renderer?.grassDrawDistance ?? GrassRenderPolicy.defaultDrawDistance }
         set {
@@ -249,25 +60,5 @@ extension WorldRenderControls: GrassControlProviding {
                 GrassRenderPolicy.maximumDrawDistance
             )
         }
-    }
-
-    public var grassWindScale: Float {
-        get { renderer?.grassWindScale ?? 1 }
-        set {
-            renderer?.grassWindScale = simd_clamp(newValue, 0, GrassRenderPolicy.maximumWindScale)
-        }
-    }
-
-    public var grassSnapshot: GrassControlSnapshot {
-        let stats = renderer?.lastGrassDrawStats ?? GrassDrawStats()
-        return GrassControlSnapshot(
-            sceneInstances: stats.sceneInstances,
-            drawnInstances: stats.drawnInstances,
-            drawCalls: stats.drawCalls,
-            distanceCulledInstances: stats.distanceCulledInstances,
-            densityCulledInstances: stats.densityCulledInstances,
-            frustumCulledInstances: stats.frustumCulledInstances,
-            budgetDroppedInstances: stats.budgetDroppedInstances
-        )
     }
 }

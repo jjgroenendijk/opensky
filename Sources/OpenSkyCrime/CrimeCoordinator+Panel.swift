@@ -1,5 +1,5 @@
-// The `World > Crime & Factions` panel's reading half. Every value comes from
-// the runtime the session itself consults, so the panel cannot disagree with
+// The crime and faction reading half. Every value comes from
+// the runtime the session itself consults, so the readout cannot disagree with
 // the world.
 
 import OpenSkyCrimeInterface

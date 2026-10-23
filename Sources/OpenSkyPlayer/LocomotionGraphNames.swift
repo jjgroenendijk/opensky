@@ -92,8 +92,8 @@ nonisolated public struct LocomotionMotionSample: Equatable, Sendable {
     public let isSwimming: Bool
 }
 
-/// What the bridge did, for the `World > Player & Locomotion` readout and for
-/// the tests. Value type, snapshot-per-read, like the other panel bridges.
+/// What the bridge did, for the locomotion readout and for
+/// the tests. Value type, snapshot-per-read, like the other readout bridges.
 nonisolated public struct LocomotionStatus: Equatable, Sendable {
     /// Whether a behavior graph is attached at all.
     public var graphAvailable = false
@@ -197,14 +197,6 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         if motionTrace.count > Self.motionTraceLimit {
             motionTrace.removeFirst(motionTrace.count - Self.motionTraceLimit)
         }
-    }
-
-    /// Empties the trace and both totals without disturbing anything the
-    /// player can feel, which is what the panel's own clear control does.
-    public mutating func clearMotionTrace() {
-        motionTrace = []
-        rootMotionDistance = 0
-        configuredSpeedDistance = 0
     }
 
     public mutating func noteGraphUpdate(events: [BehaviorEvent]) {

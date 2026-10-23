@@ -44,7 +44,7 @@ nonisolated public struct HostilityDerivation: HostilityDeriving {
 
     /// The reaction alone, for a caller that wants what the records say without
     /// the aggression table over it — a condition function asking
-    /// `GetFactionReaction`, or a panel explaining a decision.
+    /// `GetFactionReaction`, or a readout explaining a decision.
     public func reaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile

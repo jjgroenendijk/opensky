@@ -217,9 +217,8 @@ count are right without building a table for every holder each frame.
 `GetDisabled` reads the runtime enable state first. Without one, it reads the
 "initially disabled" flag in the REFR or ACHR header. A missing placement fails.
 
-`GetCurrentTime` reads the game clock. Without a clock, it reads the `GameHour` global, so
-an inspector or a test without a running world still gets the plugin's time. With a clock,
-the clock wins ([game clock](/engine/game-clock.md)).
+`GetCurrentTime` reads the game clock. With a clock, the clock wins ([game
+clock](/engine/game-clock.md)).
 
 `GetDayOfWeek` counts from the start date of a new game. UESP `Skyrim:Calendar`
 (<https://en.uesp.net/wiki/Skyrim:Calendar>) says a new game starts on the 17th of Last Seed,

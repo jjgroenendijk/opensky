@@ -24,7 +24,7 @@ nonisolated extension LocomotionBridge {
 
     /// Raises one event on every attached graph, on the same terms. The dev
     /// control in `LocomotionBridgeDevControls.swift` raises through this path
-    /// too, so an event fired from the sidebar is indistinguishable from one
+    /// too, so an event fired by agent control is indistinguishable from one
     /// the player produced.
     public func raise(_ name: String) {
         raiseOnFirstPersonGraph(name)

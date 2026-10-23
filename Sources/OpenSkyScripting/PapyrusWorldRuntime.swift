@@ -196,7 +196,7 @@ public final class PapyrusWorldRuntime {
     public static let maximumActivationDepth = 8
 
     /// Entries `recentEvents` retains, matching
-    /// `RuntimeStateSnapshot.journalTailLimit`: both feed a sidebar readout
+    /// `RuntimeStateSnapshot.journalTailLimit`: both feed a state read
     /// that shows recent history rather than a whole session.
     public static let recentEventLimit = 8
 

@@ -33,7 +33,7 @@ deactivation: a machine that is no longer reached leaves its state.
 
 A state whose generator is another `hkbStateMachine` runs it the same way. The runtime publishes
 every machine the last update reached, in walk order with the outermost first: the machine name,
-the state name, and the crossfade weight. The locomotion panel shows this path.
+the state name, and the crossfade weight.
 
 ## What a machine publishes
 

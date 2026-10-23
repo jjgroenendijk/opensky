@@ -265,7 +265,7 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
 }
 
 /// The `XOWN`/`XRNK` reading for one placed reference, and what the crime
-/// runtime makes of it. Shown on the gate panel.
+/// runtime makes of it. Shown on the gate readout.
 nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
     /// How the reference is named in the world, matching the HUD prompt.
     public let name: String

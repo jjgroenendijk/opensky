@@ -51,7 +51,7 @@ public struct QuestRuntime: QuestAccess {
     }
 
     /// Convenience for a caller holding an editor ID rather than a FormID,
-    /// which is what a console line and a sidebar field carry.
+    /// which is what a console line and an agent command carry.
     public func state(editorID: String) throws -> QuestRuntimeState {
         guard let quest = quests.quest(editorID: editorID) else {
             throw QuestError.unknownQuest(FormID(0))

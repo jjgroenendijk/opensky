@@ -194,14 +194,3 @@ handles worst: it runs about 24 times slower unoptimized. So the 2 ms step budge
   for piles of clutter, but it is not a full face-clipping manifold. A tall stack settles instead of
   resting perfectly.
 - The player capsule sees moving bodies through the shared query, but is not part of the solve.
-
-## Controls
-
-World > Combat & Physics > Physics:
-
-- Freeze body stepping: stops integration with everything in place. It lights the sidebar dot,
-  because frozen physics looks like a bug.
-- Reset bodies: returns every body to the pose its cell build drew it at, and clears its velocity.
-  Where a crate fell is world state the player caused, so this is a button, not automatic.
-- Readout: body, awake, and asleep counts, the last step's contacts and substeps, and pose
-  recoveries.

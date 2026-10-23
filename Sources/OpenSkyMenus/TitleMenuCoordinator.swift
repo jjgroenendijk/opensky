@@ -79,15 +79,6 @@ nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
     }
 }
 
-public protocol TitleMenuControlProviding: AnyObject {
-    var titleMenuSnapshot: TitleMenuSnapshot { get }
-    func openTitleMenu()
-    func closeTitleMenu()
-    func sendTitleMenuInput(_ event: MenuInputEvent)
-    func setTitleMenuMovieEnabled(_ enabled: Bool)
-    func startNewGame(atCell editorID: String)
-}
-
 public final class TitleMenuCoordinator {
     public static let identifier: MenuIdentifier = "Main Menu"
 
@@ -180,17 +171,6 @@ public final class TitleMenuCoordinator {
         creditsClosing = false
         menuMode.dismiss(Self.identifier)
         stopMovie()
-    }
-
-    public func setMovieEnabled(_ enabled: Bool) {
-        guard enabled != movieEnabled else { return }
-        movieEnabled = enabled
-        guard isOpen else { return }
-        if enabled {
-            startMovie()
-        } else {
-            stopMovie()
-        }
     }
 
     public func route(_ event: MenuInputEvent) {
@@ -294,32 +274,5 @@ public final class TitleMenuCoordinator {
                 state: runtime.flatMap(TitleMenuMovieBridge.currentState(runtime:))
             )
         )
-    }
-}
-
-extension TitleMenuCoordinator: TitleMenuControlProviding {
-    public var titleMenuSnapshot: TitleMenuSnapshot {
-        snapshot
-    }
-
-    public func openTitleMenu() {
-        open()
-    }
-
-    public func closeTitleMenu() {
-        close()
-    }
-
-    public func sendTitleMenuInput(_ event: MenuInputEvent) {
-        route(event)
-    }
-
-    public func setTitleMenuMovieEnabled(_ enabled: Bool) {
-        setMovieEnabled(enabled)
-    }
-
-    public func startNewGame(atCell editorID: String) {
-        let trimmed = editorID.trimmingCharacters(in: .whitespaces)
-        newGame(at: trimmed.isEmpty ? .vanilla : .cell(trimmed))
     }
 }

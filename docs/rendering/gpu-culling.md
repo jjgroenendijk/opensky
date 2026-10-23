@@ -52,15 +52,11 @@ and the next launch reads it. The launcher's Graphics page and the switch below 
 it. The `Renderer` type itself starts on the CPU path, so a render test that builds one tests
 the CPU path unless it turns the GPU path on.
 
-The frame HUD, the render debug panel, and the shadow readout show one count per view: the
-CPU path's count plus the GPU path's count. The GPU part is a few frames old.
+The GPU part is a few frames old.
 
 ## Checking it
 
-`Developer > Rendering Performance > GPU Culling` has the switch
-(`GPUCullingEnabledControl`) and the counts of both paths apart (`GPUCullingStatsLabel`):
-instances drawn and culled for the camera and for all cascades together. With the switch on,
-the CPU counts cover only the groups that stay on the CPU.
+With the switch on, the CPU counts cover only the groups that stay on the CPU.
 
 `make benchmark` measures the GPU path, and `make benchmark ARGS='--set rendering.gpuCulling=off'`
 the CPU path. The `encode` entry of each scene's `cpu` field holds the CPU time of the shadow and

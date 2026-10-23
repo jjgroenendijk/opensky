@@ -1,4 +1,4 @@
-// The seam for World > World > Triggers: one Equatable snapshot polled at 2 Hz and one
+// The trigger state: one Equatable snapshot polled at 2 Hz and one
 // action. Nothing here reaches into the streamer.
 
 /// What the trigger readout shows for one refresh.
@@ -49,13 +49,4 @@ nonisolated public struct TriggerStatsSnapshot: Equatable, Sendable {
         self.recentTransitions = recentTransitions
         self.recordedTransitionCount = recordedTransitionCount
     }
-}
-
-@MainActor
-public protocol TriggerControlProviding: AnyObject {
-    var triggerStatsSnapshot: TriggerStatsSnapshot { get }
-    /// Empties the rolling transition log so the next walk produces a readable
-    /// tail. Action-only: it leaves no provider state behind, so it is not an
-    /// override.
-    func clearTriggerLog()
 }

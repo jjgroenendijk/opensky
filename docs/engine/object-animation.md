@@ -127,12 +127,3 @@ path. A body on no leaf, such as a frame, stays where it is.
 - `GetOpenState` answers 1 or 3 for any other reference, where the game answers 0 for a
   reference that cannot open.
 - Text keys reach Papyrus `OnAnimationEvent` only through the graph path, not from sequence doors.
-
-## Controls
-
-World > World > Animated Objects lists the running objects with their project, state, and
-events. It sends a chosen event, as a script's `PlayAnimation` does, and switches all object
-animation off, sequence doors included. The switch is also on the launcher's Graphics page.
-
-World > World > Animated Doors lists the loaded sequence doors with their state, and opens or
-closes the chosen one, as `SetOpen` does.

@@ -1,4 +1,4 @@
-// The seam the actor-value panel is written against: the engine-owned damage,
+// The seam the actor-value readout is written against: the engine-owned damage,
 // restore and reset operations, without `GameViewController`. One snapshot value,
 // so the readout comes from a single observation while the streamer mutates.
 
@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// One actor's values as a panel spells them.
+/// One actor's values as a readout spells them.
 nonisolated public struct ActorValueReadout: Equatable, Sendable {
     /// FULL name when the actor index resolves one, else the editor ID, else
     /// the FormID. Never empty, so a readout line always names something.
@@ -52,7 +52,7 @@ nonisolated public struct ActorValueReadout: Equatable, Sendable {
     }
 }
 
-/// One actor value as the panel inspects it. The modifier slots stay separate,
+/// One actor value as the readout inspects it. The modifier slots stay separate,
 /// because a damaged value and a lowered base read the same at a glance.
 nonisolated public struct ActorValueInspection: Equatable, Sendable {
     /// Vanilla name, or the bare index when the selection names none, so a
@@ -115,7 +115,7 @@ nonisolated public enum ActorValueTargetSelector: Equatable, Sendable {
 /// One observation of the actor-value runtime.
 nonisolated public struct ActorValueControlSnapshot: Equatable, Sendable {
     /// False when no actor-value runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather than
+    /// scene. Every other field is then empty and the readout says so rather than
     /// showing a convincing zero.
     public let isAvailable: Bool
     /// The player's values, always present when available.
@@ -129,7 +129,7 @@ nonisolated public struct ActorValueControlSnapshot: Equatable, Sendable {
     /// How many references currently carry an actor-value component, across
     /// every cell whether resident or not.
     public let runtimeActorCount: Int
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
 
     /// The reading with no runtime attached.
@@ -160,45 +160,4 @@ nonisolated public struct ActorValueControlSnapshot: Equatable, Sendable {
         self.runtimeActorCount = runtimeActorCount
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol ActorValueControlProviding: AnyObject {
-    var actorValueControlSnapshot: ActorValueControlSnapshot { get }
-
-    /// Which target the damage and restore controls act on.
-    var actorValueTarget: ActorValueTargetSelector { get set }
-
-    /// Which actor value they act on, by vanilla table index.
-    /// Health until a panel selects another, and any of the 164 after that.
-    var actorValueSelection: Int32 { get set }
-
-    /// Takes `amount` off the selected target's selected value.
-    @discardableResult
-    func damageSelectedActor(by amount: Float) -> ActorValueActionOutcome
-
-    /// Adds `amount` to the selected target's selected value.
-    @discardableResult
-    func restoreSelectedActor(by amount: Float) -> ActorValueActionOutcome
-
-    /// Sets the selected value outright: the current value for a primary and
-    /// the base value for everything else, which is what makes a resistance
-    /// settable from the panel at all.
-    @discardableResult
-    func setSelectedActorValue(to value: Float) -> ActorValueActionOutcome
-
-    /// Sets the selected value's base outright, as `SetActorValue` does; for a
-    /// primary that moves its maximum. Stored as a delta, so "Reset to records"
-    /// still works. Returns a readable outcome the panel shows verbatim.
-    @discardableResult
-    func setSelectedActorBase(to value: Float) -> ActorValueActionOutcome
-
-    /// Refills the selected target to its derived maximums.
-    @discardableResult
-    func restoreSelectedActorFully() -> ActorValueActionOutcome
-
-    /// Drops the selected target's runtime state, so it re-derives from
-    /// records again.
-    @discardableResult
-    func resetSelectedActorValues() -> ActorValueActionOutcome
 }

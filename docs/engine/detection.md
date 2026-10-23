@@ -154,7 +154,7 @@ is slower than a walk. Swimming uses the walking value instead of a new unmeasur
 
 The noise radius is how far a target at one gait can be heard, in world units. It is the
 distance where the sound and skill terms exactly cancel `fSneakBaseValue`. The evaluation does
-not use it. The readout shows it, because a radius in world units is easy to check. Zero is a
+not use it. Zero is a
 real answer: a target too quiet to notice even up close has no radius.
 
 Where each constant and each input comes from is on the
@@ -210,8 +210,7 @@ alone.
   The wiki also has the event put the observer in its Alert state; OpenSky does not do that yet.
 
 The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
-because the wiki says the pool is for aggression, not for seeing a theft. The perception
-readout shows each target's points.
+because the wiki says the pool is for aggression, not for seeing a theft.
 
 ## Sneak training
 
@@ -256,15 +255,7 @@ When an actor in combat loses a target that perception was tracking, it goes to 
 position. `GetCombatState` then returns 2, "Searching". Combat music keeps playing while an actor
 searches.
 
-## Controls
+## Checking it
 
-- World > AI & Navigation > Overlays > Detection: draws, for each observer, a flat cone at its
-  feet out to the range its senses reach. The color is grey, amber, or red for the strongest
-  state. A white line points to the place it will investigate. The overlay uses depth, so a wall
-  hides the cone behind it ([navigation](/engine/navigation.md)).
-- World > AI & Navigation > Detection: the totals, each target's inputs (light, armour weight,
-  muffle, action sound, Sneak, invisibility), one line per tracked pair of the selected actor, and
-  every constant with its source. This section has no controls on purpose. A control
-  that set a level directly would show a number the formula never made.
-- `openskycli gmst detection` prints every setting with its source, and
-  `openskycli gmst list --prefix <s>` prints any group of game settings ([CLI](/tools/cli.md)).
+`openskycli gmst detection` prints every setting with its source, and
+`openskycli gmst list --prefix <s>` prints any group of game settings ([CLI](/tools/cli.md)).

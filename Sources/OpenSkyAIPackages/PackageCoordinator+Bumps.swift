@@ -17,11 +17,4 @@ extension PackageCoordinator {
         }
         return started + moves
     }
-
-    /// Ends `actor`'s reaction at once and gives it back its package.
-    public func cancelBump(of actor: ReferenceKey) {
-        guard bumps.reactingActors.contains(actor) else { return }
-        bumps.cancel(actor)
-        resume(actor)
-    }
 }

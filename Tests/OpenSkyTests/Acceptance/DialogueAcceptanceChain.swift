@@ -79,26 +79,25 @@ final class DialogueAcceptanceChain {
         return hit.candidate.key
     }
 
-    // MARK: - The panel's entry points
+    // MARK: - The menu's entry points
 
-    /// Every one of these is a `DialogueControlProviding` member, which is what
-    /// the panel's buttons call and what the live keys route into.
+    /// The live keys route into the same menu calls.
     func openDialogue() {
-        controller.openDialogue()
+        controller.dialogueMenu.openFromCrosshair()
     }
 
     func leaveDialogue() {
-        controller.closeDialogue()
+        controller.dialogueMenu.close()
     }
 
     func moveSelection(by delta: Int) {
         for _ in 0 ..< abs(delta) {
-            controller.sendDialogueInput(.move(delta < 0 ? .up : .down))
+            controller.dialogueMenu.route(.move(delta < 0 ? .up : .down))
         }
     }
 
     func choose() {
-        controller.sendDialogueInput(.button(.accept))
+        controller.dialogueMenu.route(.button(.accept))
     }
 
     /// Chooses the row whose text reads `text`, which is how a player picks a
@@ -130,7 +129,7 @@ final class DialogueAcceptanceChain {
     }
 
     var snapshot: DialogueControlSnapshot {
-        controller.dialogueSnapshot
+        controller.dialogueMenu.snapshot
     }
 
     var topicTexts: [String] {
@@ -158,7 +157,7 @@ final class DialogueAcceptanceChain {
     }
 
     /// The world state a save would write, taken through the same encoder and
-    /// decoder the Runtime State panel's save control uses.
+    /// decoder the Runtime State readout's save control uses.
     func roundTripThroughASave() throws -> WorldStateStore {
         let encoded = OpenSkySaveEncoder.encode(
             snapshot: controller.worldState.snapshot(),

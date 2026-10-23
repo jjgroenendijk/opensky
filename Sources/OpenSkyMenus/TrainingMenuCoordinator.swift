@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 /// What the training menu needs from the app.
 public protocol TrainingMenuWorld: MenuScreenWorld {
@@ -13,7 +12,7 @@ public protocol TrainingMenuWorld: MenuScreenWorld {
     func trainingCard(trainer: ReferenceKey) -> TrainingCard?
     /// Buys one session. The refusal text, or nil when the skill went up.
     func train(with trainer: ReferenceKey) -> String?
-    /// The trainer the player stands closest to, for the sidebar.
+    /// The trainer the player stands closest to.
     var nearestTrainer: ReferenceKey? { get }
 }
 

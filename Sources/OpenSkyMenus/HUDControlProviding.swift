@@ -53,16 +53,3 @@ nonisolated public struct HUDControlSnapshot: Equatable, Sendable {
         self.drawStats = drawStats
     }
 }
-
-@MainActor
-public protocol HUDControlProviding: AnyObject {
-    var hudLayerEnabled: Bool { get set }
-    var hudCrosshairEnabled: Bool { get set }
-    var hudMetersEnabled: Bool { get set }
-    var hudCompassEnabled: Bool { get set }
-    var hudMarkersEnabled: Bool { get set }
-    var hudPromptEnabled: Bool { get set }
-    var hudPlaceholderTextEnabled: Bool { get set }
-    var hudScale: Float { get set }
-    var hudControlSnapshot: HUDControlSnapshot { get }
-}

@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyRendering
 
 /// The arguments of `Actor.ShowGiftMenu` (CK wiki "ShowGiftMenu - Actor").
 nonisolated public struct GiftMenuRequest: Equatable, Sendable {
@@ -32,7 +31,7 @@ public protocol GiftMenuWorld: MenuScreenWorld {
     func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory]
     /// Moves one of `item` from the giver to the receiver; the outcome text.
     func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String
-    /// The actor the player stands closest to, for the sidebar.
+    /// The actor the player stands closest to.
     var nearestActor: ReferenceKey? { get }
 }
 

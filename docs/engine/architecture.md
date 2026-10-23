@@ -78,8 +78,6 @@ Where it applies:
   renderer without a driver draws the input its caller sets. Rule 10 of `make module-graph`
   keeps the renderer's dependencies to formats, loaded data, assets, and draw helpers, and
   the lint rule `renderer_downcast` fails a cast of the renderer or its driver.
-- Controls. `AudioControlProviding` is what the audio sidebar section needs.
-  `AudioVoiceSection` holds `any AudioControlProviding`, not the audio engine.
 - Files. Code reads game files through `any GameFileSource`. `VirtualFileSystem` is the
   adapter over the install. A test passes `InMemoryFileSource` from `OpenSkyEngineTesting`,
   filled with synthetic bytes.
@@ -94,8 +92,8 @@ protocol that has one conformer and no test fake.
 
 A coordinator owns the state and the logic of one game domain, such as inventory or combat.
 It lives in that domain's feature module and is tested there. It imports no AppKit, so the CLI
-and the package tests can use it. `GameViewController` keeps only the view, the input, the
-render loop, and the panel wiring. It holds the coordinators and forwards to them. A
+and the package tests can use it. `GameViewController` keeps only the view, the input, and the
+render loop. It holds the coordinators and forwards to them. A
 coordinator takes its port in its initializer and returns the changes it wants outside its
 domain as commands, which the app runs. The lint rule `late_attached_world` fails a
 late-attach method, such as `attach(world:)` or `wire(host:)`, in a package module. The lint
@@ -105,7 +103,7 @@ the app shell and the `GameViewController` files; a comment may still name it.
 Where it applies: every game domain that has a `GameViewController+X` file today. Issues 30.24
 to 30.34 move them.
 
-Where it does not apply: view code, input handling, and sidebar panels stay in the app.
+Where it does not apply: view code and input handling stay in the app.
 
 [Coordinators](/engine/coordinators.md) has the pattern, the module rules, and the steps to
 move a domain.
@@ -160,7 +158,7 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
 | No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
 | No late-attach method in a package module | SwiftLint `late_attached_world` |
-| A panel action returns a typed outcome, not `String` | SwiftLint `action_returns_text`, `panel_action_returns_text` |
+| An action returns a typed outcome, not `String` | SwiftLint `action_returns_text` |
 | A pure core imports no AppKit, Metal, or audio, and reads no clock | SwiftLint `pure_core_side_effect` |
 | The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |
 | The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |

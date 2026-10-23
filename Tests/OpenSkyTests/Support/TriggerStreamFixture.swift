@@ -12,7 +12,6 @@
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyWorld
-import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import simd
 

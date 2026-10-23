@@ -12,7 +12,7 @@ tags: [rendering, ui, metal, text, layout]
 The UI overlay is the last thing drawn in the scene encoder, after precipitation. So the window and
 the offscreen renderer both get it with no extra pass. The game's menus are vanilla SWF movies,
 drawn by the [SWF layer](/rendering/swf-layer.md) through the same atlas and blend. The overlay draws
-after the SWF layer, so developer readouts stay on top.
+after the SWF layer, so it stays on top.
 
 ## Model
 
@@ -75,18 +75,3 @@ The shared vertex and uniform structs are in `ShaderTypes.h`.
 With the overlay off or an empty scene, nothing is drawn. The draw stats count draw calls, quads,
 glyphs, and drops, plus atlas size, packed glyphs, occupancy, and pack failures. The atlas numbers
 cover both text sources, because the SWF layer packs into the same atlas and draws first.
-
-## Localized sample
-
-The UI Lab has a localized preview. It uses invented `$KEY` strings merged through the real
-[translation strings](/formats/translation-strings.md) path: a wrapped paragraph 312 points wide, a
-line that runs past the frame edge, and the unknown key `$OPENSKY_UILAB_MISSING`, shown as written.
-
-## Where to see it
-
-`Developer > UI Lab` turns the overlay on and off, shows the plain and localized samples (they share
-the one UI scene, so turning on one turns off the other), sets the scale to 50, 100, 150, or 200
-percent, and shows the draw and atlas stats. The atlas stats show eviction working: swap movies in
-the SWF movie section and the packed glyph count falls back to the new movie's own need instead of
-climbing. The same page pushes and pops menus on the real [menu mode](/engine/menu-mode.md)
-controller, and shows the translation file and key counts for the install.

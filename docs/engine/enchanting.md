@@ -113,13 +113,6 @@ the `ENCK` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
 ## Where OpenSky differs
 
 - A made enchantment combines bases of one plugin only, because one item profile reads all its
-  effect links from one plugin. The panel says so when two plugins are mixed.
+  effect links from one plugin.
 - The magnitude slider is not modelled: a weapon always gets the highest magnitude.
-- An item is not renamed. The made enchantment's name is what the readouts show.
-- The panel acts as if the player stood at an arcane enchanter.
-
-## Controls
-
-World > Inventory & Equipment > Enchanting: disenchant a carried item; enchant a plain item with
-one or two known bases and a filled soul gem. The readout lists the known bases, how many bases an
-item may take, and a preview of the power and charge before the gem is spent.
+- An item is not renamed.

@@ -86,16 +86,11 @@ origin. Inside an alpha or multiply system, the particles also draw far to near.
 systems are not sorted inside, because a sum does not depend on order. Rain and snow follow
 the camera and draw last.
 
-## Wind and controls
+## Wind
 
 The renderer publishes the blended weather wind, and every live frame passes it to the active
-`BSWind` modifiers. Calm or no weather is zero.
-
-`World > Environment > Particles` turns drawing on and off (the simulation keeps its state), freezes
-the simulation (the current frame stays), turns the far-to-near sort on and off, scales new births
-from 0 to 200 percent (living particles go on), and shows resident systems, active emitters, live
-particles, and systems with a keyed birth rate. The sort is the player setting
-`rendering.particleSorting`, which the launcher's Graphics page also shows.
+`BSWind` modifiers. Calm or no weather is zero. The far-to-near sort is the player setting
+`rendering.particleSorting`, which the launcher's Graphics page shows.
 
 ## Not done
 

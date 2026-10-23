@@ -1,10 +1,9 @@
-// The provider seam for the perception panel. The shell never sees
-// `PerceptionRuntime` or `CellStreamer`: a panel that could reach the runtime
+// The provider seam for the perception readout. The shell never sees
+// `PerceptionRuntime` or `CellStreamer`: a readout that could reach the runtime
 // could also drive the fixed-step simulation it describes.
 
-// One resolved detection setting as a panel shows it: the name it is addressed
+// One resolved detection setting as a readout shows it: the name it is addressed
 // by, its value, and where that value came from.
-import OpenSkyFormatsESM
 
 nonisolated public struct DetectionSettingReadout: Equatable, Sendable {
     public let editorID: String
@@ -29,7 +28,7 @@ nonisolated public struct PerceptionControlSnapshot: Equatable, Sendable {
     public static let unavailable = PerceptionControlSnapshot(readout: .empty, settings: [])
 
     /// True when no perception runtime is attached, which is every synthetic
-    /// scene. The panel reports that rather than showing a convincing zero.
+    /// scene. The readout reports that rather than showing a convincing zero.
     public var isUnavailable: Bool {
         settings.isEmpty
     }
@@ -38,13 +37,4 @@ nonisolated public struct PerceptionControlSnapshot: Equatable, Sendable {
         self.readout = readout
         self.settings = settings
     }
-}
-
-@MainActor
-public protocol PerceptionControlProviding: AnyObject {
-    var perceptionSnapshot: PerceptionControlSnapshot { get }
-
-    /// The `DetectionStatsLabel` lines for one actor: every pair it observes or
-    /// is observed in. Empty when nothing watches it.
-    func perceptionLines(for actor: ReferenceKey) -> [String]
 }

@@ -57,7 +57,7 @@ nonisolated public enum LockpickingRefusal: Error, Equatable, Sendable {
     case noLockpicks
 }
 
-/// How the last lockpicking session ended, for the sidebar.
+/// How the last lockpicking session ended.
 nonisolated public struct LockpickingOutcome: Equatable, Sendable {
     public let difficulty: LockDifficulty
     public let opened: Bool
@@ -121,7 +121,7 @@ public final class LockCoordinator {
     public var texts = LockTexts.vanilla
     /// The `LKPK` default object. Nil keeps every lock shut to picking.
     public var lockpickItem: FormID?
-    /// Sidebar override: treat the player as carrying every lock's key.
+    /// Test override: treat the player as carrying every lock's key.
     public var playerCarriesEveryKey = false
     public var random = LockpickingRandom(seed: 0x4F_7065_6E53_6B79)
     let world: any LockWorld
@@ -135,7 +135,7 @@ public final class LockCoordinator {
     var sessionExperience: Float = 0
     public internal(set) var lastOutcome: LockpickingOutcome?
     public internal(set) var lastAction = LockActionOutcome.idle
-    /// The lock the sidebar works on.
+    /// The selected lock.
     public var selectedLock: FormID?
 
     public init(world: any LockWorld) {

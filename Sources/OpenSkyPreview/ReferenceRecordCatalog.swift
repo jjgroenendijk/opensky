@@ -81,45 +81,6 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
         case .loadScreen: "LSCR"
         }
     }
-
-    public var title: String {
-        switch self {
-        case .keyword: "KYWD — Keywords"
-        case .formList: "FLST — Form lists"
-        case .location: "LCTN — Locations"
-        case .locationReferenceType: "LCRT — Location reference types"
-        case .encounterZone: "ECZN — Encounter zones"
-        case .action: "AACT — Actions"
-        case .collisionLayer: "COLL — Collision layers"
-        case .defaultObjects: "DOBJ — Default objects"
-        case .magicEffect: "MGEF — Magic effects"
-        case .spell: "SPEL — Spells"
-        case .scroll: "SCRL — Scrolls"
-        case .enchantment: "ENCH — Enchantments"
-        case .shout: "SHOU — Shouts"
-        case .wordOfPower: "WOOP — Words of power"
-        case .leveledSpell: "LVSP — Leveled spells"
-        case .dualCastData: "DUAL — Dual cast data"
-        case .equipSlot: "EQUP — Equip slots"
-        case .actorValueInformation: "AVIF — Actor value information"
-        case .perk: "PERK — Perks"
-        case .faction: "FACT — Factions"
-        case .relationship: "RELA — Relationships"
-        case .associationType: "ASTP — Association types"
-        case .constructibleObject: "COBJ — Recipes"
-        case .key: "KEYM — Keys"
-        case .soulGem: "SLGM — Soul gems"
-        case .apparatus: "APPA — Alchemy apparatus"
-        case .flora: "FLOR — Flora"
-        case .talkingActivator: "TACT — Talking activators"
-        case .artObject: "ARTO — Art objects"
-        case .cameraShot: "CAMS — Camera shots"
-        case .cameraPath: "CPTH — Camera paths"
-        case .combatStyle: "CSTY — Combat styles"
-        case .message: "MESG — Messages"
-        case .loadScreen: "LSCR — Loading screens"
-        }
-    }
 }
 
 nonisolated public struct ReferenceRecordCatalog: Sendable {
@@ -130,11 +91,9 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
     /// Every type the browse list offers, for the index the app builds.
     public static let browsedTypes = Set(ReferenceRecordType.allCases.map(\.fourCC))
 
-    public let pluginNames: [String]
     private let itemsByType: [ReferenceRecordType: [PreviewItem]]
 
-    public init(index: RecordIndex, pluginNames: [String]) {
-        self.pluginNames = pluginNames
+    public init(index: RecordIndex) {
         var grouped: [ReferenceRecordType: [PreviewItem]] = [:]
         for type in ReferenceRecordType.allCases {
             grouped[type] = Self.items(type: type, index: index)

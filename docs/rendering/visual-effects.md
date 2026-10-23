@@ -26,7 +26,6 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | An explosion | The `EXPL` model at the blast point | 2 s |
 | An impact | The `IPCT` model at the contact point ([impacts and decals](/rendering/decals.md)) | 2 s |
 | A script | `VisualEffect.Play` or `EffectShader.Play` on a reference | The `afTime` argument, or until `Stop` when it is negative |
-| The Effects panel | Any `RFCT`, `EFSH`, `ADDN`, or `ARTO`, on the player or the nearest actor | Until cleared |
 
 An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. Its flag 0x02 (attach to
 camera) draws the art at the camera eye instead of the target. With flag 0x04 (inherit
@@ -103,12 +102,3 @@ OpenSky's numbers.
 - [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
   `VisualEffect.Play` does not pass its facing object on yet.
 - An actor's membrane covers every mesh drawn for that actor, including worn armor.
-
-## Checking it in the app
-
-`World > Effects > Visual Effects` holds a record picker (`VisualEffectNameControl`) with the
-record's details, buttons to attach it to the player or the nearest actor, a clear button, and
-the live effects (`VisualEffectStatsLabel`). `World > Effects > Impacts & Decals` turns screen
-blood on and off (`ScreenBloodControl`), splashes it as if the player was hit
-(`ScreenBloodSplashControl`), and lists the blood settings. The launcher's Graphics page has the
-same Screen blood option.

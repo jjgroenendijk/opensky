@@ -67,8 +67,8 @@ code itself.
    `gh pr ready <pr>`.
 
 - One branch and one PR per issue.
-- Load the skill for the kind of work: `implementing-format-parsers`, `building-app-ui`,
-  `testing-and-verifying`, and `committing-and-landing-work` to land it.
+- Load the skill for the kind of work: `implementing-format-parsers`,
+  `driving-the-running-game`, `testing-and-verifying`, and `committing-and-landing-work` to land it.
 - Scope changes are issue edits, not doc edits.
 - A gap found in the area the task touches, such as a missing shader term or record field,
   goes in this PR, after a check of that area for more gaps (root `AGENTS.md`).
@@ -85,6 +85,6 @@ code itself.
   that record: `gh pr list --state merged --milestone "M4 - walkable world"` shows how it
   was built.
 - The closing PR carries the acceptance record in the format of
-  `docs/tools/sidebar-acceptance.md`.
+  `docs/tools/acceptance-record.md`.
 - Record the outcome in the closing PR, not in the milestone description, then close the
   milestone. Project history lives in git, merged PRs, and closed issues, never in `docs/`.

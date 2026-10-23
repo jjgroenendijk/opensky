@@ -1,4 +1,4 @@
-// The Player & Locomotion and First person panels. Without a renderer both
+// The Player & Locomotion and First person readouts. Without a renderer both
 // report an "unavailable" snapshot.
 
 import OpenSkyActorPresentation
@@ -8,7 +8,7 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import simd
 
-extension PlayerCoordinator: PlayerLocomotionControlProviding {
+extension PlayerCoordinator {
     public var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         guard let world, let bridge = world.playerLocomotion else { return .unavailable }
         var snapshot = PlayerLocomotionSnapshot(
@@ -49,10 +49,6 @@ extension PlayerCoordinator: PlayerLocomotionControlProviding {
         set { world?.playerLocomotion?.forcedGait = newValue }
     }
 
-    public func requestJump() {
-        input.requestJump()
-    }
-
     @discardableResult
     public func raiseLocomotionEvent(named name: String) -> Bool {
         world?.playerLocomotion?.raiseGraphEvent(named: name) ?? false
@@ -62,13 +58,9 @@ extension PlayerCoordinator: PlayerLocomotionControlProviding {
     public func playIdle(named name: String, state: String?) {
         world?.playerLocomotion?.playIdle(name, state: state)
     }
-
-    public func clearLocomotionTrace() {
-        world?.playerLocomotion?.clearMotionTrace()
-    }
 }
 
-extension PlayerCoordinator: FirstPersonControlProviding {
+extension PlayerCoordinator {
     public var firstPersonSnapshot: FirstPersonSnapshot {
         guard
             let world,

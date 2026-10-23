@@ -12,7 +12,6 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -92,7 +91,7 @@ struct RendererSWFDynamicAcceptanceTests {
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)
 
     /// The milestone's pixel evidence: the same movie renders nothing at frame
-    /// 1 and a full panel once its ActionScript runs.
+    /// 1 and a full readout once its ActionScript runs.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func actionScriptRevealsContentHiddenByAnAlphaZeroColorTransform() throws {

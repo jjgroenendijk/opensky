@@ -1,4 +1,4 @@
-// The AI panel's procedure line: where a held patrol is along its markers.
+// The AI readout's procedure line: where a held patrol is along its markers.
 
 @testable import OpenSkyAIPackages
 import OpenSkyWorldInterface

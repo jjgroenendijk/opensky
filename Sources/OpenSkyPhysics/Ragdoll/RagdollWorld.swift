@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 
-/// Counts one refresh of the ragdoll panel shows.
+/// Counts one refresh of the ragdoll readout shows.
 nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
     public var ragdollCount = 0
     public var activeRagdollCount = 0
@@ -22,7 +22,7 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
     /// ragdoll. Zero once they have all converged.
     public var jointViolationCount = 0
     /// Constraint solver iterations one substep runs, which is a constant the
-    /// panel shows beside the violation count so the two read together.
+    /// readout shows beside the violation count so the two read together.
     public var solverIterationCount: Int = RagdollConstraintSolver.iterationCount
     /// Bodies whose integrated pose came back non-finite. Always zero; a
     /// non-zero value is the stability gate failing in the open.
@@ -62,44 +62,6 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
         self.selfContactCount = selfContactCount
         self.isSelfCollisionEnabled = isSelfCollisionEnabled
         self.isFrozen = isFrozen
-    }
-}
-
-/// The panel seam for the ragdoll controls under `World > Combat & Physics`.
-@MainActor
-public protocol RagdollControlProviding: AnyObject {
-    var ragdollStatsSnapshot: RagdollStatsSnapshot { get }
-    /// Kills the selected actor and hands its skeleton to the physics, which is
-    /// the dev trigger the item's acceptance drives.
-    ///
-    /// - Returns: false when there is no selected actor, or when its skeleton
-    ///   carries no ragdoll to spawn.
-    @discardableResult
-    func triggerRagdoll() -> Bool
-    /// Suspends and resumes ragdoll stepping without discarding the corpses.
-    func setRagdollFrozen(_ frozen: Bool)
-    /// Switches self-collision between a ragdoll's own bones on and off, waking
-    /// every corpse so the change is visible on the ones already lying down.
-    func setRagdollSelfCollision(_ enabled: Bool)
-    /// Drops every live ragdoll. The corpses stay dead; they stop simulating and
-    /// fall back to their recorded resting pose.
-    func clearRagdolls()
-    /// Kills the selected actor when it lives and cuts off its head.
-    /// - Returns: false when nothing is selected or its race has no head part.
-    @discardableResult
-    func dismemberSelectedActor() -> Bool
-    /// The death settings and what the deaths did, for the readout.
-    var deathEffectsText: String { get }
-}
-
-extension RagdollControlProviding {
-    @discardableResult
-    public func dismemberSelectedActor() -> Bool {
-        false
-    }
-
-    public var deathEffectsText: String {
-        "Death effects: unavailable"
     }
 }
 

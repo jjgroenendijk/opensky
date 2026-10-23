@@ -1,6 +1,6 @@
 // WorldAudioFootstepDirector coverage over the offline-render engine: routing
 // fired graph events to positional sources, gait selection, the enable toggle,
-// and the panel force-trigger. Synthetic plugins and a stubbed file loader —
+// and the readout force-trigger. Synthetic plugins and a stubbed file loader —
 // no real audio device, no VFS, no extracted game file. See
 // docs/engine/audio.md and docs/engine/walk-mode.md.
 
@@ -12,7 +12,6 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 

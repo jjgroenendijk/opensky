@@ -35,7 +35,7 @@ public protocol MapMenuWorld: AnyObject {
     var questTargets: [QuestTargetMarker] { get }
     /// Puts the quest markers on the HUD compass.
     func showQuestMarkers(_ positions: [SIMD3<Float>])
-    /// Every worldspace with markers, for the sidebar inspector.
+    /// Every worldspace with markers, for the inspector.
     var mapMarkerWorldspaces: [MapWorldspaceChoice] { get }
     func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite]
 }
@@ -199,11 +199,6 @@ public final class MapMenuCoordinator {
     public func zoom(by amount: Float) {
         camera?.zoom(by: amount)
         refreshSelection()
-        applyView()
-    }
-
-    public func tilt(by degrees: Float) {
-        camera?.tilt(by: degrees)
         applyView()
     }
 

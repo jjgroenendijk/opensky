@@ -206,11 +206,6 @@ nonisolated public final class DialogueStore: Sendable {
         branchIndex.branchesByFormID.count
     }
 
-    /// DLBR records in FormID order.
-    public func sortedBranches() -> [DialogueBranch] {
-        branchIndex.branchesByFormID.keys.sorted().compactMap { branchIndex.branchesByFormID[$0] }
-    }
-
     /// The master list the FormIDs inside INFO `id` are relative to.
     public func sourceResolver(ofInfo id: FormID) -> FormIDResolver {
         infoSources[id.rawValue] ?? resolver

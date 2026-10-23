@@ -1,4 +1,4 @@
-// The `World > First person` seam: one Equatable snapshot at 2 Hz plus the settings it
+// First person state: one Equatable snapshot at 2 Hz plus the settings it
 // writes. It reports whether the `_1stperson` graph loaded, kept and dropped arm meshes,
 // the `Camera1st [Cam1]` bone, and the arms' graph events, none of which a frame shows.
 
@@ -77,16 +77,4 @@ nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
         self.missingEvents = missingEvents
         self.fovYDegrees = fovYDegrees
     }
-}
-
-@MainActor
-public protocol FirstPersonControlProviding: AnyObject {
-    var firstPersonSnapshot: FirstPersonSnapshot { get }
-    /// Vertical field of view in degrees, clamped by the engine to
-    /// `FirstPersonCamera.fovYRange`.
-    var firstPersonFOVYDegrees: Float { get set }
-    /// Whether the arms are drawn at all. An A/B toggle rather than a game
-    /// setting: turning them off is how a capture separates "the arms are
-    /// wrong" from "the world behind them is wrong".
-    var firstPersonArmsEnabled: Bool { get set }
 }

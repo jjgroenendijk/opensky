@@ -46,7 +46,7 @@ extension MagicCoordinator {
         holds.contains { $0.kind == .grabActor && $0.held.contains(key) }
     }
 
-    /// The panel lines: one per running hold.
+    /// The readout lines: one per running hold.
     var holdLines: [String] {
         holds.map { hold in
             let names = hold.held.map { key in

@@ -84,16 +84,11 @@ measurements.
 
 ## Settings and checking it
 
-The app streams textures by default. The player setting `rendering.textureStreaming` turns
-it off; off raises every streamed texture to its full size, and on applies to textures
-loaded from then on. The `Renderer` type itself starts with streaming off, so a render test
-that builds one loads textures whole unless it turns streaming on. `rendering.textureBudget`
-picks the budget, with 0 for Automatic. The launcher's Graphics page ("Full detail only near
-the camera") and
-`Developer > Rendering Performance > Texture Streaming` write both
-(`TextureStreamingEnabledControl`, `TextureBudgetControl`). The readout
-(`TextureStreamingStatsLabel`) shows the streamed textures, the mapped memory against the
-budget, the heap memory, and the levels loaded and dropped.
+The app streams textures by default. The player setting `rendering.textureStreaming` turns it off;
+off raises every streamed texture to its full size, and on applies to textures loaded from then on.
+The `Renderer` type itself starts with streaming off, so a render test that builds one loads
+textures whole unless it turns streaming on. `rendering.textureBudget` picks the budget, with 0 for
+Automatic.
 
 `make benchmark ARGS='--set rendering.textureStreaming=on'` measures it, and
 `--set rendering.textureBudget=<MiB>` sets the budget ([benchmark](/tools/benchmark.md)). The heaps

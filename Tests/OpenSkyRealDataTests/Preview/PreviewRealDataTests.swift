@@ -10,7 +10,6 @@ import Foundation
 import ImageIO
 import Metal
 import MetalKit
-@testable import OpenSky
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
@@ -85,16 +84,6 @@ struct PreviewRealDataTests {
         let skinnedBounds = try #require(bindPoseBounds(model: model))
         #expect(simd_distance(sourceBounds.min, skinnedBounds.min) < 0.01)
         #expect(simd_distance(sourceBounds.max, skinnedBounds.max) < 0.01)
-
-        let detail = await PreviewDetailLoader(fileSystem: vfs).detail(
-            for: .file(VFSEntry(path: path, archive: "Skyrim - Meshes0.bsa"))
-        )
-        #expect(!detail.text.contains("[ERROR]"))
-        #expect(!detail.text.contains("[WARNING] no preview image"))
-        let image = try #require(detail.image)
-        #expect(nonBackgroundFraction(image: image) > 0.01)
-        let url = try write(image: image, name: "preview-skinned-body.png")
-        print("[INFO] skinned body preview (\(path)): \(url.path)")
     }
 
     private func bindPoseBounds(model: Model) -> ModelBounds? {

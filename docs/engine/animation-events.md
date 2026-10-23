@@ -73,10 +73,9 @@ skeleton key the player shows in the Thieves Guild
 | `AnimObjDraw` | `ANIO` editor ID | Shows the object on the actor that plays the clip |
 | The object's `BNAM` event | none | Takes the object off again, such as `AnimObjectUnequip` |
 
-The idle runtime runs these, because it holds the clip and the actor's skeleton. When an idle
-plan loads, it reads the annotations of its clips and resolves each named `ANIO` to a model and a
-bone, the same way as the prop the graph names ([idle runtime](/engine/idle-runtime.md#prop)).
-The World > AI & Navigation > Idles readout lists them as "Clip objects".
+The idle runtime runs these, because it holds the clip and the actor's skeleton. When an idle plan
+loads, it reads the annotations of its clips and resolves each named `ANIO` to a model and a bone,
+the same way as the prop the graph names ([idle runtime](/engine/idle-runtime.md#prop)).
 
 An actor shows one prop, so a drawn object replaces the graph's prop. The player has no playback
 of its own, so a player idle shows no object.
@@ -147,12 +146,3 @@ events" ([gap report](/tools/gaps.md)).
 - Creature sound cues with no `SoundPlay` prefix, such as `NPCScribAttack1`, `BenthicAOE` and
   `NPCGiantFootDistantR`, and the storm atronach's `L1_Start` and `R1_Start` marks. Their graph
   declares them and nothing waits for them. No source says what the game does with them.
-
-## Controls
-
-World > Environment > Actor animation:
-
-- Animation events: on or off. Off leaves the graph's own events alone.
-- Event and Send as player: runs any annotation text at the player, such as `CameraShake.0.5`.
-- The readout counts each action kind, and shows the last event and how many sound editor IDs
-  no `SNDR` has.

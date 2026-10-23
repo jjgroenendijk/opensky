@@ -2,7 +2,6 @@
 // selected spell in the right hand, R in the left. See docs/engine/magic.md#magic-menu.
 
 import Foundation
-import OpenSkyRendering
 
 /// What the magic menu needs from the app.
 public protocol MagicMenuWorld: MenuScreenWorld {

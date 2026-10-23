@@ -8,9 +8,8 @@ tags: [engine, menu]
 
 # Creation Club
 
-The Creation Club menu is the game's store for paid add-ons. It needs the Bethesda.net
-service. OpenSky does not connect to it, so the menu opens empty and only closes. The
-sidebar opens it (HUD & Interaction > Menu screens, "Creation Club").
+The Creation Club menu is the game's store for paid add-ons. It needs the Bethesda.net service.
+OpenSky does not connect to it, so the menu opens empty and only closes.
 
 ## The movie
 
@@ -36,4 +35,4 @@ Escape closes the menu. In the movie, Escape calls `onExit`, which calls
 ## Differences from the game
 
 - The store shows no add-ons, no credits, and no login screen.
-- The game opens it from the main menu. OpenSky opens it only from the sidebar.
+- The game opens it from the main menu.

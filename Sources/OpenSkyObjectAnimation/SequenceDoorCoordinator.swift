@@ -16,7 +16,7 @@ public protocol SequenceDoorWorld: AnyObject {
     func sequenceDoorWantsOpen(_ reference: UInt32) -> Bool
 }
 
-/// One line of the doors panel.
+/// One line of the doors readout.
 nonisolated public struct SequenceDoorRow: Equatable, Sendable {
     public let reference: UInt32
     public let modelPath: String

@@ -35,7 +35,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         continueLabel.stringValue = offer.disabledReason.map { "Unavailable: \($0)" }
             ?? "\(offer.title)\(date)"
         continueLabel.toolTip = continueLabel.stringValue
-        refreshModes()
+        refreshPlay()
     }
 
     func configureStartControls() {
@@ -77,7 +77,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
     func makeStartGroup() -> NSView {
         layout.group("Start", [
             layout.row("Play starts at", startKindPopUp), startCellRow, startGridRow,
-            startReasonLabel, layout.note("Applies to Play. Developer Mode starts as before.")
+            startReasonLabel
         ])
     }
 
@@ -108,7 +108,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
             startReasonLabel.toolTip = startReasonLabel.stringValue
             startReasonLabel.isHidden = false
         }
-        refreshModes()
+        refreshPlay()
     }
 
     func controlTextDidChange(_: Notification) {

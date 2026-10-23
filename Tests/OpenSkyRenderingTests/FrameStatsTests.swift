@@ -40,7 +40,7 @@ struct FrameStatsTests {
                 flushCount += 1
                 summary = line.text
             }
-            // Polling mid-window is what the panel and the HUD do at 2 Hz.
+            // Polling mid-window is what the readout and the HUD do at 2 Hz.
             _ = stats.snapshot()
         }
 

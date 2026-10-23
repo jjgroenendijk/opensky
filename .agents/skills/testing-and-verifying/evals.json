@@ -105,7 +105,7 @@
     "skills": [
       "testing-and-verifying"
     ],
-    "query": "I renamed the accessibility id of the lockpicking sidebar control. What should I test?",
+    "query": "I renamed the accessibility id of the launcher's Graphics preset control. What should I test?",
     "files": [],
     "expected_behavior": [
       "Runs make test-ui with T= set to the UI tests that use that control, not the whole UI plan",

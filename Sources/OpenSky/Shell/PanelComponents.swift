@@ -1,18 +1,12 @@
-// Shared vocabulary for main-app inspector panels. Every sidebar
+// Shared vocabulary for launcher pages. Every page
 // destination's controls are built from these metrics + factories so 100 future
-// knobs still read as one coherent panel. Pure AppKit builders, no state; the
-// numbers match the hand-rolled constants the panels used before unification.
+// knobs still read as one coherent page. Pure AppKit builders, no state; the
+// numbers match the hand-rolled constants the pages used before unification.
 
 import AppKit
 
-/// Fixed geometry shared by every inspector panel.
+/// Fixed geometry shared by every launcher page.
 enum PanelMetrics {
-    /// Width of the sidebar panel slot.
-    static let panelWidth: CGFloat = 300
-    /// Usable content width inside the panel insets (panelWidth - 2*edgeInset).
-    static let contentWidth: CGFloat = 272
-    /// Panel edge insets.
-    static let edgeInset: CGFloat = 14
     // Three-step vertical rhythm. One spacing value applied everywhere made a
     // checkbox and its slider look as separate as two whole subsystems, so the
     // column read as loose floating blocks. Structure now comes from the step
@@ -22,8 +16,6 @@ enum PanelMetrics {
     static let rowSpacing: CGFloat = 6
     /// Between control groups within a section.
     static let groupSpacing: CGFloat = 12
-    /// Between whole sections in a panel column.
-    static let sectionSpacing: CGFloat = 18
     /// Horizontal spacing inside a control row.
     static let rowGap: CGFloat = 8
 
@@ -32,62 +24,9 @@ enum PanelMetrics {
     static let monoDigitFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
 }
 
-/// Stateless factories for the labels, rows, and controls panels share. Extract
-/// only what was already duplicated across panels — keep it small.
+/// Stateless factories for the labels, rows, and controls pages share. Extract
+/// only what was already duplicated across pages — keep it small.
 enum PanelComponents {
-    /// Sub-heading above a control group.
-    static func caption(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = PanelMetrics.captionFont
-        label.textColor = Theme.parchment
-        return label
-    }
-
-    /// Wrapping monospaced live-readout label with a stable accessibility id.
-    static func statsLabel(identifier: String) -> NSTextField {
-        let label = NSTextField(wrappingLabelWithString: "")
-        label.font = PanelMetrics.monoFont
-        label.textColor = Theme.parchmentDim
-        label.setAccessibilityIdentifier(identifier)
-        label.widthAnchor.constraint(equalToConstant: PanelMetrics.contentWidth).isActive = true
-        return label
-    }
-
-    /// Horizontal slider + trailing value label row.
-    static func sliderRow(slider: NSSlider, valueLabel: NSTextField) -> NSStackView {
-        let row = NSStackView(views: [slider, valueLabel])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = PanelMetrics.rowGap
-        return row
-    }
-
-    /// Caption + trailing control row (fixed caption width for column
-    /// alignment). `field` is an `NSView` rather than an `NSTextField` so a
-    /// segmented picker can share the same column alignment as the text fields
-    /// above it; every existing caller passes a field and is unaffected.
-    static func labeledFieldRow(
-        caption text: String,
-        captionWidth: CGFloat,
-        field: NSView
-    ) -> NSStackView {
-        let caption = NSTextField(labelWithString: text)
-        caption.widthAnchor.constraint(equalToConstant: captionWidth).isActive = true
-        let row = NSStackView(views: [caption, field])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = PanelMetrics.rowGap
-        return row
-    }
-
-    /// Horizontal row of buttons (weather presets, apply/reset), or of fields with their button.
-    static func buttonRow(_ buttons: [NSView]) -> NSStackView {
-        let row = NSStackView(views: buttons)
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        return row
-    }
-
     /// Wires a checkbox's target/action + accessibility id. Sections declare
     /// their controls as stored properties (no `self` yet), so this configures
     /// an existing button rather than making one — same shape as
@@ -117,16 +56,6 @@ enum PanelComponents {
         button.setAccessibilityIdentifier(identifier)
     }
 
-    /// Wires every button in `specs` to `target`, with its tooltip.
-    static func configureButtons(_ specs: [PanelButtonSpec], target: AnyObject) {
-        for spec in specs {
-            spec.button.toolTip = spec.toolTip
-            configureButton(
-                spec.button, target: target, action: spec.action, identifier: spec.identifier
-            )
-        }
-    }
-
     /// Stacks tightly-related controls at `rowSpacing` into one unit. A section
     /// returns *groups*; the section stack spaces those at `groupSpacing`, so a
     /// checkbox sits close to the slider it governs while distinct groups stay
@@ -139,32 +68,8 @@ enum PanelComponents {
         return stack
     }
 
-    /// Full-width hairline between control groups inside a section.
-    static func separator() -> NSView {
-        let line = Theme.hairline()
-        line.heightAnchor.constraint(equalToConstant: 1).isActive = true
-        line.widthAnchor.constraint(equalToConstant: PanelMetrics.contentWidth).isActive = true
-        return line
-    }
-
-    /// Wires a slider's target/action + width + accessibility id in one call.
-    static func configureSlider(
-        _ slider: NSSlider,
-        target: AnyObject,
-        action: Selector,
-        identifier: String,
-        width: CGFloat,
-        continuous: Bool = true
-    ) {
-        slider.target = target
-        slider.action = action
-        slider.isContinuous = continuous
-        slider.widthAnchor.constraint(equalToConstant: width).isActive = true
-        slider.setAccessibilityIdentifier(identifier)
-    }
-
     /// Wires a popup button's target/action + accessibility id, and optionally
-    /// pins its width so a long item title cannot stretch the panel column.
+    /// pins its width so a long item title cannot stretch the page column.
     /// Items are added by the caller (the list is usually data-driven).
     static func configurePopUp(
         _ popUp: NSPopUpButton,
@@ -179,27 +84,6 @@ enum PanelComponents {
         if let width {
             popUp.widthAnchor.constraint(equalToConstant: width).isActive = true
         }
-    }
-
-    /// Wires an editable combo box's target/action/id + width. Use this where a
-    /// knob takes a free-form name that usually comes from a short, live list
-    /// (a movie's registered callbacks) — the list autocompletes, and anything
-    /// outside it can still be typed. Items are added by the caller.
-    static func configureComboBox(
-        _ comboBox: NSComboBox,
-        target: AnyObject,
-        action: Selector,
-        identifier: String,
-        width: CGFloat
-    ) {
-        comboBox.target = target
-        comboBox.action = action
-        comboBox.isEditable = true
-        comboBox.completes = true
-        comboBox.usesDataSource = false
-        comboBox.font = PanelMetrics.monoFont
-        comboBox.widthAnchor.constraint(equalToConstant: width).isActive = true
-        comboBox.setAccessibilityIdentifier(identifier)
     }
 
     /// Wires a free-text entry field's font, width, placeholder, and
@@ -218,28 +102,5 @@ enum PanelComponents {
         field.placeholderString = placeholder
         field.widthAnchor.constraint(equalToConstant: width).isActive = true
         field.setAccessibilityIdentifier(identifier)
-    }
-
-    /// Wires a value label's font + fixed width for readouts beside a slider.
-    static func valueLabel(width: CGFloat) -> NSTextField {
-        let label = NSTextField(labelWithString: "")
-        label.font = PanelMetrics.monoDigitFont
-        label.widthAnchor.constraint(equalToConstant: width).isActive = true
-        return label
-    }
-}
-
-/// One push button of a section: its action, accessibility id, and tooltip.
-struct PanelButtonSpec {
-    let button: NSButton
-    let action: Selector
-    let identifier: String
-    let toolTip: String
-
-    init(_ button: NSButton, _ action: Selector, _ identifier: String, _ toolTip: String) {
-        self.button = button
-        self.action = action
-        self.identifier = identifier
-        self.toolTip = toolTip
     }
 }

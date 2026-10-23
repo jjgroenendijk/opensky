@@ -17,14 +17,14 @@ extension AgentWorldAdapter {
         guard let top = game.menuMode.topMenu else { return nil }
         switch top {
         case InventoryMenuController.identifier:
-            let snapshot = game.inventoryMenuSnapshot
+            let snapshot = game.inventoryMenu.snapshot
             return AgentMenuRows(
                 menu: top.name,
                 rows: snapshot.entryLines,
                 selected: snapshot.selectedIndex
             )
         case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
-            let snapshot = game.containerMenuSnapshot
+            let snapshot = game.containerMenu.snapshot
             return AgentMenuRows(
                 menu: top.name,
                 rows: snapshot.entryLines,
