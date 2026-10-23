@@ -259,9 +259,8 @@ describes the first three; how the others apply is OpenSky's reading of their na
 wiki's Scenes category also gives 150 units for the greeting distance
 (<https://ck.uesp.net/wiki/Category:Scenes>).
 
-A line is picked from the topics of its `DIAL` subtype, as the speaker's conditions allow. The
-clock is the scene clock: game seconds over the timescale. The Dialogue section of the sidebar
-shows the values.
+A line is picked from the topics of its `DIAL` subtype, as the speaker's conditions allow. The clock
+is the scene clock: game seconds over the timescale.
 
 Who speaks:
 

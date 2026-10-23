@@ -92,11 +92,7 @@ the movie, which draws both lists again.
 ## Actions
 
 - Activate equips a row, or unequips it if it is equipped. This is the vanilla toggle.
-- Equip, unequip, and drop use the same calls as World > HUD & Interaction > Items. So the menu and
-  the panel cannot differ on what equipping means.
-- Use eats or drinks the selected row: one unit leaves the inventory, and its effects apply to the
-  player, through the same call as the Magic Effects panel ([magic](/engine/magic.md)). Eating an
-  ingredient also teaches its first effect, and using a poison puts it on the drawn weapon
+- Eating an ingredient also teaches its first effect, and using a poison puts it on the drawn weapon
   ([alchemy](/engine/alchemy.md)). Any other row says so and changes nothing.
 - R drops the row. A stack of more than five opens the quantity prompt first; a smaller one drops
   one copy. The limit is `QUANTITY_MENU_COUNT_LIMIT` in the movie's `InventoryDefines`.
@@ -113,8 +109,7 @@ bytecode. No measured run has called either, so they are not confirmed. Only `Cl
 The quantity prompt asks how many of a stack to drop. It starts at the whole stack: the movie's
 `ItemCard.ShowQuantityMenu` sets the slider's maximum and value to the stack count. Left and right
 change the count by 1. Down and up change it by 10, which is OpenSky's own step. The count stays
-between 1 and the stack. Accept or R drops that many, and cancel drops none. The movie's
-`QuantitySlider` is not driven yet; the prompt shows in the sidebar.
+between 1 and the stack. Accept or R drops that many, and cancel drops none.
 
 ## Favourites and hotkeys
 
@@ -157,21 +152,8 @@ the menu scene that the [crafting menu](/engine/crafting.md#crafting-menu) uses.
 draws into a thin slice of depth near the camera, so the world cannot cover it. The model turns at
 0.6 radians a second; the game's rate is not measured. A model with a `BSInvMarker` is first turned
 by the marker's angles, and its fit size is multiplied by the marker's zoom
-([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A model that fails to load shows its
-reason in the readout and draws nothing.
-
-## Controls
-
-World > Inventory Menu > Menu has Open, Close, Up, Down, Previous and Next category, Equip, Drop,
-Use, and a vanilla movie switch, over a readout. Every button sends the same menu event as the
-keyboard.
-
-World > Inventory Menu > Item marks a favourite, binds and uses a hotkey, drops a counted stack
-through the quantity prompt, and turns the item preview off or on. Its readout is the item card,
-the prompt, the hotkeys, and the preview's model and angle.
-
-`make run-cli ARGS="swf inventory-menu --ticks 20 --down 3 --right 2"` drives the real movie from
-the command line. Frames go to `.logs/`, because a drawn frame contains the user's game art.
+([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A model that fails to load logs its
+reason and draws nothing.
 
 ## Gift menu
 

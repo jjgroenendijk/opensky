@@ -78,8 +78,7 @@ record's sound and particle system cap are not used.
 
 ## What uses the rest
 
-The mesh preview in the sidebar lists every decoded block with its fields. The values
-below have no other consumer yet:
+The values below have no other consumer yet:
 
 - `BSBound` is the bound the game uses for a skeleton or a creature.
 - `BSDistantObjectLargeRefExtraData` marks a model the game may draw as a large

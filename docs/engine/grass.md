@@ -72,9 +72,6 @@ The cap drops only for that frame, and each reason is counted. Grass receives su
 fog. It does not cast shadows and ignores point lights, because small alpha-tested blades would
 cost too much there.
 
-World > Environment > Grass has on and off, density, distance, and wind, and shows draws and
-each drop count.
-
 ## Differences from the game
 
 - The candidate grid, SplitMix64 seeds, the 32-unit floor, and the 128 cap are OpenSky's.

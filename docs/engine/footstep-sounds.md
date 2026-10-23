@@ -2,8 +2,7 @@
 type: Subsystem
 title: Footstep sounds
 description: How the player's footsteps are played from the behavior graph's own foot events,
-  which footstep set and ground material choose the sound, and the panel that plays one standing
-  still.
+  and which footstep set and ground material choose the sound.
 tags: [engine, audio, footsteps, behavior-graph, walk-mode]
 ---
 
@@ -47,21 +46,3 @@ sound right.
 
 A routed step also shows the `IPCT` impact model at the feet, such as dust
 ([impacts and decals](/rendering/decals.md)).
-
-## Controls
-
-World > Audio > Footsteps:
-
-- Enabled.
-- Tag: the tags the current footstep set answers to, for the gait the player is in. The list is
-  rebuilt on every refresh, because the gait changes as the player moves. A choice that is still in
-  the new list is kept.
-- Material: "Ground contact" (the default, the surface under the walk controller), or any `MATT`.
-  Choosing a `MATT` pins it, and the readout adds `(forced)`. Both graph events and the play button
-  use it. This is how to hear snow while standing on stone. A pinned material counts as a change, so
-  reset clears it.
-- Play footstep: plays one step at the player's feet without walking, so the whole chain can be
-  checked standing still.
-- Readout: the set, the material, the tags, how many events were routed and played, and the last
-  sound file. Routed and played differ by the tags the set has no sound for, which is normal
-  vanilla data.

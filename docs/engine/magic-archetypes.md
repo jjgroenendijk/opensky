@@ -196,10 +196,9 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
 
 ## Held effects
 
-Detect Life, Telekinesis, Grab Actor, and Guide are concentration spells in vanilla. A
-concentration spell lands once a second with a duration of 0, so each landing renews a hold.
-A hold no landing renews ends after 1.5 seconds, an OpenSky number. The magic panel lists the
-running holds and lights.
+Detect Life, Telekinesis, Grab Actor, and Guide are concentration spells in vanilla. A concentration
+spell lands once a second with a duration of 0, so each landing renews a hold. A hold no landing
+renews ends after 1.5 seconds, an OpenSky number.
 
 - Detect Life: "Applies a visual effect to all valid targets in range." The range is the
   effect's area. A valid target passes the effect's own conditions as the subject: vanilla uses

@@ -24,24 +24,6 @@ another. This makes each one easy to test by comparing frames with it on and off
 - World particles and rain or snow have separate switches. Rain can run with cell particles
   hidden, and the other way round.
 
-## Controls
-
-World > Environment has one section per system:
-
-| System | Controls | Live readout |
-| --- | --- | --- |
-| Actor animation | Enabled | Playback, updated bones |
-| Shadows | Off, Low, High | Cascades, casters, updates |
-| Weather | Enabled, auto or forced weather, Clear, Rain, Snow, pause transition, time | Weather, blend, wind |
-| Particles | Enabled, freeze, emission scale | Systems, emitters, live particles |
-| Rain and snow | Enabled | Type, intensity, roof |
-| Grass | Enabled, density, distance, wind | Scenes, draws, culled, dropped |
-
-"Enabled" is the same on and off action in every section. Force, freeze, tuning, and reset are
-separate actions, so looking at one system never changes another. This rule came from an early
-single switch that hid which system was in which state. See
-[app UI](/tools/app-ui.md) for the panel rules.
-
 ## Combined gate
 
 The fly-path gate, `FlyPathGateRealDataTests`, flies through the 5 x 5 streamed world with a rainy

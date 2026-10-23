@@ -3,7 +3,7 @@ type: Subsystem
 title: Papyrus world runtime
 description: How the Papyrus VM runs inside the engine loop - main-actor confinement, the fixed-step
   frame hook, the event queue and its budget, instance lifecycle over cell streaming, script state
-  in a save, the lazy script library, and the World > Scripts panel.
+  in a save, and the lazy script library.
 tags: [engine, papyrus, streaming, save]
 ---
 
@@ -74,9 +74,8 @@ ten-script cell in one step, because an attach queues three events per instance,
 carries over instead of stalling a frame.
 
 All scripts share one instruction budget per tick, resumed calls and new events together. The
-[scheduler](/engine/papyrus-vm.md#scheduler) explains how the budget is spent and why its default
-is 4,000 instructions. The World > Scripts sidebar shows what the last step spent and can change
-the budget.
+[scheduler](/engine/papyrus-vm.md#scheduler) explains how the budget is spent and why its default is
+4,000 instructions.
 
 `OnInit` fires once ever per instance. The fired set is saved. A pending set covers the gap between
 queuing and running, so a rebuild in between cannot queue a second one. Whether a function exists is
@@ -224,22 +223,6 @@ native is found under the script that declares it. Every failure is remembered, 
 broken script is not decoded again on every attach. The app builds the provider over the
 [virtual file system](/formats/vfs.md) and the same [form ID resolver](/formats/formid.md) the cells
 used. A scene with no file system gets no VM, rather than a VM with an empty library.
-
-## World > Scripts
-
-The `World > Scripts` panel shows instances and the scripts on the interaction target, quest
-instances and alias fills ([quest scripts](/engine/papyrus-quests.md)), recent events, the scheduler,
-and the native tally. Readouts come from one snapshot, refreshed at 2 Hz.
-
-The scheduler section has pause, step one tick, and burst 20 ticks. A burst is capped at 60. Pause is
-checked only at the top of an advance: a paused advance does nothing and builds no backlog. Stepping
-ignores it. This pause is separate from menu pause, and either one stops scripts. The last tick
-report is kept only from a tick that did work, so the readout never shows a report of zeros. The
-destination counts as overridden while paused, and Reset unpauses.
-
-The `Game native timing` checkbox switches between game timing and run-to-end timing, so a user can
-compare both. The readout shows how many native calls the last step delayed. Run-to-end timing
-counts as an override, and Reset puts game timing back.
 
 ## Stated simplifications
 

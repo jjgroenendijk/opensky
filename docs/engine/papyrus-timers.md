@@ -72,8 +72,7 @@ deltas from the game clock with the same policy the scheduler uses: a backward j
 resets the baseline, and one step adds at most 24 game hours.
 
 A due timer fires at most once per step, however many intervals passed. A repeating timer then
-restarts from now instead of queueing one event per missed interval. Without this rule, one
-`SetGameHour` jump from the `World > Runtime State` panel could fire a month of timers in one step.
+restarts from now instead of queueing one event per missed interval.
 
 ## Unload and save
 

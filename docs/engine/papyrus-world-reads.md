@@ -116,7 +116,6 @@ to its own file under `Logs/Script/User/`
 ([OpenUserLog - Debug](https://ck.uesp.net/wiki/OpenUserLog_-_Debug)). OpenSky keeps one
 log, so the name is a prefix instead.
 
-`Debug.ToggleMenus()` shows or hides the HUD layer, as the `tm` console command does. It
-is the same switch as the HUD layer control in the sidebar.
+`Debug.ToggleMenus()` shows or hides the HUD layer, as the `tm` console command does.
 
 `Game.UsingGamepad()` answers false, because OpenSky reads only the keyboard and mouse.

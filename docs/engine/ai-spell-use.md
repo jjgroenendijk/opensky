@@ -14,10 +14,8 @@ An NPC that owns spells casts them in a fight. The decision of when to cast is o
 
 ## The same path as the player
 
-A fighting actor's spell is readied, begun, charged, and released through the same four calls the
-panel's Cast button makes for the player ([spellcasting](/engine/spellcasting.md)). So casts in
-progress are keyed by the actor and the hand, not the hand alone: two actors charging at once are two
-casts.
+So casts in progress are keyed by the actor and the hand, not the hand alone: two actors charging at
+once are two casts.
 
 An NPC always casts with its right hand. Vanilla NPCs cast from either hand and dual-cast. One hand
 is a simplification.
@@ -69,10 +67,8 @@ The same as the player's. An aimed fire-and-forget spell fires its `PROJ`
 ray reaches. A held spell is held for 1.5 s and applies once a second. Only the ray differs: an NPC's
 spell leaves the NPC's own eye, aimed at the middle of the player's capsule.
 
-A cast in progress is dropped whenever the fight takes it away: a stagger, fleeing, a lost target, a
-stopped fight, death, or the panel switch turned off. A held cast whose `SPIT` minimum duration has
-not passed is dropped too. The player's release waits for the minimum because their button is still
-held. An NPC has no button.
+A held cast whose `SPIT` minimum duration has not passed is dropped too. The player's release waits
+for the minimum because their button is still held. An NPC has no button.
 
 ## Simplified on purpose
 
@@ -84,8 +80,3 @@ held. An NPC has no button.
   caster's spells.
 - No shouts, summons, reanimation, or healing itself mid-fight. An NPC only casts a hostile spell at
   its target. The buffs and heals in its list are known and never chosen.
-
-## Controls
-
-World > Combat & Physics > Combat Loop has the AI casting switch. The readout's "AI casting:" line
-shows whether it is on, and each fighter's line shows "N casts (M castable)".

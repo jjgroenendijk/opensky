@@ -49,10 +49,9 @@ context of the session. A function the evaluator does not know makes its group f
 verdict names it, for example `function 4725` for `GetVMQuestVariable`.
 
 The conditions decide whether the recipe is listed at all. The CK wiki calls them "Match
-Conditions", the "pre-requisites for the recipe to appear in the crafting menu"
-([Constructible Object](https://ck.uesp.net/wiki/Constructible_Object)). So the crafting menu
-hides a recipe whose conditions fail. Missing components only mark the row as not makeable. The
-sidebar still lists every recipe with its verdict, so a hidden one can be inspected.
+Conditions", the "pre-requisites for the recipe to appear in the crafting menu" ([Constructible
+Object](https://ck.uesp.net/wiki/Constructible_Object)). So the crafting menu hides a recipe whose
+conditions fail. Missing components only mark the row as not makeable.
 
 ## What a craft writes
 
@@ -144,12 +143,3 @@ enchanted item and set its charge; OpenSky answers those calls and does nothing.
 
 - Perk entry points that change crafting, such as Arcane Blacksmith and the material perks.
 - `GetVMQuestVariable`, which the evaluator does not know.
-
-## Controls
-
-World > Inventory & Equipment > Crafting opens any station from a list of the item plugin's
-benches, lists the recipes with their verdicts, and crafts the selected one. At a tempering
-bench each row names the quality of every held copy and the damage or rating change, and
-Craft improves one copy. The Harvest
-section beside it shows the crosshair plant and can force or reset a harvest
-([interaction](/engine/interaction.md)).

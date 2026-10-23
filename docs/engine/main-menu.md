@@ -15,10 +15,8 @@ Developer mode opens in the world.
 
 ## The vanilla movie
 
-The menu draws `interface\startmenu.swf`, the game's own main menu. OpenSky's engine rows
-stay as the fallback when the movie does not load, and a sidebar control switches between
-the two. These facts were measured on the install with `openskycli swf movie-probe` and
-`swf action-list`:
+The menu draws `interface\startmenu.swf`, the game's own main menu. These facts were measured on the
+install with `openskycli swf movie-probe` and `swf action-list`:
 
 - The menu clip is `/MenuHolder/Menu_mc`, with class `StartMenuObj`. Its row list is
   `MainListHolder/List_mc`. The list reacts to keys only while it has focus.
@@ -66,18 +64,16 @@ marker, and the player is then put back into walk mode. The `MQ101` aliases that
 actors fill from the location records ([quest state](/engine/quest-state.md), "What does not
 fill yet").
 
-The race menu then opens where `MQ101` calls `Game.ShowRaceMenu`
-([race menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart
-scene. OpenSky does not play that scene yet, so a new game waits beside the carts. The riders
-who live in other cells, such as `Ulfric` and `Lokir`, stay there, because `MoveTo` moves a
-reference only inside the loaded cells. `debug quest MQ101 75` in the
-[agent control](/tools/agent-control.md) runs the stage that opens the race menu. The race menu
-panel in the sidebar opens the menu by hand.
+The race menu then opens where `MQ101` calls `Game.ShowRaceMenu` ([race
+menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart scene. OpenSky
+does not play that scene yet, so a new game waits beside the carts. The riders who live in other
+cells, such as `Ulfric` and `Lokir`, stay there, because `MoveTo` moves a reference only inside the
+loaded cells. `debug quest MQ101 75` in the [agent control](/tools/agent-control.md) runs the stage
+that opens the race menu.
 
-`MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded
-cells is looked up in the worldspace records of `Skyrim.esm`, off the main
-actor, and its cell loads before the player is placed. The title menu panel can also start
-a new game at a named cell; that test start opens the race menu at once.
+`MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded cells
+is looked up in the worldspace records of `Skyrim.esm`, off the main actor, and its cell loads
+before the player is placed.
 
 `MoveTo` on any other reference needs that reference and its target in the loaded cells. It
 stores the target's position plus the offsets, and the target's rotation unless

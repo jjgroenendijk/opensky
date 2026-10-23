@@ -201,13 +201,3 @@ The level name is the `sLockLevel` text of the load order, such as "Adept".
 ## Saves
 
 The `LOCK` chunk holds every changed lock ([save format](/formats/opensky-save.md)).
-
-## Checking it in the app
-
-World > Inventory & Equipment > Locks lists the locks in the loaded cells. The selected lock
-gets a yellow marker in the world. The section can unlock and relock it, open the lockpicking
-menu on it, and let the player carry every key. The readout shows the last session: whether
-the lock opened, the picks broken, and the experience given. A leveled lock's row shows its
-band now and its authored band. "Menu lock" says whether the menu drew the 3D lock, or why it
-fell back to the 2D lock. The record views in the Asset
-Browser show a reference's `XLOC` level and key.

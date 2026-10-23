@@ -36,9 +36,9 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Shared types, `ShaderTypes.h`, project or `config/` files, file moves between `OpenSky/` and a package module | `make build-app`, `make build-cli`, or `make build-tests` for the products the change reaches, then `make test-unit` |
 | Rendering or shaders | `make test-unit PLAN=GPU`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
-| App UI | `building-app-ui` skill and `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
+| App UI | `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make health`, `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
+| Milestone acceptance | `make health`, `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/acceptance-record.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
 
 The whole unit plan (`make test-unit PLAN=UnitTests`) and the sanitizers run in CI: the
 unit plan on every push, the sanitizers and `make health` weekly. Do not run them locally
@@ -109,7 +109,7 @@ and `make install`. `git push` builds nothing: the only git hook is `pre-commit`
 screen while the user may be working.
 
 - Run it only when the change can break what a UI test checks: a new or changed UI test, or
-  a changed sidebar control or accessibility id that a UI test uses. Then run only those
+  a changed launcher control or accessibility id that a UI test uses. Then run only those
   tests with `T='Suite/test()'`.
 - Do not run it as a routine check for engine, parser, rendering, tooling, or docs changes.
   The unit tests and the `make build-*` targets cover those. Write `test-ui not run: no UI test

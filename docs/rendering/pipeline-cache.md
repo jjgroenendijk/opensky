@@ -45,11 +45,8 @@ A process without a `default.metallib` in its bundle, such as a package test, ge
 
 ## Checking it
 
-`Developer > Rendering Performance > Pipeline Cache` has the switch
-(`PipelineCacheEnabledControl`), a clear button (`PipelineCacheClearControl`), and the counts
-of this launch (`PipelineCacheStatsLabel`): pipelines loaded from the archive and pipelines
-compiled. The switch is the `pipelineCache.enabled` player setting and applies on the next
-launch. The launcher's Graphics page has the same switch and clear button.
+The switch is the `pipelineCache.enabled` player setting and applies on the next launch. The
+launcher's Graphics page has the same switch and clear button.
 
 To time a cold start, clear the cache on the Graphics page, then run
 `make benchmark PRESET=quick`. The app start in the result holds the renderer setup time

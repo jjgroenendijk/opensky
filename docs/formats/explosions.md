@@ -56,8 +56,7 @@ Each `DATA` field is one model: a uint8 percentage, a zstring path, and a uint8 
 
 ## Runtime
 
-An explosion is set off by a projectile with an `EXPL` link, by an area spell at the struck
-actor, or by the Effects panel. On detonation OpenSky:
+On detonation OpenSky:
 
 1. Damages every actor whose capsule axis is within the radius. Damage falls linearly from
    the full `DATA` damage at the center to zero at the radius.
@@ -80,6 +79,5 @@ Simplifications:
   once, and another type 23 times. None is a `DEBR`. Placed objects of other types are
   counted and skipped.
 
-Debris: each detonation or panel throw launches 6 pieces, picked from the `DEBR` models by
-their percentage with a seeded random draw. Pieces fly outward and up, fall under gravity
-(686 units/s²), spin, and are removed after 6 s. They have no collision.
+Pieces fly outward and up, fall under gravity (686 units/s²), spin, and are removed after 6 s. They
+have no collision.

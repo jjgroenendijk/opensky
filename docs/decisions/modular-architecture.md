@@ -40,7 +40,7 @@ and a second source of truth. So the rules are checked on the package graph inst
 ## Why no Example apps
 
 TMA gives each feature an `Example` app that runs the feature alone. In OpenSky the feature's
-sidebar destination in the main app, plus its `openskycli` command, does that job. So there
+`openskycli` command, and `openskycli game` in the running app, do that job. So there
 are no `Example` targets.
 
 ## The check

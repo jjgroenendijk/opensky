@@ -30,9 +30,8 @@ domain and `suiteName` refuses the app's own bundle ID. Both read the same file.
 Every other user setting goes through `SettingsStore.shared`, which uses the same domain. A
 `SettingKey` names the setting, its type, and the value a missing entry reads as, such as
 `SettingKey("TimeOfDaySetting", default: 13.0)`. Code does not call `UserDefaults.standard`:
-from the CLI, `.standard` is a different file. Older CLI builds wrote the time of day and the
-shadow quality to the CLI's own domain, so the CLI moves those two values into the shared
-domain once at start.
+from the CLI, `.standard` is a different file. Older CLI builds wrote the time of day to the CLI's
+own domain, so the CLI moves that value into the shared domain once at start.
 
 ## What counts as an install
 
@@ -44,9 +43,8 @@ go under the data folder.
 
 ## Failure
 
-A failure is a typed error. The app logs it (category `GameData`) and shows how to fix it in the
-World and Asset Browser views. Settings stays open to use. A new valid path rebuilds the world and
-reloads the browser without a restart. There is never a silent fallback.
+A failure is a typed error. The app logs it (category `GameData`) and shows how to fix it on the
+launcher, whose Play button stays off. Settings stays open to use. There is never a silent fallback.
 
 `saveUserChoice(path:)` checks a path before saving it. An invalid path is an error, and the old
 setting stays. `clearUserChoice()` removes the setting.

@@ -79,7 +79,6 @@ Sundas and 6 is Loredas, as `GetDayOfWeek` returns them.
 
 ### The date line
 
-The Runtime State panel also shows the date as the game's wait menu writes it:
 `Sundas, 8:00 AM, 17th of Last Seed, 4E 201`. Every word comes from a string setting:
 
 | Part | Settings |

@@ -351,18 +351,3 @@ one ([reference identity](/engine/reference-identity.md#moved-references)). The 
 rebuilt without it. Without this, a horse that walked far from its plugin cell would vanish when
 that cell unloads. A vehicle follower, such as a cart, does the same when its pose enters
 another loaded cell ([vehicles](/engine/vehicles.md)).
-
-## Controls
-
-World > AI & Navigation > Package shows the selected actor's current package, its editor ID, its
-procedure, and its schedule as a start time and duration.
-
-The Package line shows the running procedures of every actor's current package, a schedule
-package as well as a scene or alias one. The List line shows which list gave the package, the
-situation, and any script package. Reevaluate picks the package again and starts its tree from
-the root. The clock and conditions pick the package. To watch the schedule work, move the clock
-in World > Runtime State > Time and press Reevaluate.
-
-Add script package takes an editor ID or a FormID and does what `AddScriptPackage` does;
-Remove does what `RemoveScriptPackage` does. This is the one way to set a package directly,
-because the game has it too.

@@ -115,10 +115,4 @@ Morph weights are clamped to 0 to 1. Brow values reach 1.34 in vanilla files. Th
 angles keep their sign and turn the neck and head on top of the clip and of
 [head tracking](/engine/head-tracking.md).
 
-The 8-slot creature grids decode, but drive nothing. `World > Dialogue & Voice` lists their
-active slots as unmapped.
-
-## Controls
-
-`World > Dialogue & Voice` shows the live weights, the head angles, and the layout of the
-current line, and has a switch that turns lip sync off.
+The 8-slot creature grids decode, but drive nothing.

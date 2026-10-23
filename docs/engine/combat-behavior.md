@@ -118,10 +118,9 @@ multipliers to 0.24, so an actor on it attacks less often and blocks less than t
 So two bandits with the same spell fight differently: one on a melee style (magic score below
 melee) mostly closes in and swings, and one on a magic style stands off and casts.
 
-The in-reach chances never reach 1, so the other choice stays possible. A member a record leaves out,
-or a value that is not finite or not positive, counts as the neutral value. An actor with no
-style uses the settings unchanged. The `World > Combat Loop` readout shows the selected
-actor's style and the derived numbers.
+The in-reach chances never reach 1, so the other choice stays possible. A member a record leaves
+out, or a value that is not finite or not positive, counts as the neutral value. An actor with no
+style uses the settings unchanged.
 
 ## Blocking
 
@@ -169,10 +168,9 @@ Note 1: the three radii are `Min`, `Mid`, and `Max`. Offense 1 picks `Min`, 0.5 
 Note 2: defense 0 picks `Min`, 0.5 `Mid`, and 1 `Max`. The back-off lasts at most 2 s, which is
 OpenSky's own number.
 
-The advance, range, healing, shout, and flight settings reach the fights that start while the
-switch "Game combat settings" is on. It is on by default, saved with the player settings, and
-sits in `World > Combat Loop` and on the launcher's Graphics page. Off keeps OpenSky's own
-numbers, which is what the older behaviour tests run on.
+The advance, range, healing, shout, and flight settings reach the fights that start while the switch
+"Game combat settings" is on. Off keeps OpenSky's own numbers, which is what the older behaviour
+tests run on.
 
 Healing: a spell counts as a heal when it is a hand-cast spell aimed at the caster, carries no
 hostile effect, and one of its effects is a value modifier on Health that is not detrimental, such
@@ -248,9 +246,8 @@ Members of one faction are allies only when the faction lists itself as one
 other. `GuardFactionWhiterun` and `CrimeFactionWhiterun` do not, so Whiterun guards do not join
 each other's fights through Assistance.
 
-The Combat Loop section and the launcher's graphics page share a saved switch, Confidence and
-Assistance. Off gives the flat health rule and lone fighters. The readout shows the selected
-actor's Confidence, strength, decision, and Assistance.
+The launcher's graphics page has a saved switch, Confidence and Assistance. Off gives the flat
+health rule and lone fighters.
 
 ## Searching and giving up
 
@@ -265,9 +262,8 @@ the level decays to nothing, so a stale position is never walked to.
 - Losing the target with nothing remembered gives up at once, instead of searching where the actor
   stands.
 
-Giving up leaves hostility as it is. Walking back into view starts the fight again, and the panel
-counts a second fight. The package is a fresh choice, not a resumed one: the world moved on during
-the fight, and the package the schedule names now is the right one.
+Giving up leaves hostility as it is. The package is a fresh choice, not a resumed one: the world
+moved on during the fight, and the package the schedule names now is the right one.
 
 ## Hit reactions
 

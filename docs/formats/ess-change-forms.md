@@ -59,10 +59,9 @@ layout below.
 
 ## Decode status
 
-A decoder reads the documented parts in order. When a flag's data has no documented layout,
-the decoder stops there and records why, as `partial(blockedBy:)`. Everything before the
-stop is kept. Nothing after it is guessed. The inspector shows a histogram per type: count,
-compressed, complete, blocked with the reason, and failed.
+A decoder reads the documented parts in order. When a flag's data has no documented layout, the
+decoder stops there and records why, as `partial(blockedBy:)`. Everything before the stop is kept.
+Nothing after it is guessed.
 
 ## References
 

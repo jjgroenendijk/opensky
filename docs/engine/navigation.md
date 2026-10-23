@@ -165,19 +165,3 @@ offscreen. It draws at most 65,536 primitives per frame, and counts what it drew
 
 Movers do not jump over an obstacle the navmesh does not link with a ledge. A swim follows the
 navmesh path, so water with no navmesh under it is not crossed.
-
-## Controls
-
-World > AI & Navigation has three sections:
-
-- Overlays: navmesh and path toggles, and a readout of what was drawn and dropped.
-- Actor: pick the actor the rest of the panel is about, from a list or under the crosshair.
-- Movement: send the actor to the crosshair point, stop it, and read its state, waypoint, gait,
-  and search count.
-
-The move target is where the crosshair ray hits, put on the nearest triangle by the path search.
-The ray reaches 4096 units, and works in any camera mode. It is longer than the use key's reach,
-because sending an actor across a market is an inspection, and arm's length would only send it to
-its own feet. It is no longer than needed, because the collision search box grows with it. The
-result is cached for the current camera pose, so several panel sections reading it twice a second
-cost one raycast.

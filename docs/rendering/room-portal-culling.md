@@ -71,13 +71,7 @@ The result is a bitset with one bit per room.
 Rooms cull only the camera view, never a shadow cascade. A hidden room can still cast a
 shadow into a room the camera sees.
 
-## Settings and readout
+## Setting
 
 The player setting `rendering.roomCulling` turns it on or off. It is on by default. The
-launcher's Graphics page writes it, and so does the switch in
-`Developer > Rendering Performance > Room Culling` (`RoomCullingEnabledControl`). The readout
-(`RoomCullingStatsLabel`) shows the rooms, the portals, the rooms seen, and the camera
-instances that rooms culled over both paths.
-
-The room-culled count is part of the culled count that the [GPU culling](/rendering/gpu-culling.md)
-readout shows.
+launcher's Graphics page writes it.

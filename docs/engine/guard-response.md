@@ -145,8 +145,3 @@ scripted alarm fail silently because the witness faced away. The wiki also notes
 - A faction with no cell to enter moves the player to the jail marker only when it is loaded.
 - Guards do not arrest NPCs. A guard does not walk over to answer another actor's report. Only
   guards who see the player themselves act.
-
-## Controls
-
-World > Crime & Factions > Bounty has Guard check, which asks the chosen actor whether it is a
-guard and what it would do, then runs one guard tick if a world is loaded, and Resist arrest.

@@ -51,8 +51,6 @@ ones only this bundle uses. Other fixtures are in the `Tests/OpenSky<Layer>Testi
   `OpenSkyTests`, and `make test-rerun PLAN=App T=...` reruns it without the build system;
   the `testing-and-verifying` skill covers what to run. `make test-report` extracts failure
   names and messages from the newest result bundle.
-- Accessibility ids are pinned as literal assertions here (`DestinationRegistryTests`) *and*
-  exercised through `OpenSkyUITests`. The two catch different things: a unit assertion pins
-  the id string, and only a UI test proves the id is reachable in the built view hierarchy.
-  Every sidebar row assertion passed here for months while
-  `outlines["AppSidebar"].cells[...]` matched nothing in the running app (issue #380).
+- Accessibility ids are pinned as literal assertions here (`LauncherTests`) *and* exercised
+  through `OpenSkyUITests`. The two catch different things: a unit assertion pins the id
+  string, and only a UI test proves the id is reachable in the built view hierarchy.

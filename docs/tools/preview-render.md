@@ -1,17 +1,16 @@
 ---
 type: Tool
 title: Preview render
-description: How `openskycli preview` and Library > Render Preview render one record, reference,
+description: How `openskycli preview` renders one record, reference,
   mesh, or cell from fixed angles, and what the report holds.
-tags: [tool, cli, gui, rendering, preview]
+tags: [tool, cli, rendering, preview]
 ---
 
 # Preview render
 
 A preview renders one thing from fixed camera angles and measures each image. An agent uses it
-to look at an asset, an NPC, or a cell without starting the game and walking there. The CLI
-command and the sidebar page share one pipeline in the `OpenSkyPreview` module, so both give the
-same image for the same input.
+to look at an asset, an NPC, or a cell without starting the game and walking there. The pipeline
+lives in the `OpenSkyPreview` module.
 
 ## Targets
 
@@ -82,9 +81,3 @@ The images show game assets, so they stay in `.logs/` and never go into a commit
 The render does not depend on the clock. The animation time is 0, the weather is fixed by the
 request, and the camera comes only from the angles and the bounds. Two runs of the same command
 give byte-identical PNGs.
-
-## Sidebar
-
-`Library > Render Preview` offers the same targets, stages, and angles. The scene builds off the
-main actor; the render runs on it. Each image is shown with its instance, triangle, and coverage
-numbers. It keeps one cell builder, so a second preview reuses the loaded meshes and textures.

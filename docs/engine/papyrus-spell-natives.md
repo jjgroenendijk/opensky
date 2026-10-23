@@ -39,8 +39,7 @@ and then reads `HasMagicEffect` sees the effect.
 ## Where each goes
 
 - Learning, forgetting, and readying go through the spellbook, so a scripted `AddSpell` is saved
-  like reading a spell tome. Readying a hand works against worn equipment by the same path the
-  panel's Ready button uses.
+  like reading a spell tome. Readying a hand works against worn equipment.
 - Dispelling goes through the active effect runtime, so each removed effect gives back its modifier
   slot.
 - `Spell.Cast` goes through the caster, so it applies the effect list with the same code a player's

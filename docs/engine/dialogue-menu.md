@@ -16,7 +16,7 @@ and the input and pause rules around them. Which topics are offered is on the
 ## Talk targeting
 
 An actor under the crosshair becomes a normal crosshair target with the action "Talk". So the HUD
-prompt, the compass marker, and the target readout reach it with no extra work. Pressing the use
+prompt and the compass marker reach it with no extra work. Pressing the use
 key sends a talk event with the speaker's session-stable `ReferenceKey`. Dialogue selection,
 "said" state, and saves all name a speaker that way.
 
@@ -188,12 +188,3 @@ Each response run is said in the speaker's voice, with lip movement, through the
 speech channel ([audio decoding](/engine/audio-decoding.md)). When a run's voice file plays to
 its end, the menu moves on as Accept does. A run with no voice file waits for Accept. Accept
 during a run cuts its voice off and starts the next one.
-
-## Controls
-
-World > HUD & Interaction > Dialogue: Open dialogue, Leave, Up, Down, Choose, and three readouts
-(topics and target, condition trace, movie). Open dialogue is the same call as the use key. The
-navigation buttons send the same menu input as the keys.
-
-The condition trace lists every topic that offered nothing, and why each of its responses lost.
-This answers "why is the line I expected missing?".

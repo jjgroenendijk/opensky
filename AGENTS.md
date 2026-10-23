@@ -139,17 +139,18 @@ machine the data lives under `/Volumes/data/steam/steamapps/...`. The data root 
 configurable setting, never a hardcoded constant. Missing -> fail loud. There is no bundled
 data to fall back to.
 
-## Open work, docs, and the app sidebar
+## Open work, docs, and checking a behaviour
 
 - Open work lives in GitHub issues and milestones; there is no roadmap file. Load the
   `starting-roadmap-work` skill to pick up or finish an item.
 - `docs/` holds only what the code cannot show: sources of facts, design reasons, where
   OpenSky differs from the game, how subsystems work together, and tool usage. History
   lives in git. Load `writing-wiki-docs` before writing there.
-- Every new subsystem or user-verifiable behavior gets a control in the main app sidebar in
-  the same milestone. A user must be able to select, force, toggle, or inspect it without a
-  CLI command. Parser, math, and infrastructure-only work may wait for its first visible
-  consumer. `building-app-ui` has the placement rules and the acceptance record.
+- Every new subsystem or user-verifiable behavior can be forced and inspected in the running
+  game through `openskycli game` in the same milestone: a command that sets it and a `state`
+  read that shows it. Parser, math, and infrastructure-only work may wait for its first
+  visible consumer. `driving-the-running-game` lists the commands, and
+  `docs/tools/acceptance-record.md` gives the acceptance record.
 
 ## Code quality
 
@@ -248,7 +249,6 @@ the skill.
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game` |
-| `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
 | `consulting-uesp-wikis` | Looking up anything on the Creation Kit wiki (ck.uesp.net) or the UESP wiki (en.uesp.net), or syncing their offline copies |
 | `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |

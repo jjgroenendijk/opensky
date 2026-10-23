@@ -3,7 +3,7 @@ type: Subsystem
 title: Gameplay HUD
 description: How the vanilla hudmenu.swf becomes the gameplay HUD - the observed engine-to-movie
   functions and argument shapes, compass heading mapping, authored placeholder clips, who owns the
-  single SWF layer, and the HUD & Interaction panel.
+  single SWF layer.
 tags: [rendering, ui, swf, hud]
 ---
 
@@ -64,26 +64,6 @@ would make behavior depend on the monitor. Timed HUD animation needs its own mov
 
 ## Who owns the SWF layer
 
-There is one SWF layer, and the HUD owns it by default. Two surfaces take it and give it back:
-
-- Choosing a movie in `Developer > UI Lab > SWF movie` is a debug override. Choosing `None` brings
-  the HUD back, with its saved element and scale settings.
-- Turning on the vanilla movie in `World > System Menu` shows `quest_journal.swf` on its System
-  page while the menu is open, and brings the HUD back on Resume
-  ([system menu](/engine/system-menu.md)).
-
-## HUD & Interaction panel
-
-`World > HUD & Interaction` has two sections:
-
-- **Elements** turns the layer, crosshair, meters, compass, marker, prompt, and the authored
-  placeholder text on and off, and sets the scale to 50, 75, 100, 125, 150, or 200 percent. Scale is
-  a centered presentation factor and does not change the display list. The readout shows the load
-  state, scale, draw calls, and skipped items. Gameplay elements start on and placeholder text starts
-  off.
-- **Target** shows the current walk-mode reference and base form IDs, the action and name, the
-  distance, the placed and hit positions, the exact prompt, the camera heading, and the marker
-  headings. It has no synthetic preview on purpose, so a broken targeting or localization path shows
-  as broken.
-
-Captures of the HUD over a real cell contain game art, so they stay in `.logs/`.
+There is one SWF layer, and the HUD owns it by default. The system menu's vanilla movie takes it:
+it shows `quest_journal.swf` on its System page while the menu is open, and brings the HUD back on
+Resume ([system menu](/engine/system-menu.md)).

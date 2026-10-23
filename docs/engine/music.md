@@ -91,7 +91,7 @@ palette that names itself stops instead of looping.
 
 Silent tracks, which have no `ANAM`, and tracks whose file name breaks the `music\` path rules are
 dropped. The rest keep their order. A playlist that loses every track gives silence, but the
-readout still names the `MUSC`. Whether the file exists is not checked here, because selection
+music state still names the `MUSC`. Whether the file exists is not checked here, because selection
 reads no files. A missing file fails later, when it loads.
 
 Order:
@@ -131,7 +131,7 @@ reported as missing, not as a wrong extension.
 This rule sits where the file loads, not in the path normalizing step. Normalizing is a pure
 string change. It cannot tell a name that exists from one that does not, so changing the
 extension there would guess for every track, including mod tracks that really are `.wav`. The
-playing source is named after the file that loaded, so the readout shows the real file.
+playing source is named after the file that loaded, so the music state shows the real file.
 
 ## Crossfades
 
@@ -159,7 +159,7 @@ The director follows the same rules as the sound effects director:
   is not lost, and turning music on starts it at once.
 - A context change, a forced playlist, and the toggle all take one path, so they cannot drift
   apart.
-- The readout comes from the live sources. It cannot claim music that already stopped.
+- The music state comes from the live sources. It cannot claim music that already stopped.
 
 The next track starts from the per-frame tick. The audio engine removes a stream that reached
 its end, and the director notices this in the same frame. Sources fading out in a crossfade are
@@ -168,7 +168,7 @@ selection asks the engine to loop, so it never reaches this step.
 
 ## Failures
 
-Nothing throws to the caller. Each failure gives silence plus a reason in the readout:
+Nothing throws to the caller. Each failure gives silence plus a reason in the music state:
 
 - no music data: silence, no error;
 - a link that does not resolve: the chain goes on;
@@ -177,20 +177,6 @@ Nothing throws to the caller. Each failure gives silence plus a reason in the re
   every track fails, silence, with the last load error;
 - the audio engine is not running: the selection is kept and starts when the engine does.
 
-## Controls
+## Settings
 
-World > Audio > Music:
-
-- Music enabled. Off fades out the current track. On starts the last selection again.
-- Music type: "None (automatic)" and every `MUSC` editor ID. Choosing one crossfades to it, past
-  the selection chain. Choosing "None (automatic)" drops the forced type and stops music, so the
-  next cell selects through the chain again.
-- Stop music, for comparing with silence.
-- Readout: the state, the playlist and file, and an error line when there is one.
-
-Music starts with the game. World > Audio > Output > Enabled and the Sound setting turn all audio
-off and on.
-
-A manual check: walk an exterior cell and hear the exploration playlist. Enter a city and hear the
-crossfade to its town playlist. Enter an interior and check the state readout. Walk to the
-door of Mzulft: the readout names `MUSDungeon`, from its location.
+Music starts with the game. The Sound setting turns all audio off and on.

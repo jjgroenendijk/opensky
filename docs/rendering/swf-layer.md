@@ -10,7 +10,7 @@ tags: [rendering, ui, swf, metal]
 # SWF render layer
 
 The SWF layer draws a movie's display list over the finished 3D frame. It is encoded in the scene
-pass just before the [screen-space UI](/rendering/ui.md) overlay, so developer readouts stay on top.
+pass just before the [screen-space UI](/rendering/ui.md) overlay, so that overlay stays on top.
 Tag decoding and frame 1 rules are on the [SWF container](/formats/swf.md) and
 [SWF display list](/formats/swf-display-list.md) pages. There is one main movie and an optional
 [overlay movie](#overlay-movie).
@@ -123,21 +123,7 @@ for the same reason.
 - Glyph quads follow a transform's position and scale, but not rotation or skew. Vanilla UI text is
   not rotated.
 
-## Where to see it
-
-`Developer > UI Lab > SWF movie` lists `None` and every `Interface\*.swf` in the install, turns the
-layer on and off, and shows the movie's tag tally, its ActionScript inventory, the draw stats,
-unresolved font names, and any load error. The movie list is built once, lazily, because listing
-movies walks every archive index. `None` gives the layer back to the gameplay [HUD](/rendering/hud.md).
-
-`Developer > UI Lab > SWF runtime` runs the assigned movie. It has Start, Tick, Tick 20 (a vanilla
-menu's open and close animations are each about 20 frames), and Stop. It sends navigation keys, and
-pointer moves and clicks at a position in movie stage pixels. It calls a named function: the list is
-the movie's own `GameDelegate.addCallBack` names, and it is editable, because some entry points are
-root clip functions the delegate does not list (`SetPlatform` and `InitExtensions` in
-`tweenmenu.swf`). Readouts show the runtime state, the invoke log, and the tally. Every shortened
-list shows its total, so a cut list never reads as complete. No control throws: every failure goes
-to the load error the readout shows.
+## Checking it
 
 Across all 53 vanilla movies, `openskycli swf render-sweep` renders frame 1 with no failures. Many
 vanilla menus are blank at frame 1, because their top-level content starts at alpha zero until

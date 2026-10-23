@@ -79,12 +79,11 @@ progression". `Actor.GetLevel` follows the menu: "if you have leveled up but hav
 the perk menu screen, this will still return your level seen in the HUD"
 ([GetLevel - Actor](https://www.creationkit.com/index.php?title=GetLevel_-_Actor)).
 
-OpenSky does the same. An award only banks experience and shows the "level up available"
-notice once per new level. Opening the skills menu applies every earned level at once: the
-level, one perk point, and one owed pick per level. Until then `GetLevel`, `PC Level Mult`
-scaling, and every condition read the old level. The progression panel's "Apply levels" button
-does what opening the menu does. Owed picks queue, so the menu shows "if you gained 4 levels you
-will be prompted to make 4 choices in succession".
+OpenSky does the same. An award only banks experience and shows the "level up available" notice once
+per new level. Opening the skills menu applies every earned level at once: the level, one perk
+point, and one owed pick per level. Until then `GetLevel`, `PC Level Mult` scaling, and every
+condition read the old level. Owed picks queue, so the menu shows "if you gained 4 levels you will
+be prompted to make 4 choices in succession".
 
 ## The attribute pick
 
@@ -149,7 +148,7 @@ out of order.
 
 A condition function OpenSky does not implement holds when a spend is checked. The game has every
 function, so a perk the player meets in the game must not be locked by a gap in OpenSky. The
-function is still counted in the condition tally, so `make gaps` and the readout show it. A
+function is still counted in the condition tally, so `make gaps` shows it. A
 function that is implemented but answers false still refuses the spend.
 
 ## Conditions
@@ -185,22 +184,3 @@ refuses all of them, instead of answering 0, which would look like a player who 
 The [skills menu](/engine/skills-menu.md) spends the pick and the points, and covers legendary
 skills and the Dragonborn altar. Experience multipliers are a perk entry point
 ([skill advancement](/engine/skill-advancement.md#experience-multipliers)).
-
-## Controls
-
-World > Progression has three sections. Each control makes the same call a game session makes.
-
-| Section | What it does |
-| --- | --- |
-| Character | Level, experience, unspent points, owed picks. Award experience, make a pick, add or remove perk points |
-| Skills | The 18 skills with value, trained base, experience, and next threshold. Grant use (`AdvanceSkill`) or a whole point (`IncrementSkill`) |
-| Perk Tree | The chosen skill's `AVIF` boxes with lines, rank chain, and refusal reason, the chosen box's `PERK` record, and the real spend beside two developer grants |
-
-Choices the panel makes:
-
-- It is its own destination, not part of World > Combat & Physics. Combat asks what an actor is
-  worth in this fight. Progression asks what the player has become.
-- It has no reset. Every control changes world state on purpose. A reset would take levels away
-  from a character, not restore a setting.
-- It shows a list and an inspector, not a drawn tree. The tree's meaning is its lines, rank
-  chains, and refusal rules, which read well as text.

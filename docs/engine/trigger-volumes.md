@@ -138,24 +138,3 @@ The trigger set is built on the build queue, in the same call as the render scen
 set. It is immutable, travels to the main thread as a plain value, and is released with its cell.
 Queries over several cells visit them in `(x, y)` order, not dictionary order, because the result
 orders script events.
-
-## Controls
-
-World > World > Triggers, under the same destination as the fly and walk switch, because only
-walk mode tests triggers:
-
-```text
-Volumes: 12 resident  Occupied: 1
-Sources: mesh 8  primitive 4
-Dropped: excluded 3  degenerate 1  unkeyed 2
-Occupancy: walk mode, live
-```
-
-The Occupancy line names the gate: `walk mode, live`, `fly mode, frozen at n`, or
-`fly mode, not tested`. A non-zero count in fly mode is correct, because leaving walk mode
-freezes the set.
-
-Below it is a short log of recent events, like `enter skyrim.esm:ABCDEF 0x000ABCDE`. A leave from
-an unloaded cell shows `unloaded` in place of the FormID. The log is a normal event listener, so
-it cannot change the order of the Papyrus handler. It lives on the streamer, not the panel,
-because the panel is built late and rebuilt when settings reload. Clear empties it.

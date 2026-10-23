@@ -92,7 +92,7 @@ Settings:
     `PapyrusWorldFixture.Session` are test fixtures. The runtime under test holds them
     weakly (`CasterRuntime.world`, `CrimeReporter.world`, `PapyrusWorldStateBridge.world`),
     so the fixture must hold them strongly.
-- `retain_equatable_properties` stays off. Most panel snapshot types are `Equatable`, so
+- `retain_equatable_properties` stays off. Most snapshot types are `Equatable`, so
   this setting would hide dead snapshot fields. A test struct compared with `==` reads its
   fields in an assertion instead.
 - **A decoded field counts as used when a test reads it.** Record fields that a
@@ -143,8 +143,8 @@ files, like `GameViewController`, passes it. So a second rule is needed for that
 
 ## GameViewController extensions
 
-`GameViewController` keeps only the view, input, the render loop, and the panel wiring, in
-`GameViewController.swift` and `GameViewControllerPanels.swift`. A SwiftLint
+`GameViewController` keeps only the view, input, and the render loop, in
+`GameViewController.swift` and `GameViewControllerHosts.swift`. A SwiftLint
 `custom_rules` entry, `game_view_controller_extension`, forbids `extension
 GameViewController` in any other file. The allowed file names are one regular expression
 in `tools/lint/.swiftlint.yml`. It is a design rule for the future, not a list of old

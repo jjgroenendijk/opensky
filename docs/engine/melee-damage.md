@@ -49,8 +49,7 @@ weapon branch only. At 1 it changes nothing.
 The install wins: these are the numbers the game reads. UESP still gives which term multiplies
 which. That shape fits the install's values in only one reading: the two base terms and the cap
 are fractions, and the two scaling terms are percentage points per unit of damage or armor, so
-each has a `/ 100`. Every result is a fraction from 0 to 1. The readout multiplies by 100 at the
-end.
+each has a `/ 100`. Every result is a fraction from 0 to 1.
 
 The weapon branch uses the attacker's weapon damage, not the blocker's. This looks like a bug but
 is not. UESP says so, and works through the creature case (an unarmed attacker gives only the flat

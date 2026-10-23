@@ -128,11 +128,11 @@ A sweep of every `.dds` in the vanilla archives (about 33,000 files) found:
   LOD atlases. OpenSky reads the three 32-bit formats and 24-bit RGB (188 files).
 - 58 cubemaps, such as `textures\cubemaps\EyeCubeMap.dds`. A cubemap used as a 2D texture
   throws `unsupported` and gets a placeholder.
-- 1 volume texture, `textures\effects\noisevolume.dds`: L8, 128 x 128 x 128, 8 mip levels,
-  no DX10 header, and `DDSD_DEPTH` (`0x800000`) set in dwFlags. The file is 2,396,873 bytes:
-  the 128-byte header plus the sum of `n * n * n` for n = 128, 64, ..., 1. This exact match
-  confirms the slices-per-level layout. The renderer has no volume use yet, so it still loads
-  only 2D and cube textures; the Preview panel and `openskycli dds` show the volume's levels.
+- 1 volume texture, `textures\effects\noisevolume.dds`: L8, 128 x 128 x 128, 8 mip levels, no DX10
+  header, and `DDSD_DEPTH` (`0x800000`) set in dwFlags. The file is 2,396,873 bytes: the 128-byte
+  header plus the sum of `n * n * n` for n = 128, 64, ..., 1. This exact match confirms the
+  slices-per-level layout. The renderer has no volume use yet, so it still loads only 2D and
+  cube textures; `openskycli dds` shows the volume's levels.
 - Every vanilla texture parses (census of 32,918 files).
 
 ## Cubemaps

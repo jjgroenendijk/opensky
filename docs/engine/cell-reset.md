@@ -58,8 +58,3 @@ Quest-alias protection is not modelled: a quest item in a chest that resets is l
 A reset reference's scripts start again with fresh variables. `OnInit` runs again, then
 `OnReset` (<https://ck.uesp.net/wiki/OnReset_-_ObjectReference>). The wiki says the order of
 `OnReset` and `OnCellLoad` is undefined; OpenSky queues `OnReset` after the attach events.
-
-## Sidebar
-
-World > Runtime State > Reset shows how many cells wait to reset and the last reset. "Make
-cell resets due" moves every stored departure back, so each cell resets on the next visit.

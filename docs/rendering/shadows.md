@@ -81,11 +81,10 @@ Low keeps all 3 slices allocated and draws fewer, so changing quality allocates 
 padding already handles 2 cascades. The on and off switch is separate from quality, so turning shadows
 back on keeps the chosen quality.
 
-## Where to see it
+## Choosing the quality
 
-`World > Environment > Sun shadows` turns shadows on and off and sets the quality. The readout shows
-the shadow draw calls, drawn and culled instances, cascades, and the CPU time of the shadow pass. The
-quality is saved in user defaults, and a bad or missing value means high.
+A new renderer starts at high. `openskycli game debug shadows <off|low|high>` changes the tier
+until the renderer is rebuilt; nothing saves it.
 
 ## Fly-path budget
 

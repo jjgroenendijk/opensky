@@ -100,7 +100,7 @@ A fragment naming a script the quest has no instance of is counted as
 
 A `VMAD` object property whose alias word is not -1 names an alias slot on the quest its form ID
 identifies. It binds to an alias slot handle: one handle per quest and alias ID, filled or not.
-The binding still counts an empty alias as an unfilled quest alias, for the readout.
+The binding still counts an empty alias as an unfilled quest alias.
 
 A slot handle stands for the alias, and a call on it goes one of three ways:
 

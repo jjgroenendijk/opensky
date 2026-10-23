@@ -224,17 +224,14 @@ field-grass textures instead of the mesh's slab and rock textures.
 
 ## Coverage
 
-Every record type in the five masters and the Creation Club plugins has a decoder: 120
-types, `TES4` included. The decoder registry maps each type to its decoder. The
-real-data coverage sweep walks every group of every plugin, decodes every live record
-through the registry, and fails on a type with no decoder or a decode that throws. It
-also fails on a decoder that keeps no skip tally, and it pins the number of fields no
-decoder reads, which is 0. Every type reads every field its install records carry. A field
-xEdit names but does not explain, such as `TES4 INTV` or `PACK PFOR`, is kept as raw bytes.
-So are the script leftovers of older Creation Kit versions that xEdit marks unused: `SCHR`
-and `QNAM` before an `INFO` `NEXT`, and `SCHR`, `SCTX`, and `QNAM` in a `QUST` log entry.
-The CLI `record` command and the app's record inspector print the decoded fields of any
-record, with links shown as editor IDs.
+Every record type in the five masters and the Creation Club plugins has a decoder: 120 types, `TES4`
+included. The decoder registry maps each type to its decoder. The real-data coverage sweep walks
+every group of every plugin, decodes every live record through the registry, and fails on a type
+with no decoder or a decode that throws. It also fails on a decoder that keeps no skip tally, and it
+pins the number of fields no decoder reads, which is 0. Every type reads every field its install
+records carry. A field xEdit names but does not explain, such as `TES4 INTV` or `PACK PFOR`, is kept
+as raw bytes. So are the script leftovers of older Creation Kit versions that xEdit marks unused:
+`SCHR` and `QNAM` before an `INFO` `NEXT`, and `SCHR`, `SCTX`, and `QNAM` in a `QUST` log entry.
 
 A second sweep, the field census, checks that each decoded field is set by at least one
 record of the install. A field that no record sets would point at a decoder that never

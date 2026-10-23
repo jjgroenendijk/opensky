@@ -3,7 +3,7 @@ type: Subsystem
 title: Combat loop
 description: How a fight starts and ends - who is hostile, what makes an actor engage, derived
   combat state, how many fight at once, the script natives and events, transient caps, combat
-  music, what a save keeps, the panel, and the known limits.
+  music, what a save keeps, and the known limits.
 tags: [engine, combat, hostility, combat-ai, npc, music, persistence]
 ---
 
@@ -29,12 +29,11 @@ every other write ([runtime state](/engine/runtime-state.md)). There is no `dead
 its own component, and a second copy of the same fact would have to be kept in step.
 
 The stored value is the session's explicit override: a record of something that already happened.
-Three things write it:
+Two things write it:
 
 1. The player hurt the actor. The melee hit and the projectile impact call the same function, so a
    swing and an arrow anger a target the same way. Calling it twice is safe.
-2. The panel's hostility checkbox.
-3. A script's `StartCombat`.
+2. A script's `StartCombat`.
 
 Everything else is derived from the records each time it is asked
 ([hostility](/engine/hostility.md)). With no game data loaded, there is nothing to derive from, and
@@ -49,9 +48,6 @@ Hostility is how an actor feels. Starting to fight is a separate step, with thre
 | The player struck it | It is angered and staggered. It is in the fight for the step it takes to turn around |
 | A script called `StartCombat` | It fights at once, without needing to perceive anything |
 | It perceived the player | A hostile actor whose detection level reaches `detected` starts fighting, unhit |
-
-So the panel's hostility checkbox does not start a fight by itself. An actor made hostile from the
-sidebar stands there until it notices the player, like a bandit in a cave.
 
 Being suspicious is not enough. A level between the two thresholds means something to investigate,
 not a target.
@@ -76,16 +72,14 @@ The current target is the nearest hostile living actor, engaged or not, with tie
 `ReferenceKey`. From the player's side, "who am I fighting?" is answered by turning to face someone.
 Nearest, not last hit, because a player who turned to a second attacker has answered by turning.
 
-Deriving keeps it correct. A target that died, a cell that unloaded, and hostility cleared from the
-panel all change the answer on the next step. A stored flag would need clearing in each place, and a
-forgotten one would leave the player in combat with a corpse.
+Deriving keeps it correct. A stored flag would need clearing in each place, and a forgotten one
+would leave the player in combat with a corpse.
 
 ## How many fight at once
 
 At most eight actors are engaged, the same as the most simultaneous movers. Every engaged actor asks
-the mover for a path, so a ninth would be a fighter whose approach never starts. Past the limit the
-nearest actors win, and the panel shows how many were crowded out. A silent cut would read as
-"nobody else was fighting".
+the mover for a path, so a ninth would be a fighter whose approach never starts. A silent cut would
+read as "nobody else was fighting".
 
 ## Allies
 
@@ -130,10 +124,7 @@ false, because power attacks, sneak attacks, and bashing do not exist yet. The `
 `akProjectile` handles name base records with no script instance: a handler can compare and log
 them, but cannot call a method on them.
 
-Deaths come from the death latch in the ragdoll runtime. So `OnDying` and `OnDeath` fire exactly
-once, whether a sword, an arrow, a sidebar control, or a script's `Kill` made the corpse. The death
-panel counts these beside the graph-driven and fallback deaths, so "the scripts were told" and "the
-graph drove it" are two numbers, not one guess.
+Deaths come from the death latch in the ragdoll runtime.
 
 The condition side reads the same state ([conditions](/formats/conditions.md)). `GetCombatState`
 reads the behavior phase, not stored hostility: 0 for an actor that hates the player but has not
@@ -181,29 +172,6 @@ change who is angry. An unknown hostility byte loads as neutral.
 Before a save, and after a load, the loop drops what a reload cannot rebuild: arrows in the air,
 falling corpses, attack phases, and the damage flash. What stays is what a component holds:
 hostility, actor values, and death. A fight saved mid-swing loads as a fight, without the swing.
-
-## Controls
-
-World > Combat & Physics > Combat Loop:
-
-- Selected actor is hostile: reads the derived answer for the nearest actor, so a bandit shows
-  hostile with nothing ticked, and a guard shows calm. Writing it sets the explicit override, which
-  beats every record. Unticking a bandit keeps it calm. Clearing it also ends any fight and returns
-  the actor to its package.
-- AI casting: lets actors cast spells ([combat behavior](/engine/combat-behavior.md)).
-- Clear hit trace.
-- Readout: combat state and target, one line per fighting actor (phase, awareness, distance, health,
-  and attack, contact, block, search, and cast counts, with how many spells it could cast from where
-  it stands), the number crowded out, the player's allies and what each does, hits taken, the
-  damage flash, and transients against their limits.
-
-World > AI & Navigation > Combat Behavior has a second hostility checkbox for the actor selected
-there. The first one follows the nearest actor, which is useless for following one guard through a
-market. Both write the same component, so they never disagree.
-
-A frozen physics simulation is the Combat & Physics destination's one change from default. A damaged
-actor, an angry opponent, a corpse, and a shoved crate are world state, so they do not light the
-sidebar dot and no reset undoes them.
 
 ## Limits
 

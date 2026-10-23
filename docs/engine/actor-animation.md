@@ -122,11 +122,7 @@ fly, and a creature does not play its random idle variations.
 Actors with a missing skeleton stay in the bind pose. Each drawn actor is counted as animated or
 static, and each static one has its `ACHR` and a reason. So an actor with a missing clip still shows.
 
-## Time and controls
+## Time
 
 The renderer clock moves by real frame time, capped at 100 ms per frame. Offscreen tests set exact
 times. Benchmarks measure animation CPU time on its own against a budget.
-
-World > Environment > Actor animation > Enabled turns animation off and on for NPCs and the player.
-Off puts every skinned mesh back in the bind pose. On resumes from the renderer clock. The clock
-keeps running while it is off, so grass and particles do not freeze.

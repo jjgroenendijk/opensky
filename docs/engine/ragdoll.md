@@ -163,18 +163,3 @@ A body is kept from removal while any quest alias holds it. Removal deletes the 
 - The neck stump armour of the race (`DNAM`) and the flying head. The NPC visuals do not rebuild
   when equipment changes.
 - The skin partitions of `BSDismemberSkinInstance` are not used; the cut hides bones instead.
-
-## Controls
-
-World > Combat & Physics > Death & Ragdoll:
-
-- Ragdoll selected actor: kills and hands off the crosshair target, or else the nearest loaded
-  actor. It calls the same function as a death in a fight, so the two cannot differ.
-- Dismember selected actor: kills the actor when it lives, then cuts off its head.
-- Clear ragdolls: removes every live ragdoll. The deaths stay.
-- Freeze ragdoll stepping: stops the solver with the corpses where they are.
-- Bones collide with each other: turns self-collision on or off for the allowed pairs, and wakes
-  every corpse so the change shows.
-- Readout: live and settled counts, bone bodies and joints, solver iterations and errors, allowed
-  pairs and bones touching, and final pose corrections. Below them: the death settings, and how
-  many bodies were pushed, weapons dropped, heads cut, and bodies removed.

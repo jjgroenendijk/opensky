@@ -2,8 +2,7 @@
 type: Subsystem
 title: Locomotion graph
 description: What the player's movement writes into the behavior graph each step - the variables
-  and events it drives, how a name the graph does not declare is reported - and the
-  Player & Locomotion panel.
+  and events it drives, and how a name the graph does not declare is reported.
 tags: [engine, animation, behavior, locomotion, player]
 ---
 
@@ -55,40 +54,10 @@ the player never made.
 
 Writing a variable and raising an event both answer whether the graph declares the name. The bridge
 records both answers instead of dropping the write. A graph that spells a name differently, such as
-a mod or a non-player graph, shows as a named miss in the readout, not as movement that does
+a mod or a non-player graph, is recorded as a named miss, not as movement that does
 nothing. The vanilla `0_master.hkx` has no misses for all ten variables and all eleven events.
 
 A bridge with no graph is a supported setup. Movement still works, and the writes are dropped.
 
 `IsFirstPerson` is the one variable written per instance. It is false on the third-person graph and
 true on the first-person one ([first person](/engine/first-person.md)).
-
-## The Player & Locomotion panel
-
-World > Player & Locomotion shows everything above, and every key the player can press is also a
-control. It has six sections.
-
-- State: where the capsule is, the resolved gait, which source moved it, and the gait speeds with
-  their source. It repeats the camera mode selector from World > World > Camera, because the
-  capsule and both graphs only run outside fly mode. Frozen values with no way to unfreeze them
-  from the same screen would break the main-app UI rule.
-- Behavior Graph: the active state path (machine, state, and the state blending out with its
-  weight), every variable the bridge writes with the value the graph holds, the events raised, the
-  events that came back, the names the graph does not declare, and the tally's coverage line. A
-  variable the graph does not declare is listed as `<not declared by the graph>`, not hidden, so a
-  spelling mismatch looks like a failure.
-- Actor State: `iState`, the other actor-state inputs, and the outputs the graph publishes
-  ([actor state graph variables](/engine/actor-state-graph.md)).
-- Bindings: every movement key and its live state. Sneak is a toggle. Jump requests exactly one
-  jump, the same request the space bar makes. Run and sprint are held keys, so their rows turn
-  active while held.
-- Root Motion: two running totals that cannot both grow in one step (graph root motion and gait
-  speed), and a trace of the steps where the source changed. A button clears both.
-- Dev Controls: hold one gait regardless of input, or raise one graph event by name. A held gait
-  writes the graph's inputs and the gait speed and nothing else. The capsule keeps its gravity,
-  ground, and collision, so a forced swim shows the swim clips on dry land. Raising an event uses
-  the same path the bridge uses and says whether the graph declares the name.
-
-A held gait is the panel's one change from default: the sidebar dot lights for it, and "Reset all"
-releases it. The camera mode belongs to World > World and is not counted twice. Sneaking, jumping,
-and raising an event are actions, not settings, so they do not light the dot.

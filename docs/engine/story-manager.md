@@ -106,9 +106,8 @@ conditions test `GetBribeSuccess` == 1, `GetIntimidateSuccess` == 1, or the Spee
 value (17) >= a value. That is how the success lines of `Skyrim.esm` are gated. Persuasion
 sends `FLAT`, because the Creation Kit names the event "Flatter".
 
-`SKIL` fires once when one use raises a skill by more than one level, as the wiki says.
-`CLOC` is checked every 30 frames. Every event can also be fired from the sidebar, with the
-player as `R1`.
+`SKIL` fires once when one use raises a skill by more than one level, as the wiki says. `CLOC` is
+checked every 30 frames.
 
 `SendStoryEventAndWait()` returns at once with the result, because the walk is synchronous.
 
@@ -166,12 +165,11 @@ reset time and "do all before repeating" read them. The world-state component is
 
 ## Observed on the install
 
-`Skyrim.esm` has event nodes for 24 codes: `ADCR`, `ADIA`, `AFAV`, `AHEL`, `AIPL`, `ARRT`,
-`ASSU`, `BRIB`, `CAST`, `CHRR`, `CLOC`, `CRFT`, `DEAD`, `ESJA`, `FLAT`, `INTM`, `JAIL`, `KILL`,
-`LEVL`, `LOCK`, `NVPE`, `REMP`, `SCPT`, and `SKIL`. Firing `ESJA` (escape jail) with the
-player as `R1` starts `EscapeJailAchievementQuest` and `EscapeJailQuest`, with no condition
-failing. `SKIL` starts `WISkillIncrease02`. The other events start nothing with only the player as
-data, because their conditions ask for event data the sidebar does not give.
+`Skyrim.esm` has event nodes for 24 codes: `ADCR`, `ADIA`, `AFAV`, `AHEL`, `AIPL`, `ARRT`, `ASSU`,
+`BRIB`, `CAST`, `CHRR`, `CLOC`, `CRFT`, `DEAD`, `ESJA`, `FLAT`, `INTM`, `JAIL`, `KILL`, `LEVL`,
+`LOCK`, `NVPE`, `REMP`, `SCPT`, and `SKIL`. Firing `ESJA` (escape jail) with the player as `R1`
+starts `EscapeJailAchievementQuest` and `EscapeJailQuest`, with no condition failing. `SKIL` starts
+`WISkillIncrease02`.
 
 ## Not done yet
 

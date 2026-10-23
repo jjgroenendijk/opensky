@@ -142,11 +142,8 @@ work as for any spell. Hazards step on world time and stop while a menu pauses t
 
 ## Spawned hazards
 
-An explosion whose placed object is a `HAZD` spawns that hazard at the blast point, and the
-Effects panel can spawn one in front of the camera. A spawned hazard expires after its
-lifetime and respects the record's limit. It draws its `MODL` model where it sits. The panel
-lists each live hazard with its position, remaining lifetime, and tick count: the number of
-steps on which it hit someone.
+A spawned hazard expires after its lifetime and respects the record's limit. It draws its `MODL`
+model where it sits.
 
 ## Activate parents
 
@@ -169,16 +166,6 @@ A tripwire or pressure plate is activated with the use key like any activator. T
 reaches the reference's scripts as `OnActivate`, and the shipped script decides whether it
 disarms. OpenSky adds no disarm rule. A spent trap is a script state too: a tripwire stays in
 `active` after it fires, and a plate goes to `DoNothing` while an actor stands on it.
-
-## Checking it in the app
-
-World > World > Traps lists every loaded reference with a trap-family script, with each
-script's Papyrus state and how many actors stand in its volume. The script state is how a trap
-says armed or disarmed. The selected trap gets a red marker. Fire sends the volume an enter
-and a leave, as a walk across it would. Disarm presses the use key on it. The readout shows
-the selected reference's enable-parent chain with each link's effective state, and every live
-hazard with its lifetime and last hit. The record views in the Asset Browser decode `HAZD`
-and `PHZD`.
 
 ## Not done
 

@@ -6,7 +6,7 @@ no way to import each other, while a fixture like `FakeWorldProviders` is needed
 Membership follows the folder, exactly as `Sources/OpenSky/` builds into the app alone.
 
 Only fixtures that need the app or two feature implementations belong here: the fake world
-providers, the panel fakes, the acceptance harnesses, and chains such as
+providers, the acceptance harnesses, and chains such as
 `CombatCastingChain`. A fixture that needs neither goes in a `Tests/OpenSky<Layer>Testing/` or
 `Tests/<Name>Fixtures/` library, so the package test targets can use it too
 (`Tests/AGENTS.md`).

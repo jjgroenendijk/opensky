@@ -49,8 +49,7 @@ clutter has no such limit.
 
 The pose the delta is measured from is refreshed at every rebuild, not only for new bodies. A
 rebuild that bakes a settled pose into the scene must move the starting point too. Otherwise the
-object would be drawn moved twice. The same refresh makes the panel's reset return a body to the
-pose the current build drew, not to the plugin's pose.
+object would be drawn moved twice.
 
 ## Crossing a cell border
 

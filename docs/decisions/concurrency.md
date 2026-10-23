@@ -54,7 +54,7 @@ measurement.
   the caches. Only values in a `Mutex` cross to the main actor. An actor is not used here, for the
   reasons in [cell streaming](/engine/cell-streaming.md): the work has no `await` inside, and an
   actor would add `await` to the synchronous frame loop.
-- **`@concurrent` function.** One-shot loading outside the frame loop, such as a list for a panel
+- **`@concurrent` function.** One-shot loading outside the frame loop, such as a record catalog
   or a save file. The function takes `Sendable` values and returns a `Sendable` value. A
   main-actor `Task` awaits it. The UI shows that the work is in progress.
 
@@ -123,9 +123,9 @@ than Release, so the numbers are an upper bound.
 | Script execution (Papyrus) | Main actor | Simulation. Native functions read and write main-actor game state synchronously |
 | Menu movies (SWF) and fonts | Serial worker, `Mutex` mailbox | Loading when a menu opens |
 | Save, load, and the save list | `@concurrent` function | Loading after a user action. The encoder and decoder are pure |
-| Preview catalog and detail | `@concurrent` function | Loading for a panel. Hundreds of thousands of records. The detail builder sits in a `Mutex`, because its mesh and texture caches have no lock. Only the offscreen render of the picture runs on the main actor |
+| Preview catalog and detail | `@concurrent` function | Loading for `openskycli preview`. Hundreds of thousands of records. The detail builder sits in a `Mutex`, because its mesh and texture caches have no lock. Only the offscreen render of the picture runs on the main actor |
 | Launch setup (locate the install, settings) | Main actor | Reads a few small files before the first frame |
-| Session start (renderer, game systems, first frame) | Main actor | Wires every system to the loaded data and starts the start-game quests before the first frame. 0.74 s in a Release build (measured 2026-10-05). World > World Load lists each phase |
+| Session start (renderer, game systems, first frame) | Main actor | Wires every system to the loaded data and starts the start-game quests before the first frame. 0.74 s in a Release build (measured 2026-10-05). |
 | MetalFX scaler and frame interpolator build | `@concurrent` function | MetalFX compiles a model through the Neural Engine compiler: seconds the first time, and the service can stop answering. The frame draws at full size until the build lands ([upscaling](/rendering/upscaling.md#building-the-scaler)) |
 | World data load (archives, record stores) | `@concurrent` function with one child task per stage | Loading before the game window opens. 19.3 s on the main thread in a Debug build (measured 2026-10-04). The launcher shows each stage |
 

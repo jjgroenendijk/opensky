@@ -161,10 +161,8 @@ default. A kind that is off:
 - is read from the archives, without a cache lookup;
 - keeps its entries on disk, so turning it on again needs no rebuild.
 
-In a running game, World > Asset Optimisation turns the reads of one kind off and on for a
-comparison, without a reload; that change is not saved. `openskycli asset-optimisation` and
-the benchmarks read the same settings, and `--kinds textures,meshes,collision` overrides
-them.
+`openskycli asset-optimisation` and the benchmarks read the same settings, and `--kinds
+textures,meshes,collision` overrides them.
 
 Audio and animation have no switch, because the cache does not store them.
 
@@ -198,10 +196,8 @@ A check reads only the entry headers. It reports the cache as current, partly bu
 built, or stale. Stale wins, because a changed install or texture output needs a new
 conversion. The launcher shows the result as Ready, Needs conversion, or Not converted.
 
-`openskycli asset-optimisation build` runs a conversion without the app
-([CLI](/tools/cli.md)). The app starts the same conversion from the launcher's Asset
-Optimisation page. In a running game, World > Asset Optimisation turns reads off and on,
-shows the hits and misses per kind, and shows the entries of one path.
+`openskycli asset-optimisation build` runs a conversion without the app ([CLI](/tools/cli.md)). The
+app starts the same conversion from the launcher's Asset Optimisation page.
 
 ## Direct GPU loading
 
@@ -218,11 +214,9 @@ The fast loader runs only during a cell build:
    the cell handed to the renderer, so a frame never shows a texture that is still loading.
 4. If the buffer fails, every texture of the batch is filled on the CPU from the same entry.
 
-A texture loaded outside a cell build, or a texture with no current entry, takes the CPU
-path. The page calls this "Direct GPU loading", with one switch for textures, one for
-meshes, and one for "All disks". In a running game, World > Asset Optimisation has the same
-switches and shows the textures, bytes, and time of the last cell load.
-`make benchmark` measures it, and `ARGS='--set assetOptimisation.directLoad=off'` the path
+A texture loaded outside a cell build, or a texture with no current entry, takes the CPU path. The
+page calls this "Direct GPU loading", with one switch for textures, one for meshes, and one for "All
+disks". `make benchmark` measures it, and `ARGS='--set assetOptimisation.directLoad=off'` the path
 without it ([benchmark](/tools/benchmark.md)).
 
 A texture read needs scratch memory, in requests from 16 KiB to 8 MiB. The queue's own
@@ -233,16 +227,14 @@ scratch buffer when its read ends. Median of three cold fly-path gate runs with 
 the queue's allocator, 1189 MB with ours, and 1186 MB for the CPU upload. The frames until
 the stream settles did not change (391 and 393).
 
-On a slow external disk this does not hold. More reads wait at once, so the queue asks for
-more scratch buffers. The device keeps the memory of every scratch buffer the queue used, even
-after our allocator released it: `currentAllocatedSize` grows by the total scratch size, and
-the benchmark block ended 377 MiB above the CPU upload. Neither a cap on reads in flight, a new
-queue per batch, private textures, nor scratch memory that OpenSky owns changed this. On that
-disk the fast loader also saved no time: 4.62 s cold against 4.60 s for the CPU upload
-(2026-10-08, USB SSD, run directories under `.logs/fast-load-*`). So the fast loader reads
-only from a cache folder on an internal volume. From an external volume each texture takes
-the CPU path, and World > Asset Optimisation counts it under "External disk". "All disks"
-turns this rule off for a measurement.
+On a slow external disk this does not hold. More reads wait at once, so the queue asks for more
+scratch buffers. The device keeps the memory of every scratch buffer the queue used, even after our
+allocator released it: `currentAllocatedSize` grows by the total scratch size, and the benchmark
+block ended 377 MiB above the CPU upload. Neither a cap on reads in flight, a new queue per batch,
+private textures, nor scratch memory that OpenSky owns changed this. On that disk the fast loader
+also saved no time: 4.62 s cold against 4.60 s for the CPU upload (2026-10-08, USB SSD, run
+directories under `.logs/fast-load-*`). So the fast loader reads only from a cache folder on an
+internal volume. "All disks" turns this rule off for a measurement.
 
 Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as

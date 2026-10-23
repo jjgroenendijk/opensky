@@ -56,6 +56,3 @@ so without a minimum the screen would flash for one frame and the tip could not 
 - The `MOD2` camera path file is not read.
 - The tip text comes from the `Skyrim.esm` string tables only, so a DLC screen may show the
   wrong text or none.
-
-The `World > Loading Screens` panel can force a screen to stay on, release it, turn loading
-screens off, and list the screens whose conditions pass where the player stands.

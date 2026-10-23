@@ -34,7 +34,7 @@
     "query": "Every issue in milestone M9 is merged. Wrap it up.",
     "files": [],
     "expected_behavior": [
-      "Checks that the closing PR carries the acceptance record from docs/tools/sidebar-acceptance.md",
+      "Checks that the closing PR carries the acceptance record from docs/tools/acceptance-record.md",
       "Records the outcome in the closing PR, not in the milestone description or docs/",
       "Closes the milestone with gh"
     ]

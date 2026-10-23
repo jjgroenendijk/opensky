@@ -8,9 +8,8 @@ tags: [engine, settings, ui, menu]
 
 # Player settings
 
-One store owns every player setting at runtime. The System menu Settings page, the sidebar,
-and the Controls page read and write the same store. A write is clamped, saved, and sent to
-the system that uses it at once.
+One store owns every player setting at runtime. A write is clamped, saved, and sent to the system
+that uses it at once.
 
 ## Storage and defaults
 

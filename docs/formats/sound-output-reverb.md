@@ -79,6 +79,5 @@ zero decay, or a room or reverb gain at -60 dB or lower, switches reverb off. Ou
 no reverb. On the install, interior records span room filters -1 to -13 dB, reverb
 amplitudes 0 to 17 dB, and decays 193 to 3987 ms; `DefaultReverb` (-100 dB, 0 ms) means off.
 
-A change fades the wet level at 40 dB/s. A change of room first fades out, then switches the
-preset, then fades in, so the preset never jumps under a loud tail. The Audio panel's reverb
-section can hold the wet level at a fixed value for a listening test.
+A change fades the wet level at 40 dB/s. A change of room first fades out, then switches the preset,
+then fades in, so the preset never jumps under a loud tail.

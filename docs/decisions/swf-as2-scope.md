@@ -72,9 +72,7 @@ Enough of the `gfx` library for a real menu: `EventDispatcher`, `addEventListene
 `Constraints`, the focus path (`FocusHandler`, `setFocus`, `_focused`, `focusIndicator`),
 `NavigationCode`, and the button and list controls built on them (`setState`, `ButtonChange`,
 `thumb`, `track`). Real keyboard and mouse input goes into that focus path, not into clip events.
-`GameDelegate` works in both directions. The exit check is one vanilla menu opening, navigating, and
-closing under real input, with UI-state and pixel evidence, and with `Developer > UI Lab` showing
-movie state, the invoke log, and the tally.
+`GameDelegate` works in both directions.
 
 ### Per-menu data APIs
 
@@ -114,7 +112,7 @@ row. `tweenmenu.swf` was the first interactive menu instead. The
 The interpreter runs untrusted content. Vanilla movies come from the user's install, but mod movies
 are a goal, and a script that loops forever must not take the engine with it.
 
-- Bounded execution: an action budget and call and re-entry depth limits, shown in the UI Lab tally.
+- Bounded execution: an action budget and call and re-entry depth limits.
   Going past one aborts that block with a logged diagnostic, and the frame goes on. The largest
   vanilla block has 5,886 records, so a budget far above that still catches a runaway fast. The
   values are on the [AS2 runtime](/engine/as2-runtime.md) page.
@@ -124,7 +122,7 @@ are a goal, and a script that loops forever must not take the engine with it.
 - No outside reach. `ActionGetURL` and `ActionGetURL2` are not implemented and stay logged no-ops.
   The runtime has no file, network, or process access, and the host API is an explicit allowlist, not
   a bridge to any engine call.
-- `ActionTrace` output goes to the engine log and UI Lab, never to the rendered frame.
+- `ActionTrace` output goes to the engine log, never to the rendered frame.
 
 ## Residual risk
 

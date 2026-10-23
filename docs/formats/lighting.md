@@ -102,9 +102,7 @@ amplitude, clamped to 0 to 1. [WARNING] The curve shapes, the period unit, and t
 are OpenSky choices, not checked against the game. xEdit shows the period with a 0.01
 display scale, so the stored unit may differ.
 
-`World > Environment > Actor animation` has the "Flickering lights" switch and counts the
-animated lights. It is the player setting `rendering.lightAnimation`, also on the launcher's
-Graphics page.
+It is the player setting `rendering.lightAnimation`, also on the launcher's Graphics page.
 
 ## Placed lights (REFR)
 

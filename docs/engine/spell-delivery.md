@@ -88,9 +88,9 @@ whatever the ray reaches, once at the start and once per second held. The ray is
 every application, so moving the beam off a target stops applying to it while the cast keeps running
 and costing.
 
-A spell projectile is not drawn yet: no model, no muzzle flash, and no impact art. The Archery
-panel's trace shows its path. There is no aim assist. Vanilla nudges a cast toward a target, and
-OpenSky aims exactly where the camera points, as it does for arrows.
+A spell projectile is not drawn yet: no model, no muzzle flash, and no impact art. There is no aim
+assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the camera points, as
+it does for arrows.
 
 ## What a landed spell reaches
 
@@ -132,13 +132,11 @@ only. A weakness is the same formula with a negative resistance: -30 points mult
 The `SPEL` flag xEdit calls "Ignore Resistance" skips the whole step.
 
 Every scaled entry records the effect, the target, the resistance value, the base magnitude, and the
-multiplier. A moving health bar does not prove the multiplier was the documented one, so the
-Spellcasting panel prints each one.
+multiplier.
 
 ## Defences
 
-Before resistance, each target runs three defences. The first that answers stops the spell for that
-target, and the Spellcasting panel counts it.
+Before resistance, each target runs three defences.
 
 1. A wall. A bystander that a straight line from the impact to its middle does not reach takes
    nothing, so a fireball does not burn through stone. The actor the spell struck is never asked. The

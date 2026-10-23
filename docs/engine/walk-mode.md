@@ -90,8 +90,7 @@ if either value changes.
 
 macOS uses Control-click as the secondary click, so Control cannot be held during mouse look. That
 is why sneak moved. Sneak is a mode, not a held key, so it stays on when the pointer is released.
-Sprint and a pending jump are dropped. Every binding is listed on the World > Player & Locomotion
-panel.
+Sprint and a pending jump are dropped.
 
 ## Who moves the capsule
 
@@ -162,11 +161,10 @@ Above water the breath is full again at once. The settings come from the CK wiki
 
 Example: with 100 health, a 16 second dive costs 6 seconds at 8 health a second, which is 48 health.
 
-The `Water Breathing` actor value above 0 keeps the breath full. A water breathing effect, or
-the Argonian racial ability, raises it. `fActorSwimBreathMult` is in `Skyrim.esm` (0.2), but the
-wiki text for it ("number of minutes (additive)") does not say what it multiplies, so OpenSky
-does not use it. The breath refills at once, but the game may refill it over time; this is not
-measured. World > Player & Locomotion shows the breath left.
+The `Water Breathing` actor value above 0 keeps the breath full. A water breathing effect, or the
+Argonian racial ability, raises it. `fActorSwimBreathMult` is in `Skyrim.esm` (0.2), but the wiki
+text for it ("number of minutes (additive)") does not say what it multiplies, so OpenSky does not
+use it. The breath refills at once, but the game may refill it over time; this is not measured.
 
 ## Ground material
 

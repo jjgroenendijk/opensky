@@ -127,15 +127,14 @@ refraction shape scrolls the normal map half a texture per second. The reach and
 rate are OpenSky choices: the game's formula is not documented. A refraction shape casts no
 sun shadow.
 
-## Controls
+## Settings
 
-`World > Environment > Surface Shading` has one switch per term group and counts the scene
-draws that use each. The launcher's Graphics page has the same switches under "Surface
-shading". Both write the `rendering.shading.*` player settings. A frame applies the switches
-as a mask over each material's terms, so turning a term off costs no rebuild.
-Two switches act on effect shapes and particles instead: "Soft effect edges" and "Scene
-light on effects" ([effect shapes](/formats/nif-materials.md#effect-shapes)). "Glow and
-emissive colour" also switches the external emittance of effects.
+The launcher's Graphics page has one switch per term group under "Surface shading". The
+switches write the `rendering.shading.*` player settings. A frame applies them as a mask over
+each material's terms, so turning a term off costs no rebuild. Two switches act on effect shapes
+and particles instead: "Soft effect edges" and "Scene light on effects"
+([effect shapes](/formats/nif-materials.md#effect-shapes)). "Glow and emissive colour" also
+switches the external emittance of effects.
 
 ## Not modelled
 

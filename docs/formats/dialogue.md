@@ -55,14 +55,12 @@ Its direct children are the `INFO` records, in order.
 Categories 0 to 7: player, favor, scene, combat, favors, detection, service,
 miscellaneous. OpenSky keeps unknown values. It never trusts `TIFC` over the real children.
 
-Each subtype has a name in a string setting, `sTopicSubtypeText` plus the tab and the name:
-`HELO` is `sTopicSubtypeTextMiscellaneousHello`, and `CUST` is
-`sTopicSubtypeTextPlayerDialogueCustom`. The tabs are `PlayerDialogue`, `FavorDialogue`,
-`SceneDialogue`, `Combat`, `Favors`, `Detection`, `Service`, and `Miscellaneous`. The code
-to name list is UESP's `SNAM` table; its 97 names match the 97 settings one to one, with
-three `Custom` codes (`CUST`, `FVDL`, `SCEN`) on three tabs. The six Dragonborn
-flying-mount codes, such as `FMAT`, have no setting. The Dialogue panel shows the name
-beside each rejected topic.
+Each subtype has a name in a string setting, `sTopicSubtypeText` plus the tab and the name: `HELO`
+is `sTopicSubtypeTextMiscellaneousHello`, and `CUST` is `sTopicSubtypeTextPlayerDialogueCustom`. The
+tabs are `PlayerDialogue`, `FavorDialogue`, `SceneDialogue`, `Combat`, `Favors`, `Detection`,
+`Service`, and `Miscellaneous`. The code to name list is UESP's `SNAM` table; its 97 names match the
+97 settings one to one, with three `Custom` codes (`CUST`, `FVDL`, `SCEN`) on three tabs. The six
+Dragonborn flying-mount codes, such as `FMAT`, have no setting.
 
 ## INFO
 

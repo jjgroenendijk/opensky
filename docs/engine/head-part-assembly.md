@@ -13,9 +13,8 @@ and eyes merged. OpenSky draws that head by default. It can also build the head 
 parts, the `HDPT` records ([Head parts](/formats/head-parts.md)). This is the path a
 custom character will need, because a custom character has no baked head.
 
-World > AI & Navigation > Head Assembly switches the selected actor between the two and
-lists its parts. The choice lives in the actor's presentation state for the session, and a
-change rebuilds the actor's cell.
+The choice lives in the actor's presentation state for the session, and a change rebuilds the
+actor's cell.
 
 ## Which parts
 
@@ -28,8 +27,8 @@ Only a race with the FaceGen head flag gets assembled parts.
    once, so a loop of extra parts stops.
 4. A part whose `RNAM` race list does not hold the actor's race is dropped.
 
-Each drop is a miss with a reason: no such head part, not allowed for the race, no model,
-or extra parts loop. The sidebar lists them.
+Each drop is a miss with a reason: no such head part, not allowed for the race, no model, or extra
+parts loop.
 
 ## Textures and color
 

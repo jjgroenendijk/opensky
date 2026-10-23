@@ -89,13 +89,3 @@ the look, through the same two bones and shares. Roll tilts around the forward a
 track's turn has no limit and no speed: it follows the recorded curve.
 
 The eyes move as face morphs, not as bones ([face morphs](/engine/face-morphs.md)).
-
-## Controls
-
-World > Dialogue & Voice > Face Morphs:
-
-- Head tracking: turns head tracking on or off. Off puts every head back to forward.
-- The readout shows what the selected actor looks at, and its yaw and pitch.
-
-The launcher's Graphics page has the same switch under Characters. It is a persisted player
-setting, so the choice survives a restart.

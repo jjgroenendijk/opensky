@@ -10,9 +10,9 @@ a usage error.
 
 | Command | Does |
 | --- | --- |
-| `launch [--mode play\|developer] [--title] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
+| `launch [--title] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
 | `attach` | Prints the hello line: protocol version, data root, `worldReady` |
-| `status` | Running, mode, data root, frame, paused |
+| `status` | Running, data root, frame, paused |
 | `quit` | Quits the app after the reply |
 | `screenshot [--out <png>] [--offscreen] [--size WxH] [--world-only]` | The window's next presented frame, debug view included. `--offscreen`, `--size`, or `--world-only` render a second frame instead |
 
@@ -79,6 +79,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug racemenu [--limited on]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
+| `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
+| `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
 
 ## Benchmark
 

@@ -85,17 +85,3 @@ During the conversation the speaker turns its head toward the player
 Suspension is a latch, not a saved plan. While an actor stood in a conversation, the world moved
 on. On release it needs the package its schedule names now. So the package is selected again from
 scratch, as after [combat](/engine/combat.md).
-
-## Controls
-
-World > Dialogue & Voice > Dialogue Camera:
-
-- Force camera: shows the framing on any actor without a conversation. A conversation needs an
-  actor with something to say, within reach. The framing must be checkable on any actor in the
-  cell. An open conversation wins over the force, so forcing and then talking to someone else
-  cannot leave the view on the wrong actor.
-- Target: which actor the forced camera frames.
-- Overlay: draws a yellow cross on the pivot, a cyan line from the player's eye to it, and a
-  magenta line along the camera's own axis ([navigation](/engine/navigation.md)). It is drawn
-  from the last resolved pose, so it cannot disagree with the frame it is drawn over.
-- Readouts: the camera pose and the speaker's state.

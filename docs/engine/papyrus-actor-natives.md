@@ -92,10 +92,9 @@ moment, the latch. Firing them some frames apart would invent a dying time the r
 not define.
 
 The latch gives exactly once. It records a death only for an actor not already dead, and raises the
-pair inside that check. So the per-frame zero-health check, a killing blow, a sidebar kill, and a
-script's `Kill` together produce one of each. `Kill` empties health first and then takes the same
-path, so `GetActorValue("Health")` and `IsDead()` never disagree. `akKiller` is `None` for a death
-nothing caused, which is the wiki's default.
+pair inside that check. `Kill` empties health first and then takes the same path, so
+`GetActorValue("Health")` and `IsDead()` never disagree. `akKiller` is `None` for a death nothing
+caused, which is the wiki's default.
 
 ## Faction and relationship natives
 

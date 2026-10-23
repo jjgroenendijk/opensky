@@ -23,7 +23,7 @@ Asked what `observer` makes of `target`, the derivation takes the first term tha
 
 | Order | Term | Source of the answer |
 | --- | --- | --- |
-| 1 | Session override | The stored hostility: the panel, `StartCombat`, or the player's blow |
+| 1 | Session override | The stored hostility: `StartCombat` or the player's blow |
 | 2 | Crime | Guards and a bounty ([guard response](/engine/guard-response.md)) |
 | 3 | Relationship | A rank a script set, else the `RELA` rank between the two `NPC_` bases |
 | 4 | Faction | The `FACT` relations between the two actors' memberships |
@@ -36,8 +36,6 @@ Only row 3's place comes from a source. The Creation Kit wiki says "relationship
   player stabbed does not calm down because the records say they are friends.
 - Crime is next, because a bounty is also something the player did.
 - Faction comes before the default.
-
-Each answer carries the term that produced it, so a panel or a test can say why an actor is angry.
 
 ## The four reactions
 
@@ -85,10 +83,9 @@ Aggression value, "in conjunction with Faction Relationships"
 An aggression value the spec does not name attacks nobody. An actor with no readable `AIDT` is
 unaggressive. Guessing upward, into a drawn weapon, is the harmful direction.
 
-This table is why a vanilla bandit is hostile to the player with nobody touching the panel. No
-`FACT` relation and no `RELA` record names the pair, so the reaction is the default, Neutral. The
-bandit is Very Aggressive, and Very Aggressive attacks neutrals. A Whiterun guard next to it gets the
-same Neutral reaction and stays calm, because a guard is only Aggressive.
+No `FACT` relation and no `RELA` record names the pair, so the reaction is the default, Neutral. The
+bandit is Very Aggressive, and Very Aggressive attacks neutrals. A Whiterun guard next to it gets
+the same Neutral reaction and stays calm, because a guard is only Aggressive.
 
 Confidence is decoded but not used here. "Cowardly actors NEVER engage in combat" is about engaging,
 and hostility records regard.

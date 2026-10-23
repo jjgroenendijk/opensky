@@ -110,12 +110,6 @@ with neither is dropped with the reason `noFirstPersonModel`. That is why vanill
 nothing on the arms while the cuirass and hands do.
 
 Dropping is a choice. The third-person mesh is skinned to the third-person skeleton, and the 99-bone
-first-person rig does not have all of its bones. So a fallback would bind a mesh to bones that do not
-exist. Nothing in the install says whether vanilla hides the piece, replaces it, or never meets the
-case. Each drop is counted in the World > First person readout.
-
-## Controls
-
-World > First person has the arms toggle, the field of view slider, and a readout. The readout shows
-the first-person graph, the arm meshes and every dropped piece with its reason, the camera bone, and
-any name the first-person graph does not declare.
+first-person rig does not have all of its bones. So a fallback would bind a mesh to bones that do
+not exist. Nothing in the install says whether vanilla hides the piece, replaces it, or never meets
+the case.

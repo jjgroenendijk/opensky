@@ -10,8 +10,7 @@ tags: [rendering, metal, debugging, engine, app-ui]
 # Render debug views and layer isolation
 
 Finding a visual bug needs a way to cut the problem in half. Two tools do that: change the scene
-pass's output channel, and turn layers off one at a time. Both are in the Render Debug section of
-`World > World`.
+pass's output channel, and turn layers off one at a time.
 
 ## Debug channels
 
@@ -49,9 +48,7 @@ separates distant LOD. An overdraw mode needs a blending pipeline set and an alw
 and a stencil version would clash with the SWF layer's counting stencil in the same encoder.
 
 Wireframe is a raster state, not a channel. The scene pass sets it once. Particles force fill mode
-and put the old value back, because a wireframe billboard is noise. The pass goes back to fill
-before the world overlay, the SWF layer, and the UI overlay, which share the encoder and would
-otherwise draw a wireframe HUD.
+and put the old value back, because a wireframe billboard is noise.
 
 ## Layer isolation
 
@@ -77,9 +74,8 @@ state can disagree. A derived value cannot.
 The renderer already has switches such as grass, particles, and precipitation. A second set of layer
 switches would be two controls for the same pixels. The rule:
 
-> A subsystem switch is the feature switch: it has meaning, it is saved, and its panel section owns
-> it. The layer mask is a view filter: it is temporary, never saved, and for developers only. What
-> is visible is the AND of both.
+> The layer mask is a view filter: it is temporary, never saved, and for developers only. What is
+> visible is the AND of both.
 
 Grass drops when grass is off. Particles drop only when both particle sources are off, because cell
 particles and precipitation share one layer and one draw path. Each source still checks its own
@@ -87,16 +83,15 @@ switch where it draws. The combined mask is worked out once per frame, with no G
 
 ## Not saved, and not in an offscreen frame
 
-Unlike shadow quality, neither the channel nor the mask survives a relaunch. A session that starts
+Neither the channel nor the mask survives a relaunch. A session that starts
 in wireframe, or with no terrain, looks like a rendering bug, and telling those apart is the point of
 the tools.
 
 For the same reason, an offscreen frame uses the normal settings unless it asks for the debug state.
-Offscreen captures and bench runs stay clean whatever the sidebar says. Device tests opt in. A
-window screenshot is a copy of the presented frame, so it shows the debug view.
+Device tests opt in. A window screenshot is a copy of the presented frame, so it shows the debug
+view.
 
 ## Where to see it
 
-`World > World` has a Render Debug section: a channel picker, one checkbox per layer, and a solo
-control that writes the same mask. A channel other than off, or a mask other than all layers, shows
-the World destination's override dot, and Reset all clears both.
+`openskycli game debug channel <mode>` picks the channel, and `openskycli game debug overlay
+<layer> on|off` turns one layer on or off ([agent control](/tools/agent-control.md)).

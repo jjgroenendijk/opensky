@@ -73,7 +73,7 @@ to no one, which is why killing a bandit on the road costs nothing. No default i
 The crimes are theft, assault, murder, and trespass. They are the four that the `FACT` `CRVA`
 field prices and that this engine can observe.
 
-The bounty readout names them with the string settings `sCrimeTypeSteal`, `sCrimeTypeAttack`,
+Bounty text names them with the string settings `sCrimeTypeSteal`, `sCrimeTypeAttack`,
 `sCrimeTypeMurder`, and `sCrimeTypeTrespass`. The game also names `sCrimeTypePickpocket`,
 `sCrimeTypeEscape`, and `sCrimeTypeWerewolf`; OpenSky reads those when it counts those crimes.
 
@@ -218,16 +218,3 @@ disagree about what is a first strike.
   but the crime check does not read it. It reads a script owner on the reference only.
 - Crafting does not clear the stolen mark. UESP says an item fully used up in crafting loses it.
   There is no crafting yet.
-
-## Controls
-
-World > Crime & Factions:
-
-- Bounty: the bounty per crime faction in its two halves, and what the faction's guards do. Add
-  changes one half, Clear removes both.
-- Theft: whether taking the crosshair target is theft, who owns it, and the player's stolen items.
-- Memberships: the factions and ranks of the player and of an actor under the crosshair, what that
-  actor thinks of the player, and each hostility term. Join and Leave change memberships.
-- Vendor: see [vendor factions](/engine/vendor-factions.md).
-
-`FACT`, `RELA`, and `ASTP` records are in Library > Asset Browser > Reference records.

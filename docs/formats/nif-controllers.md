@@ -94,6 +94,5 @@ bit 5 follow.
 - A manager-controlled particle controller reads its keys from the sequence through the
   blend interpolator it points at.
 
-The shader property controllers are on the [NIF sequences](/formats/nif-sequences.md) page.
-The mesh preview in the sidebar lists the decoded fields of every block here. Lag bones,
-lightning bolts, bone LOD, and look-at turns have no other consumer yet.
+The shader property controllers are on the [NIF sequences](/formats/nif-sequences.md) page. Lag
+bones, lightning bolts, bone LOD, and look-at turns have no other consumer yet.

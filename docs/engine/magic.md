@@ -212,28 +212,6 @@ The player's slot is rebuilt as soon as the state loads. At that time the cells 
 back in, so no other actor has a holder yet. Each NPC that had effects is kept in a list, and its
 slot is rebuilt on the first frame its holder is loaded again.
 
-## Controls
-
-World > Combat & Physics > Magic Effects sits beside Actor Values, because a potion that restored
-health is only convincing next to the health.
-
-- Consume carried item: consumes the first `ALCH` or `INGR` the player carries. The inventory menu's
-  Consume button uses the same path ([inventory menu](/engine/inventory-menu.md)).
-- Dispel: acts on the player only. A dispel is a way back from something the user did, and the
-  nearest actor's effects belong to the world.
-- Readout: the player's effects first, then the nearest actor's, the same actor the Actor Values
-  panel names. "No actor nearby" and "an actor with nothing running" read differently, so an NPC just
-  hit by a spell and an empty cell cannot look the same.
-
-Each readout line names its source with the `sMagicTypePotion`, `sIngredient`, `sMagicTypeSpell`,
-and `sMagicTypeEnchantment` settings, and gives the time left in the units of the
-`sEffectsListDisplaySec(s)`, `Min(s)`, and `Hour(s)` settings. Below a minute it counts seconds,
-below an hour whole minutes rounded up, and above that whole hours rounded up, such as "2 mins".
-This is OpenSky's reading of the game's active effects list, not a measured rule.
-
-Effect visuals and sounds are not drawn or played. The `ALCH` consume sound is decoded and passed
-along for when they are.
-
 ## Magic menu
 
 The magic menu (`Interface\magicmenu.swf`) uses the same list clips as the inventory movie

@@ -91,12 +91,3 @@ terrain or object LOD.
 
 Distant LOD does not cast or receive near shadows and ignores point lights. Sun, ambient, and fog
 still apply.
-
-## Controls
-
-World > Environment > Distant LOD has four fields: level 4, level 8, far distance, and trees.
-Apply saves an OpenSky override and rebuilds the current ring at once. "Use Skyrim INI" clears
-the override, reloads the files, and rebuilds. A label shows which source is active.
-
-`openskycli render --worldspace Tamriel --x 6 --y -2 --neighbors` draws a 5 x 5 grid with its
-LOD ([CLI](/tools/cli.md)).

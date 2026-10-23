@@ -28,10 +28,8 @@ shout key: a tap shouts the first word, and a longer hold shouts more of the unl
 
 ## What the player knows
 
-The Papyrus shout natives keep the player's words and shouts in the script state
-([script state](/engine/papyrus-script-state.md#words-and-shouts)). The shout runtime reads the
-same record, so a word wall script and the World > Combat & Physics > Shouts section change one
-thing.
+The Papyrus shout natives keep the player's words and shouts in the script state ([script
+state](/engine/papyrus-script-state.md#words-and-shouts)).
 
 - A shout is known when `Actor.AddShout` gave it, or when one of its words is known.
 - Words unlock in order. The shout can use the words from the first one up to the first locked
@@ -69,5 +67,3 @@ as the holds that reach the second and third word. The values fit the UESP text 
   anyway. This keeps a shout working on a body with no graph. The game has no such wait.
 - The graph picks the exhale clip; the engine does not tell it how many words were shouted.
 - Only the player shouts. An NPC's shout package is not cast.
-- The panel's Learn button teaches and unlocks every word at once, the way the Greybeards'
-  words arrive unlocked.

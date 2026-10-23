@@ -3,7 +3,7 @@ type: Subsystem
 title: Actor value store
 description: How actor values change at runtime - current values, the override table of base
   offsets and modifier slots, the rule that a base write is a delta over the records, the Papyrus
-  writes, regeneration, the HUD bars, saving, and the Actor Values panel.
+  writes, regeneration, the HUD bars, and saving.
 tags: [engine, actors, gameplay, stats, runtime-state, hud, papyrus]
 ---
 
@@ -202,21 +202,3 @@ the buff. The layouts, and why these are separate chunks, are on the
 
 Maximums are not saved. So a save loaded against changed records gets the new numbers. The stored
 current value is kept, and the first change clamps it into the new range.
-
-## Controls
-
-World > Combat & Physics > Actor Values:
-
-- Target: the player or the nearest actor in a loaded cell.
-- Value: health, magicka, or stamina. Other value: any of the other 161, by vanilla name or index.
-  `Resist Fire`, `ResistFire`, and `41` all reach the same value. A text field that names nothing
-  falls back to the popup, and the readout shows which one won.
-- Amount: a text field, so a test can ask for exactly 40. Text that is not a number falls back to
-  the default instead of sending a NaN.
-- Damage, Restore, Set (the current value for a primary, the base otherwise), and Set base (for a
-  primary, this moves the maximum the bar is drawn against).
-- Refill, and Reset to records. The section cannot be reset from the sidebar. A damaged actor is
-  world state, and a sidebar reset would refill every bar in the cell.
-- Readout: both actors' three bars against the effective maximum, the derivation behind them, the
-  selected value with its modifier slots and capped resistance, and the last action. 90/90 after
-  `ModActorValue` and 90/100 after `DamageActorValue` are different states, and the bar shows both.

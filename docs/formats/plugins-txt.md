@@ -80,11 +80,9 @@ Lowest priority first:
 A name listed twice keeps its first position. So a master that is also starred in
 `plugins.txt` does not move behind the mods.
 
-A `plugins.txt` entry with no file in `Data/` is shown as missing in the Load Order panel.
-This usually means a mod was removed without updating the list. Missing entries from the
-other two sources are not shown. A missing master means the DLC is not owned. `Skyrim.ccc`
-lists everything Creation Club sells, not what is installed; on a stock install most of its
-entries are absent.
+This usually means a mod was removed without updating the list. Missing entries from the other two
+sources are not shown. A missing master means the DLC is not owned. `Skyrim.ccc` lists everything
+Creation Club sells, not what is installed; on a stock install most of its entries are absent.
 
 ## Archive order
 
@@ -100,9 +98,7 @@ worse than loading one archive the game would skip.
 
 - Settings (Cmd+,) has a "Plugin Load Order (plugins.txt)" group: the path in use, where it
   came from, "Choose...", and "Search Automatically".
-- Library > Load Order lists the order: runtime index (`02`, or `FE 001` for a light
-  plugin, see [FormID](/formats/formid.md#light-plugins)), plugin, source (masters, `Skyrim.ccc`, or
-  `plugins.txt`), and missing plugins. It has the same buttons and "Reload".
+- It has the same buttons and "Reload".
 
 ## Not supported
 

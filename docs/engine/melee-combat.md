@@ -199,12 +199,3 @@ them: attacking does not move the capsule. The graph does that, if its attack cl
 
 Losing cursor capture drops the guard, because a block held through a lost mouse-up would stay up
 forever. The drawn state stays, like sneak, because the player set it on purpose.
-
-## Controls
-
-World > Combat & Physics > Melee: Weapon drawn (raises draw or sheath), Attack (one swing), Clear
-hit trace, and a readout of the state, weapon, reach, both hand types, and the last hits.
-
-Block is held, so it is shown live in the state line, not as a checkbox. A checkbox would hold it
-for one frame and look broken. The section has no reset. A drawn weapon is world state, and "Reset
-all" must not sheath it.

@@ -155,9 +155,7 @@ still fails on the missing list, because `make` creates both the symlink and the
 
 `dlopen` and weak linking were rejected. They exist to survive a library that is missing at run
 time, which an embedded copy rules out, and `dlopen` needs hand-written function pointer types for
-every symbol, a quiet place to get the ABI wrong. Real failures (no output device, a corrupt file,
-an unsupported codec variant) are thrown decoder errors, and the audio panel shows an unavailable
-state.
+every symbol, a quiet place to get the ABI wrong.
 
 ## No alternative removes the dependency
 
