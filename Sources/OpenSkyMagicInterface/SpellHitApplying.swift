@@ -1,3 +1,5 @@
+import simd
+
 /// Applying one landed spell. A projectile, a target-actor cast and a beam land the
 /// same way, so the session implements it once.
 @MainActor
@@ -9,4 +11,11 @@ public protocol SpellHitApplying: AnyObject {
     ///   not be applied is reported rather than counted as landed.
     @discardableResult
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport
+    /// A spell met a surface and reached nobody. Light stays at the point, as
+    /// Magelight does.
+    func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>)
+}
+
+extension SpellHitApplying {
+    public func spellLanded(_: SpellPayload, at _: SIMD3<Float>) {}
 }

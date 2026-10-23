@@ -27,6 +27,8 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     public let values: [ActiveEffectValue]
     /// Peak Value Modifier's second associated item.
     public let stackKeyword: ReferenceKey?
+    /// The EFIT area, feet. Detect Life reads its range here.
+    public var area: UInt32 = 0
     /// MGEF No Recast: "Once the magic effect is applied to a target, it cannot
     /// be cast again on the same target until it has worn off or been
     /// dispelled."
@@ -66,6 +68,12 @@ nonisolated public enum MagicEffectPlanFailure: Equatable, Error, Hashable, Send
     /// Turn Undead "is hard-coded to require that the target have the
     /// ActorTypeUndead keyword".
     case notUndead
+    /// Enhance Weapon found no melee weapon in the target's hands.
+    case noMeleeWeapon
+    /// Enhance Weapon found the weapon already enchanted or conjured.
+    case weaponEnchanted
+    /// Banish, Command Summoned, and Werewolf Feed act on a summon or a corpse only.
+    case wrongTarget(MagicEffectArchetype)
 }
 
 nonisolated public enum MagicEffectPlanner: Sendable {
@@ -94,6 +102,7 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         effect: ResolvedMagicEffect,
         entry: MagicItemEffect,
         isConstant: Bool = false,
+        valueAndParts: MagicValueAndPartsScale = MagicValueAndPartsScale(),
         resolveKeyword: (FormID) -> ReferenceKey? = { _ in nil }
     ) -> Outcome {
         guard let data = effect.effect.data else {
@@ -107,8 +116,9 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         if let reason = refusal(of: rule, data: data, duration: duration, isConstant: isConstant) {
             return .skip(reason)
         }
-        let planned = rule.map { values(of: $0, data: data, magnitude: entry.magnitude) }
-            ?? .success([])
+        let planned = rule.map {
+            values(of: $0, data: data, magnitude: entry.magnitude, scale: valueAndParts)
+        } ?? .success([])
         let values: [ActiveEffectValue]
         switch planned {
         case let .success(planned):
@@ -121,7 +131,7 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         // A timed Recover effect on health, magicka, or stamina applies like any held
         // modifier: a primary's temporary slot moves its maximum and the current value.
         // Expiry's floor is `ActiveEffectRuntime.release`.
-        return .apply(MagicEffectApplication(
+        var application = MagicEffectApplication(
             effect: ReferenceKey(resolved: effect.id),
             archetype: data.archetype,
             rule: rule,
@@ -134,7 +144,9 @@ nonisolated public enum MagicEffectPlanner: Sendable {
                 ? data.associatedItem.flatMap(resolveKeyword)
                 : nil,
             refusesRecast: data.flags.contains(.noRecast)
-        ))
+        )
+        application.area = entry.area
+        return .apply(application)
     }
 
     // MARK: - Private
@@ -167,7 +179,8 @@ nonisolated public enum MagicEffectPlanner: Sendable {
             return .constant
         }
         switch rule {
-        case .heldFlag, .influence(.paralysis), .accumulate: return .modifier
+        case .heldFlag, .influence(.paralysis), .accumulate, .world(.enhanceWeapon):
+            return .modifier
         case .absorb: return .perSecond
         default: return flags.contains(.recover) ? .modifier : .perSecond
         }
@@ -185,7 +198,8 @@ nonisolated public enum MagicEffectPlanner: Sendable {
     private static func values(
         of rule: MagicArchetypeRule,
         data: MagicEffectData,
-        magnitude: Float
+        magnitude: Float,
+        scale: MagicValueAndPartsScale
     ) -> Result<[ActiveEffectValue], MagicEffectPlanFailure> {
         switch rule {
         case let .heldFlag(index):
@@ -195,6 +209,15 @@ nonisolated public enum MagicEffectPlanner: Sendable {
                 ActiveEffectValue(index: MagicArchetypeRule.paralysisActorValue, magnitude: 1)
             ])
         case .actorValues, .absorb, .accumulate:
+            actorValues(of: data, magnitude: magnitude)
+        case .valueAndParts:
+            actorValues(of: data, magnitude: magnitude * scale.value).map { values in
+                values + MagicArchetypeRule.bodyPartConditionValues.map {
+                    ActiveEffectValue(index: $0, magnitude: magnitude * scale.parts)
+                }
+            }
+        case .world(.enhanceWeapon)
+            where ActorValueIdentity.isVanilla(index: data.relatedActorValue):
             actorValues(of: data, magnitude: magnitude)
         case .influence, .dispel, .carrier, .world:
             .success([

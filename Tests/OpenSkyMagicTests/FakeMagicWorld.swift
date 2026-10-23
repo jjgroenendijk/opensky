@@ -10,6 +10,7 @@ import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
+import simd
 
 @MainActor
 final class FakeMagicWorld: MagicWorld {
@@ -175,5 +176,47 @@ final class FakeMagicWorld: MagicWorld {
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {
         bookRaises.append((skill: skill, points: points))
         return points
+    }
+
+    // MARK: - Later archetypes
+
+    private(set) var commandedBy: [(actor: ReferenceKey, caster: ReferenceKey)] = []
+    private(set) var raceChanges: [(actor: ReferenceKey, race: FormID)] = []
+    private(set) var eaten: [ReferenceKey] = []
+    private(set) var actorHolds: [(actor: ReferenceKey, point: SIMD3<Float>?)] = []
+    private(set) var placedHazards: [SIMD3<Float>] = []
+    var canChangeRace = true
+    var guide = MagicGuidePath.noMarker
+    var aimRays: [ReferenceKey: MagicAimRay] = [:]
+
+    func commandActor(_ actor: ReferenceKey, for caster: ReferenceKey) {
+        commandedBy.append((actor: actor, caster: caster))
+    }
+
+    func changeRace(of key: ReferenceKey, to race: FormID) -> Bool {
+        guard canChangeRace else { return false }
+        raceChanges.append((actor: key, race: race))
+        return true
+    }
+
+    func markEaten(_ key: ReferenceKey) {
+        eaten.append(key)
+    }
+
+    func aimRay(of key: ReferenceKey) -> MagicAimRay? {
+        aimRays[key]
+    }
+
+    func holdActor(_ actor: ReferenceKey, at point: SIMD3<Float>?) {
+        actorHolds.append((actor: actor, point: point))
+    }
+
+    func guidePath(for _: ReferenceKey) -> MagicGuidePath {
+        guide
+    }
+
+    func placeHazard(_: ReferenceKey, at point: SIMD3<Float>) -> Bool {
+        placedHazards.append(point)
+        return true
     }
 }

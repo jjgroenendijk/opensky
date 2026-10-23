@@ -93,6 +93,15 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.applyWeaponPoison(hit)
     }
 
+    @discardableResult
+    func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
+        game.magic.applyWeaponEnhancement(attacker: attacker, target: target)
+    }
+
+    func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
+        game.magic.spellLanded(payload, at: point)
+    }
+
     var playerAttacker: MeleeAttacker? {
         guard let gameSession = game.gameSession else { return nil }
         return MeleeAttacker(

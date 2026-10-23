@@ -9,6 +9,10 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case shoutWhileCasting = "sMagicCastShoutWhileCasting"
     case castWhileShouting = "sMagicCastCastWhileShouting"
     case playerDisarmed = "sPlayerDisarmedMessage"
+    case enhanceWeaponNoWeapon = "sMagicEnhanceWeaponNoWeapon"
+    case enhanceWeaponEnchanted = "sMagicEnhanceWeaponWeaponEnchanted"
+    case guideNoMarker = "sMagicGuideNoMarker"
+    case guideNoPath = "sMagicGuideNoPath"
 
     public var fallback: String {
         switch self {
@@ -17,6 +21,10 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .shoutWhileCasting: "You cannot shout during a cast."
         case .castWhileShouting: "You cannot cast during a shout."
         case .playerDisarmed: "You have been disarmed!"
+        case .enhanceWeaponNoWeapon: "You need a melee weapon equipped."
+        case .enhanceWeaponEnchanted: "This weapon is already enchanted."
+        case .guideNoMarker: "There is no quest target to guide you to."
+        case .guideNoPath: "No path leads to the quest target."
         }
     }
 

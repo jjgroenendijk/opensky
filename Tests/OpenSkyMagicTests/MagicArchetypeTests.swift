@@ -89,7 +89,15 @@ struct MagicArchetypeTests {
         #expect(MagicArchetypeRule.rule(for: .slowTime) == .world(.slowTime))
         #expect(MagicArchetypeRule.rule(for: .invisibility) == .heldFlag(actorValue: 54))
         #expect(MagicArchetypeRule.rule(for: .summonCreature) == .world(.summon))
-        #expect(MagicArchetypeRule.rule(for: .light) == nil)
+        #expect(MagicArchetypeRule.rule(for: .light) == .world(.light))
+        #expect(MagicArchetypeRule.rule(for: .werewolf) == .world(.changeRace))
+        #expect(MagicArchetypeRule.rule(for: .vampireLord) == .world(.changeRace))
+        #expect(MagicArchetypeRule.rule(for: .lock) == .carrier)
+        #expect(MagicArchetypeRule.rule(for: .valueAndParts) == .valueAndParts)
+        #expect(MagicArchetypeRule.rule(for: .unknown13) == nil)
+        #expect(MagicArchetypeRule.rule(for: .banish)?.capsTargetLevel == true)
+        #expect(MagicArchetypeRule.rule(for: .detectLife)?.actsOnce == true)
+        #expect(MagicArchetypeRule.rule(for: .light)?.needsDuration == true)
         #expect(MagicArchetypeRule.rule(for: .calm)?.capsTargetLevel == true)
         #expect(MagicArchetypeRule.rule(for: .paralysis)?.capsTargetLevel == false)
     }
@@ -269,7 +277,9 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.calm, magnitude: 9, duration: 30, on: coordinator)
         let snapshot = coordinator.magicEffectControlSnapshot
-        #expect(snapshot.playerEffects.first?.line.contains("calm at magnitude 9.0") == true)
+        let line = snapshot.playerEffects.first?.line ?? ""
+        #expect(line.contains("calm: \(MagicArchetypeRule.influence(.calm).summary)"))
+        #expect(line.contains("at magnitude 9.0"))
         #expect(MagicEffectControlReadout.influenceText(for: snapshot).contains("calmed"))
     }
 }

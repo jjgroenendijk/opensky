@@ -31,6 +31,8 @@ extension MagicWorldAdapter {
                 castingSound(sound, caster: caster, starts: starts)
             case let .notice(text): game.hud.showNotification(text)
             case .playerShouted: game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
+            case let .paintActor(actor, shader, plugin, shown):
+                paintActor(actor, shader: shader, plugin: plugin, shown: shown)
             case let .castingArt(art, plugin, caster, starts):
                 game.effectsWorld.effects
                     .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)

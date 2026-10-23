@@ -35,6 +35,10 @@ nonisolated public struct MagicWorldAction: Equatable, Sendable {
     public var caster: ReferenceKey?
     /// The stored effect's sequence on `target`; zero for an effect that acts once.
     public var sequence: UInt64 = 0
+    /// The EFIT duration, seconds, of an effect that acts once.
+    public var duration: Float = 0
+    /// The EFIT area, feet, of an effect that acts once.
+    public var area: UInt32 = 0
 
     public init(
         phase: Phase,
@@ -95,6 +99,15 @@ extension ActiveEffectRuntime {
         return dispel(on: holder) { sequences.contains($0.sequence) }
     }
 
+    /// Whether the MGEF's own conditions hold with `holder` as the subject. Detect Life
+    /// asks this of each actor it may paint.
+    public mutating func effectConditionsHold(
+        _ effect: ReferenceKey, on holder: ActorValueHolder
+    ) -> Bool {
+        guard let resolved = effects.effect(key: effect) else { return false }
+        return allows(resolved.effect.conditions, on: holder)
+    }
+
     // MARK: - Target checks
 
     /// Why `application` cannot act on `target`, or nil when it can.
@@ -105,6 +118,9 @@ extension ActiveEffectRuntime {
         guard let rule = application.rule else { return nil }
         if rule == .influence(.turnUndead), !isUndead(target) {
             return .notUndead
+        }
+        if case let .world(archetype) = rule, let reason = worldRefusal(archetype, target) {
+            return reason
         }
         if rule.capsTargetLevel {
             let level = Float(values.baseline(of: target).level)
@@ -124,7 +140,7 @@ extension ActiveEffectRuntime {
         on target: ActorValueHolder
     ) {
         switch application.rule {
-        case nil, .actorValues:
+        case nil, .actorValues, .valueAndParts:
             guard application.isInstant else { return }
             moveValues(application, on: target)
         case .absorb:
@@ -136,13 +152,17 @@ extension ActiveEffectRuntime {
             dispelMatching(filter, on: target)
         case let .world(archetype) where application.rule?.actsOnce == true:
             guard archetype != .stagger || !isStaggerImmune(target) else { return }
-            worldActions.append(MagicWorldAction(
+            var action = MagicWorldAction(
                 phase: .began,
                 archetype: archetype,
                 effect: application.effect,
                 target: target,
                 magnitude: application.magnitude
-            ))
+            )
+            action.caster = caster
+            action.duration = application.duration
+            action.area = application.area
+            worldActions.append(action)
         case .world, .carrier, .influence, .heldFlag, .accumulate:
             break
         }

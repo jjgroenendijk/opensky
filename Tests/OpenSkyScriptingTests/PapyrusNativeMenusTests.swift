@@ -49,6 +49,12 @@ final class FakeMenuBridge: PapyrusMenuBridge {
         races[actor]
     }
 
+    @discardableResult
+    func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool {
+        races[actor] = race
+        return true
+    }
+
     func sex(ofBase base: FormID) -> Int? {
         nil
     }
@@ -194,6 +200,18 @@ struct PapyrusNativeMenusTests {
         #expect(actor("GetRace") == base)
         menus.races = [:]
         #expect(actor("GetRace") == .returned(.none))
+    }
+
+    @Test func setRaceWithNoneAsksForTheOriginalRace() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        menus.races[fixture.key] = FormID(0x100)
+        fixture.session.bridge.menus = menus
+        let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "Actor", "SetRace", receiver: fixture.receiver, arguments: [.none]
+        ))
+        #expect(result == .returned(.none))
+        #expect(menus.races[fixture.key] == nil)
     }
 
     @Test func voiceTypeAndGiftFilterReadTheBase() throws {

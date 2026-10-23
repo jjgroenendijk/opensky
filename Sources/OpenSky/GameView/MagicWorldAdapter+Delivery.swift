@@ -84,7 +84,7 @@ extension MagicWorldAdapter {
     }
 
     /// An NPC's eye, scaled with the actor.
-    private func actorCastOrigin(of key: ReferenceKey) -> SIMD3<Float>? {
+    func actorCastOrigin(of key: ReferenceKey) -> SIMD3<Float>? {
         guard
             let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor
@@ -97,7 +97,7 @@ extension MagicWorldAdapter {
 
     /// The middle of the target's capsule, so a miss means the target moved,
     /// not that the caster aimed at the floor.
-    private func castTarget(of caster: ReferenceKey) -> SIMD3<Float> {
+    func castTarget(of caster: ReferenceKey) -> SIMD3<Float> {
         if
             let key = game.combat.loop?.combatTarget(of: caster), key != .player,
             let target = game.combat.combatActor(key: key)

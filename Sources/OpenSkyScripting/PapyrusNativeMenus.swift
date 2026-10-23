@@ -22,6 +22,9 @@ public protocol PapyrusMenuBridge: AnyObject {
     func isMapMarkerVisible(_ marker: ReferenceKey) -> Bool
     /// The player's chosen race for the player, else the actor's record race.
     func race(of actor: ReferenceKey) -> FormID?
+    /// Changes the actor's race; nil restores its original race. False when it cannot.
+    @discardableResult
+    func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool
     /// 0 male, 1 female, or nil for an unknown base.
     func sex(ofBase base: FormID) -> Int?
     /// The race after `useTraits` inheritance.
@@ -196,6 +199,18 @@ extension PapyrusNativeFunctions {
                 let handle = world.objectHandle(for: raceKey)
             else { return .returned(.none) }
             return .returned(.object(handle))
+        }
+        // "Change actors race and reload his art." None restores the original race.
+        withReference("Actor", "SetRace", into: &registry) { call, world, menus, key in
+            let race = objectArgument(call, at: 0).flatMap(world.referenceKey(for:))
+                .flatMap { (key: ReferenceKey) -> FormID? in
+                    guard case let .plugin(plugin, objectID) = key else { return nil }
+                    return world.formIDResolver?.localFormID(
+                        of: ResolvedFormID(plugin: plugin, objectID: objectID)
+                    )
+                }
+            menus.setRace(of: key, to: race)
+            return .returned(.none)
         }
         for name in ["GetActorBase", "GetLeveledActorBase"] {
             withReference("Actor", name, into: &registry) { _, world, _, key in

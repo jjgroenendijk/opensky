@@ -62,7 +62,7 @@ extension MagicWorldAdapter {
 
     /// The actor takes its caster's side: the player's ally is calm toward the player,
     /// and an NPC's ally shares its caster's regard for the player.
-    private func enlist(_ actor: ReferenceKey, for caster: ReferenceKey) {
+    func enlist(_ actor: ReferenceKey, for caster: ReferenceKey) {
         guard let loop = game.combat.loop else { return }
         let regard = caster == .player ? ActorHostility.neutral : loop.hostility(of: caster)
         loop.setHostility(regard, on: actor)

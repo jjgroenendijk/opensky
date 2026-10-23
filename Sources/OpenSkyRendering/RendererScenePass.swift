@@ -147,8 +147,11 @@ extension Renderer {
         let pick = pointLightPick(near: position, limit: limit)
         let stride = MemoryLayout<PointLightUniform>.stride
         let first = (slot * drawUniformSlotCapacity + draw) * limit
-        for index in 0 ..< pick.count {
-            let light = scene.pointLights[Int(pick.indices[index])]
+        let transient = transientPointLights.prefix(limit)
+        let scenePicks = (0 ..< min(pick.count, limit - transient.count)).map {
+            scene.pointLights[Int(pick.indices[$0])]
+        }
+        for (index, light) in (Array(transient) + scenePicks).enumerated() {
             let live = light.animated(at: animationTime, enabled: lightAnimationEnabled)
             var uniform = PointLightUniform(
                 positionRadius: SIMD4(live.position, light.radius),
@@ -157,7 +160,7 @@ extension Renderer {
             pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
         }
-        return (pick.count, first * stride)
+        return (transient.count + scenePicks.count, first * stride)
     }
 
     /// Group and terrain centers repeat every frame, so their picks are kept per scene.

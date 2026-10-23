@@ -34,6 +34,8 @@ protocol MagicWorldHost: AnyObject {
     var combat: CombatCoordinator { get }
     var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
+    var hazards: HazardCoordinator { get }
+    var hazardWorld: HazardWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
@@ -54,6 +56,8 @@ protocol MagicWorldHost: AnyObject {
 /// Answers `MagicWorld` from the session systems `game` owns.
 final class MagicWorldAdapter {
     unowned let game: any MagicWorldHost
+    /// The NPCs a Grab Actor effect holds through the ridden-actor hold.
+    var grabbedActors: Set<ReferenceKey> = []
 
     init(game: any MagicWorldHost) {
         self.game = game
@@ -75,6 +79,7 @@ final class MagicWorldAdapter {
         let worldTick = gameSession.worldTick
         worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
+            self?.publishMagicLights()
             gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
             let scales = coordinator?.timeScales ?? .normal
@@ -137,6 +142,7 @@ final class MagicWorldAdapter {
         game.magic.castNotices = game.mapWorld.settingTexts()
         game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
         game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
+        game.magic.holdSettings = MagicHoldSettings.resolve(store: provider.gameSettings)
         game.magic.enchantingSettings = EnchantingSettings.resolve(store: provider.gameSettings)
         game.magic.soulTexts = SoulTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }

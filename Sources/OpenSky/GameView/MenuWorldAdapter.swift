@@ -64,6 +64,8 @@ final class MenuWorldAdapter {
     var newGameTeleport: AgentWait?
     /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
     private var raceMenuAfterTeleport = false
+    /// The player's race before a script or a magic effect changed it. Not saved.
+    private var originalPlayerRace: FormID?
     private var startTickerInstalled = false
     /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
     private var coverNextTeleport = false
@@ -308,6 +310,19 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         }
         return game.scripts.bridge?.placedReference(for: actor)
             .flatMap { identityRecords?.race(ofBase: $0.base) }
+    }
+
+    /// Only the player changes race: an NPC's body is built from its record.
+    @discardableResult
+    func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool {
+        guard actor == .player, var identity = playerIdentity else { return false }
+        let original = originalPlayerRace ?? identity.race
+        guard let wanted = race ?? originalPlayerRace else { return true }
+        originalPlayerRace = wanted == original ? nil : original
+        identity.race = wanted
+        applyPlayerIdentity(identity)
+        game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
+        return true
     }
 
     func sex(ofBase base: FormID) -> Int? {

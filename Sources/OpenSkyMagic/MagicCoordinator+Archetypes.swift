@@ -30,13 +30,21 @@ extension MagicCoordinator {
             runtime.entryConditions = { [weak self] effect in
                 self?.entryConditions(of: effect)
             }
+            runtime.worldRefusal = { [weak self] archetype, holder in
+                self?.worldRefusal(archetype, on: holder)
+            }
+            runtime.valueAndParts = holdSettings.valueAndParts
         }
     }
 
     /// The behaviour `key`'s running effects force on it.
     public func influence(of key: ReferenceKey) -> ActorMagicInfluence {
         guard let effects, let holder = world.actorValueHolder(for: key) else { return .none }
-        return effects.influence(on: holder)
+        var influence = effects.influence(on: holder)
+        if isGrabbed(key) {
+            influence.isParalysed = true
+        }
+        return influence
     }
 
     /// Ends `key`'s invisibility, because it acted. Returns how many effects ended.
@@ -73,11 +81,18 @@ extension MagicCoordinator {
             disarm(action.target)
         case (.summon, _), (.reanimate, _):
             performCommanding(action)
+        case (.detectLife, .began), (.telekinesis, .began), (.grabActor, .began),
+             (.guide, .began):
+            performHold(action)
+        case (.banish, _), (.commandSummoned, _), (.changeRace, _), (.werewolfFeed, _),
+             (.light, _):
+            performWorldArchetype(action)
         case (.cloak, _), (.soulTrap, _), (.slowTime, _), (.stagger, .ended), (
             .spawnHazard,
             .ended
         ),
-        (.disarm, .ended):
+        (.disarm, .ended), (.enhanceWeapon, _), (.detectLife, .ended), (.telekinesis, .ended),
+        (.grabActor, .ended), (.guide, .ended):
             break
         }
     }

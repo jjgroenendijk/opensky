@@ -21,4 +21,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case notice(String)
     /// The player's shout went off, which a witness may comment on.
     case playerShouted
+    /// Show or hide an `EFSH`, written in `plugin`, on the actor, as Detect Life paints.
+    case paintActor(ReferenceKey, shader: FormID, plugin: String, shown: Bool)
 }

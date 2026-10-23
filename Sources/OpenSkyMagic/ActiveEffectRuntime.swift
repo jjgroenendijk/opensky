@@ -51,6 +51,13 @@ public struct ActiveEffectRuntime {
     public var sourceCategory: (ActiveEffectSource) -> ActiveEffectSourceCategory = { _ in .other }
     /// Whether an actor carries `ActorTypeUndead`, for Turn Undead.
     public var isUndead: (ActorValueHolder) -> Bool = { _ in false }
+    /// Why a world archetype cannot act on an actor, such as Enhance Weapon on empty
+    /// hands. Nil lets it act.
+    public var worldRefusal: (MagicWorldArchetype, ActorValueHolder)
+        -> MagicEffectPlanFailure? = { _, _ in nil }
+
+    /// The game settings that scale a Value and Parts magnitude.
+    public var valueAndParts = MagicValueAndPartsScale()
     /// The spell-side `CTDA` list of the entry a stored effect came from, which is
     /// checked again every second. Nil when the source is not known here.
     public var entryConditions: (ActiveEffect) -> ConditionList? = { _ in nil }
@@ -130,6 +137,7 @@ public struct ActiveEffectRuntime {
                 effect: resolved,
                 entry: entry,
                 isConstant: isConstant,
+                valueAndParts: valueAndParts,
                 resolveKeyword: { link in
                     effects.resolvedID(link, fromPlugin: resolved.sourcePlugin)
                         .map(ReferenceKey.init(resolved:))

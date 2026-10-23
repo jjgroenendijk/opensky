@@ -51,6 +51,28 @@ nonisolated public enum MagicWorldArchetype: Equatable, Sendable {
     case summon
     /// "If the target is dead, reanimate them, putting them under the caster's control."
     case reanimate
+    /// "Banishes Summoned Actors up to level <MAG>."
+    case banish
+    /// "Takes control of Summoned Actors up to level <MAG>."
+    case commandSummoned
+    /// "Applies a visual effect to all valid targets in range."
+    case detectLife
+    /// "Creates the specified light object."
+    case light
+    /// "Any equipped (melee) weapon receives the specified enchantment until unequipped
+    /// or until the effect wears off."
+    case enhanceWeapon
+    /// Werewolf and Vampire Lord: "Changes the target's race to the specified race."
+    case changeRace
+    /// "When cast on a dead actor, sets the HasBeenEaten property on actor from 0 to 1."
+    case werewolfFeed
+    /// "Applies the Telekinesis effect to the target object, allowing the caster to
+    /// manipulate it at a distance."
+    case telekinesis
+    /// "Can pick up and throw selected NPC."
+    case grabActor
+    /// "Creates a trail of Hazard objects from the caster to the nearest quest target."
+    case guide
 }
 
 nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
@@ -66,8 +88,12 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     case accumulate
     case influence(MagicInfluenceKind)
     case dispel(MagicDispelFilter)
-    /// "Has no effect other than any Papyrus Scripts specified", or "Not Used".
+    /// "Has no effect other than any Papyrus Scripts specified", "Not Used", or an
+    /// archetype that cannot reach its target. See docs/engine/magic-archetypes.md.
     case carrier
+    /// "Modifies the target actor value by the computed magnitude times the
+    /// fMagicVACPartTargetedMult Game Setting".
+    case valueAndParts
     case world(MagicWorldArchetype)
 
     /// `Paralysis` in the vanilla actor-value table: "This will also set the
@@ -75,6 +101,14 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     public static let paralysisActorValue: Int32 = 53
     /// `Invisibility` in the vanilla actor-value table. Detection reads it.
     public static let invisibilityActorValue: Int32 = 54
+    /// `Telekinesis`: "set the boolean actor value Telekinesis to 1 in order to allow you
+    /// to see item stats at a distance."
+    public static let telekinesisActorValue: Int32 = 88
+    /// `Grabbed`, held at 1 on an actor Grab Actor holds.
+    public static let grabbedActorValue: Int32 = 161
+    /// `PerceptionCondition` through `BrainCondition`, the seven slots between
+    /// `ResistDisease` (45) and `Paralysis` (53). Value and Parts changes each one.
+    public static let bodyPartConditionValues: [Int32] = Array(46 ... 52)
 
     /// The rule for `archetype`, or nil while it has none.
     public static func rule(for archetype: MagicEffectArchetype) -> Self? {
@@ -83,7 +117,10 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
         case .absorb: .absorb
         case .accumulateMagnitude: .accumulate
         case .invisibility: .heldFlag(actorValue: invisibilityActorValue)
-        case .script, .concussion, .cureAddiction: .carrier
+        case .script, .concussion, .cureAddiction, .lock, .open, .disguise,
+             .spawnScriptedReference:
+            .carrier
+        case .valueAndParts: .valueAndParts
         case .dispel: .dispel(.timed)
         case .cureDisease: .dispel(.disease)
         case .curePoison: .dispel(.poison)
@@ -93,19 +130,18 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     }
 
     private static func worldRule(for archetype: MagicEffectArchetype) -> Self? {
-        switch archetype {
-        case .stagger: .world(.stagger)
-        case .spawnHazard: .world(.spawnHazard)
-        case .cloak: .world(.cloak)
-        case .boundWeapon: .world(.boundWeapon)
-        case .disarm: .world(.disarm)
-        case .soulTrap: .world(.soulTrap)
-        case .slowTime: .world(.slowTime)
-        case .summonCreature: .world(.summon)
-        case .reanimate: .world(.reanimate)
-        default: nil
-        }
+        worldArchetypes[archetype].map { .world($0) }
     }
+
+    private static let worldArchetypes: [MagicEffectArchetype: MagicWorldArchetype] = [
+        .stagger: .stagger, .spawnHazard: .spawnHazard, .cloak: .cloak,
+        .boundWeapon: .boundWeapon, .disarm: .disarm, .soulTrap: .soulTrap,
+        .slowTime: .slowTime, .summonCreature: .summon, .reanimate: .reanimate,
+        .banish: .banish, .commandSummoned: .commandSummoned, .detectLife: .detectLife,
+        .light: .light, .enhanceWeapon: .enhanceWeapon, .werewolf: .changeRace,
+        .vampireLord: .changeRace, .werewolfFeed: .werewolfFeed,
+        .telekinesis: .telekinesis, .grabActor: .grabActor, .guide: .guide
+    ]
 
     private static func influenceRule(for archetype: MagicEffectArchetype) -> Self? {
         switch archetype {
@@ -126,7 +162,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
         switch self {
         case .influence(.calm), .influence(.frenzy), .influence(.demoralize),
              .influence(.rally), .influence(.turnUndead), .world(.disarm),
-             .world(.reanimate):
+             .world(.reanimate), .world(.banish), .world(.commandSummoned):
             true
         default:
             false
@@ -137,7 +173,11 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     /// for as long as it runs.
     public var actsOnce: Bool {
         switch self {
-        case .dispel, .world(.stagger), .world(.spawnHazard), .world(.disarm): true
+        case .dispel, .world(.stagger), .world(.spawnHazard), .world(.disarm),
+             .world(.banish), .world(.commandSummoned), .world(.werewolfFeed),
+             .world(.changeRace), .world(.detectLife), .world(.telekinesis),
+             .world(.grabActor), .world(.guide):
+            true
         default: false
         }
     }
@@ -147,7 +187,8 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
     public var needsDuration: Bool {
         switch self {
         case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon),
-             .world(.soulTrap), .world(.slowTime), .world(.summon), .world(.reanimate):
+             .world(.soulTrap), .world(.slowTime), .world(.summon), .world(.reanimate),
+             .world(.light), .world(.enhanceWeapon):
             true
         default: false
         }

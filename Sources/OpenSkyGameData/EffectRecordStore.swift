@@ -27,6 +27,8 @@ nonisolated public struct EffectRecordStore: Sendable {
     public let outputModels: TypedRecordStore<SoundOutputModel>
     public let reverbs: TypedRecordStore<ReverbParameters>
     public let artObjects: TypedRecordStore<ArtObject>
+    /// The lights a magic effect places.
+    public let lights: TypedRecordStore<LightRecord>
 
     public init(index: RecordIndex) {
         imageSpaces = Self.store(index, "IMGS") { try ImageSpace(record: $0.record) }
@@ -50,6 +52,7 @@ nonisolated public struct EffectRecordStore: Sendable {
         outputModels = Self.store(index, "SOPM") { try SoundOutputModel(record: $0.record) }
         reverbs = Self.store(index, "REVB") { try ReverbParameters(record: $0.record) }
         artObjects = Self.store(index, "ARTO") { try ArtObject(record: $0.record) }
+        lights = Self.store(index, "LIGH") { try LightRecord(record: $0.record) }
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -99,6 +102,7 @@ nonisolated extension ImageSpaceAdapter: EditorIdentified {}
 nonisolated extension EffectShader: EditorIdentified {}
 nonisolated extension VisualEffect: EditorIdentified {}
 nonisolated extension AddonNode: EditorIdentified {}
+nonisolated extension LightRecord: EditorIdentified {}
 nonisolated extension Explosion: EditorIdentified {}
 nonisolated extension Debris: EditorIdentified {}
 nonisolated extension ShaderParticleGeometry: EditorIdentified {}
