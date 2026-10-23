@@ -81,7 +81,9 @@ extension PapyrusWorldRuntime {
     /// instance that handles one of the two events retires once they have run.
     public func detach(cell: CellSceneLocation) {
         deferredScriptWork.removeAll { $0.cell == cell }
-        cellLoadedReferences[cell] = nil
+        if let unloaded = cellLoadedReferences.removeValue(forKey: cell) {
+            dropAnimationEvents(of: unloaded)
+        }
         guard let keys = attachedByCell.removeValue(forKey: cell) else {
             return
         }

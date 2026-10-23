@@ -51,8 +51,19 @@ public final class CellResetCoordinator {
         store.component(CellResetLedger.self, for: .player) ?? CellResetLedger()
     }
 
+    /// A departure this far back marks a cell a script flagged for reset.
+    static let forcedDeparture = -Double.infinity
+
+    /// Papyrus `Cell.Reset`: the cell resets on its next load, even in a zone that never
+    /// resets (<https://ck.uesp.net/wiki/Reset_-_Cell>).
+    public func flagForReset(_ location: CellSceneLocation) {
+        var ledger = ledger
+        ledger.departures[location] = Self.forcedDeparture
+        store.set(ledger, for: .player)
+    }
+
     public func cellDetached(_ location: CellSceneLocation) {
-        guard let now else { return }
+        guard let now, ledger.departures[location] != Self.forcedDeparture else { return }
         var ledger = ledger
         ledger.departures[location] = now
         store.set(ledger, for: .player)
@@ -68,9 +79,10 @@ public final class CellResetCoordinator {
         var ledger = ledger
         ledger.departures[location] = nil
         store.set(ledger, for: .player)
+        let forced = departure == Self.forcedDeparture
         guard
-            !neverResets(scene),
-            settings.isDue(departedAt: departure, now: now, cleared: isCleared(scene))
+            forced || !neverResets(scene),
+            forced || settings.isDue(departedAt: departure, now: now, cleared: isCleared(scene))
         else { return [] }
         let reset = scene.references.sortedEntries().filter(reset)
         lastReset = CellResetRecord(location: location, resetReferences: reset.map(\.key))

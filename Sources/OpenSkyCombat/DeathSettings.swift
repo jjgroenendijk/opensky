@@ -46,6 +46,11 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
     public var excessDeadCount = 15
     /// `fRemoveExcessDeadTime`: seconds a body must be dead before it can go.
     public var excessDeadSeconds: Float = 10
+    /// `fEssentialDeathTime`: seconds an essential actor stays in bleedout.
+    public var bleedoutSeconds: Float = 20
+    /// `fBleedoutDefault`: the health share at which an actor kneels when its class
+    /// gives no ratio. Read from the name; no open source defines it.
+    public var bleedoutThreshold: Float = 0.15
 
     public static let vanilla = Self()
 
@@ -63,7 +68,9 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
             ("fDeathForceRangedForceMin", \.ranged.forceMin),
             ("fDeathForceRangedForceMax", \.ranged.forceMax),
             ("fDeathForceSpellImpactMult", \.spellImpactMult),
-            ("fRemoveExcessDeadTime", \.excessDeadSeconds)
+            ("fRemoveExcessDeadTime", \.excessDeadSeconds),
+            ("fEssentialDeathTime", \.bleedoutSeconds),
+            ("fBleedoutDefault", \.bleedoutThreshold)
         ]
         for (editorID, keyPath) in fields {
             store.read(editorID, into: &settings, keyPath)

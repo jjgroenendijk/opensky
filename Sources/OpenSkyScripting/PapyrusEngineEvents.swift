@@ -64,6 +64,21 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onPlayerFastTravelEnd = "OnPlayerFastTravelEnd"
     public static let onSleepStart = "OnSleepStart"
     public static let onSleepStop = "OnSleepStop"
+    public static let onAnimationEventUnregistered = "OnAnimationEventUnregistered"
+    public static let onAttachedToCell = "OnAttachedToCell"
+    public static let onDetachedFromCell = "OnDetachedFromCell"
+    public static let onEquipped = "OnEquipped"
+    public static let onUnequipped = "OnUnequipped"
+    public static let onRead = "OnRead"
+    public static let onEnterBleedout = "OnEnterBleedout"
+    public static let onTrapHitStart = "OnTrapHitStart"
+    public static let onTrapHit = "OnTrapHit"
+    public static let onTrapHitStop = "OnTrapHitStop"
+    public static let onGrab = "OnGrab"
+    public static let onRelease = "OnRelease"
+    public static let onPlayerBowShot = "OnPlayerBowShot"
+    public static let onVampireFeed = "OnVampireFeed"
+    public static let onWardHit = "OnWardHit"
 
     /// Every event above, lowercased, as Papyrus matches names.
     public static let sent: Set<String> = Set([
@@ -78,6 +93,9 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
         onTrackedStatsEvent, onLycanthropyStateChanged, onVampirismStateChanged,
         onStoryKillActor, onStoryChangeLocation, onStoryAddToPlayer, onStoryAssaultActor,
         onStoryCrimeGold, onStoryIncreaseSkill, onStoryScript, onSit, onGetUp, onSpellCast,
-        onPlayerFastTravelEnd, onSleepStart, onSleepStop
+        onPlayerFastTravelEnd, onSleepStart, onSleepStop, onReset, onAnimationEventUnregistered,
+        onAttachedToCell, onDetachedFromCell, onEquipped, onUnequipped, onRead, onEnterBleedout,
+        onTrapHitStart, onTrapHit, onTrapHitStop, onGrab, onRelease, onPlayerBowShot,
+        onVampireFeed, onWardHit
     ].map { $0.lowercased() })
 }

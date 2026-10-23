@@ -41,6 +41,11 @@ extension MagicCoordinator {
         }
     }
 
+    /// The body the player's Telekinesis holds: Papyrus `Game.GetPlayerGrabbedRef`.
+    public var playerGrabbedReference: ReferenceKey? {
+        holds.first { $0.kind == .telekinesis && $0.caster == .player }?.held.first
+    }
+
     /// Whether a running Grab Actor holds `key`, which keeps it from acting.
     func isGrabbed(_ key: ReferenceKey) -> Bool {
         holds.contains { $0.kind == .grabActor && $0.held.contains(key) }
@@ -117,6 +122,9 @@ extension MagicCoordinator {
                 held: body.map { [$0] } ?? []
             ))
             setHeldFlag(MagicArchetypeRule.telekinesisActorValue, on: caster, by: 1)
+            if caster == .player, let body {
+                pendingCommands.append(.playerGrab(body, held: true))
+            }
             return
         }
         holds = MagicHoldCore.renewing(
@@ -215,6 +223,9 @@ extension MagicCoordinator {
             }
         case .telekinesis:
             setHeldFlag(MagicArchetypeRule.telekinesisActorValue, on: hold.caster, by: -1)
+            if hold.caster == .player, let target = hold.held.first {
+                pendingCommands.append(.playerGrab(target, held: false))
+            }
             guard
                 let target = hold.held.first, let body = world.heldBody(target),
                 let ray = world.aimRay(of: hold.caster)

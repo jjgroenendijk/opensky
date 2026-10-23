@@ -65,6 +65,8 @@ nonisolated public struct CrimeOutcome: Equatable, Sendable {
         case victimIsMember
         /// Nobody saw it.
         case unwitnessed
+        /// A script turned off reporting of the player's crimes (`SetPlayerReportCrime`).
+        case playerCrimesNotReported
     }
 
     /// Gold added to the ledger, which is zero for every refusal.

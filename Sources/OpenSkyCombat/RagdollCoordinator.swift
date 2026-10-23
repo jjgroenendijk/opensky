@@ -45,6 +45,8 @@ public final class RagdollCoordinator {
     /// When each dead actor died, or was first seen dead.
     var deathTimes: [ReferenceKey: Float] = [:]
     var deathRandom = ConditionRandom()
+    /// Essential and protected actors kneeling at zero health.
+    public internal(set) var bleedout = BleedoutTracker()
     public internal(set) var deathEffects = DeathEffectCounts()
 
     public init(store: WorldStateStore, world: any RagdollSessionWorld) {
@@ -71,6 +73,7 @@ public final class RagdollCoordinator {
         guard let runtime else { return [] }
         clock += max(delta.isFinite ? delta : 0, 0)
         runtime.retainRagdolls(in: world.residentRagdollCells)
+        let recoveries = recoverFromBleedout(delta: delta)
         let murders = killZeroHealthActors(runtime: runtime)
         removeExcessDead(runtime: runtime)
         for key in runtime.pendingHandOffs.sorted() {
@@ -83,7 +86,7 @@ public final class RagdollCoordinator {
         runtime.motor = controls.powered.map(RagdollMotor.init)
         runtime.contactEvent = controls.contactEvent
         runtime.advance(by: delta)
-        return murders
+        return recoveries + murders
     }
 
     /// Rebuilt each frame, so a corpse whose cell unloaded stops being drawn as
@@ -113,16 +116,56 @@ public final class RagdollCoordinator {
     /// so each murder is reported once. The last hit names the killer and pushes the body.
     private func killZeroHealthActors(runtime: RagdollRuntime) -> [RagdollCommand] {
         var murders: [RagdollCommand] = []
-        for resident in world.ragdollResidents where world.hasZeroHealth(resident.key) {
+        for resident in world.ragdollResidents {
             let key = resident.key
             guard !runtime.isDead(key) else { continue }
+            guard world.hasZeroHealth(key) else {
+                murders += kneelBelowThreshold(key)
+                continue
+            }
             let hit = recentHit(on: key)
+            switch world.zeroHealthOutcome(of: key, killer: hit?.attacker) {
+            case .deferred:
+                continue
+            case .bleedsOut:
+                if bleedout.enter(key) {
+                    murders.append(.enterBleedout(key))
+                }
+                continue
+            case .dies:
+                bleedout.remove(key)
+            }
             deathImpulses[key] = hit.map { impulse(of: $0, on: resident) }
             guard runtime.noteZeroHealth(of: key, killer: hit?.attacker) else { continue }
             murders.append(.reportMurder(key))
             applyDeathEffects(of: hit, to: key)
         }
         return murders
+    }
+
+    /// An essential or protected actor kneels once its health share falls to its ratio,
+    /// before its health reaches zero.
+    private func kneelBelowThreshold(_ key: ReferenceKey) -> [RagdollCommand] {
+        guard
+            !bleedout.contains(key), let fraction = world.healthFraction(of: key),
+            fraction <= world.bleedoutThreshold(of: key) ?? deathSettings.bleedoutThreshold,
+            world.zeroHealthOutcome(of: key, killer: recentHit(on: key)?.attacker) == .bleedsOut,
+            bleedout.enter(key)
+        else { return [] }
+        return [.enterBleedout(key)]
+    }
+
+    /// An actor whose cell unloaded stands up at once, so it does not kneel forever.
+    private func recoverFromBleedout(delta: Float) -> [RagdollCommand] {
+        let resident = Set(world.ragdollResidents.map(\.key))
+        let unloaded = bleedout.seconds.keys.filter { !resident.contains($0) }.sorted()
+        for key in unloaded {
+            bleedout.remove(key)
+        }
+        let recovered = bleedout.advance(by: delta, settings: deathSettings) {
+            world.blocksBleedoutRecovery(of: $0)
+        }
+        return (unloaded + recovered).map { .leaveBleedout($0) }
     }
 
     func definition(for pose: RagdollActorPose) -> RagdollDefinition? {

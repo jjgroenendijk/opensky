@@ -20,6 +20,8 @@ public struct ActorValueRuntime: ActorValueAccess {
     public let regeneration: RegenerationSettings
     /// Seconds each holder still waits before a damaged value regenerates again.
     private let delays = RegenerationDelays()
+    /// `Debug.SetGodMode`: the player's values take no damage while it is on.
+    public let godMode = GodModeSwitch()
     /// Regeneration reads every actor's baseline each step. A `PC Level Mult` actor
     /// scales with the player, so the key holds the player level too.
     private let actorBaselines = BaselineMemo<ActorBaselineKey, ActorValueBaseline>()
@@ -103,6 +105,7 @@ public struct ActorValueRuntime: ActorValueAccess {
         by amount: Float,
         on holder: ActorValueHolder
     ) -> ActorValueState {
+        guard !(godMode.isOn && holder.subject == .player) else { return state(of: holder) }
         if amount.isFinite, amount > 0 {
             delays.pause(kind, of: holder.key, for: regeneration.delay(after: kind))
         }
@@ -316,4 +319,11 @@ public struct ActorValueRuntime: ActorValueAccess {
 private struct ActorBaselineKey: Hashable {
     let base: FormID
     let playerLevel: Int
+}
+
+/// A switch shared by every copy of the runtime, as the regeneration delays are.
+public final class GodModeSwitch {
+    public var isOn = false
+
+    public init() {}
 }

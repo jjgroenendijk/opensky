@@ -389,6 +389,11 @@ extension MagicCoordinator: CasterWorld {
         else { return .none }
         lastHit = report
         breakWards(report.brokenWards)
+        for wardHit in report.wardHits {
+            pendingCommands.append(
+                .wardHit(wardHit, caster: hit.payload.caster, spell: hit.payload.spell)
+            )
+        }
         if !hit.targets.isEmpty, let onSpellHit, let store = effects?.effects {
             onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
         }

@@ -24,6 +24,8 @@ public struct CrimeRuntime {
     public var witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
     /// The default prices, the sentence, and the alarm reach, from the load order.
     public var settings = CrimeSettings.vanilla
+    /// Papyrus `Game.SetPlayerReportCrime`: off, the player's crimes cost nothing.
+    public var reportsPlayerCrimes = true
 
     private let worldState: WorldStateStore
 
@@ -203,6 +205,9 @@ public struct CrimeRuntime {
         keyed key: ReferenceKey,
         checkingWitness: Bool = true
     ) -> CrimeOutcome.Refusal? {
+        guard reportsPlayerCrimes || event.perpetrator != .player else {
+            return .playerCrimesNotReported
+        }
         guard faction.tracksCrime else { return .factionIgnoresCrime }
         guard !faction.flags.contains(event.kind.ignoreFlag) else { return .factionIgnoresKind }
         if

@@ -38,6 +38,18 @@ extension EffectsCoordinator {
         return screenBlood.splatter(damage: damage)
     }
 
+    /// `count` splatters at once, for Papyrus `TriggerScreenBlood`.
+    @discardableResult
+    public func splatterScreen(count: Int) -> Int {
+        guard screenBlood.enabled else { return 0 }
+        return screenBlood.splatter(count: count)
+    }
+
+    /// Removes the blood on screen, for Papyrus `ClearTempEffects`.
+    public func clearTemporaryBlood() {
+        screenBlood.removeAll()
+    }
+
     /// The weapon of `holder` hit a bleeding actor.
     public func bloodyWeapon(of holder: ReferenceKey) {
         let target: MembraneTarget? = holder == .player ? .playerWeapon

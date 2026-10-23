@@ -46,10 +46,12 @@ public struct SpellHitDefences {
         {
             return .blockedByWall
         }
-        // UESP: "self-applying spells ... will not be absorbed".
-        guard payload.isHostile, payload.caster != target.key else { return .lands }
         let values = runtime.values
         let ward = values.value(at: SpellHitApplication.wardPowerActorValue, on: holder) ?? 0
+        // UESP: "self-applying spells ... will not be absorbed".
+        guard payload.isHostile, payload.caster != target.key else {
+            return ward > 0 && payload.caster != target.key ? .landsThroughWard : .lands
+        }
         if ward > 0, wardFaces(target.key, payload.caster) {
             let damage = SpellHitApplication.hostileMagnitude(
                 of: entries, fromPlugin: payload.sourcePlugin, runtime
@@ -74,13 +76,15 @@ public struct SpellHitDefences {
 /// How a defence answered one target.
 nonisolated public enum SpellDefenceOutcome: Equatable, Sendable {
     case lands
+    /// A spell that is not hostile passed through the target's ward.
+    case landsThroughWard
     case blockedByWall
     case absorbed(magicka: Float)
     /// A ward took `damage`. A broken ward still blocks the spell.
     case warded(damage: Float, broken: Bool, magicka: Float)
 
     public var stopsSpell: Bool {
-        self != .lands
+        self != .lands && self != .landsThroughWard
     }
 }
 

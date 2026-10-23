@@ -20,13 +20,49 @@ extension PapyrusWorldStateBridge {
             .filter { $0.kind == .inventory }
             .compactMap(inventoryChange)
         var queued = 0
-        for (index, change) in changes.enumerated()
-            where !world.instanceKeys(on: change.holder).isEmpty
-        {
+        for (index, change) in changes.enumerated() {
+            queued += queueItemEquipEvents(change, in: world)
+            guard !world.instanceKeys(on: change.holder).isEmpty else { continue }
             let before = index > 0 ? changes[index - 1] : nil
             let after = index + 1 < changes.count ? changes[index + 1] : nil
             queued += queueItemEvents(change, before: before, after: after, in: world)
             queued += queueEquipEvents(change, in: world)
+        }
+        return queued
+    }
+
+    /// Queues `name` on the scripts of the item `base` itself. Returns the count.
+    @discardableResult
+    public func queueItemScriptEvent(
+        _ name: String, base: ReferenceKey, arguments: [PapyrusValue]
+    ) -> Int {
+        guard
+            let world, let formIDResolver,
+            let scripts = sessionNatives.itemScripts?(base), !scripts.isEmpty
+        else { return 0 }
+        return world.queueItemEvent(
+            name, base: base, scripts: scripts, arguments: arguments,
+            formIDResolver: formIDResolver
+        )
+    }
+
+    /// `OnEquipped(Actor akActor)` and `OnUnequipped(Actor akActor)` on the item's own
+    /// scripts, whoever wears it (<https://ck.uesp.net/wiki/OnUnequipped_-_ObjectReference>).
+    private func queueItemEquipEvents(
+        _ change: InventoryChange, in world: PapyrusWorldRuntime
+    ) -> Int {
+        let old = Set(change.old.equipped)
+        let new = Set(change.new.equipped)
+        let actor = PapyrusValue.object(world.objectHandle(for: change.holder))
+        var queued = 0
+        for (items, name) in [
+            (new.subtracting(old), PapyrusEngineEvents.onEquipped),
+            (old.subtracting(new), PapyrusEngineEvents.onUnequipped)
+        ] {
+            for item in items.sorted(by: { $0.rawValue < $1.rawValue }) {
+                guard let base = itemKey(item) else { continue }
+                queued += queueItemScriptEvent(name, base: base, arguments: [actor])
+            }
         }
         return queued
     }

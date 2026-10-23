@@ -28,6 +28,18 @@ struct BloodRuntimeTests {
         #expect(runtime.splatters.allSatisfy { (0.3 ... 1).contains($0.opacity) })
     }
 
+    /// `TriggerScreenBlood(aiValue)` places that many drops, up to the cap.
+    @Test
+    func aScriptedSplatterPlacesItsCountUpToTheCap() {
+        var settings = BloodEffectSettings.vanilla
+        settings.maxCount = 5
+        var runtime = ScreenBloodRuntime(settings: settings)
+        #expect(runtime.splatter(count: 3) == 3)
+        #expect(runtime.splatter(count: 4) == 2)
+        #expect(runtime.splatter(count: -1) == 0)
+        #expect(runtime.splatters.count == 5)
+    }
+
     @Test
     func aSplatterHoldsThenFadesAndGoesAtTheDuration() {
         var runtime = ScreenBloodRuntime()

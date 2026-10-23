@@ -42,6 +42,7 @@ public enum SpellHitApplication {
                 target, holder: holder, entries: reaching, hit: hit, runtime: runtime
             ) {
             case .lands: break
+            case .landsThroughWard: report.noteFriendlyWardHit(target.key)
             case .blockedByWall:
                 report.noteBlockedByWall()
                 continue

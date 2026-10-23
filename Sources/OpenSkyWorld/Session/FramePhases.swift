@@ -39,6 +39,7 @@ public enum AssetDrain: Int, FramePhase {
     case audio
     case playerBody
     case vehicleWheels
+    case modelNodes
     case cinematicTracks
 }
 

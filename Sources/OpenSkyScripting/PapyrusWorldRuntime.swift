@@ -122,6 +122,8 @@ public final class PapyrusWorldRuntime {
     public var updateTimers = PapyrusUpdateTimerRegistry()
     /// Who listens for each lowercased animation event, by the reference that sends it.
     public var animationEventListeners: [ReferenceKey: [String: Set<PapyrusInstanceKey>]] = [:]
+    /// Each lowercased animation event as a script first spelled it.
+    var animationEventSpellings: [String: String] = [:]
     /// The `RegisterForLOS` family, checked once a frame.
     public var lineOfSight = LineOfSightWatch()
     /// Instances that called `RegisterForTrackedStatsEvent`.

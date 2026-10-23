@@ -142,7 +142,12 @@ public final class CombatCoordinator {
             intent.hasBowEquipped = archery.bow.weapon != nil
             let shots = archery.state.shotCount
             archery.acceptFrame(intent)
-            archery.handleGraphEvents(events)
+            for _ in archery.handleGraphEvents(events) {
+                pendingCommands.append(.playerBowShot(
+                    weapon: archery.bow.weapon, ammunition: archery.arrow?.item,
+                    power: archery.lastDrawFraction
+                ))
+            }
             noteWeaponUse(.shot, changed: archery.state.shotCount != shots)
         }
         // Every arrow provokes, a spell only when its effects are hostile.

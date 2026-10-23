@@ -7,6 +7,10 @@ import OpenSkyMagicInterface
 nonisolated public enum MagicCommand: Equatable, Sendable {
     /// A Stagger effect began on the actor, with its magnitude.
     case stagger(ReferenceKey, magnitude: Float)
+    /// A spell of `caster` met the ward of the actor: Papyrus `OnWardHit`.
+    case wardHit(SpellWardHit, caster: ReferenceKey, spell: ReferenceKey)
+    /// The player's Telekinesis took hold of a body, or let it go: `OnGrab` and `OnRelease`.
+    case playerGrab(ReferenceKey, held: Bool)
     /// A Spawn Hazard effect began: the hazard is placed at the actor.
     case spawnHazard(ReferenceKey, at: ReferenceKey)
     /// Raise this event on the player's behaviour graph.

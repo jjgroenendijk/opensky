@@ -745,8 +745,8 @@ targets += domain(
 targets += domain(
     "OpenSkyObjectAnimation",
     dependencies: [
-        "OpenSkyFormatsAnimation", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyBehavior",
-        "OpenSkyActorPresentation"
+        "OpenSkyFormatsAnimation", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyBehavior", "OpenSkyActorPresentation"
     ],
     tests: worldTestBase
 )

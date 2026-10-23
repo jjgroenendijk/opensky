@@ -61,6 +61,23 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         return decoded.scriptData.scripts
     }
 
+    /// The VMAD scripts of the base record behind `key`, such as a book's or an armour's.
+    /// Empty for a key outside the load order or a type that carries no scripts.
+    public func scripts(ofBase key: ReferenceKey) -> [AttachedScript] {
+        guard
+            case let .plugin(name, objectID) = key,
+            let formID = resolver.localFormID(of: ResolvedFormID(plugin: name, objectID: objectID)),
+            let found = index.record(withFormID: formID), !found.record.isDeleted
+        else { return [] }
+        if found.record.type == "ARMO" {
+            let armor = try? found.decode { try Armor(record: $0, localized: found.localized) }
+            return armor?.details.scriptData.scripts ?? []
+        }
+        guard ModelBase.supportedTypes.contains(found.record.type) else { return [] }
+        let base = try? found.decode { try ModelBase(record: $0, localized: found.localized) }
+        return base?.scriptData.scripts ?? []
+    }
+
     /// The mesh key of the reference's base model, such as
     /// `meshes\\furniture\\prisonercarriage\\prisonercarriage01.nif`.
     public func baseModelPath(for key: ReferenceKey) -> String? {

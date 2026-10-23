@@ -65,6 +65,49 @@ struct RagdollCoordinatorTests {
         #expect(runtime.fallbackDeathCount == 1)
     }
 
+    /// An essential actor kneels once, does not die, and stands after `fEssentialDeathTime`.
+    @Test
+    func anEssentialActorBleedsOutAndRecovers() {
+        let session = Self.session()
+        let coordinator = session.coordinator
+        session.world.zeroHealth = [Self.far]
+        session.world.essentials = [Self.far]
+        let controls = RagdollGraphControls()
+        let entered = coordinator.advance(events: [], controls: controls, delta: 1)
+        #expect(entered == [.enterBleedout(Self.far)])
+        #expect(coordinator.advance(events: [], controls: controls, delta: 1).isEmpty)
+        #expect(coordinator.deathState(of: Self.far) == nil)
+        session.world.zeroHealth = []
+        let recovered = coordinator.advance(events: [], controls: controls, delta: 19)
+        #expect(recovered == [.leaveBleedout(Self.far)])
+        #expect(!coordinator.bleedout.contains(Self.far))
+    }
+
+    /// `SetNoBleedoutRecovery(true)` keeps the actor down past the timer and full health.
+    @Test
+    func aHeldActorKeepsKneeling() {
+        var tracker = BleedoutTracker()
+        let entered = tracker.enter(Self.far)
+        #expect(entered)
+        let held = tracker.advance(by: 60, settings: .vanilla) { _ in true }
+        #expect(held.isEmpty)
+        let released = tracker.advance(by: 0, settings: .vanilla)
+        #expect(released == [Self.far])
+    }
+
+    /// The class ratio, not zero health, starts a bleedout (CK "Class").
+    @Test
+    func anEssentialActorKneelsAtItsBleedoutShare() {
+        let session = Self.session()
+        session.world.essentials = [Self.far]
+        session.world.healthFractions = [Self.far: 0.5]
+        let controls = RagdollGraphControls()
+        #expect(session.coordinator.advance(events: [], controls: controls, delta: 1).isEmpty)
+        session.world.healthFractions = [Self.far: 0.1]
+        let entered = session.coordinator.advance(events: [], controls: controls, delta: 1)
+        #expect(entered == [.enterBleedout(Self.far)])
+    }
+
     @Test
     func theBlendFallsBackToTheVanillaDuration() throws {
         let session = Self.session()

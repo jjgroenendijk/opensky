@@ -58,6 +58,11 @@ public enum PapyrusNativeFunctions {
         installWorldReads(into: &registry)
         installFindReferences(into: &registry)
         installSpellRecords(into: &registry)
+        installSky(into: &registry)
+        installGameSession(into: &registry)
+        installActorRules(into: &registry)
+        installReferenceRules(into: &registry)
+        installEngineStubs(into: &registry)
     }
 
     public static func failure(

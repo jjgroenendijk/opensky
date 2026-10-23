@@ -54,6 +54,14 @@ public struct PapyrusSessionNatives {
     public var havokMass: ((ReferenceKey) -> Float?)?
     /// Hands the drawn pose of every moving reference to the renderer, after each change.
     public var publishTranslationPoses: (([ReferenceKey: ReferenceTransformOverride]) -> Void)?
+    /// The unit direction from the player toward the sun; nil indoors or while it is down.
+    public var towardSun: (() -> SIMD3<Float>?)?
+    /// Where the player's eyes are and the unit direction they look in.
+    public var playerView: (() -> PapyrusPlayerView?)?
+    /// `Weather.GetSkyMode`: 0 no sky, 1 interior, 2 sky dome only, 3 full sky.
+    public var skyMode: (() -> Int32)?
+    /// The VMAD scripts of an item's base record, for `OnEquipped` and `OnRead`.
+    public var itemScripts: ((ReferenceKey) -> [AttachedScript])?
 
     public init() {}
 }
@@ -68,4 +76,15 @@ public struct PapyrusStoryNatives {
     public var favorStateChanged: ((ReferenceKey, Bool) -> Void)?
 
     public init() {}
+}
+
+/// The player's eye and look direction.
+nonisolated public struct PapyrusPlayerView: Equatable, Sendable {
+    public let eye: SIMD3<Float>
+    public let forward: SIMD3<Float>
+
+    public init(eye: SIMD3<Float>, forward: SIMD3<Float>) {
+        self.eye = eye
+        self.forward = forward
+    }
 }

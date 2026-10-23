@@ -145,7 +145,9 @@ final class InventoryWorldAdapter {
         guard book.isBook(interaction.base), let runtime = game.inventory.runtime else {
             return false
         }
-        let offer = BookTakeOffer(isTheft: runtime.isTheft(interaction)) { [game] in
+        let offer = BookTakeOffer(
+            isTheft: runtime.isTheft(interaction), reference: interaction.reference
+        ) { [game] in
             game.inventory.take(interaction)
         }
         return book.open(item: interaction.base, takeOffer: offer)

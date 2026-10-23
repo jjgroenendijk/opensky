@@ -41,11 +41,15 @@ extension PapyrusNativeFunctions {
         ),
         ScriptedFlag("Actor", "SetAlert", "IsAlerted", ScriptedStateName.alerted),
         ScriptedFlag("Actor", "SetAllowFlying", "IsAllowedToFly", ScriptedStateName.allowFlying),
+        ScriptedFlag("Actor", "SetAllowFlyingEx", ScriptedStateName.allowFlying),
         ScriptedFlag("Actor", "SetIntimidated", "IsIntimidated", "intimidated"),
         ScriptedFlag("Actor", "SetBribed", "IsBribed", ScriptedStateName.bribed),
         ScriptedFlag("Actor", "SetUnconscious", "IsUnconscious", "unconscious"),
         ScriptedFlag("Actor", "SetRestrained", ScriptedStateName.restrained),
-        ScriptedFlag("Actor", "SetNoBleedoutRecovery", "noBleedoutRecovery"),
+        ScriptedFlag(
+            "Actor", "SetNoBleedoutRecovery", "GetNoBleedoutRecovery",
+            ScriptedStateName.noBleedoutRecovery
+        ),
         ScriptedFlag("Actor", "SetNotShowOnStealthMeter", "notShowOnStealthMeter"),
         ScriptedFlag("Actor", "SetDontMove", "dontMove"),
         ScriptedFlag("Actor", "SetAttackActorOnSight", "attackActorOnSight"),

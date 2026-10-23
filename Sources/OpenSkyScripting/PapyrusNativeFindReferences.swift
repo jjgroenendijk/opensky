@@ -11,7 +11,7 @@ import OpenSkyWorldState
 import simd
 
 extension PapyrusNativeFunctions {
-    private enum FindFilter {
+    enum FindFilter {
         case actors, baseForm, baseFormList
     }
 
@@ -68,7 +68,7 @@ extension PapyrusNativeFunctions {
         return bridge.pluginFormListEntries(of: form).map { Set($0.compactMap(\.self)) }
     }
 
-    private static func findCandidates(
+    static func findCandidates(
         _ bridge: PapyrusWorldStateBridge, filter: FindFilter, bases: Set<ReferenceKey>,
         around centre: SIMD3<Float>, radius: Float
     ) -> [(key: ReferenceKey, distance: Float)] {

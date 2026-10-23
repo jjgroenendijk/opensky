@@ -20,6 +20,7 @@ import simd
 @MainActor
 protocol ObjectAnimationWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
+    var actorWorld: ActorWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var renderer: Renderer? { get }
@@ -45,6 +46,8 @@ final class ObjectAnimationWorldAdapter {
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
+    /// Which scripted traps touch which actors.
+    var trapContact = TrapContactTracker()
 
     init(game: any ObjectAnimationWorldHost) {
         self.game = game
@@ -73,6 +76,7 @@ final class ObjectAnimationWorldAdapter {
         objects.tick(deltaTime: delta)
         run(doors.sync())
         run(doors.tick(deltaTime: delta))
+        advanceTrapContact(delta)
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
         for (token, fired) in pendingAnswers
             where scheduler.answer(token, returning: .boolean(fired))

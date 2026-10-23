@@ -67,6 +67,21 @@ struct CellResetCoordinatorTests {
         #expect(reset.cellAttached(scene) == [Self.key(0x10)])
     }
 
+    /// `Cell.Reset` resets on the next load even in a never-resets zone, and leaving the
+    /// cell before that load keeps the flag.
+    @Test func aScriptedResetWinsOverTheZoneAndTheClock() throws {
+        var now = 1000.0
+        let reset = coordinator { now }
+        reset.neverResets = { _ in true }
+        let scene = try Self.scene([Self.reference(0x10)])
+        store.set(ReferenceDeletionState.deleted, for: Self.key(0x10), in: Self.cell)
+        reset.flagForReset(Self.cell)
+        now += 1
+        reset.cellDetached(Self.cell)
+        #expect(reset.cellAttached(scene) == [Self.key(0x10)])
+        #expect(reset.ledger.departures.isEmpty)
+    }
+
     @Test func aNeverResetsZoneAndANonRespawningBaseKeepTheirState() throws {
         var now = 1000.0
         let reset = coordinator { now }

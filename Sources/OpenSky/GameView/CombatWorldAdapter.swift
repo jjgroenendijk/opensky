@@ -175,6 +175,11 @@ final class CombatWorldAdapter {
             case let .playerAttackedOutsideCombat(use):
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
             case let .drewBlood(hit, target): drewBlood(hit, target: target)
+            case let .playerBowShot(weapon, ammunition, power):
+                game.scripts.runtime?.queuePlayerBowShot(
+                    weapon: weapon, ammunition: ammunition, power: power,
+                    sunGazing: game.scripts.bridge?.isPlayerSunGazing ?? false
+                )
             case let .showDefaultBlood(target, position, melee):
                 showDefaultBlood(on: target, at: position, melee: melee)
             }

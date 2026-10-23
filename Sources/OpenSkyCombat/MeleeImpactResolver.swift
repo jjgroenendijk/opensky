@@ -58,8 +58,12 @@ nonisolated public struct MeleeImpactResolver: Sendable {
     ///   - material: the MATT type struck, tried with its parents, or nil for the
     ///     table's default entry.
     public func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
+        weapon.impactDataSet.flatMap { resolve(dataSet: $0, material: material) }
+    }
+
+    /// The impact one IPDS plays on `material`, as Papyrus `PlayImpactEffect` asks.
+    public func resolve(dataSet dataSetID: FormID, material: FormID?) -> ResolvedMeleeImpact? {
         guard
-            let dataSetID = weapon.impactDataSet,
             let dataSet = impactDataSets[dataSetID.rawValue],
             let impactID = dataSet.impact(forFirstOf: materialParents.chain(from: material)),
             let impact = impacts[impactID.rawValue],

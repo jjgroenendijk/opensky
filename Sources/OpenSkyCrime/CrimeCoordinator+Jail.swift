@@ -38,6 +38,12 @@ extension CrimeCoordinator {
         return true
     }
 
+    /// Papyrus `Game.ClearPrison`: the game no longer counts the player as jailed, so
+    /// leaving the cell is not an escape (<https://ck.uesp.net/wiki/ClearPrison_-_Game>).
+    public func clearPrison() {
+        jailStay = nil
+    }
+
     /// One tick: notes the arrival in the cell, and an escape once the player leaves it.
     public func advanceJail() {
         guard var stay = jailStay else { return }

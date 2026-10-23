@@ -48,11 +48,27 @@ extension PapyrusWorldStateBridge {
 
     /// Sends `key` to `location`. Moving it back to its plugin cell drops the move.
     public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
+        let origin = placement(of: key)?.location
         let home = references?.pluginPlacement(of: key)?.home
         if home == location {
             worldState.reset(.relocation, for: key)
         } else {
             worldState.set(ReferenceRelocation(location: location), for: key, in: location)
         }
+        queueCellAttachmentChange(of: key, from: origin, to: location)
+    }
+
+    /// `OnAttachedToCell` or `OnDetachedFromCell` when a move crosses between an attached
+    /// and a detached cell (<https://ck.uesp.net/wiki/OnAttachedToCell_-_ObjectReference>).
+    private func queueCellAttachmentChange(
+        of key: ReferenceKey, from origin: CellSceneLocation?, to destination: CellSceneLocation
+    ) {
+        guard let world, key != playerKey else { return }
+        let wasAttached = origin.map { world.attachedByCell[$0] != nil } ?? false
+        let isAttached = world.attachedByCell[destination] != nil
+        guard wasAttached != isAttached else { return }
+        let name = isAttached
+            ? PapyrusEngineEvents.onAttachedToCell : PapyrusEngineEvents.onDetachedFromCell
+        _ = world.queueActorEvent(name, on: key, arguments: [])
     }
 }
