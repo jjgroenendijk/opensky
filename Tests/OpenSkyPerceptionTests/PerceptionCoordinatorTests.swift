@@ -1,5 +1,5 @@
 // The perception shell over a fake session: which resident actors observe,
-// and what the panel reads before and after the pass is wired.
+// and what the readout reads before and after the pass is wired.
 
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM

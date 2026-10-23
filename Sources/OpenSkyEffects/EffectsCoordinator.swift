@@ -40,7 +40,7 @@ public final class EffectsCoordinator {
     /// Impact models (dust, sparks, blood spray) show where a hit or step lands.
     public var impactModelsEnabled = true
     public internal(set) var impactCount = 0
-    /// The last impact shown, so the panel can show it again.
+    /// The last impact shown, so the readout can show it again.
     public internal(set) var lastImpact: (impact: Impact, decal: ImpactDecal?)?
     var decalsChanged = false
     /// The particle systems of each live effect, by instance id.

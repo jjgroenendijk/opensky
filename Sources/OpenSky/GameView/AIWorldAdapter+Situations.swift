@@ -6,12 +6,9 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCombat
-import OpenSkyDialogue
-import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldInterface
 
 extension AIWorldAdapter {
     /// The graph events that draw and sheathe the weapon.

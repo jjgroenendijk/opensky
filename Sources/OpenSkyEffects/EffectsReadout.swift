@@ -1,5 +1,5 @@
 // The text of the image-space and visual-effect readouts, kept out of the
-// panels so a unit test can pin it.
+// readouts so a unit test can pin it.
 
 import Foundation
 import OpenSkyFormatsESM

@@ -39,7 +39,7 @@ public final class MagicCoordinator {
     public weak var storyEvents: (any StoryEventReporting)?
     /// Hears every cast, as spell then caster, for the `OnSpellCast` event.
     public var onSpellCast: ((ReferenceKey, ReferenceKey) -> Void)?
-    /// The spell words the spellcasting panel shows.
+    /// The spell words the spellcasting readout shows.
     public var magicTexts = MagicTexts.vanilla
     public var castNotices = GameSettingTexts<CastNoticeText>.vanilla
     /// The hands pressed last frame, so a press during a shout is refused once.
@@ -76,7 +76,7 @@ public final class MagicCoordinator {
     public var shoutSettings = ShoutSettings.vanilla
     public internal(set) var shoutMachine = ShoutMachine()
     var wasShoutHeld = false
-    /// Seconds the panel's Shout button still holds the key.
+    /// Seconds the readout's Shout button still holds the key.
     var panelShoutHold: Float?
     /// The shout the machine is voicing, fixed at the press.
     var voicedShout: ReferenceKey?
@@ -246,7 +246,7 @@ public final class MagicCoordinator {
     }
 
     /// Consumes `item` from the player and applies it to the player. The menu
-    /// and the panel both call this, and show the line of the outcome it returns.
+    /// and the readout both call this, and show the line of the outcome it returns.
     @discardableResult
     public func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome {
         guard effects != nil, let inventory = world.inventory else {
@@ -369,7 +369,7 @@ extension MagicCoordinator: CasterWorld {
     }
 
     /// A projectile hit and a direct cast take this one path, so the effects
-    /// panel's tally counts both.
+    /// readout's tally counts both.
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         let holders = residentHolders(of: hit.targets)

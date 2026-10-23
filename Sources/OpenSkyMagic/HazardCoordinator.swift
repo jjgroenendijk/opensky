@@ -30,7 +30,7 @@ nonisolated public struct HazardPlacement: Equatable, Sendable {
     }
 }
 
-/// The last hit one hazard landed, for the sidebar.
+/// The last hit one hazard landed.
 nonisolated public struct HazardHitRecord: Equatable, Sendable {
     public let targets: [ReferenceKey]
     public let applied: Int

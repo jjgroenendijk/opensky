@@ -1,5 +1,5 @@
 // What a world load has done so far: the state and time of each stage. The
-// launcher draws it live, and the developer sidebar shows the last one.
+// launcher draws it live.
 
 import Foundation
 import OpenSkyCells

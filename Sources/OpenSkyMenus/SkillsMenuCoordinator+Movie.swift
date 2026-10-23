@@ -1,5 +1,5 @@
 // The skills menu's two vanilla movies on the one SWF layer. A movie that does not
-// load leaves the engine rows in the sidebar in charge, never a thrown error.
+// load leaves the engine rows in charge, never a thrown error.
 
 import Foundation
 import OpenSkyFormatsSWF

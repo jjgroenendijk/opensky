@@ -149,7 +149,7 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
         tracks.isEmpty
     }
 
-    /// Label for the panel readout: editor id when the record has one, else the
+    /// Label for the readout: editor id when the record has one, else the
     /// FormID, else "none".
     public var displayName: String {
         if let editorID, !editorID.isEmpty {
@@ -209,7 +209,7 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
         )
     }
 
-    /// Resolves one named MUSC directly. The panel's force control uses this;
+    /// Resolves one named MUSC directly. The readout's force control uses this;
     /// the context path funnels into it after picking a winner.
     public static func resolve(
         musicType id: FormID,

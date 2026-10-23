@@ -10,7 +10,7 @@ import simd
 /// A free function over an `inout ActiveEffectRuntime` rather than a type of its
 /// own, for the reason the consumption path is one: the effect runtime is a
 /// value over a shared store whose tally advances as it works, and a copy held
-/// here would grow a tally the panel never sees.
+/// here would grow a tally the readout never sees.
 @MainActor
 public enum SpellHitApplication {
     /// Applies `hit` to every actor it reached, scaling each entry by `perkScaling` and

@@ -1,9 +1,8 @@
 // Main-app world-item inspection seam: take, drop, and container sessions,
-// without the panel depending on `GameViewController`. One snapshot value, so the
+// without the readout depending on `GameViewController`. One snapshot value, so the
 // readout comes from one observation. AppKit-free.
 
 import Foundation
-import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 
 /// Who an equip or unequip applies to: the player for state and carry weight,
@@ -14,10 +13,10 @@ nonisolated public enum EquipmentTargetSelector: Equatable, Sendable {
     case nearestActor
 }
 
-/// One equipped item as the panel spells it.
+/// One equipped item as the readout spells it.
 nonisolated public struct EquippedItemReadout: Equatable, Sendable {
     public let name: String
-    /// Biped slots and hands it occupies, preformatted — the panel has no
+    /// Biped slots and hands it occupies, preformatted — the readout has no
     /// business knowing how to render a `BodySlots` bitfield.
     public let occupancy: String
     /// The item's enchantment and what it has left, preformatted, or nil when it has
@@ -34,7 +33,7 @@ nonisolated public struct EquippedItemReadout: Equatable, Sendable {
 /// One observation of the world-item runtime.
 nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     /// False when no inventory runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather than
+    /// scene. Every other field is then empty and the readout says so rather than
     /// showing a convincing zero.
     public let isAvailable: Bool
     /// The crosshair target's name, when it has one.
@@ -62,7 +61,7 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     public let nearestActorName: String?
     /// What that actor is wearing — the set an equip is actually visible on.
     public let nearestActorEquipped: [EquippedItemReadout]
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
     /// The `CarryWeight` actor value. Above it the player can only walk.
     public let playerCapacity: Float?
@@ -116,42 +115,4 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
         spawnedObjectCount: 0,
         lastActionText: "World items unavailable: no game data loaded."
     )
-}
-
-@MainActor
-public protocol ItemControlProviding: AnyObject {
-    var itemControlSnapshot: ItemControlSnapshot { get }
-
-    /// Takes the crosshair target into the player's inventory.
-    @discardableResult
-    func takeInteractionTarget() -> ItemActionOutcome
-
-    /// Opens a container session on the crosshair target, replacing any
-    /// session already open.
-    @discardableResult
-    func openInteractionTargetContainer() -> ItemActionOutcome
-
-    /// Moves everything in the open container to the player.
-    @discardableResult
-    func takeAllFromOpenContainer() -> ItemActionOutcome
-
-    /// Ends the open container session.
-    @discardableResult
-    func closeOpenContainer() -> ItemActionOutcome
-
-    /// Drops `count` of `item` in front of the player. A nil `item` drops from
-    /// the player's first stack, which is what makes the control usable without
-    /// knowing a FormID.
-    @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome
-
-    /// Equips `item` on `target`, unequipping its conflicts. A nil `item` equips the
-    /// target's first equippable unequipped stack.
-    @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome
-
-    /// Unequips `item` on `target`. A nil `item` unequips the first thing the
-    /// target is wearing.
-    @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> ItemActionOutcome
 }

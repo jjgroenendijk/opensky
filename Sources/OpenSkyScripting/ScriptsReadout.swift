@@ -1,4 +1,4 @@
-// World > Scripts readout text: pure functions of one `ScriptsSnapshot`, so the wording
+// Papyrus readout text: pure functions of one `ScriptsSnapshot`, so the wording
 // is tested without AppKit, Metal or an install. No AppKit import, so the CLI builds it.
 
 import OpenSkyScriptingInterface
@@ -49,34 +49,6 @@ nonisolated public enum ScriptsReadout: Sendable {
             "Fill failures: \(snapshot.questAliasFillFailures)"
                 + "  Last fill: \(snapshot.lastQuestAliasFill ?? "none")"
         ].joined(separator: "\n")
-    }
-
-    /// One quest's alias table, one line per alias in fill order. An empty alias shows
-    /// its fill type, so an unimplemented type differs from an empty result. A stopped
-    /// quest shows all aliases empty.
-    public static func questAliasText(
-        for table: ScriptQuestAliasInspection?,
-        editorID: String
-    ) -> String {
-        guard let table else {
-            return editorID.isEmpty
-                ? "No quest selected."
-                : "No loaded plugin defines \(editorID)."
-        }
-        let header = "\(table.editorID) (\(table.formIDText))"
-            + "  \(table.isRunning ? "running" : "not running")"
-            + "  filled \(table.filledCount)/\(table.rows.count)"
-        guard !table.rows.isEmpty else {
-            return "\(header)\nThis quest declares no aliases."
-        }
-        return ([header] + table.rows.map(line)).joined(separator: "\n")
-    }
-
-    private static func line(_ row: ScriptQuestAliasRow) -> String {
-        let name = row.name.isEmpty ? "unnamed" : row.name
-        let optional = row.isOptional ? ", optional" : ""
-        return "  [\(row.aliasID)] \(name) (\(row.fillType)\(optional))"
-            + " -> \(row.reference ?? "empty")"
     }
 
     /// Queue depth plus the dispatched-event tail, oldest first, in the same

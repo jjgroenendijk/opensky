@@ -1,5 +1,5 @@
 // The spell natives against a real bridge, `SpellbookRuntime`, and
-// `CasterRuntime`, so a script's `AddSpell` and the panel's Learn button reach
+// `CasterRuntime`, so a script's `AddSpell` and the readout's Learn button reach
 // one component. Only the cast's target world is faked.
 
 import Foundation
@@ -153,7 +153,7 @@ struct PapyrusNativeSpellTests {
             arguments: [spell], returnType: .boolean
         ) == .returned(.boolean(true)))
         // The write went through `SpellbookRuntime`, so the component the
-        // panel and the save read carries it too.
+        // readout and the save read carries it too.
         #expect(fixture.caster.spellbook.knows(
             SpellbookFixture.key(SpellbookFixture.Spell.fastHealing), fixture.holder
         ))

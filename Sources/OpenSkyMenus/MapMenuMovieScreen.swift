@@ -36,15 +36,6 @@ public final class MapMenuMovieScreen {
         }
     }
 
-    /// "movie", or why the map draws no markers.
-    public var movieState: String {
-        guard isShown else { return "closed" }
-        if movie.isLoaded {
-            return "movie, \(sites.count) markers"
-        }
-        return movie.error.map { "no movie, \($0)" } ?? "no movie"
-    }
-
     public func tick(now: Double) {
         if map.isOpen != isShown {
             if map.isOpen {

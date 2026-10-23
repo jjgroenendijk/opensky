@@ -1,5 +1,5 @@
 // The phases between the end of the world data load and the first drawn frame.
-// The World panel lists them after the load stages; Instruments shows them as signposts.
+// The World readout lists them after the load stages; Instruments shows them as signposts.
 
 import Foundation
 import OpenSkyFormatsCore

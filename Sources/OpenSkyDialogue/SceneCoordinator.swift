@@ -1,5 +1,5 @@
 // The shell of scene playback: owns the scene catalog, ticks playing scenes,
-// and keeps the last steps and lines for the sidebar. The rules live in
+// and keeps the last steps and lines for state reads. The rules live in
 // `SceneRuntime`. See docs/engine/coordinators.md and docs/engine/scenes.md.
 
 import OpenSkyDialogueInterface

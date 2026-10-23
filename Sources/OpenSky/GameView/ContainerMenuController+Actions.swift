@@ -1,4 +1,4 @@
-// Transactions, merchant nomination, barter and the panel snapshot for the
+// Transactions, merchant nomination, barter and the readout snapshot for the
 // container and barter menus. Every refusal lands in `lastActionText` and
 // leaves the world untouched.
 
@@ -28,29 +28,6 @@ extension ContainerMenuController {
         }
     }
 
-    @discardableResult
-    func selectMerchant(_ reference: FormID) -> MerchantNomination {
-        guard let streamer = game.streamer else { return noteNomination(.noCell) }
-        guard
-            let interaction = streamer.containerInteractions()
-                .first(where: { $0.reference == reference })
-        else {
-            return noteNomination(.notResident(reference))
-        }
-        return nominateAndNote(interaction)
-    }
-
-    @discardableResult
-    func selectMerchantFromInteraction() -> MerchantNomination {
-        guard
-            let interaction = game.hud.interactionTarget?.interaction,
-            interaction.action == .search
-        else {
-            return noteNomination(.crosshairNotOnContainer)
-        }
-        return nominateAndNote(interaction)
-    }
-
     /// Binds one container interaction as the menu's target. The holder
     /// matches the one a crosshair search opens.
     @discardableResult
@@ -60,21 +37,10 @@ extension ContainerMenuController {
         return true
     }
 
-    private func nominateAndNote(_ interaction: PlacedInteraction) -> MerchantNomination {
-        guard nominate(interaction) else { return noteNomination(.noHolder) }
-        refreshModel()
-        return noteNomination(.nominated(interaction.name))
-    }
-
-    private func noteNomination(_ nomination: MerchantNomination) -> MerchantNomination {
-        note(nomination.text)
-        return nomination
-    }
-
     // MARK: - Barter
 
     /// Opens the barter menu on `actor`'s vendor stock, as
-    /// `Actor.ShowBarterMenu` does. `override` is the dev panel's vendor faction.
+    /// `Actor.ShowBarterMenu` does. `override` is the dev readout's vendor faction.
     ///
     /// - Returns: a readout line, which also lands in the menu's action text.
     @discardableResult
@@ -271,7 +237,7 @@ extension ContainerMenuController {
             side: model.side,
             transferLabel: model.transferLabel,
             containerName: containerName,
-            entryLines: model.active.entries.map(InventoryMenuSection.line(for:)),
+            entryLines: model.active.entries.map(\.readoutLine),
             selectedIndex: model.active.selectedIndex,
             categoryLabels: model.active.categoryLabels,
             selectedCategoryIndex: model.active.selectedCategoryIndex,

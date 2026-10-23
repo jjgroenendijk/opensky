@@ -1,5 +1,5 @@
 // Ambience-bed behavior of WorldAudioSoundDirector over the offline-render
-// engine: bed start and swap on context change, the World > Audio toggle
+// engine: bed start and swap on context change, the audio toggle
 // retiring and restarting the bed live, looping bed sources, and the readout
 // telling the truth about what is playing. See docs/engine/world-sfx.md.
 
@@ -9,7 +9,6 @@ import AVFAudio
 @testable import OpenSkyFormatsESM
 import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor
@@ -82,7 +81,7 @@ struct WorldAudioDirectorAmbienceTests {
         #expect(engine.sources.isEmpty)
     }
 
-    /// The panel checkbox must retire the playing bed the moment it is
+    /// The readout checkbox must retire the playing bed the moment it is
     /// unticked, and restart it when it is ticked again.
     @Test func ambienceToggleRetiresAndRestartsBed() throws {
         let engine = try Fixture.makeRunningEngine()

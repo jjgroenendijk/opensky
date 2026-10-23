@@ -19,7 +19,7 @@ public final class RagdollCoordinator {
         _ skeletonMeshPath: String, _ skeleton: HKASkeleton, _ scale: Float
     ) -> RagdollDefinition?
 
-    /// Nil until `wire`. The panel then reports itself unavailable.
+    /// Nil until `wire`. The readout then reports itself unavailable.
     public private(set) var runtime: RagdollRuntime?
     let world: any RagdollSessionWorld
     /// Whether the scene holds poses from this coordinator, so an empty frame clears them once.

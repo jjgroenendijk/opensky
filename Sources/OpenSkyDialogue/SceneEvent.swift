@@ -1,5 +1,5 @@
 // What scene playback did, one entry per step, like the dialogue selection
-// trace. The sidebar shows it; tests assert on it. See docs/engine/scenes.md.
+// trace. Agent control reads it; tests assert on it. See docs/engine/scenes.md.
 
 import Foundation
 import OpenSkyFormatsESM

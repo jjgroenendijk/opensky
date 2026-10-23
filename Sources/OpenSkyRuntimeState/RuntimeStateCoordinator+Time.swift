@@ -17,7 +17,7 @@ extension RuntimeStateCoordinator {
         )
     }
 
-    /// The Environment panel's time-of-day control writes here too, so the two
+    /// The Environment readout's time-of-day control writes here too, so the two
     /// cannot disagree about the hour.
     public func setGameClockHour(_ hour: Float) {
         if let id = timeGlobalFormID(.gameHour), let globalStore {
@@ -34,22 +34,6 @@ extension RuntimeStateCoordinator {
         setTimeGlobal(.gameYear, value: Float(year)) { $0.setYear(year) }
         setTimeGlobal(.gameMonth, value: Float(month)) { $0.setMonth(month) }
         setTimeGlobal(.gameDay, value: Float(day)) { $0.setDay(day) }
-    }
-
-    @discardableResult
-    public func setGameTimescale(_ timescale: Float) -> Bool {
-        setGlobalValue(
-            RuntimeStateCore.clampTimescale(timescale), editorID: GameClock.timescaleEditorID
-        )
-    }
-
-    public var runtimeStateGlobalEditorIDs: [String] {
-        if let cached = globalEditorIDs {
-            return cached
-        }
-        let names = (globalStore?.sortedGlobals() ?? []).compactMap(\.editorID)
-        globalEditorIDs = names
-        return names
     }
 
     public func runtimeStateGlobal(editorID: String) -> RuntimeStateGlobalSnapshot? {

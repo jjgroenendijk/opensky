@@ -66,17 +66,6 @@ nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
     }
 }
 
-/// The sidebar's view of the race menu.
-public protocol RaceMenuControlProviding: AnyObject {
-    var raceMenuSnapshot: RaceMenuSnapshot { get }
-    func openRaceMenu(limited: Bool)
-    func sendRaceMenuInput(_ event: MenuInputEvent)
-    func setRaceMenuName(_ name: String)
-    func resetPlayerIdentity()
-    func applyRacePreset(offset: Int)
-    func setRaceMenuMovieEnabled(_ enabled: Bool)
-}
-
 public final class RaceMenuCoordinator {
     public static let identifier: MenuIdentifier = "RaceSex Menu"
 
@@ -95,7 +84,7 @@ public final class RaceMenuCoordinator {
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
     private var typedName = ""
-    /// The preset the sidebar applied last, so the next press moves on from it.
+    /// The preset applied last, so the next press moves on from it.
     private var presetIndex: Int?
     private let menuMode: MenuModeController
     weak let world: (any RaceMenuWorld)?
@@ -146,17 +135,6 @@ public final class RaceMenuCoordinator {
         return true
     }
 
-    public func setMovieEnabled(_ enabled: Bool) {
-        guard enabled != movieEnabled else { return }
-        movieEnabled = enabled
-        guard isOpen else { return }
-        if enabled {
-            startMovie()
-        } else {
-            stopMovie()
-        }
-    }
-
     public func route(_ event: MenuInputEvent) {
         // The movie's Done button only answers a click, so the engine reads its key.
         if movieLoaded, event == .button(.xButton) {
@@ -205,10 +183,6 @@ public final class RaceMenuCoordinator {
             }
         }
         return true
-    }
-
-    public func setName(_ name: String) {
-        model?.setName(name)
     }
 
     private func startName() {
@@ -280,36 +254,6 @@ public final class RaceMenuCoordinator {
                 isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError
             )
         )
-    }
-}
-
-extension RaceMenuCoordinator: RaceMenuControlProviding {
-    public var raceMenuSnapshot: RaceMenuSnapshot {
-        snapshot
-    }
-
-    public func resetPlayerIdentity() {
-        resetToRecord()
-    }
-
-    public func openRaceMenu(limited: Bool) {
-        open(limited: limited)
-    }
-
-    public func sendRaceMenuInput(_ event: MenuInputEvent) {
-        route(event)
-    }
-
-    public func setRaceMenuName(_ name: String) {
-        setName(name)
-    }
-
-    public func applyRacePreset(offset: Int) {
-        applyPreset(offset: offset)
-    }
-
-    public func setRaceMenuMovieEnabled(_ enabled: Bool) {
-        setMovieEnabled(enabled)
     }
 }
 

@@ -10,7 +10,7 @@ import OpenSkyWorldConditions
 
 nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a
-    /// session's counters span every evaluation the panel has run.
+    /// session's counters span every evaluation the readout has run.
     public static func report(
         source: String,
         conditions: [Condition],

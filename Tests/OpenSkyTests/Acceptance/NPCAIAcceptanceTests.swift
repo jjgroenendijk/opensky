@@ -1,7 +1,7 @@
 // M16 acceptance: one guard through one day. A schedule picks a package, the
 // guard walks a navmesh corridor through a door, notices the player, fights,
 // breaks off wounded, searches, gives up, and resumes its package. Each step
-// asserts runtime state, not only that a call returned. The panel, budget,
+// asserts runtime state, not only that a call returned. The readout, budget,
 // render, and real-data halves live in the other `NPCAIAcceptance*` suites.
 
 import Foundation

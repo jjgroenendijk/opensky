@@ -1,4 +1,4 @@
-// World > Player & Locomotion > Actor State: the inputs the engine wrote and the
+// Actor state readout: the inputs the engine wrote and the
 // outputs the graph published, as the third-person graph holds them now. No AppKit
 // import: the CLI builds it too.
 
@@ -25,7 +25,7 @@ nonisolated public struct ActorStateGraphSnapshot: Equatable, Sendable {
     }
 
     /// Reads every input and output off `graph`. A name the graph does not declare
-    /// gets a nil value, so a mismatch shows on the panel.
+    /// gets a nil value, so a mismatch shows on the readout.
     public static func read(
         _ graph: BehaviorGraphInstance?, constants: [ActorGraphState: Int32]
     ) -> ActorStateGraphSnapshot {
@@ -45,20 +45,5 @@ nonisolated public struct ActorStateGraphSnapshot: Equatable, Sendable {
             outputs: ActorStateGraphNames.outputs.map(snapshot),
             state: state
         )
-    }
-}
-
-nonisolated public enum ActorStateGraphReadout: Sendable {
-    public static func text(for snapshot: ActorStateGraphSnapshot) -> String {
-        guard snapshot.state != nil || !snapshot.inputs.isEmpty else {
-            return "Actor state: no graph attached"
-        }
-        let state = "State: " + (snapshot.state ?? "<not declared by the graph>")
-        return ([state, "Engine writes:"] + snapshot.inputs.map(line)
-            + ["Graph outputs:"] + snapshot.outputs.map(line)).joined(separator: "\n")
-    }
-
-    private static func line(_ variable: LocomotionVariableSnapshot) -> String {
-        "  \(variable.name) = \(variable.value ?? "<not declared by the graph>")"
     }
 }

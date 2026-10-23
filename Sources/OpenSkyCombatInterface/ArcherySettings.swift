@@ -44,7 +44,7 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     }
 
     /// Every setting paired with its editor ID, for the CLI report and the
-    /// panel readout.
+    /// readout.
     public var report: [(editorID: String, setting: MovementSetting)] {
         [
             ("f1PArrowTiltUpAngle", firstPersonTiltUpAngle),

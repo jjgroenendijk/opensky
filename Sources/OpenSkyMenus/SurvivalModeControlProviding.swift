@@ -1,4 +1,4 @@
-// The sidebar's view of the Survival Mode answer and the plugin's globals.
+// A view of the Survival Mode answer and the plugin's globals.
 
 import Foundation
 import OpenSkyGameData
@@ -29,22 +29,12 @@ nonisolated public struct SurvivalModeSnapshot: Equatable, Sendable {
     }
 }
 
-public protocol SurvivalModeControlProviding: AnyObject {
-    var survivalModeSnapshot: SurvivalModeSnapshot { get }
-    func setSurvivalMode(_ on: Bool)
-    func setSurvivalModeAsk(_ ask: Bool)
-}
-
-extension SurvivalModeCoordinator: SurvivalModeControlProviding {
+extension SurvivalModeCoordinator {
     public var survivalModeSnapshot: SurvivalModeSnapshot {
         SurvivalModeSnapshot(answer: answer, isForced: forcedAnswer != nil, globals: globals)
     }
 
     public func setSurvivalMode(_ on: Bool) {
         store.set(.survivalMode, to: on ? 1 : 0)
-    }
-
-    public func setSurvivalModeAsk(_ ask: Bool) {
-        store.set(.survivalModeAsk, to: ask ? 1 : 0)
     }
 }

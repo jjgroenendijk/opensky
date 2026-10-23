@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsSWF
 
 /// The three tallies a dialogue bring-up is gated on. Zero of each is the gate
-/// passing; the panel and the CLI probe print all three even at zero, so a
+/// passing; the readout and the CLI probe print all three even at zero, so a
 /// passing gate cannot be mistaken for a missing readout.
 nonisolated public struct DialogueMenuDiagnostics: Equatable, Sendable {
     public let faults: Int
@@ -110,7 +110,7 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
     /// goodbye path both reach.
     ///
     /// Nothing here throws. A movie that does not match the measured contract
-    /// leaves entries in the missing-API tally, which the panel reports.
+    /// leaves entries in the missing-API tally, which the readout reports.
     public static func activate(
         runtime: SWFMovieRuntime,
         onClose: @escaping @MainActor @Sendable () -> Void

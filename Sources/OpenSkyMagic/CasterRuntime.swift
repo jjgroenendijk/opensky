@@ -123,7 +123,7 @@ public final class CasterRuntime {
     /// The most recent outcome per hand, for a readout. The player's hands
     /// alone: an NPC's casts are reported through the combat loop's own
     /// readout, and letting every actor in a fight overwrite this would make
-    /// the panel line say whatever the last skeever did.
+    /// the readout line say whatever the last skeever did.
     public private(set) var lastOutcome: [SpellHand: SpellCastOutcome] = [:]
     /// The player's refused casts since the coordinator last took them.
     public private(set) var playerFailures: [SpellCastFailure] = []
@@ -187,7 +187,7 @@ public final class CasterRuntime {
         SpellHand.allCases.contains { phase(of: $0, on: caster).isCasting }
     }
 
-    /// Every actor with a cast in flight, in key order. What the combat panel
+    /// Every actor with a cast in flight, in key order. What the combat readout
     /// counts so an NPC mid-charge is visible rather than assumed.
     public var castingActors: [ReferenceKey] {
         Set(casts.filter(\.value.phase.isCasting).keys.map(\.caster)).sorted()

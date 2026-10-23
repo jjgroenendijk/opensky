@@ -1,9 +1,6 @@
-// Persists the World > Environment > Time of day choice (game-hours) across
-// launches. Stores one Double in the shared settings domain; a missing or
-// out-of-range value falls back to 13:00 (matches Renderer.timeOfDay's own
-// default) so a bad stored value never skews renderer setup. Applied when the
-// renderer is (re)created (GameViewController), read + written by the
-// Environment panel. Mirrors ShadowQualitySettings.
+// Keeps the time of day (game hours) across launches. A missing or out-of-range
+// value reads as 13:00, the renderer's own default, so a bad stored value never
+// skews renderer setup.
 
 import Foundation
 import OpenSkyGameData

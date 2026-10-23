@@ -1,4 +1,4 @@
-// The World > Progression panel's snapshot and actions. Each action is the
+// The progression snapshot and actions. Each action is the
 // runtime's own call; the tree reads are in `ProgressionCoordinator+Tree.swift`.
 
 import Foundation
@@ -37,16 +37,6 @@ extension ProgressionCoordinator {
 
     // MARK: - Skills
 
-    @discardableResult
-    public func advanceSelectedSkill(byUse amount: Float) -> ProgressionActionOutcome {
-        applyToSelectedSkill(verb: "took no use") { advanceSkill($0, byUse: amount) }
-    }
-
-    @discardableResult
-    public func incrementSelectedSkill() -> ProgressionActionOutcome {
-        applyToSelectedSkill(verb: "took no point") { incrementSkill($0) }
-    }
-
     // MARK: - Character level
 
     @discardableResult
@@ -57,23 +47,6 @@ extension ProgressionCoordinator {
         return record(.experienceAwarded(
             amount, report, nextLevelAt: leveling.experienceForNextLevel
         ))
-    }
-
-    /// What opening the skills menu does to the level, for the panel.
-    @discardableResult
-    public func applyBankedLevels() -> ProgressionActionOutcome {
-        guard let report = applyEarnedLevels() else { return .unavailable }
-        return record(.levelsApplied(report))
-    }
-
-    @discardableResult
-    public func chooseAttributePick(_ kind: ActorValueKind) -> ProgressionActionOutcome {
-        switch chooseAttribute(kind) {
-        case let .success(state):
-            record(.attributeChosen(kind, picksOwed: state.pendingAttributePicks))
-        case let .failure(error):
-            record(.progressRefused(error))
-        }
     }
 
     @discardableResult
@@ -106,22 +79,6 @@ extension ProgressionCoordinator {
         changeSelectedPerk(granting: false)
     }
 
-    @discardableResult
-    public func makeSelectedSkillLegendary() -> ProgressionActionOutcome {
-        if case let .failure(refusal) = makeSkillLegendary(skillSelection) {
-            record(.treeRefused(refusal))
-        }
-        return lastAction
-    }
-
-    @discardableResult
-    public func resetSelectedPerkTree() -> ProgressionActionOutcome {
-        if case let .failure(refusal) = resetPerkTree(skillSelection) {
-            record(.treeRefused(refusal))
-        }
-        return lastAction
-    }
-
     /// The readout line of `lastAction`, with the load order's training notices.
     public var lastActionText: String {
         lastAction.text(training: training)
@@ -137,18 +94,6 @@ extension ProgressionCoordinator {
 
     private func perkName(_ key: ReferenceKey) -> String {
         perks.runtime?.record(key)?.displayName ?? key.description
-    }
-
-    private func applyToSelectedSkill(
-        verb: String, _ change: (Int32) -> Bool
-    ) -> ProgressionActionOutcome {
-        guard skills != nil else { return .unavailable }
-        let index = skillSelection
-        let name = skillName(index)
-        guard change(index), let report = lastAdvance else {
-            return record(.skillUnchanged(skill: name, verb: verb))
-        }
-        return record(.skillAdvanced(report, skill: name))
     }
 
     private func changeSelectedPerk(granting: Bool) -> ProgressionActionOutcome {

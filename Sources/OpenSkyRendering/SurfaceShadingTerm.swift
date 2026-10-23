@@ -1,4 +1,4 @@
-// The lit-mesh terms a frame draws, in the groups the sidebar and the launcher
+// The lit-mesh terms a frame draws, in the groups the launcher
 // switch together. Mirrors the `ShadingTerm` bits in ShaderTypes.h.
 
 import OpenSkyShaderTypes

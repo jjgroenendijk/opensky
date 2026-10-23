@@ -96,7 +96,7 @@ extension GameSession {
 
     /// Switches camera mode, re-seating the capsule under the current eye when
     /// the new mode simulates a player. Shared by the camera key and the
-    /// `World > Camera` selector so the two cannot drift apart.
+    /// camera selector so the two cannot drift apart.
     public func setMovementMode(_ mode: CameraMovementMode) {
         guard mode != movementMode else { return }
         // Re-seating the capsule reads the view pose, which a live conversation

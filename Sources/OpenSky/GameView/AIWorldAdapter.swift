@@ -1,4 +1,4 @@
-// App side of the AI coordinators: packages, the AI & Navigation panel, NPC
+// App side of the AI coordinators: packages, the AI & Navigation readout, NPC
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
@@ -13,7 +13,6 @@ import OpenSkyCrime
 import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyFactions
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory

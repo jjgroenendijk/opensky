@@ -1,6 +1,6 @@
 // The engine-side inventory list, grouped by the categories
 // `inventorymenu.swf` filters by (docs/engine/inventory-menu.md). The movie
-// bridge and the sidebar both read it, so they cannot disagree.
+// bridge and agent control both read it, so they cannot disagree.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -276,5 +276,22 @@ nonisolated public struct InventoryQuantityPrompt: Equatable, Sendable {
 
     public var text: String {
         "\(verb) how many \(name)? \(value) of \(maximum)"
+    }
+}
+
+nonisolated extension InventoryMenuEntry {
+    /// One row as `openskycli game` reads it: name, count, flags, weight, and value.
+    public var readoutLine: String {
+        let countText = count == 1 ? "" : " ×\(count)"
+        let equipped = isEquipped ? " [equipped]" : ""
+        // "Stolen items in your inventory will be marked with the word 'Stolen'"
+        // (<https://en.uesp.net/wiki/Skyrim:Crime>). The flag is per copy.
+        let stolen = switch stolenCount {
+        case 0: ""
+        case count: " [stolen]"
+        default: " [\(stolenCount) stolen]"
+        }
+        let weightText = String(format: "%.1f", weight)
+        return "\(name)\(countText)\(equipped)\(stolen) · \(weightText) wt · \(value) gold"
     }
 }

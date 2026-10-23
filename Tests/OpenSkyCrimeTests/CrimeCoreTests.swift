@@ -1,4 +1,4 @@
-// The pure crime rules: readout sentences, the panel's faction lists, and what
+// The pure crime rules: readout sentences, the readout's faction lists, and what
 // the hostility derivation reads about the player's bounties. No game-derived
 // bytes.
 

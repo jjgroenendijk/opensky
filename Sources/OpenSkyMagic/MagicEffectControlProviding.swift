@@ -1,10 +1,10 @@
-// The active-effect panel's seam: consume, dispel and coverage, without
+// The active-effect readout's seam: consume, dispel and coverage, without
 // `GameViewController`. One snapshot value, so the readout comes from a single observation.
 
 import Foundation
 import OpenSkyMagicInterface
 
-/// One active effect as a panel spells it.
+/// One active effect as a readout spells it.
 nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
     /// FULL name of the MGEF when the index resolves one, else its editor ID,
     /// else its key. Never empty, so a line always names something.
@@ -73,7 +73,7 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
 /// One observation of the active-effect runtime.
 nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     /// False when no active-effect runtime is attached — no game data, or a
-    /// synthetic scene. Every other field is then empty and the panel says so
+    /// synthetic scene. Every other field is then empty and the readout says so
     /// rather than showing a convincing zero.
     public let isAvailable: Bool
     /// Every effect currently acting on the player, in application order.
@@ -101,7 +101,7 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     /// The unimplemented archetypes seen, most frequent first, already spelled
     /// as `name x count`.
     public let unimplementedLines: [String]
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
     /// What the player's effects force on the player, such as paralysis.
     public var playerInfluence = ActorMagicInfluence.none
@@ -154,18 +154,4 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
         self.unimplementedLines = unimplementedLines
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol MagicEffectControlProviding: AnyObject {
-    var magicEffectControlSnapshot: MagicEffectControlSnapshot { get }
-
-    /// Consumes the first ALCH or INGR the player carries, without opening a menu.
-    /// Returns a readable outcome the panel shows verbatim.
-    @discardableResult
-    func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome
-
-    /// Removes every effect currently acting on the player.
-    @discardableResult
-    func dispelPlayerMagicEffects() -> MagicEffectActionOutcome
 }

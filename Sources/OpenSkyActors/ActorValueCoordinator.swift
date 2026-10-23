@@ -1,5 +1,5 @@
 // The shell of the actor-value domain: owns the runtime, steps regeneration,
-// and runs the Combat panel's actor-value controls. The rules live in
+// and runs the Combat readout's actor-value controls. The rules live in
 // `ActorValueRuntime`. See docs/engine/coordinators.md.
 
 import OpenSkyActorsInterface
@@ -8,13 +8,13 @@ import OpenSkyGameData
 import OpenSkyWorldState
 
 /// Owns the actor-value runtime and reads the world through `ActorValueWorld`.
-/// Without game data the runtime stays nil, and the panel reports itself
+/// Without game data the runtime stays nil, and the readout reports itself
 /// unavailable rather than showing a convincing zero.
 @MainActor
 public final class ActorValueCoordinator {
     /// Nil until `wire`.
     public private(set) var runtime: ActorValueRuntime?
-    /// Which target the panel's controls act on.
+    /// Which target the readout's controls act on.
     public var target = ActorValueTargetSelector.player
     /// Which actor value they act on, by vanilla table index. Health first.
     public var selection: Int32 = 24

@@ -14,11 +14,11 @@ nonisolated public struct FirstPersonCamera: Equatable, Sendable {
     /// asserted against the renderer by `FirstPersonCameraTests`.
     public static let defaultFOVYRadians = MatrixMath.radians(fromDegrees: defaultFOVYDegrees)
 
-    /// The same angle in the unit the panel control presents, so the slider,
+    /// The same angle in the unit the control presents, so the slider,
     /// the override check, and the engine cannot disagree about "default".
     public static let defaultFOVYDegrees: Float = 65
 
-    /// How far the field of view may be pushed from the panel. Wide enough to
+    /// How far the field of view may be pushed from the readout. Wide enough to
     /// cover the range a Skyrim player's own INI profile realistically holds
     /// and narrow enough that the projection stays well conditioned.
     public static let fovYRange: ClosedRange<Float> = (

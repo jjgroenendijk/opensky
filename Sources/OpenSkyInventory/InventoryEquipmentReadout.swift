@@ -1,4 +1,4 @@
-// World > Inventory & Equipment readout text. Every line is a pure function of
+// Inventory and equipment readout text. Every line is a pure function of
 // one `InventoryEquipmentSnapshot`, so the wording is testable without AppKit,
 // Metal, or a game install.
 

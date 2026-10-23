@@ -3,7 +3,6 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
 
 extension InventoryCoordinator {
     /// Nil without game data or for an item no plugin describes.

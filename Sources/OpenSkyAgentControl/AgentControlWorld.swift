@@ -33,12 +33,10 @@ nonisolated public struct AgentWorldStatus: Equatable, Sendable {
     /// True once the first cell is in the scene and the player can move.
     public var worldReady: Bool
     public var dataRoot: String?
-    public var mode: String?
 
-    public init(worldReady: Bool, dataRoot: String?, mode: String?) {
+    public init(worldReady: Bool, dataRoot: String?) {
         self.worldReady = worldReady
         self.dataRoot = dataRoot
-        self.mode = mode
     }
 }
 

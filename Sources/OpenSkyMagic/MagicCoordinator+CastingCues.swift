@@ -70,7 +70,7 @@ extension MagicCoordinator {
         wasWeaponsDrawn = weaponsDrawn
     }
 
-    /// The panel line: how many cues went out, the last one, and a waiting release.
+    /// The readout line: how many cues went out, the last one, and a waiting release.
     var castingCueText: String {
         let last = lastCastingCue.map { "; last: \($0)" } ?? ""
         let waiting = SpellHand.allCases.filter(releaseLatch.isWaiting)

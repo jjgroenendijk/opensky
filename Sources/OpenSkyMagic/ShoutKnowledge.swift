@@ -1,6 +1,6 @@
 // What the player knows of shouts. `Game.TeachWord`, `Game.UnlockWord`,
 // `Actor.AddShout`, and `Actor.EquipShout` keep it in the script state; the app reads
-// it from there, so a script and the panel change one record. See docs/engine/shouts.md.
+// it from there, so a script and the readout change one record. See docs/engine/shouts.md.
 
 import OpenSkyFormatsESM
 

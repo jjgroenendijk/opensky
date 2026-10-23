@@ -1,4 +1,4 @@
-// The combat panel's seam: the hostility toggle, combat state and target, one line per
+// The combat readout's seam: the hostility toggle, combat state and target, one line per
 // fighting actor, and transient counts. One snapshot value, so the readout comes from a
 // single observation while a fight runs.
 
@@ -8,7 +8,7 @@ import OpenSkyCombatInterface
 /// One observation of the combat loop.
 nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     /// False when no combat runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather than
+    /// scene. Every other field is then empty and the readout says so rather than
     /// showing a convincing zero.
     public let isAvailable: Bool
     /// Whether the player is in combat, and with whom.
@@ -40,13 +40,13 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     public let transients: CombatTransientCounts
     public let limits: CombatTransientLimits
     public let trimmedTransients: CombatTransientCounts
-    /// Whether fighters may cast at all: the panel's own switch.
+    /// Whether fighters may cast at all: the readout's own switch.
     public let isActorCastingEnabled: Bool
     /// Spells NPCs have finished casting this session.
     public let actorCastCount: Int
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
-    /// Whether Confidence and Assistance are on: the panel's own switch.
+    /// Whether Confidence and Assistance are on: the readout's own switch.
     public var usesTemperament = true
     /// The selected actor's Confidence beside the player, when it is known.
     public var selectedTemperament: CombatTemperament?
@@ -128,31 +128,4 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
         self.actorCastCount = actorCastCount
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol CombatLoopControlProviding: AnyObject {
-    var combatLoopSnapshot: CombatLoopSnapshot { get }
-    /// The selected actor's resolved CSTY and the settings it fights with.
-    var selectedCombatStyle: CombatStyleReadout? { get }
-
-    /// Whether the selected actor — the crosshair target, else the nearest
-    /// resident one — regards the player as an enemy. Settable, which is the
-    /// hostility toggle scope point 7 asks for.
-    var selectedActorIsHostile: Bool { get set }
-
-    /// Whether fighting actors may cast. Turning it off separates "chose a swing" from
-    /// "nothing deliverable". On by default.
-    var isActorCastingEnabled: Bool { get set }
-
-    /// Whether Confidence decides fleeing and Assistance brings allies in. On by default.
-    var usesCombatTemperament: Bool { get set }
-
-    /// Whether new fights use the game's advance, range, healing, shout, and flight
-    /// settings. On by default.
-    var appliesCombatGameSettings: Bool { get set }
-
-    /// Empties the incoming-hit trace and its count, without disturbing the
-    /// fight.
-    func clearCombatTrace()
 }

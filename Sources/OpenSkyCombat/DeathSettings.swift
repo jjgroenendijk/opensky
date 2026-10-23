@@ -89,7 +89,7 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
         spellImpactMult.isFinite ? max(spellImpactMult, 0) : 0
     }
 
-    /// The Death & Ragdoll panel's settings line.
+    /// The Death & Ragdoll readout's settings line.
     public var readout: String {
         String(
             format: "Death settings: melee push %.0f-%.0f for %.0f-%.0f damage · ranged %.0f-%.0f "

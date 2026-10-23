@@ -1,5 +1,5 @@
-// The Magic Effects and Spellcasting panels, read off the runtimes
-// `MagicCoordinator` owns. Every action returns the sentence the panel shows.
+// The Magic Effects and Spellcasting readouts, read off the runtimes
+// `MagicCoordinator` owns. Every action returns the sentence the readout shows.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -9,7 +9,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyWorldState
 
-extension MagicCoordinator: MagicEffectControlProviding {
+extension MagicCoordinator {
     public var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         guard let runtime = effects else { return .unavailable }
         let tally = runtime.tally
@@ -125,7 +125,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
     }
 }
 
-extension MagicCoordinator: CastingControlProviding {
+extension MagicCoordinator {
     public var castingControlSnapshot: CastingControlSnapshot {
         guard let caster else { return .unavailable }
         let book = caster.spellbook.state(of: .player)
@@ -159,22 +159,6 @@ extension MagicCoordinator: CastingControlProviding {
         snapshot.commandedText = commandedText
         snapshot.castingCueText = castingCueText
         return snapshot
-    }
-
-    @discardableResult
-    public func grantPlayerStartSpells() -> CastingActionOutcome {
-        guard let caster else { return recordCasting(.unavailable) }
-        let race = caster.spellbook.resolve(world.playerRaceSpells(), fromPlugin: pluginName)
-        let granted = caster.spellbook.grantStartSpells(to: .player, additional: race)
-        let held = reconcileAbilities(on: .player).storedCount
-        return recordCasting(.learnedStartSpells(granted: granted, held: held))
-    }
-
-    @discardableResult
-    public func readFirstCarriedSpellTome() -> CastingActionOutcome {
-        guard caster != nil else { return recordCasting(.unavailable) }
-        guard let tome = carriedSpellTomes().first else { return recordCasting(.noTome) }
-        return readSpellTome(tome.item, spell: tome.spell)
     }
 
     @discardableResult
@@ -233,25 +217,6 @@ extension MagicCoordinator: CastingControlProviding {
             caster.advance(delta: 1, on: .player)
         }
         return recordCasting(.cast(caster.release(hand, on: .player)))
-    }
-
-    @discardableResult
-    public func castReadiedSpellWithBothHands() -> CastingActionOutcome {
-        guard let caster else { return recordCasting(.unavailable) }
-        caster.begin(.right, on: .player)
-        let outcome = caster.begin(.left, on: .player)
-        guard caster.state(of: .right).isDualCast else {
-            caster.cancel(.right, on: .player)
-            caster.cancel(.left, on: .player)
-            return recordCasting(.cast(outcome.failure.map(SpellCastOutcome.failed)
-                    ?? .failed(.notDualCastable)))
-        }
-        let charge = caster.state(of: .right).phase == .charging ? MagicCore.panelChargeStep : 0
-        caster.advance(delta: charge, on: .player)
-        if caster.phase(of: .right) == .concentrating {
-            caster.advance(delta: 1, on: .player)
-        }
-        return recordCasting(.cast(caster.release(.right, on: .player)))
     }
 
     // MARK: - Reads

@@ -135,7 +135,7 @@ final class DialogueMenuController {
         dialogue.endConversation()
         model.showTopicList()
         game.menuMode.dismiss(Self.identifier)
-        // Hands the view and the speaker back, unless the panel forces the camera.
+        // Hands the view and the speaker back, unless the readout forces the camera.
         game.dialogueCamera.refreshFocus()
         movie.stop()
         publishSubtitle()

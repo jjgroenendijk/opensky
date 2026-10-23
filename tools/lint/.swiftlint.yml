@@ -98,14 +98,14 @@ opening_brace:
   ignore_multiline_function_signatures: true
   ignore_multiline_type_headers: true
 
-# GameViewController keeps the view, input, the render loop, and the panel wiring,
-# in these two files. Game logic goes in a coordinator in its feature module
+# GameViewController keeps the view, input, and the render loop, in its own
+# files. Game logic goes in a coordinator in its feature module
 # (Sources/AGENTS.md), so no other file may extend it.
 custom_rules:
   game_view_controller_extension:
     name: "GameViewController extension"
     regex: '\bextension\s+GameViewController\b'
-    excluded: 'Sources/OpenSky/GameView/GameViewController([A-Za-z]*Panels|Hosts)?\.swift$'
+    excluded: 'Sources/OpenSky/GameView/GameViewController(Hosts)?\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
   perk_entry_point_literal:
@@ -155,13 +155,6 @@ custom_rules:
     excluded: '(Sources/OpenSky/|Tests/).*$'
     message: "Return a typed outcome and build its line in a formatter (docs/engine/coordinators.md)"
     severity: error
-  # A protocol requirement in a panel seam: no access modifier, no body, no static.
-  panel_action_returns_text:
-    name: "Panel action returns text"
-    regex: '^[ \t]*func\s+\w+\((?:[^()]|\([^()]*\))*\)\s*->\s*String\??[ \t]*$'
-    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]+ControlProviding\.swift$'
-    message: "A panel action returns a typed outcome; the panel writes its text (docs/engine/coordinators.md)"
-    severity: error
   pure_core_side_effect:
     name: "Pure core side effect"
     regex: '^\s*(@\w+\s+)*import\s+(AppKit|Cocoa|SwiftUI|Metal|MetalKit|MetalFX|QuartzCore|AVFoundation|AVFAudio|AudioToolbox|CoreAudio|GameController|Dispatch|OpenSkyRendering)\b|\b(Date\(\)|Date\.now\b|CACurrentMediaTime\b|DispatchTime\b|ContinuousClock\b|SuspendingClock\b|mach_absolute_time\b|CFAbsoluteTimeGetCurrent\b|systemUptime\b)'
@@ -188,7 +181,7 @@ custom_rules:
     name: "Frame callback property"
     regex: '\bvar\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*:\s*[^=\n{]*->[^{\n]*$|\b(var|let)\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*(=|:)\s*CallbackFanOut\b'
     included: 'Sources/.*\.swift$'
-    excluded: 'Sources/OpenSky(World/Session/FrameSchedule|/(Shell|Panels|Launcher)/.*)\.swift$'
+    excluded: 'Sources/OpenSky(World/Session/FrameSchedule|/(Shell|Launcher)/.*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Join the frame through a phase of a FrameSchedule, not a callback (docs/engine/architecture.md)"
     severity: error

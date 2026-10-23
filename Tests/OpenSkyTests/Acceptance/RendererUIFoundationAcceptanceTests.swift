@@ -1,4 +1,4 @@
-// UI-shell acceptance in pixels: the localized sample changes the frame, a
+// UI-shell acceptance in pixels: the overlay sample changes the frame, a
 // scale change moves pixels, and a paused world with the sample up repeats
 // byte for byte. Skips without a Metal 4 GPU.
 
@@ -10,7 +10,6 @@ import OpenSkyEngineTesting
 import OpenSkyTagsTesting
 import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -21,24 +20,24 @@ struct RendererUIFoundationAcceptanceTests {
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
-    func localizedSampleChangesPixelsOverBaseline() throws {
+    func overlaySampleChangesPixelsOverBaseline() throws {
         let gameSession = try Self.canvas.makeSession()
         let renderer = gameSession.renderer
         gameSession.uiScene = .empty
         let base = try Self.canvas.render(renderer)
-        gameSession.uiScene = .localizedSample
+        gameSession.uiScene = .overlaySample
         let withSample = try Self.canvas.render(renderer)
         let changed = OffscreenRendererFixture.changedPixels(base, withSample)
-        // Filled panel alone covers thousands of pixels.
-        #expect(changed > 2000, "localized sample changed only \(changed) pixels")
+        // Filled readout alone covers thousands of pixels.
+        #expect(changed > 2000, "overlay sample changed only \(changed) pixels")
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
-    func localizedSampleScaleChangesPixels() throws {
+    func overlaySampleScaleChangesPixels() throws {
         let gameSession = try Self.canvas.makeSession()
         let renderer = gameSession.renderer
-        gameSession.uiScene = .localizedSample
+        gameSession.uiScene = .overlaySample
         renderer.uiScale = 1
         let atOne = try Self.canvas.render(renderer)
         renderer.uiScale = 2
@@ -47,15 +46,15 @@ struct RendererUIFoundationAcceptanceTests {
         #expect(changed > 2000, "scale change moved only \(changed) pixels")
     }
 
-    /// Menu-mode pause with the localized sample up: repeated frames are
+    /// Menu-mode pause with the overlay sample up: repeated frames are
     /// byte-identical (frozen world + deterministic overlay) and the sim clock
     /// holds still.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
-    func pausedLocalizedFramesRepeatByteIdentical() throws {
+    func pausedOverlayFramesRepeatByteIdentical() throws {
         let gameSession = try Self.canvas.makeSession()
         let renderer = gameSession.renderer
-        gameSession.uiScene = .localizedSample
+        gameSession.uiScene = .overlaySample
         gameSession.worldSimPaused = true
         // Warm the glyph atlas so no upload happens between the compared frames.
         _ = try Self.renderPaused(renderer)

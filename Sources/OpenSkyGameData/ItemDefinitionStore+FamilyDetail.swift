@@ -1,5 +1,5 @@
 // One readout line of the decoded fields that set keys, soul gems, and apparatus
-// apart, for the inventory panels. See docs/formats/item-records.md.
+// apart, for the inventory readouts. See docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsESM

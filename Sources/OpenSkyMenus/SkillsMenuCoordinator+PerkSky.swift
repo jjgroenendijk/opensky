@@ -63,14 +63,7 @@ extension SkillsMenuCoordinator {
         )
     }
 
-    public func setSkyEnabled(_ enabled: Bool) {
-        skyEnabled = enabled
-        if !enabled {
-            hideSky()
-        }
-    }
-
-    /// The sidebar's sky line; nil before the sky first shows.
+    /// The sky readout line; nil before the sky first shows.
     var skyLine: String? {
         if let failure = world?.perkSkySource?.failure {
             return "failed: \(failure)"

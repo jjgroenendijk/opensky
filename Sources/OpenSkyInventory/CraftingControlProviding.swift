@@ -121,21 +121,6 @@ nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
     }
 }
 
-@MainActor
-public protocol CraftingControlProviding: AnyObject {
-    var craftingSnapshot: CraftingControlSnapshot { get }
-    @discardableResult
-    func openCraftingStation(_ editorID: String) -> CraftingActionOutcome
-    @discardableResult
-    func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome
-    @discardableResult
-    func closeCraftingStation() -> CraftingActionOutcome
-    @discardableResult
-    func forceHarvest() -> ItemActionOutcome
-    @discardableResult
-    func resetHarvest() -> ItemActionOutcome
-}
-
 extension InventoryCoordinator {
     public var craftingSnapshot: CraftingControlSnapshot {
         guard runtime != nil else { return .unavailable }
@@ -149,18 +134,6 @@ extension InventoryCoordinator {
             lastCraftText: lastCraft.text,
             lastActionText: lastAction.text
         )
-    }
-
-    public func openCraftingStation(_ editorID: String) -> CraftingActionOutcome {
-        openCraftingSession(station: editorID)
-    }
-
-    public func craftRecipe(_ id: ResolvedFormID) -> CraftingActionOutcome {
-        craft(id)
-    }
-
-    public func closeCraftingStation() -> CraftingActionOutcome {
-        closeCraftingSession()
     }
 
     private func harvestTarget() -> HarvestTargetReadout? {
@@ -255,45 +228,5 @@ extension InventoryCoordinator {
             "\(name(of: $0.item)) \($0.held) of \($0.required)"
         }
         return "missing " + missing.joined(separator: ", ")
-    }
-}
-
-/// The section readouts, kept here so a package test can pin them.
-nonisolated public enum CraftingReadout {
-    /// Recipe rows past this many are counted, not listed.
-    public static let listedRecipes = 12
-
-    public static func craftingText(for snapshot: CraftingControlSnapshot) -> String {
-        guard snapshot.isAvailable else { return snapshot.lastActionText }
-        guard let station = snapshot.stationName else {
-            return ["Station: none", "Last: \(snapshot.lastCraftText)"].joined(separator: "\n")
-        }
-        let ready = snapshot.recipes.count(where: \.isEligible)
-        var lines = [
-            "Station: \(station)",
-            "Skill: \(snapshot.skillName ?? "none")",
-            "Recipes: \(snapshot.recipes.count), ready \(ready)"
-        ]
-        lines += snapshot.recipes.prefix(listedRecipes).map { "  \($0.line)" }
-        if snapshot.recipes.count > listedRecipes {
-            lines.append("  and \(snapshot.recipes.count - listedRecipes) more")
-        }
-        lines.append("Last: \(snapshot.lastCraftText)")
-        return lines.joined(separator: "\n")
-    }
-
-    public static func harvestText(for snapshot: CraftingControlSnapshot) -> String {
-        guard snapshot.isAvailable else { return snapshot.lastActionText }
-        guard let target = snapshot.harvestTarget else {
-            return ["Plant: none", "Last: \(snapshot.lastActionText)"].joined(separator: "\n")
-        }
-        return [
-            "Plant: \(target.name)",
-            "Produce: \(target.produce)",
-            "Harvested: \(target.isHarvested ? "yes" : "no")",
-            target.seasonText,
-            target.regrowthText,
-            "Last: \(snapshot.lastActionText)"
-        ].joined(separator: "\n")
     }
 }

@@ -173,7 +173,7 @@ struct InventoryMenuModelTests {
     // MARK: - Live runtime
 
     /// The `@MainActor` convenience must agree with the plain builder, so the
-    /// panel and the movie cannot read two different lists.
+    /// readout and the movie cannot read two different lists.
     @Test func buildingThroughTheRuntimeMatchesThePlainBuilder() throws {
         let store = WorldStateStore()
         let baselines = try InventoryBaselineFixture.resolver()

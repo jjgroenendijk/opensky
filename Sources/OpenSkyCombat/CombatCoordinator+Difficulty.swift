@@ -4,7 +4,6 @@
 import Foundation
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
-import OpenSkyPhysics
 import OpenSkyProgressionInterface
 
 extension CombatCoordinator {
@@ -26,18 +25,6 @@ extension CombatCoordinator {
                 use.amount, level: difficulty, multipliers: difficultyMultipliers
             )
         )
-    }
-
-    /// The sidebar lines: each multiplier of the chosen level and its source.
-    public var difficultyMultiplierLines: [String] {
-        let resolved = difficultyMultipliers
-        return [
-            ("Damage dealt", resolved.damageByPlayer),
-            ("Damage taken", resolved.damageToPlayer),
-            ("Destruction experience divisor", resolved.experience)
-        ].map { label, setting in
-            String(format: "%@: %.2f (%@)", label, setting.value, setting.source)
-        }
     }
 
     /// `Destruction` in `wbActorValueEnum`.

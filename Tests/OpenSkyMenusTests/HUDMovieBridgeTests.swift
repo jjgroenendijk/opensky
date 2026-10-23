@@ -225,7 +225,7 @@ struct HUDMovieBridgeTests {
         #expect(HUDMovieBridge.subtitleText(runtime: harness.runtime) == nil)
         #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
         // The AS2 scope rule: an unreachable name is an accounted no-op, so the
-        // panel can report it.
+        // readout can report it.
         #expect(
             harness.runtime.tally.missingNames[HUDMovieBridge.subtitleTextPath] != nil
         )

@@ -31,7 +31,7 @@ extension CellStreamer {
         activate(InteractionTarget(interaction: entered, hitPosition: feet, distance: 0))
     }
 
-    /// The automatic door count and the `DoorSettings` distances, for World > Triggers.
+    /// The automatic door count and the `DoorSettings` distances, for state reads.
     public var automaticDoorReadout: String {
         let count = residentScenes.reduce(0) { total, scene in
             total + scene.interactions.values.count { $0.automaticArea != nil }

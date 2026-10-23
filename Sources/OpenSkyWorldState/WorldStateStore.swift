@@ -17,7 +17,7 @@ public final class WorldStateStore {
     /// Runtime global overrides, keyed by the GLOB's key. Separate from components,
     /// because a global has no cell and must not trigger a cell rebuild.
     private var globalValues: [ReferenceKey: GlobalValue] = [:]
-    /// Dirty reference count per cell, maintained incrementally so a sidebar
+    /// Dirty reference count per cell, maintained incrementally so a reader
     /// readout costs a dictionary lookup rather than a scan.
     private var dirtyCountsByCell: [CellSceneLocation: Int] = [:]
     private var changeJournal: WorldStateJournal

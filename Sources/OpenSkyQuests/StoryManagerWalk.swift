@@ -1,5 +1,5 @@
 // What one story-manager event did: every node visited, why each quest did or
-// did not start, and the condition tally. The sidebar shows it, like the
+// did not start, and the condition tally. State reads show it, like the
 // dialogue selection trace. See docs/engine/story-manager.md.
 
 import Foundation

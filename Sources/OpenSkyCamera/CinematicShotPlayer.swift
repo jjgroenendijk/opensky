@@ -168,10 +168,6 @@ nonisolated public struct CinematicShotPlayer: Sendable {
         nextStage()
     }
 
-    public mutating func stop() {
-        isFinished = true
-    }
-
     public func pose(anchors: CinematicAnchors) -> CinematicCameraPose? {
         guard let stage = currentStage else { return nil }
         let properties = stage.shot.record.properties

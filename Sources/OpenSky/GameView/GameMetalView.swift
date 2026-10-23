@@ -18,9 +18,7 @@ final class GameMetalView: MTKView {
     /// path, exactly as before menu mode existed.
     var menuMode: MenuModeController?
 
-    /// World-mode journal key. Nil leaves J unmapped. It is an accelerator for
-    /// `World > Quests & Journal > Page > Open journal`, so the app-ui rule
-    /// against unadvertised keystrokes holds.
+    /// World-mode journal key. Nil leaves J unmapped.
     var onJournalKey: (() -> Void)?
 
     /// The input event name of a world key, such as "Jump", for help messages.
@@ -54,8 +52,7 @@ final class GameMetalView: MTKView {
     private var captured = false
     private var freedForMenu = false
 
-    /// World-mode inventory key, an accelerator like `onJournalKey` for
-    /// `World > Menus > Inventory Menu > Open`.
+    /// World-mode inventory key. Nil leaves it unmapped.
     var onInventoryKey: (() -> Void)?
 
     /// The install's keys plus the player's remaps; the settings coordinator sets it.

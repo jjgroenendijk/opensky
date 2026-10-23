@@ -36,7 +36,7 @@ public protocol BookMenuWorld: MenuScreenWorld {
     func bookContent(_ item: FormID) -> BookContent?
     /// Applies what reading teaches; the notice to show, or nil when it teaches nothing.
     func readBook(_ item: FormID) -> String?
-    /// The books and notes the player carries, for the sidebar.
+    /// The books and notes the player carries.
     var carriedBooks: [FormID] { get }
 }
 
@@ -44,7 +44,6 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
     public static let identifier: MenuIdentifier = "Book Menu"
     public static let hint = "A/D: turn page   Tab or Esc: close"
 
-    public private(set) var book: FormID?
     public private(set) var content: BookContent?
     /// The first line the text panel shows.
     public private(set) var panelLine = 0
@@ -74,7 +73,6 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
             lastResult = "Not opened: \(item) is not a book"
             return false
         }
-        book = item
         self.content = content
         self.takeOffer = takeOffer
         panelLine = 0
@@ -99,7 +97,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
         world?.bookContent(item) != nil
     }
 
-    /// Opens the first carried book, for the sidebar.
+    /// Opens the first carried book.
     @discardableResult
     public func openFirstCarried() -> Bool {
         guard let item = world?.carriedBooks.first else {
@@ -152,7 +150,6 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
 
     override func didClose() {
         bar.stop()
-        book = nil
         content = nil
         takeOffer = nil
     }

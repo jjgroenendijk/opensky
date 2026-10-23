@@ -57,23 +57,6 @@ final class LockpickingMenuController {
         sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }
 
-    /// The readout of the movie layer: "movie", or why the overlay draws alone.
-    var movieState: String {
-        if movie.isLoaded {
-            return "movie"
-        }
-        return movie.error.map { "overlay, \($0)" } ?? "overlay"
-    }
-
-    /// The readout of the 3D lock: "3D lock", or why the overlay draws the lock.
-    var lockModelState: String {
-        guard let lockSource else { return "not opened yet" }
-        if lockSource.models != nil {
-            return "3D lock"
-        }
-        return lockSource.failure.map { "2D lock, \($0)" } ?? "2D lock, loading"
-    }
-
     private var locks: LockCoordinator {
         game.inventory.locks
     }
@@ -115,20 +98,6 @@ final class LockpickingMenuController {
             activate: LockpickingMenuMovieBridge.activate(runtime:),
             didLoad: { [weak self] in self?.publishMovie(force: true) }
         ), while: { [weak self] in self?.isOpen == true })
-    }
-
-    /// Opens the menu on the lock the sidebar selected, as if the player pressed on it.
-    @discardableResult
-    func openSelected() -> LockActionOutcome {
-        guard let interaction = locks.selectedInteraction else {
-            return locks.record(.noSelection)
-        }
-        open(InteractionTarget(
-            interaction: interaction,
-            hitPosition: interaction.position,
-            distance: 0
-        ))
-        return locks.lastAction
     }
 
     /// Opens the menu for a lock the gate refused, if the lock can be picked.
@@ -247,7 +216,7 @@ final class LockpickingMenuController {
         publishMovie()
     }
 
-    /// The panel changes only when a pick breaks; the debug angles change every frame.
+    /// The readout changes only when a pick breaks; the debug angles change every frame.
     private func publishMovie(force: Bool = false) {
         guard movie.isLoaded, let frame = presentation else { return }
         let index = ActorValueIdentity.index(named: "Lockpicking")

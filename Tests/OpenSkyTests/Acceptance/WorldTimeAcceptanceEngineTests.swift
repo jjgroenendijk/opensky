@@ -12,6 +12,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyRuntimeState
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -48,7 +49,7 @@ private struct WorldTimeEngineSession {
         box.clock
     }
 
-    /// One panel-level global write. Returns false when no loaded plugin
+    /// One readout-level global write. Returns false when no loaded plugin
     /// defines the editor ID, which is the same answer the live bridge gives.
     @discardableResult
     func setGlobal(_ value: Float, editorID: String) -> Bool {
@@ -83,10 +84,11 @@ private struct WorldTimeEngineSession {
     }
 }
 
-extension WorldTimeAcceptanceTests {
+@Suite(.tags(.acceptance))
+struct WorldTimeAcceptanceTests {
     // MARK: Step 7 — the five-step round trip on real engine objects
 
-    /// The core proof of the gate, in the order the panel performs it: mutate a
+    /// The core proof of the gate, in the order the readout performs it: mutate a
     /// reference, mutate a global, scrub the clock, save, and load into a
     /// brand-new store and a brand-new clock. The restored session is in the
     /// identical end state, and the equality that proves it is journal
@@ -108,7 +110,7 @@ extension WorldTimeAcceptanceTests {
         #expect(session.world.overriddenGlobalCount == 2)
         #expect(session.resolution().floatValue(editorID: "GameHour") == 7.25)
 
-        let directory = try RuntimeStateAcceptanceTests.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -125,7 +127,7 @@ extension WorldTimeAcceptanceTests {
     }
 
     /// A clock scrub leaves no override behind but does leave a journal entry,
-    /// which is what puts it in the panel's tail readout beside the reference
+    /// which is what puts it in the readout's tail readout beside the reference
     /// and global writes. Both facts are asserted together because either one
     /// alone would look like a bug.
     @Test @MainActor
@@ -164,7 +166,7 @@ extension WorldTimeAcceptanceTests {
         let session = try WorldTimeEngineSession()
         #expect(session.setGlobal(2500, editorID: "MyGold"))
 
-        let directory = try RuntimeStateAcceptanceTests.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -195,7 +197,7 @@ extension WorldTimeAcceptanceTests {
         .plugin(name: "skyrim.esm", objectID: objectID)
     }
 
-    /// The two reference mutations the panel's Disable and Nudge buttons make,
+    /// The two reference mutations the readout's Disable and Nudge buttons make,
     /// applied through the same `WorldStateStore.set` the live bridge calls.
     @MainActor
     private static func mutateAReference(_ store: WorldStateStore) {
@@ -251,7 +253,7 @@ extension WorldTimeAcceptanceTests {
         #expect(restored.floatValue(editorID: "MyGold") == 2500)
         #expect(restored.floatValue(editorID: GameClock.timescaleEditorID) == 3600)
         #expect(restored.floatValue(editorID: "GameHour") == 7.25)
-        // What the panel's clock readout would show for the restored session.
+        // What the clock readout would show for the restored session.
         let sample = RuntimeStateClockSnapshot(
             clock: restoredClock, timescale: 3600, isPaused: false
         )

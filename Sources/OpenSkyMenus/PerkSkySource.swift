@@ -27,10 +27,6 @@ public final class PerkSkySource {
         )
     }
 
-    public var models: Models? {
-        loader.models.map { Models(dome: $0[0], star: $0[1], line: $0[2]) }
-    }
-
     public var failure: String? {
         loader.failure
     }

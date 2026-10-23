@@ -1,7 +1,7 @@
 // The spell acceptance chain on the real install: find a shipped spell tome,
 // read it, ready its spell, cast it, and check that magicka drops and health
 // returns. Headless, so it proves the engine chain behind the Cast button, not
-// the panel. The summary in `.logs/` holds counts and editor IDs only.
+// the readout. The summary in `.logs/` holds counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyActors

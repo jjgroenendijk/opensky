@@ -1,5 +1,5 @@
-// The pure rules of the AI & Navigation panel: the actor list order, which
-// actor the selection resolves to, and the names the panel prints.
+// The pure rules of the AI & Navigation readout: the actor list order, which
+// actor the selection resolves to, and the names the readout prints.
 
 import OpenSkyFormatsESM
 import simd

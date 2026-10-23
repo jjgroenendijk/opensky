@@ -28,21 +28,18 @@ import OpenSkyWorldState
 protocol AgentWorldHost: AnyObject {
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
-    var agentControl: AgentControlCoordinator? { get }
     var benchmarkWorld: BenchmarkWorldAdapter { get }
     var cameraInput: CameraInputState { get }
     var combat: CombatCoordinator { get }
-    var containerMenuSnapshot: ContainerMenuControlSnapshot { get }
+    var containerMenu: ContainerMenuController { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var inventoryMenu: InventoryMenuController { get }
-    var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
     var journalMenu: JournalMenuController { get }
     var loadingScreens: LoadingScreenCoordinator { get }
-    var meleeCombatSnapshot: MeleeCombatSnapshot { get }
     var menuMode: MenuModeController { get }
     var messages: MessageCoordinator { get }
     var packages: PackageCoordinator { get }
@@ -69,7 +66,6 @@ final class AgentWorldAdapter {
     unowned let game: any AgentWorldHost
     /// Set by the host when a mode starts.
     var dataRoot: GameDataRoot?
-    var modeName: String?
     /// The diff state behind the game events.
     var tap = AgentEventTapState()
     private var quitScheduled = false
@@ -112,8 +108,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     var agentStatus: AgentWorldStatus {
         AgentWorldStatus(
             worldReady: isWorldReady,
-            dataRoot: dataRoot?.dataURL.path(percentEncoded: false),
-            mode: modeName
+            dataRoot: dataRoot?.dataURL.path(percentEncoded: false)
         )
     }
 
@@ -275,12 +270,5 @@ extension AgentWorldAdapter: AgentControlWorld {
             try? await Task.sleep(for: .milliseconds(200))
             NSApplication.shared.terminate(nil)
         }
-    }
-}
-
-/// The Agent Control section reads the bridge while one runs.
-extension AgentWorldAdapter: AgentControlForwarding {
-    var agentControl: AgentControlCoordinator? {
-        game.agentControl
     }
 }

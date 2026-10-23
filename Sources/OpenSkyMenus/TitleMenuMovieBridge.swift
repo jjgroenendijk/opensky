@@ -9,7 +9,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\startmenu.swf"
     public static let menuPath = "/MenuHolder/Menu_mc"
     public static let listPath = "\(menuPath)/MainListHolder/List_mc"
-    /// One panel lists the characters, then one character's saves.
+    /// One readout lists the characters, then one character's saves.
     public static let saveLoadPanelPath = "\(menuPath)/SaveLoadPanel_mc"
     public static let saveLoadListPath = "\(saveLoadPanelPath)/List_mc"
     static let saveLoadStates: Set = ["CharacterSelection", "SaveLoad"]

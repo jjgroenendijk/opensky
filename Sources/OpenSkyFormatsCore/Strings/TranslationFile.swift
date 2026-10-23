@@ -26,7 +26,7 @@ nonisolated public struct TranslationFile: Equatable, Sendable {
     }
 
     /// Builds a file directly from already-parsed entries. Used by in-app
-    /// synthetic sample content (Developer > UI Lab localized preview) and tests;
+    /// synthetic sample content and tests;
     /// `init(data:)` remains the only on-disk path.
     public init(entries: [String: String]) {
         self.entries = entries

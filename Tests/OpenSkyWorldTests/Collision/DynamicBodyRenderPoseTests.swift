@@ -118,7 +118,7 @@ struct DynamicBodyRenderPoseTests {
         ], sequence: 2)
 
         #expect(world.instanceDeltas.isEmpty)
-        // And the panel's reset now returns the body to the rebuilt pose rather
+        // And the readout's reset now returns the body to the rebuilt pose rather
         // than to the one the plugin authored, which is the same fact.
         world.reset()
         #expect(world.body(for: .generated(1))?.originPosition == rested)

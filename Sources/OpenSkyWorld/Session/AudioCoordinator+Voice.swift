@@ -1,4 +1,4 @@
-// World > Audio > Voice: the picker over the 75,408 `.fuz` lines, the
+// Voice playback: the picker over the 75,408 `.fuz` lines, the
 // positional trigger, the playback clock, and lip sync on the speaker.
 
 import Foundation
@@ -134,11 +134,7 @@ extension AudioCoordinator {
         voice.lipPlayback?.snapshot ?? .empty
     }
 
-    public var lastLipSyncError: String? {
-        voice.lipError
-    }
-
-    /// The panel reads the list and the count on every 2 Hz refresh, so the
+    /// The readout reads the list and the count on every 2 Hz refresh, so the
     /// matches are kept until the filter changes.
     private func matchedVoicePaths() -> [String] {
         let paths: [String]

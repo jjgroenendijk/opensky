@@ -1,4 +1,4 @@
-// What each archetype rule does, in a few words for the Magic Effects panel.
+// What each archetype rule does, in a few words for the Magic Effects readout.
 // See docs/engine/magic-archetypes.md.
 
 import Foundation

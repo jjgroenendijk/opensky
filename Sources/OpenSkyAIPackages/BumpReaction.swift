@@ -63,7 +63,7 @@ nonisolated public struct BumpReactions: Equatable, Sendable {
     }
 
     private var stages: [ReferenceKey: Stage] = [:]
-    /// Reactions started since the last reset, for the panel.
+    /// Reactions started since the last reset, for the readout.
     public private(set) var reactionCount = 0
 
     public init() {}

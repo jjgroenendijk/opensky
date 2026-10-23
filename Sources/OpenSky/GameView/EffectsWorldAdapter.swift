@@ -32,7 +32,6 @@ protocol EffectsWorldHost: AnyObject {
     var hazards: HazardCoordinator { get }
     var magic: MagicCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
@@ -286,58 +285,5 @@ extension EffectsWorldAdapter: EffectsWorld {
         var matrix = float4x4(simd_quatf(angle: yaw, axis: SIMD3(0, 0, 1)))
         matrix.columns.3 = SIMD4(feet, 1)
         return matrix
-    }
-}
-
-extension EffectsWorldAdapter: ExplosionControlWorld {
-    /// How far in front of the camera a panel detonation lands, in world units.
-    static let viewDistance: Float = 300
-
-    var effectsViewPoint: SIMD3<Float>? {
-        guard let camera = game.renderer?.camera else { return nil }
-        let look = camera.target - camera.eye
-        guard simd_length(look) > 0 else { return nil }
-        return camera.eye + simd_normalize(look) * Self.viewDistance
-    }
-
-    var hazardNames: [String] {
-        game.hazardWorld.store?.hazards.records.compactMap(\.record.editorID).sorted() ?? []
-    }
-
-    func spawnHazard(named name: String, at position: SIMD3<Float>) -> Bool {
-        guard let resolved = game.hazardWorld.store?.hazards.record(editorID: name)
-        else { return false }
-        return placeExplosionHazard(ReferenceKey(resolved: resolved.id), at: position)
-    }
-
-    var hazardRows: [TrapHazardRow] {
-        game.hazards.hazardRows
-    }
-}
-
-/// The Effects sections act on the nearest actor and the live settings store.
-extension EffectsWorldAdapter: EffectsControlForwarding, ExplosionControlForwarding {
-    var playerSettingsStore: PlayerSettingsStore {
-        game.playerSettings.store
-    }
-
-    var renderer: Renderer? {
-        game.renderer
-    }
-
-    var gameSession: GameSession? {
-        game.gameSession
-    }
-
-    var effectsSelectedActor: ReferenceKey? {
-        game.actorWorld.nearestActorValueHolder()?.key
-    }
-
-    var combat: CombatCoordinator {
-        game.combat
-    }
-
-    var explosionControlWorld: any ExplosionControlWorld {
-        self
     }
 }

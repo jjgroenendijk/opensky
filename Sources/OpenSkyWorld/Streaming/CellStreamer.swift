@@ -175,7 +175,7 @@ public final class CellStreamer {
     var doorTransitionHold: Float = 0
     /// Finished door builds held back by `doorTransitionHold`.
     var heldDoorTransitions: [DoorTransitionBuildResult] = []
-    /// Recent trigger edges for `World > World > Triggers`, filled by a subscriber
+    /// Recent trigger edges, filled by a subscriber
     /// registered in `init`.
     public let triggerLog = TriggerEventLog()
     /// Simulated rigid bodies, reconciled against residency each frame.
@@ -571,11 +571,5 @@ extension CellStreamer {
         let deltaX = Int(lhs.x) - Int(rhs.x)
         let deltaY = Int(lhs.y) - Int(rhs.y)
         return deltaX * deltaX + deltaY * deltaY
-    }
-
-    /// Requests a fresh ring for current center. If a build is already in
-    /// flight, requestDistantLODIfNeeded retries until runner accepts it.
-    public func invalidateDistantLOD() {
-        requestedLODCenter = nil
     }
 }

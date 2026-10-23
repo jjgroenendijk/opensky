@@ -1,6 +1,6 @@
-// The reading half of the World > Progression panel: the skill lines, the
+// The progression reading half: the skill lines, the
 // selected skill's AVIF perk tree, and the PERK record behind the selected box.
-// `PerkTreeIndex` answers "which box grants this perk?". The panel asks the
+// `PerkTreeIndex` answers "which box grants this perk?". The readout asks the
 // opposite, so it reads the AVIF node run in `INAM` order directly.
 
 import OpenSkyActorsInterface

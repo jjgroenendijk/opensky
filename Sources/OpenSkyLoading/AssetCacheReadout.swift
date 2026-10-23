@@ -76,32 +76,6 @@ nonisolated public enum AssetCacheReadout {
         seconds < 90 ? "\(Int(seconds.rounded())) s" : "\(Int((seconds / 60).rounded())) min"
     }
 
-    /// One line per kind that was read: `textures: 812 hits, 3 misses, 40 original, 0 stale`.
-    public static func countLines(_ counts: [AssetCacheKind: AssetCacheReadCounts]) -> [String] {
-        AssetCacheKind.allCases.compactMap { kind in
-            guard let count = counts[kind] else { return nil }
-            let stale = count.stale + count.unreadable
-            return "\(kind): \(count.hits) hits, \(count.misses) misses, "
-                + "\(count.original) original, \(stale) stale"
-        }
-    }
-
-    /// `meshes: current, 48 KiB` per entry, or why there is none.
-    public static func inspectionLines(_ entries: [AssetCacheEntryInspection]?) -> [String] {
-        guard let entries else { return ["Entry: no file has this path"] }
-        guard !entries.isEmpty else { return ["Entry: this file type is not cached"] }
-        return entries.map { entry in
-            let state = switch entry.state {
-            case let .current(bytes): "current, \(max(1, bytes >> 10)) KiB"
-            case .original: "loads the original"
-            case let .stale(reason): "stale, \(reason)"
-            case let .unreadable(reason): "unreadable, \(reason)"
-            case .missing: "missing"
-            }
-            return "\(entry.kind): \(state)"
-        }
-    }
-
     /// `Direct GPU loading: 412 textures, 380 MiB`, the meshes, then the last cell load.
     public static func directLoadLines(_ stats: FastTextureLoadStats) -> [String] {
         guard stats.batches > 0 || stats.externalSkips > 0 else {

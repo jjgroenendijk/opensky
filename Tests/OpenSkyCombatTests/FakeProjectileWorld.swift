@@ -1,4 +1,4 @@
-// The fake `ProjectileWorld` for the projectile, archery, and panel suites.
+// The fake `ProjectileWorld` for the projectile, archery, and readout suites.
 // Answers are stored values and actions are recorded. Static collision is a
 // list of half-space planes, so the tests do not retest `ShapeSweeper`.
 

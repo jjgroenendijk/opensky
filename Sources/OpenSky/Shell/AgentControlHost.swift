@@ -1,11 +1,10 @@
 // Runs the agent control server for the app's lifetime and points it at the
-// running mode's game. Off unless the launch environment or the sidebar turns
-// it on (docs/tools/agent-control.md).
+// running game. Off unless the launch environment turns it on
+// (docs/tools/agent-control.md).
 
 import AppKit
 import OpenSkyAgentControl
 import OpenSkyGameData
-import OpenSkyLaunch
 
 final class AgentControlHost {
     /// `openskycli game launch` sets this to 1.
@@ -38,9 +37,8 @@ final class AgentControlHost {
         }
     }
 
-    func attach(game: GameViewController, mode: LaunchMode, root: GameDataRoot?) {
+    func attach(game: GameViewController, root: GameDataRoot?) {
         game.agentWorld.dataRoot = root
-        game.agentWorld.modeName = mode.rawValue
         game.agentControl = coordinator
         self.game = game
     }

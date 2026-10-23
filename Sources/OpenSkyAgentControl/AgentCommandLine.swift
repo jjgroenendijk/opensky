@@ -19,6 +19,7 @@ nonisolated public enum AgentCommandLine {
         "debug.teleport": [], "debug.time": ["hour"], "debug.weather": ["id"],
         "debug.av": ["name"], "debug.item": ["id"], "debug.quest": ["id", "stage"],
         "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"],
+        "debug.channel": ["mode"], "debug.shadows": ["quality"],
         "debug.racemenu": []
     ]
 

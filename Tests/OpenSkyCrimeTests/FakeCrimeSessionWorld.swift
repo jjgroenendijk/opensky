@@ -130,10 +130,6 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
         nil
     }
 
-    func openBarter(with _: ReferenceKey, vendorFaction _: ReferenceKey?) -> String {
-        "Barter opened."
-    }
-
     func passGameTime(days: Int) {
         gameSeconds = (gameSeconds ?? 0) + Double(days) * 86400
     }

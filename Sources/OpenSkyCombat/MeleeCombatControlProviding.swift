@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 
-/// One landed hit as a panel spells it.
+/// One landed hit as a readout spells it.
 nonisolated public struct MeleeHitReadout: Equatable, Sendable {
     /// The target reference, as its `ReferenceKey` description.
     public let target: String
@@ -54,7 +54,7 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
 /// One observation of the melee runtime.
 nonisolated public struct MeleeCombatSnapshot: Equatable, Sendable {
     /// False when no melee runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather
+    /// scene. Every other field is then empty and the readout says so rather
     /// than showing a convincing zero.
     public let isAvailable: Bool
     public let drawState: WeaponDrawState
@@ -136,26 +136,4 @@ nonisolated public struct MeleeCombatSnapshot: Equatable, Sendable {
         self.trace = trace
         self.settings = settings
     }
-}
-
-@MainActor
-public protocol MeleeCombatControlProviding: AnyObject {
-    var meleeCombatSnapshot: MeleeCombatSnapshot { get }
-
-    /// Whether the weapon is out. Setting it raises the draw or sheath event, as the
-    /// R key does. Block is not offered here: it is a held modifier, so the readout
-    /// shows it live.
-    var isWeaponDrawn: Bool { get set }
-
-    /// Requests exactly one swing, the same latch the left mouse button sets.
-    @discardableResult
-    func requestMeleeAttack() -> MeleeActionOutcome
-
-    /// Requests one held press: a power attack, or a power bash with the guard up.
-    @discardableResult
-    func requestMeleePowerAttack() -> MeleeActionOutcome
-
-    /// Empties the last-hit trace and both counts, without disturbing anything
-    /// the player can feel.
-    func clearMeleeTrace()
 }

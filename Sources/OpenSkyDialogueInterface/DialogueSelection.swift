@@ -1,6 +1,6 @@
 // What dialogue selection produced, and why: the offered topics, the winning
 // response in each, and the reason every other response lost. The acceptance
-// panel needs the trace, so selection keeps every `ConditionOutcome`.
+// readout needs the trace, so selection keeps every `ConditionOutcome`.
 
 import Foundation
 import OpenSkyConditions

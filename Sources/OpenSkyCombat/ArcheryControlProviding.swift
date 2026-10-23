@@ -1,9 +1,9 @@
-// The archery panel's seam: shot state, live projectile count, the last trajectory, and
+// The archery readout's seam: shot state, live projectile count, the last trajectory, and
 // a dev spawn. One snapshot value, so the readout comes from a single observation.
 
 import Foundation
 
-/// One finished shot as a panel spells it.
+/// One finished shot as a readout spells it.
 nonisolated public struct ProjectileTraceReadout: Equatable, Sendable {
     public let id: Int
     /// Spawn point, impact point and flight time — the three the issue names.
@@ -54,7 +54,7 @@ nonisolated public struct ProjectileTraceReadout: Equatable, Sendable {
 /// One observation of the archery runtime.
 nonisolated public struct ArcherySnapshot: Equatable, Sendable {
     /// False when no archery runtime is attached — no game data, or a demo
-    /// scene. Every other field is then empty and the panel says so rather
+    /// scene. Every other field is then empty and the readout says so rather
     /// than showing a convincing zero.
     public let isAvailable: Bool
     public let phase: ArcheryShotPhase
@@ -163,25 +163,4 @@ nonisolated public struct ArcherySnapshot: Equatable, Sendable {
         self.trace = trace
         self.settings = settings
     }
-}
-
-@MainActor
-public protocol ArcheryControlProviding: AnyObject {
-    var archerySnapshot: ArcherySnapshot { get }
-
-    /// Fires one projectile from the current aim without using an arrow. It reaches the
-    /// same `ArcheryRuntime.loose` as `arrowRelease`, so it verifies the real binding.
-    /// - Returns: a readable outcome the panel shows verbatim.
-    @discardableResult
-    func spawnDevProjectile() -> ArcheryActionOutcome
-
-    /// Removes everything in the air right now, resolving nothing.
-    func despawnProjectiles()
-
-    /// Pulls every stuck arrow back out of the world.
-    func clearStuckProjectiles()
-
-    /// Empties the trace and the counts, without disturbing anything in the
-    /// world.
-    func clearProjectileTrace()
 }

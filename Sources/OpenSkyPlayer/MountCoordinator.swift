@@ -12,8 +12,6 @@ import simd
 public protocol MountWorld: AnyObject {
     /// What the world says about one actor, or nil when it is not loaded.
     func mountCandidate(_ key: ReferenceKey) -> MountCandidate?
-    /// The nearest loaded actor the player could mount, for the sidebar.
-    func nearestMountCandidate() -> ReferenceKey?
     /// Takes the actor from its packages and its graph runner, for the drive.
     func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
@@ -94,14 +92,6 @@ public final class MountCoordinator {
         }
     }
 
-    public func mountNearest() -> [MountCommand] {
-        guard let key = world?.nearestMountCandidate() else {
-            lastRefusal = .notLoaded
-            return [.refused(.notLoaded)]
-        }
-        return mount(key)
-    }
-
     /// Starts the dismount clips. Only a seated rider dismounts.
     public func dismount() -> [MountCommand] {
         guard let drive, phase == .riding else { return [] }
@@ -161,15 +151,6 @@ public final class MountCoordinator {
         return commands
     }
 
-    public var readout: MountReadout {
-        MountReadout(
-            phase: phase, mount: drive?.mount, kind: drive?.kind,
-            speed: drive?.motion.speed ?? 0, isSprinting: drive?.motion.isSprinting ?? false,
-            lastMount: lastMount, lastRefusal: lastRefusal,
-            nearest: world?.nearestMountCandidate()
-        )
-    }
-
     private func finishMount() -> [MountCommand] {
         guard let drive else { return [] }
         phase = .riding
@@ -191,32 +172,5 @@ public final class MountCoordinator {
 
     private static func matches(_ name: String, _ wanted: String) -> Bool {
         name.caseInsensitiveCompare(wanted) == .orderedSame
-    }
-}
-
-/// The sidebar's view of the player's mount.
-nonisolated public struct MountReadout: Equatable, Sendable {
-    public let phase: MountPhase
-    public let mount: ReferenceKey?
-    public let kind: MountKind?
-    public let speed: Float
-    public let isSprinting: Bool
-    public let lastMount: ReferenceKey?
-    public let lastRefusal: MountRefusal?
-    public let nearest: ReferenceKey?
-
-    public init(
-        phase: MountPhase, mount: ReferenceKey?, kind: MountKind?, speed: Float,
-        isSprinting: Bool, lastMount: ReferenceKey?, lastRefusal: MountRefusal?,
-        nearest: ReferenceKey?
-    ) {
-        self.phase = phase
-        self.mount = mount
-        self.kind = kind
-        self.speed = speed
-        self.isSprinting = isSprinting
-        self.lastMount = lastMount
-        self.lastRefusal = lastRefusal
-        self.nearest = nearest
     }
 }

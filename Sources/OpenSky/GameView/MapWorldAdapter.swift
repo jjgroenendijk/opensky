@@ -16,7 +16,6 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -39,7 +38,6 @@ protocol MapWorldHost: MenuInputConsumer {
     var journal: JournalCoordinator { get }
     var magic: MagicCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }

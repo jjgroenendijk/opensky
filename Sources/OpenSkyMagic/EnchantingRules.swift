@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// One base enchantment as the rules see it.
 nonisolated public struct EnchantingBase: Equatable, Sendable {

@@ -1,31 +1,20 @@
-// What the launcher shows: one button per launch mode and one sidebar row per
-// page. A new page (mods) is one descriptor in `LauncherRegistry`.
+// What the launcher shows: one sidebar row per page. A new page (mods) is one descriptor in
+// `LauncherRegistry`.
 
 import AppKit
 import OpenSkyGameData
-import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyWorld
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {
-    func start(_ mode: LaunchMode)
+    func play()
     /// Starts Play and loads `slot`, the newest save.
     func continueGame(slot: String)
     func cancelLoad()
     func gameFolderDidChange()
     /// Opens the Play window and runs the benchmark tour in it.
     func runBenchmark(_ request: BenchmarkRequest)
-}
-
-struct LaunchModeDescriptor {
-    let mode: LaunchMode
-    let title: String
-    let symbolName: String
-    let toolTip: String
-    /// The one line under the button on what the mode starts.
-    let summary: String
-    let controlIdentifier: String
 }
 
 /// What the pages share: the app's actions and one asset optimisation coordinator,
@@ -60,25 +49,6 @@ struct LauncherPageDescriptor {
 }
 
 enum LauncherRegistry {
-    static let modes: [LaunchModeDescriptor] = [
-        LaunchModeDescriptor(
-            mode: .play,
-            title: "Play",
-            symbolName: "play.fill",
-            toolTip: "Start the game without developer tools",
-            summary: "The game alone, from the start you choose",
-            controlIdentifier: "LaunchPlayControl"
-        ),
-        LaunchModeDescriptor(
-            mode: .developer,
-            title: "Developer Mode",
-            symbolName: "hammer.fill",
-            toolTip: "Start the game with the sidebar and inspector panels",
-            summary: "The game with tool panels beside it",
-            controlIdentifier: "LaunchDeveloperControl"
-        )
-    ]
-
     static let pages: [LauncherPageDescriptor] = [
         LauncherPageDescriptor(
             id: "launch",

@@ -2,7 +2,6 @@
 // rebuilds the cell, as equipment does. The slot has no save tag, so it lasts
 // for the session only. An idle prop is not here: `ActorPropPlayback` draws it.
 
-import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
@@ -41,22 +40,4 @@ nonisolated public struct ActorPresentationState: WorldStateComponent {
 
 nonisolated extension WorldStateComponentKind {
     public static let actorPresentation = Self(rawValue: "actorPresentation", order: 29)
-}
-
-@MainActor
-extension WorldStateStore {
-    /// Writes `change` over `key`'s presentation; the default drops the slot.
-    public func updatePresentation(
-        of key: ReferenceKey,
-        in cell: CellSceneLocation?,
-        _ change: (inout ActorPresentationState) -> Void
-    ) {
-        var state = component(ActorPresentationState.self, for: key) ?? ActorPresentationState()
-        change(&state)
-        if state.isDefault {
-            reset(.actorPresentation, for: key)
-        } else {
-            set(state, for: key, in: cell)
-        }
-    }
 }

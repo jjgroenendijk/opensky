@@ -12,15 +12,15 @@ import OpenSkyMagicInterface
 
 /// Owns the combat runtimes and reads the world through `CombatWorld`.
 public final class CombatCoordinator {
-    /// Nil until `wireMelee`. The panels then report themselves unavailable.
+    /// Nil until `wireMelee`. The readouts then report themselves unavailable.
     public private(set) var melee: MeleeCombatRuntime?
     public private(set) var archery: ArcheryRuntime?
     public private(set) var loop: CombatLoopRuntime?
-    /// Every explosion: projectile, spell, and sidebar detonations share it.
+    /// Every explosion: projectile, spell, and forced detonations share it.
     public let explosions = ExplosionRuntime()
     /// The WEAP, AMMO and PROJ index the hands and arrows resolve through.
     public private(set) var items: ItemDefinitionStore?
-    /// Fighting actors may cast their spells unless the panel turns it off.
+    /// Fighting actors may cast their spells unless the readout turns it off.
     public private(set) var allowsActorCasting = true
     /// Confidence decides engaging and fleeing, and Assistance brings allies into a
     /// fight. Off keeps the flat health-fraction rule and lone fighters.
@@ -169,7 +169,7 @@ public final class CombatCoordinator {
     }
 
     /// Returns and empties what this step asked of the app. A command raised outside
-    /// a frame step, such as by a panel, also leaves with the next frame step.
+    /// a frame step, such as by a readout, also leaves with the next frame step.
     public func takeCommands() -> [CombatCommand] {
         defer { pendingCommands = [] }
         return pendingCommands
@@ -186,7 +186,7 @@ public final class CombatCoordinator {
         loop.record(.castingDisallowed)
     }
 
-    /// Sets hostility on the panel's selected actor and records the outcome.
+    /// Sets hostility on the readout's selected actor and records the outcome.
     public func setSelectedActorHostile(_ hostile: Bool) {
         guard let loop else { return }
         guard let key = world.selectedActor() else {

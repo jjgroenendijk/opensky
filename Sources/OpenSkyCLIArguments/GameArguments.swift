@@ -42,8 +42,6 @@ public struct GameArguments: ParsableCommand, Sendable {
         )
         @OptionGroup public var global: GlobalOptions
         @OptionGroup public var game: GameOptions
-        @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "play|developer"))
-        public var mode = "play"
         @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "path"))
         public var app: String?
         @Option(

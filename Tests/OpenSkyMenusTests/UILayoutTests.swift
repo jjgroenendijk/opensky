@@ -179,20 +179,20 @@ struct UILayoutTests {
     func resolveIsDeterministic() {
         let atlas = UIGlyphAtlas()
         let viewport = SIMD2<Float>(480, 320)
-        let first = UIScene.labSample.resolve(viewportPixels: viewport, scale: 1, atlas: atlas)
-        let second = UIScene.labSample.resolve(viewportPixels: viewport, scale: 1, atlas: atlas)
+        let first = UIScene.overlaySample.resolve(viewportPixels: viewport, scale: 1, atlas: atlas)
+        let second = UIScene.overlaySample.resolve(viewportPixels: viewport, scale: 1, atlas: atlas)
         #expect(first.quadCount == second.quadCount)
         #expect(first.glyphCount == second.glyphCount)
         #expect(vertexBytes(first.vertices) == vertexBytes(second.vertices))
     }
 
     @Test
-    func labSampleResolvesToDrawsWithText() {
+    func overlaySampleResolvesToDrawsWithText() {
         let atlas = UIGlyphAtlas()
-        let list = UIScene.labSample.resolve(
+        let list = UIScene.overlaySample.resolve(
             viewportPixels: SIMD2(480, 320), scale: 1, atlas: atlas
         )
-        // Panel + border edges + markers + heading/body/paragraph glyphs.
+        // Readout + border edges + markers + heading/body/paragraph glyphs.
         #expect(list.quadCount > 20)
         #expect(list.glyphCount > 10)
     }

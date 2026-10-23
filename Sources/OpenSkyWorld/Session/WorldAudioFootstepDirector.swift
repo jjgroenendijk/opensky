@@ -26,7 +26,7 @@ public final class WorldAudioFootstepDirector {
     public var materialTypes = MaterialTypeIndex.empty
 
     /// Footstep playback. On by default, like the SFX and ambience beds; the
-    /// World > Audio panel writes back here.
+    /// audio controls write back here.
     /// Each routed step's impact, for its dust model; set by the session.
     public var onImpact: ((Impact, SIMD3<Float>) -> Void)?
     public var footstepsEnabled = true
@@ -36,7 +36,7 @@ public final class WorldAudioFootstepDirector {
     /// The MATT under the player's feet in the last routed frame. Nil while airborne.
     public private(set) var groundMaterial: FormID?
 
-    /// A material the panel pins in place of the ground contact's, for
+    /// A material the readout pins in place of the ground contact's, for
     /// verifying that a chosen surface really does select a different sound.
     /// Nil — the default — follows the ground.
     public var forcedMaterial: FormID?
@@ -45,7 +45,7 @@ public final class WorldAudioFootstepDirector {
     /// set and is replaced when the player's feet armature resolves to one.
     public private(set) var footstepSet: FootstepSet?
 
-    /// Last resolved footstep, for the panel readout.
+    /// Last resolved footstep, for the readout.
     public private(set) var lastFootstepDescription: String?
     public private(set) var lastFootstepError: String?
     /// Events routed and events played since construction. The two differ by
@@ -166,7 +166,7 @@ public final class WorldAudioFootstepDirector {
     }
 
     /// Plays one footstep for `tag` without waiting for the graph to fire it.
-    /// The World > Audio panel's verification control; nil when the step played.
+    /// The verification control; nil when the step played.
     public func forcePlayFootstep(
         tag: String,
         gait: LocomotionGait,
@@ -187,30 +187,23 @@ public final class WorldAudioFootstepDirector {
         return play(resolved, tag: tag, at: position)
     }
 
-    /// The material every resolution is made against: the panel's pinned one
+    /// The material every resolution is made against: the readout's pinned one
     /// when it has pinned one, else the ground contact's.
     public var activeMaterial: FormID? {
         forcedMaterial ?? groundMaterial
     }
 
-    /// How the panel names the current set.
+    /// How the readout names the current set.
     public var footstepSetDescription: String {
         guard let footstepSet else { return "none" }
         return describe(footstepSet)
     }
 
-    /// How the panel names the surface footsteps currently resolve against.
+    /// How the readout names the surface footsteps currently resolve against.
     public var materialDescription: String {
         guard let material = activeMaterial else { return "none" }
         let name = materialTypes.describe(material)
         return forcedMaterial == nil ? name : "\(name) (forced)"
-    }
-
-    /// Every material the panel can pin, ordered by name so the menu is stable.
-    public var selectableMaterials: [(id: FormID, name: String)] {
-        materialTypes.materials.values
-            .map { (id: $0.formID, name: materialTypes.describe($0.formID)) }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     private func describe(_ set: FootstepSet) -> String {

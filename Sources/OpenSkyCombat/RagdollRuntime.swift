@@ -213,7 +213,7 @@ public final class RagdollRuntime: DeathReporting {
     }
 
     /// Spawns the bodies for one actor, whatever asked for it: the graph's
-    /// hand-off, the fallback, or the panel's dev trigger.
+    /// hand-off, the fallback, or the readout's dev trigger.
     ///
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
@@ -240,7 +240,7 @@ public final class RagdollRuntime: DeathReporting {
     }
 
     /// The dev trigger: kills `key` if it is not dead already, then hands off
-    /// without waiting for a graph. What the panel's button calls.
+    /// without waiting for a graph. What the readout's button calls.
     ///
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
@@ -277,13 +277,13 @@ public final class RagdollRuntime: DeathReporting {
     }
 
     /// Suspends and resumes stepping without discarding the corpses, which is
-    /// what the panel's freeze control drives.
+    /// what the readout's freeze control drives.
     public var isFrozen: Bool {
         get { world.isFrozen }
         set { world.isFrozen = newValue }
     }
 
-    /// Whether a ragdoll's own bones may touch each other; the panel's
+    /// Whether a ragdoll's own bones may touch each other; the readout's
     /// self-collision control drives it.
     public var isSelfCollisionEnabled: Bool {
         get { world.isSelfCollisionEnabled }

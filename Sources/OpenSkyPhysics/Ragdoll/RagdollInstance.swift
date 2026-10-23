@@ -33,7 +33,7 @@ nonisolated public struct RagdollInstance: Sendable {
     /// modifier's `m_durationToBlend`. Zero means an instant hand-off, which is
     /// what the `RagdollInstant` event asks for.
     public let blendDuration: Float
-    /// Whether the bones may touch each other this step; the sidebar switch over the
+    /// Whether the bones may touch each other this step; the switch over the
     /// definition's pairs.
     public var isSelfCollisionEnabled = true
     /// The powered-ragdoll motor that holds the bones near the hand-off pose

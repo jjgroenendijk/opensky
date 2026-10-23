@@ -1,4 +1,4 @@
-// Pure rules behind the World > Runtime State panel: FormID parsing, journal
+// Pure runtime state rules: FormID parsing, journal
 // lines, and the lookup tables the coordinator caches.
 
 import Foundation

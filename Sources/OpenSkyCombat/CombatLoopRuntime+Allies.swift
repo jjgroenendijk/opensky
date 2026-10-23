@@ -2,7 +2,6 @@
 // near the player and otherwise walks after it. Another actor's ally fights through
 // its own hostility and walks after its commander between fights. See `CombatAllyRule`.
 
-import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface

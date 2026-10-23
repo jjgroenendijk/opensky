@@ -1,5 +1,5 @@
 // The shell of the story manager: owns the node index, fires events, runs the
-// session-start pass, and keeps the last walk for the sidebar. The rules live
+// session-start pass, and keeps the last walk for state reads. The rules live
 // in `StoryManagerRuntime`. See docs/engine/story-manager.md.
 
 import OpenSkyConditions

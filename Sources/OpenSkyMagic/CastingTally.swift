@@ -1,5 +1,5 @@
 // What a cast loop declined to do, counted rather than swallowed. A plain value the
-// panel and tests read. See docs/engine/spellcasting.md.
+// readout and tests read. See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM

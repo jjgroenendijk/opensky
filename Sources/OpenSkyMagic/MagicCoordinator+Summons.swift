@@ -35,7 +35,7 @@ extension MagicCoordinator {
         }
     }
 
-    /// The panel line: who the player commands, against the limit.
+    /// The readout line: who the player commands, against the limit.
     var commandedText: String {
         let mine = commanded.filter { $0.caster == .player }
         let names = mine.compactMap { world.actorValueHolder(for: $0.actor) }

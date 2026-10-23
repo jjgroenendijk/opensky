@@ -88,7 +88,7 @@ nonisolated public final class LocomotionBridge {
     /// Whether the shout key is held this frame.
     public internal(set) var isShoutHeld = false
 
-    /// A forced gait, or nil (`World > Player & Locomotion > Dev Controls`). It forces the
+    /// A forced gait, or nil. It forces the
     /// graph inputs and gait speed only; water, gravity and collision are untouched, so a
     /// forced `swim` swims on dry floor.
     public var forcedGait: LocomotionGait?

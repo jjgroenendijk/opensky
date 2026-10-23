@@ -1,4 +1,4 @@
-// One asset's cache entries as the developer sidebar shows them: which kinds
+// One asset's cache entries: which kinds
 // the path has, and whether each entry is current, stale, missing, or a marker
 // that says the original file loads.
 

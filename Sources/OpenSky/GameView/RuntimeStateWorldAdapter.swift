@@ -254,14 +254,6 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         gameSession.weather?.setGlobalResolution(resolution, reroll: reroll)
     }
 
-    var cellResetReadout: String {
-        game.gameSession?.cellReset?.readout ?? "Cell reset: no world loaded"
-    }
-
-    func makeCellResetsDue() -> Int {
-        game.gameSession?.cellReset?.makeAllDue() ?? 0
-    }
-
     var musicStore: MusicRecordStore? {
         game.worldData?.musicStore
     }

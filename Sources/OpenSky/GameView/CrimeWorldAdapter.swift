@@ -31,7 +31,6 @@ import simd
 @MainActor
 protocol CrimeWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
-    var containerMenu: ContainerMenuController { get }
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
@@ -214,10 +213,6 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         game.inventory.vendors?.vendor(of: actor)
     }
 
-    func openBarter(with actor: ReferenceKey, vendorFaction: ReferenceKey?) -> String {
-        game.containerMenu.openBarter(with: actor, vendorFaction: vendorFaction)
-    }
-
     // MARK: - Clock and player
 
     var gameSeconds: Double? {
@@ -238,10 +233,6 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
 
     var playerFeet: SIMD3<Float>? {
         game.gameSession?.locomotion.status.feetPosition
-    }
-
-    func restockAllVendors() -> Int {
-        game.inventory.vendors?.makeAllRestocksDue() ?? 0
     }
 
     func enterJail(through marker: ReferenceKey) -> Bool {

@@ -41,6 +41,10 @@ extension AgentWorldAdapter {
             return try done(resurrect(reference))
         case let .overlay(name, enabled):
             return try done(setOverlay(name, enabled: enabled))
+        case let .channel(name):
+            return try done(setChannel(name))
+        case let .shadows(name):
+            return try done(setShadowQuality(name))
         case let .raceMenu(limited):
             return try done(openRaceMenu(limited: limited))
         case let .benchmark(request):
@@ -211,6 +215,30 @@ extension AgentWorldAdapter {
             renderer.renderDebug.layers = enabled ? layers.union(layer) : layers.subtracting(layer)
         }
         return ["overlay": .string(name.lowercased()), "on": .bool(enabled)]
+    }
+
+    private func setChannel(_ name: String) throws(AgentFailure) -> AgentJSON {
+        guard let renderer = game.renderer else { throw notReady() }
+        let modes = RenderDebugMode.allCases
+        guard let mode = modes.first(where: { "\($0)".lowercased() == name.lowercased() }) else {
+            let known = modes.map { "\($0)".lowercased() }.joined(separator: ", ")
+            throw AgentFailure(.invalidArgument, "unknown channel '\(name)'; known: \(known)")
+        }
+        renderer.renderDebug.mode = mode
+        return ["channel": .string("\(mode)".lowercased())]
+    }
+
+    private func setShadowQuality(_ name: String) throws(AgentFailure) -> AgentJSON {
+        guard let renderer = game.renderer else { throw notReady() }
+        guard let quality = ShadowQuality(rawValue: name.lowercased()) else {
+            let known = ShadowQuality.allCases.map(\.rawValue).joined(separator: ", ")
+            throw AgentFailure(
+                .invalidArgument,
+                "unknown shadow quality '\(name)'; known: \(known)"
+            )
+        }
+        renderer.shadowQuality = quality
+        return ["shadows": .string(quality.rawValue)]
     }
 
     private static func layer(named name: String) -> RenderLayer? {

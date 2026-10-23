@@ -103,7 +103,7 @@ public struct SkillAdvancementRuntime {
     }
 
     /// Experience toward `skill`'s next level, from its `Skill Advance` slot. Zero for an
-    /// unused skill. The progression panel reads it.
+    /// unused skill. The progression readout reads it.
     public func experience(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
         guard let slot = ActorValueIdentity.skillAdvanceIndex(forSkill: index) else { return 0 }
         return max(0, values.baseValue(at: slot, on: holder) ?? 0)

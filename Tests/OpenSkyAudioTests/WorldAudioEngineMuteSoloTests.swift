@@ -53,7 +53,7 @@ struct WorldAudioEngineMuteSoloTests {
         #expect(otherRMS > 1e-2, "an unmuted category must keep sounding, got \(otherRMS)")
     }
 
-    /// Muting after a source started reaches the playing node, and the panel's
+    /// Muting after a source started reaches the playing node, and the readout's
     /// reported effective gain follows.
     @Test
     func mutingAPlayingSourceAppliesImmediately() throws {

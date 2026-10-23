@@ -135,7 +135,7 @@ struct PlayerBodyAnimationTests {
         #expect(mesh.renderMesh.currentBoneMatrices != afterFirst)
     }
 
-    /// The `World > Environment` animation A/B has to be reversible: turning it
+    /// The actor animation switch has to be reversible: turning it
     /// off restores the bind palette, and turning it back on recomposes even
     /// though the simulation produced nothing in between.
     @Test(.enabled(if: Self.hasMetal4Device))

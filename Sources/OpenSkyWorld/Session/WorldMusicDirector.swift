@@ -150,9 +150,9 @@ public final class WorldMusicDirector {
         }
     }
 
-    // MARK: - Panel entry points (stage 4 verification surface)
+    // MARK: - Readout entry points (stage 4 verification surface)
 
-    /// MUSC editor ids the panel can offer, sorted. Empty without music data.
+    /// MUSC editor ids the readout can offer, sorted. Empty without music data.
     public var selectableMusicTypeNames: [String] {
         guard let musicStore else { return [] }
         return musicStore.musicTypes.values
@@ -257,7 +257,7 @@ public final class WorldMusicDirector {
             .formID
     }
 
-    /// What the panel readout shows. Derived from live engine sources: the id
+    /// What the readout shows. Derived from live engine sources: the id
     /// is dropped first if the engine already retired it, so the readout can
     /// never claim music that stopped. "none" when nothing of ours is playing.
     public var currentMusicDescription: String {

@@ -6,7 +6,7 @@
 import CoreText
 import simd
 
-/// A border stroke on a panel.
+/// A border stroke on a readout.
 nonisolated public struct UIBorder: Equatable, Sendable {
     public var width: Float
     public var color: SIMD4<Float>

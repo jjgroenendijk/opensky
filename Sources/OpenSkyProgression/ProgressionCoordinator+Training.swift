@@ -59,7 +59,7 @@ extension ProgressionCoordinator {
         return .trained(skill: offer.skill, level: level + 1, gold: cost)
     }
 
-    /// The panel's Train control: one session with the nearest trainer.
+    /// The readout's Train control: one session with the nearest trainer.
     @discardableResult
     public func trainWithNearestTrainer() -> ProgressionActionOutcome {
         guard let offer = world.nearestTrainer() else { return record(.noTrainer) }

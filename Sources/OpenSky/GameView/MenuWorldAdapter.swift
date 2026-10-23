@@ -40,7 +40,6 @@ protocol MenuWorldHost: MenuInputConsumer {
     var menuScreens: MenuScreens { get }
     var messages: MessageCoordinator { get }
     var player: PlayerCoordinator { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var renderer: Renderer? { get }
@@ -466,16 +465,5 @@ extension MenuWorldAdapter {
         guard raceMenuAfterTeleport else { return }
         raceMenuAfterTeleport = false
         game.raceMenu.open(limited: false)
-    }
-}
-
-/// The Settings panel reads the settings coordinator, and combat for difficulty.
-extension MenuWorldAdapter: PlayerSettingsControlForwarding {
-    var playerSettings: PlayerSettingsCoordinator {
-        game.playerSettings
-    }
-
-    var difficultyMultiplierLines: [String] {
-        game.combat.difficultyMultiplierLines
     }
 }

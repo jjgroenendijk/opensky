@@ -1,4 +1,4 @@
-// Main-app system menu seam. Keeps the verification panel independent
+// Main-app system menu seam. Keeps the verification readout independent
 // of GameViewController while exposing the live menu-stack state, the two
 // settings placeholders the milestone surfaces (data root, audio volume), and
 // the vanilla-movie presentation state behind them.
@@ -76,21 +76,4 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
         self.movieState = movieState
         self.page = page
     }
-}
-
-@MainActor
-public protocol SystemMenuControlProviding: AnyObject {
-    var systemMenuIsOpen: Bool { get }
-    /// Drives the vanilla `Interface\quest_journal.swf` presentation layer. Off
-    /// keeps the engine-side selector working with the gameplay HUD on screen.
-    var systemMenuMovieEnabled: Bool { get set }
-    var systemMenuMasterVolume: Float { get set }
-    func openSystemMenu()
-    func closeSystemMenu()
-    /// Routes one menu event through the same path as keyboard input, so the
-    /// panel buttons and the live keys cannot diverge.
-    func sendSystemMenuInput(_ event: MenuInputEvent)
-    /// Asks before deleting the save selected on the Save or Load page.
-    func deleteSelectedSave()
-    var systemMenuSnapshot: SystemMenuControlSnapshot { get }
 }

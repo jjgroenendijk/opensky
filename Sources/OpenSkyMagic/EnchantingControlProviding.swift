@@ -1,4 +1,4 @@
-// The sidebar seam for enchanting: disenchant a carried item, and enchant a plain one
+// Enchanting: disenchant a carried item, and enchant a plain one
 // with known bases and a filled soul gem, as if at an arcane enchanter.
 // See docs/engine/enchanting.md.
 
@@ -7,7 +7,7 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
-/// One carried item the panel can act on.
+/// One carried item the readout can act on.
 nonisolated public struct EnchantingItemReadout: Equatable, Sendable {
     public let id: FormID
     public let name: String
@@ -73,22 +73,7 @@ nonisolated public struct EnchantingControlSnapshot: Equatable, Sendable {
     }
 }
 
-@MainActor
-public protocol EnchantingControlProviding: AnyObject {
-    var enchantingSnapshot: EnchantingControlSnapshot { get }
-    @discardableResult
-    func disenchant(_ item: FormID) -> EnchantingOutcome
-    @discardableResult
-    func enchant(
-        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String?
-    ) -> EnchantingOutcome
-    /// What enchanting would make, without making it.
-    func enchantingPreview(
-        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate
-    ) -> Result<MadeEnchantment, EnchantingRefusal>
-}
-
-extension MagicCoordinator: EnchantingControlProviding {
+extension MagicCoordinator {
     public var enchantingSnapshot: EnchantingControlSnapshot {
         guard effects != nil, enchantmentStore != nil, let inventory = world.inventory else {
             return .unavailable
@@ -119,12 +104,6 @@ extension MagicCoordinator: EnchantingControlProviding {
             madeCount: state.made.count,
             lastActionText: lastEnchanting.text
         )
-    }
-
-    public func enchantingPreview(
-        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate
-    ) -> Result<MadeEnchantment, EnchantingRefusal> {
-        preview(item, with: bases, gem: gem)
     }
 
     private func readout(_ item: FormID) -> EnchantingItemReadout {

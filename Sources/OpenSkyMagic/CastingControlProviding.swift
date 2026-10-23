@@ -1,11 +1,10 @@
-// The spellcasting panel's seam: learn, read, ready and cast, without
+// The spellcasting readout's seam: learn, read, ready and cast, without
 // `GameViewController`. One snapshot value, so the readout comes from a single
 // observation.
 
 import Foundation
-import OpenSkyMagicInterface
 
-/// One known spell as a panel spells it.
+/// One known spell as a readout spells it.
 nonisolated public struct KnownSpellReadout: Equatable, Sendable {
     /// FULL name when the record resolves one, else its editor ID, else its
     /// key. Never empty, so a line always names something.
@@ -62,13 +61,13 @@ nonisolated public struct KnownSpellReadout: Equatable, Sendable {
 /// One observation of the caster runtime.
 nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     /// False when no caster runtime is attached — no game data, or a synthetic
-    /// scene. Every other field is then empty and the panel says so rather than
+    /// scene. Every other field is then empty and the readout says so rather than
     /// showing a convincing empty spellbook.
     public let isAvailable: Bool
     /// Every spell the player knows that this load order still carries, in key
     /// order.
     public let knownSpells: [KnownSpellReadout]
-    /// Which known spell the panel's Ready buttons act on.
+    /// Which known spell the readout's Ready buttons act on.
     public let selectedSpellName: String?
     /// What each hand is doing right now.
     public let leftPhase: SpellCastPhase
@@ -104,7 +103,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     /// The magic condition functions for the player now, each as `name = value` or
     /// `name: reason`. Here, beside the readied spells they read.
     public let conditionLines: [String]
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last control action.
     public let lastActionText: String
     /// One line per carried soul gem copy, then the last soul trap.
     public var soulLines: [String] = []
@@ -182,43 +181,4 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
         self.conditionLines = conditionLines
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol CastingControlProviding: AnyObject {
-    var castingControlSnapshot: CastingControlSnapshot { get }
-
-    /// Grants every spell the load order flags as a player start spell.
-    @discardableResult
-    func grantPlayerStartSpells() -> CastingActionOutcome
-
-    /// Opens the first spell tome the player carries.
-    @discardableResult
-    func readFirstCarriedSpellTome() -> CastingActionOutcome
-
-    /// Reads the first skill book the player carries and has not read.
-    @discardableResult
-    func readFirstUnreadSkillBook() -> CastingActionOutcome
-
-    /// Moves the panel's selection to the next known spell, wrapping.
-    @discardableResult
-    func selectNextKnownSpell() -> CastingActionOutcome
-
-    /// Readies the selected spell in one hand.
-    @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> CastingActionOutcome
-
-    /// Runs one whole cast in `hand` with no button: charge, then release, so the panel
-    /// alone can verify it. Returns a readable outcome the panel shows verbatim.
-    @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome
-
-    /// Begins both hands together and runs the whole cast, so a dual cast can be
-    /// checked without two buttons.
-    @discardableResult
-    func castReadiedSpellWithBothHands() -> CastingActionOutcome
-
-    /// Recharges the equipped enchanted weapon from a carried filled soul gem.
-    @discardableResult
-    func rechargeEquippedWeapon() -> RechargeOutcome
 }

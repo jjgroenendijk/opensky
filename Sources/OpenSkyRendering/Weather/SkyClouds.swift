@@ -62,7 +62,7 @@ public final class SkyClouds {
     private var domeRequested = false
     private var uniformsResident = false
     let uniforms: MTLBuffer
-    /// Layers drawn in the last frame, for the sidebar readout.
+    /// Layers drawn in the last frame.
     public internal(set) var drawnLayerCount = 0
     public private(set) var failedPaths: [String] = []
 

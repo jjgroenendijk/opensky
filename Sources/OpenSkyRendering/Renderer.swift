@@ -92,7 +92,7 @@ public final class Renderer: NSObject {
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
     public let shadow: ShadowResources
-    /// A/B toggle from `World > Environment > Sun shadows`. Default on; ANDed
+    /// Sun shadow switch. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true
     /// The most real frames a second the live view draws; 0 is no cap.
@@ -181,7 +181,7 @@ public final class Renderer: NSObject {
     public var particleEmissionScale: Float = 1
     /// Placed and effect systems the last scene pass skipped as outside the view.
     public internal(set) var offscreenParticleSystemCount = 0
-    /// World > Environment > Grass live controls. Values clamp at encode so
+    /// Live grass controls. Values clamp at encode so
     /// tests/CLI callers cannot bypass renderer safety policy.
     public var grassEnabled = true
     public var grassDensityScale: Float = 1
@@ -215,7 +215,7 @@ public final class Renderer: NSObject {
     public var animationTime: Float = 0
     /// Placed lights flicker and pulse as their LIGH flags ask.
     public var lightAnimationEnabled = true
-    /// World > Environment actor-animation A/B. Off restores bind palettes;
+    /// Actor animation switch. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.
     public var actorAnimationsEnabled = true
     /// The time source every frame clock reads.
@@ -291,7 +291,7 @@ public final class Renderer: NSObject {
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true
-    /// The lit-mesh terms the frame draws; the sidebar turns each off.
+    /// The lit-mesh terms the frame draws; each can be turned off.
     public var shadingTerms = SurfaceShadingTerm.all
     /// Bound in the environment slot of a material without a cube map.
     public let blackCube: MTLTexture

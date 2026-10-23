@@ -156,7 +156,7 @@ struct CrimeRuntimeTests {
     }
 
     /// The quote a readout shows before the player acts runs the same refusal
-    /// rules the charge does, so a panel cannot promise a bounty the take would
+    /// rules the charge does, so a readout cannot promise a bounty the take would
     /// not accrue. Witnessing is the one rule it skips, because "if witnessed"
     /// is what the quote answers.
     @Test

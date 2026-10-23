@@ -1,5 +1,5 @@
 // The answer to `openskycli game state packages`, from the package runtime and the
-// procedure machine the AI panel reads, the vehicle the actor rides, and its last idle.
+// procedure machine the AI readout reads, the vehicle the actor rides, and its last idle.
 
 import Foundation
 import OpenSkyActorPresentation

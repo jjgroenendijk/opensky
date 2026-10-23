@@ -1,5 +1,5 @@
 // VM pause, single-stepping, the recent-event ring, and the Scripts snapshot
-// the World > Scripts sidebar reads. Every fixture is built in
+// agent control reads. Every fixture is built in
 // code by `PapyrusWorldFixture`; no game data is involved.
 
 import Foundation

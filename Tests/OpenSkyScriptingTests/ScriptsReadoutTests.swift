@@ -1,4 +1,4 @@
-// World > Scripts readout coverage. Every line the four sections
+// Papyrus readout coverage. Every line the four sections
 // show is a pure function of one `ScriptsSnapshot`, so the exact wording is
 // asserted here without AppKit, without a Metal device, and without a game
 // install. The empty cases matter most: an idle VM and an absent target have to

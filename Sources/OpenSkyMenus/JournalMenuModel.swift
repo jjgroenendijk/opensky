@@ -1,6 +1,6 @@
 // Engine-side model of the journal's Quests page (docs/engine/journal.md).
 // `QuestJournalMovieBridge` pushes these rows into `quest_journal.swf`; the
-// split lets panel and CLI check rows without a window or install.
+// split lets readout and CLI check rows without a window or install.
 
 import Foundation
 import OpenSkyFormatsESM

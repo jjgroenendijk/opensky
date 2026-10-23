@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
 
-/// Why a tree was not cleared. Not a bool, because the skills menu and the panel show it.
+/// Why a tree was not cleared. Not a bool, because the skills menu and the readout show it.
 nonisolated public enum PerkTreeResetRefusal: Error, Equatable, Sendable {
     case notASkill
     /// No leveling or no perk data in this session.

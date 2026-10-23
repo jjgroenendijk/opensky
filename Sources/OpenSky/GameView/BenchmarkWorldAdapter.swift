@@ -6,7 +6,6 @@ import AppKit
 import Metal
 import MetalKit
 import OpenSkyAgentControl
-import OpenSkyCells
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -16,7 +15,6 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface

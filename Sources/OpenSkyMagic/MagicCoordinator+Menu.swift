@@ -2,7 +2,6 @@
 // and hands, and readying one by its position in that list.
 
 import Foundation
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface

@@ -1,4 +1,4 @@
-// The lockpicking movie bridge: the panel values and the debug angles it sends.
+// The lockpicking movie bridge: the readout values and the debug angles it sends.
 
 import Foundation
 import OpenSkyFormatsSWF

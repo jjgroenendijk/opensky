@@ -1,4 +1,4 @@
-// The AI & Navigation panel shell over a fake session: the actor order, the
+// The AI & Navigation readout shell over a fake session: the actor order, the
 // selection fallback, the crosshair pick, and each action's outcome line.
 
 @testable import OpenSkyAIPackages

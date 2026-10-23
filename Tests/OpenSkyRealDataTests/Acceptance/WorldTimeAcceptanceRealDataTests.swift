@@ -19,7 +19,7 @@ struct WorldTimeAcceptanceRealDataTests {
     /// The gate's first sentence against the installed master: with the clock
     /// running at an elevated timescale written through the real `TimeScale`
     /// global, Tamriel's weather changes only on six-game-hour boundaries, and
-    /// the clock, the `GameHour` projection and the panel's clock readout all
+    /// the clock, the `GameHour` projection and the clock readout all
     /// describe the same instant at the end of the run.
     @Test(.enabled(if: RealDataEnvironment.canRender)) @MainActor
     func weatherAndTimeStaySynchronizedAgainstTheInstalledMaster() throws {

@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
     public static let identifier: MenuIdentifier = "TextEntry Menu"

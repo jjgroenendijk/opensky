@@ -140,10 +140,6 @@ nonisolated public struct WeaponBloodRuntime: Equatable, Sendable {
         ages = ages.filter { strength(age: $0.value) > 0 }
     }
 
-    public mutating func removeAll() {
-        ages.removeAll()
-    }
-
     /// Whole for `fWeaponBloodLifetime`, then fading over `fWeaponBloodFadeDuration`;
     /// gone below `fWeaponBloodFalloffThreshold`.
     public func strength(age: Float) -> Float {

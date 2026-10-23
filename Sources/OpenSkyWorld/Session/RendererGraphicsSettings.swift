@@ -1,5 +1,5 @@
 // The GPU features the player settings ask for. The launcher's Graphics page and the
-// Rendering Performance panel write the same settings.
+// the rendering performance readout write the same settings.
 
 import Metal
 import OpenSkyCells

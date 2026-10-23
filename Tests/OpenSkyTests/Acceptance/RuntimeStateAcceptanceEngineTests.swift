@@ -10,6 +10,7 @@ import OpenSkyCells
 @testable import OpenSkyPhysics
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
@@ -62,7 +63,8 @@ private struct WorldTimeEngineHarness {
     }
 }
 
-extension RuntimeStateAcceptanceTests {
+@Suite(.tags(.acceptance))
+struct RuntimeStateAcceptanceTests {
     // MARK: Step 5 — the engine round trip
 
     /// The core proof of the gate. Two references are mutated in a resident
@@ -111,7 +113,7 @@ extension RuntimeStateAcceptanceTests {
         #expect(harness.store.allocateGeneratedKey() == .generated(1))
         #expect(harness.store.allocateGeneratedKey() == .generated(2))
 
-        let directory = try Self.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -151,7 +153,7 @@ extension RuntimeStateAcceptanceTests {
         let saved = WorldStateStore()
         Self.mutate(saved, in: .exterior(cell))
 
-        let directory = try Self.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -186,7 +188,7 @@ extension RuntimeStateAcceptanceTests {
     /// the difference named in the error rather than silently applied.
     @Test
     func aSaveFromADifferentLoadOrderIsRefused() throws {
-        let directory = try Self.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -236,7 +238,7 @@ extension RuntimeStateAcceptanceTests {
         #expect(mutated.summary.runtimeDisabledSkipCount == 1)
         #expect(mutated.staticCollision.shapes.count == 1)
 
-        let directory = try Self.makeTemporaryDirectory()
+        let directory = try TemporarySaveDirectory.make()
         defer { try? FileManager.default.removeItem(at: directory) }
         let saves = OpenSkySaveStore(directory: directory)
         try saves.save(
@@ -274,7 +276,7 @@ extension RuntimeStateAcceptanceTests {
     }
 
     /// The two mutations the gate names: one reference disabled, one moved.
-    /// Applied through `WorldStateStore.set` exactly as the panel's Disable and
+    /// Applied through `WorldStateStore.set` exactly as the readout's Disable and
     /// Nudge buttons apply them.
     @MainActor
     private static func mutate(_ store: WorldStateStore, in cell: CellSceneLocation) {

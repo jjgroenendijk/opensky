@@ -34,7 +34,7 @@ nonisolated public final class SWFRuntimeInputState {
     public weak var hoverTarget: SWFDisplayObject?
     /// Node the press started on, for release and release-outside routing.
     public weak var pressTarget: SWFDisplayObject?
-    /// Events accepted, reported by the UI Lab readout.
+    /// Events accepted.
     public private(set) var pointerEvents = 0
     public private(set) var keyEvents = 0
 

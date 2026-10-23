@@ -4,7 +4,6 @@
 // Run with `make test-real T='LockpickingLockRenderRealDataTests'`.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering

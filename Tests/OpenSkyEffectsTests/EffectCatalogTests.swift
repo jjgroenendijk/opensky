@@ -1,5 +1,5 @@
 // The effect catalog and visual-effect specs over a synthetic plugin, the
-// effects coordinator's attach and detach, and the panel readout text.
+// effects coordinator's attach and detach, and the readout text.
 
 import Foundation
 @testable import OpenSkyEffects

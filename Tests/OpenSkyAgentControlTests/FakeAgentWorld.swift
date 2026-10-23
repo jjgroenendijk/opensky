@@ -6,7 +6,7 @@ import OpenSkyAgentControl
 
 @MainActor
 final class FakeAgentWorld: AgentControlWorld {
-    var agentStatus = AgentWorldStatus(worldReady: true, dataRoot: "/data", mode: "play")
+    var agentStatus = AgentWorldStatus(worldReady: true, dataRoot: "/data")
     var agentTimeline = AgentTimeline(frame: 10, paused: false)
     var heldActions: Set = ["forward", "back", "block"]
     var oneShotActions: Set = ["jump", "activate"]

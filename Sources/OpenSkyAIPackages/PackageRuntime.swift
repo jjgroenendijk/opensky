@@ -1,5 +1,5 @@
 // Schedule and condition package selection for resident actors. Event-driven: exact
-// daily edges, a bounded game-time interval for other changes, and a panel seam.
+// daily edges, a bounded game-time interval for other changes, and a readout seam.
 
 import Foundation
 import OpenSkyConditions
@@ -240,7 +240,7 @@ nonisolated public struct ActorPackageRuntime {
         return nil
     }
 
-    /// On-demand seam for the AI gate panel.
+    /// On-demand seam for the AI gate readout.
     public mutating func forceReevaluate(
         actor: ReferenceKey,
         clock: GameClock,

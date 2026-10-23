@@ -1,4 +1,4 @@
-// The seam for World > World > Traps: the trap triggers in the loaded cells with
+// The trap state: trap triggers in the loaded cells with
 // their script states, the enable-parent chain of the selected one, and the live
 // hazards. Plain values, so the app assembles them. See docs/engine/traps.md.
 
@@ -94,35 +94,6 @@ nonisolated public struct TrapControlSnapshot: Equatable, Sendable {
         self.hazards = hazards
         self.hazardHits = hazardHits
         self.lastText = lastText
-    }
-}
-
-@MainActor
-public protocol TrapControlProviding: AnyObject {
-    var trapSnapshot: TrapControlSnapshot { get }
-    func selectTrap(_ key: ReferenceKey?)
-    /// The player steps into the selected trigger and out again.
-    @discardableResult
-    func fireSelectedTrap() -> TrapActionOutcome
-    /// The player presses the use key on the selected trap.
-    @discardableResult
-    func disarmSelectedTrap() -> TrapActionOutcome
-}
-
-/// What the last Traps control did. Only `text` builds the line.
-nonisolated public enum TrapActionOutcome: Equatable, Sendable {
-    case idle
-    case noSelection
-    case fired(trap: String)
-    case activated(trap: String, queuedEvents: Int)
-
-    public var text: String {
-        switch self {
-        case .idle: "No trap action yet."
-        case .noSelection: "No trap selected."
-        case let .fired(trap): "Stepped into and out of \(trap)."
-        case let .activated(trap, events): "Activated \(trap): \(events) script events."
-        }
     }
 }
 

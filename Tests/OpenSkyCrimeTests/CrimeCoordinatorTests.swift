@@ -1,5 +1,5 @@
 // The crime shell over a fake world: the assault, murder, and trespass hooks,
-// one guard tick, and the panel's bounty and membership controls. The
+// one guard tick, and the readout's bounty and membership controls. The
 // sentences and lists are tested in `CrimeCoreTests`.
 
 import OpenSkyConditions

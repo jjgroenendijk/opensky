@@ -1,4 +1,4 @@
-// HUD & Interaction > Messages: the seam the sidebar reads and the readout lines.
+// Messages: the snapshot and the readout lines.
 
 import Foundation
 import OpenSkyScriptingInterface
@@ -21,12 +21,6 @@ nonisolated public struct MessageControlSnapshot: Equatable, Sendable {
     public var lastOutcome: String?
 
     public init() {}
-}
-
-public protocol MessageControlProviding: AnyObject {
-    var messageSnapshot: MessageControlSnapshot { get }
-    func showMessage(editorID: String, asBox: Bool)
-    func resetHelpMessages()
 }
 
 extension MessageCoordinator {
@@ -76,20 +70,5 @@ nonisolated public enum MessageReadout {
             lines.append("Last: \(outcome)")
         }
         return lines.joined(separator: "\n")
-    }
-}
-
-extension MessageCoordinator: MessageControlProviding {
-    public var messageSnapshot: MessageControlSnapshot {
-        snapshot(lastOutcome: lastPanelOutcome)
-    }
-
-    public func showMessage(editorID: String, asBox: Bool) {
-        lastPanelOutcome = show(editorID: editorID, asBox: asBox).text
-    }
-
-    public func resetHelpMessages() {
-        resetAllHelpMessages()
-        lastPanelOutcome = "Reset every help message"
     }
 }

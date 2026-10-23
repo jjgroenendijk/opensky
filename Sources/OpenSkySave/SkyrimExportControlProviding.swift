@@ -1,4 +1,4 @@
-// The seam the sidebar's Skyrim export control reads. The app answers it from the
+// The Skyrim export state. The app answers it from the
 // running session. See docs/engine/ess-export.md.
 
 import Foundation
@@ -19,11 +19,4 @@ nonisolated public enum SkyrimExportOutcome: Equatable, Sendable {
         case let .failed(message): ["Export failed: \(message)"]
         }
     }
-}
-
-@MainActor
-public protocol SkyrimExportControlProviding: AnyObject {
-    var lastSkyrimExport: SkyrimExportOutcome { get }
-    /// Writes the session as a new `.ess` in the Skyrim saves folder.
-    func startSkyrimExport()
 }

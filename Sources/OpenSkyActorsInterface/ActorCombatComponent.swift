@@ -1,6 +1,6 @@
 // Persistent hostility: the component that keeps an actor angry after a reload.
 // It is separate from values and death, because the lifetimes differ. An actor
-// turns hostile when the player damages it or the panel sets it. The player's
+// turns hostile when the player damages it or the readout sets it. The player's
 // own combat state is derived, not stored (`CombatLoopState`).
 // See docs/engine/combat.md.
 

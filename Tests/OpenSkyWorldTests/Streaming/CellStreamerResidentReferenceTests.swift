@@ -1,4 +1,4 @@
-// The streamer's resident reference count, shown in the sidebar. Scenes are
+// The streamer's resident reference count, shown in state reads. Scenes are
 // built here because `CellStreamerFixture.cellScene` keeps no references and
 // `CellScene.references` is immutable.
 

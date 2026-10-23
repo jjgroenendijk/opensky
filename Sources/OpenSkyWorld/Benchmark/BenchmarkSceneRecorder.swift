@@ -34,10 +34,6 @@ nonisolated struct BenchmarkSceneRecorder {
         memory.add(usage)
     }
 
-    var gpuMemory: BenchmarkGPUMemory? {
-        memory.result
-    }
-
     func fill(_ result: inout BenchmarkSceneResult) {
         result.frameTime = BenchmarkDistribution(milliseconds: frameMS)
         result.gpuTime = BenchmarkDistribution(milliseconds: gpuMS)

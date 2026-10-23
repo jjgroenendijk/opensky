@@ -1,7 +1,7 @@
 import Foundation
 import OpenSkyFormatsESM
 
-/// One stack as the panel spells it: what it is, how many, and what to call it.
+/// One stack as the readout spells it: what it is, how many, and what to call it.
 nonisolated public struct ItemStackReadout: Equatable, Sendable {
     public let item: FormID
     public let count: Int32

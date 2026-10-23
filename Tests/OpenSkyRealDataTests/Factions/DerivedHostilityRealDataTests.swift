@@ -1,4 +1,4 @@
-// Derived hostility on the real load order: with no dev-panel input, a vanilla
+// Derived hostility on the real load order: with no dev-readout input, a vanilla
 // bandit is hostile to the player and a Whiterun guard is calm. Both run
 // through the session's `FactionRuntime`, fed by FACT, RELA, the actor's
 // `AIDT`, and its NPC_ memberships. Counts, editor IDs, and verdicts only.
@@ -88,7 +88,7 @@ struct DerivedHostilityRealDataTests {
         #expect(!decision.isHostile)
         #expect(!harness.runtime.resolvedFactions(of: located.key).isEmpty)
 
-        // The panel toggle still wins, which is scope point 2's "override of
+        // The control toggle still wins, which is scope point 2's "override of
         // last resort": the same guard, made hostile by hand, stays hostile
         // even though every record says it should not be.
         harness.runtime.store.set(ActorCombatState.hostile, for: located.key)

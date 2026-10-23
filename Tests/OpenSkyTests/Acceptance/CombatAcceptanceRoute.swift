@@ -63,8 +63,8 @@ extension CombatAcceptanceTests {
     }
 
     /// Step 3 — the opponent is angered and starts swinging back. This is the
-    /// same call `World > Combat & Physics > Combat Loop`'s hostility checkbox
-    /// makes; the panel half drives it through the control.
+    /// same call the combat hostility control
+    /// makes; the readout half drives it through the control.
     ///
     /// Since 16.7 that is the whole of it: hostility plus the opponent noticing
     /// the player is the fight, and there is no designation step in between.

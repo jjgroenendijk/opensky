@@ -40,7 +40,7 @@ nonisolated public struct MeleeAttacker: Equatable, Sendable {
     }
 }
 
-/// One landed hit, kept for the panel's last-hit trace.
+/// One landed hit, kept for the readout's last-hit trace.
 nonisolated public struct MeleeHitRecord: Equatable, Sendable {
     public let target: ReferenceKey
     /// How far along the swing contact was found, world units.

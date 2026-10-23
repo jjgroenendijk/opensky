@@ -6,28 +6,27 @@
 
 import AppKit
 import Foundation
-@testable import OpenSky
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
-@testable import OpenSkyRuntimeState
+import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
-extension WorldTimeAcceptanceTests {
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
+struct WorldTimeAcceptanceWeatherTests {
     // MARK: Step 8 — weather transitions fire from real elapsed game hours
 
     /// Forty-five game hours at a timescale of 3600 — one game hour per real
     /// second — driven half a real second at a time. Every weather change lands
     /// on a six-game-hour boundary, and at the end the clock, the `GameHour`
-    /// projection, the hour the weather system was resolved at, and the panel's
-    /// own readout all agree on 05:00.
+    /// projection, and the hour the weather system was resolved at all agree on
+    /// 05:00.
     @Test @MainActor
     func weatherRerollsOnGameHourBoundariesWhileTheClockRunsFast() throws {
         let defaults = try Self.weatherTimeGlobals()
@@ -158,9 +157,7 @@ extension WorldTimeAcceptanceTests {
 
     // MARK: Shared assertions
 
-    /// The three readings the gate names, checked against one another: the
-    /// clock, the `GameHour` global projection, and the World > Runtime State
-    /// clock readout read back by accessibility identifier.
+    /// The clock and the `GameHour` global projection agree on the end hour.
     @MainActor
     static func expectClockAgreement(
         _ clock: GameClock, defaults: GlobalStore, resolvedHour: Float
@@ -170,21 +167,6 @@ extension WorldTimeAcceptanceTests {
         let resolution = GlobalResolution(defaults: defaults, clock: clock)
         #expect(resolution.floatValue(editorID: GameClock.TimeGlobal.gameHour.editorID)
             == clock.hourOfDay)
-
-        let panel = RuntimeStatePanelViewController()
-        panel.loadViewIfNeeded()
-        let engine = FakeRuntimeStateProvider()
-        engine.runtimeStateClock = RuntimeStateClockSnapshot(
-            clock: clock, timescale: WorldTimeAcceptanceClock.fastTimescale, isPaused: false
-        )
-        panel.provider = engine
-        panel.startInspecting()
-        defer { panel.stopInspecting() }
-        let readout = try #require(
-            runtimeStateReadout("RuntimeStateTimeStatsLabel", in: panel.view)
-        )
-        #expect(readout.contains("05:00  19 Last Seed, 4E 201"))
-        #expect(readout.contains("Timescale: 3600"))
     }
 
     // MARK: Synthetic engine state

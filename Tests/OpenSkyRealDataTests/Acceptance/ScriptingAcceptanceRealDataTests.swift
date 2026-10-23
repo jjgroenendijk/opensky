@@ -18,7 +18,6 @@ import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
 import OpenSkyTerrain
-import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting

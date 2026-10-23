@@ -49,21 +49,4 @@ extension PackageCoordinator {
             && execution?.runner.outcome == nil
         return holds ? .guardWarn : nil
     }
-
-    /// `AddScriptPackage`: the package outranks all others until it is done. Nil
-    /// removes it, as `RemoveScriptPackage` does. False when the actor or package is unknown.
-    @discardableResult
-    public func setScriptPackage(_ package: FormID?, for actor: ReferenceKey) -> Bool {
-        guard
-            var runtime, let world, let clock = world.packageClock,
-            registeredActors[actor] != nil
-        else { return false }
-        let applied = runtime.setScriptPackage(
-            package, actor: actor, clock: clock,
-            context: world.packageConditionContext(clock: clock)
-        )
-        self.runtime = runtime
-        syncExecution(actor)
-        return applied
-    }
 }

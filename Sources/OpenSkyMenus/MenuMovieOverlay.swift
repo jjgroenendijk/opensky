@@ -42,11 +42,6 @@ public final class MenuMovieOverlay {
         record { try $0.setSWFOverlay(nil) }
     }
 
-    public func publish(_ body: (SWFMovieRuntime) -> Void) {
-        guard isLoaded else { return }
-        record { try $0.updateSWFOverlay(body) }
-    }
-
     public func tick() {
         guard isLoaded else { return }
         record { try $0.advanceSWFOverlay() }

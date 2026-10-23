@@ -61,7 +61,7 @@ struct ProgressionReadoutTests {
     }
 
     /// The skills block ends with what the count cache is doing, so cache reuse
-    /// is visible from the panel.
+    /// is visible from the readout.
     @Test
     func theSkillsBlockClosesWithTheCacheLine() {
         let snapshot = makeProgressionSnapshot(

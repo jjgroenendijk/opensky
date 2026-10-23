@@ -1,36 +1,28 @@
 // The launcher: the app opens on it, shows its pages with the game folder under
-// Settings, and each launch mode button opens its window.
+// Settings, and the Play button opens the game window.
 
 import XCTest
 
 final class LauncherUITests: OpenSkyUITestCase {
     @MainActor
-    func testLauncherOpensDeveloperModeAndReturns() throws {
-        let app = try launchApp(launchMode: "")
+    func testLauncherShowsPlayAndTheGameFolder() throws {
+        let app = try launchApp(skipsLauncher: false)
         XCTAssertTrue(app.tables["LauncherSidebar"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["LauncherGameFolderStatsLabel"].exists)
         XCTAssertTrue(app.buttons["LauncherSettingsLinkControl"].exists)
         XCTAssertTrue(app.buttons["LaunchPlayControl"].isEnabled)
-
-        app.buttons["LaunchDeveloperControl"].click()
-        XCTAssertTrue(app.outlines["AppSidebar"].waitForExistence(timeout: 10))
-
-        app.typeKey("l", modifierFlags: [.command, .shift])
-        XCTAssertTrue(app.buttons["LaunchPlayControl"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.outlines["AppSidebar"].exists)
     }
 
     @MainActor
     func testPlayNeedsAGameFolder() {
-        let app = launchApp(dataRoot: "/invalid/opensky-uitest-root", launchMode: "")
+        let app = launchApp(dataRoot: "/invalid/opensky-uitest-root", skipsLauncher: false)
         XCTAssertTrue(app.buttons["LaunchPlayControl"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["LaunchPlayControl"].isEnabled)
-        XCTAssertTrue(app.buttons["LaunchDeveloperControl"].isEnabled)
     }
 
     @MainActor
     func testLaunchPageShowsTheStartAndLinksToAssetOptimisation() throws {
-        let app = try launchApp(launchMode: "")
+        let app = try launchApp(skipsLauncher: false)
         XCTAssertTrue(app.buttons["LaunchContinueControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["LauncherContinueStatsLabel"].exists)
         XCTAssertTrue(app.popUpButtons["LaunchStartKindControl"].exists)
@@ -52,7 +44,7 @@ final class LauncherUITests: OpenSkyUITestCase {
 
     @MainActor
     func testDiagnosticsSettingsAndGraphicsPagesShowTheirControls() throws {
-        let app = try launchApp(launchMode: "")
+        let app = try launchApp(skipsLauncher: false)
         let sidebar = app.tables["LauncherSidebar"]
         XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
         sidebar.descendants(matching: .any)["LauncherPage-diagnostics"].firstMatch.click()
@@ -69,5 +61,32 @@ final class LauncherUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.checkBoxes["GraphicsFullScreenControl"].exists)
         XCTAssertTrue(app.popUpButtons["GraphicsFrameRateCapControl"].exists)
         XCTAssertTrue(app.textFields["GraphicsOptionfTreeLoadDistanceControl"].exists)
+    }
+
+    @MainActor
+    func testLauncherGraphicsPageControls() throws {
+        let app = try launchApp(skipsLauncher: false)
+        let sidebar = app.tables["LauncherSidebar"]
+        let page = sidebar.descendants(matching: .any)["LauncherPage-graphics"].firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 5))
+        page.click()
+
+        XCTAssertTrue(
+            app.checkBoxes["GraphicsPipelineCacheControl"].waitForExistence(timeout: 5)
+        )
+        for checkbox in [
+            "GraphicsGPUCullingControl", "GraphicsTextureStreamingControl",
+            "GraphicsRayTracedShadowsControl", "GraphicsFrameInterpolationControl",
+            "GraphicsMeshShaderGrassControl"
+        ] {
+            XCTAssertTrue(app.checkBoxes[checkbox].exists, checkbox)
+        }
+        XCTAssertTrue(app.buttons["GraphicsPipelineCacheClearControl"].exists)
+        for popUp in [
+            "GraphicsTextureBudgetControl", "GraphicsRenderScaleControl", "GraphicsUpscalerControl"
+        ] {
+            XCTAssertTrue(app.popUpButtons[popUp].exists, popUp)
+        }
+        XCTAssertTrue(app.staticTexts["GraphicsStatsLabel"].exists)
     }
 }

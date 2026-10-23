@@ -8,7 +8,7 @@ import OpenSkyFormatsCore
 import os
 import Synchronization
 
-/// Latest completed short-window reading, for live readouts (the World panel
+/// Latest completed short-window reading, for live readouts (the World readout
 /// and the frame HUD both poll this so they can never show different numbers).
 /// Separate from the 120-frame log window, which stays the milestone 2.9
 /// measurement and is never disturbed by a reader.

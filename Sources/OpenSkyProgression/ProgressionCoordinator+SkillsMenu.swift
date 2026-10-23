@@ -1,4 +1,4 @@
-// The skills menu's reads and spends, answered from the same runtimes the panel uses.
+// The skills menu's reads and spends, answered from the same runtimes the readout uses.
 // Names and descriptions resolve through the string tables when the app gave them.
 // See docs/engine/skills-menu.md.
 

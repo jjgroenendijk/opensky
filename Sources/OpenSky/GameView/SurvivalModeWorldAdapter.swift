@@ -1,5 +1,5 @@
 // The Survival Mode coordinator reads and writes the plugin's globals through
-// the session's global store, as scripts and the Globals panel do.
+// the session's global store, as scripts and the Globals readout do.
 
 import OpenSkyMenus
 import OpenSkyRuntimeState

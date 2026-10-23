@@ -1,12 +1,11 @@
 // The measured AS2 contract of `Interface\lockpickingmenu.swf`. The movie draws the
-// skill and lock panel and the button bar; the lock itself is the overlay scene.
+// skill and lock readout and the button bar; the lock itself is the overlay scene.
 // See docs/engine/locks.md#lockpicking-menu.
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyInventoryInterface
 
-/// The panel text `SetLockInfo` shows.
+/// The readout text `SetLockInfo` shows.
 nonisolated public struct LockpickingMovieInfo: Equatable, Sendable {
     public var skillLevel: Int
     /// 0 to 1 towards the next skill level.

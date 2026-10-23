@@ -1,5 +1,5 @@
-// Snapshot builders for the World > Progression seam, shared by the readout suite,
-// the panel suite, and the M20 acceptance suite.
+// Snapshot builders for the progression snapshot, shared by the readout suite,
+// the readout suite, and the M20 acceptance suite.
 //
 // `ProgressionControlSnapshot` is immutable by design and its memberwise
 // initializer takes sixteen arguments, so a test that wants one non-zero field

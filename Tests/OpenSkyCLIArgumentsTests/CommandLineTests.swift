@@ -120,11 +120,7 @@ struct CommandLineTests {
         )
         #expect(send.game.text)
         #expect(send.words == ["input", "press", "jump", "--frames", "3"])
-        let launch = try command(
-            ["game", "launch", "--mode", "developer"],
-            as: GameArguments.Launch.self
-        )
-        #expect(launch.mode == "developer")
+        let launch = try command(["game", "launch"], as: GameArguments.Launch.self)
         #expect(launch.survivalMode == "off")
         let asking = try command(
             ["game", "launch", "--survival-mode", "ask"], as: GameArguments.Launch.self

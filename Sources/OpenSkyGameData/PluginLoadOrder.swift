@@ -7,7 +7,7 @@
 import Foundation
 
 nonisolated public enum PluginLoadOrder: Sendable {
-    /// Why a plugin is in the order. Drives the Load Order panel's second
+    /// Why a plugin is in the order. Drives the Settings window.s second
     /// column and nothing else — priority comes from position, not origin.
     public enum Origin: Equatable, Sendable {
         case implicitMaster

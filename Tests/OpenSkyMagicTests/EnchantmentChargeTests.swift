@@ -78,7 +78,7 @@ struct EnchantmentChargeTests {
         #expect(empty.restoring(to: 36).usesRemaining == 2)
     }
 
-    /// The readout line names both numbers and the uses, so a panel prints a
+    /// The readout line names both numbers and the uses, so a readout prints a
     /// charge without knowing the model.
     @Test func theReadoutLineNamesChargeAndUses() {
         let charge = EnchantmentCharge(capacity: 90, remaining: 72, costPerUse: 18)

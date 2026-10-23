@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 /// One help topic's text.
 nonisolated public struct HelpTopic: Equatable, Sendable {

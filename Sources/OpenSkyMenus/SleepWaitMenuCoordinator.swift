@@ -4,7 +4,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 /// What the sleep and wait menu needs from the app.
 public protocol SleepWaitWorld: MenuScreenWorld {

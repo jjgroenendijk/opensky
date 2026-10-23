@@ -235,7 +235,7 @@ struct HostilityDerivationTests {
         let calm = derivation.decide(calmed, toward: target)
         #expect(calm.source == .runtimeOverride)
         #expect(!calm.isHostile)
-        // The records are still reported, so a panel can show why the override
+        // The records are still reported, so a readout can show why the override
         // is disagreeing with them.
         #expect(calm.reaction == .enemy)
 

@@ -31,10 +31,6 @@ nonisolated public struct GameFolderStatus: Equatable, Sendable {
         }
     }
 
-    public func canStart(_ mode: LaunchMode) -> Bool {
-        isFound || !mode.requiresGameData
-    }
-
     public static func sourceNote(for source: GameDataRoot.Source) -> String {
         switch source {
         case .environment:

@@ -66,7 +66,7 @@ public final class CombatLoopRuntime: CombatControlling {
     public private(set) var playerDamageFlash: Float = 0
     /// Transients removed by the caps since construction, cumulative.
     public private(set) var trimmedTransients = CombatTransientCounts()
-    /// Human-readable result of the last panel or script action.
+    /// Human-readable result of the last readout or script action.
     public var lastAction = CombatLoopOutcome.idle
 
     private(set) weak var world: (any CombatLoopWorld)?
@@ -101,7 +101,7 @@ public final class CombatLoopRuntime: CombatControlling {
         world?.combatHostility(of: key) ?? .neutral
     }
 
-    /// Sets `key`'s regard for the player outright, which is what the panel
+    /// Sets `key`'s regard for the player outright, which is what the readout
     /// toggle does.
     ///
     /// - Returns: true when stored state changed.
@@ -255,12 +255,6 @@ public final class CombatLoopRuntime: CombatControlling {
         accumulator = 0
         attackID = 0
         wasInCombat = false
-    }
-
-    /// Empties the incoming trace and its count without disturbing the fight.
-    public func clearTrace() {
-        incomingTrace = []
-        incomingHitCount = 0
     }
 
     // MARK: - Internal, for the satellite

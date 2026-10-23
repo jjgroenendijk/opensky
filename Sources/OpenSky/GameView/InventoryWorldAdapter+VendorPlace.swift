@@ -5,7 +5,6 @@ import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRuntimeState
 import OpenSkyWorld

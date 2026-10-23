@@ -1,5 +1,5 @@
 // The shell of the inventory domain: owns the world-item and equipment
-// runtimes, the open container session, and the panel readout lines. The
+// runtimes, the open container session, and the readout lines. The
 // rules live in `InventoryCore`. See docs/engine/coordinators.md.
 
 import OpenSkyConditions
@@ -20,14 +20,14 @@ public final class InventoryCoordinator {
     public private(set) var equipment: EquipmentRuntime?
     /// The load order's `fBarterMin` and `fBarterMax`, else the vanilla values.
     public private(set) var barterPricing = BarterPricing.vanilla
-    /// At most one container is open from the Items panel at a time.
+    /// At most one container is open from the Items readout at a time.
     public private(set) var session: ContainerSession?
     /// Captured on open, because the cell holding the container may be evicted
     /// while it is still open.
     public private(set) var sessionName: String?
     public private(set) var lastAction = ItemActionOutcome.idle
     /// Kept apart from `lastAction`, so a grant does not overwrite the
-    /// take and drop readout on the other panel.
+    /// take and drop readout on the other readout.
     public private(set) var lastGrant = GrantActionOutcome.idle
     /// The NPC by default: an equip is only visible on a rendered actor.
     public var inspectionTarget = EquipmentTargetSelector.nearestActor
@@ -159,19 +159,6 @@ public final class InventoryCoordinator {
             session = nil
             sessionName = nil
             return note(.failed(action: "Search", reason: String(describing: error)))
-        }
-    }
-
-    @discardableResult
-    public func takeAllFromOpenContainer() -> ItemActionOutcome {
-        guard runtime != nil else { return .unavailable }
-        guard let session else { return .noContainer }
-        do {
-            let moved = try session.takeAll()
-            reportTaken(moved, from: session)
-            return note(.tookAll(moved))
-        } catch {
-            return note(.failed(action: "Take all", reason: String(describing: error)))
         }
     }
 

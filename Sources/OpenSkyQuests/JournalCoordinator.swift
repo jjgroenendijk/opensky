@@ -1,4 +1,4 @@
-// The shell of the journal: the quest the panel names, the quest mutations its
+// The shell of the journal: the quest the readout names, the quest mutations its
 // controls run, and the quest list its readouts show. The page model and the
 // movie stay in the app, because they live in `OpenSkyMenus`.
 // See docs/engine/coordinators.md and docs/engine/journal.md.
@@ -12,7 +12,7 @@ import OpenSkyQuestsInterface
 /// Without a quest runtime every control refuses with a stated reason.
 @MainActor
 public final class JournalCoordinator {
-    /// As typed into the panel.
+    /// As typed into the readout.
     public var editorID = ""
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
@@ -123,19 +123,6 @@ public final class JournalCoordinator {
         let name = runtime.quests.quest(id)?.editorID ?? id.description
         lastOutcome = "\(name): \(tracked ? "tracked" : "not tracked")"
         return tracked
-    }
-
-    @discardableResult
-    public func toggleSelectedTracking() -> Bool {
-        guard let runtime, let quest = runtime.quests.quest(editorID: selectedEditorID) else {
-            lastOutcome = "track: no quest selected"
-            return false
-        }
-        guard toggleTracking(quest.formID) != nil else {
-            lastOutcome = "track: \(selectedEditorID) is not running"
-            return false
-        }
-        return true
     }
 
     /// Editor IDs of the tracked, running quests.

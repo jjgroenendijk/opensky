@@ -76,7 +76,7 @@ public final class ArcheryRuntime {
     }
 
     /// Abandons the draw in progress, raising `bowReset`. What a sheath or a
-    /// stagger calls, and what the panel's cancel control calls.
+    /// stagger calls, and what the readout's cancel control calls.
     public func cancelDraw() {
         guard state.phase.isDrawing || wasDrawing else { return }
         wasDrawing = false

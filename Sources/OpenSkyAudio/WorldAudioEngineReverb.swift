@@ -15,12 +15,6 @@ extension WorldAudioEngine {
         pushReverb()
     }
 
-    /// Fixes the wet level for listening tests; nil returns it to the ramp.
-    public func setReverbWetOverride(_ level: Float?) {
-        reverb.wetOverride = level
-        pushReverb()
-    }
-
     func advanceReverb(deltaTime: Float) {
         guard reverb.advance(deltaTime) else { return }
         pushReverb()

@@ -24,8 +24,7 @@ struct ReferenceRecordCatalogTests {
                 .union(ReferenceRecordCatalog.browsedTypes)
         )
         let catalog = ReferenceRecordCatalog(
-            index: index,
-            pluginNames: ["Base.esm", "Patch.esp"]
+            index: index
         )
 
         for type in ReferenceRecordType.allCases {
@@ -61,7 +60,7 @@ struct ReferenceRecordCatalogTests {
                 .union(ReferenceRecordCatalog.inspectedItemTypes)
         )
         let inspector = ReferenceRecordInspector(index: index)
-        let catalog = ReferenceRecordCatalog(index: index, pluginNames: ["Base.esm"])
+        let catalog = ReferenceRecordCatalog(index: index)
 
         let keywordPreview = try previewRecord(in: catalog, type: .keyword)
         let keywordText = inspector.text(for: keywordPreview)

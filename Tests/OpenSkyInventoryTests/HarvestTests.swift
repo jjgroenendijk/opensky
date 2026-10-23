@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFeaturesTesting
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

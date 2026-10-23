@@ -8,7 +8,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
-/// One reset, for the World > Runtime State readout.
+/// One reset, for the runtime state readout.
 nonisolated public struct CellResetRecord: Equatable, Sendable {
     public let location: CellSceneLocation
     public let resetReferences: [ReferenceKey]
@@ -89,7 +89,7 @@ public final class CellResetCoordinator {
         return ledger.departures.count
     }
 
-    /// For World > Runtime State > Reset.
+    /// For a forced reset.
     public var readout: String {
         let waiting = "Cells left behind: \(ledger.departures.count)"
         guard let lastReset else { return waiting + "  Last cell reset: none" }

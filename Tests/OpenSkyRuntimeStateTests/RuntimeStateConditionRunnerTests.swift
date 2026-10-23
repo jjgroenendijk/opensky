@@ -1,4 +1,4 @@
-// The per-condition report in World > Runtime State > Conditions. The runner's
+// The per-condition report in the runtime state readout. The runner's
 // verdict must equal `ConditionEvaluator.evaluate(_ conditions:)`, so tests
 // compare the two directly and an OR-grouping change cannot drift.
 
@@ -109,7 +109,7 @@ struct RuntimeStateConditionRunnerTests {
         #expect(tally.conditionsEvaluated == 0)
     }
 
-    /// The tally is a session counter, not a per-list one: the panel readout
+    /// The tally is a session counter, not a per-list one: the readout
     /// reports what the whole session has evaluated.
     @Test
     func tallyAccumulatesAcrossEvaluations() throws {

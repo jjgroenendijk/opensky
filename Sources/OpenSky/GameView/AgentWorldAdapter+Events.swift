@@ -167,7 +167,7 @@ extension AgentWorldAdapter {
     }
 
     private func diffCombatAndScripts() {
-        let melee = game.meleeCombatSnapshot
+        let melee = game.combat.meleeCombatSnapshot
         if melee.hitCount > tap.hitCount, tap.seeded, let hit = melee.trace.last {
             tap.append(AgentEventKind.combatHit, [
                 "target": .string(hit.target), "damage": .init(hit.appliedDamage)

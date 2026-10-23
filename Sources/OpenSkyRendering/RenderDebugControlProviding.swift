@@ -1,4 +1,4 @@
-// The seam for `World > Render Debug`: the debug channel and the layer mask, without
+// Render debug state: the debug channel and the layer mask, without
 // `Renderer`. The readout shows a draw-call delta, which proves a hidden layer is gone.
 
 nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
@@ -7,7 +7,7 @@ nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
     public let layers: RenderLayer
     /// The mask after the subsystem enables were folded in
     /// (`RenderLayerPolicy`). Differs from `layers` when a layer is checked
-    /// here but switched off by its own panel section.
+    /// here but switched off by its own readout section.
     public let effectiveLayers: RenderLayer
     public let stats: SceneDrawStats
     public let shadowStats: ShadowDrawStats
@@ -25,13 +25,6 @@ nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
         self.stats = stats
         self.shadowStats = shadowStats
     }
-}
-
-@MainActor
-public protocol RenderDebugControlProviding: AnyObject {
-    var renderDebugMode: RenderDebugMode { get set }
-    var renderDebugLayers: RenderLayer { get set }
-    var renderDebugSnapshot: RenderDebugControlSnapshot { get }
 }
 
 /// Readout text for the Render Debug section, kept apart from AppKit so the
@@ -60,23 +53,5 @@ nonisolated public enum RenderDebugReadout: Sendable {
         guard !suppressed.isEmpty else { return nil }
         return "Also off by their own controls: "
             + suppressed.map(\.title).joined(separator: ", ")
-    }
-
-    public static func drawText(for snapshot: RenderDebugControlSnapshot) -> String {
-        """
-        Scene: \(snapshot.stats.drawCalls) draws, \
-        \(snapshot.stats.drawnInstances) instances
-        Shadow: \(snapshot.shadowStats.drawCalls) draws, \
-        \(snapshot.shadowStats.drawnInstances) casters
-        """
-    }
-
-    public static func text(for snapshot: RenderDebugControlSnapshot) -> String {
-        [
-            modeText(for: snapshot),
-            layerText(for: snapshot),
-            suppressedText(for: snapshot),
-            drawText(for: snapshot)
-        ].compactMap(\.self).joined(separator: "\n")
     }
 }

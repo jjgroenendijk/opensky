@@ -59,7 +59,7 @@ public final class CrimeReporter: CrimeReporting {
     /// saw it, before it is taken. Zero when the take would not be theft.
     ///
     /// Quoted through `CrimeRuntime.quote`, so the same faction flags that would
-    /// refuse the charge refuse the quote: a panel must not promise a bounty the
+    /// refuse the charge refuse the quote: a readout must not promise a bounty the
     /// take will not accrue.
     public func theftBounty(
         of item: FormID,

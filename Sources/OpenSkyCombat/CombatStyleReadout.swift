@@ -1,9 +1,8 @@
-// The combat panel's style lines: an actor's resolved CSTY and the settings its
+// The combat readout's style lines: an actor's resolved CSTY and the settings its
 // machine runs on, next to the base values. See docs/engine/combat-behavior.md.
 
 import Foundation
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
 
 nonisolated public struct CombatStyleReadout: Equatable, Sendable {
     public let tuning: CombatStyleTuning?
@@ -55,12 +54,5 @@ nonisolated extension CombatStyleReadout {
             settings.shoutRetrySeconds, flight.orbitDistance, flight.airSeconds,
             flight.perchSeconds, flight.perchChance * 100, flight.groundSeconds
         )
-    }
-}
-
-extension CombatLoopRuntime {
-    /// The style `key` fights with and what it makes of the base settings.
-    public func styleReadout(of key: ReferenceKey) -> CombatStyleReadout {
-        CombatStyleReadout(tuning: styleTuning(of: key), base: behaviorSettings)
     }
 }

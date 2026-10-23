@@ -123,7 +123,7 @@ public final class HUDCoordinator {
         }
     }
 
-    /// Lines the movie showed, newest last, for the panel readout.
+    /// Lines the movie showed, newest last, for the readout.
     public private(set) var shownNotifications: [String] = []
 
     public func showNotification(_ text: String) {
@@ -195,7 +195,7 @@ public final class HUDCoordinator {
         )
     }
 
-    /// Applies one panel change. The layer toggle and the scale reach the
+    /// Applies one readout change. The layer toggle and the scale reach the
     /// renderer only; every other change republishes the movie state.
     public func update(_ change: (inout HUDSettings) -> Void) {
         let old = settings

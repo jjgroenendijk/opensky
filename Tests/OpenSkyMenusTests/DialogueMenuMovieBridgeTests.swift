@@ -219,7 +219,7 @@ struct DialogueMenuMovieBridgeTests {
             DialogueMenuMovieBridge.missingEntryPoints(runtime: runtime)
                 == DialogueMenuMovieBridge.requiredEntryPoints
         )
-        // Publishing into it must be a no-op rather than a trap: the panel
+        // Publishing into it must be a no-op rather than a trap: the readout
         // reports the missing entry points and the conversation degrades to the
         // engine-side model.
         DialogueMenuMovieBridge.publish(model(["One"]), runtime: runtime)

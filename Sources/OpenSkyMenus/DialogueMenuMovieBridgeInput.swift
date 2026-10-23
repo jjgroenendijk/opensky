@@ -22,7 +22,7 @@ nonisolated extension DialogueMenuMovieBridge {
 
     /// Everything a readout wants back out of the live movie, in one pass.
     ///
-    /// One value rather than five accessors because the panel samples at 2 Hz
+    /// One value rather than five accessors because the readout samples at 2 Hz
     /// and each read walks the display tree by path; batching them keeps that
     /// to one walk per field instead of one per refresh per caller.
     @MainActor

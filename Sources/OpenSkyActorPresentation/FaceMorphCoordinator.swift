@@ -1,4 +1,4 @@
-// The Face Morphs panel, and the automatic face of every loaded actor: blinking, eye
+// The Face Morphs readout, and the automatic face of every loaded actor: blinking, eye
 // drift, and the emotion of the line a speaker says. See docs/engine/face-morphs.md.
 
 import OpenSkyFormatsESM
@@ -145,9 +145,5 @@ extension FaceMorphCoordinator {
 
     public func setFaceMorphWeight(_ weight: Float, target: String) {
         selectedPlayback?.setWeight(weight, for: target)
-    }
-
-    public func resetFaceMorphWeights() {
-        selectedPlayback?.resetToBindPose()
     }
 }

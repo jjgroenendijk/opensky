@@ -1,7 +1,7 @@
 // The inventory menu: opening it pushes the menu stack, which pauses world sim
 // and routes keyboard input here. The row list is `InventoryMenuModel`, the
 // vanilla movie is `InventoryMenuMovieBridge`, and every action calls the same
-// `InventoryCoordinator` method the Items panel calls.
+// `InventoryCoordinator` method the Items readout calls.
 // See docs/engine/inventory-menu.md.
 
 import Foundation
@@ -87,17 +87,6 @@ final class InventoryMenuController {
         hidePreview()
     }
 
-    func setMovieEnabled(_ enabled: Bool) {
-        guard enabled != movieEnabled else { return }
-        movieEnabled = enabled
-        guard isOpen else { return }
-        if enabled {
-            startMovie()
-        } else {
-            movie.stop()
-        }
-    }
-
     /// Re-reads the player's inventory. Every change calls this, so the row
     /// list and the movie cannot drift apart.
     func refreshModel() {
@@ -175,7 +164,7 @@ final class InventoryMenuController {
     }
 
     /// Left and right change category here, because the movie routes them
-    /// through panel-state codes that nothing drives without a live
+    /// through readout-state codes that nothing drives without a live
     /// `InputDelegate` (docs/engine/inventory-menu.md).
     private func move(_ direction: MenuInputEvent.Direction) {
         switch direction {
@@ -245,15 +234,6 @@ final class InventoryMenuController {
         perform { game.inventory.dropPlayerItem($0.item, count: count).text }
     }
 
-    /// A poison goes on the drawn weapon; anything else is eaten or drunk.
-    func consumeSelection() {
-        perform { entry in
-            game.inventory.isPoison(entry.item)
-                ? game.inventory.applyPoison(entry.item).text
-                : game.magic.consumeMagicItem(entry.item).text
-        }
-    }
-
     func perform(_ action: (InventoryMenuEntry) -> String) {
         guard let entry = model.selectedEntry else {
             lastActionText = "No row selected."
@@ -274,7 +254,7 @@ final class InventoryMenuController {
             worldSimPaused: game.menuMode.isWorldSimPaused,
             categoryLabels: model.categoryLabels,
             selectedCategoryIndex: model.selectedCategoryIndex,
-            entryLines: model.entries.map(InventoryMenuSection.line(for:)),
+            entryLines: model.entries.map(\.readoutLine),
             selectedIndex: model.selectedIndex,
             carriedWeight: model.carriedWeight,
             gold: model.gold,

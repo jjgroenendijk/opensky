@@ -99,11 +99,6 @@ nonisolated public final class AssetCacheReader: Sendable {
         state.withLock { $0.counts[kind] ?? AssetCacheReadCounts() }
     }
 
-    /// The counts of every kind read so far.
-    public var allCounts: [AssetCacheKind: AssetCacheReadCounts] {
-        state.withLock { $0.counts }
-    }
-
     /// Entries a lookup found stale or broken since the last call.
     public func takeRebuildItems() -> Set<AssetCacheRebuildItem> {
         state.withLock { state in

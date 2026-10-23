@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
     public private(set) var model = ItemListMenuModel(categories: [])

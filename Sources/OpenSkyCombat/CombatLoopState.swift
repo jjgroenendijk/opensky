@@ -77,7 +77,7 @@ nonisolated public struct CombatLoopState: Equatable, Sendable {
     }
 }
 
-/// One blow an actor landed on the player, kept for the panel's trace.
+/// One blow an actor landed on the player, kept for the readout's trace.
 nonisolated public struct CombatIncomingHit: Equatable, Sendable {
     /// Who swung.
     public let aggressor: ReferenceKey

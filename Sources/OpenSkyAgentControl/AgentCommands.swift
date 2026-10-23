@@ -81,6 +81,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case kill(String)
     case resurrect(String)
     case overlay(name: String, enabled: Bool)
+    /// The scene pass's debug channel, such as `wireframe`, or `off`.
+    case channel(String)
+    /// The sun shadow tier: `off`, `low`, or `high`.
+    case shadows(String)
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -89,18 +93,28 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
-        case "teleport": return try .teleport(parseTeleport(args))
-        case "time": return try .setTime(hour: parseHour(args))
-        case "weather": return try .weather(args.optionalString("id"))
-        case "av": return try parseActorValue(args)
-        case "item": return try parseItem(args)
+        case "teleport": try .teleport(parseTeleport(args))
+        case "time": try .setTime(hour: parseHour(args))
+        case "weather": try .weather(args.optionalString("id"))
+        case "av": try parseActorValue(args)
+        case "item": try parseItem(args)
         case "quest":
-            return try .setQuestStage(quest: args.string("id"), stage: args.int("stage"))
-        case "kill": return try .kill(args.string("ref"))
-        case "resurrect": return try .resurrect(args.string("ref"))
+            try .setQuestStage(quest: args.string("id"), stage: args.int("stage"))
+        case "kill": try .kill(args.string("ref"))
+        case "resurrect": try .resurrect(args.string("ref"))
+        case "racemenu": try .raceMenu(limited: args.bool("limited", default: false))
+        default: try parseRender(name, args)
+        }
+    }
+
+    private static func parseRender(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self {
+        switch name {
         case "overlay":
             return try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
-        case "racemenu": return try .raceMenu(limited: args.bool("limited", default: false))
+        case "channel": return try .channel(args.string("mode"))
+        case "shadows": return try .shadows(args.string("quality"))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

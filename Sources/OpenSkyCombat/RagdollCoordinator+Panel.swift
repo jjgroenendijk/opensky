@@ -1,5 +1,5 @@
-// The Death & Ragdoll panel and the corpse search. The panel trigger goes
-// through the same `RagdollRuntime.trigger(_:)` a death reaches, so the sidebar
+// The Death & Ragdoll readout and the corpse search. The readout trigger goes
+// through the same `RagdollRuntime.trigger(_:)` a death reaches, so a forced
 // verifies that route rather than adding a second one.
 
 import OpenSkyFormatsESM

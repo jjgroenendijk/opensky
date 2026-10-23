@@ -1,6 +1,6 @@
-// Smoke tests: the app launches, shows its window, and reaches every
-// destination. OPENSKY_DATA_ROOT points at a synthetic install (an empty
-// Skyrim.esm marker), so the data probe passes without the game.
+// Smoke tests: the app launches and shows the game window. OPENSKY_DATA_ROOT
+// points at a synthetic install (an empty Skyrim.esm marker), so the data probe
+// passes without the game.
 
 import XCTest
 
@@ -9,235 +9,16 @@ final class OpenSkyUITests: OpenSkyUITestCase {
     func testAppLaunchesAndShowsWindow() throws {
         let app = try launchApp()
         XCTAssertEqual(app.dialogs.count, 0, "No game-data alert expected with valid root")
-        XCTAssertTrue(app.outlines["AppSidebar"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["SidebarToggleButton"].exists)
-        // CI runners may expose AppKit accessibility without Metal 4.
-        XCTAssertTrue(app.buttons["ScreenshotButton"].exists)
+        XCTAssertTrue(app.windows["OpenSky"].waitForExistence(timeout: 10))
     }
 
-    /// World sidebar surface: the launch destination is the World panel, which
-    /// carries the camera/frame/scene readouts and the fly/walk selector that
-    /// the `G` key accelerates.
+    /// Without an install a forced start stays on the launcher, and Settings opens there.
     @MainActor
-    func testWorldDestinationShowsCameraAndStats() throws {
-        let app = try launchApp()
-        selectDestination("Destination-world", in: app)
-
-        let mode = app.popUpButtons["CameraMovementModeControl"]
-        XCTAssertTrue(mode.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["CameraCopyPoseControl"].exists)
-        XCTAssertTrue(app.staticTexts["CameraStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["FrameStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["SceneStatsLabel"].exists)
-    }
-
-    /// World > Environment: shadow quality and stats, particle controls, and
-    /// only implemented LOD values. Runs on synthetic data with DemoScene.
-    @MainActor
-    func testWorldSidebarEnvironmentShadowQuality() throws {
-        let app = try launchApp()
-        selectDestination("Destination-environment", in: app)
-
-        let quality = app.popUpButtons["ShadowQualityControl"]
-        XCTAssertTrue(quality.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["ShadowStatsLabel"].exists)
-        XCTAssertTrue(app.checkBoxes["SunShadowsEnabledControl"].exists)
-        XCTAssertTrue(app.checkBoxes["AnimationsEnabledControl"].exists)
-        XCTAssertTrue(app.checkBoxes["WeatherEnabledControl"].exists)
-        XCTAssertTrue(app.checkBoxes["ParticlesEnabledControl"].exists)
-        XCTAssertTrue(app.checkBoxes["ParticlesFrozenControl"].exists)
-        XCTAssertTrue(app.sliders["ParticleEmissionControl"].exists)
-        XCTAssertTrue(app.checkBoxes["PrecipitationEnabledControl"].exists)
-        XCTAssertTrue(app.checkBoxes["GrassEnabledControl"].exists)
-        XCTAssertTrue(app.sliders["GrassDensityControl"].exists)
-        XCTAssertTrue(app.sliders["GrassDistanceControl"].exists)
-        XCTAssertTrue(app.sliders["GrassWindControl"].exists)
-        XCTAssertTrue(app.buttons["ClearWeatherControl"].exists)
-        XCTAssertTrue(app.buttons["RainWeatherControl"].exists)
-        XCTAssertTrue(app.buttons["SnowWeatherControl"].exists)
-        XCTAssertTrue(app.checkBoxes["WeatherTransitionsPausedControl"].exists)
-        XCTAssertTrue(app.textFields["LODLevel0DistanceControl"].exists)
-        XCTAssertTrue(app.textFields["LODLevel1DistanceControl"].exists)
-        XCTAssertTrue(app.textFields["LODMaximumDistanceControl"].exists)
-        XCTAssertTrue(app.textFields["LODTreeDistanceControl"].exists)
-        XCTAssertTrue(app.buttons["LODApplyControl"].exists)
-        XCTAssertTrue(app.buttons["LODResetControl"].exists)
-
-        quality.click()
-        app.menuItems["Low"].click()
-        XCTAssertEqual(quality.value as? String, "Low")
-    }
-
-    /// World > HUD & Interaction acceptance surface.
-    @MainActor
-    func testHUDInteractionControlsAndReadouts() throws {
-        let app = try launchApp()
-        selectDestination("Destination-hudInteraction", in: app)
-
-        XCTAssertTrue(app.checkBoxes["HUDLayerEnabledControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.checkBoxes["HUDCrosshairControl"].exists)
-        XCTAssertTrue(app.checkBoxes["HUDMetersControl"].exists)
-        XCTAssertTrue(app.checkBoxes["HUDCompassControl"].exists)
-        XCTAssertTrue(app.checkBoxes["HUDMarkersControl"].exists)
-        XCTAssertTrue(app.checkBoxes["HUDPromptControl"].exists)
-        XCTAssertTrue(app.checkBoxes["HUDPlaceholderTextControl"].exists)
-        XCTAssertTrue(app.popUpButtons["HUDScaleControl"].exists)
-        XCTAssertTrue(app.staticTexts["HUDElementsStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
-    }
-
-    /// World > Dialogue & Voice: menu controls, camera, voice line, and the
-    /// speaker's face on one destination.
-    @MainActor
-    func testDialogueVoiceControlsAndReadouts() throws {
-        let app = try launchApp()
-        selectDestination("Destination-dialogueVoice", in: app)
-
-        XCTAssertTrue(app.buttons["DialogueOpenControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["DialogueLeaveControl"].exists)
-        XCTAssertTrue(app.buttons["DialogueChooseControl"].exists)
-        XCTAssertTrue(app.staticTexts["DialogueTopicsStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["DialogueConditionsStatsLabel"].exists)
-        XCTAssertTrue(app.checkBoxes["DialogueCameraForceControl"].exists)
-        XCTAssertTrue(app.staticTexts["DialogueCameraStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["VoiceSourceStatsLabel"].exists)
-        XCTAssertTrue(app.popUpButtons["FaceMorphTargetControl"].exists)
-        XCTAssertTrue(app.sliders["MorphWeightControl"].exists)
-        XCTAssertTrue(app.staticTexts["FaceMorphStatsLabel"].exists)
-    }
-
-    /// World > System Menu: the Resume/Settings/Quit selector plus the data-root
-    /// and volume rows behind it.
-    @MainActor
-    func testSystemMenuControlsAndReadouts() throws {
-        let app = try launchApp()
-        selectDestination("Destination-systemMenu", in: app)
-
-        let open = app.buttons["SystemMenuOpenControl"]
-        XCTAssertTrue(open.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["SystemMenuResumeControl"].exists)
-        XCTAssertTrue(app.buttons["SystemMenuUpControl"].exists)
-        XCTAssertTrue(app.buttons["SystemMenuDownControl"].exists)
-        XCTAssertTrue(app.buttons["SystemMenuActivateControl"].exists)
-        XCTAssertTrue(app.checkBoxes["SystemMenuMovieControl"].exists)
-        XCTAssertTrue(app.sliders["SystemMenuMasterVolumeControl"].exists)
-        XCTAssertTrue(app.staticTexts["SystemMenuStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["SystemMenuDataRootStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["SystemMenuSettingsStatsLabel"].exists)
-
-        // Opening the menu pushes the engine menu stack, which pauses world sim.
-        open.click()
-        let readout = app.staticTexts["SystemMenuStatsLabel"]
-        XCTAssertTrue(readout.value is String)
-        app.buttons["SystemMenuResumeControl"].click()
-    }
-
-    /// World > Dialogue & Voice > Voice: the lip-sync A/B seam and the live
-    /// audio-timeline readout.
-    @MainActor
-    func testAudioLipSyncControlsAndReadout() throws {
-        let app = try launchApp()
-        selectDestination("Destination-dialogueVoice", in: app)
-
-        XCTAssertTrue(app.checkBoxes["LipSyncEnabledControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)["LipSyncStatsLabel"].exists)
-    }
-
-    /// Developer > UI Lab: overlay and sample toggles, scale presets, menu-mode
-    /// buttons, and the draw-stats, menu-stack, and strings readouts.
-    @MainActor
-    func testWorldSidebarUILabControls() throws {
-        let app = try launchApp()
-        selectDestination("Destination-uiLab", in: app)
-
-        XCTAssertTrue(app.checkBoxes["UIOverlayEnabledControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.checkBoxes["UILabSampleControl"].exists)
-        XCTAssertTrue(app.checkBoxes["UIStringsSampleControl"].exists)
-        XCTAssertTrue(app.popUpButtons["UIScaleControl"].exists)
-        XCTAssertTrue(app.staticTexts["UIStatsLabel"].exists)
-        XCTAssertTrue(app.buttons["UIMenuPushControl"].exists)
-        XCTAssertTrue(app.buttons["UIMenuPopControl"].exists)
-        XCTAssertTrue(app.buttons["UIMenuClearControl"].exists)
-        XCTAssertTrue(app.staticTexts["UIMenuStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["UIStringsStatsLabel"].exists)
-
-        // Menu-mode preview round trip: push pauses world sim, clear resumes.
-        app.buttons["UIMenuPushControl"].click()
-        let menuStats = app.staticTexts["UIMenuStatsLabel"]
-        XCTAssertTrue(
-            waitForPause(menuStats),
-            "UI Lab menu readout never reported the world sim paused"
-        )
-        app.buttons["UIMenuClearControl"].click()
-    }
-
-    /// The readouts are `NSTextField` wrapping labels, and AppKit publishes a
-    /// static text field's string as the element's accessibility value, leaving
-    /// its label empty — so reading `.label` alone finds nothing however correct
-    /// the readout is.
-    @MainActor
-    private func readoutText(_ element: XCUIElement) -> String {
-        let value = element.value as? String ?? ""
-        return value.isEmpty ? element.label : value
-    }
-
-    /// The 2 Hz readout ticker may lag one interaction; poll briefly.
-    @MainActor
-    private func waitForPause(_ label: XCUIElement) -> Bool {
-        let deadline = Date().addingTimeInterval(5)
-        while Date() < deadline {
-            if readoutText(label).contains("paused") {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        return false
-    }
-
-    /// Library > Asset Browser: a full-content destination covering the game
-    /// view; the toolbar screenshot stays disabled while it is frontmost.
-    @MainActor
-    func testSidebarShowsAssetBrowser() throws {
-        let app = try launchApp()
-        selectDestination("Destination-assetBrowser", in: app)
-        XCTAssertTrue(app.popUpButtons["AssetCategory"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.searchFields["AssetFilter"].exists)
-        XCTAssertTrue(app.tables["AssetTable"].exists)
-        app.popUpButtons["AssetCategory"].click()
-        app.menuItems["Reference records (load order)"].click()
-        XCTAssertTrue(app.popUpButtons["AssetPluginControl"].exists)
-        XCTAssertTrue(app.popUpButtons["AssetRecordTypeControl"].exists)
-        XCTAssertTrue(app.textViews["AssetRecordInspectorStatsLabel"].exists)
-        XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
-    }
-
-    /// Library > Load Order: the resolved plugin order and its plugins.txt,
-    /// changeable without a CLI flag.
-    @MainActor
-    func testSidebarShowsLoadOrder() throws {
-        let app = try launchApp()
-        selectDestination("Destination-loadOrder", in: app)
-        XCTAssertTrue(app.tables["LoadOrderTable"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["LoadOrderStatsLabel"].exists)
-        XCTAssertTrue(app.buttons["LoadOrderChooseControl"].exists)
-        XCTAssertTrue(app.buttons["LoadOrderUseDefaultControl"].exists)
-        XCTAssertTrue(app.buttons["LoadOrderReloadControl"].exists)
-        XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
-    }
-
-    @MainActor
-    func testMissingDataStaysInWindowAndSettingsOpens() {
-        let app = XCUIApplication()
-        app.launchEnvironment["OPENSKY_DATA_ROOT"] = "/invalid/opensky-uitest-root"
-        app.launchEnvironment["OPENSKY_LAUNCH_MODE"] = "developer"
-        app.launch()
-        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
+    func testMissingDataStaysOnTheLauncherAndSettingsOpens() {
+        let app = launchApp(dataRoot: "/invalid/opensky-uitest-root")
         XCTAssertEqual(app.dialogs.count, 0)
-        XCTAssertTrue(
-            app.staticTexts.containing(
-                NSPredicate(format: "value CONTAINS 'not a Skyrim SE install'")
-            ).firstMatch.exists
-        )
+        XCTAssertTrue(app.buttons["LaunchPlayControl"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["LaunchPlayControl"].isEnabled)
 
         app.typeKey(",", modifierFlags: .command)
         XCTAssertTrue(app.windows["Settings"].waitForExistence(timeout: 5))
@@ -256,41 +37,22 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         let window = app.windows.firstMatch
         // Kept: let the render loop present a few frames before capturing.
         Thread.sleep(forTimeInterval: 2)
-        let screenshot = window.screenshot()
-        let url = FileManager.default.temporaryDirectory
-            .appending(path: "opensky-frame-\(UUID().uuidString).png")
-        try screenshot.pngRepresentation.write(to: url)
-        NSLog("rendered frame screenshot: \(url.path)")
-        XCTAssertGreaterThan(screenshot.pngRepresentation.count, 0)
+        try write(window.screenshot(), name: "opensky-frame-\(UUID().uuidString).png")
     }
 
-    /// Milestone 3.3 visual proof over user's read-only install. Set
-    /// OPENSKY_DATA_ROOT for the UI-test runner; CI skips without it.
+    /// A capture over the user's read-only install. Set OPENSKY_DATA_ROOT for
+    /// the UI-test runner; CI skips without it.
     @MainActor
-    func testCapturesWorldAndAssetBrowserWithRealData() throws {
+    func testCapturesTheWorldWithRealData() throws {
         let environment = ProcessInfo.processInfo.environment
         guard let root = environment["OPENSKY_DATA_ROOT"], !root.isEmpty else {
             throw XCTSkip("OPENSKY_DATA_ROOT not set for UI-test runner")
         }
         let app = launchApp(dataRoot: root)
-        let window = app.windows.firstMatch
-        let worldFrame = window.frame
-
         // Kept: the capture needs streamed cells on screen, and no UI element
         // reports that.
         Thread.sleep(forTimeInterval: 5)
-        try write(window.screenshot(), name: "app-world.png")
-
-        selectDestination("Destination-assetBrowser", in: app)
-        let table = app.tables["AssetTable"]
-        XCTAssertTrue(table.waitForExistence(timeout: 5))
-        XCTAssertTrue(table.tableRows.firstMatch.waitForExistence(timeout: 30))
-        table.tableRows.firstMatch.click()
-        // Kept: the preview renders with no UI element to wait on.
-        Thread.sleep(forTimeInterval: 3)
-        XCTAssertEqual(window.frame.width, worldFrame.width, accuracy: 1)
-        XCTAssertEqual(window.frame.height, worldFrame.height, accuracy: 1)
-        try write(window.screenshot(), name: "app-asset-browser.png")
+        try write(app.windows.firstMatch.screenshot(), name: "app-world.png")
     }
 
     @MainActor
@@ -299,7 +61,7 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         // Host verification copies these logged temp paths after the run.
         let url = FileManager.default.temporaryDirectory.appending(path: name)
         try screenshot.pngRepresentation.write(to: url)
-        NSLog("mode screenshot: \(url.path)")
+        NSLog("game screenshot: \(url.path)")
         XCTAssertGreaterThan(screenshot.pngRepresentation.count, 0)
     }
 }

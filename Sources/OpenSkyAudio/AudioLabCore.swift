@@ -1,11 +1,11 @@
-// The pure rules behind the World > Audio pickers and triggers. The shell is
+// The pure rules behind the audio pickers and triggers. The shell is
 // `AudioCoordinator` in OpenSkyWorld (docs/engine/coordinators.md).
 
 import Foundation
 import OpenSkyGameData
 import simd
 
-/// Picker lists, trigger placement, and readout lines for the audio panel.
+/// Picker lists, trigger placement, and readout lines for the audio readout.
 nonisolated public enum AudioLabCore {
     /// A popup is unusable past a few hundred entries, so the filter is the real navigation.
     public static let voicePickerLimit = 200
@@ -37,7 +37,7 @@ nonisolated public enum AudioLabCore {
         camera + AudioSpace.worldForward(yaw: yaw, pitch: 0) * triggerOffsetUnits
     }
 
-    /// Voice-type directory plus file name: the part that names the line in a panel column.
+    /// Voice-type directory plus file name: the part that names the line in a readout column.
     public static func shortVoiceName(_ path: String) -> String {
         path.split(separator: "\\").suffix(2).joined(separator: "\\")
     }

@@ -40,7 +40,7 @@ nonisolated public struct ActorBuildCounts: Sendable {
     public var animationFailures = 0
     public var animationFailureReasons: [String] = []
     /// Every `AppearanceSkip`, per actor, as "ACHR <id>: <reason> (<subject>)".
-    /// Not an error: a masked skin torso still reports one. The inventory panel
+    /// Not an error: a masked skin torso still reports one. The inventory readout
     /// uses it to say why an equipped piece drew nothing.
     public var appearanceSkipReasons: [String] = []
     /// Each drawn humanoid's head parts and the head it shows, by ACHR.

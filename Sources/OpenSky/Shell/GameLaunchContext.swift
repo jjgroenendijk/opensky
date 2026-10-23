@@ -127,7 +127,6 @@ final class GameLaunchContext {
         // Both loaders run on first use, not here, because they walk the VFS.
         if let vfs = virtualFileSystem {
             let language = localizationLanguage.language
-            controller.uiLab.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
             controller.swfMovies.fileSystem = vfs
             controller.menuTextLoader = { LocalizedLabels.load(vfs: vfs, language: language) }
             controller.controlMapLoader = {
@@ -136,7 +135,7 @@ final class GameLaunchContext {
             controller.playerSettings.keyNamesLoader = {
                 try? KeyboardNameTable(data: vfs.contents(forPath: KeyboardNameTable.path))
             }
-            // World > Audio picker and playback source.
+            // Audio picker and playback source.
             controller.audioFileSystem = vfs
             controller.assetCache = assetCache
             controller.fastTextureLoad = fastTextureLoad
@@ -152,14 +151,6 @@ final class GameLaunchContext {
         return controller
     }
 
-    /// Root context handed to full-content destination factories (and reload).
-    func makeFullContentContext() -> FullContentContext {
-        FullContentContext(
-            gameDataRoot: gameDataRoot,
-            startupErrorMessage: gameDataErrorMessage
-        )
-    }
-
     /// A failure logs [ERROR] and loads no session, and the game view falls back
     /// to `DemoScene`. Only a cancel throws.
     @concurrent
@@ -173,7 +164,7 @@ final class GameLaunchContext {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
             return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
         }
-        // The control exists whenever the cache does, so the panel can turn it on later.
+        // The control exists whenever the cache does, so the readout can turn it on later.
         let fastLoad = cache.map { _ in
             FastTextureLoadControl(
                 isEnabled: cacheSettings.directLoad.loadsTextures,

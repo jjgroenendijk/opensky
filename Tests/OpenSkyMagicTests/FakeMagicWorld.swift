@@ -18,7 +18,6 @@ final class FakeMagicWorld: MagicWorld {
     var inventory: (any InventoryAccess)?
     var equipment: (any EquipmentAccess)?
     var residents: [ReferenceKey] = []
-    var raceSpells: [FormID] = []
     var aim = SpellAim.none
     var canFireProjectile = true
     private(set) var firedProjectiles: [SpellPayload] = []
@@ -70,10 +69,6 @@ final class FakeMagicWorld: MagicWorld {
 
     func itemName(_ item: FormID) -> String {
         "item \(item.rawValue)"
-    }
-
-    func playerRaceSpells() -> [FormID] {
-        raceSpells
     }
 
     @discardableResult

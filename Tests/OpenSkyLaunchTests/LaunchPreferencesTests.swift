@@ -1,4 +1,5 @@
-// Which mode starts and whether it may start, without a real install.
+// Whether the launcher is skipped, and whether the game folder lets Play start,
+// without a real install.
 
 import Foundation
 @testable import OpenSkyGameData
@@ -8,42 +9,24 @@ import Testing
 struct LaunchPreferencesTests {
     private struct MissingInstall: Error {}
 
-    private func isolatedDefaults() throws -> UserDefaults {
-        let suite = "OpenSkyLaunchTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
-    @Test func theEnvironmentForcesAModeInAnyCase() {
+    @Test func onlyOneSkipsTheLauncher() {
         let key = LaunchPreferences.environmentKey
-        #expect(LaunchPreferences.forcedMode(environment: [key: "Developer"]) == .developer)
-        #expect(LaunchPreferences.forcedMode(environment: [key: "play"]) == .play)
-        #expect(LaunchPreferences.forcedMode(environment: [key: "editor"]) == nil)
-        #expect(LaunchPreferences.forcedMode(environment: [:]) == nil)
+        #expect(LaunchPreferences.skipsLauncher(environment: [key: "1"]))
+        #expect(!LaunchPreferences.skipsLauncher(environment: [key: "0"]))
+        #expect(!LaunchPreferences.skipsLauncher(environment: [key: "play"]))
+        #expect(!LaunchPreferences.skipsLauncher(environment: [:]))
     }
 
-    @Test func playOpensAtTheTitleAndAForcedLaunchOnlyWhenAsked() {
-        #expect(LaunchMode.play.opensAtTitleScreen)
-        #expect(!LaunchMode.developer.opensAtTitleScreen)
+    @Test func aForcedLaunchOpensAtTheTitleOnlyWhenAsked() {
         let key = LaunchPreferences.titleScreenKey
         #expect(LaunchPreferences.forcedTitleScreen(environment: [key: "1"]))
         #expect(!LaunchPreferences.forcedTitleScreen(environment: [key: "0"]))
         #expect(!LaunchPreferences.forcedTitleScreen(environment: [:]))
     }
 
-    @Test func theLastModeDefaultsToPlayAndIsRemembered() throws {
-        let defaults = try isolatedDefaults()
-        #expect(LaunchPreferences.lastMode(userDefaults: defaults) == .play)
-        LaunchPreferences.remember(.developer, userDefaults: defaults)
-        #expect(LaunchPreferences.lastMode(userDefaults: defaults) == .developer)
-    }
-
-    @Test func playNeedsAGameFolderAndDeveloperModeDoesNot() {
+    @Test func theGameFolderIsFoundOnlyWhenTheInstallLocates() {
         let missing = GameFolderStatus { throw MissingInstall() }
         #expect(!missing.isFound)
-        #expect(!missing.canStart(.play))
-        #expect(missing.canStart(.developer))
 
         let found = GameFolderStatus {
             GameDataRoot(
@@ -52,8 +35,8 @@ struct LaunchPreferencesTests {
                 source: .userDefaults
             )
         }
+        #expect(found.isFound)
         #expect(found.path == "/Games/Skyrim")
         #expect(found.note == "Chosen in Settings.")
-        #expect(LaunchMode.allCases.allSatisfy(found.canStart))
     }
 }

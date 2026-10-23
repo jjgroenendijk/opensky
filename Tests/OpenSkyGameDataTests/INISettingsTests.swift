@@ -68,28 +68,6 @@ struct INISettingsTests {
         #expect(TerrainLODSettings.resolve(invalid).configuration == .fallback)
     }
 
-    @Test func sidebarOverridePersistsOnlyCompleteValidConfiguration() throws {
-        let suite = "TerrainLODSettingsTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let configuration = TerrainLODConfiguration(
-            level0Distance: 16384,
-            level1Distance: 32768,
-            maximumDistance: 131_072,
-            treeLoadDistance: 65536
-        )
-
-        TerrainLODSettings.store(configuration, to: defaults)
-        #expect(TerrainLODSettings.hasOverride(in: defaults))
-        let loaded = TerrainLODSettings.load(root: nil, defaults: defaults)
-        #expect(loaded.configuration == configuration)
-        #expect(loaded.source == "OpenSky sidebar override")
-
-        TerrainLODSettings.clearOverride(from: defaults)
-        #expect(!TerrainLODSettings.hasOverride(in: defaults))
-        #expect(TerrainLODSettings.load(root: nil, defaults: defaults).configuration == .fallback)
-    }
-
     @Test func localizationLanguageUsesIniAndFallsBackPastInvalidValues() {
         let settings = INISettings(sources: [
             INISettingsSource(

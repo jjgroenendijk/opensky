@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyCells
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerception

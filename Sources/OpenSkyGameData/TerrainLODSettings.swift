@@ -1,5 +1,5 @@
 // Typed [TerrainManager] settings consumed by distant terrain/object/tree LOD.
-// OpenSky overrides live in its defaults domain; Skyrim files stay read-only.
+// Skyrim files stay read-only.
 
 import Foundation
 import Synchronization
@@ -48,11 +48,6 @@ nonisolated public struct TerrainLODConfigurationSnapshot: Equatable, Sendable {
 }
 
 nonisolated public enum TerrainLODSettings: Sendable {
-    public static let level0Key = "TerrainLODLevel0Distance"
-    public static let level1Key = "TerrainLODLevel1Distance"
-    public static let maximumKey = "TerrainLODMaximumDistance"
-    public static let treeKey = "TerrainLODTreeLoadDistance"
-
     private static let section = "TerrainManager"
 
     /// Skyrim files OpenSky can locate from one configured install. Order is
@@ -72,14 +67,13 @@ nonisolated public enum TerrainLODSettings: Sendable {
     }
 
     /// `settings`, the player settings file's bytes, adds the Graphics page's view
-    /// distances over the INI files. The developer sidebar override wins over both.
+    /// distances over the INI files.
     public static func load(
         root: GameDataRoot?,
-        defaults: UserDefaults = GameDataLocator.settingsDefaults,
         settings: Data? = nil,
         fileManager: FileManager = .default
     ) -> TerrainLODConfigurationSnapshot {
-        let base = root.map {
+        root.map {
             let ini = INISettings.load(
                 candidates: iniCandidates(installURL: $0.installURL),
                 fileManager: fileManager
@@ -89,13 +83,6 @@ nonisolated public enum TerrainLODSettings: Sendable {
             configuration: .fallback,
             source: "safe defaults"
         )
-        if let override = loadOverride(from: defaults) {
-            return TerrainLODConfigurationSnapshot(
-                configuration: override,
-                source: "OpenSky sidebar override"
-            )
-        }
-        return base
     }
 
     /// The store's defaults come from the same INI files, so an unchanged store keeps them.
@@ -150,41 +137,6 @@ nonisolated public enum TerrainLODSettings: Sendable {
             .compactMap(\.self)
             .last ?? "safe defaults"
         return TerrainLODConfigurationSnapshot(configuration: configuration, source: source)
-    }
-
-    public static func store(
-        _ configuration: TerrainLODConfiguration,
-        to defaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) {
-        guard configuration.isValid else { return }
-        defaults.set(Double(configuration.level0Distance), forKey: level0Key)
-        defaults.set(Double(configuration.level1Distance), forKey: level1Key)
-        defaults.set(Double(configuration.maximumDistance), forKey: maximumKey)
-        defaults.set(Double(configuration.treeLoadDistance), forKey: treeKey)
-    }
-
-    public static func clearOverride(
-        from defaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) {
-        [level0Key, level1Key, maximumKey, treeKey].forEach(defaults.removeObject(forKey:))
-    }
-
-    public static func hasOverride(
-        in defaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) -> Bool {
-        loadOverride(from: defaults) != nil
-    }
-
-    private static func loadOverride(from defaults: UserDefaults) -> TerrainLODConfiguration? {
-        let keys = [level0Key, level1Key, maximumKey, treeKey]
-        guard keys.allSatisfy({ defaults.object(forKey: $0) != nil }) else { return nil }
-        let configuration = TerrainLODConfiguration(
-            level0Distance: Float(defaults.double(forKey: level0Key)),
-            level1Distance: Float(defaults.double(forKey: level1Key)),
-            maximumDistance: Float(defaults.double(forKey: maximumKey)),
-            treeLoadDistance: Float(defaults.double(forKey: treeKey))
-        )
-        return configuration.isValid ? configuration : nil
     }
 }
 

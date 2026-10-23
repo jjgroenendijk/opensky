@@ -3,7 +3,6 @@
 // stolen (<https://en.uesp.net/wiki/Skyrim:Crime>), so the flag is in the key.
 
 import Foundation
-@testable import OpenSky
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
@@ -186,8 +185,8 @@ struct StolenGoodsTests {
 
         // The row line says how many of the row are hot, because the flag is
         // per copy.
-        #expect(InventoryMenuSection.line(for: arrows).contains("[1 stolen]"))
-        #expect(InventoryMenuSection.line(for: swords).contains("[stolen]"))
+        #expect(arrows.readoutLine.contains("[1 stolen]"))
+        #expect(swords.readoutLine.contains("[stolen]"))
     }
 
     /// An inventory runtime over an empty baseline, plus one container to move

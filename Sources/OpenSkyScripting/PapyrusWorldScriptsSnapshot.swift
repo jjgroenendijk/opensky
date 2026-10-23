@@ -1,5 +1,5 @@
 // Folds the VM's instance table, event ring, scheduler counters and tally into the
-// `ScriptsSnapshot` the World > Scripts sidebar reads. Here, so the sampling rules are
+// `ScriptsSnapshot` agent control reads. Here, so the sampling rules are
 // testable without AppKit.
 
 import Foundation

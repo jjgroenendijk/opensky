@@ -1,5 +1,5 @@
 // Browse catalog for the main app's asset browser: every archive entry
-// plus every plugin record flattened into filterable sidebar rows. AppKit-free
+// plus every plugin record flattened into filterable rows. AppKit-free
 // so grouping + filtering unit-test without a window (main app owns the UI,
 // OpenSkyTests exercises this). See docs/tools/preview-gui.md.
 
@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// What one sidebar row selects.
+/// What one catalog row selects.
 nonisolated public enum PreviewSelection: Sendable {
     case file(VFSEntry)
     case record(PreviewRecord)
@@ -33,7 +33,7 @@ nonisolated public struct PreviewRecord: Sendable {
     }
 }
 
-/// One sidebar row. `searchKey` is the lowercase haystack the filter matches
+/// One catalog row. `searchKey` is the lowercase haystack the filter matches
 /// (files: the canonical VFS key itself; records: lowercased display text).
 nonisolated public struct PreviewItem: Sendable {
     public let display: String
@@ -47,16 +47,6 @@ nonisolated public enum PreviewCategory: CaseIterable, Sendable {
     case records
     case referenceRecords
     case allFiles
-
-    public var title: String {
-        switch self {
-        case .meshes: "Meshes (.nif)"
-        case .textures: "Textures (.dds)"
-        case .records: "Records (every plugin)"
-        case .referenceRecords: "Reference records (load order)"
-        case .allFiles: "All files"
-        }
-    }
 }
 
 nonisolated public struct PreviewCatalog: Sendable {

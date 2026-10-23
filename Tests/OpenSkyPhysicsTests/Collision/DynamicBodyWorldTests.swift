@@ -1,5 +1,5 @@
 // The registry around the solver: residency, resting transforms for
-// persistence, the player's shove, and the panel's freeze and reset.
+// persistence, the player's shove, and the readout's freeze and reset.
 
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore

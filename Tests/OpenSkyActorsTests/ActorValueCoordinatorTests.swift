@@ -1,5 +1,5 @@
 // The actor-value shell over a fake world: casting and combat slow regeneration, and the
-// panel controls act on the selected target and report what they did.
+// control controls act on the selected target and report what they did.
 
 @testable import OpenSkyActors
 import OpenSkyActorsInterface

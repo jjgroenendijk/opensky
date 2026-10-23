@@ -20,7 +20,7 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
     public let text: String?
     /// 1 hides the world; below 1 the world shows through during the fade.
     public let opacity: Float
-    /// False during the fade, when the world draws again under a dimming panel.
+    /// False during the fade, when the world draws again under a dimming readout.
     public let drawsObject: Bool
 }
 
@@ -33,8 +33,6 @@ public protocol LoadingScreenWorld: AnyObject {
     /// Draws one frame of the cover, or removes it for nil.
     func presentLoadingCover(_ frame: LoadingCoverFrame?)
     func setLoadingPaused(_ paused: Bool)
-    /// The `XLCN` of the cell the player stands in, for the panel's passing list.
-    var currentLocation: ResolvedFormID? { get }
 }
 
 public final class LoadingScreenCoordinator {
@@ -96,11 +94,6 @@ public final class LoadingScreenCoordinator {
         guard waitingSince != nil else { return }
         waitingSince = nil
         finish()
-    }
-
-    /// Passing screens for `location`, in load order.
-    public func passingScreens(location: ResolvedFormID?) -> [ResolvedRecord<LoadScreen>] {
-        selector(location: location)?.passing() ?? []
     }
 
     // MARK: - Debug

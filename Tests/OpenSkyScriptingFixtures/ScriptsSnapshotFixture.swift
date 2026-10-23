@@ -1,5 +1,5 @@
-// Snapshot builder for the World > Scripts seam, shared by the readout suite and
-// the panel suite.
+// Snapshot builder for the Papyrus snapshot, shared by the readout suite and
+// the readout suite.
 
 @testable import OpenSkyScripting
 

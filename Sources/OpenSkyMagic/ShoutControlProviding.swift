@@ -1,65 +1,10 @@
-// World > Combat & Physics > Shouts: the equipped shout, its words, dragon souls, and
-// the cooldown, with the panel actions that teach, unlock, equip, and shout.
+// Shouts: the equipped shout, its words, dragon souls, and
+// the cooldown, with the control actions that teach, unlock, equip, and shout.
 
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-
-nonisolated public struct ShoutReadout: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let name: String
-    public let wordsKnown: Int
-    public let wordsUnlocked: Int
-    public let wordCount: Int
-
-    public init(
-        key: ReferenceKey,
-        name: String,
-        wordsKnown: Int,
-        wordsUnlocked: Int,
-        wordCount: Int
-    ) {
-        self.key = key
-        self.name = name
-        self.wordsKnown = wordsKnown
-        self.wordsUnlocked = wordsUnlocked
-        self.wordCount = wordCount
-    }
-}
-
-nonisolated public struct ShoutControlSnapshot: Equatable, Sendable {
-    public var isAvailable = false
-    public var isAllowed = false
-    public var dragonSouls = 0
-    public var equipped: ReferenceKey?
-    public var known: [ShoutReadout] = []
-    /// Every shout of the load order, for the teach control.
-    public var all: [ShoutReadout] = []
-    public var phase = ShoutPhase.idle
-    public var cooldown: Float = 0
-    public var lastShout = ShoutOutcome.idle
-    /// What the player's Slow Time effects set.
-    public var timeScales = MagicTimeScales.normal
-
-    public static let unavailable = Self()
-
-    public init() {}
-
-    public var readoutText: String {
-        guard isAvailable else { return "Shouts: unavailable" }
-        let equippedName = known.first { $0.key == equipped }.map {
-            "\($0.name) (\($0.wordsUnlocked) of \($0.wordCount) words)"
-        } ?? "none"
-        return [
-            "Shouting allowed (entry point 82): \(isAllowed ? "yes" : "no")",
-            "Equipped: \(equippedName)   Dragon souls: \(dragonSouls)",
-            "Phase: \(phase.text)   Cooldown: " + String(format: "%.1f s", cooldown),
-            "Last: \(lastShout.text)",
-            "Slow Time (entry point 70): \(timeScales.text)"
-        ].joined(separator: "\n")
-    }
-}
 
 nonisolated extension MagicTimeScales {
     public var text: String {
@@ -111,39 +56,7 @@ nonisolated extension ShoutRefusal {
     }
 }
 
-@MainActor
-public protocol ShoutControlProviding: AnyObject {
-    var shoutSnapshot: ShoutControlSnapshot { get }
-    @discardableResult
-    func learnShout(_ shout: ReferenceKey) -> ShoutOutcome
-    @discardableResult
-    func equipShout(_ shout: ReferenceKey) -> ShoutOutcome
-    @discardableResult
-    func unlockNextWord(of shout: ReferenceKey) -> ShoutOutcome
-    func addDragonSoul()
-    /// Holds the shout key long enough for `words` words.
-    @discardableResult
-    func shout(words: Int) -> ShoutOutcome
-}
-
-extension MagicCoordinator: ShoutControlProviding {
-    public var shoutSnapshot: ShoutControlSnapshot {
-        guard effects != nil, caster != nil, !shouts.isEmpty else { return .unavailable }
-        var snapshot = ShoutControlSnapshot()
-        snapshot.isAvailable = true
-        snapshot.isAllowed = isShoutAllowed
-        snapshot.dragonSouls = dragonSouls
-        snapshot.equipped = world.shoutKnowledge.equipped
-        snapshot.known = knownShouts.compactMap(shoutReadout)
-        snapshot.all = shouts.keys.sorted().compactMap(shoutReadout)
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        snapshot.phase = shoutMachine.phase
-        snapshot.cooldown = shoutMachine.cooldown
-        snapshot.lastShout = lastShout
-        snapshot.timeScales = timeScales
-        return snapshot
-    }
-
+extension MagicCoordinator {
     /// Teaches and unlocks every word, the way the Greybeards' words arrive unlocked.
     @discardableResult
     public func learnShout(_ shout: ReferenceKey) -> ShoutOutcome {
@@ -183,36 +96,10 @@ extension MagicCoordinator: ShoutControlProviding {
         return noteShout(.unlocked(word: name, soulsLeft: dragonSouls))
     }
 
-    public func addDragonSoul() {
-        guard let index = Self.dragonSoulsIndex else { return }
-        effects?.values.addModifier(1, to: .permanent, at: index, on: .player)
-    }
-
-    @discardableResult
-    public func shout(words: Int) -> ShoutOutcome {
-        guard shoutMachine.isIdle else { return lastShout }
-        let outcome = beginShout()
-        guard !shoutMachine.isIdle else { return outcome }
-        let hold = ShoutCore.fullChargeHold(unlocked: max(1, words), settings: shoutSettings)
-        panelShoutHold = hold > 0 ? hold + 0.05 : 0
-        return outcome
-    }
-
     var dragonSouls: Int {
         guard let index = Self.dragonSoulsIndex else { return 0 }
         return Int((effects?.values.value(at: index, on: .player) ?? 0).rounded(.down))
     }
 
     static let dragonSoulsIndex = ActorValueIdentity.index(named: "Dragon Souls")
-
-    private func shoutReadout(_ key: ReferenceKey) -> ShoutReadout? {
-        guard let shout = shouts[key] else { return nil }
-        let words = wordKeys(of: shout)
-        let known = world.shoutKnowledge.knownWords
-        return ShoutReadout(
-            key: key, name: shout.displayName,
-            wordsKnown: words.filter { $0.map(known.contains) ?? false }.count,
-            wordsUnlocked: unlockedWordCount(of: shout), wordCount: words.count
-        )
-    }
 }

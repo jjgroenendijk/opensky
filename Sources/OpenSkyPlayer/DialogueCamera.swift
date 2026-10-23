@@ -95,7 +95,7 @@ nonisolated public struct DialogueCamera: Equatable, Sendable {
         minimumDistance: PlayerCapsule.standard.radius
     )
 
-    /// The last resolved frame, or nil before the first one. Kept so the panel
+    /// The last resolved frame, or nil before the first one. Kept so the readout
     /// can report where the camera is and what it is looking at, and so the
     /// debug overlay can draw the pivot without resolving a second time.
     public private(set) var pose: DialogueCameraPose?

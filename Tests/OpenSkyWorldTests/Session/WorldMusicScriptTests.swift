@@ -5,7 +5,6 @@
 import OpenSkyFormatsESM
 import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

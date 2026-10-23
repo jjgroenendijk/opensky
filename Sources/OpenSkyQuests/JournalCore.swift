@@ -1,4 +1,4 @@
-// The pure rules of the journal readouts: which quests the panel lists and how
+// The pure rules of the journal readouts: which quests the readout lists and how
 // it words an objective. Values in, values out. See docs/engine/journal.md.
 
 import OpenSkyFormatsESM
@@ -16,7 +16,7 @@ nonisolated public struct JournalQuestStatus: Sendable {
 }
 
 public enum JournalCore {
-    /// The panel lists the quests that run or ran.
+    /// The readout lists the quests that run or ran.
     public static func listed(_ entries: [JournalQuestStatus]) -> [JournalQuestStatus] {
         entries.filter { $0.state.isRunning || $0.state.isCompleted }
     }

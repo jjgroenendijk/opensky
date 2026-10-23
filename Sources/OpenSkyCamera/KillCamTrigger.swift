@@ -34,7 +34,7 @@ nonisolated public struct KillCamSettings: Equatable, Sendable {
     public var enabled = true
     /// fKillCamBaseOdds; the install sets 1, so every eligible kill plays.
     public var baseOdds: Float = 1
-    /// The player's own kill cam chance, 0...1, which scales `baseOdds`. The sidebar sets it.
+    /// The player's own kill cam chance, 0...1, which scales `baseOdds`. Tests set it.
     public var playerOdds: Float = 1
     /// Vanilla plays a kill cam only on the last enemy; off allows every kill.
     public var lastEnemyOnly = true

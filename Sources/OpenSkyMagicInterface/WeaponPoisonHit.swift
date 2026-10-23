@@ -3,7 +3,6 @@
 // See docs/engine/alchemy.md.
 
 import OpenSkyFormatsESM
-import OpenSkyWorldState
 
 nonisolated public struct WeaponPoisonHit: Equatable, Sendable {
     public let attacker: ReferenceKey

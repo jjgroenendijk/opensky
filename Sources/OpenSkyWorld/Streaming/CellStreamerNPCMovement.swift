@@ -210,11 +210,6 @@ extension CellStreamer {
         return released
     }
 
-    /// What one actor is turning towards, for the gate readout.
-    public func npcFacing(for actor: ReferenceKey) -> NPCFacingHold? {
-        npcMovement.facing(for: actor)
-    }
-
     public func npcMovementReadouts() -> [NPCMovementReadout] {
         npcMovement.readouts()
     }

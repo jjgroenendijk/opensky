@@ -14,7 +14,7 @@ public protocol ObjectBehaviorWorld: AnyObject {
     func residentAnimatedObjects() -> [CellAnimatedObject]
 }
 
-/// One line of the object animation panel.
+/// One line of the object animation readout.
 nonisolated public struct ObjectAnimationRow: Equatable, Sendable {
     public let reference: UInt32
     public let project: String

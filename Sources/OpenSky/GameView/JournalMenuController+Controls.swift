@@ -1,4 +1,4 @@
-// The journal's sidebar controls: the snapshot the sections read, and the
+// The journal's controls: the snapshot the sections read, and the
 // quest commands they send. `GameViewController` gets them through
 // `JournalMenuHosting`, so it holds no journal logic.
 
@@ -9,76 +9,6 @@ import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
-import OpenSkyScripting
-import OpenSkyScriptingInterface
-
-/// A holder of the journal menu, which then provides the journal controls.
-protocol JournalMenuHosting: AnyObject {
-    var journalMenu: JournalMenuController { get }
-}
-
-extension JournalControlProviding where Self: JournalMenuHosting {
-    var journalSnapshot: JournalControlSnapshot {
-        journalMenu.snapshot
-    }
-
-    var journalQuestEditorID: String {
-        get { journalMenu.journal.editorID }
-        set { journalMenu.setEditorID(newValue) }
-    }
-
-    var journalQuestEditorIDs: [String] {
-        journalMenu.journal.questEditorIDs
-    }
-
-    func openJournal() {
-        journalMenu.open()
-    }
-
-    func closeJournal() {
-        journalMenu.close()
-    }
-
-    func sendJournalInput(_ event: MenuInputEvent) {
-        journalMenu.route(event)
-    }
-
-    func setJournalShowsCompleted(_ flag: Bool) {
-        journalMenu.setShowsCompleted(flag)
-    }
-
-    func startSelectedQuest() {
-        journalMenu.applied(journalMenu.journal.startSelectedQuest())
-    }
-
-    func stopSelectedQuest() {
-        journalMenu.applied(journalMenu.journal.stopSelectedQuest())
-    }
-
-    func setSelectedQuestStage(_ index: Int) {
-        journalMenu.applied(journalMenu.journal.setSelectedQuestStage(index))
-    }
-
-    func setSelectedQuestObjective(_ index: Int, displayed: Bool) {
-        journalMenu.applied(
-            journalMenu.journal.setSelectedQuestObjective(index, displayed: displayed)
-        )
-    }
-
-    func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        journalMenu.game.scripts.questAliasTable(editorID: editorID)
-    }
-
-    func toggleSelectedQuestTracking() {
-        journalMenu.applied(journalMenu.journal.toggleSelectedTracking())
-    }
-
-    func showSelectedQuestOnMap() {
-        guard let quest = journalMenu.journal.selectedEntry()?.quest.formID else { return }
-        journalMenu.close()
-        journalMenu.game.mapMenu.showQuestTarget(quest: quest)
-    }
-}
 
 extension JournalMenuController {
     /// One sample per refresh, so two sections never show a half-updated session.

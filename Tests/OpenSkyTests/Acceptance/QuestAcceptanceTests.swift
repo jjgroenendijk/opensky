@@ -2,7 +2,7 @@
 // `SetStage` through script code, the fragment writes `WorldStateStore`, the
 // alias resolves, the journal shows the quest, and a mid-quest save loads into
 // a fresh engine at the same stage. Each step asserts the trace, not only the
-// return. Render and panel halves are the other `QuestAcceptance*` suites.
+// return. Render and readout halves are the other `QuestAcceptance*` suites.
 
 import Foundation
 import OpenSkyFormatsCore

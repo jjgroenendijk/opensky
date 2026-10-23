@@ -14,7 +14,6 @@ import Testing
 @MainActor
 struct RagdollDeathEffectsTests {
     private static let victim = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x201)
-    private static let other = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x202)
 
     private static func session(
         settings: DeathSettings = .vanilla

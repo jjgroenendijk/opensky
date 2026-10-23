@@ -84,10 +84,6 @@ public final class PlayerMountDrive {
         events = bridge.graphEvents.addConsumer()
     }
 
-    public var feetPosition: SIMD3<Float> {
-        walk.drawnFeetPosition
-    }
-
     /// Steps the mount by one input frame, steered by the rider's input against the
     /// camera yaw. Returns the events its graph fired.
     public func advance(

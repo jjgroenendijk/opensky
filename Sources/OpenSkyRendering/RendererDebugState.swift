@@ -36,7 +36,7 @@ nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
         .statics, .actors, .distantLOD, .terrain, .water, .sky, .grass, .particles
     ]
 
-    /// Stable presentation order for the panel checkboxes and the readout.
+    /// Stable presentation order for the readout checkboxes and the readout.
     /// Ordering by raw value would be equally stable but would put the sky
     /// between water and grass; this groups geometry before atmosphere.
     public static let ordered: [RenderLayer] = [
@@ -178,7 +178,7 @@ extension Renderer {
     }
 
     /// Isolates one layer, or restores all of them when it is already the only
-    /// one drawn — the panel's solo button toggles rather than latches.
+    /// one drawn — the readout's solo button toggles rather than latches.
     public func soloRenderLayer(_ layer: RenderLayer) {
         renderDebug.layers = renderDebug.soloedLayer == layer ? .all : layer
     }

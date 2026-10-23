@@ -101,7 +101,7 @@ nonisolated public struct SpellHit: Equatable, Sendable {
 }
 
 /// How one entry's magnitude was moved by the target's resistances, so a test
-/// and the sidebar panel can assert the adjustment rather than infer it from a
+/// and a state read can assert the adjustment rather than infer it from a
 /// health bar.
 nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
     public let target: ReferenceKey

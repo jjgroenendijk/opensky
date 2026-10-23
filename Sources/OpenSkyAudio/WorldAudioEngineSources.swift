@@ -20,7 +20,7 @@ nonisolated public enum AudioRouting: String, Sendable {
 }
 
 /// One playing source. Reference type: identity is what the eviction,
-/// retirement and panel rows track.
+/// retirement and readout rows track.
 @MainActor
 public final class ActiveAudioSource {
     public let id: Int

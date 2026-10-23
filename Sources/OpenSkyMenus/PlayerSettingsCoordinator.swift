@@ -47,8 +47,6 @@ public final class PlayerSettingsCoordinator {
     /// Reads the install's key names on first use.
     public var keyNamesLoader: () -> KeyboardNameTable? = { nil }
     private lazy var keyNames = keyNamesLoader()
-    /// The group the sidebar table shows.
-    public var inspectedGroup = PlayerSettingGroup.gameplay
 
     /// Call `applyAll()` once the world can take the settings.
     public init(store: PlayerSettingsStore, world: PlayerSettingsWorld? = nil) {

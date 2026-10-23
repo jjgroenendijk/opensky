@@ -1,4 +1,4 @@
-// The sidebar's view of the world map, the local map, and fast travel.
+// A view of the world map, the local map, and fast travel.
 
 import Foundation
 
@@ -32,65 +32,5 @@ nonisolated public struct MapMenuSnapshot: Equatable, Sendable {
         self.questTargets = questTargets
         self.fastTravelEnabled = fastTravelEnabled
         self.lastResult = lastResult
-    }
-}
-
-public protocol MapMenuControlProviding: AnyObject {
-    var mapMenuSnapshot: MapMenuSnapshot { get }
-    func openMap(local: Bool)
-    func closeMap()
-    func zoomMap(by amount: Float)
-    func tiltMap(by degrees: Float)
-    func sendMapInput(_ event: MenuInputEvent)
-    func revealAllMapMarkers()
-    func resetLocalMapFog()
-    func inspectMapWorldspace(offset: Int)
-    func inspectMapMarker(offset: Int)
-    func applyToInspectedMarker(_ action: MapMarkerAction)
-}
-
-extension MapMenuCoordinator: MapMenuControlProviding {
-    public var mapMenuSnapshot: MapMenuSnapshot {
-        snapshot
-    }
-
-    public func openMap(local: Bool) {
-        open(local ? .local : .world)
-    }
-
-    public func closeMap() {
-        close()
-    }
-
-    public func zoomMap(by amount: Float) {
-        zoom(by: amount)
-    }
-
-    public func tiltMap(by degrees: Float) {
-        tilt(by: degrees)
-    }
-
-    public func sendMapInput(_ event: MenuInputEvent) {
-        route(event)
-    }
-
-    public func revealAllMapMarkers() {
-        revealAll()
-    }
-
-    public func resetLocalMapFog() {
-        resetFog()
-    }
-
-    public func inspectMapWorldspace(offset: Int) {
-        inspectWorldspace(offset: offset)
-    }
-
-    public func inspectMapMarker(offset: Int) {
-        inspectMarker(offset: offset)
-    }
-
-    public func applyToInspectedMarker(_ action: MapMarkerAction) {
-        apply(action)
     }
 }

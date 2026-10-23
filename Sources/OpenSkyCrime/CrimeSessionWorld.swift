@@ -52,9 +52,6 @@ public protocol CrimeSessionWorld: AnyObject {
     func stolenPlayerStacks() -> [ItemStackReadout]
     func vendor(faction key: ReferenceKey) -> Vendor?
     func vendor(of actor: ReferenceKey) -> Vendor?
-    func openBarter(with actor: ReferenceKey, vendorFaction: ReferenceKey?) -> String
-    /// Makes every stocked merchant chest due. Returns how many.
-    func restockAllVendors() -> Int
 
     // MARK: - Clock and player
 
@@ -109,10 +106,6 @@ extension CrimeSessionWorld {
 
     public func isDead(_: ReferenceKey) -> Bool {
         false
-    }
-
-    public func restockAllVendors() -> Int {
-        0
     }
 
     public func enterJail(through _: ReferenceKey) -> Bool {

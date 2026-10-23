@@ -7,7 +7,7 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
 
-/// The open page and its rows, for the readout and the panel.
+/// The open page and its rows, for the readout and the readout.
 nonisolated public struct SystemMenuPageSnapshot: Equatable, Sendable {
     public let page: String
     public let rows: [String]

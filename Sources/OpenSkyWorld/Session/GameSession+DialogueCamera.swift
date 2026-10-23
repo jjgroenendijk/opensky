@@ -59,12 +59,6 @@ extension GameSession {
         dialogueCameraState.camera.pose
     }
 
-    /// The camera mode that is still live underneath the override and that the
-    /// view returns to when the conversation ends.
-    public var dialogueCameraRestoreMode: CameraMovementMode {
-        movementMode
-    }
-
     /// The field of view that mode projects with, which is what releasing the
     /// override re-projects to. The one statement of the per-mode rule;
     /// `activeFOVYRadians` reads it rather than repeating it.

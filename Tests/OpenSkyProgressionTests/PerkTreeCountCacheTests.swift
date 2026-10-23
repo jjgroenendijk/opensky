@@ -86,7 +86,7 @@ struct PerkTreeCountCacheTests {
     }
 
     /// A skill this load order carries no tree for is an entry too: an empty
-    /// answer must not send the panel back to the records twice a second.
+    /// answer must not send the readout back to the records twice a second.
     @Test
     func aSkillWithNoTreeIsCachedAsEmpty() {
         var trees = Self.trees()
@@ -184,7 +184,7 @@ struct PerkTreeCountCacheTests {
     }
 
     /// The line the Skills section closes with, which is how the reuse is read
-    /// from the panel rather than from a profiler.
+    /// from the readout rather than from a profiler.
     @Test
     func theReadoutSpellsOutWhatTheCacheDid() {
         var trees = Self.trees()

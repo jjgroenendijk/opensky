@@ -51,13 +51,12 @@ final class BenchmarkRunHost {
     }
 
     /// Wires a new game window; it starts the pending tour once the world is ready.
-    func attach(game: GameViewController, window: NSWindow, shellItems: BenchmarkToolbarItems?) {
+    func attach(game: GameViewController, window: NSWindow) {
         let tour = game.benchmarkWorld
-        let items = shellItems ?? playToolbar
-        items.benchmark = tour
-        tour.onRunningChange = { [weak window, weak items, playToolbar] running in
-            items?.refresh()
-            guard shellItems == nil, let window else { return }
+        playToolbar.benchmark = tour
+        tour.onRunningChange = { [weak window, playToolbar] running in
+            playToolbar.refresh()
+            guard let window else { return }
             window.toolbar = running ? playToolbar.makeToolbar() : nil
         }
         tour.onFinish = { [weak self, weak window] run in

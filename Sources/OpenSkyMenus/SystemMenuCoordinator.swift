@@ -265,39 +265,3 @@ public final class SystemMenuCoordinator {
         category: "SystemMenu"
     )
 }
-
-extension SystemMenuCoordinator: SystemMenuControlProviding {
-    public var systemMenuIsOpen: Bool {
-        isOpen
-    }
-
-    public var systemMenuMovieEnabled: Bool {
-        get { movieEnabled }
-        set { setMovieEnabled(newValue) }
-    }
-
-    public var systemMenuMasterVolume: Float {
-        get { masterVolume }
-        set { masterVolume = newValue }
-    }
-
-    public func openSystemMenu() {
-        open()
-    }
-
-    public func closeSystemMenu() {
-        close()
-    }
-
-    public func sendSystemMenuInput(_ event: MenuInputEvent) {
-        route(event)
-    }
-
-    public func deleteSelectedSave() {
-        requestDeleteSelectedSave()
-    }
-
-    public var systemMenuSnapshot: SystemMenuControlSnapshot {
-        snapshot
-    }
-}

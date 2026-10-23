@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyWorldState
 import simd
 
-/// How many of each death effect happened since the session started, for the panel.
+/// How many of each death effect happened since the session started, for the readout.
 nonisolated public struct DeathEffectCounts: Equatable, Sendable {
     public var pushedBodies = 0
     public var droppedWeapons = 0
@@ -100,16 +100,6 @@ extension RagdollCoordinator {
         )
         deathEffects.dismemberments += 1
         return true
-    }
-
-    /// The panel's control: kills the selected actor when it lives, then cuts.
-    @discardableResult
-    public func dismemberSelected() -> Bool {
-        guard let runtime, let key = world.selectedRagdollActor else { return false }
-        if !runtime.isDead(key) {
-            runtime.trigger(key)
-        }
-        return dismember(key)
     }
 
     /// With more dead loaded than `iRemoveExcessDeadCount`, the oldest bodies no quest

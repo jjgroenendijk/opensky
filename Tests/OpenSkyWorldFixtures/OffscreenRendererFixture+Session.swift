@@ -4,7 +4,6 @@ import Metal
 import OpenSkyEngineTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 
 extension OffscreenRendererFixture {
     /// A `GameSession` and the renderer it drives, over a paused view.

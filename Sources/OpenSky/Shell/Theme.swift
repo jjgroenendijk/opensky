@@ -11,17 +11,11 @@ enum Theme {
 
     /// Window + full-content base. Near-black with a cold cast.
     static let windowBackground = NSColor(srgbRed: 0.075, green: 0.075, blue: 0.086, alpha: 1)
-    /// Inspector-panel slot behind controls, one step above the window.
-    static let panelBackground = NSColor(srgbRed: 0.104, green: 0.104, blue: 0.118, alpha: 1)
-    /// Raised wells (text views, image wells) above the panel surface.
-    static let raisedBackground = NSColor(srgbRed: 0.137, green: 0.137, blue: 0.153, alpha: 1)
 
     // MARK: Ink
 
     /// Primary text: warm parchment white.
     static let parchment = NSColor(srgbRed: 0.910, green: 0.886, blue: 0.824, alpha: 1)
-    /// Secondary text/readouts: faded parchment.
-    static let parchmentDim = NSColor(srgbRed: 0.635, green: 0.612, blue: 0.549, alpha: 1)
     /// Accent: muted Nordic gold (also the app accent color asset).
     static let gold = NSColor(srgbRed: 0.788, green: 0.655, blue: 0.361, alpha: 1)
     /// Hairlines + ornament strokes.

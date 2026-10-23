@@ -23,11 +23,6 @@ nonisolated public enum AudioCategory: String, CaseIterable, Sendable {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 
-    /// Accessibility-identifier fragment (`Audio<Category>VolumeControl`).
-    public var identifierFragment: String {
-        displayName
-    }
-
     public init?(soundCategoryEditorID: String?) {
         guard let wanted = soundCategoryEditorID?.lowercased() else { return nil }
         guard

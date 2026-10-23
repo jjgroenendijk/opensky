@@ -76,7 +76,7 @@ final class WhiterunFight {
             scale: located.actor.scale,
             name: located.editorID
         )]
-        // The guard is already angry, which is the panel toggle's state and the
+        // The guard is already angry, which is the control toggle's state and the
         // one 16.7 widens entry from: what this case is evidence for is that
         // *perceiving* the player is what starts the fight.
         combatWorld.hostility[located.key] = .hostile

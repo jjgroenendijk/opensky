@@ -196,7 +196,7 @@ struct SWFMovieRuntimeTests {
         let items = SWFRuntimeFixture.drawItems(scene)
         #expect(items.count == 1)
         #expect(items.first?.content == .shape(1))
-        // The panel's translation (400, 300) reaches the item transform.
+        // The readout's translation (400, 300) reaches the item transform.
         #expect(items.first?.transform.translateX == 400)
         #expect(items.first?.transform.translateY == 300)
         #expect(scene.skippedPlacements == 0)

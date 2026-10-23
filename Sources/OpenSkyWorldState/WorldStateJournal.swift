@@ -1,5 +1,5 @@
 // The ordered log of every mutation `WorldStateStore` applies. Save and the
-// sidebar read it, and Papyrus needs its causal order, so sequence numbers
+// state reads use it, and Papyrus needs its causal order, so sequence numbers
 // are store-wide and keep counting after old entries drop. Global writes have
 // their own entry type and window but share the counter, so merging both logs
 // by `sequence` gives the true order. See docs/engine/runtime-state.md.

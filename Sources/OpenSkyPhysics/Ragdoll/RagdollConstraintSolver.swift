@@ -44,7 +44,7 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
     /// Runs the whole joint set over `bodies` for one substep.
     ///
     /// - Returns: how many limit constraints were found violated on the final
-    ///   iteration, which is the panel's convergence readout.
+    ///   iteration, which is the convergence readout.
     @discardableResult
     public static func solve(
         joints: [RagdollJointDefinition],

@@ -24,7 +24,7 @@ nonisolated public struct DynamicStepWorld {
     }
 }
 
-/// What one step did, for the panel readout and the perf gate.
+/// What one step did, for the readout and the perf gate.
 nonisolated public struct DynamicStepStats: Equatable, Sendable {
     public var activeBodyCount = 0
     public var sleepingBodyCount = 0
@@ -37,7 +37,7 @@ nonisolated public struct DynamicStepStats: Equatable, Sendable {
     /// zero on well-formed input; a non-zero value is a bug, not a tolerance.
     public var recoveredBodyCount = 0
     /// Joint limits still violated after the last iteration of the last substep. Zero
-    /// means converged; the panel shows it and the stability gate bounds it.
+    /// means converged; the readout shows it and the stability gate bounds it.
     public var jointViolationCount = 0
 }
 
@@ -123,7 +123,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
             // joints are as satisfied as they are going to get, nothing is
             // moving them, and running the pass anyway both costs a settled
             // corpse solver time forever and reports its sub-degree residual to
-            // the panel as work still outstanding.
+            // the readout as work still outstanding.
             if isRagdoll, bodies.contains(where: { !$0.isSleeping }) {
                 stats.jointViolationCount = resolveRagdoll(
                     contacts: contacts,

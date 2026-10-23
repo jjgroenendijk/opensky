@@ -1,4 +1,4 @@
-// The seam the `World > Crime & Factions` panel is written against, so it reaches
+// The crime and faction snapshot, so it reaches
 // the same engine calls as the runtime without `GameViewController`. One snapshot
 // value, because a bounty, the guard reaction and the membership move together.
 
@@ -106,7 +106,7 @@ nonisolated public struct SocialSubjectReadout: Equatable, Sendable {
     public let crimeFaction: FactionOption?
     /// The crime faction this actor polices, when it is a guard.
     public let policedFaction: FactionOption?
-    /// The vendor role its memberships give it, before any panel override.
+    /// The vendor role its memberships give it, before any readout override.
     public let vendor: Vendor?
 
     public init(
@@ -131,7 +131,7 @@ nonisolated public struct SocialSubjectReadout: Equatable, Sendable {
 /// One observation of the crime and faction runtimes.
 nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
     /// False when no crime or faction runtime is attached — no game data, or a
-    /// demo scene. The panel then says so rather than showing an empty ledger
+    /// demo scene. The readout then says so rather than showing an empty ledger
     /// that looks like an honest player.
     public let isAvailable: Bool
     public let bounties: [BountyReadout]
@@ -231,65 +231,4 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
         self.lastGuardText = lastGuardText
         self.lastActionText = lastActionText
     }
-}
-
-@MainActor
-public protocol CrimeFactionControlProviding: AnyObject {
-    var crimeFactionSnapshot: CrimeFactionControlSnapshot { get }
-
-    /// The crime faction the bounty controls write to.
-    var bountyFactionSelection: ReferenceKey? { get set }
-
-    /// The faction the membership controls join and leave.
-    var membershipFactionSelection: ReferenceKey? { get set }
-
-    /// A vendor faction the next barter trades under in place of the one the
-    /// subject's memberships resolve, or nil to use the resolved one.
-    var vendorOverrideSelection: ReferenceKey? { get set }
-
-    /// Moves one half of the player's bounty with the selected faction, which
-    /// is `Faction.ModCrimeGold`.
-    @discardableResult
-    func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome
-
-    /// Clears both halves of the bounty with the selected faction.
-    @discardableResult
-    func clearSelectedBounty() -> CrimeFactionActionOutcome
-
-    /// Asks what the subject would do about the player's bounty right now if
-    /// it is a guard, and runs one guard-response tick when a world is live.
-    @discardableResult
-    func checkGuardConfrontation() -> CrimeFactionActionOutcome
-
-    /// Refuses arrest with the selected faction, turning its guards hostile.
-    @discardableResult
-    func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome
-
-    /// Makes every merchant chest restock the next time its vendor trades.
-    @discardableResult
-    func restockAllVendors() -> CrimeFactionActionOutcome
-
-    /// Serves the jail sentence, as sleeping in the cell does.
-    @discardableResult
-    func serveJailSentence() -> CrimeFactionActionOutcome
-
-    /// Makes the actor under the crosshair the subject.
-    @discardableResult
-    func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome
-
-    /// Makes the player the subject again.
-    @discardableResult
-    func selectPlayerAsSocialSubject() -> CrimeFactionActionOutcome
-
-    /// Puts the subject in the selected faction at `rank`, or moves it there.
-    @discardableResult
-    func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome
-
-    /// Takes the subject out of the selected faction.
-    @discardableResult
-    func leaveSelectedFaction() -> CrimeFactionActionOutcome
-
-    /// Opens the barter menu against the subject under the effective vendor.
-    @discardableResult
-    func barterWithSocialSubject() -> CrimeFactionActionOutcome
 }

@@ -1,4 +1,4 @@
-// The Combat panel's actor-value readouts and dev controls. Every field is a
+// The Combat readout's actor-value readouts and dev controls. Every field is a
 // plain read off `ActorValueRuntime`.
 
 import Foundation
@@ -34,23 +34,9 @@ extension ActorValueCoordinator {
     }
 
     @discardableResult
-    public func restoreSelected(by amount: Float) -> ActorValueActionOutcome {
-        applyToSelection(verb: "Restored") { runtime, holder, index in
-            runtime.restore(at: index, by: amount, on: holder)
-        }
-    }
-
-    @discardableResult
     public func setSelectedValue(to value: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Set") { runtime, holder, index in
             runtime.setValue(at: index, to: value, on: holder)
-        }
-    }
-
-    @discardableResult
-    public func setSelectedBase(to value: Float) -> ActorValueActionOutcome {
-        applyToSelection(verb: "Set the base of") { runtime, holder, index in
-            runtime.setBase(at: index, to: value, on: holder)
         }
     }
 

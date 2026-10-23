@@ -1,6 +1,6 @@
 // App lifecycle. The app opens on the launcher, where the user picks the game
-// folder and a launch mode. The launcher shows the world load, then the mode's
-// window opens. Closing a mode's window returns to the launcher.
+// folder and presses Play. The launcher shows the world load, then the game
+// window opens. Closing the game window returns to the launcher.
 
 import AppKit
 import MetalKit
@@ -13,14 +13,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let worldLoader = WorldLoader()
     private var launcher: LauncherViewController?
     private var launcherWindow: NSWindow?
-    private var modeWindow: NSWindow?
-    private var shellViewController: AppShellViewController?
+    private var gameWindow: NSWindow?
     private var settingsController: SettingsWindowController?
     private var agentControl: AgentControlHost?
     private let benchmarkHost = BenchmarkRunHost()
 
-    /// The running mode, or nil while the launcher is up.
-    private(set) var activeMode: LaunchMode?
+    /// True while the game window is up.
+    private(set) var isPlaying = false
     /// Where the next Play window starts: a launcher start option or a save to continue.
     private var pendingStart = LaunchStart.normal
     private var pendingContinueSlot: String?
@@ -36,13 +35,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if benchmarkHost.readLaunchArguments() {
-            begin(.play, atTitleScreen: false, showingLauncher: false)
-        } else if let mode = LaunchPreferences.forcedMode() {
-            begin(
-                mode,
-                atTitleScreen: LaunchPreferences.forcedTitleScreen(),
-                showingLauncher: false
-            )
+            begin(atTitleScreen: false, showingLauncher: false)
+        } else if LaunchPreferences.skipsLauncher() {
+            begin(atTitleScreen: LaunchPreferences.forcedTitleScreen(), showingLauncher: false)
         } else {
             showLauncher()
         }
@@ -70,52 +65,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func returnToLauncher(_: Any?) {
-        modeWindow?.close()
+        gameWindow?.close()
     }
 
-    // MARK: - Modes
+    // MARK: - Game window
 
-    private func makeModeWindow(for mode: LaunchMode, atTitleScreen: Bool) -> NSWindow {
-        let game = makeGame(for: mode)
+    private func makeGameWindow(atTitleScreen: Bool) -> NSWindow {
+        let game = makeGame()
         game.startsAtTitleScreen = atTitleScreen
-        if mode == .play {
-            game.launchStart = pendingStart
-            game.continueSlot = pendingContinueSlot
-        }
+        game.launchStart = pendingStart
+        game.continueSlot = pendingContinueSlot
         pendingStart = .normal
         pendingContinueSlot = nil
-        switch mode {
-        case .play:
-            shellViewController = nil
-            return AppWindows.makePlay(game: game)
-        case .developer:
-            let shell = AppShellViewController(
-                gameViewController: game,
-                fullContentContext: gameContext.makeFullContentContext()
-            )
-            shellViewController = shell
-            return AppWindows.makeDeveloper(shell: shell)
-        }
+        return AppWindows.makePlay(game: game)
     }
 
-    private func makeGame(for mode: LaunchMode) -> GameViewController {
+    private func makeGame() -> GameViewController {
         let game = gameContext.makeGameViewController()
-        agentControl?.attach(game: game, mode: mode, root: gameContext.gameDataRoot)
+        agentControl?.attach(game: game, root: gameContext.gameDataRoot)
         return game
     }
 
-    /// Ends the running mode. The window is already closing, so this only
-    /// stops the draw loop and drops the game graph.
-    private func endMode() {
+    /// Ends the game. The window is already closing, so this only stops the
+    /// draw loop and drops the game graph.
+    private func endGame() {
         cancelLoad()
-        pauseRendering(
-            shellViewController?.gameViewController
-                ?? modeWindow?.contentViewController as? GameViewController
-        )
-        modeWindow?.delegate = nil
-        modeWindow = nil
-        shellViewController = nil
-        activeMode = nil
+        pauseRendering(gameWindow?.contentViewController as? GameViewController)
+        gameWindow?.delegate = nil
+        gameWindow = nil
+        isPlaying = false
     }
 
     /// Stops the draw loop of a game view that is leaving its window.
@@ -135,57 +113,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// A settings change applies without a relaunch, to whatever is running.
     /// The launcher shows the load, and the new game view swaps in after it.
-    private func reloadRunningMode() {
-        guard activeMode != nil else { return }
+    private func reloadRunningGame() {
+        guard isPlaying else { return }
         gameContext.resolve()
         showLauncher()
         loadWorld { [weak self] in self?.swapRunningGame() }
     }
 
     private func swapRunningGame() {
-        guard let activeMode else { return }
+        guard isPlaying else { return }
         launcherWindow?.orderOut(nil)
-        let game = makeGame(for: activeMode)
-        switch activeMode {
-        case .developer:
-            shellViewController?.reload(
-                gameViewController: game,
-                fullContentContext: gameContext.makeFullContentContext()
-            )
-        case .play:
-            pauseRendering(modeWindow?.contentViewController as? GameViewController)
-            modeWindow?.contentViewController = game
-        }
-        if let modeWindow {
-            benchmarkHost.attach(
-                game: game,
-                window: modeWindow,
-                shellItems: shellViewController?.benchmarkItems
-            )
+        let game = makeGame()
+        pauseRendering(gameWindow?.contentViewController as? GameViewController)
+        gameWindow?.contentViewController = game
+        if let gameWindow {
+            benchmarkHost.attach(game: game, window: gameWindow)
         }
     }
 }
 
 extension AppDelegate: LauncherActions {
-    func start(_ mode: LaunchMode) {
-        pendingStart = mode == .play ? LaunchPreferences.savedStart() : .normal
+    func play() {
+        pendingStart = LaunchPreferences.savedStart()
         pendingContinueSlot = nil
-        begin(mode, atTitleScreen: mode.opensAtTitleScreen && pendingStart == .normal)
+        begin(atTitleScreen: pendingStart == .normal)
     }
 
     func continueGame(slot: String) {
         pendingStart = .normal
         pendingContinueSlot = slot
-        begin(.play, atTitleScreen: false)
+        begin(atTitleScreen: false)
     }
 
     func gameFolderDidChange() {
         // A load in the launcher reads the old folder, so it stops.
-        if activeMode == nil {
+        if !isPlaying {
             cancelLoad()
         }
         launcher?.refreshGameFolder()
-        reloadRunningMode()
+        reloadRunningGame()
     }
 
     func cancelLoad() {
@@ -197,22 +163,21 @@ extension AppDelegate: LauncherActions {
         benchmarkHost.queueLauncherRun(request)
         pendingStart = .normal
         pendingContinueSlot = nil
-        begin(.play, atTitleScreen: false)
+        begin(atTitleScreen: false)
     }
 
-    /// A forced mode skips the launcher, so its load shows no panel.
-    private func begin(_ mode: LaunchMode, atTitleScreen: Bool, showingLauncher: Bool = true) {
-        guard GameFolderStatus().canStart(mode) else {
+    /// A forced start skips the launcher, so its load shows no readout.
+    private func begin(atTitleScreen: Bool, showingLauncher: Bool = true) {
+        guard GameFolderStatus().isFound else {
             showLauncher()
             return
         }
-        LaunchPreferences.remember(mode)
         gameContext.resolve()
         gameContext.benchmarkLoadPhases = benchmarkHost.loadPhasesForNextLoad()
         if showingLauncher {
             showLauncher()
         }
-        loadWorld { [weak self] in self?.open(mode, atTitleScreen: atTitleScreen) }
+        loadWorld { [weak self] in self?.open(atTitleScreen: atTitleScreen) }
     }
 
     /// The load runs off the main actor, so the launcher stays responsive and
@@ -231,27 +196,17 @@ extension AppDelegate: LauncherActions {
         )
     }
 
-    private func open(_ mode: LaunchMode, atTitleScreen: Bool) {
-        let window = makeModeWindow(for: mode, atTitleScreen: atTitleScreen)
+    private func open(atTitleScreen: Bool) {
+        let window = makeGameWindow(atTitleScreen: atTitleScreen)
         window.delegate = self
-        modeWindow = window
-        activeMode = mode
-        if
-            let game = shellViewController?.gameViewController ?? window
-                .contentViewController as? GameViewController
-        {
-            benchmarkHost.attach(
-                game: game,
-                window: window,
-                shellItems: shellViewController?.benchmarkItems
-            )
+        gameWindow = window
+        isPlaying = true
+        if let game = window.contentViewController as? GameViewController {
+            benchmarkHost.attach(game: game, window: window)
         }
         window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
-        if
-            mode == .play, Self.savedSettings().bool(.fullScreen),
-            !window.styleMask.contains(.fullScreen)
-        {
+        if Self.savedSettings().bool(.fullScreen), !window.styleMask.contains(.fullScreen) {
             window.toggleFullScreen(nil)
         }
     }
@@ -263,14 +218,14 @@ extension AppDelegate: LauncherActions {
 
 extension AppDelegate: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        guard (notification.object as? NSWindow) === modeWindow else { return }
-        endMode()
+        guard (notification.object as? NSWindow) === gameWindow else { return }
+        endGame()
         showLauncher()
     }
 }
 
 extension AppDelegate: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        menuItem.action == #selector(returnToLauncher(_:)) ? activeMode != nil : true
+        menuItem.action == #selector(returnToLauncher(_:)) ? isPlaying : true
     }
 }

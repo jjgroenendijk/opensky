@@ -9,7 +9,7 @@ import OpenSkyPhysics
 
 extension MeleeCombatRuntime {
     /// Latches one held press, as if the button stayed down past the delay. What the
-    /// panel's Power attack button calls; with the guard up it is a power bash.
+    /// readout's Power attack button calls; with the guard up it is a power bash.
     public func requestPowerAttack() {
         pendingAttack = true
         pendingPower = true

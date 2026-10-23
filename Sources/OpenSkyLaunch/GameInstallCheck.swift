@@ -1,6 +1,6 @@
 // What the launcher found in the game folder: the build, the DLC, the counts,
 // and what is wrong with it. It reads file names and headers only, so it takes
-// well under a second. The launcher, the sidebar, and openskycli read this value.
+// well under a second. The launcher and openskycli read this value.
 
 import Foundation
 import OpenSkyFormatsCore

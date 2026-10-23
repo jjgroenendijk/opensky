@@ -1,17 +1,9 @@
-// The sidebar seam for perk activate choices: what the crosshair target offers, and
+// Perk activate choices: what the crosshair target offers, and
 // running one without pressing the use key.
 
 import Foundation
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
-
-@MainActor
-public protocol PerkActivationControlProviding: AnyObject {
-    var perkActivationSnapshot: PerkActivationSnapshot { get }
-    /// Runs the crosshair target's choice at `index` of the snapshot's rows.
-    @discardableResult
-    func runPerkChoice(at index: Int) -> Bool
-}
 
 nonisolated public struct PerkActivationSnapshot: Equatable, Sendable {
     /// One choice: its label and how it acts.
@@ -52,7 +44,7 @@ nonisolated public struct PerkActivationSnapshot: Equatable, Sendable {
     }
 }
 
-extension PerkActivationCoordinator: PerkActivationControlProviding {
+extension PerkActivationCoordinator {
     public var perkActivationSnapshot: PerkActivationSnapshot {
         guard let target = world?.crosshairTarget else {
             return PerkActivationSnapshot(target: nil, rows: [], lastRun: lastRun)

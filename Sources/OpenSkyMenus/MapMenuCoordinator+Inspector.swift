@@ -1,4 +1,4 @@
-// The sidebar's marker inspector: pick a worldspace and one of its markers,
+// The marker inspector: pick a worldspace and one of its markers,
 // then reveal, discover, or hide that marker alone.
 
 import Foundation

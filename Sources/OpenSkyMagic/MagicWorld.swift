@@ -33,8 +33,6 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func residentActorKeys() -> [ReferenceKey]
     func actorName(_ holder: ActorValueHolder) -> String
     func itemName(_ item: FormID) -> String
-    /// The `SPLO` list of the player's race. Empty before a race is chosen.
-    func playerRaceSpells() -> [FormID]
 
     /// Launches a spell projectile. False when the session cannot fly one.
     @discardableResult

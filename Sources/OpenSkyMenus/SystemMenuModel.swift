@@ -1,6 +1,6 @@
 // Engine-owned system menu: the vanilla System page rows and which sub-page is
 // open (docs/engine/system-menu.md). The model owns entries, selection, and
-// activation, so keyboard input, the panel, and the movie bridge share one state.
+// activation, so keyboard input, the readout, and the movie bridge share one state.
 
 import Foundation
 

@@ -8,14 +8,10 @@ import OpenSkyCLIArguments
 enum GameLaunch {
     static let defaultWaitSeconds = 180.0
     static let retrySeconds = 0.5
-    static let modes = ["play", "developer"]
     static let survivalAnswers = ["on", "off", "ask"]
 
     static func run(arguments: GameArguments.Launch) throws {
         let options = try GameCommandOptions(arguments.game)
-        guard modes.contains(arguments.mode) else {
-            throw CLIError.usage("--mode must be play or developer")
-        }
         guard survivalAnswers.contains(arguments.survivalMode) else {
             throw CLIError.usage("--survival-mode must be on, off, or ask")
         }
@@ -55,7 +51,7 @@ enum GameLaunch {
         var arguments = [
             "-n", app.path(percentEncoded: false),
             "--env", "OPENSKY_AGENT_CONTROL=1",
-            "--env", "OPENSKY_LAUNCH_MODE=\(launch.mode)",
+            "--env", "OPENSKY_SKIP_LAUNCHER=1",
             "--env", "OPENSKY_START_AT_TITLE=\(launch.title ? 1 : 0)",
             "--env", "OPENSKY_SURVIVAL_MODE=\(launch.survivalMode)",
             "--env", "OPENSKY_AGENT_SOCKET=\(socket)"

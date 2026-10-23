@@ -1,4 +1,4 @@
-// The `World > Crime & Factions` readout wording: the reaction line names the
+// The crime and faction readout wording: the reaction line names the
 // deciding term and every term below it; the vendor line uses the game hour.
 
 import Foundation
