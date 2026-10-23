@@ -23,7 +23,9 @@ A docs page holds what the code cannot show. Everything else lives somewhere bet
 
 - **Where a fact comes from.** Spec links, and how a byte layout was confirmed.
 - **Why a design was chosen**, when the reason is not visible in the code.
-- **Where OpenSky differs from the original game**, and why.
+- **Where OpenSky differs from the original game**, and why. Each such difference also
+  has a GitHub issue (root `AGENTS.md`, How agents work here); the page explains it, the
+  issue tracks closing it.
 - **How several subsystems work together**, when no single file shows it.
 - **How to use the tools and the build.**
 

@@ -224,6 +224,11 @@ better name instead.
   states how to reproduce it, what was observed, and what is expected. This keeps the bug from
   being lost and keeps the fix out of an unrelated PR. Fix it inline only when it blocks
   the task, and say so in the commit.
+- Every difference found between Skyrim and OpenSky is recorded in a GitHub issue: a rule
+  approximated, a field read but not used, a behaviour left out, or a different result.
+  Search the open issues first and add to a matching one. A note in `docs/` or a code
+  comment does not replace the issue, because open work lives only in issues. A
+  difference the same PR closes needs no issue.
 - An issue body states intent, not code locations: no file paths, line numbers, or pasted
   code. Code moves faster than issues are worked. `starting-roadmap-work` has the rules.
 - Do the whole task in the main session. Do not split work across sub-agents: parallel
