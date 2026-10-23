@@ -19,6 +19,11 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     /// Destination modulation (DEST_COLOR / ZERO).
     case multiply
 
+    /// The blend adds to the frame, so fog takes the added light away instead.
+    public var addsLight: Bool {
+        self == .additive || self == .additiveOne
+    }
+
     /// Additive blends sum, so their draw order does not change the image.
     public var dependsOnOrder: Bool {
         self == .alpha || self == .multiply
@@ -336,7 +341,14 @@ nonisolated public final class ParticlePlayback: Sendable {
     public let sourcePath: String
     public let texture: MTLTexture
     public let blendMode: ParticleBlendMode
+    /// The system's effect shader. The particle colour always applies, as vertex
+    /// colour and alpha, whatever the shader's vertex flags say.
+    public let effect: RenderEffectMaterial
+    /// The placed reference's `XEMI`, for an effect shader with external emittance.
+    public let emittance: EmittanceSource?
     public let instanceBuffer: MTLBuffer
+    /// One `ParticleEffectUniforms` per frame in flight.
+    let effectBuffer: MTLBuffer
     public let capacity: Int
     public let emitterCount: Int
     private let seed: UInt64
@@ -356,12 +368,16 @@ nonisolated public final class ParticlePlayback: Sendable {
         definition: ParticleSystemDefinition,
         placementTransform: float4x4,
         texture: MTLTexture,
+        effect: RenderEffectMaterial = .plainParticles,
+        emittance: EmittanceSource? = nil,
         seed: UInt64,
         sourcePath: String = "(synthetic)"
     ) throws {
         name = definition.name ?? "Unnamed emitter"
         self.sourcePath = sourcePath
         self.texture = texture
+        self.effect = RenderEffectMaterial.forParticles(effect)
+        self.emittance = emittance
         blendMode = ParticleBlendMode(alpha: definition.alphaProperty)
         self.seed = seed
         let simulator = ParticleSimulator(
@@ -380,6 +396,40 @@ nonisolated public final class ParticlePlayback: Sendable {
             ) else { throw RendererError.bufferAllocationFailed }
         buffer.label = "Particle instances: \(name)"
         instanceBuffer = buffer
+        guard
+            let uniforms = device.makeBuffer(
+                length: Self.effectStride * Renderer.maxFramesInFlight,
+                options: .storageModeShared
+            ) else { throw RendererError.bufferAllocationFailed }
+        uniforms.label = "Particle effect: \(name)"
+        effectBuffer = uniforms
+    }
+
+    static let effectStride = (MemoryLayout<ParticleEffectUniforms>.size + 0xFF) & -0x100
+
+    /// The buffers and textures a draw of this system reads.
+    public var residencyAllocations: [MTLAllocation] {
+        [instanceBuffer, effectBuffer, texture] + (effect.palette.map { [$0] } ?? [])
+    }
+
+    /// Writes the effect uniforms into the slot's range and returns their address.
+    func prepareEffect(
+        slot: Int, pointLightCount: Int, regions: [UInt32: SIMD3<Float>]
+    ) -> UInt64 {
+        var uniforms = ParticleEffectUniforms(
+            flags: effect.flags,
+            pointLightCount: UInt32(pointLightCount),
+            baseColorScale: effect.baseColorScale,
+            softDepth: effect.softDepth,
+            baseColor: effect.baseColor,
+            falloff: effect.falloff,
+            lighting: SIMD4(effect.lightingInfluence, blendMode.addsLight ? 1 : 0, 0, 0),
+            emittance: EmittanceSource.colour(of: emittance, regions: regions)
+        )
+        let offset = slot * Self.effectStride
+        effectBuffer.contents().advanced(by: offset)
+            .copyMemory(from: &uniforms, byteCount: MemoryLayout<ParticleEffectUniforms>.size)
+        return effectBuffer.gpuAddress + UInt64(offset)
     }
 
     public func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {

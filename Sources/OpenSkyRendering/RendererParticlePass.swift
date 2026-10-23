@@ -42,6 +42,7 @@ extension Renderer {
                 streamedBinding(item.texture),
                 index: TextureIndex.diffuse.rawValue
             )
+            bindEffect(of: item, state: &state)
             state.encoder.setCullMode(.none)
             state.encoder.drawPrimitives(
                 primitiveType: .triangle,
@@ -56,6 +57,32 @@ extension Renderer {
 }
 
 extension Renderer {
+    /// Binds the system's effect uniforms, its palette, and the point lights an
+    /// effect-lit system takes. The rings count one draw per system, so a full ring
+    /// only happens when a caller skipped `growRings`; the lights then wait.
+    private func bindEffect(of item: ParticlePlayback, state: inout ScenePassState) {
+        let lit = item.effect.flags & UInt32(EffectFlag.lit.rawValue) != 0
+        var lights = PointLightRange()
+        if lit, state.drawCursor < drawUniformSlotCapacity {
+            lights = writePointLights(near: item.origin, slot: state.slot, draw: state.drawCursor)
+            state.drawCursor += 1
+        }
+        argumentTable.setAddress(
+            item.prepareEffect(
+                slot: state.slot, pointLightCount: lights.unshadowedCount, regions: regionEmittance
+            ),
+            index: BufferIndex.drawUniforms.rawValue
+        )
+        argumentTable.setAddress(
+            pointLightBuffer.gpuAddress + UInt64(lights.byteOffset),
+            index: BufferIndex.pointLights.rawValue
+        )
+        argumentTable.setTexture(
+            streamedBinding(item.effect.palette ?? item.texture),
+            index: TextureIndex.effectPalette.rawValue
+        )
+    }
+
     /// Drops the systems whose live particles lie outside the view. Their simulation
     /// still runs, so a system looks the same when it comes back into view.
     func visibleParticles(_ items: [ParticlePlayback], frustum: Frustum) -> [ParticlePlayback] {

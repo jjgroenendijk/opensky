@@ -70,8 +70,8 @@ nonisolated public struct RenderPlacement: Sendable {
     /// The actor reference this placement draws, or zero. A membrane overlay finds its
     /// target's meshes by it.
     public let owner: UInt32
-    /// The reference's emittance colour (`XEMI`), for shapes with external emittance.
-    public var emittance: SIMD3<Float>?
+    /// The reference's emittance (`XEMI`), for shapes with external emittance.
+    public var emittance: EmittanceSource?
 
     public init(
         model: RenderModel,
@@ -122,11 +122,11 @@ nonisolated public struct DrawInstance: Sendable {
     /// The interior room this static instance sits in, or `RoomPortalGraph.noRoom`.
     public var room = RoomPortalGraph.noRoom
     /// See `RenderPlacement.emittance`.
-    public var emittance: SIMD3<Float>?
+    public var emittance: EmittanceSource?
 
-    /// The `InstanceTransform.instanceColor` of a static: the emittance, alpha 1 when set.
-    public var instanceColor: SIMD4<Float> {
-        emittance.map { SIMD4($0, 1) } ?? SIMD4(1, 1, 1, 0)
+    /// The `InstanceTransform.instanceColor` of a static, with this frame's region colours.
+    public func instanceColor(regions: [UInt32: SIMD3<Float>]) -> SIMD4<Float> {
+        EmittanceSource.colour(of: emittance, regions: regions)
     }
 }
 
@@ -196,10 +196,18 @@ nonisolated public struct DrawGroup: Sendable {
         Self.drawsBlended(material)
     }
 
+    /// Blood on a weapon, drawn only while the weapon is bloody.
+    public var isWeaponBlood: Bool {
+        material.effect?.weaponBlood ?? false
+    }
+
     /// Blend without an alpha test, such as a beard or a waterfall. Foliage and
-    /// hair often set both, and keep the depth-writing alpha-test pass.
+    /// hair often set both, and keep the depth-writing alpha-test pass. An additive
+    /// blend always draws blended, because it only adds light.
     static func drawsBlended(_ material: RenderMaterial) -> Bool {
-        material.alphaBlend && material.alphaTestThreshold == nil && !material.drawState.screenDoor
+        material.additiveBlend != nil
+            || material.alphaBlend && material.alphaTestThreshold == nil
+            && !material.drawState.screenDoor
     }
 
     /// A refraction shape reads the scene drawn before it, so it draws in its own pass.
@@ -564,7 +572,7 @@ nonisolated public struct RenderScene: Sendable {
             ])
         }
         for particle in particles {
-            add([particle.instanceBuffer, particle.texture])
+            add(particle.residencyAllocations)
         }
         return allocations
     }

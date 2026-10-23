@@ -329,7 +329,8 @@ nonisolated extension CellSceneBuilder {
                     path: instance.modelPath,
                     surface: instance.surface,
                     placementTransform: instance.transform,
-                    formID: instance.formID
+                    formID: instance.formID,
+                    emittance: instance.emittance
                 )
             } catch {
                 let reason = String(describing: error)

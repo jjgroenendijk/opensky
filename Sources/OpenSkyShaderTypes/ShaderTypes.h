@@ -109,8 +109,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexSceneColor = 13,
     /// Greyscale palette of an effect shape; the diffuse stands in when it has none.
     TextureIndexEffectPalette = 14,
-    /// The scene depth copied before the water draws, for its see-through depth.
-    TextureIndexWaterDepth = 15,
+    /// The scene depth copied before the water and the blended effects draw.
+    TextureIndexSceneDepth = 15,
     /// Terrain normal maps (LTEX TXST TX01): the base, then one slot per layer slot.
     TextureIndexTerrainBaseNormal = 16,
     TextureIndexTerrainLayerNormal0 = 17,
@@ -186,6 +186,12 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagFalloff = 1 << 3,
     EffectFlagVertexColors = 1 << 4,
     EffectFlagVertexAlpha = 1 << 5,
+    /// Fades by the scene depth behind the fragment: SLSF1 Soft_Effect.
+    EffectFlagSoft = 1 << 6,
+    /// Scene light tints the colour: SLSF2 Effect_Lighting.
+    EffectFlagLit = 1 << 7,
+    /// The reference's emittance tints the colour: SLSF1 External_Emittance.
+    EffectFlagExternalEmittance = 1 << 8,
 };
 
 /// Lit-mesh shading terms: DrawUniforms.materialFlags says which a material has,
@@ -228,6 +234,10 @@ typedef NS_ENUM(EnumBackingType, ShadingTerm)
     ShadingTermScreenDoor = 1 << 25,
     /// Frame-only, read on the CPU: draw with each material's depth and decal flags.
     ShadingTermMaterialDrawState = 1 << 26,
+    /// Frame-only: soft effects fade where they meet the scene behind them.
+    ShadingTermSoftEffect = 1 << 29,
+    /// Frame-only: effect-lit effects take the scene light.
+    ShadingTermEffectLighting = 1 << 30,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.
@@ -332,6 +342,9 @@ typedef struct
     unsigned int debugMode;
     /// ShadingTerm bits the frame allows; the sidebar turns each off.
     unsigned int shadingTerms;
+    /// x, y: projection m22 and m32, to turn stored depth into view depth. z: 1 when
+    /// the scene depth copy is bound at TextureIndexSceneDepth.
+    vector_float4 sceneDepthUnproject;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every
@@ -356,6 +369,12 @@ typedef struct
     /// Falloff start and stop cosines, then start and stop opacity.
     vector_float4 effectFalloff;
     float effectBaseColorScale;
+    /// Depth in world units over which a soft effect fades in.
+    float effectSoftDepth;
+    /// Share of the scene light an effect-lit shape takes, 0 to 1.
+    float effectLightingInfluence;
+    /// 0 no additive blend; 1 the colour times its alpha adds; 2 the colour adds as is.
+    unsigned int additiveBlend;
     /// ShadingTerm bits this material has.
     unsigned int materialFlags;
     /// rgb specular colour times strength, a glossiness.

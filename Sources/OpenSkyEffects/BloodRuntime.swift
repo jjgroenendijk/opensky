@@ -154,19 +154,8 @@ nonisolated public struct WeaponBloodRuntime: Equatable, Sendable {
         return value < settings.weaponBloodFalloffThreshold ? 0 : min(value, 1)
     }
 
-    /// Dark red, so the additive membrane reddens the blade without glowing.
-    static let bloodColour = SIMD3<Float>(0.22, 0.01, 0.005)
-
-    /// One membrane per bloody weapon.
-    public var membranes: [MembraneDraw] {
-        ages.sorted { "\($0.key)" < "\($1.key)" }.map { weapon, age in
-            let strength = strength(age: age)
-            return MembraneDraw(
-                target: weapon,
-                fill: Self.bloodColour * strength,
-                edge: Self.bloodColour * strength * 0.5,
-                edgeFalloff: 2
-            )
-        }
+    /// The blood strength of each bloody weapon, which scales its blood shapes' alpha.
+    public var strengths: [MembraneTarget: Float] {
+        ages.mapValues(strength(age:))
     }
 }

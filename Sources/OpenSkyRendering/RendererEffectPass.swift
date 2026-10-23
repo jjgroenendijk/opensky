@@ -37,11 +37,12 @@ extension Renderer {
         )
     }
 
-    /// Draws and instances the player rigs add on top of the scene.
+    /// Draws and instances the player rigs, the loading cover, and the effect particle
+    /// systems add on top of the scene.
     var rigDrawCount: Int {
         (frameInput.rigs.body?.render.drawCount ?? 0)
             + (frameInput.rigs.arms?.render.drawCount ?? 0)
-            + (effects.loadingCover?.drawCount ?? 0)
+            + (effects.loadingCover?.drawCount ?? 0) + effects.particles.count
     }
 
     var rigInstanceCount: Int {

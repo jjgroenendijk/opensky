@@ -49,7 +49,7 @@ extension Renderer {
             ("Shadow maps", shadow.map),
             ("Grade copy", imageSpacePass.sceneCopy),
             ("Grade depth", imageSpacePass.storedDepth),
-            ("Water depth copy", waterDepth.copy),
+            ("Scene depth copy", waterDepth.copy),
             ("Upscale color", upscale.targets?.color),
             ("Upscale depth", upscale.targets?.depth),
             ("Upscale motion", upscale.targets?.motion),

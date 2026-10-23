@@ -1,19 +1,23 @@
 // Water surfaces: cell planes and placed water meshes. Water renders after opaque and
 // cutout geometry with read-only depth and a straight-alpha blend. To see how deep the
 // water is, the scene encoder ends, its depth is copied, and a second encoder draws the
-// water over the same targets (docs/rendering/water.md).
+// water over the same targets (docs/rendering/water.md). Soft effects read the same copy.
 
 import Metal
 import OpenSkyShaderTypes
 import simd
 
-/// The scene depth copy the water reads, and whether the split runs at all.
+/// The scene depth copy the water and the soft effects read, and whether the split runs.
 public struct WaterDepthState {
     /// Off draws the water in the scene encoder with a fixed middle depth.
     public var enabled = true
     var copy: MTLTexture?
     /// Projection terms of this frame; nil when the projection is not a perspective one.
     var unproject: SIMD2<Float>?
+    /// This frame's water reads the copy.
+    var waterReads = false
+    /// This frame copies the depth, for the water or for a soft effect in view.
+    var copies = false
 
     public init() {}
 
@@ -25,11 +29,31 @@ public struct WaterDepthState {
 }
 
 extension Renderer {
-    /// True when this frame's water reads the scene depth, so the pass must store it.
-    func waterReadsDepth(projection: float4x4) -> Bool {
+    /// Decides whether this frame copies the scene depth, so the pass must store it.
+    /// Runs before the frame uniforms, which tell the shaders whether the copy is bound.
+    func planSceneDepthCopy(projection: float4x4) {
         waterDepth.unproject = WaterDepthState.unproject(projection)
-        return waterDepth.enabled && waterDepth.unproject != nil && !scene.water.isEmpty
-            && effectiveRenderLayers.contains(.water) && !isRenderDebugActive
+        let perspective = waterDepth.unproject != nil && !isRenderDebugActive
+        waterDepth.waterReads = perspective && waterDepth.enabled && !scene.water.isEmpty
+            && effectiveRenderLayers.contains(.water)
+        waterDepth.copies = waterDepth.waterReads || perspective && softEffectsInView()
+    }
+
+    /// `FrameUniforms.sceneDepthUnproject`.
+    var sceneDepthUnproject: SIMD4<Float> {
+        let terms = waterDepth.unproject ?? .zero
+        return SIMD4(terms.x, terms.y, waterDepth.copies ? 1 : 0, 0)
+    }
+
+    private func softEffectsInView() -> Bool {
+        guard shadingTerms.contains(.softEffects) else { return false }
+        let soft = UInt32(EffectFlag.soft.rawValue)
+        let groups = frameDrawGroups.alphaTested.contains {
+            $0.drawsBlended && ($0.material.effect?.flags ?? 0) & soft != 0
+        }
+        let particles = particlesEnabled && effectiveRenderLayers.contains(.particles)
+            && (scene.particles + effects.particles).contains { $0.effect.softDepth > 0 }
+        return groups || particles
     }
 
     private func updateWaterDrawUniforms(
@@ -66,26 +90,28 @@ extension Renderer {
         return offset
     }
 
-    /// Draws every water item. With `descriptor`, the pass first splits so the
-    /// water can read the depth drawn so far. False when the split cannot open
-    /// its second encoder; the frame is then dropped.
-    func encodeWater(
-        items: [WaterDrawItem],
-        depthFrom descriptor: MTL4RenderPassDescriptor?,
+    /// When this frame copies the scene depth, splits the pass so the water and the
+    /// blended effects after it can read the depth drawn so far. False when the split
+    /// cannot open its second encoder; the frame is then dropped.
+    func copySceneDepth(
+        descriptor: MTL4RenderPassDescriptor,
         frameOffset: Int,
         state: inout ScenePassState
     ) -> Bool {
-        guard !items.isEmpty, effectiveRenderLayers.contains(.water) else { return true }
-        var depthBound = false
-        if let descriptor {
-            guard
-                let split = splitForWaterDepth(
-                    descriptor: descriptor, state: state, frameOffset: frameOffset
-                )
-            else { return false }
-            state = split
-            depthBound = true
-        }
+        guard waterDepth.copies else { return true }
+        guard
+            let split = splitForSceneDepth(
+                descriptor: descriptor, state: state, frameOffset: frameOffset
+            )
+        else { return false }
+        state = split
+        return true
+    }
+
+    /// Draws every water item, reading the scene depth copy when the frame made one.
+    func encodeWater(items: [WaterDrawItem], state: inout ScenePassState) {
+        guard !items.isEmpty, effectiveRenderLayers.contains(.water) else { return }
+        let depthBound = waterDepth.waterReads
         state.encoder.setRenderPipelineState(
             isRenderDebugActive ? debugPipelines.water : waterPipeline
         )
@@ -98,7 +124,6 @@ extension Renderer {
             encodeWaterItem(item, depthBound: depthBound, state: &state)
         }
         state.encoder.setDepthStencilState(depthState)
-        return true
     }
 
     private func encodeWaterItem(
@@ -132,7 +157,7 @@ extension Renderer {
 
     /// Ends the scene encoder, copies its depth, and opens a second encoder on the same
     /// color and depth with the copy bound.
-    private func splitForWaterDepth(
+    private func splitForSceneDepth(
         descriptor: MTL4RenderPassDescriptor,
         state: ScenePassState,
         frameOffset: Int
@@ -146,7 +171,7 @@ extension Renderer {
             copy: ScenePassCopy(source: depth, target: \.waterDepth.copy, label: "Water")
         )
         if let copy = waterDepth.copy {
-            argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.waterDepth.rawValue)
+            argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.sceneDepth.rawValue)
         }
         return split
     }

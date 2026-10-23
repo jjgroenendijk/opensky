@@ -42,6 +42,7 @@ public final class Renderer: NSObject {
     public let alphaTestPipeline: MTLRenderPipelineState
     public let blendedPipeline: MTLRenderPipelineState
     public let skinnedBlendedPipelines: SkinnedBlendedPipelines
+    public let additivePipelines: AdditivePipelines
     public let skinnedOpaquePipeline: MTLRenderPipelineState
     public let skinnedAlphaTestPipeline: MTLRenderPipelineState
     public let morphedSkinnedOpaquePipeline: MTLRenderPipelineState
@@ -117,6 +118,7 @@ public final class Renderer: NSObject {
             shadowCasters = ShadowCasterBounds(scene: scene)
             actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
             sceneAllocations = scene.residencyAllocations
+            emittanceRegions = scene.emittanceRegions
             gpuCull.isCurrent = false
             rayTracedShadows.isCurrent = false
             // A new cell shows other surfaces; old frames would ghost over them.
@@ -141,6 +143,11 @@ public final class Renderer: NSObject {
     /// The scene's GPU allocations, gathered once per scene: a swap needs the old
     /// and the new list, and gathering walks every draw group.
     public private(set) lazy var sceneAllocations = scene.residencyAllocations
+
+    /// The regions the scene's `XEMI` references name, gathered once per scene.
+    public private(set) lazy var emittanceRegions = scene.emittanceRegions
+    /// Each region's weather `Effect Lighting` colour at this hour, set once per frame.
+    public var regionEmittance: [UInt32: SIMD3<Float>] = [:]
 
     /// The scene's caster bounds, built once per scene for the shadow pass.
     public private(set) lazy var shadowCasters = ShadowCasterBounds(scene: scene)
@@ -338,7 +345,7 @@ public final class Renderer: NSObject {
         (skyPipeline, cloudPipeline) = (pipelines.sky, pipelines.clouds)
         (opaquePipeline, skinnedBlendedPipelines) = (pipelines.opaque, pipelines.skinnedBlended)
         (alphaTestPipeline, blendedPipeline) = (pipelines.alphaTest, pipelines.blended)
-        skinnedOpaquePipeline = pipelines.skinnedOpaque
+        (skinnedOpaquePipeline, additivePipelines) = (pipelines.skinnedOpaque, pipelines.additive)
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
         (morphedSkinnedOpaquePipeline, morphedSkinnedAlphaTestPipeline) = (
             pipelines.morphedSkinnedOpaque, pipelines.morphedSkinnedAlphaTest

@@ -59,19 +59,23 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
     public let falloffExponent: Float
     /// Flicker or pulse; nil for a steady light.
     public let animation: RenderLightAnimation?
+    /// A shadow-casting light lights no effect shape.
+    public let castsShadows: Bool
 
     public init(
         position: SIMD3<Float>,
         radius: Float,
         color: SIMD3<Float>,
         falloffExponent: Float,
-        animation: RenderLightAnimation? = nil
+        animation: RenderLightAnimation? = nil,
+        castsShadows: Bool = false
     ) {
         self.position = position
         self.radius = radius
         self.color = color
         self.falloffExponent = falloffExponent
         self.animation = animation
+        self.castsShadows = castsShadows
     }
 
     /// Position and colour at `time` seconds; a steady light or `animated` false

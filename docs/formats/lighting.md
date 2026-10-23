@@ -88,7 +88,11 @@ float32. When `DALC` exists, it replaces the directional ambient block of `DATA`
 
 OpenSky draws omni lights, including shadow omni lights. It does not draw a light with any
 of these: flag `0x004` (negative), `0x200` (spot), `0x400` (shadow spot), `0x020` (off by
-default), or a radius that is not a positive finite number.
+default), or a radius that is not a positive finite number. The shadow types are `0x400`
+spot, `0x800` hemisphere, and `0x1000` omni
+([UESP LIGH](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LIGH)). A light with one
+casts shadows, so it does not light an effect shape
+([effect shapes](/formats/nif-materials.md#effect-shapes)).
 
 The animation flags are `0x008` flicker, `0x040` flicker slow, `0x080` pulse, and `0x100`
 pulse slow (xEdit dev-4.1.6). OpenSky reads the period as seconds per cycle, and a slow flag

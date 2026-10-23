@@ -61,9 +61,18 @@ repeat.
 
 The CPU uploads the center, radius, color, and texture rectangle of each live particle. The vertex
 shader builds six corners around each center from the camera's right and up vectors, so there is no
-vertex or index buffer. The fragment shader samples the effect texture, applies scene fog, and
-discards near-zero alpha. Particles test depth against opaque geometry, never write depth, and are
+vertex or index buffer. Particles test depth against opaque geometry, never write depth, and are
 not culled.
+
+The fragment shader shades a particle like an effect shape that faces the eye
+([effect shapes](/formats/nif-materials.md#effect-shapes)): the system's base color, palette,
+falloff, soft effect, effect lighting, and point lights. The particle color is the vertex color
+and alpha. OpenSky always applies it, also when the shader's vertex flags are off, because the
+color modifier and the birth and death fade live there. In the vanilla files with particle
+systems, 1292 soft effect shaders set vertex colors without vertex alpha. It is not known
+whether the game then drops the particle alpha. A playback takes its reference's `XEMI`
+emittance for external emittance. Fog takes the light away from an additive system instead of mixing
+in the fog color, because the sum already shows the fogged scene behind it.
 
 | NIF source and destination | Pipeline | Used for |
 | --- | --- | --- |
@@ -92,5 +101,4 @@ particles, and systems with a keyed birth rate. The sort is the player setting
 
 - Switching sequences on animation events.
 - Rotation, drag, spawn and death chains, collision, and strip particles.
-- Soft particles that fade near depth.
 - Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).

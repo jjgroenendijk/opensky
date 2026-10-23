@@ -46,3 +46,64 @@ static inline float4 effectShade(
     }
     return float4(rgb * terms.baseColorScale, alpha);
 }
+
+// Soft effect: the shape fades in over `softDepth` units in front of the scene behind
+// it, so smoke and fire cards show no hard line where they cross the ground.
+static inline float softEffectFade(
+    float2 pixel,
+    float3 worldPosition,
+    float softDepth,
+    constant FrameUniforms &frame,
+    depth2d<float> sceneDepth)
+{
+    bool allowed = (frame.shadingTerms & uint(ShadingTermSoftEffect)) != 0;
+    float4 unproject = frame.sceneDepthUnproject;
+    if (!allowed || unproject.z < 0.5 || softDepth <= 0.0) {
+        return 1.0;
+    }
+    float stored = sceneDepth.read(uint2(pixel));
+    float behind = unproject.y / (stored + unproject.x);
+    float own = dot(worldPosition - frame.cameraPosition, frame.cameraForward);
+    return saturate((behind - own) / softDepth);
+}
+
+struct EffectLightInput
+{
+    uint flags;
+    /// Share of the scene light, 0 to 1.
+    float influence;
+    float3 worldPosition;
+    float3 normal;
+    float3 toEye;
+    /// rgb the reference's emittance, a 1 when it has one.
+    float4 emittance;
+};
+
+// What multiplies an effect's colour: the reference's emittance on an
+// external-emittance shape, else the scene light on an effect-lit one, else 1.
+static inline float3 effectLight(
+    EffectLightInput input,
+    constant FrameUniforms &frame,
+    const device PointLightUniform *pointLights,
+    uint pointLightCount)
+{
+    uint frameTerms = frame.shadingTerms;
+    bool external = (input.flags & EffectFlagExternalEmittance) != 0 &&
+                    (frameTerms & uint(ShadingTermExternalEmittance)) != 0 &&
+                    input.emittance.a > 0.0;
+    if (external) {
+        return input.emittance.rgb;
+    }
+    bool lit =
+        (input.flags & EffectFlagLit) != 0 && (frameTerms & uint(ShadingTermEffectLighting)) != 0;
+    if (!lit) {
+        return 1.0;
+    }
+    // Effect cards are thin and often double-sided, so they take light on the side
+    // that faces the eye.
+    float3 normal = dot(input.normal, input.toEye) < 0.0 ? -input.normal : input.normal;
+    float3 light = baseAmbient(frame) + directionalAmbient(normal, frame) +
+                   frame.sunColor * saturate(dot(normal, -frame.sunDirection)) +
+                   pointLighting(input.worldPosition, normal, pointLights, pointLightCount);
+    return mix(float3(1.0), light, saturate(input.influence));
+}

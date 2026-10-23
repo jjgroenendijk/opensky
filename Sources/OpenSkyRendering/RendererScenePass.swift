@@ -27,6 +27,8 @@ extension Renderer {
         var cullList: GPUCullList?
         /// Set while a scene list draws: each group then sets its material's depth flags.
         var materialDepth: MaterialDepthMode?
+        /// Set while the blood of one weapon draws; weapon-blood groups draw only then.
+        var weaponBloodAlpha: Float?
     }
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
@@ -44,11 +46,7 @@ extension Renderer {
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
         let fog = resolveFrameFog(weatherLight: weatherLight)
-        let grassDistance = simd_clamp(
-            grassDrawDistance,
-            GrassRenderPolicy.minimumDrawDistance,
-            GrassRenderPolicy.maximumDrawDistance
-        )
+        let grassDistance = clampedGrassDrawDistance
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: frameInput.view.position,
@@ -93,7 +91,8 @@ extension Renderer {
                 grassDistance
             ),
             debugMode: renderDebug.mode.rawValue,
-            shadingTerms: shadingTerms.rawValue
+            shadingTerms: shadingTerms.rawValue,
+            sceneDepthUnproject: sceneDepthUnproject
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -107,7 +106,8 @@ extension Renderer {
         slot: Int,
         draw: Int,
         group: DrawGroup,
-        pointLightCount: Int
+        pointLightCount: Int,
+        alphaScale: Float
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let material = group.material
@@ -115,15 +115,20 @@ extension Renderer {
         var uniforms = DrawUniforms(
             uvOffset: material.uvOffset,
             uvScale: material.uvScale,
-            materialAlpha: material.alpha,
+            materialAlpha: material.alpha * alphaScale,
             alphaThreshold: material.alphaTestThreshold ?? 0,
             pointLightCount: UInt32(pointLightCount),
             receivesShadows: group.receivesShadows ? 1 : 0,
             layerCategory: group.layer.rawValue,
-            effectFlags: effect?.flags ?? 0,
+            // Only the blended pass runs after the scene depth copy, so only it fades soft.
+            effectFlags: (effect?.flags ?? 0)
+                & (group.drawsBlended ? ~0 : ~UInt32(EffectFlag.soft.rawValue)),
             effectBaseColor: effect?.baseColor ?? .zero,
             effectFalloff: effect?.falloff ?? .zero,
             effectBaseColorScale: effect?.baseColorScale ?? 1,
+            effectSoftDepth: effect?.softDepth ?? 0,
+            effectLightingInfluence: effect?.lightingInfluence ?? 0,
+            additiveBlend: UInt32(material.additiveBlend?.rawValue ?? 0),
             materialFlags: material.surface.flags,
             specular: material.surface.specular,
             emissive: material.surface.emissive,
@@ -136,45 +141,12 @@ extension Renderer {
         return offset
     }
 
-    /// Selects + writes nearest supported point lights for one draw. Returns
-    /// count plus byte offset bound at BufferIndexPointLights.
-    func writePointLights(
-        near position: SIMD3<Float>,
-        slot: Int,
-        draw: Int
-    ) -> (count: Int, byteOffset: Int) {
-        let limit = LightingConstant.maxPointLights.rawValue
-        let pick = pointLightPick(near: position, limit: limit)
-        let stride = MemoryLayout<PointLightUniform>.stride
-        let first = (slot * drawUniformSlotCapacity + draw) * limit
-        let transient = transientPointLights.prefix(limit)
-        let scenePicks = (0 ..< min(pick.count, limit - transient.count)).map {
-            scene.pointLights[Int(pick.indices[$0])]
-        }
-        for (index, light) in (Array(transient) + scenePicks).enumerated() {
-            let live = light.animated(at: animationTime, enabled: lightAnimationEnabled)
-            var uniform = PointLightUniform(
-                positionRadius: SIMD4(live.position, light.radius),
-                colorFalloff: SIMD4(live.color, light.falloffExponent)
-            )
-            pointLightBuffer.contents().advanced(by: (first + index) * stride)
-                .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
-        }
-        return (transient.count + scenePicks.count, first * stride)
-    }
-
-    /// Group and terrain centers repeat every frame, so their picks are kept per scene.
-    /// Moving centers, such as the player body, would grow the cache, so it has a cap.
-    private func pointLightPick(near position: SIMD3<Float>, limit: Int) -> PointLightPick {
-        if let cached = pointLightPicks[position] {
-            return cached
-        }
-        if pointLightPicks.count >= Self.pointLightPickCacheLimit {
-            pointLightPicks.removeAll(keepingCapacity: true)
-        }
-        let pick = scene.nearestPointLightPick(to: position, limit: limit)
-        pointLightPicks[position] = pick
-        return pick
+    private var clampedGrassDrawDistance: Float {
+        simd_clamp(
+            grassDrawDistance,
+            GrassRenderPolicy.minimumDrawDistance,
+            GrassRenderPolicy.maximumDrawDistance
+        )
     }
 
     /// Writes the group's frustum-surviving instance transforms tightly
@@ -204,7 +176,7 @@ extension Renderer {
             var transforms = InstanceTransform(
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
-                instanceColor: instance.instanceColor,
+                instanceColor: instance.instanceColor(regions: regionEmittance),
                 grassParameters: .zero
             )
             instanceTransformBuffer.contents()
@@ -278,7 +250,10 @@ extension Renderer {
         boundPipeline: inout ObjectIdentifier?,
         state: inout ScenePassState
     ) {
-        guard let visible = visibleInstances(of: group, at: index, state: &state) else { return }
+        guard
+            !group.isWeaponBlood || state.weaponBloodAlpha != nil,
+            let visible = visibleInstances(of: group, at: index, state: &state)
+        else { return }
         let pipeline = pipelines.pipeline(for: group)
         if boundPipeline != ObjectIdentifier(pipeline) {
             state.encoder.setRenderPipelineState(pipeline)
@@ -288,12 +263,15 @@ extension Renderer {
         // visible groups <= scene.drawCount <= ring capacity.
         let lightOffset = group.instances.first?.receivesPointLights == true
             ? writePointLights(near: group.lightingCenter, slot: state.slot, draw: state.drawCursor)
-            : (count: 0, byteOffset: 0)
+            : PointLightRange()
         let uniformOffset = updateDrawUniforms(
             slot: state.slot,
             draw: state.drawCursor,
             group: group,
-            pointLightCount: lightOffset.count
+            // An effect shape takes no light from a shadow-casting light.
+            pointLightCount: group.material.effect == nil
+                ? lightOffset.count : lightOffset.unshadowedCount,
+            alphaScale: state.weaponBloodAlpha ?? 1
         )
         state.drawCursor += 1
         state.stats.drawCalls += 1
@@ -471,6 +449,7 @@ extension Renderer {
             view: view
         )
         let frustum = Frustum(viewProjection: projection * view)
+        planSceneDepthCopy(projection: projection)
         let frameOffset = updateFrameUniforms(
             slot: slot,
             viewProjection: upscaleFrame?.jitteredViewProjection ?? projection * view
@@ -479,21 +458,17 @@ extension Renderer {
         let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
             ?? target
         let grade = imageSpaceGrade(descriptor: sceneTarget, slot: slot)
-        let waterDepth = waterReadsDepth(projection: projection)
         refraction.splits = refractionSplits()
         guard
             let descriptor = scenePassDescriptor(
-                sceneTarget, grade: grade, storesDepth: waterDepth || refraction.splits
+                sceneTarget, grade: grade, storesDepth: waterDepth.copies || refraction.splits
             ),
             let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
         guard
-            encodeSceneLayers(
-                descriptor: descriptor, waterDepth: waterDepth, frameOffset: frameOffset,
-                state: &state
-            )
+            encodeSceneLayers(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }
         if let grade {
             guard
@@ -525,11 +500,10 @@ extension Renderer {
         return true
     }
 
-    /// Sky, world geometry, effects, and the first-person arms. False when the water
+    /// Sky, world geometry, effects, and the first-person arms. False when the depth
     /// split cannot open its encoder.
     private func encodeSceneLayers(
         descriptor: MTL4RenderPassDescriptor,
-        waterDepth: Bool,
         frameOffset: Int,
         state: inout ScenePassState
     ) -> Bool {
@@ -550,14 +524,12 @@ extension Renderer {
         encodeMembranes(state: &state)
         encodeDecals(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
-        // The water split replaces the encoder, so later layers use `state.encoder`.
-        guard
-            encodeWater(
-                items: scene.water, depthFrom: waterDepth ? descriptor : nil,
-                frameOffset: frameOffset, state: &state
-            )
+        // The depth split replaces the encoder, so later layers use `state.encoder`.
+        guard copySceneDepth(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }
+        encodeWater(items: scene.water, state: &state)
         encodeBlendedGroups(state: &state)
+        encodeWeaponBlood(state: &state)
         guard
             encodeRefraction(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }

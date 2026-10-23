@@ -30,10 +30,12 @@ nonisolated public struct SurfaceShadingTerm: OptionSet, Hashable, Sendable {
     public static let landscapeNoise = Self(.landscapeNoise)
     public static let materialDrawState = Self(.materialDrawState, .screenDoor)
     public static let refraction = Self(.refraction, .fireRefraction)
+    public static let softEffects = Self(.softEffect)
+    public static let effectLighting = Self(.effectLighting)
 
     public static let all: Self = [
         .normalMaps, .specular, .glow, .softAndRimLight, .backLight, .faceTint, .tintColor,
         .reflections, .parallax, .vertexColorGamma, .baseAmbient, .hairLighting, .sparkle,
-        .landscapeNoise, .materialDrawState, .refraction
+        .landscapeNoise, .materialDrawState, .refraction, .softEffects, .effectLighting
     ]
 }

@@ -63,7 +63,7 @@ nonisolated public final class PrecipitationVolume {
     }
 
     public var residencyAllocations: [MTLAllocation] {
-        [rain.instanceBuffer, rain.texture, snow.instanceBuffer, snow.texture]
+        rain.residencyAllocations + snow.residencyAllocations
     }
 
     public init(device: MTLDevice) throws {

@@ -60,6 +60,8 @@ public final class EffectLayer {
     /// The effect models of the current frame. Set through `Renderer.setEffectPlacements`.
     public internal(set) var scene = RenderScene(instances: [])
     public var membranes: [MembraneDraw] = []
+    /// The strength of the blood on each bloody weapon. Set through `Renderer.setBloodyWeapons`.
+    public internal(set) var bloodyWeapons: [MembraneTarget: Float] = [:]
     /// The loading screen's object. While set, the world does not draw.
     public internal(set) var loadingCover: RenderScene?
     /// Membranes the last frame drew, for the readout.

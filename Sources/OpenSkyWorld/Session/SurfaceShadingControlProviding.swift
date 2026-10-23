@@ -31,6 +31,8 @@ nonisolated extension SurfaceShadingSetting {
         case .landscapeNoise: .landscapeNoise
         case .materialDrawState: .materialDrawState
         case .refraction: .refraction
+        case .softEffects: .softEffects
+        case .effectLighting: .effectLighting
         }
     }
 }

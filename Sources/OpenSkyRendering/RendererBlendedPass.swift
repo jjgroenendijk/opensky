@@ -10,18 +10,25 @@ extension Renderer {
         let groups = frameDrawGroups.alphaTested
         let order = Self.blendedDrawOrder(groups, eye: frameInput.view.position)
         guard !order.isEmpty else { return }
+        let debug = isRenderDebugActive ? debugPipelines : nil
         let pipelines = GroupPipelines(
             staticMesh: blendedPipeline, skinned: skinnedBlendedPipelines.skinned,
             morphedSkinned: skinnedBlendedPipelines.morphed
-        ).resolved(debug: isRenderDebugActive ? debugPipelines : nil)
+        ).resolved(debug: debug)
+        let additive = GroupPipelines(
+            staticMesh: additivePipelines.staticMesh, skinned: additivePipelines.skinned,
+            morphedSkinned: additivePipelines.morphed
+        ).resolved(debug: debug)
         let layers = effectiveRenderLayers
         state.cullList = .alphaTested
         state.materialDepth = .readOnly
         state.encoder.setDepthStencilState(waterDepthState)
         var boundPipeline: ObjectIdentifier?
         for index in order where layers.contains(groups[index].layer) {
+            let group = groups[index]
             encode(
-                group: groups[index], at: index, pipelines: pipelines,
+                group: group, at: index,
+                pipelines: group.material.additiveBlend == nil ? pipelines : additive,
                 boundPipeline: &boundPipeline, state: &state
             )
         }
