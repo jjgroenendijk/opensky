@@ -113,6 +113,7 @@ nonisolated public enum ModelCacheCodec {
         out.bool(material.doubleSided)
         out.bool(material.alphaBlend)
         out.array(material.alphaTestThreshold.map { [$0] } ?? [])
+        out.value(material.additiveBlend?.rawValue ?? 0)
         out.bool(material.effect != nil)
         if let effect = material.effect {
             encode(effect, into: &out)
@@ -171,30 +172,6 @@ nonisolated public enum ModelCacheCodec {
         return shading
     }
 
-    private static func encode(_ effect: EffectShading, into out: inout CachePayloadWriter) {
-        out.value(effect.baseColor)
-        out.value(effect.baseColorScale)
-        out.string(effect.paletteTexture)
-        out.bool(effect.paletteColor)
-        out.bool(effect.paletteAlpha)
-        out.array(effect.falloff.map { [$0] } ?? [])
-        out.bool(effect.vertexColors)
-        out.bool(effect.vertexAlpha)
-    }
-
-    private static func effect(_ input: inout CachePayloadReader) throws -> EffectShading {
-        try EffectShading(
-            baseColor: input.value(SIMD4<Float>.self),
-            baseColorScale: input.value(Float.self),
-            paletteTexture: input.string(),
-            paletteColor: input.bool(),
-            paletteAlpha: input.bool(),
-            falloff: input.array(SIMD4<Float>.self).first,
-            vertexColors: input.bool(),
-            vertexAlpha: input.bool()
-        )
-    }
-
     static func material(_ input: inout CachePayloadReader) throws -> Material {
         let diffuse = try input.string()
         let normal = try input.string()
@@ -207,6 +184,7 @@ nonisolated public enum ModelCacheCodec {
         let doubleSided = try input.bool()
         let alphaBlend = try input.bool()
         let threshold = try input.array(Float.self).first
+        let additive = try AdditiveBlend(rawValue: input.value(UInt8.self))
         let shading = try input.bool() ? effect(&input) : nil
         let waterSurface = try input.bool()
         let tintTexture = try input.string()
@@ -217,7 +195,8 @@ nonisolated public enum ModelCacheCodec {
             diffuseTexture: diffuse, normalTexture: normal, uvOffset: uvOffset, uvScale: uvScale,
             alpha: alpha, glossiness: glossiness, specularColor: specularColor,
             specularStrength: specularStrength, doubleSided: doubleSided, alphaBlend: alphaBlend,
-            alphaTestThreshold: threshold, effect: shading, waterSurface: waterSurface,
+            alphaTestThreshold: threshold, additiveBlend: additive, effect: shading,
+            waterSurface: waterSurface,
             tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface, drawState: state
         )
     }

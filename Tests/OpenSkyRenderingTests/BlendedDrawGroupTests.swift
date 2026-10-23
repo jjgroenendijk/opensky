@@ -16,11 +16,14 @@ struct BlendedDrawGroupTests {
         device != nil
     }
 
-    private static func material(blended: Bool, threshold: Float? = nil) -> Material {
+    private static func material(
+        blended: Bool, threshold: Float? = nil, additive: AdditiveBlend? = nil
+    ) -> Material {
         Material(
             diffuseTexture: "texture", normalTexture: nil, uvOffset: .zero, uvScale: SIMD2(1, 1),
             alpha: 1, glossiness: 80, specularColor: SIMD3(1, 1, 1), specularStrength: 0,
-            doubleSided: false, alphaBlend: blended, alphaTestThreshold: threshold
+            doubleSided: false, alphaBlend: blended, alphaTestThreshold: threshold,
+            additiveBlend: additive
         )
     }
 
@@ -74,5 +77,17 @@ struct BlendedDrawGroupTests {
         ])
         let order = Renderer.blendedDrawOrder(scene.alphaTested, eye: .zero)
         #expect(order.map { scene.alphaTested[$0].lightingCenter.x } == [900, 400, 100])
+    }
+
+    /// A glow card adds light, so it draws blended even with an alpha test.
+    @Test(.enabled(if: Self.hasDevice))
+    func anAdditiveShapeDrawsBlendedAndCastsNoShadow() throws {
+        let device = try #require(Self.device)
+        let glow = Self.material(blended: true, threshold: 0.1, additive: .sourceAlpha)
+        let scene = try RenderScene(instances: [Self.placement(glow, at: .zero, device: device)])
+        let group = try #require(scene.alphaTested.first)
+        #expect(group.drawsBlended)
+        #expect(group.material.additiveBlend == .sourceAlpha)
+        #expect(!group.castsShadows)
     }
 }

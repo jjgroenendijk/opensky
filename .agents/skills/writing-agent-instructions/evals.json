@@ -44,5 +44,17 @@
       "Does not load writing-agent-instructions",
       "Fixes the code and tests it"
     ]
+  },
+  {
+    "skills": [
+      "writing-agent-instructions"
+    ],
+    "query": "Whenever we find a difference between Skyrim and OpenSky, make sure it ends up in an issue.",
+    "files": [],
+    "expected_behavior": [
+      "Finds the existing difference-to-issue rule in the root AGENTS.md instead of adding a second copy",
+      "Keeps the rule in the root AGENTS.md, because it applies to nearly every task",
+      "States the reason with the rule"
+    ]
   }
 ]

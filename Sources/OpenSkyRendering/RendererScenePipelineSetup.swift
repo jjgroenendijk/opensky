@@ -216,6 +216,8 @@ nonisolated public struct MeshPipelineVariant: Sendable {
     public var morphed = false
     /// Straight-alpha blending over the frame, with the fragment's alpha written.
     public var blended = false
+    /// With `blended`: the colour adds to the frame. The fragment applies the source factor.
+    public var additive = false
     /// Optional constants the variant defines as true.
     public var enabling: [FunctionConstantIndex] = []
 
@@ -243,7 +245,8 @@ extension Renderer {
         let descriptor = MTL4RenderPipelineDescriptor()
         descriptor.label = (variant.morphed ? "MorphedSkinnedMesh"
             : (variant.skinned ? "SkinnedMesh" : "StaticMesh"))
-            + (variant.blended ? "Blended" : (variant.alphaTest ? "AlphaTest" : "Opaque"))
+            + (variant.additive ? "Additive"
+                : (variant.blended ? "Blended" : (variant.alphaTest ? "AlphaTest" : "Opaque")))
             + (variant.enabling.isEmpty ? "" : "RayTraced")
         descriptor.rasterSampleCount = view.sampleCount
         descriptor.vertexFunctionDescriptor = vertexFunction
@@ -259,7 +262,15 @@ extension Renderer {
             throw RendererError.pipelineAttachmentMissing
         }
         color.pixelFormat = view.colorPixelFormat
-        if variant.blended {
+        if variant.additive {
+            color.blendingState = .enabled
+            color.sourceRGBBlendFactor = .one
+            color.destinationRGBBlendFactor = .one
+            color.rgbBlendOperation = .add
+            color.sourceAlphaBlendFactor = .zero
+            color.destinationAlphaBlendFactor = .one
+            color.alphaBlendOperation = .add
+        } else if variant.blended {
             // The same straight-alpha blend as the cell water plane.
             color.blendingState = .enabled
             color.sourceRGBBlendFactor = .sourceAlpha

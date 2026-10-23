@@ -14,6 +14,13 @@ nonisolated public struct SkinnedBlendedPipelines: Sendable {
     public let morphed: MTLRenderPipelineState
 }
 
+/// Shapes whose blend adds light, such as glow cards, by mesh kind.
+nonisolated public struct AdditivePipelines: Sendable {
+    public let staticMesh: MTLRenderPipelineState
+    public let skinned: MTLRenderPipelineState
+    public let morphed: MTLRenderPipelineState
+}
+
 /// The scene pass's pipeline states, built together from one library.
 nonisolated public struct RenderPipelines: Sendable {
     public let sky: MTLRenderPipelineState
@@ -23,6 +30,7 @@ nonisolated public struct RenderPipelines: Sendable {
     /// Shapes with a blending alpha property, drawn after water.
     public let blended: MTLRenderPipelineState
     public let skinnedBlended: SkinnedBlendedPipelines
+    public let additive: AdditivePipelines
     public let skinnedOpaque: MTLRenderPipelineState
     public let skinnedAlphaTest: MTLRenderPipelineState
     public let morphedSkinnedOpaque: MTLRenderPipelineState
@@ -288,6 +296,7 @@ extension Renderer {
                     library: library, compiler: compiler, view: view
                 )
             ),
+            additive: makeAdditivePipelines(library: library, compiler: compiler, view: view),
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
             morphedSkinnedOpaque: makeVariant(
@@ -303,6 +312,25 @@ extension Renderer {
                 library: library, compiler: compiler, view: view
             ),
             debug: makeDebugPipelines(library: library, compiler: compiler, view: view)
+        )
+    }
+
+    private static func makeAdditivePipelines(
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> AdditivePipelines {
+        func make(skinned: Bool, morphed: Bool) throws -> MTLRenderPipelineState {
+            var variant = MeshPipelineVariant(
+                alphaTest: true, skinned: skinned, morphed: morphed, blended: true
+            )
+            variant.additive = true
+            return try makeMeshPipeline(variant, library: library, compiler: compiler, view: view)
+        }
+        return try AdditivePipelines(
+            staticMesh: make(skinned: false, morphed: false),
+            skinned: make(skinned: true, morphed: false),
+            morphed: make(skinned: true, morphed: true)
         )
     }
 

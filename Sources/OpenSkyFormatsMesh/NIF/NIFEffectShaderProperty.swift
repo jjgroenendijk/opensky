@@ -19,6 +19,9 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
     public let sourceTexture: String?
     /// nif.xml TexClampMode byte (0 clamp S/T … 3 wrap S/T).
     public let textureClampMode: UInt8
+    /// nif.xml "Lighting Influence", 0 to 255: how much scene light reaches an
+    /// effect-lit shape.
+    public let lightingInfluence: UInt8
     /// Cosine-of-angle falloff endpoints + their opacity multipliers; active
     /// when `usesFalloff` is set (SLSF1 Use_Falloff).
     public let falloffStartAngle: Float
@@ -54,6 +57,12 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
     /// SLSF1 bit 30 Soft_Effect -> soft-particle depth fade.
     public var isSoftEffect: Bool {
         has(.softEffect)
+    }
+
+    /// SLSF2 bit 30 Effect_Lighting takes the scene light. nif.xml says SLSF1 bit 22
+    /// Own_Emit "will not absorb light", so it keeps the shape unlit.
+    public var isEffectLit: Bool {
+        has(.effectLighting) && !has(.ownEmit)
     }
 
     /// SLSF1 bit 4 Greyscale_To_PaletteColor -> RGB from palette texture.
@@ -121,7 +130,8 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
         uvScale = try SIMD2(reader.readFloat32(), reader.readFloat32())
         sourceTexture = try Self.readSizedString(&reader)
         textureClampMode = try reader.readUInt8()
-        reader.skip(3) // lighting influence + env-map min LOD + unused byte
+        lightingInfluence = try reader.readUInt8()
+        reader.skip(2) // env-map min LOD + unused byte
         falloffStartAngle = try reader.readFloat32()
         falloffStopAngle = try reader.readFloat32()
         falloffStartOpacity = try reader.readFloat32()
@@ -165,7 +175,11 @@ nonisolated extension NIFEffectShaderProperty {
                 falloffStartAngle, falloffStopAngle, falloffStartOpacity, falloffStopOpacity
             ) : nil,
             vertexColors: hasVertexColors,
-            vertexAlpha: hasVertexAlpha
+            vertexAlpha: hasVertexAlpha,
+            softFalloffDepth: isSoftEffect ? softFalloffDepth : nil,
+            lightingInfluence: isEffectLit ? Float(lightingInfluence) / 255 : nil,
+            externalEmittance: has(.externalEmittance),
+            weaponBlood: has(.weaponBlood)
         )
     }
 }

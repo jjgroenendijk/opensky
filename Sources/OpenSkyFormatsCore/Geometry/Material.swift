@@ -6,6 +6,14 @@
 import Foundation
 import simd
 
+/// The source factor of an additive blend. Raw values match `DrawUniforms.additiveBlend`.
+nonisolated public enum AdditiveBlend: UInt8, Hashable, Sendable {
+    /// Source times its alpha, plus the frame.
+    case sourceAlpha = 1
+    /// Source as it is, plus the frame.
+    case one = 2
+}
+
 nonisolated public struct Material: Hashable, Sendable {
     /// Normalized VFS key ("textures/….dds"); nil = no texture.
     public let diffuseTexture: String?
@@ -24,6 +32,8 @@ nonisolated public struct Material: Hashable, Sendable {
     public let alphaBlend: Bool
     /// Alpha-test cutoff in [0, 1]; nil = no test. Foliage cutouts set this.
     public let alphaTestThreshold: Float?
+    /// Set when the blend adds to the frame (destination factor ONE), such as a glow card.
+    public let additiveBlend: AdditiveBlend?
     /// Set for an effect shape: drawn unlit with this shading.
     public let effect: EffectShading?
     /// A water-shader shape: the water pass draws it with the cell's water look.
@@ -47,6 +57,7 @@ nonisolated public struct Material: Hashable, Sendable {
         doubleSided: Bool,
         alphaBlend: Bool,
         alphaTestThreshold: Float?,
+        additiveBlend: AdditiveBlend? = nil,
         effect: EffectShading? = nil,
         waterSurface: Bool = false,
         tintTexture: String? = nil,
@@ -65,6 +76,7 @@ nonisolated public struct Material: Hashable, Sendable {
         self.doubleSided = doubleSided
         self.alphaBlend = alphaBlend
         self.alphaTestThreshold = alphaTestThreshold
+        self.additiveBlend = additiveBlend
         self.effect = effect
         self.waterSurface = waterSurface
         self.tintTexture = tintTexture

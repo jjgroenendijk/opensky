@@ -56,9 +56,13 @@ extension GameSession {
         defer { updateImageSpace(deltaTime: deltaTime) }
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
+            renderer.regionEmittance = [:]
             return
         }
         weather.update(hour: timeOfDay, elapsedGameHours: consumeElapsedGameHours())
+        renderer.regionEmittance = weather.regionEmittance(
+            for: renderer.emittanceRegions, hour: timeOfDay
+        )
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
         if let links = imageSpaceLinks {
             precipitationTuning = PrecipitationTuning(record: weather.precipitationParticles(

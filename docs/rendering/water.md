@@ -50,7 +50,9 @@ forward, is the water along the ray. Times the vertical part of the ray, it is t
 
 Shallow water shows the ground: there the alpha drops toward the `ANAM` opacity. Deep water, and
 water seen edge-on, is opaque. The split costs one depth copy and one encoder per frame with
-water in view. It can be turned off in Environment > Water; the water then uses a fixed middle
+water or a soft effect in view. Soft effects read the same copy, so they fade where they meet
+the ground ([effect shapes](/formats/nif-materials.md#effect-shapes)); the copy does not hold
+the water itself. It can be turned off in Environment > Water; the water then uses a fixed middle
 depth and stays half see-through.
 
 ## Where OpenSky differs

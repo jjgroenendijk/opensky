@@ -184,12 +184,13 @@ public final class EffectsCoordinator {
             try renderer.setEffectPlacements(models.compactMap(placement))
             drewModels = !models.isEmpty
         }
-        syncParticles(models, renderer: renderer)
+        try syncParticles(models, renderer: renderer)
         try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }
             return world?.membraneTarget(of: key)
-        } + weaponBlood.membranes)
+        })
+        renderer.setBloodyWeapons(weaponBlood.strengths)
     }
 
     private func attachHitEffects(_ link: SpellHitEffectLinks, to targets: [ReferenceKey]) -> Int {

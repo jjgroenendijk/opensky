@@ -59,6 +59,9 @@ extension Renderer {
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state
         )
+        if let blood = effects.bloodyWeapons[.playerWeapon] {
+            encodeWeaponBlood(groups: rig.render.alphaTested, strength: blood, state: &state)
+        }
         endMaterialDrawState(state: &state)
         state.encoder.setViewport(MTLViewport(
             originX: 0, originY: 0, width: width, height: height, znear: 0, zfar: 1

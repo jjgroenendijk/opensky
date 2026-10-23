@@ -121,7 +121,7 @@ extension EffectsCoordinator {
 
     /// Starts the particle systems of new effects, moves the emitters of moving ones, and
     /// drops those of effects that ended.
-    func syncParticles(_ models: [VisualEffectModel], renderer: Renderer) {
+    func syncParticles(_ models: [VisualEffectModel], renderer: Renderer) throws {
         guard let meshes else { return }
         var live: [Int: EffectParticles] = [:]
         var changed = false
@@ -146,7 +146,8 @@ extension EffectsCoordinator {
         }
         effectParticles = live
         if changed {
-            renderer.setEffectParticles(live.keys.sorted().flatMap { live[$0]?.playbacks ?? [] })
+            try renderer
+                .setEffectParticles(live.keys.sorted().flatMap { live[$0]?.playbacks ?? [] })
         }
     }
 

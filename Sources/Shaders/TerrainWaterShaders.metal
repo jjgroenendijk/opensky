@@ -173,7 +173,7 @@ fragment float4 waterFragment(
     WaterVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
-    depth2d<float> sceneDepth [[texture(TextureIndexWaterDepth)]])
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]])
 {
     if (debugViewActive) {
         // A water plane is flat and untextured, so the normal is the plane's

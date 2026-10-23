@@ -68,7 +68,9 @@ strength, and does not use w. This is an OpenSky model, not the game's formula.
 Ambient is the six-axis directional ambient (`DALC`), plus the single ambient colour while
 "Base ambient light" is on. The emissive colour times its multiple adds to the light, scaled
 by the slot 2 glow map on a glow shape. An external-emittance shape uses the colour of its
-reference's `XEMI` light instead; a reference without one keeps the NIF colour. The sun terms
+reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
+([effect shapes](/formats/nif-materials.md#effect-shapes)), instead. A reference without one
+keeps the NIF colour. The sun terms
 use the sun shadow.
 
 ## Albedo
@@ -131,6 +133,9 @@ sun shadow.
 draws that use each. The launcher's Graphics page has the same switches under "Surface
 shading". Both write the `rendering.shading.*` player settings. A frame applies the switches
 as a mask over each material's terms, so turning a term off costs no rebuild.
+Two switches act on effect shapes and particles instead: "Soft effect edges" and "Scene
+light on effects" ([effect shapes](/formats/nif-materials.md#effect-shapes)). "Glow and
+emissive colour" also switches the external emittance of effects.
 
 ## Not modelled
 

@@ -10,7 +10,8 @@ nonisolated extension MeshLibrary {
         path: String,
         surface: ModelSurfaceOverride? = nil,
         placementTransform: float4x4,
-        formID: UInt32
+        formID: UInt32,
+        emittance: EmittanceSource? = nil
     ) throws -> [ParticlePlayback] {
         let pathKey = try meshKey(for: path)
         let key = cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)
@@ -29,6 +30,10 @@ nonisolated extension MeshLibrary {
                 definition: definition,
                 placementTransform: placementTransform,
                 texture: texture,
+                effect: RenderEffectMaterial(shading: shader.shading) {
+                    textures.texture(key: $0, usage: $1)
+                },
+                emittance: emittance,
                 seed: seed,
                 sourcePath: pathKey
             ))

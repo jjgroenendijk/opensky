@@ -47,6 +47,8 @@ nonisolated public struct LightRecord: Sendable {
         public static let pulseSlow = Flags(rawValue: 0x0100)
         public static let spotLight = Flags(rawValue: 0x0200)
         public static let shadowSpotlight = Flags(rawValue: 0x0400)
+        public static let shadowHemisphere = Flags(rawValue: 0x0800)
+        public static let shadowOmnidirectional = Flags(rawValue: 0x1000)
         public static let inverseSquare = Flags(rawValue: 0x4000)
     }
 
@@ -59,6 +61,11 @@ nonisolated public struct LightRecord: Sendable {
     public let falloffExponent: Float
     public let flicker: FlickerEffect
     public let fade: Float
+
+    /// One of the three shadow types; without one the light is a plain omnidirectional light.
+    public var castsShadows: Bool {
+        !flags.isDisjoint(with: [.shadowSpotlight, .shadowHemisphere, .shadowOmnidirectional])
+    }
 
     public var isSupportedPointLight: Bool {
         !flags.contains(.negative)

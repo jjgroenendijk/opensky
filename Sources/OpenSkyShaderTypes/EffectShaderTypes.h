@@ -19,6 +19,24 @@ typedef struct
     vector_float4 rotation;
 } ParticleInstance;
 
+/// The effect shader of one particle system, written once per frame in flight.
+typedef struct
+{
+    /// EffectFlag bits.
+    unsigned int flags;
+    unsigned int pointLightCount;
+    float baseColorScale;
+    /// Depth in world units over which a soft system fades in.
+    float softDepth;
+    vector_float4 baseColor;
+    /// Falloff start and stop cosines, then start and stop opacity.
+    vector_float4 falloff;
+    /// x: share of the scene light, 0 to 1. y: 1 when the blend adds light. zw unused.
+    vector_float4 lighting;
+    /// The reference's `XEMI` colour; alpha 1 when known.
+    vector_float4 emittance;
+} ParticleEffectUniforms;
+
 /// One decal quad on a surface (docs/rendering/decals.md), built from vertex_id
 /// like a particle. The two axes are half the width and height; their cross
 /// product is the surface normal.

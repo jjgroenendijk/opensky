@@ -110,7 +110,7 @@ fields:
 | float x 2 | UV scale | |
 | SizedString | Source texture | Effect texture path |
 | byte | Texture clamp mode | `TexClampMode` |
-| byte | (Lighting influence) | |
+| byte | Lighting influence | 0 to 255: the share of scene light an effect-lit shape takes |
 | byte | (Env map min LOD) | |
 | byte | (Unused) | |
 | float | Falloff start angle | Cosine of the angle |
@@ -119,7 +119,7 @@ fields:
 | float | Falloff stop opacity | |
 | float x 4 | Base color | Emissive color with alpha |
 | float | Base color scale | RGB multiplier |
-| float | Soft falloff depth | Soft particle edge fade |
+| float | Soft falloff depth | World units over which a soft effect fades in |
 | SizedString | Greyscale texture | Palette for greyscale-to-color |
 
 At streams 83 and 100 there is no refraction power (`nif.xml` has it only for Fallout 76),
@@ -134,8 +134,22 @@ Flag bits OpenSky uses:
 | 1 | 3 | Vertex alpha |
 | 1 | 4, 5 | Greyscale to palette color, alpha |
 | 1 | 6 | Use falloff |
+| 1 | 22 | Own emit: the shape stays unlit, even with effect lighting |
+| 1 | 26, 27 | Decal, dynamic decal |
+| 1 | 29 | External emittance |
 | 1 | 30 | Soft effect |
 | 1 | 31 | Z buffer test. It is in flags 1, not flags 2 |
+| 2 | 5 | Vertex colors |
+| 2 | 17 | Weapon blood |
+| 2 | 30 | Effect lighting |
+
+`nif.xml` names bits 29, 30 (flags 1) and 30 (flags 2) without a description. OpenSky reads
+them as the [shading below](#effect-shapes) says. On 2026-10-23 the vanilla meshes had 3796
+effect blocks with soft effect (falloff depth 0.5 to 7000, median 32), 1750 with external
+emittance, 1748 with effect lighting, and 310 with weapon blood. Lighting influence varies on
+effect-lit blocks: 224 have 255, 100 have 191, 64 have 127. The 69 blocks with own emit never
+set effect lighting too, so the own-emit rule is a reading of `nif.xml` ("will not absorb
+light"), not a fact checked on data.
 
 ## BSWaterShaderProperty
 
@@ -201,6 +215,8 @@ OpenSky already behaves as these flags ask, so it does not read them:
 | SLSF2 bit 3 `No_Fade` | OpenSky does not fade objects out with distance, so every shape behaves as if it set the bit |
 | SLSF2 bit 28 `Unused02` | `nif.xml` marks it unused |
 
+The same holds for `Skinned` and `No_Fade` on a `BSEffectShaderProperty`.
+
 The Fallout 3 flags in `nif.xml` describe bit 16 as "switches on refraction power/period",
 and the period as the "rate of texture movement for refraction shader". Skyrim blocks have
 no period field, so OpenSky picks the scroll rate. 51 vanilla shapes set bit 16 without bit
@@ -230,7 +246,7 @@ A term is on only when its texture slot names a texture. The rules follow NifSko
 | Hair soft light | SLSF1 bit 18 | None; caps the direct light |
 | Anisotropic specular | SLSF2 bit 21 | None; the highlight follows the strand |
 | Reflection lit with the surface | Environment and SLSF2 bit 15 | Without the bit the reflection adds unlit |
-| External emittance | SLSF1 bit 29 | None; the reference's `XEMI` light colour replaces the emissive colour |
+| External emittance | SLSF1 bit 29 | None; the reference's `XEMI` light or region colour replaces the emissive colour |
 | Sparkle | Type 14 | None; the tail parameters |
 | Landscape noise | Type 18 | `textures\terrain\noise.dds`, which the shape does not name |
 
@@ -281,8 +297,10 @@ their textures and constants. Water and sky shaders get a
 plain fallback material, untextured but drawn. Effect shaders used by particles go to the
 particle path instead (see [NIF particle systems](/formats/nif-particles.md)).
 
+### Effect shapes
+
 A mesh shape with an effect shader, such as a smoke disc, a fire card, or waterfall foam,
-draws unlit with the effect's source texture, UV transform, double-sided flag, base color,
+draws with the effect's source texture, UV transform, double-sided flag, base color,
 falloff, and greyscale palette, plus its `NiAlphaProperty`. The palette lookup follows the
 open-source NifSkope effect shader (`sk_effectshader.frag`):
 
@@ -291,13 +309,37 @@ open-source NifSkope effect shader (`sk_effectshader.frag`):
 - Falloff: `smoothstep(stop, start, |N . V|)` mixes the stop opacity into the start opacity.
 
 Vanilla palettes are 2D, for example `textures\effects\gradients\GradWhiteWater.dds` is
-512 x 128, so the second coordinate matters. Two kinds of effect shape are skipped,
-because the static path cannot draw them:
+512 x 128, so the second coordinate matters.
 
-- An effect shape with no source texture.
-- An additive one: `NiAlphaProperty` blends with destination factor `ONE`, so it only adds
-  light. Glow cards are additive. So is `wrlodwindowglow01.nif`, the window glow of the
-  low-detail Whiterun that the `WhiterunLODlights` reference places in Tamriel. Its `XEMI`
-  emittance (`FXLightRegionInvertWindowWhiterun`) darkens it by day.
+The flags then change the result. Neither NifSkope nor `nif.xml` gives these rules, so they
+are OpenSky's reading of the Creation Kit wiki
+([Lights and FX tutorial](https://ck.uesp.net/wiki/Bethesda_Tutorial_Lights_and_FX),
+[Weather](https://ck.uesp.net/wiki/Weather)):
+
+- Effect lighting: the color is multiplied by the scene light at the shape, mixed with 1 by
+  the lighting influence. The light is the ambient, the six-axis ambient, the sun, and the
+  nearby point lights, on the side of the shape that faces the eye. The tutorial shows mist
+  that "picks up the light's coloration" near a light. Near a shadow-casting light, the mist
+  "inherits the directional/ambient light of the cell, but not the light", so a light with
+  a shadow type in its `LIGH` flags does not light an effect shape.
+- External emittance: when the placed reference has an `XEMI` emittance, that color
+  replaces the scene light. The tutorial says emittance "will prevent the mist from being
+  affected by any other light". `XEMI` names a `LIGH` or a `REGN`. A light gives its
+  color. A region gives the `Effect Lighting` color of its weather at the current hour
+  ([Reference](https://ck.uesp.net/wiki/Reference)). The game keeps a weather per region;
+  OpenSky runs one, so a region takes the active weather when its `RDWT` list holds it, else
+  its most likely weather. Particle systems take the emittance of their reference too.
+- Soft effect: the alpha fades in over the soft falloff depth in front of the scene behind
+  the shape, so a smoke card shows no hard line where it crosses the ground.
+- Weapon blood: the shape draws only while its weapon is bloody
+  ([visual effects](/rendering/visual-effects.md)). Vanilla weapons, and even forks and
+  knives, hold such a shape with `textures\blood\BloodEdge01.dds`.
+
+An additive shape (`NiAlphaProperty` with destination factor `ONE`) adds light to the frame.
+Glow cards are additive. So is `wrlodwindowglow01.nif`, the window glow of the low-detail
+Whiterun that the `WhiterunLODlights` reference places in Tamriel. Its `XEMI` emittance
+(`FXLightRegionInvertWindowWhiterun`) darkens it by day. Source factor `ONE` adds the color
+as it is; any other source factor is read as `SRC_ALPHA`. An effect shape with no source
+texture is skipped, because the static path has no look for it.
 
 An effect block that does not decode keeps the fallback material.

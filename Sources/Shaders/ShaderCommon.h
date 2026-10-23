@@ -143,17 +143,32 @@ static inline float sunShadowFactor(
     return sum / taps;
 }
 
-static inline float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
+// x: how far between fog near and far, 0 to 1. y: how much fog covers the point.
+static inline float2 fogAt(float3 worldPosition, constant FrameUniforms &frame)
 {
     if (frame.fogEnabled == 0) {
-        return color;
+        return 0.0;
     }
     float distanceToCamera = distance(worldPosition, frame.cameraPosition);
     float range = max(frame.fogDistances.y - frame.fogDistances.x, 0.0001);
     float linear = saturate((distanceToCamera - frame.fogDistances.x) / range);
     float amount = pow(linear, max(frame.fogDistances.z, 0.01)) * frame.fogDistances.w;
-    float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, linear);
-    return mix(color, fogColor, saturate(amount));
+    return float2(linear, saturate(amount));
+}
+
+static inline float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
+{
+    float2 fog = fogAt(worldPosition, frame);
+    float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, fog.x);
+    return mix(color, fogColor, fog.y);
+}
+
+// An additive colour adds to what is behind it, which the fog already covers, so the
+// fog only takes the added light away.
+static inline float3
+applyAdditiveFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
+{
+    return color * (1.0 - fogAt(worldPosition, frame).y);
 }
 
 // Render debug views. One function constant gates this block: shipping

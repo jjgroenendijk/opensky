@@ -131,7 +131,8 @@ nonisolated extension CellSceneBuilder {
                 radius: radius,
                 color: light.color * max(0, light.fade),
                 falloffExponent: max(0.01, light.falloffExponent),
-                animation: RenderLightAnimation(light: light, reference: reference.formID.rawValue)
+                animation: RenderLightAnimation(light: light, reference: reference.formID.rawValue),
+                castsShadows: light.castsShadows
             )
         }
     }
@@ -147,11 +148,14 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    /// The colour of the `XEMI` light, faded as a point light is. A region has none.
-    nonisolated func emittanceColour(of reference: PlacedReference) -> SIMD3<Float>? {
-        reference.emittance
-            .flatMap { lightIndexBuildingIfNeeded()[$0.rawValue] }
-            .map { $0.color * max(0, $0.fade) }
+    /// The `XEMI` light's colour, faded as a point light is. Any other form is taken
+    /// as a region, whose weather gives the colour at the current hour.
+    nonisolated func emittanceSource(of reference: PlacedReference) -> EmittanceSource? {
+        guard let id = reference.emittance, !id.isNull else { return nil }
+        guard let light = lightIndexBuildingIfNeeded()[id.rawValue] else {
+            return .region(id.rawValue)
+        }
+        return .light(light.color * max(0, light.fade))
     }
 
     nonisolated public func lightIndexBuildingIfNeeded() -> [UInt32: LightRecord] {

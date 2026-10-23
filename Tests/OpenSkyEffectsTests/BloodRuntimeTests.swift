@@ -49,15 +49,16 @@ struct BloodRuntimeTests {
     }
 
     @Test
-    func weaponBloodStaysThenFadesAndIsGoneBelowTheThreshold() {
+    func weaponBloodStaysThenFadesAndIsGoneBelowTheThreshold() throws {
         var runtime = WeaponBloodRuntime()
         #expect(runtime.strength(age: 10) == 1)
         #expect(abs(runtime.strength(age: 40) - 0.5) < 1e-4)
         #expect(runtime.strength(age: 66) == 0, "0.067 is below 0.07")
         runtime.bloody(.playerWeapon)
         runtime.advance(30)
-        #expect(runtime.membranes.map(\.target) == [.playerWeapon])
+        let strength = try #require(runtime.strengths[.playerWeapon])
+        #expect(abs(strength - 2 / 3) < 1e-4, "10 s full, then 20 of 60 s faded")
         runtime.advance(40)
-        #expect(runtime.membranes.isEmpty)
+        #expect(runtime.strengths.isEmpty)
     }
 }

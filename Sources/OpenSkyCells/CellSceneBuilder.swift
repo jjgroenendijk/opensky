@@ -78,8 +78,8 @@ nonisolated public struct ResolvedInstance {
     public let transform: float4x4
     /// The behaviour set when `model` is this reference's own node-skinned copy.
     public var animated: BehaviorProjectAsset?
-    /// The colour of the reference's `XEMI` light, for external-emittance shapes.
-    public var emittance: SIMD3<Float>?
+    /// The reference's `XEMI`, for external-emittance shapes.
+    public var emittance: EmittanceSource?
     /// A door whose `Open` and `Close` sequences move its leaves.
     public var isSequenceDoor = false
 }
@@ -553,7 +553,7 @@ nonisolated extension CellSceneBuilder {
                     scale: ref.scale
                 ),
                 animated: animated == nil ? nil : behavior,
-                emittance: emittanceColour(of: ref)
+                emittance: emittanceSource(of: ref)
             )
         } catch MeshLibraryError.editorMarkerOnly {
             counts.markers += 1

@@ -1,4 +1,5 @@
 #include "ShaderCommon.h"
+#include "EffectShading.h"
 
 // CPU particle path: six vertex_id corners per instance. Camera basis comes
 // from FrameUniforms, so every quad remains billboarded without CPU rebuild.
@@ -36,17 +37,38 @@ vertex ParticleVertexOut particleVertex(
     return out;
 }
 
+// A particle shades like an effect shape that faces the eye: the particle colour is
+// its vertex colour (docs/rendering/particles.md).
 fragment float4 particleFragment(
     ParticleVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant ParticleEffectUniforms &effect [[buffer(BufferIndexDrawUniforms)]],
+    const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> sourceMap [[texture(TextureIndexDiffuse)]],
+    texture2d<float> palette [[texture(TextureIndexEffectPalette)]],
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
-    float4 sample = sourceMap.sample(trilinear, in.texcoord) * in.color;
-    if (sample.a <= 0.002) {
+    float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
+    float4 shaded = effectShade(
+        sourceMap.sample(trilinear, in.texcoord), in.color, toEye, toEye,
+        EffectTerms{effect.flags, effect.falloff, effect.baseColor, effect.baseColorScale},
+        palette);
+    float alpha = shaded.a;
+    if ((effect.flags & EffectFlagSoft) != 0) {
+        alpha *=
+            softEffectFade(in.position.xy, in.worldPosition, effect.softDepth, frame, sceneDepth);
+    }
+    if (alpha <= 0.002) {
         discard_fragment();
     }
-    return float4(applyFog(sample.rgb, in.worldPosition, frame), sample.a);
+    EffectLightInput light = {effect.flags, effect.lighting.x, in.worldPosition, toEye,
+                              toEye,        effect.emittance};
+    float3 rgb = shaded.rgb * effectLight(light, frame, pointLights, effect.pointLightCount);
+    bool adds = effect.lighting.y > 0.5;
+    float3 fogged = adds ? applyAdditiveFog(rgb, in.worldPosition, frame)
+                         : applyFog(rgb, in.worldPosition, frame);
+    return float4(fogged, alpha);
 }
 
 // Decals (docs/rendering/decals.md): a flat quad on the struck surface, lit by the

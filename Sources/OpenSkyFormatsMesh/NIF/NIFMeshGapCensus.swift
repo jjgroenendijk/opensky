@@ -25,7 +25,9 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
     public static let readLightingFlags = Set(
         NIFShaderFlag.lightingRead.union(NIFShaderFlag.lightingMatchedByDefault).map(\.name)
     )
-    public static let readEffectFlags = Set(NIFShaderFlag.effectRead.map(\.name))
+    public static let readEffectFlags = Set(
+        NIFShaderFlag.effectRead.union(NIFShaderFlag.effectMatchedByDefault).map(\.name)
+    )
 
     public mutating func record(data: Data) {
         fileCount += 1

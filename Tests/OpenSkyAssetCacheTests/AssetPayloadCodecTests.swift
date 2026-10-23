@@ -59,11 +59,13 @@ struct AssetPayloadCodecTests {
             diffuseTexture: "textures/effects/foam.dds", normalTexture: nil, uvOffset: .zero,
             uvScale: SIMD2(1, 1), alpha: 1, glossiness: 80, specularColor: SIMD3(1, 1, 1),
             specularStrength: 0, doubleSided: true, alphaBlend: true, alphaTestThreshold: nil,
+            additiveBlend: .one,
             effect: EffectShading(
                 baseColor: SIMD4(1, 0.5, 0.25, 0.75), baseColorScale: 2,
                 paletteTexture: "textures/effects/gradients/foam.dds", paletteColor: true,
                 paletteAlpha: false, falloff: SIMD4(0.9, 0.1, 1, 0), vertexColors: true,
-                vertexAlpha: false
+                vertexAlpha: false, softFalloffDepth: 32, lightingInfluence: 0.75,
+                externalEmittance: true, weaponBlood: true
             )
         )
         return Model(

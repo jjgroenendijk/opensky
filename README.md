@@ -46,7 +46,7 @@ Measured on 2026-10-23 by `make gaps`.
 | NIF block types | 145 | 0 | 145 | 100% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
 | Lighting shader flags | 38 | 0 | 38 | 100% |
-| Effect shader flags | 10 | 7 | 17 | 58% |
+| Effect shader flags | 17 | 0 | 17 | 100% |
 | Mesh decode failures | - | 0 | - | - |
 | Texture variants | 10 | 0 | 10 | 100% |
 | Sound file variants | 3 | 0 | 3 | 100% |

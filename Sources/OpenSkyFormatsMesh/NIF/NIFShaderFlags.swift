@@ -77,6 +77,7 @@ nonisolated extension NIFShaderFlag {
     static let glowMap = NIFShaderFlag(word: 2, bit: 6)
     static let assumeShadowmask = NIFShaderFlag(word: 2, bit: 7)
     static let envMapLightFade = NIFShaderFlag(word: 2, bit: 15)
+    static let weaponBlood = NIFShaderFlag(word: 2, bit: 17)
     static let anisotropicLighting = NIFShaderFlag(word: 2, bit: 21)
     static let multiLayerParallax = NIFShaderFlag(word: 2, bit: 24)
     static let softLighting = NIFShaderFlag(word: 2, bit: 25)
@@ -84,6 +85,7 @@ nonisolated extension NIFShaderFlag {
     static let backLighting = NIFShaderFlag(word: 2, bit: 27)
     static let unused02 = NIFShaderFlag(word: 2, bit: 28)
     static let treeAnim = NIFShaderFlag(word: 2, bit: 29)
+    static let effectLighting = NIFShaderFlag(word: 2, bit: 30)
     static let hdLODObjects = NIFShaderFlag(word: 2, bit: 31)
 
     /// `BSLightingShaderProperty` bits a surface term or draw state depends on.
@@ -103,11 +105,14 @@ nonisolated extension NIFShaderFlag {
     ]
 
     /// `BSEffectShaderProperty` bits `EffectShading` or the draw state depends on.
-    /// Soft effect is decoded, and no draw uses it yet.
     public static let effectRead: Set<NIFShaderFlag> = [
         vertexAlpha, greyscaleToPaletteColor, greyscaleToPaletteAlpha, useFalloff,
-        decal, dynamicDecal, zBufferTest, zBufferWrite, doubleSided, vertexColors
+        decal, dynamicDecal, zBufferTest, zBufferWrite, doubleSided, vertexColors,
+        softEffect, externalEmittance, effectLighting, weaponBlood, ownEmit
     ]
+
+    /// Effect bits whose behaviour OpenSky has without a read: docs/formats/nif-materials.md.
+    public static let effectMatchedByDefault: Set<NIFShaderFlag> = [skinned, noFade]
 }
 
 /// `BSLightingShaderType` values, with the ones a surface term depends on.

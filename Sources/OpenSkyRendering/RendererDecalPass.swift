@@ -30,9 +30,15 @@ extension Renderer {
     }
 
     /// Replaces the effect models' particle systems.
-    public func setEffectParticles(_ playbacks: [ParticlePlayback]) {
+    /// Replaces the effect models' particle systems. Each may take a draw-ring slot for
+    /// its point lights, so the rings grow to fit.
+    public func setEffectParticles(_ playbacks: [ParticlePlayback]) throws {
         let retiring = effects.particleAllocations
         effects.particles = playbacks
+        try growRings(
+            drawCount: scene.drawCount + rigDrawCount + effects.scene.drawCount,
+            instanceCount: scene.instanceCount + rigInstanceCount + effects.scene.instanceCount
+        )
         addResident(effects.particleAllocations)
         retireAllocations(retiring)
     }
@@ -87,6 +93,6 @@ extension EffectLayer {
     }
 
     var particleAllocations: [MTLAllocation] {
-        particles.flatMap { [$0.instanceBuffer, $0.texture] as [MTLAllocation] }
+        particles.flatMap(\.residencyAllocations)
     }
 }

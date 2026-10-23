@@ -31,6 +31,13 @@ nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
         blendEnabled && destinationBlendMode == 0
     }
 
+    /// The additive blend, nil when the shape does not add light. Source ONE (0) adds
+    /// the colour as it is; every other source factor is read as SRC_ALPHA.
+    public var additiveBlend: AdditiveBlend? {
+        guard isAdditive else { return nil }
+        return sourceBlendMode == 0 ? .one : .sourceAlpha
+    }
+
     public var testEnabled: Bool {
         flags & 0x0200 != 0
     }

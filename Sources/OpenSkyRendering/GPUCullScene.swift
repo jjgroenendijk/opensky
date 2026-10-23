@@ -297,7 +297,8 @@ private struct GPUCullSceneBuilder {
     mutating func add(_ group: DrawGroup) -> Int? {
         guard
             !group.instances.isEmpty,
-            group.instances.allSatisfy({ $0.referenceFormID == 0 })
+            // A region's emittance changes with the hour, so it is written every frame.
+            group.instances.allSatisfy({ $0.referenceFormID == 0 && $0.emittance?.region == nil })
         else { return nil }
         let index = groups.count
         let first = instances.count
@@ -326,7 +327,7 @@ private struct GPUCullSceneBuilder {
             transform: InstanceTransform(
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
-                instanceColor: instance.instanceColor,
+                instanceColor: instance.instanceColor(regions: [:]),
                 grassParameters: .zero
             ),
             boundsMin: SIMD4(bounds?.min ?? .zero, 0),

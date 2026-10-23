@@ -21,6 +21,8 @@ nonisolated public struct RenderMaterial: Sendable {
     /// Render both faces (cull mode none for this draw).
     public let doubleSided: Bool
     public let alphaBlend: Bool
+    /// Set for a shape that adds light; it draws with the additive pipelines.
+    public let additiveBlend: AdditiveBlend?
     /// Set for an effect shape, which draws unlit.
     public let effect: RenderEffectMaterial?
     /// A water-shader shape: the water pass draws it, not a draw group.
@@ -39,6 +41,7 @@ nonisolated public struct RenderMaterial: Sendable {
         alphaTestThreshold = material.alphaTestThreshold
         doubleSided = material.doubleSided
         alphaBlend = material.alphaBlend
+        additiveBlend = material.additiveBlend
         effect = material.effect.map {
             RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
         }

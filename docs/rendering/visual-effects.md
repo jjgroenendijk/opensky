@@ -77,10 +77,12 @@ Screen blood: a melee or ranged hit on the player places splatters.
   `fBloodSplatterFlareOffsetScale` splatter sizes, at `fBloodSplatterFlareMult` opacity.
 - The quads draw after the world and before the SWF menus and the UI.
 
-Weapon blood: a melee hit on an actor whose race lacks the no-weapon-blood flag reddens the
-attacker's weapon. It is a dark red membrane on the holder's unskinned meshes, full for
-`fWeaponBloodLifetime`, fading over `fWeaponBloodFadeDuration`, and gone below
-`fWeaponBloodFalloffThreshold`.
+Weapon blood: a melee hit on an actor whose race lacks the no-weapon-blood flag makes the
+attacker's weapon bloody. A weapon model holds blood shapes, whose effect shader sets the
+`Weapon_Blood` flag ([effect shapes](/formats/nif-materials.md#effect-shapes)). They stay
+hidden on a clean weapon. On a bloody one they draw blended, with their alpha times the blood's
+strength: full for `fWeaponBloodLifetime`, fading over `fWeaponBloodFadeDuration`, and gone
+below `fWeaponBloodFalloffThreshold`. The first-person weapon draws its blood in the arms pass.
 
 Default blood: a hit on an actor that its impact data shows nothing for plays
 `sBloodParticleMeleeDefault` or `sBloodParticleDefault` and places the `sBloodTextureDefault`
@@ -100,8 +102,7 @@ OpenSky's numbers.
   index is not used.
 - [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
   `VisualEffect.Play` does not pass its facing object on yet.
-- An actor's membrane covers every mesh drawn for that actor, including worn armor. Weapon blood
-  covers every unskinned mesh, which may include a helmet or a shield.
+- An actor's membrane covers every mesh drawn for that actor, including worn armor.
 
 ## Checking it in the app
 

@@ -294,6 +294,23 @@ static float3 refracted(
     return scene.sample(clamped, input.pixel / size + bend * reach).rgb;
 }
 
+// The additive pipelines add the colour as it is, so the shader applies the source
+// factor. Opaque: alpha only gates the test. The frame is premultiplied, so a lower
+// alpha would show as white or black. The blended pass blends it.
+static inline float4 blendOutput(
+    float3 colour,
+    float alpha,
+    float3 worldPosition,
+    constant FrameUniforms &frame,
+    constant DrawUniforms &draw)
+{
+    if (draw.additiveBlend != 0) {
+        float3 added = applyAdditiveFog(colour, worldPosition, frame);
+        return float4(draw.additiveBlend == 1 ? added * alpha : added, alpha);
+    }
+    return float4(applyFog(colour, worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
+}
+
 fragment float4 staticMeshFragment(
     StaticVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
@@ -310,6 +327,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
     raytracing::instance_acceleration_structure rayScene
@@ -339,6 +357,10 @@ fragment float4 staticMeshFragment(
                 draw.effectBaseColorScale},
             effectPalette);
         alpha = effect.a * draw.materialAlpha;
+        if ((draw.effectFlags & EffectFlagSoft) != 0) {
+            alpha *= softEffectFade(
+                in.position.xy, in.worldPosition, draw.effectSoftDepth, frame, sceneDepth);
+        }
     }
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {
         discard_fragment();
@@ -360,8 +382,14 @@ fragment float4 staticMeshFragment(
         return float4(refracted(refraction, frame, draw, normalMap, sceneColour, trilinear), 1.0);
     }
     if (isEffect) {
-        float3 shaded = applyFog(effect.rgb, in.worldPosition, frame);
-        return float4(shaded, alphaBlendEnabled ? alpha : 1.0);
+        EffectLightInput light = {draw.effectFlags,
+                                  draw.effectLightingInfluence,
+                                  in.worldPosition,
+                                  normalize(in.normal),
+                                  toEye,
+                                  in.instanceColor};
+        float3 lit = effect.rgb * effectLight(light, frame, pointLights, draw.pointLightCount);
+        return blendOutput(lit, alpha, in.worldPosition, frame, draw);
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
     float shadow = draw.receivesShadows != 0
@@ -404,9 +432,7 @@ fragment float4 staticMeshFragment(
     LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
     lit += reflectionLit ? 0.0 : reflected;
-    // Opaque: alpha only gates the test above. The frame is premultiplied, so
-    // a lower alpha would show as white or black. The blended pass blends it.
-    return float4(applyFog(lit, in.worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
+    return blendOutput(lit, alpha, in.worldPosition, frame, draw);
 }
 
 // Sun-shadow depth pre-pass: each caster renders into one cascade slice,

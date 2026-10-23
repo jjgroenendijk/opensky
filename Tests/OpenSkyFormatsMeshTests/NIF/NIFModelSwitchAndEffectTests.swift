@@ -50,7 +50,7 @@ struct NIFModelSwitchAndEffectTests {
         #expect(model.materials[0].waterSurface)
     }
 
-    @Test func effectShapeDrawsItsSourceTextureBlended() throws {
+    @Test func effectShapeDrawsItsSourceTextureBlendedOrAdded() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
             .init("BSTriShape", shape(shaderPropertyRef: 4, alphaPropertyRef: 6)),
@@ -66,9 +66,11 @@ struct NIFModelSwitchAndEffectTests {
             .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 0x0D, threshold: 0))
         ]))
         let model = try file.model()
-        #expect(model.meshes.count == 1)
-        #expect(model.skippedShapeCount == 2)
-        let material = model.materials[0]
+        #expect(model.meshes.count == 2, "the untextured shape is skipped")
+        #expect(model.skippedShapeCount == 1)
+        let blends = model.meshes.map { model.materials[$0.materialSlot].additiveBlend }
+        #expect(Set(blends) == [nil, .sourceAlpha])
+        let material = try #require(model.materials.first { $0.additiveBlend == nil })
         #expect(material.diffuseTexture == "textures/effects/cloudtile.dds")
         #expect(material.alphaBlend)
         #expect(material.doubleSided)
@@ -112,6 +114,22 @@ struct NIFModelSwitchAndEffectTests {
         #expect(effect.paletteColor && effect.paletteAlpha)
         #expect(effect.falloff == SIMD4(0.9, 0.1, 1, 0.2))
         #expect(effect.vertexColors && effect.vertexAlpha)
+        #expect(effect.softFalloffDepth == nil)
+        #expect(effect.lightingInfluence == nil)
+        #expect(!effect.externalEmittance && !effect.weaponBlood)
+    }
+
+    /// The flags of a vanilla weapon's blood edge (`BloodEdge01.dds`): weapon blood only.
+    @Test func weaponBloodShapeCarriesItsFlag() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 1)),
+            .init("BSEffectShaderProperty", NIFParticleFixture.effectShaderProperty(
+                flags1: 0x8C00_0000, flags2: 0x20000,
+                sourceTexture: "textures\\blood\\bloodedge01.dds"
+            ))
+        ]))
+        let effect = try #require(try file.model().materials.first?.effect)
+        #expect(effect.weaponBlood)
     }
 
     /// The flags of the heat-haze dome over `fireplacewood01burning.nif`. Its slot 0
