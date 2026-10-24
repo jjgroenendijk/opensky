@@ -115,7 +115,9 @@ extension CombatAcceptanceChain: ProjectileWorld {
     }
 
     @discardableResult
-    func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from _: ReferenceKey
+    ) -> Bool {
         applyCombatDamage(amount, to: target)
     }
 

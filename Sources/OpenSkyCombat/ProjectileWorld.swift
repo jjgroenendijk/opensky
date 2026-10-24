@@ -157,13 +157,16 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     /// Normally `ShapeSweeper.firstHit` over the streamer's broadphase.
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit?
 
-    /// Takes `amount` off `target`'s health.
+    /// Takes `amount` off `target`'s health. `shooter` is who fired it: the player,
+    /// or a trap whose script called `Weapon.Fire`.
     ///
     /// - Returns: true when the damage was actually applied, so a hit on a
     ///   reference with no actor-value state is reported rather than silently
     ///   counted as a hit that did nothing.
     @discardableResult
-    func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
+    ) -> Bool
 
     /// Plays one resolved impact at the contact point.
     func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)

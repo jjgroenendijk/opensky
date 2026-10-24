@@ -29,6 +29,13 @@ nonisolated public struct EffectiveReferences: Sendable {
                 ? nil : entry.formID.rawValue
         })
     }
+
+    /// The motion types scripts set, by the FormID each reference was placed under.
+    public var motionTypes: [FormID: ReferenceMotionType] {
+        entries.reduce(into: [:]) { types, entry in
+            types[entry.formID] = deltas[entry.key]?.component(ReferenceMotionType.self)
+        }
+    }
 }
 
 nonisolated extension CellSceneBuilder {

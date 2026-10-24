@@ -41,7 +41,8 @@ nonisolated extension CellSceneBuilder {
                 location: location,
                 keys: resolved.entries.reduce(into: [:]) { keys, entry in
                     keys[entry.formID] = entry.key
-                }
+                },
+                motionTypes: resolved.motionTypes
             )
             let followers = resolved.vehicleFollowers
             let split = CellVehicleCollision.split(

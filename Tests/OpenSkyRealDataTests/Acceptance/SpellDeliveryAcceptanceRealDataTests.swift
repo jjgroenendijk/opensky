@@ -127,7 +127,9 @@ struct SpellDeliveryAcceptanceRealDataTests {
         }
 
         @discardableResult
-        func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+        func applyProjectileDamage(
+            _: Float, to _: ReferenceKey, from _: ReferenceKey
+        ) -> Bool {
             false
         }
 

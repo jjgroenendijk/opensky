@@ -16,7 +16,9 @@ extension ProjectileRuntime {
         guard
             let arrow = projectile.payload.arrow,
             let target = impact.target, let world,
-            world.applyProjectileDamage(arrow.damage.applied, to: target)
+            world.applyProjectileDamage(
+                arrow.damage.applied, to: target, from: projectile.shooter
+            )
         else { return 0 }
         // After the damage, as the melee path does. `akProjectile` is filled in; vanilla
         // leaves it `None` for an actor target, which handlers already tolerate.

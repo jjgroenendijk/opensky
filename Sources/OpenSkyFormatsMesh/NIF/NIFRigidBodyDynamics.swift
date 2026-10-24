@@ -118,7 +118,12 @@ nonisolated public struct NIFRigidBodyDynamics: Sendable, BitwiseCopyable {
     /// a positive finite mass. An unknown motion byte is not simulated, so a
     /// modded or future value degrades to static rather than to nonsense.
     public var isSimulated: Bool {
-        (motionSystem?.isSimulated ?? false) && mass > 0 && mass.isFinite
+        (motionSystem?.isSimulated ?? false) && hasMass
+    }
+
+    /// A body `SetMotionType` can make simulate, whatever motion system it was authored with.
+    public var hasMass: Bool {
+        mass > 0 && mass.isFinite
     }
 
     /// A phantom has no mass and a fixed motion: physics never moves it.
