@@ -94,4 +94,22 @@ extension RecordDecoderTests {
         #expect(!ignoredActivator.isAutomaticDoor)
         #expect(!disabledFurniture.allowsManualInteraction)
     }
+
+    /// `CommonBedDouble01L` (`000F5101`) has MNAM `0x88000001`: only marker 0 is on.
+    @Test func furnitureFlagsPickTheMarkersInUse() throws {
+        var flags = Data()
+        flags.appendUInt32(0x8800_0001)
+        let leftBed = try ModelBase(record: record(ESMFixture.record(
+            "FURN", data: ESMFixture.field("MNAM", flags)
+        )))
+        let chair = try ModelBase(record: record(ESMFixture.record("FURN", data: Data())))
+
+        #expect(leftBed.furnitureFlags == 0x8800_0001)
+        #expect(leftBed.usesFurnitureMarker(0))
+        #expect(!leftBed.usesFurnitureMarker(1))
+        #expect(!leftBed.usesFurnitureMarker(24))
+        #expect(chair.furnitureFlags == nil)
+        #expect(chair.usesFurnitureMarker(5))
+        #expect(leftBed.allowsManualInteraction)
+    }
 }

@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
+import OpenSkyAIPackages
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
@@ -26,6 +27,7 @@ protocol DialogueMenuHost: MenuInputConsumer {
     var dialogueCamera: DialogueCameraController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var faceMorphs: FaceMorphCoordinator { get }
+    var furniture: FurnitureCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
     var hud: HUDCoordinator { get }
     var menuMode: MenuModeController { get }
@@ -88,6 +90,7 @@ final class DialogueMenuController {
             return
         }
         guard let runtime = dialogue.begin(with: speaker) else { return }
+        game.furniture.greet(speaker)
         model = DialogueMenuModel.build(
             speaker: speaker,
             name: game.dialogueWorld.speakerLabel(for: speaker),

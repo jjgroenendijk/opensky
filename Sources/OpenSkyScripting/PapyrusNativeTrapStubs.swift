@@ -25,7 +25,6 @@ extension PapyrusNativeFunctions {
         TrapStub("ObjectReference", "CreateDetectionEvent", .none),
         TrapStub("ObjectReference", "SetActorCause", .none),
         TrapStub("ObjectReference", "CalculateEncounterLevel", .integer(1)),
-        TrapStub("ObjectReference", "IsFurnitureInUse", .boolean(false)),
         TrapStub("ObjectReference", "InterruptCast", .none),
         TrapStub("ObjectReference", "Say", .none),
         TrapStub("Weapon", "Fire", .none),

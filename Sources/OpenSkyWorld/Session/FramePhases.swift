@@ -65,6 +65,8 @@ public enum WorldTickStep: Int, FramePhase {
     /// After the idles, so an idle's event reaches the actor's graph in the same frame.
     case actorGraphs
     case vehicles
+    /// After the vehicles, which clear the seat of a player who rides none.
+    case furniture
     case objectAnimation
     /// Samples the speaker's head bone in the same tick.
     case dialogueCamera

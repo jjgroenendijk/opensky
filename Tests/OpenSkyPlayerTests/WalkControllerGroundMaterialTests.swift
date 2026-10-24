@@ -29,6 +29,16 @@ struct WalkControllerGroundMaterialTests {
         #expect(controller.groundMaterial == Self.wood)
     }
 
+    @Test func aResetNearTheFloorStandsOnItRatherThanUnderIt() {
+        var controller = WalkController(cameraPosition: SIMD3(0, 0, 30))
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(z: 10)])
+        controller.standOnFloorBelowEye(query: query)
+        #expect(controller.feetPosition.z == 10)
+        var high = WalkController(cameraPosition: SIMD3(0, 0, 400))
+        high.standOnFloorBelowEye(query: query)
+        #expect(high.feetPosition.z == 400 - high.capsule.eyeHeight)
+    }
+
     @Test func fallingReportsNoMaterialAtAll() {
         var camera = Self.camera(feet: SIMD3(0, 0, 4000))
         var controller = WalkController(cameraPosition: camera.position)

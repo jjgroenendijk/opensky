@@ -1,9 +1,10 @@
-// Furniture entry idles and dependent animated objects. An actor that sits plays
+// Furniture entry and exit idles, and dependent animated objects. An actor that sits plays
 // the idle the `ActionActivate` tree picks for its marker and holds it. A dependent
 // takes its owner's idle events, as the chopping block's executioner and guard take
 // the prisoner's. See docs/engine/idle-runtime.md.
 
 import OpenSkyConditions
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -11,8 +12,7 @@ extension IdleCoordinator {
     /// The tree the game picks a furniture entry idle from.
     static let furnitureEntryAction = "ActionActivate"
 
-    /// How long an actor reads `GetSitting` 4 after it gets up. OpenSky plays no exit
-    /// idle, so this stands in for one; a script that waits for the state sees it.
+    /// How long an actor reads `GetSitting` 4 after it gets up when no exit idle plays.
     static let standUpSeconds: Float = 1
 
     /// Plays the entry idle the `ActionActivate` tree picks while `actor` gets ready to
@@ -35,15 +35,92 @@ extension IdleCoordinator {
         return report
     }
 
-    /// Stops the seat idle and forgets where the actor's graph was. The actor reads
-    /// `GetSitting` 4 for `standUpSeconds`, then 0.
-    public func leaveFurniture(_ actor: ReferenceKey) {
-        guard furnitureUses[actor] != nil else { return }
+    /// Plays the exit idle the `ActionActivate` tree picks once the actor reads
+    /// `GetSitting` 4. The actor reads 4 until the exit clip ends, or for
+    /// `standUpSeconds` when no exit idle plays; then the seat idle just stops.
+    /// Without `playsExit`, as after a teleport, the seat idle just stops.
+    @discardableResult
+    public func leaveFurniture(_ actor: ReferenceKey, playsExit: Bool = true) -> IdleReport? {
+        guard furnitureUses[actor] != nil else { return nil }
+        let now = world?.idleAnimationTime ?? 0
         furnitureUses[actor]?.sitState = .readyToStand
-        standingUntil[actor] = (world?.idleAnimationTime ?? 0) + Self.standUpSeconds
+        let report = store.flatMap { store -> IdleReport? in
+            guard playsExit else { return nil }
+            let roots = store.roots(underAction: Self.furnitureEntryAction)
+            return play(
+                selector(for: actor).select(roots: roots),
+                on: actor,
+                source: Self.furnitureExitSource,
+                now: now
+            )
+        }
+        // A loading exit plays when it arrives; the seat idle holds until then.
+        if report?.failure == "loading" {
+            standingUntil[actor] = now ... now + Self.exitLoadSeconds
+            return report
+        }
+        let exitSeconds = report.flatMap(Self.exitSeconds)
+        if exitSeconds == nil {
+            stopSeatIdle(of: actor)
+        }
+        standingUntil[actor] = now ... now + (exitSeconds ?? Self.standUpSeconds)
+        return report
+    }
+
+    /// How long a loading exit idle may take before the actor just stands.
+    static let exitLoadSeconds: Float = 3
+    static let furnitureExitSource = "furniture exit"
+
+    /// Whether the actor's exit idle is still loading, so it has not left the seat yet.
+    public func isExitLoading(_ actor: ReferenceKey) -> Bool {
+        furnitureUses[actor]?.sitState == .readyToStand
+            && sessions[actor]?.waiting?.source == Self.furnitureExitSource
+    }
+
+    /// An exit idle that waited for its load times the stand-up once it plays.
+    func exitArrived(_ report: IdleReport, now: Float) {
+        guard
+            report.source == Self.furnitureExitSource,
+            furnitureUses[report.actor]?.sitState == .readyToStand
+        else { return }
+        guard let seconds = Self.exitSeconds(report) else {
+            stopSeatIdle(of: report.actor)
+            return
+        }
+        standingUntil[report.actor] = now ... now + seconds
+    }
+
+    private static func exitSeconds(_ report: IdleReport) -> Float? {
+        report.failure == nil && report.seconds.isFinite && report.seconds > 0 ? report
+            .seconds : nil
+    }
+
+    private func stopSeatIdle(of actor: ReferenceKey) {
         endIdle(of: actor)
         sessions[actor]?.playing = nil
         sessions[actor]?.waiting = nil
+    }
+
+    /// How the clip `actor` plays now moves its root, and the seconds into the clip.
+    public func rootMotion(of actor: ReferenceKey)
+        -> (motion: AnimationRootMotion, elapsed: Float)?
+    {
+        guard
+            let playing = sessions[actor]?.playing,
+            let motion = playing.rootMotion,
+            let now = world?.idleAnimationTime
+        else { return nil }
+        return (motion, now - playing.start)
+    }
+
+    /// The actor's last idle play: what it chose and why nothing played, if nothing did.
+    public func lastReport(of actor: ReferenceKey) -> IdleReport? {
+        reports[actor]
+    }
+
+    /// Whether the actor still gets up from furniture.
+    public func isStandingUp(_ actor: ReferenceKey) -> Bool {
+        standingUntil[actor] != nil
     }
 
     /// Who sits where, for every condition context: `GetSitting` in a quest, a topic, or
@@ -63,10 +140,11 @@ extension IdleCoordinator {
             }
         }
         // A clock that went back, such as after a load, also ends the stand-up.
-        for (actor, until) in standingUntil
-            where now >= until || now < until - Self.standUpSeconds
-        {
+        for (actor, span) in standingUntil where now >= span.upperBound || now < span.lowerBound {
             standingUntil[actor] = nil
+            if isExitLoading(actor) {
+                stopSeatIdle(of: actor)
+            }
             if furnitureUses[actor]?.sitState == .readyToStand {
                 furnitureUses[actor] = nil
             }

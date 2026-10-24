@@ -10,6 +10,8 @@ import OpenSkyFormatsAnimation
 nonisolated public struct BehaviorEventClip: Equatable, Sendable {
     /// The clip generator's animation name, relative to the project folder.
     public let animationName: String
+    /// The clip generator's own name, which the project's animation data keys clips by.
+    public var generatorName: String?
     public var behaviorFiles: [String]
     /// String payloads of events below the target state, in walk order. A prop
     /// event such as `AnimObjDraw` names its ANIO editor ID here.

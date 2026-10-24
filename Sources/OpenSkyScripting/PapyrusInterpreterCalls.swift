@@ -56,14 +56,13 @@ extension PapyrusInterpreter {
             return intrinsic
         }
         guard let instance = runtime.instance(for: handle) else {
-            let call = externalMethodCall(
+            return try externalMethodFlow(
                 function,
-                receiverOperand: operands[1],
+                operands: operands,
                 receiver: handle,
                 arguments: arguments,
                 frame: frame
             )
-            return try nativeFlow(call, destination: operands[2])
         }
         if let resolved = try resolveMethod(functionName, instance: instance) {
             return try resolvedMethodFlow(
@@ -323,6 +322,57 @@ extension PapyrusInterpreter {
             receiver: receiver,
             arguments: arguments
         )
+    }
+
+    /// A call on a receiver with no script instance: a Papyrus wrapper of its declared
+    /// type runs, anything else goes to native dispatch.
+    private func externalMethodFlow(
+        _ function: CallName,
+        operands: [PexValue],
+        receiver: PapyrusObjectHandle,
+        arguments: [PapyrusValue],
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> PapyrusFlow {
+        if
+            let wrapper = try externalWrapper(
+                function.spelling,
+                receiverOperand: operands[1],
+                frame: frame
+            )
+        {
+            return try resolvedMethodFlow(
+                wrapper, function: function, receiver: receiver,
+                arguments: arguments, destination: operands[2]
+            )
+        }
+        let call = externalMethodCall(
+            function,
+            receiverOperand: operands[1],
+            receiver: receiver,
+            arguments: arguments,
+            frame: frame
+        )
+        return try nativeFlow(call, destination: operands[2])
+    }
+
+    /// A function written in Papyrus on the receiver's declared type, such as
+    /// `ObjectReference.IsInInterior`, run on a receiver that has no script of its own.
+    /// The declared script loads on first use, as a static call's global script does.
+    private func externalWrapper(
+        _ functionName: String,
+        receiverOperand: PexValue,
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> PapyrusResolvedFunction? {
+        let declared = receiverScriptName(receiverOperand, frame: frame)
+        if runtime.index(named: declared) == nil {
+            _ = runtime.loadScript?(declared)
+        }
+        for owner in try runtime.indexChain(from: declared) {
+            guard let compiled = owner.function(named: functionName, state: "") else { continue }
+            let resolved = PapyrusResolvedFunction(owner: owner, compiled: compiled)
+            return resolved.function.flags.contains(.native) ? nil : resolved
+        }
+        return nil
     }
 
     /// The script in `declared`'s parent chain that declares `functionName` native, as a

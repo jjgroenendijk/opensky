@@ -14,6 +14,7 @@ import OpenSkyFactions
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyLoading
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
@@ -35,11 +36,15 @@ protocol AgentWorldHost: AnyObject {
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var factions: FactionCoordinator { get }
+    var aiWorld: AIWorldAdapter { get }
+    var furniture: FurnitureCoordinator { get }
+    var menuScreensWorld: MenuScreensWorldAdapter { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var inventoryMenu: InventoryMenuController { get }
     var journalMenu: JournalMenuController { get }
     var loadingScreens: LoadingScreenCoordinator { get }
+    var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
     var messages: MessageCoordinator { get }
     var packages: PackageCoordinator { get }

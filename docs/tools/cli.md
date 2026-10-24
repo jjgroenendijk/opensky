@@ -64,7 +64,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `actor-values [--npc id \| --race id] [--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
 | `collision [--worldspace/--x/--y] [--radius n]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)) |
 | `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
-| `nif <key> [--sequences]`, `dds <key>` | Container stats, each node with its local translation, and the flattened model; or the header and mip chain. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
+| `nif <key> [--sequences]`, `dds <key>` | Container stats, each node with its local translation, the flattened model, and any furniture markers; or the header and mip chain. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
 | `hkx <key>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)) |
 | `hkt <key>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
 | `skeleton <hkx-key> [--nif <nif-key>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |

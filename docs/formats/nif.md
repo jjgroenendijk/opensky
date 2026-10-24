@@ -207,7 +207,7 @@ Reference: the `BSFurnitureMarker` and `FurniturePosition` entries of nif.xml (N
 Confirmed on the install: `meshes\furniture\headchoppingblock.nif` has one 68-byte block
 named `FRN` with three sit markers, 8 + 3 x 20 bytes. The `FURN` record's `ENAM`, `FNMK`,
 and `FNPR` fields describe the same markers by index ([world records](/formats/world-records.md)).
-How OpenSky uses them: [package schedules](/engine/package-schedules.md#furniture).
+How OpenSky uses them: [furniture](/engine/furniture.md).
 
 ## BSTriShape
 

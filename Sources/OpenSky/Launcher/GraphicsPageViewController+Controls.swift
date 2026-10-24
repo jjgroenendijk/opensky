@@ -119,6 +119,10 @@ extension GraphicsPageViewController {
             "Traps, doors, and levers play their animations"
         )
         checkbox(
+            furnitureControl, "Furniture",
+            "The player and package actors sit in chairs and lie in beds"
+        )
+        checkbox(
             actorGraphsControl, "ActorGraphs",
             "NPCs and creatures run their own behaviour graphs"
         )
@@ -196,7 +200,8 @@ extension GraphicsPageViewController {
             (blinkingControl, .characterBlinking), (eyeMovementControl, .characterEyeMovement),
             (expressionsControl, .characterDialogueExpressions),
             (headTrackingControl, .characterHeadTracking),
-            (objectAnimationControl, .objectAnimation), (actorGraphsControl, .actorGraphs),
+            (objectAnimationControl, .objectAnimation), (furnitureControl, .furniture),
+            (actorGraphsControl, .actorGraphs),
             (combatTemperamentControl, .combatTemperament),
             (combatGameSettingsControl, .combatGameSettings),
             (pipelineCacheControl, .pipelineCacheEnabled),

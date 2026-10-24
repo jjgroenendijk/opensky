@@ -4,6 +4,8 @@
 
 import Metal
 import OpenSkyEngineTesting
+import OpenSkyFormatsESM
+import OpenSkyPlayer
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
@@ -55,6 +57,21 @@ struct GameSessionFrameInputTests {
         #expect(renderer.frameInput.fovYRadians == gameSession.firstPersonCamera.fovYRadians)
         #expect(renderer.frameInput.fovYRadians != FirstPersonCamera.defaultFOVYRadians)
         #expect(renderer.projectionMatrix != before)
+    }
+
+    /// A teleport in fly mode, then walk mode, stands the player on the spot.
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
+    @MainActor
+    func aFlyTeleportThenWalkStandsOnTheSpot() throws {
+        let gameSession = try Self.makeSession()
+        gameSession.setMovementMode(.fly)
+        let spot = SIMD3<Float>(100, -50, 68)
+        gameSession.reseedMovement(camera: .teleport(placement: .init(
+            position: spot,
+            rotation: .zero
+        )))
+        gameSession.setMovementMode(.walk)
+        #expect(simd_distance(gameSession.walkController.feetPosition, spot) < 0.01)
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))

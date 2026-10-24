@@ -3,6 +3,7 @@
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import simd
 
 extension GameSession {
     /// Seeds the walk controller from the camera pose during `init`, before every
@@ -23,7 +24,9 @@ extension GameSession {
         restorePlayerCameraPose()
         dialogueCameraState.camera.reset()
         freeFlyCamera = FreeFlyCamera(framing: newCamera)
-        if movementMode.isPlayerControlled, let feet = newCamera.walkFeetPosition {
+        // Fly mode looks from eye height too, so a later switch to walk puts the feet
+        // on the spot rather than an eye height below its floor.
+        if let feet = newCamera.walkFeetPosition {
             freeFlyCamera.position = feet
                 + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
         }
@@ -49,6 +52,21 @@ extension GameSession {
                 collisionQuery: collisionQuery ?? { _ in [] }
             )
             : eye
+    }
+
+    /// Puts the body's root on a seat and the eye on the seat idle's `head` bone, in
+    /// the root's space, so the view sits in the seat. The seat holds without a head
+    /// bone too: a walking step there would drop the player out of the seat state.
+    public func seatPlayer(at root: float4x4, head: SIMD3<Float>?) {
+        playerSeat = root
+        seatedHead = head ?? seatedHead
+        guard let head = seatedHead else {
+            let origin = root.columns.3
+            placePlayerFeet(at: SIMD3(origin.x, origin.y, origin.z))
+            return
+        }
+        let eye = root * SIMD4(head, 1)
+        placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - walkController.capsule.eyeHeight))
     }
 
     /// Advances active movement mode by one input frame. First frame makes no
@@ -81,11 +99,14 @@ extension GameSession {
              .thirdPerson where playerMount?.isMountActive == true:
             advanceMounted(frameInput)
         case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
-            // The vehicle places a seated player; only the view turns.
+            // The vehicle or the furniture places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
             locomotion.advanceSeated(
                 deltaTime: lastCameraDelta, feet: walkController.feetPosition
             )
+            if frameInput.moveForward != 0 || frameInput.moveRight != 0 || frameInput.jump {
+                playerFurniture?.playerAskedToStand()
+            }
         case .walk, .thirdPerson:
             advancePlayer(frameInput)
         }
@@ -116,6 +137,9 @@ extension GameSession {
         // distance every time the camera key is pressed.
         guard !wasPlayerControlled else { return }
         walkController.reset(cameraPosition: freeFlyCamera.position)
+        if let collisionQuery {
+            walkController.standOnFloorBelowEye(query: collisionQuery)
+        }
         locomotion.reset()
     }
 

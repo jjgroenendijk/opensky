@@ -37,6 +37,12 @@ enum AssetCommand {
             }
         }
         printModelSummary(file: file)
+        for (index, marker) in NIFFurnitureMarker.markers(in: file).enumerated() {
+            let offset = marker.offset
+            print("furniture marker \(index): at (\(offset.x), \(offset.y), \(offset.z)) "
+                + "heading \(marker.heading) type \(marker.animationType) "
+                + "entry \(marker.entryPoints)")
+        }
         if arguments.sequences {
             NIFSequenceReport.print(file: file)
         }

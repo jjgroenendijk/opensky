@@ -87,7 +87,7 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
         world.packagePatrolPath(from: start, actor: actor, aliasQuest: aliasQuest)
     }
 
-    func seat(in furniture: ReferenceKey) -> PackageSeat? {
-        world.packageSeat(in: furniture, actor: actor)
+    func seat(in furniture: ReferenceKey, animation: UInt16) -> PackageSeat? {
+        world.packageSeat(in: furniture, actor: actor, animation: animation)
     }
 }

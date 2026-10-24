@@ -14,7 +14,7 @@ public protocol PackageInputResolving {
     func reference(of target: Package.Target) -> ReferenceKey?
     func position(of reference: ReferenceKey) -> SIMD3<Float>?
     func patrolPath(from start: Package.Target) -> [SIMD3<Float>]?
-    func seat(in furniture: ReferenceKey) -> PackageSeat?
+    func seat(in furniture: ReferenceKey, animation: UInt16) -> PackageSeat?
 }
 
 /// Where each kind reads its parameters, as positions in its `PKC2` list.

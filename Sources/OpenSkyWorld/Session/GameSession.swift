@@ -88,10 +88,22 @@ public final class GameSession: RenderFrameDriver {
     /// buffers the GPU has not been told about.
     public var playerBody: PlayerBody?
     /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
-    public var playerSeat: float4x4?
+    public var playerSeat: float4x4? {
+        didSet {
+            if playerSeat == nil {
+                seatedHead = nil
+            }
+        }
+    }
+
+    /// The seat idle's last `head` bone, in the seat's space. A seat idle that ended, or
+    /// one still loading, keeps the eye there.
+    var seatedHead: SIMD3<Float>?
     /// The player's mount; while one is under the player it moves instead of the
     /// player (docs/engine/riding.md).
     public weak var playerMount: (any PlayerMountDriving)?
+    /// The furniture the player sits in; a move key asks it to stand the player up.
+    public weak var playerFurniture: (any PlayerFurnitureDriving)?
     /// The waypoints a package walks the player along, empty without a walk
     /// (`PlayerPackageWalk`).
     public var playerWalkPath: [SIMD3<Float>] = []

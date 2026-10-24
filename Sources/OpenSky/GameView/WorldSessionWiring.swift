@@ -253,6 +253,7 @@ final class WorldSessionWiring {
         game.idleWorld.wireIdles(provider: provider, gameSession: gameSession)
         game.actorGraphWorld.wire(gameSession: gameSession)
         game.vehicleWorld.wireVehicles(gameSession: gameSession)
+        game.aiWorld.wireFurniture(gameSession: gameSession)
         // After the locks, whose activation gate it wraps.
         game.mountWorld.wireMounts(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)

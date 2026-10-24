@@ -40,6 +40,8 @@ final class VehicleWorldAdapter {
     private(set) var isPlayerAIDriven = false
     /// The cell each follower is moving into while its old cell still draws it.
     private var crossings: [ReferenceKey: CellCoordinate] = [:]
+    /// The vehicle seated the player on the last step.
+    private var ridesPlayer = false
     /// The start of the seat idle the player's view was last turned for.
     private var facedIdleStart: Float?
     /// Wheel contacts by model path, read off the main actor.
@@ -71,9 +73,12 @@ final class VehicleWorldAdapter {
         gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] _ in
             guard let self else { return }
             run(vehicles.advance())
-            if vehicles.lastPoses[.player] == nil {
+            // Only the end of a ride frees the seat; a chair holds the player too.
+            let rides = vehicles.lastPoses[.player] != nil
+            if ridesPlayer, !rides {
                 gameSession?.playerSeat = nil
             }
+            ridesPlayer = rides
         }
     }
 
@@ -127,21 +132,12 @@ extension VehicleWorldAdapter: VehicleWorld {
     /// plays a seat idle, the eye goes to the clip's head bone, so the view sits in the seat.
     func placePlayer(at pose: ReferenceTransformOverride) {
         guard let gameSession = game.gameSession else { return }
-        guard
-            let head = game.idleWorld.idles.idleBone(
-                of: .player, named: DialogueCamera.headBoneName
-            )
-        else {
-            gameSession.playerSeat = nil
-            gameSession.placePlayerFeet(at: pose.position)
-            return
-        }
+        let head = game.idleWorld.idles.idleBone(of: .player, named: DialogueCamera.headBoneName)
         let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
-        gameSession.playerSeat = root
-        let eye = root * SIMD4(head, 1)
-        let height = gameSession.walkController.capsule.eyeHeight
-        gameSession.placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - height))
-        faceSeat(root: root, gameSession: gameSession)
+        gameSession.seatPlayer(at: root, head: head)
+        if head != nil {
+            faceSeat(root: root, gameSession: gameSession)
+        }
     }
 
     /// A new seat idle turns the view the way the seat's head faces, once; the player

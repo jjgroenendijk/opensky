@@ -55,11 +55,23 @@ extension CellSceneBuilderTests {
         #expect(scene.interactions[FormID(0x404)]?.voiceType == nil)
     }
 
-    /// Each mesh marker is a seat in world space, with the record's keyword for its index.
+    /// Each mesh marker is a seat in world space, with the record's keyword and disabled
+    /// entries for its index. `MNAM` 0b10 turns marker 0 off. The root drops to the floor,
+    /// and every seat carries the record's perch, sandbox, and spell flags.
     @Test(.enabled(if: Self.hasDevice))
     func furnitureSeatsTakeMarkersAndKeywords() throws {
         try writeLooseFile("meshes/furniture/block.nif", Self.furnitureNIF)
-        let keyword = ESMFixture.field("ENAM", ESMFixture.u32(1))
+        var disabledEntries = Data()
+        disabledEntries.appendUInt16(0)
+        disabledEntries.appendUInt16(2)
+        var flags = Data()
+        flags.appendUInt16(0x02)
+        let keyword = ESMFixture.field("MNAM", ESMFixture.u32(0x0400_0002))
+            + ESMFixture.field("FNAM", flags)
+            + ESMFixture.field("NAM1", ESMFixture.u32(0x777))
+            + ESMFixture.field("ENAM", ESMFixture.u32(0))
+            + ESMFixture.field("NAM0", disabledEntries)
+            + ESMFixture.field("ENAM", ESMFixture.u32(1))
             + ESMFixture.field("FNMK", ESMFixture.u32(0x900))
         let scene = try build(pluginData: plugin(
             temporaryRefs: refrRecord(
@@ -75,9 +87,16 @@ extension CellSceneBuilderTests {
         #expect(seats[0].keyword == nil)
         #expect(seats[1].keyword == FormID(0x900))
         // A z turn of a quarter maps model +x onto world -y, as the cell build places meshes.
-        #expect(simd_distance(seats[1].position, [100, -10, 0]) < 0.01)
+        #expect(simd_distance(seats[1].position, [100, -10, 34]) < 0.01)
+        #expect(simd_distance(seats[1].root, [100, -10, 0]) < 0.01)
         #expect(abs(seats[1].heading - (.pi / 2 + 1)) < 0.0001)
         #expect(seats[1].entryPoints == 2)
+        #expect(seats[0].entryPoints == 0)
+        #expect(!seats[0].isEnabled)
+        #expect(seats[1].isEnabled)
+        #expect(seats[0].rules == FurnitureRules(
+            isPerch: true, ignoredBySandbox: true, associatedSpell: FormID(0x777)
+        ))
     }
 
     /// An automatic door covers its `OBND` box at its pose; a parent-only reference is no
@@ -126,6 +145,19 @@ extension CellSceneBuilderTests {
         #expect(lift.entry(from: [5, 0, 0]) == 16)
     }
 
+    /// A seat facing +y stands its user up in front for entry 1 and to the right for 4.
+    @Test func aStandingActorStepsOutOnItsEntrySide() {
+        let seat = FurnitureSeat(
+            position: [10, 20, 39], heading: 0, animationType: 1, keyword: nil,
+            entryPoints: 0b0101, root: [10, 20, 5]
+        )
+        let distance = FurnitureSeat.standDistance
+        #expect(simd_distance(seat.standPoint(entry: 1), [10, 20 + distance, 5]) < 0.001)
+        #expect(simd_distance(seat.standPoint(entry: 4), [10 + distance, 20, 5]) < 0.001)
+        #expect(seat.standPoint(entry: 16) == seat.root)
+        #expect(abs(seat.facingYaw - .pi / 2) < 0.0001)
+    }
+
     private static var furnitureNIF: Data {
         var block = Data()
         block.appendUInt32(0)
@@ -133,7 +165,7 @@ extension CellSceneBuilderTests {
         for (x, heading) in [(Float(0), Float(0)), (10, 1)] {
             block.appendFloat32(x)
             block.appendFloat32(0)
-            block.appendFloat32(0)
+            block.appendFloat32(34)
             block.appendFloat32(heading)
             block.appendUInt16(1)
             block.appendUInt16(2)

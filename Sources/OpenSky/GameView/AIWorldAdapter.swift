@@ -47,14 +47,17 @@ protocol AIWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var factions: FactionCoordinator { get }
+    var furniture: FurnitureCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var npcAnimation: NPCAnimationCoordinator { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
+    var playerSettingsStore: PlayerSettingsStore { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -301,6 +304,10 @@ extension AIWorldAdapter {
     ) -> PackageMoveResult {
         if actor == .player {
             return walkPlayer(to: point, direct: direct) ? .started : .failed
+        }
+        // The exit clip carries the actor out of its seat first.
+        if game.furniture.isLeavingSeat(actor) {
+            return .busy
         }
         let result = game.streamer?.moveActor(
             actor, to: point, direct: direct, gait: gait,

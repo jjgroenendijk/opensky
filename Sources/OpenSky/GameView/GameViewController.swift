@@ -260,6 +260,8 @@ final class GameViewController: NSViewController {
     lazy var combatWorld = CombatWorldAdapter(game: self)
     /// Live resident-actor package selection.
     lazy var packages = PackageCoordinator(world: aiWorld)
+    /// The furniture seats the player and the packages share.
+    lazy var furniture = FurnitureCoordinator(world: aiWorld)
 
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
     lazy var perception = PerceptionCoordinator(world: aiWorld)

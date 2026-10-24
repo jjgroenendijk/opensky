@@ -35,6 +35,7 @@ public enum PapyrusNativeFunctions {
         installMenus(into: &registry)
         installReferenceAlias(into: &registry)
         installVehicle(into: &registry)
+        installFurniture(into: &registry)
         installInventory(into: &registry)
         installAlchemy(into: &registry)
         installWorldPlace(into: &registry)

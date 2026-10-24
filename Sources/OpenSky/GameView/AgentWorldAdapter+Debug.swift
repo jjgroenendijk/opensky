@@ -39,16 +39,23 @@ extension AgentWorldAdapter {
             return try done(kill(reference))
         case let .resurrect(reference):
             return try done(resurrect(reference))
-        case let .overlay(name, enabled):
-            return try done(setOverlay(name, enabled: enabled))
-        case let .channel(name):
-            return try done(setChannel(name))
-        case let .shadows(name):
-            return try done(setShadowQuality(name))
+        case .overlay, .channel, .shadows:
+            return try done(renderDebug(command))
         case let .raceMenu(limited):
             return try done(openRaceMenu(limited: limited))
         case let .benchmark(request):
             return try benchmark(request)
+        case .sit, .stand, .passTime:
+            return try done(performFurniture(command))
+        }
+    }
+
+    private func renderDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .overlay(name, enabled): try setOverlay(name, enabled: enabled)
+        case let .channel(name): try setChannel(name)
+        case let .shadows(name): try setShadowQuality(name)
+        default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
 

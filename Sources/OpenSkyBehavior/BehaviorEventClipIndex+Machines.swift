@@ -45,6 +45,7 @@ nonisolated extension BehaviorEventClipIndex {
                 loops: clip.mode == 1 || clip.mode == 3
             )
             found.triggers = Self.triggers(of: clip, in: events)
+            found.generatorName = clip.node.name
             found.position = position
             return found
         }

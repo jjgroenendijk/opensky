@@ -15,6 +15,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case scripts(reference: String?)
     /// The actor's package, its procedure progress, and its newest move result.
     case packages(reference: String)
+    /// An actor's seat, or a piece of furniture's markers and who holds them.
+    case furniture(reference: String)
     case actorValue(reference: String, name: String)
     case global(String)
     case time
@@ -50,6 +52,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "scenes": .scenes
         case "scripts": try .scripts(reference: args.optionalString("ref"))
         case "packages": try .packages(reference: args.string("ref"))
+        case "furniture": try .furniture(reference: args.optionalString("ref") ?? "player")
         default: nil
         }
     }
@@ -90,6 +93,12 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case raceMenu(limited: Bool)
     /// Runs the benchmark tour; the reply comes when the tour ends.
     case benchmark(AgentBenchmarkRequest)
+    /// Seats the actor in `furniture`, or in the nearest loaded furniture with a free seat.
+    case sit(reference: String, furniture: String?)
+    /// Gets the actor up from its seat.
+    case stand(String)
+    /// Passes the hours as the wait menu does; `sleeping` as the rest menu does.
+    case passTime(hours: Int, sleeping: Bool)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
@@ -103,7 +112,25 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "kill": try .kill(args.string("ref"))
         case "resurrect": try .resurrect(args.string("ref"))
         case "racemenu": try .raceMenu(limited: args.bool("limited", default: false))
-        default: try parseRender(name, args)
+        default: try parseFurniture(name, args)
+        }
+    }
+
+    private static func parseFurniture(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self {
+        switch name {
+        case "sit":
+            return try .sit(
+                reference: args.optionalString("ref") ?? "player",
+                furniture: args.optionalString("furniture")
+            )
+        case "stand": return try .stand(args.optionalString("ref") ?? "player")
+        case "rest":
+            let hours = try args.int("hours")
+            guard (1 ... 24).contains(hours) else { throw args.invalid("hours", "1 to 24") }
+            return try .passTime(hours: hours, sleeping: args.bool("sleep", default: false))
+        default: return try parseRender(name, args)
         }
     }
 
