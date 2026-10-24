@@ -55,7 +55,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
             lifetime: record.lifetime,
             collisionRadius: record.collisionRadius
         )
-        explosion = record.explosion
+        // A trap dart names `FireBallExp01` but leaves the explosion flag off.
+        explosion = record.flags.contains(.explosion) ? record.explosion : nil
         if record.flags.contains(.alternateTrigger) {
             explosionProximity = Self.clean(record.explosionProximity)
             explosionTimer = Self.clean(record.explosionTimer)

@@ -53,4 +53,17 @@ struct ProjectileTrapShotTests {
         #expect(west.x > 0.98 && west.z == 0)
         #expect(east.x < -0.98 && east.z == 0)
     }
+
+    /// `TrapDartWooden01` names `FireBallExp01` with the explosion flag off.
+    @Test func aProjectileExplodesOnlyWithTheExplosionFlag() {
+        let fireball = FormID(0x0439C0)
+        func profile(_ flags: Projectile.Flags) -> ProjectileProfile {
+            ProjectileProfile(record: Projectile(
+                formID: FormID(0x0141EF), flags: flags, gravityFactor: 0, speed: 1300,
+                range: 10000, explosion: fireball
+            ))
+        }
+        #expect(profile([.muzzleFlash, .passThroughSmallTransparent]).explosion == nil)
+        #expect(profile([.explosion]).explosion == fireball)
+    }
 }
