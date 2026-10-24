@@ -90,6 +90,10 @@ Events are also positional: index, name, and flags. A raised event waits for the
 waiting queue holds at most 256 and drops the oldest first. So a modifier that raises an event every
 update, with nothing reading it, cannot grow the queue without end.
 
+A name, of an event or a variable, matches without case. The game shows this: the vanilla
+`trapbase` script raises `loop` and `reset` on the swinging blade graph, which declares `Loop` and
+`Reset`, and the blade swings.
+
 ## Bindings
 
 A `hkbVariableBindingSet` maps a member path on a node to a variable index. Writing a graph variable

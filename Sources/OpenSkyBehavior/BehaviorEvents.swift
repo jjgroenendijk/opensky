@@ -25,7 +25,9 @@ nonisolated public struct BehaviorEvent: Equatable, Sendable {
 nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
     /// Declared name per event index; nil where the graph declares none.
     public let names: [String?]
-    /// Name -> index. First declaration wins, as in `BehaviorVariableStore`.
+    /// Lowercased name -> index. First declaration wins, as in `BehaviorVariableStore`.
+    /// The game matches names without case: `trapbase` raises `loop` on a graph that
+    /// declares `Loop`.
     private let indexByName: [String: Int]
 
     /// Raised but not yet promoted into an update.
@@ -48,14 +50,14 @@ nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
         self.names = names
         var byName: [String: Int] = [:]
         for (index, name) in names.enumerated() {
-            guard let name, byName[name] == nil else { continue }
-            byName[name] = index
+            guard let name, byName[name.lowercased()] == nil else { continue }
+            byName[name.lowercased()] = index
         }
         indexByName = byName
     }
 
     public func index(of name: String) -> Int? {
-        indexByName[name]
+        indexByName[name.lowercased()]
     }
 
     // MARK: - Raising

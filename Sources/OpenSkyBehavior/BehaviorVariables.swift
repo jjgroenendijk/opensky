@@ -65,7 +65,8 @@ nonisolated public struct BehaviorVariableStore: Equatable, Sendable {
     /// with the same index they use for `words`, which is how Havok addresses
     /// them: one variable index, two parallel arrays, the declared type picks.
     private var quads: [SIMD4<Float>]
-    /// Name -> index, built once. First declaration wins, so a duplicated name
+    /// Lowercased name -> index, built once, because the game matches names without
+    /// case. First declaration wins, so a duplicated name
     /// in a modded graph resolves to the same index every run.
     private let indexByName: [String: Int]
 
@@ -101,16 +102,16 @@ nonisolated public struct BehaviorVariableStore: Equatable, Sendable {
 
         var byName: [String: Int] = [:]
         for (index, name) in names.enumerated() {
-            guard let name, byName[name] == nil else { continue }
-            byName[name] = index
+            guard let name, byName[name.lowercased()] == nil else { continue }
+            byName[name.lowercased()] = index
         }
         indexByName = byName
     }
 
     /// The declared index of `name`, or nil when the graph declares no such
-    /// variable. Names are matched exactly; Havok's are case-sensitive.
+    /// variable. Names match without case.
     public func index(of name: String) -> Int? {
-        indexByName[name]
+        indexByName[name.lowercased()]
     }
 
     // MARK: - Reading
