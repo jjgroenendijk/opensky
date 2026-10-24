@@ -54,6 +54,8 @@ nonisolated public enum PerkSkyLayout {
     ) -> [PerkSkyStar] {
         let parents = parentMap(perks)
         let owned = Set(perks.filter(\.isOwned).map(\.node))
+        let columns = perks.map(\.gridX)
+        let centre = ((columns.min() ?? 0) + (columns.max() ?? 0)) / 2
         return perks.map { perk in
             let state: PerkStarState = if perk.node == selected {
                 .selected
@@ -66,7 +68,9 @@ nonisolated public enum PerkSkyLayout {
             }
             return PerkSkyStar(
                 node: perk.node,
-                position: position(perk, slot: slot, anchor: anchor, settings: settings),
+                position: position(
+                    perk, centre: centre, slot: slot, anchor: anchor, settings: settings
+                ),
                 state: state
             )
         }
@@ -91,14 +95,17 @@ nonisolated public enum PerkSkyLayout {
         }
     }
 
-    /// `fStatsStar*Increment` steps across, up, and inward per row, from the anchor.
+    /// The `fStatsStar*` settings work in a frame that faces the camera: +X runs to
+    /// the left and +Z toward the camera, so a higher column sits further left and
+    /// `fStatsStarZIncrement` (-9) leans the tree back. `centre` is the column under the anchor.
     static func position(
-        _ perk: SkillsMenuPerk, slot: Int, anchor: SIMD3<Float>, settings: PerkSkySettings
+        _ perk: SkillsMenuPerk, centre: Float, slot: Int, anchor: SIMD3<Float>,
+        settings: PerkSkySettings
     ) -> SIMD3<Float> {
         let step = settings.starIncrement
         let local = SIMD3<Float>(
-            (perk.gridX - 2) * step.x,
-            settings.starZInitialOffset + perk.gridY * step.z * settings.rowScale,
+            (centre - perk.gridX) * step.x,
+            -(settings.starZInitialOffset + perk.gridY * step.z * settings.rowScale),
             perk.gridY * step.y * settings.rowScale
         )
         return anchor + rotate(local, yawDegrees: Float(slot) * slotDegrees)

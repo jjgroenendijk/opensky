@@ -30,7 +30,7 @@ struct PerkSkyTests {
         #expect(PerkSkyLayout.anchorName(slot: 7) == "Point07")
     }
 
-    @Test func starsGrowUpAndInwardFromTheAnchor() {
+    @Test func starsMirrorAcrossAndLeanBackFromTheAnchor() {
         let settings = PerkSkySettings()
         let stars = PerkSkyLayout.stars(
             [
@@ -40,8 +40,12 @@ struct PerkSkyTests {
             ],
             slot: 0, anchor: [0, 100, 0], selected: nil, settings: settings
         )
-        #expect(Self.close(stars[0].position, [0, 100, 0]))
-        #expect(Self.close(stars[1].position, [5, 100 - 9 * 0.4, 15 * 0.4]))
+        let row = settings.rowScale
+        #expect(Self.close(stars[0].position, [0, 95, 0]), "column 2 is the centre of 1 to 3")
+        #expect(
+            Self.close(stars[1].position, [-5, 95 + 9 * row, 15 * row]),
+            "a higher column sits to the left, and a higher row further out"
+        )
         #expect(stars.map(\.state) == [.owned, .unlocked, .locked])
     }
 
