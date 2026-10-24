@@ -268,6 +268,7 @@ nonisolated extension BehaviorGraphInstance {
         transition: BehaviorTransition?
     ) {
         raiseNotifyEvents(of: state.currentStateId, machine: machine, entering: false)
+        restartGenerator(ofState: stateId, leaving: state.currentStateId, machine: machine)
         var effect = transition
         effect?.fromStateId = state.currentStateId
         state.previousStateId = state.currentStateId

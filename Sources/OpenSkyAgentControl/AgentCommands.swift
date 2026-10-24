@@ -17,6 +17,10 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case packages(reference: String)
     /// An actor's seat, or a piece of furniture's markers and who holds them.
     case furniture(reference: String)
+    /// Each running object graph, such as a trap's, with its state and bone positions.
+    case objects(reference: String?)
+    /// The newest world-state writes, and whether the streamer is loading or rebuilding.
+    case changes(limit: Int)
     case actorValue(reference: String, name: String)
     case global(String)
     case time
@@ -53,6 +57,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "scripts": try .scripts(reference: args.optionalString("ref"))
         case "packages": try .packages(reference: args.string("ref"))
         case "furniture": try .furniture(reference: args.optionalString("ref") ?? "player")
+        case "objects": try .objects(reference: args.optionalString("ref"))
+        case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         default: nil
         }
     }

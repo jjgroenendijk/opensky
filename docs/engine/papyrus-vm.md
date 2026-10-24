@@ -121,6 +121,11 @@ chain writes in Papyrus runs on the receiver: `ObjectReference.IsInInterior` cal
 dispatch under the name of the script that declares it, so `Location.HasKeyword` reaches
 `Form.HasKeyword`.
 
+During play, scripts load off the main actor. A cell's attach waits until its scripts have
+loaded, and also the scripts their code names in a static call. `DartTrap` calls
+`Custom.countLinks` to count its ports. If `custom.pex` were still loading, the call would go
+to native dispatch as unknown and return 0, so the trap would fire from no port.
+
 A native returns a value, a failure with a reason, a suspension request, or a stated deviation. An
 unknown `(script, function)` pair is logged and tallied, and the call returns its declared default.
 A native failure does the same and keeps its reason. This keeps vanilla scripts moving without

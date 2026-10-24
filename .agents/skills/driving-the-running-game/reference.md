@@ -48,7 +48,7 @@ arrow keys.
 `state player`, `state target`, `state actors [--radius <units>]`, `state menu`,
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
-`state furniture [<ref>]`,
+`state furniture [<ref>]`, `state objects [<ref>]`, `state changes [--limit <n>]`,
 `state time`, `state frame`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
@@ -62,7 +62,8 @@ arrow keys.
   name.
 - `state scripts` gives the script queue, the waits, the newest events, the newest fault, and
   the missing natives. With `--ref`, it also lists the scripts on that reference or quest
-  with their state and variables.
+  with their state and variables, and the `waits` they are in: the script, the native
+  (`Utility.Wait`, `ObjectReference.PlayAnimationAndWait`), and what wakes it.
 - `state player` also lists the `spells` the player knows, by editor ID, abilities such as
   `Rested` included.
 - `state furniture` (default `player`) gives an actor's `sitState` (the `GetSitState` value),
@@ -71,6 +72,14 @@ arrow keys.
   `rootMotion`; for a piece of furniture it gives the record's `rules` and lists each
   marker with its type, whether `MNAM` turns it on, its entry sides, its `position` and
   floor-level `root`, its holder, and `inUse`.
+- `state objects` lists each running object behaviour graph, such as a trap's or a door's,
+  with its project, innermost active `state`, every active state in `states`,
+  `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
+  `bones`: each bone's `position` in the object's own space and its `rotationDegrees` angle
+  there, so two reads a few frames apart show a blade swing.
+- `state changes` lists the newest world-state writes (`ref`, `kind`, `reset`) and whether a
+  door transition or an interior rebuild is in flight. A cell that never settles shows the
+  reference that keeps writing.
 - `state packages` gives the actor's package, its procedure, the procedure machine's state
   and patrol point, the mover's state, and the vehicle links.
 

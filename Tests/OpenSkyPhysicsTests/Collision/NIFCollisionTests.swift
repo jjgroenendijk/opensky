@@ -12,18 +12,20 @@ struct NIFCollisionTests {
 
     @Test func decodesRigidBodyMetadataAndRigidBodyTTransform() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSFadeNode", NIFFixture.niNode(children: [1])),
             .init("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(
                     translation: SIMD3(10, 20, 30),
-                    collisionRef: 1
+                    collisionRef: 2
                 )
             )),
             .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(
+                target: 1,
                 flags: 0x89,
-                body: 2
+                body: 3
             )),
             .init("bhkRigidBodyT", NIFCollisionFixture.rigidBody(
-                shape: 3,
+                shape: 4,
                 worldLayer: 12,
                 rigidLayer: 1,
                 translation: SIMD3(1, 2, 3),

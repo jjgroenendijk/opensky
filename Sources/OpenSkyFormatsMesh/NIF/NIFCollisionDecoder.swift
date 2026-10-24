@@ -281,7 +281,7 @@ nonisolated private struct CollisionTargetTransformVisitor {
     var names: [Int: String] = [:]
 
     mutating func walk(from root: Int32) throws {
-        var stack = NIFGraphStack(root: root)
+        var stack = NIFGraphStack(root: root, parent: file.walkParent(ofRoot: root))
         while let visit = stack.next() {
             try step(visit, stack: &stack)
         }

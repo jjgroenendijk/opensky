@@ -13,6 +13,7 @@ import Testing
 private struct TwoStateGraph {
     var table = BehaviorObjectTable()
     var root: HKXPointerTarget?
+    var leftClip: HKXPointerTarget?
 
     /// Bone 1 sits at 0 in state "Left" and at 10 in state "Right".
     static var clips: BehaviorClipTable {
@@ -47,6 +48,7 @@ private struct TwoStateGraph {
         let right = table.add(
             BehaviorFixture.clipGenerator("right", animationName: "right"), at: 0x110
         )
+        leftClip = left
         let leftArray = addTransitions(
             leftTransitions, at: 0x200, effect: effectTarget, condition: conditionTarget
         )
@@ -328,6 +330,26 @@ struct BehaviorStateMachineTests {
         #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 7.5)
         #expect(graph.tally.featureGaps["stateMachineTransitionInterrupted"] == 1)
         #expect(graph.activeStates.first?.stateName == "Left")
+    }
+
+    /// Going back to a state that is still blending out restarts its clip. The blade
+    /// trap's swing stays at its end without this.
+    @Test func returningToABlendingOutStateRestartsItsClip() throws {
+        let fixture = TwoStateGraph(
+            leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1)],
+            rightTransitions: [BehaviorTransitionSpec(eventId: 1, toStateId: 0)],
+            effect: BehaviorStateMachineFixture.blendingEffect(duration: 0.4)
+        )
+        let clip = try #require(fixture.leftClip)
+        let graph = fixture.instance()
+        graph.update(deltaTime: Self.step)
+        let fresh = graph.nodeStates[clip]?.localTime
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "back")
+        graph.update(deltaTime: Self.step)
+        #expect(graph.nodeStates[clip]?.localTime == fresh)
     }
 
     @Test func anUninterruptibleTransitionRefusesTheNewEvent() {

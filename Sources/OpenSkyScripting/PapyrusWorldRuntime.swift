@@ -148,6 +148,8 @@ public final class PapyrusWorldRuntime {
     public var scriptLibrary: ((String) -> AssetLoadState<[PexFile]>)?
     /// Script names the provider already failed to resolve, keyed lowercased.
     public var unresolvableScripts: Set<String> = []
+    /// `PexObject.staticCallScripts` of each loaded script, keyed lowercased.
+    var staticCallScriptsByKey: [String: [String]] = [:]
     /// Attaches and fragments that wait for a script to load, oldest first.
     public var deferredScriptWork: [PapyrusDeferredScriptWork] = []
 
@@ -397,6 +399,11 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
     /// Instances with a suspended call that holds them.
     public var heldInstances: Set<PapyrusInstanceKey> {
         Set(holdingIDs.compactMap { instanceByID[$0] })
+    }
+
+    /// The instance whose call `id` waits, or nil for an untracked call.
+    public func instance(waiting id: UInt64) -> PapyrusInstanceKey? {
+        instanceByID[id]
     }
 
     /// Tracks the suspension `call` of `instance`.

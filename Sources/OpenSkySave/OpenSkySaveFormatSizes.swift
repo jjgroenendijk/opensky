@@ -100,6 +100,8 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumVendorRestockEntrySize = 15
     /// Smallest `RLOC` entry: the smallest key and cell (8) and an interior target (5).
     public static let minimumRelocationEntrySize = 13
+    /// Smallest `RMOT` entry: the smallest key and cell (8) and the motion byte.
+    public static let minimumMotionTypeEntrySize = 9
     /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the
     /// entered byte, and the two empty list counts (8).
     public static let minimumSceneEntrySize = 21

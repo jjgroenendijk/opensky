@@ -151,7 +151,11 @@ nonisolated public struct HKBClipTriggerArray: HKBClass, Equatable, Sendable {
         }
     }
 
+    /// Each trigger as `event@time`, with `end` for a time measured back from the clip end.
     public var summary: String {
-        "\(triggers.count) clip triggers"
+        let list = triggers.map { trigger in
+            "\(trigger.event.id)@\(trigger.localTime)\(trigger.relativeToEndOfClip ? " end" : "")"
+        }
+        return "\(triggers.count) clip triggers: " + list.joined(separator: ", ")
     }
 }

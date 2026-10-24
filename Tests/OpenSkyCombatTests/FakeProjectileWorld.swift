@@ -50,6 +50,8 @@ final class FakeProjectileWorld: ProjectileWorld {
     }
 
     private(set) var damage: [ReferenceKey: Float] = [:]
+    /// Who fired the shot that damaged each target.
+    private(set) var damagedBy: [ReferenceKey: ReferenceKey] = [:]
     private(set) var consumed: [FormID] = []
     private(set) var spawned: [StuckProjectile] = []
     private(set) var removed: [ReferenceKey] = []
@@ -94,8 +96,11 @@ final class FakeProjectileWorld: ProjectileWorld {
     }
 
     @discardableResult
-    func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
+    ) -> Bool {
         damage[target, default: 0] += amount
+        damagedBy[target] = shooter
         return true
     }
 

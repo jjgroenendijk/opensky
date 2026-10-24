@@ -5,10 +5,12 @@
 
 import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated extension CellSceneBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
@@ -50,7 +52,13 @@ nonisolated extension CellSceneBuilder {
             let playback = PlayerAnimationPlayback(
                 skeleton: asset.skeleton, pose: pose, models: [instance.model]
             )
-            let object = CellAnimatedObject(reference: instance.formID, asset: asset, pose: pose)
+            let parts = instance.model.meshes.compactMap { mesh in
+                mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
+            }
+            let object = CellAnimatedObject(
+                reference: instance.formID, asset: asset, pose: pose,
+                contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts)
+            )
             return (object, playback)
         }
     }

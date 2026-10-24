@@ -125,8 +125,12 @@ nonisolated public struct HKBStateMachineTransitionInfoArray: HKBClass, Equatabl
         transitions.enumerated().flatMap { $1.references(index: $0) }
     }
 
+    /// Each transition as `event->state`, with its flags in hex.
     public var summary: String {
-        "\(transitions.count) transitions"
+        let list = transitions.map {
+            "\($0.eventId)->\($0.toStateId) flags 0x\(String($0.flags, radix: 16))"
+        }
+        return "\(transitions.count) transitions: " + list.joined(separator: ", ")
     }
 }
 

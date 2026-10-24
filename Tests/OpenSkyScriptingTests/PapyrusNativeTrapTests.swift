@@ -44,42 +44,6 @@ private final class FakeObjectAnimation: PapyrusObjectAnimationBridge {
     }
 }
 
-private final class FakeTrapWorld: PapyrusTrapWorldBridge {
-    struct Placed {
-        let base: ReferenceKey
-        let anchor: ReferenceKey
-        let count: Int
-    }
-
-    var placed: [Placed] = []
-    var impulses: [(impulse: SIMD3<Float>, reference: ReferenceKey)] = []
-    struct Push {
-        let source: ReferenceKey
-        let direction: SIMD3<Float>?
-        let speed: Float
-    }
-
-    var pushes: [Push] = []
-
-    func placeAtMe(_ base: ReferenceKey, at anchor: ReferenceKey, count: Int) -> ReferenceKey? {
-        placed.append(Placed(base: base, anchor: anchor, count: count))
-        return .generated(42)
-    }
-
-    func applyImpulse(_ impulse: SIMD3<Float>, to reference: ReferenceKey) -> Bool {
-        impulses.append((impulse, reference))
-        return true
-    }
-
-    func pushActor(
-        _ actor: ReferenceKey, awayFrom source: ReferenceKey,
-        along direction: SIMD3<Float>?, speed: Float
-    ) -> Bool {
-        pushes.append(Push(source: source, direction: direction, speed: speed))
-        return true
-    }
-}
-
 @MainActor
 struct PapyrusNativeTrapTests {
     private typealias Fixture = PapyrusNativeReferenceFixture
@@ -257,16 +221,21 @@ struct PapyrusNativeTrapTests {
             == .plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x100))
     }
 
-    @Test func applyHavokImpulseScalesTheDirectionByTheMagnitude() throws {
+    @Test func applyHavokImpulseScalesTheUnitDirectionByTheMagnitude() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
         fixture.session.bridge.trapWorld = trapWorld
         let result = fixture.call(
-            "ApplyHavokImpulse", arguments: [.float(0), .float(1), .float(0), .float(50)]
+            "ApplyHavokImpulse", arguments: [.float(0), .float(0), .float(-4), .float(50)]
         )
         #expect(result == .returned(.none))
-        #expect(trapWorld.impulses.first?.impulse == SIMD3(0, 50, 0))
+        #expect(trapWorld.impulses.first?.impulse == SIMD3(0, 0, -50))
         #expect(trapWorld.impulses.first?.reference == fixture.key)
+        let zero = fixture.call(
+            "ApplyHavokImpulse", arguments: [.float(0), .float(0), .float(0), .float(50)]
+        )
+        #expect(PapyrusWorldFixture.isInvalidArguments(zero))
+        #expect(trapWorld.impulses.count == 1)
     }
 
     @Test func pushActorAwayPushesFromTheReceiver() throws {
@@ -280,5 +249,7 @@ struct PapyrusNativeTrapTests {
         #expect(trapWorld.pushes.first?.source == fixture.key)
         #expect(trapWorld.pushes.first?.direction == nil)
         #expect(trapWorld.pushes.first?.speed == 2 * PapyrusNativeFunctions.knockbackSpeedPerForce)
+        _ = fixture.call("PushActorAway", arguments: [.object(fixture.receiver), .float(-1)])
+        #expect(trapWorld.pushes.last?.speed == -PapyrusNativeFunctions.knockbackSpeedPerForce)
     }
 }

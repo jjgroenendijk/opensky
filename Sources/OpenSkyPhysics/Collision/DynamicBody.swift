@@ -70,13 +70,17 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     /// One body per placed reference, at its XSCL scale, because a reference has one key,
     /// one placement and one `.transform`. Several `bhkRigidBody` blocks are welded: masses
     /// add, shapes join. Model space; nil when nothing has positive mass and convex volume.
+    /// `forcesSimulation` simulates a keyframed or fixed body too, for `SetMotionType`.
     public init?(
         bodies: [NIFCollisionBody],
         referenceScale: Float,
-        materials: MaterialTypeIndex? = nil
+        materials: MaterialTypeIndex? = nil,
+        forcesSimulation: Bool = false
     ) {
         guard referenceScale > 0, referenceScale.isFinite else { return nil }
-        let simulated = bodies.filter(\.dynamics.isSimulated)
+        let simulated = bodies.filter {
+            forcesSimulation ? $0.dynamics.hasMass : $0.dynamics.isSimulated
+        }
         guard !simulated.isEmpty else { return nil }
         let scaling = MatrixMath.scale(uniform: referenceScale)
         let totalMass = simulated.reduce(0) { $0 + $1.dynamics.mass }

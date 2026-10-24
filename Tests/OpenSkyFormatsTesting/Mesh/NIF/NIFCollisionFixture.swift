@@ -277,10 +277,11 @@ extension Data {
         appendFloat32(value.w)
     }
 
-    public mutating func appendMatrix(translation: SIMD3<Float>) {
+    /// `w` is the translation column's fourth float; the game writes 0 there for a phantom.
+    public mutating func appendMatrix(translation: SIMD3<Float>, w: Float = 1) {
         appendVector4(SIMD4(1, 0, 0, 0))
         appendVector4(SIMD4(0, 1, 0, 0))
         appendVector4(SIMD4(0, 0, 1, 0))
-        appendVector4(SIMD4(translation, 1))
+        appendVector4(SIMD4(translation, w))
     }
 }

@@ -50,6 +50,7 @@ protocol AgentWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
     var messages: MessageCoordinator { get }
+    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var player: PlayerCoordinator { get }

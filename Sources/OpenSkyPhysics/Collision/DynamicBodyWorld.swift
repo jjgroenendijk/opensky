@@ -176,6 +176,14 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         rebinExteriorBodies()
     }
 
+    /// Drops one body, so the next build of its cell places the reference afresh.
+    public mutating func remove(_ key: ReferenceKey) {
+        bodies.removeAll { $0.key == key }
+        placedPoses.removeValue(forKey: key)
+        settled.removeValue(forKey: key)
+        wasSleeping.remove(key)
+    }
+
     /// Forces bodies to sleep in place until at most `limit` are awake, in ascending
     /// `ReferenceKey` order. A slept body keeps and persists its pose.
     /// - Returns: how many were put to sleep.

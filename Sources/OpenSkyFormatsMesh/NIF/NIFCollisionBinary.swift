@@ -59,6 +59,9 @@ nonisolated extension BinaryReader {
         columns.3.x *= scale
         columns.3.y *= scale
         columns.3.z *= scale
+        // The game stores 0 in the fourth slot of a phantom's matrix. Without 1 there, a
+        // parent's translation drops out when the matrices multiply.
+        columns.3.w = 1
         return float4x4(columns: columns)
     }
 

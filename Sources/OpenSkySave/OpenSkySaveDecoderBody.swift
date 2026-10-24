@@ -103,6 +103,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var vendorRestocks: [SaveVendorRestockLedger] = []
         /// Absent `RLOC`: every reference is in its plugin cell.
         public var relocations: [SaveRelocationEntry] = []
+        public var motionTypes: [SaveMotionTypeEntry] = []
         /// Absent `SCNS`: no scene is playing.
         public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SCNP`: no scene is paused. Each entry holds only `pausedAt`.

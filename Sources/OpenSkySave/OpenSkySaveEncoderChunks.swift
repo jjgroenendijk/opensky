@@ -46,6 +46,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeCellResets(entries, into: &writer)
         writeVendorRestocks(entries, into: &writer)
         writeRelocations(entries, into: &writer)
+        writeMotionTypes(entries, into: &writer)
         writeSceneChunks(entries, into: &writer)
         writeStoryManagerQuests(entries, into: &writer)
         writeDialogueBranches(entries, into: &writer)

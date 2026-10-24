@@ -146,7 +146,8 @@ nonisolated public final class MeshLibrary {
             let decoded = try decode(
                 pathKey: pathKey,
                 actorSkeleton: actorSkeleton,
-                explicitActorSkeleton: explicitActorSkeleton
+                explicitActorSkeleton: explicitActorSkeleton,
+                keepingRoot: attachmentBone != nil
             )
             let decodedParticles = decoded.particles
             var model = terrainLODClipMask
@@ -403,7 +404,8 @@ nonisolated extension MeshLibrary {
     private func decode(
         pathKey: String,
         actorSkeleton: ActorSkeletonAsset?,
-        explicitActorSkeleton: Bool
+        explicitActorSkeleton: Bool,
+        keepingRoot: Bool = false
     ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
         if !explicitActorSkeleton, let ready = takePredecoded(pathKey: pathKey) {
             return try ready.get()
@@ -423,7 +425,10 @@ nonisolated extension MeshLibrary {
         }
         do {
             let file = try NIFFile(data: data)
-            return try (file.model(skeleton: actorSkeleton?.skeleton), file.particleSystems())
+            return try (
+                file.model(skeleton: actorSkeleton?.skeleton, keepingRoot: keepingRoot),
+                file.particleSystems(keepingRoot: keepingRoot)
+            )
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }

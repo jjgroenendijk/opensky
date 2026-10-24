@@ -294,6 +294,14 @@ are static.
   `parent * local` down the tree. `BSTriShape`, `BSSubIndexTriShape`,
   `BSDynamicTriShape`, `NiTriShape`, and `BSLODTriShape` become meshes with their
   model-space transform.
+- A placed reference's transform replaces the root's own transform, so every walk leaves
+  the root's translation, rotation, and scale out. A model attached to an actor bone, such
+  as a weapon or an anim object in a hand, keeps it. Source: observed data. In
+  `Dungeons\Nordic\SmHalls\NorHallSm1wayEndCap01.nif` the root `BSFadeNode` turns 180
+  degrees about Z. Its `STAT OBND` (y from -128 to 14) fits the geometry only without that
+  turn, and only then does the cap close the corridor in `Pinewatch02`. 20 of 23 sampled
+  architecture meshes with a turned root agree; a few clutter meshes, such as road signs,
+  fit their `OBND` better with the turn.
 - Materials are shared by (shader property, alpha property) pair.
 - Collision and controller blocks end the walk of their subtree.
 - A shape or node named `EditorMarker` is dropped with its subtree, because the game does

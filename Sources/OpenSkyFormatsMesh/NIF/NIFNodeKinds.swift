@@ -96,7 +96,7 @@ nonisolated extension NIFFile {
     public func addOnNodes() throws -> [NIFAddOnNode] {
         var found: [NIFAddOnNode] = []
         for root in roots {
-            var stack = NIFGraphStack(root: root)
+            var stack = NIFGraphStack(root: root, parent: walkParent(ofRoot: root))
             while let visit = stack.next() {
                 guard
                     visit.ref >= 0, Int(visit.ref) < blocks.count,

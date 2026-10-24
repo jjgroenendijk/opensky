@@ -20,6 +20,10 @@ nonisolated public struct ObjectAnimationRow: Equatable, Sendable {
     public let project: String
     public let events: [String]
     public let activeState: String?
+    /// Every active state, outermost first; a blend runs several machines at once.
+    public var activeStates: [String] = []
+    /// True while a clip the graph reached is still loading, so the pose holds.
+    public var isWaitingForClip = false
 
     public init(reference: UInt32, project: String, events: [String], activeState: String?) {
         self.reference = reference
@@ -150,12 +154,15 @@ public final class ObjectBehaviorCoordinator {
     public var rows: [ObjectAnimationRow] {
         running.keys.sorted().compactMap { reference in
             guard let entry = running[reference] else { return nil }
-            return ObjectAnimationRow(
+            var row = ObjectAnimationRow(
                 reference: reference,
                 project: entry.object.asset.projectPath,
                 events: entry.object.asset.eventNames,
                 activeState: entry.instance.activeStates.last?.stateName
             )
+            row.activeStates = entry.instance.activeStates.compactMap(\.stateName)
+            row.isWaitingForClip = entry.instance.isWaitingForClip
+            return row
         }
     }
 

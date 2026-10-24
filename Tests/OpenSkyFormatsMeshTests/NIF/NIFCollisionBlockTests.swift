@@ -33,6 +33,24 @@ struct NIFCollisionBlockTests {
         #expect(body.shapes.count == 1)
     }
 
+    /// A pressure plate's phantom stores 0 as the matrix's last float. The reference's
+    /// position must still carry through, or the trigger sits at the cell origin.
+    @Test func phantomMatrixKeepsTheParentTranslation() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(collisionRef: 1))),
+            .init("bhkSPCollisionObject", NIFCollisionFixture.collisionObject(body: 2)),
+            .init("bhkSimpleShapePhantom", NIFBlockFixture.shapePhantom(
+                shape: 3, layer: 12, translation: .zero, w: 0
+            )),
+            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1))
+        ]))
+        let body = try #require(file.collisionModel().bodies.first)
+        var reference = matrix_identity_float4x4
+        reference.columns.3 = SIMD4(100, 200, 300, 1)
+        let placed = reference * body.transform
+        #expect(placed.columns.3 == SIMD4(100, 200, 300, 1))
+    }
+
     @Test func cylinderBecomesAClosedPrism() throws {
         let cylinder = try #require(decode("bhkCylinderShape", NIFBlockFixture.cylinder(
             first: SIMD3(0, 0, -1), second: SIMD3(0, 0, 1), radius: 0.5

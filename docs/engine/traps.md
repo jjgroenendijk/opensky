@@ -55,10 +55,13 @@ Implemented for traps:
 | Native | Behavior |
 | --- | --- |
 | `ObjectReference.GetTriggerObjectCount` | Actors standing in the volume, from the trigger enter and leave events |
-| `ObjectReference.ProcessTrapHit` | Takes the damage off the receiver's Health and knocks it back. Stagger is dropped |
+| `ObjectReference.ProcessTrapHit` | Takes the damage off the receiver's Health, knocks it back, and staggers it |
 | `ObjectReference.PlaceAtMe` | Spawns a hazard, detonates an explosion, or places an object, see below |
 | `ObjectReference.ApplyHavokImpulse` | Pushes the receiver's simulated body |
 | `ObjectReference.PushActorAway` | Knocks the actor argument back, away from the receiver |
+| `ObjectReference.SetMotionType` | Makes the receiver's collision simulate or hold, see below |
+| `ObjectReference.Reset` | Puts an object back at its plugin place, see below |
+| `Weapon.Fire` | Fires an arrow or dart from a reference, see below |
 | `ObjectReference.GetBaseObject` | The base form |
 | `ObjectReference.GetNthLinkedRef` | Follows the untagged `XLKR` link n times |
 | `ObjectReference.GetAngleX`, `GetAngleZ` | Rotation about X or Z, in degrees |
@@ -66,7 +69,7 @@ Implemented for traps:
 | `Utility.GetCurrentRealTime` | Seconds since the first call |
 | `FormList.GetSize`, `FormList.GetAt` | The list's plugin entries. A nested list is one entry, and a runtime `AddForm` is not seen |
 
-Without a running game (the CLI and the package tests) the four world natives above are
+Without a running game (the CLI and the package tests) the world natives above are
 traced stubs too.
 
 A trap whose mesh names a behaviour graph runs it, and the animation natives drive that
@@ -78,11 +81,10 @@ would run that loop thousands of times in each frame.
 Traced stubs answer the type's empty value and count as stubbed in the Papyrus tally, so the
 script runs on:
 
-- Havok and motion: `SetMotionType`, `Reset`.
 - Destruction: `ClearDestruction`, `DamageObject`, `SetDestroyed`,
   `GetCurrentDestructionStage` (0, intact).
 - Effects and feedback: `Game.ShakeCamera`, `Game.ShakeController`, `Sound.Play`,
-  `EffectShader.Play`, `Say`, `Message.Show`, `Weapon.Fire`, `InterruptCast`.
+  `EffectShader.Play`, `Say`, `Message.Show`, `InterruptCast`.
 - Animation: `SetAnimationVariableFloat`,
   `GetAnimationVariableFloat` (0), `Form.RegisterForAnimationEvent` (true),
   `Form.UnregisterForAnimationEvent`.
@@ -108,17 +110,82 @@ read the level modifier or the encounter zone.
 ## Impulses and pushback
 
 `ApplyHavokImpulse(x, y, z, magnitude)` pushes the receiver's dynamic body with the unit
-direction times the magnitude. Papyrus gives the impulse in Havok units, so OpenSky scales it
-by 69.99 game units per metre. A reference with no dynamic body does not move.
+direction times the magnitude. The CK wiki
+([ApplyHavokImpulse](https://ck.uesp.net/wiki/ApplyHavokImpulse_-_ObjectReference)) says the
+vector is normalized first and a zero-length vector fails; OpenSky does both. Papyrus gives
+the impulse in Havok units, so OpenSky scales it by 69.99 game units per metre. A reference
+with no dynamic body does not move.
 
-`ProcessTrapHit(trap, damage, pushback, xVel, yVel, zVel, ...)` knocks the hit actor back at
-`pushback` units per second, along the trap's velocity. With no velocity it pushes away
-from the trap. `PushActorAway(actor, force)` pushes away from the receiver at 100 units per
-second per point of force. The knockback is horizontal, is capped at 1500 units per second,
-and fades on the ground in about one second.
+`ProcessTrapHit(trap, damage, pushback, xVel, yVel, zVel, xPos, yPos, zPos, material,
+stagger)` knocks the hit actor back at `pushback` units per second, along the trap's velocity.
+With no velocity it pushes away from the trap. A stagger above 0 staggers the actor with that
+magnitude, at most 1, through the same path a stagger spell takes.
+
+`PushActorAway(actor, force)` pushes away from the receiver at 100 units per second per point
+of force. A negative force pulls the actor in, as the CK wiki
+([PushActorAway](https://ck.uesp.net/wiki/PushActorAway_-_ObjectReference)) notes.
+
+The knockback is horizontal, is capped at 1500 units per second, and fades on the ground in
+about one second. The player slides on the walk capsule. An NPC that is walking takes the push
+on its walk capsule. A standing NPC slides on a capsule of its own until the push drops below
+5 units per second on the ground, or for at most 3 seconds, and then stands where it stopped.
 
 [WARNING] Neither scale is confirmed against the game. The game also ragdolls an actor that
-`PushActorAway` hits; OpenSky only moves the player and does not push NPCs.
+`PushActorAway` hits, "as if an explosion had gone off"; OpenSky only slides it.
+
+## Motion type
+
+`SetMotionType(type, allowActivate)` sets whether a reference's collision simulates. The
+values come from the CK wiki
+([SetMotionType](https://ck.uesp.net/wiki/SetMotionType_-_ObjectReference)): 1, 2, 3, and 6
+simulate, 4 and 5 hold. 7 is for characters and fails. The choice is stored on the reference,
+saved in the `RMOT` chunk ([save format](/formats/opensky-save.md)), and read by the next build
+of its cell:
+
+- Dynamic: every body in the model with a positive mass simulates, whatever motion system the
+  NIF gives it.
+- Keyframed: no body simulates. A body that was moving keeps the pose it has now.
+
+The shipped traps use this. `PhysicsTrap` (rock falls) and `MaceTrap` hold their objects when
+the cell attaches. When the trap fires they set the objects dynamic and push them down with
+`ApplyHavokImpulse(0, 0, -1, 15)`. The rebuild takes a few frames, so the impulse can reach
+the object before its body exists; the body falls under gravity anyway.
+
+`allowActivate` is not read: a body made dynamic falls at once.
+
+## Reset
+
+`Reset(target)` on an object drops the moves a script or physics made, drops the motion type,
+and removes the simulated body, so the next build places the object where its plugin put it.
+With a target it stands at the target instead. Every shipped trap calls it in `onReset`.
+
+The CK wiki ([Reset](https://ck.uesp.net/wiki/Reset_-_ObjectReference)) says the game also
+resets inventory and resurrects an actor. OpenSky does neither: other state stays, and `Reset`
+on an actor stays a traced stub.
+
+## Firing a weapon
+
+`Weapon.Fire(source, ammo)` fires the weapon from a reference
+([Fire](https://ck.uesp.net/wiki/Fire_-_Weapon)). Dart traps call it once per linked
+reference, and ballistas and crossbow traps from themselves. OpenSky fires the ammo's
+projectile from the source's position, level, along its heading (its rotation about Z). The
+X and Y rotations are not used. Source: observed data. In `Pinewatch02` the dart ports on the
+west wall are turned +90 degrees about X with a heading of 81 degrees, and those on the east
+wall -90 degrees with a heading of 263 degrees. Only the heading points both walls across the
+corridor; the full facing points one wall at the ceiling and the other at the floor. The shot
+spends no ammunition, and an arrow that misses still sticks. Its damage is the
+weapon's base damage plus the ammo's, with no skill or perk term. The weapon's enchantment
+applies too, and never runs out of charge: `TrapDartWeapon01` poisons with
+`TrapDartPoisonWeapEnch01`. A dart does not explode. Its projectile `TrapDartWooden01` names
+`FireBallExp01`, but its explosion flag (`0x02`) is off, and a projectile explodes only with that
+flag. Of the 93 vanilla projectiles that name an explosion, 18 have the flag off, such as
+`BoundArrowPROJ` and `VoiceFireBreathProjectile01`. The hit is credited to the
+source, so it raises `OnHit` with the trap as the aggressor and gives the player no crime and
+no sneak attack.
+
+The CK wiki says a source with no `ammo` uses the ammo it has equipped. OpenSky fires nothing
+then, because a trap equips nothing. Effect weapons that some traps fire for a hit effect, such
+as `BladeTrapHit`, fire the same way when their ammo has a ballistic projectile.
 
 ## Hazards
 
@@ -170,25 +237,27 @@ disarms. OpenSky adds no disarm rule. A spent trap is a script state too: a trip
 ## Trap contact
 
 A trap whose scripts handle `OnTrapHitStart`, `OnTrapHit`, or `OnTrapHitStop` is checked every
-frame while its animation graph runs. The world positions of its skeleton bones come from the
-current pose. A bone that moves faster than a minimum speed and comes close to an actor's capsule
-hits that actor:
+frame while its animation graph runs. At cell build, each rigid mesh that a rig bone moves gives
+15 sample points: the corners, face centres, and centre of its bounds, in that bone's space. A
+trap with no such mesh uses its bone origins instead. Each frame the current pose moves the
+points. A point that moves faster than a minimum speed and comes close to an actor's capsule hits
+that actor:
 
 - The first hit sends `OnTrapHitStart` and then `OnTrapHit` with `abInitialHit` true.
 - While contact lasts, `OnTrapHit` repeats at a fixed interval with `abInitialHit` false.
-- When no bone is near the actor any more, `OnTrapHitStop` follows.
+- When no point is near the actor any more, `OnTrapHitStop` follows.
 
-The velocity argument is the bone's velocity over the last frame. The material argument is 0,
+The velocity argument is the point's velocity over the last frame. The material argument is 0,
 and the motion type is keyframed. Sources: the Creation Kit wiki pages
 [OnTrapHit](https://ck.uesp.net/wiki/OnTrapHit_-_ObjectReference) and
 [OnTrapHitStart](https://ck.uesp.net/wiki/OnTrapHitStart_-_ObjectReference).
 
 The game reads contact from the trap's collision bodies. OpenSky has no collision body that
-follows a bone, so it measures bone points against capsules. The reach, minimum speed, and repeat
-interval are OpenSky's own numbers; no open source gives the game's.
+follows a bone, so it measures mesh points against capsules. A swinging blade's only bone is
+its pivot, which turns but does not move, so bone origins alone never hit. The reach, minimum
+speed, and repeat interval are OpenSky's own numbers; no open source gives the game's.
 
 ## Not done
 
-A swinging blade or a battering ram reports its hits through bone contact, not a collision body. `SetMotionType`
-stays stubbed: OpenSky cannot turn a static object into a dynamic body at runtime.
-`Weapon.Fire` stays stubbed: projectiles fire only from actors.
+A swinging blade or a battering ram reports its hits through bone contact, not a collision
+body. A pushed NPC slides instead of falling as a ragdoll.

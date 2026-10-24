@@ -3,6 +3,7 @@
 // See docs/decisions/concurrency.md.
 
 import OpenSkyFormatsESM
+import OpenSkyFormatsPEX
 import OpenSkyGameData
 
 nonisolated public enum PapyrusScriptAvailability: Equatable, Sendable {
@@ -39,15 +40,41 @@ extension PapyrusWorldRuntime {
         return keys.sorted().flatMap(scriptsOfTarget)
     }
 
-    /// Requests every named script, and the reference types. True when any still loads.
+    /// Requests every named script, the reference types, and the scripts their code calls
+    /// global functions on, such as `Custom.countLinks`. True when any still loads.
     func scriptsLoading(_ names: [String]) -> Bool {
         var loading = false
-        for name in names + Self.referenceTypeScripts
-            where scriptAvailability(named: name) == .loading
-        {
-            loading = true
+        var pending = names + Self.referenceTypeScripts
+        var seen: Set<String> = []
+        while let name = pending.popLast() {
+            guard seen.insert(PapyrusRuntime.key(name)).inserted else { continue }
+            switch scriptAvailability(named: name) {
+            case .loading: loading = true
+            case .ready: pending += staticCallScripts(ofChain: name)
+            case .missing: break
+            }
         }
         return loading
+    }
+
+    /// The static call targets of `name` and its loaded ancestors.
+    private func staticCallScripts(ofChain name: String) -> [String] {
+        var targets: [String] = []
+        var current = name
+        var visited: Set<String> = []
+        while !current.isEmpty, visited.insert(PapyrusRuntime.key(current)).inserted {
+            let key = PapyrusRuntime.key(current)
+            guard let object = runtime.script(named: current) else { break }
+            if let known = staticCallScriptsByKey[key] {
+                targets += known
+            } else {
+                let found = object.staticCallScripts
+                staticCallScriptsByKey[key] = found
+                targets += found
+            }
+            current = object.parentClassName
+        }
+        return targets
     }
 
     func deferUntilScriptsLoad(

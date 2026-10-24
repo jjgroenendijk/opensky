@@ -32,11 +32,13 @@ protocol EffectsWorldHost: AnyObject {
     var hazardWorld: HazardWorldAdapter { get }
     var hazards: HazardCoordinator { get }
     var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
+    var worldState: WorldStateStore { get }
 }
 
 final class EffectsWorldAdapter {
