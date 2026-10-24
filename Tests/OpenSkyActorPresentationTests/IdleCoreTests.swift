@@ -26,6 +26,16 @@ struct IdleCoreTests {
         )
     }
 
+    /// The player has no playback, so its idles load against this rig. The clip loader
+    /// takes only a `.nif` path, and the graph project comes from the assets folder.
+    @MainActor @Test func thePlayerRigIsTheHumanSkeletonFile() {
+        #expect(IdleCoordinator.playerSkeletonPath
+            == "meshes\\actors\\character\\character assets\\skeleton.nif")
+        #expect(IdleCore.graphProject(skeletonMeshPath: IdleCoordinator.playerSkeletonPath)
+            == "meshes\\actors\\character\\")
+        #expect(IdleCoordinator.defaultStateEvent == "IdleForceDefaultState")
+    }
+
     @Test func sandboxAndTheIdleMarkerProcedureUseMarkers() {
         #expect(IdleCore.usesMarkers(.sandbox))
         #expect(IdleCore.usesMarkers(.useIdleMarker))

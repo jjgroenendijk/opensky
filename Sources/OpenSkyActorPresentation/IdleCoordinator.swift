@@ -113,9 +113,9 @@ public final class IdleCoordinator {
     public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
     /// The player has no playback, so a player idle only times its events with this rig.
     static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
+        + "character assets\\skeleton.nif"
     /// The event that returns a graph from a held idle, as `Debug.SendAnimationEvent` sends it.
     static let defaultStateEvent = "IdleForceDefaultState"
-        + "character assets\\skeleton.nif"
     let random: (Int) -> Int
 
     weak let world: (any IdleWorld)?
