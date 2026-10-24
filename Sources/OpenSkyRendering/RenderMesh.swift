@@ -163,6 +163,11 @@ nonisolated public final class RenderMesh: Sendable {
         skinningBuffer != nil
     }
 
+    /// The skin's bones and bind data, or nil for a mesh that is not skinned.
+    public var skinning: SkinningPalette? {
+        skinningPalette
+    }
+
     /// Mesh-local -> model-root transform (see Geometry/Mesh.swift).
     public let localTransform: float4x4
     /// Mesh-local bounds retained for vertex effects that need normalized

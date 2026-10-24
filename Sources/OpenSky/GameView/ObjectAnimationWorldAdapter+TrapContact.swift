@@ -1,4 +1,4 @@
-// Trap contact: each frame, the moving bones of a scripted trap meet the resident
+// Trap contact: each frame, the moving parts of a scripted trap meet the resident
 // actors, and the trap's scripts get `OnTrapHitStart`, `OnTrapHit`, and `OnTrapHitStop`.
 // The contact rule lives in `TrapContactTracker`. See docs/engine/traps.md.
 
@@ -23,7 +23,7 @@ extension ObjectAnimationWorldAdapter {
             guard
                 let entry = streamer.referenceEntry(formID: FormID(reference)),
                 runtime.handlesTrapHits(on: entry.key),
-                let local = objects.bonePositions(of: reference),
+                let local = objects.contactPositions(of: reference),
                 let state = game.scripts.bridge?.referenceState(for: entry.key)
             else { continue }
             resident.insert(entry.key)

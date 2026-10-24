@@ -5,6 +5,9 @@
 
 import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
 import OpenSkyRendering
@@ -49,7 +52,13 @@ nonisolated extension CellSceneBuilder {
             let playback = PlayerAnimationPlayback(
                 skeleton: asset.skeleton, pose: pose, models: [instance.model]
             )
-            let object = CellAnimatedObject(reference: instance.formID, asset: asset, pose: pose)
+            let parts = instance.model.meshes.compactMap { mesh in
+                mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
+            }
+            let object = CellAnimatedObject(
+                reference: instance.formID, asset: asset, pose: pose,
+                contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts)
+            )
             return (object, playback)
         }
     }
