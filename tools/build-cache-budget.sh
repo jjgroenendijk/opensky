@@ -1,6 +1,6 @@
 #!/bin/sh
 # Keep the build trees under OPENSKY_CACHE_ROOT within OPENSKY_BUILD_CACHE_GB
-# (default 40). Many worktrees stay alive at once, so removing only the trees of
+# (default 200). Many worktrees stay alive at once, so removing only the trees of
 # gone worktrees does not hold the disk. A tree rebuilds from the shared
 # compilation cache in about two minutes (docs/tools/build-system.md).
 #
@@ -47,7 +47,7 @@ evict() {
     # Only CACHE_ROOT holds build trees. CI keeps its tree beside the compilation
     # store instead, and that folder must never be listed.
     root="${OPENSKY_CACHE_ROOT:?}"
-    budget_kb=$((${OPENSKY_BUILD_CACHE_GB:-40} * 1024 * 1024))
+    budget_kb=$((${OPENSKY_BUILD_CACHE_GB:-200} * 1024 * 1024))
     # TREE is about to be built, so it counts first, whenever it was last built.
     used_kb="$(cat "$keep/$size_file" 2>/dev/null || echo 0)"
     list_trees "$root" | sort -rn | while read -r _ kb tree; do
@@ -62,7 +62,7 @@ evict() {
         rm -rf "$tree"
         rm -rf "$lock"
         printf '[INFO] build cache over %s GB: removed %s (%s MB)\n' \
-            "${OPENSKY_BUILD_CACHE_GB:-40}" "$(basename "$tree")" "$((kb / 1024))"
+            "${OPENSKY_BUILD_CACHE_GB:-200}" "$(basename "$tree")" "$((kb / 1024))"
     done
 }
 
