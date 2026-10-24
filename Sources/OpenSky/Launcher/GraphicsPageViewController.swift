@@ -73,6 +73,9 @@ final class GraphicsPageViewController: NSViewController {
     let objectAnimationControl = NSButton(
         checkboxWithTitle: "Animated objects", target: nil, action: nil
     )
+    let furnitureControl = NSButton(
+        checkboxWithTitle: "Sit in furniture", target: nil, action: nil
+    )
     let actorGraphsControl = NSButton(
         checkboxWithTitle: "Actor behaviour graphs", target: nil, action: nil
     )
@@ -179,6 +182,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),
                 layout.toggle(expressionsControl),
                 layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl),
+                layout.toggle(furnitureControl),
                 layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl),
                 layout.toggle(combatGameSettingsControl)
             ]),

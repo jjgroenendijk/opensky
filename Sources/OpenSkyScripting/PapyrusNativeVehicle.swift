@@ -38,7 +38,7 @@ extension PapyrusNativeFunctions {
         }
         installAnimationEvents(into: &registry)
         installActorAI(into: &registry)
-        for name in ["SetHudCartMode", "SetSittingRotation"] {
+        for name in ["SetHudCartMode"] {
             registry.register(PapyrusNativeFunction(
                 scriptName: "Game", functionName: name
             ) { call, context in

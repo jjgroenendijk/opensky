@@ -1,11 +1,12 @@
-// Who holds each furniture seat, so two package actors never share one. A seat
-// with a FURN `FNMK` keyword is kept for actors that have it
-// (docs/engine/package-schedules.md, "Furniture").
+// Who holds each furniture seat, so two actors never share one. A seat with a FURN
+// `FNMK` keyword is kept for actors that have it, and a seat the record's `MNAM`
+// turns off is no one's (docs/engine/furniture.md).
 
 import OpenSkyFormatsESM
 import OpenSkyWorldInterface
+import simd
 
-nonisolated public struct PackageSeatLedger: Sendable {
+nonisolated public struct FurnitureSeatLedger: Sendable {
     private struct SeatKey: Hashable, Sendable {
         let furniture: ReferenceKey
         let index: Int
@@ -15,19 +16,30 @@ nonisolated public struct PackageSeatLedger: Sendable {
 
     public init() {}
 
-    /// Reserves a free seat for `actor`. A keyed seat wins for an actor with its keyword.
+    /// Reserves a free seat for `actor`. A keyed seat wins for an actor with its keyword,
+    /// then a seat of `animation` over one of another type, then the seat nearest `near`.
     public mutating func reserve(
         in furniture: ReferenceKey,
         seats: [FurnitureSeat],
         actor: ReferenceKey,
+        animation: UInt16? = nil,
+        near: SIMD3<Float>? = nil,
         hasKeyword: (FormID) -> Bool
     ) -> PackageSeat? {
         let free = seats.indices.filter { index in
             let holder = holders[SeatKey(furniture: furniture, index: index)]
-            return holder == nil || holder == actor
+            return seats[index].isEnabled && (holder == nil || holder == actor)
+        }.sorted { first, second in
+            guard let near else { return first < second }
+            return simd_distance(seats[first].position, near)
+                < simd_distance(seats[second].position, near)
         }
-        let keyed = free.first { seats[$0].keyword.map(hasKeyword) ?? false }
-        guard let index = keyed ?? free.first(where: { seats[$0].keyword == nil }) else {
+        let allowed = free.filter { seats[$0].keyword.map(hasKeyword) ?? true }
+        let keyed = allowed.filter { seats[$0].keyword != nil }
+        let open = allowed.filter { seats[$0].keyword == nil }
+        let ordered = keyed.filter { seats[$0].animationType == animation }
+            + keyed + open.filter { seats[$0].animationType == animation } + open
+        guard let index = animation == nil ? (keyed + open).first : ordered.first else {
             return nil
         }
         holders[SeatKey(furniture: furniture, index: index)] = actor
@@ -42,7 +54,26 @@ nonisolated public struct PackageSeatLedger: Sendable {
         }
     }
 
+    /// Gives the seat to `actor`, whoever held it.
+    public mutating func hold(_ seat: PackageSeat, by actor: ReferenceKey) {
+        holders[SeatKey(furniture: seat.furniture, index: seat.index)] = actor
+    }
+
+    /// Frees every seat `actor` holds, in every piece of furniture.
+    public mutating func releaseAll(heldBy actor: ReferenceKey) {
+        holders = holders.filter { $0.value != actor }
+    }
+
     public func holder(of furniture: ReferenceKey, index: Int) -> ReferenceKey? {
         holders[SeatKey(furniture: furniture, index: index)]
+    }
+
+    /// Every held seat of the furniture, by marker index.
+    public func holders(of furniture: ReferenceKey) -> [Int: ReferenceKey] {
+        var result: [Int: ReferenceKey] = [:]
+        for (key, actor) in holders where key.furniture == furniture {
+            result[key.index] = actor
+        }
+        return result
     }
 }

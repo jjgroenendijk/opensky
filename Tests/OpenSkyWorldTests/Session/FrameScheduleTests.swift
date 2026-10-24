@@ -39,7 +39,8 @@ struct FrameScheduleTests {
         #expect(WorldTickStep.allCases == [
             .survivalMode, .scripts, .actorValues, .magicEffects, .breath, .archery, .ragdoll,
             .combatLoop,
-            .packages, .perception, .idles, .actorGraphs, .vehicles, .objectAnimation,
+            .packages, .perception, .idles, .actorGraphs, .vehicles, .furniture,
+            .objectAnimation,
             .dialogueCamera, .story
         ])
     }

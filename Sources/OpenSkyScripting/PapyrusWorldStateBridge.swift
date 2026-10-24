@@ -87,6 +87,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var music: (any PapyrusMusicControlling)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
+    /// Furniture seats, for `IsFurnitureInUse` and `SetSittingRotation`.
+    public weak var furniture: (any PapyrusFurnitureBridge)?
     /// Inventories and equipment, for the item natives.
     public weak var inventory: (any PapyrusInventoryBridge)?
     /// Ingredient knowledge, for the `Ingredient` and `Potion` natives.

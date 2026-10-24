@@ -34,7 +34,9 @@ extension PackageProcedureInputs {
         var result = PackageLeafSetup(setup: setup)
         switch leaf.kind {
         case .patrol: result = patrol(result, resolver: resolver)
-        case .sit: result.seat = targets.first.flatMap(resolver.seat(in:))
+        case .sit, .sleep:
+            let animation = Self.seatAnimation(of: leaf.kind)
+            result.seat = targets.first.flatMap { resolver.seat(in: $0, animation: animation) }
         case .orbit: result.setup = orbit(result.setup)
         case .hover: result.setup.destination = result.setup.destination.map { $0 + height }
         // SuspiciousOf is usually PlayerFaction, which names no one reference.
@@ -42,7 +44,7 @@ extension PackageProcedureInputs {
         default: break
         }
         if let seat = result.seat {
-            result.setup.destination = seat.seat.position
+            result.setup.destination = seat.seat.root
             result.setup.walks = true
         }
         if leaf.kind == .sandbox {
@@ -59,6 +61,11 @@ extension PackageProcedureInputs {
         sandbox.usesIdleMarkers = (number(at: 4) ?? 1) != 0
         sandbox.energy = min(max(number(at: 8) ?? sandbox.energy, 0), 100)
         return sandbox
+    }
+
+    /// Sleep lies down in a bed's sleep marker; Sit takes a sit marker first.
+    static func seatAnimation(of kind: PackageProcedureKind) -> UInt16 {
+        kind == .sleep ? FurnitureSeat.sleepAnimation : FurnitureSeat.sitAnimation
     }
 
     private var height: SIMD3<Float> {
@@ -122,11 +129,13 @@ extension PackageProcedureInputs {
             return nil
         }.first
         let place = location.flatMap(resolver.place(of:))
-        let seat = leaf.kind == .sit
-            ? target.flatMap(resolver.reference(of:)).flatMap(resolver.seat(in:)) : nil
+        let seat = leaf.kind == .sit || leaf.kind == .sleep
+            ? target.flatMap(resolver.reference(of:)).flatMap {
+                resolver.seat(in: $0, animation: Self.seatAnimation(of: leaf.kind))
+            } : nil
         var setup = PackageProcedureSetup(
             kind: leaf.kind, center: place?.point ?? start,
-            destination: seat?.seat.position ?? place?.point,
+            destination: seat?.seat.root ?? place?.point,
             radius: Float(place?.radius ?? 0)
         )
         setup.seed = seed

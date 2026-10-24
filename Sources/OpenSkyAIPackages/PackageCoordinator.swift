@@ -38,11 +38,15 @@ public protocol PackageWorld: AnyObject {
     func packagePatrolPath(
         from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]?
-    /// A free seat of the furniture, or nil when it has none or is not loaded.
-    func packageSeat(in furniture: ReferenceKey, actor: ReferenceKey) -> PackageSeat?
-    /// The actor sits down in `seat`, or leaves it and frees it.
+    /// A free seat of the furniture, one of `animation` first, or nil when it has none
+    /// or is not loaded.
+    func packageSeat(
+        in furniture: ReferenceKey, actor: ReferenceKey, animation: UInt16
+    ) -> PackageSeat?
+    /// The actor sits down in `seat`.
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat)
-    func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat)
+    /// The actor leaves `seat`, or nil when it never sat, and frees every seat it reserved.
+    func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?)
     /// A held package started, finished, or was left. Its fragments run here.
     func packageProcedure(_ event: PackageScriptEvent)
     /// Seats `rider` on its horse and returns the horse, or nil when it has none loaded.
@@ -93,13 +97,15 @@ extension PackageWorld {
         nil
     }
 
-    public func packageSeat(in _: ReferenceKey, actor _: ReferenceKey) -> PackageSeat? {
+    public func packageSeat(
+        in _: ReferenceKey, actor _: ReferenceKey, animation _: UInt16
+    ) -> PackageSeat? {
         nil
     }
 
     public func seatPackageActor(_: ReferenceKey, in _: PackageSeat) {}
 
-    public func unseatPackageActor(_: ReferenceKey, from _: PackageSeat) {}
+    public func unseatPackageActor(_: ReferenceKey, from _: PackageSeat?) {}
 
     public func packageProcedure(_: PackageScriptEvent) {}
 
@@ -217,7 +223,6 @@ public final class PackageCoordinator {
     /// A follower's gait, which overrides its package's preferred speed.
     var paces: [ReferenceKey: LocomotionGait] = [:]
     var nextMoveTicket = 0
-    public var seats = PackageSeatLedger()
     /// The Guard procedure's warnings; the app sets the install's values.
     public var guardWarnings = GuardWarningSettings.vanilla
     public var sandboxSettings = SandboxSettings.vanilla

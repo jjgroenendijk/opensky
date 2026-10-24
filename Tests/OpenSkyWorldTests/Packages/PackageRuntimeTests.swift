@@ -194,18 +194,19 @@ struct PackageRuntimeTests {
         #expect(travel.handle(.arrived).isEmpty)
         #expect(travel.state == .complete)
 
-        for (kind, clip) in [(PackageProcedureKind.sleep, PackageLoopClip.sleep), (.eat, .eat)] {
-            var machine = PackageProcedureMachine(
-                kind: kind,
-                center: .zero,
-                destination: destination,
-                radius: 0,
-                seed: 2
-            )
-            #expect(machine.start() == [.move(to: destination)])
-            #expect(machine.handle(.arrived) == [.playLoop(clip)])
-            #expect(machine.state == .looping(clip))
-        }
+        var eat = PackageProcedureMachine(
+            kind: .eat, center: .zero, destination: destination, radius: 0, seed: 2
+        )
+        #expect(eat.start() == [.move(to: destination)])
+        #expect(eat.handle(.arrived) == [.playLoop(.eat)])
+        #expect(eat.state == .looping(.eat))
+        // Sleep lies down in its bed the way Sit takes its chair.
+        var bed = PackageProcedureMachine(
+            kind: .sleep, center: .zero, destination: destination, radius: 0, seed: 2
+        )
+        #expect(bed.start() == [.move(to: destination)])
+        #expect(bed.handle(.arrived) == [.sit])
+        #expect(bed.state == .seated)
 
         for kind in [PackageProcedureKind.wander, .sandbox] {
             var first = PackageProcedureMachine(

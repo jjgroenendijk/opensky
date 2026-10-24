@@ -4,6 +4,7 @@
 // (docs/engine/coordinators.md).
 
 import OpenSkyActors
+import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrime
@@ -37,6 +38,7 @@ protocol InventoryWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var crime: CrimeCoordinator { get }
     var factions: FactionCoordinator { get }
+    var furniture: FurnitureCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
@@ -118,11 +120,28 @@ final class InventoryWorldAdapter {
                 )
                 return
             }
+            if useFurniture(event.target.interaction) {
+                return
+            }
             run(game.inventory.handleInteraction(action))
             if action == .use, game.inventory.crafting != nil {
                 game.menuScreens.crafting.open()
             }
         }
+    }
+
+    /// A chair or a bench seats the player. A crafting station keeps its menu, and a bed
+    /// its rest menu. False while the furniture switch is off.
+    private func useFurniture(_ interaction: PlacedInteraction) -> Bool {
+        guard
+            !interaction.seats.isEmpty,
+            (interaction.station?.workbench.benchType ?? WorkbenchType.none) == WorkbenchType.none,
+            let key = game.streamer?.referenceEntry(formID: interaction.reference)?.key
+        else { return false }
+        if case .failure(.disabled) = game.furniture.use(key, by: .player) {
+            return false
+        }
+        return true
     }
 
     /// The lab's notices, from the load order's strings.

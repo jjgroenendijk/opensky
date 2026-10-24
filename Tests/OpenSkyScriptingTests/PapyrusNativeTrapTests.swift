@@ -130,8 +130,6 @@ struct PapyrusNativeTrapTests {
         #expect(fixture.call("SetMotionType") == .deviated(.none, .stubbed))
         #expect(fixture.call("ApplyHavokImpulse") == .deviated(.none, .stubbed))
         #expect(fixture.call("IsLockBroken", returnType: .boolean) == .returned(.boolean(false)))
-        #expect(fixture.call("IsFurnitureInUse", returnType: .boolean)
-            == .deviated(.boolean(false), .stubbed))
         #expect(fixture.call("GetAngleX", returnType: .float) == .returned(.float(0)))
     }
 

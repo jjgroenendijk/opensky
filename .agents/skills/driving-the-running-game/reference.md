@@ -48,6 +48,7 @@ arrow keys.
 `state player`, `state target`, `state actors [--radius <units>]`, `state menu`,
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
+`state furniture [<ref>]`,
 `state time`, `state frame`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
@@ -59,6 +60,12 @@ arrow keys.
 - `state scripts` gives the script queue, the waits, the newest events, the newest fault, and
   the missing natives. With `--ref`, it also lists the scripts on that reference or quest
   with their state and variables.
+- `state player` also lists the `spells` the player knows, by editor ID, abilities such as
+  `Rested` included.
+- `state furniture` (default `player`) gives an actor's `sitState` (the `GetSitState` value),
+  its furniture, marker, entry side, `position`, and `sittingRotation`; for a piece of furniture
+  it lists each marker with its type, whether `MNAM` turns it on, its entry sides, its
+  `position` and floor-level `root`, its holder, and `inUse`.
 - `state packages` gives the actor's package, its procedure, the procedure machine's state
   and patrol point, the mover's state, and the vehicle links.
 
@@ -78,6 +85,9 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug racemenu [--limited on]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
+| `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
+| `debug stand [<ref>]` | gets the actor up from its seat |
+| `debug rest <hours> [--sleep on]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |

@@ -150,8 +150,9 @@ before it got on no longer counts as where it is.
 
 ## Where OpenSky differs
 
-- `Game.SetHudCartMode` and `Game.SetSittingRotation` do nothing yet. The HUD movie has a `CartMode`
-  among its HUD modes, but OpenSky does not drive HUD modes yet. The second turns the player in the
-  seat; the player keeps the view it had.
+- `Game.SetHudCartMode` does nothing yet. The HUD movie has a `CartMode` among its HUD modes, but
+  OpenSky does not drive HUD modes yet. `Game.SetSittingRotation` turns only a player who sits in
+  furniture ([furniture](/engine/furniture.md#papyrus)); on a cart seat the player keeps the view
+  it had.
 - The front axle does not swivel under the cart, and the wheels do not turn at different speeds
   in a curve.

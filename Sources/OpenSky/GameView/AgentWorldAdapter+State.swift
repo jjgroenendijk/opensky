@@ -13,6 +13,7 @@ import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -40,12 +41,21 @@ extension AgentWorldAdapter {
         case .menu: menuState
         case let .quest(editorID): try questState(editorID)
         case .scenes: scenesState()
-        case let .scripts(reference): try scriptsState(reference: reference)
-        case let .packages(reference): try packagesState(reference: reference)
+        case .scripts, .packages, .furniture: try inspection(query)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
         case .time: timeState()
         case .frame: frameState()
+        }
+    }
+
+    /// The reads that look inside the scripts, the packages, and the seats.
+    private func inspection(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
+        switch query {
+        case let .scripts(reference): try scriptsState(reference: reference)
+        case let .packages(reference): try packagesState(reference: reference)
+        case let .furniture(reference): try furnitureState(reference: reference)
+        default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
     }
 
@@ -115,6 +125,10 @@ extension AgentWorldAdapter {
             result["magicka"] = ["current": .init(current.magicka), "max": .init(maximum.magicka)]
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
+        // Abilities such as Rested show here; the game lists them in the magic menu.
+        result["spells"] = .array(game.magic.playerKnownSpells().map { spell in
+            .string(spell.editorID ?? "\(spell.id)")
+        })
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
         result["bowZoom"] = [
             "zoomed": .bool(gameSession.bowZoomViewShare < 1),

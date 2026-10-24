@@ -88,7 +88,7 @@ script runs on:
   `Form.UnregisterForAnimationEvent`.
 - Records and world: `AddItem`, `BlockActivation`, `CreateDetectionEvent`,
   `SetActorCause`, `CalculateEncounterLevel` (1), `GetActorOwner`, `GetFactionOwner`,
-  `GetParentCell` (None), `SetNoFavorAllowed`, `IsFurnitureInUse` (false),
+  `GetParentCell` (None), `SetNoFavorAllowed`,
   `FormList.HasForm` (false), `Actor.GetEquippedItemType` (0),
   `Cell.IsAttached` (true).
 

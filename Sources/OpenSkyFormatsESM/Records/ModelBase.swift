@@ -63,6 +63,8 @@ nonisolated public struct ModelBase: Sendable {
     public let interactionKeyword: FormID?
     /// FURN WBDT. Nil on other types and on furniture without the field.
     public let workbench: Workbench?
+    /// FURN MNAM: the low 24 bits mark the mesh markers this record uses. Nil on other types.
+    public let furnitureFlags: UInt32?
     /// FLOR and TREE produce. Nil when the record carries none of its fields.
     public let produce: HarvestProduce?
     /// TACT VNAM, a VTYP.
@@ -109,7 +111,7 @@ nonisolated public struct ModelBase: Sendable {
         allowsManualInteraction = !(record.type == "ACTI"
             && record.flags.rawValue & (1 << 20) != 0)
             && !(record.type == "DOOR" && fields.doorFlags & 0x02 != 0)
-            && !(record.type == "FURN" && fields.furnitureMarkers & 0x0200_0000 != 0)
+            && !(record.type == "FURN" && (fields.furnitureMarkers ?? 0) & 0x0200_0000 != 0)
         modelPath = details.model?.path
         sounds = Self.buildSounds(
             activation: fields.activationSound,
@@ -120,6 +122,7 @@ nonisolated public struct ModelBase: Sendable {
         keywords = fields.world.keywords
         interactionKeyword = fields.world.interactionKeyword
         workbench = fields.world.workbench
+        furnitureFlags = fields.furnitureMarkers
         produce = fields.world.produce
         voiceType = fields.world.voiceType
         skipped = rest.finish()
@@ -132,7 +135,7 @@ nonisolated public struct ModelBase: Sendable {
         var name: LString?
         var activateTextOverride: LString?
         var doorFlags: UInt8 = 0
-        var furnitureMarkers: UInt32 = 0
+        var furnitureMarkers: UInt32?
         var activationSound: FormID?
         var closeSound: FormID?
         var loopSound: FormID?
@@ -206,6 +209,14 @@ nonisolated public struct ModelBase: Sendable {
             let formID = try FormID(reader.readUInt32())
             return formID.isNull ? nil : formID
         }
+    }
+
+    /// Whether FURN `MNAM` turns on mesh marker `index`. A double bed's L and R
+    /// records each turn on one side. True without `MNAM`.
+    public func usesFurnitureMarker(_ index: Int) -> Bool {
+        guard let furnitureFlags else { return true }
+        guard (0 ..< 24).contains(index) else { return false }
+        return furnitureFlags & (1 << UInt32(index)) != 0
     }
 
     private static func buildSounds(

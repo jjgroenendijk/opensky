@@ -28,7 +28,7 @@ nonisolated extension PackageProcedureMachine {
         .travel: .complete, .hover: .complete, .useIdleMarker: .complete,
         .followTo: .complete, .escort: .complete, .flee: .complete,
         .patrol: .nextPoint, .orbit: .nextPoint,
-        .sleep: .loop(.sleep), .eat: .loop(.eat), .sit: .sit,
+        .sleep: .sit, .eat: .loop(.eat), .sit: .sit,
         .wander: .idle(wanderIdleSeconds), .sandbox: .sandbox,
         .holdPosition: .hold, .guardArea: .hold, .flightGrab: .hold, .wait: .hold,
         .keepAnEyeOn: .hold,

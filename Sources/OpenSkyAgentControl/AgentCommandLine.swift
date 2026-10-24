@@ -13,14 +13,15 @@ nonisolated public enum AgentCommandLine {
         "time.pause": [], "time.resume": [], "time.step": ["n"], "time.scale": ["x"],
         "state.player": [], "state.target": [], "state.actors": [], "state.menu": [],
         "state.quest": ["id"], "state.scenes": [], "state.scripts": ["ref"],
-        "state.packages": ["ref"],
+        "state.packages": ["ref"], "state.furniture": ["ref"],
         "state.av": ["name"], "state.global": ["id"],
         "state.time": [], "state.frame": [],
         "debug.teleport": [], "debug.time": ["hour"], "debug.weather": ["id"],
         "debug.av": ["name"], "debug.item": ["id"], "debug.quest": ["id", "stage"],
         "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"],
         "debug.channel": ["mode"], "debug.shadows": ["quality"],
-        "debug.racemenu": []
+        "debug.racemenu": [], "debug.sit": ["ref"], "debug.stand": ["ref"],
+        "debug.rest": ["hours"]
     ]
 
     /// Arguments a command gets when the words leave them out.

@@ -208,26 +208,11 @@ done once the actor sits.
 
 ## Furniture
 
-A furniture mesh marks where an actor sits with its `BSFurnitureMarkerNode` block
-([NIF](/formats/nif.md#bsfurnituremarkernode)). Each marker is one seat. The `FURN` record lists
-the same markers by index (`ENAM`), and a marker can carry a keyword (`FNMK`). A sit package
-picks its seat by these rules:
-
-- A seat with a keyword is only for an actor whose base `NPC_` has that keyword (`KWDA`).
-- An actor with a matching keyword takes that seat first. Otherwise it takes a free seat with
-  no keyword.
-- Two package actors never share a seat.
-
-On arrival the actor is set at the seat's point, facing the marker heading plus the
-reference's own z rotation. Then the furniture is activated by the actor, so its scripts get
-`OnActivate`. A Creation Kit template whose procedure tree holds "Sit" is a sit package, even
-when the tree also holds "Wait", because the vanilla `SitTarget` tree is
-Sequence[Sit, Simultaneous[Sit, Wait]].
-
-Example: `ExecutionerChoppingBlock` (`FURN` `0002E8EB`) has three markers. Marker 0 has the
-keyword `isExecutioner` and marker 2 `isExecutionerGuard`; marker 1 has none, so the prisoner
-gets it. The keyword rule is OpenSky's reading of the record. The entry points and the sit
-animations are not used yet: the actor appears in the seat and plays no sit idle.
+A Sit package walks to a seat of its target furniture and sits there. A Sleep package does the
+same with a bed's sleep marker. A Creation Kit template whose procedure tree holds "Sit" is a
+sit package, even when the tree also holds "Wait", because the vanilla `SitTarget` tree is
+Sequence[Sit, Simultaneous[Sit, Wait]]. Which seat the actor takes, and what sitting does, is
+in [furniture](/engine/furniture.md).
 
 ## In a session
 

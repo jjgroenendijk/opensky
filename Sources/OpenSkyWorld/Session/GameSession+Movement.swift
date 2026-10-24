@@ -3,6 +3,7 @@
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import simd
 
 extension GameSession {
     /// Seeds the walk controller from the camera pose during `init`, before every
@@ -51,6 +52,21 @@ extension GameSession {
             : eye
     }
 
+    /// Puts the body's root on a seat and the eye on the seat idle's `head` bone, in
+    /// the root's space, so the view sits in the seat. The seat holds without a head
+    /// bone too: a walking step there would drop the player out of the seat state.
+    public func seatPlayer(at root: float4x4, head: SIMD3<Float>?) {
+        playerSeat = root
+        seatedHead = head ?? seatedHead
+        guard let head = seatedHead else {
+            let origin = root.columns.3
+            placePlayerFeet(at: SIMD3(origin.x, origin.y, origin.z))
+            return
+        }
+        let eye = root * SIMD4(head, 1)
+        placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - walkController.capsule.eyeHeight))
+    }
+
     /// Advances active movement mode by one input frame. First frame makes no
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
     public func advanceCamera() {
@@ -81,11 +97,14 @@ extension GameSession {
              .thirdPerson where playerMount?.isMountActive == true:
             advanceMounted(frameInput)
         case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
-            // The vehicle places a seated player; only the view turns.
+            // The vehicle or the furniture places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
             locomotion.advanceSeated(
                 deltaTime: lastCameraDelta, feet: walkController.feetPosition
             )
+            if frameInput.moveForward != 0 || frameInput.moveRight != 0 || frameInput.jump {
+                playerFurniture?.playerAskedToStand()
+            }
         case .walk, .thirdPerson:
             advancePlayer(frameInput)
         }

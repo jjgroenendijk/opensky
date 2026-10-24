@@ -221,7 +221,7 @@ extension MagicCoordinator {
 
     // MARK: - Reads
 
-    func playerKnownSpells() -> [ResolvedSpell] {
+    public func playerKnownSpells() -> [ResolvedSpell] {
         caster?.spellbook.knownSpells(of: .player) ?? []
     }
 

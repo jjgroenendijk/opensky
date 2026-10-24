@@ -369,6 +369,8 @@ nonisolated extension PlayerSettingID {
     public static let characterHeadTracking = Self("characters.headTracking")
     /// Traps, doors, and levers play their behaviour graph animations.
     public static let objectAnimation = Self("world.objectAnimation")
+    /// The player and package actors sit in chairs and lie in beds.
+    public static let furniture = Self("world.furniture")
     /// NPCs and creatures run their own behaviour graphs.
     public static let actorGraphs = Self("characters.actorGraphs")
     /// Up to this many units from the camera an actor's graph steps every frame.
@@ -403,6 +405,7 @@ nonisolated extension PlayerSettingsCatalog {
         ),
         row("characters.headTracking", .opensky, .toggle, "Head tracking", 1, applied: true),
         row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true),
+        row("world.furniture", .opensky, .toggle, "Sit in furniture", 1, applied: true),
         row(
             "combat.temperament", .opensky, .toggle, "Confidence and Assistance", 1,
             applied: true

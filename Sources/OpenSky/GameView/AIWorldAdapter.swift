@@ -47,6 +47,7 @@ protocol AIWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var factions: FactionCoordinator { get }
+    var furniture: FurnitureCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
@@ -55,6 +56,7 @@ protocol AIWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
+    var playerSettingsStore: PlayerSettingsStore { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }

@@ -88,6 +88,25 @@ struct AgentCommandParsingTests {
             == ["limited": true])
     }
 
+    @Test func furnitureCommandsDefaultToThePlayer() throws {
+        #expect(try AgentDebugCommand.parse("sit", args([:]))
+            == .sit(reference: "player", furniture: nil))
+        #expect(try AgentDebugCommand.parse("sit", args(["ref": "1A2B", "furniture": "target"]))
+            == .sit(reference: "1A2B", furniture: "target"))
+        #expect(try AgentDebugCommand.parse("stand", args([:])) == .stand("player"))
+        #expect(try AgentCommandLine.request(["debug", "rest", "8", "--sleep", "on"]).args
+            == ["hours": 8, "sleep": true])
+        #expect(try AgentDebugCommand.parse("rest", args(["hours": 8, "sleep": true]))
+            == .passTime(hours: 8, sleeping: true))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("rest", args(["hours": 30]))
+        }
+        #expect(try AgentStateQuery.parse("furniture", args(["ref": "target"]))
+            == .furniture(reference: "target"))
+        #expect(try AgentStateQuery
+            .parse("furniture", args([:])) == .furniture(reference: "player"))
+    }
+
     @Test func theDebugChannelIsAPositionalMode() throws {
         let request = try AgentCommandLine.request(["debug", "channel", "wireframe"])
         #expect(request.args == ["mode": "wireframe"])

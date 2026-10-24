@@ -112,9 +112,8 @@ extension PackageCoordinator {
         {
             world?.stopPackageActor(mounts[actor] ?? actor)
         }
-        if let seat = execution.seat {
-            world?.unseatPackageActor(actor, from: seat)
-        }
+        // A seat reserved on the walk there is freed too, though the actor never sat.
+        world?.unseatPackageActor(actor, from: execution.seat)
         if let package = try? store?.resolve(execution.package).package {
             world?.packageProcedure(
                 PackageScriptEvent(kind: .change, actor: actor, package: package)

@@ -127,36 +127,50 @@ nonisolated public struct AutomaticDoorArea: Equatable, Sendable {
 /// One place an actor uses a piece of furniture.
 nonisolated public struct FurnitureSeat: Equatable, Sendable {
     public let position: SIMD3<Float>
+    /// Where the user's root goes: the marker at the furniture's own height. A chair's
+    /// marker sits on the seat, and its clips put the root on the floor.
+    public let root: SIMD3<Float>
     /// The world z rotation the user faces, in the record's clockwise radians.
     public let heading: Float
     /// 1 sit, 2 sleep, 4 lean.
     public let animationType: UInt16
+    public static let sitAnimation: UInt16 = 1
     public static let sleepAnimation: UInt16 = 2
     /// FURN `FNMK`: only an actor with this keyword may use the seat.
     public let keyword: FormID?
-    /// The marker's entry bits: 1 front, 2 behind, 4 right, 8 left, 16 up.
+    /// The marker's entry bits less the record's `NAM0` ones: 1 front, 2 behind, 4 right,
+    /// 8 left, 16 up.
     public var entryPoints: UInt16 = 0
+    /// False when the record's `MNAM` leaves this mesh marker off; no one uses it.
+    public var isEnabled = true
+
+    /// How far from the marker a standing actor's feet go. OpenSky plays no exit
+    /// clip, whose root motion would carry the actor out, so this stands in for it.
+    public static let standDistance: Float = 48
 
     public init(
         position: SIMD3<Float>, heading: Float, animationType: UInt16, keyword: FormID?,
-        entryPoints: UInt16 = 0
+        entryPoints: UInt16 = 0, isEnabled: Bool = true, root: SIMD3<Float>? = nil
     ) {
         self.position = position
+        self.root = root ?? position
         self.heading = heading
         self.animationType = animationType
         self.keyword = keyword
         self.entryPoints = entryPoints
+        self.isEnabled = isEnabled
+    }
+
+    /// The world z rotation the camera uses to look the way the seat faces: the
+    /// counter-clockwise yaw from +x of the marker's clockwise heading from +y.
+    public var facingYaw: Float {
+        Float.pi / 2 - heading
     }
 
     /// The one entry bit an actor at `point` uses: the allowed side that faces it most.
     /// Up is used only when no side is allowed. The game's own choice is not documented.
     public func entry(from point: SIMD3<Float>) -> UInt16 {
-        let forward = SIMD2(sin(heading), cos(heading))
-        let right = SIMD2(forward.y, -forward.x)
         let offset = SIMD2(point.x - position.x, point.y - position.y)
-        let sides: [(bit: UInt16, direction: SIMD2<Float>)] = [
-            (1, forward), (2, -forward), (4, right), (8, -right)
-        ]
         let allowed = sides.filter { entryPoints & $0.bit != 0 }
         guard
             let best = allowed.max(by: {
@@ -164,6 +178,20 @@ nonisolated public struct FurnitureSeat: Equatable, Sendable {
             })
         else { return entryPoints & 16 }
         return best.bit
+    }
+
+    /// Where an actor that entered by `entry` stands up: `standDistance` out on that
+    /// side, or on the root for up or no side.
+    public func standPoint(entry: UInt16) -> SIMD3<Float> {
+        guard let side = sides.first(where: { $0.bit == entry }) else { return root }
+        let step = side.direction * Self.standDistance
+        return root + SIMD3(step.x, step.y, 0)
+    }
+
+    private var sides: [(bit: UInt16, direction: SIMD2<Float>)] {
+        let forward = SIMD2(sin(heading), cos(heading))
+        let right = SIMD2(forward.y, -forward.x)
+        return [(1, forward), (2, -forward), (4, right), (8, -right)]
     }
 }
 

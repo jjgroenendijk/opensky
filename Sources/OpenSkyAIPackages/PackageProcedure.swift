@@ -9,7 +9,6 @@ import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum PackageLoopClip: String, Equatable, Sendable {
-    case sleep
     case eat
 }
 
