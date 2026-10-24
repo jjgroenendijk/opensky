@@ -21,7 +21,7 @@ nonisolated public enum AgentCommandLine {
         "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"],
         "debug.channel": ["mode"], "debug.shadows": ["quality"],
         "debug.racemenu": [], "debug.sit": ["ref"], "debug.stand": ["ref"],
-        "debug.rest": ["hours"]
+        "debug.rest": ["hours"], "debug.skillsmenu": []
     ]
 
     /// Arguments a command gets when the words leave them out.

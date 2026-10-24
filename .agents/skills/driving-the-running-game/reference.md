@@ -52,6 +52,9 @@ arrow keys.
 `state time`, `state frame`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
+- `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
+  plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
+  draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).
 - `state player` also gives `firstPerson`: whether the arms graph and rig are attached and
   drawn, the failure reason, the arm model count, and the bones the last pose reached.
 - `state quest` also lists each reference alias with the reference that fills it, or null.
@@ -87,6 +90,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug racemenu [--limited on]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
+| `debug skillsmenu [--sky on\|off] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
 | `debug rest <hours> [--sleep on]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
