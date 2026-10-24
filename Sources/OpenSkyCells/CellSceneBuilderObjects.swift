@@ -10,6 +10,7 @@ import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated extension CellSceneBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
