@@ -45,7 +45,12 @@ protocol ScriptWorldHost: AnyObject {
     var factionWorld: FactionWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var messages: MessageCoordinator { get }
+    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var audioFileSystem: (any GameFileSource)? { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var perks: PerkCoordinator { get }
@@ -62,7 +67,7 @@ protocol ScriptWorldHost: AnyObject {
     func quitApplication()
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
+    var scripts: ScriptCoordinator { get set }
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var vehicleWorld: VehicleWorldAdapter { get }
@@ -82,8 +87,9 @@ final class ScriptWorldAdapter {
         self.game = game
     }
 
-    /// The streamer, the renderer, and the provider each feed the VM one way,
-    /// so the engine never depends on it. Without compiled scripts there is no VM.
+    /// Builds the bridge with every seam, then the VM over it. The streamer, the
+    /// renderer, and the provider each feed the VM one way, so the engine never
+    /// depends on it. Without compiled scripts there is no VM.
     func wirePapyrus(
         provider: WorldDataStores,
         gameSession: GameSession,
@@ -94,7 +100,8 @@ final class ScriptWorldAdapter {
         else { return }
         let bridge = PapyrusWorldStateBridge(
             worldState: game.worldState, references: streamer,
-            globals: game.runtimeState.globalStore
+            globals: game.runtimeState.globalStore,
+            seams: seams(provider: provider)
         )
         bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
         wireActorNatives(bridge: bridge)
@@ -106,9 +113,6 @@ final class ScriptWorldAdapter {
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         let resolver = provider.scriptFormIDResolver
         bridge.formIDResolver = resolver
-        bridge.effectPresenter = game.effectsWorld
-        bridge.weather = self
-        bridge.music = self
         bridge.playerNatives
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
         bridge.playerNatives.dismount = { [weak game] actor in
@@ -121,7 +125,9 @@ final class ScriptWorldAdapter {
         game.magic.onSpellCast = { [weak game] spell, caster in
             game?.scripts.runtime?.queueSpellCast(spell, by: caster)
         }
-        let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
+        let scripts = ScriptCoordinator(world: self, bridge: bridge, fileSystem: fileSystem)
+        game.scripts = scripts
+        let world = scripts.runtime
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)
         }
@@ -130,7 +136,7 @@ final class ScriptWorldAdapter {
         streamer.onTriggerTransition.add { [weak bridge] event in
             bridge?.handleTriggerTransition(event)
         }
-        wireQuests(provider: provider)
+        scripts.startQuestScripts()
         streamer.onCellAttached = { [weak world] scene, firstIntegration in
             guard let world, let location = scene.location else { return }
             world.attach(
@@ -152,10 +158,31 @@ final class ScriptWorldAdapter {
         }
     }
 
+    /// The features the natives reach, each answered by its world adapter.
+    private func seams(provider: WorldDataStores) -> PapyrusBridgeSeams {
+        var seams = PapyrusBridgeSeams()
+        seams.quests = quests(provider: provider)
+        seams.inventory = game.inventoryWorld
+        seams.alchemy = game.inventoryWorld
+        seams.actorAI = game.vehicleWorld
+        seams.furniture = game.aiWorld
+        seams.objectAnimation = game.audioFileSystem == nil ? nil : game.objectAnimationWorld
+        seams.story = game.storyWorld
+        seams.menus = game.menuWorld
+        seams.trapWorld = game.effectsWorld
+        seams.presenter = game.messages
+        seams.itemNotices = ItemNoticeTexts
+            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+        seams.effectPresenter = game.effectsWorld
+        seams.weather = self
+        seams.music = self
+        return seams
+    }
+
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
-    private func wireQuests(provider: WorldDataStores) {
-        guard let store = provider.questStore else { return }
+    private func quests(provider: WorldDataStores) -> QuestRuntime? {
+        guard let store = provider.questStore else { return nil }
         var runtime = QuestRuntime(
             store: game.worldState,
             quests: store,
@@ -165,7 +192,7 @@ final class ScriptWorldAdapter {
         runtime.referenceCreator = { [weak game] base, anchor in
             game?.storyWorld.createQuestReference(base, at: anchor)
         }
-        game.scripts.attachQuests(runtime)
+        return runtime
     }
 
     /// Getters, not captured values: the runtimes behind them are wired after

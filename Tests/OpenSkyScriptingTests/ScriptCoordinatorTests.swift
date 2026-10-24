@@ -11,13 +11,9 @@ import Testing
 @MainActor
 struct ScriptCoordinatorTests {
     private let world = FakeScriptWorld()
-    private let coordinator: ScriptCoordinator
-
-    init() {
-        coordinator = ScriptCoordinator(world: world)
-    }
 
     @Test func withoutAVMThePanelReadsEmpty() {
+        let coordinator = ScriptCoordinator(world: world)
         #expect(coordinator.scriptsSnapshot == .empty)
         #expect(coordinator.questAliasQuestEditorIDs.isEmpty)
         #expect(coordinator.questAliasTable(editorID: "MQ101") == nil)
@@ -26,7 +22,7 @@ struct ScriptCoordinatorTests {
     }
 
     @Test func crosshairTargetsTheResidentReference() throws {
-        try install()
+        let (coordinator, _) = try whole()
         world.crosshairReference = FormID(1)
         world.residentKeys = [FormID(1): Self.key(1)]
         let snapshot = coordinator.scriptsSnapshot
@@ -36,7 +32,7 @@ struct ScriptCoordinatorTests {
 
     /// An unresolved FormID still shows as itself.
     @Test func unresolvedCrosshairShowsTheBareFormID() throws {
-        try install()
+        let (coordinator, _) = try whole()
         world.crosshairReference = FormID(9)
         let snapshot = coordinator.scriptsSnapshot
         #expect(snapshot.targetDescription == FormID(9).description)
@@ -44,13 +40,13 @@ struct ScriptCoordinatorTests {
     }
 
     @Test func noCrosshairNamesNoTarget() throws {
-        try install()
+        let (coordinator, _) = try whole()
         #expect(coordinator.scriptsSnapshot.targetDescription == nil)
         #expect(coordinator.scriptsSnapshot.instanceCount == 2)
     }
 
     @Test func pauseFreezesOnlyTheVMAndStepsStillRun() throws {
-        let runtime = try install()
+        let (coordinator, runtime) = try whole()
         coordinator.setScriptsPaused(true)
         #expect(runtime.isPaused)
         #expect(coordinator.scriptsSnapshot.isPaused)
@@ -59,27 +55,25 @@ struct ScriptCoordinatorTests {
     }
 
     @Test func pausedAdvanceRunsNothing() throws {
-        let runtime = try install()
+        let (coordinator, runtime) = try whole()
         coordinator.setScriptsPaused(true)
         coordinator.advance(delta: 1)
         #expect(runtime.scheduler.tickCount == 0)
     }
 
-    /// The VM's registry owns the bridge, so `install` closes the loop with a
+    /// The VM's registry owns the bridge, so the initializer closes the loop with a
     /// weak link from the bridge back to the VM.
-    @Test func installLinksTheBridgeToTheVM() throws {
+    @Test func theInitializerLinksTheBridgeToTheVM() throws {
         let runtime = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
-        coordinator.install(runtime: runtime, bridge: bridge)
+        let coordinator = ScriptCoordinator(world: world, runtime: runtime, bridge: bridge)
         #expect(bridge.world === runtime)
         #expect(coordinator.bridge === bridge)
     }
 
-    @discardableResult
-    private func install() throws -> PapyrusWorldRuntime {
+    private func whole() throws -> (ScriptCoordinator, PapyrusWorldRuntime) {
         let runtime = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
-        coordinator.install(runtime: runtime, bridge: nil)
-        return runtime
+        return (ScriptCoordinator(world: world, runtime: runtime, bridge: nil), runtime)
     }
 
     private static func key(_ objectID: UInt32) -> ReferenceKey {

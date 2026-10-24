@@ -22,9 +22,9 @@ struct DialogueCoordinatorTests {
         world: FakeDialogueWorld,
         store: WorldStateStore = WorldStateStore()
     ) throws -> DialogueCoordinator {
-        let coordinator = DialogueCoordinator(store: store, world: world)
-        coordinator.index = try DialogueRuntimeFixture.dialogueStore()
-        return coordinator
+        try DialogueCoordinator(
+            store: store, world: world, index: DialogueRuntimeFixture.dialogueStore()
+        )
     }
 
     private func world() throws -> FakeDialogueWorld {
@@ -37,7 +37,11 @@ struct DialogueCoordinatorTests {
     // MARK: - Conversation
 
     @Test func withoutAnIndexNoConversationBegins() throws {
-        let coordinator = try DialogueCoordinator(store: WorldStateStore(), world: world())
+        let coordinator = try DialogueCoordinator(
+            store: WorldStateStore(),
+            world: world(),
+            index: nil
+        )
         #expect(coordinator.begin(with: speaker) == nil)
         #expect(coordinator.lastOutcome == "no dialogue index loaded")
     }
@@ -135,7 +139,11 @@ struct DialogueCoordinatorTests {
     }
 
     @Test func finishingWithoutARuntimeLeavesTheList() throws {
-        let coordinator = try DialogueCoordinator(store: WorldStateStore(), world: world())
+        let coordinator = try DialogueCoordinator(
+            store: WorldStateStore(),
+            world: world(),
+            index: nil
+        )
         #expect(coordinator.finishResponse(speaker: speaker) == .unchanged)
     }
 

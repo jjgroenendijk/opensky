@@ -17,7 +17,6 @@ import OpenSkyWorldState
 /// replaces it.
 struct TrapControlDependencies {
     let hazards: HazardCoordinator
-    let scripts: ScriptCoordinator
     let worldState: WorldStateStore
     let streamer: () -> CellStreamer?
 }

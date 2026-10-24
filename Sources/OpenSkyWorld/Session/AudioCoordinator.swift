@@ -64,8 +64,8 @@ public final class AudioCoordinator {
         self.world = world
     }
 
-    /// Called once the engine exists, so stored volumes reach it.
-    public var onEngineBuilt: (() -> Void)?
+    /// Runs once, when the first enable builds the engine.
+    public let engineStarted = FrameSchedule<AudioEngineStartStep, Void>()
 
     /// The first enable builds the engine and the directors once.
     public var audioEnabled: Bool {
@@ -73,7 +73,7 @@ public final class AudioCoordinator {
         set {
             if newValue, engine == nil {
                 buildEngine()
-                onEngineBuilt?()
+                engineStarted(())
             }
             engine?.isEnabled = newValue
         }

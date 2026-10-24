@@ -47,11 +47,9 @@ public final class SubtitleCoordinator {
     public private(set) var current: String?
     private var currentKind: SubtitleKind?
     private var shownUntil: Double = 0
-    private weak var presenter: (any SubtitlePresenting)?
+    private weak let presenter: (any SubtitlePresenting)?
 
-    public init() {}
-
-    public func attach(presenter: any SubtitlePresenting) {
+    public init(presenter: any SubtitlePresenting) {
         self.presenter = presenter
     }
 

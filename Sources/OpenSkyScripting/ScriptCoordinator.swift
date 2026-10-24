@@ -26,27 +26,48 @@ public protocol ScriptWorld: AnyObject {
 
 @MainActor
 public final class ScriptCoordinator {
-    /// Nil until `start`.
-    public private(set) var runtime: PapyrusWorldRuntime?
+    /// Nil without game data.
+    public let runtime: PapyrusWorldRuntime?
     /// The seam natives reach the world through.
-    public private(set) var bridge: PapyrusWorldStateBridge?
+    public let bridge: PapyrusWorldStateBridge?
     /// Scripts with their ancestors, loaded off the main actor once play starts.
-    private var scripts: AssetLoader<String, [PexFile]>?
+    private let scripts: AssetLoader<String, [PexFile]>?
     weak let world: (any ScriptWorld)?
     /// The player's location at the last frame. The outer nil means no frame has read it.
     private var lastPlayerLocation: ResolvedFormID??
 
-    public init(world: any ScriptWorld) {
-        self.world = world
+    /// Without game data there is no VM, and every call does nothing.
+    public convenience init(world: any ScriptWorld) {
+        self.init(world: world, runtime: nil, bridge: nil)
     }
 
-    /// Builds the VM over `bridge`, with scripts decoded on demand from
-    /// `fileSystem`. The VM's registry owns the bridge, so the bridge holds the
-    /// VM weakly.
-    @discardableResult
-    public func start(
-        bridge: PapyrusWorldStateBridge, fileSystem: any GameFileSource
-    ) -> PapyrusWorldRuntime {
+    /// Takes a VM built elsewhere, such as a test fixture's.
+    public convenience init(
+        world: any ScriptWorld, runtime: PapyrusWorldRuntime?, bridge: PapyrusWorldStateBridge?
+    ) {
+        self.init(world: world, runtime: runtime, bridge: bridge, scripts: nil)
+    }
+
+    /// The VM's registry owns the bridge, so the bridge holds the VM weakly.
+    private init(
+        world: any ScriptWorld,
+        runtime: PapyrusWorldRuntime?,
+        bridge: PapyrusWorldStateBridge?,
+        scripts: AssetLoader<String, [PexFile]>?
+    ) {
+        self.world = world
+        self.runtime = runtime
+        self.bridge = bridge
+        self.scripts = scripts
+        bridge?.world = runtime
+    }
+
+    /// Builds the VM over `bridge`, with scripts decoded on demand from `fileSystem`.
+    public convenience init(
+        world: any ScriptWorld,
+        bridge: PapyrusWorldStateBridge,
+        fileSystem: any GameFileSource
+    ) {
         let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
             nativeDispatch: PapyrusNativeRegistry.standard(
@@ -56,9 +77,18 @@ public final class ScriptCoordinator {
         runtime.runtime.nativeTiming = .game
         // Session start runs before the first frame, so it may load at once.
         runtime.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
-        scripts = AssetLoader(load: Self.chainLoad(fileSystem: fileSystem))
-        install(runtime: runtime, bridge: bridge)
-        return runtime
+        self.init(
+            world: world,
+            runtime: runtime,
+            bridge: bridge,
+            scripts: AssetLoader(load: Self.chainLoad(fileSystem: fileSystem))
+        )
+    }
+
+    /// Starts the scripts of the quests that already run. Session start calls it once.
+    public func startQuestScripts() {
+        let started = bridge?.attachRunningQuestScripts() ?? 0
+        Self.logger.info("[INFO] quest scripts instantiated: \(started, privacy: .public)")
     }
 
     /// The frame's drain point. The first call is the first frame: from then on,
@@ -80,20 +110,6 @@ public final class ScriptCoordinator {
             }
         }
         runtime.retryDeferredScriptWork()
-    }
-
-    /// Takes a VM built elsewhere, such as a test fixture's.
-    public func install(runtime: PapyrusWorldRuntime?, bridge: PapyrusWorldStateBridge?) {
-        bridge?.world = runtime
-        self.runtime = runtime
-        self.bridge = bridge
-    }
-
-    /// Gives the bridge its quest layer and starts the quests that already run.
-    public func attachQuests(_ quests: any QuestAccess) {
-        bridge?.questRuntime = quests
-        let started = bridge?.attachRunningQuestScripts() ?? 0
-        Self.logger.info("[INFO] quest scripts instantiated: \(started, privacy: .public)")
     }
 
     /// The player slept from `start` to `end`, in game days passed; time has already passed.

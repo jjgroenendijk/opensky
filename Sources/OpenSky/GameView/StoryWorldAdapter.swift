@@ -116,7 +116,6 @@ final class StoryWorldAdapter {
         game.inventory.storyEvents = self
         game.crime.storyEvents = self
         game.magic.storyEvents = self
-        game.scripts.bridge?.story = self
         game.scripts.bridge?.storyNatives.questStarted = { [weak self] quest in
             self?.scenes.questDidStart(quest)
         }
@@ -130,8 +129,6 @@ final class StoryWorldAdapter {
                 say(line, speaker: actor)
             }
         }
-        game.scripts.bridge?.menus = game.menuWorld
-        game.scripts.bridge?.trapWorld = game.effectsWorld
         game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard

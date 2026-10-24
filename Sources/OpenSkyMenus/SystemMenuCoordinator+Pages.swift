@@ -35,7 +35,7 @@ extension SystemMenuCoordinator {
             model.showMain()
             mirrorMovie(SettingsMovieBridge.mainState)
         case .settings:
-            settingsPage = SettingsPageModel(catalog: settings?.store.catalog ?? .vanilla)
+            settingsPage = SettingsPageModel(catalog: settings.store.catalog)
             mirrorMovie(SettingsMovieBridge.categoryState)
         case .controls:
             controlsPage = ControlsPageModel()
@@ -80,7 +80,7 @@ extension SystemMenuCoordinator {
         let action = controlsPage.capture(scanCode: scanCode)
         routeControls(action)
         if case let .rebind(rebound, code) = action {
-            finishMovieRemap(succeeded: settings?.bindings.scanCode(for: rebound) == code)
+            finishMovieRemap(succeeded: settings.bindings.scanCode(for: rebound) == code)
         } else {
             finishMovieRemap(succeeded: true)
         }
@@ -110,7 +110,7 @@ extension SystemMenuCoordinator {
         let wasOpen = settingsPage.openGroup
         switch settingsPage.handle(event) {
         case let .adjust(id, direction):
-            settings?.store.step(id, by: direction)
+            settings.store.step(id, by: direction)
             publishSettingsRows()
         case .back:
             showPage(.main)
@@ -130,10 +130,9 @@ extension SystemMenuCoordinator {
     private func routeControls(_ action: ControlsPageAction?) {
         switch action {
         case let .rebind(action, scanCode):
-            let result = settings?.rebind(action, to: scanCode)
-            lastMessage = result.map { Self.message(for: $0, action: action) }
+            lastMessage = Self.message(for: settings.rebind(action, to: scanCode), action: action)
         case .resetAll:
-            settings?.resetBindings()
+            settings.resetBindings()
             lastMessage = "Controls reset"
         case .back:
             showPage(.main)
@@ -237,10 +236,8 @@ extension SystemMenuCoordinator {
     }
 
     private func publishSettingsRows() {
-        guard
-            movieLoaded, let renderer, let store = settings?.store,
-            settingsPage.openGroup != nil
-        else { return }
+        guard movieLoaded, let renderer, settingsPage.openGroup != nil else { return }
+        let store = settings.store
         let rows = settingsPage.rows.compactMap { id in
             store.catalog.definition(id).map { (definition: $0, value: store.value(id)) }
         }
@@ -260,10 +257,10 @@ extension SystemMenuCoordinator {
         case .settings:
             return settingsSnapshot
         case .controls:
-            let bindings = settings?.bindings ?? InputBindings()
+            let bindings = settings.bindings
             let rows = InputBindings.slots.map { slot in
                 let key = bindings.scanCode(for: slot.action)
-                    .map { self.settings?.keyName($0) ?? DirectInputKeyCodes.fallbackName($0) }
+                    .map { self.settings.keyName($0) }
                     ?? "none"
                 return "\(slot.event): \(key)"
             } + [ControlsPageModel.resetTitle]
@@ -286,7 +283,8 @@ extension SystemMenuCoordinator {
     }
 
     private var settingsSnapshot: SystemMenuPageSnapshot {
-        guard settingsPage.openGroup != nil, let store = settings?.store else {
+        let store = settings.store
+        guard settingsPage.openGroup != nil else {
             return page(
                 rows: SettingsPageModel.categories.map(\.title),
                 selected: SettingsPageModel.categories

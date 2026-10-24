@@ -61,8 +61,7 @@ struct TitleMenuCoordinatorTests {
     private static func make() -> (TitleMenuCoordinator, FakeTitleWorld) {
         let world = FakeTitleWorld()
         let menuMode = world.menuMode
-        let menu = TitleMenuCoordinator(menuMode: menuMode, world: world)
-        menu.saves = world
+        let menu = TitleMenuCoordinator(menuMode: menuMode, saves: world, world: world)
         return (menu, world)
     }
 

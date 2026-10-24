@@ -73,3 +73,9 @@ public enum WorldTickStep: Int, FramePhase {
     /// Scenes speak through the dialogue index.
     case story
 }
+
+/// The handlers of the audio engine's first start, which runs once.
+public enum AudioEngineStartStep: Int, FramePhase {
+    /// Stored volumes reach the new engine.
+    case playerSettings
+}

@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
 @testable import OpenSkyQuestsInterface
@@ -53,6 +54,22 @@ struct PapyrusWorldQuestTests {
         PapyrusWorldFixture.drain(session.world)
         #expect(session.world.questInstanceKeys.count == 2)
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
+    }
+
+    /// A coordinator built over the quest layer starts no script until session start asks.
+    @Test func questScriptsStartOnTheStartCall() throws {
+        let session = try PapyrusQuestFixture.session(
+            quest: PapyrusQuestFixture.quest(), attachQuests: false
+        )
+        let world = QuestlessScriptWorld()
+        let scripts = ScriptCoordinator(
+            world: world,
+            runtime: session.world,
+            bridge: session.bridge
+        )
+        #expect(session.world.questInstanceKeys.isEmpty)
+        scripts.startQuestScripts()
+        #expect(session.world.questInstanceKeys.count == 2)
     }
 
     /// A story-manager start attaches the one quest it started.
@@ -306,5 +323,15 @@ struct PapyrusWorldQuestTests {
         // Nothing re-runs on load: the fired set came back with the save.
         PapyrusWorldFixture.drain(fresh.world)
         #expect(fresh.dispatch.notes.isEmpty)
+    }
+}
+
+private final class QuestlessScriptWorld: ScriptWorld {
+    let crosshairReference: FormID? = nil
+    let gameClock: GameClock? = nil
+    let playerLocation: ResolvedFormID?? = nil
+
+    func referenceKey(formID _: FormID) -> ReferenceKey? {
+        nil
     }
 }

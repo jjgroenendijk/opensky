@@ -50,7 +50,7 @@ public final class SystemMenuCoordinator {
     public static let identifier: MenuIdentifier = "SystemMenu"
 
     public internal(set) var model = SystemMenuModel()
-    public internal(set) var settingsPage = SettingsPageModel(catalog: .vanilla)
+    public internal(set) var settingsPage: SettingsPageModel
     public internal(set) var saveLoadPage: SaveLoadPageModel?
     public internal(set) var controlsPage = ControlsPageModel()
     public internal(set) var quitPage: ConfirmationModel?
@@ -58,8 +58,8 @@ public final class SystemMenuCoordinator {
     public internal(set) var lastMessage: String?
     /// The running save, load, or delete; one at a time.
     public internal(set) var saveWork: Task<Void, Never>?
-    public private(set) var settings: PlayerSettingsCoordinator?
-    public weak var saves: SaveGameService?
+    public let settings: PlayerSettingsCoordinator
+    public weak let saves: SaveGameService?
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the one SWF layer.
     public private(set) var movieEnabled = true
@@ -83,12 +83,17 @@ public final class SystemMenuCoordinator {
         menuMode: MenuModeController,
         movies: SWFMovieSource,
         hud: HUDCoordinator,
+        settings: PlayerSettingsCoordinator,
+        saves: SaveGameService?,
         world: SystemMenuWorld? = nil
     ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+        self.settings = settings
+        self.saves = saves
         self.world = world
+        settingsPage = SettingsPageModel(catalog: settings.store.catalog)
     }
 
     lazy var movie = MenuMovieSession(
@@ -101,11 +106,6 @@ public final class SystemMenuCoordinator {
 
     public var movieError: String? {
         movie.error
-    }
-
-    public func attach(settings: PlayerSettingsCoordinator) {
-        self.settings = settings
-        settingsPage = SettingsPageModel(catalog: settings.store.catalog)
     }
 
     var renderer: Renderer? {
@@ -154,8 +154,8 @@ public final class SystemMenuCoordinator {
 
     /// The settings store owns the value; this reads and writes through it.
     public var masterVolume: Float {
-        get { Float(settings?.store.value(.masterVolume) ?? 1) }
-        set { settings?.store.set(.masterVolume, to: Double(newValue)) }
+        get { Float(settings.store.value(.masterVolume)) }
+        set { settings.store.set(.masterVolume, to: Double(newValue)) }
     }
 
     /// On the main page the movie moves its own highlight, and accept opens the
