@@ -9,6 +9,8 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -43,6 +45,8 @@ extension AgentWorldAdapter {
             return try done(renderDebug(command))
         case let .raceMenu(limited):
             return try done(openRaceMenu(limited: limited))
+        case let .skillsMenu(sky, levels):
+            return try done(openSkillsMenu(sky: sky, levels: levels))
         case let .benchmark(request):
             return try benchmark(request)
         case .sit, .stand, .passTime:
@@ -79,6 +83,27 @@ extension AgentWorldAdapter {
             throw AgentFailure(.notReady, "the race menu needs a loaded world")
         }
         return ["open": true, "limited": .bool(game.raceMenu.snapshot.isLimited)]
+    }
+
+    private func openSkillsMenu(sky: Bool?, levels: Int) throws(AgentFailure) -> AgentJSON {
+        let menu = game.skillsMenu
+        if let sky {
+            menu.setSkyEnabled(sky)
+        }
+        if levels > 0 {
+            guard menu.model == nil, let leveling = game.progression.leveling else {
+                throw AgentFailure(.notReady, "levels are earned before the menu opens")
+            }
+            for _ in 0 ..< levels {
+                let missing = leveling.experienceForNextLevel - leveling.state.experience
+                game.progression.awardCharacterExperience(max(1, missing))
+                game.progression.applyEarnedLevels()
+            }
+        }
+        guard menu.model != nil || menu.open() else {
+            throw AgentFailure(.notReady, "the skills menu needs a loaded world")
+        }
+        return skillsMenuState(menu.snapshot)
     }
 
     private func done(_ value: AgentJSON) -> AgentHandling {

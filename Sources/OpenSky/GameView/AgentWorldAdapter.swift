@@ -18,6 +18,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
+import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
@@ -51,6 +52,7 @@ protocol AgentWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var player: PlayerCoordinator { get }
+    var progression: ProgressionCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var renderControls: WorldRenderControls { get }
     var renderer: Renderer? { get }

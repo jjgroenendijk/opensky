@@ -88,6 +88,18 @@ struct AgentCommandParsingTests {
             == ["limited": true])
     }
 
+    @Test func theSkillsMenuCanTurnTheSkyAndEarnLevels() throws {
+        #expect(try AgentDebugCommand.parse("skillsmenu", args([:]))
+            == .skillsMenu(sky: nil, levels: 0))
+        #expect(try AgentDebugCommand.parse("skillsmenu", args(["sky": false, "levelup": 2]))
+            == .skillsMenu(sky: false, levels: 2))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("skillsmenu", args(["levelup": 11]))
+        }
+        #expect(try AgentCommandLine.request(["debug", "skillsmenu", "--sky", "off"]).args
+            == ["sky": false])
+    }
+
     @Test func furnitureCommandsDefaultToThePlayer() throws {
         #expect(try AgentDebugCommand.parse("sit", args([:]))
             == .sit(reference: "player", furniture: nil))

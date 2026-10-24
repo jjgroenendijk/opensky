@@ -1,6 +1,6 @@
 // The `fStats` game settings that shape the perk sky. `Skyrim.esm` stores four of
-// them; the game binary names the rest, and OpenSky picks their values.
-// See docs/engine/perk-sky.md.
+// them; the rest default to the game binary's values where their meaning is known,
+// and to OpenSky's own values otherwise. See docs/engine/perk-sky.md.
 
 import Foundation
 
@@ -10,13 +10,14 @@ nonisolated public struct PerkSkySettings: Equatable, Sendable {
     /// `fStatsStarXIncrement`, `fStatsStarYIncrement`, `fStatsStarZIncrement`: the
     /// offset of one grid step across, one step up, and the depth per step up.
     public var starIncrement: SIMD3<Float> = [5, 15, -9]
-    /// `fStatsStarZInitialOffset`: depth of a tree's bottom row from its anchor.
-    public var starZInitialOffset: Float = 0
+    /// `fStatsStarZInitialOffset`: how far a tree's bottom row stands toward the camera.
+    public var starZInitialOffset: Float = 5
     /// `fStatsStarScale`, and `fStatsLineScale` for a line's width.
     public var starScale: Float = 0.15
-    public var lineScale: Float = 0.15
-    /// OpenSky's own factor on the up and depth steps, so a tree fits its art.
-    public var rowScale: Float = 0.4
+    public var lineScale: Float = 0.1175
+    /// The factor on the up and depth steps, measured on vanilla screenshots; no
+    /// setting names it.
+    public var rowScale: Float = 0.43
     /// `fStatsRotationSpeedMax` (degrees per second) and `fStatsRotationRampTime`.
     public var rotationSpeedMax: Float = 180
     public var rotationRampTime: Float = 0.25

@@ -1,5 +1,6 @@
-// The skills menu's two vanilla movies on the one SWF layer. A movie that does not
-// load leaves the engine rows in charge, never a thrown error.
+// The skills menu's two vanilla movies. The stats movie stays up the whole time; while
+// a pick is owed it shows its level-up state and the level-up movie is drawn over it.
+// A movie that does not load leaves the engine rows in charge, never a thrown error.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -7,15 +8,14 @@ import OpenSkyGameData
 import OpenSkyRendering
 
 extension SkillsMenuCoordinator {
-    /// The movie the page needs: the level-up buttons while a pick is owed.
+    /// The stats movie, or nil when the movies are off.
     var wantedMoviePath: String? {
-        guard let model, movieEnabled else { return nil }
-        return model.page == .levelUp ? LevelUpMenuMovieBridge.moviePath : StatsMenuMovieBridge
-            .moviePath
+        model != nil && movieEnabled ? StatsMenuMovieBridge.moviePath : nil
     }
 
-    /// Loads the movie the page needs, or sends the model to the one already up.
+    /// Loads the stats movie, or sends the model to the one already up.
     func syncMovie() {
+        syncLevelUpMovie()
         guard let wanted = wantedMoviePath else { return }
         guard wanted == movie.path else {
             startMovie(wanted)
@@ -26,23 +26,14 @@ extension SkillsMenuCoordinator {
     }
 
     func startMovie(_ path: String) {
-        let isLevelUp = path == LevelUpMenuMovieBridge.moviePath
         movie.start(MenuMovie(
             path: path,
             prepare: { [weak self] runtime in
-                Self.prepare(runtime, path: path, onCamera: { alpha in
+                StatsMenuMovieBridge.prepare(runtime: runtime) { alpha in
                     self?.sky.movieAlpha = alpha
-                }, onChoice: { kind in
-                    self?.pendingChoices.append(kind)
-                })
-            },
-            activate: { runtime in
-                if isLevelUp {
-                    LevelUpMenuMovieBridge.activate(runtime: runtime)
-                } else {
-                    StatsMenuMovieBridge.activate(runtime: runtime)
                 }
             },
+            activate: { runtime in StatsMenuMovieBridge.activate(runtime: runtime) },
             didLoad: { [weak self] in
                 guard let self, let renderer = world?.renderer else { return }
                 publish(renderer: renderer)
@@ -50,8 +41,35 @@ extension SkillsMenuCoordinator {
         ), while: { [weak self] in self?.model != nil })
     }
 
+    /// Starts the level-up movie while a pick is owed and stops it after the last one.
+    func syncLevelUpMovie() {
+        let wanted = movieEnabled && model?.page == .levelUp
+        guard wanted != levelUpShown else { return }
+        levelUpShown = wanted
+        guard wanted else {
+            levelUpMovie.stop()
+            return
+        }
+        levelUpMovie.start(
+            path: LevelUpMenuMovieBridge.moviePath,
+            prepare: { [weak self] runtime in
+                LevelUpMenuMovieBridge.prepare(runtime: runtime) { kind in
+                    self?.pendingChoices.append(kind)
+                }
+            },
+            activate: { [weak self] runtime in
+                LevelUpMenuMovieBridge.activate(runtime: runtime)
+                if let kind = self?.model?.selectedAttribute {
+                    LevelUpMenuMovieBridge.highlight(kind, runtime: runtime)
+                }
+            }
+        )
+    }
+
     func stopMovie() {
         movie.stop()
+        levelUpMovie.stop()
+        levelUpShown = false
         pendingChoices = []
     }
 
@@ -59,12 +77,11 @@ extension SkillsMenuCoordinator {
         guard let model else { return }
         do {
             try renderer.updateSWFRuntime { runtime in
-                if model.page == .levelUp {
+                StatsMenuMovieBridge.publish(model, namePoints: sky.namePoints, runtime: runtime)
+            }
+            if model.page == .levelUp {
+                try renderer.updateSWFOverlay { runtime in
                     LevelUpMenuMovieBridge.highlight(model.selectedAttribute, runtime: runtime)
-                } else {
-                    StatsMenuMovieBridge.publish(
-                        model, namePoints: sky.namePoints, runtime: runtime
-                    )
                 }
             }
         } catch {
@@ -83,6 +100,7 @@ extension SkillsMenuCoordinator {
         do {
             for _ in 0 ..< framePacer.ticks(at: now, frameRate: rate) {
                 try renderer.advanceSWFRuntime()
+                levelUpMovie.tick()
             }
         } catch {
             movie.record(error)
@@ -99,18 +117,5 @@ extension SkillsMenuCoordinator {
             perform(.chooseAttribute(kind))
         }
         syncMovie()
-    }
-
-    private static func prepare(
-        _ runtime: SWFMovieRuntime,
-        path: String,
-        onCamera: @escaping @MainActor @Sendable (Float) -> Void,
-        onChoice: @escaping @MainActor @Sendable (ActorValueKind) -> Void
-    ) {
-        if path == LevelUpMenuMovieBridge.moviePath {
-            LevelUpMenuMovieBridge.prepare(runtime: runtime, onChoice: onChoice)
-        } else {
-            StatsMenuMovieBridge.prepare(runtime: runtime, onCamera: onCamera)
-        }
     }
 }

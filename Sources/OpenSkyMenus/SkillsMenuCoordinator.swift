@@ -23,13 +23,16 @@ nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
     public let lastResult: String?
     public let movie: TitleMenuMovieSnapshot
     public let isSkyEnabled: Bool
+    /// True while the level-up movie is drawn over the stats movie.
+    public let isLevelUpMovieLoaded: Bool
     /// The perk sky's state, such as "812 draws, slot 3, tree view"; nil before it shows.
     public let sky: String?
 
     public init(
         isOpen: Bool = false, page: String = "Closed", rows: [String] = [],
         selectedIndex: Int? = nil, lastResult: String? = nil,
-        movie: TitleMenuMovieSnapshot = .init(), isSkyEnabled: Bool = true, sky: String? = nil
+        movie: TitleMenuMovieSnapshot = .init(), isSkyEnabled: Bool = true,
+        isLevelUpMovieLoaded: Bool = false, sky: String? = nil
     ) {
         self.isOpen = isOpen
         self.page = page
@@ -38,6 +41,7 @@ nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
         self.lastResult = lastResult
         self.movie = movie
         self.isSkyEnabled = isSkyEnabled
+        self.isLevelUpMovieLoaded = isLevelUpMovieLoaded
         self.sky = sky
     }
 }
@@ -49,9 +53,12 @@ public final class SkillsMenuCoordinator {
     public internal(set) var lastResult: String?
     public private(set) var movieEnabled = true
     public internal(set) var skyEnabled = true
+    /// True while the sky plays `CameraOutro` after a close; input waits.
+    public internal(set) var isClosing = false
     var framePacer = MenuMovieFramePacer()
     /// Buttons the level-up movie pressed, applied after it returns.
     var pendingChoices: [ActorValueKind] = []
+    var levelUpShown = false
     var sky = PerkSkyState()
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
@@ -74,6 +81,11 @@ public final class SkillsMenuCoordinator {
         movies: movies, hud: hud, label: "skills menu movie"
     ) { [weak self] in self?.world?.renderer }
 
+    /// The level-up movie, drawn over the stats movie while a pick is owed.
+    lazy var levelUpMovie = MenuMovieOverlay(movies: movies) { [weak self] in
+        self?.world?.renderer
+    }
+
     public var movieLoaded: Bool {
         movie.isLoaded
     }
@@ -95,16 +107,34 @@ public final class SkillsMenuCoordinator {
         return true
     }
 
+    /// The text goes at once; the sky then plays `CameraOutro` before the menu leaves.
     public func close() {
-        guard model != nil else { return }
-        model = nil
+        guard model != nil, !isClosing else { return }
         stopMovie()
+        guard sky.isShown, skyEnabled else {
+            finishClose()
+            return
+        }
+        isClosing = true
+    }
+
+    /// Off hides the sky at once; on draws it from the next frame.
+    public func setSkyEnabled(_ enabled: Bool) {
+        skyEnabled = enabled
+        if !enabled {
+            hideSky()
+        }
+    }
+
+    func finishClose() {
+        model = nil
+        isClosing = false
         hideSky()
         menuMode.dismiss(Self.identifier)
     }
 
     public func route(_ event: MenuInputEvent) {
-        guard var model else { return }
+        guard var model, !isClosing else { return }
         model.message = nil
         let action = model.handle(event)
         self.model = model
@@ -180,9 +210,9 @@ public final class SkillsMenuCoordinator {
             selected = confirmation.selectedIndex
         }
         return SkillsMenuSnapshot(
-            isOpen: true, page: page, rows: rows, selectedIndex: selected,
+            isOpen: true, page: isClosing ? "Closing" : page, rows: rows, selectedIndex: selected,
             lastResult: lastResult, movie: movieSnapshot, isSkyEnabled: skyEnabled,
-            sky: skyLine
+            isLevelUpMovieLoaded: levelUpMovie.isLoaded, sky: skyLine
         )
     }
 

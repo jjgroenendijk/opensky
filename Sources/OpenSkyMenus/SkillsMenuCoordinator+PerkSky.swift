@@ -29,6 +29,20 @@ struct PerkSkyFrame {
     let beamLength: Float
 }
 
+/// The dome's sequence names, as `intperkskydome.nif` has them.
+enum PerkSkyDome {
+    static let introSequence = "CameraIntro"
+    static let idleSequence = "Idle"
+    static let outroSequence = "CameraOutro"
+    static let cameraNode = "CameraPosition"
+}
+
+/// One frame of the dome: the sequence it plays and how far it lifts the camera.
+struct PerkSkyDomePose {
+    let playing: NIFEffectPose.Playing?
+    let lift: SIMD3<Float>
+}
+
 /// The stars and lines of every tree, and the open tree's stars for the names.
 struct PerkSkyTreeDraws {
     var stars: [MenuSceneDraw] = []
@@ -44,6 +58,8 @@ struct PerkSkyState {
     var lines = PerkSkyAnimator<PerkLineKey>()
     var anchors: [SIMD3<Float>] = []
     var openedAt: Double?
+    /// When `CameraOutro` started, after a close.
+    var closedAt: Double?
     var lastTick: Double?
     var movieAlpha: Float?
     var namePoints: [UInt32: SIMD2<Float>] = [:]
@@ -69,7 +85,11 @@ extension SkillsMenuCoordinator {
             return "failed: \(failure)"
         }
         guard sky.isShown, let motion = sky.motion else { return nil }
-        let view = motion.treeBlend >= 1 ? "tree view" : motion.treeBlend > 0 ? "moving" : "ring"
+        let view = if isClosing {
+            "closing"
+        } else {
+            motion.treeBlend >= 1 ? "tree view" : motion.treeBlend > 0 ? "moving" : "ring"
+        }
         return "\(sky.drawCount) draws, turned \(Int(motion.yawDegrees.rounded()))°, \(view)"
     }
 
@@ -87,7 +107,12 @@ extension SkillsMenuCoordinator {
         guard
             skyEnabled, let model, let world, let renderer = world.renderer,
             let models = world.perkSkySource?.models(device: renderer.device)
-        else { return }
+        else {
+            if isClosing {
+                finishClose()
+            }
+            return
+        }
         if !sky.isShown {
             sky.isShown = true
             sky.openedAt = now
@@ -97,10 +122,13 @@ extension SkillsMenuCoordinator {
             }
             try? renderer.setLoadingCover([])
         }
+        if isClosing, sky.closedAt == nil {
+            sky.closedAt = now
+        }
         let settings = world.perkSkySettings
         let elapsed = now - (sky.openedAt ?? now)
         var motion = sky.motion ?? PerkSkyMotion(slot: model.skillPosition)
-        let intro = models.dome.sequence("CameraIntro")
+        let intro = models.dome.sequence(PerkSkyDome.introSequence)
         let introSeconds = Double(intro?.duration ?? 0)
         let clock = introSeconds > 0 ? Float(elapsed / introSeconds) : 1
         motion.introAlpha = min(1, max(0, sky.movieAlpha ?? clock))
@@ -109,20 +137,22 @@ extension SkillsMenuCoordinator {
             inTree: model.page == .perks, settings: settings
         )
         sky.motion = motion
-        let introOffset = intro.flatMap { sequence in
-            models.dome.nodePosition("CameraPosition", playing: [
-                .init(sequence, seconds: motion.introAlpha * sequence.duration)
-            ])
-        } ?? .zero
+        guard let pose = domePose(models.dome, elapsed: elapsed, now: now, motion: motion) else {
+            finishClose()
+            return
+        }
         let camera = PerkSkyLayout.camera(
             yawDegrees: motion.yawDegrees, treeBlend: motion.treeBlend,
-            introOffset: introOffset, settings: settings
+            introOffset: pose.lift, settings: settings
         )
         var scene = MenuScene(
             eye: camera.eye, target: camera.target, up: camera.up,
             fovYRadians: settings.cameraFOV * .pi / 180
         )
-        scene.draws = domeDraws(models, elapsed: elapsed, introSeconds: introSeconds, camera)
+        scene.draws = models.dome.draws(
+            playing: pose.playing.map { [$0] } ?? [], placement: matrix_identity_float4x4,
+            eye: camera.eye, up: camera.up
+        )
         let frame = PerkSkyFrame(
             models: models, settings: settings, now: now, camera: camera,
             beamLength: models.line.nodePosition("BeamEnd", playing: []).map(simd_length) ?? 0
@@ -135,19 +165,37 @@ extension SkillsMenuCoordinator {
         updateNames(model, scene: scene, selectedStars: trees.openTree, renderer: renderer)
     }
 
-    private func domeDraws(
-        _ models: PerkSkySource.Models, elapsed: Double, introSeconds: Double,
-        _ camera: PerkSkyCamera
-    ) -> [MenuSceneDraw] {
-        let playing: NIFEffectPose.Playing? = if elapsed < introSeconds {
-            models.dome.sequence("CameraIntro").map { .init($0, seconds: Float(elapsed)) }
-        } else {
-            models.dome.sequence("Idle").map { .init($0, seconds: Float(elapsed - introSeconds)) }
+    /// The dome sequence at this moment and the camera lift from its `CameraPosition`:
+    /// `CameraIntro` on open, then `Idle`, and `CameraOutro` after a close. Nil once
+    /// the closing move has ended.
+    private func domePose(
+        _ dome: MenuSceneModel, elapsed: Double, now: Double, motion: PerkSkyMotion
+    ) -> PerkSkyDomePose? {
+        if let closedAt = sky.closedAt {
+            guard let outro = dome.sequence(PerkSkyDome.outroSequence) else { return nil }
+            let seconds = Float(now - closedAt)
+            guard seconds < outro.duration else { return nil }
+            let playing = NIFEffectPose.Playing(outro, seconds: seconds)
+            return PerkSkyDomePose(playing: playing, lift: Self.lift(dome, playing))
         }
-        return models.dome.draws(
-            playing: playing.map { [$0] } ?? [], placement: matrix_identity_float4x4,
-            eye: camera.eye, up: camera.up
-        )
+        let intro = dome.sequence(PerkSkyDome.introSequence)
+        let lift = intro
+            .map { Self.lift(dome, .init($0, seconds: motion.introAlpha * $0.duration)) }
+        let introSeconds = Double(intro?.duration ?? 0)
+        let playing: NIFEffectPose.Playing? = if elapsed < introSeconds {
+            intro.map { .init($0, seconds: Float(elapsed)) }
+        } else {
+            dome.sequence(PerkSkyDome.idleSequence)
+                .map { .init($0, seconds: Float(elapsed - introSeconds)) }
+        }
+        return PerkSkyDomePose(playing: playing, lift: lift ?? .zero)
+    }
+
+    private static func lift(
+        _ dome: MenuSceneModel,
+        _ playing: NIFEffectPose.Playing
+    ) -> SIMD3<Float> {
+        dome.nodePosition(PerkSkyDome.cameraNode, playing: [playing]) ?? .zero
     }
 
     private func treeDraws(_ model: SkillsMenuModel, _ frame: PerkSkyFrame) -> PerkSkyTreeDraws {
