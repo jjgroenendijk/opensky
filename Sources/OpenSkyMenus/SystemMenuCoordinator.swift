@@ -206,6 +206,7 @@ public final class SystemMenuCoordinator {
         case .environment: "\(GameDataLocator.environmentKey) environment variable"
         case .userDefaults: "Settings"
         case .steamDefault: "Steam default"
+        case .steamLibrary: "Steam library"
         }
     }
 

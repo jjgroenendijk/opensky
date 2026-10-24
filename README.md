@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Sources/OpenSky/Resources/Branding/opensky-logo.svg" width="160" alt="OpenSky logo">
+</p>
+
 # OpenSky
 
 OpenSky lets you play Skyrim Special Edition natively on a Mac with Apple Silicon. It is a new
@@ -7,6 +11,8 @@ layer.
 
 OpenSky is not made by or connected to Bethesda. It does not include any part of Skyrim. You need
 to own the game.
+
+![The OpenSky launcher](docs/images/launcher-play.png)
 
 ## Status
 
@@ -77,11 +83,23 @@ offer the game, so get the files in one of these ways:
 
 The game folder holds a `Data` folder with `Skyrim.esm` inside it. OpenSky looks in the
 usual Steam folder,
-`~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`.
+`~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`, and in every
+other Steam library folder, such as one on an external drive.
 
 ## Installing OpenSky
 
-There is no ready-made download yet, so you build the app yourself. This takes some time once.
+### Download a preview
+
+1. Download the `.dmg` file from the newest release on the
+   [Releases page](https://github.com/jjgroenendijk/opensky/releases).
+2. Open the `.dmg` file, and drag OpenSky onto the Applications folder next to it.
+3. Open OpenSky. The preview is not notarized (checked by Apple), so macOS stops it the first
+   time. Open System Settings, go to Privacy & Security, and press Open Anyway next to the
+   message about OpenSky.
+
+### Build it yourself
+
+Building takes some time once.
 
 1. Install Xcode from the Mac App Store, and open it once.
 2. Install [Homebrew](https://brew.sh).
@@ -99,8 +117,8 @@ There is no ready-made download yet, so you build the app yourself. This takes s
 ## Playing
 
 1. Open OpenSky from your Applications folder.
-2. If OpenSky cannot find Skyrim, it asks for the game folder. Choose the folder that holds
-   `Data/Skyrim.esm`.
+2. If OpenSky cannot find Skyrim, it opens a folder window. Choose the folder that holds
+   `Data/Skyrim.esm`. You can change it later in Settings.
 3. Press Play.
 
 The launcher also has pages for graphics settings and for the asset cache. The asset cache

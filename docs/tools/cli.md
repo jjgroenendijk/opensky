@@ -32,8 +32,8 @@ does not know to the app.
 
 `--data-root <path>` takes the install root or `Data/` itself. Without it, the
 [game data locator](/engine/game-data-locator.md) tries `OPENSKY_DATA_ROOT`, then the
-`OpenSkyDataRoot` user default, then the Steam default path. Missing or invalid is a typed error and
-exit 1. The install is read-only: commands write only where `--out` points.
+`OpenSkyDataRoot` user default, then the Steam default path, then every Steam library. Missing or
+invalid is a typed error and exit 1. The install is read-only: commands write only where `--out` points.
 
 The load order comes from `OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText` user default, then the
 searched locations ([plugins.txt](/formats/plugins-txt.md)). There is no `--plugins-txt` flag,

@@ -22,6 +22,12 @@ not go on to the next source.
    Settings window.
 3. The default Steam path:
    `~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition`.
+4. The same `steamapps/common/Skyrim Special Edition` folder in every Steam library. Steam lists
+   its libraries, such as one on an external drive, in
+   `~/Library/Application Support/Steam/steamapps/libraryfolders.vdf`. The file is Valve's
+   KeyValues text, and each library is one `"path"  "<folder>"` line.
+
+Sources 3 and 4 are searched, not set, so a miss there goes on to the next folder.
 
 The setting lives in one shared defaults domain, `nl.jjgroenendijk.opensky`. The CLI reads it
 with `UserDefaults(suiteName:)`. The app uses `.standard`, because its own domain is that
@@ -51,9 +57,9 @@ setting stays. `clearUserChoice()` removes the setting.
 
 ## Test hosts ignore saved settings
 
-Inside the unit test host, only the environment variable counts. The saved setting and the Steam
-path are skipped. The test host is detected by the `XCTestConfigurationFilePath` variable, as in
-[testing](/testing.md).
+Inside the unit test host, only the environment variable counts. The saved setting, the Steam
+path, and the Steam libraries are skipped. The test host is detected by the
+`XCTestConfigurationFilePath` variable, as in [testing](/testing.md).
 
 The reason: the test host is the app, and the app reads the app's settings. On a machine where
 the app pointed at a real install, unit tests that must not depend on an install read that
