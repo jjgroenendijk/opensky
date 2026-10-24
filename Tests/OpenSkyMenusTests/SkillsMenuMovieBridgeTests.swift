@@ -14,6 +14,19 @@ private final class ChoiceLog {
     var choices: [ActorValueKind] = []
 }
 
+/// A started stats movie with an empty `StatsMenu` class, and the calls sent to it.
+@MainActor
+private final class StatsMovieLog {
+    let runtime: SWFMovieRuntime
+    let menuClass: AS2Object
+    var sent: [String: [AS2Value]] = [:]
+
+    init(runtime: SWFMovieRuntime, menuClass: AS2Object) {
+        self.runtime = runtime
+        self.menuClass = menuClass
+    }
+}
+
 @MainActor
 struct SkillsMenuMovieBridgeTests {
     @Test func theLevelUpButtonsBecomeChoices() throws {
@@ -28,22 +41,7 @@ struct SkillsMenuMovieBridgeTests {
     }
 
     @Test func publishFillsTheRingAndTheTreeNames() throws {
-        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
-        let menuClass = runtime.runtime.makeObject()
-        runtime.runtime.globalObject.assign(.object(menuClass), for: StatsMenuMovieBridge.className)
-        var sent: [String: [AS2Value]] = [:]
-        for name in [
-            "SetPlayerInfo",
-            "UpdateSkillList",
-            "SetDirection",
-            "SetStatsMode",
-            "SetDescriptionCard"
-        ] {
-            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
-                sent[name] = context.arguments
-                return .undefined
-            }
-        }
+        let log = try Self.statsMovie()
         var model = SkillsMenuModel(
             player: SkillsMenuModelTests.player(points: 2), skills: SkillsMenuModelTests.allSkills
         )
@@ -51,19 +49,44 @@ struct SkillsMenuMovieBridgeTests {
         _ = model.handle(.move(.up))
         model.setPerks([SkillsMenuModelTests.perk(1, x: 2, y: 0)])
 
-        StatsMenuMovieBridge.publish(model, runtime: runtime)
+        StatsMenuMovieBridge.publish(model, runtime: log.runtime)
 
-        let ring = try #require(menuClass.lookup("SkillStatsA")?.property.value.objectValue)
+        let ring = try #require(log.menuClass.lookup("SkillStatsA")?.property.value.objectValue)
         #expect(Self.count(ring) == 18 * StatsMenuMovieBridge.skillStride)
         #expect(ring.lookup("1")?.property.value == .string("Skill 21"))
-        let names = try #require(menuClass.lookup("PerkNamesA")?.property.value.objectValue)
+        let names = try #require(log.menuClass.lookup("PerkNamesA")?.property.value.objectValue)
         #expect(Self.count(names) == 3)
-        #expect(sent["SetDirection"] == [.number(20)])
-        #expect(sent["SetStatsMode"] == [.boolean(true), .integer(2)])
-        #expect(sent["SetDescriptionCard"]?.first == .boolean(true))
-        #expect(sent["SetDescriptionCard"]?[1] == .string("Perk 1"))
-        #expect(sent["SetPlayerInfo"]?.count == 13)
-        #expect(sent["UpdateSkillList"] == [.boolean(true)])
+        #expect(log.sent["SetDirection"] == [.number(20)])
+        #expect(log.sent["SetStatsMode"] == [.boolean(true), .integer(2)])
+        #expect(log.sent["SetDescriptionCard"]?.first == .boolean(true))
+        #expect(log.sent["SetDescriptionCard"]?[1] == .string("Perk 1"))
+        #expect(log.sent["SetPlayerInfo"]?.count == 13)
+        #expect(log.sent["UpdateSkillList"] == [.boolean(true)])
+    }
+
+    @Test func anOwedPickPutsTheStatsMovieInItsLevelUpState() throws {
+        let log = try Self.statsMovie()
+        let model = SkillsMenuModel(
+            player: SkillsMenuModelTests.player(picks: 1), skills: SkillsMenuModelTests.allSkills
+        )
+        StatsMenuMovieBridge.publish(model, runtime: log.runtime)
+        #expect(log.sent["SetStatsMode"] == [.boolean(false), .integer(1)])
+    }
+
+    private static func statsMovie() throws -> StatsMovieLog {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        let menuClass = runtime.runtime.makeObject()
+        runtime.runtime.globalObject.assign(.object(menuClass), for: StatsMenuMovieBridge.className)
+        let log = StatsMovieLog(runtime: runtime, menuClass: menuClass)
+        for name in [
+            "SetPlayerInfo", "UpdateSkillList", "SetDirection", "SetStatsMode", "SetDescriptionCard"
+        ] {
+            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
+                log.sent[name] = context.arguments
+                return .undefined
+            }
+        }
+        return log
     }
 
     private static func count(_ array: AS2Object) -> Int {
