@@ -399,6 +399,11 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
         Set(holdingIDs.compactMap { instanceByID[$0] })
     }
 
+    /// The instance whose call `id` waits, or nil for an untracked call.
+    public func instance(waiting id: UInt64) -> PapyrusInstanceKey? {
+        instanceByID[id]
+    }
+
     /// Tracks the suspension `call` of `instance`.
     public func begin(_ call: SuspendedCall, instance: PapyrusInstanceKey) {
         instanceByID[call.id] = instance

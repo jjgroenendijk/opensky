@@ -72,6 +72,11 @@ public final class PapyrusScheduler {
         return true
     }
 
+    /// The waiting calls, oldest first.
+    public var pendingCalls: [SuspendedCall] {
+        entries.map(\.call)
+    }
+
     /// The tokens calls wait on, oldest first.
     public var waitingTokens: [UInt64] {
         entries.compactMap { entry in

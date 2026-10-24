@@ -35,11 +35,10 @@ extension AgentWorldAdapter {
     /// the newest fault, and the natives that are missing most.
     func scriptsState(reference: String?) throws(AgentFailure) -> AgentJSON {
         let snapshot = game.scripts.scriptsSnapshot
-        let instances = try reference.map { text throws(AgentFailure) in
-            try instancesState(on: scriptOwner(text))
-        } ?? .null
+        let owner = try reference.map { text throws(AgentFailure) in try scriptOwner(text) }
         return [
-            "on": instances,
+            "on": owner.map(instancesState(on:)) ?? .null,
+            "waits": owner.map(waitsState(on:)) ?? .null,
             "instances": .init(snapshot.instanceCount),
             "pendingEvents": .init(snapshot.pendingEventCount),
             "pendingWaits": .init(snapshot.pendingWaitCount),
@@ -57,6 +56,23 @@ extension AgentWorldAdapter {
             return quest
         }
         return try resolveReference(text).key
+    }
+
+    /// The calls the reference's scripts wait in, such as `Utility.Wait` or an
+    /// animation event, so a stalled script shows where it stopped.
+    private func waitsState(on key: ReferenceKey) -> AgentJSON {
+        guard let world = game.scripts.runtime else {
+            return .array([])
+        }
+        return .array(world.scheduler.pendingCalls.compactMap { call -> AgentJSON? in
+            guard let instance = world.suspensionTracker.instance(waiting: call.id), instance.reference == key
+            else { return nil }
+            return [
+                "script": .string(instance.scriptName),
+                "native": .string("\(call.nativeCall.scriptName).\(call.nativeCall.functionName)"),
+                "request": .string(String(describing: call.request))
+            ]
+        })
     }
 
     /// Live variables, so an object shows the reference it holds; a save keeps none.

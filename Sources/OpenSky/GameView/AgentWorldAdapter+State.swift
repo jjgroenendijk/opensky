@@ -41,7 +41,7 @@ extension AgentWorldAdapter {
         case .menu: menuState
         case let .quest(editorID): try questState(editorID)
         case .scenes: scenesState()
-        case .scripts, .packages, .furniture: try inspection(query)
+        case .scripts, .packages, .furniture, .objects, .changes: try inspection(query)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
         case .time: timeState()
@@ -55,6 +55,8 @@ extension AgentWorldAdapter {
         case let .scripts(reference): try scriptsState(reference: reference)
         case let .packages(reference): try packagesState(reference: reference)
         case let .furniture(reference): try furnitureState(reference: reference)
+        case let .objects(reference): try objectsState(reference: reference)
+        case let .changes(limit): changesState(limit: limit)
         default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
     }
