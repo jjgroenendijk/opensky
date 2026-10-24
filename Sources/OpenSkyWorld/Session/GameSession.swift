@@ -7,6 +7,7 @@ import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCamera
+import OpenSkyFormatsCore
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
@@ -47,10 +48,19 @@ public final class GameSession: RenderFrameDriver {
     public var magicTimeScale: Float = 1
     /// The player's own share while Slow Time runs; the camera and the player's steps take it.
     public var playerTimeScale: Float = 1
+    /// The bow zoom's share of normal speed for the world and the player (Steady Hand).
+    public var bowZoomTimeScale: Float = 1
+    /// The bow zoom's share of the view's half-angle tangent; 1 is no zoom.
+    public var bowZoomViewShare: Float = 1
+
+    /// The view's vertical field of view, with the bow zoom applied.
+    public var viewFOVYRadians: Float {
+        MatrixMath.zoomedFieldOfView(sessionFOVYRadians, share: bowZoomViewShare)
+    }
 
     /// What the world sim, animation, and particles run at.
     public var effectiveWorldTimeScale: Float {
-        worldTimeScale * magicTimeScale
+        worldTimeScale * magicTimeScale * bowZoomTimeScale
     }
 
     public var walkController: WalkController
@@ -243,7 +253,7 @@ public final class GameSession: RenderFrameDriver {
     public var frameInput: RenderFrameInput {
         var input = RenderFrameInput(view: freeFlyCamera)
         input.movementMode = movementMode
-        input.fovYRadians = sessionFOVYRadians
+        input.fovYRadians = viewFOVYRadians
         input.horizontalFOVRadians = cinematicCameraState.pose?.horizontalFieldOfView
         input.timeOfDay = timeOfDay
         input.wind = wind

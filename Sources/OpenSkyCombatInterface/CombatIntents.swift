@@ -10,13 +10,19 @@ nonisolated public struct ArcheryIntent: Equatable, Sendable {
     public var hasBowEquipped = false
     /// Seconds since the previous frame, for the hold clock.
     public var deltaTime: Float = 0
+    /// Block key held, a level: with Eagle Eye it zooms while aiming.
+    public var zooming = false
 
     public static let still = ArcheryIntent()
 
-    public init(drawing: Bool = false, hasBowEquipped: Bool = false, deltaTime: Float = 0) {
+    public init(
+        drawing: Bool = false, hasBowEquipped: Bool = false, deltaTime: Float = 0,
+        zooming: Bool = false
+    ) {
         self.drawing = drawing
         self.hasBowEquipped = hasBowEquipped
         self.deltaTime = deltaTime
+        self.zooming = zooming
     }
 }
 

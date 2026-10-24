@@ -28,6 +28,7 @@ protocol PlayerWorldHost: AnyObject {
     var dialogueMenu: DialogueMenuController { get }
     var headTracking: HeadTrackingCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var player: PlayerCoordinator { get }
     var renderer: Renderer? { get }
@@ -72,6 +73,12 @@ final class PlayerWorldAdapter {
                 inputs.isPowerAttacking = melee.strikeKind.isPowerAttack
                 inputs.isBlocking = melee.state.isBlocking
                 inputs.rightHandType = melee.weapon.handType.rawValue
+                inputs.leftHandType = melee.offHand.rawValue
+            }
+            if let holder = game.actorWorld.actorValueHolder(for: .player) {
+                inputs.isBeastRace = game.magicWorld.actorHasKeyword(
+                    ActorStateGraphNames.isBeastRace, on: holder
+                )
             }
             inputs.isBowDrawn = game.combat.archery?.state.phase.isFullyDrawn ?? false
             inputs.castingLeft = game.magic.wantsCast(.left)

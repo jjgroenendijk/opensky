@@ -116,6 +116,12 @@ extension AgentWorldAdapter {
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
+        result["bowZoom"] = [
+            "zoomed": .bool(gameSession.bowZoomViewShare < 1),
+            "viewShare": .init(gameSession.bowZoomViewShare),
+            "timeScale": .init(gameSession.bowZoomTimeScale),
+            "fovYDegrees": .init(gameSession.viewFOVYRadians * 180 / .pi)
+        ]
         let status = gameSession.locomotion.status
         result["graph"] = [
             "attached": .bool(status.graphAvailable),

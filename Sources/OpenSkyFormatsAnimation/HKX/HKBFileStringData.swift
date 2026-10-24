@@ -18,6 +18,8 @@ nonisolated public struct HKBProjectData: Equatable, Sendable {
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbProjectData"
+    /// Read through `m_stringData`, never as an object of its own.
+    public static let stringDataClassName = "hkbProjectStringData"
 
     private static let stringDataField = HKXField(0x20, "m_stringData")
     private static let animationFilenamesField = HKXField(0x10, "m_animationFilenames")
@@ -68,6 +70,8 @@ nonisolated public struct HKBCharacterData: Equatable, Sendable {
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbCharacterData"
+    /// Read through `m_stringData`, never as an object of its own.
+    public static let stringDataClassName = "hkbCharacterStringData"
 
     private static let stringDataField = HKXField(0x98, "m_stringData")
     private static let animationNamesField = HKXField(0x30, "m_animationNames")

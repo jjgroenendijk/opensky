@@ -25,6 +25,8 @@ public final class CombatCoordinator {
     /// Confidence decides engaging and fleeing, and Assistance brings allies into a
     /// fight. Off keeps the flat health-fraction rule and lone fighters.
     public var usesTemperament = true
+    /// A Slow Time effect runs; the app sets it each frame. A bow zoom cannot start then.
+    public var isTimeSlowed = false
     public internal(set) var actorCastCount = 0
     let world: any CombatWorld
     /// What this step asked of the app. A frame step returns and empties it.
@@ -138,6 +140,7 @@ public final class CombatCoordinator {
             archery.bow = CombatCore.bow(worn: wornItems())
             archery.arrow = selectedArrow()
             archery.attackMultiplier = archeryAttackMultiplier()
+            archery.zoomConditions = bowZoomConditions(bow: archery.bow.weapon)
             var intent = intent
             intent.hasBowEquipped = archery.bow.weapon != nil
             let shots = archery.state.shotCount
@@ -148,6 +151,7 @@ public final class CombatCoordinator {
                     power: archery.lastDrawFraction
                 ))
             }
+            drainBowZoomStamina(bow: archery.bow.weapon, delta: delta)
             noteWeaponUse(.shot, changed: archery.state.shotCount != shots)
         }
         // Every arrow provokes, a spell only when its effects are hostile.

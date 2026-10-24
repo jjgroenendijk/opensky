@@ -32,7 +32,17 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `bWantCastLeft`, `bWantCastRight` | bool | True while that hand casts | `BSEventOnFalseToTrueModifier` |
 | `bWantCastVoice` | bool | True while the player inhales a shout ([shouts](/engine/shouts.md)) | `BSEventOnFalseToTrueModifier` raising `BeginCastVoice` |
 | `IsInCastState` | real | 1 while either hand casts, else 0 | Cast blends |
+| `iRightHandEquipped`, `iLeftHandEquipped` | int32 | The hand's `iRightHandType` value while drawn, else 0 | Jump, sprint, stagger, and shout selectors |
+| `IsBeastRace` | bool | The race has the `IsBeastRace` keyword | The unarmed attack selector |
+| `iGetUpType` | int32 | 2 while swimming, else 1 | The get-up pose matcher |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
+
+The hand selectors list their children in the `iRightHandType` order: 0 unarmed, 1 to 4 one-handed,
+5 two-handed sword, 6 two-handed axe, 7 bow, 8 staff, 12 crossbow. A sheathed weapon picks the
+unarmed child, so OpenSky writes 0 then. The `IsBeastRace` keyword is the default object `KWBR`
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ>). The pose matcher under
+`iGetUpType` has three children: 0 reanimate, 1 get up, 2 swimming. OpenSky never writes 0,
+because it has no reanimation.
 
 [WARNING] The sign of `Pitch` on the spine twist is not yet checked against the game. The look
 distance of `TargetLocation` is OpenSky's own.
@@ -77,15 +87,17 @@ or an expression assignment. Examples: `bAnimationDriven`, `bAllowRotation`, `bE
 
 ## Variables left unwritten
 
-These are on the Creation Kit list or bound to an engine-facing member, but no OpenSky system can
-supply them yet, or their encoding is unknown:
+Many names on the Creation Kit list are tuning values. The graph file gives them a non-zero
+start value, such as `fMinSpeed`, `TurnMin`, `RotMax`, `SpeedAcc`, `PitchAcc`, `PitchThresh`,
+`iCharacterSelector`, and `iSyncTurnDirection`. No script reads them, so OpenSky keeps the
+graph's own value ([gap report](/tools/gaps.md)).
 
-- `iRightHandEquipped`, `iLeftHandEquipped`,
-  `iGetUpType`, `IsBeastRace`, `iCharacterSelector`, `bWantCastVoice` (no shout runtime).
-- Tuning values the graph reads but the game sets from data OpenSky does not know: `PitchOffset`,
-  `PitchLook`, `PitchAcc`, `PitchThresh`, `PitchDefault`, `TurnMin`, `RotMax`, `SpeedAcc`,
-  `fMinSpeed`, `attackIntroLength`, `attackPowerStartTime`, `attackComboStartFraction`,
-  `weapChangeStartFraction`, `IsInCastStateDamped`, `bIdlePlaying`, `iSyncTurnDirection`.
+These still need a value from the engine, and no OpenSky system can give it yet:
+
+- `attackIntroLength`, `attackPowerStartTime`, and `weapChangeStartFraction`: the game times
+  attack and weapon-change blends with them. No source gives the value.
+- `PitchOffset`, `TweenPosition`, and `TweenRotation`: dragon flight.
+- `IsInCastStateDamped`: a damped copy of `IsInCastState`. No source gives the damping rate.
 
 Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable; the
 combat runtime writes them while the perk applies.

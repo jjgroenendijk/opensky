@@ -16,6 +16,11 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var isBowDrawn = false
     /// The `iRightHandType` encoding (docs/engine/combat-graph-names.md).
     public var rightHandType: Int32 = 0
+    public var leftHandType: Int32 = 0
+    /// The race has the `IsBeastRace` keyword.
+    public var isBeastRace = false
+    /// The player swims, so a get-up uses the swimming pose matcher.
+    public var swimming = false
     public var castingLeft = false
     public var castingRight = false
     /// The player holds the shout key and may shout.
@@ -104,6 +109,9 @@ nonisolated public enum ActorStateGraphCore: Sendable {
         stateValue: Int32?
     ) -> [(name: String, value: BehaviorVariableValue)] {
         let casting = inputs.castingLeft || inputs.castingRight
+        func drawn(_ handType: Int32) -> Int32 {
+            inputs.weaponDrawn ? handType : 0
+        }
         var writes: [(name: String, value: BehaviorVariableValue)] = [
             (ActorStateGraphNames.headTracking, .bool(inputs.headTracking)),
             (ActorStateGraphNames.targetLocation, .quad(SIMD4(inputs.lookTarget, 0))),
@@ -120,12 +128,21 @@ nonisolated public enum ActorStateGraphCore: Sendable {
             (
                 ActorStateGraphNames.combatStance,
                 .int(MountGraphNames.combatStanceValue(inputs.weaponDrawn))
-            )
+            ),
+            (ActorStateGraphNames.rightHandEquipped, .int(drawn(inputs.rightHandType))),
+            (ActorStateGraphNames.leftHandEquipped, .int(drawn(inputs.leftHandType))),
+            (ActorStateGraphNames.isBeastRace, .bool(inputs.isBeastRace)),
+            (ActorStateGraphNames.getUpType, .int(getUpType(swimming: inputs.swimming)))
         ]
         if let stateValue {
             writes.append((ActorStateGraphNames.state, .int(stateValue)))
         }
         return writes
+    }
+
+    /// The player is alive, so a get-up never uses the reanimate pose matcher.
+    public static func getUpType(swimming: Bool) -> Int32 {
+        swimming ? 2 : 1
     }
 
     /// The readout name of an `iState` value: the constant that holds it, or the

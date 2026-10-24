@@ -9,6 +9,7 @@ import OpenSkyPhysics
 nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {
         guard isPlayerGraph else { return }
+        actorState.swimming = gait == .swim
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,

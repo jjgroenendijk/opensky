@@ -55,11 +55,21 @@ struct BehaviorExpressionTests {
     }
 
     @Test func variableRolesSplitEngineAndGraphVariables() {
-        #expect(BehaviorVariableRoles.isEngineFacing("speed", uses: []))
-        #expect(!BehaviorVariableRoles.isEngineFacing("myLocalBlend", uses: []))
-        #expect(BehaviorVariableRoles.isEngineFacing(
-            "lookTarget", uses: ["BSLookAtModifier.targetLocation"]
-        ))
+        func role(_ name: String, _ uses: Set<String>, authored: Bool = false, script: Bool = false)
+            -> BehaviorVariableRole
+        {
+            BehaviorVariableRoles.role(
+                of: name, uses: uses, isAuthored: authored, isScriptRead: script
+            )
+        }
+        let read: Set = ["hkbBlenderGenerator.blendParameter"]
+        #expect(role("speed", read) == .engineInput)
+        #expect(role("speed", []) == .unread)
+        #expect(role("speed", [], script: true) == .engineInput)
+        #expect(role("fMinSpeed", read, authored: true) == .authoredConstant)
+        #expect(role("myLocalBlend", read) == .authoredConstant)
+        #expect(role("bCastReady", ["BSIsActiveModifier.bIsActive0"]) == .graphComputed)
+        #expect(role("lookTarget", ["BSLookAtModifier.targetLocation"]) == .engineInput)
         #expect(BehaviorVariableRoles.isGraphWritten(
             uses: ["BSInterpValueModifier.result"], assignedUse: "expression assignment"
         ))

@@ -33,12 +33,20 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     public static let state = "iState"
     /// 1 while a weapon is drawn: the riding graph's combat idle (MountGraphNames.swift).
     public static let combatStance = MountGraphNames.combatStance
+    /// What each drawn hand holds, in the `iRightHandType` encoding, else 0. The jump,
+    /// sprint, stagger, and shout selectors pick a child by it. Int32.
+    public static let rightHandEquipped = "iRightHandEquipped"
+    public static let leftHandEquipped = "iLeftHandEquipped"
+    /// The race has the `IsBeastRace` keyword (`DOBJ` `KWBR`): claw attacks. Bool.
+    public static let isBeastRace = "IsBeastRace"
+    /// The pose matcher a get-up uses: 0 reanimate, 1 get up, 2 swimming. Int32.
+    public static let getUpType = "iGetUpType"
 
     /// Every input, in write order.
     public static let inputs = [
         headTracking, targetLocation, cameraFromX, cameraFromY, cameraFromZ, pitch,
         sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState,
-        combatStance, state
+        combatStance, rightHandEquipped, leftHandEquipped, isBeastRace, getUpType, state
     ]
 
     // MARK: - Outputs the graph publishes

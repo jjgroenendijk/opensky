@@ -197,4 +197,12 @@ struct MatrixMathTests {
             #expect(simd_length(matrix[column] - rebuilt[column]) < 1e-3)
         }
     }
+
+    @Test func aZoomScalesTheHalfAngleTangent() {
+        let fov = MatrixMath.radians(fromDegrees: 90)
+        let zoomed = MatrixMath.zoomedFieldOfView(fov, share: 0.5)
+        #expect(abs(tanf(zoomed / 2) - 0.5) < 1e-5)
+        #expect(MatrixMath.zoomedFieldOfView(fov, share: 1) == fov)
+        #expect(MatrixMath.zoomedFieldOfView(fov, share: .nan) == fov)
+    }
 }

@@ -14,6 +14,7 @@ import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyScripting
 
 extension GapsGatherer {
     func meshes() -> [GapSection] {
@@ -70,7 +71,9 @@ extension GapsGatherer {
                 .map { $0.lowercased() }
         )
         let footsteps = footstepTags()
+        let scripts = scriptAnimationCensus()
         let handled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
+            .union(scripts.registeredEvents)
         let boundVariables = Set(
             (CombatGraphNames.variables + CombatGraphNames.loopVariables
                 + ArcheryGraphNames.variables
@@ -96,8 +99,8 @@ extension GapsGatherer {
                 },
                 usesUnit: "clips",
                 notes: [
-                    "done means engine code reacts to it, or a graph of the clip's own folder "
-                        + "waits for it"
+                    "done means engine code reacts to it, a script registers for it, "
+                        + "or a graph of the clip's own folder waits for it"
                 ]
             ),
             GapSection(
@@ -105,46 +108,48 @@ extension GapsGatherer {
                 counts: census.graphVariables,
                 handled: { name in
                     boundVariables.contains(name.lowercased())
-                        || !BehaviorVariableRoles.isEngineFacing(
-                            name, uses: census.variableUses[name] ?? []
-                        )
+                        || scripts.writtenVariables.contains(name.lowercased())
+                        || Self.role(of: name, census, scripts: scripts) != .engineInput
                 },
                 usesUnit: "graphs",
-                notes: Self.variableNotes(census, boundVariables: boundVariables)
+                notes: Self.variableNotes(census, scripts: scripts, boundVariables: boundVariables)
             )
         ]
     }
 
-    /// How the done variables split: driven by the engine, computed by the graph,
-    /// or authored constants the graph only reads.
+    /// How the done variables split: set by the engine, or one of the other roles.
     private static func variableNotes(
-        _ census: HKXGapCensus, boundVariables: Set<String>
+        _ census: HKXGapCensus, scripts: PapyrusAnimationCensus, boundVariables: Set<String>
     ) -> [String] {
-        var engine = 0
-        var graph = 0
-        var constant = 0
+        var counts: [String: Int] = [:]
         for name in census.graphVariables.uses.keys {
-            let uses = census.variableUses[name] ?? []
+            let kind = role(of: name, census, scripts: scripts)
             if boundVariables.contains(name.lowercased()) {
-                engine += 1
-            } else if BehaviorVariableRoles.isEngineFacing(name, uses: uses) {
-                continue
-            } else if
-                BehaviorVariableRoles.isGraphWritten(
-                    uses: uses,
-                    assignedUse: HKXGapCensus.assignedUse
-                )
-            {
-                graph += 1
-            } else {
-                constant += 1
+                counts["set by the engine", default: 0] += 1
+            } else if scripts.writtenVariables.contains(name.lowercased()) {
+                counts["set by scripts", default: 0] += 1
+            } else if kind != .engineInput {
+                counts[kind.rawValue, default: 0] += 1
             }
         }
+        let order = ["set by the engine", "set by scripts"] + BehaviorVariableRole.allCases
+            .filter { $0 != .engineInput }.map(\.rawValue)
         return [
-            "done means engine code reads or sets it, or only the graph uses it",
-            "\(engine) set by the engine, \(graph) computed by graph nodes, "
-                + "\(constant) authored constants"
+            "done means engine code or a script sets it, or the engine need not: the graph "
+                + "computes it, authors it, or nothing reads it",
+            order.map { "\(counts[$0] ?? 0) \($0)" }.joined(separator: ", ")
         ]
+    }
+
+    private static func role(
+        of name: String, _ census: HKXGapCensus, scripts: PapyrusAnimationCensus
+    ) -> BehaviorVariableRole {
+        BehaviorVariableRoles.role(
+            of: name,
+            uses: census.variableUses[name] ?? [],
+            isAuthored: census.authoredVariables.contains(name),
+            isScriptRead: scripts.readVariables.contains(name.lowercased())
+        )
     }
 
     func audio() -> [GapSection] {
@@ -217,7 +222,13 @@ extension GapsGatherer {
         return Array(PerkGapCensus(perks: perks).graphVariables)
     }
 
-    /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
+    /// The animation events a script registers for; `OnAnimationEvent` handles them.
+    private func scriptAnimationCensus() -> PapyrusAnimationCensus {
+        let loader = PexScriptLoader(fileSystem: fileSystem)
+        let files = loader.scriptPaths().compactMap { try? loader.load($0) }
+        return PapyrusAnimationCensus(files: files)
+    }
+
     /// The events that take an animation object off its actor (`ANIO` `BNAM`).
     private func animationObjectUnloadEvents() -> [String] {
         var skipped = SkippedRecords()
@@ -227,6 +238,7 @@ extension GapsGatherer {
         return objects.compactMap(\.unloadEvent)
     }
 
+    /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
     private func footstepTags() -> Set<String> {
         let store = FootstepStore(loadOrder: plugins)
         return Set(store.footsteps.values.compactMap { $0.tag?.lowercased() })

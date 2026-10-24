@@ -49,7 +49,7 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `perks` | A perk entry point, and an entry-point function | Engine code reads the entry point; the evaluator computes the function | Perk effects |
 | `packages` | An AI procedure in a package's resolved tree | An actor can run it | Packages |
 | `behavior` | A Havok generator or modifier class in an actor behaviour graph | The sweep reached it and the evaluator noted no gap | Objects of the class |
-| `animations` | A Havok class in any `.hkx`, a clip annotation event, a graph variable | A decoder reads the class; engine code reacts to the event or binds the variable | Objects, clips, graphs |
+| `animations` | A Havok class in any `.hkx`, a clip annotation event, a graph variable | A decoder reads the class; engine code or a script reacts to the event, or engine code binds the variable | Objects, clips, graphs |
 | `meshes` | A NIF block type, a lighting shader type, a shader flag | Engine code names the type; a draw term or draw state uses the shader type or flag | Blocks, shader blocks |
 | `textures` | A DDS variant: pixel format, cubemap, volume, or unread kind | `DDSFile` reads it | Textures |
 | `audio` | A sound file variant, and lip sync data | The engine opens and decodes it | Files |
@@ -139,15 +139,25 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   camera shake, head tracking, or an animation object
   ([animation events](/engine/animation-events.md)). An `ANIO` unload event (`BNAM`) counts
   too. So does an event a graph of the clip's own folder waits for: a transition, an
-  event-driven modifier, or another node that switches on it. The folder is the one above
+  event-driven modifier, or another node that switches on it. So does an event an archived
+  script passes as a string to `RegisterForAnimationEvent`, because the engine sends every
+  graph event to the `OnAnimationEvent` of the scripts that registered for it. `Func.X` counts
+  as done, because it sends `X` to the scripts. The folder is the one above
   `animations` or `behaviors`, so `canine\animations` meets `canine\behaviors wolf`. A
   footstep name that no tag can match, such as `FootFornt` or a tag with a line break after it,
   counts as done, because it plays nothing.
-- A graph variable counts as done when engine code sets or reads it, or when it does not face
-  the engine. It faces the engine when it is on the Creation Kit list of animation variables
-  (<https://ck.uesp.net/wiki/List_of_Animation_Variables>) or a graph binds it to a member that
-  takes a world position, such as `BSLookAtModifier.targetLocation`. The rest are computed by the
-  graph (an expression assignment or a modifier output) or are authored constants.
+- A graph variable counts as done when engine code sets or reads it, when a script sets it with
+  `SetAnimationVariableBool`, `SetAnimationVariableInt`, or `SetAnimationVariableFloat`, or when
+  its role is not "engine input". The census gives each variable one role, checked in this order:
+  1. Engine input: a graph binds it to a member that takes a world position, such as
+     `BSLookAtModifier.targetLocation`.
+  2. Computed by graph nodes: an expression assignment or a modifier output writes it.
+  3. Read by nothing: no node, condition, or expression reads it, and no script reads it.
+  4. Authored constant: a graph file gives it a non-zero start value.
+  5. Engine input: it is on the Creation Kit list of animation variables
+     (<https://ck.uesp.net/wiki/List_of_Animation_Variables>), or a script reads it with
+     `GetAnimationVariableBool`, `GetAnimationVariableInt`, or `GetAnimationVariableFloat`.
+  6. Authored constant: everything else.
   A variable a perk sets through Set Boolean Graph Variable counts as set, because the combat
   runtime writes it. So does an `iState_*` constant the engine reads, and a variable a state
   machine publishes through `isActive`, `currentStateId`, or its sync variable

@@ -41,6 +41,10 @@ public final class ArcheryRuntime {
     /// The shooter's fortify multiplier, `ArcheryDamage`'s `bonusMultiplier`. Written by
     /// the session on the same frame as `bow` and `arrow`; 1 until then.
     public var attackMultiplier: Float = 1
+    /// What the zoom reads besides the keys: the perk share, stamina, and Slow Time.
+    /// Written by the session each frame, like `attackMultiplier`.
+    public var zoomConditions = BowZoomInput()
+    public private(set) var zoom = BowZoom()
 
     private weak var world: (any ProjectileWorld)?
     private var wasDrawing = false
@@ -74,6 +78,10 @@ public final class ArcheryRuntime {
         }
         raiseIntentEvents(drawing: drawing)
         wasDrawing = drawing
+        var conditions = zoomConditions
+        conditions.blockHeld = intent.zooming && intent.hasBowEquipped
+        conditions.aiming = drawing || state.phase.isDrawing
+        zoom.update(conditions)
         writeVariables()
     }
 
@@ -96,6 +104,10 @@ public final class ArcheryRuntime {
     @discardableResult
     public func handleGraphEvents(_ names: [String]) -> [LiveProjectile] {
         var launched: [LiveProjectile] = []
+        let stop = ArcheryGraphNames.bowZoomStop
+        if names.contains(where: { $0.caseInsensitiveCompare(stop) == .orderedSame }) {
+            zoom.stop()
+        }
         for change in state.handle(names) where change.loosedArrow {
             if let projectile = loose() {
                 launched.append(projectile)
@@ -145,6 +157,7 @@ public final class ArcheryRuntime {
         drawRequestCount = 0
         wasDrawing = false
         wasPressed = false
+        zoom = BowZoom()
         projectiles.despawnAll()
     }
 
