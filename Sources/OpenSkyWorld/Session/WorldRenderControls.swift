@@ -52,6 +52,11 @@ extension WorldRenderControls {
         renderer?.shadowRenders ?? false
     }
 
+    /// Nil when the GPU lacks Metal 4.
+    public var terrainLODBrightness: TerrainLODBrightness? {
+        renderer?.terrainLODBrightness
+    }
+
     public func refocusGameView() {
         world?.refocusGameView()
     }

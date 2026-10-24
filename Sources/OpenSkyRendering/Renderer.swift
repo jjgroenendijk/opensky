@@ -293,6 +293,11 @@ public final class Renderer: NSObject {
     public var terrainNormalMapsEnabled = true
     /// The lit-mesh terms the frame draws; each can be turned off.
     public var shadingTerms = SurfaceShadingTerm.all
+    /// The noise term undoes it; off, the LOD texture is drawn as stored.
+    public var terrainLODBrightness: TerrainLODBrightness {
+        shadingTerms.contains(.landscapeNoise) ? .vanilla : .identity
+    }
+
     /// Bound in the environment slot of a material without a cube map.
     public let blackCube: MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.

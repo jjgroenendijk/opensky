@@ -99,6 +99,17 @@ Distant terrain (type 18) multiplies the albedo by `mix(1, noise / 0.215, 0.5)`.
 (4096 units). Dividing by the mean keeps the average colour of the land. The game's blend is
 not documented, so the strength and the tiling are OpenSky choices.
 
+The Creation Kit brightens terrain LOD textures when it builds them, and the game darkens
+them again in the type 18 shader with the noise texture. Object LOD textures are not
+brightened. The xLODGen author (sheson) describes the same rule. OpenSky keeps the noise
+mean-neutral and undoes the brightening with a fitted curve instead. A vanilla LOD texel is
+`2.385 * source^1.145` in gamma space (0 to 1), where the source is the same land baked from
+the `LAND` textures and vertex colours. Over the Tamriel worldspace the mean gain is 1.93, the
+same on flat and steep ground and for every facing, so it is a brightness scale and not baked
+light. The shader applies the inverse, `(albedo / 2.385)^(1 / 1.145)`, after the noise. With
+the noise term off, the LOD texture is drawn as stored. `openskycli game state frame` reports
+the curve under `terrainLOD`.
+
 Parallax (type 3) shifts the texture coordinate before any sampling:
 `uv += V.xy * (height * 0.08 - 0.04)`, with V the view direction in the tangent frame.
 
