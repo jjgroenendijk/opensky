@@ -8,6 +8,7 @@ import OpenSkyAssetCache
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
 import simd

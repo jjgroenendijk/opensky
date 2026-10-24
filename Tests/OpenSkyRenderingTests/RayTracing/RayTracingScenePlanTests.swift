@@ -1,7 +1,9 @@
 // Which GPUs run the ray-traced shadows, which geometry they trace against, and when the
 // acceleration structures are built or freed.
 
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import Testing
 
 struct RayTracingAvailabilityTests {

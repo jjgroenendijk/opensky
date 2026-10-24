@@ -1,7 +1,9 @@
 // The effect shader flags reach the GPU flag bits, and particles keep their colour.
 
 import OpenSkyFormatsCore
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import Testing
 

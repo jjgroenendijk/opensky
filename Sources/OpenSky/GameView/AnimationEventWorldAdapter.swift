@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyCamera
 import OpenSkyFormatsESM
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

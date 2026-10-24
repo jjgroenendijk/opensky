@@ -4,6 +4,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -71,7 +72,7 @@ public final class ScreenBloodLayer {
             fragment: "screenBloodFlareFragment", library: library, compiler: compiler, view: view
         )
         let length = Self.quadLimit * Self.verticesPerQuad * MemoryLayout<UIVertex>.stride
-            * Renderer.maxFramesInFlight
+            * GPUFactory.maxFramesInFlight
         guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
             throw RendererError.bufferAllocationFailed
         }

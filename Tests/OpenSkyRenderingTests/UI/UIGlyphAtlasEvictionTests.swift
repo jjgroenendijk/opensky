@@ -3,6 +3,7 @@
 // synthetic rectangle paths.
 
 import CoreGraphics
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 

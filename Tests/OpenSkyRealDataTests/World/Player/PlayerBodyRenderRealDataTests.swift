@@ -14,6 +14,7 @@ import OpenSkyCells
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

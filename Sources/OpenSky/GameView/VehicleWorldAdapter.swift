@@ -12,6 +12,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyTerrain

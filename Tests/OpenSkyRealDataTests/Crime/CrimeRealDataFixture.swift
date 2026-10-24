@@ -13,6 +13,7 @@ import Metal
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

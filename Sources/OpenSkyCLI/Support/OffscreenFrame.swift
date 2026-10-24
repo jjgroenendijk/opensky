@@ -7,6 +7,7 @@ import MetalKit
 import OpenSkyDiagnostics
 import OpenSkyNavigation
 import OpenSkyPerception
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 

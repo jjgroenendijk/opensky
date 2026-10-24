@@ -13,7 +13,9 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTerrain
 import OpenSkyWorldState
 import simd

@@ -3,6 +3,7 @@
 
 import Metal
 import OpenSkyFormatsSWF
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

@@ -6,6 +6,7 @@
 import Foundation
 import Metal
 import OpenSkyFormatsCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

@@ -5,6 +5,7 @@ import AppKit
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 extension GraphicsPageViewController {
     func configureControls() {

@@ -3,6 +3,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 nonisolated public enum MeshShaderSupport {

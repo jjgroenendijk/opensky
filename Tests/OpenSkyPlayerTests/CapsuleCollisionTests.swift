@@ -7,6 +7,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

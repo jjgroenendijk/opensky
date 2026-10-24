@@ -3,6 +3,8 @@
 import Foundation
 @preconcurrency import Metal
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

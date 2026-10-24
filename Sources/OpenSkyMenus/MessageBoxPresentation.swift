@@ -3,7 +3,7 @@
 // box is a Scaleform movie. See docs/engine/messages.md#message-boxes.
 
 import Foundation
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated public struct MessageBoxPresentation: Equatable, Sendable {

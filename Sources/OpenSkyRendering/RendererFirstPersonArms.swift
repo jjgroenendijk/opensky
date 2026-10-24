@@ -5,6 +5,7 @@
 
 import Metal
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
 import simd
 
 extension Renderer {

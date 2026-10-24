@@ -3,6 +3,7 @@
 // without writing it, so a surface behind another one still shows through.
 
 import Metal
+import OpenSkyRenderResources
 import simd
 
 extension Renderer {

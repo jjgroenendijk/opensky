@@ -2,6 +2,8 @@
 // costs and saves, without `Renderer`.
 
 import Foundation
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 
 /// What the rendering performance readout reads.
 nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {

@@ -3,6 +3,7 @@
 // reads only it, so no game value can change half way through an encode.
 
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import simd
 
 public struct RenderFrameInput {

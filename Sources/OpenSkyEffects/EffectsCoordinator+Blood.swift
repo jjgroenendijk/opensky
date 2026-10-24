@@ -6,7 +6,9 @@ import Metal
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 
 extension EffectsCoordinator {

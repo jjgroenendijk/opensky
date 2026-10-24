@@ -5,6 +5,7 @@
 @preconcurrency import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
+import OpenSkyRenderResources
 import simd
 
 public final class MenuSceneModel {

@@ -3,6 +3,8 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 nonisolated extension MeshLibrary {

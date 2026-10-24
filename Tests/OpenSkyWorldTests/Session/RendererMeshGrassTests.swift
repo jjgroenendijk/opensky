@@ -6,7 +6,9 @@ import MetalKit
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import simd
 import Testing
@@ -103,7 +105,7 @@ struct RendererMeshGrassTests {
 
         renderer.meshShaderGrassEnabled = true
         var mesh = try Self.frame(renderer)
-        for _ in 0 ..< Renderer.maxFramesInFlight + 1 {
+        for _ in 0 ..< GPUFactory.maxFramesInFlight + 1 {
             mesh = try Self.frame(renderer)
         }
         #expect(renderer.drawsGrassWithMeshShaders)

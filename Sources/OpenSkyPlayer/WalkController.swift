@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

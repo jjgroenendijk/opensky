@@ -6,7 +6,8 @@
 import Foundation
 import OpenSkyGameData
 @testable import OpenSkyMenus
-@testable import OpenSkyRendering
+import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import OpenSkyWorld
 import Testing

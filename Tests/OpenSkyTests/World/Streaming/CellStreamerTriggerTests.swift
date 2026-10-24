@@ -8,7 +8,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures

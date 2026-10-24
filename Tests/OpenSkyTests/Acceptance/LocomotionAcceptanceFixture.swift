@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyPlayer
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import simd
 
 /// The synthetic terrain and water, west to east along +X. Slopes stay under

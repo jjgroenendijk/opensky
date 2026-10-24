@@ -5,6 +5,8 @@
 import Metal
 import MetalFX
 import MetalKit
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The motion and composite pipelines, built once with the renderer.
@@ -71,8 +73,8 @@ public final class UpscaleResources {
             throw RendererError.depthStateAllocationFailed
         }
         motionDepthState = depthState
-        uniformBuffer = try Renderer.makeUniformBuffer(
-            device: device, length: Self.uniformStride * Renderer.maxFramesInFlight,
+        uniformBuffer = try GPUFactory.makeUniformBuffer(
+            device: device, length: Self.uniformStride * GPUFactory.maxFramesInFlight,
             label: "UpscaleMotionUniforms"
         )
         temporalUnavailableReason = MTLFXTemporalScalerDescriptor.supportsMetal4FX(device)

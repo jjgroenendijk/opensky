@@ -15,6 +15,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

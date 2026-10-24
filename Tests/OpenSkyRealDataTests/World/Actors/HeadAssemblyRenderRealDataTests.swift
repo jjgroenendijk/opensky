@@ -10,6 +10,7 @@ import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 @testable import OpenSkyRuntimeState
 import OpenSkyTagsTesting
 import simd

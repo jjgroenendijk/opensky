@@ -4,6 +4,7 @@
 // looking north (+Y world) with world up = +Z, matching MatrixMathTests style.
 
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

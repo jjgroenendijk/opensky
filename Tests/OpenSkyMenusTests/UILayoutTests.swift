@@ -4,7 +4,7 @@
 
 import CoreText
 @testable import OpenSkyMenus
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import simd
 import Testing

@@ -86,6 +86,16 @@
         },
         {
           "containerPath": "container:.",
+          "identifier": "OpenSkyRenderCore",
+          "name": "OpenSkyRenderCore"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyRenderResources",
+          "name": "OpenSkyRenderResources"
+        },
+        {
+          "containerPath": "container:.",
           "identifier": "OpenSkyRendering",
           "name": "OpenSkyRendering"
         },

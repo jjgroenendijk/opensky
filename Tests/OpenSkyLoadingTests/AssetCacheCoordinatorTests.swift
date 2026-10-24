@@ -6,7 +6,7 @@ import OpenSkyAssetCache
 import OpenSkyEngineTesting
 import OpenSkyGameData
 @testable import OpenSkyLoading
-import OpenSkyRendering
+import OpenSkyRenderResources
 import Testing
 
 /// Stores each file with `suffix` as it is.

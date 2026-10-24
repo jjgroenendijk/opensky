@@ -3,6 +3,8 @@
 // and stays in its own call.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 extension Renderer {

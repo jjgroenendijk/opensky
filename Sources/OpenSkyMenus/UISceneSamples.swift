@@ -2,7 +2,7 @@
 // paragraph, a bordered panel, and corner markers. Tests render it offscreen;
 // overlay sample draws it.
 
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension UIScene {

@@ -23,8 +23,8 @@ Comparing and later converting textures needs an ASTC encoder for every block si
 - Wrap it in a C target of the package, `CASTCEncoder`: one C++ file that calls astcenc and a C
   header that Swift imports. Swift needs no C++ interop mode, which would spread to every module
   that imports one that uses it.
-- Every astcenc call stays behind `ASTCEncoder` in `OpenSkyRendering`. Callers pass RGBA8 pixels, a
-  block size, and an effort preset, and get the encoded blocks or a typed error.
+- Every astcenc call stays behind `ASTCEncoder` in `OpenSkyRenderResources`. Callers pass RGBA8
+  pixels, a block size, and an effort preset, and get the encoded blocks or a typed error.
 
 ## Why not ImageIO
 
@@ -42,5 +42,5 @@ redistributed OpenSky must carry the astcenc license text and its notice; the bu
 ## Build requirement
 
 cmake builds the library; `make bootstrap` installs it with Homebrew. A missing `.vendor/astcenc`
-fails the link of any target that imports `OpenSkyRendering`. CI restores the prefix from its cache,
-keyed by the vendoring script, and runs `make astcenc` otherwise.
+fails the link of any target that imports `OpenSkyRenderResources`. CI restores the prefix from its
+cache, keyed by the vendoring script, and runs `make astcenc` otherwise.

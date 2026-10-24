@@ -3,6 +3,7 @@
 // docs/rendering/decals.md and docs/rendering/visual-effects.md.
 
 import Metal
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 extension Renderer {

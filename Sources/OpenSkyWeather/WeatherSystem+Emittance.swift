@@ -3,7 +3,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension WeatherSystem {

@@ -3,6 +3,7 @@
 
 @preconcurrency import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 public final class MenuSceneResources {
@@ -48,7 +49,7 @@ public final class MenuSceneResources {
         frontDepthState = frontState
         guard
             let buffer = device.makeBuffer(
-                length: Self.uniformStride * Self.drawLimit * Renderer.maxFramesInFlight,
+                length: Self.uniformStride * Self.drawLimit * GPUFactory.maxFramesInFlight,
                 options: .storageModeShared
             )
         else { throw RendererError.bufferAllocationFailed }

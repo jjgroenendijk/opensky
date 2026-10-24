@@ -2,7 +2,7 @@
 // OpenSky's own layout, so a menu stays usable without the install's interface files.
 
 import Foundation
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated public struct MenuTextPanel: Equatable, Sendable {

@@ -14,6 +14,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
 import Testing

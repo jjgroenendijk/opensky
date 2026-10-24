@@ -16,6 +16,7 @@ import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState

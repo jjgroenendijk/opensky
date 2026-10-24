@@ -2,6 +2,7 @@
 // `OnPlayerBowShot`, and `Weather.GetSkyMode`. Values come from the renderer and the
 // weather clock, so a script sees the sun the frame draws.
 
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWeather

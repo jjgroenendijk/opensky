@@ -12,6 +12,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd

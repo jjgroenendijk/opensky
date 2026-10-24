@@ -8,7 +8,8 @@ import Metal
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
-@testable import OpenSkyRendering
+import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import Testing
 

@@ -8,6 +8,7 @@ import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyPreview
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyWorld
 
 enum PreviewCommand {

@@ -2,6 +2,7 @@
 // projection. `gameTime` is written and read on the main thread only.
 
 import Foundation
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorldState
 

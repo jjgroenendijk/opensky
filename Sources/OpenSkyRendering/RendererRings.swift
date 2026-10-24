@@ -5,6 +5,8 @@
 // extension (it needs the renderer's private state).
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -39,34 +41,34 @@ extension Renderer {
         let drawCapacity = slotCapacity(for: scene.drawCount)
         let instanceCapacity = slotCapacity(for: scene.instanceCount)
         let instanceLength = MemoryLayout<InstanceTransform>.stride
-            * instanceCapacity * maxFramesInFlight
+            * instanceCapacity * GPUFactory.maxFramesInFlight
         return try SceneRings(
-            drawBuffer: makeUniformBuffer(
+            drawBuffer: GPUFactory.makeUniformBuffer(
                 device: device,
-                length: alignedDrawUniformsSize * drawCapacity * maxFramesInFlight,
+                length: alignedDrawUniformsSize * drawCapacity * GPUFactory.maxFramesInFlight,
                 label: "DrawUniforms"
             ),
-            pointLightBuffer: makeUniformBuffer(
+            pointLightBuffer: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: MemoryLayout<PointLightUniform>.stride
                     * LightingConstant.maxPointLights.rawValue
-                    * drawCapacity * maxFramesInFlight,
+                    * drawCapacity * GPUFactory.maxFramesInFlight,
                 label: "PointLights"
             ),
             drawCapacity: drawCapacity,
-            instanceBuffer: makeUniformBuffer(
+            instanceBuffer: GPUFactory.makeUniformBuffer(
                 device: device, length: instanceLength, label: "InstanceTransforms"
             ),
             instanceCapacity: instanceCapacity,
-            shadowDrawBuffer: makeUniformBuffer(
+            shadowDrawBuffer: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: alignedDrawUniformsSize
-                    * shadowDrawCapacity(drawCapacity) * maxFramesInFlight,
+                    * shadowDrawCapacity(drawCapacity) * GPUFactory.maxFramesInFlight,
                 label: "ShadowDrawUniforms"
             ),
             // Per-cascade caster culling writes one instance run per cascade, so the
             // worst case is cascadeCount x the scene instance ring.
-            shadowInstanceBuffer: makeUniformBuffer(
+            shadowInstanceBuffer: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: instanceLength * ShadowConstant.cascadeCount.rawValue,
                 label: "ShadowInstanceTransforms"

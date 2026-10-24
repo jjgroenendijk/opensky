@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyPlayer
 import OpenSkyQuests
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

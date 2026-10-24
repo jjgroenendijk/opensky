@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyMenus
 @testable import OpenSkyQuests
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
 import Testing

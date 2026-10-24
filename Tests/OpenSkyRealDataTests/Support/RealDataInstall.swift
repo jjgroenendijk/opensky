@@ -3,6 +3,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import Testing
 
 /// `Skyrim.esm` and the texture and mesh libraries over the real install: the

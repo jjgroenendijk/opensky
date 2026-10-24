@@ -4,6 +4,7 @@
 // (docs/engine/actor-animation.md).
 
 import Metal
+import OpenSkyRenderCore
 import simd
 
 extension Renderer {

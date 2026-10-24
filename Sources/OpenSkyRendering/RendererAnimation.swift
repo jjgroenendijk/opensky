@@ -1,6 +1,7 @@
 // Per-frame actor animation clock + measured palette refresh.
 
 import Foundation
+import OpenSkyRenderCore
 
 extension Renderer {
     public func updateAnimations(deltaTime: Float) {

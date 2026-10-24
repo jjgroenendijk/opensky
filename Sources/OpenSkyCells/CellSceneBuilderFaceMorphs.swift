@@ -7,7 +7,9 @@ import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated private struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]

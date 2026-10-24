@@ -7,6 +7,7 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWeather

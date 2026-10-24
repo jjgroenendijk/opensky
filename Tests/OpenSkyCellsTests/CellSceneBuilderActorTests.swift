@@ -8,7 +8,7 @@ import Metal
 import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkyTerrain
 import OpenSkyWorldTesting
 import simd

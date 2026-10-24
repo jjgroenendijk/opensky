@@ -11,6 +11,7 @@ import Metal
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd

@@ -2,7 +2,7 @@
 // OpenSky's impact-model switch.
 
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 extension EffectsCoordinator {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {

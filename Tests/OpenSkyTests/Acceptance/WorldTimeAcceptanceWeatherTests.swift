@@ -10,7 +10,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 import OpenSkyWorld

@@ -2,6 +2,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The render-debug pipeline set: one per geometry path. The channel is a

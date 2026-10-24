@@ -1,6 +1,7 @@
 // Finds the interior rooms the camera sees each frame, for both culling paths.
 // See docs/rendering/room-portal-culling.md.
 
+import OpenSkyRenderCore
 import simd
 
 /// The renderer's room-and-portal culling state.

@@ -31,6 +31,7 @@ LAYERS = [
     ["OpenSkyGameData"],
     ["OpenSkyBehavior", "OpenSkyLaunch", "OpenSkyAssetCache"],
     ["OpenSkyPhysics", "OpenSkyDiagnostics", "OpenSkyAgentControl"],
+    ["OpenSkyRenderCore", "OpenSkyRenderResources"],
     ["OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState"],
     ["OpenSkyConditions"],
 ]
@@ -50,7 +51,8 @@ RENDERER = "OpenSkyRendering"
 RENDERER_DEPS = {
     "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
     "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
-    "OpenSkyAssetCache", "CASTCEncoder", "OpenSkyImageKernels",
+    "OpenSkyAssetCache", "CASTCEncoder", "OpenSkyImageKernels", "OpenSkyRenderCore",
+    "OpenSkyRenderResources",
 }
 # Products of external packages. They sit below every layer.
 EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}

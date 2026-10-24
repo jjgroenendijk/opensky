@@ -4,7 +4,7 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
-import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated public enum AssetCacheConvertersError: Error, Equatable {
     case metalUnavailable

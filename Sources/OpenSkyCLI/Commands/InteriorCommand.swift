@@ -9,6 +9,7 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTerrain
 import simd
 

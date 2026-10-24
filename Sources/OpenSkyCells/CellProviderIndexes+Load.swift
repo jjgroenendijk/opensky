@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTerrain
 import OpenSkyWorldState
 

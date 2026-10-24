@@ -11,6 +11,7 @@ import OpenSkyBehavior
 import OpenSkyCombat
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd

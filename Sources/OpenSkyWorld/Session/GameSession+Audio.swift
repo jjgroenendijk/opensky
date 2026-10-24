@@ -7,6 +7,7 @@
 import Foundation
 import OpenSkyAudio
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyTerrain
 import simd

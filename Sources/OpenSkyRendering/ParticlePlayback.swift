@@ -5,6 +5,8 @@
 @preconcurrency import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 import Synchronization
@@ -388,7 +390,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         capacity = simulator.capacity
         emitterCount = definition.emitters.filter(\.active).count
         state = Mutex(State(simulator: simulator))
-        let count = max(capacity, 1) * Renderer.maxFramesInFlight
+        let count = max(capacity, 1) * GPUFactory.maxFramesInFlight
         guard
             let buffer = device.makeBuffer(
                 length: count * MemoryLayout<ParticleGPUInstance>.stride,
@@ -398,7 +400,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         instanceBuffer = buffer
         guard
             let uniforms = device.makeBuffer(
-                length: Self.effectStride * Renderer.maxFramesInFlight,
+                length: Self.effectStride * GPUFactory.maxFramesInFlight,
                 options: .storageModeShared
             ) else { throw RendererError.bufferAllocationFailed }
         uniforms.label = "Particle effect: \(name)"

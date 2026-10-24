@@ -5,6 +5,7 @@
 import AppKit
 import Metal
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 

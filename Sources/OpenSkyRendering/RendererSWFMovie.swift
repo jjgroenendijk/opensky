@@ -5,6 +5,7 @@
 
 import Metal
 import OpenSkyFormatsSWF
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -179,19 +180,19 @@ nonisolated public final class SWFMovieResources {
     }
 
     private static func makeUniformRing(device: MTLDevice, capacity: Int) throws -> MTLBuffer {
-        try Renderer.makeUniformBuffer(
+        try GPUFactory.makeUniformBuffer(
             device: device,
             length: max(1, capacity) * Renderer.alignedSWFUniformsSize
-                * Renderer.maxFramesInFlight,
+                * GPUFactory.maxFramesInFlight,
             label: "SWFDrawUniforms"
         )
     }
 
     private static func makeGlyphBuffer(device: MTLDevice, capacity: Int) throws -> MTLBuffer {
-        try Renderer.makeUniformBuffer(
+        try GPUFactory.makeUniformBuffer(
             device: device,
             length: max(1, capacity) * 6 * MemoryLayout<SWFVertex>.stride
-                * Renderer.maxFramesInFlight,
+                * GPUFactory.maxFramesInFlight,
             label: "SWFGlyphVertices"
         )
     }
@@ -202,7 +203,7 @@ nonisolated public final class SWFMovieResources {
         label: String
     ) throws -> MTLBuffer {
         let length = max(1, vertices.count) * MemoryLayout<SWFVertex>.stride
-        let buffer = try Renderer.makeUniformBuffer(device: device, length: length, label: label)
+        let buffer = try GPUFactory.makeUniformBuffer(device: device, length: length, label: label)
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
             buffer.contents().copyMemory(from: base, byteCount: bytes.count)

@@ -8,7 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState

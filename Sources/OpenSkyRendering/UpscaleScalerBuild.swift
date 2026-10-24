@@ -5,6 +5,8 @@
 
 import Metal
 import MetalFX
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 
 /// The MetalFX objects one request built. A nil scaler means MetalFX refused it.
 nonisolated struct UpscaleScalers {

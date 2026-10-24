@@ -2,7 +2,7 @@
 // in GameClock.swift. See docs/engine/game-clock.md.
 
 import Foundation
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 @testable import OpenSkyWorldState
 import Testing
 

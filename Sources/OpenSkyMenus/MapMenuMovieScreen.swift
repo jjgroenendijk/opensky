@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 import OpenSkyWorldInterface
 
 /// What the map movie needs from the app.

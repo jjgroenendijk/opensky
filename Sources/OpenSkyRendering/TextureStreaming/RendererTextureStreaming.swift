@@ -5,6 +5,7 @@
 
 import Metal
 import OpenSkyAssetCache
+import OpenSkyRenderResources
 
 /// What the Texture Streaming readout shows.
 nonisolated public struct TextureStreamingStats: Equatable, Sendable {

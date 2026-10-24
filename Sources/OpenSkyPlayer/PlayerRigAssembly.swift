@@ -7,6 +7,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 /// One rig to assemble. A result whose `generation` is not the newest is dropped.
 nonisolated public struct PlayerRigRequest: Equatable, Sendable {

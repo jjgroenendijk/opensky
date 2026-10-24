@@ -9,7 +9,9 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyImageKernels
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyRuntimeState
 
 nonisolated extension CellSceneBuilder {

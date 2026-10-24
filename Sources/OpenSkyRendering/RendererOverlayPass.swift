@@ -4,6 +4,7 @@
 import Metal
 import MetalKit
 import OpenSkyDiagnostics
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 nonisolated public struct WorldOverlayDrawStats: Equatable, Sendable {
@@ -56,9 +57,10 @@ extension Renderer {
         return try WorldOverlayResources(
             pipeline: makeWorldOverlayPipeline(view: view, library: library, compiler: compiler),
             depthState: makeWorldOverlayDepthState(device: device),
-            vertexBuffer: makeUniformBuffer(
+            vertexBuffer: GPUFactory.makeUniformBuffer(
                 device: device,
-                length: verticesPerSlot * maxFramesInFlight * MemoryLayout<OverlayVertex>.stride,
+                length: verticesPerSlot * GPUFactory.maxFramesInFlight * MemoryLayout<OverlayVertex>
+                    .stride,
                 label: "WorldOverlayVertices"
             )
         )

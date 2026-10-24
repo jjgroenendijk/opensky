@@ -5,6 +5,7 @@
 // just behind the player, whichever is further. See docs/engine/dialogue-camera.md.
 
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd
