@@ -68,17 +68,18 @@ struct SoulTrapTests {
         world.holders[Self.victim] = ActorValueHolder(
             key: Self.victim, subject: .actor(base: FormID(0x0F01)), cell: nil
         )
-        let coordinator = MagicCoordinator(world: world)
+        var data = MagicSessionData()
         let file = try ActiveEffectFixture.plugin(
             records: ActiveEffectFixture.effectRecords + ActiveEffectFixture.archetypeRecords
         )
-        coordinator.wireEffects(
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
             pluginName: ActiveEffectFixture.pluginName,
             conditionRegistry: ConditionFunctionRegistry()
         )
         let holder = try #require(world.holders[Self.victim])
+        let coordinator = MagicCoordinator(world: world, data: data)
         coordinator.withEffects { runtime in
             runtime.apply(
                 [MagicItemEffect(

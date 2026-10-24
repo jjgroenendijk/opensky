@@ -10,16 +10,6 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator {
-    public func wireCrafting(
-        catalog: CraftingCatalog?,
-        conditions: any RecipeConditionChecking,
-        skills: any SkillUseReporting
-    ) {
-        craftingCatalog = catalog
-        recipeConditions = conditions
-        skillUses = skills
-    }
-
     // MARK: - Harvest
 
     /// `interaction` with its runtime label: the game's verb, then a harvested plant, a

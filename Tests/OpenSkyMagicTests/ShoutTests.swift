@@ -49,18 +49,19 @@ struct ShoutTests {
         let file = try ShoutPluginFixture.plugin()
         let world = FakeMagicWorld()
         world.perkValues[.modShoutOK] = allowed ? 1 : 0
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(Self.plugin, file)]),
             pluginName: Self.plugin,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        try coordinator.wireCasting(
+        data.casting = try MagicCastingData(
             spellbook: SpellbookFixture.runtime().0, values: FixedActorValues(),
             spellPluginName: Self.plugin, baselines: nil
         )
-        coordinator.wireShouts(store: ShoutStore(plugins: [(Self.plugin, file)]))
+        data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
+        let coordinator = MagicCoordinator(world: world, data: data)
         let shout = try #require(coordinator.shouts.keys.first)
         coordinator.learnShout(shout)
         coordinator.equipShout(shout)
@@ -83,21 +84,17 @@ struct ShoutTests {
     /// A tap shouts the first word on `Voice_SpellFire_Event`, and its 20 s recovery starts.
     @Test func aTapShoutsOneWordOnTheGraphEvent() throws {
         var trial = try session()
-        var casts: [ReferenceKey] = []
-        trial.coordinator.onSpellCast = { spell, _ in casts.append(spell) }
         let commands = trial.shout(holding: Self.frame)
         #expect(commands == [.playerGraphEvent(ShoutGraphNames.release), .playerShouted])
-        #expect(casts == [spell(ShoutPluginFixture.Form.spell1)])
+        #expect(trial.world.spellCasts == [spell(ShoutPluginFixture.Form.spell1)])
         #expect(trial.coordinator.shoutMachine.cooldownTotal == 20)
     }
 
     /// The fixture has two words, so a hold past `fShoutTime1` releases by itself.
     @Test func aFullHoldShoutsEveryUnlockedWord() throws {
         var trial = try session()
-        var casts: [ReferenceKey] = []
-        trial.coordinator.onSpellCast = { spell, _ in casts.append(spell) }
         _ = trial.shout(holding: 0.5)
-        #expect(casts == [spell(ShoutPluginFixture.Form.spell2)])
+        #expect(trial.world.spellCasts == [spell(ShoutPluginFixture.Form.spell2)])
         #expect(trial.coordinator.lastShout == .shouted(
             shout: "Fire Breath",
             words: 2,
@@ -138,22 +135,21 @@ struct ShoutTests {
     /// With no graph, the spell still leaves once the wait runs out.
     @Test func noGraphEventStillFiresAfterTheWait() throws {
         var trial = try session()
-        var casts: [ReferenceKey] = []
-        trial.coordinator.onSpellCast = { spell, _ in casts.append(spell) }
         _ = trial.shout(holding: Self.frame, fire: false)
-        #expect(casts.isEmpty)
+        #expect(trial.world.spellCasts.isEmpty)
         _ = trial.coordinator.advanceShout(
             held: false, delta: 2, events: [], isPlayerControlled: true
         )
-        #expect(casts.count == 1)
+        #expect(trial.world.spellCasts.count == 1)
     }
 
     @Test func aWordNeedsADragonSoul() throws {
         let trial = try session()
         let file = try ShoutPluginFixture.plugin()
-        let fresh = MagicCoordinator(world: FakeMagicWorld())
-        fresh.wireShouts(store: ShoutStore(plugins: [(Self.plugin, file)]))
+        var data = MagicSessionData()
+        data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
         #expect(trial.coordinator.unlockNextWord(of: trial.shout) == .refused(.wordAlreadyUnlocked))
+        let fresh = MagicCoordinator(world: FakeMagicWorld(), data: data)
         let world = try #require(fresh.world as? FakeMagicWorld)
         world.changeShoutKnowledge(.teachWord(.plugin(
             name: Self.plugin.lowercased(), objectID: ShoutPluginFixture.Form.word1

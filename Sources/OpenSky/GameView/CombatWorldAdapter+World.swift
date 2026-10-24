@@ -80,7 +80,7 @@ extension CombatWorldAdapter: CombatWorld {
 
     @discardableResult
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        game.magic.applySpellHit(hit)
+        game.magicWorld.applySpellHit(hit)
     }
 
     @discardableResult

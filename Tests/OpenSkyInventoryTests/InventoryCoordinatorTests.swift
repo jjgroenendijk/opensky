@@ -29,17 +29,15 @@ struct InventoryCoordinatorTests {
         let references: FakeWorldReferences
     }
 
-    private static func harness() throws -> Harness {
+    private static func harness(seams: InventorySeams = InventorySeams()) throws -> Harness {
         let items = try Items.standardHarness()
         let world = FakeWorld()
+        var data = InventorySessionData(items: WorldItemRuntime(
+            inventory: items.runtime.inventory, references: items.references
+        ))
+        data.equipment = try EquipmentCatalog.build(from: ESMFile(data: Fixture.pluginBytes()))
         let coordinator = InventoryCoordinator(
-            world: world, locks: LockCoordinator(world: FakeLockWorld())
-        )
-        try coordinator.wire(
-            inventory: items.runtime.inventory,
-            references: items.references,
-            catalog: EquipmentCatalog.build(from: ESMFile(data: Fixture.pluginBytes())),
-            pricing: nil
+            world: world, lockWorld: FakeLockWorld(), data: data, seams: seams
         )
         return Harness(coordinator: coordinator, world: world, references: items.references)
     }
@@ -71,7 +69,7 @@ struct InventoryCoordinatorTests {
 
     @Test func withoutGameDataEveryActionSaysSo() {
         let coordinator = InventoryCoordinator(
-            world: FakeWorld(), locks: LockCoordinator(world: FakeLockWorld())
+            world: FakeWorld(), lockWorld: FakeLockWorld(), data: nil
         )
         #expect(coordinator.takeInteractionTarget().text == InventoryCore.noRuntimeText)
         #expect(coordinator.dropPlayerItem(nil, count: 1).text == InventoryCore.noRuntimeText)
@@ -180,12 +178,11 @@ struct InventoryCoordinatorTests {
     }
 
     @Test func containerTransfersMoveOneItemEachWay() throws {
-        let harness = try Self.harness()
+        let recorder = StoryEventRecorder()
+        let harness = try Self.harness(seams: InventorySeams(storyEvents: recorder))
         let coordinator = harness.coordinator
         let chest = try #require(coordinator.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
-        let recorder = StoryEventRecorder()
-        coordinator.storyEvents = recorder
         try inventory.add(Fixture.sword, count: 1, to: .player)
         let stored = try coordinator.transfer(
             .store, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
@@ -317,10 +314,9 @@ extension InventoryCoordinatorTests {
     /// A roll under the chance moves the item, marked stolen, and teaches Pickpocket
     /// by its value; a roll over it moves nothing.
     @Test func aPickpocketRollDecidesTheTake() throws {
-        let harness = try Self.harness()
-        let coordinator = harness.coordinator
         let recorder = SkillRecorder()
-        coordinator.skillUses = recorder
+        let harness = try Self.harness(seams: InventorySeams(skillUses: recorder))
+        let coordinator = harness.coordinator
         let chest = try #require(coordinator.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
         try inventory.add(Fixture.sword, count: 1, to: chest)

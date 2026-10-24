@@ -88,9 +88,6 @@ final class CombatWorldAdapter {
         combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
         combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
         game.ragdoll.deathSettings = DeathSettings.resolve(store: provider.gameSettings)
-        game.effects.applyBloodSettings(BloodEffectSettings.resolve(
-            store: provider.gameSettings
-        ) { [game] in game.mapWorld.text($0) })
         combat.wireMelee(
             settings: settings,
             items: Self.items(provider),

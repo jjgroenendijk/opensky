@@ -56,14 +56,15 @@ struct EnchantingTests {
         let world = FakeMagicWorld()
         world.inventory = inventory
         world.equipment = FakeHandEquipment()
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(indexedValue: skill),
             store: MagicEffectStore(plugins: [(plugin, file)]),
             pluginName: plugin,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        coordinator.wireEnchantments(store: enchantments)
+        data.enchantments = enchantments
+        let coordinator = MagicCoordinator(world: world, data: data)
         return Session(coordinator: coordinator, world: world, inventory: inventory)
     }
 

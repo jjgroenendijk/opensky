@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -57,7 +58,7 @@ struct CrimeTheftHookTests {
         let reporter: CrimeReporter
 
         init(witnessed: Bool = true, owned: Bool = true) throws {
-            chain = try Chain()
+            let store = WorldStateStore()
             world = FakeCrimeWorld()
             world.values[InventoryBaselineFixture.sword] = 25
             if owned {
@@ -68,7 +69,7 @@ struct CrimeTheftHookTests {
             }
             reporter = try CrimeReporter(
                 runtime: CrimeRuntime(
-                    store: chain.store, factions: CrimeFixture.factionStore()
+                    store: store, factions: CrimeFixture.factionStore()
                 ),
                 world: world
             )
@@ -77,7 +78,7 @@ struct CrimeTheftHookTests {
                     watching: .player, by: [CrimeFixture.key(CrimeFixture.Actors.resident)]
                 )
             }
-            chain.runtime.crime = reporter
+            chain = try Chain(store: store, crime: reporter)
         }
     }
 

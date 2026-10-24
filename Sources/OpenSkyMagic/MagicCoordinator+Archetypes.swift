@@ -16,7 +16,7 @@ extension MagicCoordinator {
     public static let undeadKeyword = "ActorTypeUndead"
 
     /// Gives the runtime the lookups it cannot make itself.
-    func wireArchetypeLookups() {
+    func prepareArchetypeLookups() {
         withEffects { runtime in
             runtime.holderResolver = { [weak self] key in
                 self?.world.actorValueHolder(for: key)

@@ -60,8 +60,7 @@ final class CrimeWorldAdapter {
         self.game = game
     }
 
-    /// After `wireFactions` and `wireWorldItems`: it reads the same FACT store
-    /// as the hostility derivation and joins the take path.
+    /// Before `wireWorldItems`, whose take path asks the reporter about theft.
     func wireCrime(provider: WorldDataStores) {
         guard
             let factionStore = provider.factionStore,
@@ -77,7 +76,6 @@ final class CrimeWorldAdapter {
             locations: provider.locationStore,
             pluginName: pluginName
         )
-        game.inventory.runtime?.crime = game.crime.reporter
     }
 
     func run(_ commands: [CrimeCommand]) {

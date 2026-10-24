@@ -47,6 +47,7 @@ protocol ScriptWorldHost: AnyObject {
     var inventory: InventoryCoordinator { get }
     var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
@@ -122,9 +123,6 @@ final class ScriptWorldAdapter {
             .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
         bridge.playerNatives
             .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
-        game.magic.onSpellCast = { [weak game] spell, caster in
-            game?.scripts.runtime?.queueSpellCast(spell, by: caster)
-        }
         let scripts = ScriptCoordinator(world: self, bridge: bridge, fileSystem: fileSystem)
         game.scripts = scripts
         let world = scripts.runtime
@@ -276,7 +274,7 @@ final class ScriptWorldAdapter {
             game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }
         bridge.magicNatives.applySpellHit = { [weak game] hit in
-            game?.magic.applySpellHit(hit) ?? .none
+            game?.magicWorld.applySpellHit(hit) ?? .none
         }
         bridge.magicNatives.trapSoul = { [weak game] victim, caster in
             guard case .trapped = game?.magic.trapSoul(of: victim, by: caster) else { return false }

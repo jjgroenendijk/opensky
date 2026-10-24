@@ -113,9 +113,7 @@ final class StoryWorldAdapter {
         storyManager.story = data.storyManager
         storyManager.social.settings = data.social
         game.progression.storyEvents = self
-        game.inventory.storyEvents = self
         game.crime.storyEvents = self
-        game.magic.storyEvents = self
         game.scripts.bridge?.storyNatives.questStarted = { [weak self] quest in
             self?.scenes.questDidStart(quest)
         }

@@ -19,25 +19,27 @@ import Testing
 struct MagicCoordinatorTests {
     private static func effectsWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
             pluginName: ActiveEffectFixture.pluginName,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        return coordinator
+        return MagicCoordinator(world: world, data: data)
     }
 
-    private static func castingWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
-        let coordinator = MagicCoordinator(world: world)
-        try coordinator.wireCasting(
+    private static func castingWired(
+        _ world: FakeMagicWorld, storyEvents: StoryEventRecorder? = nil
+    ) throws -> MagicCoordinator {
+        var data = MagicSessionData()
+        data.casting = try MagicCastingData(
             spellbook: SpellbookFixture.runtime().0,
             values: FixedActorValues(),
             spellPluginName: SpellbookFixture.pluginName,
             baselines: nil
         )
-        return coordinator
+        return MagicCoordinator(world: world, data: data, storyEvents: storyEvents)
     }
 
     @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
@@ -96,9 +98,8 @@ struct MagicCoordinatorTests {
 
     @Test func onlyThePlayersCastFiresTheCastEventAtTheAimedTarget() throws {
         let world = FakeMagicWorld()
-        let coordinator = try Self.castingWired(world)
         let recorder = StoryEventRecorder()
-        coordinator.storyEvents = recorder
+        let coordinator = try Self.castingWired(world, storyEvents: recorder)
         let target = ReferenceKey.plugin(name: SpellbookFixture.pluginName, objectID: 0x900)
         world.aim = SpellAim(target: target)
         let flames = SpellbookFixture.key(SpellbookFixture.Spell.flames)
@@ -132,13 +133,14 @@ struct MagicCoordinatorTests {
         let world = FakeMagicWorld()
         let equipment = FakeHandEquipment()
         world.equipment = equipment
-        let coordinator = MagicCoordinator(world: world)
-        try coordinator.wireCasting(
+        var data = MagicSessionData()
+        data.casting = try MagicCastingData(
             spellbook: SpellbookFixture.runtime(equipment: equipment).0,
             values: FixedActorValues(),
             spellPluginName: SpellbookFixture.pluginName,
             baselines: nil
         )
+        let coordinator = MagicCoordinator(world: world, data: data)
         let spellbook = try #require(coordinator.caster).spellbook
         let healing = SpellbookFixture.key(SpellbookFixture.Spell.healing)
         spellbook.learn(healing, on: .player)

@@ -55,14 +55,15 @@ struct SoulRechargeTests {
         world.holders[Self.victim] = ActorValueHolder(
             key: Self.victim, subject: .actor(base: FormID(0x0F01)), cell: nil
         )
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(plugin, file)]),
             pluginName: plugin,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        coordinator.wireEnchantments(store: enchantments)
+        data.enchantments = enchantments
+        let coordinator = MagicCoordinator(world: world, data: data)
         let profile = try #require(coordinator.enchantmentProfile(of: Gems.enchantedBlade))
         coordinator.withEffects { runtime in
             let ledger = EnchantmentLedger(store: runtime.store, inventory: inventory)

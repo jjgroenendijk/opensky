@@ -48,8 +48,7 @@ struct EffectsCoordinatorImpactTests {
 
     @Test func anActorHitShowsTheModelAndMarksTheGroundUnderIt() throws {
         let world = FeetWorld()
-        let effects = EffectsCoordinator()
-        effects.world = world
+        let effects = EffectsCoordinator(world: world)
         try effects.showImpact(
             Self.impact(model: "Effects\\ImpactEffects\\Blood.nif"),
             decal: Self.decal, at: SIMD3(12, 22, 60), on: .actor(.player)
@@ -76,9 +75,8 @@ struct EffectsCoordinatorImpactTests {
     }
 
     @Test func repeatingNeedsAnImpactFirst() throws {
-        let effects = EffectsCoordinator()
         let world = FeetWorld()
-        effects.world = world
+        let effects = EffectsCoordinator(world: world)
         #expect(!effects.repeatLastImpact())
         try effects.showImpact(Self.impact(model: nil), decal: Self.decal, at: .zero, on: .ground)
         #expect(effects.repeatLastImpact())

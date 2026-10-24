@@ -38,10 +38,6 @@ extension MagicWorldAdapter {
         return game.combat.items?.projectileProfile(link)?.explosionProximity ?? 0
     }
 
-    func wireRunes(provider: WorldDataStores) {
-        game.magic.runeSettings = RuneSettings.resolve(store: provider.gameSettings)
-    }
-
     /// The rune's `PROJ` explosion, as a spell projectile's impact sets it off.
     func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
         let explosions = game.combat.explosions

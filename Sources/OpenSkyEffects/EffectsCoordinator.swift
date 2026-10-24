@@ -27,9 +27,9 @@ public final class EffectsCoordinator {
     /// Seconds a hit-effect art model stays when its spell is instant.
     public static let instantArtDuration: Float = 2
 
-    public weak var world: (any EffectsWorld)?
-    public private(set) var records = EffectRecordStore.empty
-    public private(set) var catalog = EffectCatalog.empty
+    public weak let world: (any EffectsWorld)?
+    public let records: EffectRecordStore
+    public let catalog: EffectCatalog
     public internal(set) var visualEffects = VisualEffectRuntime()
     public private(set) var spellHitCount = 0
     public private(set) var lastSpellHit = "No spell hit yet."
@@ -45,22 +45,30 @@ public final class EffectsCoordinator {
     var decalsChanged = false
     /// The particle systems of each live effect, by instance id.
     var effectParticles: [Int: EffectParticles] = [:]
-    var meshes: MeshLibrary?
+    /// A library only the main thread uses; nil draws membranes only.
+    let meshes: MeshLibrary?
     private var drewModels = false
     /// Blood that lasts: on the screen after the player is hit, and on weapons.
     public internal(set) var screenBlood = ScreenBloodRuntime()
     public internal(set) var weaponBlood = WeaponBloodRuntime()
-    public internal(set) var bloodSettings = BloodEffectSettings.vanilla
+    public let bloodSettings: BloodEffectSettings
     var screenBloodTextures: ScreenBloodTextures?
     var drewScreenBlood = false
 
-    public init() {}
-
-    /// `meshes` is a library only the main thread uses; nil draws membranes only.
-    public func wire(records: EffectRecordStore, meshes: MeshLibrary?) {
+    /// Without records there is no game, and every effect draws nothing.
+    public init(
+        records: EffectRecordStore = .empty,
+        meshes: MeshLibrary? = nil,
+        blood: BloodEffectSettings = .vanilla,
+        world: (any EffectsWorld)? = nil
+    ) {
         self.records = records
         self.meshes = meshes
+        self.world = world
         catalog = EffectCatalog(records: records)
+        bloodSettings = blood
+        screenBlood.settings = blood
+        weaponBlood.settings = blood
     }
 
     /// Attaches any `RFCT`, `EFSH`, or `ARTO` by key. Nil when it draws nothing.

@@ -14,13 +14,6 @@ extension EffectsCoordinator {
     /// game names the texture but not a size.
     static let defaultBloodDecalSize: ClosedRange<Float> = 24 ... 48
 
-    public func applyBloodSettings(_ settings: BloodEffectSettings) {
-        bloodSettings = settings
-        screenBlood.settings = settings
-        weaponBlood.settings = settings
-        screenBloodTextures = nil
-    }
-
     public var screenBloodEnabled: Bool {
         get { screenBlood.enabled }
         set {

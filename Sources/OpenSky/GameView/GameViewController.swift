@@ -189,9 +189,12 @@ final class GameViewController: NSViewController {
     lazy var cinematicWorld = CinematicCameraWorldAdapter(game: self)
     lazy var loadingScreens = LoadingScreenCoordinator(world: loadingWorld)
     lazy var loadingWorld = LoadingScreenWorldAdapter(game: self)
-    /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
+    /// World items, equipment, vendors and trades. Its runtimes stay nil without game data;
+    /// session start replaces it with one built over the loaded world.
     lazy var inventory = InventoryCoordinator(
-        world: inventoryWorld, locks: LockCoordinator(world: lockWorld)
+        world: inventoryWorld,
+        lockWorld: lockWorld,
+        data: nil
     )
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     lazy var lockWorld = LockWorldAdapter(game: self)
@@ -204,9 +207,11 @@ final class GameViewController: NSViewController {
     lazy var hazardWorld = HazardWorldAdapter(HazardWorldDependencies(
         hazards: hazards,
         combat: combat,
-        magic: magic,
+        magic: { [unowned self] in magic },
+        magicWorld: { [unowned self] in magicWorld },
         gameSession: { [unowned self] in gameSession }
     ))
+    /// Session start replaces it with one built over the loaded effect records.
     lazy var effects = EffectsCoordinator()
     lazy var effectsWorld = EffectsWorldAdapter(game: self)
     lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
@@ -230,7 +235,7 @@ final class GameViewController: NSViewController {
     lazy var actorWorld = ActorWorldAdapter(game: self)
 
     /// Active effects, spellcasting and item enchantments. Its runtimes stay nil without game
-    /// data.
+    /// data; session start replaces it with one built over the loaded world.
     lazy var magic = MagicCoordinator(world: magicWorld)
     lazy var magicWorld = MagicWorldAdapter(game: self)
 
@@ -260,7 +265,9 @@ final class GameViewController: NSViewController {
     lazy var ragdollWorld = RagdollWorldAdapter(game: self)
 
     /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
-    lazy var combat = CombatCoordinator(world: combatWorld)
+    lazy var combat = CombatCoordinator(
+        world: combatWorld, explosions: effectsWorld.makeExplosions()
+    )
     lazy var combatWorld = CombatWorldAdapter(game: self)
     /// Live resident-actor package selection.
     lazy var packages = PackageCoordinator(world: aiWorld)

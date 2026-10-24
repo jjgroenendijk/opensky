@@ -35,22 +35,19 @@ struct AlchemyCoordinatorTests {
         let inventory = try InventoryRuntime(store: store, baselines: Fixture.resolver())
         let references = FakeWorldReferences(entries: [], cell: WorldItemRuntimeTests.cell)
         let world = FakeAlchemyWorld()
-        let coordinator = InventoryCoordinator(
-            world: world, locks: LockCoordinator(world: FakeLockWorld())
-        )
-        let file = try Fixture.file()
-        coordinator.wire(
-            inventory: inventory,
-            references: references,
-            catalog: EquipmentCatalog.build(from: file),
-            pricing: nil
-        )
         let conditions = CraftingSessionTests.FakeConditions()
         let skills = CraftingSessionTests.FakeSkills()
-        coordinator.wireCrafting(catalog: nil, conditions: conditions, skills: skills)
-        try coordinator.wireAlchemy(
-            effects: Fixture.effects(), pluginName: Fixture.pluginName,
-            settings: .vanilla, texts: .vanilla
+        var data = InventorySessionData(
+            items: WorldItemRuntime(inventory: inventory, references: references)
+        )
+        data.equipment = try EquipmentCatalog.build(from: Fixture.file())
+        data.alchemy.effects = try Fixture.effects()
+        data.alchemy.pluginName = Fixture.pluginName
+        let coordinator = InventoryCoordinator(
+            world: world,
+            lockWorld: FakeLockWorld(),
+            data: data,
+            seams: InventorySeams(recipeConditions: conditions, skillUses: skills)
         )
         coordinator.alchemySelection = []
         return Harness(

@@ -13,11 +13,11 @@ import simd
 public final class ExplosionRuntime {
     public static let reportLimit = 8
 
-    public weak var world: (any ExplosionWorld)?
-    /// The load-order effect records. Empty until the session wires them.
-    public var records = EffectRecordStore.empty
+    public weak let world: (any ExplosionWorld)?
+    /// The load-order effect records. Empty without game data.
+    public let records: EffectRecordStore
     /// The plugin raw item links (a PROJ's explosion) are written in.
-    public var itemPlugin = "Skyrim.esm"
+    public let itemPlugin: String
     public private(set) var reports: [ExplosionReport] = []
     public private(set) var debris: [DebrisPiece] = []
     public private(set) var detonationTotal = 0
@@ -25,7 +25,15 @@ public final class ExplosionRuntime {
     public private(set) var skippedPlacements = 0
     private var seed: UInt64 = 0x0E5D_1A57
 
-    public init() {}
+    public init(
+        records: EffectRecordStore = .empty,
+        itemPlugin: String = "Skyrim.esm",
+        world: (any ExplosionWorld)? = nil
+    ) {
+        self.records = records
+        self.itemPlugin = itemPlugin
+        self.world = world
+    }
 
     /// The explosion a raw link in the item plugin names.
     public func spec(itemLink id: FormID?) -> ExplosionSpec? {

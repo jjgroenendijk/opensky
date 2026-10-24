@@ -45,14 +45,10 @@ final class LockWorldAdapter {
         self.game = game
     }
 
-    /// After `wireWorldItems`, which wires the coordinator's item runtime.
+    /// After `wireWorldItems`, which builds the lock coordinator.
     func wireLocks(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
         let renderer = gameSession.renderer
         let locks = game.inventory.locks
-        locks.settings = provider.lockTrapData.lockpicking
-        locks.lockpickItem = provider.lockTrapData.lockpickItem
-        locks.texts = LockTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         let inventoryWorld = game.inventoryWorld
         streamer.activationGate.gate = { [weak locks, weak inventoryWorld] target in
             locks.flatMap { inventoryWorld?.run($0.gate(target)) }

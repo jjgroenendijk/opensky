@@ -47,8 +47,8 @@ struct RuneTests {
                 keywords: [Self.runeKeyword]
             )
         ])
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
             pluginName: ActiveEffectFixture.pluginName,
@@ -57,7 +57,7 @@ struct RuneTests {
         world.keywords[RuneCore.keyword] = ReferenceKey(resolved: ResolvedFormID(
             plugin: ActiveEffectFixture.pluginName, objectID: Self.runeKeyword
         ))
-        return coordinator
+        return MagicCoordinator(world: world, data: data)
     }
 
     // MARK: - Rules
@@ -111,7 +111,13 @@ struct RuneTests {
         #expect(coordinator.runes.isEmpty)
         #expect(coordinator.detonatedRunes == 1)
         let detonation = MagicCommand.detonateRune(Self.payload(), at: SIMD3(300, 0, 0))
-        #expect(coordinator.takeCommands() == [detonation])
+        let commands = coordinator.takeCommands()
+        #expect(commands.last == detonation)
+        guard case let .spellHit(hit)? = commands.first else {
+            Issue.record("The rune's hit leaves as a command: \(commands)")
+            return
+        }
+        #expect(hit.hit.targets.map(\.key) == [Self.victim])
     }
 
     /// Without the rune keyword the spell lands at once on whoever stands there.

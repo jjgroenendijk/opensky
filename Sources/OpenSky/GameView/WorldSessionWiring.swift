@@ -124,6 +124,8 @@ final class WorldSessionWiring {
         )
         wireAssetDrains(gameSession: gameSession)
         game.messageWorld.wire(gameSession: gameSession)
+        // Ownership reads the FACT store, and the reporter joins the take path.
+        game.crimeWorld.wireCrime(provider: provider)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
@@ -226,20 +228,13 @@ final class WorldSessionWiring {
     /// Magic effects write through the actor-value runtime, so it comes first.
     private func wireActorSystems(provider: WorldDataStores, gameSession: GameSession) {
         game.actorWorld.wireActorValues(provider: provider, gameSession: gameSession)
-        game.magicWorld.wireEffects(provider: provider, gameSession: gameSession)
-        game.magicWorld.wireCasting(provider: provider, gameSession: gameSession)
-        game.magicWorld.wireEnchantments(provider: provider)
-        game.magicWorld.wireShouts(provider: provider)
-        game.magicWorld.wireRunes(provider: provider)
+        game.magicWorld.wireMagic(provider: provider, gameSession: gameSession)
         // After the cast loop, which folds spell cost through `Mod Spell Cost`.
         game.progressionWorld.wirePerks(provider: provider)
         // Memberships resolve through the actor-value template chain.
         game.factionWorld.wireFactions(provider: provider)
-        game.inventoryWorld.wireVendors(provider: provider)
         game.progressionWorld.wireSkills(provider: provider)
         game.progressionWorld.wireProgression(provider: provider)
-        // Ownership reads the FACT store, and the reporter joins the take path.
-        game.crimeWorld.wireCrime(provider: provider)
     }
 
     private func wireLateWorldSystems(

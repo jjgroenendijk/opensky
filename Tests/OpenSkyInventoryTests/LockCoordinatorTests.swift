@@ -81,12 +81,15 @@ struct LockCoordinatorTests {
 
     static func coordinator(
         picks: Int32 = 0,
-        world: FakeLockWorld = FakeLockWorld()
+        world: FakeLockWorld = FakeLockWorld(),
+        storyEvents: StoryEventRecorder? = nil
     ) throws -> Rig {
         let harness = try Items.harness(entries: [Items.entry(formID: door, base: doorBase)])
-        let locks = LockCoordinator(world: world)
-        locks.wire(items: harness.runtime)
-        locks.lockpickItem = Fixture.lockpick
+        var data = LockSessionData()
+        data.lockpickItem = Fixture.lockpick
+        let locks = LockCoordinator(
+            world: world, items: harness.runtime, data: data, storyEvents: storyEvents
+        )
         if picks > 0 {
             _ = try harness.runtime.inventory.add(Fixture.lockpick, count: picks, to: .player)
         }
@@ -184,10 +187,9 @@ struct LockCoordinatorTests {
 
     @Test func anOpenedLockUnlocksAndReportsSkillUse() throws {
         let world = FakeLockWorld()
-        let rig = try Self.coordinator(picks: 2, world: world)
-        let locks = rig.locks
         let recorder = StoryEventRecorder()
-        locks.storyEvents = recorder
+        let rig = try Self.coordinator(picks: 2, world: world, storyEvents: recorder)
+        let locks = rig.locks
         let target = Self.door(level: .novice)
         try locks.beginLockpicking(target)
         let center = try #require(locks.session?.sweetSpotCenter)

@@ -19,7 +19,9 @@ import OpenSkyWorld
 struct HazardWorldDependencies {
     let hazards: HazardCoordinator
     let combat: CombatCoordinator
-    let magic: MagicCoordinator
+    /// A closure, because session start replaces the coordinator.
+    let magic: () -> MagicCoordinator
+    let magicWorld: () -> MagicWorldAdapter
     let gameSession: () -> GameSession?
 }
 
@@ -81,10 +83,10 @@ extension HazardWorldAdapter: HazardWorld {
     }
 
     func hazardPayload(spell: ReferenceKey, hazard: ReferenceKey) -> SpellPayload? {
-        dependencies.magic.caster?.spellbookAccess.record(spell)?.payload(caster: hazard)
+        dependencies.magic().caster?.spellbookAccess.record(spell)?.payload(caster: hazard)
     }
 
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        dependencies.magic.applySpellHit(hit)
+        dependencies.magicWorld().applySpellHit(hit)
     }
 }

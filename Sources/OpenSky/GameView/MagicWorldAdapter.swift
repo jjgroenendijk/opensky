@@ -38,7 +38,7 @@ protocol MagicWorldHost: AnyObject {
     var hazardWorld: HazardWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
+    var magic: MagicCoordinator { get set }
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
@@ -63,19 +63,67 @@ final class MagicWorldAdapter {
         self.game = game
     }
 
-    /// After `wireActorValues`, because every effect writes an actor value. A
-    /// provider without an MGEF index leaves the runtime nil.
-    func wireEffects(provider: WorldDataStores, gameSession: GameSession) {
-        guard
+    /// After `wireActorValues`, because every effect writes an actor value, and after
+    /// `wireWorldItems`, because the spellbook reads the equipment.
+    func wireMagic(provider: WorldDataStores, gameSession: GameSession) {
+        let coordinator = MagicCoordinator(
+            world: self, data: sessionData(provider: provider), storyEvents: game.storyWorld
+        )
+        game.magic = coordinator
+        if coordinator.effects != nil {
+            registerEffects(coordinator, gameSession: gameSession)
+        }
+        if coordinator.caster != nil {
+            registerCasting(coordinator, gameSession: gameSession)
+        }
+    }
+
+    private func sessionData(provider: WorldDataStores) -> MagicSessionData {
+        let settings = provider.gameSettings
+        var data = MagicSessionData()
+        if
             let values = game.actorValues.runtime,
             let store = provider.magicEffectStore,
             let pluginName = provider.magicItemPluginName
-        else { return }
-        let coordinator = game.magic
-        coordinator.wireEffects(
-            values: values, store: store, pluginName: pluginName, conditionRegistry: .standard
-        )
-        // Chained after regeneration and the Papyrus VM, on the same delta.
+        {
+            data.effects = MagicEffectsData(
+                values: values, store: store, pluginName: pluginName, conditionRegistry: .standard
+            )
+        }
+        if
+            let values = game.actorValues.runtime,
+            let spells = provider.spellStore,
+            let equipSlots = provider.equipSlotStore
+        {
+            data.casting = MagicCastingData(
+                spellbook: SpellbookRuntime(
+                    store: game.worldState,
+                    spells: spells,
+                    equipSlots: equipSlots,
+                    equipment: game.inventory.equipment
+                ),
+                values: values,
+                spellPluginName: provider.magicItemPluginName,
+                baselines: provider.actorValueBaselines?.resolver
+                    .map { ActorSpellBaselineResolver(actorValues: $0) }
+            )
+        }
+        data.enchantments = provider.enchantmentStore
+        data.shouts = provider.shoutStore
+        data.rules.spellCost = SpellCostSettings.resolve(store: settings)
+        data.rules.soulTrap = SoulTrapSettings.resolve(store: settings)
+        data.rules.holds = MagicHoldSettings.resolve(store: settings)
+        data.rules.enchanting = EnchantingSettings.resolve(store: settings)
+        data.rules.shouts = ShoutSettings.resolve(store: settings)
+        data.rules.runes = RuneSettings.resolve(store: settings)
+        data.texts.magic = MagicTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
+        data.texts.castNotices = game.mapWorld.settingTexts()
+        data.texts.souls = SoulTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
+        return data
+    }
+
+    /// Chained after regeneration and the Papyrus VM, on the same delta.
+    private func registerEffects(_ coordinator: MagicCoordinator, gameSession: GameSession) {
         let worldTick = gameSession.worldTick
         worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
@@ -88,27 +136,8 @@ final class MagicWorldAdapter {
         }
     }
 
-    /// After `wireEffects`, because a cast applies its effects through it.
-    func wireCasting(provider: WorldDataStores, gameSession: GameSession) {
-        guard
-            let values = game.actorValues.runtime,
-            let spells = provider.spellStore,
-            let equipSlots = provider.equipSlotStore
-        else { return }
-        let coordinator = game.magic
-        coordinator.wireCasting(
-            spellbook: SpellbookRuntime(
-                store: game.worldState,
-                spells: spells,
-                equipSlots: equipSlots,
-                equipment: game.inventory.equipment
-            ),
-            values: values,
-            spellPluginName: provider.magicItemPluginName,
-            baselines: provider.actorValueBaselines?.resolver
-                .map { ActorSpellBaselineResolver(actorValues: $0) }
-        )
-        // A frame step, beside melee: a cast is timed against the rendered frame.
+    /// A frame step, beside melee: a cast is timed against the rendered frame.
+    private func registerCasting(_ coordinator: MagicCoordinator, gameSession: GameSession) {
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
             guard let coordinator, let gameSession else { return }
@@ -136,17 +165,17 @@ final class MagicWorldAdapter {
         }
     }
 
-    func wireEnchantments(provider: WorldDataStores) {
-        game.magic.magicTexts = MagicTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.magic.castNotices = game.mapWorld.settingTexts()
-        game.magic.spellCostSettings = SpellCostSettings.resolve(store: provider.gameSettings)
-        game.magic.soulTrapSettings = SoulTrapSettings.resolve(store: provider.gameSettings)
-        game.magic.holdSettings = MagicHoldSettings.resolve(store: provider.gameSettings)
-        game.magic.enchantingSettings = EnchantingSettings.resolve(store: provider.gameSettings)
-        game.magic.soulTexts = SoulTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.magic.wireEnchantments(store: provider.enchantmentStore)
+    /// A hit from outside the magic frame steps runs its commands at once, so the
+    /// hit effects and the ragdoll's push land in the same frame as the damage.
+    @discardableResult
+    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+        let report = game.magic.applySpellHit(hit)
+        run(game.magic.takeCommands())
+        return report
+    }
+
+    func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
+        game.scripts.runtime?.queueSpellCast(spell, by: caster)
     }
 }
 

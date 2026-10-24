@@ -32,11 +32,11 @@ struct FavouritesTests {
     @Test func aHotkeyNamesOnlyACarriedFavourite() throws {
         let items = try WorldItemRuntimeTests.standardHarness()
         let coordinator = InventoryCoordinator(
-            world: FakeAlchemyWorld(), locks: LockCoordinator(world: FakeLockWorld())
-        )
-        coordinator.wire(
-            inventory: items.runtime.inventory, references: items.references,
-            catalog: nil, pricing: nil
+            world: FakeAlchemyWorld(),
+            lockWorld: FakeLockWorld(),
+            data: InventorySessionData(items: WorldItemRuntime(
+                inventory: items.runtime.inventory, references: items.references
+            ))
         )
         #expect(coordinator.hotkeyItem(1) == .failure(.emptySlot(1)))
         #expect(coordinator.bindHotkey(1, to: Fixture.sword) == .bound("IronSword", slot: 1))
@@ -52,13 +52,13 @@ struct FavouritesTests {
         let store = WorldStateStore()
         let inventory = try InventoryRuntime(store: store, baselines: AlchemyFixture.resolver())
         let references = FakeWorldReferences(entries: [], cell: WorldItemRuntimeTests.cell)
-        let coordinator = InventoryCoordinator(
-            world: FakeAlchemyWorld(), locks: LockCoordinator(world: FakeLockWorld())
+        var data = InventorySessionData(
+            items: WorldItemRuntime(inventory: inventory, references: references)
         )
-        coordinator.wire(inventory: inventory, references: references, catalog: nil, pricing: nil)
-        try coordinator.wireAlchemy(
-            effects: AlchemyFixture.effects(), pluginName: AlchemyFixture.pluginName,
-            settings: .vanilla, texts: .vanilla
+        data.alchemy.effects = try AlchemyFixture.effects()
+        data.alchemy.pluginName = AlchemyFixture.pluginName
+        let coordinator = InventoryCoordinator(
+            world: FakeAlchemyWorld(), lockWorld: FakeLockWorld(), data: data
         )
         let sword = try #require(coordinator.itemCard(for: Fixture.sword))
         #expect(sword.kind == "Weapon")

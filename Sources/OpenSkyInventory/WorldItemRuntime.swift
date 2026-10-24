@@ -95,7 +95,7 @@ public final class WorldItemRuntime {
 
     /// Where a take asks whether it is theft. Nil without a crime runtime, where
     /// every take is honest.
-    public var crime: (any CrimeReporting)?
+    public let crime: (any CrimeReporting)?
 
     public var store: WorldStateStore {
         inventory.store
@@ -103,10 +103,12 @@ public final class WorldItemRuntime {
 
     public init(
         inventory: InventoryRuntime,
-        references: (any PapyrusWorldReferenceSource)? = nil
+        references: (any PapyrusWorldReferenceSource)? = nil,
+        crime: (any CrimeReporting)? = nil
     ) {
         self.inventory = inventory
         self.references = references
+        self.crime = crime
     }
 
     /// The same holder for an entry already in hand, so a caller that resolved

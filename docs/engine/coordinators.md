@@ -35,7 +35,7 @@ coordinator in a package module is tested with `make test-unit` in seconds.
 | Port: what the coordinator reads from the world | The same file, as a protocol | `VendorWorld` |
 | Result and refusal values | The same file, as value types | `BarterCounterparty`, `BarterOpenRefusal` |
 | Adapter: the app's answers to the port | The app, beside the wire function | `InventoryWorldAdapter: VendorWorld` |
-| Wire function: builds the coordinator | The app | `InventoryWorldAdapter.wireVendors(provider:)` |
+| Wire function: builds the coordinator | The app | `InventoryWorldAdapter.wireWorldItems(provider:streamer:)` |
 | Effects: menus, camera, sound | The app | `ContainerMenuController.openBarter(with:vendorFaction:)` |
 
 When a domain's last `GameViewController+X` file goes, the adapter and the wire functions move
