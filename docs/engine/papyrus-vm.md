@@ -114,6 +114,13 @@ Method lookup starts at the receiver's root script. `callparent` starts at the p
 function's own script. A static call targets the named script's empty-state function. A native flag,
 or a call with no decoded body, goes to native dispatch.
 
+A receiver with no script of its own, such as the player or a `Location`, is looked up on the
+type the caller declares for it. That script and its parents load on first use. A function the
+chain writes in Papyrus runs on the receiver: `ObjectReference.IsInInterior` calls
+`GetParentCell` and `Cell.IsInterior`, and `Actor.SetAV` calls `SetActorValue`. A native goes to
+dispatch under the name of the script that declares it, so `Location.HasKeyword` reaches
+`Form.HasKeyword`.
+
 A native returns a value, a failure with a reason, a suspension request, or a stated deviation. An
 unknown `(script, function)` pair is logged and tallied, and the call returns its declared default.
 A native failure does the same and keeps its reason. This keeps vanilla scripts moving without
