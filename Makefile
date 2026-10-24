@@ -390,7 +390,7 @@ health-index: link-shared
 
 ##@ Build and run
 
-.PHONY: build-app build-cli run-cli install app-path cli-path probe icon
+.PHONY: build-app build-cli run-cli install app-path cli-path probe icon dmg
 
 # A Debug build of the app or the CLI runs as a test build of the smallest plan, so
 # it shares one build context with every test run and compiles nothing twice
@@ -417,6 +417,10 @@ app-path: #| Print the built OpenSky.app path [CONFIG]
 
 cli-path: #| Print the built openskycli path [CONFIG]
 	@echo "$(PRODUCTS)/openskycli"
+
+# Packs the app `make build-app CONFIG=Release` built; it builds nothing itself.
+dmg: ## Pack the Release app into a disk image for a release [NAME=OpenSky-<version>]
+	@./tools/package-dmg.sh "$(DERIVED_DATA)/Build/Products/Release/OpenSky.app" "$(or $(NAME),OpenSky)"
 
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
