@@ -327,7 +327,7 @@ nonisolated public final class BehaviorGraphInstance {
     }
 
     /// Runs the deactivation hooks of `targets` and forgets their state.
-    private func deactivateNodes(_ targets: Set<HKXPointerTarget>) {
+    func deactivateNodes(_ targets: Set<HKXPointerTarget>) {
         for target in targets.sorted(by: Self.isOrderedBefore) {
             if let object = object(at: target) {
                 noteDeactivation(of: object, at: target)

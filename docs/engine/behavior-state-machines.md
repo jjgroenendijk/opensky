@@ -100,6 +100,13 @@ jump by the part of the old blend still running. A transition with
 `FLAG_UNINTERRUPTIBLE_WHILE_PLAYING` or `FLAG_UNINTERRUPTIBLE_WHILE_BLENDING` refuses the new
 candidate.
 
+Entering a state starts its generator from the beginning, even when the old state is still
+blending out of it. Nodes that the old state also runs keep their state. The swinging blade trap
+(`meshes\traps\swingingblade\trapbladeswinging01.hkx`) shows why. Its script waits for `Reset`
+at the end of the swing and raises `Single` again in the next update. That update still blends
+out of the finished swing. Without the restart, the swing clip stays at its end. In the game,
+the blade swings again and again. This is observed behaviour; no Havok source describes it.
+
 The four machine-level event IDs are checked only when no transition fired:
 
 - `m_returnToPreviousStateEventId` goes back one state.
