@@ -79,6 +79,11 @@ ref names a `bhkSimpleShapePhantom`. A phantom reports overlaps and pushes nothi
 | World object info and unused bytes | 28 bytes |
 | Transform | `Matrix44`, phantom to target node |
 
+The transform's last float is 0 on the install, for example in
+`traps\pressureplate\trapstonepressureplate02.nif` and `traps\tripwire\traptripwire01.nif`.
+OpenSky reads it as 1, because the matrix places the phantom: with 0 there, the reference's
+own translation would drop out when the two matrices multiply.
+
 OpenSky turns a phantom into a body that is never solid and never simulated: both filter
 copies are the phantom's filter, both responses are `RESPONSE_NONE` (3), and it has no mass.
 So a phantom on layer 12 joins the per-cell trigger set like any trigger body. On the

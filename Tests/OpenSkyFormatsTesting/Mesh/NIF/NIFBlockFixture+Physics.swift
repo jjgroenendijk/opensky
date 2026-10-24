@@ -68,12 +68,14 @@ extension NIFBlockFixture {
     }
 
     /// `bhkSimpleShapePhantom` with an identity rotation.
-    public static func shapePhantom(shape: Int32, layer: UInt8, translation: SIMD3<Float>) -> Data {
+    public static func shapePhantom(
+        shape: Int32, layer: UInt8, translation: SIMD3<Float>, w: Float = 1
+    ) -> Data {
         var out = Data()
         out.appendRef(shape)
         out.appendFilter(layer: layer)
         out.append(Data(count: 28))
-        out.appendMatrix(translation: translation)
+        out.appendMatrix(translation: translation, w: w)
         return out
     }
 
