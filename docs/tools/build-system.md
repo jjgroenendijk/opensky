@@ -62,8 +62,10 @@ writes at about 135 MB/s against the internal disk's 2 GB/s. Measured on 2026-10
 Many worktrees stay alive at once, so deleting only the trees of gone worktrees does not hold the
 disk. After a build takes its locks, `tools/build-cache-budget.sh` deletes the trees built longest
 ago until all trees fit in `BUILD_CACHE_GB`. It never deletes the tree about to build, or a tree
-whose lock is held. A deleted tree costs about two minutes when its worktree builds again, because
-nearly every task replays from the shared store.
+whose lock is held. A deleted tree costs about five minutes when its worktree builds again: nearly
+every compile replays from the shared store, but every link, copy, and signing step runs again.
+The default is 200 GB. The trees are on the data volume, so the internal disk does not pay for it.
+CI keeps its one tree outside `CACHE_ROOT`, so the budget never deletes anything there.
 
 Measuring a tree with `du` costs about a second, so each build measures only its own tree when it
 ends and stores the size in `.opensky-size` inside the tree. That file's time stamp is when the
@@ -77,6 +79,23 @@ What each tree holds, measured on 2026-10-18:
 | `ModuleCache.noindex` (dependency scanner) | 470 MB | No: the hashes differ per checkout |
 | SDK precompiled modules | 230 MB | Yes: `SDK_MODULES`, `.cache/SDKModules.noindex` |
 | `SourcePackages` | 50 MB | No: about 40 dependency tasks miss per new tree, which costs seconds |
+
+### Seeding a new tree
+
+A checkout without a tree gets an APFS clone of the tree built most recently, made by
+`tools/seed-build-tree.sh` with `cp -c`. A clone takes about 6 s and shares disk blocks with its
+source until a build rewrites them. `make link-shared`, run first by every building target, runs it,
+and so does the Claude Code session-start hook in `.claude/settings.json`, in the background. The
+script holds the locks of both trees while it clones, so a build that starts meanwhile waits.
+
+The clone does not make the first build incremental. Xcode records each output by its absolute
+path, and a new checkout has new paths, so every task runs again. What the clone saves is the
+cold work: third-party packages, test files the store has never seen, and fetching `SourcePackages`.
+Measured on 2026-10-24, a first `make build-cli` took 344 s from an empty tree and 158 to 172 s
+from a clone. The script deletes the clone's build database (`XCBuildData`): it names the source
+tree's outputs, and Xcode then warns about each one as a stale file outside its root.
+
+`du` counts a clone at full size, so the budget overestimates what the trees use on disk.
 
 ## Two builds at a time
 
@@ -98,7 +117,7 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | `CONFIG` | `Debug` | The configuration for `build`, `cli`, `test`, `app-path`, and `cli-path`. `install` is always Release |
 | `DESTINATION` | `platform=macOS` | The test destination |
 | `CACHE_ROOT` | `<main checkout>/.cache/Build` | Where every checkout's build tree and the build locks live, exported as `OPENSKY_CACHE_ROOT` |
-| `BUILD_CACHE_GB` | `40` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
+| `BUILD_CACHE_GB` | `200` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
 | `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
 | `COMPILATION_CACHE` | `<main checkout>/.cache/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
 | `SDK_MODULES` | `<main checkout>/.cache/SDKModules.noindex` | The SDK's precompiled modules, shared by every tree. CI keeps them inside its build tree: there, beside it, the prune at the end of a build reloaded the package graph and crashed `xcodebuild` before the tests |

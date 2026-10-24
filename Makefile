@@ -39,7 +39,7 @@ LINT_SWIFT        = $(if $(ALL),$(SWIFT_PATHS),$(CHANGED_SWIFT))
 SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --path-format=absolute --git-common-dir)))
 CACHE_ROOT       ?= $(SHARED_ROOT)/.cache/Build
 export OPENSKY_CACHE_ROOT := $(CACHE_ROOT)
-BUILD_CACHE_GB   ?= 40
+BUILD_CACHE_GB   ?= 200
 export OPENSKY_BUILD_CACHE_GB := $(BUILD_CACHE_GB)
 DERIVED_DATA     ?= $(or $(OPENSKY_DERIVED_DATA),$(CACHE_ROOT)/$(notdir $(CURDIR)))
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
@@ -169,7 +169,7 @@ UV_RUN           := UV_LINK_MODE=copy uv run --locked --quiet --project $(PY_PRO
 
 ##@ Getting started
 
-.PHONY: help bootstrap hooks ffmpeg astcenc link-shared
+.PHONY: help bootstrap hooks ffmpeg astcenc link-shared seed-build-tree
 
 # A `#|` target is a part of a listed one, such as each check inside `lint`.
 help: ## Show the main targets [ALL=1 also lists the parts]
@@ -192,8 +192,11 @@ ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 astcenc: #| Build the vendored static astcenc into .vendor/astcenc
 	@./tools/vendor-astcenc.sh
 
-link-shared: #| Point this worktree's ffmpeg and compile cache at the main checkout's
+link-shared: seed-build-tree #| Point this worktree's ffmpeg and compile cache at the main checkout's
 	@./tools/link-shared.sh
+
+seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
+	@./tools/seed-build-tree.sh
 
 ##@ Format and lint
 
