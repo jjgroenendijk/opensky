@@ -72,4 +72,19 @@ struct FavouritesTests {
         #expect(wheat.effects == ["Restore Health", "?"])
         #expect(wheat.lines.last == "favourite, hotkey 4")
     }
+
+    /// A row and a hotkey use an item the same way: a poison coats the weapon, an
+    /// ingredient is eaten, and a weapon is equipped.
+    @Test func usingAnItemFollowsItsKind() throws {
+        let store = WorldStateStore()
+        let inventory = try InventoryRuntime(store: store, baselines: AlchemyFixture.resolver())
+        let coordinator = InventoryCoordinator(
+            world: FakeAlchemyWorld(),
+            lockWorld: FakeLockWorld(),
+            data: InventorySessionData(items: WorldItemRuntime(inventory: inventory))
+        )
+        #expect(coordinator.use(of: AlchemyFixture.poison) == .applyPoison)
+        #expect(coordinator.use(of: AlchemyFixture.wheat) == .consume)
+        #expect(coordinator.use(of: Fixture.sword) == .equip)
+    }
 }
