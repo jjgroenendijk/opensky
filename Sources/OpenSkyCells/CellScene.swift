@@ -9,6 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyShaderTypes
 import OpenSkyTerrain

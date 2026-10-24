@@ -10,7 +10,7 @@ import Foundation
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import OpenSkyTagsTesting
 import simd
 import Testing

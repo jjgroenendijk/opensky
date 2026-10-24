@@ -4,7 +4,7 @@
 import Foundation
 import Metal
 @testable import OpenSkyCells
-@testable import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldTesting
 import simd

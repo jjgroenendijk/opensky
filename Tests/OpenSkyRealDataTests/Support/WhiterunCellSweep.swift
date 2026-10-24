@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 
 struct WhiterunCellSweep {
     let file: ESMFile

@@ -1,6 +1,7 @@
 // Swift structs that the GPU reads must keep the byte layout the shaders expect.
 
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import Testing
 

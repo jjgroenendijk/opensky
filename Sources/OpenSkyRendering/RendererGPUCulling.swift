@@ -2,6 +2,8 @@
 // changes, and encodes the cull dispatches before the shadow and scene passes.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 /// The renderer's GPU culling state.
@@ -56,7 +58,7 @@ extension Renderer {
     /// The counts of the last encoded frame, for a caller that waited for its GPU work.
     public func lastFrameGPUCullCounts() -> CullCounts {
         guard gpuCull.enabled else { return CullCounts() }
-        return gpuCull.scene?.counts(slot: (frameIndex - 1) % Self.maxFramesInFlight)
+        return gpuCull.scene?.counts(slot: (frameIndex - 1) % GPUFactory.maxFramesInFlight)
             ?? CullCounts()
     }
 
@@ -86,7 +88,7 @@ extension Renderer {
         }
         // A failed allocation leaves the CPU path drawing this scene.
         gpuCull.scene = try? GPUCullScene(
-            scene: scene, device: device, framesInFlight: Self.maxFramesInFlight
+            scene: scene, device: device, framesInFlight: GPUFactory.maxFramesInFlight
         )
         if let fresh = gpuCull.scene {
             residencySet.addAllocations(fresh.allocations)

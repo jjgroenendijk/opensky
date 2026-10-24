@@ -1,6 +1,7 @@
 // The nearest point lights of one draw, written into the point light ring.
 
 import Metal
+import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import simd
 

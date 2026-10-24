@@ -3,7 +3,9 @@
 // See docs/engine/idle-runtime.md.
 
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 
 /// Poses a prop's skinned meshes with the pose of the actor it rides, so the

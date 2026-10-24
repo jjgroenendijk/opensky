@@ -1,5 +1,6 @@
 // Per-reference draw-list extraction for exterior dynamic-body handoff.
 
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension RenderScene {

@@ -5,7 +5,7 @@ import Foundation
 import Metal
 import OpenSkyAssetCache
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderResources
 
 extension PipelineCache {
     /// A cache with an archive file when the setting is on, else one that only compiles.

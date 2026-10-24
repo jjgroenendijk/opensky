@@ -5,7 +5,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyRendering
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 import Synchronization
 

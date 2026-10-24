@@ -7,7 +7,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyImageKernels
-import OpenSkyRendering
 
 nonisolated extension DistantLODSelection {
     /// Level-4 block origins spread evenly over the LOD area, at most `maximum` of them,

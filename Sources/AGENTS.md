@@ -8,8 +8,8 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 - No Swift file sits loose at the root of `OpenSky/`, a multi-format `OpenSkyFormats*/`, or
   `OpenSkyWorld/`; each goes in a folder. `OpenSkyGameData/` and the feature modules
   are small enough to stay flat. `OpenSkyRendering/` keeps the renderer at its root and puts
-  `UI/`, `Terrain/`, `Weather/`, `ImageSpace/`, `Effects/`, `TextureStreaming/`, and
-  `RayTracing/` in folders.
+  `Terrain/`, `Weather/`, `Effects/`, `TextureStreaming/`, and `RayTracing/` in
+  folders. `OpenSkyRenderCore/` and `OpenSkyRenderResources/` put every file in a folder.
 - `OpenSky/` (app only): `Shell/` (app lifecycle, windows, settings, theme), `Launcher/`
   (the start window and its pages), `GameView/` (`GameViewController`, the world adapters,
   and the menu controllers), and `Resources/`.

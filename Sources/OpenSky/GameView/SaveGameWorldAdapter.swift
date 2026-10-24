@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkySave
 import OpenSkyWorld
 

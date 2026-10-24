@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 import Testing

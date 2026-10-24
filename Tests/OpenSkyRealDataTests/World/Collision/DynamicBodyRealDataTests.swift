@@ -13,7 +13,7 @@ import Metal
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
-@testable import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkyTagsTesting
 import simd
 import Testing

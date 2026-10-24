@@ -5,6 +5,8 @@
 import Metal
 import MetalKit
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 /// Result of a sustained offscreen render run.
@@ -223,7 +225,7 @@ extension Renderer {
             height: descriptor.colorAttachments[0].texture?.height ?? 1
         )
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
-        let slot = frameIndex % Self.maxFramesInFlight
+        let slot = frameIndex % GPUFactory.maxFramesInFlight
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)

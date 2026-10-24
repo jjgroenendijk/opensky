@@ -3,6 +3,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderCore
 import Synchronization
 
 extension Renderer {

@@ -3,6 +3,7 @@
 // marks sit between encoders only (docs/tools/benchmark.md).
 
 import Metal
+import OpenSkyRenderResources
 
 /// The passes in frame order. A pass that a frame skips takes no time.
 nonisolated public enum GPUPass: String, CaseIterable, Codable, Sendable {
@@ -102,7 +103,7 @@ extension Renderer {
     /// Starts or stops pass timing; the first frames after a start have no samples yet.
     public func setPassTimingEnabled(_ enabled: Bool) {
         passTimer = enabled ? passTimer ?? GPUPassTimer(
-            device: device, slots: Self.maxFramesInFlight
+            device: device, slots: GPUFactory.maxFramesInFlight
         ) : nil
     }
 }

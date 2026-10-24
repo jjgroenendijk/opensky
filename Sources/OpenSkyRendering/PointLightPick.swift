@@ -1,6 +1,7 @@
 // Per-draw point light choice without a sort. The renderer keeps one pick per
 // lighting center until the scene changes, because cell lights do not move.
 
+import OpenSkyRenderCore
 import simd
 
 /// Up to `capacity` scene point lights by index, nearest first.

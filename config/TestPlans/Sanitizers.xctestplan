@@ -331,6 +331,14 @@
     },
     {
       "parallelizable" : true,
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRenderCoreTests", "name" : "OpenSkyRenderCoreTests"}
+    },
+    {
+      "parallelizable" : true,
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRenderResourcesTests", "name" : "OpenSkyRenderResourcesTests"}
+    },
+    {
+      "parallelizable" : true,
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRenderingTests", "name" : "OpenSkyRenderingTests"}
     },
     {

@@ -7,6 +7,7 @@ import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 public enum ColdCellBuilder {
     /// A builder with empty caches. A `recorder` gets every file read and asset phase.

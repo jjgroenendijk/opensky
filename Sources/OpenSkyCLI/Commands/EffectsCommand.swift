@@ -7,6 +7,7 @@ import Foundation
 import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 enum EffectsCommand {

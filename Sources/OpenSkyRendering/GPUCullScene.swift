@@ -5,6 +5,8 @@
 
 import Metal
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -107,26 +109,26 @@ public final class GPUCullScene {
             repeating: Array(repeating: [], count: Self.viewCount), count: framesInFlight
         )
         roomWordCount = scene.rooms.map { ($0.rooms.count + 31) / 32 } ?? 0
-        rooms = try Renderer.makeUniformBuffer(
+        rooms = try GPUFactory.makeUniformBuffer(
             device: device,
             length: MemoryLayout<UInt32>.stride * (1 + roomWordCount) * framesInFlight,
             label: "CullRooms"
         )
         let views = Self.viewCount * framesInFlight
-        instances = try Renderer.makeUniformBuffer(
+        instances = try GPUFactory.makeUniformBuffer(
             device: device,
             length: MemoryLayout<CullInstance>.stride * instanceCount,
             label: "CullInstances"
         )
-        parameters = try Renderer.makeUniformBuffer(
+        parameters = try GPUFactory.makeUniformBuffer(
             device: device, length: MemoryLayout<CullParameters>.stride * views,
             label: "CullParameters"
         )
-        output = try Renderer.makeUniformBuffer(
+        output = try GPUFactory.makeUniformBuffer(
             device: device, length: Self.transformStride * instanceCount * views,
             label: "CulledInstanceTransforms"
         )
-        arguments = try Renderer.makeUniformBuffer(
+        arguments = try GPUFactory.makeUniformBuffer(
             device: device, length: Self.argumentStride * groups.count * views,
             label: "CullDrawArguments"
         )

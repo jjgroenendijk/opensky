@@ -3,6 +3,7 @@
 // by its normal map (docs/rendering/surface-shading.md).
 
 import Metal
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The colour copy refraction shapes read, and whether this frame splits for it.

@@ -2,6 +2,8 @@
 // meshes after the alpha-tested pass. See docs/rendering/visual-effects.md.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

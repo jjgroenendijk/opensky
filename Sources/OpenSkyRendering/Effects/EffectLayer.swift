@@ -6,6 +6,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -120,7 +121,7 @@ public final class EffectLayer {
         depthState = state
         guard
             let buffer = device.makeBuffer(
-                length: Self.uniformStride * Self.membraneLimit * Renderer.maxFramesInFlight,
+                length: Self.uniformStride * Self.membraneLimit * GPUFactory.maxFramesInFlight,
                 options: .storageModeShared
             )
         else { throw RendererError.bufferAllocationFailed }

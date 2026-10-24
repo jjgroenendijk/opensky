@@ -1,6 +1,7 @@
 // Draws the weather's cloud layers over the sky gradient, each on its dome shape.
 
 import Metal
+import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import simd
 

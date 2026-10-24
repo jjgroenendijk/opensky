@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
-@testable import OpenSkyRendering
+import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

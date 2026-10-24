@@ -8,6 +8,7 @@ import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated public struct DistantLODPrebuild: Sendable {
     public let fileSystem: any GameFileSource

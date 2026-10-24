@@ -18,7 +18,7 @@ import OpenSkyCells
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import OpenSkyWorldConditions
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState

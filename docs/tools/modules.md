@@ -141,7 +141,12 @@ OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkySh
 OpenSkyAgentControl       agent control protocol, socket server and client, command router;
                           needs nothing, the app adapts the game to its port
   ^
-OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
+OpenSkyRenderCore         Metal-free render values: weather and image space, terrain and grass
+                          meshes, UI text layout, lights, clocks, culling and shadow math
+OpenSkyRenderResources    GPU resources: textures and their streaming, meshes, materials,
+                          pipeline cache, ASTC conversion, Metal allocation helpers
+  ^
+OpenSkyRendering          Metal renderer, its passes, render scenes, mesh library, particles
 OpenSkyAudio              audio graph, decoders, sound and music record stores
 OpenSkyWorldState         runtime state store, open component set, game clock, globals
   ^
@@ -208,6 +213,12 @@ uses `OpenSkyImageKernels` for its CPU DDS decode.
 well, because a Debug build of these loops is about 100 times slower: one 1024 x 1024 BC1 face
 took about 1.2 seconds, and a face with many tint layers held up a save load for minutes. A
 module that needs such a loop moves it here instead of turning on optimization for itself.
+
+The renderer is three modules. `OpenSkyRenderCore` holds what a frame works out on the CPU, and
+it imports no Metal, so its tests need no GPU. `OpenSkyRenderResources` holds the GPU resources a
+pass draws with. Neither one knows the `Renderer` class or the render scene. A new type goes in
+`OpenSkyRendering` only when it needs one of them. Example: `TerrainMeshBuilder` builds vertex
+arrays, so it is in `OpenSkyRenderCore`; `RendererTerrainPass` draws them, so it stays above.
 
 `OpenSkyCLIArguments` declares every `openskycli` command and option with swift-argument-parser
 ([decision](/decisions/swift-argument-parser.md)). It sits in the lowest layer and imports no

@@ -3,6 +3,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

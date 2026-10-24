@@ -4,7 +4,8 @@
 import Foundation
 import OpenSkyCells
 import OpenSkyFormatsTesting
-@testable import OpenSkyRendering
+import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkyWorldTesting
 import simd
 import Testing

@@ -7,6 +7,8 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import QuartzCore
 import simd
@@ -43,7 +45,7 @@ public final class ImageSpacePassResources {
         )
         guard
             let buffer = device.makeBuffer(
-                length: Self.uniformStride * Renderer.maxFramesInFlight,
+                length: Self.uniformStride * GPUFactory.maxFramesInFlight,
                 options: .storageModeShared
             )
         else { throw RendererError.bufferAllocationFailed }
@@ -51,7 +53,7 @@ public final class ImageSpacePassResources {
         uniformBuffer = buffer
         guard
             let luminance = device.makeBuffer(
-                length: Self.luminanceStride * Renderer.maxFramesInFlight,
+                length: Self.luminanceStride * GPUFactory.maxFramesInFlight,
                 options: .storageModeShared
             )
         else { throw RendererError.bufferAllocationFailed }

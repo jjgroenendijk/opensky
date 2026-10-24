@@ -3,6 +3,7 @@
 import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 

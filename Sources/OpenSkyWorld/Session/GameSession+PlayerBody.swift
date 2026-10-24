@@ -3,6 +3,7 @@
 
 import Metal
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 extension GameSession {

@@ -6,6 +6,8 @@ import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -78,7 +80,7 @@ public final class SkyClouds {
             : AssetLoader(load: load)
         self.device = device
         textureLoader = try TextureLoader(device: device)
-        let length = Renderer.maxFramesInFlight * Self.maximumDraws * Self.uniformStride
+        let length = GPUFactory.maxFramesInFlight * Self.maximumDraws * Self.uniformStride
         guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
             throw RendererError.bufferAllocationFailed
         }

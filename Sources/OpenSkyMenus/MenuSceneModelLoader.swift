@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 public final class MenuSceneModelLoader {
     public let paths: [String]

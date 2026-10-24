@@ -6,6 +6,8 @@
 import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 nonisolated public enum GrassRenderPolicy: Sendable {

@@ -4,6 +4,7 @@
 
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRuntimeState
 @testable import OpenSkyWorld

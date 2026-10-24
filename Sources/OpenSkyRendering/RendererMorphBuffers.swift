@@ -2,6 +2,7 @@
 // passes. One guard spans both passes so an actor-local stream is copied once.
 
 import Metal
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 extension Renderer {

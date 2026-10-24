@@ -4,7 +4,7 @@
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 extension NPCMover {

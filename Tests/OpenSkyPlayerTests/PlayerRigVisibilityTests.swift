@@ -1,6 +1,6 @@
 // Which rig is drawn and which casts shadows, per camera mode.
 
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import Testing
 
 struct PlayerRigVisibilityTests {

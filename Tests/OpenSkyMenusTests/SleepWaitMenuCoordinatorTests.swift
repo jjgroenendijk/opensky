@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
+import OpenSkyRenderCore
 import OpenSkyRendering
 import Testing
 

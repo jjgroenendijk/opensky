@@ -3,6 +3,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -79,22 +80,6 @@ nonisolated public struct ShadowResources {
 }
 
 extension Renderer {
-    nonisolated public static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
-        guard let queue = device.makeMTL4CommandQueue() else {
-            throw RendererError.commandQueueUnavailable
-        }
-        return queue
-    }
-
-    nonisolated public static func makeCommandBuffer(device: MTLDevice) throws
-        -> MTL4CommandBuffer
-    {
-        guard let buffer = device.makeCommandBuffer() else {
-            throw RendererError.commandBufferUnavailable
-        }
-        return buffer
-    }
-
     nonisolated public static var nearPlane: Float {
         10
     }
@@ -146,7 +131,7 @@ extension Renderer {
     }
 
     public static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
-        try (0 ..< maxFramesInFlight).map { _ in
+        try (0 ..< GPUFactory.maxFramesInFlight).map { _ in
             guard let allocator = device.makeCommandAllocator() else {
                 throw RendererError.commandAllocatorUnavailable
             }
@@ -220,17 +205,6 @@ extension Renderer {
         return try device.makeArgumentTable(descriptor: descriptor)
     }
 
-    nonisolated public static func makeUniformBuffer(
-        device: MTLDevice,
-        length: Int,
-        label: String
-    ) throws -> MTLBuffer {
-        guard let buffer = device.makeBuffer(length: length, options: .storageModeShared)
-        else { throw RendererError.bufferAllocationFailed }
-        buffer.label = label
-        return buffer
-    }
-
     /// Per-frame uniform ring: one aligned slot per in-flight frame.
     /// The frame uniforms and the cube bound where a material has no cube map.
     static func makeFrameResources(device: MTLDevice) throws -> (MTLBuffer, MTLTexture) {
@@ -241,9 +215,9 @@ extension Renderer {
     }
 
     public static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
-        try makeUniformBuffer(
+        try GPUFactory.makeUniformBuffer(
             device: device,
-            length: alignedFrameUniformsSize * maxFramesInFlight,
+            length: alignedFrameUniformsSize * GPUFactory.maxFramesInFlight,
             label: "FrameUniforms"
         )
     }
@@ -530,17 +504,5 @@ extension Renderer {
             throw RendererError.samplerAllocationFailed
         }
         return sampler
-    }
-
-    nonisolated public static func makeResidencySet(
-        device: MTLDevice,
-        allocations: [MTLAllocation]
-    ) throws -> MTLResidencySet {
-        let descriptor = MTLResidencySetDescriptor()
-        descriptor.initialCapacity = allocations.count
-        let residencySet = try device.makeResidencySet(descriptor: descriptor)
-        residencySet.addAllocations(allocations)
-        residencySet.commit()
-        return residencySet
     }
 }

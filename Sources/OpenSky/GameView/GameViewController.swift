@@ -27,7 +27,9 @@ import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld

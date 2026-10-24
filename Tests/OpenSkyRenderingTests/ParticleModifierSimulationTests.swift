@@ -2,6 +2,7 @@
 // velocity, and spawn modifiers, on engine values.
 
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

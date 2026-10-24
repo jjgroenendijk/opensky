@@ -4,6 +4,8 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The pipelines that trace: static meshes and terrain.

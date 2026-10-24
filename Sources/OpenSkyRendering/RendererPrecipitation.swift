@@ -1,6 +1,7 @@
 // Renderer precipitation setup + per-frame feed, split for size limits.
 
 import Metal
+import OpenSkyRenderCore
 
 extension Renderer {
     public static func makeInitialScene(

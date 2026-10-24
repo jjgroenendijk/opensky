@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyRendering
+import OpenSkyRenderCore
 import OpenSkyScriptingInterface
 
 /// What the message coordinator needs from the app.

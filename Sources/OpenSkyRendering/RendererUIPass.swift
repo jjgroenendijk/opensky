@@ -4,6 +4,8 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -33,15 +35,16 @@ extension Renderer {
         compiler: PipelineCache
     ) throws -> UIResources {
         let atlas = UIGlyphAtlas()
-        let vertexCapacity = uiQuadBudget * UIDrawList.verticesPerQuad * maxFramesInFlight
-        let vertexBuffer = try makeUniformBuffer(
+        let vertexCapacity = uiQuadBudget * UIDrawList.verticesPerQuad * GPUFactory
+            .maxFramesInFlight
+        let vertexBuffer = try GPUFactory.makeUniformBuffer(
             device: device,
             length: vertexCapacity * MemoryLayout<UIVertex>.stride,
             label: "UIVertices"
         )
-        let uniformBuffer = try makeUniformBuffer(
+        let uniformBuffer = try GPUFactory.makeUniformBuffer(
             device: device,
-            length: alignedUIUniformsSize * maxFramesInFlight,
+            length: alignedUIUniformsSize * GPUFactory.maxFramesInFlight,
             label: "UIFrameUniforms"
         )
         return try UIResources(

@@ -2,6 +2,8 @@ import Metal
 import MetalKit
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

@@ -4,6 +4,8 @@
 // water over the same targets (docs/rendering/water.md). Soft effects read the same copy.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

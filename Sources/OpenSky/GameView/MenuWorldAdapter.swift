@@ -18,6 +18,7 @@ import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySave
 import OpenSkyScripting

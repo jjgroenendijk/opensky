@@ -9,7 +9,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import OpenSkyWorldFixtures
 import simd
 import Testing

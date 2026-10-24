@@ -2,6 +2,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyTerrain
 import simd

@@ -3,6 +3,7 @@
 // docs/formats/nif-particles.md#parameter-modifiers.
 
 import OpenSkyFormatsMesh
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension ParticleSimulator {

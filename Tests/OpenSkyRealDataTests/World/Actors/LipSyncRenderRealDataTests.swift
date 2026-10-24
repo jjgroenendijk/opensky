@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyActorPresentation
 @testable import OpenSkyAudio
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import Testing
 

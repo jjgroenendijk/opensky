@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {

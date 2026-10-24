@@ -1,3 +1,4 @@
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 

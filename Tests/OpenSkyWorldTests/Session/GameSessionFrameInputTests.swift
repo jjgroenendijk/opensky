@@ -6,6 +6,7 @@ import Metal
 import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyPlayer
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

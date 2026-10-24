@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 

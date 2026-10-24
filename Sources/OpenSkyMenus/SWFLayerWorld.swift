@@ -2,6 +2,7 @@
 
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import Synchronization
 

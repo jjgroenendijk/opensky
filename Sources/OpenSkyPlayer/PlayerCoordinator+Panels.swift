@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsCore
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

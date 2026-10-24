@@ -86,6 +86,16 @@
         },
         {
           "containerPath": "container:.",
+          "identifier": "OpenSkyRenderCore",
+          "name": "OpenSkyRenderCore"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyRenderResources",
+          "name": "OpenSkyRenderResources"
+        },
+        {
+          "containerPath": "container:.",
           "identifier": "OpenSkyRendering",
           "name": "OpenSkyRendering"
         },
@@ -281,6 +291,14 @@
     {
       "parallelizable": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyPhysicsTests", "name": "OpenSkyPhysicsTests"}
+    },
+    {
+      "parallelizable": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderCoreTests", "name": "OpenSkyRenderCoreTests"}
+    },
+    {
+      "parallelizable": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderResourcesTests", "name": "OpenSkyRenderResourcesTests"}
     },
     {
       "parallelizable": true,

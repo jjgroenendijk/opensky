@@ -8,6 +8,7 @@ import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

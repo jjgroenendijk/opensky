@@ -3,7 +3,9 @@
 
 import Metal
 import OpenSkyEngineTesting
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import Testing
 
@@ -60,7 +62,7 @@ struct ImageSpaceTileGradeTests {
         let off = try render(renderer)
         renderer.frameInput.imageSpace.toneMapping.enabled = true
         var mapped = off
-        for _ in 0 ... Renderer.maxFramesInFlight {
+        for _ in 0 ... GPUFactory.maxFramesInFlight {
             mapped = try render(renderer)
         }
         #expect(mapped != off, "tone mapping changed no pixel")

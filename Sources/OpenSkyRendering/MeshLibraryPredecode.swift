@@ -8,6 +8,7 @@ import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderResources
 import Synchronization
 
 /// A mesh decoded ahead of its load, or the error its load will throw.

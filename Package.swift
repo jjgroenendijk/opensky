@@ -373,17 +373,41 @@ targets += foundation(
     ]
 )
 
+// Rendering: a Metal-free core and the GPU resources below the renderer, so a change
+// to a pass does not rebuild terrain meshes or texture loading.
+targets += foundation(
+    "OpenSkyRenderCore",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyPhysics", "OpenSkyShaderTypes"
+    ],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
+        "OpenSkyFormatsTesting", "OpenSkyPhysics", "OpenSkyShaderTypes", "OpenSkyEngineTesting"
+    ]
+)
+targets += foundation(
+    "OpenSkyRenderResources",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyShaderTypes",
+        "OpenSkyAssetCache", "CASTCEncoder"
+    ],
+    tests: [
+        "OpenSkyAssetCache", "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyFormatsTesting",
+        "OpenSkyGameData", "OpenSkyEngineTesting"
+    ]
+)
 targets += foundation(
     "OpenSkyRendering",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
         "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache", "CASTCEncoder"
+        "OpenSkyAssetCache", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
         "OpenSkyPhysics", "OpenSkyShaderTypes", "OpenSkyFormatsTesting", "OpenSkyFormatsSWF",
-        "OpenSkyEngineTesting", "OpenSkyAssetCache"
+        "OpenSkyEngineTesting", "OpenSkyAssetCache", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ]
 )
 
@@ -392,7 +416,7 @@ targets += foundation(
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyFormatsTesting", "OpenSkyEngineTesting"
+        "OpenSkyFormatsTesting", "OpenSkyEngineTesting", "OpenSkyRenderCore"
     ]
 )
 targets += foundation(
@@ -413,7 +437,7 @@ targets += testing(
         "OpenSkyFormatsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsAnimation",
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyWorldState"
+        "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyRenderCore"
     ]
 )
 
@@ -669,7 +693,7 @@ let worldTestBase = [
     "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyPhysics",
     "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyRendering",
     "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface", "OpenSkyWorldState",
-    "OpenSkyAssetCache"
+    "OpenSkyAssetCache", "OpenSkyRenderCore", "OpenSkyRenderResources"
 ]
 
 // The domains of the world feature, lowest first (docs/tools/modules.md).
@@ -688,7 +712,7 @@ targets += domain(
     "OpenSkyWeather",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyShaderTypes", "OpenSkyWorldState"
+        "OpenSkyShaderTypes", "OpenSkyWorldState", "OpenSkyRenderCore"
     ],
     tests: worldTestBase
 )
@@ -704,7 +728,7 @@ targets += domain(
     "OpenSkyTerrain",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyAssetCache", "OpenSkyImageKernels"
+        "OpenSkyAssetCache", "OpenSkyImageKernels", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -712,7 +736,9 @@ targets += domain(
     "OpenSkyEffects",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
-        "OpenSkyAudio", "OpenSkyRendering", "OpenSkyShaderTypes", "OpenSkyMagicInterface"
+        "OpenSkyAudio", "OpenSkyRendering", "OpenSkyShaderTypes", "OpenSkyMagicInterface",
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -738,7 +764,8 @@ targets += domain(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyAudio", "OpenSkyRendering",
         "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldInterface", "OpenSkyCombatInterface",
-        "OpenSkyWorldConditions", "OpenSkyNavigation", "OpenSkyRuntimeState"
+        "OpenSkyWorldConditions", "OpenSkyNavigation", "OpenSkyRuntimeState", "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -755,7 +782,9 @@ targets += domain(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyRendering",
-        "OpenSkyWorldInterface", "OpenSkyCombatInterface", "OpenSkyActorPresentation"
+        "OpenSkyWorldInterface", "OpenSkyCombatInterface", "OpenSkyActorPresentation",
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -765,7 +794,7 @@ targets += domain(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldInterface",
         "OpenSkyPerceptionInterface", "OpenSkyWorldConditions", "OpenSkyNavigation",
-        "OpenSkyActorPresentation", "OpenSkyPlayer"
+        "OpenSkyActorPresentation", "OpenSkyPlayer", "OpenSkyRenderCore"
     ],
     tests: worldTestBase
 )
@@ -799,7 +828,7 @@ targets += domain(
         "OpenSkyBehavior",
         "OpenSkyObjectAnimation",
         "OpenSkyPlayer",
-        "OpenSkyAIPackages"
+        "OpenSkyAIPackages", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -807,7 +836,9 @@ targets += domain(
     "OpenSkyLoading",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyAssetCache",
-        "OpenSkyRendering", "OpenSkyConditions", "OpenSkyWorldConditions", "OpenSkyCells"
+        "OpenSkyRendering", "OpenSkyConditions", "OpenSkyWorldConditions", "OpenSkyCells",
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ],
     tests: worldTestBase
 )
@@ -821,7 +852,7 @@ targets += testing(
         "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldInterface", "OpenSkyAudio",
         "OpenSkyWorldConditions", "OpenSkyTerrain", "OpenSkyRuntimeState",
         "OpenSkyActorPresentation",
-        "OpenSkyCells"
+        "OpenSkyCells", "OpenSkyRenderResources"
     ]
 )
 let worldDomains = [
@@ -839,9 +870,12 @@ targets += feature(
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
         "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache", "OpenSkyImageKernels", "HeapModule"
+        "OpenSkyAssetCache", "OpenSkyImageKernels", "HeapModule", "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ] + worldDomains,
     tests: worldDomains + [
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources",
         "OpenSkyWorldTesting",
         "OpenSkyEngineTesting",
         "OpenSkyFormatsTesting",
@@ -904,7 +938,9 @@ targets += feature(
         "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
         "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
-        "OpenSkyQuestsInterface", "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
+        "OpenSkyQuestsInterface", "OpenSkyScriptingInterface", "OpenSkyWorldInterface",
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources"
     ],
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
@@ -912,7 +948,7 @@ targets += feature(
         "OpenSkyProgressionInterface",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
-        "OpenSkyEngineTesting"
+        "OpenSkyEngineTesting", "OpenSkyRenderCore"
     ]
 )
 
@@ -981,7 +1017,8 @@ targets += fixtures(
         "OpenSkyFormatsTesting", "OpenSkyAudio", "OpenSkyConditions", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState",
-        "OpenSkyFeaturesTesting", "OpenSkyEngineTesting", "OpenSkyWorldTesting"
+        "OpenSkyFeaturesTesting", "OpenSkyEngineTesting", "OpenSkyWorldTesting",
+        "OpenSkyRenderResources"
     ] + worldDomains
 )
 
@@ -991,7 +1028,7 @@ targets += composition(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
         "OpenSkyFormatsAnimation", "OpenSkyGameData", "OpenSkyConditions", "OpenSkyRendering",
-        "OpenSkyWorld"
+        "OpenSkyWorld", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ] + worldDomains,
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",

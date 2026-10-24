@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyRendering
+import OpenSkyRenderCore
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

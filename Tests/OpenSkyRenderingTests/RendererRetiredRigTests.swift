@@ -5,6 +5,7 @@
 import Metal
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import simd

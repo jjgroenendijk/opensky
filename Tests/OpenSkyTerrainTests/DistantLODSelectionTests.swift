@@ -3,7 +3,7 @@ import Foundation
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-@testable import OpenSkyRendering
+import OpenSkyRenderCore
 @testable import OpenSkyTerrain
 import Testing
 
