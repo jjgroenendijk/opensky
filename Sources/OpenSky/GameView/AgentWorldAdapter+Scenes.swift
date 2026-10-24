@@ -65,7 +65,9 @@ extension AgentWorldAdapter {
             return .array([])
         }
         return .array(world.scheduler.pendingCalls.compactMap { call -> AgentJSON? in
-            guard let instance = world.suspensionTracker.instance(waiting: call.id), instance.reference == key
+            guard
+                let instance = world.suspensionTracker.instance(waiting: call.id),
+                instance.reference == key
             else { return nil }
             return [
                 "script": .string(instance.scriptName),

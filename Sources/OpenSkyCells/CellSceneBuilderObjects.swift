@@ -6,8 +6,6 @@
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
 import OpenSkyRendering

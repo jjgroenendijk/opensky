@@ -10,7 +10,9 @@ nonisolated extension BehaviorGraphInstance {
     /// The swinging blade trap needs this: its script raises `Single` again in the
     /// update after `Reset`, while the finished swing is still blending out.
     func restartGenerator(ofState stateId: Int, leaving currentId: Int, machine: HKBStateMachine) {
-        guard stateId != currentId, let incoming = stateInfo(of: machine, id: stateId) else { return }
+        guard
+            stateId != currentId,
+            let incoming = stateInfo(of: machine, id: stateId) else { return }
         var kept: Set<HKXPointerTarget> = []
         if let outgoing = stateInfo(of: machine, id: currentId)?.info.generator {
             collectSubtree(at: outgoing, depth: 0, into: &kept)
@@ -27,8 +29,9 @@ nonisolated extension BehaviorGraphInstance {
     private func collectSubtree(
         at target: HKXPointerTarget, depth: Int, into targets: inout Set<HKXPointerTarget>
     ) {
-        guard depth < Self.maximumDepth, targets.insert(target).inserted,
-              let node = compiledNode(at: target) else { return }
+        guard
+            depth < Self.maximumDepth, targets.insert(target).inserted,
+            let node = compiledNode(at: target) else { return }
         for child in node.children {
             collectSubtree(at: child, depth: depth + 1, into: &targets)
         }

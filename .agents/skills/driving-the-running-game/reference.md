@@ -74,9 +74,9 @@ arrow keys.
   floor-level `root`, its holder, and `inUse`.
 - `state objects` lists each running object behaviour graph, such as a trap's or a door's,
   with its project, innermost active `state`, every active state in `states`,
-  `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives `bones`: each bone's
-  `position` in the object's own space and its `rotationDegrees` angle there, so two reads a few
-  frames apart show a blade swing.
+  `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
+  `bones`: each bone's `position` in the object's own space and its `rotationDegrees` angle
+  there, so two reads a few frames apart show a blade swing.
 - `state changes` lists the newest world-state writes (`ref`, `kind`, `reset`) and whether a
   door transition or an interior rebuild is in flight. A cell that never settles shows the
   reference that keeps writing.
