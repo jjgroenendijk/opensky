@@ -44,4 +44,13 @@ struct ProjectileTrapShotTests {
         #expect(world.damagedBy[.player] == trap)
         #expect(world.spawned.map(\.base) == [dart])
     }
+
+    /// Pinewatch02's dart ports: X turned +90 or -90 degrees, heading 81.4 or 263.1.
+    /// Both walls fire across the corridor, level.
+    @Test func aDartPortFiresAlongItsHeading() {
+        let west = ProjectileShooter.headingAim(zRotation: 1.4207962)
+        let east = ProjectileShooter.headingAim(zRotation: 4.592389)
+        #expect(west.x > 0.98 && west.z == 0)
+        #expect(east.x < -0.98 && east.z == 0)
+    }
 }

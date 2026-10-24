@@ -41,6 +41,13 @@ nonisolated public struct ProjectileShooter: Equatable, Sendable {
         self.isFirstPerson = isFirstPerson
         self.location = location
     }
+
+    /// A placed reference fires along its heading (rotation about Z, radians), level.
+    /// Dart ports are turned 90 degrees about X, so their full facing points at the
+    /// ceiling or the floor; docs/engine/traps.md "Firing a weapon".
+    public static func headingAim(zRotation: Float) -> SIMD3<Float> {
+        SIMD3(sinf(zRotation), cosf(zRotation), 0)
+    }
 }
 
 /// One projectile in flight: an arrow or a cast spell.

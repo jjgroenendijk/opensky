@@ -98,18 +98,14 @@ extension EffectsWorldAdapter {
         return runtime.projectiles.fire(shot, from: shooter) != nil
     }
 
-    /// A reference fires from its origin along its local +Y axis.
     private func shooter(at source: ReferenceKey) -> ProjectileShooter? {
         guard let transform = game.scripts.bridge?.referenceState(for: source)?.transform else {
             return nil
         }
-        let facing = MatrixMath.placement(
-            position: .zero, rotation: transform.rotation, scale: 1
-        ) * SIMD4<Float>(0, 1, 0, 0)
         return ProjectileShooter(
             key: source,
             origin: transform.position,
-            aim: ProjectileFlight.normalized(SIMD3(facing.x, facing.y, facing.z)),
+            aim: ProjectileShooter.headingAim(zRotation: transform.rotation.z),
             isFirstPerson: false,
             location: game.streamer?.cellLocation(of: source)
         )

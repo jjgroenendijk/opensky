@@ -168,8 +168,12 @@ on an actor stays a traced stub.
 `Weapon.Fire(source, ammo)` fires the weapon from a reference
 ([Fire](https://ck.uesp.net/wiki/Fire_-_Weapon)). Dart traps call it once per linked
 reference, and ballistas and crossbow traps from themselves. OpenSky fires the ammo's
-projectile from the source's position along its local +Y axis, the way a placed reference
-faces. The shot spends no ammunition, and an arrow that misses still sticks. Its damage is the
+projectile from the source's position, level, along its heading (its rotation about Z). The
+X and Y rotations are not used. Source: observed data. In `Pinewatch02` the dart ports on the
+west wall are turned +90 degrees about X with a heading of 81 degrees, and those on the east
+wall -90 degrees with a heading of 263 degrees. Only the heading points both walls across the
+corridor; the full facing points one wall at the ceiling and the other at the floor. The shot
+spends no ammunition, and an arrow that misses still sticks. Its damage is the
 weapon's base damage plus the ammo's, with no skill or perk term. The hit is credited to the
 source, so it raises `OnHit` with the trap as the aggressor and gives the player no crime and
 no sneak attack.
