@@ -24,7 +24,9 @@ extension GameSession {
         restorePlayerCameraPose()
         dialogueCameraState.camera.reset()
         freeFlyCamera = FreeFlyCamera(framing: newCamera)
-        if movementMode.isPlayerControlled, let feet = newCamera.walkFeetPosition {
+        // Fly mode looks from eye height too, so a later switch to walk puts the feet
+        // on the spot rather than an eye height below its floor.
+        if let feet = newCamera.walkFeetPosition {
             freeFlyCamera.position = feet
                 + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
         }
@@ -135,6 +137,9 @@ extension GameSession {
         // distance every time the camera key is pressed.
         guard !wasPlayerControlled else { return }
         walkController.reset(cameraPosition: freeFlyCamera.position)
+        if let collisionQuery {
+            walkController.standOnFloorBelowEye(query: collisionQuery)
+        }
         locomotion.reset()
     }
 
