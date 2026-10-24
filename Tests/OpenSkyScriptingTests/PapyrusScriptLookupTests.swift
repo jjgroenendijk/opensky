@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
+import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
@@ -78,6 +79,33 @@ struct PapyrusScriptLookupTests {
         }
         let handle = try world.runtime.makeInstance(scriptName: "Caller")
         #expect(PapyrusTestSupport.value(world.runtime.invoke("Run", on: handle)) == .integer(7))
+    }
+
+    /// An attach waits for `custom.pex` too, so `DartTrap`'s first port count runs it.
+    @Test func anAttachWaitsForTheScriptsItsCodeCallsStatically() {
+        let run = PexFixture.runtimeFunction(instructions: [
+            PapyrusTestSupport.instruction(
+                .callStatic, .identifier("Helper"), .identifier("Count"),
+                .identifier("::NoneVar"), .integer(0)
+            )
+        ])
+        let caller = PexFixture.runtimeObject(
+            name: "Caller", states: [PapyrusTestSupport.state(functions: [("Run", run)])]
+        )
+        let helper = PexFixture.runtimeObject(name: "Helper", states: [])
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [caller], nativeDispatch: PapyrusRecordingNativeDispatch()
+        )
+        var helperLoaded = false
+        world.scriptLibrary = { name in
+            guard PapyrusRuntime.matches(name, "Helper") else {
+                return .failed(AssetLoadFailure(reason: "not in the fixture"))
+            }
+            return helperLoaded ? .ready([PexFixture.runtimeFile(objects: [helper])]) : .loading
+        }
+        #expect(world.scriptsLoading(["Caller"]))
+        helperLoaded = true
+        #expect(!world.scriptsLoading(["Caller"]))
     }
 
     /// `PlayerSleepQuestScript` calls `IsInInterior`, which `ObjectReference.psc` writes

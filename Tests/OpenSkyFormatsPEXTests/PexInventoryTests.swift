@@ -56,6 +56,14 @@ struct PexInventoryTests {
         #expect(inventory.unnamedDecodeFailures == 1)
     }
 
+    @Test("lists the scripts a static call names once each")
+    func listsStaticCallScripts() throws {
+        let staticCall = PexFixture.everyInstruction.filter { $0.opcode == 0x19 }
+        let file = try PexFile(data: PexFixture.file(instructions: staticCall + staticCall))
+        let object = try #require(file.objects.first)
+        #expect(object.staticCallScripts == ["StaticClass"])
+    }
+
     @Test("counts preserved unknown opcodes")
     func countsUnknownOpcodes() throws {
         let file = try PexFile(data: PexFixture.file(

@@ -57,4 +57,17 @@ nonisolated public struct PexObject: Equatable, Sendable {
         properties.flatMap { [$0.readHandler, $0.writeHandler].compactMap(\.self) }
             + states.flatMap { $0.functions.map(\.function) }
     }
+
+    /// The scripts whose global functions this object's code calls, such as `Utility`.
+    public var staticCallScripts: [String] {
+        var names: [String] = []
+        for instruction in functions.flatMap(\.instructions)
+            where instruction.opcode == .callStatic
+        {
+            if let name = instruction.operands.first?.stringValue, !names.contains(name) {
+                names.append(name)
+            }
+        }
+        return names
+    }
 }
