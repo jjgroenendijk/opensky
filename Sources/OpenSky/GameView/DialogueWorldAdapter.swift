@@ -72,13 +72,24 @@ final class DialogueWorldAdapter {
         self.game = game
     }
 
+    /// Without game data the coordinator has no index, and every conversation refuses.
+    func makeDialogue() -> DialogueCoordinator {
+        guard let data = game.worldData else {
+            return DialogueCoordinator(store: game.worldState, world: self, index: nil)
+        }
+        return DialogueCoordinator(
+            store: game.worldState,
+            world: self,
+            index: data.dialogueStore,
+            topicSubtypes: TopicSubtypeTexts
+                .resolve(store: data.gameSettings) { [game] in game.mapWorld.text($0) },
+            speechTimers: SpeechTimerSettings.resolve(store: data.gameSettings)
+        )
+    }
+
     /// Hostility and death decide who is worth talking to, so the candidate
     /// list is built here, not in streaming.
     func wireDialogue(provider: WorldDataStores, streamer: CellStreamer) {
-        game.dialogue.index = provider.dialogueStore
-        game.dialogue.topicSubtypes = TopicSubtypeTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.dialogue.speechTimers = SpeechTimerSettings.resolve(store: provider.gameSettings)
         game.storyWorld.scenes.repeatPause = game.dialogue.speechTimers.sceneRepeatPause
         game.headTracking.settings = HeadTrackingSettings.resolve(store: provider.gameSettings)
         game.faceMorphs.settings = FaceAnimationSettings.resolve(store: provider.gameSettings)

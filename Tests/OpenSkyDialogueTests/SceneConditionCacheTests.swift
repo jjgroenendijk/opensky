@@ -31,7 +31,8 @@ struct SceneConditionCacheTests {
             context: DialogueRuntimeFixture.context()
         )
         let coordinator = SceneCoordinator(
-            dialogue: DialogueCoordinator(store: store, world: world), world: FakeSceneHost()
+            dialogue: DialogueCoordinator(store: store, world: world, index: nil),
+            world: FakeSceneHost()
         )
         let scene = try SceneFixture.scene()
         coordinator.catalog = SceneCatalog(scenes: [scene])

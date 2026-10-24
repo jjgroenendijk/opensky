@@ -17,7 +17,7 @@ import simd
 public final class DialogueCoordinator {
     public let store: WorldStateStore
     /// Nil without game data.
-    public var index: DialogueStore?
+    public let index: DialogueStore?
     /// Kept for the condition trace. Selecting again for a readout would
     /// evaluate every condition in the game twice a second.
     public private(set) var selection = DialogueSelection.empty
@@ -37,9 +37,9 @@ public final class DialogueCoordinator {
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
     /// Subtype names the Dialogue readout shows beside a topic.
-    public var topicSubtypes = TopicSubtypeTexts.vanilla
-    /// How often NPCs speak outside a conversation; the app sets the install's values.
-    public var speechTimers = SpeechTimerSettings.vanilla
+    public let topicSubtypes: TopicSubtypeTexts
+    /// How often NPCs speak outside a conversation.
+    public let speechTimers: SpeechTimerSettings
     var speechClock = NPCSpeechClock()
     var speechRandom = ConditionRandom()
     private var cachedStrings: LocalizedStrings?
@@ -47,9 +47,18 @@ public final class DialogueCoordinator {
 
     let world: any DialogueWorld
 
-    public init(store: WorldStateStore, world: any DialogueWorld) {
+    public init(
+        store: WorldStateStore,
+        world: any DialogueWorld,
+        index: DialogueStore?,
+        topicSubtypes: TopicSubtypeTexts = .vanilla,
+        speechTimers: SpeechTimerSettings = .vanilla
+    ) {
         self.store = store
         self.world = world
+        self.index = index
+        self.topicSubtypes = topicSubtypes
+        self.speechTimers = speechTimers
     }
 
     /// Plugin string tables, loaded on first use.

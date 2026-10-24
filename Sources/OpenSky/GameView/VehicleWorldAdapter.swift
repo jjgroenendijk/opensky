@@ -53,7 +53,6 @@ final class VehicleWorldAdapter {
 
     /// After the idles and packages, so a follower reads where its carrier ended up.
     func wireVehicles(gameSession: GameSession) {
-        game.scripts.bridge?.actorAI = self
         let scripts = game.scripts
         let idles = game.idleWorld.idles
         idles.onAnimationEvent = { [weak self, weak scripts, weak gameSession] actor, name in

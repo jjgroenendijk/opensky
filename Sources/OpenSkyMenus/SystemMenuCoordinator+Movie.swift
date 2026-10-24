@@ -162,13 +162,12 @@ extension SystemMenuCoordinator {
     // MARK: - Controls
 
     private var mappingRows: [[String: AS2Value]] {
-        guard let settings else { return [] }
-        return SystemMenuMovieBridge.mappingRows(settings.bindings, keyName: settings.keyName)
+        SystemMenuMovieBridge.mappingRows(settings.bindings, keyName: settings.keyName)
     }
 
     private func answerMappings(_ request: SystemMenuMovieBridge.Request) {
         if request == .resetControls {
-            settings?.resetBindings()
+            settings.resetBindings()
             lastMessage = "Controls reset"
         }
         refreshMovieMappings(request)

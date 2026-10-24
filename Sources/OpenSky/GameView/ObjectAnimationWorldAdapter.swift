@@ -56,7 +56,6 @@ final class ObjectAnimationWorldAdapter {
     /// After the vehicles, so a cart's events and an object's events keep one order.
     func wire(gameSession: GameSession) {
         guard game.audioFileSystem != nil else { return }
-        game.scripts.bridge?.objectAnimation = self
         objects.onAnimationEvent = { [weak self] reference, name in
             self?.forward(name, from: reference)
         }

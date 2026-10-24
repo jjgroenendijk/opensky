@@ -82,8 +82,6 @@ final class InventoryWorldAdapter {
             pricing: provider.barterPricing,
             cellReset: provider.cellResetSettings
         )
-        game.scripts.bridge?.inventory = self
-        game.scripts.bridge?.alchemy = self
         coordinator.wireCrafting(
             catalog: provider.craftingCatalog, conditions: self, skills: game.progression
         )

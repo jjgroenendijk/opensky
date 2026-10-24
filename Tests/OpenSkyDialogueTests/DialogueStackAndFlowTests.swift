@@ -115,9 +115,11 @@ struct DialogueStackAndFlowTests {
             quests: QuestResolution(defaults: DialogueRuntimeFixture.questStore()),
             context: DialogueRuntimeFixture.context()
         )
-        let coordinator = DialogueCoordinator(store: WorldStateStore(), world: world)
-        coordinator.index = try DialogueFixture.store(dialogueChildren: dialogue)
-        return coordinator
+        return try DialogueCoordinator(
+            store: WorldStateStore(),
+            world: world,
+            index: DialogueFixture.store(dialogueChildren: dialogue)
+        )
     }
 
     /// Invisible Continue says the linked line next, with no choice list.

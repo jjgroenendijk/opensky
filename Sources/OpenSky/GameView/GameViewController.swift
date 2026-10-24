@@ -47,7 +47,15 @@ final class GameViewController: NSViewController {
 
     /// Loaded off the main actor before the view loads, on the system default
     /// device the view also uses. Nil falls back to `DemoScene`.
-    var cellSession: CellSession?
+    var cellSession: CellSession? {
+        // Set before any coordinator is built, so each one is built over the stores.
+        didSet {
+            if let cellSession {
+                worldData = cellSession.data
+            }
+        }
+    }
+
     /// The stage times of the load that built `cellSession`.
     var worldLoadReport: WorldLoadReport?
     /// The session's asset cache.
@@ -85,7 +93,8 @@ final class GameViewController: NSViewController {
     lazy var runtimeState = RuntimeStateCoordinator(store: worldState, world: runtimeStateWorld)
 
     lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: self)
-    /// The Papyrus VM and its world bridge. Both stay nil without game data.
+    /// The Papyrus VM and its world bridge. Both stay nil without game data;
+    /// session start replaces it with one built over the loaded world.
     lazy var scripts = ScriptCoordinator(world: scriptWorld)
 
     lazy var scriptWorld = ScriptWorldAdapter(game: self)
@@ -155,7 +164,7 @@ final class GameViewController: NSViewController {
 
     lazy var journalMenu = JournalMenuController(game: self)
     /// The dialogue index, the open conversation, and the speaker focus.
-    lazy var dialogue = DialogueCoordinator(store: worldState, world: dialogueWorld)
+    lazy var dialogue = dialogueWorld.makeDialogue()
 
     lazy var dialogueWorld = DialogueWorldAdapter(game: self)
     /// Owns the scene and story-manager coordinators.
@@ -169,11 +178,7 @@ final class GameViewController: NSViewController {
     lazy var messages = MessageCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, world: messageWorld
     )
-    lazy var subtitles: SubtitleCoordinator = {
-        let subtitles = SubtitleCoordinator()
-        subtitles.attach(presenter: hud)
-        return subtitles
-    }()
+    lazy var subtitles = SubtitleCoordinator(presenter: hud)
 
     lazy var messageWorld = MessageWorldAdapter(game: self)
     /// Wait, training, books, help, magic, gifts, crafting, and text entry.
@@ -206,7 +211,6 @@ final class GameViewController: NSViewController {
     lazy var effectsWorld = EffectsWorldAdapter(game: self)
     lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
         hazards: hazards,
-        scripts: scripts,
         worldState: worldState,
         streamer: { [unowned self] in streamer }
     ))
