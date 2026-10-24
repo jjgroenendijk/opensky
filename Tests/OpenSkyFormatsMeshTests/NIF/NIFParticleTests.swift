@@ -109,9 +109,11 @@ struct NIFParticleTests {
         let alpha = try #require(decoded.alphaProperty)
         #expect(alpha.blendEnabled)
         #expect(!alpha.testEnabled)
-        // Parent node translate (0,100,0) composed with local (5,0,0).
+        // A placed root's own translation is left out; an attachment keeps it.
         #expect(decoded.worldTransform.columns.3.x == 5)
-        #expect(decoded.worldTransform.columns.3.y == 100)
+        #expect(decoded.worldTransform.columns.3.y == 0)
+        let attached = try #require(file.particleSystems(keepingRoot: true).first)
+        #expect(attached.worldTransform.columns.3.y == 100)
 
         try #require(decoded.emitters.count == 1)
         let emitter = decoded.emitters[0]

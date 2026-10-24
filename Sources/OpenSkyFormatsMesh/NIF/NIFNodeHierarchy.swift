@@ -12,8 +12,8 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
     public let worldTransforms: [Int: float4x4]
     public let names: [Int: String]
 
-    public init(file: NIFFile) throws {
-        var builder = Builder(file: file)
+    public init(file: NIFFile, keepingRoot: Bool = false) throws {
+        var builder = Builder(file: file, keepingRoot: keepingRoot)
         for root in file.roots {
             try builder.walk(from: root)
         }
@@ -28,11 +28,14 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
         static let maxDepth = 64
 
         let file: NIFFile
+        let keepingRoot: Bool
         var worldTransforms: [Int: float4x4] = [:]
         var names: [Int: String] = [:]
 
         mutating func walk(from root: Int32) throws {
-            var stack = NIFGraphStack(root: root)
+            var stack = NIFGraphStack(
+                root: root, parent: file.walkParent(ofRoot: root, keepingRoot: keepingRoot)
+            )
             while let visit = stack.next() {
                 guard visit.ref >= 0 else { continue }
                 let index = Int(visit.ref)

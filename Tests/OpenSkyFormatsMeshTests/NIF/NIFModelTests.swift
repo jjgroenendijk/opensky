@@ -29,13 +29,14 @@ struct NIFModelTests {
     }
 
     @Test func accumulatesTransformsDownTheParentChain() throws {
-        // BSFadeNode(translate) -> NiNode(rotate Z) -> BSTriShape(scale):
+        // BSFadeNode -> NiNode(translate) -> NiNode(rotate Z) -> BSTriShape(scale):
         // mesh transform must equal the ordered product of the three locals.
         let theta = MatrixMath.radians(fromDegrees: 90)
         let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("BSFadeNode", NIFFixture.niNode(
+            .init("BSFadeNode", NIFFixture.niNode(children: [1])),
+            .init("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(translation: SIMD3(0, 0, 100)),
-                children: [1]
+                children: [2]
             )),
             .init("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(rotationRows: [
@@ -43,7 +44,7 @@ struct NIFModelTests {
                     sinf(theta), cosf(theta), 0,
                     0, 0, 1
                 ]),
-                children: [2]
+                children: [3]
             )),
             .init("BSTriShape", shape(
                 prefix: NIFFixture.avObjectPrefix(scale: 2)

@@ -13,9 +13,10 @@ nonisolated extension NIFFile {
     private static let maxSceneGraphDepth = 64
 
     /// Flattens the block tree into drawable meshes with model-space
-    /// transforms and deduplicated material slots.
-    public func model(skeleton: NIFSkeleton? = nil) throws -> Model {
-        var flattener = try Flattener(file: self, skeleton: skeleton)
+    /// transforms and deduplicated material slots. A bone attachment passes
+    /// `keepingRoot`; see `walkParent(ofRoot:keepingRoot:)`.
+    public func model(skeleton: NIFSkeleton? = nil, keepingRoot: Bool = false) throws -> Model {
+        var flattener = try Flattener(file: self, skeleton: skeleton, keepingRoot: keepingRoot)
         for root in roots {
             try flattener.walk(from: root)
         }
@@ -37,6 +38,7 @@ nonisolated extension NIFFile {
         public let file: NIFFile
         public let hierarchy: NIFNodeHierarchy
         public let skeleton: NIFSkeleton?
+        public let keepingRoot: Bool
         public var meshes: [Mesh] = []
         /// The block index of each mesh, in `meshes` order.
         public var meshBlocks: [Int] = []
@@ -59,14 +61,17 @@ nonisolated extension NIFFile {
             name?.caseInsensitiveCompare(editorMarkerName) == .orderedSame
         }
 
-        public init(file: NIFFile, skeleton: NIFSkeleton?) throws {
+        public init(file: NIFFile, skeleton: NIFSkeleton?, keepingRoot: Bool = false) throws {
             self.file = file
-            hierarchy = try NIFNodeHierarchy(file: file)
+            hierarchy = try NIFNodeHierarchy(file: file, keepingRoot: keepingRoot)
             self.skeleton = skeleton
+            self.keepingRoot = keepingRoot
         }
 
         public mutating func walk(from root: Int32) throws {
-            var stack = NIFGraphStack(root: root)
+            var stack = NIFGraphStack(
+                root: root, parent: file.walkParent(ofRoot: root, keepingRoot: keepingRoot)
+            )
             while let visit = stack.next() {
                 guard visit.ref >= 0 else { continue } // -1 = null ref
                 let index = Int(visit.ref)

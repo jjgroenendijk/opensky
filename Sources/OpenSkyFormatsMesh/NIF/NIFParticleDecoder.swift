@@ -17,8 +17,8 @@ nonisolated extension NIFFile {
 
     /// Flattens the block tree into the particle systems it contains, each in
     /// model space. Non-particle leaves are skipped; a malformed system throws.
-    public func particleSystems() throws -> [ParticleSystemDefinition] {
-        var walker = ParticleWalker(file: self)
+    public func particleSystems(keepingRoot: Bool = false) throws -> [ParticleSystemDefinition] {
+        var walker = ParticleWalker(file: self, keepingRoot: keepingRoot)
         for root in roots {
             try walker.walk(from: root)
         }
@@ -27,6 +27,7 @@ nonisolated extension NIFFile {
 
     fileprivate struct ParticleWalker {
         let file: NIFFile
+        let keepingRoot: Bool
         /// Systems in walk order. They decode after the walk, because a mesh
         /// emitter needs the transform of a shape found later.
         var found: [(block: NIFFile.Block, parent: float4x4)] = []
@@ -34,7 +35,9 @@ nonisolated extension NIFFile {
         var parents: [Int: float4x4] = [:]
 
         mutating func walk(from root: Int32) throws {
-            var stack = NIFGraphStack(root: root)
+            var stack = NIFGraphStack(
+                root: root, parent: file.walkParent(ofRoot: root, keepingRoot: keepingRoot)
+            )
             while let visit = stack.next() {
                 guard visit.ref >= 0 else { continue } // -1 = null ref
                 let index = Int(visit.ref)

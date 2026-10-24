@@ -105,11 +105,15 @@ struct NIFSkinTests {
     @Test func decodesSkeletonBoneTreeByName() throws {
         let blocks: [NIFFixture.Block] = [
             .init("NiNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(nameIndex: 2),
+                children: [1]
+            )),
+            .init("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(
                     nameIndex: 0,
                     translation: SIMD3(10, 0, 0)
                 ),
-                children: [1]
+                children: [2]
             )),
             .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
                 nameIndex: 1,
@@ -118,7 +122,7 @@ struct NIFSkinTests {
         ]
         let file = try NIFFile(data: NIFFixture.file(
             blocks: blocks,
-            strings: ["Root", "Bone"]
+            strings: ["Root", "Bone", "skeleton.nif"]
         ))
         let skeleton = try NIFSkeleton(file: file)
         let bone = try #require(skeleton.boneTransforms["Bone"])
