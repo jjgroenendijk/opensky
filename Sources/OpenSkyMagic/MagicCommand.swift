@@ -27,4 +27,6 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case playerShouted
     /// Show or hide an `EFSH`, written in `plugin`, on the actor, as Detect Life paints.
     case paintActor(ReferenceKey, shader: FormID, plugin: String, shown: Bool)
+    /// A spell reached someone: its hit shaders, art, sounds, and image-space modifier.
+    case spellHit(SpellHitEvent)
 }

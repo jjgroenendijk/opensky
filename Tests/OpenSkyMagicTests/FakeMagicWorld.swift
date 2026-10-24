@@ -23,6 +23,8 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var firedProjectiles: [SpellPayload] = []
     private(set) var aimRequests: [(range: Float, caster: ReferenceKey)] = []
     private(set) var skillUses: [SkillUseEvent] = []
+    /// Every cast, by spell.
+    private(set) var spellCasts: [ReferenceKey] = []
     private(set) var probedFunctions: [UInt16] = []
     var nearbyHostiles: [ReferenceKey] = []
     /// Every actor's perks at an entry point, as a factor on the value.
@@ -213,5 +215,9 @@ final class FakeMagicWorld: MagicWorld {
     func placeHazard(_: ReferenceKey, at point: SIMD3<Float>) -> Bool {
         placedHazards.append(point)
         return true
+    }
+
+    func noteSpellCast(_ spell: ReferenceKey, by _: ReferenceKey) {
+        spellCasts.append(spell)
     }
 }

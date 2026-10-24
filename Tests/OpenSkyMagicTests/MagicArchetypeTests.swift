@@ -27,14 +27,14 @@ struct MagicArchetypeTests {
     }
 
     private func makeCoordinator() throws -> MagicCoordinator {
-        let coordinator = MagicCoordinator(world: world)
-        try coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = try MagicEffectsData(
             values: FixedActorValues(),
             store: Self.store(),
             pluginName: ActiveEffectFixture.pluginName,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        return coordinator
+        return MagicCoordinator(world: world, data: data)
     }
 
     private static func entry(_ formID: UInt32, magnitude: Float, duration: UInt32 = 0)

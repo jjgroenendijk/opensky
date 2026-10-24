@@ -26,14 +26,14 @@ struct SummonTests {
         world.holders[Self.victim] = ActorValueHolder(
             key: Self.victim, subject: .actor(base: FormID(0x0F01)), cell: nil
         )
-        let coordinator = MagicCoordinator(world: world)
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
             pluginName: ActiveEffectFixture.pluginName,
             conditionRegistry: ConditionFunctionRegistry()
         )
-        return coordinator
+        return MagicCoordinator(world: world, data: data)
     }
 
     @discardableResult

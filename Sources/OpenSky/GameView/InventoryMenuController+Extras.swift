@@ -34,19 +34,14 @@ extension InventoryMenuController {
         }
     }
 
-    private func use(_ item: FormID) -> String {
+    func use(_ item: FormID) -> String {
         let inventory = game.inventory
-        if inventory.isPoison(item) {
-            return inventory.applyPoison(item).text
+        switch inventory.use(of: item) {
+        case .applyPoison: return inventory.applyPoison(item).text
+        case .consume: return game.magic.consumeMagicItem(item).text
+        case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
+        case .equip: return game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
         }
-        let items = inventory.runtime?.inventory.baselines.items
-        if items?.ingestibles[item.rawValue] != nil || items?.ingredients[item.rawValue] != nil {
-            return game.magic.consumeMagicItem(item).text
-        }
-        let equipped = inventory.equipment?.equipped(on: .player).contains(item) == true
-        return equipped
-            ? game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
-            : game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
     }
 
     // MARK: - Quantity

@@ -98,6 +98,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     /// A summon fades away; a reanimated actor falls dead again.
     func releaseCommandedActor(_ actor: CommandedActor)
     func isActorDead(_ key: ReferenceKey) -> Bool
+    /// Every cast, for the Papyrus `OnSpellCast` event.
+    func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey)
 }
 
 extension MagicWorld {
@@ -120,6 +122,9 @@ extension MagicWorld {
 
     /// A session with no alchemy learns nothing.
     public func playerAteIngredient(_: FormID) {}
+
+    /// A session with no scripts hears no cast.
+    public func noteSpellCast(_: ReferenceKey, by _: ReferenceKey) {}
 
     public func postNotification(_: String) {}
 

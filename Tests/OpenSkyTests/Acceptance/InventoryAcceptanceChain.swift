@@ -3,6 +3,7 @@
 // chest. A guard is the actor an equip is visible on. No Metal or install.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -35,19 +36,23 @@ struct InventoryAcceptanceChain {
     /// makes taking either of them theft in the data.
     static let ownerActor = Fixture.guardActor
 
-    let store = WorldStateStore()
+    let store: WorldStateStore
     let references: FakeWorldReferences
     let runtime: WorldItemRuntime
     let equipment: EquipmentRuntime
     let pricing = BarterPricing.vanilla
 
-    init() throws {
+    /// `crime` decides whether a take is theft; without one every take is honest.
+    init(
+        store: WorldStateStore = WorldStateStore(), crime: (any CrimeReporting)? = nil
+    ) throws {
+        self.store = store
         let baselines = try Fixture.resolver()
         let inventory = InventoryRuntime(store: store, baselines: baselines)
         references = try FakeWorldReferences(
             entries: Self.entries(), cell: Self.cell
         )
-        runtime = WorldItemRuntime(inventory: inventory, references: references)
+        runtime = WorldItemRuntime(inventory: inventory, references: references, crime: crime)
         equipment = try EquipmentRuntime(
             inventory: inventory,
             catalog: EquipmentCatalog.build(from: ESMFile(data: Fixture.pluginBytes()))

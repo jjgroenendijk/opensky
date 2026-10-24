@@ -41,9 +41,4 @@ extension MagicWorldAdapter {
             }
         }
     }
-
-    func wireShouts(provider: WorldDataStores) {
-        game.magic.shoutSettings = ShoutSettings.resolve(store: provider.gameSettings)
-        game.magic.wireShouts(store: provider.shoutStore)
-    }
 }

@@ -39,11 +39,7 @@ struct EffectsProbeRealDataTests {
 
         @MainActor
         func explosions(world: ProbeExplosionWorld) -> ExplosionRuntime {
-            let runtime = ExplosionRuntime()
-            runtime.records = records
-            runtime.itemPlugin = "Skyrim.esm"
-            runtime.world = world
-            return runtime
+            ExplosionRuntime(records: records, itemPlugin: "Skyrim.esm", world: world)
         }
     }
 

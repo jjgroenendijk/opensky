@@ -57,19 +57,6 @@ extension InventoryCoordinator {
     public static let alchemySkill: Int32 = 16
     public static let alchemyIngredientLimit = 3
 
-    public func wireAlchemy(
-        effects: MagicEffectStore?,
-        pluginName: String,
-        settings: AlchemySettings,
-        texts: AlchemyTexts
-    ) {
-        magicEffects = effects
-        magicItemPlugin = pluginName
-        alchemySettings = settings
-        alchemyTexts = texts
-        registerCreatedPotions()
-    }
-
     public var createdPotions: CreatedPotionState {
         runtime?.store.component(CreatedPotionState.self, for: .player) ?? CreatedPotionState()
     }

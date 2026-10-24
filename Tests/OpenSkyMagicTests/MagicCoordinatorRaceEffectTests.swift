@@ -19,15 +19,15 @@ struct MagicCoordinatorRaceEffectTests {
     /// Only the race's abilities give a lasting one.
     @Test func onlyTheRacesAbilitiesGiveALastingLook() throws {
         let index = try SpellbookFixture.index()
-        let coordinator = MagicCoordinator(world: FakeMagicWorld())
-        coordinator.wireEffects(
+        var data = MagicSessionData()
+        data.effects = MagicEffectsData(
             values: FixedActorValues(),
             store: SpellbookFixture.effectStore(index: index),
             pluginName: SpellbookFixture.pluginName,
             conditionRegistry: ConditionFunctionRegistry()
         )
         let spells = [SpellbookFixture.Spell.dragonskin, SpellbookFixture.Spell.resistFire]
-        try coordinator.wireCasting(
+        data.casting = try MagicCastingData(
             spellbook: SpellbookFixture.runtime().0,
             values: FixedActorValues(),
             spellPluginName: SpellbookFixture.pluginName,
@@ -36,6 +36,7 @@ struct MagicCoordinatorRaceEffectTests {
                 races: [ActorSpellFixture.race(formID: Self.nord, spells: spells)]
             )
         )
+        let coordinator = MagicCoordinator(world: FakeMagicWorld(), data: data)
         let links = coordinator.raceEffectLinks(
             base: FormID(Self.villager), actor: SpellbookFixture.key(Self.villager)
         )

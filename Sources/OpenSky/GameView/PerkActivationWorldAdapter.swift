@@ -19,6 +19,7 @@ import OpenSkyWorldState
 @MainActor
 protocol PerkActivationWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
     var perkActivation: PerkActivationCoordinator { get }
     var perks: PerkCoordinator { get }
@@ -77,7 +78,7 @@ extension PerkActivationWorldAdapter: PerkActivationWorld {
     func applyActivateSpell(
         _ spell: ResolvedSpell, caster: ReferenceKey, on target: ReferenceKey
     ) -> Bool {
-        let report = game.magic.applySpellHit(SpellHit(
+        let report = game.magicWorld.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: target)]
         ))
         return report.targetCount > 0

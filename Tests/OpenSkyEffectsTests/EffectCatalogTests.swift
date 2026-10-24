@@ -55,8 +55,7 @@ struct EffectCatalogTests {
     }
 
     @Test func theCoordinatorAttachesShowsAndClearsDebugEffects() throws {
-        let effects = EffectsCoordinator()
-        try effects.wire(records: Self.records(), meshes: nil)
+        let effects = try EffectsCoordinator(records: Self.records())
         #expect(effects
             .attach(Self.key(0x801), to: .actor(.player), cause: .debug, duration: nil) != nil)
         effects.showModel("fx/blast.nif", at: .zero, cause: .explosion)

@@ -11,15 +11,14 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
-/// Every runtime stays nil without game data, and each action then says so.
+/// Without game data every runtime is nil, and each action then says so.
 @MainActor
 public final class InventoryCoordinator {
-    /// Nil until `wire`.
-    public private(set) var runtime: WorldItemRuntime?
-    /// Nil until `wire` gets an equipment catalog.
-    public private(set) var equipment: EquipmentRuntime?
+    public let runtime: WorldItemRuntime?
+    /// Nil without an equipment catalog.
+    public let equipment: EquipmentRuntime?
     /// The load order's `fBarterMin` and `fBarterMax`, else the vanilla values.
-    public private(set) var barterPricing = BarterPricing.vanilla
+    public let barterPricing: BarterPricing
     /// At most one container is open from the Items readout at a time.
     public private(set) var session: ContainerSession?
     /// Captured on open, because the cell holding the container may be evicted
@@ -32,67 +31,83 @@ public final class InventoryCoordinator {
     /// The NPC by default: an equip is only visible on a rendered actor.
     public var inspectionTarget = EquipmentTargetSelector.nearestActor
     /// Nil without a FACT and FLST index.
-    public var vendors: VendorCoordinator?
+    public let vendors: VendorCoordinator?
     /// Lock state, keys, and lockpicking, over the same world-item runtime.
     public let locks: LockCoordinator
     /// Nil without recipe data.
-    public internal(set) var craftingCatalog: CraftingCatalog?
+    public let craftingCatalog: CraftingCatalog?
     /// At most one station is in use at a time.
     public internal(set) var crafting: CraftingSession?
     public internal(set) var lastCraft = CraftingActionOutcome.idle
-    weak var recipeConditions: (any RecipeConditionChecking)?
-    weak var skillUses: (any SkillUseReporting)?
+    weak let recipeConditions: (any RecipeConditionChecking)?
+    weak let skillUses: (any SkillUseReporting)?
     /// The experience formulas a crafting session reports with.
-    public var craftingSkillUse = CraftingSkillUseSettings.vanilla
-    public var menuTexts = InventoryMenuTexts.vanilla
+    public let craftingSkillUse: CraftingSkillUseSettings
+    public let menuTexts: InventoryMenuTexts
     /// The crosshair's verbs.
-    public var activationTexts = GameSettingTexts<ActivationText>.vanilla
-    public var tradeTexts = TradeTexts.vanilla
-    public var pickpocketSettings = PickpocketSettings.vanilla
-    public var soulTexts = SoulTexts.vanilla
+    public let activationTexts: GameSettingTexts<ActivationText>
+    public let tradeTexts: TradeTexts
+    public let pickpocketSettings: PickpocketSettings
+    public let soulTexts: SoulTexts
     /// The quality names of an improved item.
-    public var temperingTexts = TemperingTexts.vanilla
+    public let temperingTexts: TemperingTexts
     /// The load order's cell reset intervals, which a harvested plant waits for.
-    public private(set) var cellReset = CellResetSettings.vanilla
+    public let cellReset: CellResetSettings
     /// The ingredients chosen at the open alchemy lab, in the order chosen. Nil when no
     /// lab is open.
     public internal(set) var alchemySelection: [FormID]?
     public internal(set) var lastAlchemy = AlchemyActionOutcome.idle
-    public var alchemySettings = AlchemySettings.vanilla
-    public var alchemyTexts = AlchemyTexts.vanilla
+    public let alchemySettings: AlchemySettings
+    public let alchemyTexts: AlchemyTexts
     /// The MGEF index ingredient effects resolve through. Nil leaves alchemy unavailable.
-    public internal(set) var magicEffects: MagicEffectStore?
+    public let magicEffects: MagicEffectStore?
     /// The plugin ingredient EFID links are relative to.
-    var magicItemPlugin = FormIDResolver.loadOrderSpaceName
+    let magicItemPlugin: String
 
     let world: any InventoryWorld
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.
-    public weak var storyEvents: (any StoryEventReporting)? {
-        didSet { locks.storyEvents = storyEvents }
-    }
+    public weak let storyEvents: (any StoryEventReporting)?
 
-    public init(world: any InventoryWorld, locks: LockCoordinator) {
-        self.world = world
-        self.locks = locks
-    }
-
-    public func wire(
-        inventory: InventoryRuntime,
-        references: any PapyrusWorldReferenceSource,
-        catalog: EquipmentCatalog?,
-        pricing: BarterPricing?,
-        cellReset: CellResetSettings = .vanilla
+    /// Without `data` there is no game, and every action says it is unavailable.
+    public init(
+        world: any InventoryWorld,
+        lockWorld: any LockWorld,
+        data: InventorySessionData?,
+        seams: InventorySeams = InventorySeams()
     ) {
-        let items = WorldItemRuntime(inventory: inventory, references: references)
-        self.cellReset = cellReset
-        runtime = items
-        locks.wire(items: items)
-        if let catalog {
-            equipment = EquipmentRuntime(inventory: inventory, catalog: catalog)
+        self.world = world
+        runtime = data?.items
+        equipment = data.flatMap { data in
+            data.equipment.map { EquipmentRuntime(inventory: data.items.inventory, catalog: $0) }
         }
-        if let pricing {
-            barterPricing = pricing
-        }
+        locks = LockCoordinator(
+            world: lockWorld,
+            items: data?.items,
+            data: data?.locks ?? LockSessionData(),
+            storyEvents: seams.storyEvents
+        )
+        vendors = data?.vendors
+        craftingCatalog = data?.crafting
+        recipeConditions = seams.recipeConditions
+        skillUses = seams.skillUses
+        storyEvents = seams.storyEvents
+        let rules = data?.rules ?? InventoryRules()
+        barterPricing = rules.barterPricing
+        cellReset = rules.cellReset
+        pickpocketSettings = rules.pickpocket
+        craftingSkillUse = rules.craftingSkillUse
+        let texts = data?.texts ?? InventoryTexts()
+        menuTexts = texts.menu
+        activationTexts = texts.activation
+        tradeTexts = texts.trade
+        soulTexts = texts.soul
+        temperingTexts = texts.tempering
+        let alchemy = data?.alchemy ?? InventoryAlchemyData()
+        magicEffects = alchemy.effects
+        magicItemPlugin = alchemy.pluginName
+        alchemySettings = alchemy.settings
+        alchemyTexts = alchemy.texts
+        registerCreatedPotions()
     }
 
     /// The use key: take a loose item, search a container, harvest a plant, or

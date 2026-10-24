@@ -47,13 +47,12 @@ nonisolated public enum ShoutOutcome: Equatable, Sendable {
 }
 
 extension MagicCoordinator {
-    public func wireShouts(store: ShoutStore?) {
+    static func shoutsByKey(_ store: ShoutStore?) -> [ReferenceKey: ResolvedShout] {
         var byKey: [ReferenceKey: ResolvedShout] = [:]
         for (id, shout) in store?.shouts ?? [:] {
             byKey[ReferenceKey(resolved: id)] = shout
         }
-        shouts = byKey
-        shoutStore = store
+        return byKey
     }
 
     /// The shouts on an NPC's own and race spell lists (`SPLO` entries that name a `SHOU`).

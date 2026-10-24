@@ -23,27 +23,41 @@ import simd
 
 extension MagicWorldAdapter {
     func run(_ commands: [MagicCommand]) {
-        for command in commands {
-            switch command {
-            case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
-            case let .wardHit(hit, caster, spell):
-                game.scripts.runtime?.queueWardHit(
-                    holder: hit.holder, caster: caster, spell: spell, status: hit.status.rawValue
-                )
-            case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
-            case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
-            case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
-            case let .detonateRune(payload, position): detonateRune(payload, at: position)
-            case let .castingSound(sound, caster, starts):
-                castingSound(sound, caster: caster, starts: starts)
-            case let .notice(text): game.hud.showNotification(text)
-            case .playerShouted: game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
-            case let .paintActor(actor, shader, plugin, shown):
-                paintActor(actor, shader: shader, plugin: plugin, shown: shown)
-            case let .castingArt(art, plugin, caster, starts):
-                game.effectsWorld.effects
-                    .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
-            }
+        for command in commands where !present(command) {
+            perform(command)
+        }
+    }
+
+    /// The commands the player only sees or hears. False for every other command.
+    private func present(_ command: MagicCommand) -> Bool {
+        switch command {
+        case let .castingSound(sound, caster, starts):
+            castingSound(sound, caster: caster, starts: starts)
+        case let .paintActor(actor, shader, plugin, shown):
+            paintActor(actor, shader: shader, plugin: plugin, shown: shown)
+        case let .castingArt(art, plugin, caster, starts):
+            game.effectsWorld.effects
+                .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
+        case let .spellHit(event): game.effectsWorld.handleSpellHit(event)
+        case let .notice(text): game.hud.showNotification(text)
+        default: return false
+        }
+        return true
+    }
+
+    private func perform(_ command: MagicCommand) {
+        switch command {
+        case let .stagger(key, magnitude): staggerActor(key, magnitude: magnitude)
+        case let .wardHit(hit, caster, spell):
+            game.scripts.runtime?.queueWardHit(
+                holder: hit.holder, caster: caster, spell: spell, status: hit.status.rawValue
+            )
+        case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
+        case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
+        case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
+        case let .detonateRune(payload, position): detonateRune(payload, at: position)
+        case .playerShouted: game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
+        default: break
         }
     }
 

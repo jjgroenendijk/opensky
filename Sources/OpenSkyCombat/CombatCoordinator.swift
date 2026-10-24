@@ -17,7 +17,7 @@ public final class CombatCoordinator {
     public private(set) var archery: ArcheryRuntime?
     public private(set) var loop: CombatLoopRuntime?
     /// Every explosion: projectile, spell, and forced detonations share it.
-    public let explosions = ExplosionRuntime()
+    public let explosions: ExplosionRuntime
     /// The WEAP, AMMO and PROJ index the hands and arrows resolve through.
     public private(set) var items: ItemDefinitionStore?
     /// Fighting actors may cast their spells unless the readout turns it off.
@@ -67,8 +67,9 @@ public final class CombatCoordinator {
     /// The graph flags the player's perks set true last frame.
     var perkGraphFlags: Set<String> = []
 
-    public init(world: any CombatWorld) {
+    public init(world: any CombatWorld, explosions: ExplosionRuntime = ExplosionRuntime()) {
         self.world = world
+        self.explosions = explosions
     }
 
     public func wireMelee(

@@ -188,20 +188,11 @@ assigns once after build, such as `combat.staggers`, follow the row of their coo
 | `IdleCoordinator.onAnimationEvent` | Event | Returned command or event schedule |
 | `RagdollCoordinator.wire(collisionModels:)` and `deathSettings` | Session data | Initializer |
 | `CombatCoordinator.wireMelee`, `wireArchery`, `wireLoop`, and its settings properties | Session data | One initializer that builds all three runtimes |
-| `MagicCoordinator.wireEffects`, `wireCasting` | Session data, session object | Initializer; the actor-value runtime and the spellbook are built first |
-| `MagicCoordinator.wireEnchantments`, `wireShouts`, and its settings and texts | Session data | Initializer |
-| `MagicCoordinator.onSpellHit` | Event | Returned command |
 | `PerkCoordinator.wire(_:baselines:pluginName:)` | Session data | Initializer; live conditions through its port |
 | `ProgressionCoordinator.wireSkills`, `wireLeveling`, `training`, `texts` | Session data, session object | One initializer that builds both runtimes, so their order is internal |
-| `InventoryCoordinator.wire(inventory:references:catalog:pricing:cellReset:)` | Session data, session object | Initializer; the streamer is built first |
-| `InventoryCoordinator.wireCrafting(catalog:conditions:skills:)` | Session data, feature seam | Initializer |
-| `InventoryCoordinator.wireAlchemy(effects:pluginName:settings:texts:)` | Session data | Initializer |
-| `InventoryCoordinator.vendors`, and the crime reporter set on its runtime | Session object, feature seam | Initializer |
-| `LockCoordinator.wire(items:)` | Session object | Built by the inventory coordinator with its item runtime |
 | `CrimeCoordinator.wire(runtime:locations:pluginName:)` and `crimeTexts` | Session data | Initializer |
 | `CrimeCoordinator.attachWitnesses(_:)` | Feature seam | Initializer; perception is built first |
-| `storyEvents` on the crime, inventory, lock, magic, and progression coordinators | Feature seam | Initializer, answered by the story adapter |
-| `EffectsCoordinator.wire(records:meshes:)`, `world`, and the explosion world | Session data, world port | Initializer |
+| `storyEvents` on the crime and progression coordinators | Feature seam | Initializer, answered by the story adapter |
 | `PlayerCoordinator.wireBody(source:)` | Late asset | Request at start, drain the mailbox; the coordinator is whole without the graph |
 | `CallbackFanOut` registrations on the streamer, the activation gate, and talk targeting | Event order | Phase enum per event |
 
@@ -213,6 +204,11 @@ every family when it builds the bridge.
 The bridge's feature seams, such as its quest layer and its inventory, arrive together in one
 `PapyrusBridgeSeams` value when the bridge is built. They stay settable, so a test fixture can
 give a built bridge one fake.
+
+A spell hit leaves the magic coordinator as a `MagicCommand`. A hit applied outside the magic
+frame steps, such as an arrow's or a script's, runs the commands at once, so the hit effects
+and the ragdoll's push land in the same frame as the damage. Every cast reaches the Papyrus
+`OnSpellCast` event through the `MagicWorld` port.
 
 ## What the checks enforce afterwards
 

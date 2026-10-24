@@ -53,11 +53,16 @@ nonisolated public struct BarterCounterparty: Equatable, Sendable {
 /// hands the facts to `VendorCore`, which decides.
 public final class VendorCoordinator {
     public let core: VendorCore
-    public var restockSettings = VendorRestockSettings.vanilla
+    public let restockSettings: VendorRestockSettings
     private weak var world: (any VendorWorld)?
 
-    public init(core: VendorCore, world: any VendorWorld) {
+    public init(
+        core: VendorCore,
+        world: any VendorWorld,
+        restockSettings: VendorRestockSettings = .vanilla
+    ) {
         self.core = core
+        self.restockSettings = restockSettings
         self.world = world
     }
 

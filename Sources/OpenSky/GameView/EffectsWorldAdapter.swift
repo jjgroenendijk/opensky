@@ -28,7 +28,10 @@ protocol EffectsWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
-    var effects: EffectsCoordinator { get }
+    var effects: EffectsCoordinator { get set }
+    var mapWorld: MapWorldAdapter { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
+    var worldData: WorldDataStores? { get }
     var hazardWorld: HazardWorldAdapter { get }
     var hazards: HazardCoordinator { get }
     var magic: MagicCoordinator { get }
@@ -72,23 +75,36 @@ final class EffectsWorldAdapter {
         gameSession.imageSpaceLinks = ImageSpaceLinks(
             records: records, weatherPlugin: Self.basePlugin
         )
-        effects.wire(records: records, meshes: Self.meshes(provider: provider, renderer: renderer))
-        effects.world = self
-        explosions.records = records
-        explosions.itemPlugin = Self.basePlugin
-        explosions.world = self
-        game.magic.onSpellHit = { [weak self, weak gameSession] event in
-            guard let self, let gameSession else { return }
-            effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
-            noteSpellHit(event.hit)
-            playHitSounds(of: event, director: gameSession.soundDirector)
-        }
+        game.effects = EffectsCoordinator(
+            records: records,
+            meshes: Self.meshes(provider: provider, renderer: renderer),
+            blood: BloodEffectSettings.resolve(store: provider.gameSettings) { [game] in
+                game.mapWorld.text($0)
+            },
+            world: self
+        )
+        game.effects.applyGraphicsSettings(game.playerSettings.store)
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
             guard let self, let gameSession else { return }
             cameraPosition = position
             tick(gameSession: gameSession, streamer: streamer)
         }
+    }
+
+    /// The visual, image-space, and sound side of one landed spell.
+    func handleSpellHit(_ event: SpellHitEvent) {
+        guard let gameSession = game.gameSession else { return }
+        effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
+        noteSpellHit(event.hit)
+        playHitSounds(of: event, director: gameSession.soundDirector)
+    }
+
+    /// The explosion runtime the combat coordinator owns. Without effect records it
+    /// has no world, and nothing detonates.
+    func makeExplosions() -> ExplosionRuntime {
+        guard let records = game.worldData?.effectRecords else { return ExplosionRuntime() }
+        return ExplosionRuntime(records: records, itemPlugin: Self.basePlugin, world: self)
     }
 
     /// A hostile spell's push on a body it kills: the sum of its magnitudes as the

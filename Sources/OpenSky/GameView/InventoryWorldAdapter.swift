@@ -40,7 +40,8 @@ protocol InventoryWorldHost: AnyObject {
     var factions: FactionCoordinator { get }
     var furniture: FurnitureCoordinator { get }
     var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
+    var inventory: InventoryCoordinator { get set }
+    var lockWorld: LockWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
@@ -52,6 +53,7 @@ protocol InventoryWorldHost: AnyObject {
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
@@ -67,40 +69,17 @@ final class InventoryWorldAdapter {
     }
 
     /// After the audio and Papyrus subscribers, so the activation sound plays
-    /// whether or not the take succeeds.
+    /// whether or not the take succeeds. After `wireCrime`, whose reporter joins
+    /// the take path.
     func wireWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
-        guard let baselines = provider.inventoryBaselines
-        else { return }
-        baselines.items.enchantedValueSettings = EnchantedValueSettings
-            .resolve(store: provider.gameSettings)
-        let coordinator = game.inventory
-        coordinator.activationTexts = game.mapWorld.settingTexts()
-        coordinator.wire(
-            inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
-            references: streamer,
-            catalog: provider.equipmentCatalog,
-            pricing: provider.barterPricing,
-            cellReset: provider.cellResetSettings
-        )
-        coordinator.wireCrafting(
-            catalog: provider.craftingCatalog, conditions: self, skills: game.progression
-        )
-        coordinator.craftingSkillUse = CraftingSkillUseSettings
-            .resolve(store: provider.gameSettings)
-        coordinator.menuTexts = InventoryMenuTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        coordinator.tradeTexts = TradeTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        coordinator.pickpocketSettings = PickpocketSettings.resolve(store: provider.gameSettings)
-        coordinator.soulTexts = SoulTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        coordinator.temperingTexts = TemperingTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        coordinator.wireAlchemy(
-            effects: provider.magicEffectStore,
-            pluginName: provider.magicItemPluginName ?? FormIDResolver.loadOrderSpaceName,
-            settings: AlchemySettings.resolve(store: provider.gameSettings),
-            texts: alchemyTexts
+        guard let data = sessionData(provider: provider, streamer: streamer) else { return }
+        game.inventory = InventoryCoordinator(
+            world: self,
+            lockWorld: game.lockWorld,
+            data: data,
+            seams: InventorySeams(
+                recipeConditions: self, skillUses: game.progression, storyEvents: game.storyWorld
+            )
         )
         streamer.onInteraction.add { [weak self] event in
             guard let self else { return }
@@ -126,6 +105,48 @@ final class InventoryWorldAdapter {
                 game.menuScreens.crafting.open()
             }
         }
+    }
+
+    /// Nil without inventory baselines: then there is no item runtime.
+    private func sessionData(
+        provider: WorldDataStores, streamer: CellStreamer
+    ) -> InventorySessionData? {
+        guard let baselines = provider.inventoryBaselines else { return nil }
+        let settings = provider.gameSettings
+        baselines.items.enchantedValueSettings = EnchantedValueSettings.resolve(store: settings)
+        var data = InventorySessionData(items: WorldItemRuntime(
+            inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
+            references: streamer,
+            crime: game.crime.reporter
+        ))
+        data.equipment = provider.equipmentCatalog
+        data.crafting = provider.craftingCatalog
+        data.vendors = vendors(provider: provider)
+        data.rules.barterPricing = provider.barterPricing
+        data.rules.cellReset = provider.cellResetSettings
+        data.rules.pickpocket = PickpocketSettings.resolve(store: settings)
+        data.rules.craftingSkillUse = CraftingSkillUseSettings.resolve(store: settings)
+        data.texts = texts(provider: provider)
+        data.alchemy.effects = provider.magicEffectStore
+        data.alchemy.pluginName = provider.magicItemPluginName ?? FormIDResolver.loadOrderSpaceName
+        data.alchemy.settings = AlchemySettings.resolve(store: settings)
+        data.alchemy.texts = alchemyTexts
+        data.locks.settings = provider.lockTrapData.lockpicking
+        data.locks.lockpickItem = provider.lockTrapData.lockpickItem
+        data.locks.texts = LockTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
+        return data
+    }
+
+    private func texts(provider: WorldDataStores) -> InventoryTexts {
+        let settings = provider.gameSettings
+        let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
+        var texts = InventoryTexts()
+        texts.activation = game.mapWorld.settingTexts()
+        texts.menu = InventoryMenuTexts.resolve(store: settings, text: text)
+        texts.trade = TradeTexts.resolve(store: settings, text: text)
+        texts.soul = SoulTexts.resolve(store: settings, text: text)
+        texts.tempering = TemperingTexts.resolve(store: settings, text: text)
+        return texts
     }
 
     /// A chair or a bench seats the player. A crafting station keeps its menu, and a bed
@@ -170,19 +191,21 @@ final class InventoryWorldAdapter {
         return book.open(item: interaction.base, takeOffer: offer)
     }
 
-    /// After `wireFactions`, whose runtime answers the memberships.
-    func wireVendors(provider: WorldDataStores) {
+    /// Nil without a FACT and FLST index. The memberships are read at call time.
+    private func vendors(provider: WorldDataStores) -> VendorCoordinator? {
         guard
             let factionStore = provider.factionStore,
             let formLists = provider.formListStore
-        else { return }
+        else { return nil }
         let core = VendorCore(
             resolver: VendorResolver(factions: factionStore, formLists: formLists),
             itemPluginName: provider.magicItemPluginName
         )
-        let vendors = VendorCoordinator(core: core, world: self)
-        vendors.restockSettings = VendorRestockSettings.resolve(store: provider.gameSettings)
-        game.inventory.vendors = vendors
+        return VendorCoordinator(
+            core: core,
+            world: self,
+            restockSettings: VendorRestockSettings.resolve(store: provider.gameSettings)
+        )
     }
 }
 

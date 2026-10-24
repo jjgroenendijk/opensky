@@ -223,11 +223,7 @@ final class InventoryMenuController {
             books.open(item: entry.item)
             return
         }
-        perform { entry in
-            entry.isEquipped
-                ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
-                : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text
-        }
+        perform { use($0.item) }
     }
 
     func dropSelection(count: Int32 = 1) {

@@ -32,11 +32,11 @@ struct FavouritesTests {
     @Test func aHotkeyNamesOnlyACarriedFavourite() throws {
         let items = try WorldItemRuntimeTests.standardHarness()
         let coordinator = InventoryCoordinator(
-            world: FakeAlchemyWorld(), locks: LockCoordinator(world: FakeLockWorld())
-        )
-        coordinator.wire(
-            inventory: items.runtime.inventory, references: items.references,
-            catalog: nil, pricing: nil
+            world: FakeAlchemyWorld(),
+            lockWorld: FakeLockWorld(),
+            data: InventorySessionData(items: WorldItemRuntime(
+                inventory: items.runtime.inventory, references: items.references
+            ))
         )
         #expect(coordinator.hotkeyItem(1) == .failure(.emptySlot(1)))
         #expect(coordinator.bindHotkey(1, to: Fixture.sword) == .bound("IronSword", slot: 1))
@@ -52,13 +52,13 @@ struct FavouritesTests {
         let store = WorldStateStore()
         let inventory = try InventoryRuntime(store: store, baselines: AlchemyFixture.resolver())
         let references = FakeWorldReferences(entries: [], cell: WorldItemRuntimeTests.cell)
-        let coordinator = InventoryCoordinator(
-            world: FakeAlchemyWorld(), locks: LockCoordinator(world: FakeLockWorld())
+        var data = InventorySessionData(
+            items: WorldItemRuntime(inventory: inventory, references: references)
         )
-        coordinator.wire(inventory: inventory, references: references, catalog: nil, pricing: nil)
-        try coordinator.wireAlchemy(
-            effects: AlchemyFixture.effects(), pluginName: AlchemyFixture.pluginName,
-            settings: .vanilla, texts: .vanilla
+        data.alchemy.effects = try AlchemyFixture.effects()
+        data.alchemy.pluginName = AlchemyFixture.pluginName
+        let coordinator = InventoryCoordinator(
+            world: FakeAlchemyWorld(), lockWorld: FakeLockWorld(), data: data
         )
         let sword = try #require(coordinator.itemCard(for: Fixture.sword))
         #expect(sword.kind == "Weapon")
@@ -71,5 +71,20 @@ struct FavouritesTests {
         let wheat = try #require(coordinator.itemCard(for: AlchemyFixture.wheat))
         #expect(wheat.effects == ["Restore Health", "?"])
         #expect(wheat.lines.last == "favourite, hotkey 4")
+    }
+
+    /// A row and a hotkey use an item the same way: a poison coats the weapon, an
+    /// ingredient is eaten, and a weapon is equipped.
+    @Test func usingAnItemFollowsItsKind() throws {
+        let store = WorldStateStore()
+        let inventory = try InventoryRuntime(store: store, baselines: AlchemyFixture.resolver())
+        let coordinator = InventoryCoordinator(
+            world: FakeAlchemyWorld(),
+            lockWorld: FakeLockWorld(),
+            data: InventorySessionData(items: WorldItemRuntime(inventory: inventory))
+        )
+        #expect(coordinator.use(of: AlchemyFixture.poison) == .applyPoison)
+        #expect(coordinator.use(of: AlchemyFixture.wheat) == .consume)
+        #expect(coordinator.use(of: Fixture.sword) == .equip)
     }
 }

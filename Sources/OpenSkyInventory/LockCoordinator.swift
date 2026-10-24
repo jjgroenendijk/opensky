@@ -116,17 +116,18 @@ nonisolated public struct ResolvedLock: Sendable {
 
 @MainActor
 public final class LockCoordinator {
-    public private(set) var items: WorldItemRuntime?
-    public var settings = LockpickingSettings.documentedDefaults
-    public var texts = LockTexts.vanilla
+    /// Nil without game data; every lock then reads as unlocked.
+    public let items: WorldItemRuntime?
+    public let settings: LockpickingSettings
+    public let texts: LockTexts
     /// The `LKPK` default object. Nil keeps every lock shut to picking.
-    public var lockpickItem: FormID?
+    public let lockpickItem: FormID?
     /// Test override: treat the player as carrying every lock's key.
     public var playerCarriesEveryKey = false
     public var random = LockpickingRandom(seed: 0x4F_7065_6E53_6B79)
     let world: any LockWorld
     /// Takes `LOCK`.
-    public weak var storyEvents: (any StoryEventReporting)?
+    public weak let storyEvents: (any StoryEventReporting)?
     /// Health of the pick in hand. UESP: it carries over between locks.
     public internal(set) var pickHealth: Float = 1
     public internal(set) var session: LockpickingSession?
@@ -138,12 +139,18 @@ public final class LockCoordinator {
     /// The selected lock.
     public var selectedLock: FormID?
 
-    public init(world: any LockWorld) {
+    public init(
+        world: any LockWorld,
+        items: WorldItemRuntime?,
+        data: LockSessionData = LockSessionData(),
+        storyEvents: (any StoryEventReporting)? = nil
+    ) {
         self.world = world
-    }
-
-    public func wire(items: WorldItemRuntime) {
         self.items = items
+        settings = data.settings
+        texts = data.texts
+        lockpickItem = data.lockpickItem
+        self.storyEvents = storyEvents
     }
 
     // MARK: - Lock state

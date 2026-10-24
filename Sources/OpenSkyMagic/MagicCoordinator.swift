@@ -13,40 +13,32 @@ import OpenSkyProgressionInterface
 /// Owns the magic runtimes and reads the world through `MagicWorld`.
 @MainActor
 public final class MagicCoordinator {
-    /// Nil until `wireEffects`. A value over a shared store, so every change
+    /// Nil without an MGEF index. A value over a shared store, so every change
     /// goes through `withEffects`.
     public private(set) var effects: ActiveEffectRuntime?
-    /// Nil until `wireCasting`.
+    /// Nil without a SPEL index. Set once in the initializer, because it reads
+    /// the world through this coordinator.
     public private(set) var caster: CasterRuntime?
     /// The plugin every magic item's EFID links are relative to.
-    public private(set) var pluginName = ""
+    public let pluginName: String
     /// The plugin an actor's `SPLO` links are relative to.
-    public private(set) var spellPluginName: String?
+    public let spellPluginName: String?
     /// What the most recent landed spell applied. Nil until one lands.
     public private(set) var lastHit: SpellHitReport?
-    /// Called after every spell hit that reached someone, for the visual and
-    /// image-space hooks. One observer: the effects adapter.
-    public var onSpellHit: ((SpellHitEvent) -> Void)?
-    /// The ENCH index. Setting it drops the cached profiles derived from it.
-    public private(set) var enchantmentStore: EnchantmentStore? {
-        didSet { profiles.invalidate() }
-    }
+    /// The ENCH index.
+    public let enchantmentStore: EnchantmentStore?
 
     let world: any MagicWorld
     /// What the effects asked of the app. A frame step returns and empties it.
     var pendingCommands: [MagicCommand] = []
     /// Takes `CAST`.
-    public weak var storyEvents: (any StoryEventReporting)?
-    /// Hears every cast, as spell then caster, for the `OnSpellCast` event.
-    public var onSpellCast: ((ReferenceKey, ReferenceKey) -> Void)?
+    public weak let storyEvents: (any StoryEventReporting)?
     /// The spell words the spellcasting readout shows.
-    public var magicTexts = MagicTexts.vanilla
-    public var castNotices = GameSettingTexts<CastNoticeText>.vanilla
+    public let magicTexts: MagicTexts
+    public let castNotices: GameSettingTexts<CastNoticeText>
     /// The hands pressed last frame, so a press during a shout is refused once.
     var castPressed: Set<SpellHand> = []
-    public var spellCostSettings = SpellCostSettings.vanilla {
-        didSet { caster?.costSettings = spellCostSettings }
-    }
+    public let spellCostSettings: SpellCostSettings
 
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
@@ -63,17 +55,17 @@ public final class MagicCoordinator {
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
     public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
-    public var soulTrapSettings = SoulTrapSettings.vanilla
-    public var enchantingSettings = EnchantingSettings.vanilla
-    public var soulTexts = SoulTexts.vanilla
+    public let soulTrapSettings: SoulTrapSettings
+    public let enchantingSettings: EnchantingSettings
+    public let soulTexts: SoulTexts
     public internal(set) var lastSoulTrap: SoulTrapOutcome?
     public internal(set) var lastRecharge: RechargeOutcome?
     public internal(set) var lastEnchanting = EnchantingOutcome.idle
-    /// Every SHOU in the load order, by key. Empty until `wireShouts`.
-    public internal(set) var shouts: [ReferenceKey: ResolvedShout] = [:]
+    /// Every SHOU in the load order, by key.
+    public let shouts: [ReferenceKey: ResolvedShout]
     /// The load order's shouts, for an NPC's spell list.
-    var shoutStore: ShoutStore?
-    public var shoutSettings = ShoutSettings.vanilla
+    let shoutStore: ShoutStore?
+    public let shoutSettings: ShoutSettings
     public internal(set) var shoutMachine = ShoutMachine()
     var wasShoutHeld = false
     /// Seconds the readout's Shout button still holds the key.
@@ -89,7 +81,7 @@ public final class MagicCoordinator {
     public internal(set) var lastCastingCue: String?
     /// Runes waiting on the ground, oldest first. Not saved.
     public internal(set) var runes: [PlacedRune] = []
-    public var runeSettings = RuneSettings.vanilla
+    public let runeSettings: RuneSettings
     public internal(set) var detonatedRunes = 0
     /// Summoned and reanimated actors, oldest first. Not saved.
     public internal(set) var commanded: [CommandedActor] = []
@@ -97,14 +89,12 @@ public final class MagicCoordinator {
     public internal(set) var holds: [MagicHold] = []
     /// Lights the Light archetype placed. Not saved.
     public internal(set) var magicLights: [MagicLight] = []
-    public var holdSettings = MagicHoldSettings.vanilla {
-        didSet { effects?.valueAndParts = holdSettings.valueAndParts }
-    }
+    public let holdSettings: MagicHoldSettings
 
     /// Where each caster aimed its last target-location summon.
     var summonPoints: [ReferenceKey: SIMD3<Float>] = [:]
     var profiles = ItemEnchantmentProfileCache()
-    var spellBaselines: ActorSpellBaselineResolver?
+    let spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
     var grantedActors: Set<ReferenceKey> = []
     /// An index into the player's known spells. Clamped on read.
@@ -112,40 +102,42 @@ public final class MagicCoordinator {
     public internal(set) var lastEffectAction = MagicEffectActionOutcome.idle
     public internal(set) var lastCastingAction = CastingActionOutcome.idle
 
-    public init(world: any MagicWorld) {
+    /// Without data there is no game: every runtime is nil, and each action says so.
+    public init(
+        world: any MagicWorld,
+        data: MagicSessionData = MagicSessionData(),
+        storyEvents: (any StoryEventReporting)? = nil
+    ) {
         self.world = world
-    }
-
-    public func wireEffects(
-        values: any ActorValueAccess,
-        store: MagicEffectStore,
-        pluginName: String,
-        conditionRegistry: ConditionFunctionRegistry
-    ) {
-        effects = ActiveEffectRuntime(
-            values: values,
-            effects: store,
-            conditionRegistry: conditionRegistry
-        )
-        self.pluginName = pluginName
-        wireArchetypeLookups()
-    }
-
-    public func wireCasting(
-        spellbook: SpellbookRuntime,
-        values: any ActorValueAccess,
-        spellPluginName: String?,
-        baselines: ActorSpellBaselineResolver?
-    ) {
-        let runtime = CasterRuntime(spellbook: spellbook, values: values, world: self)
-        runtime.costSettings = spellCostSettings
-        caster = runtime
-        self.spellPluginName = spellPluginName
-        spellBaselines = baselines
-    }
-
-    public func wireEnchantments(store: EnchantmentStore?) {
-        enchantmentStore = store
+        self.storyEvents = storyEvents
+        effects = data.effects.map {
+            ActiveEffectRuntime(
+                values: $0.values, effects: $0.store, conditionRegistry: $0.conditionRegistry
+            )
+        }
+        pluginName = data.effects?.pluginName ?? ""
+        spellPluginName = data.casting?.spellPluginName
+        spellBaselines = data.casting?.baselines
+        enchantmentStore = data.enchantments
+        shoutStore = data.shouts
+        shouts = Self.shoutsByKey(data.shouts)
+        magicTexts = data.texts.magic
+        castNotices = data.texts.castNotices
+        soulTexts = data.texts.souls
+        spellCostSettings = data.rules.spellCost
+        soulTrapSettings = data.rules.soulTrap
+        holdSettings = data.rules.holds
+        enchantingSettings = data.rules.enchanting
+        shoutSettings = data.rules.shouts
+        runeSettings = data.rules.runes
+        if let casting = data.casting {
+            let runtime = CasterRuntime(
+                spellbook: casting.spellbook, values: casting.values, world: self
+            )
+            runtime.costSettings = spellCostSettings
+            caster = runtime
+        }
+        prepareArchetypeLookups()
     }
 
     /// Runs one change on the effect runtime and stores it back. Nil without one.
@@ -357,7 +349,7 @@ extension MagicCoordinator: CasterWorld {
     /// Casting breaks the caster's invisibility. The wiki says only the player's
     /// casts count as a story event.
     public func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
-        onSpellCast?(spell, caster)
+        world.noteSpellCast(spell, by: caster)
         breakInvisibility(of: caster)
         guard caster == .player, let storyEvents else { return }
         storyEvents.reportStoryEvent(.castMagic(
@@ -394,8 +386,10 @@ extension MagicCoordinator: CasterWorld {
                 .wardHit(wardHit, caster: hit.payload.caster, spell: hit.payload.spell)
             )
         }
-        if !hit.targets.isEmpty, let onSpellHit, let store = effects?.effects {
-            onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
+        if !hit.targets.isEmpty, let store = effects?.effects {
+            pendingCommands.append(
+                .spellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
+            )
         }
         return report
     }

@@ -87,11 +87,7 @@ struct ExplosionRuntimeTests {
     }
 
     static func runtime(world: FakeExplosionWorld) throws -> ExplosionRuntime {
-        let runtime = ExplosionRuntime()
-        runtime.records = try records()
-        runtime.itemPlugin = plugin
-        runtime.world = world
-        return runtime
+        try ExplosionRuntime(records: records(), itemPlugin: plugin, world: world)
     }
 
     @Test func damageFallsOffLinearlyToTheEdge() {

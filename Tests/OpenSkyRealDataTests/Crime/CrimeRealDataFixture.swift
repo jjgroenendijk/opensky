@@ -211,9 +211,9 @@ extension CrimeRealDataTests {
         let references = SceneReferences(scene: scene)
         let items = WorldItemRuntime(
             inventory: InventoryRuntime(store: store, baselines: definitions),
-            references: references
+            references: references,
+            crime: reporter
         )
-        items.crime = reporter
 
         let resolved = crimeFaction(of: scene, resolver: crimeFactions, plugin: plugin)
         return Harness(
