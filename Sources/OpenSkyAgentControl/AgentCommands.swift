@@ -91,6 +91,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
+    /// Opens the skills menu as the Quick Stats key does. `sky` turns the perk sky on
+    /// or off; `levels` first earns that many character levels.
+    case skillsMenu(sky: Bool?, levels: Int)
     /// Runs the benchmark tour; the reply comes when the tour ends.
     case benchmark(AgentBenchmarkRequest)
     /// Seats the actor in `furniture`, or in the nearest loaded furniture with a free seat.
@@ -112,8 +115,16 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "kill": try .kill(args.string("ref"))
         case "resurrect": try .resurrect(args.string("ref"))
         case "racemenu": try .raceMenu(limited: args.bool("limited", default: false))
+        case "skillsmenu": try parseSkillsMenu(args)
         default: try parseFurniture(name, args)
         }
+    }
+
+    private static func parseSkillsMenu(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let levels = try args.optionalInt("levelup") ?? 0
+        guard (0 ... 10).contains(levels) else { throw args.invalid("levelup", "0 to 10") }
+        guard args.has("sky") else { return .skillsMenu(sky: nil, levels: levels) }
+        return try .skillsMenu(sky: args.bool("sky", default: true), levels: levels)
     }
 
     private static func parseFurniture(

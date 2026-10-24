@@ -42,8 +42,16 @@ Making a skill legendary uses the Jump key on a keyboard (Space) and the Y butto
 
 ## The two movies
 
-The level-up pick and the skill ring are two movies on one SWF layer. The coordinator loads
-`levelupmenu.swf` while a pick is owed, and `statsmenu.swf` after the last pick.
+`statsmenu.swf` stays up while the menu is open, with the [perk sky](/engine/perk-sky.md)
+behind it. While a pick is owed, the stats movie is in its `LEVEL_UP` state and
+`levelupmenu.swf` is drawn over it on the SWF overlay layer
+([overlay movie](/rendering/swf-layer.md#overlay-movie)). After the last pick the overlay
+goes and the stats movie returns to `STATS`.
+
+This is the game's layering. The stats movie has code for the level-up state: it places
+the perk names under `MaxPerkNameHeightLevelMode` and hides `AddPerkButtonInstance`
+(`openskycli swf action-list --movie statsmenu.swf`). So the game keeps the stats movie up
+under the level-up pick.
 
 ### levelupmenu.swf
 

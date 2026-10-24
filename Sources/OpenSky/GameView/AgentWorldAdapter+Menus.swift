@@ -96,7 +96,21 @@ extension AgentWorldAdapter {
             result["rows"] = .array(rows.rows.map { .string($0) })
             result["selected"] = .init(rows.selected)
         }
+        if game.menuMode.topMenu == SkillsMenuCoordinator.identifier {
+            result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
+        }
         return .object(result)
+    }
+
+    /// The page, the movies, and the perk sky line, such as "812 draws, turned 40°, ring".
+    func skillsMenuState(_ snapshot: SkillsMenuSnapshot) -> AgentJSON {
+        [
+            "page": .string(snapshot.page),
+            "movie": .init(snapshot.movie.state),
+            "levelUpMovie": .bool(snapshot.isLevelUpMovieLoaded),
+            "skyEnabled": .bool(snapshot.isSkyEnabled),
+            "sky": .init(snapshot.sky)
+        ]
     }
 
     func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON {

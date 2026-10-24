@@ -45,7 +45,8 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         runtime.runtime.globalValue(className).objectValue
     }
 
-    /// Sends the whole model: the card, the ring, the tree's names, and the mode.
+    /// Sends the whole model: the card, the ring, the tree's names, and the mode. The
+    /// level-up page uses the movie's `LEVEL_UP` state, under the level-up movie.
     /// `namePoints` holds each star's place on screen, 0 to 1 with y down.
     public static func publish(
         _ model: SkillsMenuModel, namePoints: [UInt32: SIMD2<Float>] = [:],
@@ -63,7 +64,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         publishPerkNames(model, points: namePoints, runtime: runtime)
         runtime.callMovie(
             "SetStatsMode",
-            arguments: [.boolean(true), .integer(model.player.perkPoints)]
+            arguments: [.boolean(model.page != .levelUp), .integer(model.player.perkPoints)]
         )
         publishCard(model, inTree: inTree, runtime: runtime)
         updatePerkText(show: inTree, menuClass: menuClass, runtime: runtime)
