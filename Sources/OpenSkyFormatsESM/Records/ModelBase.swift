@@ -65,6 +65,8 @@ nonisolated public struct ModelBase: Sendable {
     public let workbench: Workbench?
     /// FURN MNAM: the low 24 bits mark the mesh markers this record uses. Nil on other types.
     public let furnitureFlags: UInt32?
+    /// The record header flags. FURN keeps Must Exit To Talk and Child Can Use here.
+    public let headerFlags: UInt32
     /// FLOR and TREE produce. Nil when the record carries none of its fields.
     public let produce: HarvestProduce?
     /// TACT VNAM, a VTYP.
@@ -83,6 +85,7 @@ nonisolated public struct ModelBase: Sendable {
         formID = FormID(record.formID)
         recordType = record.type
         isEditorMarker = record.isEditorMarker
+        headerFlags = record.flags.rawValue
 
         var fields = ModelBaseFields(ownerType: record.type)
         var rest = try RecordFields(

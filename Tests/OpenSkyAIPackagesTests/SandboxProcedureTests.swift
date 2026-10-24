@@ -2,6 +2,7 @@
 // clock, and meals at the meal times.
 
 @testable import OpenSkyAIPackages
+import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyWorldInterface
@@ -72,7 +73,9 @@ struct SandboxProcedureTests {
         #expect(machine.handle(.clock(hours: 10 + Double(hours) / 2)).isEmpty)
         let commands = machine.handle(.clock(hours: 10 + Double(hours) + 0.01))
         #expect(commands.first == .endActivity(.idleMarker))
-        #expect(machine.state == .moving)
+        // After an activity without furniture the sandbox asks for a seat next.
+        #expect(commands.last == .seekSeat(machine.seatRequest))
+        #expect(machine.state == .ready)
     }
 
     @Test func aMarkerGivenWhileWanderingStartsAnIdleMarkerActivity() {
@@ -113,5 +116,39 @@ struct SandboxProcedureTests {
         _ = machine.start()
         _ = machine.handle(.clock(hours: 12.05))
         #expect(machine.state == .sandboxing(.wandering))
+    }
+
+    @Test func aSandboxWalksToAnOfferedSeatSitsAndThenWanders() {
+        var machine = Self.machine()
+        _ = machine.start()
+        _ = machine.handle(.clock(hours: 10))
+        let wandering = machine.handle(.clock(hours: 100))
+        #expect(wandering.first == .endActivity(.wandering))
+        guard case let .seekSeat(request)? = wandering.last else {
+            Issue.record("no seat request: \(wandering)")
+            return
+        }
+        #expect(request.radius == 500 && request.sits && !request.sleeps)
+        let chair = FurnitureSeat(position: [100, 0, 0], heading: 0, animationType: 1, keyword: nil)
+        let seat = PackageSeat(
+            furniture: .plugin(name: "seat.esm", objectID: 10), index: 0, seat: chair
+        )
+        #expect(machine.handle(.seatOffered(seat)) == [.move(to: chair.root)])
+        #expect(machine.handle(.arrived) == [.sit])
+        #expect(machine.state == .sandboxing(.sitting))
+        let standing = machine.handle(.clock(hours: 200))
+        #expect(standing.first == .endActivity(.sitting))
+        #expect(machine.sandbox.seat == nil)
+        #expect(machine.state == .moving)
+    }
+
+    @Test func aSandboxWithNoSeatWanders() {
+        var machine = Self.machine()
+        _ = machine.start()
+        _ = machine.handle(.clock(hours: 10))
+        _ = machine.handle(.clock(hours: 100))
+        let commands = machine.handle(.seatOffered(nil))
+        #expect(commands.count == 1)
+        #expect(machine.state == .moving)
     }
 }

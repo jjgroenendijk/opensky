@@ -43,6 +43,8 @@ public protocol PackageWorld: AnyObject {
     func packageSeat(
         in furniture: ReferenceKey, actor: ReferenceKey, animation: UInt16
     ) -> PackageSeat?
+    /// A free seat in a sandbox's area that the actor may use, reserved for it.
+    func packageSandboxSeat(for actor: ReferenceKey, in request: SandboxSeatRequest) -> PackageSeat?
     /// The actor sits down in `seat`.
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat)
     /// The actor leaves `seat`, or nil when it never sat, and frees every seat it reserved.
@@ -99,6 +101,12 @@ extension PackageWorld {
 
     public func packageSeat(
         in _: ReferenceKey, actor _: ReferenceKey, animation _: UInt16
+    ) -> PackageSeat? {
+        nil
+    }
+
+    public func packageSandboxSeat(
+        for _: ReferenceKey, in _: SandboxSeatRequest
     ) -> PackageSeat? {
         nil
     }

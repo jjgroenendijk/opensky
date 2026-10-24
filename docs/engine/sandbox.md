@@ -44,13 +44,22 @@ Wandering. Example: an idle marker with Energy 50 lasts 0.2 x 1.5 x (1 + 50 x 0.
   times are rolled once per game day. A meal that starts cuts the current activity short.
   Inside a meal, each activity is EatStanding, which asks for the eat loop.
 - When the Allow Idle Markers input is false, the idle runtime gives the actor no marker.
+- After an activity that did not use furniture, the actor looks for a free seat in the
+  place: the nearest one that its inputs allow. Allow Sitting (default true) admits sit and
+  lean markers, Allow Sleeping admits beds, and Allow Special Furniture admits crafting
+  stations. Furniture flagged Ignored By Sandbox, furniture owned by someone else, and the
+  furniture the actor used last are skipped. The actor walks to the seat and sits for a
+  Sitting, Sleeping, or Furniture activity, then stands and walks on. With no seat, it walks
+  to a random point. The wiki gives the object just used a chance of zero, so the actor
+  never takes furniture twice in a row.
 
 The wiki lists twelve parameters. The procedure in the vanilla `Sandbox` template (`PACK`
 named `Sandbox` in `Skyrim.esm`) has ten, read from its `PKC2` indexes and `BNAM` names on
 the install: Location, Allow Eating, Allow Sleeping, Allow Conversation, Allow Idle Markers,
 Allow Sitting, Allow Wandering, Prefered Path Only?, Energy (default 50), and Allow Special
 Furniture. There is no Allow Furniture or Min Wander Distance. OpenSky reads Allow Eating
-(position 1), Allow Idle Markers (4), and Energy (8).
+(position 1), Allow Sleeping (2), Allow Idle Markers (4), Allow Sitting (5), Energy (8),
+and Allow Special Furniture (9).
 
 `Skyrim.esm` holds only 14 of the settings: the duration base, the cylinder bottom, the
 radius hysteresis, the lunch, dinner, and meal-length bounds, and the duration multipliers
@@ -67,10 +76,10 @@ names, and the settings table has the `fSandbox...` names with other values (lun
 
 Where OpenSky differs from the game:
 
-- The game picks each activity from a weighted list of nearby objects. OpenSky only has idle
-  markers and wandering, so the actor always takes a free marker when one is in the place.
-- Furniture, sitting, sleeping, conversations, and special furniture are not used yet. Their
-  duration settings are read, so the formula covers them.
+- The game picks each activity from a weighted list of nearby objects. OpenSky takes the
+  nearest allowed seat after each activity without furniture, and a free idle marker when
+  one is in the place.
+- Conversations are not used yet.
 - That the durations are game hours is an inference: the wiki gives hours only for meals and
   sleep. With game hours, a sandboxing actor stays at a marker for about a minute of real
   time, as in the game.

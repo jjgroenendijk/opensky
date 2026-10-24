@@ -56,14 +56,19 @@ extension CellSceneBuilderTests {
     }
 
     /// Each mesh marker is a seat in world space, with the record's keyword and disabled
-    /// entries for its index. `MNAM` 0b10 turns marker 0 off. The root drops to the floor.
+    /// entries for its index. `MNAM` 0b10 turns marker 0 off. The root drops to the floor,
+    /// and every seat carries the record's perch, sandbox, and spell flags.
     @Test(.enabled(if: Self.hasDevice))
     func furnitureSeatsTakeMarkersAndKeywords() throws {
         try writeLooseFile("meshes/furniture/block.nif", Self.furnitureNIF)
         var disabledEntries = Data()
         disabledEntries.appendUInt16(0)
         disabledEntries.appendUInt16(2)
-        let keyword = ESMFixture.field("MNAM", ESMFixture.u32(0b10))
+        var flags = Data()
+        flags.appendUInt16(0x02)
+        let keyword = ESMFixture.field("MNAM", ESMFixture.u32(0x0400_0002))
+            + ESMFixture.field("FNAM", flags)
+            + ESMFixture.field("NAM1", ESMFixture.u32(0x777))
             + ESMFixture.field("ENAM", ESMFixture.u32(0))
             + ESMFixture.field("NAM0", disabledEntries)
             + ESMFixture.field("ENAM", ESMFixture.u32(1))
@@ -89,6 +94,9 @@ extension CellSceneBuilderTests {
         #expect(seats[0].entryPoints == 0)
         #expect(!seats[0].isEnabled)
         #expect(seats[1].isEnabled)
+        #expect(seats[0].rules == FurnitureRules(
+            isPerch: true, ignoredBySandbox: true, associatedSpell: FormID(0x777)
+        ))
     }
 
     /// An automatic door covers its `OBND` box at its pose; a parent-only reference is no

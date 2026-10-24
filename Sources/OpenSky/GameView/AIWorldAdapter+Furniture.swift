@@ -4,8 +4,12 @@
 // docs/engine/furniture.md.
 
 import OpenSkyActorPresentation
+import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyConditions
+import OpenSkyCrime
+import OpenSkyCrimeInterface
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -31,7 +35,8 @@ extension AIWorldAdapter {
             furniture?.isEnabled = store.bool(.furniture)
         }
         gameSession.worldTick.register(.furniture) { [weak self] _ in
-            self?.placeSeatedPlayer()
+            self?.releaseMovedPlayer()
+            self?.game.furniture.advance()
         }
     }
 
@@ -39,6 +44,12 @@ extension AIWorldAdapter {
         in furniture: ReferenceKey, actor: ReferenceKey, animation: UInt16
     ) -> PackageSeat? {
         game.furniture.reserve(in: furniture, for: actor, animation: animation)
+    }
+
+    func packageSandboxSeat(
+        for actor: ReferenceKey, in request: SandboxSeatRequest
+    ) -> PackageSeat? {
+        game.furniture.sandboxSeat(for: actor, in: request)
     }
 
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat) {
@@ -56,33 +67,52 @@ extension AIWorldAdapter {
     /// Farther than this from the seat, something else moved the seated player away.
     static let seatLeaveDistance: Float = 256
 
-    /// The body's root sits on the seat and the eye on the seat idle's head bone. A
-    /// teleport or a cell change that took the player away ends the seat.
-    private func placeSeatedPlayer() {
+    /// A teleport or a cell change that took the seated or rising player away ends the seat.
+    private func releaseMovedPlayer() {
+        let seated = game.furniture.occupancies[.player]
         guard
-            let occupancy = game.furniture.occupancies[.player],
+            let occupancy = seated ?? game.furniture.exits[.player],
             let gameSession = game.gameSession
         else { return }
-        let seat = occupancy.seat.seat
         let feet = gameSession.walkController.feetPosition
         guard
-            furnitureSeats(of: occupancy.seat.furniture) != nil,
-            simd_distance(feet, seat.position) <= Self.seatLeaveDistance
-        else {
-            game.furniture.vacate(.player)
-            game.idleWorld.idles.leaveFurniture(.player)
-            gameSession.playerSeat = nil
+            furnitureSeats(of: occupancy.seat.furniture) == nil
+            || simd_distance(feet, occupancy.seat.seat.position) > Self.seatLeaveDistance
+        else { return }
+        game.furniture.vacate(.player)
+        holdAssociatedSpell(of: occupancy.seat.seat, on: .player, while: false)
+        game.idleWorld.idles.leaveFurniture(.player, playsExit: false)
+        gameSession.playerSeat = nil
+        if seated != nil {
             game.scripts.runtime?.queueFurnitureEvent(
                 sitting: false, actor: .player, furniture: occupancy.seat.furniture
             )
-            return
         }
-        seatPlayer(on: seat, gameSession: gameSession)
     }
 
-    private func seatPlayer(on seat: FurnitureSeat, gameSession: GameSession) {
+    /// FURN `NAM1` is on the actor while it uses the furniture, as Papyrus `AddSpell` puts
+    /// a spell on it. No vanilla record has one.
+    private func holdAssociatedSpell(
+        of seat: FurnitureSeat,
+        on actor: ReferenceKey,
+        while held: Bool
+    ) {
+        guard
+            let spell = seat.rules.associatedSpell,
+            let bridge = game.scripts.bridge,
+            let key = bridge.referenceKey(forFormID: spell)
+        else { return }
+        if held {
+            bridge.addSpell(key, to: actor)
+        } else {
+            bridge.removeSpell(key, from: actor)
+        }
+    }
+
+    /// The body's root goes on the pose and the eye on the idle's head bone.
+    private func seatPlayer(at pose: FurniturePose, gameSession: GameSession) {
         let root = MatrixMath.placement(
-            position: seat.root, rotation: SIMD3(0, 0, seat.heading), scale: 1
+            position: pose.root, rotation: SIMD3(0, 0, pose.heading), scale: 1
         )
         let head = game.idleWorld.idles.idleBone(of: .player, named: DialogueCamera.headBoneName)
         gameSession.seatPlayer(at: root, head: head)
@@ -102,6 +132,36 @@ extension AIWorldAdapter: FurnitureWorld {
         packageActorPosition(actor)
     }
 
+    /// A crafting station: its furniture names a workbench type. A chair names none.
+    func furnitureIsSpecial(_ furniture: ReferenceKey) -> Bool {
+        guard
+            let streamer = game.streamer,
+            let formID = streamer.referenceEntry(key: furniture)?.formID
+        else { return false }
+        let station = streamer.residentInteraction(reference: formID)?.station
+        return (station?.workbench.benchType ?? WorkbenchType.none) != WorkbenchType.none
+    }
+
+    /// The reference's own owner, then its cell's, as the crime rules read them.
+    func furnitureOwnerAllows(_ actor: ReferenceKey, _ furniture: ReferenceKey) -> Bool {
+        let owner = game.crime.crimeOwner(of: furniture)
+        if case .forbidden = game.crime.crimeActor(actor).verdict(on: owner) {
+            return false
+        }
+        return true
+    }
+
+    func furnitureActorTraits(_ actor: ReferenceKey) -> FurnitureActorTraits {
+        guard
+            let holder = game.actorWorld.actorValueHolder(for: actor),
+            let values = game.actorValues.runtime
+        else { return FurnitureActorTraits() }
+        return FurnitureActorTraits(
+            isChild: values.baseline(of: holder).isChild,
+            isDragon: game.magicWorld.actorHasKeyword(MountWorldAdapter.dragonKeyword, on: holder)
+        )
+    }
+
     /// `KWDA` of the actor's base, as the Papyrus `HasKeyword` reads it.
     func furnitureActorHasKeyword(_ actor: ReferenceKey, _ keyword: FormID) -> Bool {
         guard
@@ -116,13 +176,14 @@ extension AIWorldAdapter: FurnitureWorld {
     func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy) {
         let seat = occupancy.seat
         if actor == .player, let gameSession = game.gameSession {
-            seatPlayer(on: seat.seat, gameSession: gameSession)
+            seatPlayer(at: seat.seat.seatedPose, gameSession: gameSession)
         } else if actor != .player {
             game.streamer?.restActor(actor, at: ReferenceTransformOverride(
                 position: seat.seat.root, rotation: SIMD3(0, 0, seat.seat.heading)
             ))
             game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
         }
+        holdAssociatedSpell(of: seat.seat, on: actor, while: true)
         game.idleWorld.idles.enterFurniture(actor, use: FurnitureUse(
             sitState: .readyToSit,
             animationType: UInt32(seat.seat.animationType),
@@ -134,18 +195,51 @@ extension AIWorldAdapter: FurnitureWorld {
         )
     }
 
-    /// An NPC's package walks it on from the seat; the player stands at `point`.
-    func placeStanding(
-        _ actor: ReferenceKey, from occupancy: FurnitureOccupancy, at point: SIMD3<Float>
-    ) {
+    func placeStanding(_ actor: ReferenceKey, from occupancy: FurnitureOccupancy) {
+        holdAssociatedSpell(of: occupancy.seat.seat, on: actor, while: false)
         game.idleWorld.idles.leaveFurniture(actor)
-        if actor == .player, let gameSession = game.gameSession {
-            gameSession.playerSeat = nil
-            gameSession.placePlayerFeet(at: point)
-        }
         game.scripts.runtime?.queueFurnitureEvent(
             sitting: false, actor: actor, furniture: occupancy.seat.furniture
         )
+    }
+
+    func furnitureExitIsLoading(_ actor: ReferenceKey) -> Bool {
+        game.idleWorld.idles.isExitLoading(actor)
+    }
+
+    func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample? {
+        guard let playing = game.idleWorld.idles.rootMotion(of: actor) else { return nil }
+        let (motion, elapsed) = playing
+        return FurnitureMotionSample(
+            offset: motion.offset(at: elapsed), yaw: motion.yaw(at: elapsed),
+            endOffset: motion.offset(at: motion.duration), endYaw: motion.yaw(at: motion.duration),
+            isFinished: elapsed >= motion.duration
+        )
+    }
+
+    func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose) {
+        if actor == .player {
+            if let gameSession = game.gameSession {
+                seatPlayer(at: pose, gameSession: gameSession)
+            }
+        } else {
+            game.streamer?.restActor(actor, at: ReferenceTransformOverride(
+                position: pose.root, rotation: SIMD3(0, 0, pose.heading)
+            ))
+        }
+    }
+
+    /// The player walks on from `pose`, facing its way; an NPC's package walks it on.
+    func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose) {
+        guard actor == .player, let gameSession = game.gameSession else {
+            moveFurnitureActor(actor, to: pose)
+            return
+        }
+        gameSession.playerSeat = nil
+        gameSession.placePlayerFeet(at: pose.root)
+        if gameSession.movementMode == .walk {
+            gameSession.freeFlyCamera.yaw = Float.pi / 2 - pose.heading
+        }
     }
 
     func residentFurniture() -> [ReferenceKey] {

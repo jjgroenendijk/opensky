@@ -13,6 +13,10 @@ nonisolated public struct PackageSandboxSetup: Equatable, Sendable {
     public var energy: Float = 50
     public var eats = false
     public var usesIdleMarkers = true
+    /// Allow Sitting, Allow Sleeping, and Allow Special Furniture.
+    public var sits = true
+    public var sleeps = false
+    public var usesSpecialFurniture = false
     /// Where the actor stood when the procedure started.
     public var start: SIMD3<Float>
 
@@ -36,6 +40,9 @@ nonisolated public struct SandboxProgress: Equatable, Sendable {
     /// The meals of day `mealDay`, rolled once per day as the wiki describes.
     public internal(set) var meals: [SandboxMeal] = []
     var mealDay: Int?
+    /// The seat the actor walks to or sits in.
+    public internal(set) var seat: PackageSeat?
+    var lastActivity: SandboxActivity?
 }
 
 nonisolated extension PackageProcedureMachine {
@@ -75,6 +82,7 @@ nonisolated extension PackageProcedureMachine {
     /// Starts `activity`, or a meal when one is due, and rolls how long it lasts.
     mutating func beginSandboxActivity(_ activity: SandboxActivity) -> [PackageProcedureCommand] {
         let chosen = mealIsDue ? SandboxActivity.eatStanding : activity
+        sandbox.lastActivity = chosen
         let sandboxSetup = sandboxSetup
         sandbox.hoursLeft = sandboxSetup.settings.duration(
             of: chosen, energy: sandboxSetup.energy, unit: randomUnit()
@@ -94,11 +102,12 @@ nonisolated extension PackageProcedureMachine {
         let eating = activity == .eatStanding || activity == .eatSitting
         let mealStarts = mealIsDue && !eating
         guard sandbox.hoursLeft <= 0 || mealStarts else { return [] }
-        let ended = [PackageProcedureCommand.endActivity(activity)]
+        let ended = sandbox.seat == nil
+            ? [PackageProcedureCommand.endActivity(activity)] : leaveSandboxSeat()
         if mealIsDue {
             return ended + beginSandboxActivity(.eatStanding)
         }
-        return ended + move(to: nextWanderPoint())
+        return ended + (seeksSeatNext ? seekSeat() : move(to: nextWanderPoint()))
     }
 
     /// True inside one of today's meals when the package lets the actor eat.

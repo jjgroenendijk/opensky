@@ -35,8 +35,16 @@ extension AgentWorldAdapter {
         let furniture = game.furniture
         if let seats = game.aiWorld.furnitureSeats(of: target.key), !seats.isEmpty {
             let holders = furniture.ledger.holders(of: target.key)
+            let rules = seats[0].rules
             return [
                 "ref": .formID(target.formID.rawValue),
+                "rules": [
+                    "childCanUse": .bool(rules.childCanUse),
+                    "mustExitToTalk": .bool(rules.mustExitToTalk),
+                    "perch": .bool(rules.isPerch),
+                    "ignoredBySandbox": .bool(rules.ignoredBySandbox),
+                    "spell": rules.associatedSpell.map { .formID($0.rawValue) } ?? .null
+                ],
                 "markers": .array(seats.indices.map { index in
                     let seat = seats[index]
                     return [
@@ -63,6 +71,8 @@ extension AgentWorldAdapter {
             "marker": occupancy.map { .init($0.seat.index) } ?? .null,
             "entry": occupancy.map { .init(Int($0.entry)) } ?? .null,
             "sittingRotation": .init(furniture.sittingRotation),
+            "leaving": .bool(furniture.isLeavingSeat(target.key)),
+            "idle": idleReport(of: target.key),
             "position": game.aiWorld.furnitureActorPosition(target.key).map { .init($0) } ?? .null
         ]
     }
@@ -91,6 +101,17 @@ extension AgentWorldAdapter {
         case let .failure(refusal):
             throw AgentFailure(.failed, "the actor cannot sit: \(refusal.rawValue)")
         }
+    }
+
+    /// The last idle the actor played, such as its furniture entry or exit idle.
+    private func idleReport(of actor: ReferenceKey) -> AgentJSON {
+        guard let report = game.idleWorld.idles.lastReport(of: actor) else { return .null }
+        return [
+            "chosen": report.chosen.map { .string($0) } ?? .null,
+            "failure": report.failure.map { .string($0) } ?? .null,
+            "seconds": report.seconds.isFinite ? .init(report.seconds) : .string("held"),
+            "rootMotion": .bool(report.plan?.rootMotion != nil)
+        ]
     }
 
     private func formID(of key: ReferenceKey) -> AgentJSON? {

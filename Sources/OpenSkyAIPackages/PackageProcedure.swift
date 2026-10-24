@@ -43,6 +43,8 @@ nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case stop
     /// A sandbox activity's time ran out; the world lets go of what it used.
     case endActivity(SandboxActivity)
+    /// A sandbox wants a free seat in its area; the world answers with `seatOffered`.
+    case seekSeat(SandboxSeatRequest)
 }
 
 nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
@@ -55,6 +57,8 @@ nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
     case sensed(PackageSenses)
     /// The game clock, in game hours since the calendar's start.
     case clock(hours: Double)
+    /// The seat the world reserved for a sandbox, or nil when it found none.
+    case seatOffered(PackageSeat?)
 }
 
 /// What one procedure needs, read from its parameters by `PackageProcedureInputs`.
@@ -195,6 +199,8 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             return handleArrivalAtIdleMarker()
         case let .clock(hours):
             return handleClock(hours)
+        case let .seatOffered(seat):
+            return handleSeatOffer(seat)
         case let .tick(delta):
             return handleTick(max(0, delta))
         case let .acted(result):
@@ -218,7 +224,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     /// A sandbox never completes, so it waits where it stands and then tries a new point.
     private mutating func handleMovementFailure() -> [PackageProcedureCommand] {
         if kind == .sandbox {
-            return beginSandboxActivity(.wandering)
+            return leaveSandboxSeat() + beginSandboxActivity(.wandering)
         }
         state = .failed
         return []

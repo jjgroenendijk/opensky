@@ -121,6 +121,9 @@ nonisolated extension PackageProcedureMachine {
             state = .waiting
             return []
         case .sandbox:
+            if let seat = sandbox.seat {
+                return sitInSandboxSeat(seat)
+            }
             return beginSandboxActivity(.wandering)
         case .act:
             guard let action = arrivalAction() else {

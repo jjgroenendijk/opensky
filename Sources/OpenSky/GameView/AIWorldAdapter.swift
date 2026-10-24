@@ -52,6 +52,7 @@ protocol AIWorldHost: AnyObject {
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
+    var magicWorld: MagicWorldAdapter { get }
     var npcAnimation: NPCAnimationCoordinator { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
@@ -303,6 +304,10 @@ extension AIWorldAdapter {
     ) -> PackageMoveResult {
         if actor == .player {
             return walkPlayer(to: point, direct: direct) ? .started : .failed
+        }
+        // The exit clip carries the actor out of its seat first.
+        if game.furniture.isLeavingSeat(actor) {
+            return .busy
         }
         let result = game.streamer?.moveActor(
             actor, to: point, direct: direct, gait: gait,

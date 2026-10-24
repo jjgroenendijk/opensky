@@ -15,12 +15,23 @@ public protocol FurnitureWorld: AnyObject {
     func furnitureActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>?
     /// Whether the actor's base has the keyword (`KWDA`).
     func furnitureActorHasKeyword(_ actor: ReferenceKey, _ keyword: FormID) -> Bool
+    func furnitureActorTraits(_ actor: ReferenceKey) -> FurnitureActorTraits
+    /// A crafting station or other furniture a sandbox uses only with Allow Special Furniture.
+    func furnitureIsSpecial(_ furniture: ReferenceKey) -> Bool
+    /// False when someone other than the actor or its faction owns the furniture.
+    func furnitureOwnerAllows(_ actor: ReferenceKey, _ furniture: ReferenceKey) -> Bool
     /// Sets the actor on the seat, starts its entry idle, and tells the scripts.
     func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy)
-    /// Stops the seat idle and tells the scripts. The player's feet go to `point`.
-    func placeStanding(
-        _ actor: ReferenceKey, from occupancy: FurnitureOccupancy, at point: SIMD3<Float>
-    )
+    /// Starts the exit idle and tells the scripts.
+    func placeStanding(_ actor: ReferenceKey, from occupancy: FurnitureOccupancy)
+    /// Whether the actor's exit idle still loads; it stays on the seat until it plays.
+    func furnitureExitIsLoading(_ actor: ReferenceKey) -> Bool
+    /// The root motion of the entry or exit clip the actor plays now, if it has one.
+    func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample?
+    /// Sets the actor's root on its way into, on, or out of a seat.
+    func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose)
+    /// The exit is over: the actor stands at `pose` and walks again.
+    func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose)
     /// The loaded furniture references.
     func residentFurniture() -> [ReferenceKey]
     /// Turns the seated player's first-person view to `yaw` radians.
@@ -51,8 +62,14 @@ nonisolated public enum FurnitureUseRefusal: String, Error, Equatable, Sendable 
 
 @MainActor
 public final class FurnitureCoordinator {
-    public private(set) var ledger = FurnitureSeatLedger()
+    public internal(set) var ledger = FurnitureSeatLedger()
     public private(set) var occupancies: [ReferenceKey: FurnitureOccupancy] = [:]
+    /// Actors whose exit clip still carries them out of the seat they left.
+    public private(set) var exits: [ReferenceKey: FurnitureOccupancy] = [:]
+    /// Seated actors that an entry clip still moves.
+    private var entering: Set<ReferenceKey> = []
+    /// The furniture each sandboxing actor used last, which its next choice skips.
+    var lastSandboxFurniture: [ReferenceKey: ReferenceKey] = [:]
     /// The launcher switch. Off, no actor sits down; an actor already seated may still stand.
     public var isEnabled = true
     /// `Game.SetSittingRotation`, in degrees. It lasts until the player stands up.
@@ -70,7 +87,7 @@ public final class FurnitureCoordinator {
         guard let world, let seats = world.furnitureSeats(of: furniture) else { return nil }
         return ledger.reserve(
             in: furniture, seats: seats, actor: actor, animation: animation,
-            near: world.furnitureActorPosition(actor)
+            near: world.furnitureActorPosition(actor), traits: world.furnitureActorTraits(actor)
         ) { world.furnitureActorHasKeyword(actor, $0) }
     }
 
@@ -104,6 +121,7 @@ public final class FurnitureCoordinator {
         let approach = world?.furnitureActorPosition(actor) ?? seat.seat.position
         let occupancy = FurnitureOccupancy(seat: seat, entry: seat.seat.entry(from: approach))
         occupancies[actor] = occupancy
+        exits[actor] = nil
         world?.placeSeated(actor, in: occupancy)
         if actor == .player {
             turnPlayerView(occupancy)
@@ -111,14 +129,66 @@ public final class FurnitureCoordinator {
         return occupancy
     }
 
-    /// Gets the actor up at its entry side and frees every seat it holds or reserved.
+    /// Frees every seat the actor holds or reserved and starts its exit. `advance` carries
+    /// it out of the seat.
     @discardableResult
     public func stand(_ actor: ReferenceKey) -> Bool {
         guard let occupancy = vacate(actor) else { return false }
-        world?.placeStanding(
-            actor, from: occupancy, at: occupancy.seat.seat.standPoint(entry: occupancy.entry)
-        )
+        exits[actor] = occupancy
+        world?.placeStanding(actor, from: occupancy)
+        advance()
         return true
+    }
+
+    /// Moves each actor along the root motion of its entry or exit clip, and ends each
+    /// exit whose clip is done. The player is placed every frame.
+    public func advance() {
+        guard let world else { return }
+        for (actor, occupancy) in exits {
+            let seat = occupancy.seat.seat
+            guard let sample = world.furnitureMotion(of: actor) else {
+                if world.furnitureExitIsLoading(actor) {
+                    world.moveFurnitureActor(actor, to: seat.seatedPose)
+                    continue
+                }
+                exits[actor] = nil
+                world.finishStanding(actor, at: seat.standingPose(entry: occupancy.entry))
+                continue
+            }
+            if sample.isFinished {
+                exits[actor] = nil
+                world.finishStanding(actor, at: seat.leavingPose(sample))
+            } else {
+                world.moveFurnitureActor(actor, to: seat.leavingPose(sample))
+            }
+        }
+        for (actor, occupancy) in occupancies {
+            let seat = occupancy.seat.seat
+            let sample = world.furnitureMotion(of: actor)
+            // The last entry frame goes back on the seat itself.
+            guard sample != nil || entering.contains(actor) || actor == .player else { continue }
+            world.moveFurnitureActor(actor, to: sample.map(seat.enteringPose) ?? seat.seatedPose)
+            if sample == nil {
+                entering.remove(actor)
+            } else {
+                entering.insert(actor)
+            }
+        }
+    }
+
+    /// The player greets `actor`. A seat whose furniture is Must Exit To Talk lets it up
+    /// (Creation Kit wiki "Furniture").
+    @discardableResult
+    public func greet(_ actor: ReferenceKey) -> Bool {
+        guard actor != .player, occupancies[actor]?.seat.seat.rules.mustExitToTalk == true else {
+            return false
+        }
+        return stand(actor)
+    }
+
+    /// Whether an exit clip still carries the actor, so nothing else should move it.
+    public func isLeavingSeat(_ actor: ReferenceKey) -> Bool {
+        exits[actor] != nil
     }
 
     /// Forgets the actor's seat and reservations without standing it up, for an actor
@@ -126,6 +196,8 @@ public final class FurnitureCoordinator {
     @discardableResult
     public func vacate(_ actor: ReferenceKey) -> FurnitureOccupancy? {
         ledger.releaseAll(heldBy: actor)
+        exits[actor] = nil
+        entering.remove(actor)
         if actor == .player {
             sittingRotation = 0
         }

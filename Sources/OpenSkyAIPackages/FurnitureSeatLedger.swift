@@ -18,12 +18,14 @@ nonisolated public struct FurnitureSeatLedger: Sendable {
 
     /// Reserves a free seat for `actor`. A keyed seat wins for an actor with its keyword,
     /// then a seat of `animation` over one of another type, then the seat nearest `near`.
+    /// The furniture's rules may keep the actor out, as a perch keeps out all but dragons.
     public mutating func reserve(
         in furniture: ReferenceKey,
         seats: [FurnitureSeat],
         actor: ReferenceKey,
         animation: UInt16? = nil,
         near: SIMD3<Float>? = nil,
+        traits: FurnitureActorTraits = FurnitureActorTraits(),
         hasKeyword: (FormID) -> Bool
     ) -> PackageSeat? {
         let free = seats.indices.filter { index in
@@ -34,7 +36,9 @@ nonisolated public struct FurnitureSeatLedger: Sendable {
             return simd_distance(seats[first].position, near)
                 < simd_distance(seats[second].position, near)
         }
-        let allowed = free.filter { seats[$0].keyword.map(hasKeyword) ?? true }
+        let allowed = free.filter {
+            seats[$0].rules.admits(traits) && seats[$0].keyword.map(hasKeyword) ?? true
+        }
         let keyed = allowed.filter { seats[$0].keyword != nil }
         let open = allowed.filter { seats[$0].keyword == nil }
         let ordered = keyed.filter { seats[$0].animationType == animation }

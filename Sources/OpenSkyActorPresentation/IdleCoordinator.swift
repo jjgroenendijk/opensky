@@ -78,6 +78,8 @@ public final class IdleCoordinator {
         var shownObject: IdleAnimationObject?
         /// The actor's own graph plays the clips and sends their annotations.
         var throughGraph = false
+        /// How the clip moves the actor's root; only a first segment carries one.
+        var rootMotion: AnimationRootMotion?
     }
 
     /// One loaded clip of an idle's chain and the triggers its generator raises.
@@ -95,7 +97,7 @@ public final class IdleCoordinator {
     /// Actors on a furniture marker, for the furniture condition functions.
     var furnitureUses: [ReferenceKey: FurnitureUse] = [:]
     /// When each actor that gets up from furniture stops reading `GetSitting` 4.
-    var standingUntil: [ReferenceKey: Float] = [:]
+    var standingUntil: [ReferenceKey: ClosedRange<Float>] = [:]
     /// Actors that take each owner's idle events too, in the order they were added.
     var dependents: [ReferenceKey: [ReferenceKey]] = [:]
     var reports: [ReferenceKey: IdleReport] = [:]
@@ -388,7 +390,12 @@ extension IdleCoordinator {
 /// Waiting for a load and recording the outcome of a play.
 extension IdleCoordinator {
     private func retry(_ waiting: Waiting, on actor: ReferenceKey, now: Float) {
-        play(waiting.selection, on: actor, source: waiting.source, timer: waiting.timer, now: now)
+        let report = play(
+            waiting.selection, on: actor, source: waiting.source, timer: waiting.timer, now: now
+        )
+        if report.failure != "loading" {
+            exitArrived(report, now: now)
+        }
     }
 
     private func wait(
@@ -442,7 +449,8 @@ extension IdleCoordinator {
             exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: events, marks: marks,
             followUps: chain.followUps, holdsLast: chain.holdsLast,
-            animationObjects: plan.animationObjects, throughGraph: graphPlays
+            animationObjects: plan.animationObjects, throughGraph: graphPlays,
+            rootMotion: plan.rootMotion
         )
     }
 

@@ -66,9 +66,15 @@ seat, but the furniture clips put the root on the floor. Observed on the install
 | `NPC COM` in `bed_leftsleep.hkx` | 53 above the clip root |
 | `NPC COM` in `bedroll_leftsleep.hkx` | 18 above the clip root |
 | `NPC COM` standing, first frame of `bed_leftenter.hkx` | 69 above the clip root |
+| `WoodenBarStool.nif` marker, and `NPC COM` in `aobarstoolidle.hkx` | 49, and 55 |
+| `WindhelmThrone.nif` marker, and `NPC COM` in `special_jarlchairidlecrossarm.hkx` | 34, and 39 |
+| `SitLedgeMarker.nif` marker, and `NPC COM` in `idlesitledge.hkx` | 0, and 8 |
+| `CounterLeanMarker.nif` marker, and `NPC COM` in `idleleantable.hkx` | 32, and 69 |
 
-So a seated body on the marker floats one seat height above the chair. Dropping the marker's
-own z offset is OpenSky's reading of that data; no source states the rule.
+Every seat clip puts the hips about 5 units above its marker, with the clip root on the
+floor; a lean clip stands on the floor. So a seated body on the marker would float one seat
+height above the chair. Dropping the marker's own z offset is OpenSky's reading of that
+data; no source states the rule. `openskycli nif <mesh>` prints a mesh's markers.
 
 The actor's entry side is the allowed side that faces where it stood. The idle runtime then
 plays the entry idle that the `ActionActivate` tree picks for the marker
@@ -82,12 +88,21 @@ where that clip left the head. The seat holds the player while no clip plays, be
 walking step there would drop the player and the graph would leave the seat state. On sitting
 down, the first-person view turns the way the seat faces.
 
-A move key or the jump key gets the player up. A package actor gets up when its package ends.
-The game plays an exit clip whose root motion carries the actor out of the seat. OpenSky plays
-none: the player's feet go `FurnitureSeat.standDistance` (48 units) out on the entry side, or
-stay on the root for the up side. An NPC stays where it sat, and its next package walks
-it on. Scripts get `OnGetUp`. A teleport or a cell change that takes the seated player more
-than 256 units from the seat, or unloads the furniture, also ends the seat.
+A move key or the jump key gets the player up. A package actor gets up when its package
+ends. The actor then reads `GetSitting` 4, and the `ActionActivate` tree picks the exit idle,
+such as `ExitChair`. Scripts get `OnGetUp`.
+
+Clips carry no root motion; the project's [animation data](/formats/animation-data.md) does.
+An entry clip ends on the seat, so the actor starts where its motion leads back from: 52
+units left of a chair for `Chair_LeftEnter`. An exit clip starts on the seat and carries the
+actor out: 52 units to the left for `Chair_LeftExit`. While the exit plays, the player's
+input does nothing and an NPC's next package waits. When it ends, the actor stands where the
+motion left it and faces its way. An exit clip without motion data leaves the actor
+`FurnitureSeat.standDistance` (48 units) out on the entry side, or on the root for the up
+side.
+
+A teleport or a cell change that takes the seated or rising player more than 256 units from
+the seat, or unloads the furniture, also ends the seat, without an exit idle.
 
 A bed that the player activates opens the rest menu instead ([sleep and wait](/engine/sleep-wait.md)),
 and a crafting station opens its menu. A chair has a workbench field too, of type none, so it
@@ -95,6 +110,27 @@ is furniture.
 
 The launcher's "Sit in furniture" switch turns the feature off. Then a chair does nothing, and
 a Sit or Sleep package actor stands at its seat.
+
+## Record flags
+
+The meanings come from the Creation Kit wiki page
+<https://ck.uesp.net/wiki/Furniture>, and the bits from
+[UESP "Skyrim Mod:Mod File Format/FURN"](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FURN).
+Counts are from the 400 uncompressed `FURN` records of `Skyrim.esm`.
+
+| Flag | OpenSky |
+| --- | --- |
+| Header `0x20000000` Child Can Use | A child actor (race flag) takes only furniture with it |
+| Header `0x10000000` Must Exit To Talk | A seated NPC stands up when the player starts dialogue with it. Always paired with `MNAM` `0x08000000` |
+| `MNAM` `0x04000000` Is Perch | Only an actor whose race has `ActorTypeDragon` uses it, and a dragon uses nothing else |
+| `MNAM` `0x02000000` | The player cannot activate it |
+| `FNAM` `0x02` Ignored By Sandbox | A sandbox does not choose the furniture ([sandbox](/engine/sandbox.md)) |
+| `NAM1` Associated Spell | Added to the actor when it sits, removed when it gets up. No vanilla record has one |
+
+`MNAM` `0x40000000` and `0x80000000` are set on most records. No source names them, and
+OpenSky does not use them. `FNPR` lists each marker's animation type and entry points; on
+the meshes checked it repeats the mesh marker (`WoodenBarStool`: sit, behind), and OpenSky
+reads the mesh.
 
 ## Papyrus
 

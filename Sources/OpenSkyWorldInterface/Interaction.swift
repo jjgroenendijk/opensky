@@ -143,9 +143,11 @@ nonisolated public struct FurnitureSeat: Equatable, Sendable {
     public var entryPoints: UInt16 = 0
     /// False when the record's `MNAM` leaves this mesh marker off; no one uses it.
     public var isEnabled = true
+    /// The record's flags for the whole piece of furniture.
+    public var rules = FurnitureRules()
 
-    /// How far from the marker a standing actor's feet go. OpenSky plays no exit
-    /// clip, whose root motion would carry the actor out, so this stands in for it.
+    /// How far from the marker a standing actor's feet go when its exit clip has no
+    /// root motion to carry it out.
     public static let standDistance: Float = 48
 
     public init(

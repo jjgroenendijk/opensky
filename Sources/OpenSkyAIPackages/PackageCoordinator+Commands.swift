@@ -62,7 +62,8 @@ extension PackageCoordinator {
                     requestMove(actor, to: point)
                 }
             case .sit:
-                guard let seat = executions[actor]?.runner.running[tagged.leaf]?.setup.seat else {
+                let running = executions[actor]?.runner.running[tagged.leaf]
+                guard let seat = running?.machine.sandbox.seat ?? running?.setup.seat else {
                     continue
                 }
                 executions[actor]?.seat = seat
@@ -78,7 +79,15 @@ extension PackageCoordinator {
             case .playLoop:
                 continue
             case let .endActivity(activity):
+                if PackageProcedureMachine.isSeatActivity(activity) {
+                    let seat = executions[actor]?.seat
+                    executions[actor]?.seat = nil
+                    world?.unseatPackageActor(actor, from: seat)
+                }
                 world?.packageSandboxActivityEnded(activity, actor: actor)
+            case let .seekSeat(request):
+                let seat = world?.packageSandboxSeat(for: actor, in: request)
+                step(actor, with: .seatOffered(seat), leaf: tagged.leaf)
             }
         }
     }

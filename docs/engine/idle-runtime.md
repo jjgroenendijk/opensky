@@ -139,7 +139,9 @@ under the `ActionActivate` action (`AACT`). The tree's conditions read the seat 
 functions ([Condition functions](/engine/condition-functions.md#furniture)):
 
 - `GetSitting` is 2 (getting ready to sit) while the idle is picked, 1 while an NPC's sit idle
-  still loads, and 3 once it plays. When the actor gets up it reads 4 for one second, then 0.
+  still loads, and 3 once it plays. When the actor gets up it reads 4, the same tree picks the
+  exit idle, such as `ExitChair`, and the actor reads 4 until that clip ends, then 0. With no
+  exit idle it reads 4 for one second.
 - `IsFurnitureAnimType` is the marker's animation type: 1 sit, 2 lay, 4 lean.
 - `IsFurnitureEntryType` is the one entry the actor uses. It is the allowed side of the marker
   that faces the actor most; "up" counts only when no side is allowed.
@@ -151,8 +153,8 @@ functions ([Condition functions](/engine/condition-functions.md#furniture)):
 
 Example: on the chopping block, the prisoner's chain is `ActivateRootChar` > `Chair` >
 `ExecutioneeRoot` > `IdleExecutioneeIdle`. Its event enters the executionee machine, which plays
-`AOExecutioneeEnter.hkx` and then holds `AOExecutioneeIdle.hkx`. The idle stops when the package
-lets the actor stand up.
+`AOExecutioneeEnter.hkx` and then holds `AOExecutioneeIdle.hkx`. When the package lets the actor
+stand up, the tree's exit branch plays.
 
 [WARNING] The entry side rule is OpenSky's reading. The game's choice of entry is not documented.
 

@@ -13,6 +13,12 @@ private final class FakeFurnitureWorld: FurnitureWorld {
     var positions: [ReferenceKey: SIMD3<Float>] = [:]
     var seated: [ReferenceKey: FurnitureOccupancy] = [:]
     var stoodAt: [ReferenceKey: SIMD3<Float>] = [:]
+    var moved: [ReferenceKey: FurniturePose] = [:]
+    var motions: [ReferenceKey: FurnitureMotionSample] = [:]
+    var traits: [ReferenceKey: FurnitureActorTraits] = [:]
+    var loadingExits: Set<ReferenceKey> = []
+    var special: Set<ReferenceKey> = []
+    var ownedByOthers: Set<ReferenceKey> = []
     var viewYaw: Float?
 
     func furnitureSeats(of furniture: ReferenceKey) -> [FurnitureSeat]? {
@@ -27,15 +33,40 @@ private final class FakeFurnitureWorld: FurnitureWorld {
         false
     }
 
+    func furnitureActorTraits(_ actor: ReferenceKey) -> FurnitureActorTraits {
+        traits[actor] ?? FurnitureActorTraits()
+    }
+
+    func furnitureIsSpecial(_ furniture: ReferenceKey) -> Bool {
+        special.contains(furniture)
+    }
+
+    func furnitureOwnerAllows(_ actor: ReferenceKey, _ furniture: ReferenceKey) -> Bool {
+        !ownedByOthers.contains(furniture)
+    }
+
     func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy) {
         seated[actor] = occupancy
     }
 
-    func placeStanding(
-        _ actor: ReferenceKey, from _: FurnitureOccupancy, at point: SIMD3<Float>
-    ) {
+    func placeStanding(_ actor: ReferenceKey, from _: FurnitureOccupancy) {
         seated[actor] = nil
-        stoodAt[actor] = point
+    }
+
+    func furnitureExitIsLoading(_ actor: ReferenceKey) -> Bool {
+        loadingExits.contains(actor)
+    }
+
+    func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample? {
+        motions[actor]
+    }
+
+    func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose) {
+        moved[actor] = pose
+    }
+
+    func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose) {
+        stoodAt[actor] = pose.root
     }
 
     func residentFurniture() -> [ReferenceKey] {
@@ -141,5 +172,133 @@ struct FurnitureCoordinatorTests {
             return off
         }
         #expect(furniture.nearestFurniture(to: farmer) == farChair)
+    }
+
+    /// A chair exit that steps 50 to the left and turns left, as `Chair_LeftExit` does.
+    private static func leftExit(at fraction: Float) -> FurnitureMotionSample {
+        FurnitureMotionSample(
+            offset: [-50 * fraction, 0, 0], yaw: .pi / 2 * fraction,
+            endOffset: [-50, 0, 0], endYaw: .pi / 2, isFinished: fraction >= 1
+        )
+    }
+
+    @Test func anExitClipCarriesTheActorOutAndThenItStands() throws {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        let seat = try #require(furniture.reserve(in: bench, for: farmer, animation: 1))
+        furniture.sit(farmer, in: seat)
+        // The exit idle still loads: the farmer stays on the seat.
+        world.loadingExits = [farmer]
+        furniture.stand(farmer)
+        #expect(world.moved[farmer] == FurniturePose(root: .zero, heading: 0))
+        #expect(world.stoodAt[farmer] == nil)
+        world.loadingExits = []
+        world.motions[farmer] = Self.leftExit(at: 0.5)
+        furniture.advance()
+        #expect(furniture.isLeavingSeat(farmer))
+        let halfway = try #require(world.moved[farmer])
+        #expect(simd_distance(halfway.root, [-25, 0, 0]) < 0.001)
+        #expect(abs(halfway.heading + .pi / 4) < 0.001)
+        #expect(world.stoodAt[farmer] == nil)
+
+        world.motions[farmer] = Self.leftExit(at: 1)
+        furniture.advance()
+        #expect(!furniture.isLeavingSeat(farmer))
+        #expect(try simd_distance(#require(world.stoodAt[farmer]), [-50, 0, 0]) < 0.001)
+    }
+
+    @Test func anEntryClipStartsWhereItsMotionLeadsBackFrom() throws {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        let seat = try #require(furniture.reserve(in: bench, for: farmer, animation: 1))
+        furniture.sit(farmer, in: seat)
+        // `Chair_LeftEnter`: forward 50, then a left turn onto the seat.
+        let enter = { (fraction: Float) in
+            FurnitureMotionSample(
+                offset: [0, 50 * fraction, 0], yaw: .pi / 2 * fraction,
+                endOffset: [0, 50, 0], endYaw: .pi / 2, isFinished: fraction >= 1
+            )
+        }
+        world.motions[farmer] = enter(0)
+        furniture.advance()
+        let start = try #require(world.moved[farmer])
+        #expect(simd_distance(start.root, [-50, 0, 0]) < 0.001)
+        #expect(abs(start.heading - .pi / 2) < 0.001)
+        world.motions[farmer] = nil
+        furniture.advance()
+        #expect(world.moved[farmer] == FurniturePose(root: .zero, heading: 0))
+    }
+
+    @Test func childrenUseOnlyChildFurnitureAndOnlyDragonsUsePerches() {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        world.traits[farmer] = FurnitureActorTraits(isChild: true)
+        #expect(furniture.reserve(in: bench, for: farmer, animation: 1) == nil)
+        world.seats[bench] = world.seats[bench]?.map {
+            var seat = $0
+            seat.rules = FurnitureRules(childCanUse: true)
+            return seat
+        }
+        #expect(furniture.reserve(in: bench, for: farmer, animation: 1) != nil)
+
+        world.seats[farChair] = world.seats[farChair]?.map {
+            var perch = $0
+            perch.rules = FurnitureRules(isPerch: true)
+            return perch
+        }
+        #expect(furniture.use(farChair, by: .player) == .failure(.noFreeSeat))
+        world.traits[.player] = FurnitureActorTraits(isDragon: true)
+        #expect((try? furniture.use(farChair, by: .player).get()) != nil)
+    }
+
+    @Test func greetingStandsUpOnlyAMustExitToTalkSitter() throws {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        let seat = try #require(furniture.reserve(in: bench, for: farmer, animation: 1))
+        furniture.sit(farmer, in: seat)
+        #expect(!furniture.greet(farmer))
+        world.seats[farChair] = world.seats[farChair]?.map {
+            var bed = $0
+            bed.rules = FurnitureRules(mustExitToTalk: true)
+            return bed
+        }
+        furniture.stand(farmer)
+        world.positions[farmer] = [0, 2000, 0]
+        _ = try furniture.use(farChair, by: farmer).get()
+        #expect(furniture.greet(farmer))
+        #expect(furniture.occupancies[farmer] == nil)
+    }
+
+    private static let area = SandboxSeatRequest(
+        center: .zero, radius: 500, height: -100 ... 150,
+        sits: true, sleeps: false, usesSpecialFurniture: false
+    )
+
+    @Test func aSandboxTakesTheNearestAllowedSeatAndNotTheSameFurnitureTwice() throws {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        let first = try #require(furniture.sandboxSeat(for: farmer, in: Self.area))
+        #expect(first.furniture == bench)
+        #expect(first.index == 0)
+        furniture.releaseReservations(of: farmer)
+        // The far chair is outside the area, so the bench was the only choice.
+        #expect(furniture.sandboxSeat(for: farmer, in: Self.area) == nil)
+    }
+
+    @Test func aSandboxSkipsIgnoredSpecialAndOwnedFurniture() {
+        let world = world()
+        let furniture = FurnitureCoordinator(world: world)
+        world.special = [bench]
+        #expect(furniture.sandboxSeat(for: farmer, in: Self.area) == nil)
+        world.special = []
+        world.ownedByOthers = [bench]
+        #expect(furniture.sandboxSeat(for: farmer, in: Self.area) == nil)
+        world.ownedByOthers = []
+        world.seats[bench] = world.seats[bench]?.map {
+            var seat = $0
+            seat.rules = FurnitureRules(ignoredBySandbox: true)
+            return seat
+        }
+        #expect(furniture.sandboxSeat(for: farmer, in: Self.area) == nil)
     }
 }

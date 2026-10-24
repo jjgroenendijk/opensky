@@ -63,9 +63,11 @@ arrow keys.
 - `state player` also lists the `spells` the player knows, by editor ID, abilities such as
   `Rested` included.
 - `state furniture` (default `player`) gives an actor's `sitState` (the `GetSitState` value),
-  its furniture, marker, entry side, `position`, and `sittingRotation`; for a piece of furniture
-  it lists each marker with its type, whether `MNAM` turns it on, its entry sides, its
-  `position` and floor-level `root`, its holder, and `inUse`.
+  its furniture, marker, entry side, `position`, `sittingRotation`, and `leaving` while an exit
+  clip carries it out, and its `idle`: the chosen clip, a failure, its seconds, and
+  `rootMotion`; for a piece of furniture it gives the record's `rules` and lists each
+  marker with its type, whether `MNAM` turns it on, its entry sides, its `position` and
+  floor-level `root`, its holder, and `inUse`.
 - `state packages` gives the actor's package, its procedure, the procedure machine's state
   and patrol point, the mover's state, and the vehicle links.
 

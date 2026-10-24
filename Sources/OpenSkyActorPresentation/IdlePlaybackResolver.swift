@@ -64,6 +64,8 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public var position: BehaviorStatePosition?
     /// The objects the clips' annotations show while they play.
     public var animationObjects: [IdleAnimationObject] = []
+    /// How the first clip moves the actor, such as a chair exit stepping it aside.
+    public var rootMotion: AnimationRootMotion?
 
     /// Every clip path the plan plays, in order.
     public var clipPaths: [String] {
@@ -80,13 +82,15 @@ nonisolated public struct IdlePlanSegment: Equatable, Sendable {
 
 /// Caches decoded behavior files and prop bones for the session.
 nonisolated public final class IdlePlaybackResolver {
-    private let files: any GameFileSource
+    let files: any GameFileSource
     private let animatedObjects: TypedRecordStore<AnimatedObject>
     /// One per project folder, because referenced behavior names are relative.
     private var indexes: [String: BehaviorEventClipIndex] = [:]
     private var plans: [IdlePlanKey: IdlePlaybackPlan] = [:]
     private var propBones: [String: String?] = [:]
     private var skeletonBones: [String: [String]] = [:]
+    /// The animation data of each project folder, read once.
+    var motionProjects: [String: [IdleMotionProject]] = [:]
 
     public init(files: any GameFileSource, animatedObjects: TypedRecordStore<AnimatedObject>) {
         self.files = files
@@ -177,6 +181,7 @@ nonisolated public final class IdlePlaybackResolver {
             position: clip.position
         )
         plan.animationObjects = animationObjects(clipPaths: plan.clipPaths, project: project)
+        plan.rootMotion = clip.generatorName.flatMap { rootMotion(generator: $0, project: project) }
         return plan
     }
 
