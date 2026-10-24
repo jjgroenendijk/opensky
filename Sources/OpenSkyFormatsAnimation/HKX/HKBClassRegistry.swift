@@ -106,7 +106,37 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(BSIStateManagerModifier.decode),
             entry(BSTweenerModifier.decode),
             entry(BSPassByTargetTriggerModifier.decode),
-            entry(BSLimbIKModifier.decode)
+            entry(BSLimbIKModifier.decode),
+            entry(BGSGamebryoSequenceGenerator.decode),
+            // Character helpers.
+            entry(HKBMirroredSkeletonInfo.decode),
+            entry(HKBFootIkDriverInfo.decode),
+            // Ragdoll and physics (docs/formats/hkx-physics.md).
+            entry(HKARagdollInstance.decode),
+            entry(HKASkeletonMapper.decode),
+            entry(HKPPhysicsData.decode),
+            entry(HKPPhysicsSystem.decode),
+            entry(HKPRigidBody.decode),
+            entry(HKPConstraintInstance.decode),
+            entry(HKPRagdollConstraintData.decode),
+            entry(HKPLimitedHingeConstraintData.decode),
+            entry(HKPPositionConstraintMotor.decode),
+            entry(HKPShapeInfo.decode),
+            entry(HKPCapsuleShape.decode),
+            entry(HKPBoxShape.decode),
+            entry(HKPConvexTranslateShape.decode),
+            entry(HKPConvexTransformShapeObject.decode),
+            entry(HKPConvexVerticesShape.decode),
+            entry(HKPConvexVerticesConnectivity.decode),
+            entry(HKPListShape.decode),
+            entry(HKPMoppBvTreeShape.decode),
+            entry(HKPMoppCode.decode),
+            // Resources and animation extras.
+            entry(HKMemoryResourceContainer.decode),
+            entry(HKMemoryResourceHandle.decode),
+            entry(HKADefaultAnimatedReferenceFrame.decode),
+            entry(HKAInterleavedUncompressedAnimation.decode),
+            entry(HKAAnnotationTrackObject.decode)
         ]
     )
 

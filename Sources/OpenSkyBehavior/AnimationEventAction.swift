@@ -14,17 +14,21 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
     case cameraShake(strength: Float)
     /// Lets the source's head turn toward a target again, or holds it forward.
     case headTracking(enabled: Bool)
+    /// Sends the payload of `Func.<name>` as its own event to the source's scripts. The
+    /// graphs declare the bare name, and `dragonactorscript` registers for it.
+    case raiseEvent(name: String)
 
     /// The annotation names this parser reads, with the payload folded to `.*`, the way
     /// `HKXGapCensus` folds them. Compared without case.
     public static let handledEvents = [
         soundPlay + ".*", soundPlayAt + ".*",
         soundStop + ".*", soundRelease + ".*",
-        cameraShake + ".*", headTrackingOn, headTrackingOff
+        cameraShake + ".*", headTrackingOn, headTrackingOff, function + ".*"
     ]
 
     static let soundPlay = "SoundPlay"
     static let soundPlayAt = "SoundPlayAt"
+    static let function = "Func"
     static let soundStop = "SoundStop"
     /// Ends a loop at its next cycle in the game. OpenSky has no release stage, so it stops.
     static let soundRelease = "SoundRelease"
@@ -54,6 +58,8 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
         switch event {
         case soundPlay.lowercased():
             return .playSound(editorID: first, node: nil)
+        case function.lowercased():
+            return .raiseEvent(name: first)
         case soundPlayAt.lowercased():
             return .playSound(editorID: first, node: parts.count > 1 ? parts[1] : nil)
         case soundStop.lowercased(), soundRelease.lowercased():

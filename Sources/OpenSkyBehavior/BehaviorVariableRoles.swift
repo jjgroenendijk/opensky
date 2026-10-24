@@ -1,6 +1,6 @@
-// Which graph variables the engine must drive or read, and which members a node
-// writes back. `openskycli gaps` counts a variable as left only when it faces the
-// engine and no engine code handles it (docs/tools/gaps.md).
+// Which graph variables the engine must drive, and which members a node writes back.
+// `openskycli gaps` counts a variable as left only when it is an engine input and no
+// engine code writes it (docs/tools/gaps.md).
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -71,15 +71,43 @@ nonisolated public enum BehaviorVariableRoles: Sendable {
 
     private static let engineVariablesLowercased = Set(engineVariables.map { $0.lowercased() })
 
-    /// True when the engine must set or read `name`: the game exposes it, or a
-    /// graph binds it to a world-space input. `uses` are `Class.member` paths.
-    public static func isEngineFacing(_ name: String, uses: Set<String>) -> Bool {
-        engineVariablesLowercased.contains(name.lowercased()) || !uses
-            .isDisjoint(with: worldInputMembers)
+    /// What `name` is for. `uses` are `Class.member` paths, `isAuthored` says a graph
+    /// gives it a non-zero initial value, and `isScriptRead` says a script calls
+    /// `GetAnimationVariable*` on it.
+    public static func role(
+        of name: String, uses: Set<String>, isAuthored: Bool, isScriptRead: Bool
+    ) -> BehaviorVariableRole {
+        if !uses.isDisjoint(with: worldInputMembers) {
+            return .engineInput
+        }
+        if isGraphWritten(uses: uses, assignedUse: HKXGapCensus.assignedUse) {
+            return .graphComputed
+        }
+        if uses.isEmpty, !isScriptRead {
+            return .unread
+        }
+        if isAuthored {
+            return .authoredConstant
+        }
+        let listed = engineVariablesLowercased.contains(name.lowercased())
+        return listed || isScriptRead ? .engineInput : .authoredConstant
     }
 
     /// True when a node of the graph computes `name` itself.
     public static func isGraphWritten(uses: Set<String>, assignedUse: String) -> Bool {
         uses.contains(assignedUse) || !uses.isDisjoint(with: outputMembers)
     }
+}
+
+/// Why a graph variable needs the engine, or why it does not (docs/tools/gaps.md).
+nonisolated public enum BehaviorVariableRole: String, CaseIterable, Equatable, Sendable {
+    /// The engine must set it: a world input, or a listed or script-read variable
+    /// that the graph reads and nothing writes.
+    case engineInput = "engine input"
+    /// A node computes it.
+    case graphComputed = "computed by graph nodes"
+    /// A graph gives it a value and only graph nodes read it.
+    case authoredConstant = "authored constants"
+    /// No graph node and no script reads it, so no value it holds changes anything.
+    case unread = "read by nothing"
 }

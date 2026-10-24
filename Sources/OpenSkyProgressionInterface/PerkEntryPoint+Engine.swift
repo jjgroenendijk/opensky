@@ -68,6 +68,7 @@ nonisolated extension PerkEntryPoint {
     public static let modAppliedEnchantmentsAllowed = PerkEntryPoint(rawValue: 80)
     public static let modShoutOK = PerkEntryPoint(rawValue: 82)
     public static let modPlayerMagicSlowdown = PerkEntryPoint(rawValue: 70)
+    public static let modBowZoom = PerkEntryPoint(rawValue: 20)
     public static let modSpellRangeTargetLoc = PerkEntryPoint(rawValue: 88)
     public static let modCommandedActorLimit = PerkEntryPoint(rawValue: 68)
     public static let applyReanimateSpell = PerkEntryPoint(rawValue: 53)
@@ -98,7 +99,7 @@ nonisolated extension PerkEntryPoint {
         canDualCastSpell, modWardMagickaAbsorptionPct, modSoulGemRecharge,
         modSoulPctCapturedToWeapon,
         modEnchantmentPower, modAppliedEnchantmentsAllowed, modShoutOK,
-        modPlayerMagicSlowdown, modSpellRangeTargetLoc, modCommandedActorLimit,
+        modPlayerMagicSlowdown, modSpellRangeTargetLoc, modCommandedActorLimit, modBowZoom,
         applyReanimateSpell, activate, allowMountActor
     ]
 }

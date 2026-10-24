@@ -62,6 +62,21 @@ struct ArcheryRuntimeTests {
         ])
     }
 
+    /// A crossbow release clip carries `bowZoomStop` right after `arrowRelease`.
+    @Test func blockWhileDrawingZoomsUntilTheClipStopsIt() {
+        let runtime = Self.runtime(world: FakeProjectileWorld())
+        runtime.zoomConditions = BowZoomInput(viewShare: 0.6)
+        let zooming = ArcheryIntent(
+            drawing: true, hasBowEquipped: true, deltaTime: 0.1, zooming: true
+        )
+        runtime.acceptFrame(zooming)
+        #expect(runtime.zoom.isZoomed)
+        runtime.handleGraphEvents(["BowZoomStop"])
+        #expect(!runtime.zoom.isZoomed)
+        runtime.acceptFrame(zooming)
+        #expect(!runtime.zoom.isZoomed)
+    }
+
     @Test func aPressWithNoBowEquippedRaisesNothing() {
         let world = FakeProjectileWorld()
         let runtime = Self.runtime(world: world)

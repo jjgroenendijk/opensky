@@ -6,6 +6,7 @@ import OpenSkyCamera
 import OpenSkyFormatsESM
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -17,6 +18,7 @@ protocol AnimationEventWorldHost: AnyObject {
     var headTracking: HeadTrackingCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
 }
 
@@ -77,5 +79,9 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
 
     func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey) {
         game.headTracking.setHeadTracking(enabled, for: actor)
+    }
+
+    func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey) {
+        game.scripts.runtime?.queueAnimationEvent(sender: source, name: name)
     }
 }

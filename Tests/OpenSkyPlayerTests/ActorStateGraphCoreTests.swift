@@ -71,6 +71,27 @@ struct ActorStateGraphCoreTests {
         #expect(Set(writes.keys) == Set(ActorStateGraphNames.inputs))
     }
 
+    /// A sheathed sword is no drawn weapon, so the selectors keep their unarmed child.
+    @Test func equippedHandsCountOnlyWhileDrawn() {
+        var inputs = ActorStateGraphInputs()
+        inputs.rightHandType = 1
+        inputs.leftHandType = 10
+        inputs.isBeastRace = true
+        inputs.swimming = true
+        func writes() -> [String: BehaviorVariableValue] {
+            Dictionary(uniqueKeysWithValues: ActorStateGraphCore.writes(
+                inputs, sprintAllowed: true, wantsBlock: false, stateValue: nil
+            ).map { ($0.name, $0.value) })
+        }
+        #expect(writes()[ActorStateGraphNames.rightHandEquipped] == .int(0))
+        inputs.weaponDrawn = true
+        #expect(writes()[ActorStateGraphNames.rightHandEquipped] == .int(1))
+        #expect(writes()[ActorStateGraphNames.leftHandEquipped] == .int(10))
+        #expect(writes()[ActorStateGraphNames.isBeastRace] == .bool(true))
+        #expect(writes()[ActorStateGraphNames.getUpType] == .int(2))
+        #expect(ActorStateGraphCore.getUpType(swimming: false) == 1)
+    }
+
     @Test func aGraphWithNoConstantGetsNoState() {
         let writes = ActorStateGraphCore.writes(
             ActorStateGraphInputs(), sprintAllowed: true, wantsBlock: false, stateValue: nil

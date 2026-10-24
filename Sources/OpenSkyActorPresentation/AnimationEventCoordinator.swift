@@ -1,5 +1,6 @@
-// Clip annotations that ask the engine, not the graph, to act: sounds, camera shake, and
-// head tracking. The player graph, the NPC idles, and the object graphs all send their
+// Clip annotations that ask the engine, not the graph, to act: sounds, camera shake,
+// head tracking, and script events. The player graph, the NPC idles, and the object graphs all send
+// their
 // fired names here. See docs/engine/animation-events.md.
 
 import Foundation
@@ -18,6 +19,8 @@ public protocol AnimationEventWorld: AnyObject {
     /// A far source shakes the camera less.
     func shakeCamera(from position: SIMD3<Float>, strength: Float)
     func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey)
+    /// Sends `name` to the `OnAnimationEvent` of the scripts that registered on `source`.
+    func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey)
 }
 
 public final class AnimationEventCoordinator {
@@ -54,6 +57,8 @@ public final class AnimationEventCoordinator {
             world.shakeCamera(from: position, strength: strength)
         case let .headTracking(enabled):
             world.setHeadTracking(enabled, for: source)
+        case let .raiseEvent(event):
+            world.sendScriptAnimationEvent(event, from: source)
         }
         counts[Self.kind(action), default: 0] += 1
         lastEvent = "\(name) from \(source)"
@@ -71,6 +76,7 @@ public final class AnimationEventCoordinator {
         case .stopSound: "sound stop"
         case .cameraShake: "camera shake"
         case .headTracking: "head tracking"
+        case .raiseEvent: "script event"
         }
     }
 }

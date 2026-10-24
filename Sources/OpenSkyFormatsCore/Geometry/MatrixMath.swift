@@ -157,6 +157,12 @@ nonisolated public enum MatrixMath: Sendable {
         return matrix.inverse.transpose
     }
 
+    /// The field of view whose half-angle tangent is `share` of `fovYRadians`'s: a zoom.
+    public static func zoomedFieldOfView(_ fovYRadians: Float, share: Float) -> Float {
+        guard share.isFinite, share > 0, share < 1 else { return fovYRadians }
+        return 2 * atanf(tanf(fovYRadians / 2) * share)
+    }
+
     /// Right-handed perspective projection mapping z to Metal's [0, 1] range.
     public static func perspective(
         fovYRadians: Float,

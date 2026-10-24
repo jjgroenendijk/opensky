@@ -439,7 +439,9 @@ nonisolated extension LocomotionBridge {
             moveForward: input.moveForward,
             moveRight: input.moveRight
         )
-        archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
+        archeryIntent = ArcheryIntent(
+            drawing: input.attackHeld, deltaTime: input.dt, zooming: input.block
+        )
         isShoutHeld = input.shout
         if input.jump {
             pendingJump = true

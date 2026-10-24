@@ -97,6 +97,22 @@ node can wait for it, and the graph acts without the engine. Examples on the ins
 ([gap report](/tools/gaps.md)). A graph of another folder does not count. A door graph waits for
 `Open`, but a dragon clip that carries `Open` is not played by a door.
 
+## Function events
+
+`Func.<name>` sends `<name>` to the source's scripts as an animation event, the same way
+`OnAnimationEvent` receives a graph event (<https://ck.uesp.net/wiki/OnAnimationEvent_-_Form>).
+The install shows it:
+
+- The dragon graphs declare the bare `DragonBiteEffect`, and the giant and lurker graphs declare
+  `GiantStompEffect`. Their clips carry `Func.DragonBiteEffect` and `Func.GiantStompEffect`.
+- Scripts call `RegisterForAnimationEvent` with `dragonbiteeffect` and `giantstompeffect`.
+
+So the prefix only routes the event to the scripts. A script registered for the name runs its
+`OnAnimationEvent`; with no registration, nothing happens.
+
+`make gaps` also counts an event as done when a script registers for it, because the
+script VM delivers it ([gap report](/tools/gaps.md)).
+
 ## Footsteps no record answers
 
 Some creature clips carry footstep names that no `FSTP` tag matches: `FrontFoot` and `BackFoot`
@@ -133,10 +149,8 @@ events" ([gap report](/tools/gaps.md)).
   `dragonmouthfire.hkx`, wait for these events, so the game sends an actor's events on to the
   graphs of its effects too.
 - Dragon flight and its effects: `FlightLandingEffect`, `DragonTakeoffEffect`,
-  `DragonLandEffect`, the crash landing events, `DiveSplashStart`, the wing and tail attack
-  effects, and `Func.DragonBiteEffect`. `Func.GiantStompEffect` on the lurker stomp is an effect
-  of the same kind.
-- `bowZoomStop` on the crossbow release clips: OpenSky has no bow zoom.
+  `DragonLandEffect`, the crash landing events, `DiveSplashStart`, and the wing and tail attack
+  effects.
 - `StartAnimationDriven`: about 29 creature graphs declare it and none waits for it, so the engine
   reads it. It likely moves the actor by the clip's root motion; no source confirms it.
 - The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and

@@ -50,8 +50,11 @@ Every name comes from the behavior census over the install. Each is declared by 
 The only variable written is `bBowDrawn`. `iState_NPCBow`, `iState_NPCBowDrawn`, and
 `iState_NPCBowDrawnQuickShot` are not written. The census gives their names and their `int32` type,
 but nothing gives their encoding, and a guessed number would silently pick an animation set.
-`bowZoom`, `bowZoomAmt`, and `bAimActive` are not written either: Eagle Eye zoom is a perk effect
-nothing drives yet.
+`bowZoom`, `bowZoomAmt`, and `bAimActive` are not written either: no graph on the install reads
+them.
+
+The crossbow release clips carry `bowZoomStop` right after `arrowRelease`. It ends the bow zoom
+(below).
 
 Archery is the third listener on the graph event queue, after footsteps and melee.
 
@@ -150,6 +153,33 @@ The arrow a shot uses is the first ammunition the player carries that resolves t
 "First carried", not "equipped", because ammunition has its own `EQUP` slot that is not modelled.
 The inventory lists stacks in a fixed order, so the rule is predictable. An empty quiver stops the
 shot.
+
+## Bow zoom
+
+UESP says that with the Eagle Eye perk, "pressing Block while aiming will zoom in your view", that
+the zoom drains stamina, and that it cannot start under the Slow Time shout
+(<https://en.uesp.net/wiki/Skyrim:Archery>, <https://en.uesp.net/wiki/Skyrim:Eagle_Eye>). The perk
+records give the numbers:
+
+| Effect in the `PERK` | Entry point | Value | What OpenSky does |
+| --- | --- | --- | --- |
+| Eagle Eye | `Mod Bow Zoom` (20) | set 0.6 | The view's half-angle tangent is this share of normal |
+| Eagle Eye | `Mod Power Attack Stamina` (27), bow only | set 10 | Stamina drained per second while zoomed |
+| Steady Hand | `Bow Speed Bonus` actor value (78) | 0.75, 0.5 | The world and the player run at this speed while zoomed |
+
+`Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, 1. The zoom starts when block is held, a
+shot is nocked or drawn, `Mod Bow Zoom` gives less than 1, and the player has stamina. It ends
+when one of these stops. It also ends on `bowZoomStop`, and then waits until block comes up.
+
+`openskycli game state player` shows it under `bowZoom`: `zoomed`, `viewShare`, `timeScale`, and
+`fovYDegrees`.
+
+Where OpenSky differs:
+
+- No source says what the `Mod Bow Zoom` number scales. OpenSky reads it as the share of the
+  half-angle tangent, which is how a camera zoom scales the image.
+- The drain is stamina damage, so regeneration pauses for `fDamagedStaminaRegenDelay` after the
+  last drain. `fBowZoomStaminaRegenDelay` (3) is not used.
 
 ## Not done yet
 

@@ -24,7 +24,7 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-23 by `make gaps`.
+Measured on 2026-10-24 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
@@ -34,15 +34,15 @@ Measured on 2026-10-23 by `make gaps`.
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 1061 | 587 | 1648 | 64% |
 | Magic effect archetypes | 37 | 0 | 37 | 100% |
-| Perk entry points | 66 | 2 | 68 | 97% |
+| Perk entry points | 67 | 1 | 68 | 98% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
 | Behavior node classes | 52 | 2 | 54 | 96% |
 | Behavior features ignored | - | 256 | - | - |
-| Havok classes | 71 | 29 | 100 | 71% |
-| Animation events | 101 | 43 | 144 | 70% |
-| Behavior graph variables | 647 | 49 | 696 | 92% |
+| Havok classes | 100 | 0 | 100 | 100% |
+| Animation events | 113 | 31 | 144 | 78% |
+| Behavior graph variables | 689 | 7 | 696 | 98% |
 | NIF block types | 145 | 0 | 145 | 100% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
 | Lighting shader flags | 38 | 0 | 38 | 100% |

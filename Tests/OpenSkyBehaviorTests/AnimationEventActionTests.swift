@@ -45,6 +45,16 @@ struct AnimationEventActionTests {
         #expect(AnimationEventAction.parse("HeadTrackingOff") == .headTracking(enabled: false))
     }
 
+    /// The dragon and giant graphs declare `DragonBiteEffect` and `GiantStompEffect`, and
+    /// scripts register for them, while the clips carry them after `Func.`.
+    @Test func aFunctionEventSendsItsPayload() {
+        #expect(AnimationEventAction.parse("Func.TestStompEffect")
+            == .raiseEvent(name: "TestStompEffect"))
+        #expect(AnimationEventAction.parse("func.TestStompEffect")
+            == .raiseEvent(name: "TestStompEffect"))
+        #expect(AnimationEventAction.parse("Func.") == nil)
+    }
+
     /// The graph and the other runtimes own these, so the parser leaves them alone.
     @Test func otherEventsAskForNothing() {
         let others = [

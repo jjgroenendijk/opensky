@@ -15,6 +15,8 @@ nonisolated public struct HKXGapCensus: Sendable {
     /// Variable name -> how graphs use it: `Class.memberPath` for each binding,
     /// and `assignedUse` for an expression statement that assigns it.
     public private(set) var variableUses: [String: Set<String>] = [:]
+    /// Variables some graph gives a non-zero bool, integer, or real initial value.
+    public private(set) var authoredVariables: Set<String> = []
     /// Which annotations the graphs of their own project wait for.
     public private(set) var hearing = HKXAnnotationHearing()
     /// Failure kind -> files.
@@ -22,6 +24,8 @@ nonisolated public struct HKXGapCensus: Sendable {
     public private(set) var fileCount = 0
 
     public static let assignedUse = "expression assignment"
+    /// A condition or an expression reads the variable.
+    public static let expressionReadUse = "expression read"
     /// A state machine writes its current state to its `m_syncVariableIndex`.
     public static let syncUse = "hkbStateMachine.syncVariable"
 
@@ -35,6 +39,7 @@ nonisolated public struct HKXGapCensus: Sendable {
         .union([
             HKBRootLevelContainer.className, HKBProjectData.className,
             HKBCharacterData.className, HKASkeleton.className,
+            HKBProjectData.stringDataClassName, HKBCharacterData.stringDataClassName,
             HKASplineCompressedAnimation.className, HKAAnimationBinding.className,
             "hkaAnimationContainer"
         ])
@@ -56,6 +61,7 @@ nonisolated public struct HKXGapCensus: Sendable {
                 for name in Set(census.variables.compactMap(\.name)) {
                     graphVariables.add(name)
                 }
+                recordAuthoredValues(census.variables, graph: graph)
                 recordGraphUses(
                     graph, variables: census.variables.map(\.name),
                     events: census.eventNames, path: path
@@ -72,6 +78,7 @@ nonisolated public struct HKXGapCensus: Sendable {
     ) {
         var listened: [String] = []
         defer { hearing.addListened(listened, graphPath: path) }
+        let declared = Set(names.compactMap(\.self))
         for ref in graph.objectRefs {
             let target = HKXPointerTarget(
                 sectionIndex: ref.sectionIndex,
@@ -83,13 +90,7 @@ nonisolated public struct HKXGapCensus: Sendable {
             else { continue }
             listened += HKBEventListeners.eventIDs(of: object)
                 .compactMap { events.indices.contains($0) ? events[$0] : nil }
-            if let array = object as? HKBExpressionDataArray {
-                for data in array.expressionsData {
-                    if let name = data.expression.flatMap(Self.assignedVariable) {
-                        variableUses[name, default: []].insert(Self.assignedUse)
-                    }
-                }
-            }
+            recordExpressionUses(object, declared: declared)
             if
                 let machine = object as? HKBStateMachine,
                 names.indices.contains(machine.syncVariableIndex),
@@ -112,6 +113,49 @@ nonisolated public struct HKXGapCensus: Sendable {
                 let member = path.hasPrefix("m_") ? String(path.dropFirst(2)) : path
                 variableUses[name, default: []].insert("\(className).\(member)")
             }
+        }
+    }
+
+    /// An assignment writes its left side; every other variable an expression or a
+    /// condition names is read.
+    private mutating func recordExpressionUses(_ object: any HKBClass, declared: Set<String>) {
+        var texts: [String] = []
+        if let array = object as? HKBExpressionDataArray {
+            texts = array.expressionsData.compactMap(\.expression)
+        } else if let condition = object as? HKBExpressionCondition {
+            texts = condition.expression.map { [$0] } ?? []
+        }
+        for text in texts {
+            let assigned = Self.assignedVariable(text)
+            if let assigned {
+                variableUses[assigned, default: []].insert(Self.assignedUse)
+            }
+            let read = Self.identifiers(in: text).intersection(declared)
+            for name in read where name != assigned {
+                variableUses[name, default: []].insert(Self.expressionReadUse)
+            }
+        }
+    }
+
+    /// The names in an expression: runs of letters, digits, and underscores.
+    static func identifiers(in text: String) -> Set<String> {
+        let parts = text.split { !($0.isLetter || $0.isNumber || $0 == "_") }
+        return Set(parts.map(String.init))
+    }
+
+    /// Quad and pointer variables keep their values elsewhere, so only the word types count.
+    private mutating func recordAuthoredValues(
+        _ variables: [HKBCensusVariable], graph: HKXObjectGraph
+    ) {
+        let words = HKBBehaviorGraph.graphs(in: graph).first?.data?.variableInitialValues?
+            .wordValues ?? []
+        let wordTypes: Set<HKBVariableType> = [.bool, .int8, .int16, .int32, .real]
+        for (index, variable) in variables.enumerated() {
+            guard
+                let name = variable.name, let type = variable.type, wordTypes.contains(type),
+                words.indices.contains(index), words[index] != 0
+            else { continue }
+            authoredVariables.insert(name)
         }
     }
 

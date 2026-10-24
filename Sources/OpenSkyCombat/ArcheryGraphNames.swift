@@ -39,9 +39,13 @@ nonisolated public enum ArcheryGraphNames: Sendable {
     public static let bowDraw = "BowDraw"
     public static let bowRelease = "BowRelease"
 
-    /// Every event the archery state machine acts on when the graph fires it.
+    /// Ends the Eagle Eye zoom; the crossbow release clips carry it after the bolt leaves.
+    public static let bowZoomStop = "bowZoomStop"
+
+    /// Every event the archery state machine and the zoom act on when the graph fires it.
     public static let observedEvents = [
-        arrowAttach, bowDrawn, arrowRelease, arrowDetach, bowReset, bowDraw, bowRelease
+        arrowAttach, bowDrawn, arrowRelease, arrowDetach, bowReset, bowDraw, bowRelease,
+        bowZoomStop
     ]
 
     // MARK: - Variables
@@ -51,6 +55,6 @@ nonisolated public enum ArcheryGraphNames: Sendable {
 
     /// Every variable the archery runtime writes. The `iState_NPCBow*` integers are left
     /// out, because their encoding is unknown and a guess would silently pick the wrong
-    /// set. Eagle Eye zoom variables are a perk effect and are not written.
+    /// set. No graph of the install reads `bowZoom` or `bowZoomAmt`.
     public static let variables = [isBowDrawn]
 }

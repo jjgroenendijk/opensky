@@ -163,6 +163,10 @@ nonisolated enum LocomotionAcceptanceFixture {
         BehaviorVariableSpec(ActorStateGraphNames.wantCastRight, .bool, 0),
         BehaviorVariableSpec(ActorStateGraphNames.wantCastVoice, .bool, 0),
         BehaviorVariableSpec(ActorStateGraphNames.inCastState, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.rightHandEquipped, .int32, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.leftHandEquipped, .int32, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.isBeastRace, .bool, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.getUpType, .int32, 0),
         BehaviorVariableSpec(ActorStateGraphNames.state, .int32, 0)
     ]
 

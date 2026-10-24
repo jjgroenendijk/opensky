@@ -25,6 +25,26 @@ struct HKXGapCensusTests {
             == ["hkClass"])
     }
 
+    @Test func everyClassTheInstallUsesHasADecoder() {
+        let skeletonAndPhysics: Set = [
+            "hkMemoryResourceContainer", "hkMemoryResourceHandle", "hkpConstraintInstance",
+            "hkpRigidBody", "hkpRagdollConstraintData", "hkpShapeInfo", "hkpCapsuleShape",
+            "hkpLimitedHingeConstraintData", "hkpConvexTranslateShape", "hkpBoxShape",
+            "hkaSkeletonMapper", "hkaRagdollInstance", "hkpPhysicsData", "hkpPhysicsSystem",
+            "hkpPositionConstraintMotor", "hkpConvexTransformShape",
+            "hkpConvexVerticesConnectivity", "hkpConvexVerticesShape", "hkpListShape",
+            "hkpMoppBvTreeShape", "hkpMoppCode"
+        ]
+        let behaviorAndAnimation: Set = [
+            "BGSGamebryoSequenceGenerator", "hkbProjectStringData", "hkbCharacterStringData",
+            "hkbMirroredSkeletonInfo", "hkbFootIkDriverInfo", "hkaAnnotationTrack",
+            "hkaDefaultAnimatedReferenceFrame", "hkaInterleavedUncompressedAnimation"
+        ]
+        let missing = skeletonAndPhysics.union(behaviorAndAnimation)
+            .subtracting(HKXGapCensus.decoded)
+        #expect(missing.isEmpty, "\(missing.sorted())")
+    }
+
     @Test func aFileThatDoesNotDecodeIsOneFailure() {
         var census = HKXGapCensus()
         census.record(data: Data("not havok".utf8))
@@ -43,5 +63,13 @@ struct HKXGapCensusTests {
             .assignedVariable("turnSpeedMult = fabs(TurnDelta/90)") == "turnSpeedMult")
         #expect(HKXGapCensus.assignedVariable("weaponDraw if (iCombatStance == 1)") == nil)
         #expect(HKXGapCensus.assignedVariable("x if (a >= 1)") == nil)
+    }
+
+    /// The census keeps the names a graph declares, so `fabs` and `90` drop out.
+    @Test func expressionsNameTheVariablesTheyRead() {
+        #expect(HKXGapCensus.identifiers(in: "turnLeft if (TurnDelta > TurnMin)")
+            == ["turnLeft", "if", "TurnDelta", "TurnMin"])
+        #expect(HKXGapCensus.identifiers(in: "1stPRot = sind(Direction * 360)")
+            == ["1stPRot", "sind", "Direction", "360"])
     }
 }

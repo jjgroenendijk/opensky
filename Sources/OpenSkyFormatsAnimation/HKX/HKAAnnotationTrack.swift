@@ -47,12 +47,19 @@ nonisolated public struct HKAAnnotationTrack: Equatable, Sendable {
                 cursor.recordMiss(tracksField, .outOfBounds)
                 continue
             }
-            let name = element.string(at: nameField)
-            let annotations = readAnnotations(cursor: &element)
+            let track = track(cursor: &element)
             cursor.absorb(element)
-            tracks.append(HKAAnnotationTrack(name: name, annotations: annotations))
+            tracks.append(track)
         }
         return tracks
+    }
+
+    /// The track `cursor` is open on, as an array element or a tagfile object.
+    public static func track(cursor: inout HKXObjectCursor) -> HKAAnnotationTrack {
+        HKAAnnotationTrack(
+            name: cursor.string(at: nameField),
+            annotations: readAnnotations(cursor: &cursor)
+        )
     }
 
     /// The annotations of one track, in file order.

@@ -132,12 +132,15 @@ final class CombatWorldAdapter {
         worldTick.register(.archery) { [weak self, weak combat, weak gameSession] delta in
             guard let combat, let gameSession else { return }
             let locomotion = gameSession.locomotion
+            combat.isTimeSlowed = gameSession.magicTimeScale < 1
             let commands = combat.advanceArchery(
                 events: locomotion.graphEvents.drain(locomotion.archeryEventConsumer),
                 intent: locomotion.archeryIntent,
                 isPlayerControlled: gameSession.movementMode.isPlayerControlled,
                 delta: delta
             )
+            gameSession.bowZoomTimeScale = combat.bowZoomTimeScale
+            gameSession.bowZoomViewShare = combat.archery?.zoom.viewShare ?? 1
             self?.run(commands)
         }
     }

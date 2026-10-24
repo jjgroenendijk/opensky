@@ -20,6 +20,7 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
     var stopped: [(String, ReferenceKey)] = []
     var shakes: [(SIMD3<Float>, Float)] = []
     var headTracking: [(Bool, ReferenceKey)] = []
+    var scriptEvents: [(String, ReferenceKey)] = []
 
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>? {
         positions[source]
@@ -42,6 +43,10 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
 
     func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey) {
         headTracking.append((enabled, actor))
+    }
+
+    func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey) {
+        scriptEvents.append((name, source))
     }
 }
 
@@ -91,6 +96,14 @@ struct AnimationEventCoordinatorTests {
         #expect(world.shakes.first?.1 == 0.5)
         #expect(world.headTracking.first?.0 == false)
         #expect(coordinator.lastEvent?.hasPrefix("HeadTrackingOff") == true)
+    }
+
+    @Test func aFunctionEventReachesTheSourcesScripts() {
+        let (coordinator, world) = make()
+        coordinator.handle("Func.TestBiteEffect", from: actor)
+        #expect(world.scriptEvents.map(\.0) == ["TestBiteEffect"])
+        #expect(world.scriptEvents.first?.1 == actor)
+        #expect(coordinator.readout == ["script event: 1"])
     }
 
     @Test func offOrAGraphEventDoesNothing() {
