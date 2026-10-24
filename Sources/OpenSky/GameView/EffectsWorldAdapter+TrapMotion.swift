@@ -22,17 +22,28 @@ extension EffectsWorldAdapter {
                 position: body.originPosition,
                 rotation: MatrixMath.eulerAngles(of: body.orientation)
             )
-            let scale = game.scripts.bridge?.referenceState(for: reference)?.transform.scale ?? 1
-            game.worldState.set(
-                ReferenceTransformOverride(
-                    position: pose.position, rotation: pose.rotation, scale: scale
-                ),
-                for: reference, in: cell
-            )
+            let current = game.scripts.bridge?.referenceState(for: reference)?.transform
+            if current.map({ !Self.isSamePose(pose, as: $0.position, $0.rotation) }) ?? true {
+                game.worldState.set(
+                    ReferenceTransformOverride(
+                        position: pose.position, rotation: pose.rotation,
+                        scale: current?.scale ?? 1
+                    ),
+                    for: reference, in: cell
+                )
+            }
             game.streamer?.dynamicBodies.remove(reference)
         }
         game.worldState.set(motionType, for: reference, in: cell)
         return true
+    }
+
+    /// A body that never moved needs no transform write, which would rebuild the cell.
+    private static func isSamePose(
+        _ pose: PlacedReference.Placement, as position: SIMD3<Float>, _ rotation: SIMD3<Float>
+    ) -> Bool {
+        simd_distance(pose.position, position) < 0.01
+            && simd_reduce_max(simd_abs(pose.rotation - rotation)) < 0.0001
     }
 
     /// Clears the moves and the motion type, or moves the object to `target`. Its
