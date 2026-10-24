@@ -704,7 +704,7 @@ targets += domain(
     "OpenSkyTerrain",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyAssetCache"
+        "OpenSkyAssetCache", "OpenSkyImageKernels"
     ],
     tests: worldTestBase
 )

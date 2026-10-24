@@ -61,6 +61,22 @@ struct DDSDecoderTests {
         #expect(Array(image.rgba[0 ..< 4]) == [255, 255, 255, 0])
     }
 
+    @Test func smallLevelPicksTheLastMipAtLeastTheEdge() throws {
+        // 8 x 8 red top level (four blocks), then a 4 x 4 blue mip.
+        var payload = Data()
+        for _ in 0 ..< 4 {
+            payload.append(contentsOf: [0x00, 0xF8, 0x00, 0xF8, 0, 0, 0, 0])
+        }
+        payload.append(contentsOf: [0x1F, 0x00, 0x1F, 0x00, 0, 0, 0, 0])
+        let data = DDSFixture.file(
+            flags: 0x21007, width: 8, height: 8, mipCount: 2, fourCC: "DXT1", payload: payload
+        )
+        let small = try DDSDecoder.smallLevel(data, edge: 4)
+        #expect(small.width == 4)
+        #expect(Array(small.rgba[0 ..< 4]) == [0, 0, 255, 255])
+        #expect(try DDSDecoder.smallLevel(data, edge: 8).width == 8)
+    }
+
     @Test func decodesTwentyFourBitMasks() throws {
         let data = DDSFixture.file(
             flags: 0x100F, width: 2, height: 1, pitchOrLinearSize: 6, pixelFlags: 0x40,

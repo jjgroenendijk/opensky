@@ -333,6 +333,8 @@ nonisolated public struct RenderScene: Sendable {
     /// The placement each moving reference was built with, so a live pose becomes a
     /// draw delta against what this scene holds.
     public let referencePlacements: [UInt32: float4x4]
+    /// The distant LOD's fitted curve; nil draws with the vanilla one.
+    public var terrainLODBrightness: TerrainLODBrightness?
 
     public init(
         instances: [RenderPlacement],
@@ -465,6 +467,7 @@ nonisolated public struct RenderScene: Sendable {
         // Room indices belong to one graph, so two graphs turn room culling off.
         let graphs = scenes.compactMap(\.rooms)
         rooms = graphs.count == 1 ? graphs.first : nil
+        terrainLODBrightness = scenes.lazy.compactMap(\.terrainLODBrightness).first
         referencePlacements = scenes.reduce(into: [:]) { merged, scene in
             merged.merge(scene.referencePlacements) { kept, _ in kept }
         }

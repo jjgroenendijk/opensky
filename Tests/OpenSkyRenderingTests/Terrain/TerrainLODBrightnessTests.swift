@@ -31,4 +31,26 @@ struct TerrainLODBrightnessTests {
         #expect(curve.darkened(0.37) == 0.37)
         #expect(curve.typicalFactor == 1)
     }
+
+    @Test func fitRecoversTheGainOfOneWorld() {
+        // A worldspace brightened less than vanilla, like the Dawnguard ones.
+        let curve = TerrainLODBrightness(gain: 2.0, exponent: TerrainLODBrightness.vanilla.exponent)
+        let samples = (0 ..< 40).map { index -> SIMD2<Float> in
+            let source = 0.08 + Float(index) * 0.006
+            return SIMD2(source, curve.brightened(source))
+        }
+        let fitted = TerrainLODBrightness.fitted(samples: samples)
+        #expect(abs(fitted.gain - 2.0) < 0.001)
+        #expect(abs(fitted.darkened(curve.brightened(0.2)) - 0.2) < 0.001)
+    }
+
+    @Test func fewSamplesKeepTheVanillaCurve() {
+        let samples = [SIMD2<Float>](repeating: SIMD2(0.2, 0.3), count: 3)
+        #expect(TerrainLODBrightness.fitted(samples: samples) == .vanilla)
+    }
+
+    @Test func brokenDataIsClamped() {
+        let samples = [SIMD2<Float>](repeating: SIMD2(0.2, 0.001), count: 30)
+        #expect(TerrainLODBrightness.fitted(samples: samples).gain == 0.5)
+    }
 }

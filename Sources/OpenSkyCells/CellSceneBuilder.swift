@@ -168,6 +168,10 @@ nonisolated public final class CellSceneBuilder {
     var loadOrderExteriorCells: [UInt32: [SIMD2<Int32>: FoundCell]] = [:]
     /// LTEX FormID to its TXST texture keys; nil marks a broken chain.
     var terrainTextureKeyCache: [UInt32: TerrainTextureKeys?] = [:]
+    /// Diffuse path to its mean gamma colour; nil marks a texture the CPU cannot decode.
+    var terrainTextureMeans: [String: SIMD3<Float>?] = [:]
+    /// LOD worldspace editor ID, lowercased, to its fitted terrain LOD curve.
+    var terrainLODBrightnessByWorld: [String: TerrainLODBrightness] = [:]
     public var waterTypeIndex: [UInt32: WaterType]?
     public var waterPlaneMesh: RenderMesh?
     public var landTextureIndex: [UInt32: LandTexture]?

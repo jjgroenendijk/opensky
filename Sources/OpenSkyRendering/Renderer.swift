@@ -295,7 +295,8 @@ public final class Renderer: NSObject {
     public var shadingTerms = SurfaceShadingTerm.all
     /// The noise term undoes it; off, the LOD texture is drawn as stored.
     public var terrainLODBrightness: TerrainLODBrightness {
-        shadingTerms.contains(.landscapeNoise) ? .vanilla : .identity
+        guard shadingTerms.contains(.landscapeNoise) else { return .identity }
+        return scene.terrainLODBrightness ?? .vanilla
     }
 
     /// Bound in the environment slot of a material without a cube map.

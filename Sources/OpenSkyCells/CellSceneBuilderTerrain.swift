@@ -256,7 +256,7 @@ nonisolated extension CellSceneBuilder {
 
     /// LTEX TNAM -> TXST TX00 and TX01, normalized like NIF materials. Nil on any
     /// broken link or a missing diffuse (docs/engine/terrain.md).
-    nonisolated private func terrainTextureKeys(for ltexID: FormID) -> TerrainTextureKeys? {
+    nonisolated func terrainTextureKeys(for ltexID: FormID) -> TerrainTextureKeys? {
         if let cached = terrainTextureKeyCache[ltexID.rawValue] {
             return cached
         }
