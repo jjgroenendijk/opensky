@@ -86,6 +86,38 @@ struct HKBNodeClassTests {
         HKBClassCase(name: "BSLimbIKModifier", size: 128)
     ]
 
+    /// Classes beside the behaviour nodes. Their first member need not be a pointer,
+    /// so the dangling-pointer case skips them.
+    static let helperClasses: [HKBClassCase] = [
+        HKBClassCase(name: "BGSGamebryoSequenceGenerator", size: 112),
+        HKBClassCase(name: "hkbMirroredSkeletonInfo", size: 48),
+        HKBClassCase(name: "hkbFootIkDriverInfo", size: 80),
+        HKBClassCase(name: "hkaRagdollInstance", size: 80),
+        HKBClassCase(name: "hkaSkeletonMapper", size: 144),
+        HKBClassCase(name: "hkpPhysicsData", size: 40),
+        HKBClassCase(name: "hkpPhysicsSystem", size: 104),
+        HKBClassCase(name: "hkpRigidBody", size: 720),
+        HKBClassCase(name: "hkpConstraintInstance", size: 112),
+        HKBClassCase(name: "hkpRagdollConstraintData", size: 384),
+        HKBClassCase(name: "hkpLimitedHingeConstraintData", size: 272),
+        HKBClassCase(name: "hkpPositionConstraintMotor", size: 48),
+        HKBClassCase(name: "hkpShapeInfo", size: 128),
+        HKBClassCase(name: "hkpCapsuleShape", size: 80),
+        HKBClassCase(name: "hkpBoxShape", size: 64),
+        HKBClassCase(name: "hkpConvexTranslateShape", size: 80),
+        HKBClassCase(name: "hkpConvexTransformShape", size: 128),
+        HKBClassCase(name: "hkpConvexVerticesShape", size: 144),
+        HKBClassCase(name: "hkpConvexVerticesConnectivity", size: 48),
+        HKBClassCase(name: "hkpListShape", size: 144),
+        HKBClassCase(name: "hkpMoppBvTreeShape", size: 112),
+        HKBClassCase(name: "hkpMoppCode", size: 64),
+        HKBClassCase(name: "hkMemoryResourceContainer", size: 64),
+        HKBClassCase(name: "hkMemoryResourceHandle", size: 48),
+        HKBClassCase(name: "hkaDefaultAnimatedReferenceFrame", size: 80),
+        HKBClassCase(name: "hkaInterleavedUncompressedAnimation", size: 88),
+        HKBClassCase(name: "hkaAnnotationTrack", size: 24)
+    ]
+
     /// Bytes left in the section for the truncated case; every class in the set
     /// declares its first serialized member at 0x10 or later, so 16 bytes puts
     /// all of them out of bounds while still leaving the object addressable.
@@ -95,14 +127,14 @@ struct HKBNodeClassTests {
     /// without the other.
     @Test
     func tableMatchesTheRegistry() {
-        let tabled = Set(Self.classes.map(\.name))
+        let tabled = Set((Self.classes + Self.helperClasses).map(\.name))
         let registered = Set(HKBClassRegistry.decoders.keys)
         let difference = "table minus registry: \(tabled.subtracting(registered)); "
             + "registry minus table: \(registered.subtracting(tabled))"
         #expect(tabled == registered, "\(difference)")
     }
 
-    @Test(arguments: HKBNodeClassTests.classes)
+    @Test(arguments: HKBNodeClassTests.classes + HKBNodeClassTests.helperClasses)
     func decodesAZeroFilledObject(_ entry: HKBClassCase) throws {
         var fixture = HKBNodeFixture(payloadSize: entry.size)
         let target = fixture.addObject(entry.name, at: 0)
@@ -121,7 +153,7 @@ struct HKBNodeClassTests {
         #expect(!object.summary.isEmpty)
     }
 
-    @Test(arguments: HKBNodeClassTests.classes)
+    @Test(arguments: HKBNodeClassTests.classes + HKBNodeClassTests.helperClasses)
     func toleratesATruncatedObject(_ entry: HKBClassCase) throws {
         var fixture = HKBNodeFixture(payloadSize: entry.size)
         let target = fixture.addObject(entry.name, at: 0)
