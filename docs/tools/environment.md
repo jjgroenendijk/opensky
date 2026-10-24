@@ -31,6 +31,15 @@ this first.
 
 Retires when a later macOS or Xcode answers the query under offline rendering.
 
+## Missing VFS overlay when an app build overlaps a package test
+
+Observed 2026-10-24 on Xcode 27. `make build-app` failed with `Virtual filesystem overlay file
+'.../all-product-headers.yaml' not found` while `make test-package` was building the same
+checkout. The same `make build-app` passed when run again on its own. Run them one after the
+other in one checkout.
+
+Retires when an app build that overlaps a package test in the same checkout passes.
+
 ## Upstream spec hosts
 
 Quirks that cost time in every format parser session. Each retires when the host changes behavior.

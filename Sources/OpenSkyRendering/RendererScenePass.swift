@@ -92,7 +92,8 @@ extension Renderer {
             ),
             debugMode: renderDebug.mode.rawValue,
             shadingTerms: shadingTerms.rawValue,
-            sceneDepthUnproject: sceneDepthUnproject
+            sceneDepthUnproject: sceneDepthUnproject,
+            terrainLODBrightening: terrainLODBrightness.uniform
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

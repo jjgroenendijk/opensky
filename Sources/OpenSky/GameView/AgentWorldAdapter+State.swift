@@ -273,7 +273,17 @@ extension AgentWorldAdapter {
             "maxFrameMS": .number(stats.maxFrameMS),
             "gpuMS": stats.gpuMS.map(AgentJSON.number) ?? .null,
             "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
-            "interpolation": interpolationState()
+            "interpolation": interpolationState(),
+            "terrainLOD": terrainLODState()
+        ]
+    }
+
+    private func terrainLODState() -> AgentJSON {
+        guard let curve = game.renderControls.terrainLODBrightness else { return .null }
+        return [
+            "brighteningGain": .init(curve.gain),
+            "brighteningExponent": .init(curve.exponent),
+            "darkeningFactor": .init(curve.typicalFactor)
         ]
     }
 

@@ -345,6 +345,8 @@ typedef struct
     /// x, y: projection m22 and m32, to turn stored depth into view depth. z: 1 when
     /// the scene depth copy is bound at TextureIndexSceneDepth.
     vector_float4 sceneDepthUnproject;
+    /// Terrain LOD brightening the noise term undoes: x = gain, y = exponent, in gamma.
+    vector_float2 terrainLODBrightening;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

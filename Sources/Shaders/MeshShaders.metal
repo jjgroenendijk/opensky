@@ -15,6 +15,11 @@ constant bool alphaBlendEnabled = is_function_constant_defined(alphaBlendValue) 
 // dividing by it keeps the average colour of the land.
 constant float landscapeNoiseTile = 1.0 / 4096.0;
 constant float landscapeNoiseMean = 0.215;
+// Inverse of the Creation Kit's terrain LOD brightening `gain * source^exponent` in gamma.
+static inline float3 undoTerrainLODBrightening(float3 albedo, float2 curve)
+{
+    return toLinear(pow(toGamma(albedo) / curve.x, 1.0 / curve.y));
+}
 // Refraction strength 1 moves the scene by a tenth of the screen; fire refraction
 // scrolls its normal map half a texture per second. Both are OpenSky choices.
 constant float refractionReach = 0.1;
@@ -410,6 +415,7 @@ fragment float4 staticMeshFragment(
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
         albedo *= mix(1.0, noise / landscapeNoiseMean, 0.5);
+        albedo = undoTerrainLODBrightening(albedo, frame.terrainLODBrightening);
     }
     if (hasTerm(terms, ShadingTermMultiLayer)) {
         float innerAlpha = layerMap.sample(trilinear, uv).a;

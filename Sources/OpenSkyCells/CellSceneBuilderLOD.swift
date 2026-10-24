@@ -15,6 +15,7 @@ nonisolated extension CellSceneBuilder {
         let lodWorld = lodWorldspace(of: worldspaceEditorID)
         guard let builder = distantLODBuilder else { return nil }
         let lod = try builder.build(worldspace: lodWorld, center: center, hiddenCells: hiddenCells)
+            .with(terrainLODBrightness: terrainLODBrightness(lodWorldspace: lodWorld))
         let water = builder.area(worldspace: lodWorld).map {
             distantWater(worldspace: worldspaceEditorID, area: $0, hiddenCells: hiddenCells)
         } ?? []

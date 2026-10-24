@@ -169,6 +169,9 @@ The chargen face is painted on the CPU, so two kinds of file are also decoded th
   the red channel is the coverage.
 
 The CPU decoder reads the top level of BC1, BC3, the three 32-bit formats, and 24-bit RGB.
+It can also read one small mip instead: the terrain LOD brightness fit needs only the mean
+colour of a texture, and a 4 x 4 mip of a Skyrim texture has the same mean as its top level
+to within 5 percent.
 A BC1 block with `color0 <= color1` uses the three-color mode with transparent black. A BC3
 color block always uses four colors. The painted result is written back as an RGBA8888
 file with a box-filtered mip chain, so the normal texture path uploads it.

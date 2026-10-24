@@ -272,12 +272,23 @@ nonisolated public struct DistantLODScene: Sendable {
         self.treeInstanceCount = treeInstanceCount
     }
 
+    /// The same ring, drawn with the worldspace's fitted terrain LOD curve.
+    public func with(terrainLODBrightness: TerrainLODBrightness) -> DistantLODScene {
+        var scene = renderScene
+        scene.terrainLODBrightness = terrainLODBrightness
+        return replacing(renderScene: scene)
+    }
+
     /// The same ring with distant water planes added.
     public func adding(water: [WaterDrawItem]) -> DistantLODScene {
+        replacing(renderScene: RenderScene(merging: [
+            renderScene, RenderScene(instances: [], water: water)
+        ]))
+    }
+
+    private func replacing(renderScene: RenderScene) -> DistantLODScene {
         DistantLODScene(
-            renderScene: RenderScene(merging: [
-                renderScene, RenderScene(instances: [], water: water)
-            ]),
+            renderScene: renderScene,
             assets: assets,
             blockCount: blockCount,
             missingBlockCount: missingBlockCount,
@@ -401,7 +412,7 @@ nonisolated public final class DistantLODBuilder {
         )
     }
 
-    private func settings(worldspace: String) throws -> LODSettings {
+    func settings(worldspace: String) throws -> LODSettings {
         let key = worldspace.lowercased()
         if let cached = settingsByWorldspace[key] {
             return cached

@@ -99,6 +99,36 @@ Distant terrain (type 18) multiplies the albedo by `mix(1, noise / 0.215, 0.5)`.
 (4096 units). Dividing by the mean keeps the average colour of the land. The game's blend is
 not documented, so the strength and the tiling are OpenSky choices.
 
+The Creation Kit brightens terrain LOD textures when it builds them, and the game darkens
+them again in the type 18 shader with the noise texture. Object LOD textures are not
+brightened. The xLODGen author (sheson) describes the same rule. OpenSky keeps the noise
+mean-neutral and undoes the brightening with a curve instead: a LOD texel is
+`gain * source^1.145` in gamma space (0 to 1), where the source is the same land painted by
+its `LAND` textures and vertex colours. The shader applies the inverse,
+`(albedo / gain)^(1 / 1.145)`, after the noise. With the noise term off, the LOD texture is
+drawn as stored. `openskycli game state frame` reports the curve under `terrainLOD`.
+
+The gain differs between worldspaces, so OpenSky fits it per worldspace from that
+worldspace's own files. A mod worldspace needs no entry in any table. The fit reads up to
+64 level-4 LOD blocks spread over the LOD area, takes the 4 x 4 mip of each (one texel per
+cell), and compares each texel with the cell's `LAND` colour. The gain is the median of
+`texel / land^1.145`. With fewer than 16 cells it falls back to gain 2.431, the fit for
+Tamriel. The first LOD ring of a session is built before the plugins are read, so it uses
+that fallback until the ring is rebuilt.
+
+Measured on the user's install, LOD brightness over `LAND` brightness, mean over all cells:
+
+| Worldspace | Built from | Ratio |
+| --- | --- | --- |
+| Tamriel, Sovngarde, Skuldafn, Blackreach, Markarth, Japhet's Folly | `Skyrim.esm` | 1.73 to 1.86 |
+| Solstheim | `Dragonborn.esm` | 1.90 |
+| Forgotten Vale, Dawnguard HQ | `Dawnguard.esm` | 1.74 to 1.77, but 13 % lower than Tamriel at the same brightness |
+| Soul Cairn | `Dawnguard.esm` | 1.42 |
+
+The game has one shader and no worldspace field for this, so in the game the Dawnguard
+worldspaces most likely show a slightly darker LOD ring. OpenSky fits each worldspace and
+does not show that step.
+
 Parallax (type 3) shifts the texture coordinate before any sampling:
 `uv += V.xy * (height * 0.08 - 0.04)`, with V the view direction in the tangent frame.
 
