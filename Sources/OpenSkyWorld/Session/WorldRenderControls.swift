@@ -7,7 +7,9 @@ import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyTerrain
 

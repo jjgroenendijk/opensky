@@ -7,6 +7,7 @@ import Metal
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

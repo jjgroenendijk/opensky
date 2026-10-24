@@ -35,21 +35,21 @@ final class DialogueAcceptanceChain {
     private(set) var activations: [TalkActivationEvent] = []
 
     private let runner = ManualCellBuildRunner()
-    /// No dialogue store, because the chain installs a synthetic one, so the
-    /// chain still calls the app's own `wireDialogue`.
-    private static let emptyData = WorldDataStores(
-        scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: [])
-    )
 
     init() throws {
+        // Set before the first read of `controller.dialogue`, which is built over it.
+        let data = try WorldDataStores(
+            scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: []),
+            dialogueStore: DialogueAcceptanceFixture.dialogueStore()
+        )
+        controller.worldData = data
         session = try DialogueAcceptanceFixture.session(worldState: controller.worldState)
-        controller.scripts.install(runtime: session.world, bridge: session.bridge)
+        controller.scripts = ScriptCoordinator(
+            world: controller.scriptWorld, runtime: session.world, bridge: session.bridge
+        )
         streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
-        controller.dialogueWorld.wireDialogue(provider: Self.emptyData, streamer: streamer)
-        // The provider seam carries a store only in a session with game data;
-        // this one is synthetic, so the index is installed directly.
-        controller.dialogue.index = try DialogueAcceptanceFixture.dialogueStore()
+        controller.dialogueWorld.wireDialogue(provider: data, streamer: streamer)
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
         streamer.talk.candidateSource = { [Self.candidate] }

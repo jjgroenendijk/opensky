@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyPlayer
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 /// Live camera pose, as one value so a readout and the HUD read the same frame's
 /// numbers rather than each polling the parts separately.

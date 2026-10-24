@@ -79,7 +79,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
-    public var itemNotices = ItemNoticeTexts.vanilla
+    public var itemNotices: ItemNoticeTexts
     /// Visual effects, effect shaders, and image-space modifiers. Nil in a headless session.
     public weak var effectPresenter: (any PapyrusEffectPresenting)?
     /// The sky, for the `Weather` natives. Nil in a headless session.
@@ -116,12 +116,27 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         worldState: WorldStateStore,
         world: PapyrusWorldRuntime? = nil,
         references: (any PapyrusWorldReferenceSource)? = nil,
-        globals: GlobalStore? = nil
+        globals: GlobalStore? = nil,
+        seams: PapyrusBridgeSeams = PapyrusBridgeSeams()
     ) {
         self.worldState = worldState
         self.world = world
         self.references = references
         self.globals = globals
+        questRuntime = seams.quests
+        inventory = seams.inventory
+        alchemy = seams.alchemy
+        actorAI = seams.actorAI
+        furniture = seams.furniture
+        objectAnimation = seams.objectAnimation
+        story = seams.story
+        menus = seams.menus
+        trapWorld = seams.trapWorld
+        presenter = seams.presenter
+        itemNotices = seams.itemNotices
+        effectPresenter = seams.effectPresenter
+        weather = seams.weather
+        music = seams.music
     }
 
     public var playerKey: ReferenceKey {

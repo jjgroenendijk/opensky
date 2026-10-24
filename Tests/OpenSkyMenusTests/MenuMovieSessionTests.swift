@@ -2,7 +2,6 @@
 
 import OpenSkyEngineTesting
 @testable import OpenSkyMenus
-@testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import Testing
 

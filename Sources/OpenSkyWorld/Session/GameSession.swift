@@ -10,7 +10,9 @@ import OpenSkyCamera
 import OpenSkyFormatsCore
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyWeather
 import OpenSkyWorldState
 import simd

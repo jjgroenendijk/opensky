@@ -4,6 +4,7 @@
 import Metal
 import OpenSkyCells
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 extension RenderScale {

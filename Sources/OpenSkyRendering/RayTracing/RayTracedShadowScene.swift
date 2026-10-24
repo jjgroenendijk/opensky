@@ -3,6 +3,7 @@
 // See docs/rendering/ray-traced-shadows.md.
 
 import Metal
+import OpenSkyRenderResources
 import simd
 
 /// One mesh placed in the world.

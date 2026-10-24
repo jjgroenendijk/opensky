@@ -10,6 +10,7 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting

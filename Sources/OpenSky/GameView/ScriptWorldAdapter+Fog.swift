@@ -4,6 +4,7 @@
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

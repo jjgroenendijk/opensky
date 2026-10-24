@@ -1,5 +1,6 @@
 // Per-draw point light pick: same choice as a full stable sort, in fixed storage.
 
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

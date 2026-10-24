@@ -4,8 +4,9 @@
 #
 #   1. Extracted Bethesda assets must never be committed, in any form.
 #   2. A frame OpenSky renders embeds the user's own game textures and meshes,
-#      so a rendered capture is game content too. Only the app icon set is a
-#      legitimately tracked image; verification captures go to gitignored .logs/.
+#      so a rendered capture is game content too. Only the app icon set and the
+#      README's launcher screenshots (OpenSky's own UI, no game frame) are tracked
+#      images; verification captures go to gitignored .logs/.
 #   3. Pages of the offline Creation Kit wiki mirror are someone else's text.
 #
 # Checks every tracked file, so it also catches a blob that arrived by merge or
@@ -16,7 +17,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 FORBIDDEN_EXT_RE='\.(bsa|ba2|esm|esp|esl|nif|dds|hkx|hkc|pex|psc|bik|fuz|xwm|lip|tri|btr|bto|btt)$'
 RENDERED_IMAGE_RE='\.(png|jpg|jpeg|gif|webp|tga|bmp|tif|tiff)$'
-ALLOWED_IMAGE_PATH_RE='^Sources/OpenSky/Resources/Assets\.xcassets/'
+ALLOWED_IMAGE_PATH_RE='^(Sources/OpenSky/Resources/Assets\.xcassets/|docs/images/launcher-[a-z-]+\.png$)'
 
 indent() { while IFS= read -r line; do printf '  %s\n' "$line"; done; }
 

@@ -5,6 +5,7 @@ import AppKit
 import Foundation
 @testable import OpenSky
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 import Testing

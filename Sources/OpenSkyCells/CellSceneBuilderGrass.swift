@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated public struct GrassBuild {

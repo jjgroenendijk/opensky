@@ -4,6 +4,7 @@
 import Foundation
 import Metal
 import OpenSkyRendering
+import OpenSkyRenderResources
 
 extension RenderCommand {
     static func report(

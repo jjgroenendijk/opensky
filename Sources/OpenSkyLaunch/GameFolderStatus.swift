@@ -40,6 +40,8 @@ nonisolated public struct GameFolderStatus: Equatable, Sendable {
             "Chosen in Settings."
         case .steamDefault:
             "Default Steam install location."
+        case .steamLibrary:
+            "Found in a Steam library folder."
         }
     }
 }

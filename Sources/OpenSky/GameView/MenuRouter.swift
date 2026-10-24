@@ -43,26 +43,24 @@ final class MenuRouter {
     }
 
     func makeSystemMenu() -> SystemMenuCoordinator {
-        let menu = SystemMenuCoordinator(
+        SystemMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
             hud: game.hud,
+            settings: game.playerSettings,
+            saves: game.saveGames,
             world: game
         )
-        menu.attach(settings: game.playerSettings)
-        menu.saves = game.saveGames
-        return menu
     }
 
     func makeTitleMenu() -> TitleMenuCoordinator {
-        let menu = TitleMenuCoordinator(
+        TitleMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
             hud: game.hud,
+            saves: game.saveGames,
             world: game.menuWorld
         )
-        menu.saves = game.saveGames
-        return menu
     }
 
     func makeRaceMenu() -> RaceMenuCoordinator {
@@ -118,7 +116,8 @@ final class MenuRouter {
         let renderer = gameSession.renderer
         game.playerSettings.loadControlMap(try? game.controlMapLoader?())
         game.playerSettings.applyAll()
-        game.audio.onEngineBuilt = { [weak game] in game?.playerSettings.applyAll() }
+        game.audio.engineStarted
+            .register(.playerSettings) { [weak game] _ in game?.playerSettings.applyAll() }
         if let labels = game.menuTextLoader?() {
             renderer.swfTextTranslator = { labels.label(for: $0) }
         }

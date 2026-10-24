@@ -8,6 +8,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyPhysics
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyWorldTesting
 import simd

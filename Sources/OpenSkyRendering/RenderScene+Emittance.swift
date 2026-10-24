@@ -1,5 +1,7 @@
 // The regions whose weather colours light this scene's external-emittance shapes.
 
+import OpenSkyRenderCore
+
 nonisolated extension RenderScene {
     public var emittanceRegions: Set<UInt32> {
         let instances = (opaque + alphaTested).flatMap(\.instances)

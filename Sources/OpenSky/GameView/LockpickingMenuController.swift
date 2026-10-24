@@ -10,6 +10,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

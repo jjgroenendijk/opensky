@@ -4,6 +4,8 @@
 
 import Metal
 import MetalFX
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

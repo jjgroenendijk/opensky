@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 

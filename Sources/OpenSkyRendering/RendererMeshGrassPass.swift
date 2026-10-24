@@ -2,6 +2,8 @@
 // draw. The object stage culls meshlets on the GPU. See docs/rendering/mesh-shader-grass.md.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -45,7 +47,7 @@ extension Renderer {
             let counters = meshGrass.counters
         else { return }
         let values = counters.contents().bindMemory(
-            to: UInt32.self, capacity: 2 * Self.maxFramesInFlight
+            to: UInt32.self, capacity: 2 * GPUFactory.maxFramesInFlight
         )
         meshGrass.lastCounts = MeshletCounts(
             tested: Int(values[slot * 2]), drawn: Int(values[slot * 2 + 1]),
@@ -138,11 +140,11 @@ extension Renderer {
     private func prepareMeshGrassBuffers(groupCount: Int) -> Bool {
         if meshGrass.counters == nil {
             meshGrass.counters = makeMeshGrassBuffer(
-                length: 2 * Self.maxFramesInFlight * MemoryLayout<UInt32>.stride,
+                length: 2 * GPUFactory.maxFramesInFlight * MemoryLayout<UInt32>.stride,
                 label: "GrassMeshletCounters"
             )
             meshGrass.counters?.contents().initializeMemory(
-                as: UInt8.self, repeating: 0, count: 2 * Self.maxFramesInFlight * 4
+                as: UInt8.self, repeating: 0, count: 2 * GPUFactory.maxFramesInFlight * 4
             )
         }
         if groupCount > meshGrass.uniformCapacity {
@@ -151,7 +153,7 @@ extension Renderer {
             }
             let capacity = max(groupCount, 2 * meshGrass.uniformCapacity, 16)
             meshGrass.uniforms = makeMeshGrassBuffer(
-                length: Self.meshGrassUniformStride * capacity * Self.maxFramesInFlight,
+                length: Self.meshGrassUniformStride * capacity * GPUFactory.maxFramesInFlight,
                 label: "GrassMeshUniforms"
             )
             meshGrass.uniformCapacity = meshGrass.uniforms == nil ? 0 : capacity

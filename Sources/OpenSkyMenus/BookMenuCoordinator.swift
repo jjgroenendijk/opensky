@@ -4,7 +4,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyRendering
 
 /// One book's text, ready for the movie.
 nonisolated public struct BookContent: Equatable, Sendable {

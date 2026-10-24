@@ -3,7 +3,7 @@
 // unit-testable. See docs/engine/cell-streaming.md.
 
 import OpenSkyFormatsCore
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 /// Cells to load and cells to unload, computed fresh each call against

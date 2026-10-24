@@ -9,6 +9,8 @@ import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 nonisolated public enum MeshLibraryError: Error, Equatable {

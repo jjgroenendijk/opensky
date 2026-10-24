@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated public enum EffectsReadout {

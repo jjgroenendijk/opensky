@@ -2,6 +2,8 @@
 // player body, so both sizing callers live here.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -87,22 +89,22 @@ extension Renderer {
         guard drawCount > drawUniformSlotCapacity else { return nil }
         let capacity = Self.slotCapacity(for: drawCount)
         return try DrawRingRegrow(
-            draw: Self.makeUniformBuffer(
+            draw: GPUFactory.makeUniformBuffer(
                 device: device,
-                length: Self.alignedDrawUniformsSize * capacity * Self.maxFramesInFlight,
+                length: Self.alignedDrawUniformsSize * capacity * GPUFactory.maxFramesInFlight,
                 label: "DrawUniforms"
             ),
-            pointLight: Self.makeUniformBuffer(
+            pointLight: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: MemoryLayout<PointLightUniform>.stride
                     * LightingConstant.maxPointLights.rawValue
-                    * capacity * Self.maxFramesInFlight,
+                    * capacity * GPUFactory.maxFramesInFlight,
                 label: "PointLights"
             ),
-            shadowDraw: Self.makeUniformBuffer(
+            shadowDraw: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: Self.alignedDrawUniformsSize
-                    * Self.shadowDrawCapacity(capacity) * Self.maxFramesInFlight,
+                    * Self.shadowDrawCapacity(capacity) * GPUFactory.maxFramesInFlight,
                 label: "ShadowDrawUniforms"
             ),
             capacity: capacity
@@ -112,14 +114,15 @@ extension Renderer {
     public func regrownInstanceRing(for instanceCount: Int) throws -> InstanceRingRegrow? {
         guard instanceCount > instanceSlotCapacity else { return nil }
         let capacity = Self.slotCapacity(for: instanceCount)
-        let length = MemoryLayout<InstanceTransform>.stride * capacity * Self.maxFramesInFlight
+        let length = MemoryLayout<InstanceTransform>.stride * capacity * GPUFactory
+            .maxFramesInFlight
         return try InstanceRingRegrow(
-            instance: Self.makeUniformBuffer(
+            instance: GPUFactory.makeUniformBuffer(
                 device: device, length: length, label: "InstanceTransforms"
             ),
             // Per-cascade caster runs need cascadeCount x the scene ring
             // (matches makeSceneRings sizing).
-            shadowInstance: Self.makeUniformBuffer(
+            shadowInstance: GPUFactory.makeUniformBuffer(
                 device: device,
                 length: length * ShadowConstant.cascadeCount.rawValue,
                 label: "ShadowInstanceTransforms"

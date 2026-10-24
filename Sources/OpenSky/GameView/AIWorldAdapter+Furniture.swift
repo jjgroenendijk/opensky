@@ -14,6 +14,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
@@ -22,9 +23,8 @@ import OpenSkyWorldState
 import simd
 
 extension AIWorldAdapter {
-    /// After the vehicles, so the switch and the bridge are set before a package sits.
+    /// After the vehicles, so the switch is set before a package sits.
     func wireFurniture(gameSession: GameSession) {
-        game.scripts.bridge?.furniture = self
         gameSession.playerFurniture = self
         let furniture = game.furniture
         let store = game.playerSettingsStore

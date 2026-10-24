@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import OpenSkyWorldState
 import simd

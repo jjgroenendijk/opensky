@@ -13,7 +13,9 @@ import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld

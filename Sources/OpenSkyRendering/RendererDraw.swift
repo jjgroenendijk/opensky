@@ -2,6 +2,8 @@
 // setup + resource lifetime live in Renderer and RendererSetup.
 
 import MetalKit
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import QuartzCore
 
 extension Renderer: MTKViewDelegate {
@@ -41,11 +43,11 @@ extension Renderer: MTKViewDelegate {
         }
 
         endFrameEvent.wait(
-            untilSignaledValue: UInt64(frameIndex - Self.maxFramesInFlight),
+            untilSignaledValue: UInt64(frameIndex - GPUFactory.maxFramesInFlight),
             timeoutMS: 10
         )
 
-        let slot = frameIndex % Self.maxFramesInFlight
+        let slot = frameIndex % GPUFactory.maxFramesInFlight
         beginFrameCapture()
         let allocator = commandAllocators[slot]
         allocator.reset()

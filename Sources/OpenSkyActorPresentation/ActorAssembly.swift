@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import simd
 

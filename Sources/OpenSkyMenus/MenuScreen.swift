@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 /// What every menu screen needs from the app.
 public protocol MenuScreenWorld: SWFLayerWorld {

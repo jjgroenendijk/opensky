@@ -4,15 +4,16 @@ import Metal
 import MetalKit
 import OpenSkyDiagnostics
 import OpenSkyPhysics
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import QuartzCore
 import simd
 
 public final class Renderer: NSObject {
-    /// Members below default to internal (not private) where
-    /// RendererOffscreen.swift / RendererSetup.swift extend the loop
-    /// cross-file; the module boundary still hides them from callers.
-    nonisolated public static let maxFramesInFlight = 3
+    // Members below default to internal (not private) where
+    // RendererOffscreen.swift / RendererSetup.swift extend the loop
+    // cross-file; the module boundary still hides them from callers.
 
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement. The per-draw ring is
@@ -332,14 +333,13 @@ public final class Renderer: NSObject {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         (self.device, self.wallClock) = (device, wallClock)
 
-        (commandQueue, commandBuffer) = try (
-            Self.makeCommandQueue(device: device), Self.makeCommandBuffer(device: device)
-        )
+        commandQueue = try GPUFactory.makeCommandQueue(device: device)
+        commandBuffer = try GPUFactory.makeCommandBuffer(device: device)
         commandAllocators = try Self.makeCommandAllocators(device: device)
         argumentTable = try Self.makeArgumentTable(device: device)
 
         endFrameEvent = try Self.makeEndFrameEvent(device: device)
-        frameIndex = Self.maxFramesInFlight
+        frameIndex = GPUFactory.maxFramesInFlight
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
         Self.configure(view: view)
@@ -380,7 +380,7 @@ public final class Renderer: NSObject {
         shadowDrawUniformBuffer = rings.shadowDrawBuffer
         shadowInstanceBuffer = rings.shadowInstanceBuffer
 
-        residencySet = try Self.makeResidencySet(
+        residencySet = try GPUFactory.makeResidencySet(
             device: device,
             allocations: [
                 frameUniformBuffer, drawUniformBuffer, pointLightBuffer,

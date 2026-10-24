@@ -9,6 +9,7 @@ import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySave
 import OpenSkyWorld

@@ -3,7 +3,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 nonisolated extension WeatherSystem {
     /// The `IMSP` links of every weather in the blend, weighted, at `hour`.

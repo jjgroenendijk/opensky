@@ -8,6 +8,7 @@ import OpenSkyActorPresentation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 
 nonisolated public final class PlayerBody {

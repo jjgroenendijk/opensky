@@ -42,6 +42,8 @@ node_modules/
 *.[pP][nN][gG]
 # Exception: AppIcon PNGs generated from our own SVG (make icon) — no game content.
 !Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
+# Exception: README screenshots of OpenSky's own launcher, no game frame (AGENTS.md).
+!docs/images/launcher-*.png
 
 # ── Logs (AGENTS.md "Code scripts": all logs go to .logs/) ─────────────────────
 .logs/*

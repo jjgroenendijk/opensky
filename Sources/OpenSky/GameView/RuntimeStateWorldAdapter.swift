@@ -23,6 +23,7 @@ import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave

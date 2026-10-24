@@ -6,6 +6,7 @@ import Foundation
 import Metal
 import OpenSkyEngineTesting
 @testable import OpenSkyMenus
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorld

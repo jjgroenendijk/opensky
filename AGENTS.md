@@ -23,7 +23,8 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
   SKSE or Creation Kit internals. Reimplement from observed behavior and open format docs.
 - A frame OpenSky renders embeds the user's game assets, so a rendered capture is game
   content too. Verification captures go to gitignored `.logs/`; link the local path in the
-  PR rather than committing the image.
+  PR rather than committing the image. The one exception is a screenshot of OpenSky's own
+  launcher, with no game frame in it, at `docs/images/launcher-*.png` for the README.
 - The game install is read-only external input: located at runtime, never bundled, cached
   into the repo, or copied into build output.
 - About to add a binary blob -> stop, ask.

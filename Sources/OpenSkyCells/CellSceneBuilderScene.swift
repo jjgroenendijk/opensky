@@ -7,7 +7,9 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTerrain
 import OpenSkyWorldInterface
 import OpenSkyWorldState

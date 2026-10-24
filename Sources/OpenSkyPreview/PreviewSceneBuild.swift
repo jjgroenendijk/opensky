@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

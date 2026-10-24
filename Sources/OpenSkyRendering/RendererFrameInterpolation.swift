@@ -4,6 +4,7 @@
 import Metal
 import MetalFX
 import MetalKit
+import OpenSkyRenderCore
 import QuartzCore
 
 /// The second drawable of a live frame and the pass that draws into it.

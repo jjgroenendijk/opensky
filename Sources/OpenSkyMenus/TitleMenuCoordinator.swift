@@ -86,7 +86,7 @@ public final class TitleMenuCoordinator {
     public private(set) var selectedIndex = 0
     public private(set) var loadPage: SaveLoadPageModel?
     public internal(set) var lastResult: String?
-    public weak var saves: SaveGameService?
+    public weak let saves: SaveGameService?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
     /// The credits movie has the layer in place of the title movie.
@@ -113,9 +113,10 @@ public final class TitleMenuCoordinator {
 
     public init(
         menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
-        world: (any TitleMenuWorld)? = nil
+        saves: SaveGameService?, world: (any TitleMenuWorld)? = nil
     ) {
         self.menuMode = menuMode
+        self.saves = saves
         self.movies = movies
         self.hud = hud
         self.world = world

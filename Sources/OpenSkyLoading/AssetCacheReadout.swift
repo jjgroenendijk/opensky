@@ -2,7 +2,7 @@
 
 import Foundation
 import OpenSkyAssetCache
-import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated public enum AssetCacheReadout {
     /// `High: no visible loss`, for the texture quality menu.

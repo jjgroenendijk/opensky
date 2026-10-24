@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyQuests
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
@@ -26,7 +27,6 @@ protocol MessageWorldHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var journal: JournalCoordinator { get }
     var journalMenu: JournalMenuController { get }
-    var mapWorld: MapWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -45,12 +45,8 @@ final class MessageWorldAdapter {
         self.game = game
     }
 
-    /// Gives the Papyrus bridge its presenter, once the VM exists.
+    /// Notifications and help records for the new session.
     func wire(gameSession: GameSession) {
-        game.scripts.bridge?.presenter = game.messages
-        game.scripts.bridge?.itemNotices = game.worldData.map {
-            ItemNoticeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
         cachedEditorIDs = nil
         game.messages.reloadHelpRecords()
         // Frame steps run under a menu too, so notifications keep real time.

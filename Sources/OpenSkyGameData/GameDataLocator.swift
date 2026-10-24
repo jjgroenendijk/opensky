@@ -1,7 +1,7 @@
 // Locates the user's Skyrim SE install, read-only (AGENTS.md, Legal & IP). First
 // configured source wins, and an invalid one fails loud: `OPENSKY_DATA_ROOT`, then
-// UserDefaults "OpenSkyDataRoot", then the default Steam path. A test host reads only
-// the environment variable (`persistedRootDefaults`).
+// UserDefaults "OpenSkyDataRoot", then the default Steam path, then every Steam library.
+// A test host reads only the environment variable (`persistedRootDefaults`).
 
 import Foundation
 
@@ -18,19 +18,18 @@ nonisolated extension GameDataError: LocalizedError {
         switch self {
         case let .overrideInvalid(source, path):
             let origin = switch source {
-            case .environment: "environment variable \(GameDataLocator.environmentKey)"
-            case .userDefaults: "defaults key \(GameDataLocator.defaultsKey)"
-            case .steamDefault: "default Steam path"
+            case .environment: "the \(GameDataLocator.environmentKey) environment variable"
+            case .userDefaults: "the folder chosen in Settings"
+            case .steamDefault, .steamLibrary: "the Steam folder"
             }
-            return "Configured game data root (\(origin)) is not a Skyrim SE install: \(path). "
-                + "Expected a folder containing Data/Skyrim.esm (or Skyrim.esm itself)."
+            return "The game folder set by \(origin) has no Skyrim Special Edition in it: "
+                + "\(path). Choose the folder that holds Data/Skyrim.esm in Settings."
         case let .notFound(searched):
             let scope = searched.isEmpty
-                ? "No fallback location was consulted."
+                ? "No folder was searched."
                 : "Searched: " + searched.joined(separator: ", ") + "."
-            return "Skyrim Special Edition install not found. \(scope) "
-                + "Set the \(GameDataLocator.defaultsKey) default or the "
-                + "\(GameDataLocator.environmentKey) environment variable to the install folder."
+            return "Skyrim Special Edition was not found. \(scope) "
+                + "Choose the game folder in Settings: it holds Data/Skyrim.esm."
         }
     }
 }
@@ -41,6 +40,7 @@ nonisolated public struct GameDataRoot: Equatable, Sendable {
         case environment
         case userDefaults
         case steamDefault
+        case steamLibrary
     }
 
     /// Install root (the folder holding the game executable and `Data/`).
@@ -104,6 +104,12 @@ nonisolated public enum GameDataLocator: Sendable {
         isRunningInTestHost ? nil : defaultSteamInstallURL
     }
 
+    /// Skyrim folders in the libraries Steam lists, withheld in a test host like
+    /// `defaultInstallCandidate`.
+    public static var steamLibraryCandidates: [URL] {
+        isRunningInTestHost ? [] : SteamLibraryFolders.skyrimInstallCandidates()
+    }
+
     /// Resolves and validates the game data root. Every source is injectable
     /// for tests; production callers use the defaults. A nil `userDefaults` or
     /// `defaultInstall` skips that source entirely.
@@ -111,6 +117,7 @@ nonisolated public enum GameDataLocator: Sendable {
         environment: [String: String] = ProcessInfo.processInfo.environment,
         userDefaults: UserDefaults? = persistedRootDefaults,
         defaultInstall: URL? = defaultInstallCandidate,
+        steamLibraries: [URL] = steamLibraryCandidates,
         fileManager: FileManager = .default
     ) throws -> GameDataRoot {
         if let path = environment[environmentKey], !path.isEmpty {
@@ -125,9 +132,18 @@ nonisolated public enum GameDataLocator: Sendable {
         {
             return root
         }
-        throw GameDataError.notFound(
-            searched: defaultInstall.map { [$0.path(percentEncoded: false)] } ?? []
-        )
+        for library in steamLibraries {
+            if let root = root(at: library, source: .steamLibrary, fileManager: fileManager) {
+                return root
+            }
+        }
+        let searched = ([defaultInstall].compactMap(\.self) + steamLibraries)
+            .map { $0.path(percentEncoded: false) }
+        throw GameDataError.notFound(searched: searched.reduce(into: []) { unique, path in
+            if !unique.contains(path) {
+                unique.append(path)
+            }
+        })
     }
 
     /// Persists a user-chosen install path (Settings UI). Validated first;

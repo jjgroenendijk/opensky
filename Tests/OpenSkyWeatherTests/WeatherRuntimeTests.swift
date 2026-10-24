@@ -7,7 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 @testable import OpenSkyWeather
 import simd
 import Testing

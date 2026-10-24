@@ -7,7 +7,9 @@ import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 

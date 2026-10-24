@@ -7,6 +7,7 @@ import MetalKit
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures

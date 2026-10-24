@@ -8,6 +8,7 @@ import OpenSkyCLIArguments
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWeather
 import OpenSkyWorld

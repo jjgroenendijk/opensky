@@ -1,10 +1,11 @@
 // The launcher's first page: Continue, where Play starts, the new game options,
 // the two launch modes side by side, and what to check before playing. The game
-// folder is set in Settings. While a world load runs, the load panel takes the
-// place of the mode buttons.
+// folder is set in Settings, or in a picker that opens when none is found. While a
+// world load runs, the load panel takes the place of the mode buttons.
 
 import AppKit
 import OpenSkyAssetCache
+import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkySave
@@ -60,6 +61,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         action: nil
     )
     private let loadPanel = WorldLoadPanel()
+    private var didOfferFolderPicker = false
 
     init(context: LauncherContext) {
         self.context = context
@@ -101,10 +103,28 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         }
     }
 
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        offerFolderPickerOnce()
+    }
+
+    /// A new user picks the folder at once instead of finding it in Settings.
+    /// A test host skips it, because a sheet would wait for a click.
+    private func offerFolderPickerOnce() {
+        guard
+            !didOfferFolderPicker, !GameDataLocator.isRunningInTestHost,
+            !GameFolderStatus().isFound, let window = view.window
+        else { return }
+        didOfferFolderPicker = true
+        GameFolderPicker.chooseUntilValid(for: window) { [weak self] in
+            self?.context.actions?.gameFolderDidChange()
+        }
+    }
+
     func refreshGameFolder() {
         let status = GameFolderStatus()
         folderLabel.stringValue = status.path.map { "Game folder: \($0)" }
-            ?? "Game folder: not found. Choose it in Settings"
+            ?? "Game folder: not found. Open Settings and press Choose…"
         folderLabel.toolTip = status.isFound ? status.path : status.note
         folderLabel.textColor = status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
         refreshPlay()

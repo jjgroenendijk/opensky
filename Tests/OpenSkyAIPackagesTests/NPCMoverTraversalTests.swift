@@ -7,7 +7,7 @@
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderCore
 import simd
 import Testing
 

@@ -8,7 +8,9 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 import Synchronization
 

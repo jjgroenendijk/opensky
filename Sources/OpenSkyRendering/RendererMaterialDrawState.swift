@@ -4,6 +4,7 @@
 
 @preconcurrency import Metal
 import OpenSkyFormatsCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// Whether the list that draws may write depth at all. The blended list may not.

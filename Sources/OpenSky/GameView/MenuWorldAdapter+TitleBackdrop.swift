@@ -6,6 +6,7 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyWorld
 
 extension MenuWorldAdapter {

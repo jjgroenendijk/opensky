@@ -19,6 +19,7 @@ MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
 // Generated Info.plist keys.
 GENERATE_INFOPLIST_FILE = YES
 INFOPLIST_KEY_NSPrincipalClass = NSApplication
+INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.role-playing-games
 INFOPLIST_KEY_NSHumanReadableCopyright =
 INFOPLIST_KEY_NSRemovableVolumesUsageDescription = OpenSky reads game data from your selected Skyrim Special Edition installation.
 

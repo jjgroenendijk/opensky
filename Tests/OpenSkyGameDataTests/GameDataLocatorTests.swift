@@ -135,6 +135,7 @@ struct GameDataLocatorTests {
         #expect(GameDataLocator.isRunningInTestHost)
         #expect(GameDataLocator.persistedRootDefaults == nil)
         #expect(GameDataLocator.defaultInstallCandidate == nil)
+        #expect(GameDataLocator.steamLibraryCandidates.isEmpty)
     }
 
     @Test func withheldSourcesResolveToNotFound() {
@@ -144,7 +145,8 @@ struct GameDataLocatorTests {
             try GameDataLocator.locate(
                 environment: [:],
                 userDefaults: GameDataLocator.persistedRootDefaults,
-                defaultInstall: GameDataLocator.defaultInstallCandidate
+                defaultInstall: GameDataLocator.defaultInstallCandidate,
+                steamLibraries: GameDataLocator.steamLibraryCandidates
             )
         }
     }
@@ -165,8 +167,35 @@ struct GameDataLocatorTests {
 
     @Test func notFoundWithoutSearchedPathsStillExplainsRemedy() {
         let message = GameDataError.notFound(searched: []).errorDescription
-        #expect(message?.contains("No fallback location was consulted.") == true)
-        #expect(message?.contains(GameDataLocator.environmentKey) == true)
+        #expect(message?.contains("No folder was searched.") == true)
+        #expect(message?.contains("Choose the game folder in Settings") == true)
+    }
+
+    @Test func findsTheInstallInASteamLibrary() throws {
+        let install = try makeInstall(named: "library")
+        defer { try? FileManager.default.removeItem(at: install) }
+
+        let root = try GameDataLocator.locate(
+            environment: [:],
+            userDefaults: emptyDefaults(),
+            defaultInstall: missing,
+            steamLibraries: [missing, install]
+        )
+        #expect(root.source == .steamLibrary)
+        #expect(root.installURL == install)
+    }
+
+    @Test func notFoundListsEverySearchedFolderOnce() {
+        let other = URL(filePath: "/nonexistent/other", directoryHint: .isDirectory)
+        let expected = [missing, other].map { $0.path(percentEncoded: false) }
+        #expect(throws: GameDataError.notFound(searched: expected)) {
+            try GameDataLocator.locate(
+                environment: [:],
+                userDefaults: emptyDefaults(),
+                defaultInstall: missing,
+                steamLibraries: [missing, other]
+            )
+        }
     }
 
     @Test func saveUserChoicePersistsValidInstall() throws {

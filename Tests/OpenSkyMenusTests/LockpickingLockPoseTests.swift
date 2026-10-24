@@ -3,7 +3,7 @@
 import OpenSkyFormatsMesh
 import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 import Testing
 

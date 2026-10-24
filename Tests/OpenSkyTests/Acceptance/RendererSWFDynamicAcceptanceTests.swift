@@ -9,7 +9,7 @@ import Metal
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
 import OpenSkyFormatsTesting
-@testable import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
 import simd

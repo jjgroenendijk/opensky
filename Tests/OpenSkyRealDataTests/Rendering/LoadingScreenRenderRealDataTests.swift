@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyLoading
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import OpenSkyWorld
 import simd

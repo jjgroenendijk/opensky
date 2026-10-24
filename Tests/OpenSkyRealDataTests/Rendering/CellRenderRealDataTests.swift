@@ -12,6 +12,7 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld
@@ -141,7 +142,7 @@ struct CellRenderRealDataTests {
         )
         // A few more frames so the renderer's retire list fully drains the old
         // grid's GPU resources (setScene only frees once frames prove drained).
-        for _ in 0 ..< Renderer.maxFramesInFlight + 1 {
+        for _ in 0 ..< GPUFactory.maxFramesInFlight + 1 {
             _ = try renderer.renderOffscreen(width: 320, height: 240)
         }
         let afterRecenterFootprint = try #require(MemoryFootprint.physFootprintMB())

@@ -176,8 +176,7 @@ register handlers in any order.
 ## The current late setters
 
 Each late setter in a package module, its kind, and its target. Settable properties that the app
-assigns once after build, such as `combat.staggers` or `game.dialogue.index`, follow the row of
-their coordinator.
+assigns once after build, such as `combat.staggers`, follow the row of their coordinator.
 
 | Late setter | Kind | Target |
 | --- | --- | --- |
@@ -203,12 +202,6 @@ their coordinator.
 | `CrimeCoordinator.attachWitnesses(_:)` | Feature seam | Initializer; perception is built first |
 | `storyEvents` on the crime, inventory, lock, magic, and progression coordinators | Feature seam | Initializer, answered by the story adapter |
 | `EffectsCoordinator.wire(records:meshes:)`, `world`, and the explosion world | Session data, world port | Initializer |
-| `ScriptCoordinator.install(runtime:bridge:)` | Session object | Initializer; the VM and bridge are built first |
-| `ScriptCoordinator.attachQuests(_:)`, and the bridge's inventory and alchemy seams | Feature seam | Initializer of the bridge |
-| `DialogueCoordinator.index` and its texts and timers | Session data | Initializer |
-| `SubtitleCoordinator.attach(presenter:)` | Feature seam | Initializer; the HUD is built first |
-| `SystemMenuCoordinator.attach(settings:)` and `saves` on the system and title menus | App object | Initializer |
-| `AudioCoordinator.onEngineBuilt` | Event | Event schedule |
 | `PlayerCoordinator.wireBody(source:)` | Late asset | Request at start, drain the mailbox; the coordinator is whole without the graph |
 | `CallbackFanOut` registrations on the streamer, the activation gate, and talk targeting | Event order | Phase enum per event |
 
@@ -216,6 +209,10 @@ The `Papyrus` bridge's native families stay as they are. Each family is a value 
 closures, and a missing family answers nothing on purpose, so a native refuses instead of
 reading a half-wired family ([coordinators](/engine/coordinators.md)). The session scope fills
 every family when it builds the bridge.
+
+The bridge's feature seams, such as its quest layer and its inventory, arrive together in one
+`PapyrusBridgeSeams` value when the bridge is built. They stay settable, so a test fixture can
+give a built bridge one fake.
 
 ## What the checks enforce afterwards
 

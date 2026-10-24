@@ -2,7 +2,7 @@
 // a streamed texture's levels again, in the same queue, so it needs no lock.
 
 import Dispatch
-import OpenSkyRendering
+import OpenSkyRenderResources
 import Synchronization
 
 nonisolated extension SerialCellBuildRunner: TextureLevelReading {

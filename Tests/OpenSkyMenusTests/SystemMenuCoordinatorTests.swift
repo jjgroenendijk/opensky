@@ -3,6 +3,7 @@
 import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 
@@ -72,10 +73,8 @@ private struct Harness {
         let movies = SWFMovieSource()
         menu = SystemMenuCoordinator(
             menuMode: menuMode, movies: movies, hud: HUDCoordinator(movies: movies),
-            world: world
+            settings: settings, saves: saves, world: world
         )
-        menu.attach(settings: settings)
-        menu.saves = saves
     }
 
     func open(_ entry: SystemMenuEntry) {

@@ -8,6 +8,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 
 /// Which model the preview shows and how far it has turned. Pure, so tests drive it.

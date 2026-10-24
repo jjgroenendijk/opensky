@@ -7,7 +7,7 @@
 import Foundation
 import OpenSkyCLIArguments
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 /// CLI failure modes: `usage` prints the command's help and exits 2; `failure`
 /// prints the message and exits 1. Engine errors pass through as exit 1.

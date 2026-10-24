@@ -4,7 +4,9 @@
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import OpenSkyTagsTesting
 import simd
@@ -166,7 +168,7 @@ struct RenderMeshTests {
         #expect(attributes.length == mesh.positions.count * SkinVertexLayout.stride)
         #expect(
             matrices.length
-                == 2 * MemoryLayout<float4x4>.stride * Renderer.maxFramesInFlight
+                == 2 * MemoryLayout<float4x4>.stride * GPUFactory.maxFramesInFlight
         )
     }
 

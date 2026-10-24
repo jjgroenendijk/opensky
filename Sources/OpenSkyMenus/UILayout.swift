@@ -2,7 +2,7 @@
 // container rect. Pure float math.
 
 // Cross-axis alignment for a vertical stack.
-import OpenSkyRendering
+import OpenSkyRenderCore
 
 nonisolated public enum UIStackAlignment: Sendable {
     case leading, center, trailing

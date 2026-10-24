@@ -24,6 +24,7 @@ import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld

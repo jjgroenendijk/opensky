@@ -4,7 +4,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated public enum RoomPortalGraphBuilder: Sendable {

@@ -8,7 +8,7 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTerrain
 
 nonisolated public struct BenchmarkLoadInputs: Sendable {

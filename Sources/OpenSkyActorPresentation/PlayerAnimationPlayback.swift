@@ -7,7 +7,9 @@
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import simd
 import Synchronization
 

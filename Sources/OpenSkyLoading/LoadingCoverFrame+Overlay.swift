@@ -1,7 +1,7 @@
 // The screen-space half of a loading screen: the line of text at the bottom,
 // and during the fade a dark panel that thins out over the world.
 
-import OpenSkyRendering
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension LoadingCoverFrame {

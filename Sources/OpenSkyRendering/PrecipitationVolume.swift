@@ -4,6 +4,8 @@
 import Metal
 import OpenSkyFormatsMesh
 import OpenSkyPhysics
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 nonisolated public struct PrecipitationRuntimeSnapshot: Equatable, Sendable {
@@ -35,18 +37,7 @@ nonisolated public struct PrecipitationUpdate {
     public let collisionQuery: CapsuleWorldCollider.CandidateQuery?
 }
 
-/// The hand-tuned values a precipitation scale of 1 keeps.
-nonisolated public struct PrecipitationBase: Equatable, Sendable {
-    public let speed: Float
-    public let radius: Float
-    /// Multiplies the shared particle birth rate.
-    public let emission: Float
-}
-
 nonisolated public final class PrecipitationVolume {
-    public static let rainBase = PrecipitationBase(speed: 1900, radius: 12, emission: 6)
-    public static let snowBase = PrecipitationBase(speed: 360, radius: 5, emission: 4)
-
     private let rain: ParticlePlayback
     private let snow: ParticlePlayback
     public private(set) var anchor: SIMD3<Float>?
@@ -110,13 +101,13 @@ nonisolated public final class PrecipitationVolume {
             wind: update.wind,
             // Shared NIF fallback caps base birth rate at 60/s; weather
             // volumes need denser coverage across their much larger box.
-            emissionScale: update.state.rainIntensity * Self.rainBase.emission
+            emissionScale: update.state.rainIntensity * PrecipitationBase.rain.emission
                 * tuning.rain.density
         )
         snow.advance(
             deltaTime: update.deltaTime,
             wind: update.wind,
-            emissionScale: update.state.snowIntensity * Self.snowBase.emission
+            emissionScale: update.state.snowIntensity * PrecipitationBase.snow.emission
                 * tuning.snow.density
         )
         drawItems = [rain, snow]
@@ -165,11 +156,11 @@ nonisolated extension PrecipitationVolume {
     fileprivate static let rainDefinition = definition(DefinitionConfig(
         name: "Rain volume",
         capacity: 1024,
-        speed: rainBase.speed,
+        speed: PrecipitationBase.rain.speed,
         speedVariation: 180,
         declinationVariation: 0.05,
         color: SIMD4(0.68, 0.78, 0.9, 0.72),
-        radius: rainBase.radius,
+        radius: PrecipitationBase.rain.radius,
         radiusVariation: 3,
         lifeSpan: 0.8,
         lifeVariation: 0.1,
@@ -180,12 +171,12 @@ nonisolated extension PrecipitationVolume {
     fileprivate static let snowDefinition = definition(DefinitionConfig(
         name: "Snow volume",
         capacity: 768,
-        speed: snowBase.speed,
+        speed: PrecipitationBase.snow.speed,
         speedVariation: 90,
         declinationVariation: 0.22,
         // The sprite is unlit, so a grey tint keeps a near flake below the sky's brightness.
         color: SIMD4(0.8, 0.82, 0.86, 0.8),
-        radius: snowBase.radius,
+        radius: PrecipitationBase.snow.radius,
         radiusVariation: 2,
         lifeSpan: 3.2,
         lifeVariation: 0.5,

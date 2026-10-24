@@ -8,6 +8,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {

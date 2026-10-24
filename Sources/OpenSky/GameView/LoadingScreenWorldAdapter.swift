@@ -11,7 +11,9 @@ import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyQuests
+import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyWorld
 import simd

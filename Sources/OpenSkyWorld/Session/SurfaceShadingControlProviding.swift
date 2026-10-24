@@ -2,7 +2,7 @@
 // draws that use it.
 
 import OpenSkyGameData
-import OpenSkyRendering
+import OpenSkyRenderResources
 
 nonisolated extension SurfaceShadingSetting {
     public var term: SurfaceShadingTerm {

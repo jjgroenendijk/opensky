@@ -1,7 +1,7 @@
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
-@testable import OpenSkyRendering
+@testable import OpenSkyRenderResources
 import simd
 import Testing
 

@@ -4,6 +4,8 @@
 // are the visible surface. See docs/rendering/upscaling.md.
 
 import Metal
+import OpenSkyRenderCore
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -136,7 +138,7 @@ extension Renderer {
         }
         prepareBoneMatricesOnce(for: mesh, slot: slot)
         let previousSlot = upscale.previousBonePrepared.contains(ObjectIdentifier(mesh))
-            ? (slot + Self.maxFramesInFlight - 1) % Self.maxFramesInFlight : slot
+            ? (slot + GPUFactory.maxFramesInFlight - 1) % GPUFactory.maxFramesInFlight : slot
         argumentTable.setAddress(
             skinning.gpuAddress, index: BufferIndex.skinningAttributes.rawValue
         )
@@ -181,9 +183,10 @@ extension Renderer {
         if count > upscale.motionInstanceCapacity {
             let capacity = Self.slotCapacity(for: count)
             guard
-                let buffer = try? Self.makeUniformBuffer(
+                let buffer = try? GPUFactory.makeUniformBuffer(
                     device: device,
-                    length: MemoryLayout<MotionInstance>.stride * capacity * Self.maxFramesInFlight,
+                    length: MemoryLayout<MotionInstance>.stride * capacity * GPUFactory
+                        .maxFramesInFlight,
                     label: "MotionInstances"
                 )
             else { return nil }
