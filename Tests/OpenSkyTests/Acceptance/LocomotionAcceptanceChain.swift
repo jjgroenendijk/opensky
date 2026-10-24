@@ -80,7 +80,7 @@ final class LocomotionAcceptanceChain {
     private(set) var visitedStates: [String] = []
     private(set) var firstPersonVisitedStates: [String] = []
     /// Cell locations the streamer attached, in order, straight off its own
-    /// `onCellAttached` callback rather than inferred from a position.
+    /// `onCellAttached` event rather than inferred from a position.
     let attachedLocations = LocomotionLocationLog()
     private(set) var frames = 0
 
@@ -105,7 +105,7 @@ final class LocomotionAcceptanceChain {
         ) { _, _ in }
         view.input = input
         let log = attachedLocations
-        streamer.onCellAttached = { scene, _ in log.note(scene.location) }
+        streamer.onCellAttached.register(.agentEvents) { log.note($0.scene.location) }
         // The start cell, brought up the way every later one is.
         streamer.update(cameraPosition: controller.cameraPosition)
         completePendingBuilds()

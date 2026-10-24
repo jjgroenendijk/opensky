@@ -5,9 +5,17 @@
 // See docs/engine/dialogue-menu.md.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
+
+/// The handler slots of a Talk activation. The enum order is the delivery order.
+public enum TalkActivationStep: Int, FramePhase {
+    case dialogue
+    /// A test or a readout records the activation after the menu opened.
+    case log
+}
 
 /// The streamer's Talk seam: the candidates, the current pick, and where an activation
 /// goes. One value, because the three parts belong together.
@@ -20,9 +28,8 @@ public struct TalkTargetingSeam {
     /// streaming. Nil in a session that never wired it, which is every session
     /// before the dialogue layer and every test that does not care.
     public var candidateSource: (() -> [TalkCandidate])?
-    /// Fires when the use key activates a Talk target. Multicast like
-    /// `CellStreamer.onInteraction`: the dialogue menu and dialogue camera subscribe.
-    public let activations = CallbackFanOut<TalkActivationEvent>()
+    /// Fires when the use key activates a Talk target, in `TalkActivationStep` order.
+    public let activations = FrameSchedule<TalkActivationStep, TalkActivationEvent>()
     /// The actor the current interaction target names, retained from the pick
     /// so activation does not have to resolve it again.
     public var speaker: ReferenceKey?

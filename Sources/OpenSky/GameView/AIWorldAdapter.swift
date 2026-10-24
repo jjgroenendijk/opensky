@@ -142,30 +142,44 @@ final class AIWorldAdapter {
         }
     }
 
-    func wirePackages(provider: WorldDataStores, gameSession: GameSession) {
-        guard let store = provider.packageStore else { return }
-        game.packages.guardWarnings = GuardWarningSettings.resolve(store: provider.gameSettings)
-        game.packages.wire(store: store)
-        game.packages.sandboxSettings = SandboxSettings.resolve(store: provider.gameSettings)
-        game.packages.bumpSettings = BumpReactionSettings.resolve(store: provider.gameSettings)
-        game.packages.followSettings = FollowSettings.resolve(store: provider.gameSettings)
+    func makePackages() -> PackageCoordinator {
+        guard let provider = game.worldData, let store = provider.packageStore else {
+            return PackageCoordinator(world: self, data: nil)
+        }
+        let settings = provider.gameSettings
+        var data = PackageSessionData(store: store)
+        data.guardWarnings = GuardWarningSettings.resolve(store: settings)
+        data.sandboxSettings = SandboxSettings.resolve(store: settings)
+        data.bumpSettings = BumpReactionSettings.resolve(store: settings)
+        data.followSettings = FollowSettings.resolve(store: settings)
+        return PackageCoordinator(world: self, data: data)
+    }
+
+    func wirePackages(gameSession: GameSession) {
         let packages = game.packages
+        guard packages.runtime != nil else { return }
         gameSession.worldTick.register(.packages) { [weak self, weak packages] delta in
             packages?.advance(by: Float(delta))
             self?.advanceBumps()
         }
     }
 
+    func makePerception() -> PerceptionCoordinator {
+        guard let data = game.worldData else {
+            return PerceptionCoordinator(world: self, settings: nil)
+        }
+        return PerceptionCoordinator(
+            world: self,
+            settings: data.detectionSettings,
+            stealthPoints: StealthPointSettings.resolve(store: data.gameSettings)
+        )
+    }
+
     /// Runs after NPC movement and the combat loop, because the pass reads
     /// where actors ended up this frame and which of them are hostile.
-    func wirePerception(provider: WorldDataStores, gameSession: GameSession) {
+    func wirePerception(gameSession: GameSession) {
         let renderer = gameSession.renderer
-        let settings = provider.detectionSettings
         let perception = game.perception
-        perception.wire(
-            settings: settings,
-            stealthPoints: StealthPointSettings.resolve(store: provider.gameSettings)
-        )
         gameSession.worldTick.register(.perception) { [weak self] delta in
             guard let self else { return }
             run(game.perception.advance(by: delta))

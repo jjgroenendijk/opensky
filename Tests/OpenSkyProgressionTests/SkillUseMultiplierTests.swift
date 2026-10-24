@@ -23,9 +23,9 @@ struct SkillUseMultiplierTests {
 
     private func coordinator(world: FakeProgressionWorld) throws -> PerkCoordinator {
         let index = try PerkRuntimeFixture.index()
-        let coordinator = PerkCoordinator(world: world)
-        coordinator.wire(
-            PerkRuntime(
+        return PerkCoordinator(
+            world: world,
+            runtime: PerkRuntime(
                 store: WorldStateStore(),
                 perks: PerkRuntimeFixture.perkStore(index: index),
                 conditionRegistry: Self.registry
@@ -33,7 +33,6 @@ struct SkillUseMultiplierTests {
             baselines: nil,
             pluginName: PerkRuntimeFixture.pluginName
         )
-        return coordinator
     }
 
     @Test func anEffectPerkMultipliesOnlyItsOwnSkill() throws {

@@ -84,7 +84,7 @@ struct ScriptedWorldChain {
             recorder.seen.append(contentsOf: call.arguments)
             return .returned(.none)
         }
-        streamer.onInteraction.add { [weak bridge = session.bridge] event in
+        streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
             bridge?.handleInteraction(event)
         }
         Self.integrate(streamer: streamer, runner: runner, entries: [lever, door])
@@ -130,7 +130,7 @@ struct ScriptedWorldChain {
     /// frame with the use key held. Everything above it is `GameViewController`
     /// key handling and an `MTKView` draw callback, neither of which a headless
     /// test can honestly drive, so the raycast, the interaction target, the
-    /// `InteractionEvent`, and the multicast fan-out are all real from here.
+    /// `InteractionEvent`, and the phase-ordered interaction event are all real from here.
     private static func pressUseKey(_ streamer: CellStreamer) {
         let ray = CellStreamerFixture.interactionRay(
             from: CellStreamerFixture.center, to: leverTarget

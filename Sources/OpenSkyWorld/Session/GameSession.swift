@@ -8,6 +8,7 @@ import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCamera
 import OpenSkyFormatsCore
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore

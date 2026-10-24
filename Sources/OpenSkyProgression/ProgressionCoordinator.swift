@@ -9,22 +9,52 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
 
+/// The load order's progression data. Without the AVIF index no skill
+/// advances and no perk tree exists, but the player still levels.
+public struct ProgressionSessionData {
+    public let values: any ActorValueAccess
+    public let information: ActorValueInformationStore?
+    public let perkStore: PerkStore?
+    public let skillSettings: SkillAdvancementSettings
+    public let levelSettings: CharacterLevelSettings
+    public let training: TrainingSettings
+    public let texts: ProgressionTexts
+
+    public init(
+        values: any ActorValueAccess,
+        information: ActorValueInformationStore?,
+        perkStore: PerkStore?,
+        skillSettings: SkillAdvancementSettings = .documentedDefaults,
+        levelSettings: CharacterLevelSettings = .documentedDefaults,
+        training: TrainingSettings = .vanilla,
+        texts: ProgressionTexts = .vanilla
+    ) {
+        self.values = values
+        self.information = information
+        self.perkStore = perkStore
+        self.skillSettings = skillSettings
+        self.levelSettings = levelSettings
+        self.training = training
+        self.texts = texts
+    }
+}
+
 /// Owns skill advancement and leveling, and reads the world through
 /// `ProgressionWorld`. Without game data both runtimes stay nil: every skill
 /// use is dropped and nothing levels.
 @MainActor
 public final class ProgressionCoordinator {
     public let perks: PerkCoordinator
-    /// Nil until `wireSkills`.
+    /// Nil without actor values or the AVIF index.
     public private(set) var skills: SkillAdvancementRuntime?
     public private(set) var lastAdvance: SkillAdvanceReport?
-    /// Nil until `wireLeveling`.
-    public private(set) var leveling: PlayerLevelRuntime?
+    /// Nil without actor values.
+    public let leveling: PlayerLevelRuntime?
     /// Where each perk sits in a skill's tree. Empty without game data, and
     /// every spend is then refused with `.notInPerkTree`.
-    public private(set) var trees = PerkTreeIndex.empty
+    public let trees: PerkTreeIndex
     /// The AVIF index the readout browses a skill's perk tree out of.
-    public private(set) var information: ActorValueInformationStore?
+    public let information: ActorValueInformationStore?
     /// The readout asks twice a second; walking eighteen trees each time is
     /// about nine hundred record lookups for numbers that rarely move.
     var treeCounts = PerkTreeCountCache()
@@ -33,9 +63,9 @@ public final class ProgressionCoordinator {
     /// The selected box of that skill's tree, by `INAM`.
     public var nodeSelection: UInt32 = 0
     public internal(set) var lastAction = ProgressionActionOutcome.idle
-    /// Cost, per-level cap, and refusal notices; the app sets them from the load order.
-    public var training = TrainingSettings.vanilla
-    public var texts = ProgressionTexts.vanilla
+    /// Cost, per-level cap, and refusal notices.
+    public let training: TrainingSettings
+    public let texts: ProgressionTexts
 
     let world: any ProgressionWorld
     var pendingCommands: [ProgressionCommand] = []
@@ -43,11 +73,43 @@ public final class ProgressionCoordinator {
     var announcedLevelsReady = 0
     private var cachedStrings: LocalizedStrings??
     /// Takes `SKIL` and `LEVL`.
-    public weak var storyEvents: (any StoryEventReporting)?
+    public weak let storyEvents: (any StoryEventReporting)?
 
-    public init(perks: PerkCoordinator, world: any ProgressionWorld) {
+    /// Builds the skill runtime over the leveling runtime, so a skill use banks
+    /// into it from the first call.
+    public init(
+        perks: PerkCoordinator,
+        world: any ProgressionWorld,
+        data: ProgressionSessionData?,
+        storyEvents: (any StoryEventReporting)? = nil
+    ) {
         self.perks = perks
         self.world = world
+        self.storyEvents = storyEvents
+        training = data?.training ?? .vanilla
+        texts = data?.texts ?? .vanilla
+        let leveling = data.map {
+            PlayerLevelRuntime(values: $0.values, settings: $0.levelSettings)
+        }
+        self.leveling = leveling
+        if leveling != nil, let perkStore = data?.perkStore, let information = data?.information {
+            trees = PerkTreeIndex(information: information, perks: perkStore)
+            self.information = information
+        } else {
+            trees = .empty
+            information = nil
+        }
+        guard let data, let information = data.information else { return }
+        var runtime = SkillAdvancementRuntime(
+            values: data.values,
+            parameters: SkillUseParameterSource(store: information),
+            settings: data.skillSettings
+        )
+        runtime.wornArmor = { [weak self] key in self?.world.wornArmor(of: key) ?? .none }
+        runtime.useMultiplier = { [weak self] usage in self?.perks.skillUseMultiplier(usage) ?? 1 }
+        runtime.leveling = leveling
+        skills = runtime
+        nodeSelection = firstNode(forSkill: skillSelection)
     }
 
     /// Notices and stats raised since the last call; the app runs them once a frame.
@@ -64,41 +126,6 @@ public final class ProgressionCoordinator {
         let loaded = world.localizedStrings()
         cachedStrings = .some(loaded)
         return loaded
-    }
-
-    public func wireSkills(
-        values: any ActorValueAccess,
-        information: ActorValueInformationStore,
-        settings: SkillAdvancementSettings = .documentedDefaults
-    ) {
-        var runtime = SkillAdvancementRuntime(
-            values: values,
-            parameters: SkillUseParameterSource(store: information),
-            settings: settings
-        )
-        runtime.wornArmor = { [weak self] key in self?.world.wornArmor(of: key) ?? .none }
-        runtime.useMultiplier = { [weak self] usage in self?.perks.skillUseMultiplier(usage) ?? 1 }
-        runtime.leveling = leveling
-        skills = runtime
-    }
-
-    /// After `wireSkills`: the skill runtime banks into this one.
-    public func wireLeveling(
-        values: any ActorValueAccess,
-        settings: CharacterLevelSettings = .documentedDefaults,
-        perkStore: PerkStore?,
-        information: ActorValueInformationStore?
-    ) {
-        let leveling = PlayerLevelRuntime(values: values, settings: settings)
-        self.leveling = leveling
-        if let perkStore, let information {
-            trees = PerkTreeIndex(information: information, perks: perkStore)
-            self.information = information
-            // Counts taken against the old stores describe records that are gone.
-            treeCounts.invalidate()
-            nodeSelection = firstNode(forSkill: skillSelection)
-        }
-        skills?.leveling = leveling
     }
 
     /// Ignores an index that is not a skill. The old box means nothing in the

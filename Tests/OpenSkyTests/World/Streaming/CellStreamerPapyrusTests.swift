@@ -45,16 +45,16 @@ struct CellStreamerPapyrusTests {
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
         streamer.bind(to: store)
         let resolver = PapyrusWorldFixture.resolver
-        streamer.onCellAttached = { scene, firstIntegration in
-            guard let location = scene.location else { return }
+        streamer.onCellAttached.register(.scripts) { attachment in
+            guard let location = attachment.scene.location else { return }
             world.attach(
                 cell: location,
-                references: scene.references,
+                references: attachment.scene.references,
                 formIDResolver: resolver,
-                firstIntegration: firstIntegration
+                firstIntegration: attachment.isFirstIntegration
             )
         }
-        streamer.onCellDetached = { world.detach(cell: $0) }
+        streamer.onCellDetached.register(.scripts) { world.detach(cell: $0) }
         return Harness(
             store: store, runner: runner, streamer: streamer, world: world, probe: probe
         )

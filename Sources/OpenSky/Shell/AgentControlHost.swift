@@ -14,7 +14,7 @@ final class AgentControlHost {
 
     private(set) lazy var coordinator = AgentControlCoordinator(
         socketPath: AgentSocketLocation.path(environment: environment),
-        world: { [weak self] in self?.game?.agentWorld }
+        world: { [weak self] in self?.game?.session?.agentWorld }
     )
     private let environment: [String: String]
     private weak var game: GameViewController?
@@ -38,7 +38,7 @@ final class AgentControlHost {
     }
 
     func attach(game: GameViewController, root: GameDataRoot?) {
-        game.agentWorld.dataRoot = root
+        game.dataRoot = root
         game.agentControl = coordinator
         self.game = game
     }

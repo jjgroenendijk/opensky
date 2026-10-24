@@ -105,7 +105,7 @@ custom_rules:
   game_view_controller_extension:
     name: "GameViewController extension"
     regex: '\bextension\s+GameViewController\b'
-    excluded: 'Sources/OpenSky/GameView/GameViewController(Hosts)?\.swift$'
+    excluded: 'Sources/OpenSky/GameView/GameViewController\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
   perk_entry_point_literal:
@@ -176,12 +176,12 @@ custom_rules:
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Give the bridge a collaborator through a native family value, not a closure property (docs/engine/coordinators.md)"
     severity: error
-  # A closure property or fan-out whose name says frame, tick, or update.
+  # A closure property whose name says frame, tick, or update.
   frame_callback_property:
     name: "Frame callback property"
-    regex: '\bvar\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*:\s*[^=\n{]*->[^{\n]*$|\b(var|let)\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*(=|:)\s*CallbackFanOut\b'
+    regex: '\bvar\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*:\s*[^=\n{]*->[^{\n]*$'
     included: 'Sources/.*\.swift$'
-    excluded: 'Sources/OpenSky(World/Session/FrameSchedule|/(Shell|Launcher)/.*)\.swift$'
+    excluded: 'Sources/OpenSky(GameData/FrameSchedule|/(Shell|Launcher)/.*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Join the frame through a phase of a FrameSchedule, not a callback (docs/engine/architecture.md)"
     severity: error

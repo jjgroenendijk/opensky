@@ -26,15 +26,20 @@ struct CrimeReportingTests {
     private static let marker = CrimeFixture.key(CrimeFixture.Links.jailMarker)
 
     private static func coordinator(
-        _ world: FakeCrimeSessionWorld, witnesses: [ReferenceKey] = [victim]
+        _ world: FakeCrimeSessionWorld,
+        witnesses: [ReferenceKey] = [victim],
+        storyEvents: StoryEventRecorder? = nil
     ) throws -> CrimeCoordinator {
-        let coordinator = CrimeCoordinator(world: world)
-        try coordinator.wire(
-            runtime: CrimeFixture.runtime(),
-            locations: CrimeFixture.locationStore(),
-            pluginName: CrimeFixture.pluginName
+        let coordinator = try CrimeCoordinator(
+            world: world,
+            data: CrimeSessionData(
+                runtime: CrimeFixture.runtime(),
+                locations: CrimeFixture.locationStore(),
+                pluginName: CrimeFixture.pluginName
+            ),
+            witnesses: FixedCrimeWitnesses(watching: .player, by: witnesses),
+            storyEvents: storyEvents
         )
-        coordinator.attachWitnesses(FixedCrimeWitnesses(watching: .player, by: witnesses))
         world.currentCellLocation = Self.shop
         world.references = FakeCrimeReferences(cell: Self.shop)
         world.cellLinks[Self.shop] = FormID(CrimeFixture.Locations.shop)
@@ -183,9 +188,8 @@ struct CrimeReportingTests {
 
     @Test func leavingTheCellIsAnEscapeThatOwesTheBountyAgain() throws {
         let (world, _) = try Self.jailedWorld()
-        let coordinator = try Self.coordinator(world)
         let recorder = StoryEventRecorder()
-        coordinator.storyEvents = recorder
+        let coordinator = try Self.coordinator(world, storyEvents: recorder)
         let runtime = try #require(coordinator.reporter?.runtime)
         runtime.setCrimeGold(300, of: Self.hold)
         _ = coordinator.settleArrest(with: Self.hold, .jail)

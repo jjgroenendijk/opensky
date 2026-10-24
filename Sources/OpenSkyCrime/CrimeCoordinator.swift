@@ -25,13 +25,32 @@ public struct CrimeFactionPanelState {
     var options: CrimeFactionOptions?
 }
 
+/// The load order's crime data. `locations` is nil when the provider carries
+/// no LCTN index; then no place has a crime faction.
+public struct CrimeSessionData {
+    public let runtime: CrimeRuntime
+    public let locations: LocationStore?
+    public let pluginName: String
+    public let texts: CrimeTexts
+
+    public init(
+        runtime: CrimeRuntime,
+        locations: LocationStore?,
+        pluginName: String,
+        texts: CrimeTexts = .vanilla
+    ) {
+        self.runtime = runtime
+        self.locations = locations
+        self.pluginName = pluginName
+        self.texts = texts
+    }
+}
+
 /// Owns the crime runtimes and reads the world through `CrimeSessionWorld`.
 /// Without a FACT index the reporter stays nil, and every take is honest.
 @MainActor
 public final class CrimeCoordinator {
-    public private(set) var reporter: CrimeReporter? {
-        didSet { conditionRevision &+= 1 }
-    }
+    public private(set) var reporter: CrimeReporter?
 
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
@@ -41,17 +60,9 @@ public final class CrimeCoordinator {
 
     /// Rises whenever a script sets or clears an owner, so the crime seam is rebuilt.
     public var scriptedOwnerRevision: (() -> UInt64)?
-    var ownership: OwnershipResolver? {
-        didSet { conditionRevision &+= 1 }
-    }
-
-    var crimeFactions: CrimeFactionResolver? {
-        didSet { conditionRevision &+= 1 }
-    }
-
-    var pluginName: String? {
-        didSet { conditionRevision &+= 1 }
-    }
+    let ownership: OwnershipResolver?
+    let crimeFactions: CrimeFactionResolver?
+    let pluginName: String?
 
     /// Actors the player struck first. A later death counts as murder. Session
     /// state: a reloaded save restarts every fight.
@@ -65,9 +76,7 @@ public final class CrimeCoordinator {
     }
 
     /// Takes `ARRT` and `JAIL`, and is passed on to the reporter.
-    public weak var storyEvents: (any StoryEventReporting)? {
-        didSet { reporter?.storyEvents = storyEvents }
-    }
+    public weak let storyEvents: (any StoryEventReporting)?
 
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
@@ -111,7 +120,7 @@ public final class CrimeCoordinator {
 
     public internal(set) var lastCrime = CrimeNote.idle
     /// The crime names the bounty readout uses.
-    public var crimeTexts = CrimeTexts.vanilla
+    public let crimeTexts: CrimeTexts
     public internal(set) var lastGuard = GuardNote.idle
     public var panel = CrimeFactionPanelState()
 
@@ -119,8 +128,42 @@ public final class CrimeCoordinator {
     /// What crime asked of the app. The guard step returns and empties it.
     var pendingCommands: [CrimeCommand] = []
 
-    public init(world: any CrimeSessionWorld) {
+    /// Without `data` the reporter stays nil. `witnesses` decides which crimes
+    /// someone saw.
+    public init(
+        world: any CrimeSessionWorld,
+        data: CrimeSessionData?,
+        witnesses: (any CrimeWitnessSource)?,
+        storyEvents: (any StoryEventReporting)?
+    ) {
         self.world = world
+        self.storyEvents = storyEvents
+        crimeTexts = data?.texts ?? .vanilla
+        pluginName = data?.pluginName
+        ownership = data.map {
+            OwnershipResolver(factions: $0.runtime.factions, pluginName: $0.pluginName)
+        }
+        crimeFactions = data.flatMap { data in
+            data.locations.map {
+                CrimeFactionResolver(locations: $0, factions: data.runtime.factions)
+            }
+        }
+        guard let data else { return }
+        let reporter = CrimeReporter(runtime: data.runtime, world: self)
+        reporter.storyEvents = storyEvents
+        if let witnesses {
+            reporter.witnesses = witnesses
+        }
+        reporter.onPlayerBounty = { [weak self] faction, gold in
+            self?.showBountyNotice(gold: gold, added: true, faction: faction)
+        }
+        reporter.onCrimeCharged = { [weak self] event, outcome, witnesses in
+            self?.track(event, outcome: outcome, witnesses: witnesses)
+        }
+        reporter.onCrimeRecorded = { [weak self] event, outcome in
+            self?.count(event, outcome: outcome)
+        }
+        self.reporter = reporter
     }
 
     /// Returns and empties what crime asked of the app. A command raised outside
@@ -128,43 +171,6 @@ public final class CrimeCoordinator {
     public func takeCommands() -> [CrimeCommand] {
         defer { pendingCommands = [] }
         return pendingCommands
-    }
-
-    /// `locations` is nil when the provider carries no LCTN index; then no
-    /// place has a crime faction.
-    public func wire(
-        runtime: CrimeRuntime,
-        locations: LocationStore?,
-        pluginName: String
-    ) {
-        reporter = CrimeReporter(runtime: runtime, world: self)
-        reporter?.storyEvents = storyEvents
-        reporter?.onPlayerBounty = { [weak self] faction, gold in
-            self?.showBountyNotice(gold: gold, added: true, faction: faction)
-        }
-        reporter?.onCrimeCharged = { [weak self] event, outcome, witnesses in
-            self?.track(event, outcome: outcome, witnesses: witnesses)
-        }
-        reporter?.onCrimeRecorded = { [weak self] event, outcome in
-            self?.count(event, outcome: outcome)
-        }
-        pendingReports = []
-        jailStay = nil
-        actorFirstStrikes = []
-        actorCriminals = [:]
-        self.pluginName = pluginName
-        // A new load order carries different factions for the readout to offer.
-        panel.options = nil
-        ownership = OwnershipResolver(factions: runtime.factions, pluginName: pluginName)
-        crimeFactions = locations.map {
-            CrimeFactionResolver(locations: $0, factions: runtime.factions)
-        }
-    }
-
-    /// Separate from `wire`, because the perception pass needs a streamed
-    /// world to watch.
-    public func attachWitnesses(_ witnesses: any CrimeWitnessSource) {
-        reporter?.witnesses = witnesses
     }
 
     // MARK: - Reading

@@ -30,7 +30,7 @@ struct PapyrusWorldActivationSeamTests {
 
     // MARK: - The multicast seam
 
-    @Test("the interaction fan-out reaches world audio and Papyrus alike")
+    @Test("the interaction event reaches world audio and Papyrus alike")
     func fanOutReachesBothSubscribers() throws {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
@@ -43,14 +43,13 @@ struct PapyrusWorldActivationSeamTests {
         )
         session.bridge.references = streamer
 
-        // Registration order is delivery order: the engine's own audio
-        // subscriber stays first, Papyrus runs beside it.
+        // Registered scripts first: the audio step still runs before Papyrus.
         var audible: [InteractionEvent] = []
-        streamer.onInteraction.add { audible.append($0) }
-        streamer.onInteraction.add { [weak bridge = session.bridge] event in
+        streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
             bridge?.handleInteraction(event)
         }
-        #expect(streamer.onInteraction.handlerCount == 2)
+        streamer.onInteraction.register(.audio) { audible.append($0) }
+        #expect(streamer.onInteraction.registeredPhases == [.audio, .scripts])
 
         let position = CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
         let placed = PapyrusWorldActivationFixture.interaction(

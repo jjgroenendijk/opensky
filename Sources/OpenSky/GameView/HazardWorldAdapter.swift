@@ -44,7 +44,7 @@ final class HazardWorldAdapter {
     func wireHazards(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
         store = provider.lockTrapData.hazards
         hazards.world = self
-        streamer.cellHazards.add { [weak self] event in
+        streamer.cellHazards.register(.hazards) { [weak self] event in
             self?.load(event)
         }
         gameSession.frameSteps.register(.hazards) { [weak self, weak gameSession] _ in

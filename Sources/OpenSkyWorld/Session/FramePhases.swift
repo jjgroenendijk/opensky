@@ -2,6 +2,7 @@
 // camera moves, then `AssetDrain`, then `WorldTickStep` after the clock.
 
 import Foundation
+import OpenSkyGameData
 
 /// Steps that run after the camera advances, with the camera position.
 public enum FrameStep: Int, FramePhase {

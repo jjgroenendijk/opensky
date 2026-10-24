@@ -42,16 +42,18 @@ extension WorldSessionWiring {
         }
         gameSession.cellReset = reset
         let scripts = game.scripts
-        let attached = streamer.onCellAttached
-        streamer.onCellAttached = { [weak reset, weak scripts] scene, first in
-            let keys = first ? reset?.cellAttached(scene) ?? [] : []
-            scripts?.runtime?.prepareReset(of: keys)
-            attached?(scene, first)
-            scripts?.runtime?.enqueueReset(of: keys)
+        // The prepare step hands its keys to the enqueue step of the same attach.
+        var resetKeys: [ReferenceKey] = []
+        streamer.onCellAttached.register(.resetPrepare) { [weak reset, weak scripts] attachment in
+            resetKeys = attachment.isFirstIntegration
+                ? reset?.cellAttached(attachment.scene) ?? [] : []
+            scripts?.runtime?.prepareReset(of: resetKeys)
         }
-        let detached = streamer.onCellDetached
-        streamer.onCellDetached = { [weak reset] location in
-            detached?(location)
+        streamer.onCellAttached.register(.resetEnqueue) { [weak scripts] _ in
+            scripts?.runtime?.enqueueReset(of: resetKeys)
+            resetKeys = []
+        }
+        streamer.onCellDetached.register(.reset) { [weak reset] location in
             reset?.cellDetached(location)
         }
     }

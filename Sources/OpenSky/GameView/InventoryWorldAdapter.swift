@@ -69,8 +69,7 @@ final class InventoryWorldAdapter {
     }
 
     /// After the audio and Papyrus subscribers, so the activation sound plays
-    /// whether or not the take succeeds. After `wireCrime`, whose reporter joins
-    /// the take path.
+    /// whether or not the take succeeds. The crime reporter joins the take path.
     func wireWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
         guard let data = sessionData(provider: provider, streamer: streamer) else { return }
         game.inventory = InventoryCoordinator(
@@ -81,7 +80,7 @@ final class InventoryWorldAdapter {
                 recipeConditions: self, skillUses: game.progression, storyEvents: game.storyWorld
             )
         )
-        streamer.onInteraction.add { [weak self] event in
+        streamer.onInteraction.register(.worldItems) { [weak self] event in
             guard let self else { return }
             let action = event.target.interaction.action
             if action == .take, openBook(event.target.interaction) {

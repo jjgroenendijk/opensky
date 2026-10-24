@@ -17,15 +17,13 @@ struct CombatCoordinatorTests {
     private static let guardKey = ReferenceKey.generated(1)
 
     private static func coordinator(_ world: FakeCoordinatorWorld) -> CombatCoordinator {
-        let coordinator = CombatCoordinator(world: world)
-        coordinator.wireMelee(settings: .synthetic, items: nil, impacts: nil)
-        coordinator.wireArchery(settings: .synthetic, items: nil, impacts: nil)
-        coordinator.wireLoop(settings: .synthetic)
-        return coordinator
+        CombatCoordinator(
+            world: world, data: CombatSessionData(combat: .synthetic, archery: .synthetic)
+        )
     }
 
     @Test func theConfidenceAndAssistanceSwitchFollowsTheSavedSetting() {
-        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld())
+        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         let store = PlayerSettingsStore(persistence: nil)
         coordinator.load(settings: store)
         #expect(coordinator.usesCombatTemperament)
@@ -34,8 +32,8 @@ struct CombatCoordinatorTests {
         #expect(!coordinator.usesCombatTemperament)
     }
 
-    @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
-        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld())
+    @Test func aCoordinatorWithoutGameDataReportsItselfUnavailable() {
+        let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         #expect(coordinator.meleeCombatSnapshot == .unavailable)
         #expect(coordinator.archerySnapshot == .unavailable)
         #expect(coordinator.combatLoopSnapshot == .unavailable)

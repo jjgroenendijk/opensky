@@ -32,27 +32,33 @@ protocol IdleWorldHost: AnyObject {
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var sessionWiring: WorldSessionWiring { get }
     var streamer: CellStreamer? { get }
+    var vehicleWorld: VehicleWorldAdapter { get }
+    var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
 }
 
 final class IdleWorldAdapter {
     unowned let game: any IdleWorldHost
-    /// Ambient idles at idle markers, with their props.
-    private(set) lazy var idles = IdleCoordinator(world: self)
+    /// Ambient idles at idle markers, with their props. The clip loader is built first.
+    private(set) lazy var idles = IdleCoordinator(world: self, data: sessionData())
 
     init(game: any IdleWorldHost) {
         self.game = game
     }
 
-    /// After packages, because the pass reads each actor's current procedure.
-    func wireIdles(provider: WorldDataStores, gameSession: GameSession) {
+    private func sessionData() -> IdleSessionData? {
         guard
-            let store = provider.idleStore,
+            let store = game.worldData?.idleStore,
             let files = game.audioFileSystem,
             let clips = game.sessionWiring.animationClips
-        else { return }
-        idles.wire(store: store, files: files, clips: clips)
+        else { return nil }
+        return IdleSessionData(store: store, files: files, clips: clips)
+    }
+
+    /// After packages, because the pass reads each actor's current procedure.
+    func wireIdles(gameSession: GameSession) {
         let idles = idles
+        guard idles.store != nil else { return }
         gameSession.worldTick.register(.idles) { [weak idles] _ in
             idles?.advance()
         }
@@ -60,6 +66,10 @@ final class IdleWorldAdapter {
 }
 
 extension IdleWorldAdapter: IdleWorld {
+    func idleAnimationEvent(_ name: String, on actor: ReferenceKey) {
+        game.vehicleWorld.handleIdleAnimationEvent(name, from: actor)
+    }
+
     func idleReferencePlacements() -> [IdleReferencePlacement]? {
         guard game.renderer != nil, let streamer = game.streamer else { return nil }
         let scenes = streamer.interiorScene.map { [$0] }

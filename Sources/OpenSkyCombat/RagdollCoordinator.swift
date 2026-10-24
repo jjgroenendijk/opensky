@@ -19,20 +19,20 @@ public final class RagdollCoordinator {
         _ skeletonMeshPath: String, _ skeleton: HKASkeleton, _ scale: Float
     ) -> RagdollDefinition?
 
-    /// Nil until `wire`. The readout then reports itself unavailable.
+    /// Nil without game data. The readout then reports itself unavailable.
     public private(set) var runtime: RagdollRuntime?
     let world: any RagdollSessionWorld
     /// Whether the scene holds poses from this coordinator, so an empty frame clears them once.
     var hasPublishedPoses = false
     let store: WorldStateStore
-    private var loadDefinition: DefinitionLoader?
+    private let loadDefinition: DefinitionLoader?
     /// Keyed by path and scale: a definition bakes the scale into every pivot,
     /// so a giant and a Nord cannot share one.
     private var definitions: [String: RagdollDefinition] = [:]
     /// Keys that produced no ragdoll, so they are not decoded once per frame.
     private var unresolvableSkeletons: Set<String> = []
-    /// The install's death settings. Read at session start.
-    public var deathSettings = DeathSettings.vanilla
+    /// The install's death settings.
+    public let deathSettings: DeathSettings
     /// Seconds of simulated time since wiring, the clock of hits and deaths.
     var clock: Float = 0
     /// Each actor's last landed hit and when it landed.
@@ -49,19 +49,14 @@ public final class RagdollCoordinator {
     public internal(set) var bleedout = BleedoutTracker()
     public internal(set) var deathEffects = DeathEffectCounts()
 
-    public init(store: WorldStateStore, world: any RagdollSessionWorld) {
+    public init(store: WorldStateStore, world: any RagdollSessionWorld, data: RagdollSessionData?) {
         self.store = store
         self.world = world
-    }
-
-    /// Without collision models nothing can ragdoll, but deaths still record.
-    public func wire(collisionModels: NIFCollisionLibrary?) {
-        wire(loadDefinition: collisionModels.map(Self.definitionLoader))
-    }
-
-    func wire(loadDefinition: DefinitionLoader?) {
-        self.loadDefinition = loadDefinition
-        runtime = RagdollRuntime(seam: self)
+        loadDefinition = data?.loadDefinition
+        deathSettings = data?.deathSettings ?? .vanilla
+        if data != nil {
+            runtime = RagdollRuntime(seam: self)
+        }
     }
 
     /// One frame: zero-health actors die, `events` hand off, live ragdolls step.
@@ -184,7 +179,7 @@ public final class RagdollCoordinator {
         return definition
     }
 
-    private static func definitionLoader(_ library: NIFCollisionLibrary) -> DefinitionLoader {
+    static func definitionLoader(_ library: NIFCollisionLibrary) -> DefinitionLoader {
         { path, skeleton, scale in
             guard
                 let model = try? library.model(path: path),
@@ -246,5 +241,27 @@ extension RagdollCoordinator: RagdollWorldSeam {
 
     public func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation? {
         world.unloadedActorHome(of: key)
+    }
+}
+
+/// What the ragdoll coordinator is built from. Without collision models nothing
+/// can ragdoll, but deaths still record.
+public struct RagdollSessionData {
+    let loadDefinition: RagdollCoordinator.DefinitionLoader?
+    let deathSettings: DeathSettings
+
+    public init(collisionModels: NIFCollisionLibrary?, deathSettings: DeathSettings = .vanilla) {
+        self.init(
+            loadDefinition: collisionModels.map(RagdollCoordinator.definitionLoader),
+            deathSettings: deathSettings
+        )
+    }
+
+    init(
+        loadDefinition: RagdollCoordinator.DefinitionLoader?,
+        deathSettings: DeathSettings = .vanilla
+    ) {
+        self.loadDefinition = loadDefinition
+        self.deathSettings = deathSettings
     }
 }

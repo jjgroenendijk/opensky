@@ -71,6 +71,8 @@ final class MagicWorldAdapter {
             world: self, data: sessionData(provider: provider), storyEvents: game.storyWorld
         )
         game.magic = coordinator
+        // `Mod Spell Cost` folds through the caster's own copy of the perks.
+        coordinator.caster?.perks = game.perks.runtime
         if coordinator.effects != nil {
             registerEffects(coordinator, gameSession: gameSession)
         }

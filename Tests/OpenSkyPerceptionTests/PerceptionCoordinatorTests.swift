@@ -59,13 +59,13 @@ struct PerceptionCoordinatorTests {
         })
     }
 
-    @Test func thePanelIsUnavailableUntilTheSettingsAreWired() {
-        let coordinator = PerceptionCoordinator(world: FakePerceptionSessionWorld())
+    @Test func thePanelIsUnavailableWithoutSettings() {
+        let coordinator = PerceptionCoordinator(world: FakePerceptionSessionWorld(), settings: nil)
         #expect(coordinator.perceptionSnapshot.isUnavailable)
         #expect(coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
     }
 
-    @Test func theWiredPassRunsOverTheFilteredRoster() throws {
+    @Test func thePassRunsOverTheFilteredRoster() throws {
         let world = FakePerceptionSessionWorld()
         world.candidates = [
             PerceptionCandidate(
@@ -78,8 +78,7 @@ struct PerceptionCoordinatorTests {
             Self.candidate(9)
         ]
         world.targets = [PerceptionFixture.target(feet: SIMD3(200, 0, 0))]
-        let coordinator = PerceptionCoordinator(world: world)
-        coordinator.wire(settings: .synthetic)
+        let coordinator = PerceptionCoordinator(world: world, settings: .synthetic)
 
         for _ in 0 ..< 60 {
             _ = coordinator.advance(by: PerceptionRuntime.fixedStepSeconds)
@@ -105,8 +104,7 @@ struct PerceptionCoordinatorTests {
         world.targets = [
             PerceptionFixture.target(feet: feet, gait: nil, isSneaking: isSneaking)
         ]
-        let coordinator = PerceptionCoordinator(world: world)
-        coordinator.wire(settings: .synthetic)
+        let coordinator = PerceptionCoordinator(world: world, settings: .synthetic)
         var uses: Float = 0
         for _ in 0 ..< 60 {
             for case let .reportSneakSkillUse(amount, _) in coordinator.advance(

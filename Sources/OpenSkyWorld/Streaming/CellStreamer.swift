@@ -37,7 +37,7 @@ public final class CellStreamer {
     /// The worldspace the exterior cells come from. A door or a teleport changes it.
     public private(set) var worldspaceEditorID: String
     /// Fires with the new worldspace after the exterior switched to it.
-    public let onWorldspaceChanged = CallbackFanOut<String>()
+    public let onWorldspaceChanged = FrameSchedule<WorldspaceChangeStep, String>()
     public var composition = CellSceneComposition() {
         didSet { actorPoseRevision &+= 1 }
     }
@@ -129,9 +129,9 @@ public final class CellStreamer {
     public var interactionTarget: InteractionTarget?
     /// Fires when view-ray target identity, text, or hit details change.
     public var onInteractionTargetChanged: ((InteractionTarget?) -> Void)?
-    /// Use-key event, multicast to world audio and the Papyrus bridge in registration
-    /// order. Neither owns the raycast or door behavior.
-    public let onInteraction = CallbackFanOut<InteractionEvent>()
+    /// Use-key event, delivered in `InteractionStep` order. No handler owns the
+    /// raycast or door behavior.
+    public let onInteraction = FrameSchedule<InteractionStep, InteractionEvent>()
     /// Everything Talk activation needs from the streamer.
     public var talk = TalkTargetingSeam()
     /// The lock check in front of every use-key activation.
@@ -144,20 +144,19 @@ public final class CellStreamer {
     public var doorMotionInteraction: PlacedInteraction?
     /// Each sequence door's leaf moves from rest, by reference; its collision follows.
     public var sequenceDoorLeaves: [UInt32: [float4x4]] = [:]
-    /// A cell joined the live world. True for a first integration, false for a rebuild or
-    /// interior refresh, so scripts attach once. Emitted in CellStreamerPapyrus.
-    public var onCellAttached: ((CellScene, Bool) -> Void)?
+    /// A cell joined the live world. Emitted in CellStreamerPapyrus.
+    public let onCellAttached = FrameSchedule<CellAttachStep, CellAttachment>()
     /// A cell left the live world: unloaded off the grid, dropped by a
     /// coverage transition, or replaced by a door transition.
-    public var onCellDetached: ((CellSceneLocation) -> Void)?
+    public let onCellDetached = FrameSchedule<CellDetachStep, CellSceneLocation>()
     /// A door transition was queued. The loading screen covers the view from here.
     public var onDoorTransitionStarted: (() -> Void)?
     /// A door transition ended: the destination scene, or nil when it failed.
     public var onDoorTransitionFinished: ((CellScene?) -> Void)?
     /// A live cell's placed hazards changed: attached, rebuilt, or detached.
-    public let cellHazards = CallbackFanOut<CellHazardEvent>()
+    public let cellHazards = FrameSchedule<CellHazardStep, CellHazardEvent>()
     /// The player entered or left a trigger volume. Emitted in CellStreamerTriggers.
-    public let onTriggerTransition = CallbackFanOut<TriggerTransitionEvent>()
+    public let onTriggerTransition = FrameSchedule<TriggerTransitionStep, TriggerTransitionEvent>()
     /// Trigger volumes the player capsule was inside as of the last walk-mode
     /// frame, keyed by the authoring REFR. The per-frame diff against this set
     /// is what makes enter and leave edge events.

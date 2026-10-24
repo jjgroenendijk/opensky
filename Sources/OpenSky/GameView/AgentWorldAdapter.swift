@@ -69,13 +69,12 @@ protocol AgentWorldHost: AnyObject {
     var titleMenu: TitleMenuCoordinator { get }
     var vehicleWorld: VehicleWorldAdapter { get }
     var hostView: NSView { get }
+    var dataRoot: GameDataRoot? { get }
     var worldState: WorldStateStore { get }
 }
 
 final class AgentWorldAdapter {
     unowned let game: any AgentWorldHost
-    /// Set by the host when a mode starts.
-    var dataRoot: GameDataRoot?
     /// The diff state behind the game events.
     var tap = AgentEventTapState()
     private var quitScheduled = false
@@ -84,6 +83,10 @@ final class AgentWorldAdapter {
 
     init(game: any AgentWorldHost) {
         self.game = game
+    }
+
+    var dataRoot: GameDataRoot? {
+        game.dataRoot
     }
 
     var dispatcher: GameInputDispatcher {

@@ -92,7 +92,7 @@ struct WorldAudioTransitionAcceptanceTests {
             // Exactly the three subscriptions the game controller makes.
             streamer.onAmbienceContextChanged = { soundDirector.handleAmbienceContext($0) }
             streamer.onMusicContextChanged = { musicDirector.handleMusicContext($0) }
-            streamer.onInteraction.add { soundDirector.handleInteraction($0) }
+            streamer.onInteraction.register(.audio) { soundDirector.handleInteraction($0) }
         }
 
         /// Step 1: the center cell arrives carrying one region and one cell
@@ -118,7 +118,7 @@ struct WorldAudioTransitionAcceptanceTests {
                     activation: FormID(Self.doorActivation), close: nil, loop: nil
                 )
             )
-            #expect(streamer.onInteraction.handlerCount == 1)
+            #expect(streamer.onInteraction.registeredPhases == [.audio])
             streamer.onInteraction(event)
 
             #expect(sound.lastSFXDescription == "sound\\fx\\dor\\doorwoodopen.xwm")

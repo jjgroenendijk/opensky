@@ -20,9 +20,14 @@ struct RagdollDeathEffectsTests {
     ) -> (RagdollCoordinator, FakeRagdollSessionWorld) {
         let world = FakeRagdollSessionWorld()
         world.ragdollResidents = [RagdollResident(key: victim, position: SIMD3(100, 0, 0))]
-        let coordinator = RagdollCoordinator(store: WorldStateStore(), world: world)
-        coordinator.wire(loadDefinition: { _, _, _ in RagdollFixture.limb().definition })
-        coordinator.deathSettings = settings
+        let coordinator = RagdollCoordinator(
+            store: WorldStateStore(),
+            world: world,
+            data: RagdollSessionData(
+                loadDefinition: { _, _, _ in RagdollFixture.limb().definition },
+                deathSettings: settings
+            )
+        )
         return (coordinator, world)
     }
 

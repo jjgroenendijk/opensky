@@ -49,7 +49,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let recorder = TriggerRecorder()
-        streamer.onTriggerTransition.add { recorder.note($0) }
+        streamer.onTriggerTransition.register(.scripts) { recorder.note($0) }
         let scene = CellStreamerFixture.cellScene(
             location: .exterior(CellStreamerFixture.coordinate(0, 0)),
             triggerVolumes: TriggerStreamFixture.volumeSet([volume])
@@ -139,7 +139,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
-        streamer.onTriggerTransition.add { log.append($0) }
+        streamer.onTriggerTransition.register(.scripts) { log.append($0) }
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: Self.center
         ) { coordinate in
@@ -202,7 +202,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
-        streamer.onTriggerTransition.add { log.append($0) }
+        streamer.onTriggerTransition.register(.scripts) { log.append($0) }
         let away = SIMD3<Float>(boundaryX - 600, Self.center.y, 0)
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: TriggerStreamFixture.eye(feetAt: away)
@@ -237,7 +237,7 @@ struct CellStreamerTriggerTests {
     func unloadingTheCellFiresLeaveBeforeTheDetach() throws {
         let harness = try Self.makeHarness()
         let recorder = harness.recorder
-        harness.streamer.onCellDetached = { _ in recorder.log.append("detach") }
+        harness.streamer.onCellDetached.register(.scripts) { _ in recorder.log.append("detach") }
         Self.step(harness, feetAt: Self.inside)
         #expect(recorder.log == ["enter"])
 

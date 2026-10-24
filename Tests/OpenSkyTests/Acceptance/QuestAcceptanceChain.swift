@@ -110,7 +110,7 @@ struct QuestAcceptanceChain {
             recorder.seen.append(contentsOf: call.arguments)
             return .returned(.none)
         }
-        streamer.onInteraction.add { [weak bridge = session.bridge] event in
+        streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
             bridge?.handleInteraction(event)
         }
         integrateCell()

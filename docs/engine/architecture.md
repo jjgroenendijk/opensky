@@ -144,8 +144,10 @@ hook takes one step per case of its phase enum (`FrameStep`, `AssetDrain`, `Worl
 and the enum order is the run order. So moving a wiring statement cannot reorder the
 simulation, and a system wired late still runs in its own slot. A new system adds a case where
 it must run; a unit test pins the world-tick order. The lint rule `frame_callback_property`
-fails a closure property or a `CallbackFanOut` whose name says frame, tick, or update, so no
-second list of per-frame callbacks grows beside the schedule.
+fails a closure property whose name says frame, tick, or update, so no second list of
+per-frame callbacks grows beside the schedule. Events use the same type: each streamer event,
+such as an activation or a cell attach, has its own phase enum, so its handlers also run in a
+declared order.
 
 ## Machine checks
 

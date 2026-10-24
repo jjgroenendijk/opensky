@@ -26,9 +26,9 @@ Words used on this page:
 
 ## Why late setters must go
 
-Today most coordinators are `lazy var` properties of the game view controller. A host
-protocol can build one before the world data is wired. So the data arrives later, through
-`wire...` methods and settable properties. This has four costs:
+Coordinators used to be `lazy var` properties of the game view controller. A host protocol
+could build one before the world data was wired, so the data arrived later, through `wire...`
+methods and settable properties. This has four costs:
 
 - A coordinator is half built until every setter runs. Every method checks for a missing
   runtime and returns nothing.
@@ -56,10 +56,10 @@ Two scopes, each built by hand by a composition root:
 | App | From launch to quit | The launcher, the data root locator, the asset cache, player settings, save-game files, agent control, the pipeline cache |
 | Session | From one loaded world and its Metal view to the end of that game view | The loaded stores, the file source, the world state store, the cell streamer, the frame session and renderer, every coordinator, every world adapter, every menu controller |
 
-The session scope is one final class. Its initializer takes the loaded world, the Metal view,
-and the app services it needs. It builds the frame session, the streamer, and every coordinator
-with full initializers. The app builds it at the one point where the loaded world and the view
-both exist. Today that point is where the session systems are wired, when the view loads.
+The session scope is one final class, `GameSessionScope`. Its initializer takes the loaded
+world, the cell build runner, the frame session, and the app services it needs
+(`GameAppServices`). The game view builds it when the view loads, the one point where the
+loaded world and the view both exist, and then calls `start()`.
 
 Rules:
 
@@ -92,7 +92,7 @@ Each dependency is one of seven kinds. The kind decides how it arrives.
 | Live input | A player setting changed in the launcher, an agent command's argument | A method argument, or a port member read each time. Never stored as a dependency |
 
 A world adapter reads the session through its host protocol and holds the session scope
-`unowned`, as adapters hold the view controller today. The session scope conforms to the host
+`unowned`. The session scope conforms to the host
 protocols instead of the view controller.
 
 A setting the player changes while the game runs is live input, not a dependency. Example: the
@@ -116,18 +116,20 @@ A setter is never the way out of a cycle.
 
 ## Frame order and event order
 
-The frame order is already declared. A frame hook is a `FrameSchedule` over a phase enum, and
-the enum order is the run order ([architecture](/engine/architecture.md#isolation-per-subsystem)).
+A frame hook is a `FrameSchedule` over a phase enum, and the enum order is the run order
+([architecture](/engine/architecture.md#isolation-per-subsystem)).
 
-Event multicast is not declared yet. A `CallbackFanOut` delivers in registration order, so the
-order of the wiring statements decides which handler runs first. Example: the streamer's
-interaction event must reach audio first and the item pickup last, and only comments say so.
-The same holds for the activation gate and the cell attach that cell reset wraps.
-
-Target: each multicast event gets a phase enum, like a frame hook. A handler registers in its
+Each multicast event uses the same type with its own phase enum. A handler registers in its
 phase, and the enum order is the delivery order. One phase takes one handler, so a second
-registration is a wiring bug and traps, as in `FrameSchedule`. Then the session scope may
-register handlers in any order.
+registration is a wiring bug and traps. So the session scope may register handlers in any
+order. Examples:
+
+- The streamer's interaction event (`InteractionStep`) reaches audio first, then the scripts,
+  then the item pickup, then the agent event log.
+- A cell attach (`CellAttachStep`) lets cell reset choose the references to reset before the
+  scripts attach, and queue the reset events after.
+- The activation gate asks its checks in `ActivationGateStep` order, and the first refusal
+  wins: a rider is refused at a door before the lock is checked.
 
 ## The game UI and agent control
 
@@ -173,28 +175,14 @@ register handlers in any order.
 | A task-local environment or a service locator (`swift-dependencies`, Godot autoloads, singletons) | Dependencies are hidden in the body, not the signature. A default value hides a missing dependency |
 | Coordinators read stores from one shared `WorldDataStores` port on demand | Every read can fail, so every method keeps the missing-data branch. It moves the late setter into a lookup |
 
-## The current late setters
+## What is left
 
-Each late setter in a package module, its kind, and its target. Settable properties that the app
-assigns once after build, such as `combat.staggers`, follow the row of their coordinator.
+Every coordinator takes its session data in the initializer. Two parts of the start still run
+after the scope is built:
 
-| Late setter | Kind | Target |
-| --- | --- | --- |
-| `ActorValueCoordinator.wire(baselines:regeneration:stamina:)` | Session data | Initializer |
-| `FactionCoordinator.wire(factions:relationships:baselines:pluginName:)` | Session data | Initializer |
-| `PerceptionCoordinator.wire(settings:stealthPoints:)` | Session data | Initializer |
-| `PackageCoordinator.wire(store:)` and its settings properties | Session data | Initializer |
-| `IdleCoordinator.wire(store:files:clips:planWorker:)` | Session data, session object | Initializer; the clip loader is built first |
-| `IdleCoordinator.onAnimationEvent` | Event | Returned command or event schedule |
-| `RagdollCoordinator.wire(collisionModels:)` and `deathSettings` | Session data | Initializer |
-| `CombatCoordinator.wireMelee`, `wireArchery`, `wireLoop`, and its settings properties | Session data | One initializer that builds all three runtimes |
-| `PerkCoordinator.wire(_:baselines:pluginName:)` | Session data | Initializer; live conditions through its port |
-| `ProgressionCoordinator.wireSkills`, `wireLeveling`, `training`, `texts` | Session data, session object | One initializer that builds both runtimes, so their order is internal |
-| `CrimeCoordinator.wire(runtime:locations:pluginName:)` and `crimeTexts` | Session data | Initializer |
-| `CrimeCoordinator.attachWitnesses(_:)` | Feature seam | Initializer; perception is built first |
-| `storyEvents` on the crime and progression coordinators | Feature seam | Initializer, answered by the story adapter |
-| `PlayerCoordinator.wireBody(source:)` | Late asset | Request at start, drain the mailbox; the coordinator is whole without the graph |
-| `CallbackFanOut` registrations on the streamer, the activation gate, and talk targeting | Event order | Phase enum per event |
+- `start()` builds the streamer, so its users read it as an optional.
+- Session start replaces the inventory, magic, and effects coordinators with ones built over
+  the loaded world, instead of the scope building them once.
 
 The `Papyrus` bridge's native families stay as they are. Each family is a value with optional
 closures, and a missing family answers nothing on purpose, so a native refuses instead of
@@ -218,6 +206,5 @@ and the ragdoll's push land in the same frame as the damage. Every cast reaches 
   dependency: a type ending in `Store`, `Settings`, `Texts`, `Runtime`, `Catalog`, `Resolver`,
   `World`, `Seam`, `Reporting`, or `Presenting`, or a closure named `on...`.
 - A lint rule fails a coordinator built under `Sources/` outside the session scope's files.
-- `CallbackFanOut` is deleted when the last event has a phase enum, so the compiler rejects a
-  new registration-ordered multicast.
+- There is no registration-ordered multicast type left, so a new event needs a phase enum.
 - A unit test builds the session scope from a synthetic load and checks that it builds.

@@ -1,4 +1,4 @@
-// The M17 gate's session: one speaker, a live `GameViewController`, and the
+// The M17 gate's session: one speaker, a live `GameSessionScope`, and the
 // shipping conversation path, headless. It drives only the app's entry points.
 // No cell is resident, so Talk candidates are supplied directly; the pick is
 // real. No renderer, so `dialoguemenu.swf` never loads; the engine model is
@@ -10,6 +10,7 @@ import AppKit
 import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyPlayer
 @testable import OpenSkyQuestsInterface
@@ -27,7 +28,7 @@ import Testing
 
 @MainActor
 final class DialogueAcceptanceChain {
-    let controller = GameViewController()
+    let controller: GameSessionScope
     let session: PapyrusWorldFixture.Session
     let streamer: CellStreamer
     /// Talk activations the world published, in order, so the route asserts the
@@ -37,12 +38,14 @@ final class DialogueAcceptanceChain {
     private let runner = ManualCellBuildRunner()
 
     init() throws {
-        // Set before the first read of `controller.dialogue`, which is built over it.
+        // The scope is built over the stores, so `controller.dialogue` reads them.
         let data = try WorldDataStores(
             scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: []),
             dialogueStore: DialogueAcceptanceFixture.dialogueStore()
         )
-        controller.worldData = data
+        controller = GameSessionScope(
+            worldData: data, cellRunner: nil, gameSession: nil, services: GameAppServices()
+        )
         session = try DialogueAcceptanceFixture.session(worldState: controller.worldState)
         controller.scripts = ScriptCoordinator(
             world: controller.scriptWorld, runtime: session.world, bridge: session.bridge
@@ -53,7 +56,7 @@ final class DialogueAcceptanceChain {
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
         streamer.talk.candidateSource = { [Self.candidate] }
-        streamer.talk.activations.add { [weak self] event in
+        streamer.talk.activations.register(.log) { [weak self] event in
             self?.activations.append(event)
         }
         PapyrusWorldFixture.drain(session.world)

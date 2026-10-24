@@ -97,7 +97,7 @@ final class DialogueWorldAdapter {
             self?.talkCandidates() ?? []
         }
         // Activating a living actor while sneaking opens its pockets instead of a talk.
-        streamer.talk.activations.add { [weak self] event in
+        streamer.talk.activations.register(.dialogue) { [weak self] event in
             guard let game = self?.game else { return }
             if game.mountWorld.mountOnActivation(event.speaker) {
                 return

@@ -46,7 +46,7 @@ extension PapyrusWorldRuntime {
 }
 
 extension PapyrusWorldStateBridge {
-    /// `CellStreamer.onTriggerTransition` subscriber: one event per script of the volume's
+    /// `CellStreamer.onTriggerTransition` scripts step: one event per script of the volume's
     /// reference, with the player as `akActionRef`. The event already has a `ReferenceKey`.
     @discardableResult
     public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {

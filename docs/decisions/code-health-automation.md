@@ -144,9 +144,10 @@ files, like `GameViewController`, passes it. So a second rule is needed for that
 ## GameViewController extensions
 
 `GameViewController` keeps only the view, input, and the render loop, in
-`GameViewController.swift` and `GameViewControllerHosts.swift`. A SwiftLint
-`custom_rules` entry, `game_view_controller_extension`, forbids `extension
-GameViewController` in any other file. The allowed file names are one regular expression
+`GameViewController.swift`. The game objects live in the session scope
+([session scope](/decisions/session-scope.md)). A SwiftLint `custom_rules` entry,
+`game_view_controller_extension`, forbids `extension GameViewController` in any other
+file. The allowed file names are one regular expression
 in `tools/lint/.swiftlint.yml`. It is a design rule for the future, not a list of old
 findings.
 

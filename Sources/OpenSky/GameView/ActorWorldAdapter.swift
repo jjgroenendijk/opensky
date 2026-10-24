@@ -61,18 +61,25 @@ final class ActorWorldAdapter {
 
     /// A provider without stat indexes, such as every synthetic scene, leaves
     /// the runtime nil.
+    func makeActorValues() -> ActorValueCoordinator {
+        guard let data = game.worldData, let baselines = data.actorValueBaselines else {
+            return ActorValueCoordinator(store: game.worldState, world: self, baselines: nil)
+        }
+        return ActorValueCoordinator(
+            store: game.worldState,
+            world: self,
+            baselines: baselines,
+            regeneration: RegenerationSettings.resolve(store: data.gameSettings),
+            stamina: StaminaSettings.resolve(store: data.gameSettings)
+        )
+    }
+
     func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
         baseNames = [:]
         actorList = nil
-        guard let baselines = provider.actorValueBaselines
-        else { return }
         let coordinator = game.actorValues
+        guard coordinator.runtime != nil else { return }
         let settings = provider.gameSettings
-        coordinator.wire(
-            baselines: baselines,
-            regeneration: RegenerationSettings.resolve(store: settings),
-            stamina: StaminaSettings.resolve(store: settings)
-        )
         // Chained after the Papyrus VM, so neither unhooks the other. The
         // renderer gates the delta, so a menu-paused frame regenerates nothing.
         gameSession.worldTick.register(.actorValues) { [weak coordinator] delta in

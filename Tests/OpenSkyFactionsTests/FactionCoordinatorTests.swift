@@ -45,20 +45,22 @@ struct FactionCoordinatorTests {
 
     private static func wired(_ world: FakeWorld) throws -> FactionCoordinator {
         let file = try Fixture.file()
-        let coordinator = FactionCoordinator(store: WorldStateStore(), world: world)
-        coordinator.wire(
-            factions: FactionStore(plugins: [(Fixture.pluginName, file)]),
-            relationships: RelationshipStore(plugins: [(Fixture.pluginName, file)]),
-            baselines: nil,
-            pluginName: Fixture.pluginName
+        return FactionCoordinator(
+            store: WorldStateStore(),
+            world: world,
+            data: FactionSessionData(
+                factions: FactionStore(plugins: [(Fixture.pluginName, file)]),
+                relationships: RelationshipStore(plugins: [(Fixture.pluginName, file)]),
+                baselines: nil,
+                pluginName: Fixture.pluginName
+            )
         )
-        return coordinator
     }
 
     @Test func withoutGameDataHostilityIsTheStoredOverride() {
         let world = FakeWorld()
         world.residents = [Self.bandit]
-        let coordinator = FactionCoordinator(store: WorldStateStore(), world: world)
+        let coordinator = FactionCoordinator(store: WorldStateStore(), world: world, data: nil)
 
         #expect(coordinator.hostility(of: Self.bandit) == .neutral)
         #expect(coordinator.setHostility(.hostile, on: Self.bandit))

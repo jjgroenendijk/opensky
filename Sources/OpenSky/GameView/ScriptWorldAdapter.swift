@@ -126,25 +126,25 @@ final class ScriptWorldAdapter {
         let scripts = ScriptCoordinator(world: self, bridge: bridge, fileSystem: fileSystem)
         game.scripts = scripts
         let world = scripts.runtime
-        streamer.onInteraction.add { [weak bridge] event in
+        streamer.onInteraction.register(.scripts) { [weak bridge] event in
             bridge?.handleInteraction(event)
         }
         // The streamer tests trigger volumes once per walk-mode frame; each edge
         // queues one event per script on the volume's reference.
-        streamer.onTriggerTransition.add { [weak bridge] event in
+        streamer.onTriggerTransition.register(.scripts) { [weak bridge] event in
             bridge?.handleTriggerTransition(event)
         }
         scripts.startQuestScripts()
-        streamer.onCellAttached = { [weak world] scene, firstIntegration in
-            guard let world, let location = scene.location else { return }
+        streamer.onCellAttached.register(.scripts) { [weak world] attachment in
+            guard let world, let location = attachment.scene.location else { return }
             world.attach(
                 cell: location,
-                references: scene.references,
+                references: attachment.scene.references,
                 formIDResolver: resolver,
-                firstIntegration: firstIntegration
+                firstIntegration: attachment.isFirstIntegration
             )
         }
-        streamer.onCellDetached = { [weak world] location in
+        streamer.onCellDetached.register(.scripts) { [weak world] location in
             world?.detach(cell: location)
         }
         gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in

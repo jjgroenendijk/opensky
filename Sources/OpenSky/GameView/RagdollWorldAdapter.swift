@@ -47,6 +47,7 @@ protocol RagdollWorldHost: AnyObject {
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
@@ -57,13 +58,23 @@ final class RagdollWorldAdapter {
         self.game = game
     }
 
+    /// Without game data the runtime stays nil.
+    func makeRagdoll() -> RagdollCoordinator {
+        let data = game.worldData.map { provider in
+            RagdollSessionData(
+                collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init),
+                deathSettings: DeathSettings.resolve(store: provider.gameSettings)
+            )
+        }
+        return RagdollCoordinator(store: game.worldState, world: self, data: data)
+    }
+
     /// A world-tick step, so the ragdolls see the same simulated
     /// delta as the other systems, and a menu-paused frame stops a falling
     /// corpse. The pose reaches the scene on the drawn frame, so a paused
     /// corpse stays where it was.
     func wireRagdoll(gameSession: GameSession) {
         let ragdoll = game.ragdoll
-        ragdoll.wire(collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init))
         let worldTick = gameSession.worldTick
         worldTick.register(.ragdoll) { [weak self, weak ragdoll, weak gameSession] delta in
             guard let ragdoll, let gameSession else { return }

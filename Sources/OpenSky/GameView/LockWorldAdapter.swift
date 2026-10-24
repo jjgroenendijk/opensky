@@ -50,11 +50,11 @@ final class LockWorldAdapter {
         let renderer = gameSession.renderer
         let locks = game.inventory.locks
         let inventoryWorld = game.inventoryWorld
-        streamer.activationGate.gate = { [weak locks, weak inventoryWorld] target in
+        streamer.activationGate.register(.lock) { [weak locks, weak inventoryWorld] target in
             locks.flatMap { inventoryWorld?.run($0.gate(target)) }
         }
         let menu = game.lockpickingMenu
-        streamer.activationGate.refusals.add { [weak menu] refusal in
+        streamer.activationGate.refusals.register(.lockpicking) { [weak menu] refusal in
             menu?.handle(refusal)
         }
         // Frame steps run while the menu pauses the world; the menu keeps its own clock.

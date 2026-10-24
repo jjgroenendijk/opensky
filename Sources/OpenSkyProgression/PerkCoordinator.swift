@@ -13,29 +13,27 @@ import OpenSkyProgressionInterface
 /// the formula already had.
 @MainActor
 public final class PerkCoordinator {
-    /// Nil until `wire`.
+    /// Nil without a perk store in the load order.
     public private(set) var runtime: PerkRuntime?
-    private var baselines: ActorPerkBaselineResolver?
+    private let baselines: ActorPerkBaselineResolver?
     /// The plugin an actor's `PRKR` links are relative to.
-    private var pluginName: String?
+    private let pluginName: String?
     /// An NPC is seeded the first time anything asks about it, not at cell
     /// build, so townsfolk who never fight write no perks into the save.
     private var seededActors: Set<ReferenceKey> = []
 
     let world: any PerkWorld
 
-    public init(world: any PerkWorld) {
-        self.world = world
-    }
-
-    public func wire(
-        _ runtime: PerkRuntime,
-        baselines: ActorPerkBaselineResolver?,
-        pluginName: String?
+    public init(
+        world: any PerkWorld,
+        runtime: PerkRuntime?,
+        baselines: ActorPerkBaselineResolver? = nil,
+        pluginName: String? = nil
     ) {
+        self.world = world
+        self.runtime = runtime
         self.baselines = baselines
         self.pluginName = pluginName
-        store(runtime)
     }
 
     // MARK: - Ownership

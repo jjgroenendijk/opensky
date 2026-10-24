@@ -41,6 +41,7 @@ protocol CombatWorldHost: AnyObject {
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
@@ -75,25 +76,37 @@ final class CombatWorldAdapter {
         self.game = game
     }
 
-    /// Without combat settings, which is every synthetic scene, the runtime
-    /// stays nil and no fight starts with invented numbers.
-    func wireMelee(provider: WorldDataStores, gameSession: GameSession) {
-        let settings = provider.combatSettings
-        let combat = game.combat
-        combat.difficultySettings = provider.difficultySettings
-        combat.weaponDamage = WeaponDamageSettings
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        combat.stamina = StaminaSettings.resolve(store: provider.gameSettings)
-        combat.powerAttacks = PowerAttackSettings.resolve(store: provider.gameSettings)
-        combat.skillUses = MeleeSkillUseSettings.resolve(store: provider.gameSettings)
-        combat.staggers = StaggerSettings.resolve(store: provider.gameSettings)
-        combat.combatAI = CombatAISettings.resolve(store: provider.gameSettings)
-        game.ragdoll.deathSettings = DeathSettings.resolve(store: provider.gameSettings)
-        combat.wireMelee(
-            settings: settings,
+    /// Without game data the runtimes stay nil, and no fight starts with
+    /// invented numbers.
+    func makeCombat() -> CombatCoordinator {
+        guard let provider = game.worldData else {
+            return CombatCoordinator(
+                world: self, data: nil, explosions: game.effectsWorld.makeExplosions()
+            )
+        }
+        let settings = provider.gameSettings
+        let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
+        var data = CombatSessionData(
+            combat: provider.combatSettings,
+            archery: provider.archerySettings,
             items: Self.items(provider),
             impacts: Self.impacts(provider)
         )
+        data.difficulty = provider.difficultySettings
+        data.weaponDamage = WeaponDamageSettings.resolve(store: settings, text: text)
+        data.stamina = StaminaSettings.resolve(store: settings)
+        data.powerAttacks = PowerAttackSettings.resolve(store: settings)
+        data.skillUses = MeleeSkillUseSettings.resolve(store: settings)
+        data.staggers = StaggerSettings.resolve(store: settings)
+        data.combatAI = CombatAISettings.resolve(store: settings)
+        data.arrows = ArrowSettings.resolve(store: settings, text: text)
+        return CombatCoordinator(
+            world: self, data: data, explosions: game.effectsWorld.makeExplosions()
+        )
+    }
+
+    func wireMelee(gameSession: GameSession) {
+        let combat = game.combat
         // A frame step, not the audio tick: a swing must resolve with audio off.
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.melee) { [weak self, weak combat, weak gameSession] _ in
@@ -114,16 +127,8 @@ final class CombatWorldAdapter {
         }
     }
 
-    func wireArchery(provider: WorldDataStores, gameSession: GameSession) {
-        let settings = provider.archerySettings
+    func wireArchery(gameSession: GameSession) {
         let combat = game.combat
-        combat.arrows = ArrowSettings
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        combat.wireArchery(
-            settings: settings,
-            items: Self.items(provider),
-            impacts: Self.impacts(provider)
-        )
         // The world tick delivers a zero delta on a menu-paused frame, so an
         // arrow hangs in the air behind an open menu.
         let worldTick = gameSession.worldTick
@@ -144,11 +149,8 @@ final class CombatWorldAdapter {
     }
 
     /// Wired after melee, archery and the ragdolls, so the loop steps last.
-    func wireLoop(provider: WorldDataStores, gameSession: GameSession) {
-        let settings = provider.combatSettings
+    func wireLoop(gameSession: GameSession) {
         let combat = game.combat
-        combat.difficultySettings = provider.difficultySettings
-        combat.wireLoop(settings: settings)
         let store = game.playerSettingsStore
         combat.load(settings: store)
         // The launcher page writes the switch while a session runs.

@@ -1,4 +1,4 @@
-// The shell of the player: loads both behavior graphs, assembles the body and
+// The shell of the player: loads both behavior graphs as a late asset, assembles the body and
 // the first-person arms, and rebuilds them when the equipped set changes. A
 // load failure is recorded and shown, not retried, because it is a fact about
 // the install. See docs/engine/coordinators.md.
@@ -17,7 +17,11 @@ public final class PlayerCoordinator {
 
     let input: CameraInputState
     weak let world: (any PlayerWorld)?
-    private var source: (any PlayerRigSource)?
+    /// Nil without game data; then there is no body and no failure to report.
+    private let source: (any PlayerRigSource)?
+    private let graphLoads: (any AssetLoadWorking<PlayerGraphKind, PlayerGraphDecode>)?
+    /// Decoded graphs that wait for the other one, so both attach together.
+    private var decodedGraphs: [PlayerGraphKind: PlayerGraphDecode] = [:]
     /// Bumped by each rebuild, so a rig assembled for an older set is dropped.
     private var generation = 0
     /// Held so it stays alive for the session.
@@ -35,44 +39,67 @@ public final class PlayerCoordinator {
     /// third-person set and a broken `_1stperson` one.
     public private(set) var firstPersonFailureReason: String?
 
-    public init(input: CameraInputState, world: any PlayerWorld) {
+    /// The coordinator is whole without its graphs: `requestBody()` starts
+    /// their loads, and a later `drainClipLoads()` attaches them.
+    public init(
+        input: CameraInputState,
+        world: any PlayerWorld,
+        source: (any PlayerRigSource)?,
+        graphWorker: (any AssetLoadWorking<PlayerGraphKind, PlayerGraphDecode>)? = nil
+    ) {
         self.input = input
         self.world = world
+        self.source = source
+        guard let source else {
+            graphLoads = nil
+            return
+        }
+        guard let fileSystem = source.playerAssetFileSystem else {
+            graphLoads = nil
+            failureReason = PlayerBodyError.noFileSystem.localizedDescription
+            return
+        }
+        graphLoads = graphWorker
+            ?? SerialAssetLoadWorker(load: PlayerGraphKind.loader(fileSystem: fileSystem))
     }
 
-    /// Loads both graphs and assembles the body.
-    /// - Returns: true when the third-person graph is attached, so the caller
-    ///   should call `refreshBody()` every frame.
-    public func wireBody(source: any PlayerRigSource) -> Bool {
-        guard let fileSystem = source.playerAssetFileSystem else {
-            failureReason = PlayerBodyError.noFileSystem.localizedDescription
-            return false
+    /// Starts both graph loads. The body appears at a later drain.
+    public func requestBody() {
+        guard let graphLoads, graph == nil, decodedGraphs.isEmpty else { return }
+        graphLoads.submit(.thirdPerson, priority: .needed)
+        graphLoads.submit(.firstPerson, priority: .needed)
+    }
+
+    private func drainGraphs() {
+        guard let graphLoads, graph == nil else { return }
+        for completion in graphLoads.takeFinished() {
+            decodedGraphs[completion.key] = completion.result
+                .mapError { PlayerBehaviorGraphError.invalid($0.reason) }
+                .flatMap(\.self)
         }
-        let loaded: PlayerBehaviorGraph
-        do {
-            loaded = try PlayerBehaviorGraph.load(
-                fileSystem: fileSystem, clipWorker: Self.clipWorker(fileSystem)
+        guard
+            let thirdPerson = decodedGraphs[.thirdPerson],
+            let firstPerson = decodedGraphs[.firstPerson],
+            let fileSystem = source?.playerAssetFileSystem
+        else { return }
+        decodedGraphs = [:]
+        let build = { (files: PlayerBehaviorGraphFiles) in
+            PlayerBehaviorGraph.build(
+                files, fileSystem: fileSystem, clipWorker: Self.clipWorker(fileSystem)
             )
-        } catch let error as PlayerBehaviorGraphError {
+        }
+        switch thirdPerson {
+        case let .success(files):
+            attach(
+                graph: build(files),
+                firstPerson: firstPerson.map(build).mapError { $0 as any Error }
+            )
+        case let .failure(error):
             failureReason = PlayerBodyError.behavior(error).localizedDescription
             Self.logger.error(
                 "[ERROR] player behavior graph: \(String(describing: error), privacy: .public)"
             )
-            return false
-        } catch {
-            failureReason = String(describing: error)
-            return false
         }
-        let firstPerson = Result {
-            try PlayerBehaviorGraph.load(
-                fileSystem: fileSystem,
-                behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
-                skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath,
-                clipWorker: Self.clipWorker(fileSystem)
-            )
-        }
-        attach(graph: loaded, firstPerson: firstPerson, source: source)
-        return true
     }
 
     /// Clips read on the shared play-time queue; a state whose clip is still
@@ -85,19 +112,15 @@ public final class PlayerCoordinator {
 
     /// Moves finished clip loads and rigs in. Runs at the frame's drain point.
     public func drainClipLoads() {
+        drainGraphs()
         graph?.clips.drain()
         firstPersonGraph?.clips.drain()
         drainRigs()
     }
 
     /// The locomotion bridge drops every write until a graph is attached.
-    func attach(
-        graph: PlayerBehaviorGraph,
-        firstPerson: Result<PlayerBehaviorGraph, any Error>,
-        source: any PlayerRigSource
-    ) {
+    func attach(graph: PlayerBehaviorGraph, firstPerson: Result<PlayerBehaviorGraph, any Error>) {
         self.graph = graph
-        self.source = source
         world?.playerLocomotion?.attach(graph: graph.instance)
         switch firstPerson {
         case let .success(firstPersonGraph):
@@ -200,3 +223,31 @@ public final class PlayerCoordinator {
         }
     }
 }
+
+/// The two graphs the player runs side by side.
+nonisolated public enum PlayerGraphKind: Hashable, Sendable {
+    case thirdPerson
+    case firstPerson
+
+    /// Decodes one graph's files; it runs on a load worker, off the main actor.
+    public static func loader(
+        fileSystem: any GameFileSource
+    ) -> @Sendable (PlayerGraphKind) -> PlayerGraphDecode {
+        { kind in
+            Result { () throws(PlayerBehaviorGraphError) in
+                switch kind {
+                case .thirdPerson:
+                    try PlayerBehaviorGraphFiles.decode(fileSystem: fileSystem)
+                case .firstPerson:
+                    try PlayerBehaviorGraphFiles.decode(
+                        fileSystem: fileSystem,
+                        behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
+                        skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+                    )
+                }
+            }
+        }
+    }
+}
+
+public typealias PlayerGraphDecode = Result<PlayerBehaviorGraphFiles, PlayerBehaviorGraphError>
