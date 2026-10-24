@@ -153,6 +153,12 @@ checks that take an hour or recompile everything, so they run on a runner rather
 session: `make test-sanitize SAN=thread`, `SAN=address`, and `make health`. A failure is read
 from the run, not from a pull request, so the person who reads it opens an issue.
 
+## Preview releases
+
+`preview.yml` builds the Release app and publishes it as a GitHub pre-release every night and on
+demand. It reads the `Lint` result of `ci.yml` to pick a commit, and it restores the caches that
+`ci.yml` saves without saving its own. [Releases](/tools/releases.md) explains it.
+
 ## Not in CI
 
 - `make test-ui`. It needs the Accessibility grant, which a runner cannot give.

@@ -1,0 +1,107 @@
+name: Preview release
+
+# Publishes the newest main commit whose CI passed as a GitHub pre-release, once a night
+# and on demand (docs/tools/releases.md). The plan runs on Linux and skips the macOS build
+# when the last preview already holds that commit.
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: preview-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/.cache/DerivedData
+  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
+  SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
+  # Ad-hoc signing: the runner holds no certificate, so users press Open Anyway once.
+  BUILD_FLAGS: >-
+    CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
+    -skipPackagePluginValidation -skipMacroValidation
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      publish: ${{ steps.plan.outputs.publish }}
+      sha: ${{ steps.plan.outputs.sha }}
+      tag: ${{ steps.plan.outputs.tag }}
+      previous: ${{ steps.plan.outputs.previous }}
+    steps:
+      # The plan walks main's first-parent history for a commit whose Lint passed.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 200
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/ci/preview-release.sh plan | tee -a "$GITHUB_OUTPUT"
+
+  publish:
+    name: Build and publish
+    needs: plan
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+      - name: Start Metal Toolchain download
+        run: tools/ci/metal-toolchain.sh start
+      - run: make swift-baseline
+      # Restore only: the CI workflow owns these caches.
+      - uses: actions/cache/restore@v6
+        with:
+          path: .vendor/ffmpeg
+          key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
+      - run: make ffmpeg
+      - uses: actions/cache/restore@v6
+        with:
+          path: .vendor/astcenc
+          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
+      - run: make astcenc
+      - uses: actions/cache/restore@v6
+        with:
+          path: .cache/CompilationCache.noindex
+          key: cas2-${{ runner.arch }}-main-preview-${{ github.run_id }}
+          restore-keys: cas2-${{ runner.arch }}-main-
+      - name: Wait for the Metal Toolchain
+        run: tools/ci/metal-toolchain.sh wait
+      - run: make build-app CONFIG=Release XCODEBUILD_FLAGS="$BUILD_FLAGS"
+      - name: Pack the disk image
+        id: dmg
+        env:
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: echo "path=$(make -s dmg NAME="OpenSky-${TAG#v}" | tail -n 1)" | tee -a "$GITHUB_OUTPUT"
+      - name: Publish the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          SHA: ${{ needs.plan.outputs.sha }}
+          PREVIOUS: ${{ needs.plan.outputs.previous }}
+          DMG: ${{ steps.dmg.outputs.path }}
+        run: tools/ci/preview-release.sh publish "$DMG"
+      - name: Upload build logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: preview-logs
+          path: .logs/
+          include-hidden-files: true
+          retention-days: 7
