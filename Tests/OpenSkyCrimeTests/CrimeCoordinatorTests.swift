@@ -23,15 +23,21 @@ struct CrimeCoordinatorTests {
 
     /// A coordinator whose every cell sits in the hold, watched by one witness.
     private static func coordinator(
-        _ world: FakeCrimeSessionWorld
+        _ world: FakeCrimeSessionWorld,
+        storyEvents: StoryEventRecorder? = nil,
+        texts: CrimeTexts = .vanilla
     ) throws -> CrimeCoordinator {
-        let coordinator = CrimeCoordinator(world: world)
-        try coordinator.wire(
-            runtime: CrimeFixture.runtime(),
-            locations: CrimeFixture.locationStore(),
-            pluginName: CrimeFixture.pluginName
+        let coordinator = try CrimeCoordinator(
+            world: world,
+            data: CrimeSessionData(
+                runtime: CrimeFixture.runtime(),
+                locations: CrimeFixture.locationStore(),
+                pluginName: CrimeFixture.pluginName,
+                texts: texts
+            ),
+            witnesses: FixedCrimeWitnesses(watching: .player, by: [Self.victim]),
+            storyEvents: storyEvents
         )
-        coordinator.attachWitnesses(FixedCrimeWitnesses(watching: .player, by: [Self.victim]))
         world.currentCellLocation = Self.shop
         world.references = FakeCrimeReferences(cell: Self.shop)
         world.cellLinks[Self.shop] = FormID(CrimeFixture.Locations.shop)
@@ -62,8 +68,9 @@ struct CrimeCoordinatorTests {
 
     @Test func aBountyShowsItsNotice() throws {
         let world = FakeCrimeSessionWorld()
-        let coordinator = try Self.coordinator(world)
-        coordinator.crimeTexts.bountyAdded = "bounty for"
+        var texts = CrimeTexts.vanilla
+        texts.bountyAdded = "bounty for"
+        let coordinator = try Self.coordinator(world, texts: texts)
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
         let gold = coordinator.crimeGold(of: Self.hold)
         let name = coordinator.factionName(Self.hold)
@@ -94,9 +101,8 @@ struct CrimeCoordinatorTests {
 
     @Test func aReportedMurderFiresTheCrimeEventsAndSetsTheKillStatus() throws {
         let world = FakeCrimeSessionWorld()
-        let coordinator = try Self.coordinator(world)
         let recorder = StoryEventRecorder()
-        coordinator.storyEvents = recorder
+        let coordinator = try Self.coordinator(world, storyEvents: recorder)
         #expect(coordinator.killStatus(of: Self.victim, by: .player) == .notMurder)
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
         coordinator.reportMurder(of: Self.victim)

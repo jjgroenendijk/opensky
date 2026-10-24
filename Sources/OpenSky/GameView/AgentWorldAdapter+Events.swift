@@ -69,25 +69,21 @@ extension AgentWorldAdapter {
     private func wireEventCallbacks() {
         guard !tap.wired, let streamer = game.streamer else { return }
         tap.wired = true
-        let attached = streamer.onCellAttached
-        streamer.onCellAttached = { [weak self] scene, first in
-            attached?(scene, first)
+        streamer.onCellAttached.register(.agentEvents) { [weak self] attachment in
             // A rebuild of the same cell after a state change is not a new load.
-            guard first else { return }
-            self?.tap.append(AgentEventKind.cellLoaded, Self.cellData(scene))
+            guard attachment.isFirstIntegration else { return }
+            self?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
         }
-        let detached = streamer.onCellDetached
-        streamer.onCellDetached = { [weak self] location in
-            detached?(location)
+        streamer.onCellDetached.register(.agentEvents) { [weak self] location in
             self?.tap.append(AgentEventKind.cellUnloaded, Self.locationData(location))
         }
-        streamer.onInteraction.add { [weak self] event in
+        streamer.onInteraction.register(.agentEvents) { [weak self] event in
             self?.tap.append(
                 AgentEventKind.activation,
                 Self.interactionData(event.target.interaction)
             )
         }
-        streamer.activationGate.refusals.add { [weak self] event in
+        streamer.activationGate.refusals.register(.agentEvents) { [weak self] event in
             var data = Self.interactionData(event.target.interaction)
             if case let .locked(level, _) = event.refusal {
                 data["reason"] = "locked"

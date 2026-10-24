@@ -56,14 +56,10 @@ final class MountWorldAdapter {
         }
         gameSession.playerMount = self
         guard let streamer = game.streamer else { return }
-        let locks = streamer.activationGate.gate
-        streamer.activationGate.gate = { [weak self] target in
-            if self?.mounts.isActive == true, target.interaction.action == .open {
-                return .mounted
-            }
-            return locks?(target)
+        streamer.activationGate.register(.mount) { [weak self] target in
+            self?.mounts.isActive == true && target.interaction.action == .open ? .mounted : nil
         }
-        streamer.activationGate.refusals.add { [weak self] event in
+        streamer.activationGate.refusals.register(.mount) { [weak self] event in
             guard let self, event.refusal == .mounted else { return }
             _ = game.messages.postNotification(mounts.settings.doorRefusal)
         }

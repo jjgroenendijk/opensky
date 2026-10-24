@@ -12,8 +12,8 @@ import OpenSkyWorldState
 /// unavailable rather than showing a convincing zero.
 @MainActor
 public final class ActorValueCoordinator {
-    /// Nil until `wire`.
-    public private(set) var runtime: ActorValueRuntime?
+    /// Nil without stat indexes in the load order.
+    public let runtime: ActorValueRuntime?
     /// Which target the readout's controls act on.
     public var target = ActorValueTargetSelector.player
     /// Which actor value they act on, by vanilla table index. Health first.
@@ -26,26 +26,25 @@ public final class ActorValueCoordinator {
     private var holderOrder = ReferenceKeyOrder()
     /// The over-encumbered state last sent to the world, so the HUD message shows once.
     public private(set) var isPlayerOverencumbered = false
-    /// What sprinting costs; `wire` sets it from the load order.
-    public private(set) var stamina = StaminaSettings.vanilla
+    /// What sprinting costs.
+    public let stamina: StaminaSettings
 
     let store: WorldStateStore
     weak let world: (any ActorValueWorld)?
 
-    public init(store: WorldStateStore, world: (any ActorValueWorld)?) {
-        self.store = store
-        self.world = world
-    }
-
-    public func wire(
-        baselines: ActorValueBaselineResolver,
+    public init(
+        store: WorldStateStore,
+        world: (any ActorValueWorld)?,
+        baselines: ActorValueBaselineResolver?,
         regeneration: RegenerationSettings = .vanilla,
         stamina: StaminaSettings = .vanilla
     ) {
+        self.store = store
+        self.world = world
         self.stamina = stamina
-        runtime = ActorValueRuntime(
-            store: store, baselines: baselines, regeneration: regeneration
-        )
+        runtime = baselines.map {
+            ActorValueRuntime(store: store, baselines: $0, regeneration: regeneration)
+        }
     }
 
     /// Runs whole regeneration steps for the delta this frame simulated. Combat

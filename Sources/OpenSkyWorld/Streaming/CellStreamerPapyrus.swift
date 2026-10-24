@@ -15,7 +15,7 @@ extension CellStreamer {
     ///   events.
     public func emitCellAttached(_ scene: CellScene, firstIntegration: Bool) {
         guard let location = scene.location else { return }
-        onCellAttached?(scene, firstIntegration)
+        onCellAttached(CellAttachment(scene: scene, isFirstIntegration: firstIntegration))
         cellHazards(CellHazardEvent(location: location, hazards: scene.hazards))
     }
 
@@ -26,7 +26,7 @@ extension CellStreamer {
         guard let scene else { return }
         releaseTriggers(in: scene)
         guard let location = scene.location else { return }
-        onCellDetached?(location)
+        onCellDetached(location)
         cellHazards(CellHazardEvent(location: location, hazards: []))
     }
 }

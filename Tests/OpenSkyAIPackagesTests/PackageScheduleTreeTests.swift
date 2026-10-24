@@ -169,11 +169,13 @@ struct PackageScheduleTreeTests {
         ]
         let world = FakePackageWorld()
         world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: base)]
-        let coordinator = PackageCoordinator(world: world)
-        coordinator.wire(store: PackageStore(
-            packages: packages,
-            actorTemplates: ActorTemplateResolver(actors: actors, leveledActors: [:])
-        ))
+        let coordinator = PackageCoordinator(
+            world: world,
+            data: PackageSessionData(store: PackageStore(
+                packages: packages,
+                actorTemplates: ActorTemplateResolver(actors: actors, leveledActors: [:])
+            ))
+        )
         return (coordinator, world)
     }
 }

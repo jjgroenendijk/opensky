@@ -215,6 +215,20 @@ nonisolated public enum PackageCore {
     }
 }
 
+/// The load order's packages and the game settings the procedures read. The
+/// settings default to the vanilla values.
+public struct PackageSessionData {
+    public var store: PackageStore
+    public var guardWarnings = GuardWarningSettings.vanilla
+    public var sandboxSettings = SandboxSettings.vanilla
+    public var bumpSettings = BumpReactionSettings.vanilla
+    public var followSettings = FollowSettings.vanilla
+
+    public init(store: PackageStore) {
+        self.store = store
+    }
+}
+
 /// Owns the package selector. Without game data the runtime stays nil and
 /// every call is a no-op.
 @MainActor
@@ -231,19 +245,19 @@ public final class PackageCoordinator {
     /// A follower's gait, which overrides its package's preferred speed.
     var paces: [ReferenceKey: LocomotionGait] = [:]
     var nextMoveTicket = 0
-    /// The Guard procedure's warnings; the app sets the install's values.
-    public var guardWarnings = GuardWarningSettings.vanilla
-    public var sandboxSettings = SandboxSettings.vanilla
-    /// How a bumped NPC steps aside; the app sets the install's values.
-    public var bumpSettings = BumpReactionSettings.vanilla
-    /// Follower spacing and slowdown; the app sets the install's values.
-    public var followSettings = FollowSettings.vanilla
+    /// The Guard procedure's warnings.
+    public let guardWarnings: GuardWarningSettings
+    public let sandboxSettings: SandboxSettings
+    /// How a bumped NPC steps aside.
+    public let bumpSettings: BumpReactionSettings
+    /// Follower spacing and slowdown.
+    public let followSettings: FollowSettings
     public internal(set) var bumps = BumpReactions()
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
     weak let world: (any PackageWorld)?
-    private(set) var store: PackageStore?
+    let store: PackageStore?
     /// Real seconds until the alias stacks are read again.
     private var aliasRefreshSeconds: Float = 0
     private static let aliasRefreshInterval: Float = 1
@@ -254,15 +268,14 @@ public final class PackageCoordinator {
     static let playerBase = FormID(0x7)
     private var absentSeconds: [ReferenceKey: Float] = [:]
 
-    public init(world: (any PackageWorld)?) {
+    public init(world: (any PackageWorld)?, data: PackageSessionData?) {
         self.world = world
-    }
-
-    public func wire(store: PackageStore) {
-        self.store = store
-        runtime = ActorPackageRuntime(store: store)
-        registeredActors = [:]
-        bumps.reset()
+        store = data?.store
+        runtime = data.map { ActorPackageRuntime(store: $0.store) }
+        guardWarnings = data?.guardWarnings ?? .vanilla
+        sandboxSettings = data?.sandboxSettings ?? .vanilla
+        bumpSettings = data?.bumpSettings ?? .vanilla
+        followSettings = data?.followSettings ?? .vanilla
     }
 
     /// Reconciles residency, then evaluates scheduled boundaries. An actor

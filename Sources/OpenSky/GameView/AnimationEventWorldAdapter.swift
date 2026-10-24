@@ -4,6 +4,7 @@
 import OpenSkyActorPresentation
 import OpenSkyCamera
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering

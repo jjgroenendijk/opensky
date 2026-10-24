@@ -63,14 +63,15 @@ public final class PerceptionCoordinator {
     public private(set) var runtime: PerceptionRuntime?
     let world: any PerceptionSessionWorld
 
-    public init(world: any PerceptionSessionWorld) {
-        self.world = world
-    }
-
-    public func wire(
-        settings: DetectionSettings, stealthPoints: StealthPointSettings = .vanilla
+    public init(
+        world: any PerceptionSessionWorld,
+        settings: DetectionSettings?,
+        stealthPoints: StealthPointSettings = .vanilla
     ) {
-        runtime = PerceptionRuntime(settings: settings, stealthPoints: stealthPoints, world: self)
+        self.world = world
+        runtime = settings.map {
+            PerceptionRuntime(settings: $0, stealthPoints: stealthPoints, world: self)
+        }
     }
 
     /// - Returns: the Sneak skill uses earned by hiding during the steps run.

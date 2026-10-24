@@ -12,14 +12,14 @@ import OpenSkyMagicInterface
 
 /// Owns the combat runtimes and reads the world through `CombatWorld`.
 public final class CombatCoordinator {
-    /// Nil until `wireMelee`. The readouts then report themselves unavailable.
+    /// Nil without game data. The readouts then report themselves unavailable.
     public private(set) var melee: MeleeCombatRuntime?
     public private(set) var archery: ArcheryRuntime?
     public private(set) var loop: CombatLoopRuntime?
     /// Every explosion: projectile, spell, and forced detonations share it.
     public let explosions: ExplosionRuntime
     /// The WEAP, AMMO and PROJ index the hands and arrows resolve through.
-    public private(set) var items: ItemDefinitionStore?
+    public let items: ItemDefinitionStore?
     /// Fighting actors may cast their spells unless the readout turns it off.
     public private(set) var allowsActorCasting = true
     /// Confidence decides engaging and fleeing, and Assistance brings allies into a
@@ -37,27 +37,23 @@ public final class CombatCoordinator {
     var stuckKeys: Set<ReferenceKey> = []
     /// The Difficulty setting; the app sets it from the settings store.
     public var difficulty = DifficultyLevel.default
-    public var difficultySettings = DifficultySettings.synthetic
-    /// Skill, sneak-attack, and armour settings; the app sets them from the load order.
-    public var weaponDamage = WeaponDamageSettings.vanilla
-    /// What a block costs; the app sets it from the load order.
-    public var stamina = StaminaSettings.vanilla
-    /// Power attacks and bashes; the app sets them before `wireMelee`.
-    public var powerAttacks = PowerAttackSettings.vanilla
-    /// The Block experience of blocks and bashes; the app sets it before `wireMelee`.
-    public var skillUses = MeleeSkillUseSettings.vanilla
-    /// Stagger and disarm chances; the app sets them before `wireMelee` and `wireLoop`.
-    public var staggers = StaggerSettings.vanilla
-    /// The game's combat AI settings; the app sets them before `wireLoop`.
-    public var combatAI = CombatAISettings.vanilla
+    public let difficultySettings: DifficultySettings
+    /// Skill, sneak-attack, and armour settings.
+    public let weaponDamage: WeaponDamageSettings
+    /// What a block costs.
+    public let stamina: StaminaSettings
+    /// The Block experience of blocks and bashes.
+    public let skillUses: MeleeSkillUseSettings
+    /// Stagger and disarm chances.
+    public let staggers: StaggerSettings
+    /// The game's combat AI settings.
+    public let combatAI: CombatAISettings
     /// Whether fights that start from now on use the game's advance, range, healing,
     /// shout, and flight settings. Off keeps OpenSky's own numbers.
     public var appliesCombatGameSettings = false {
         didSet { loop?.applyingGameSettings = appliesCombatGameSettings }
     }
 
-    /// What a landed arrow does; the app sets it before `wireArchery`.
-    public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
     public internal(set) var playerStruckTarget: ReferenceKey?
     /// The critical-hit and arrow-deflect rolls.
@@ -67,44 +63,50 @@ public final class CombatCoordinator {
     /// The graph flags the player's perks set true last frame.
     var perkGraphFlags: Set<String> = []
 
-    public init(world: any CombatWorld, explosions: ExplosionRuntime = ExplosionRuntime()) {
+    /// Builds the melee, archery, and combat-loop runtimes. Without `data` all
+    /// three stay nil.
+    public init(
+        world: any CombatWorld,
+        data: CombatSessionData?,
+        explosions: ExplosionRuntime = ExplosionRuntime()
+    ) {
         self.world = world
         self.explosions = explosions
+        items = data?.items
+        difficultySettings = data?.difficulty ?? .synthetic
+        weaponDamage = data?.weaponDamage ?? .vanilla
+        stamina = data?.stamina ?? .vanilla
+        skillUses = data?.skillUses ?? .vanilla
+        staggers = data?.staggers ?? .vanilla
+        combatAI = data?.combatAI ?? .vanilla
+        guard let data else { return }
+        buildMelee(data)
+        buildArchery(data)
+        buildLoop(data)
     }
 
-    public func wireMelee(
-        settings: CombatSettings,
-        items: ItemDefinitionStore?,
-        impacts: MeleeImpactResolver?
-    ) {
-        let runtime = MeleeCombatRuntime(settings: settings, world: self)
-        runtime.impacts = impacts
-        runtime.powerAttacks = powerAttacks
-        runtime.skillUses = skillUses
-        runtime.staggers = staggers
-        self.items = items ?? self.items
+    private func buildMelee(_ data: CombatSessionData) {
+        let runtime = MeleeCombatRuntime(settings: data.combat, world: self)
+        runtime.impacts = data.impacts
+        runtime.powerAttacks = data.powerAttacks
+        runtime.skillUses = data.skillUses
+        runtime.staggers = data.staggers
         melee = runtime
     }
 
-    public func wireArchery(
-        settings: ArcherySettings,
-        items: ItemDefinitionStore?,
-        impacts: MeleeImpactResolver?
-    ) {
-        let projectiles = ProjectileRuntime(settings: settings, world: self)
-        projectiles.impacts = impacts
+    private func buildArchery(_ data: CombatSessionData) {
+        let projectiles = ProjectileRuntime(settings: data.archery, world: self)
+        projectiles.impacts = data.impacts
         projectiles.explosions = explosions
-        projectiles.arrows = arrows
-        let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles, world: self)
-        self.items = items ?? self.items
-        archery = runtime
+        projectiles.arrows = data.arrows
+        archery = ArcheryRuntime(settings: data.archery, projectiles: projectiles, world: self)
     }
 
-    public func wireLoop(settings: CombatSettings) {
-        let runtime = CombatLoopRuntime(settings: settings, world: self)
-        runtime.skillUses = skillUses
-        runtime.staggers = staggers
-        runtime.combatAI = combatAI
+    private func buildLoop(_ data: CombatSessionData) {
+        let runtime = CombatLoopRuntime(settings: data.combat, world: self)
+        runtime.skillUses = data.skillUses
+        runtime.staggers = data.staggers
+        runtime.combatAI = data.combatAI
         runtime.applyingGameSettings = appliesCombatGameSettings
         loop = runtime
     }

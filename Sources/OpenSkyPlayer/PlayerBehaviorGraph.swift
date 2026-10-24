@@ -8,7 +8,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
-nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable {
+nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable, Sendable {
     case missing(String)
     case invalid(String)
     case noGraph(String)
@@ -60,6 +60,56 @@ nonisolated public struct PlayerBehaviorGraph {
         skeletonPath: String = Self.skeletonPath,
         clipWorker: (any AssetLoadWorking<String, SplineBehaviorClip>)? = nil
     ) throws -> PlayerBehaviorGraph {
+        let files = try PlayerBehaviorGraphFiles.decode(
+            fileSystem: fileSystem, behaviorPath: behaviorPath, skeletonPath: skeletonPath
+        )
+        return build(files, fileSystem: fileSystem, clipWorker: clipWorker)
+    }
+
+    /// Builds the running instance from decoded files. The decode can run off
+    /// the main actor; this step cannot, because the instance is not `Sendable`.
+    public static func build(
+        _ files: PlayerBehaviorGraphFiles,
+        fileSystem: any GameFileSource,
+        clipWorker: (any AssetLoadWorking<String, SplineBehaviorClip>)? = nil
+    ) -> PlayerBehaviorGraph {
+        let clips = clipWorker.map {
+            InstallBehaviorClipSource(paths: files.clipPaths, worker: $0)
+        } ?? InstallBehaviorClipSource(fileSystem: fileSystem, paths: files.clipPaths)
+        let references = InstallBehaviorReferenceSource(
+            fileSystem: fileSystem, rootPath: files.behaviorPath
+        )
+        let instance = BehaviorGraphInstance(
+            graph: files.behavior,
+            in: files.objectGraph,
+            skeleton: BehaviorSkeleton(files.rig),
+            clips: clips
+        )
+        // `0_master.hkx` is a shell: the locomotion states live in the behavior
+        // files it references by name, so without this the graph can only reach
+        // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
+        instance.references = references
+        instance.activate()
+        instance.prefetchReachableClips()
+        return PlayerBehaviorGraph(
+            instance: instance, skeleton: files.rig, clips: clips, referenceSource: references
+        )
+    }
+}
+
+/// One player graph's decoded behavior file, rig, and clip list.
+nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
+    let behaviorPath: String
+    let objectGraph: HKXObjectGraph
+    let behavior: HKBBehaviorGraph
+    let rig: HKASkeleton
+    let clipPaths: [String]
+
+    public static func decode(
+        fileSystem: any GameFileSource,
+        behaviorPath: String = PlayerBehaviorGraph.behaviorPath,
+        skeletonPath: String = PlayerBehaviorGraph.skeletonPath
+    ) throws(PlayerBehaviorGraphError) -> PlayerBehaviorGraphFiles {
         let behaviorFile = try read(behaviorPath, from: fileSystem)
         guard let objectGraph = try? HKXObjectGraph(file: behaviorFile) else {
             throw PlayerBehaviorGraphError.invalid(behaviorPath)
@@ -74,37 +124,22 @@ nonisolated public struct PlayerBehaviorGraph {
         else {
             throw PlayerBehaviorGraphError.noSkeleton(skeletonPath)
         }
-        let clipPaths = InstallBehaviorClipSource.animationPaths(
-            in: fileSystem,
-            folder: InstallBehaviorClipSource.animationFolder(forBehaviorPath: behaviorPath)
-        )
-        let clips = clipWorker.map {
-            InstallBehaviorClipSource(paths: clipPaths, worker: $0)
-        } ?? InstallBehaviorClipSource(fileSystem: fileSystem, paths: clipPaths)
-        let references = InstallBehaviorReferenceSource(
-            fileSystem: fileSystem, rootPath: behaviorPath
-        )
-        let instance = BehaviorGraphInstance(
-            graph: behavior,
-            in: objectGraph,
-            skeleton: BehaviorSkeleton(rig),
-            clips: clips
-        )
-        // `0_master.hkx` is a shell: the locomotion states live in the behavior
-        // files it references by name, so without this the graph can only reach
-        // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
-        instance.references = references
-        instance.activate()
-        instance.prefetchReachableClips()
-        return PlayerBehaviorGraph(
-            instance: instance, skeleton: rig, clips: clips, referenceSource: references
+        return PlayerBehaviorGraphFiles(
+            behaviorPath: behaviorPath,
+            objectGraph: objectGraph,
+            behavior: behavior,
+            rig: rig,
+            clipPaths: InstallBehaviorClipSource.animationPaths(
+                in: fileSystem,
+                folder: InstallBehaviorClipSource.animationFolder(forBehaviorPath: behaviorPath)
+            )
         )
     }
 
     private static func read(
         _ path: String,
         from fileSystem: any GameFileSource
-    ) throws -> HKXFile {
+    ) throws(PlayerBehaviorGraphError) -> HKXFile {
         guard let data = try? fileSystem.contents(forPath: path) else {
             throw PlayerBehaviorGraphError.missing(path)
         }

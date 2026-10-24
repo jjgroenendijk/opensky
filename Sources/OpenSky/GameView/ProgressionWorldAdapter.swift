@@ -43,6 +43,7 @@ protocol ProgressionWorldHost: AnyObject {
     var worldState: WorldStateStore { get }
     var journalMenu: JournalMenuController { get }
     var scripts: ScriptCoordinator { get }
+    var storyWorld: StoryWorldAdapter { get }
 }
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
@@ -53,52 +54,46 @@ final class ProgressionWorldAdapter {
         self.game = game
     }
 
-    /// After the caster, which folds the spell-cost entry point through its
-    /// own copy of the runtime.
-    func wirePerks(provider: WorldDataStores) {
-        guard let store = provider.perkStore else { return }
+    /// The caster takes the runtime when its cast loop is built. The live
+    /// conditions carry the globals, so no snapshot of them is kept.
+    func makePerks() -> PerkCoordinator {
+        guard let data = game.worldData, let store = data.perkStore else {
+            return PerkCoordinator(world: self, runtime: nil)
+        }
         var runtime = PerkRuntime(
             store: game.worldState, perks: store, conditionRegistry: .standard
         )
-        runtime.conditions = ConditionContext(globals: game.runtimeState.globalResolution())
         runtime.liveConditions = { [weak game] references in
             game?.runtimeState.conditionContext(indexing: references) ?? ConditionContext()
         }
-        game.perks.wire(
-            runtime,
-            baselines: provider.actorValueBaselines?.resolver
+        return PerkCoordinator(
+            world: self,
+            runtime: runtime,
+            baselines: data.actorValueBaselines?.resolver
                 .map(ActorPerkBaselineResolver.init(actorValues:)),
-            pluginName: provider.magicItemPluginName
+            pluginName: data.magicItemPluginName
         )
     }
 
-    /// After `wireActorValues`, which every skill write goes through, and after
-    /// the world items, which the worn-armor read uses.
-    func wireSkills(provider: WorldDataStores) {
-        guard
-            let values = game.actorValues.runtime,
-            let information = provider.actorValueInformation
-        else { return }
-        game.progression.wireSkills(
-            values: values,
-            information: information,
-            settings: provider.skillAdvancementSettings
-        )
-    }
-
-    /// After `wirePerks` and `wireSkills`: the spend validator reads the perk
-    /// runtime, and the skill runtime banks into this one.
-    func wireProgression(provider: WorldDataStores) {
-        guard let values = game.actorValues.runtime else { return }
-        game.progression.training = TrainingSettings
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.progression.texts = ProgressionTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.progression.wireLeveling(
-            values: values,
-            settings: provider.characterLevelSettings,
-            perkStore: provider.perkStore,
-            information: provider.actorValueInformation
+    /// Every skill write goes through the actor-value runtime.
+    func makeProgression() -> ProgressionCoordinator {
+        let data = game.worldData.flatMap { provider in
+            game.actorValues.runtime.map { values in
+                ProgressionSessionData(
+                    values: values,
+                    information: provider.actorValueInformation,
+                    perkStore: provider.perkStore,
+                    skillSettings: provider.skillAdvancementSettings,
+                    levelSettings: provider.characterLevelSettings,
+                    training: TrainingSettings
+                        .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) },
+                    texts: ProgressionTexts
+                        .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+                )
+            }
+        }
+        return ProgressionCoordinator(
+            perks: game.perks, world: self, data: data, storyEvents: game.storyWorld
         )
     }
 

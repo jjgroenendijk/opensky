@@ -29,7 +29,7 @@ struct CellStreamerWorldspaceTests {
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner)
         var changes: [String] = []
-        streamer.onWorldspaceChanged.add { changes.append($0) }
+        streamer.onWorldspaceChanged.register(.weather) { changes.append($0) }
         streamer.update(cameraPosition: Fixture.center)
         runner.complete(
             Fixture.coordinate(0, 0), worldspace: "Tamriel",

@@ -9,15 +9,35 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
+/// The load order's faction and relationship records.
+public struct FactionSessionData {
+    public let factions: FactionStore
+    public let relationships: RelationshipStore
+    public let baselines: ActorFactionBaselineResolver?
+    public let pluginName: String?
+
+    public init(
+        factions: FactionStore,
+        relationships: RelationshipStore,
+        baselines: ActorFactionBaselineResolver?,
+        pluginName: String?
+    ) {
+        self.factions = factions
+        self.relationships = relationships
+        self.baselines = baselines
+        self.pluginName = pluginName
+    }
+}
+
 /// Owns the faction runtimes and reads the world through `FactionWorld`.
 /// Without game data every runtime stays nil, and hostility answers from the
 /// stored override alone.
 @MainActor
 public final class FactionCoordinator {
-    /// Nil until `wire`.
+    /// Nil without faction data.
     public private(set) var runtime: FactionRuntime?
-    /// Nil until `wire`, and then `SetRelationshipRank` refuses.
-    public private(set) var relationships: RelationshipRuntime?
+    /// Nil without faction data, and then `SetRelationshipRank` refuses.
+    public let relationships: RelationshipRuntime?
     /// Kept apart from the derivation's copy, so `Faction.GetReaction` needs
     /// no actor.
     public private(set) var relations: FactionRelationIndex?
@@ -25,26 +45,25 @@ public final class FactionCoordinator {
     let store: WorldStateStore
     let world: any FactionWorld
 
-    public init(store: WorldStateStore, world: any FactionWorld) {
+    public init(store: WorldStateStore, world: any FactionWorld, data: FactionSessionData?) {
         self.store = store
         self.world = world
-    }
-
-    public func wire(
-        factions: FactionStore,
-        relationships relationshipStore: RelationshipStore,
-        baselines: ActorFactionBaselineResolver?,
-        pluginName: String?
-    ) {
-        let relations = FactionRelationIndex(store: factions)
+        guard let data else {
+            relationships = nil
+            return
+        }
+        let relations = FactionRelationIndex(store: data.factions)
         self.relations = relations
-        relationships = RelationshipRuntime(store: store, relationships: relationshipStore)
+        relationships = RelationshipRuntime(store: store, relationships: data.relationships)
         runtime = FactionRuntime(
             store: store,
-            factions: factions,
-            derivation: HostilityDerivation(relations: relations, relationships: relationshipStore),
-            baselines: baselines,
-            pluginName: pluginName
+            factions: data.factions,
+            derivation: HostilityDerivation(
+                relations: relations,
+                relationships: data.relationships
+            ),
+            baselines: data.baselines,
+            pluginName: data.pluginName
         )
     }
 

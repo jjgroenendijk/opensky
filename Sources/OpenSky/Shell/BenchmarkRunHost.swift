@@ -50,9 +50,15 @@ final class BenchmarkRunHost {
         pending == nil ? nil : LoadPhaseRecorder()
     }
 
-    /// Wires a new game window; it starts the pending tour once the world is ready.
+    /// Wires a new game window; it starts the pending tour once its session starts.
     func attach(game: GameViewController, window: NSWindow) {
-        let tour = game.benchmarkWorld
+        game.onSessionStart = { [weak self, weak window] session in
+            guard let window else { return }
+            self?.attach(tour: session.benchmarkWorld, window: window)
+        }
+    }
+
+    private func attach(tour: BenchmarkWorldAdapter, window: NSWindow) {
         playToolbar.benchmark = tour
         tour.onRunningChange = { [weak window, playToolbar] running in
             playToolbar.refresh()

@@ -41,11 +41,11 @@ final class AudioWorldAdapter {
         self.game = game
     }
 
-    /// Each callback does nothing until audio is enabled. Papyrus `OnActivate`
-    /// subscribes beside the interaction handler through the same `CallbackFanOut`.
+    /// Each callback does nothing until audio is enabled. The activation sound
+    /// plays in the first interaction step, before Papyrus `OnActivate`.
     func wireAudioCallbacks(_ streamer: CellStreamer) {
         let audio = game.audio
-        streamer.onInteraction.add { [weak audio] event in
+        streamer.onInteraction.register(.audio) { [weak audio] event in
             audio?.soundDirector?.handleInteraction(event)
         }
         streamer.onInteractionAnimation = { [weak audio] event in

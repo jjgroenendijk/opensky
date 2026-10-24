@@ -45,13 +45,18 @@ public final class PlayerSettingsCoordinator {
     public private(set) var bindings = InputBindings()
     private var controlMap: ControlMapFile?
     /// Reads the install's key names on first use.
-    public var keyNamesLoader: () -> KeyboardNameTable? = { nil }
+    private let keyNamesLoader: () -> KeyboardNameTable?
     private lazy var keyNames = keyNamesLoader()
 
     /// Call `applyAll()` once the world can take the settings.
-    public init(store: PlayerSettingsStore, world: PlayerSettingsWorld? = nil) {
+    public init(
+        store: PlayerSettingsStore,
+        world: PlayerSettingsWorld? = nil,
+        keyNamesLoader: @escaping () -> KeyboardNameTable? = { nil }
+    ) {
         self.store = store
         self.world = world
+        self.keyNamesLoader = keyNamesLoader
         bindings.restore(store.model.keyBindings)
         store.observe { [weak self] id in
             self?.apply(id)

@@ -36,6 +36,9 @@ protocol PlayerWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
+    var worldData: WorldDataStores? { get }
+    var cellRunner: SerialCellBuildRunner? { get }
+    var cameraInput: CameraInputState { get }
 }
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
@@ -46,14 +49,18 @@ final class PlayerWorldAdapter {
         self.game = game
     }
 
+    /// The rigs assemble on the session's build queue, beside the cells.
+    func makePlayer() -> PlayerCoordinator {
+        let source = game.cellRunner.map {
+            PlayerRigQueue(runner: $0, fileSystem: game.worldData?.scriptFileSystem)
+        }
+        return PlayerCoordinator(input: game.cameraInput, world: self, source: source)
+    }
+
     /// The graph and the body outlive every cell, so this is not streaming.
-    func wirePlayerBody(session: CellSession, gameSession: GameSession) {
+    func wirePlayerBody(gameSession: GameSession) {
         let player = game.player
-        let source = PlayerRigQueue(
-            runner: session.runner,
-            fileSystem: session.data.scriptFileSystem
-        )
-        guard player.wireBody(source: source) else { return }
+        player.requestBody()
         gameSession.assetDrains.register(.playerBody) { [weak player] _ in
             player?.drainClipLoads()
         }

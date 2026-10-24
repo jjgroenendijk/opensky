@@ -49,6 +49,7 @@ protocol CrimeWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
+    var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
 }
 
@@ -60,21 +61,38 @@ final class CrimeWorldAdapter {
         self.game = game
     }
 
-    /// Before `wireWorldItems`, whose take path asks the reporter about theft.
-    func wireCrime(provider: WorldDataStores) {
+    /// Perception is built first: its pass answers "did anybody see it" for every crime.
+    func makeCrime() -> CrimeCoordinator {
+        let store = game.worldState
+        let witnesses = PerceptionCrimeWitnesses(
+            perception: game.perception.runtime,
+            isAlive: { [weak store] key in
+                store?.component(ActorDeathState.self, for: key)?.isDead != true
+            }
+        )
+        return CrimeCoordinator(
+            world: self,
+            data: game.worldData.flatMap(sessionData),
+            witnesses: witnesses,
+            storyEvents: game.storyWorld
+        )
+    }
+
+    /// Ownership reads the same FACT store as the hostility derivation.
+    private func sessionData(_ provider: WorldDataStores) -> CrimeSessionData? {
         guard
             let factionStore = provider.factionStore,
             let pluginName = provider.magicItemPluginName
-        else { return }
-        game.crime.crimeTexts = CrimeTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.crime.wire(
+        else { return nil }
+        return CrimeSessionData(
             runtime: CrimeRuntime(
                 store: game.worldState, factions: factionStore,
                 settings: CrimeSettings.resolve(store: provider.gameSettings)
             ),
             locations: provider.locationStore,
-            pluginName: pluginName
+            pluginName: pluginName,
+            texts: CrimeTexts
+                .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         )
     }
 
@@ -98,17 +116,6 @@ final class CrimeWorldAdapter {
                 }
             }
         }
-    }
-
-    /// A witnessed crime is one the perception pass actually saw.
-    func attachWitnesses(perception: PerceptionRuntime?) {
-        let store = game.worldState
-        game.crime.attachWitnesses(PerceptionCrimeWitnesses(
-            perception: perception,
-            isAlive: { [weak store] key in
-                store?.component(ActorDeathState.self, for: key)?.isDead != true
-            }
-        ))
     }
 }
 

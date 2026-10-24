@@ -39,8 +39,11 @@ struct RagdollCoordinatorTests {
             RagdollResident(key: key, position: SIMD3(Float(index + 1) * 100, 0, 0))
         }
         let loader = Loader()
-        let coordinator = RagdollCoordinator(store: WorldStateStore(), world: world)
-        coordinator.wire(loadDefinition: loader.load)
+        let coordinator = RagdollCoordinator(
+            store: WorldStateStore(),
+            world: world,
+            data: RagdollSessionData(loadDefinition: loader.load)
+        )
         return Session(coordinator: coordinator, world: world, loader: loader)
     }
 

@@ -6,6 +6,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyEngineTesting
+import OpenSkyGameData
 import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

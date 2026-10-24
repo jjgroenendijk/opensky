@@ -84,20 +84,20 @@ struct TriggerVolumeWalkTests {
         witness: DetachWitness
     ) {
         let world = session.world
-        streamer.onCellAttached = { scene, firstIntegration in
-            guard let location = scene.location else { return }
+        streamer.onCellAttached.register(.scripts) { attachment in
+            guard let location = attachment.scene.location else { return }
             world.attach(
                 cell: location,
-                references: scene.references,
+                references: attachment.scene.references,
                 formIDResolver: PapyrusWorldFixture.resolver,
-                firstIntegration: firstIntegration
+                firstIntegration: attachment.isFirstIntegration
             )
         }
-        streamer.onCellDetached = { location in
+        streamer.onCellDetached.register(.scripts) { location in
             witness.queuedAtDetach = world.eventQueue.map(\.functionName)
             world.detach(cell: location)
         }
-        streamer.onTriggerTransition.add { [weak bridge = session.bridge] event in
+        streamer.onTriggerTransition.register(.scripts) { [weak bridge = session.bridge] event in
             bridge?.handleTriggerTransition(event)
         }
     }

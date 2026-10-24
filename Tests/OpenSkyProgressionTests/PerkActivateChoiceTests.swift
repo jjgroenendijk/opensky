@@ -15,9 +15,9 @@ struct PerkActivateChoiceTests {
     private let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x14)
 
     private func coordinator() throws -> PerkCoordinator {
-        let coordinator = PerkCoordinator(world: FakeProgressionWorld())
-        try coordinator.wire(
-            PerkRuntime(
+        try PerkCoordinator(
+            world: FakeProgressionWorld(),
+            runtime: PerkRuntime(
                 store: WorldStateStore(),
                 perks: PerkActivateFixture.store(),
                 conditionRegistry: .empty
@@ -25,7 +25,6 @@ struct PerkActivateChoiceTests {
             baselines: nil,
             pluginName: PerkActivateFixture.pluginName
         )
-        return coordinator
     }
 
     private func choices(_ coordinator: PerkCoordinator) -> [PerkEntryPointChoice] {

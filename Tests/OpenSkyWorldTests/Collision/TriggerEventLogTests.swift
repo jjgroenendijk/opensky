@@ -2,6 +2,7 @@
 // the bounded ring, and the true total a truncated ring still reports.
 
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorld
@@ -63,7 +64,7 @@ struct TriggerEventLogTests {
         #expect(log.recordedCount == 0)
     }
 
-    /// The log subscribes to the streamer's own fan-out, so a dispatched edge
+    /// The log registers in the streamer's own readout step, so a dispatched edge
     /// reaches it without any app-side wiring.
     @Test
     func streamerRecordsItsOwnTransitions() {

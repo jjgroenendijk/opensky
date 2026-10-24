@@ -1,5 +1,5 @@
 // A rolling record of recent trigger transitions for state reads. It
-// subscribes to `CellStreamer.onTriggerTransition`, so it cannot reorder script
+// registers in a step of `CellStreamer.onTriggerTransition`, so it cannot reorder script
 // events. It lives on the streamer, so it survives the readout being rebuilt.
 
 import Foundation

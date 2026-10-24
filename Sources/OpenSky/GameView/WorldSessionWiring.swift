@@ -68,7 +68,8 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
 final class WorldSessionWiring {
     unowned let game: any WorldSessionWiringHost
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
-    private(set) var animationClips: ActorClipLoader?
+    private(set) lazy var animationClips: ActorClipLoader? = game.audioFileSystem
+        .map { ActorClipLoader.clips(files: $0) }
     private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game)
 
     init(game: any WorldSessionWiringHost) {
@@ -125,15 +126,13 @@ final class WorldSessionWiring {
         )
         wireAssetDrains(gameSession: gameSession)
         game.messageWorld.wire(gameSession: gameSession)
-        // Ownership reads the FACT store, and the reporter joins the take path.
-        game.crimeWorld.wireCrime(provider: provider)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
         game.lockWorld.wireLocks(provider: provider, streamer: streamer, gameSession: gameSession)
         game.perkActivationWorld.wire(streamer: streamer)
         // After the item runtime, which owns the equipped set of the body.
-        game.playerWorld.wirePlayerBody(session: session, gameSession: gameSession)
+        game.playerWorld.wirePlayerBody(gameSession: gameSession)
         wireActorSystems(provider: provider, gameSession: gameSession)
         game.hazardWorld.wireHazards(
             provider: provider,
@@ -146,8 +145,8 @@ final class WorldSessionWiring {
             gameSession: gameSession
         )
         game.trapControl.wire(renderer: gameSession.renderer)
-        game.combatWorld.wireMelee(provider: provider, gameSession: gameSession)
-        game.combatWorld.wireArchery(provider: provider, gameSession: gameSession)
+        game.combatWorld.wireMelee(gameSession: gameSession)
+        game.combatWorld.wireArchery(gameSession: gameSession)
         game.ragdollWorld.wireRagdoll(gameSession: gameSession)
         game.playerWorld.wireActorState(gameSession: gameSession)
         wireLateWorldSystems(provider: provider, gameSession: gameSession, streamer: streamer)
@@ -166,7 +165,7 @@ final class WorldSessionWiring {
         gameSession.locomotion.sampleWater = { [weak streamer] position in
             streamer?.sampleWaterHeight(at: position)
         }
-        streamer.onWorldspaceChanged.add { [weak gameSession] editorID in
+        streamer.onWorldspaceChanged.register(.weather) { [weak gameSession] editorID in
             gameSession?.weather?.setWorldspace(editorID: editorID)
         }
     }
@@ -181,9 +180,7 @@ final class WorldSessionWiring {
     /// One clip loader for idles, gaits, and combat reactions. Its results enter
     /// before the world tick, and the coordinators that wait on it go right after.
     private func wireAnimationAssets(gameSession: GameSession) {
-        guard let files = game.audioFileSystem else { return }
-        let clips = ActorClipLoader.clips(files: files)
-        animationClips = clips
+        guard let clips = animationClips else { return }
         let idles = game.idleWorld.idles
         let npcAnimation = game.npcAnimation
         let assetDrains = gameSession.assetDrains
@@ -230,12 +227,6 @@ final class WorldSessionWiring {
     private func wireActorSystems(provider: WorldDataStores, gameSession: GameSession) {
         game.actorWorld.wireActorValues(provider: provider, gameSession: gameSession)
         game.magicWorld.wireMagic(provider: provider, gameSession: gameSession)
-        // After the cast loop, which folds spell cost through `Mod Spell Cost`.
-        game.progressionWorld.wirePerks(provider: provider)
-        // Memberships resolve through the actor-value template chain.
-        game.factionWorld.wireFactions(provider: provider)
-        game.progressionWorld.wireSkills(provider: provider)
-        game.progressionWorld.wireProgression(provider: provider)
     }
 
     private func wireLateWorldSystems(
@@ -243,10 +234,10 @@ final class WorldSessionWiring {
         gameSession: GameSession,
         streamer: CellStreamer
     ) {
-        game.combatWorld.wireLoop(provider: provider, gameSession: gameSession)
-        game.aiWorld.wirePackages(provider: provider, gameSession: gameSession)
-        game.aiWorld.wirePerception(provider: provider, gameSession: gameSession)
-        game.idleWorld.wireIdles(provider: provider, gameSession: gameSession)
+        game.combatWorld.wireLoop(gameSession: gameSession)
+        game.aiWorld.wirePackages(gameSession: gameSession)
+        game.aiWorld.wirePerception(gameSession: gameSession)
+        game.idleWorld.wireIdles(gameSession: gameSession)
         game.actorGraphWorld.wire(gameSession: gameSession)
         game.vehicleWorld.wireVehicles(gameSession: gameSession)
         game.aiWorld.wireFurniture(gameSession: gameSession)
@@ -254,8 +245,6 @@ final class WorldSessionWiring {
         game.mountWorld.wireMounts(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
         animationEvents.wire(gameSession: gameSession)
-        // The perception pass answers "did anybody see it" for every crime.
-        game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
         game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)

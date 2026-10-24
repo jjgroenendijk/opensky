@@ -54,21 +54,6 @@ final class VehicleWorldAdapter {
 
     /// After the idles and packages, so a follower reads where its carrier ended up.
     func wireVehicles(gameSession: GameSession) {
-        let scripts = game.scripts
-        let idles = game.idleWorld.idles
-        idles.onAnimationEvent = { [weak self, weak scripts, weak gameSession] actor, name in
-            // The player's idles run on its graph, whose events arrive through the bridge.
-            if actor != .player {
-                gameSession?.animationEvents?.handle(name, from: actor)
-            }
-            if name == VehicleCore.exitEvent {
-                self?.detach(actor)
-            }
-            if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
-                scripts?.bridge?.killActor(actor, killer: nil)
-            }
-            scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
-        }
         wireWheels(gameSession: gameSession)
         gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] _ in
             guard let self else { return }
@@ -80,6 +65,21 @@ final class VehicleWorldAdapter {
             }
             ridesPlayer = rides
         }
+    }
+
+    /// Each clip annotation an idle passes.
+    func handleIdleAnimationEvent(_ name: String, from actor: ReferenceKey) {
+        // The player's idles run on its graph, whose events arrive through the bridge.
+        if actor != .player {
+            game.gameSession?.animationEvents?.handle(name, from: actor)
+        }
+        if name == VehicleCore.exitEvent {
+            detach(actor)
+        }
+        if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
+            game.scripts.bridge?.killActor(actor, killer: nil)
+        }
+        game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
     }
 
     private func wireWheels(gameSession: GameSession) {

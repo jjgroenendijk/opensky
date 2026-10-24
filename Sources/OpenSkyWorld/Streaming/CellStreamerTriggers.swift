@@ -3,6 +3,7 @@
 
 import OpenSkyCells
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorldState
@@ -14,14 +15,14 @@ extension CellStreamer {
     /// spacing, so a very long jump stays O(1) rather than O(distance).
     public static let maximumTriggerSweepSamples = 16
 
-    /// Subscribes `triggerLog` to this streamer's own fan-out, from `init`.
+    /// Registers `triggerLog` in the readout step, from `init`.
     ///
     /// The readout log is an ordinary subscriber, exactly like the Papyrus
     /// bridge, so nothing in `dispatchTriggerEdges` knows a readout exists.
-    /// Weak, because the fan-out this streamer owns would otherwise retain it
+    /// Weak, because the schedule this streamer owns would otherwise retain it
     /// back.
     public func installTriggerLogging() {
-        onTriggerTransition.add { [weak self] event in
+        onTriggerTransition.register(.readout) { [weak self] event in
             guard let self else { return }
             triggerLog.record(event, formID: referenceEntry(key: event.reference)?.formID)
         }

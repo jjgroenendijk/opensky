@@ -24,7 +24,9 @@ struct ProgressionCoordinatorTests {
 
     @Test func withoutGameDataThePanelIsUnavailable() {
         let coordinator = ProgressionCoordinator(
-            perks: PerkCoordinator(world: FakeProgressionWorld()), world: FakeProgressionWorld()
+            perks: PerkCoordinator(world: FakeProgressionWorld(), runtime: nil),
+            world: FakeProgressionWorld(),
+            data: nil
         )
 
         #expect(coordinator.snapshot == .unavailable)
@@ -175,9 +177,10 @@ struct ProgressionCoordinatorTests {
     // MARK: - Story events
 
     @Test func aSkillPointAndALevelUpFireTheirStoryEvents() throws {
-        let coordinator = try coordinator(world: FakeProgressionWorld())
         let recorder = StoryEventRecorder()
-        coordinator.storyEvents = recorder
+        let coordinator = try ProgressionCoordinatorFixture.make(
+            world: FakeProgressionWorld(), storyEvents: recorder
+        )
 
         #expect(coordinator.incrementSkill(oneHanded))
         coordinator.awardCharacterExperience(100_000)
@@ -193,8 +196,9 @@ struct ProgressionCoordinatorTests {
 
     @Test func aSkillPointAndALevelUpShowTheirNotices() throws {
         let world = FakeProgressionWorld()
-        let coordinator = try coordinator(world: world)
-        coordinator.texts.skillIncreased = "%s rose to %i"
+        var texts = ProgressionTexts.vanilla
+        texts.skillIncreased = "%s rose to %i"
+        let coordinator = try ProgressionCoordinatorFixture.make(world: world, texts: texts)
 
         #expect(coordinator.incrementSkill(oneHanded))
         coordinator.awardCharacterExperience(100_000)

@@ -31,6 +31,29 @@ public protocol IdleWorld: AnyObject {
     /// Sends an idle's event to an actor that runs its own behavior graph. `state` is the
     /// graph state the event enters, when the graph walk found it. False when no graph took it.
     func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool
+    /// Each clip annotation an idle passes, in the order the clip passes them.
+    func idleAnimationEvent(_ name: String, on actor: ReferenceKey)
+}
+
+/// What the idle coordinator is built from.
+public struct IdleSessionData {
+    public let store: IdleStore
+    public let files: any GameFileSource
+    public let clips: ActorClipLoader
+    /// Where plans load; nil runs them on the shared queue.
+    public let planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)?
+
+    public init(
+        store: IdleStore,
+        files: any GameFileSource,
+        clips: ActorClipLoader,
+        planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil
+    ) {
+        self.store = store
+        self.files = files
+        self.clips = clips
+        self.planWorker = planWorker
+    }
 }
 
 @MainActor
@@ -88,9 +111,9 @@ public final class IdleCoordinator {
         let triggers: [BehaviorClipTriggerEvent]
     }
 
-    private(set) var store: IdleStore?
-    private var plans: IdlePlanLoader?
-    var clips: ActorClipLoader?
+    public let store: IdleStore?
+    private let plans: IdlePlanLoader?
+    let clips: ActorClipLoader?
     var sessions: [ReferenceKey: Session] = [:]
     /// Where each actor's graph is after its last idle, so the next event starts there.
     var positions: [ReferenceKey: BehaviorStatePosition] = [:]
@@ -111,8 +134,6 @@ public final class IdleCoordinator {
     var passContext: (sequence: UInt64, context: ConditionContext)?
     var isAdvancing = false
     public internal(set) var usesIdleMarkers = true
-    /// Each clip annotation an idle passes, as `(actor, name)`.
-    public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
     /// The player has no playback, so a player idle only times its events with this rig.
     static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
         + "character assets\\skeleton.nif"
@@ -124,29 +145,19 @@ public final class IdleCoordinator {
 
     public init(
         random: @escaping (Int) -> Int = { Int.random(in: 0 ..< max($0, 1)) },
-        world: (any IdleWorld)?
+        world: (any IdleWorld)?,
+        data: IdleSessionData?
     ) {
         self.random = random
         self.world = world
-    }
-
-    /// - Parameter planWorker: where plans load; nil runs them on the shared queue.
-    public func wire(
-        store: IdleStore,
-        files: any GameFileSource,
-        clips: ActorClipLoader,
-        planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil
-    ) {
-        self.store = store
-        self.clips = clips
-        let load = IdlePlaybackResolver.planLoad(
-            files: files, animatedObjects: store.animatedObjects
-        )
-        plans = IdlePlanLoader(worker: planWorker ?? SerialAssetLoadWorker(load: load))
-        sessions = [:]
-        reports = [:]
-        markers = []
-        markersRefreshAt = 0
+        store = data?.store
+        clips = data?.clips
+        plans = data.map { data in
+            let load = IdlePlaybackResolver.planLoad(
+                files: data.files, animatedObjects: data.store.animatedObjects
+            )
+            return IdlePlanLoader(worker: data.planWorker ?? SerialAssetLoadWorker(load: load))
+        }
     }
 
     /// Takes finished idle plans in. The frame calls it at its asset drain point.
@@ -251,7 +262,7 @@ public final class IdleCoordinator {
             due.forEach { applyAnimationObject($0.name, to: &playing, on: actor.key) }
             session.playing = playing
             if !playing.throughGraph {
-                due.forEach { onAnimationEvent?(actor.key, $0.name) }
+                due.forEach { world?.idleAnimationEvent($0.name, on: actor.key) }
             }
             if now >= playing.end, !playing.followUps.isEmpty {
                 session.playing = nextSegment(after: playing, on: actor.key)
@@ -457,7 +468,7 @@ extension IdleCoordinator {
     /// An idle replaced before its end leaves its state, which sends the exit events.
     private func leaveState(of actor: ReferenceKey, now: Float) {
         guard let playing = sessions[actor]?.playing, now < playing.end else { return }
-        playing.exitEvents.forEach { onAnimationEvent?(actor, $0) }
+        playing.exitEvents.forEach { world?.idleAnimationEvent($0, on: actor) }
     }
 
     private func finish(_ report: IdleReport, timer: Float?, now: Float) -> IdleReport {

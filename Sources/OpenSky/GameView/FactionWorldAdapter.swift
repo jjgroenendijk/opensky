@@ -31,14 +31,14 @@ final class FactionWorldAdapter {
         dependencies.factions()
     }
 
-    /// After `wirePerks`: an actor's `SNAM` run resolves through the same
-    /// template resolver as its stats.
-    func wireFactions(provider: WorldDataStores) {
+    /// An actor's `SNAM` run resolves through the same template resolver as its stats.
+    static func sessionData(_ provider: WorldDataStores?) -> FactionSessionData? {
         guard
+            let provider,
             let factionStore = provider.factionStore,
             let relationshipStore = provider.relationshipStore
-        else { return }
-        factions.wire(
+        else { return nil }
+        return FactionSessionData(
             factions: factionStore,
             relationships: relationshipStore,
             baselines: provider
@@ -49,7 +49,7 @@ final class FactionWorldAdapter {
         )
     }
 
-    /// One family value, because `wireFactions` runs after the Papyrus bridge is built.
+    /// One family value for the Papyrus bridge.
     func wireNatives(bridge: PapyrusWorldStateBridge) {
         let factions = factions
         bridge.factionNatives = PapyrusFactionNatives(

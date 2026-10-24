@@ -10,22 +10,31 @@ import OpenSkyFeaturesTesting
 @MainActor
 enum ProgressionCoordinatorFixture {
     static func make(
-        world: FakeProgressionWorld, skillLevel: Float = 15
+        world: FakeProgressionWorld,
+        skillLevel: Float = 15,
+        storyEvents: (any StoryEventReporting)? = nil,
+        texts: ProgressionTexts = .vanilla
     ) throws -> ProgressionCoordinator {
         let store = WorldStateStore()
         let index = try PerkRuntimeFixture.index()
         let information = PerkRuntimeFixture.informationStore(index: index)
         let perkStore = PerkRuntimeFixture.perkStore(index: index)
-        let perks = PerkCoordinator(world: world)
-        perks.wire(
-            PerkRuntime(store: store, perks: perkStore, conditionRegistry: .empty),
+        let perks = PerkCoordinator(
+            world: world,
+            runtime: PerkRuntime(store: store, perks: perkStore, conditionRegistry: .empty),
             baselines: nil,
             pluginName: PerkRuntimeFixture.pluginName
         )
-        let coordinator = ProgressionCoordinator(perks: perks, world: world)
-        let values = FixedActorValues(store: store, indexedValue: skillLevel)
-        coordinator.wireSkills(values: values, information: information)
-        coordinator.wireLeveling(values: values, perkStore: perkStore, information: information)
-        return coordinator
+        return ProgressionCoordinator(
+            perks: perks,
+            world: world,
+            data: ProgressionSessionData(
+                values: FixedActorValues(store: store, indexedValue: skillLevel),
+                information: information,
+                perkStore: perkStore,
+                texts: texts
+            ),
+            storyEvents: storyEvents
+        )
     }
 }

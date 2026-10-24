@@ -2,6 +2,7 @@
 // world-tick order is pinned.
 
 import Foundation
+import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing
 

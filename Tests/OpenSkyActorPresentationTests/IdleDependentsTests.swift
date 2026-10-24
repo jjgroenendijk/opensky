@@ -14,7 +14,7 @@ struct IdleDependentsTests {
     }
 
     @Test func dependentsFollowTheirOwnerInOrderOnce() {
-        let idles = IdleCoordinator(world: nil)
+        let idles = IdleCoordinator(world: nil, data: nil)
         idles.addDependent(Self.actor(2), of: Self.actor(1))
         idles.addDependent(Self.actor(3), of: Self.actor(1))
         idles.addDependent(Self.actor(1), of: Self.actor(3))
@@ -25,7 +25,7 @@ struct IdleDependentsTests {
     }
 
     @Test func aSeatedActorsFurnitureIsTheConditionTarget() {
-        let idles = IdleCoordinator(world: nil)
+        let idles = IdleCoordinator(world: nil, data: nil)
         let block = Self.actor(9)
         #expect(idles.conditionContext(for: Self.actor(1)).target == nil)
         idles.furnitureUses[Self.actor(1)] = FurnitureUse(
@@ -39,7 +39,7 @@ struct IdleDependentsTests {
     /// `GetSitting` reads 4 while the actor gets up, then 0. A sit whose idle still
     /// loads keeps reading 1.
     @Test func gettingUpReadsReadyToStandUntilTheStandUpEnds() {
-        let idles = IdleCoordinator(world: nil)
+        let idles = IdleCoordinator(world: nil, data: nil)
         let sitter = Self.actor(1)
         let loader = Self.actor(2)
         idles.furnitureUses[sitter] = FurnitureUse(

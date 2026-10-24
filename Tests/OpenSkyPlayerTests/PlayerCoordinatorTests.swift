@@ -12,25 +12,46 @@ import Testing
 
 @MainActor
 struct PlayerCoordinatorTests {
-    private static func session() -> (PlayerCoordinator, FakePlayerWorld) {
-        let input = CameraInputState()
+    private static func session(
+        source: FakePlayerRigSource? = nil
+    ) -> (PlayerCoordinator, FakePlayerWorld) {
         let world = FakePlayerWorld()
-        let player = PlayerCoordinator(input: input, world: world)
+        let player = PlayerCoordinator(
+            input: CameraInputState(),
+            world: world,
+            source: source,
+            graphWorker: source?.playerAssetFileSystem.map {
+                ImmediateAssetLoadWorker(load: PlayerGraphKind.loader(fileSystem: $0))
+            }
+        )
         return (player, world)
     }
 
     @Test
     func noMountedArchivesIsReported() {
-        let (player, _) = Self.session()
-        #expect(!player.wireBody(source: FakePlayerRigSource()))
+        let (player, _) = Self.session(source: FakePlayerRigSource())
         #expect(player.failureReason == PlayerBodyError.noFileSystem.localizedDescription)
     }
 
     @Test
-    func aMissingBehaviorFileIsReportedAndNothingAttaches() {
-        let (player, world) = Self.session()
+    func withoutGameDataThereIsNoBodyAndNoFailure() {
+        let (player, world) = Self.session(source: nil)
+        player.requestBody()
+        player.drainClipLoads()
+        player.refreshBody()
+        #expect(player.failureReason == nil)
+        #expect(player.graph == nil)
+        #expect(world.playerLocomotion?.graph == nil)
+    }
+
+    @Test
+    func aMissingBehaviorFileIsReportedAtTheDrainAndNothingAttaches() {
         let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
-        #expect(!player.wireBody(source: provider))
+        let (player, world) = Self.session(source: provider)
+        player.requestBody()
+        player.refreshBody()
+        #expect(player.failureReason == nil, "the graphs have not arrived yet")
+        player.drainClipLoads()
         let expected = PlayerBodyError.behavior(.missing(PlayerBehaviorGraph.behaviorPath))
         #expect(player.failureReason == expected.localizedDescription)
         #expect(player.graph == nil)
@@ -40,13 +61,12 @@ struct PlayerCoordinatorTests {
 
     @Test
     func attachingAGraphBuildsTheBodyAndRecordsBothFailures() {
-        let (player, world) = Self.session()
-        let provider = FakePlayerRigSource()
+        let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
+        let (player, world) = Self.session(source: provider)
         let graph = PlayerBehaviorGraph.fixture()
         player.attach(
             graph: graph,
-            firstPerson: .failure(PlayerBehaviorGraphError.noGraph("first")),
-            source: provider
+            firstPerson: .failure(PlayerBehaviorGraphError.noGraph("first"))
         )
         #expect(player.failureReason == nil, "the body is still assembling")
         player.drainClipLoads()
@@ -62,11 +82,9 @@ struct PlayerCoordinatorTests {
 
     @Test
     func bothRigsRebuildOnlyWhenTheEquippedSetChanges() {
-        let (player, world) = Self.session()
         let provider = FakePlayerRigSource()
-        player.attach(
-            graph: .fixture(), firstPerson: .success(.fixture()), source: provider
-        )
+        let (player, world) = Self.session(source: provider)
+        player.attach(graph: .fixture(), firstPerson: .success(.fixture()))
         #expect(world.playerLocomotion?.firstPersonGraph != nil)
         player.refreshBody()
         #expect(provider.bodyRequests.count == 1)

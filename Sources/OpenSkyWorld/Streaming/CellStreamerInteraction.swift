@@ -348,7 +348,7 @@ extension CellStreamer {
     /// talk, and door. The lockpicking menu calls this again after a lock opens, and
     /// the perk choice menu with `offeringPerkChoices` false.
     public func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
-        if let refusal = activationGate.gate?(target) {
+        if let refusal = activationGate.refusal(for: target) {
             activationGate.refusals(ActivationRefusalEvent(target: target, refusal: refusal))
             return
         }
