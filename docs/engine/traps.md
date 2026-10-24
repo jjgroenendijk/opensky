@@ -174,7 +174,12 @@ west wall are turned +90 degrees about X with a heading of 81 degrees, and those
 wall -90 degrees with a heading of 263 degrees. Only the heading points both walls across the
 corridor; the full facing points one wall at the ceiling and the other at the floor. The shot
 spends no ammunition, and an arrow that misses still sticks. Its damage is the
-weapon's base damage plus the ammo's, with no skill or perk term. The hit is credited to the
+weapon's base damage plus the ammo's, with no skill or perk term. The weapon's enchantment
+applies too, and never runs out of charge: `TrapDartWeapon01` poisons with
+`TrapDartPoisonWeapEnch01`. A dart does not explode. Its projectile `TrapDartWooden01` names
+`FireBallExp01`, but its explosion flag (`0x02`) is off, and a projectile explodes only with that
+flag. Of the 93 vanilla projectiles that name an explosion, 18 have the flag off, such as
+`BoundArrowPROJ` and `VoiceFireBreathProjectile01`. The hit is credited to the
 source, so it raises `OnHit` with the trap as the aggressor and gives the player no crime and
 no sneak attack.
 

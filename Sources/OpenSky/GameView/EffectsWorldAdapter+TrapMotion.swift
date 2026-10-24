@@ -6,6 +6,7 @@ import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyScripting
 import OpenSkyWorld
@@ -73,8 +74,8 @@ extension EffectsWorldAdapter {
     }
 
     /// The CK wiki "Fire - Weapon": a shot from a non-actor needs `akAmmo`, spends no
-    /// ammunition, and leaves along the source's facing. Its damage is the weapon's
-    /// plus the arrow's, with no skill or perk.
+    /// ammunition, and leaves along the source's heading. Its damage is the weapon's
+    /// plus the arrow's, with no skill or perk, and the weapon's enchantment applies.
     func fireWeapon(
         _ weapon: ReferenceKey, from source: ReferenceKey, ammunition: ReferenceKey?
     ) -> Bool {
@@ -91,7 +92,8 @@ extension EffectsWorldAdapter {
                 bowDamage: Float(bow.damage), arrowDamage: arrow.damage, skill: 0
             ),
             weapon: weaponID,
-            ammunition: arrow.item
+            ammunition: arrow.item,
+            enchantment: game.magic.enchantmentProfile(of: weaponID)
         )
         payload.spendsAmmunition = false
         let shot = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))

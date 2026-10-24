@@ -11,7 +11,7 @@ import OpenSkyWorldState
 extension MagicCoordinator: WeaponEnchantmentApplying {
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        guard let owner = world.actorValueHolder(for: hit.attacker) else { return nil }
+        let owner = world.actorValueHolder(for: hit.attacker)
         let holders = residentHolders(of: hit.targets)
         let inventory = world.inventory
         return withEffects { runtime in
