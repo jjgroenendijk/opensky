@@ -214,10 +214,15 @@ extension CombatCoordinator: ProjectileWorld {
         world.sweep(query)
     }
 
+    /// A shot no wielder fired, such as a dart trap's, takes no perks or sneak bonus.
     @discardableResult
-    public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        let shooter = projectileShooter.key
+    public func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
+    ) -> Bool {
         guard !deflectsArrow(target) else { return false }
+        guard shooter == projectileShooter.key else {
+            return applyHealthDamage(amount, to: target, attacker: shooter, kind: .ranged)
+        }
         let blow = CombatBlow(
             attacker: shooter, weapon: playerWeapon()?.formID, handType: .bow, baseDamage: amount
         )

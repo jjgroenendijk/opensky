@@ -90,6 +90,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         )
         entries = OpenSkySaveDeltaMerge.merge(body.locks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.relocations, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.motionTypes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.pausedScenes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)

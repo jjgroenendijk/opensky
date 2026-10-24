@@ -1,5 +1,5 @@
 // Natives the shipped trap and trigger scripts call, from the census over the
-// install. Ones the engine can answer are real; physics, shakes, and sounds are
+// install. Ones the engine can answer are real; shakes and sounds are
 // traced stubs, so a trap script runs on instead of stopping. See docs/engine/traps.md.
 
 import Foundation
@@ -15,6 +15,7 @@ extension PapyrusNativeFunctions {
         installTrapReads(into: &registry)
         installTrapHit(into: &registry)
         installTrapWorld(into: &registry)
+        installTrapMotion(into: &registry)
         installTrapStubs(into: &registry)
         installDestruction(into: &registry)
     }
@@ -77,7 +78,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// `ProcessTrapHit(akTrap, afDamage, afPushback, ...)` on the actor hit: the
-    /// damage comes off Health and the pushback knocks the actor back. Stagger is dropped.
+    /// damage comes off Health, the pushback knocks the actor back, and it staggers.
     private static func installTrapHit(into registry: inout PapyrusNativeRegistry) {
         reference("ProcessTrapHit", into: &registry) { call, target in
             guard let damage = float(call, at: 1), damage.isFinite else {

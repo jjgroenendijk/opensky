@@ -50,6 +50,8 @@ nonisolated public struct ArrowPayload: Equatable, Sendable {
     public let ammunition: FormID?
     /// The bow's resolved enchantment, or nil. Fixed at launch like `damage`.
     public let enchantment: ItemEnchantmentProfile?
+    /// False for a shot a script fires: it spends no arrow, but one still sticks.
+    public var spendsAmmunition = true
 
     public init(
         damage: ArcheryDamageResult,
@@ -69,6 +71,11 @@ nonisolated public struct ArrowPayload: Equatable, Sendable {
 nonisolated public struct ProjectileShot: Equatable, Sendable {
     public let profile: ProjectileProfile
     public let payload: ProjectilePayload
+
+    public init(profile: ProjectileProfile, payload: ProjectilePayload) {
+        self.profile = profile
+        self.payload = payload
+    }
 
     /// A bow's shot: the launch speed scales with the draw and the archery
     /// tilt-up angle applies.
@@ -98,7 +105,8 @@ nonisolated public struct ProjectileShot: Equatable, Sendable {
     /// The AMMO this shot spends, or nil when it spends none. Only an arrow
     /// ever does.
     public var consumedAmmunition: FormID? {
-        payload.arrow?.ammunition
+        guard let arrow = payload.arrow, arrow.spendsAmmunition else { return nil }
+        return arrow.ammunition
     }
 
     /// What the profile's launch speed is multiplied by. A partial draw slows

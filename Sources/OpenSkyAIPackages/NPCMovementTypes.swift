@@ -24,6 +24,8 @@ nonisolated public enum NPCMovementState: String, Equatable, Sendable {
     case facing
     /// Carrying the player, who steers it.
     case ridden
+    /// Sliding from a push until it fades.
+    case knockedBack
 }
 
 nonisolated public enum NPCMovementSettleReason: String, Equatable, Sendable {

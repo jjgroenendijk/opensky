@@ -176,6 +176,28 @@ extension CellStreamer {
         return released
     }
 
+    /// Pushes a resident actor at `velocity`, units per second. False when it is not
+    /// resident, a vehicle carries it, or the player rides it.
+    @discardableResult
+    public func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>) -> Bool {
+        guard
+            npcMovementState.carried[actor] == nil,
+            let entry = referenceEntry(key: actor), entry.placedActor != nil
+        else { return false }
+        bindNPCMovementCallbacks()
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let knocked = npcMovement.knock(
+            NPCFaceStart(
+                actor: actor, formID: entry.formID, placement: standing.placement,
+                scale: standing.scale, target: standing.position
+            ),
+            velocity: velocity,
+            configuration: npcMovementConfiguration
+        )
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+        return knocked
+    }
+
     /// Takes a resident actor for the player to ride. Nil when it is not resident or a
     /// vehicle carries it.
     public func takeRiddenActor(_ actor: ReferenceKey) -> NPCRiddenHold? {

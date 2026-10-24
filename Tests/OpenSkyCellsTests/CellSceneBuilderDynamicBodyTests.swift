@@ -3,11 +3,14 @@
 
 import Metal
 @testable import OpenSkyCells
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
+import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd
 import Testing
@@ -152,6 +155,46 @@ extension CellSceneBuilderTests {
         )
 
         #expect(collision.stats.shapeCount == 1)
+    }
+
+    /// `SetMotionType`: a keyframed body with mass simulates once made dynamic, and a
+    /// movable one stays in the static set once made keyframed.
+    @Test(.enabled(if: Self.hasDevice))
+    func aScriptedMotionTypeOverridesTheModels() throws {
+        try writeLooseFile(
+            "meshes/clutter/rock.nif",
+            Self.clutterNIF(motionSystem: 6, dynamics: Self.movableDynamics)
+        )
+        try writeLooseFile(
+            "meshes/clutter/barrel.nif",
+            Self.clutterNIF(motionSystem: 4, dynamics: Self.movableDynamics)
+        )
+        let device = try #require(Self.device)
+        let builder = try makeBuilder(
+            pluginData: plugin(
+                temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
+                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\rock.nif")
+            ),
+            device: device
+        )
+        builder.simulatesDynamicBodies = true
+        let build = { (path: String, motionType: ReferenceMotionType?) in
+            var placement = CellCollisionPlacement(
+                reference: FormID(0x200), modelPath: path,
+                transform: matrix_identity_float4x4, key: .generated(1)
+            )
+            placement.motionType = motionType
+            return builder.buildCollisionProducts(
+                placements: [placement], location: .exterior(CellCoordinate(x: 6, y: -2))
+            )
+        }
+
+        #expect(build("clutter\\rock.nif", nil).dynamicBodies.isEmpty)
+        #expect(build("clutter\\rock.nif", .dynamic).dynamicBodies.count == 1)
+        #expect(build("clutter\\barrel.nif", nil).dynamicBodies.count == 1)
+        let held = build("clutter\\barrel.nif", .keyframed)
+        #expect(held.dynamicBodies.isEmpty)
+        #expect(held.collision.stats.shapeCount == 1)
     }
 
     /// The same movable body with geometry hanging off the node, because the

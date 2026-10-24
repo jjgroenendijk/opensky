@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldState
 import simd
 
 nonisolated public struct CellCollisionPlacement: Sendable {
@@ -23,6 +24,8 @@ nonisolated public struct CellCollisionPlacement: Sendable {
     /// rather than a matrix.
     public let placement: PlacedReference.Placement
     public let scale: Float
+    /// The motion type a script set, which overrides the model's own.
+    public var motionType: ReferenceMotionType?
 
     public init(
         reference: FormID,
@@ -186,7 +189,8 @@ nonisolated extension CellSceneBuilder {
     /// Collision-only NIFs stay physical when no drawable mesh uploads.
     nonisolated public func resolveCollisionPlacements(
         refs: [PlacedReference],
-        keys: [FormID: ReferenceKey] = [:]
+        keys: [FormID: ReferenceKey] = [:],
+        motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> [CellCollisionPlacement] {
         guard !refs.isEmpty else { return [] }
         let statIndex = statIndexBuildingIfNeeded()
@@ -202,7 +206,7 @@ nonisolated extension CellSceneBuilder {
                 ),
                 let modelPath = base.modelPath
             else { return nil }
-            return CellCollisionPlacement(
+            var placement = CellCollisionPlacement(
                 reference: ref.formID,
                 modelPath: modelPath,
                 transform: MatrixMath.placement(
@@ -214,6 +218,8 @@ nonisolated extension CellSceneBuilder {
                 placement: ref.placement,
                 scale: ref.scale
             )
+            placement.motionType = motionTypes[ref.formID]
+            return placement
         }
     }
 
@@ -266,11 +272,14 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func buildCollisionProducts(
         refs: [PlacedReference],
         location: CellSceneLocation,
-        keys: [FormID: ReferenceKey] = [:]
+        keys: [FormID: ReferenceKey] = [:],
+        motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> CellCollisionProducts {
         let started = DispatchTime.now().uptimeNanoseconds
         var products = buildCollisionProducts(
-            placements: resolveCollisionPlacements(refs: refs, keys: keys),
+            placements: resolveCollisionPlacements(
+                refs: refs, keys: keys, motionTypes: motionTypes
+            ),
             location: location
         )
         products.collision.buildDurationMS = Double(
@@ -342,9 +351,8 @@ nonisolated extension CellSceneBuilder {
         // routing a whole model to the dynamic world because one of its bodies
         // was movable took the shelf away with it, and everything resting on the
         // shelf fell through the world.
-        let simulated = simulatesDynamicBodies
-            ? solid.filter(\.element.dynamics.isSimulated)
-            : []
+        let simulates = Self.simulates(under: placement.motionType)
+        let simulated = simulatesDynamicBodies ? solid.filter { simulates($0.element) } : []
         let dynamic = dynamicPlacement(
             bodies: simulated.map(\.element),
             placement: placement,
@@ -353,7 +361,7 @@ nonisolated extension CellSceneBuilder {
         if let dynamic {
             accumulator.dynamicBodies.append(dynamic)
         }
-        let remaining = dynamic == nil ? solid : solid.filter { !$0.element.dynamics.isSimulated }
+        let remaining = dynamic == nil ? solid : solid.filter { !simulates($0.element) }
         for (bodyIndex, body) in remaining {
             for (shapeIndex, shape) in body.shapes.enumerated() {
                 place(
@@ -371,6 +379,18 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
+    /// Which bodies simulate: the model's own choice, every body with mass after
+    /// `SetMotionType(Motion_Dynamic)`, or none after `Motion_Keyframed`.
+    nonisolated private static func simulates(
+        under motionType: ReferenceMotionType?
+    ) -> (NIFCollisionBody) -> Bool {
+        switch motionType {
+        case nil: { $0.dynamics.isSimulated }
+        case .dynamic: { $0.dynamics.hasMass }
+        case .keyframed: { _ in false }
+        }
+    }
+
     /// One placed reference's simulated body, or nil where the whole reference stays
     /// static. A model whose simulated bodies are joined by constraints stays static:
     /// without a solver, a hanging rack would fall out of the world.
@@ -383,7 +403,8 @@ nonisolated extension CellSceneBuilder {
             let key = placement.key,
             bodies.allSatisfy(\.constraints.isEmpty),
             let definition = DynamicBodyDefinition(
-                bodies: bodies, referenceScale: placement.scale, materials: materialTypes
+                bodies: bodies, referenceScale: placement.scale, materials: materialTypes,
+                forcesSimulation: placement.motionType == .dynamic
             )
         else { return nil }
         return DynamicBodyPlacement(

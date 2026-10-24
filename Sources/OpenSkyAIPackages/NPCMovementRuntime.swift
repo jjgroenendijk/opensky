@@ -127,6 +127,8 @@ public struct NPCMovementRuntime {
     private var facings: [ReferenceKey: NPCFacingHold] = [:]
     /// Mounts the player rides. Nothing else moves or turns them.
     private var ridden: [ReferenceKey: NPCRiddenHold] = [:]
+    /// Standing actors a push slides. A walking actor takes the push on its own mover.
+    private var slides: [ReferenceKey: NPCKnockbackSlide] = [:]
 
     public init() {}
 
@@ -145,10 +147,12 @@ public struct NPCMovementRuntime {
 
     public mutating func start(_ start: NPCMoveStart) -> Bool {
         guard ridden[start.actor] == nil, hasRoom(for: start.actor) else { return false }
-        movers[start.actor] = NPCMover(
-            start: start,
-            drawnPlacement: drawnPlacement(of: start.actor)
-        )
+        var mover = NPCMover(start: start, drawnPlacement: drawnPlacement(of: start.actor))
+        if let slide = slides.removeValue(forKey: start.actor) {
+            let push = slide.controller.knockback
+            mover.controller.knock(SIMD3(push.x, push.y, 0))
+        }
+        movers[start.actor] = mover
         parked.removeValue(forKey: start.actor)
         // Walking somewhere outranks standing still looking at something: the
         // mover owns the yaw from here, and a hold left behind would fight it.
@@ -163,7 +167,7 @@ public struct NPCMovementRuntime {
     /// re-aimed rather than restarted, so a player circling a speaker mid
     /// conversation is followed smoothly instead of snapping on every update.
     public mutating func face(_ start: NPCFaceStart) {
-        guard ridden[start.actor] == nil else { return }
+        guard ridden[start.actor] == nil, slides[start.actor] == nil else { return }
         if var hold = facings[start.actor] {
             hold.aim(at: start.target)
             facings[start.actor] = hold
@@ -217,6 +221,7 @@ public struct NPCMovementRuntime {
             facings[key] = hold
             onDrive?(drive)
         }
+        advanceSlides(by: frameTime, world: world)
         let crowd = neighbourSnapshot(world: world)
         for key in movers.keys.sorted() {
             guard var mover = movers[key] else { continue }
@@ -260,6 +265,10 @@ public struct NPCMovementRuntime {
             guard let hold = ridden[key] else { continue }
             onPersist?(hold.persistence(reason: .save))
         }
+        for key in slides.keys.sorted() {
+            guard let slide = slides[key] else { continue }
+            onPersist?(slide.persistence(reason: .save))
+        }
     }
 
     /// A vehicle carried `actor`, so where it got off replaces where it last walked.
@@ -267,6 +276,7 @@ public struct NPCMovementRuntime {
         guard ridden[actor] == nil else { return }
         movers[actor] = nil
         facings[actor] = nil
+        slides[actor] = nil
         guard let old = parked[actor] else { return }
         let readout = old.readout
         parked[actor] = NPCParkedMovement(
@@ -283,8 +293,8 @@ public struct NPCMovementRuntime {
     }
 
     public func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
-        ridden[actor]?.transform ?? movers[actor]?.transform ?? facings[actor]?.transform
-            ?? parked[actor]?.transform
+        ridden[actor]?.transform ?? movers[actor]?.transform ?? slides[actor]?.transform
+            ?? facings[actor]?.transform ?? parked[actor]?.transform
     }
 
     /// Takes `actor` for the player to ride, where it stands now.
@@ -295,6 +305,7 @@ public struct NPCMovementRuntime {
         stop(start.actor)
         facings[start.actor] = nil
         parked[start.actor] = nil
+        slides[start.actor] = nil
         let hold = NPCRiddenHold(
             actor: start.actor, formID: start.formID, placement: drawn, scale: start.scale,
             feetPosition: settled?.feetPosition ?? start.placement.position,
@@ -353,8 +364,9 @@ public struct NPCMovementRuntime {
 
     public func readouts() -> [NPCMovementReadout] {
         let live = movers.values.map(\.readout) + facings.values.map(\.readout)
-            + ridden.values.map(\.readout)
-        let held = parked.filter { facings[$0.key] == nil }.values.map(\.readout)
+            + ridden.values.map(\.readout) + slides.values.map(\.readout)
+        let held = parked.filter { facings[$0.key] == nil && slides[$0.key] == nil }
+            .values.map(\.readout)
         return (live + held).sorted { $0.actor < $1.actor }
     }
 
@@ -365,7 +377,8 @@ public struct NPCMovementRuntime {
         let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let riding = ridden.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        return Dictionary(resting + moving + turning + riding) { _, later in later }
+        let sliding = slides.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        return Dictionary(resting + moving + turning + riding + sliding) { _, later in later }
     }
 
     /// Records that `actor`'s cell is now built with it at `placement`, so its draw
@@ -375,12 +388,14 @@ public struct NPCMovementRuntime {
         movers[actor]?.authoredPlacement = placement
         facings[actor]?.authoredPlacement = placement
         ridden[actor]?.authoredPlacement = placement
+        slides[actor]?.authoredPlacement = placement
     }
 
     /// Where the current build draws `actor`, when a mover, hold or rest knows it.
     private func drawnPlacement(of actor: ReferenceKey) -> PlacedReference.Placement? {
         movers[actor]?.authoredPlacement ?? facings[actor]?.authoredPlacement
-            ?? ridden[actor]?.authoredPlacement ?? parked[actor]?.drawnPlacement
+            ?? ridden[actor]?.authoredPlacement ?? slides[actor]?.authoredPlacement
+            ?? parked[actor]?.drawnPlacement
     }
 
     private func publish(_ emissions: NPCMoverEmissions) {
@@ -395,6 +410,57 @@ public struct NPCMovementRuntime {
         }
         for door in emissions.doors {
             onDoorCrossing?(door.actor, door.reference)
+        }
+    }
+}
+
+extension NPCMovementRuntime {
+    /// Pushes `actor` at `velocity`, units per second. A walking actor takes it on its
+    /// mover; a standing one slides. False for a ridden actor.
+    @discardableResult
+    public mutating func knock(
+        _ start: NPCFaceStart, velocity: SIMD3<Float>,
+        configuration: PlayerMovementConfiguration
+    ) -> Bool {
+        let actor = start.actor
+        guard ridden[actor] == nil else { return false }
+        if var mover = movers[actor] {
+            mover.controller.knock(velocity)
+            movers[actor] = mover
+            return true
+        }
+        if slides[actor] == nil {
+            let settled = facings[actor]?.readout ?? parked[actor]?.readout
+            let drawn = drawnPlacement(of: actor)
+            facings[actor] = nil
+            parked[actor] = nil
+            slides[actor] = NPCKnockbackSlide(
+                start: start,
+                feetPosition: settled?.feetPosition ?? start.placement.position,
+                yaw: settled?.yaw ?? NPCYawMath.yaw(fromHeading: start.placement.rotation.z),
+                configuration: configuration,
+                drawnPlacement: drawn
+            )
+        }
+        slides[actor]?.knock(velocity)
+        return true
+    }
+
+    /// A slide that faded parks where it stopped, as a finished walk does.
+    private mutating func advanceSlides(by frameTime: Float, world: NPCMovementWorld) {
+        for key in slides.keys.sorted() {
+            guard var slide = slides[key] else { continue }
+            guard slide.advance(by: frameTime, world: world) else {
+                slides[key] = slide
+                continue
+            }
+            slides[key] = nil
+            parked[key] = NPCParkedMovement(
+                readout: slide.readout(as: .halted), transform: slide.transform,
+                formID: slide.formID,
+                scale: slide.scale, drawnPlacement: slide.authoredPlacement
+            )
+            onPersist?(slide.persistence(reason: .halt))
         }
     }
 }

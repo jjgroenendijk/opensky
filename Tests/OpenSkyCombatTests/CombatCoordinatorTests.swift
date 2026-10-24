@@ -123,7 +123,7 @@ struct CombatCoordinatorTests {
             CombatBlow(attacker: .player, handType: .dagger),
             on: Self.guardKey
         )
-        coordinator.applyProjectileDamage(5, to: Self.guardKey)
+        coordinator.applyProjectileDamage(5, to: Self.guardKey, from: .player)
 
         #expect(world.skillUses.map(\.action) == [.sneakAttack, .sneakAttack])
         #expect(world.skillUses.map(\.amount) == [30, 2.5])
