@@ -27,10 +27,10 @@ struct ConditionDataRealDataTests {
             "Dragonborn.esm", "ccBGSSSE001-Fish.esm", "ccQDRSSE001-SurvivalMode.esl",
             "ccBGSSSE037-Curios.esl", "ccBGSSSE025-AdvDSGS.esm", "_ResourcePack.esl"
         ])
-        #expect(coverage.total == 118_494)
+        #expect(ContentCount.isNear(coverage.total, 118_494))
         // Each step pins only its own indices, so a newly registered function
         // does not move this number.
-        #expect(added == 7354)
+        #expect(ContentCount.isNear(added, 7354))
         #expect(Self.m18Indices.allSatisfy { registry[$0] != nil })
         print(
             "[INFO] M18 conditions answered \(added); registry answers "

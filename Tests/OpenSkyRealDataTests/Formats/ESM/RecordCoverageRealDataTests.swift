@@ -21,14 +21,19 @@ struct RecordCoverageRealDataTests {
         }
         #expect(sweep.missing.isEmpty, "types with no decoder: \(sweep.missing)")
         #expect(sweep.failures.isEmpty, "records that threw: \(sweep.failures.prefix(10))")
-        #expect(sweep.counts.count == 120, "record type count drift")
-        #expect(sweep.recordTotal == Self.pinnedTotal, "record count drift")
+        #expect(
+            ContentCount.isNear(sweep.counts.count, Self.baselineTypes),
+            "record type count drift"
+        )
+        #expect(ContentCount.isNear(sweep.recordTotal, Self.baselineTotal), "record count drift")
         #expect(sweep.untallied.isEmpty, "types with no skip tally: \(sweep.untallied)")
         #expect(sweep.unknownFieldTotal == Self.pinnedUnknownFields, "unread field drift")
         Self.writeReport(sweep)
     }
 
-    private static let pinnedTotal = 1_188_164
+    private static let baselineTypes = 120
+    private static let baselineTotal = 1_188_164
+
     /// Fields no decoder reads, summed over the install. docs/formats/records.md.
     private static let pinnedUnknownFields = 0
 

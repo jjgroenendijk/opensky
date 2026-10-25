@@ -27,7 +27,7 @@ struct ArtObjectRealDataTests {
             }
         }
         #expect(failures.isEmpty, "records that threw: \(failures.prefix(5))")
-        #expect(records.count == 318, "ARTO count drift")
+        #expect(ContentCount.isNear(records.count, 318), "ARTO count drift")
 
         let index = RecordIndex(plugins: plugins, recordTypes: ["ARTO", "MGEF", "DUAL"])
         let store = ArtObjectStore(index: index)

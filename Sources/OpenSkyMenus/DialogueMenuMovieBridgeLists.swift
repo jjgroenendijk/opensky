@@ -52,14 +52,10 @@ nonisolated extension DialogueMenuMovieBridge {
         let rows = model.topics.enumerated().map { index, entry in
             topicRow(entry, index: index)
         }
-        publish(rows: rows, atPath: topicListPath, runtime: runtime)
-        // Called after the array write and with no arguments. What the vanilla
-        // host passes it is not measured — the movie's function bodies are not
-        // readable through the runtime — so the array the list base reads is
-        // written first and this is invoked for whatever else it does to the
-        // menu around the list. Measured outcome: the rows arrive, and the
-        // movie faults on nothing and leaves no unhandled invoke.
+        // Called with no arguments, before the array write: the movie clears the
+        // list's entries here, so rows written first would be removed.
         runtime.callMovie("PopulateDialogueLists", atPath: menuPath, arguments: [])
+        publish(rows: rows, atPath: topicListPath, runtime: runtime)
         if rows.isEmpty {
             runtime.callMovie(clearMethod, atPath: topicListPath, arguments: [])
         }

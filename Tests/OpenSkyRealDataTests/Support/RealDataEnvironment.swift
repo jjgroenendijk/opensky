@@ -24,4 +24,14 @@ nonisolated enum RealDataEnvironment {
     static var canRender: Bool {
         dataRoot != nil && device != nil
     }
+
+    /// A frame-time gate measures the engine, not `-Onone`, so it needs the
+    /// optimised build that `make test-real PERF=1` makes.
+    static var canTimeFrames: Bool {
+        #if OPENSKY_OPTIMIZED
+            canRender
+        #else
+            false
+        #endif
+    }
 }

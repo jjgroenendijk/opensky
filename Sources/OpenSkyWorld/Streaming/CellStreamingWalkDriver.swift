@@ -106,7 +106,7 @@ public final class CellStreamingWalkDriver {
 
     public func loadExterior() throws {
         let center = CellGridManager.cellCenter(of: WalkPathRoute.startCell)
-        streamer.update(cameraPosition: center)
+        streamer.update(cameraPosition: center, frameTime: Self.inputTimeStep)
         guard Self.isSettled(streamer) else {
             try timeout(limit: configuration.maxFrames)
             return
@@ -130,7 +130,7 @@ public final class CellStreamingWalkDriver {
 
     public func settleStart() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         if gameSession.walkController.isGrounded {
             changePhase(.walkExterior(1))
@@ -142,7 +142,7 @@ public final class CellStreamingWalkDriver {
     public func walkExterior(index: Int) throws {
         let target = WalkPathRoute.exteriorWaypoints[index]
         drive(toward: target, routeIndex: index)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         if index == WalkPathRoute.exteriorWaypoints.count - 1 {
             let height = gameSession.walkController.feetPosition.z
@@ -178,11 +178,7 @@ public final class CellStreamingWalkDriver {
                 direction: $0.position - gameSession.freeFlyCamera.position
             )
         }
-        streamer.update(
-            cameraPosition: gameSession.freeFlyCamera.position,
-            interactionRay: interactionRay,
-            activate: true
-        )
+        updateStreamer(interactionRay: interactionRay, activate: true)
         guard streamer.interactionTarget?.interaction.reference == WalkPathRoute.farmDoor else {
             throw CellStreamingWalkBenchmarkError.wrongDoor(
                 expected: WalkPathRoute.farmDoor,

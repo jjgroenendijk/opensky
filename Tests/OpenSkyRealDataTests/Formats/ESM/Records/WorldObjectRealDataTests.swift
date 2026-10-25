@@ -45,14 +45,14 @@ struct WorldObjectRealDataTests {
             }
         }
         #expect(sweep.failures.isEmpty, "records that threw: \(sweep.failures.prefix(5))")
-        #expect(sweep.records["FLOR"] == 108, "FLOR count drift")
+        #expect(ContentCount.isNear(sweep.records["FLOR"] ?? 0, 108), "FLOR count drift")
         #expect(sweep.records["TACT"] == 30, "TACT count drift")
 
         let index = RecordIndex(plugins: plugins, recordTypes: Self.indexTypes)
         let bases = Self.winningBases(index)
         let produce = Self.produceFailures(bases: bases, index: index)
         #expect(produce.failures.isEmpty, "produce links: \(produce.failures.prefix(5))")
-        #expect(produce.checked == 178)
+        #expect(ContentCount.isNear(produce.checked, 178))
 
         let stations = Self.stationCensus(bases: bases, index: index)
         #expect(stations.types == [

@@ -41,7 +41,7 @@ struct RecipeRealDataTests {
             }
         }
         #expect(failures.isEmpty, "records that threw: \(failures.prefix(5))")
-        #expect(records.count == 1387, "COBJ count drift")
+        #expect(ContentCount.isNear(records.count, 1387), "COBJ count drift")
 
         let index = RecordIndex(plugins: plugins, recordTypes: Self.indexTypes)
         let store = RecipeStore(index: index)

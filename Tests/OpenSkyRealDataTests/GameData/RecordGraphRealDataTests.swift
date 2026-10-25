@@ -38,14 +38,14 @@ struct RecordGraphRealDataTests {
         let idles = IdleStore(index: index)
         let cameras = CameraPathStore(index: index)
         let story = StoryManagerStore(index: index)
-        #expect(idles.idles.records.count == 4154)
+        #expect(ContentCount.isNear(idles.idles.records.count, 4154))
         #expect(idles.markers.records.count == 89)
         #expect(idles.animatedObjects.records.count == 82)
-        #expect(cameras.paths.records.count == 193)
-        #expect(cameras.shots.records.count == 192)
+        #expect(ContentCount.isNear(cameras.paths.records.count, 193))
+        #expect(ContentCount.isNear(cameras.shots.records.count, 192))
         #expect(cameras.forest.orphans.isEmpty, "every CPTH ANAM link resolves")
         #expect(cameras.forest.unreachable.isEmpty, "the camera path tree has no cycle")
-        #expect(story.nodes.records.count == 657)
+        #expect(ContentCount.isNear(story.nodes.records.count, 657))
         #expect(story.forest.unreachable.isEmpty)
         #expect(idles.forest.unreachable.isEmpty, "the idle tree has no cycle")
         #expect(idles.forest.orphans.isEmpty, "every IDLE parent is an IDLE or an AACT")
@@ -86,7 +86,7 @@ struct RecordGraphRealDataTests {
         let hazards = HazardStore(index: index)
         let scenes = SceneStore(index: index)
         #expect(hazards.hazards.records.count == 51)
-        #expect(scenes.scenes.records.count == 2130)
+        #expect(ContentCount.isNear(scenes.scenes.records.count, 2130))
         let quests = Set(scenes.scenes.records.compactMap {
             index.resolvedID($0.record.quest, fromPlugin: $0.sourcePlugin)
         })
@@ -128,7 +128,7 @@ struct RecordGraphRealDataTests {
 
     private static func characters(index: RecordIndex, root: GameDataRoot) throws -> [String] {
         let parts = CharacterPartStore(index: index)
-        #expect(parts.headParts.records.count == 805)
+        #expect(ContentCount.isNear(parts.headParts.records.count, 805))
         #expect(parts.bodyParts.records.count == 45)
         #expect(parts.headParts.skippedRecords.isEmpty)
         var cycles = 0

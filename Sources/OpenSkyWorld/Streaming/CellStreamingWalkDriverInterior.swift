@@ -12,7 +12,7 @@ import simd
 extension CellStreamingWalkDriver {
     public func waitInterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         guard let interior = streamer.interiorScene else {
             try timeout(limit: WalkPathRoute.maximumTransitionFrames)
@@ -29,7 +29,7 @@ extension CellStreamingWalkDriver {
 
     public func settleInterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         guard gameSession.walkController.isGrounded else {
             try timeout(limit: 120)
@@ -54,7 +54,7 @@ extension CellStreamingWalkDriver {
         }
         let target = interiorRoute[interiorRouteIndex]
         drive(toward: target, routeIndex: 100 + interiorRouteIndex)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         interiorDistance = max(interiorDistance, simd_distance(arrival, currentXY))
         guard distance(to: target) <= WalkPathRoute.waypointTolerance else {
@@ -78,7 +78,7 @@ extension CellStreamingWalkDriver {
             ? interiorRoute[interiorRouteIndex]
             : arrival
         drive(toward: target, routeIndex: 200 + max(interiorRouteIndex, 0))
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         guard distance(to: target) <= WalkPathRoute.waypointTolerance else {
             try timeout(limit: WalkPathRoute.maximumWaypointFrames)
@@ -108,11 +108,7 @@ extension CellStreamingWalkDriver {
                 direction: $0.position - gameSession.freeFlyCamera.position
             )
         }
-        streamer.update(
-            cameraPosition: gameSession.freeFlyCamera.position,
-            interactionRay: interactionRay,
-            activate: true
-        )
+        updateStreamer(interactionRay: interactionRay, activate: true)
         guard streamer.interactionTarget?.interaction.reference == WalkPathRoute.interiorDoor else {
             throw CellStreamingWalkBenchmarkError.wrongDoor(
                 expected: WalkPathRoute.interiorDoor,
@@ -124,7 +120,7 @@ extension CellStreamingWalkDriver {
 
     public func waitExterior() throws {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         guard !streamer.isInterior else {
             try timeout(limit: WalkPathRoute.maximumTransitionFrames)
@@ -145,7 +141,7 @@ extension CellStreamingWalkDriver {
 
     public func settleExteriorReturn() throws -> Bool {
         updateController(moveForward: 0)
-        streamer.update(cameraPosition: gameSession.freeFlyCamera.position)
+        updateStreamer()
         try validateController()
         guard gameSession.walkController.isGrounded else {
             try timeout(limit: 120)

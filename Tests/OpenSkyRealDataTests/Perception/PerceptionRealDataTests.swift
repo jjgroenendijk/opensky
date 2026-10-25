@@ -27,7 +27,7 @@ struct PerceptionRealDataTests {
     /// approach into a sequence of states rather than one jump.
     private static let stepsPerStride = 20
     /// The detection settings read from GMSTs, which the report lists first.
-    private static let loadOrderSettingCount = 12
+    private static let loadOrderSettingCount = 24
 
     // MARK: - Provenance
 
@@ -37,7 +37,7 @@ struct PerceptionRealDataTests {
         let settings = DetectionSettings.resolve(
             store: GameSettingLoader.load(root: root)
         )
-        // The twelve load-order settings must come from a plugin, not from the
+        // The load-order settings must come from a plugin, not from the
         // fallback: a fallback here would mean the formula is running on
         // numbers this install does not actually carry.
         let vanilla = settings.report.prefix(Self.loadOrderSettingCount)
@@ -53,10 +53,11 @@ struct PerceptionRealDataTests {
         #expect(settings.maxDistance.value == 2500)
         #expect(settings.exteriorDistanceMult.value == 2.1)
         #expect(settings.soundLosMult.value == 0.3)
-        // Everything after those twelve is ours and says so, which is the honesty
+        // Everything after them is a fallback and says so, which is the honesty
         // rule the docs page states.
-        let ours = settings.report.dropFirst(Self.loadOrderSettingCount)
-        #expect(ours.allSatisfy { $0.setting.source == "OpenSky constant" })
+        let fallbacks = settings.report.dropFirst(Self.loadOrderSettingCount)
+        #expect(fallbacks
+            .allSatisfy { ["CK wiki default", "OpenSky constant"].contains($0.setting.source) })
         for row in settings.report {
             print("[INFO] detection \(row.editorID) = \(row.setting.value) "
                 + "[\(row.setting.source)]")
