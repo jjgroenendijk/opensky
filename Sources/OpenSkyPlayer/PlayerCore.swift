@@ -14,10 +14,10 @@ nonisolated public enum PlayerCore {
         airborne: Bool
     ) -> [LocomotionBindingSnapshot] {
         [
-            LocomotionBindingSnapshot(label: "Run", key: "Shift (hold)", isActive: run),
-            LocomotionBindingSnapshot(label: "Sprint", key: "Option (hold)", isActive: sprint),
-            LocomotionBindingSnapshot(label: "Sneak", key: "C (toggle)", isActive: sneak),
-            LocomotionBindingSnapshot(label: "Jump", key: "Space", isActive: airborne)
+            LocomotionBindingSnapshot(label: "Run", isActive: run),
+            LocomotionBindingSnapshot(label: "Sprint", isActive: sprint),
+            LocomotionBindingSnapshot(label: "Sneak", isActive: sneak),
+            LocomotionBindingSnapshot(label: "Jump", isActive: airborne)
         ]
     }
 

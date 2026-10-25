@@ -27,10 +27,6 @@ nonisolated public struct FavouritesState: WorldStateComponent, Sendable {
         }
     }
 
-    public var isEmpty: Bool {
-        items.isEmpty
-    }
-
     public func contains(_ item: FormID) -> Bool {
         items.contains(item)
     }

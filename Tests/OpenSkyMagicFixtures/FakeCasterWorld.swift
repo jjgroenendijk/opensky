@@ -12,18 +12,15 @@ import simd
 @MainActor
 public final class FakeCasterWorld: CasterWorld {
     public struct Application: Equatable {
-        public let entries: Int
         public let source: ActiveEffectSource
         public let caster: ReferenceKey
         public let target: ReferenceKey
 
         public init(
-            entries: Int,
             source: ActiveEffectSource,
             caster: ReferenceKey,
             target: ReferenceKey
         ) {
-            self.entries = entries
             self.source = source
             self.caster = caster
             self.target = target
@@ -70,7 +67,6 @@ public final class FakeCasterWorld: CasterWorld {
     ) -> Int {
         appliedEntries.append(entries)
         applications.append(Application(
-            entries: entries.count,
             source: source,
             caster: caster,
             target: target.key

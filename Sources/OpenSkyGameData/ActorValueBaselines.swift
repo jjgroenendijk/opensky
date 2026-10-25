@@ -11,7 +11,7 @@ import OpenSkyFormatsESM
 /// and knows nothing about record types — so the caller holding the placement
 /// says which kind of subject it has. The shape mirrors `InventoryOwner`
 /// deliberately: the two travel together at every call site that has an ACHR.
-nonisolated public enum ActorValueSubject: Equatable, Sendable {
+nonisolated public enum ActorValueSubject: Hashable, Sendable {
     /// The player. No record in this engine describes the player
     /// (`ReferenceKey.player`), so its baseline comes from the configured
     /// player race rather than from an NPC_.
@@ -28,7 +28,7 @@ nonisolated public enum ActorValueSubject: Equatable, Sendable {
 /// The three travel together for the same reason `InventoryHolder`'s do: every
 /// mutation needs all three, and passing them separately is how a mutation ends
 /// up attributed to the wrong cell.
-nonisolated public struct ActorValueHolder: Equatable, Sendable {
+nonisolated public struct ActorValueHolder: Hashable, Sendable {
     public let key: ReferenceKey
     public let subject: ActorValueSubject
     public let cell: CellSceneLocation?

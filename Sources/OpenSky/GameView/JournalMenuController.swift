@@ -52,14 +52,6 @@ final class JournalMenuController {
         ) { [unowned game] in game.renderer }
     }
 
-    var movieLoaded: Bool {
-        movie.isLoaded
-    }
-
-    var movieError: String? {
-        movie.error
-    }
-
     var journal: JournalCoordinator {
         game.journal
     }

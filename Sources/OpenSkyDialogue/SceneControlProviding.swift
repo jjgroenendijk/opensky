@@ -31,12 +31,10 @@ nonisolated public struct ScenePlayingRow: Equatable, Sendable {
 nonisolated public struct SceneControlSnapshot: Equatable, Sendable {
     public static let rowLimit = 12
 
-    public let sceneCount: Int
     public let playing: [ScenePlayingRow]
     /// Newest last, at most `rowLimit`.
     public let trace: [String]
     public let lines: [String]
-    public let lastOutcome: String?
 }
 
 extension SceneCoordinator {
@@ -48,11 +46,9 @@ extension SceneCoordinator {
             return SceneCore.playingRow(entry, state: state)
         }
         return SceneControlSnapshot(
-            sceneCount: catalog.count,
             playing: Array(playingRows.prefix(limit)),
             trace: trace.suffix(limit).map { SceneCore.text($0, catalog: catalog) },
-            lines: lines.suffix(limit).map(SceneCore.text(line:)),
-            lastOutcome: lastOutcome
+            lines: lines.suffix(limit).map(SceneCore.text(line:))
         )
     }
 }

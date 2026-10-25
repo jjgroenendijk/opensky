@@ -51,23 +51,6 @@ extension MagicCoordinator {
         holds.contains { $0.kind == .grabActor && $0.held.contains(key) }
     }
 
-    /// The readout lines: one per running hold.
-    var holdLines: [String] {
-        holds.map { hold in
-            let names = hold.held.map { key in
-                world.actorValueHolder(for: key).map(world.actorName) ?? key.description
-            }
-            let what = names.isEmpty ? "nothing" : names.joined(separator: ", ")
-            return String(
-                format: "%@ by %@: %@, %.1fs left",
-                "\(hold.kind)",
-                hold.caster.description,
-                what,
-                hold.remaining
-            )
-        }
-    }
-
     // MARK: - Detect Life
 
     /// "Applies a visual effect to all valid targets in range." The range is the

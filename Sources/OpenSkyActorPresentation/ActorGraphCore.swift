@@ -33,7 +33,6 @@ nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
 /// What an actor's movement drive does, as the graph's locomotion inputs see it.
 nonisolated public struct ActorGraphMotion: Equatable, Sendable {
     public var isMoving: Bool
-    public var isRunning: Bool
     public var isSprinting: Bool
     public var isSneaking: Bool
     /// The horse graphs' `iCombatStance`: the actor, or its rider, has a weapon out.
@@ -42,11 +41,10 @@ nonisolated public struct ActorGraphMotion: Equatable, Sendable {
     public static let still = ActorGraphMotion()
 
     public init(
-        isMoving: Bool = false, isRunning: Bool = false,
+        isMoving: Bool = false,
         isSprinting: Bool = false, isSneaking: Bool = false, isInCombatStance: Bool = false
     ) {
         self.isMoving = isMoving
-        self.isRunning = isRunning
         self.isSprinting = isSprinting
         self.isSneaking = isSneaking
         self.isInCombatStance = isInCombatStance

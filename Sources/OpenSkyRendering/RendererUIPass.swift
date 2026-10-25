@@ -202,7 +202,6 @@ extension Renderer {
     private func recordAtlasStats(into stats: inout UIDrawStats) {
         let atlas = uiResources.glyphAtlas
         stats.atlasGlyphs = atlas.packedGlyphCount
-        stats.atlasOccupancy = atlas.occupancy
         stats.atlasPackFailures = atlas.packFailures
     }
 

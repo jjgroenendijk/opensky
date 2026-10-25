@@ -119,9 +119,7 @@ struct RenderDebugStateTests {
         let snapshot = RenderDebugControlSnapshot(
             mode: .wireframe,
             layers: .grass,
-            effectiveLayers: RenderLayer(),
-            stats: SceneDrawStats(),
-            shadowStats: ShadowDrawStats()
+            effectiveLayers: RenderLayer()
         )
         #expect(RenderDebugReadout.modeText(for: snapshot) == "View: Wireframe")
         #expect(RenderDebugReadout.layerText(for: snapshot) == "Layers: solo Grass")
@@ -133,9 +131,7 @@ struct RenderDebugStateTests {
         let snapshot = RenderDebugControlSnapshot(
             mode: .off,
             layers: .all,
-            effectiveLayers: .all,
-            stats: SceneDrawStats(),
-            shadowStats: ShadowDrawStats()
+            effectiveLayers: .all
         )
         #expect(RenderDebugReadout.layerText(for: snapshot) == "Layers: all layers")
         #expect(RenderDebugReadout.suppressedText(for: snapshot) == nil)

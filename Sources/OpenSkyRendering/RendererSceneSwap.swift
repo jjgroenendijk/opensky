@@ -2,7 +2,6 @@
 // player body, so both sizing callers live here.
 
 import Metal
-import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd

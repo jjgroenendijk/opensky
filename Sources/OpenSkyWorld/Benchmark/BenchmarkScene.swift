@@ -9,15 +9,6 @@ nonisolated public enum BenchmarkSceneGroup: String, Codable, CaseIterable, Send
     case wilderness
     case interior
     case dlc
-
-    public var title: String {
-        switch self {
-        case .city: "Cities"
-        case .wilderness: "Wilderness"
-        case .interior: "Interiors"
-        case .dlc: "DLC worlds"
-        }
-    }
 }
 
 nonisolated public enum BenchmarkPlace: Equatable, Sendable {

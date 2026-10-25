@@ -29,11 +29,6 @@ nonisolated public struct OffscreenBenchResult: Sendable {
     /// CPU wall time of the world-simulation callback per frame. The callback
     /// owns the Papyrus VM advance; every entry is zero when none is attached.
     public let scriptUpdateMS: [Double]
-    /// GPU time per frame from commit feedback. Feedback can arrive after the
-    /// run ends, so this may hold one entry fewer than `frameMS`.
-    public let gpuMS: [Double]
-    /// CPU time spent encoding the shadow and scene passes per frame.
-    public var encodeMS: [Double] = []
 
     public init(
         frameMS: [Double],
@@ -41,8 +36,7 @@ nonisolated public struct OffscreenBenchResult: Sendable {
         animationMS: [Double] = [],
         shadowMS: [Double] = [],
         audioUpdateMS: [Double] = [],
-        scriptUpdateMS: [Double] = [],
-        gpuMS: [Double] = []
+        scriptUpdateMS: [Double] = []
     ) {
         self.frameMS = frameMS
         self.windowSummaries = windowSummaries
@@ -50,7 +44,6 @@ nonisolated public struct OffscreenBenchResult: Sendable {
         self.shadowMS = shadowMS
         self.audioUpdateMS = audioUpdateMS
         self.scriptUpdateMS = scriptUpdateMS
-        self.gpuMS = gpuMS
     }
 
     public var averageMS: Double {
@@ -337,9 +330,6 @@ extension Renderer {
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
         var scriptUpdateMS: [Double] = []
-        let gpuLog = GPUFrameLog()
-        gpuFrameLog = gpuLog
-        defer { gpuFrameLog = nil }
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -363,8 +353,7 @@ extension Renderer {
                     animationMS: animationMS,
                     shadowMS: shadowMS,
                     audioUpdateMS: audioUpdateMS,
-                    scriptUpdateMS: scriptUpdateMS,
-                    gpuMS: gpuLog.take()
+                    scriptUpdateMS: scriptUpdateMS
                 )
             }
         }
@@ -401,10 +390,6 @@ extension Renderer {
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
         var scriptUpdateMS: [Double] = []
-        var encodeMS: [Double] = []
-        let gpuLog = GPUFrameLog()
-        gpuFrameLog = gpuLog
-        defer { gpuFrameLog = nil }
         for frame in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(descriptor: descriptor)
@@ -416,19 +401,15 @@ extension Renderer {
             shadowMS.append(lastShadowUpdateMS)
             audioUpdateMS.append(frameDriver?.lastAudioUpdateMS ?? 0)
             scriptUpdateMS.append(frameDriver?.lastScriptUpdateMS ?? 0)
-            encodeMS.append(lastEncodeMS)
             afterFrame(frame)
         }
-        var result = OffscreenBenchResult(
+        return OffscreenBenchResult(
             frameMS: frameMS,
             windowSummaries: summaries,
             animationMS: animationMS,
             shadowMS: shadowMS,
             audioUpdateMS: audioUpdateMS,
-            scriptUpdateMS: scriptUpdateMS,
-            gpuMS: gpuLog.take()
+            scriptUpdateMS: scriptUpdateMS
         )
-        result.encodeMS = encodeMS
-        return result
     }
 }

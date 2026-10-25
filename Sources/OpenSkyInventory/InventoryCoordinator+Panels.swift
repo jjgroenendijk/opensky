@@ -13,25 +13,10 @@ import OpenSkyWorldState
 extension InventoryCoordinator {
     public var itemControlSnapshot: ItemControlSnapshot {
         guard let runtime else { return .unavailable }
-        let interaction = world.crosshairInteraction
         return ItemControlSnapshot(
-            isAvailable: true,
-            targetName: interaction?.name,
-            targetIsTakeable: interaction?.action == .take,
-            targetIsContainer: interaction?.action == .search,
             playerStacks: readout(runtime.inventory.inventory(of: runtime.player).stacks),
-            playerWeight: playerCarriedWeight,
-            playerGold: runtime.inventory.goldCount(of: runtime.player),
             containerName: session == nil ? nil : sessionName,
-            containerStacks: readout(session?.contents ?? []),
-            spawnedObjectCount: runtime.store.snapshot().entries.count {
-                $0.delta.component(ReferenceSpawnState.self) != nil
-            },
-            lastActionText: lastAction.text,
-            playerEquipped: equippedReadout(on: .player),
-            nearestActorName: nearestActorHolder().map(InventoryCore.actorName),
-            nearestActorEquipped: equippedReadout(on: .nearestActor),
-            playerCapacity: world.playerCarryCapacity
+            lastActionText: lastAction.text
         )
     }
 }

@@ -13,7 +13,6 @@ extension MenuScreensWorldAdapter: TutorialMenuWorld {
         else { return nil }
         let name = editorID.dropFirst("Help".count).dropLast("Long".count)
         return HelpTopic(
-            editorID: editorID,
             title: built.title.flatMap { $0.isEmpty ? nil : $0 } ?? String(name),
             text: built.text
         )

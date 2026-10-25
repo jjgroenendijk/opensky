@@ -46,14 +46,12 @@ protocol DialogueWorldHost: AnyObject {
     var headTracking: HeadTrackingCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var mapWorld: MapWorldAdapter { get }
     var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
@@ -74,7 +72,7 @@ final class DialogueWorldAdapter {
 
     /// Hostility and death decide who is worth talking to, so the candidate
     /// list is built here, not in streaming.
-    func wireDialogue(provider: WorldDataStores, streamer: CellStreamer) {
+    func wireDialogue(streamer: CellStreamer) {
         streamer.talk.candidateSource = { [weak self] in
             self?.talkCandidates() ?? []
         }

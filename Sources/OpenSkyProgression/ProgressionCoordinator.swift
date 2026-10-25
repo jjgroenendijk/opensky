@@ -47,7 +47,6 @@ public final class ProgressionCoordinator {
     public let perks: PerkCoordinator
     /// Nil without actor values or the AVIF index.
     public private(set) var skills: SkillAdvancementRuntime?
-    public private(set) var lastAdvance: SkillAdvanceReport?
     /// Nil without actor values.
     public let leveling: PlayerLevelRuntime?
     /// Where each perk sits in a skill's tree. Empty without game data, and
@@ -241,7 +240,6 @@ public final class ProgressionCoordinator {
     func store(_ runtime: SkillAdvancementRuntime, report: SkillAdvanceReport?) {
         skills = runtime
         guard let report else { return }
-        lastAdvance = report
         if report.didAdvance {
             storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
             pendingCommands.append(.showNotification(

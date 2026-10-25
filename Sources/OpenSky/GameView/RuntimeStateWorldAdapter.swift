@@ -57,7 +57,6 @@ protocol RuntimeStateWorldHost: AnyObject {
     var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scenes: SceneCoordinator { get }
     var scripts: ScriptCoordinator { get }
@@ -203,10 +202,6 @@ final class RuntimeStateWorldAdapter {
 }
 
 extension RuntimeStateWorldAdapter: RuntimeStateWorld {
-    var residentReferenceCount: Int {
-        game.streamer?.residentReferenceCount ?? 0
-    }
-
     func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
         game.streamer?.referenceEntry(formID: formID)
     }
@@ -228,10 +223,6 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
 
     var timescale: Float? {
         game.gameSession?.currentTimescale
-    }
-
-    var isWorldSimPaused: Bool {
-        game.gameSession?.worldSimPaused ?? false
     }
 
     func setTimeOfDay(_ hour: Float) {

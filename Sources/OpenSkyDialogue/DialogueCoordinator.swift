@@ -36,8 +36,6 @@ public final class DialogueCoordinator {
     public private(set) var spokenLine: DialogueSpokenLine?
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
-    /// Subtype names the Dialogue readout shows beside a topic.
-    public let topicSubtypes: TopicSubtypeTexts
     /// How often NPCs speak outside a conversation.
     public let speechTimers: SpeechTimerSettings
     var speechClock = NPCSpeechClock()
@@ -51,13 +49,11 @@ public final class DialogueCoordinator {
         store: WorldStateStore,
         world: any DialogueWorld,
         index: DialogueStore?,
-        topicSubtypes: TopicSubtypeTexts = .vanilla,
         speechTimers: SpeechTimerSettings = .vanilla
     ) {
         self.store = store
         self.world = world
         self.index = index
-        self.topicSubtypes = topicSubtypes
         self.speechTimers = speechTimers
     }
 

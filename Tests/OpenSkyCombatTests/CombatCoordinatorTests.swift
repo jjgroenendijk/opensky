@@ -35,7 +35,6 @@ struct CombatCoordinatorTests {
     @Test func aCoordinatorWithoutGameDataReportsItselfUnavailable() {
         let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         #expect(coordinator.meleeCombatSnapshot == .unavailable)
-        #expect(coordinator.archerySnapshot == .unavailable)
         #expect(coordinator.combatLoopSnapshot == .unavailable)
         #expect(coordinator.requestMeleeAttack().text == "Melee unavailable: no game data loaded.")
         #expect(coordinator.spawnDevProjectile()

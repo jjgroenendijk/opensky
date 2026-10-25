@@ -7,7 +7,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyCells
-import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -52,7 +51,7 @@ final class DialogueAcceptanceChain {
         )
         streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
-        controller.dialogueWorld.wireDialogue(provider: data, streamer: streamer)
+        controller.dialogueWorld.wireDialogue(streamer: streamer)
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
         streamer.talk.candidateSource = { [Self.candidate] }

@@ -1,7 +1,6 @@
 // The mean colour of a cell's land: base textures, painted layers, and VCLR.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyRenderCore

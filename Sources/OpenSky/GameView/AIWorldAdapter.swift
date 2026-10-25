@@ -455,7 +455,7 @@ extension AIWorldAdapter: AINavigationWorld {
 
     func actorCandidates() -> [AIActorCandidate] {
         game.actorWorld.combatActors().map {
-            AIActorCandidate(key: $0.key, name: $0.name, feet: $0.feet, isDead: $0.isDead)
+            AIActorCandidate(key: $0.key, name: $0.name, feet: $0.feet)
         }
     }
 
@@ -465,14 +465,6 @@ extension AIWorldAdapter: AINavigationWorld {
 
     func residentActor(for reference: FormID) -> ReferenceKey? {
         game.streamer?.residentActorEntries().first { $0.formID == reference }?.key
-    }
-
-    func movementReadout(for actor: ReferenceKey) -> NPCMovementReadout? {
-        game.streamer?.npcMovementReadouts().first { $0.actor == actor }
-    }
-
-    var activeMoverCount: Int {
-        game.streamer?.npcMovement.activeMoverCount ?? 0
     }
 
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {

@@ -156,7 +156,7 @@ struct RenderSceneTests {
             weightsBuffer: weights,
             material: material,
             layerTextures: layers,
-            normals: TerrainNormalMaps(base: base, layers: layers, resolvedCount: 0),
+            normals: TerrainNormalMaps(base: base, layers: layers),
             modelMatrix: matrix_identity_float4x4,
             normalMatrix: matrix_identity_float4x4,
             bounds: nil

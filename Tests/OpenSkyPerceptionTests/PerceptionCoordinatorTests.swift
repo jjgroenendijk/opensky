@@ -59,9 +59,9 @@ struct PerceptionCoordinatorTests {
         })
     }
 
-    @Test func thePanelIsUnavailableWithoutSettings() {
+    @Test func noRuntimeRunsWithoutSettings() {
         let coordinator = PerceptionCoordinator(world: FakePerceptionSessionWorld(), settings: nil)
-        #expect(coordinator.perceptionSnapshot.isUnavailable)
+        #expect(coordinator.runtime == nil)
         #expect(coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
     }
 
@@ -86,7 +86,6 @@ struct PerceptionCoordinatorTests {
 
         let runtime = try #require(coordinator.runtime)
         #expect(runtime.observers.map(\.key) == [PerceptionFixture.guardKey])
-        #expect(!coordinator.perceptionSnapshot.isUnavailable)
         #expect(!coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
     }
 

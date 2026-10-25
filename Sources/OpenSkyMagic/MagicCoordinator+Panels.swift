@@ -2,39 +2,20 @@
 // `MagicCoordinator` owns. Every action returns the sentence the readout shows.
 
 import Foundation
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyWorldState
 
 extension MagicCoordinator {
     public var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         guard let runtime = effects else { return .unavailable }
-        let tally = runtime.tally
         let nearest = world.nearestActorValueHolder()
         var snapshot = MagicEffectControlSnapshot(
             isAvailable: true,
             playerEffects: runtime.active(on: .player).map { readout(of: $0, runtime: runtime) },
-            nearestActorName: nearest.map { world.actorName($0) },
-            nearestActorEffects: nearest.map { holder in
-                runtime.active(on: holder).map { readout(of: $0, runtime: runtime) }
-            } ?? [],
-            runtimeActorCount: runtime.store.snapshot().entries.count { entry in
-                entry.delta.component(ActiveEffectState.self) != nil
-            },
-            appliedCount: tally.applied,
-            instantCount: tally.instantApplications,
-            expiredCount: tally.expired,
-            dispelledCount: tally.dispelled,
-            skippedCount: tally.totalSkips,
-            unimplementedLines: tally.unimplementedArchetypes.map { entry in
-                "\(entry.archetype.description) x\(entry.count)"
-            },
-            lastActionText: lastEffectAction.text
+            nearestActorName: nearest.map { world.actorName($0) }
         )
-        snapshot.worldEffectLines = holdLines + lightLines
         snapshot.playerInfluence = runtime.influence(on: .player)
         snapshot.nearestActorInfluence = nearest.map { runtime.influence(on: $0) } ?? .none
         return snapshot
@@ -90,20 +71,6 @@ extension MagicCoordinator {
         return "\(archetype.description): \(rule.summary)"
     }
 
-    /// One line per light the Light archetype placed.
-    private var lightLines: [String] {
-        magicLights.map { light in
-            switch light.anchor {
-            case let .actor(key): "light \(light.light) on \(key)"
-            case let .point(point):
-                String(
-                    format: "light %@ at (%.0f, %.0f, %.0f), %.0fs left",
-                    "\(light.light)", point.x, point.y, point.z, light.remaining ?? 0
-                )
-            }
-        }
-    }
-
     private func sourceName(_ kind: ActiveEffectSourceKind) -> String {
         let setting: String? = switch kind {
         case .potion: "sMagicTypePotion"
@@ -127,34 +94,10 @@ extension MagicCoordinator {
 
 extension MagicCoordinator {
     public var castingControlSnapshot: CastingControlSnapshot {
-        guard let caster else { return .unavailable }
-        let book = caster.spellbook.state(of: .player)
-        let tally = caster.tally
+        guard caster != nil else { return .unavailable }
         var snapshot = CastingControlSnapshot(
-            isAvailable: true,
-            knownSpells: playerKnownSpells().map { readout($0, book: book) },
-            selectedSpellName: selectedKnownSpell()?.displayName,
-            leftPhase: caster.phase(of: .left),
-            rightPhase: caster.phase(of: .right),
-            magicka: caster.values.current(of: .player).magicka,
-            maximumMagicka: caster.values.maximums(of: .player).magicka,
-            carriedTomeNames: carriedSpellTomes().map { itemName($0.item) },
-            readBookCount: book.readBooks.count,
-            castCount: tally.castCount,
-            concentrationSeconds: tally.concentrationSeconds,
-            failureCount: tally.failureCount,
-            failureLines: tally.failureLines,
-            abilityEffectCount: effects?.active(on: .player)
-                .filter { $0.source.kind == .ability }.count ?? 0,
-            projectileCount: tally.projectileCount,
-            deliveryLines: tally.deliveryLines,
-            lastHitTargets: lastHit?.targetCount ?? 0,
-            lastHitAdjustments: (lastHit?.defenceLines ?? [])
-                + (lastHit?.adjustments.map(\.line) ?? []),
-            conditionLines: magicConditionLines(),
-            lastActionText: lastCastingAction.text
+            conditionLines: magicConditionLines()
         )
-        snapshot.soulLines = soulLines()
         snapshot.runeText = runeText
         snapshot.commandedText = commandedText
         snapshot.castingCueText = castingCueText
@@ -231,30 +174,7 @@ extension MagicCoordinator {
         return known[MagicCore.clampedSelection(selection, count: known.count)]
     }
 
-    func carriedSpellTomes() -> [(item: FormID, spell: FormID)] {
-        carriedItems { items, item in items.teachesSpell(item).map { (item: item, spell: $0) } }
-    }
-
     private func itemName(_ item: FormID) -> String {
         world.itemName(item)
-    }
-
-    private func readout(_ spell: ResolvedSpell, book: SpellbookState) -> KnownSpellReadout {
-        let hands = book.hands(of: spell.key)
-        return KnownSpellReadout(
-            name: spell.displayName,
-            typeName: magicTexts.name(of: spell.spellType),
-            castingName: (spell.data?.castingType).map(magicTexts.name(of:)) ?? "unknown",
-            deliveryName: (spell.data?.delivery).map(magicTexts.name(of:)) ?? "unknown",
-            cost: spell.cost.cost,
-            chargeTime: spell.data?.chargeTime ?? 0,
-            readiedHands: SpellHand.allCases
-                .filter { hands.contains($0.slots) }
-                .map(\.describedName),
-            schoolName: spell.magicSkill.flatMap(magicTexts.school(of:)).map { school in
-                spell.minimumSkillLevel.map { "\(magicTexts.level(minimumSkill: $0)) \(school)" }
-                    ?? school
-            }
-        )
     }
 }

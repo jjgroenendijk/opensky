@@ -29,7 +29,6 @@ protocol CinematicCameraWorldHost: AnyObject {
     var combat: CombatCoordinator { get }
     var effects: EffectsCoordinator { get }
     var factions: FactionCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var worldData: WorldDataStores? { get }

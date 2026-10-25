@@ -45,12 +45,6 @@ nonisolated public struct NIFMultiBoundBox: Equatable, Sendable {
     /// The box's axes; identity for an axis-aligned box.
     public let rotation: simd_float3x3
 
-    public init(center: SIMD3<Float>, extent: SIMD3<Float>, rotation: simd_float3x3) {
-        self.center = center
-        self.extent = extent
-        self.rotation = rotation
-    }
-
     public init(reader: inout BinaryReader, oriented: Bool) throws {
         center = try reader.readVector3()
         extent = try reader.readVector3()

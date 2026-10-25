@@ -39,8 +39,7 @@ nonisolated extension InventoryMenuModel {
                     family: definition?.family,
                     stolenCount: inventory.stolenCount(of: stack.item),
                     isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true,
-                    isFavourite: favourites.contains(stack.item),
-                    hotkey: favourites.hotkey(of: stack.item)
+                    isFavourite: favourites.contains(stack.item)
                 )
             )
         }

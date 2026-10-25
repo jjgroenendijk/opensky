@@ -19,34 +19,4 @@ nonisolated extension DialogueMenuMovieBridge {
         let up = try renderer.sendSWFInput(.keyUp(code: key.code))
         return down || up
     }
-
-    /// Everything a readout wants back out of the live movie, in one pass.
-    ///
-    /// One value rather than five accessors because the readout samples at 2 Hz
-    /// and each read walks the display tree by path; batching them keeps that
-    /// to one walk per field instead of one per refresh per caller.
-    @MainActor
-    public static func readback(renderer: Renderer) -> DialogueMenuReadback {
-        guard let runtime = renderer.swfRuntime else { return .empty }
-        return DialogueMenuReadback(
-            rows: topicLabels(runtime: runtime).count,
-            selection: selectedIndex(runtime: runtime),
-            subtitle: subtitleText(runtime: runtime),
-            menuState: menuState(runtime: runtime),
-            diagnostics: diagnostics(runtime: runtime)
-        )
-    }
-}
-
-/// What the live movie answers about itself.
-nonisolated public struct DialogueMenuReadback: Equatable, Sendable {
-    public let rows: Int
-    public let selection: Int?
-    public let subtitle: String?
-    public let menuState: Int?
-    public let diagnostics: DialogueMenuDiagnostics
-
-    public static let empty = DialogueMenuReadback(
-        rows: 0, selection: nil, subtitle: nil, menuState: nil, diagnostics: .none
-    )
 }

@@ -1,6 +1,5 @@
 // The `itemInfo` object the vanilla item card reads, built from an engine card.
 
-import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
@@ -9,8 +8,12 @@ import Testing
 struct InventoryMenuItemCardBridgeTests {
     @Test func aWeaponCardNamesItsPageDamageAndPrice() {
         let card = InventoryItemCard(
-            item: FormID(1), layout: .weapon, name: "Iron Sword", kind: "Weapon", value: 25,
-            weight: 9, damage: 7
+            layout: .weapon,
+            name: "Iron Sword",
+            kind: "Weapon",
+            value: 25,
+            weight: 9,
+            damage: 7
         )
         let info = InventoryMenuMovieBridge.itemCardInfo(card)
         #expect(info["type"] == .integer(2))
@@ -23,8 +26,12 @@ struct InventoryMenuItemCardBridgeTests {
 
     @Test func anIngredientCardLeavesUnknownEffectsToTheMovie() {
         let card = InventoryItemCard(
-            item: FormID(2), layout: .ingredient, name: "Wheat", kind: "Ingredient", value: 5,
-            weight: 0.1, effects: ["Restore Health", "?", "?", "Fortify Health"]
+            layout: .ingredient,
+            name: "Wheat",
+            kind: "Ingredient",
+            value: 5,
+            weight: 0.1,
+            effects: ["Restore Health", "?", "?", "Fortify Health"]
         )
         let info = InventoryMenuMovieBridge.itemCardInfo(card)
         #expect(info["type"] == .integer(8))
@@ -36,8 +43,13 @@ struct InventoryMenuItemCardBridgeTests {
 
     @Test func anArmourCardRoundsTheRatingAndListsTheEnchantment() {
         let card = InventoryItemCard(
-            item: FormID(3), layout: .armour, name: "Hide Helmet", kind: "Armour", value: 40,
-            weight: 2, armourRating: 12.5, enchantment: "Fortify Archery 10"
+            layout: .armour,
+            name: "Hide Helmet",
+            kind: "Armour",
+            value: 40,
+            weight: 2,
+            armourRating: 12.5,
+            enchantment: "Fortify Archery 10"
         )
         let info = InventoryMenuMovieBridge.itemCardInfo(card)
         #expect(info["type"] == .integer(1))

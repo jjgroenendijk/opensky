@@ -104,14 +104,4 @@ nonisolated public struct BloodEffectSettings: Equatable, Sendable {
         }
         return settings
     }
-
-    /// The Effects readout's settings line.
-    public var readout: String {
-        String(
-            format: "Blood settings: up to %d splatters · %.0f s, fading after %.0f%% · "
-                + "size %.2f-%.2f · weapon blood %.0f s + %.0f s fade",
-            maxCount, duration, fadeStart * 100, minSize, maxSize,
-            weaponBloodLifetime, weaponBloodFadeDuration
-        )
-    }
 }

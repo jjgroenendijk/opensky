@@ -79,10 +79,6 @@ nonisolated public final class SWFMovieRuntime {
         runtime.tally
     }
 
-    public var traceLog: AS2TraceLog {
-        runtime.traceLog
-    }
-
     /// Live node count, walked on demand (the tree is small).
     public var nodeCount: Int {
         root.nodeCount()

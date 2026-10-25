@@ -9,10 +9,6 @@ nonisolated public struct HKTransform: Equatable, Sendable {
     public let rotation: simd_float3x3
     public let translation: SIMD3<Float>
 
-    public static let identity = HKTransform(
-        rotation: matrix_identity_float3x3, translation: SIMD3()
-    )
-
     public init(rotation: simd_float3x3, translation: SIMD3<Float>) {
         self.rotation = rotation
         self.translation = translation

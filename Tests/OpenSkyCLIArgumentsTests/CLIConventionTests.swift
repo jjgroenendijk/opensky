@@ -3,7 +3,6 @@
 
 import ArgumentParser
 import Foundation
-import OpenSkyCLIArguments
 import Testing
 
 struct CLIConventionTests {

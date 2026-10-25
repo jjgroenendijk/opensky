@@ -2,7 +2,6 @@
 // sequence channels, over synthetic blocks (docs/formats/nif-controllers.md).
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting

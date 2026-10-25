@@ -262,40 +262,6 @@ extension ScriptCoordinator {
         )
     }
 
-    public var questAliasQuestEditorIDs: [String] {
-        guard let quests = bridge?.questRuntime?.quests else { return [] }
-        return quests.sortedQuests()
-            .filter { !$0.aliases.isEmpty }
-            .compactMap(\.editorID)
-    }
-
-    /// Lists every authored alias, filled or not: an empty one is the
-    /// interesting case, and hiding it would hide an unimplemented fill type.
-    public func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        guard
-            let quests = bridge?.questRuntime,
-            let quest = quests.quests.quest(editorID: editorID)
-        else {
-            return nil
-        }
-        let filled = (try? quests.aliasState(of: quest.formID)) ?? .empty
-        let state = try? quests.state(of: quest.formID)
-        return ScriptQuestAliasInspection(
-            editorID: quest.editorID ?? quest.formID.description,
-            formIDText: quest.formID.description,
-            isRunning: state?.isRunning ?? false,
-            rows: quest.aliases.map { alias in
-                ScriptQuestAliasRow(
-                    aliasID: alias.id,
-                    name: alias.name ?? "",
-                    fillType: alias.fillType.name,
-                    isOptional: alias.flags.contains(.optional),
-                    reference: filled.reference(forAlias: alias.id)?.description
-                )
-            }
-        )
-    }
-
     /// Freezes only the VM, not the world, so a mid-event VM can be inspected.
     public func setScriptsPaused(_ paused: Bool) {
         runtime?.isPaused = paused

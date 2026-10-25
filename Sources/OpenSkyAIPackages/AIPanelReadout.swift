@@ -36,19 +36,6 @@ nonisolated public enum AINavigationReadout: Sendable {
 
 /// The `AIPackageStatsLabel` lines: which package the schedule chose, and when.
 nonisolated public enum AIPackageReadout: Sendable {
-    /// Bumps now and since the session began, and the follower spacing.
-    public static func socialText(
-        bumps: BumpReactions, bump: BumpReactionSettings, follow: FollowSettings
-    ) -> String {
-        String(
-            format: "Bumps: %d reacting, %d since load (step %.0f u, hold %.1f s)"
-                + " · followers %.0f u apart, run slowdown to %.0f%%",
-            bumps.reactingActors.count, bumps.reactionCount, bump.moveDistance,
-            bump.waitSeconds, follow.spaceBetweenFollowers,
-            follow.runMinSlowdownMultiplier * 100
-        )
-    }
-
     /// Where the current package's procedure is, such as
     /// `Procedure: patrol, moving, point 3 of 32`.
     public static func procedureStateText(for machine: PackageProcedureMachine) -> String {

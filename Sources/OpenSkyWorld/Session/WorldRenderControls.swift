@@ -1,17 +1,13 @@
 // The renderer and streamer controls behind agent control: shadows, terrain
-// LOD, render debug, camera, frame and scene stats, triggers, and physics.
+// LOD, render debug, camera, frame and scene stats, and physics.
 // Without a renderer or a streamer every read degrades to a stated default.
 
 import OpenSkyDiagnostics
 import OpenSkyGameData
-import OpenSkyLoading
 import OpenSkyPhysics
-import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkyTerrain
 
 /// What `WorldRenderControls` reads from the app.
 @MainActor
@@ -79,19 +75,7 @@ extension WorldRenderControls {
 extension WorldRenderControls {
     public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
         guard let renderer else { return nil }
-        let camera = renderer.lastDrawStats
-        let shadow = renderer.lastShadowDrawStats
-        var snapshot = RenderPerformanceSnapshot(
-            renderTargets: renderer.renderTargetMemory(),
-            pipelineCache: renderer.pipelineCache.stats,
-            cpuCulling: CullCounts(
-                cameraVisible: camera.drawnInstances,
-                cameraCulled: camera.culledInstances,
-                shadowVisible: shadow.drawnInstances,
-                shadowCulled: shadow.culledInstances
-            ),
-            gpuCulling: renderer.lastGPUCullCounts
-        )
+        var snapshot = RenderPerformanceSnapshot()
         snapshot.upscaling = renderer.upscale.status
         snapshot.frameInterpolation = renderer.frameInterpolationStatus
         snapshot.meshShaderGrass = renderer.meshShaderGrassStatus
@@ -104,18 +88,6 @@ extension WorldRenderControls {
 }
 
 extension WorldRenderControls {
-    public var cameraPose: CameraPoseSnapshot {
-        guard let gameSession else { return .unavailable }
-        let camera = gameSession.freeFlyCamera
-        return CameraPoseSnapshot(
-            position: camera.position,
-            yaw: camera.yaw,
-            pitch: camera.pitch,
-            cell: CellGridManager.cellCoordinate(for: camera.position),
-            movementMode: gameSession.movementMode
-        )
-    }
-
     public var movementMode: CameraMovementMode {
         get { gameSession?.movementMode ?? .fly }
         set { gameSession?.setMovementMode(newValue) }
@@ -140,23 +112,7 @@ extension WorldRenderControls {
     }
 }
 
-/// Without a streamer the trigger snapshot says so, instead of zeros that would
-/// read as "no cell authors a trigger".
 extension WorldRenderControls {
-    public var triggerStatsSnapshot: TriggerStatsSnapshot {
-        guard let streamer else { return .unavailable }
-        var snapshot = TriggerStatsSnapshot(
-            streamerAvailable: true,
-            stats: streamer.triggerStats(),
-            occupiedCount: streamer.occupiedTriggers.count,
-            walkModeActive: gameSession?.movementMode.isPlayerControlled ?? false,
-            recentTransitions: streamer.triggerLog.lines,
-            recordedTransitionCount: streamer.triggerLog.recordedCount
-        )
-        snapshot.automaticDoors = streamer.automaticDoorReadout
-        return snapshot
-    }
-
     public var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot {
         streamer?.dynamicBodies.statsSnapshot ?? DynamicBodyStatsSnapshot()
     }

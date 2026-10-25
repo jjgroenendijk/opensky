@@ -13,18 +13,21 @@ import Testing
 struct HKXShapeAndHelperClassTests {
     @Test func convexShapesReadRadiusAndSize() throws {
         let capsule = try decodeHKXObject(HKPCapsuleShape.className, HKPCapsuleShape.decode) {
+            $0.setUInt64(0xBEEF, at: 0x10)
             $0.setUInt32(3, at: 0x18)
             $0.setFloat(0.1, at: 0x20)
             $0.setVector4(SIMD4(0, 0, 0, 0), at: 0x30)
             $0.setVector4(SIMD4(0, 0, 2, 0), at: 0x40)
         }
         #expect(capsule.header.shapeType == 3 && capsule.header.radius == 0.1)
+        #expect(capsule.header.userData == 0xBEEF)
         #expect(capsule.vertexB == SIMD3(0, 0, 2))
 
         let box = try decodeHKXObject(HKPBoxShape.className, HKPBoxShape.decode) {
+            $0.setFloat(0.05, at: 0x20)
             $0.setVector4(SIMD4(1, 2, 3, 0), at: 0x30)
         }
-        #expect(box.halfExtents == SIMD3(1, 2, 3))
+        #expect(box.halfExtents == SIMD3(1, 2, 3) && box.header.radius == 0.05)
     }
 
     @Test func transformShapesPlaceTheirChild() throws {
@@ -42,11 +45,13 @@ struct HKXShapeAndHelperClassTests {
             HKPConvexTransformShapeObject.className, HKPConvexTransformShapeObject.decode,
             extra: [(HKPBoxShape.className, 0x400)]
         ) {
+            $0.setFloat(0.2, at: 0x20)
             $0.setPointer(at: 0x30, to: 0x400)
             $0.setQuarterTurn(at: 0x40, translation: SIMD3(7, 8, 9))
         }
         #expect(transform.shape.transform.translation == SIMD3(7, 8, 9))
         #expect(transform.shape.transform.rotation.columns.0 == SIMD3(0, 1, 0))
+        #expect(transform.shape.header.radius == 0.2)
     }
 
     @Test func convexHullReadsTransposedVerticesAndPlanes() throws {
@@ -54,7 +59,9 @@ struct HKXShapeAndHelperClassTests {
             HKPConvexVerticesShape.className, HKPConvexVerticesShape.decode,
             extra: [(HKPConvexVerticesConnectivity.className, 0x800)]
         ) {
+            $0.setFloat(0.3, at: 0x20)
             $0.setVector4(SIMD4(1, 1, 1, 0), at: 0x30)
+            $0.setVector4(SIMD4(0, 0, 4, 0), at: 0x40)
             $0.setArray(at: 0x50, count: 2, dataOffset: 0x400)
             $0.setVector4(SIMD4(1, 2, 3, 4), at: 0x400)
             $0.setVector4(SIMD4(5, 6, 7, 8), at: 0x410)
@@ -72,6 +79,7 @@ struct HKXShapeAndHelperClassTests {
         ])
         #expect(hull.planeEquations == [SIMD4(0, 0, 1, -1)])
         #expect(hull.connectivity?.dataOffset == 0x800)
+        #expect(hull.aabbCenter == SIMD3(0, 0, 4) && hull.header.radius == 0.3)
 
         let faces = try decodeHKXObject(
             HKPConvexVerticesConnectivity.className, HKPConvexVerticesConnectivity.decode
@@ -95,10 +103,11 @@ struct HKXShapeAndHelperClassTests {
             $0.setPointer(at: 0x400, to: 0x800)
             $0.setUInt32(0x2A, at: 0x408)
             $0.setVector4(SIMD4(2, 2, 2, 0), at: 0x50)
+            $0.setVector4(SIMD4(0, 1, 0, 0), at: 0x60)
         }
         #expect(list.children.map(\.shape?.dataOffset) == [0x800])
         #expect(list.children.first?.collisionFilterInfo == 0x2A)
-        #expect(list.aabbHalfExtents == SIMD3(2, 2, 2))
+        #expect(list.aabbHalfExtents == SIMD3(2, 2, 2) && list.aabbCenter == SIMD3(0, 1, 0))
 
         let tree = try decodeHKXObject(
             HKPMoppBvTreeShape.className, HKPMoppBvTreeShape.decode,
@@ -123,10 +132,14 @@ struct HKXShapeAndHelperClassTests {
             extra: [(HKPCapsuleShape.className, 0x800)]
         ) {
             $0.setPointer(at: 0x10, to: 0x800)
+            $0.setBool(true, at: 0x18)
+            $0.setArray(at: 0x20, count: 1, dataOffset: 0x400)
+            $0.setString("Head", at: 0x400, storage: 0x500)
             $0.setQuarterTurn(at: 0x40, translation: SIMD3(0, 1, 0))
         }
         #expect(info.shape?.dataOffset == 0x800)
         #expect(info.transform.translation == SIMD3(0, 1, 0))
+        #expect(info.isHierarchicalCompound && info.childShapeNames == ["Head"])
 
         let container = try decodeHKXObject(
             HKMemoryResourceContainer.className, HKMemoryResourceContainer.decode,
@@ -160,6 +173,7 @@ struct HKXShapeAndHelperClassTests {
             $0.setVector4(SIMD4(0, 100, 0, 0.5), at: 0x410)
         }
         #expect(frame.duration == 2 && frame.up == SIMD4(0, 0, 1, 0))
+        #expect(frame.forward == SIMD4(0, 1, 0, 0))
         #expect(frame.samples.last == SIMD4(0, 100, 0, 0.5))
 
         let clip = try decodeHKXObject(
@@ -168,7 +182,10 @@ struct HKXShapeAndHelperClassTests {
         ) {
             $0.setFloat(1, at: 0x14)
             $0.setInt32(1, at: 0x18)
+            $0.setInt32(1, at: 0x1C)
             $0.setArray(at: 0x38, count: 2, dataOffset: 0x400)
+            $0.setArray(at: 0x48, count: 1, dataOffset: 0x600)
+            $0.setFloat(0.25, at: 0x600)
             for frame in 0 ..< 2 {
                 let base = 0x400 + frame * HKQsTransform.stride
                 $0.setVector4(SIMD4(Float(frame), 0, 0, 0), at: base)
@@ -177,6 +194,8 @@ struct HKXShapeAndHelperClassTests {
             }
         }
         #expect(clip.frameCount == 2 && clip.transforms.last?.translation == SIMD3(1, 0, 0))
+        #expect(clip.floatTrackCount == 1 && clip.floats == [0.25])
+        #expect(clip.annotationTracks.isEmpty)
 
         let track = try decodeHKXObject(
             HKAAnnotationTrackObject.className, HKAAnnotationTrackObject.decode
@@ -208,7 +227,10 @@ struct HKXShapeAndHelperClassTests {
         ) {
             $0.setArray(at: 0x10, count: 1, dataOffset: 0x400)
             $0.setFloat(8, at: 0x430)
+            $0.setFloat(12, at: 0x434)
             $0.setFloat(170, at: 0x440)
+            $0.setFloat(5, at: 0x444)
+            $0.setFloat(-2, at: 0x28)
             $0.setInt16(10, at: 0x44C)
             $0.setInt16(11, at: 0x44E)
             $0.setInt16(12, at: 0x450)
@@ -220,6 +242,8 @@ struct HKXShapeAndHelperClassTests {
         let leg = try #require(footIk.legs.first)
         #expect([leg.hipIndex, leg.kneeIndex, leg.ankleIndex] == [10, 11, 12] as [Int])
         #expect(leg.footPlantedAnkleHeightMS == 8 && leg.maxKneeAngleDegrees == 170)
+        #expect(leg.footRaisedAnkleHeightMS == 12 && leg.minKneeAngleDegrees == 5)
+        #expect(footIk.originalGroundHeightMS == -2)
         #expect(footIk.raycastDistanceUp == 50 && footIk.raycastDistanceDown == 60)
         #expect(footIk.lockFeetWhenPlanted && footIk.isQuadrupedNarrow)
 

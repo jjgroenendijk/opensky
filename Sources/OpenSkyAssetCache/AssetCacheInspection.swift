@@ -14,7 +14,6 @@ nonisolated public struct AssetCacheEntryInspection: Equatable, Sendable {
         case missing
     }
 
-    public let kind: AssetCacheKind
     public let state: State
 }
 
@@ -50,7 +49,7 @@ nonisolated extension AssetCacheReader {
                 kind: kind, source: source, converterVersion: kind.converterVersion,
                 output: kind == .texture ? textureOutput.variant(forPath: source.path) : 0
             )
-            return AssetCacheEntryInspection(kind: kind, state: inspectionState(request))
+            return AssetCacheEntryInspection(state: inspectionState(request))
         }
     }
 

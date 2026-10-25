@@ -179,10 +179,6 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.swfMovies.fileSystem
     }
 
-    var gameSession: GameSession? {
-        game.gameSession
-    }
-
     var viewCamera: FreeFlyCamera? {
         game.gameSession?.freeFlyCamera
     }

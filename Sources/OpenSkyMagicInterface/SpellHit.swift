@@ -104,7 +104,6 @@ nonisolated public struct SpellHit: Equatable, Sendable {
 /// and a state read can assert the adjustment rather than infer it from a
 /// health bar.
 nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
-    public let target: ReferenceKey
     /// Its display name, for the readout.
     public let name: String
     /// MGEF DATA "Resistance Actor Value", or nil where the record names none.
@@ -118,22 +117,12 @@ nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
         baseMagnitude * multiplier
     }
 
-    /// One line, the shape the readout joins with newlines.
-    public var line: String {
-        String(
-            format: "%@ on %@: %.1f x %.3f = %.1f",
-            name, target.description, baseMagnitude, multiplier, adjustedMagnitude
-        )
-    }
-
     public init(
-        target: ReferenceKey,
         name: String,
         resistance: Int32?,
         baseMagnitude: Float,
         multiplier: Float
     ) {
-        self.target = target
         self.name = name
         self.resistance = resistance
         self.baseMagnitude = baseMagnitude
@@ -162,21 +151,6 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
     public private(set) var wardHits: [SpellWardHit] = []
 
     public static let none = SpellHitReport()
-
-    /// One line per kind of defence that stopped this spell, for the readout.
-    public var defenceLines: [String] {
-        var lines: [String] = []
-        if wardedCount > 0 {
-            lines.append("warded: \(wardedCount), broken: \(brokenWards.count)")
-        }
-        if absorbedCount > 0 {
-            lines.append("absorbed: \(absorbedCount)")
-        }
-        if blockedByWallCount > 0 {
-            lines.append("behind a wall: \(blockedByWallCount)")
-        }
-        return lines
-    }
 
     public mutating func noteBlockedByWall() {
         blockedByWallCount += 1

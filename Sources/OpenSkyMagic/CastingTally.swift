@@ -42,21 +42,7 @@ nonisolated public struct CastingTally: Equatable, Sendable {
         deliveryCounts[delivery.description, default: 0] += 1
     }
 
-    /// Deliveries seen, most frequent first, already spelled `kind x count`.
-    public var deliveryLines: [String] {
-        deliveryCounts
-            .sorted { ($0.value, $1.key) > ($1.value, $0.key) }
-            .map { "\($0.key) x \($0.value)" }
-    }
-
     public var failureCount: Int {
         failureCounts.values.reduce(0, +)
-    }
-
-    /// Failure reasons, most frequent first, already spelled `reason x count`.
-    public var failureLines: [String] {
-        failureCounts
-            .sorted { ($0.value, $1.key) > ($1.value, $0.key) }
-            .map { "\($0.key) x \($0.value)" }
     }
 }

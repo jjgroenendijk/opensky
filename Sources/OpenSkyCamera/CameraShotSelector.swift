@@ -23,7 +23,6 @@ nonisolated public struct CameraPathTrace: Equatable, Sendable {
         case noShots
     }
 
-    public let id: ResolvedFormID
     public let editorID: String?
     public let depth: Int
     public let verdict: Verdict
@@ -153,7 +152,7 @@ nonisolated public struct CameraShotSelector {
         _ depth: Int,
         _ verdict: CameraPathTrace.Verdict
     ) -> CameraPathTrace {
-        CameraPathTrace(id: node.id, editorID: node.record.editorID, depth: depth, verdict: verdict)
+        CameraPathTrace(editorID: node.record.editorID, depth: depth, verdict: verdict)
     }
 }
 

@@ -267,17 +267,10 @@ public final class MapMenuCoordinator {
     }
 
     public var snapshot: MapMenuSnapshot {
-        let sites = world?.mapMarkerSites() ?? []
-        return MapMenuSnapshot(
-            mode: mode?.rawValue,
-            markerCount: sites.count,
-            visibleCount: sites.count { $0.state.isVisible },
-            discoveredCount: sites.count { $0.state.isDiscovered },
+        MapMenuSnapshot(
             selected: selected?.name,
             cameraHeight: camera?.height,
-            cameraPitch: camera?.pitch,
             questTargets: questMarkerLines,
-            fastTravelEnabled: fastTravelEnabled,
             lastResult: lastResult,
             inspectedMarker: inspectedMarkerLine
         )

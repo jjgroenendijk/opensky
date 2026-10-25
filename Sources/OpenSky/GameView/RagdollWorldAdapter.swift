@@ -47,7 +47,6 @@ protocol RagdollWorldHost: AnyObject {
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
@@ -236,8 +235,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
             InventoryHolder(
                 key: key, owner: .actor(base: actor.base), cell: streamer.cellLocation(of: key)
             ),
-            name: "Corpse \(key.description)",
-            reference: actor.formID
+            name: "Corpse \(key.description)"
         )
         return true
     }

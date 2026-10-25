@@ -3,7 +3,6 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
 import simd
 
 /// One change to the world outside the combat domain.

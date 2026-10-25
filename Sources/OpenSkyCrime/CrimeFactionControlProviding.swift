@@ -142,14 +142,8 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
     public let ownerName: String?
     /// The player's stolen stacks, one row per form.
     public let stolenStacks: [ItemStackReadout]
-    /// Factions that track crime, which is what a bounty can be written to.
-    public let crimeFactions: [FactionOption]
-    public let selectedCrimeFaction: ReferenceKey?
     public let playerMemberships: [MembershipReadout]
     public let subject: SocialSubjectReadout
-    /// Every faction the load order carries, for the membership controls.
-    public let factions: [FactionOption]
-    public let selectedFaction: ReferenceKey?
     /// Every vendor faction, for the merchant override.
     public let vendorFactions: [FactionOption]
     public let vendorOverride: ReferenceKey?
@@ -172,15 +166,11 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
         ownership: nil,
         ownerName: nil,
         stolenStacks: [],
-        crimeFactions: [],
-        selectedCrimeFaction: nil,
         playerMemberships: [],
         subject: SocialSubjectReadout(
             key: .player, name: "the player", memberships: [], towardPlayer: nil,
             crimeFaction: nil, policedFaction: nil, vendor: nil
         ),
-        factions: [],
-        selectedFaction: nil,
         vendorFactions: [],
         vendorOverride: nil,
         effectiveVendor: nil,
@@ -197,12 +187,8 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
         ownership: ReferenceOwnershipReadout?,
         ownerName: String?,
         stolenStacks: [ItemStackReadout],
-        crimeFactions: [FactionOption],
-        selectedCrimeFaction: ReferenceKey?,
         playerMemberships: [MembershipReadout],
         subject: SocialSubjectReadout,
-        factions: [FactionOption],
-        selectedFaction: ReferenceKey?,
         vendorFactions: [FactionOption],
         vendorOverride: ReferenceKey?,
         effectiveVendor: Vendor?,
@@ -217,12 +203,8 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
         self.ownership = ownership
         self.ownerName = ownerName
         self.stolenStacks = stolenStacks
-        self.crimeFactions = crimeFactions
-        self.selectedCrimeFaction = selectedCrimeFaction
         self.playerMemberships = playerMemberships
         self.subject = subject
-        self.factions = factions
-        self.selectedFaction = selectedFaction
         self.vendorFactions = vendorFactions
         self.vendorOverride = vendorOverride
         self.effectiveVendor = effectiveVendor

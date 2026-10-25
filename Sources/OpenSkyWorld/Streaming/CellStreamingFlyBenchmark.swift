@@ -50,55 +50,14 @@ nonisolated public enum CellStreamingFlyPath: Sendable {
     }
 }
 
-/// Per-cell actor accounting surfaced to the CLI: the 5.6 acceptance probe
-/// reports discovered/rendered/intentional-skip/failure counts for each
-/// touched cell, failures carrying their reasons.
-nonisolated public struct ActorCellReport: Equatable, Sendable {
-    public let coordinate: CellCoordinate
-    public let discovered: Int
-    public let rendered: Int
-    public let disabledSkips: Int
-    public let failures: Int
-    public let failureReasons: [String]
-    public let animated: Int
-    public let animationFailures: Int
-    public let animationFailureReasons: [String]
-}
-
 nonisolated public struct CellStreamingFlyBenchmarkResult: Sendable {
     public let render: OffscreenBenchResult
-    public let settledFootprintsMB: [Double]
-    /// From the first streamer update to the start area being ready, as the loading
-    /// screen waits for it: near grid resolved and its distant ring in.
-    public let startAreaReadyMS: Double
-    public let peakFootprintMB: Double
-    public let uniqueBuildCount: Int
-    public let unloadedCellCount: Int
-    public let finalResidentCellCount: Int
-    public let finalVoidCellCount: Int
-    public let footprintCapMB: Double
-    public let collisionBuildAverageMS: Double
-    public let collisionBuildP95MS: Double
-    public let collisionBuildMaximumMS: Double
-    public let collisionBuildBudgetMS: Double
-    public let collisionShapeCount: Int
-    public let collisionTriangleCount: Int
-    public let actorBuildAverageMS: Double
-    public let actorBuildP95MS: Double
-    public let actorBuildMaximumMS: Double
-    public let actorBuildBudgetMS: Double
-    public let actorDiscoveredCount: Int
-    public let actorRenderedCount: Int
-    public let actorDisabledSkipCount: Int
-    public let actorFailureCount: Int
     public let actorAnimatedCount: Int
-    public let actorAnimationFailureCount: Int
     public let animationUpdateBudgetMS: Double
     public let shadowUpdateBudgetMS: Double
     public let audioUpdateBudgetMS: Double
     public let scriptUpdateBudgetMS: Double
     public let weatherName: String
-    public let windSpeed: Float
     public let animationUpdatedBoneCount: Int
     public let particleSystemCount: Int
     public let particleLiveCount: Int
@@ -107,8 +66,8 @@ nonisolated public struct CellStreamingFlyBenchmarkResult: Sendable {
     public let shadowDrawStats: ShadowDrawStats
     /// Peak per-field grass accounting sampled across rendered fly frames.
     public let grassDrawStats: GrassDrawStats
-    /// One entry per touched cell, sorted by coordinate for stable output.
-    public let actorCellReports: [ActorCellReport]
+    /// Cells the fly built actors for.
+    public let actorCellCount: Int
 }
 
 nonisolated public struct CellStreamingFlyBenchmarkConfiguration: Sendable {
@@ -193,9 +152,6 @@ public enum CellStreamingFlyBenchmark {
 
     private final class Driver {
         private let gameSession: GameSession
-        private var renderer: Renderer {
-            gameSession.renderer
-        }
 
         private let runner: SerialCellBuildRunner
         private let streamer: CellStreamer
@@ -206,12 +162,9 @@ public enum CellStreamingFlyBenchmark {
         private var sampleIndex = 0
         private var moving = false
         private var settledFootprints: [Double] = []
-        private var peakFootprint = 0.0
         private var environmentEvidence = LivingEnvironmentFlyEvidence()
         private var initialResidents = Set<CellCoordinate>()
         private var currentPosition: SIMD3<Float>
-        private var firstUpdate: ContinuousClock.Instant?
-        private var startAreaReadyMS = 0.0
 
         init(
             gameSession: GameSession,
@@ -220,8 +173,8 @@ public enum CellStreamingFlyBenchmark {
             configuration: CellStreamingFlyBenchmarkConfiguration
         ) {
             self.gameSession = gameSession
-            let renderer = gameSession.renderer
             self.configuration = configuration
+            let renderer = gameSession.renderer
             runner = SerialCellBuildRunner(provider: provider, lodPrebuild: lodPrebuild)
             swapError = SceneSwapErrorBox()
             streamer = CellStreamer(
@@ -256,15 +209,7 @@ public enum CellStreamingFlyBenchmark {
                 _ = try sampleFootprint()
                 return false
             }
-            if firstUpdate == nil {
-                firstUpdate = .now
-            }
             streamer.update(cameraPosition: currentPosition)
-            if legIndex == -1, startAreaReadyMS == 0, streamer.startAreaReady, let firstUpdate {
-                let elapsed = ContinuousClock.now - firstUpdate
-                startAreaReadyMS = Double(elapsed.components.seconds) * 1000
-                    + Double(elapsed.components.attoseconds) / 1e15
-            }
             let footprint = try sampleFootprint()
             guard isSettled(streamer) else { return false }
             settledFootprints.append(footprint)
@@ -278,25 +223,21 @@ public enum CellStreamingFlyBenchmark {
             return false
         }
 
-        private func validatedUnloadCount() throws -> Int {
-            let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
-            guard unloaded > 0 else {
+        private func validateUnloads() throws {
+            guard !initialResidents.subtracting(streamer.residentCoordinates).isEmpty else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
             }
-            return unloaded
         }
 
         private func sampleFootprint() throws -> Double {
-            let footprint = try checkedFootprint(capMB: configuration.footprintCapMB)
-            peakFootprint = max(peakFootprint, footprint)
-            return footprint
+            try checkedFootprint(capMB: configuration.footprintCapMB)
         }
 
         func result(render: OffscreenBenchResult) throws -> CellStreamingFlyBenchmarkResult {
             environmentEvidence.capture(gameSession)
             try validateCompletion()
             let counts = try validatedBuildCounts()
-            let collision = try validatedCollisionBuildMetrics(
+            try validateCollisionBuildMetrics(
                 runner: runner,
                 configuration: configuration,
                 expectedCount: counts.count
@@ -309,47 +250,23 @@ public enum CellStreamingFlyBenchmark {
             let environment = try environmentEvidence.validated(
                 animatedActorCount: actors.animated
             )
-            let unloaded = try validatedUnloadCount()
+            try validateUnloads()
             try validatePlateau()
             return CellStreamingFlyBenchmarkResult(
                 render: render,
-                settledFootprintsMB: settledFootprints,
-                startAreaReadyMS: startAreaReadyMS,
-                peakFootprintMB: peakFootprint,
-                uniqueBuildCount: counts.count,
-                unloadedCellCount: unloaded,
-                finalResidentCellCount: streamer.residentCellCount,
-                finalVoidCellCount: streamer.voidCellCount,
-                footprintCapMB: configuration.footprintCapMB,
-                collisionBuildAverageMS: collision.average,
-                collisionBuildP95MS: collision.p95,
-                collisionBuildMaximumMS: collision.maximum,
-                collisionBuildBudgetMS: configuration.collisionBuildBudgetMS,
-                collisionShapeCount: collision.shapes,
-                collisionTriangleCount: collision.triangles,
-                actorBuildAverageMS: actors.average,
-                actorBuildP95MS: actors.p95,
-                actorBuildMaximumMS: actors.maximum,
-                actorBuildBudgetMS: configuration.actorBuildBudgetMS,
-                actorDiscoveredCount: actors.discovered,
-                actorRenderedCount: actors.rendered,
-                actorDisabledSkipCount: actors.disabledSkips,
-                actorFailureCount: actors.failures,
                 actorAnimatedCount: actors.animated,
-                actorAnimationFailureCount: actors.animationFailures,
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
                 audioUpdateBudgetMS: configuration.audioUpdateBudgetMS,
                 scriptUpdateBudgetMS: configuration.scriptUpdateBudgetMS,
                 weatherName: environment.weatherName ?? "selected rain",
-                windSpeed: environment.windSpeed,
                 animationUpdatedBoneCount: environment.animationUpdatedBoneCount,
                 particleSystemCount: environment.particleSystemCount,
                 particleLiveCount: environment.particleLiveCount,
                 rainLiveCount: environment.rainLiveCount,
                 shadowDrawStats: environment.shadowDrawStats,
                 grassDrawStats: environment.grassDrawStats,
-                actorCellReports: actors.cellReports
+                actorCellCount: actors.cellCount
             )
         }
 

@@ -118,11 +118,6 @@ extension IdleCoordinator {
         reports[actor]
     }
 
-    /// Whether the actor still gets up from furniture.
-    public func isStandingUp(_ actor: ReferenceKey) -> Bool {
-        standingUntil[actor] != nil
-    }
-
     /// Who sits where, for every condition context: `GetSitting` in a quest, a topic, or
     /// `Actor.GetSitState`, not only in the idle trees.
     public var furnitureResolution: FurnitureConditionResolution {

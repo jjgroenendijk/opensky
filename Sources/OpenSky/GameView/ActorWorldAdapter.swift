@@ -34,7 +34,6 @@ protocol ActorWorldHost: AnyObject {
     var inventory: InventoryCoordinator { get }
     var journal: JournalCoordinator { get }
     var magic: MagicCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
@@ -297,7 +296,7 @@ extension ActorWorldAdapter: ActorValueWorld {
 }
 
 /// The inputs of one `ActorWorldAdapter.combatActors()` list.
-private struct ActorListKey: Equatable {
+private struct ActorListKey: Hashable {
     let streamer: ObjectIdentifier
     let poses: UInt64
     let deltas: UInt64

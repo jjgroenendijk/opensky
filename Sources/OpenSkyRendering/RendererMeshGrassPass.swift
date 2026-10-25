@@ -29,7 +29,6 @@ extension Renderer {
     public var meshShaderGrassStatus: MeshShaderGrassStatus {
         MeshShaderGrassStatus(
             enabled: meshGrass.enabled,
-            unavailableReason: meshShaderGrassUnavailableReason,
             counts: meshGrass.lastCounts
         )
     }

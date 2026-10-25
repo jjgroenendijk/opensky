@@ -27,17 +27,6 @@ extension InventoryCoordinator {
         )
     }
 
-    /// Every resident container that could be nominated as a merchant, with
-    /// its holder.
-    public func merchantCandidates() -> [(
-        interaction: PlacedInteraction,
-        holder: InventoryHolder
-    )] {
-        world.containerInteractions().compactMap { interaction in
-            containerHolder(for: interaction).map { (interaction, $0) }
-        }
-    }
-
     /// Moves `count` of `item` in the direction `transfer` names. A new session per
     /// call, so a merchant nominated again mid-menu leaves nothing stale.
     /// `acceptingLess` lets a sale go through for the merchant's last gold.

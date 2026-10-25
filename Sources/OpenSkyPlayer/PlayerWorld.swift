@@ -8,7 +8,6 @@ import OpenSkyGameData
 public protocol PlayerWorld: AnyObject {
     /// Nil without a renderer.
     var playerLocomotion: LocomotionBridge? { get }
-    var isWalkModeActive: Bool { get }
     var isPlayerGrounded: Bool { get }
     /// Nil while nothing has touched the player's inventory. The body then
     /// wears the plugin's default outfit.
@@ -27,12 +26,4 @@ public protocol PlayerWorld: AnyObject {
     /// Nil without a renderer.
     var firstPersonArmsEnabled: Bool? { get }
     func setFirstPersonArmsEnabled(_ enabled: Bool)
-    /// Nil without a renderer.
-    var playerBreath: PlayerBreath? { get }
-}
-
-extension PlayerWorld {
-    public var playerBreath: PlayerBreath? {
-        nil
-    }
 }

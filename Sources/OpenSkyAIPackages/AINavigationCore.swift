@@ -9,13 +9,11 @@ nonisolated public struct AIActorCandidate: Equatable, Sendable {
     public let key: ReferenceKey
     public let name: String
     public let feet: SIMD3<Float>
-    public let isDead: Bool
 
-    public init(key: ReferenceKey, name: String, feet: SIMD3<Float>, isDead: Bool) {
+    public init(key: ReferenceKey, name: String, feet: SIMD3<Float>) {
         self.key = key
         self.name = name
         self.feet = feet
-        self.isDead = isDead
     }
 }
 
@@ -46,8 +44,7 @@ nonisolated public enum AINavigationCore {
                 AIActorOption(
                     key: $0.key,
                     name: $0.name,
-                    distance: simd_distance($0.feet, eye),
-                    isDead: $0.isDead
+                    distance: simd_distance($0.feet, eye)
                 )
             }
             .sorted { ($0.distance, $0.key) < ($1.distance, $1.key) }

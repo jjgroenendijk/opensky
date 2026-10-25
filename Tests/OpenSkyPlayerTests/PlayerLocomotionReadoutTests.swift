@@ -34,10 +34,8 @@ struct PlayerLocomotionReadoutTests {
     ) -> PlayerLocomotionSnapshot {
         PlayerLocomotionSnapshot(
             rendererAvailable: true,
-            walkModeActive: true,
             status: LocomotionStatus(graphAvailable: graphAvailable),
             bindings: [],
-            configuration: .synthetic,
             activeStates: [],
             firstPersonActiveStates: [],
             variables: [],

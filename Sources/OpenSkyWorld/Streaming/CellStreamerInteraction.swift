@@ -307,17 +307,6 @@ extension CellStreamer {
         return simd_length_squared(actor.placement.position - position)
     }
 
-    /// Every resident container the merchant menu can use. An interior scene answers
-    /// alone when present.
-    public func containerInteractions() -> [PlacedInteraction] {
-        if let interiorScene {
-            return interiorScene.interactions.values
-                .filter { $0.action == .search }
-                .sorted { $0.reference.rawValue < $1.reference.rawValue }
-        }
-        return composition.containerInteractions()
-    }
-
     /// The appearance skips the last build reported for one ACHR, matched on the
     /// "ACHR <id>: " prefix. Empty when the actor resolved cleanly or is not
     /// resident; the readout tells those apart.

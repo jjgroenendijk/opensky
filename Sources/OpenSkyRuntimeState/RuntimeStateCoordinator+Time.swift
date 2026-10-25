@@ -11,9 +11,7 @@ extension RuntimeStateCoordinator {
     public var runtimeStateClock: RuntimeStateClockSnapshot {
         RuntimeStateClockSnapshot(
             clock: world?.gameClock ?? GameClock(),
-            timescale: world?.timescale ?? GameClock.defaultTimescale,
-            isPaused: world?.isWorldSimPaused ?? false,
-            calendar: calendarTexts
+            timescale: world?.timescale ?? GameClock.defaultTimescale
         )
     }
 
@@ -44,12 +42,9 @@ extension RuntimeStateCoordinator {
         let current = resolution.value(for: global.formID) ?? global.defaultValue
         return RuntimeStateGlobalSnapshot(
             editorID: global.editorID ?? global.formID.description,
-            formIDText: global.formID.description,
-            typeName: RuntimeStateCore.globalTypeName(global.valueType),
             defaultValue: global.defaultValue.value,
             currentValue: current.value,
-            isOverridden: resolution.isOverridden(global.formID),
-            isConstant: global.isConstant
+            isOverridden: resolution.isOverridden(global.formID)
         )
     }
 

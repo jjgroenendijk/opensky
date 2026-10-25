@@ -1,5 +1,3 @@
-import OpenSkyFormatsESM
-
 /// The load order's packages and the game settings the procedures read. The
 /// settings default to the vanilla values.
 public struct PackageSessionData {

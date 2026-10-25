@@ -3,7 +3,6 @@
 // (docs/engine/coordinators.md, docs/engine/locks.md).
 
 import OpenSkyActors
-import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDiagnostics
@@ -26,11 +25,9 @@ import OpenSkyWorldState
 protocol LockWorldHost: AnyObject {
     var actorValues: ActorValueCoordinator { get }
     var crime: CrimeCoordinator { get }
-    var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var inventoryWorld: InventoryWorldAdapter { get }
     var lockpickingMenu: LockpickingMenuController { get }
-    var mapWorld: MapWorldAdapter { get }
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -46,7 +43,7 @@ final class LockWorldAdapter {
     }
 
     /// After `wireWorldItems`, which builds the lock coordinator.
-    func wireLocks(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
+    func wireLocks(streamer: CellStreamer, gameSession: GameSession) {
         let renderer = gameSession.renderer
         let locks = game.inventory.locks
         let inventoryWorld = game.inventoryWorld

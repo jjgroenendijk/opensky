@@ -11,8 +11,6 @@ import OpenSkyMagicInterface
 nonisolated public struct PapyrusSpellState: Equatable, Sendable {
     /// SPEL and SCRL records this actor knows.
     public let knownSpells: Set<ReferenceKey>
-    /// The MGEF behind every effect currently acting on this actor.
-    public let activeEffects: Set<ReferenceKey>
     /// Every keyword those effects carry, resolved once so
     /// `HasMagicEffectWithKeyword` is a set membership test rather than a walk
     /// back through the record store.
@@ -31,7 +29,6 @@ nonisolated public struct PapyrusSpellState: Equatable, Sendable {
         potentialEffects: Set<ReferenceKey> = []
     ) {
         self.knownSpells = knownSpells
-        self.activeEffects = activeEffects
         self.effectKeywords = effectKeywords
         self.handSpells = handSpells
         self.potentialEffects = potentialEffects.union(activeEffects)

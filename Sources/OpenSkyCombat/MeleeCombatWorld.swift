@@ -43,34 +43,21 @@ nonisolated public struct MeleeAttacker: Equatable, Sendable {
 /// One landed hit, kept for the readout's last-hit trace.
 nonisolated public struct MeleeHitRecord: Equatable, Sendable {
     public let target: ReferenceKey
-    /// How far along the swing contact was found, world units.
-    public let distance: Float
     public let damage: MeleeDamageResult
-    /// The impact sound that played, or nil where the chain named none.
-    public let sound: FormID?
     /// Whether the target's graph was told to stagger.
     public let staggered: Bool
-    /// What the weapon's enchantment did, or nil when the weapon has none or this
-    /// session cannot apply one.
-    public let enchantment: WeaponEnchantmentReport?
     /// A swing, power attack, bash, or power bash.
     public let kind: MeleeStrikeKind
 
     public init(
         target: ReferenceKey,
-        distance: Float,
         damage: MeleeDamageResult,
-        sound: FormID?,
         staggered: Bool,
-        enchantment: WeaponEnchantmentReport? = nil,
         kind: MeleeStrikeKind = .normal
     ) {
         self.target = target
-        self.distance = distance
         self.damage = damage
-        self.sound = sound
         self.staggered = staggered
-        self.enchantment = enchantment
         self.kind = kind
     }
 }

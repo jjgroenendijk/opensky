@@ -2,7 +2,6 @@
 // breakable constraint over synthetic blocks (docs/formats/nif-collision.md).
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting

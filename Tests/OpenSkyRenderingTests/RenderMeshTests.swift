@@ -4,7 +4,6 @@
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyShaderTypes

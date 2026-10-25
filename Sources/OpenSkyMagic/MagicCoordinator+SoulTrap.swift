@@ -48,7 +48,7 @@ extension MagicCoordinator {
             let inventory = world.inventory,
             let effects,
             let holder = world.actorValueHolder(for: victim)
-        else { return note(.notFilled) }
+        else { return .notFilled }
         let soul = SoulTrap.soul(
             level: effects.values.baseline(of: holder).level,
             isNPC: world.actorHasKeyword("ActorTypeNPC", on: holder),
@@ -59,11 +59,11 @@ extension MagicCoordinator {
                 "sSoulGemTooSmall",
                 or: "No soul gem large enough"
             ))
-            return note(.noGem(soul))
+            return .noGem(soul)
         }
         fill(chosen, with: soul, in: inventory)
         world.postNotification(magicTexts.word("sSoulCaptured", or: "Soul captured!"))
-        return note(.trapped(soul, gem: chosen.item))
+        return .trapped(soul, gem: chosen.item)
     }
 
     /// The player's soul gems, one candidate per held copy.
@@ -96,37 +96,5 @@ extension MagicCoordinator {
         }
         let size = soul.size.rawValue
         inventory.editCopy(of: gem.item, in: .player, where: { $0 == gem.copy }, { $0.soul = size })
-    }
-
-    private func note(_ outcome: SoulTrapOutcome) -> SoulTrapOutcome {
-        lastSoulTrap = outcome
-        return outcome
-    }
-
-    /// One line per carried soul gem copy, then the last trap, for the readout.
-    func soulLines() -> [String] {
-        guard let inventory = world.inventory else { return [] }
-        let gems = carriedGems(inventory).map { gem in
-            "\(world.itemName(gem.item)): \(soulTexts.contents(gem.soul))"
-        }
-        return gems + [
-            lastSoulTrap.map(soulTrapText) ?? "No soul trapped yet",
-            lastRecharge.map(rechargeText) ?? "No weapon recharged yet"
-        ]
-    }
-
-    private func soulTrapText(_ outcome: SoulTrapOutcome) -> String {
-        switch outcome {
-        case let .trapped(soul, gem):
-            "Last trap: \(soulName(soul)) soul into \(world.itemName(gem))"
-        case let .noGem(soul):
-            "Last trap: no empty gem holds a \(soulName(soul)) soul"
-        case .notFilled:
-            "Last trap: not the player's, nothing filled"
-        }
-    }
-
-    private func soulName(_ soul: TrappedSoul) -> String {
-        soul.isBlack ? "black" : soulTexts.name(of: soul.size)
     }
 }

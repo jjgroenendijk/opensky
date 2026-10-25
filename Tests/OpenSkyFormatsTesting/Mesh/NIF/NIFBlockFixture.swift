@@ -85,41 +85,53 @@ public enum NIFBlockFixture: Sendable {
     /// `NiPathInterpolator`. Flags 0x10 is constant velocity.
     public static func pathInterpolator(
         flags: UInt16,
+        bank: (direction: Int32, maximumAngle: Float) = (0, 0),
+        smoothing: Float = 0,
+        followAxis: Int16 = 0,
         pathData: Int32,
         percentData: Int32
     ) -> Data {
         var out = Data()
         out.appendUInt16(flags)
-        out.appendUInt32(0) // bank direction
-        out.append(floats([0, 0]))
-        out.appendUInt16(0) // follow axis
+        out.appendUInt32(UInt32(bitPattern: bank.direction))
+        out.append(floats([bank.maximumAngle, smoothing]))
+        out.appendUInt16(UInt16(bitPattern: followAxis))
         out.appendRef(pathData)
         out.appendRef(percentData)
         return out
     }
 
     /// `BSSkyShaderProperty` with no extra data and no controller.
-    public static func skyShader(texture: String, skyObject: UInt32) -> Data {
-        var out = NIFFixture.objectNETPrefix()
-        out.appendUInt32(0)
-        out.appendUInt32(0)
+    public static func skyShader(
+        nameIndex: UInt32 = 0xFFFF_FFFF,
+        shaderFlags: (UInt32, UInt32) = (0, 0),
+        texture: String,
+        skyObject: UInt32
+    ) -> Data {
+        var out = NIFFixture.objectNETPrefix(nameIndex: nameIndex)
+        out.appendUInt32(shaderFlags.0)
+        out.appendUInt32(shaderFlags.1)
         out.append(floats([0, 0, 1, 1]))
         out.append(NIFFixture.sizedString(texture))
         out.appendUInt32(skyObject)
         return out
     }
 
-    /// `NiTriShape` with no materials; `lodSizes` makes it a `BSLODTriShape`.
+    /// `NiTriShape`; `lodSizes` makes it a `BSLODTriShape`. Each material is a
+    /// name string index with no extra data.
     public static func legacyTriShape(
         prefix: Data = NIFFixture.avObjectPrefix(),
         dataRef: Int32,
         shaderRef: Int32 = -1,
+        materialNames: [UInt32] = [],
         lodSizes: [UInt32] = []
     ) -> Data {
         var out = prefix
         out.appendRef(dataRef)
         out.appendRef(-1) // skin
-        out.appendUInt32(0) // materials
+        out.appendUInt32(UInt32(materialNames.count))
+        materialNames.forEach { out.appendUInt32($0) }
+        materialNames.forEach { _ in out.appendRef(-1) } // material extra data
         out.appendUInt32(0) // active material
         out.append(0)
         out.appendRef(shaderRef)

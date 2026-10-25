@@ -3,16 +3,9 @@
 
 import Foundation
 import OpenSkyRenderCore
-import OpenSkyRenderResources
 
 /// What the rendering performance readout reads.
 nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
-    public let renderTargets: RenderTargetMemory
-    public let pipelineCache: PipelineCacheStats
-    /// What the CPU path culled in the last frame.
-    public let cpuCulling: CullCounts
-    /// What the GPU path culled, a few frames late.
-    public let gpuCulling: CullCounts
     public var textureStreaming = TextureStreamingStats()
     public var rayTracing = RayTracingAvailability.unavailable(
         reason: RayTracingAvailability.missingReason
@@ -23,17 +16,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public var meshShaderGrass = MeshShaderGrassStatus()
     public var roomCulling = RoomCullingReadout()
 
-    public init(
-        renderTargets: RenderTargetMemory = RenderTargetMemory(),
-        pipelineCache: PipelineCacheStats = PipelineCacheStats(),
-        cpuCulling: CullCounts = CullCounts(),
-        gpuCulling: CullCounts = CullCounts()
-    ) {
-        self.renderTargets = renderTargets
-        self.pipelineCache = pipelineCache
-        self.cpuCulling = cpuCulling
-        self.gpuCulling = gpuCulling
-    }
+    public init() {}
 }
 
 /// What MetalFX upscaling did in the last frame.

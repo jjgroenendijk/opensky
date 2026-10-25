@@ -71,7 +71,6 @@ public final class CombatLoopRuntime: CombatControlling {
 
     private(set) weak var world: (any CombatLoopWorld)?
     private var accumulator: Double = 0
-    private var attackID = 0
     /// Targets `StartCombat` named, which engage without waiting to perceive
     /// anything and stay engaged while they cannot.
     private var forcedTargets: [ReferenceKey: ReferenceKey] = [:]
@@ -238,25 +237,6 @@ public final class CombatLoopRuntime: CombatControlling {
         accumulator = 0
     }
 
-    /// Forgets every live fight without touching stored hostility.
-    public func reset() {
-        state = .calm
-        behaviors = [:]
-        forcedTargets = [:]
-        provoked = []
-        commanders = [:]
-        targets = [:]
-        following = [:]
-        crowdedOutCount = 0
-        incomingTrace = []
-        incomingHitCount = 0
-        playerDamageFlash = 0
-        trimmedTransients = CombatTransientCounts()
-        accumulator = 0
-        attackID = 0
-        wasInCombat = false
-    }
-
     // MARK: - Internal, for the satellite
 
     /// Advances one actor's machine by exactly one fixed step, creating it the
@@ -333,12 +313,6 @@ public final class CombatLoopRuntime: CombatControlling {
             incomingTrace.removeFirst(incomingTrace.count - Self.traceLimit)
         }
         playerDamageFlash = 1
-    }
-
-    /// The next attack's identity, so two hits from one attack read as one.
-    public func nextAttackID() -> Int {
-        attackID += 1
-        return attackID
     }
 
     public func record(_ outcome: CombatLoopOutcome) {

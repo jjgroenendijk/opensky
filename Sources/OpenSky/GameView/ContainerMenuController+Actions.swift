@@ -8,7 +8,6 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyQuestsInterface
-import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -16,24 +15,12 @@ import OpenSkyWorldState
 extension ContainerMenuController {
     // MARK: - Merchant nomination
 
-    var merchantOptions: [ContainerMenuMerchantOption] {
-        guard let inventory = game.inventory.runtime?.inventory else { return [] }
-        return game.inventory.merchantCandidates().map { interaction, holder in
-            ContainerMenuMerchantOption(
-                reference: interaction.reference,
-                name: interaction.name,
-                itemCount: Int(inventory.inventory(of: holder).totalCount),
-                gold: inventory.goldCount(of: holder)
-            )
-        }
-    }
-
     /// Binds one container interaction as the menu's target. The holder
     /// matches the one a crosshair search opens.
     @discardableResult
     func nominate(_ interaction: PlacedInteraction) -> Bool {
         guard let holder = game.inventory.containerHolder(for: interaction) else { return false }
-        target(holder, name: interaction.name, reference: interaction.reference)
+        target(holder, name: interaction.name)
         return true
     }
 
@@ -66,7 +53,6 @@ extension ContainerMenuController {
         target(
             counterparty.holder,
             name: game.dialogueWorld.speakerLabel(for: actor),
-            reference: game.streamer?.referenceEntry(key: counterparty.holder.key)?.formID,
             vendor: counterparty.vendor,
             merchant: actor
         )
@@ -90,8 +76,7 @@ extension ContainerMenuController {
                 key: actor, owner: .actor(base: placed.base),
                 cell: game.streamer?.cellLocation(of: actor)
             ),
-            name: game.dialogueWorld.speakerLabel(for: actor),
-            reference: entry.formID
+            name: game.dialogueWorld.speakerLabel(for: actor)
         )
         setMode(.container)
         open()
@@ -217,50 +202,9 @@ extension ContainerMenuController {
     // MARK: - Readout
 
     var snapshot: ContainerMenuControlSnapshot {
-        var snapshot = baseSnapshot
-        if pickpocketTarget != nil, let container, let entry = model.selectedEntry {
-            snapshot.pickpocketChance = Int(game.inventory.pickpocketChance(
-                of: entry.item, count: 1, from: container
-            ))
-        }
-        return snapshot
-    }
-
-    private var baseSnapshot: ContainerMenuControlSnapshot {
-        let runtime = movie.runtime
-        let diagnostics = runtime.map(ContainerMenuMovieBridge.diagnostics(runtime:))
-        return ContainerMenuControlSnapshot(
-            isOpen: isOpen,
-            openMenus: game.menuMode.stack.identifiers.map(\.name),
-            worldSimPaused: game.menuMode.isWorldSimPaused,
-            mode: mode,
-            side: model.side,
-            transferLabel: model.transferLabel,
-            containerName: containerName,
+        ContainerMenuControlSnapshot(
             entryLines: model.active.entries.map(\.readoutLine),
-            selectedIndex: model.active.selectedIndex,
-            categoryLabels: model.active.categoryLabels,
-            selectedCategoryIndex: model.active.selectedCategoryIndex,
-            playerGold: model.playerGold,
-            containerGold: model.containerGold,
-            selectedPrice: model.selectedEntry.flatMap(model.price(for:)),
-            canAffordSelection: model.canAffordSelection,
-            priceFactor: model.pricing.basePriceFactor,
-            pricingSource: model.pricing.source,
-            lastActionText: lastActionText,
-            merchantOptions: merchantOptions,
-            selectedMerchant: containerReference,
-            movieEnabled: movieEnabled,
-            movieLoaded: movieLoaded,
-            movieError: movieError,
-            movieDrawStats: movieLoaded
-                ? (game.renderer?.lastSWFDrawStats ?? SWFDrawStats())
-                : SWFDrawStats(),
-            movieFaults: diagnostics?.faults ?? 0,
-            movieMissingNames: diagnostics?.missingNames ?? 0,
-            movieUnhandledInvokes: diagnostics?.unhandledInvokes ?? 0,
-            movieEntryTitles: runtime.map(ContainerMenuMovieBridge.entryLabels(runtime:)) ?? [],
-            movieVendorGold: runtime.flatMap(ContainerMenuMovieBridge.vendorGoldText(runtime:))
+            selectedIndex: model.active.selectedIndex
         )
     }
 }

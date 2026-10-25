@@ -358,7 +358,6 @@ nonisolated public final class ParticlePlayback: Sendable {
     /// One `ParticleEffectUniforms` per frame in flight.
     let effectBuffer: MTLBuffer
     public let capacity: Int
-    public let emitterCount: Int
     private let seed: UInt64
     /// Advanced on the main actor after the build queue hands the scene over.
     private let state: Mutex<State>
@@ -394,7 +393,6 @@ nonisolated public final class ParticlePlayback: Sendable {
             seed: seed
         )
         capacity = simulator.capacity
-        emitterCount = definition.emitters.filter(\.active).count
         state = Mutex(State(simulator: simulator))
         let count = max(capacity, 1) * GPUFactory.maxFramesInFlight
         guard

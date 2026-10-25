@@ -174,24 +174,10 @@ public final class HUDCoordinator {
     }
 
     public var controlSnapshot: HUDControlSnapshot {
-        let target = interactionTarget
-        let cameraPosition = world?.viewCamera?.position ?? .zero
-        return HUDControlSnapshot(
-            isLoaded: isLoaded,
-            loadError: loadError,
-            targetReference: target?.interaction.reference,
-            targetBase: target?.interaction.base,
-            targetName: target?.interaction.name,
-            targetAction: target?.interaction.actionLabel,
-            targetDistance: target?.distance,
-            targetPosition: target?.interaction.position,
-            hitPosition: target?.hitPosition,
+        HUDControlSnapshot(
             prompt: effectivePrompt,
-            markerHeadings: effectiveMarkers(cameraPosition: cameraPosition)
-                .map(\.headingDegrees),
             cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },
-            scale: settings.scale,
-            drawStats: renderer?.lastSWFDrawStats ?? SWFDrawStats()
+            scale: settings.scale
         )
     }
 

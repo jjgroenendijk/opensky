@@ -24,7 +24,6 @@ public final class SWFMovieSource {
     public var fileSystem: (any GameFileSource)? {
         didSet {
             scenes = nil
-            cachedPaths = nil
             waiting = []
         }
     }
@@ -39,8 +38,6 @@ public final class SWFMovieSource {
     }
 
     private var waiting: [Waiting] = []
-    private var cachedPaths: [String]?
-    private var isListing = false
 
     public init(fileSystem: (any GameFileSource)? = nil, loadsImmediately: Bool = false) {
         self.fileSystem = fileSystem
@@ -104,32 +101,6 @@ public final class SWFMovieSource {
             case .ready, .failed: break
             }
         }
-    }
-
-    /// Every `Interface\*.swf` movie. Listing walks every archive index, so it runs
-    /// once, off the main actor; the list is empty until it is built.
-    public var moviePaths: [String] {
-        if let cachedPaths {
-            return cachedPaths
-        }
-        guard let fileSystem else { return [] }
-        if loadsImmediately {
-            cachedPaths = SWFMovieLoader.moviePaths(in: fileSystem)
-            return cachedPaths ?? []
-        }
-        if !isListing {
-            isListing = true
-            Task { [weak self] in
-                let paths = await Self.listMovies(fileSystem)
-                self?.cachedPaths = paths
-            }
-        }
-        return []
-    }
-
-    @concurrent
-    nonisolated private static func listMovies(_ files: any GameFileSource) async -> [String] {
-        SWFMovieLoader.moviePaths(in: files)
     }
 
     private func loader() -> AssetLoader<String, SWFMovieScene>? {

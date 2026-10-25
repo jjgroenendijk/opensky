@@ -23,8 +23,7 @@ struct WorldRenderControlsTests {
         controls = WorldRenderControls(runtimeState: runtimeState, world: world)
     }
 
-    @Test func cameraFallsBackWithoutARenderer() {
-        #expect(controls.cameraPose == CameraPoseSnapshot.unavailable)
+    @Test func movementModeFallsBackWithoutARenderer() {
         controls.movementMode = .walk
         // No renderer holds the change, so the getter keeps the default.
         #expect(controls.movementMode == .fly)
@@ -41,8 +40,7 @@ struct WorldRenderControlsTests {
         #expect((stats.memoryFootprintMB ?? 0) > 0)
     }
 
-    @Test func triggersSayTheStreamerIsMissing() {
-        #expect(controls.triggerStatsSnapshot == .unavailable)
+    @Test func dynamicBodiesSayTheStreamerIsMissing() {
         #expect(controls.dynamicBodyStatsSnapshot == DynamicBodyStatsSnapshot())
     }
 

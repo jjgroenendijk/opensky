@@ -113,31 +113,4 @@ extension InventoryMenuController {
         previewShown = false
         game.renderer?.setMenuScene(nil)
     }
-
-    // MARK: - Readout
-
-    var extrasSnapshot: InventoryMenuExtras {
-        let favourites = game.inventory.playerFavourites
-        return InventoryMenuExtras(
-            itemCard: model.selectedEntry.flatMap { game.inventory.itemCard(for: $0.item) }?
-                .lines ?? [],
-            quantity: model.quantity?.text,
-            hotkeys: favourites.hotkeys.sorted { $0.key < $1.key }.map {
-                "\($0.key): \(game.inventory.name(of: $0.value))"
-            },
-            previewEnabled: previewEnabled,
-            previewLine: previewLine
-        )
-    }
-
-    private var previewLine: String? {
-        guard let path = preview.modelPath else {
-            return isOpen ? "no model for this row" : nil
-        }
-        if let failure = previewSource?.failures[path] {
-            return "\(path): \(failure)"
-        }
-        let degrees = Int((preview.yaw * 180 / .pi).rounded())
-        return previewShown ? "\(path), turned \(degrees)°" : "\(path), loading"
-    }
 }

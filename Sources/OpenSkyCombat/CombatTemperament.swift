@@ -11,20 +11,18 @@ import OpenSkyGameData
 nonisolated public struct CombatTemperament: Equatable, Sendable {
     /// `Confidence` actor value: 0 cowardly through 4 foolhardy.
     public var confidence: Float
-    /// A per-actor nudge in `fCombatConfidenceModifierMin` to `...Max`, so a crowd
-    /// of one record does not break off at one moment.
-    public var modifier: Float
     /// Health fraction over the target's, scaled by the square root of the level ratio.
     public var strengthRatio: Float
     /// The strength below which this actor breaks off, from its nudged Confidence.
     public var breakOffStrength: Float
 
+    /// `modifier` is a per-actor nudge in `fCombatConfidenceModifierMin` to `...Max`,
+    /// so a crowd of one record does not break off at one moment.
     public init(
         confidence: Float, modifier: Float = 0, strengthRatio: Float,
         settings: CombatAISettings = .vanilla
     ) {
         self.confidence = confidence
-        self.modifier = modifier
         self.strengthRatio = strengthRatio
         breakOffStrength = settings.breakOffStrength(confidence: confidence + modifier)
     }

@@ -16,11 +16,4 @@ nonisolated public enum DialogueCameraTarget: String, CaseIterable, Equatable, S
     /// The nearest resident actor, so the toggle still has a subject when the
     /// crosshair is on a wall.
     case nearestActor
-
-    public var label: String {
-        switch self {
-        case .crosshair: "Crosshair target"
-        case .nearestActor: "Nearest actor"
-        }
-    }
 }

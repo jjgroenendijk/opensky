@@ -232,7 +232,7 @@ public final class ProjectileRuntime {
         impactCount += 1
         let applied = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
-        let sound = playImpact(of: impact)
+        playImpact(of: impact)
         detonateExplosion(of: projectile, at: impact.position)
         let didStick = !detonated && stick(projectile, at: impact)
         return record(
@@ -241,7 +241,6 @@ public final class ProjectileRuntime {
             at: impact.position,
             impact: impact,
             appliedDamage: applied,
-            sound: sound,
             stuck: didStick,
             spellHit: spellHit
         )
@@ -294,15 +293,12 @@ public final class ProjectileRuntime {
         at position: SIMD3<Float>,
         impact: ProjectileImpact?,
         appliedDamage: Float = 0,
-        sound: FormID? = nil,
         stuck: Bool = false,
         spellHit: SpellHitReport? = nil
     ) -> ProjectileTrace {
         let aimed = projectile.launchPosition
             + projectile.launchDirection * projectile.state.travelled
         let entry = ProjectileTrace(
-            id: projectile.id,
-            launchPosition: projectile.launchPosition,
             endPosition: position,
             flightTime: projectile.state.age,
             travelled: projectile.state.travelled,
@@ -310,7 +306,6 @@ public final class ProjectileRuntime {
             outcome: outcome,
             target: impact?.target,
             appliedDamage: appliedDamage,
-            sound: sound,
             material: impact?.material,
             stuck: stuck,
             spellHit: spellHit,

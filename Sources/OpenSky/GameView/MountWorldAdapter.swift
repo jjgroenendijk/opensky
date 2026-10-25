@@ -31,7 +31,6 @@ protocol MountWorldHost: AnyObject {
     var crime: CrimeCoordinator { get }
     var gameSession: GameSession? { get }
     var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var perks: PerkCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -190,7 +189,7 @@ extension MountWorldAdapter: MountWorld {
         guard key != .player, let actor = game.actorWorld.combatActor(key: key) else {
             return nil
         }
-        var candidate = MountCandidate(key: key)
+        var candidate = MountCandidate()
         candidate.isDead = actor.isDead
         candidate.saddleBone = saddleBone(of: key)
         guard candidate.saddleBone != nil else { return candidate }

@@ -12,9 +12,8 @@ import simd
 extension PlayerCoordinator {
     public var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         guard let world, let bridge = world.playerLocomotion else { return .unavailable }
-        var snapshot = PlayerLocomotionSnapshot(
+        return PlayerLocomotionSnapshot(
             rendererAvailable: true,
-            walkModeActive: world.isWalkModeActive,
             status: bridge.status,
             bindings: PlayerCore.bindings(
                 run: bridge.intent.run,
@@ -22,19 +21,13 @@ extension PlayerCoordinator {
                 sneak: input.isSneaking,
                 airborne: !world.isPlayerGrounded
             ),
-            configuration: bridge.configuration,
             activeStates: bridge.graph?.activeStates ?? [],
             firstPersonActiveStates: bridge.firstPersonGraph?.activeStates ?? [],
             variables: PlayerCore.variables(of: bridge.graph),
             forcedGait: bridge.forcedGait,
             tally: bridge.graph?.tally,
-            bodyFailureReason: failureReason,
-            actorState: ActorStateGraphSnapshot.read(
-                bridge.graph, constants: bridge.actorStateConstants
-            )
+            bodyFailureReason: failureReason
         )
-        snapshot.breath = world.playerBreath
-        return snapshot
     }
 
     public var isSneaking: Bool {
@@ -66,7 +59,7 @@ extension PlayerCoordinator {
         guard
             let world,
             let status = world.playerLocomotion?.status,
-            let fovY = world.firstPersonFOVYRadians
+            world.firstPersonFOVYRadians != nil
         else { return .unavailable }
         let rig = world.playerFirstPersonRig
         return FirstPersonSnapshot(
@@ -77,12 +70,9 @@ extension PlayerCoordinator {
             failureReason: firstPersonFailureReason,
             armModelCount: rig?.assembly.models.count ?? 0,
             droppedPieceCount: PlayerCore.droppedPieceCount(of: rig),
-            hasCameraBone: rig?.cameraBoneIndex != nil,
-            cameraBoneHeight: rig?.cameraBoneMatrix?.columns.3.z,
             graphUpdates: status.firstPersonGraphUpdates,
             missingVariables: status.firstPersonMissingVariables,
-            missingEvents: status.firstPersonMissingEvents,
-            fovYDegrees: MatrixMath.degrees(fromRadians: fovY)
+            missingEvents: status.firstPersonMissingEvents
         )
     }
 

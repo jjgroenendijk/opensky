@@ -16,7 +16,6 @@ extension InventoryCoordinator {
         let items = runtime.inventory.baselines.items
         let favourites = playerFavourites
         return InventoryItemCard(
-            item: item,
             layout: Self.layout(of: definition, items: items),
             name: name(of: item),
             kind: Self.kind(of: definition, items: items),

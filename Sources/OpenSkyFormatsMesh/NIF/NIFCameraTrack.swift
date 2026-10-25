@@ -174,11 +174,6 @@ nonisolated extension NIFCameraTrack {
         nodeRotation(at: time) * offsetRotation
     }
 
-    /// The horizontal field of view at `time` seconds, radians.
-    public func horizontalFieldOfView(at time: Float) -> Float {
-        fieldOfView?.horizontalFieldOfView(at: time) ?? horizontalFieldOfView
-    }
-
     private func nodeRotation(at time: Float) -> simd_quatf {
         keys?.rotation(at: time) ?? restRotation
     }

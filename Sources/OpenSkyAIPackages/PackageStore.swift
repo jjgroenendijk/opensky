@@ -36,13 +36,6 @@ nonisolated public struct PackageStore: Sendable {
     /// FormIDs move; its conditions stay as written (`ConditionEvaluator`).
     private var translations: [UInt32: FormIDTranslation] = [:]
 
-    /// This resolver for one placed reference's roll.
-    public func rolling(_ roll: LeveledRoll?) -> Self {
-        var copy = self
-        copy.actorTemplates = actorTemplates.rolling(roll)
-        return copy
-    }
-
     public init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }

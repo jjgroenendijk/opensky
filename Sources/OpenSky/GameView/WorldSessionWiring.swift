@@ -11,7 +11,6 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
-import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
@@ -35,11 +34,9 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var cameraInput: CameraInputState { get }
     var cinematicWorld: CinematicCameraWorldAdapter { get }
     var combatWorld: CombatWorldAdapter { get }
-    var crimeWorld: CrimeWorldAdapter { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var effects: EffectsCoordinator { get set }
     var effectsWorld: EffectsWorldAdapter { get }
-    var factionWorld: FactionWorldAdapter { get }
     var hazardWorld: HazardWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
@@ -56,10 +53,8 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var npcAnimation: NPCAnimationCoordinator { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var perception: PerceptionCoordinator { get }
     var playerWorld: PlayerWorldAdapter { get }
     var progression: ProgressionCoordinator { get }
-    var progressionWorld: ProgressionWorldAdapter { get }
     var ragdollWorld: RagdollWorldAdapter { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scriptWorld: ScriptWorldAdapter { get }
@@ -129,7 +124,7 @@ final class WorldSessionWiring {
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         buildWorldItems(provider: provider, streamer: streamer)
-        game.lockWorld.wireLocks(provider: provider, streamer: streamer, gameSession: gameSession)
+        game.lockWorld.wireLocks(streamer: streamer, gameSession: gameSession)
         game.perkActivationWorld.wire(streamer: streamer)
         // After the item runtime, which owns the equipped set of the body.
         game.playerWorld.wirePlayerBody(gameSession: gameSession)
@@ -242,7 +237,7 @@ final class WorldSessionWiring {
         game.objectAnimationWorld.wire(gameSession: gameSession)
         buildAnimationEvents(gameSession: gameSession)
         // The Talk filter reads the death and hostility state the systems above keep.
-        game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
+        game.dialogueWorld.wireDialogue(streamer: streamer)
         game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)
         // Scenes speak through the dialogue index, so they come after it.
         game.storyWorld.wireStory(provider: provider, gameSession: gameSession)

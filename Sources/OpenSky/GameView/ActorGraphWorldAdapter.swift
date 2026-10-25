@@ -77,7 +77,6 @@ final class ActorGraphWorldAdapter {
         graphs.setMotion(
             ActorGraphMotion(
                 isMoving: moving,
-                isRunning: moving && update.gait == .run,
                 isSprinting: moving && update.gait == .sprint,
                 isSneaking: update.gait == .sneak
             ),

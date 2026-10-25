@@ -79,17 +79,21 @@ Settings:
 - `disable_redundant_public_analysis: true`. "Redundant public" reports a `public`
   declaration that no other module uses. In TMA, the Interface modules decide the
   public API, and the module-graph check guards it. This finding is style, not dead code.
-- `retain_hashable_properties: true`. A stored property of an `Equatable` or `Hashable`
-  type is read by the synthesized `==` and `hash(into:)`, which the index does not show.
-  Example: the fields of a dictionary key such as `AmbienceKey`. Without this setting,
-  Periphery reports them as assigned but never read.
+- `retain_hashable_properties: true`. A stored property of a `Hashable` type is read by
+  the synthesized `==` and `hash(into:)`, which the index does not show. Example: the
+  fields of a dictionary key such as `AmbienceKey`. A key that is only compared, such as
+  a `RevisionCache` key, is `Hashable` too, so that this setting covers it. Without it,
+  Periphery reports the fields as assigned but never read.
+- `retain_encodable_properties: true`. A benchmark result is written as JSON. The
+  synthesized `encode(to:)` reads every field, and the index does not show that.
 - `retain_assign_only_property_types`. A property of one of these types only keeps an
   object alive. Nothing reads it, on purpose.
   - `FFmpegDecodeResources` holds ffmpeg objects until `deinit` frees them.
   - `NSWindowController` is the app delegate's only strong reference to the main window's
     controller.
-  - `AcceptanceWorld`, `SceneCrimeWorld`, `SceneReferences`, `FakeWorldReferences` and
-    `PapyrusWorldFixture.Session` are test fixtures. The runtime under test holds them
+  - `AcceptanceWorld`, `SceneCrimeWorld`, `SceneReferences`, `FakeWorldReferences`,
+    `PapyrusWorldFixture.Session` and `CraftingSessionTests.FakeConditions` are test
+    fixtures. The runtime under test holds them
     weakly (`CasterRuntime.world`, `CrimeReporter.world`, `PapyrusWorldStateBridge.world`),
     so the fixture must hold them strongly.
 - `retain_equatable_properties` stays off. Most snapshot types are `Equatable`, so

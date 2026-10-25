@@ -79,12 +79,7 @@ nonisolated public struct CombatLoopState: Equatable, Sendable {
 
 /// One blow an actor landed on the player, kept for the readout's trace.
 nonisolated public struct CombatIncomingHit: Equatable, Sendable {
-    /// Who swung.
-    public let aggressor: ReferenceKey
     public let damage: MeleeDamageResult
     /// Whether the player's own graph took the hit-react event.
     public let playedReaction: Bool
-    /// Which of the aggressor's attacks it was, so two hits from one attack
-    /// read as one attack.
-    public let attackID: Int
 }

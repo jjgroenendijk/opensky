@@ -32,7 +32,6 @@ import simd
 @MainActor
 protocol CrimeWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
-    var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
@@ -49,7 +48,6 @@ protocol CrimeWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
-    var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
 }
 

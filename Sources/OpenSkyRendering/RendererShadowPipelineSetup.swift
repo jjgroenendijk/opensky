@@ -4,7 +4,6 @@
 // attachment, so their depth format binds at pass time.
 
 import Metal
-import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 

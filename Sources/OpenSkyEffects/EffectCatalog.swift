@@ -22,8 +22,6 @@ nonisolated public struct EffectCatalogEntry: Equatable, Sendable {
 }
 
 nonisolated public struct EffectCatalog: Sendable {
-    public static let empty = EffectCatalog(records: .empty)
-
     /// Sorted by name; a name two records share keeps the first kind's record.
     public let entries: [EffectCatalogEntry]
     private let byName: [String: EffectCatalogEntry]

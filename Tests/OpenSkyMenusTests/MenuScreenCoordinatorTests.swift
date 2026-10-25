@@ -76,7 +76,8 @@ struct MenuScreenCoordinatorTests {
     @Test func helpOpensTheFirstTopic() {
         let world = FakeMenuScreenWorld()
         world.topics["HelpAlchemyLong"] = HelpTopic(
-            editorID: "HelpAlchemyLong", title: "Alchemy", text: "Press [Activate]."
+            title: "Alchemy",
+            text: "Press [Activate]."
         )
         let menu = TutorialMenuCoordinator(menuMode: MenuModeController(), world: world)
         #expect(menu.openFirstTopic())

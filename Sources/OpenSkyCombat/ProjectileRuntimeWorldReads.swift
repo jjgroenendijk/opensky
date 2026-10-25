@@ -9,8 +9,8 @@ extension ProjectileRuntime {
     /// The IPCT chain for a hit, played where the world can play it.
     /// Internal rather than private so it can live here while `resolve` in the
     /// main file calls it.
-    public func playImpact(of impact: ProjectileImpact) -> FormID? {
-        guard let world, let impacts else { return nil }
+    public func playImpact(of impact: ProjectileImpact) {
+        guard let world, let impacts else { return }
         // An arrow resolves impact through the ammunition's chain. AMMO has no INAM, so
         // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
         // so an AMMO impact link is a one-line change.
@@ -19,12 +19,11 @@ extension ProjectileRuntime {
             if let target = impact.target {
                 world.showDefaultBlood(on: target, at: impact.position, melee: false)
             }
-            return nil
+            return
         }
         resolved.target = impact.target
         resolved.surfaceNormal = impact.normal
         world.playProjectileImpact(resolved, at: impact.position)
-        return resolved.sound
     }
 
     /// Drops stuck arrows whose cell is no longer resident, so an unloading

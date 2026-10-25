@@ -1,7 +1,6 @@
 // `record find`: decoded values as flat field paths, and the `--where` filters over them.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 @testable import OpenSkyPreview
 import Testing
@@ -41,6 +40,17 @@ struct RecordFieldQueryTests {
             RecordField(path: "data.damage", value: "4"),
             RecordField(path: "data.speed", value: "1.3")
         ])
+    }
+
+    @Test func flattenKeepsEachStoredValue() {
+        func value(_ path: String) -> String? {
+            fields.first { $0.path == path }?.value
+        }
+        #expect(value("editorID") == weapon.editorID)
+        #expect(value("data.damage") == String(weapon.data.damage))
+        #expect(value("data.speed") == String(weapon.data.speed))
+        #expect(fields.count { $0.path == "keywords" } == weapon.keywords.count)
+        #expect(weapon.enchantment == nil && value("enchantment") == nil)
     }
 
     @Test func filtersReadTheirOperator() throws {

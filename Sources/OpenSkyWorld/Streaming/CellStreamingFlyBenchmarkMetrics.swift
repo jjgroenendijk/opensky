@@ -8,25 +8,14 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyRendering
 
-nonisolated public struct CollisionBuildBenchmarkSummary: Sendable {
-    public let average: Double
-    public let p95: Double
-    public let maximum: Double
-    public let shapes: Int
-    public let triangles: Int
-}
-
 nonisolated public struct ActorBuildBenchmarkSummary: Sendable {
-    public let average: Double
     public let p95: Double
-    public let maximum: Double
     public let discovered: Int
     public let rendered: Int
-    public let disabledSkips: Int
     public let failures: Int
     public let animated: Int
-    public let animationFailures: Int
-    public let cellReports: [ActorCellReport]
+    /// Cells with build metrics, one per touched cell.
+    public let cellCount: Int
 }
 
 nonisolated public func validatedFlyUpdateBudgets(
@@ -75,11 +64,11 @@ nonisolated public func validatedFlyUpdateBudgets(
     }
 }
 
-nonisolated public func validatedCollisionBuildMetrics(
+nonisolated public func validateCollisionBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration,
     expectedCount: Int
-) throws -> CollisionBuildBenchmarkSummary {
+) throws {
     let metrics = runner.buildMetricsSnapshot().values
     guard metrics.count == expectedCount else {
         throw CellStreamingFlyBenchmarkError.unexpectedBuildSet(
@@ -88,16 +77,7 @@ nonisolated public func validatedCollisionBuildMetrics(
         )
     }
     let durations = metrics.map(\.collisionDurationMS).sorted()
-    guard !durations.isEmpty else {
-        return CollisionBuildBenchmarkSummary(
-            average: 0,
-            p95: 0,
-            maximum: 0,
-            shapes: 0,
-            triangles: 0
-        )
-    }
-    let average = durations.reduce(0, +) / Double(durations.count)
+    guard !durations.isEmpty else { return }
     let p95 = durations[p95Index(count: durations.count)]
     let maximum = durations.last ?? 0
     guard p95 <= configuration.collisionBuildBudgetMS else {
@@ -107,36 +87,24 @@ nonisolated public func validatedCollisionBuildMetrics(
             budget: configuration.collisionBuildBudgetMS
         )
     }
-    return CollisionBuildBenchmarkSummary(
-        average: average,
-        p95: p95,
-        maximum: maximum,
-        shapes: metrics.reduce(0) { $0 + $1.collisionShapeCount },
-        triangles: metrics.reduce(0) { $0 + $1.collisionTriangleCount }
-    )
 }
 
 /// Exact per-cell accounting first (every discovered ACHR explained, every
 /// failure reason-tagged — 5.6 zero-unexplained rule), then the latency
 /// budget over the same per-cell durations. Count of metric entries is
-/// validated by validatedCollisionBuildMetrics.
+/// validated by validateCollisionBuildMetrics.
 nonisolated public func validatedActorBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws -> ActorBuildBenchmarkSummary {
     let metrics = runner.buildMetricsSnapshot()
     try validateActorAccounting(metrics)
-    let cellReports = actorCellReports(metrics)
     let durations = metrics.values.map(\.actorDurationMS).sorted()
     guard !durations.isEmpty else {
         return ActorBuildBenchmarkSummary(
-            average: 0, p95: 0, maximum: 0,
-            discovered: 0, rendered: 0, disabledSkips: 0, failures: 0,
-            animated: 0, animationFailures: 0,
-            cellReports: []
+            p95: 0, discovered: 0, rendered: 0, failures: 0, animated: 0, cellCount: 0
         )
     }
-    let average = durations.reduce(0, +) / Double(durations.count)
     let p95 = durations[p95Index(count: durations.count)]
     let maximum = durations.last ?? 0
     guard p95 <= configuration.actorBuildBudgetMS else {
@@ -147,18 +115,12 @@ nonisolated public func validatedActorBuildMetrics(
         )
     }
     return ActorBuildBenchmarkSummary(
-        average: average,
         p95: p95,
-        maximum: maximum,
         discovered: metrics.values.reduce(0) { $0 + $1.actorDiscoveredCount },
         rendered: metrics.values.reduce(0) { $0 + $1.actorRenderedCount },
-        disabledSkips: metrics.values.reduce(0) { $0 + $1.actorDisabledSkipCount },
         failures: metrics.values.reduce(0) { $0 + $1.actorFailureCount },
         animated: metrics.values.reduce(0) { $0 + $1.actorAnimatedCount },
-        animationFailures: metrics.values.reduce(0) {
-            $0 + $1.actorAnimationFailureCount
-        },
-        cellReports: cellReports
+        cellCount: metrics.count
     )
 }
 
@@ -195,26 +157,6 @@ nonisolated private func validateActorAccounting(
             reasons: metric.actorAnimationFailureReasons.count
         )
     }
-}
-
-nonisolated private func actorCellReports(
-    _ metrics: [CellCoordinate: CellBuildMetric]
-) -> [ActorCellReport] {
-    metrics
-        .sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
-        .map { coordinate, metric in
-            ActorCellReport(
-                coordinate: coordinate,
-                discovered: metric.actorDiscoveredCount,
-                rendered: metric.actorRenderedCount,
-                disabledSkips: metric.actorDisabledSkipCount,
-                failures: metric.actorFailureCount,
-                failureReasons: metric.actorFailureReasons,
-                animated: metric.actorAnimatedCount,
-                animationFailures: metric.actorAnimationFailureCount,
-                animationFailureReasons: metric.actorAnimationFailureReasons
-            )
-        }
 }
 
 nonisolated public func p95Index(count: Int) -> Int {

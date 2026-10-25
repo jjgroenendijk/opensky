@@ -123,6 +123,7 @@ struct HKXPhysicsClassTests {
         #expect(data.twistLimit == HKPAngleLimit(isEnabled: true, minAngle: -0.5, maxAngle: 0.5))
         #expect(data.coneLimit == HKPAngleLimit(isEnabled: true, minAngle: -1, maxAngle: 1))
         #expect(data.planesLimit == HKPAngleLimit(isEnabled: false, minAngle: -0.2, maxAngle: 0.2))
+        #expect(data.twistLimit.isEnabled && !data.planesLimit.isEnabled)
     }
 
     @Test func limitedHingeAndMotorReadTheirMembers() throws {
@@ -211,9 +212,9 @@ struct HKXPhysicsClassTests {
         #expect(simple.boneA == 3 && simple.boneB == 7)
         #expect(simple.aFromBTransform.translation == SIMD3(1, 2, 3))
         #expect(simple.aFromBTransform.isValid)
-        #expect(mapper.chainMappings == [
-            HKASkeletonMapper.ChainMapping(startBoneA: 1, endBoneA: 4, startBoneB: 2, endBoneB: 5)
-        ])
+        let chain = try #require(mapper.chainMappings.first)
+        #expect(chain.startBoneA == 1 && chain.endBoneA == 4)
+        #expect(chain.startBoneB == 2 && chain.endBoneB == 5)
         #expect(mapper.unmappedBones == [9])
         #expect(mapper.keepUnmappedLocal && mapper.mappingType == 1)
         #expect(mapper.skeletonA?.dataOffset == 0x800 && mapper.skeletonB?.dataOffset == 0xA00)

@@ -9,15 +9,12 @@ import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
 /// What the Traps section reads. The streamer is a closure, because a reload
 /// replaces it.
 struct TrapControlDependencies {
-    let hazards: HazardCoordinator
-    let worldState: WorldStateStore
     let streamer: () -> CellStreamer?
 }
 

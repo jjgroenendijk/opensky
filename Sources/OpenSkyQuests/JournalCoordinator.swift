@@ -125,11 +125,6 @@ public final class JournalCoordinator {
         return tracked
     }
 
-    /// Editor IDs of the tracked, running quests.
-    public var trackedEditorIDs: [String] {
-        runtime?.trackedQuests().compactMap(\.editorID) ?? []
-    }
-
     /// A `QuestError` is a stated outcome, never a thrown error out of a
     /// control action.
     private func applyChange(

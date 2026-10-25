@@ -37,8 +37,7 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
         world.applyWeaponEnchantment(hit)
     }
 
-    @discardableResult
-    public func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
         world.applyWeaponPoison(hit)
     }
 

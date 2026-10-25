@@ -23,34 +23,28 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
 
     /// Spends one dose of the poison on the striking weapon and applies the poison's
     /// effects to the target, scaled by its resistances like a hostile spell.
-    @discardableResult
-    public func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
         guard
             let weapon = hit.weapon,
             let items = world.inventory?.baselines.items,
             let target = residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
-        else { return nil }
+        else { return }
         let plugin = pluginName
-        return withEffects { runtime -> WeaponPoisonReport? in
+        withEffects { runtime in
             let poisons = runtime.store.component(WeaponPoisonState.self, for: hit.attacker)
-            guard let poisons else { return nil }
+            guard let poisons else { return }
             let (left, spent) = poisons.spendingDose(of: weapon)
-            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return nil }
+            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return }
             if left.isEmpty {
                 runtime.store.reset(WeaponPoisonState.componentKind, for: hit.attacker)
             } else {
                 runtime.store.set(left, for: hit.attacker)
             }
-            let stored = Self.land(
+            _ = Self.land(
                 PoisonDose(potion: potion, id: spent, plugin: plugin),
                 caster: hit.attacker, on: target, using: &runtime
             )
-            return WeaponPoisonReport(
-                poison: spent,
-                dosesLeft: left.poisons[weapon]?.doses ?? 0,
-                storedCount: stored
-            )
-        }.flatMap(\.self)
+        }
     }
 
     /// Applies `poison` straight to `target`, as a poison the Poisoned perk lets the

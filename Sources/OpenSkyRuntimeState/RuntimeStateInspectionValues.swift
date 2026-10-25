@@ -25,8 +25,6 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     public let hourOfDay: Float
     /// One-based day of the month.
     public let day: Int
-    /// One-based month, 1 = Morning Star.
-    public let month: Int
     public let monthName: String
     /// Fourth-era year, so 201 reads as 4E 201.
     public let year: Int
@@ -34,26 +32,16 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     public let daysPassed: Float
     /// Game seconds per wall-clock second, from the `TimeScale` global.
     public let timescale: Float
-    /// Whether the world simulation is paused, which freezes the clock.
-    public let isPaused: Bool
-    /// The date line in the game's own words, as the wait menu shows it.
-    public let gameDateText: String
 
     public init(
-        clock: GameClock, timescale: Float, isPaused: Bool, calendar: CalendarTexts = .vanilla
+        clock: GameClock, timescale: Float
     ) {
         hourOfDay = clock.hourOfDay
         day = clock.day
-        month = clock.month
         monthName = clock.monthName
         year = clock.year
         daysPassed = clock.daysPassed
         self.timescale = timescale
-        self.isPaused = isPaused
-        gameDateText = calendar.dateLine(
-            weekday: clock.weekday, hourOfDay: clock.hourOfDay,
-            day: clock.day, month: clock.month, year: clock.year
-        )
     }
 
     /// Twenty-four-hour wall spelling of `hourOfDay`, minutes truncated rather
@@ -69,10 +57,6 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     public var dateText: String {
         "\(day) \(monthName), 4E \(year)"
     }
-
-    public var pauseText: String {
-        isPaused ? "paused" : "running"
-    }
 }
 
 /// One global: authored value, current value, and whether an override was written. Not
@@ -80,33 +64,20 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
 /// clock-projected time globals differ without one.
 nonisolated public struct RuntimeStateGlobalSnapshot: Equatable, Sendable {
     public let editorID: String
-    /// Eight-digit hexadecimal FormID, as `FormID.description` spells it.
-    public let formIDText: String
-    /// Declared GLOB value type: "short", "long" or "float".
-    public let typeName: String
     public let defaultValue: Float
     public let currentValue: Float
     public let isOverridden: Bool
-    /// Record header flag 0x40. A constant global is still writable at runtime
-    /// here; the flag is shown so a surprising result is explicable.
-    public let isConstant: Bool
 
     public init(
         editorID: String,
-        formIDText: String,
-        typeName: String,
         defaultValue: Float,
         currentValue: Float,
-        isOverridden: Bool,
-        isConstant: Bool
+        isOverridden: Bool
     ) {
         self.editorID = editorID
-        self.formIDText = formIDText
-        self.typeName = typeName
         self.defaultValue = defaultValue
         self.currentValue = currentValue
         self.isOverridden = isOverridden
-        self.isConstant = isConstant
     }
 }
 

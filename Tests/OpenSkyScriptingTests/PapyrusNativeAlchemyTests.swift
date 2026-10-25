@@ -39,7 +39,6 @@ struct PapyrusNativeAlchemyTests {
         let session: PapyrusWorldFixture.Session
         let registry: PapyrusNativeRegistry
         let alchemy: FakeAlchemyBridge
-        let item: FormID
 
         func call(
             _ script: String, _ name: String, arguments: [PapyrusValue] = [],
@@ -68,7 +67,7 @@ struct PapyrusNativeAlchemyTests {
             fixture.session.bridge.alchemy = alchemy
         }
         return Harness(
-            session: fixture.session, registry: fixture.registry, alchemy: alchemy, item: item
+            session: fixture.session, registry: fixture.registry, alchemy: alchemy
         )
     }
 

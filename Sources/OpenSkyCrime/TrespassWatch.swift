@@ -17,7 +17,6 @@ nonisolated public enum TrespassStep: Equatable, Sendable {
 /// One stay in one owned cell. Real seconds, not game seconds: the grace period is
 /// a wall-clock wait in the game.
 nonisolated public struct TrespassWatch: Equatable, Sendable {
-    public private(set) var cell: CellSceneLocation?
     /// Seconds since the first warning, or nil before it.
     public private(set) var sinceWarning: Double?
     public private(set) var warnings = 0
@@ -28,9 +27,8 @@ nonisolated public struct TrespassWatch: Equatable, Sendable {
     public init() {}
 
     /// A new cell starts a new stay.
-    public mutating func enter(_ location: CellSceneLocation?) {
+    public mutating func enterNewCell() {
         self = Self()
-        cell = location
     }
 
     /// One tick of `seconds`. `seen` says whether anyone detects the player now.

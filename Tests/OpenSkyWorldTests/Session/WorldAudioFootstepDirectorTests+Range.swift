@@ -16,9 +16,14 @@ extension WorldAudioFootstepDirectorTests {
         let director = makeDirector(engine: engine, outputModel: Self.footstepModel)
         director.outputModels = { id in
             id == FormID(Self.footstepModel) ? OutputModelProfile(
-                name: "SOMMono01800", routing: .positional,
+                routing: .positional,
                 attenuation: AttenuationCurve(
-                    minimumDistance: 150, maximumDistance: 1800, points: [1, 0]
+                    minimumDistance: 150,
+                    maximumDistance: 1800,
+                    points: [
+                        1,
+                        0
+                    ]
                 ),
                 reverbSend: 0
             ) : nil

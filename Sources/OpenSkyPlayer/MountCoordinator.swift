@@ -51,7 +51,6 @@ public final class MountCoordinator {
     public private(set) var phase = MountPhase.none
     /// The last actor the player mounted, kept after the dismount.
     public private(set) var lastMount: ReferenceKey?
-    public private(set) var lastRefusal: MountRefusal?
     public let settings: MountSettings
     weak let world: (any MountWorld)?
 
@@ -71,17 +70,14 @@ public final class MountCoordinator {
         let decision = MountRules.decide(world?.mountCandidate(key), isRiding: isActive)
         switch decision {
         case let .refuse(reason):
-            lastRefusal = reason
             return [.refused(reason)]
         case let .mount(kind, saddle, steals):
             if steals, !stealConfirmed {
                 return [.askToSteal(key)]
             }
             guard let start = world?.takeMount(key, kind: kind, saddleBone: saddle) else {
-                lastRefusal = .notLoaded
                 return [.refused(.notLoaded)]
             }
-            lastRefusal = nil
             let drive = PlayerMountDrive(start)
             drive.settings = settings
             drive.bridge.raise(kind.events.mountEnter)

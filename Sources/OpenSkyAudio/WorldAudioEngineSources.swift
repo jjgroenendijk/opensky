@@ -39,8 +39,6 @@ public final class ActiveAudioSource {
     public let loops: Bool
     /// The output model's distance curve, nil when the environment node attenuates.
     public let attenuation: AttenuationCurve?
-    /// The `SOPM` editor ID, nil when the channel count chose the routing.
-    public let outputModelName: String?
     /// The curve's gain at the listener's distance, updated each tick.
     public var distanceGain: Float = 1
     public let node: AVAudioPlayerNode
@@ -82,7 +80,6 @@ public final class ActiveAudioSource {
         category = request.category
         self.routing = routing
         attenuation = request.outputModel?.attenuation
-        outputModelName = request.outputModel?.name
         let located = routing == .positional || attenuation != nil
         let position = located ? request.worldPosition : .zero
         worldPosition = position

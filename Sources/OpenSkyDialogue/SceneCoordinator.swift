@@ -3,6 +3,7 @@
 // `SceneRuntime`. See docs/engine/coordinators.md and docs/engine/scenes.md.
 
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
@@ -28,7 +29,6 @@ public final class SceneCoordinator {
 
     public private(set) var trace: [SceneEvent] = []
     public private(set) var lines: [SceneLine] = []
-    public var lastOutcome: String?
     /// The wait before a repeating scene plays again.
     public let repeatPause: ClosedRange<Float>
     /// Scenes known to be playing, so a frame with none builds no runtime.
@@ -78,15 +78,16 @@ public final class SceneCoordinator {
     /// `force` stops the scenes that share an actor first, as `ForceStart()` does.
     public func start(_ id: FormID, force: Bool = false) {
         guard let runtime else {
-            lastOutcome = "no dialogue index loaded"
+            Self.logger.info("scene start: no dialogue index loaded")
             return
         }
         do {
             let events = try force ? runtime.forceStart(id) : runtime.start(id)
             record(events)
-            lastOutcome = events.isEmpty ? "already playing" : "started"
+            let state = events.isEmpty ? "already playing" : "started"
+            Self.logger.info("scene \(id, privacy: .public) \(state, privacy: .public)")
         } catch {
-            lastOutcome = "start refused: \(String(describing: error))"
+            Self.logger.info("scene start refused: \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -94,7 +95,6 @@ public final class SceneCoordinator {
         guard let runtime else { return }
         let events = runtime.stop(id)
         record(events)
-        lastOutcome = events.isEmpty ? "not playing" : "stopped"
     }
 
     /// Advances playing scenes. Builds no runtime while none plays.
@@ -151,4 +151,9 @@ public final class SceneCoordinator {
         trace = Array((trace + events).suffix(Self.historyLimit))
         lines = Array(lines.suffix(Self.historyLimit))
     }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Scenes"
+    )
 }

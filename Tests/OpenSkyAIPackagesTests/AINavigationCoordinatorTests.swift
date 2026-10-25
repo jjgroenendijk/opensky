@@ -25,10 +25,6 @@ private final class FakeAINavigationWorld: AINavigationWorld {
     private(set) var collisionQueries = 0
     private(set) var moves: [(ReferenceKey, SIMD3<Float>)] = []
 
-    var activeMoverCount: Int {
-        hasMover ? 1 : 0
-    }
-
     func actorCandidates() -> [AIActorCandidate] {
         actors
     }
@@ -40,10 +36,6 @@ private final class FakeAINavigationWorld: AINavigationWorld {
 
     func residentActor(for reference: FormID) -> ReferenceKey? {
         placed[reference]
-    }
-
-    func movementReadout(for _: ReferenceKey) -> NPCMovementReadout? {
-        nil
     }
 
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
@@ -75,8 +67,8 @@ struct AINavigationCoordinatorTests {
 
     @Test func optionsAreNearestFirstAndTheSelectionFallsBackToTheNearest() {
         let options = AINavigationCore.options([
-            AIActorCandidate(key: Self.far, name: "Far", feet: SIMD3(300, 0, 0), isDead: false),
-            AIActorCandidate(key: Self.near, name: "Near", feet: SIMD3(0, 40, 0), isDead: true)
+            AIActorCandidate(key: Self.far, name: "Far", feet: SIMD3(300, 0, 0)),
+            AIActorCandidate(key: Self.near, name: "Near", feet: SIMD3(0, 40, 0))
         ], eye: .zero)
         #expect(options.map(\.key) == [Self.near, Self.far])
         #expect(options.first?.distance == 40)
@@ -156,8 +148,8 @@ struct AINavigationCoordinatorTests {
     private static func coordinator() -> (AINavigationCoordinator, FakeAINavigationWorld) {
         let world = FakeAINavigationWorld()
         world.actors = [
-            AIActorCandidate(key: far, name: "Far", feet: SIMD3(0, 900, 0), isDead: false),
-            AIActorCandidate(key: near, name: "Near", feet: SIMD3(0, 100, 0), isDead: false)
+            AIActorCandidate(key: far, name: "Far", feet: SIMD3(0, 900, 0)),
+            AIActorCandidate(key: near, name: "Near", feet: SIMD3(0, 100, 0))
         ]
         let coordinator = AINavigationCoordinator(
             packages: PackageCoordinator(world: nil, data: nil),

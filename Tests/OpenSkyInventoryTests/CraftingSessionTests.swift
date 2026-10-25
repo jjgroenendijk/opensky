@@ -133,9 +133,9 @@ struct CraftingSessionTests {
     @Test func verdictsNameMissingPartsAndFailingConditions() throws {
         let harness = try Self.harness()
         let sword = try #require(harness.session.statuses.first)
-        #expect(sword.eligibility.shortfalls == [
-            ComponentShortfall(item: Fixture.lockpick, required: 2, held: 0)
-        ])
+        let shortfall = try #require(sword.eligibility.shortfalls.first)
+        #expect(shortfall.item == Fixture.lockpick)
+        #expect(shortfall.required == 2 && shortfall.held == 0)
         try harness.inventory.add(Fixture.lockpick, count: 2, to: .player)
         #expect(harness.session.statuses.first?.eligibility.isEligible == true)
         harness.conditions.failing = "HasPerk"

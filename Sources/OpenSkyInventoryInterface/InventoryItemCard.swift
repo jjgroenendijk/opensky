@@ -2,7 +2,6 @@
 // See docs/engine/inventory-menu.md.
 
 import Foundation
-import OpenSkyFormatsESM
 
 nonisolated public struct InventoryItemCard: Equatable, Sendable {
     /// Which page of the vanilla item card shows the item.
@@ -10,7 +9,6 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
         case armour, weapon, book, food, potion, ingredient, key, soulGem, misc
     }
 
-    public let item: FormID
     public let layout: Layout
     public let name: String
     /// The record family's word, such as "Weapon" or "Potion".
@@ -30,13 +28,19 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     public let isFavourite: Bool
 
     public init(
-        item: FormID, layout: Layout = .misc, name: String, kind: String, value: Int32,
+        layout: Layout = .misc,
+        name: String,
+        kind: String,
+        value: Int32,
         weight: Float,
-        damage: Int? = nil, armourRating: Float? = nil, effects: [String] = [],
-        enchantment: String? = nil, isStolen: Bool = false, hotkey: Int? = nil,
+        damage: Int? = nil,
+        armourRating: Float? = nil,
+        effects: [String] = [],
+        enchantment: String? = nil,
+        isStolen: Bool = false,
+        hotkey: Int? = nil,
         isFavourite: Bool = false
     ) {
-        self.item = item
         self.layout = layout
         self.name = name
         self.kind = kind

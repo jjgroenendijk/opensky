@@ -29,7 +29,6 @@ protocol EffectsWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var effects: EffectsCoordinator { get set }
-    var mapWorld: MapWorldAdapter { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var worldData: WorldDataStores? { get }
     var hazardWorld: HazardWorldAdapter { get }

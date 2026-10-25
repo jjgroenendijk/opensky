@@ -21,9 +21,6 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
     /// Joint limits still violated after the last solve, summed over every
     /// ragdoll. Zero once they have all converged.
     public var jointViolationCount = 0
-    /// Constraint solver iterations one substep runs, which is a constant the
-    /// readout shows beside the violation count so the two read together.
-    public var solverIterationCount: Int = RagdollConstraintSolver.iterationCount
     /// Bodies whose integrated pose came back non-finite. Always zero; a
     /// non-zero value is the stability gate failing in the open.
     public var recoveredBodyCount = 0
@@ -43,7 +40,6 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
         boneBodyCount: Int = 0,
         jointCount: Int = 0,
         jointViolationCount: Int = 0,
-        solverIterationCount: Int = RagdollConstraintSolver.iterationCount,
         recoveredBodyCount: Int = 0,
         selfCollisionPairCount: Int = 0,
         selfContactCount: Int = 0,
@@ -56,7 +52,6 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
         self.boneBodyCount = boneBodyCount
         self.jointCount = jointCount
         self.jointViolationCount = jointViolationCount
-        self.solverIterationCount = solverIterationCount
         self.recoveredBodyCount = recoveredBodyCount
         self.selfCollisionPairCount = selfCollisionPairCount
         self.selfContactCount = selfContactCount

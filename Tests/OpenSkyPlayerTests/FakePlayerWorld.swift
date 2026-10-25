@@ -12,7 +12,6 @@ import OpenSkyEngineTesting
 @MainActor
 final class FakePlayerWorld: PlayerWorld {
     var playerLocomotion: LocomotionBridge? = LocomotionBridge(configuration: .synthetic)
-    var isWalkModeActive = true
     var isPlayerGrounded = true
     var playerEquippedSet: [FormID]?
     var playerAppearanceOverride: PlayerAppearanceOverride?

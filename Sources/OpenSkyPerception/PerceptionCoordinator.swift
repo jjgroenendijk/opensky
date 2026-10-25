@@ -117,20 +117,6 @@ extension PerceptionCoordinator: PerceptionWorld {
 }
 
 extension PerceptionCoordinator {
-    public var perceptionSnapshot: PerceptionControlSnapshot {
-        guard let runtime else { return .unavailable }
-        return PerceptionControlSnapshot(
-            readout: runtime.readout(),
-            settings: runtime.settings.report.map {
-                DetectionSettingReadout(
-                    editorID: $0.editorID,
-                    value: $0.setting.value,
-                    source: $0.setting.source
-                )
-            }
-        )
-    }
-
     public func perceptionLines(for actor: ReferenceKey) -> [String] {
         runtime?.readout().pairs(involving: actor).map(\.summaryLine) ?? []
     }

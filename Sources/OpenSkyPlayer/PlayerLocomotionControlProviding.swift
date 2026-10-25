@@ -12,12 +12,10 @@ import OpenSkyPhysics
 /// the key and watch the row light up rather than trusting the label.
 nonisolated public struct LocomotionBindingSnapshot: Equatable, Sendable {
     public let label: String
-    public let key: String
     public let isActive: Bool
 
-    public init(label: String, key: String, isActive: Bool) {
+    public init(label: String, isActive: Bool) {
         self.label = label
-        self.key = key
         self.isActive = isActive
     }
 }
@@ -43,15 +41,8 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     /// False when there is no renderer at all (no Metal 4 device). Reported
     /// rather than shown as a row of zeros.
     public let rendererAvailable: Bool
-    /// True while the camera is in walk or third-person mode. Everything below
-    /// only advances there; fly mode freezes the values instead of clearing
-    /// them.
-    public let walkModeActive: Bool
     public let status: LocomotionStatus
     public let bindings: [LocomotionBindingSnapshot]
-    /// Resolved gait speeds and their provenance, so the readout can say which
-    /// number came from the install and which is an OpenSky fallback.
-    public let configuration: PlayerMovementConfiguration
     /// The state path the third-person graph resolved on its last update, from
     /// the outermost state machine inward.
     public let activeStates: [BehaviorActiveState]
@@ -68,17 +59,11 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     public let tally: BehaviorTally?
     /// Why the player has no third-person body, or nil when one is attached.
     public let bodyFailureReason: String?
-    /// The actor-state inputs and outputs of the third-person graph.
-    public let actorState: ActorStateGraphSnapshot
-    /// The breath under water; nil without a game session.
-    public var breath: PlayerBreath?
 
     public static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,
-        walkModeActive: false,
         status: LocomotionStatus(),
         bindings: [],
-        configuration: .synthetic,
         activeStates: [],
         firstPersonActiveStates: [],
         variables: [],
@@ -88,29 +73,23 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
 
     public init(
         rendererAvailable: Bool,
-        walkModeActive: Bool,
         status: LocomotionStatus,
         bindings: [LocomotionBindingSnapshot],
-        configuration: PlayerMovementConfiguration,
         activeStates: [BehaviorActiveState],
         firstPersonActiveStates: [BehaviorActiveState],
         variables: [LocomotionVariableSnapshot],
         forcedGait: LocomotionGait?,
         tally: BehaviorTally?,
-        bodyFailureReason: String? = nil,
-        actorState: ActorStateGraphSnapshot = .empty
+        bodyFailureReason: String? = nil
     ) {
         self.rendererAvailable = rendererAvailable
-        self.walkModeActive = walkModeActive
         self.status = status
         self.bindings = bindings
-        self.configuration = configuration
         self.activeStates = activeStates
         self.firstPersonActiveStates = firstPersonActiveStates
         self.variables = variables
         self.forcedGait = forcedGait
         self.tally = tally
         self.bodyFailureReason = bodyFailureReason
-        self.actorState = actorState
     }
 }

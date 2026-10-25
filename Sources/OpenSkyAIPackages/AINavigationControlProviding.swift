@@ -15,41 +15,20 @@ nonisolated public struct AIActorOption: Equatable, Sendable {
     /// Distance from the camera, world units, which is what makes a popup of a
     /// dozen identical guards navigable.
     public let distance: Float
-    /// True when the world state records this actor dead. A corpse still
-    /// appears in the list: selecting one and seeing every section say so is
-    /// how a user finds out why nothing is moving.
-    public let isDead: Bool
 
-    public init(key: ReferenceKey, name: String, distance: Float, isDead: Bool) {
+    public init(key: ReferenceKey, name: String, distance: Float) {
         self.key = key
         self.name = name
         self.distance = distance
-        self.isDead = isDead
     }
 }
 
 /// One observation of everything the gate readout's non-combat sections show.
 nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
-    /// False when no cell is streamed — no game data, or a synthetic scene.
-    /// Every other field is then empty and the readout says so rather than
-    /// showing a convincing zero.
-    public let isAvailable: Bool
     /// Every resident actor, nearest first.
     public let actors: [AIActorOption]
     /// The actor every section acts on, or nil when none is resident.
     public let selectedActor: ReferenceKey?
-    public let selectedActorName: String
-    /// The selected actor's mover, or nil when it is standing still.
-    public let movement: NPCMovementReadout?
-    /// Movers running right now, across every actor, against the runtime cap.
-    public let moverCount: Int
-    public let moverLimit: Int
-    /// The selected actor's package selection, or nil when the runtime has not
-    /// registered it.
-    public let package: PackageActorReadout?
-    /// Actors the package runtime has registered, which is how many of the
-    /// residents above are keeping a schedule at all.
-    public let packagedActorCount: Int
     /// Where the crosshair is pointing, world space, or nil when it is not on
     /// anything. This is what the move control paths to.
     public let crosshairPoint: SIMD3<Float>?
@@ -58,58 +37,24 @@ nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
     /// one line per actor with a behavior machine; duplicating the phase here
     /// would give the same question two answers taken a tick apart.
     public let selectedActorIsHostile: Bool
-    /// Human-readable result of the last control action.
-    public let lastActionText: String
-    /// The selected actor's procedure machine, when a scene or alias package holds it.
-    public var procedure: PackageProcedureMachine?
-    /// Every procedure of that package's tree that runs now, in tree order.
-    public var runningProcedures: [PackageProcedureMachine] = []
-    /// What the selected actor rides, such as a cart, or nil.
-    public var carrier: ReferenceKey?
-    /// The bump and follower spacing line (docs/engine/bump-reactions.md).
-    public var socialText: String?
 
     /// The reading with no streamed cell attached.
     public static let unavailable = AINavigationSnapshot(
-        isAvailable: false,
         actors: [],
         selectedActor: nil,
-        selectedActorName: "—",
-        movement: nil,
-        moverCount: 0,
-        moverLimit: 0,
-        package: nil,
-        packagedActorCount: 0,
         crosshairPoint: nil,
-        selectedActorIsHostile: false,
-        lastActionText: "AI unavailable: no cell is streamed."
+        selectedActorIsHostile: false
     )
 
     public init(
-        isAvailable: Bool,
         actors: [AIActorOption],
         selectedActor: ReferenceKey?,
-        selectedActorName: String,
-        movement: NPCMovementReadout?,
-        moverCount: Int,
-        moverLimit: Int,
-        package: PackageActorReadout?,
-        packagedActorCount: Int,
         crosshairPoint: SIMD3<Float>?,
-        selectedActorIsHostile: Bool,
-        lastActionText: String
+        selectedActorIsHostile: Bool
     ) {
-        self.isAvailable = isAvailable
         self.actors = actors
         self.selectedActor = selectedActor
-        self.selectedActorName = selectedActorName
-        self.movement = movement
-        self.moverCount = moverCount
-        self.moverLimit = moverLimit
-        self.package = package
-        self.packagedActorCount = packagedActorCount
         self.crosshairPoint = crosshairPoint
         self.selectedActorIsHostile = selectedActorIsHostile
-        self.lastActionText = lastActionText
     }
 }

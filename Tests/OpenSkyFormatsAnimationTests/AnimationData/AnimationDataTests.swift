@@ -7,7 +7,7 @@ import Testing
 struct AnimationDataTests {
     private static let project = [
         "1", "2", "Behaviors\\A.hkx", "Characters\\B.hkx", "1",
-        "Seat_Enter", "7", "1", "0", "0.5", "2", "SoundPlay:0", "SitIdle:1.25", "",
+        "Seat_Enter", "7", "1", "0.25", "0.5", "2", "SoundPlay:0", "SitIdle:1.25", "",
         "Seat_Exit", "8", "1.5", "0", "0", "0", ""
     ].joined(separator: "\r\n")
 
@@ -23,11 +23,9 @@ struct AnimationDataTests {
         #expect(data.behaviorFiles == ["Behaviors\\A.hkx", "Characters\\B.hkx"])
         let enter = try #require(data.clip(named: "seat_enter"))
         #expect(enter.motionIndex == 7)
-        #expect(enter.cropEnd == 0.5)
-        #expect(enter.triggers == [
-            AnimationDataTrigger(name: "SoundPlay", time: 0),
-            AnimationDataTrigger(name: "SitIdle", time: 1.25)
-        ])
+        #expect(enter.cropStart == 0.25 && enter.cropEnd == 0.5)
+        #expect(enter.triggers.map(\.name) == ["SoundPlay", "SitIdle"])
+        #expect(enter.triggers.map(\.time) == [0, 1.25])
         #expect(data.clip(named: "Seat_Exit")?.playbackSpeed == 1.5)
     }
 

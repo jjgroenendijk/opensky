@@ -116,11 +116,6 @@ nonisolated public struct BumpReactions: Equatable, Sendable {
         stages[actor] = nil
     }
 
-    public mutating func reset() {
-        stages = [:]
-        reactionCount = 0
-    }
-
     /// A point `distance` from the actor, straight away from the player on the ground.
     static func goal(of contact: BumpContact, distance: Float) -> SIMD3<Float> {
         let offset = contact.actorFeet - contact.playerFeet

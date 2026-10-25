@@ -16,11 +16,9 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
-import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -44,16 +42,11 @@ protocol StoryWorldHost: AnyObject {
     var perception: PerceptionCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var dialogueWorld: DialogueWorldAdapter { get }
-    var effectsWorld: EffectsWorldAdapter { get }
     var faceMorphs: FaceMorphCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
     var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
     var packages: PackageCoordinator { get }
-    var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }

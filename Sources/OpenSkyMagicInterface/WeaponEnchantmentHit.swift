@@ -111,8 +111,7 @@ public protocol WeaponEnchantmentApplying {
     @discardableResult
     func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport?
     /// Delivers one dose of the poison on the weapon, if it carries one.
-    @discardableResult
-    func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport?
+    func applyWeaponPoison(_ hit: WeaponPoisonHit)
     /// Lands the attacker's running Enhance Weapon enchantments on the struck actor.
     /// Returns the effects stored.
     @discardableResult

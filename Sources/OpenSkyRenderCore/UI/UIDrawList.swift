@@ -21,8 +21,6 @@ nonisolated public struct UIDrawStats: Equatable, Sendable {
     public var atlasHeight = 0
     /// Glyph cells the shared atlas currently holds (system + SWF fonts).
     public var atlasGlyphs = 0
-    /// Occupied fraction of the atlas, 0...1.
-    public var atlasOccupancy: Float = 0
     /// Glyphs dropped because the atlas was full, since the last eviction. Non-zero means
     /// text is missing from the frame.
     public var atlasPackFailures = 0
@@ -35,7 +33,6 @@ nonisolated public struct UIDrawStats: Equatable, Sendable {
         atlasWidth: Int = 0,
         atlasHeight: Int = 0,
         atlasGlyphs: Int = 0,
-        atlasOccupancy: Float = 0,
         atlasPackFailures: Int = 0
     ) {
         self.drawCalls = drawCalls
@@ -45,7 +42,6 @@ nonisolated public struct UIDrawStats: Equatable, Sendable {
         self.atlasWidth = atlasWidth
         self.atlasHeight = atlasHeight
         self.atlasGlyphs = atlasGlyphs
-        self.atlasOccupancy = atlasOccupancy
         self.atlasPackFailures = atlasPackFailures
     }
 }

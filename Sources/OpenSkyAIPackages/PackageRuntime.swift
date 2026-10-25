@@ -22,10 +22,6 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
     public var isSuspended = false
     /// The scene action whose packages run ahead of the schedule, if any.
     public var override: PackageOverrideOwner?
-    /// Which list the current package came from.
-    public var source: PackageSource?
-    public var situation: PackageSituation?
-    public var scriptPackage: FormID?
 
     public init(
         actor: ReferenceKey,
@@ -36,10 +32,7 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         procedure: PackageProcedureKind?,
         lastEvaluationGameSeconds: Double?,
         isSuspended: Bool = false,
-        override: PackageOverrideOwner? = nil,
-        source: PackageSource? = nil,
-        situation: PackageSituation? = nil,
-        scriptPackage: FormID? = nil
+        override: PackageOverrideOwner? = nil
     ) {
         self.actor = actor
         self.actorBase = actorBase
@@ -50,9 +43,6 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         self.lastEvaluationGameSeconds = lastEvaluationGameSeconds
         self.isSuspended = isSuspended
         self.override = override
-        self.source = source
-        self.situation = situation
-        self.scriptPackage = scriptPackage
     }
 }
 
@@ -379,10 +369,7 @@ nonisolated public struct ActorPackageRuntime {
                 procedure: current?.procedure,
                 lastEvaluationGameSeconds: lastEvaluationGameSeconds,
                 isSuspended: isSuspended,
-                override: override?.owner,
-                source: source,
-                situation: situation,
-                scriptPackage: scriptPackage?.package
+                override: override?.owner
             )
         }
     }

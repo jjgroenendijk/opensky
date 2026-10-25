@@ -21,8 +21,6 @@ public protocol MessageWorld: SWFLayerWorld {
     func setHUDHelpMessage(_ text: String?)
     func shakeCamera(source: ReferenceKey?, strength: Float, duration: Float) -> Bool
     func forceCameraMode(firstPerson: Bool) -> Bool
-    /// Every MESG editor ID, sorted, for the readout picker.
-    var messageEditorIDs: [String] { get }
     func messageKey(editorID: String) -> ReferenceKey?
     /// Receives keys while a box is open.
     var menuInputConsumer: (any MenuInputConsumer)? { get }

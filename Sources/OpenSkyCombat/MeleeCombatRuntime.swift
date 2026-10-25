@@ -289,7 +289,7 @@ public final class MeleeCombatRuntime {
             world.applyMeleeHitSpell(blow(world: world), on: hit.target)
             applyWeaponRiders(on: hit.target, world: world)
         }
-        let enchantment = applyEnchantment(hit, world: world)
+        applyEnchantment(hit, world: world)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
         // comes from the damage formula's block term.
         world.reportScriptHit(ScriptHitEvent(
@@ -312,11 +312,8 @@ public final class MeleeCombatRuntime {
         }
         let record = MeleeHitRecord(
             target: hit.target,
-            distance: hit.distance,
             damage: damage,
-            sound: impact?.sound,
             staggered: staggered,
-            enchantment: enchantment,
             kind: strikeKind
         )
         trace.append(record)
@@ -354,9 +351,9 @@ public final class MeleeCombatRuntime {
     private func applyEnchantment(
         _ hit: MeleeHit,
         world: any MeleeCombatWorld
-    ) -> WeaponEnchantmentReport? {
-        guard let profile = weapon.enchantment, profile.isContact else { return nil }
-        return world.applyWeaponEnchantment(WeaponEnchantmentHit(
+    ) {
+        guard let profile = weapon.enchantment, profile.isContact else { return }
+        _ = world.applyWeaponEnchantment(WeaponEnchantmentHit(
             profile: profile,
             attacker: world.meleeAttacker.key,
             struck: hit.target,

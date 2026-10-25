@@ -165,12 +165,11 @@ struct AssetCacheReaderTests {
     @Test func inspectionReportsEachEntryState() throws {
         let reader = try makeReader()
         #expect(reader.inspect(path: path) == [AssetCacheEntryInspection(
-            kind: .texture,
             state: .missing
         )])
         try store([1, 2, 3], in: reader, converter: AssetConverterVersion.texture)
         #expect(reader.inspect(path: path) == [
-            AssetCacheEntryInspection(kind: .texture, state: .current(payloadBytes: 3))
+            AssetCacheEntryInspection(state: .current(payloadBytes: 3))
         ])
         try store([], in: reader, converter: AssetConverterVersion.texture)
         #expect(reader.inspect(path: path)?.first?.state == .original)

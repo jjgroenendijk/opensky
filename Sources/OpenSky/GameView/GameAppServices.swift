@@ -4,37 +4,13 @@
 
 import AppKit
 import MetalKit
-import OpenSkyActorPresentation
-import OpenSkyActors
-import OpenSkyAgentControl
-import OpenSkyAIPackages
-import OpenSkyAssetCache
-import OpenSkyCamera
-import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyEffects
-import OpenSkyFactions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
 import OpenSkyMenus
-import OpenSkyPerception
-import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyRenderResources
-import OpenSkyRuntimeState
-import OpenSkyScripting
-import OpenSkyWorld
-import OpenSkyWorldState
 import simd
 
 /// Where Play starts, as the launcher chose it.
@@ -58,8 +34,6 @@ struct GameAppServices {
     var audioFileSystem: (any GameFileSource)?
     var menuTextLoader: (() -> LocalizedLabels)?
     var controlMapLoader: (() throws -> ControlMapFile)?
-    var assetCache: AssetCacheReader?
-    var fastTextureLoad: FastTextureLoadControl?
     var sessionStart = SessionStartRecorder()
     var worldLoadReport: WorldLoadReport?
     var benchmarkLoadPhases: LoadPhaseRecorder?

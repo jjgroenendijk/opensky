@@ -97,8 +97,6 @@ nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIter
 /// One finished shot, kept for the readout's last-trajectory readout: spawn
 /// point, impact point, and flight time.
 nonisolated public struct ProjectileTrace: Equatable, Sendable {
-    public let id: Int
-    public let launchPosition: SIMD3<Float>
     /// Where it ended. For a miss this is simply where it was given up on.
     public let endPosition: SIMD3<Float>
     /// Seconds of flight.
@@ -115,8 +113,6 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
     /// A spell takes health off through the effect runtime instead, so this
     /// stays zero for one and `spellHit` carries what it did.
     public let appliedDamage: Float
-    /// The SNDR the impact chain resolved, or nil where it named none.
-    public let sound: FormID?
     /// The MATT type of the surface struck, which the impact chain resolved against.
     public var material: FormID?
     /// Whether the arrow was left in the world at the impact point.

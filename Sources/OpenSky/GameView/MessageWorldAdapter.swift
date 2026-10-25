@@ -89,10 +89,6 @@ extension MessageWorldAdapter: MessageWorld {
         game.renderer
     }
 
-    var gameSession: GameSession? {
-        game.gameSession
-    }
-
     var viewCamera: FreeFlyCamera? {
         game.gameSession?.freeFlyCamera
     }

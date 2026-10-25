@@ -5,36 +5,17 @@
 import AppKit
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
-import OpenSkyAgentControl
-import OpenSkyAIPackages
-import OpenSkyAssetCache
-import OpenSkyCamera
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyEffects
-import OpenSkyFactions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
 import OpenSkyMenus
-import OpenSkyPerception
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyWorld
-import OpenSkyWorldState
 import simd
 
 final class GameViewController: NSViewController {
@@ -53,9 +34,6 @@ final class GameViewController: NSViewController {
     var cellSession: CellSession?
     /// The stage times of the load that built `cellSession`.
     var worldLoadReport: WorldLoadReport?
-    /// The session's asset cache.
-    var assetCache: AssetCacheReader?
-    var fastTextureLoad: FastTextureLoadControl?
     /// Times the work between the load and the first frame.
     let sessionStart = SessionStartRecorder()
     /// Times the streamer's builds by asset phase; set only when a benchmark tour will run.
@@ -118,7 +96,6 @@ final class GameViewController: NSViewController {
     var controlMapLoader: (() throws -> ControlMapFile)?
     /// The data root agent control reports and teleports load plugins from.
     var dataRoot: GameDataRoot?
-    var agentControl: AgentControlCoordinator?
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
@@ -207,8 +184,6 @@ final class GameViewController: NSViewController {
             audioFileSystem: audioFileSystem,
             menuTextLoader: menuTextLoader,
             controlMapLoader: controlMapLoader,
-            assetCache: assetCache,
-            fastTextureLoad: fastTextureLoad,
             sessionStart: sessionStart,
             worldLoadReport: worldLoadReport,
             benchmarkLoadPhases: benchmarkLoadPhases,

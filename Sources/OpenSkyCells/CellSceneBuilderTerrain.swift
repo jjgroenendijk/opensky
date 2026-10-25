@@ -105,8 +105,7 @@ nonisolated extension CellSceneBuilder {
                     .normal
                 let normals = TerrainNormalMaps(
                     base: textures.texture(key: baseNormalKey, usage: .data),
-                    layers: resolved.normals,
-                    resolvedCount: resolved.resolvedNormals + (baseNormalKey == nil ? 0 : 1)
+                    layers: resolved.normals
                 )
                 built.items.append(TerrainDrawItem(
                     mesh: upload.mesh,

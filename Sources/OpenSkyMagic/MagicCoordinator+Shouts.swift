@@ -44,7 +44,6 @@ nonisolated public enum ShoutOutcome: Equatable, Sendable {
     case unlocked(word: String, soulsLeft: Int)
     case learned(shout: String)
     case equipped(shout: String)
-    case unavailable
 }
 
 extension MagicCoordinator {

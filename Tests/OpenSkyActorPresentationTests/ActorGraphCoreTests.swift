@@ -19,7 +19,7 @@ struct ActorGraphCoreTests {
     }
 
     @Test func aChangeOfMotionRaisesTheLocomotionEvents() {
-        let sprinting = ActorGraphMotion(isMoving: true, isRunning: true, isSprinting: true)
+        let sprinting = ActorGraphMotion(isMoving: true, isSprinting: true)
         #expect(ActorGraphCore.events(from: .still, to: sprinting) == ["moveStart", "SprintStart"])
         #expect(ActorGraphCore.events(from: sprinting, to: .still) == ["moveStop", "SprintStop"])
         let sneaking = ActorGraphMotion(isSneaking: true)

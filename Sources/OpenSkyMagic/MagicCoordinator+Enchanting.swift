@@ -39,20 +39,6 @@ nonisolated public enum EnchantingOutcome: Equatable, Sendable {
     case unavailable
 }
 
-/// One known base enchantment, for the readout.
-nonisolated public struct EnchantingBaseReadout: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let name: String
-    /// A weapon base, rather than an apparel one.
-    public let isWeapon: Bool
-
-    public init(key: ReferenceKey, name: String, isWeapon: Bool) {
-        self.key = key
-        self.name = name
-        self.isWeapon = isWeapon
-    }
-}
-
 extension MagicCoordinator {
     public var enchantingState: EnchantingState {
         effects?.store.component(EnchantingState.self, for: .player) ?? EnchantingState()
@@ -167,20 +153,6 @@ extension MagicCoordinator {
         ))
     }
 
-    /// Every base the player knows, named.
-    public var knownEnchantingBases: [EnchantingBaseReadout] {
-        guard let store = enchantmentStore else { return [] }
-        return enchantingState.known.compactMap { key in
-            store.enchantment(key: key).map {
-                EnchantingBaseReadout(
-                    key: key,
-                    name: $0.displayName,
-                    isWeapon: Self.isWeaponBase($0)
-                )
-            }
-        }
-    }
-
     /// The profile of the made enchantment on `holder`'s best copy of `item`, or nil.
     func madeProfile(of item: FormID, on holder: InventoryHolder) -> ItemEnchantmentProfile? {
         guard
@@ -200,10 +172,6 @@ extension MagicCoordinator {
             let root = store.baseChain(of: ResolvedFormID(plugin: name, objectID: objectID)).last
         else { return nil }
         return ReferenceKey(resolved: root.id)
-    }
-
-    func isEnchantable(_ item: FormID) -> Bool {
-        enchantableKind(of: item) != nil
     }
 
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.

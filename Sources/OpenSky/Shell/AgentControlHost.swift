@@ -39,7 +39,6 @@ final class AgentControlHost {
 
     func attach(game: GameViewController, root: GameDataRoot?) {
         game.dataRoot = root
-        game.agentControl = coordinator
         self.game = game
     }
 

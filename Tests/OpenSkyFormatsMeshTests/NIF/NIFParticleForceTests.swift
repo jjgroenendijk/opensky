@@ -2,7 +2,6 @@
 // controllers, over synthetic particle systems (docs/formats/nif-particles.md).
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting

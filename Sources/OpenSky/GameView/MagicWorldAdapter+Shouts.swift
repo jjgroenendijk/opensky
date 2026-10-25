@@ -1,7 +1,6 @@
 // The shout side of `MagicWorld`: what the player knows lives in the script state the
 // Papyrus shout natives write, so a word wall script and the readout change one record.
 
-import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic

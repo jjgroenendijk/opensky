@@ -45,8 +45,6 @@ public final class WorldAudioFootstepDirector {
     /// set and is replaced when the player's feet armature resolves to one.
     public private(set) var footstepSet: FootstepSet?
 
-    /// Last resolved footstep, for the readout.
-    public private(set) var lastFootstepDescription: String?
     public private(set) var lastFootstepError: String?
     /// Events routed and events played since construction. The two differ by
     /// the tags the current set has no footstep for, which is normal vanilla
@@ -233,7 +231,7 @@ public final class WorldAudioFootstepDirector {
         )
         var reason: AudioTriggerRefusal?
         assets.request(path) { [weak self] result in
-            reason = self?.start(result, request: request, tag: tag)
+            reason = self?.start(result, request: request)
         }
         return reason
     }
@@ -250,13 +248,11 @@ public final class WorldAudioFootstepDirector {
 
     private func start(
         _ result: Result<AudioFileAsset, AssetLoadFailure>,
-        request: AudioPlayRequest,
-        tag: String
+        request: AudioPlayRequest
     ) -> AudioTriggerRefusal? {
         do {
             try engine.playPositional(asset: result.get(), request: request)
             playedFootstepCount += 1
-            lastFootstepDescription = "\(tag): \(request.name)"
             lastFootstepError = nil
             return nil
         } catch {
