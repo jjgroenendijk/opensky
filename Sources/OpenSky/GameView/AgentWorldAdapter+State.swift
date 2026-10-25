@@ -203,7 +203,7 @@ extension AgentWorldAdapter {
             let entry = game.streamer?.referenceEntry(key: actor.key)
             let formID = entry?.formID
             return (distance, [
-                "leveled": leveledState(base: entry?.placedActor?.base),
+                "leveled": leveledState(of: actor.key, base: entry?.placedActor?.base),
                 "ref": formID.map { .formID($0.rawValue) } ?? .null,
                 "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
                 "position": .init(actor.feet),
@@ -221,21 +221,25 @@ extension AgentWorldAdapter {
 
     /// The `LVLN` hops of an actor's template chain, the entry each rolled, and the
     /// encounter level and difficulty the roll read (docs/engine/leveled-lists.md).
-    private func leveledState(base: FormID?) -> AgentJSON {
+    private func leveledState(of key: ReferenceKey, base: FormID?) -> AgentJSON {
         guard
-            let base, let templates = game.actorValues.runtime?.baselines.resolver?.templates,
-            let chain = try? templates.resolve(base: base).chain
+            let base, let templates = game.actorValues.runtime?.baselines.resolver?.templates
         else { return .null }
+        let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
+        guard let chain = try? templates.rolling(roll).resolve(base: base).chain else {
+            return .null
+        }
         let hops: [AgentJSON] = chain.compactMap { link in
             guard case let .leveled(list, chosen) = link else { return nil }
             return ["list": .formID(list.rawValue), "chosen": .formID(chosen.rawValue)]
         }
         guard !hops.isEmpty else { return .null }
-        let key = templates.leveling.rollKey(forActor: base)
         return [
             "hops": .array(hops),
-            "encounterLevel": .init(key.encounterLevel),
-            "difficulty": .string("\(key.difficulty)")
+            "playerLevel": .init(roll.playerLevel),
+            "frozen": .bool(game.worldState.frozenLeveledLevel(of: key) != nil),
+            "encounterLevel": .init(roll.encounterLevel),
+            "difficulty": .string("\(roll.difficulty)")
         ]
     }
 

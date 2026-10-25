@@ -61,13 +61,16 @@ nonisolated public enum OpenSkySaveMotionTypeDecoder: Sendable {
 }
 
 nonisolated extension OpenSkySaveDecoder {
-    /// The chunks that say where a reference is and how it moves. False for any other tag.
+    /// The chunks that say where a reference is, how it moves, and the level it rolls
+    /// at. False for any other tag.
     static func applyPlacement(tag: String, payload: Data, to body: inout Body) throws -> Bool {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.relocations:
             body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         case OpenSkySaveFormat.ChunkTag.motionTypes:
             body.motionTypes = try OpenSkySaveMotionTypeDecoder.decodeMotionTypes(payload)
+        case OpenSkySaveFormat.ChunkTag.leveledRolls:
+            body.leveledRolls = try OpenSkySaveLeveledRollDecoder.decodeLeveledRolls(payload)
         default:
             return false
         }

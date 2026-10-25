@@ -202,12 +202,10 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     /// The death item rolls at the actor's own level (docs/engine/leveled-lists.md).
     private func grantDeathItem(to key: ReferenceKey) {
         guard
-            let base = game.streamer?.referenceEntry(key: key)?.placedActor?.base,
-            let values = game.actorValues.runtime
+            let values = game.actorValues.runtime,
+            let holder = holder(of: key)
         else { return }
-        game.inventory.grantDeathItem(
-            to: key, actorLevel: values.baselines.baseline(for: .actor(base: base)).level
-        )
+        game.inventory.grantDeathItem(to: key, actorLevel: values.baseline(of: holder).level)
     }
 
     var selectedRagdollActor: ReferenceKey? {

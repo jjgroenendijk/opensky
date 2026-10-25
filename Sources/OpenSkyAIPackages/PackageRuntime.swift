@@ -126,8 +126,13 @@ nonisolated public struct ActorPackageRuntime {
         return bases
     }
 
-    public mutating func register(actor: ReferenceKey, base: FormID) throws {
-        actors[actor] = try ActorState(base: base, lists: store.packageLists(for: base))
+    /// `roll` is the actor's own leveled roll; nil rolls for its base.
+    public mutating func register(
+        actor: ReferenceKey, base: FormID, roll: LeveledRoll? = nil
+    ) throws {
+        actors[actor] = try ActorState(
+            base: base, lists: store.packageLists(for: base, roll: roll)
+        )
     }
 
     public mutating func unregister(actor: ReferenceKey) {

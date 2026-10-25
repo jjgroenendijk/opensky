@@ -65,11 +65,12 @@ struct InventoryBaselineTests {
     @Test func theDeathItemRollsAtTheActorsLevel() throws {
         let resolver = try Fixture.resolver()
         resolver.leveling.playerLevel.set(50)
-        let low = resolver.deathItemStacks(for: Fixture.lootedActor, level: 1, seed: 1)
+        let roll = resolver.leveling.roll(forActor: Fixture.lootedActor)
+        let low = resolver.deathItemStacks(for: Fixture.lootedActor, roll: roll, level: 1)
         #expect(low == [InventoryStack(item: Fixture.sword, count: 1)])
-        let high = resolver.deathItemStacks(for: Fixture.lootedActor, level: 5, seed: 1)
+        let high = resolver.deathItemStacks(for: Fixture.lootedActor, roll: roll, level: 5)
         #expect(high == [InventoryStack(item: Fixture.cuirass, count: 1)])
-        #expect(resolver.deathItemStacks(for: Fixture.guardActor, level: 5, seed: 1).isEmpty)
+        #expect(resolver.deathItemStacks(for: Fixture.guardActor, roll: roll, level: 5).isEmpty)
     }
 
     @Test func emptyAndUnknownContainersBaselineEmpty() throws {

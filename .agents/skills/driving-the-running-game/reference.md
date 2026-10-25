@@ -53,7 +53,9 @@ arrow keys.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
 - `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
-  `LVLN` `hops` (list and chosen entry), the `encounterLevel`, and the `difficulty`.
+  `LVLN` `hops` (list and chosen entry), the `playerLevel` it rolls at, whether that level is
+  `frozen`, the `encounterLevel`, and the `difficulty`. `debug skillsmenu --levelup <n>` raises
+  the level; a frozen roll keeps its level until its cell resets (`debug rest 240` away from it).
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
   draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).

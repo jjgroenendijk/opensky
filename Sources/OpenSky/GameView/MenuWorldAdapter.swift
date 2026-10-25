@@ -308,8 +308,16 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         if actor == .player {
             return playerIdentity?.race
         }
-        return game.scripts.bridge?.placedReference(for: actor)
-            .flatMap { identityRecords?.race(ofBase: $0.base) }
+        guard
+            let base = game.scripts.bridge?.placedReference(for: actor)?.base,
+            let records = identityRecords
+        else { return nil }
+        let roll = game.worldState.leveledRoll(
+            of: actor,
+            base: base,
+            with: records.templates.leveling
+        )
+        return records.race(ofBase: base, roll: roll)
     }
 
     /// Only the player changes race: an NPC's body is built from its record.

@@ -77,44 +77,90 @@ nonisolated public struct InventoryBaselineResolver {
     }
 
     /// `owner`'s inventory as plugin data describes it, with no runtime state
-    /// applied. An owner nothing has touched resolves through here every time.
+    /// applied, rolled for the base record. A placed owner goes through `baseline(of:)`.
     public func baseline(for owner: InventoryOwner) -> ReferenceInventoryState {
         switch owner {
         case .player:
-            actorBaseline(Self.playerBase)
+            actorBaseline(Self.playerBase, templates: actors)
         case .generated:
             .empty
         case let .container(base):
-            containerBaseline(base, seed: UInt64(base.rawValue), cell: nil)
+            containerBaseline(base, roll: leveling.roll(forActor: base))
         case let .actor(base):
-            actorBaseline(base)
+            actorBaseline(base, templates: actors)
         }
     }
 
-    /// The same baseline for a placed owner. A container rolls by its own key and
-    /// at its cell's encounter level, so two chests of one base differ.
-    public func baseline(of holder: InventoryHolder) -> ReferenceInventoryState {
-        guard case let .container(base) = holder.owner else { return baseline(for: holder.owner) }
-        return containerBaseline(
-            base, seed: LeveledListRoll.seed(text: holder.key.description), cell: holder.cell
-        )
+    /// The same baseline for a placed owner, rolled by its own key at the player level
+    /// its cell froze, so two chests or two bandits of one base differ.
+    public func baseline(of holder: InventoryHolder, frozenLevel: Int?) -> ReferenceInventoryState {
+        guard let roll = roll(of: holder, frozenLevel: frozenLevel) else {
+            return baseline(for: holder.owner)
+        }
+        switch holder.owner {
+        case let .container(base): return containerBaseline(base, roll: roll)
+        case let .actor(base): return actorBaseline(base, templates: actors.rolling(roll))
+        case .player, .generated: return baseline(for: holder.owner)
+        }
+    }
+
+    /// A placed actor's or container's roll. Nil for the player and a generated owner,
+    /// which roll for their base.
+    public func roll(of holder: InventoryHolder, frozenLevel: Int?) -> LeveledRoll? {
+        switch holder.owner {
+        case let .actor(base):
+            leveling.roll(
+                for: holder.key, base: base, cell: holder.cell, frozenLevel: frozenLevel
+            )
+        case .container:
+            leveling.roll(for: holder.key, base: nil, cell: holder.cell, frozenLevel: frozenLevel)
+        case .player, .generated:
+            nil
+        }
+    }
+
+    /// Whether `owner`'s records roll a leveled list: a leveled template, or an outfit,
+    /// carried item, spell, or container entry that names one. Only such an owner
+    /// freezes a level.
+    public func rollsLeveledLists(_ owner: InventoryOwner) -> Bool {
+        switch owner {
+        case let .container(base):
+            return items.container(base)?.entries.contains { isLeveled($0.item) } ?? false
+        case let .actor(base):
+            guard let resolved = try? actors.resolve(base: base) else { return false }
+            let hasLeveledHop = resolved.chain.contains {
+                if case .leveled = $0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            let outfit = resolved.defaultOutfit.value.flatMap { outfits[$0.rawValue] }?.items
+            let carried = (try? actors.resolveCarriedItems(base: base).value)?.map(\.item)
+            let spells = (try? actors.resolveSpells(base: base).spells.value) ?? []
+            return hasLeveledHop || ((outfit ?? []) + (carried ?? [])).contains(where: isLeveled)
+                || spells.contains { actors.leveledSpells[$0.rawValue] != nil }
+        case .player, .generated:
+            return false
+        }
+    }
+
+    private func isLeveled(_ item: FormID) -> Bool {
+        leveledItems[item.rawValue] != nil
     }
 
     // MARK: - Per-owner derivation
 
     /// A container's CNTO list, leveled entries expanded. Nothing is equipped:
     /// a chest wears nothing.
-    private func containerBaseline(
-        _ base: FormID, seed: UInt64, cell: CellSceneLocation?
-    ) -> ReferenceInventoryState {
+    private func containerBaseline(_ base: FormID, roll: LeveledRoll) -> ReferenceInventoryState {
         guard let container = items.container(base) else { return .empty }
-        let roll = Roll(request: leveling.request(forCell: cell), seed: seed)
         var stacks: [InventoryStack] = []
         for entry in container.entries {
             // A CNTO count of zero or less is left to
             // `ReferenceInventoryState.init` to drop, which it does for every
             // non-positive stack however it was produced.
-            expand(entry.item, count: entry.count, roll: roll, into: &stacks)
+            expand(entry.item, count: entry.count, roll: Roll(roll), into: &stacks)
         }
         return ReferenceInventoryState(stacks: stacks)
     }
@@ -122,44 +168,39 @@ nonisolated public struct InventoryBaselineResolver {
     /// An actor's carried `CNTO` items plus its default outfit. The outfit is also
     /// its baseline equipped set, so an NPC does not start naked. A broken template
     /// chain yields an empty baseline; the appearance path already reports it.
-    private func actorBaseline(_ base: FormID) -> ReferenceInventoryState {
-        guard let resolved = try? actors.resolve(base: base) else { return .empty }
-        let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, for: base) } ?? []
+    private func actorBaseline(
+        _ base: FormID, templates: ActorTemplateResolver
+    ) -> ReferenceInventoryState {
+        guard let resolved = try? templates.resolve(base: base) else { return .empty }
+        let roll = templates.roll(for: base)
+        let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, roll: roll) } ?? []
         var stacks = worn
-        let carried = (try? actors.resolveCarriedItems(base: base).value) ?? []
-        let roll = Roll(request: leveling.request(forActor: base), seed: UInt64(base.rawValue))
+        let carried = (try? templates.resolveCarriedItems(base: base).value) ?? []
         for entry in carried {
-            expand(entry.item, count: entry.count, roll: roll, into: &stacks)
+            expand(entry.item, count: entry.count, roll: Roll(roll), into: &stacks)
         }
         return ReferenceInventoryState(stacks: stacks, equipped: worn.map(\.item))
     }
 
-    /// The actor base whose rolls an owner's outfit takes. Nil for a container.
-    public static func actorBase(of owner: InventoryOwner) -> FormID? {
-        switch owner {
-        case .player: playerBase
-        case let .actor(base): base
-        case .container, .generated: nil
-        }
-    }
-
-    /// One of each `OTFT` item, leveled entries rolled for the actor `base`, as
+    /// One of each `OTFT` item, leveled entries rolled by `roll`, as
     /// `ActorVisualResolver` rolls them. Nil when no outfit has the ID.
-    public func outfitStacks(_ outfitID: FormID, for base: FormID) -> [InventoryStack]? {
+    public func outfitStacks(_ outfitID: FormID, roll: LeveledRoll) -> [InventoryStack]? {
         guard let outfit = outfits[outfitID.rawValue] else { return nil }
-        let roll = Roll(request: leveling.request(forActor: base), seed: UInt64(base.rawValue))
         var stacks: [InventoryStack] = []
         for item in outfit.items {
-            expand(item, count: 1, roll: roll, into: &stacks)
+            expand(item, count: 1, roll: Roll(roll), into: &stacks)
         }
         return ReferenceInventoryState(stacks: stacks).stacks
     }
 
-    /// The death item an actor of `base` gets when it dies, rolled at its own `level`
-    /// (CK "LeveledItem"). Empty when the actor has none or the roll gives nothing.
-    public func deathItemStacks(for base: FormID, level: Int, seed: UInt64) -> [InventoryStack] {
-        guard let item = (try? actors.resolveDeathItem(base: base))?.value else { return [] }
-        return expanded(item, count: 1, request: leveling.request(atLevel: level), seed: seed)
+    /// The death item an actor gets when it dies, its template chain walked by `roll`
+    /// and its list rolled at the actor's own `level` (CK "LeveledItem").
+    public func deathItemStacks(
+        for base: FormID, roll: LeveledRoll, level: Int
+    ) -> [InventoryStack] {
+        let templates = actors.rolling(roll)
+        guard let item = (try? templates.resolveDeathItem(base: base))?.value else { return [] }
+        return expanded(item, count: 1, request: leveling.request(atLevel: level), seed: roll.seed)
     }
 
     // MARK: - Leveled expansion
@@ -168,6 +209,15 @@ nonisolated public struct InventoryBaselineResolver {
     private struct Roll {
         let request: LeveledRequest
         let seed: UInt64
+
+        init(request: LeveledRequest, seed: UInt64) {
+            self.request = request
+            self.seed = seed
+        }
+
+        init(_ roll: LeveledRoll) {
+            self.init(request: roll.request, seed: roll.seed)
+        }
     }
 
     /// `id` as stacks: itself, or its leveled roll at `request` when it names an LVLI.

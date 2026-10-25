@@ -282,9 +282,11 @@ nonisolated public struct ActorVisualResolver: Sendable {
     ///   - appearance: the template-resolved actor.
     ///   - equipped: a runtime equipped set that replaces the `defaultOutfit` chain;
     ///     nil resolves through DOFT.
+    ///   - roll: the placed actor's leveled roll for the outfit; nil rolls for the base.
     public func resolve(
         appearance: ResolvedActorAppearance,
-        equipped: [FormID]? = nil
+        equipped: [FormID]? = nil,
+        roll: LeveledRoll? = nil
     ) throws -> ResolvedActorVisual {
         guard
             let raceID = appearance.race.value,
@@ -302,7 +304,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         let worn: WornEquipment = if let equipped {
             wornEquipment(equipped: equipped, skips: &skips)
         } else {
-            try WornEquipment(armors: outfitPieces(of: appearance))
+            try WornEquipment(armors: outfitPieces(of: appearance, roll: roll))
         }
         let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []

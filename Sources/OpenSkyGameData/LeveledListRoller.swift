@@ -1,7 +1,7 @@
-// What a leveled roll reads besides the list: the live player level, the
-// settings, the `LVLG` chance-none globals, and the encounter zone and
-// difficulty each leveled actor base and each cell was last built with. Every
-// resolver of one session shares one roller, so they all pick the same entry.
+// What a leveled roll reads besides the list: the player level, the settings,
+// the `LVLG` chance-none globals, and the encounter zone and difficulty each
+// placed reference was built with. Every resolver of one session shares one
+// roller, and one owner's `LeveledRoll` gives each of them the same pick.
 // See docs/engine/leveled-lists.md.
 
 import Foundation
@@ -25,6 +25,7 @@ nonisolated public struct LeveledActorPlacement: Equatable, Sendable {
 nonisolated public final class LeveledPlacements: Sendable {
     private struct State {
         var actors: [UInt32: LeveledActorPlacement] = [:]
+        var references: [ReferenceKey: LeveledActorPlacement] = [:]
         var cells: [CellSceneLocation: EncounterZone] = [:]
     }
 
@@ -37,6 +38,10 @@ nonisolated public final class LeveledPlacements: Sendable {
         state.withLock { $0.actors[base.rawValue] = placement }
     }
 
+    public func record(reference: ReferenceKey, _ placement: LeveledActorPlacement) {
+        state.withLock { $0.references[reference] = placement }
+    }
+
     public func record(cell: CellSceneLocation, zone: EncounterZone?) {
         state.withLock { $0.cells[cell] = zone }
     }
@@ -45,18 +50,48 @@ nonisolated public final class LeveledPlacements: Sendable {
         state.withLock { $0.actors[base.rawValue] }
     }
 
+    public func placement(ofReference reference: ReferenceKey) -> LeveledActorPlacement? {
+        state.withLock { $0.references[reference] }
+    }
+
     public func zone(of cell: CellSceneLocation) -> EncounterZone? {
         state.withLock { $0.cells[cell] }
     }
 }
 
-/// Everything an actor base's rolls read besides the records, so a memo of a
-/// derived baseline can tell when to derive again.
-nonisolated public struct LeveledActorRollKey: Hashable, Sendable {
-    public let base: FormID
+/// The seed and levels one owner's rolls read. Every resolver that gets the same
+/// roll picks the same entries, and a memo keyed on it derives again when it changes.
+nonisolated public struct LeveledRoll: Hashable, Sendable {
+    public let seed: UInt64
     public let playerLevel: Int
     public let encounterLevel: Int
     public let difficulty: LeveledActorDifficulty
+
+    public init(
+        seed: UInt64, playerLevel: Int, encounterLevel: Int,
+        difficulty: LeveledActorDifficulty = .none
+    ) {
+        self.seed = seed
+        self.playerLevel = playerLevel
+        self.encounterLevel = encounterLevel
+        self.difficulty = difficulty
+    }
+
+    /// What an item or spell list asks at.
+    public var request: LeveledRequest {
+        LeveledRequest(level: encounterLevel, playerLevel: playerLevel)
+    }
+}
+
+/// An actor base and the roll it resolved with, the key of a derived-baseline memo.
+nonisolated public struct LeveledActorRollKey: Hashable, Sendable {
+    public let base: FormID
+    public let roll: LeveledRoll
+
+    public init(base: FormID, roll: LeveledRoll) {
+        self.base = base
+        self.roll = roll
+    }
 }
 
 nonisolated public struct LeveledListRoller: Sendable {
@@ -86,23 +121,45 @@ nonisolated public struct LeveledListRoller: Sendable {
         )
     }
 
-    /// The request for the lists an actor base carries: its outfit, items, and spells.
-    public func request(forActor base: FormID) -> LeveledRequest {
-        request(in: placements.placement(of: base)?.zone)
-    }
-
-    public func rollKey(forActor base: FormID) -> LeveledActorRollKey {
-        let placement = placements.placement(of: base)
-        let request = request(in: placement?.zone)
-        return LeveledActorRollKey(
-            base: base, playerLevel: request.playerLevel, encounterLevel: request.level,
-            difficulty: placement?.difficulty ?? .none
+    /// The roll of an actor base with no placed reference in hand, seeded by the base.
+    public func roll(forActor base: FormID) -> LeveledRoll {
+        roll(
+            seed: UInt64(base.rawValue), placement: placements.placement(of: base),
+            playerLevel: playerLevel.level
         )
     }
 
-    /// The request for a container in `cell`; an unknown cell has no zone.
-    public func request(forCell cell: CellSceneLocation?) -> LeveledRequest {
-        request(in: cell.flatMap(placements.zone(of:)))
+    /// The roll of one placed actor or container, seeded by its key. `frozenLevel` is
+    /// the player level its cell froze; nil rolls at the live level.
+    public func roll(
+        for reference: ReferenceKey, base: FormID?, cell: CellSceneLocation?, frozenLevel: Int?
+    ) -> LeveledRoll {
+        let placement = placements.placement(ofReference: reference)
+            ?? base.flatMap(placements.placement(of:))
+            ?? LeveledActorPlacement(zone: cell.flatMap(placements.zone(of:)), difficulty: .none)
+        return roll(
+            seed: LeveledListRoll.seed(text: reference.description), placement: placement,
+            playerLevel: frozenLevel ?? playerLevel.level
+        )
+    }
+
+    /// A placed actor's roll. Nil for the player and a generated actor.
+    public func roll(of holder: ActorValueHolder, frozenLevel: Int?) -> LeveledRoll? {
+        guard case let .actor(base) = holder.subject else { return nil }
+        return roll(for: holder.key, base: base, cell: holder.cell, frozenLevel: frozenLevel)
+    }
+
+    private func roll(
+        seed: UInt64, placement: LeveledActorPlacement?, playerLevel: Int
+    ) -> LeveledRoll {
+        LeveledRoll(
+            seed: seed,
+            playerLevel: playerLevel,
+            encounterLevel: EncounterLevel.level(
+                playerLevel: playerLevel, zone: placement?.zone, settings: settings
+            ),
+            difficulty: placement?.difficulty ?? .none
+        )
     }
 
     /// A request at an exact level, such as a harvested plant's player level.
@@ -126,17 +183,13 @@ nonisolated public struct LeveledListRoller: Sendable {
         )
     }
 
-    /// The `LVLN` entry the actor walk from `base` takes, at the zone and difficulty
-    /// `base` was last built with.
-    public func actorEntry(_ list: LeveledList, for base: FormID) -> LeveledList.Entry? {
-        let placement = placements.placement(of: base)
-        var random = SplitMix64(
-            seed: LeveledListRoll.seed(UInt64(base.rawValue), UInt64(list.formID.rawValue))
-        )
+    /// The `LVLN` entry an actor walk takes for the owner of `roll`.
+    public func actorEntry(_ list: LeveledList, roll: LeveledRoll) -> LeveledList.Entry? {
+        var random = SplitMix64(seed: LeveledListRoll.seed(roll.seed, UInt64(list.formID.rawValue)))
         return LeveledListRoll.actorEntry(
             list,
-            encounterLevel: request(in: placement?.zone).level,
-            difficulty: placement?.difficulty ?? .none,
+            encounterLevel: roll.encounterLevel,
+            difficulty: roll.difficulty,
             settings: settings,
             random: &random
         )

@@ -39,8 +39,18 @@ public struct InventoryRuntime: InventoryAccess {
     /// `holder`'s effective inventory: its runtime component when it has one,
     /// its re-derived plugin baseline when it does not.
     public func inventory(of holder: InventoryHolder) -> ReferenceInventoryState {
-        store.component(ReferenceInventoryState.self, for: holder.key)
-            ?? baselines.baseline(of: holder)
+        store.component(ReferenceInventoryState.self, for: holder.key) ?? baseline(of: holder)
+    }
+
+    /// `holder`'s plugin inventory, rolled at the level its cell froze.
+    public func baseline(of holder: InventoryHolder) -> ReferenceInventoryState {
+        baselines.baseline(of: holder, frozenLevel: store.frozenLeveledLevel(of: holder.key))
+    }
+
+    /// The roll `holder`'s leveled lists take: its own when placed, else its base's.
+    public func roll(of holder: InventoryHolder) -> LeveledRoll {
+        baselines.roll(of: holder, frozenLevel: store.frozenLeveledLevel(of: holder.key))
+            ?? baselines.leveling.roll(forActor: InventoryBaselineResolver.playerBase)
     }
 
     /// Whether `holder` has been touched at runtime, as opposed to still

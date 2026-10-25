@@ -104,6 +104,8 @@ nonisolated extension OpenSkySaveDecoder {
         /// Absent `RLOC`: every reference is in its plugin cell.
         public var relocations: [SaveRelocationEntry] = []
         public var motionTypes: [SaveMotionTypeEntry] = []
+        /// Absent `LVRL`: every reference rolls at the live player level.
+        public var leveledRolls: [SaveLeveledRollEntry] = []
         /// Absent `SCNS`: no scene is playing.
         public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SCNP`: no scene is paused. Each entry holds only `pausedAt`.

@@ -38,9 +38,16 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
 
     /// Template-chain resolution, which supplies the NPC_ list, the race and
     /// the LVSP index an entry may route through.
-    public let templates: ActorTemplateResolver
+    public private(set) var templates: ActorTemplateResolver
     /// RACE decodes by raw FormID, which supply the race list.
     public let races: [UInt32: Race]
+
+    /// This resolver for one placed reference's roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.templates = templates.rolling(roll)
+        return copy
+    }
 
     /// Built from the indexes the actor-value side already loaded, rather than
     /// walking the plugin a second time for records that are already in memory.
@@ -72,9 +79,9 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
     /// SPEL, which this type does not resolve — `SpellbookRuntime.resolve` is
     /// what decides whether a link is a spell the load order still carries.
     private func expand(_ list: [FormID], for base: FormID) -> [FormID] {
-        let request = templates.leveling.request(forActor: base)
+        let roll = templates.roll(for: base)
         return list.flatMap {
-            expand($0, request: request, seed: UInt64(base.rawValue), depth: 0, visiting: [])
+            expand($0, request: roll.request, seed: roll.seed, depth: 0, visiting: [])
         }
     }
 
@@ -99,11 +106,12 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
         }
     }
 
-    /// The spell list for one actor-value subject, which is what a runtime
-    /// holding an `ActorValueHolder` actually has in hand.
-    public func baseline(for subject: ActorValueSubject) -> ActorSpellBaseline {
+    /// The spell list for one actor-value subject, rolled by a placed actor's `roll`.
+    public func baseline(
+        for subject: ActorValueSubject, roll: LeveledRoll? = nil
+    ) -> ActorSpellBaseline {
         switch subject {
-        case let .actor(base): baseline(for: base)
+        case let .actor(base): rolling(roll).baseline(for: base)
         case .player, .generated: .none
         }
     }

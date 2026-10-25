@@ -128,13 +128,15 @@ struct LeveledListRollTests {
         )
         let list = try Self.list(entries: [(1, 0x10), (9, 0x20), (15, 0x30)])
         let base = FormID(0x500)
-        #expect(roller.actorEntry(list, for: base)?.reference == FormID(0x20))
+        #expect(roller.actorEntry(list, roll: roller.roll(forActor: base))?
+            .reference == FormID(0x20))
         try roller.placements.record(
             actor: base,
             LeveledActorPlacement(zone: Self.zone(minimum: 15, maximum: 0), difficulty: .hard)
         )
-        #expect(roller.actorEntry(list, for: base)?.reference == FormID(0x30))
-        #expect(roller.rollKey(forActor: base).encounterLevel == 15)
+        #expect(roller.actorEntry(list, roll: roller.roll(forActor: base))?
+            .reference == FormID(0x30))
+        #expect(roller.roll(forActor: base).encounterLevel == 15)
 
         let gated = try Self.list(entries: [(1, 0x10)], global: 0x99)
         #expect(roller.roll(gated, count: 1, request: roller.request(atLevel: 1), seed: 1).isEmpty)
@@ -144,8 +146,54 @@ struct LeveledListRollTests {
         let roller = LeveledListRoller(playerLevel: PlayerLevelSource(2))
         let cell = CellSceneLocation.interior(FormID(0x77))
         try roller.placements.record(cell: cell, zone: Self.zone(minimum: 8, maximum: 0))
-        #expect(roller.request(forCell: cell).level == 8)
-        #expect(roller.request(forCell: nil).level == 2)
+        let chest = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x900)
+        #expect(roller.roll(for: chest, base: nil, cell: cell, frozenLevel: nil)
+            .encounterLevel == 8)
+        #expect(roller.roll(for: chest, base: nil, cell: nil, frozenLevel: nil).encounterLevel == 2)
+    }
+
+    /// Two placed references of one base roll by their own keys, and a frozen level
+    /// holds after the player levels up.
+    @Test func aPlacedReferenceRollsByItsKeyAtItsFrozenLevel() throws {
+        let roller = LeveledListRoller(playerLevel: PlayerLevelSource(30))
+        let list = try Self.list(entries: (1 ... 40).map { (UInt16(1), UInt32(0x100 + $0)) })
+        let base = FormID(0x500)
+        let picks = Set((0 ..< 8).compactMap { id in
+            roller.actorEntry(list, roll: roller.roll(
+                for: .plugin(name: "skyrim.esm", objectID: 0xA00 + id), base: base, cell: nil,
+                frozenLevel: nil
+            ))?.reference
+        })
+        #expect(picks.count > 1)
+
+        let bandit = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0xB00)
+        let levels = try Self.list(entries: [(1, 0x10), (20, 0x20)])
+        let frozen = roller.roll(for: bandit, base: base, cell: nil, frozenLevel: 5)
+        #expect(frozen.playerLevel == 5)
+        #expect(roller.actorEntry(levels, roll: frozen)?.reference == FormID(0x10))
+        let live = roller.roll(for: bandit, base: base, cell: nil, frozenLevel: nil)
+        #expect(roller.actorEntry(levels, roll: live)?.reference == FormID(0x20))
+    }
+
+    /// The reference's own placement wins over its base's.
+    @Test func aReferencePlacementWinsOverItsBase() throws {
+        let roller = LeveledListRoller(playerLevel: PlayerLevelSource(2))
+        let base = FormID(0x500)
+        let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0xC00)
+        try roller.placements.record(
+            actor: base, LeveledActorPlacement(
+                zone: Self.zone(minimum: 5, maximum: 0),
+                difficulty: .easy
+            )
+        )
+        try roller.placements.record(
+            reference: key,
+            LeveledActorPlacement(zone: Self.zone(minimum: 12, maximum: 0), difficulty: .hard)
+        )
+        let roll = roller.roll(for: key, base: base, cell: nil, frozenLevel: nil)
+        #expect(roll.encounterLevel == 12)
+        #expect(roll.difficulty == .hard)
+        #expect(roller.roll(forActor: base).encounterLevel == 5)
     }
 
     @Test func settingsResolveFromTheGameSettings() throws {

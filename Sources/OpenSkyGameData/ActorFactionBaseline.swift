@@ -21,7 +21,14 @@ nonisolated public struct ActorFactionBaseline: Equatable, Sendable {
 /// Re-derives actor faction lists and AI attributes from plugin data.
 nonisolated public struct ActorFactionBaselineResolver: Sendable {
     /// Template-chain resolution, which supplies both field groups.
-    public let templates: ActorTemplateResolver
+    public private(set) var templates: ActorTemplateResolver
+
+    /// This resolver for one placed reference's roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.templates = templates.rolling(roll)
+        return copy
+    }
 
     public init(templates: ActorTemplateResolver) {
         self.templates = templates

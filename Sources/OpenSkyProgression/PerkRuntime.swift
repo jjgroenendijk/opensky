@@ -63,6 +63,11 @@ public struct PerkRuntime: PerkAccess {
         worldState.component(PerkState.self, for: holder.key) ?? PerkState()
     }
 
+    /// The level `key`'s leveled rolls froze, which its authored perks follow.
+    public func frozenLeveledLevel(of key: ReferenceKey) -> Int? {
+        worldState.frozenLeveledLevel(of: key)
+    }
+
     public func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).owns(perk) || effectPerks[holder.key]?.contains(perk) == true
     }

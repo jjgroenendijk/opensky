@@ -176,15 +176,17 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         leveling = resolver?.templates.leveling ?? LeveledListRoller(playerLevel: level)
     }
 
-    /// The baseline for one subject. Never throws or returns nil: a broken template
-    /// chain degrades to `fallback`. `ActorValueResolver.resolve(base:)` reports the
-    /// failure to a caller that wants it.
-    public func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
+    /// The baseline for one subject, rolled by a placed actor's `roll` or else by its
+    /// base. A broken template chain degrades to `fallback`;
+    /// `ActorValueResolver.resolve(base:)` reports the failure.
+    public func baseline(
+        for subject: ActorValueSubject, roll: LeveledRoll? = nil
+    ) -> ActorValueBaseline {
         switch subject {
         case .player:
             playerBaseline(race: nil)
         case let .actor(base):
-            actorBaseline(base: base)
+            actorBaseline(base: base, resolver: resolver?.rolling(roll))
         case .generated:
             fallback
         }
@@ -238,7 +240,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         return baseline
     }
 
-    private func actorBaseline(base: FormID) -> ActorValueBaseline {
+    private func actorBaseline(base: FormID, resolver: ActorValueResolver?) -> ActorValueBaseline {
         guard
             let resolver,
             let resolved = try? resolver.resolve(base: base)

@@ -191,6 +191,13 @@ extension AIWorldAdapter: PackageWorld {
         game.vehicleWorld.isPlayerAIDriven
     }
 
+    func packageLeveledRoll(of actor: ReferenceKey, base: FormID) -> LeveledRoll? {
+        guard actor != .player, let roller = game.worldData?.actorValueBaselines?.leveling else {
+            return nil
+        }
+        return game.worldState.leveledRoll(of: actor, base: base, with: roller)
+    }
+
     func packageResidents() -> [RuntimeReferenceEntry]? {
         guard game.renderer != nil else { return nil }
         return game.streamer?.residentActorEntries()

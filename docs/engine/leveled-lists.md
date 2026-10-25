@@ -84,29 +84,37 @@ encounter level times the difficulty's `fLeveledActorMult` and `fLevelScalingMul
 An `LVLN` with no entry low enough gives its lowest entries. No source says what the game
 does then; dropping the actor would leave the reference empty.
 
-## How the engine shares one roll
+## One roll per placed reference
 
-`ActorTemplateResolver`, `ActorVisualResolver`, `InventoryBaselineResolver`, the spell and
-faction baselines, and the package store all read an actor by its base record. One
-`LeveledListRoller` per session holds the player level source, the settings, and the
-placements, so every one of them picks the same entry.
+The game makes a new base record for each placed leveled actor, and keeps what it rolled
+until the cell resets. OpenSky gives each placed actor and container its own
+`LeveledRoll` instead: a seed from its reference key, the player level, the encounter level,
+and the difficulty.
 
-- The random draw is seeded by the owner and the list. For an actor the owner is its base,
-  so the outfit it is drawn in is the outfit in its inventory. For a container the owner is
-  its reference key, so two chests of one base differ.
-- A cell build records each actor base's zone and difficulty, and each cell's zone, before
-  its actors resolve. The newest build of a base wins.
-- A baseline nothing has changed is derived again on each read, so a level-up changes the
-  roll. The actor-value and faction memos key on the player level, the encounter level, and
-  the difficulty for that reason.
+- `ActorTemplateResolver`, `ActorVisualResolver`, `InventoryBaselineResolver`, the spell,
+  perk, faction, and package baselines, and the identity records all read an actor by its
+  base. A caller that holds a placed reference passes its roll (`rolling(_:)`), so the
+  template walk, the drawn outfit, the inventory, the spells, the name, and the voice agree.
+  A call with no reference rolls for the base, seeded by the base.
+- A cell build records each actor's zone and difficulty by its reference key, and each
+  cell's zone for its containers, before anything rolls.
+- When a cell first joins the live world, each actor and container whose records name a
+  leveled list freezes the player level of that moment (`LeveledRollState`). Its rolls use
+  that level until a cell reset clears it; the next attach then freezes the new level and
+  rebuilds the cell. A No Respawn reference never resets, so it keeps its roll.
+- A save keeps the frozen levels in the `LVRL` chunk
+  ([OpenSky save](/formats/opensky-save.md)).
+- Memos of derived baselines key on the base and the roll, so a new level or placement
+  derives again.
 
 `openskycli game state player` gives `level`. `state actors` gives each actor's `leveled`
-hops: the list, the chosen entry, the encounter level, and the difficulty.
+hops: the list, the chosen entry, the player level it rolls at, whether that level is frozen,
+the encounter level, and the difficulty.
 
 ## Where OpenSky differs
 
-- The game makes a new base for each placed leveled actor and keeps its roll until the cell
-  resets. OpenSky rolls per base: every reference of one base shares the newest placement's
-  zone and difficulty, and an untouched actor or container rolls again after a level-up or a
-  load.
+- A frozen roll keeps the player level, not the picked entries. A record change between two
+  sessions, such as a new plugin, changes what the same level picks.
+- Papyrus `GetLeveledActorBase` returns the placed base, not a rolled base, because OpenSky
+  makes no new base records.
 - `LVLG` reads the global's plugin value, not a value a script set.

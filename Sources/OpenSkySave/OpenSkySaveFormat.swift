@@ -153,6 +153,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let relocations = "RLOC"
         /// Motion types scripts set with `SetMotionType`.
         public static let motionTypes = "RMOT"
+        /// The player level each placed actor and container froze for its leveled lists.
+        public static let leveledRolls = "LVRL"
         /// Playing scenes: phase, started actions, and completed actions.
         public static let scenes = "SCNS"
         /// The pause time of each paused scene. Apart from `SCNS`, whose entries have no

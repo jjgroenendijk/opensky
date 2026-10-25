@@ -53,21 +53,20 @@ nonisolated public struct WornEquipment: Sendable {
 }
 
 nonisolated extension ActorVisualResolver {
-    /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI rolled for the actor's
-    /// base, as `InventoryBaselineResolver.outfitStacks` rolls it. Any unusable
+    /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI rolled by `roll` (else for
+    /// the base), as `InventoryBaselineResolver.outfitStacks` rolls it. Any unusable
     /// link throws: the gate forbids silently rendering the actor naked.
-    public func outfitPieces(of appearance: ResolvedActorAppearance) throws -> [Armor] {
+    public func outfitPieces(
+        of appearance: ResolvedActorAppearance, roll: LeveledRoll? = nil
+    ) throws -> [Armor] {
         guard let outfitID = appearance.defaultOutfit.value else { return [] }
         guard let outfit = outfits[outfitID.rawValue] else {
             throw ActorVisualError.brokenOutfitChain(
                 outfit: outfitID, item: nil, reason: .missingOutfitRecord
             )
         }
-        let roll = OutfitRoll(
-            outfit: outfitID,
-            request: leveling.request(forActor: appearance.base),
-            seed: UInt64(appearance.base.rawValue)
-        )
+        let actorRoll = roll ?? leveling.roll(forActor: appearance.base)
+        let roll = OutfitRoll(outfit: outfitID, request: actorRoll.request, seed: actorRoll.seed)
         var pieces: [Armor] = []
         for item in outfit.items {
             var ancestors: Set<UInt32> = []

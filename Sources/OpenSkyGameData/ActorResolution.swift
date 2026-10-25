@@ -150,6 +150,8 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     public let skippedRecords: SkippedRecords
     /// The roll an `LVLN` hop and every list an actor carries go through.
     public var leveling: LeveledListRoller
+    /// The placed reference's roll. Nil rolls for the base itself.
+    public private(set) var placedRoll: LeveledRoll?
 
     public init(
         actors: [UInt32: ActorBase],
@@ -163,6 +165,18 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         self.leveledSpells = leveledSpells
         self.skippedRecords = skippedRecords
         self.leveling = leveling
+    }
+
+    /// This resolver for one placed reference, so every field resolves through its roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.placedRoll = roll
+        return copy
+    }
+
+    /// The roll the walk from `base` takes.
+    public func roll(for base: FormID) -> LeveledRoll {
+        placedRoll ?? leveling.roll(forActor: base)
     }
 
     public static func build(from file: ESMFile, localized _: Bool) -> ActorTemplateResolver {
@@ -327,7 +341,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         }
     }
 
-    /// Walks TPLT links from `base`, rolling each LVLN hop for `base`, until a
+    /// Walks TPLT links from `base`, rolling each LVLN hop by `roll(for:)`, until a
     /// record without a template.
     func resolveChain(
         base: FormID
@@ -338,6 +352,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         var visitOrder: [FormID] = []
         var next: FormID? = base
         var referencedBy: FormID?
+        let roll = roll(for: base)
         while let current = next {
             guard visited.insert(current.rawValue).inserted else {
                 throw ActorResolveError.cycle(visitOrder + [current])
@@ -349,7 +364,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
                 next = npc.template
                 referencedBy = current
             } else if let list = leveledActors[current.rawValue] {
-                guard let entry = leveling.actorEntry(list, for: base) else {
+                guard let entry = leveling.actorEntry(list, roll: roll) else {
                     throw ActorResolveError.emptyLeveledList(
                         current, referencedBy: referencedBy
                     )

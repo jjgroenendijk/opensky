@@ -136,7 +136,8 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// Records the cell's zone for its containers, and each actor's zone (its own
-    /// `XEZN`, else the cell's) and `XLCM`, before its template chain rolls.
+    /// `XEZN`, else the cell's) and `XLCM` by reference and by base, before its
+    /// template chain rolls.
     nonisolated func recordLeveledPlacements(
         _ collected: [CollectedActor], location: CellSceneLocation, zone: FormID?
     ) {
@@ -144,14 +145,21 @@ nonisolated extension CellSceneBuilder {
         encounterZones = zones
         let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: pluginName)?.zone }
         leveling.placements.record(cell: location, zone: cellZone)
-        for actor in collected.map(\.actor) {
+        for collectedActor in collected {
+            let actor = collectedActor.actor
             let own = actor.details.links["XEZN"].flatMap {
                 zones.resolve($0, fromPlugin: FormIDResolver.loadOrderSpaceName)?.zone
             }
-            leveling.placements.record(actor: actor.base, LeveledActorPlacement(
+            let placement = LeveledActorPlacement(
                 zone: own ?? cellZone,
                 difficulty: LeveledActorDifficulty(levelModifier: actor.details.levelModifier)
-            ))
+            )
+            leveling.placements.record(actor: actor.base, placement)
+            let key = collectedActor.spawnKey
+                ?? ReferenceKey.resolve(actor.formID, using: formIDResolver)
+            if let key {
+                leveling.placements.record(reference: key, placement)
+            }
         }
     }
 
@@ -165,7 +173,7 @@ nonisolated extension CellSceneBuilder {
     ) -> CellActorBuild {
         var build = CellActorBuild()
         let actors = collected.map(\.actor)
-        build.entries = actorEntries(collected)
+        build.entries = actorEntries(collected, deltas: deltas)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
@@ -270,12 +278,16 @@ nonisolated extension CellSceneBuilder {
                 continue
             }
             do {
-                let appearance = try resolvers.template.resolve(base: actor.base)
+                let roll = indexed[actor.formID].map {
+                    leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
+                }
+                let appearance = try resolvers.template.rolling(roll).resolve(base: actor.base)
                 let visual = try resolvers.visual.resolve(
                     appearance: appearance,
                     equipped: runtimeEquipment(
                         entry: indexed[actor.formID], deltas: deltas
-                    )
+                    ),
+                    roll: roll
                 ).presenting(indexed[actor.formID].flatMap {
                     deltas[$0.key]?.component(ActorPresentationState.self)
                 })

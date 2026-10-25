@@ -99,7 +99,8 @@ extension ActorValueCoordinator {
     ) -> ResolvedActorValues? {
         guard case let .actor(base) = holder.subject, let resolver = runtime.baselines.resolver
         else { return nil }
-        return try? resolver.resolve(base: base)
+        return try? resolver.rolling(runtime.leveledRoll(of: holder, base: base))
+            .resolve(base: base)
     }
 
     /// Falls back to the player when no resident actor answers, so the line is

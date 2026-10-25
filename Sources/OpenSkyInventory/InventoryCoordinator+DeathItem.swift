@@ -16,7 +16,7 @@ extension InventoryCoordinator {
             case let .actor(base) = holder.owner
         else { return [] }
         let stacks = runtime.inventory.baselines.deathItemStacks(
-            for: base, level: actorLevel, seed: LeveledListRoll.seed(text: key.description)
+            for: base, roll: runtime.inventory.roll(of: holder), level: actorLevel
         )
         guard
             !stacks.isEmpty, (try? runtime.inventory.apply(

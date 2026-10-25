@@ -120,7 +120,7 @@ public struct FactionRuntime: FactionAccess {
         seededActors.insert(holder.key)
         guard baselines != nil, let pluginName else { return .none }
         return seed(
-            baseline(for: holder.subject).memberships,
+            baseline(for: holder).memberships,
             fromPlugin: pluginName,
             to: holder
         )
@@ -168,20 +168,20 @@ public struct FactionRuntime: FactionAccess {
             relationshipOverrides: worldState
                 .component(ActorRelationshipState.self, for: holder.key)
                 ?? ActorRelationshipState(),
-            aiData: baseline(for: holder.subject).aiData,
+            aiData: baseline(for: holder).aiData,
             hostilityOverride: worldState
                 .component(ActorCombatState.self, for: holder.key)?
                 .hostility,
-            crimeFaction: crimeFaction(of: holder.subject)
+            crimeFaction: crimeFaction(of: holder)
         )
     }
 
-    /// The crime faction `subject` reports crimes to: its `CRIF` resolved against
+    /// The crime faction `holder` reports crimes to: its `CRIF` resolved against
     /// the load order. Nil for the player, a generated actor, and an unknown link.
-    public func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
+    public func crimeFaction(of holder: ActorValueHolder) -> ReferenceKey? {
         guard
             let pluginName,
-            let link = baseline(for: subject).crimeFaction,
+            let link = baseline(for: holder).crimeFaction,
             let resolved = factions.resolve(link, fromPlugin: pluginName)
         else { return nil }
         return ReferenceKey(resolved: resolved.id)
@@ -226,10 +226,15 @@ public struct FactionRuntime: FactionAccess {
 
     /// The authored baseline, resolved once per base record and leveled roll. Nil
     /// resolver reads `.none`.
-    private func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
-        guard let baselines, case let .actor(base) = subject else { return .none }
-        let key = baselines.templates.leveling.rollKey(forActor: base)
-        return baselineMemo.value(for: key) { baselines.baseline(for: base) }
+    private func baseline(for holder: ActorValueHolder) -> ActorFactionBaseline {
+        guard let baselines, case let .actor(base) = holder.subject else { return .none }
+        let roll = baselines.templates.leveling.roll(
+            for: holder.key, base: base, cell: holder.cell,
+            frozenLevel: worldState.frozenLeveledLevel(of: holder.key)
+        )
+        return baselineMemo.value(for: LeveledActorRollKey(base: base, roll: roll)) {
+            baselines.rolling(roll).baseline(for: base)
+        }
     }
 
     /// The NPC_ base identity a RELA record would name, resolved through the

@@ -38,8 +38,18 @@ public struct ActorValueRuntime: ActorValueAccess {
         guard case let .actor(base) = holder.subject else {
             return baselines.baseline(for: holder.subject)
         }
-        let key = baselines.leveling.rollKey(forActor: base)
-        return actorBaselines.value(for: key) { baselines.baseline(for: holder.subject) }
+        let roll = leveledRoll(of: holder, base: base)
+        return actorBaselines.value(for: LeveledActorRollKey(base: base, roll: roll)) {
+            baselines.baseline(for: holder.subject, roll: roll)
+        }
+    }
+
+    /// A placed actor's roll, at the level its cell froze.
+    public func leveledRoll(of holder: ActorValueHolder, base: FormID) -> LeveledRoll {
+        baselines.leveling.roll(
+            for: holder.key, base: base, cell: holder.cell,
+            frozenLevel: store.frozenLeveledLevel(of: holder.key)
+        )
     }
 
     /// `holder`'s effective state: its runtime component when it has one, a
