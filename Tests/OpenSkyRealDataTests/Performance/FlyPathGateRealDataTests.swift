@@ -12,7 +12,7 @@ import Testing
 
 @Suite(.tags(.perf, .gpu, .slow))
 struct FlyPathGateRealDataTests {
-    @Test(.enabled(if: RealDataEnvironment.canRender))
+    @Test(.enabled(if: RealDataEnvironment.canTimeFrames))
     @MainActor
     func flyPathStaysWithinBudgets() throws {
         let worldspace = FirstRenderCell.worldspaceEditorID

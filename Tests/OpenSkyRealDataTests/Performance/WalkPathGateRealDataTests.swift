@@ -9,7 +9,7 @@ import Testing
 
 @Suite(.tags(.perf, .gpu, .slow))
 struct WalkPathGateRealDataTests {
-    @Test(.enabled(if: RealDataEnvironment.canRender))
+    @Test(.enabled(if: RealDataEnvironment.canTimeFrames))
     @MainActor
     func walkPathStaysWithinBudgets() throws {
         let builder = try StreamingGateSupport.makeBuilder()
