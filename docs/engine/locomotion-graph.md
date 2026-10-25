@@ -34,12 +34,16 @@ declares 230 variables and 1,217 events, and a name that only sounds right resol
 | Variable | Type | Written as |
 | --- | --- | --- |
 | `Speed`, `SpeedSampled` | real | The gait speed, or 0 when standing |
-| `Direction` | real | Radians away from facing. Positive is left, 0 is straight ahead |
+| `Direction` | real | Fraction of a turn clockwise from facing, in [0, 1): 0 ahead, 0.25 right, 0.75 left |
 | `TurnDelta` | real | Yaw change over the step |
 | `IsSprinting`, `IsSneaking` | bool | The resolved gait |
 | `iIsInSneak` | int32 | The same sneak state, in its int spelling |
 | `bInJumpState` | bool | True while off the ground |
 | `SpeedWalk`, `SpeedRun` | real | The configured gait speeds |
+
+The `Direction` unit comes from the graph data. `MT_Direction_Blend` in `mt_behavior.hkx` is a
+cyclic parametric blender over 0 to 1, with `MT_ForwardBlend` at 0, `MT_RightBlend` at 0.25,
+`MT_BackwardBlend` at 0.5, and `MT_LeftBlend` at 0.75 (`openskycli hkx --blenders`).
 
 Events: `moveStart` and `moveStop`, `SprintStart` and `SprintStop`, `SneakStart` and `SneakStop`,
 `SwimStart` and `SwimStop`, and `JumpUp`, `JumpFall`, and `JumpLand`. Each is raised only when the
