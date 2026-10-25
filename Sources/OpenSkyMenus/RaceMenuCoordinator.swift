@@ -70,8 +70,8 @@ public final class RaceMenuCoordinator {
     public static let identifier: MenuIdentifier = "RaceSex Menu"
 
     public internal(set) var model: RaceMenuModel?
-    /// The type counts the menu may offer; set from the game settings.
-    public var morphCounts = FaceMorphCounts.vanilla
+    /// The type counts the menu may offer, from the game settings.
+    public let morphCounts: FaceMorphCounts
     public private(set) var isEditingName = false
     /// The face shot, or the whole body after the movie's `ZoomPC(false)`.
     public internal(set) var isZoomedIn = true
@@ -91,12 +91,13 @@ public final class RaceMenuCoordinator {
 
     public init(
         menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
-        world: (any RaceMenuWorld)? = nil
+        world: (any RaceMenuWorld)? = nil, morphCounts: FaceMorphCounts = .vanilla
     ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
         self.world = world
+        self.morphCounts = morphCounts
     }
 
     lazy var movie = MenuMovieSession(

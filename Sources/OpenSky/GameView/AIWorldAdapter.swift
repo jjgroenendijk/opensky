@@ -142,9 +142,9 @@ final class AIWorldAdapter {
         }
     }
 
-    func makePackages() -> PackageCoordinator {
+    func packageData() -> PackageSessionData? {
         guard let provider = game.worldData, let store = provider.packageStore else {
-            return PackageCoordinator(world: self, data: nil)
+            return nil
         }
         let settings = provider.gameSettings
         var data = PackageSessionData(store: store)
@@ -152,7 +152,7 @@ final class AIWorldAdapter {
         data.sandboxSettings = SandboxSettings.resolve(store: settings)
         data.bumpSettings = BumpReactionSettings.resolve(store: settings)
         data.followSettings = FollowSettings.resolve(store: settings)
-        return PackageCoordinator(world: self, data: data)
+        return data
     }
 
     func wirePackages(gameSession: GameSession) {
@@ -162,17 +162,6 @@ final class AIWorldAdapter {
             packages?.advance(by: Float(delta))
             self?.advanceBumps()
         }
-    }
-
-    func makePerception() -> PerceptionCoordinator {
-        guard let data = game.worldData else {
-            return PerceptionCoordinator(world: self, settings: nil)
-        }
-        return PerceptionCoordinator(
-            world: self,
-            settings: data.detectionSettings,
-            stealthPoints: StealthPointSettings.resolve(store: data.gameSettings)
-        )
     }
 
     /// Runs after NPC movement and the combat loop, because the pass reads

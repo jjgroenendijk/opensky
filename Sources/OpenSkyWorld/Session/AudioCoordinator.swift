@@ -29,9 +29,9 @@ public protocol AudioWorld: AnyObject {
     func lipSyncTarget() -> LipSyncPlayback?
     /// Whether a run of conditions passes with the player as subject.
     func playerConditionsPass(_ conditions: [Condition]) -> Bool
-    /// The renderer's audio tick drives the listener, the playlist, region sounds,
-    /// and footsteps.
-    func installAudio(
+    /// The engine started. The renderer's audio tick drives the listener, the playlist,
+    /// region sounds, and footsteps from here on.
+    func audioStarted(
         engine: WorldAudioEngine,
         sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector,
@@ -156,12 +156,10 @@ public final class AudioCoordinator {
             soundStore: audioData?.soundStore,
             weatherStore: weatherStore,
             aspcStore: audioData?.aspcStore,
-            assets: assets
+            assets: assets,
+            effectRecords: audioData?.effectRecords
         )
-        if let records = audioData?.effectRecords {
-            director.wireEffectRecords(records)
-        }
-        wireRegionSoundGates(director)
+        gateRegionSounds(director)
         soundDirector = director
         let music = WorldMusicDirector(
             engine: engine,
@@ -179,7 +177,7 @@ public final class AudioCoordinator {
         footsteps.materialTypes = audioData?.materialTypes ?? .empty
         footsteps.outputModels = director.outputModels
         footstepDirector = footsteps
-        world?.installAudio(engine: engine, sounds: director, music: music, footsteps: footsteps)
+        world?.audioStarted(engine: engine, sounds: director, music: music, footsteps: footsteps)
         // The body is usually assembled before audio is on, so do not wait for an equip change.
         if let armatures = world?.playerFeetArmatures {
             footsteps.updateFootstepSet(feetArmatures: armatures)
@@ -189,7 +187,7 @@ public final class AudioCoordinator {
 
 extension AudioCoordinator {
     /// Region sounds follow the current weather and their `SNDR` conditions.
-    private func wireRegionSoundGates(_ director: WorldAudioSoundDirector) {
+    private func gateRegionSounds(_ director: WorldAudioSoundDirector) {
         let weather = world?.audioWorldData?.weatherSystem
         director.currentWeather = { [weak weather] in
             guard let weather, let id = weather.currentWeatherID else { return .none }

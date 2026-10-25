@@ -17,8 +17,10 @@ struct CellResetCoordinatorTests {
     private static let cell = CellSceneLocation.interior(FormID(0x0001_6000))
     private let store = WorldStateStore()
 
-    private func coordinator(hours: @escaping () -> Double) -> CellResetCoordinator {
-        CellResetCoordinator(store: store) {
+    private func coordinator(
+        queries: CellResetQueries = CellResetQueries(), hours: @escaping () -> Double
+    ) -> CellResetCoordinator {
+        CellResetCoordinator(store: store, queries: queries) {
             GameClock(totalGameSeconds: hours() * GameClock.secondsPerHour)
         }
     }
@@ -55,8 +57,9 @@ struct CellResetCoordinatorTests {
 
     @Test func aClearedLocationWaitsTheLongerTime() throws {
         var now = 1000.0
-        let reset = coordinator { now }
-        reset.isCleared = { _ in true }
+        var queries = CellResetQueries()
+        queries.isCleared = { _ in true }
+        let reset = coordinator(queries: queries) { now }
         let scene = try Self.scene([Self.reference(0x10)])
         store.set(ReferenceDeletionState.deleted, for: Self.key(0x10), in: Self.cell)
         reset.cellDetached(Self.cell)
@@ -71,8 +74,9 @@ struct CellResetCoordinatorTests {
     /// cell before that load keeps the flag.
     @Test func aScriptedResetWinsOverTheZoneAndTheClock() throws {
         var now = 1000.0
-        let reset = coordinator { now }
-        reset.neverResets = { _ in true }
+        var queries = CellResetQueries()
+        queries.neverResets = { _ in true }
+        let reset = coordinator(queries: queries) { now }
         let scene = try Self.scene([Self.reference(0x10)])
         store.set(ReferenceDeletionState.deleted, for: Self.key(0x10), in: Self.cell)
         reset.flagForReset(Self.cell)
@@ -84,15 +88,17 @@ struct CellResetCoordinatorTests {
 
     @Test func aNeverResetsZoneAndANonRespawningBaseKeepTheirState() throws {
         var now = 1000.0
-        let reset = coordinator { now }
+        var neverResets = true
+        var queries = CellResetQueries()
+        queries.neverResets = { _ in neverResets }
+        queries.respawns = { _ in neverResets }
+        let reset = coordinator(queries: queries) { now }
         let scene = try Self.scene([Self.reference(0x10)])
         store.set(ReferenceDeletionState.deleted, for: Self.key(0x10), in: Self.cell)
-        reset.neverResets = { _ in true }
         reset.cellDetached(Self.cell)
         now += 1000
         #expect(reset.cellAttached(scene).isEmpty)
-        reset.neverResets = { _ in false }
-        reset.respawns = { _ in false }
+        neverResets = false
         reset.cellDetached(Self.cell)
         now += 1000
         #expect(reset.cellAttached(scene).isEmpty)

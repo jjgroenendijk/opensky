@@ -29,8 +29,22 @@ struct GameSessionScopeTests {
         _ = scope.combat
         _ = scope.ragdoll
         _ = scope.packages
-        _ = scope.idleWorld.idles
+        _ = scope.idles
         _ = scope.player
+        _ = scope.dialogue
+        _ = scope.scenes
+        _ = scope.storyManager
+        _ = scope.actorGraphs
+        _ = scope.objectBehaviors
+        _ = scope.sequenceDoors
+        _ = scope.mounts
+        _ = scope.vehicles
+        _ = scope.hazards
+        _ = scope.runtimeState
+        _ = scope.benchmarkTour
+        _ = scope.systemMenu
+        _ = scope.raceMenu
+        _ = scope.menuScreens
         #expect(scope.streamer == nil)
     }
 

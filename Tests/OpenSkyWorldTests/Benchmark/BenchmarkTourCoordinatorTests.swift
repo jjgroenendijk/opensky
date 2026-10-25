@@ -25,6 +25,7 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     var steps = 0
     var captures: [URL] = []
     var screenshots: [URL] = []
+    var finished: BenchmarkTourResult?
 
     func beginTour(overrides: [PlayerSettingID: Double], passTiming _: Bool) {
         began = overrides
@@ -32,6 +33,10 @@ private final class FakeTourWorld: BenchmarkTourWorld {
 
     func endTour() {
         endCount += 1
+    }
+
+    func tourFinished(_ result: BenchmarkTourResult) {
+        finished = result
     }
 
     func startArrival(at place: BenchmarkPlace) {
@@ -125,8 +130,6 @@ struct BenchmarkTourCoordinatorTests {
     @Test func aTourMeasuresEachSceneAndSkipsAMissingPlugin() throws {
         let world = FakeTourWorld()
         let tour = BenchmarkTourCoordinator(world: world)
-        var finished: BenchmarkTourResult?
-        tour.onFinish = { finished = $0 }
         let request = BenchmarkRequest(
             sceneIDs: ["whiterun", "forgottenVale"], settings: ["rendering.gpuCulling": 0],
             loadPasses: false
@@ -134,7 +137,7 @@ struct BenchmarkTourCoordinatorTests {
         try tour.start(request, machine: Self.machine)
         runToEnd(tour)
 
-        let result = try #require(finished)
+        let result = try #require(world.finished)
         #expect(world.began?[.gpuCulling] == 0)
         #expect(world.endCount == 1)
         #expect(result.scenes.map(\.status) == [.measured, .skipped])

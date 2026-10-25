@@ -5,11 +5,15 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
+import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -33,16 +37,19 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var combatWorld: CombatWorldAdapter { get }
     var crimeWorld: CrimeWorldAdapter { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var effects: EffectsCoordinator { get set }
     var effectsWorld: EffectsWorldAdapter { get }
     var factionWorld: FactionWorldAdapter { get }
     var hazardWorld: HazardWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var idleWorld: IdleWorldAdapter { get }
+    var inventory: InventoryCoordinator { get set }
     var inventoryWorld: InventoryWorldAdapter { get }
     var mountWorld: MountWorldAdapter { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockWorld: LockWorldAdapter { get }
     var perkActivationWorld: PerkActivationWorldAdapter { get }
+    var magic: MagicCoordinator { get set }
     var magicWorld: MagicWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
     var messageWorld: MessageWorldAdapter { get }
@@ -51,12 +58,12 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var perception: PerceptionCoordinator { get }
     var playerWorld: PlayerWorldAdapter { get }
+    var progression: ProgressionCoordinator { get }
     var progressionWorld: ProgressionWorldAdapter { get }
-    var raceMenu: RaceMenuCoordinator { get }
     var ragdollWorld: RagdollWorldAdapter { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scriptWorld: ScriptWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
+    var scripts: ScriptCoordinator { get set }
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get set }
     var swfMovies: SWFMovieSource { get }
@@ -110,25 +117,18 @@ final class WorldSessionWiring {
         wireMenuMovies(gameSession: gameSession)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
         game.runtimeState.reloadGlobals()
-        game.runtimeState.calendarTexts = CalendarTexts
-            .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        game.raceMenu.morphCounts = FaceMorphCounts.resolve(store: provider.gameSettings)
         game.aiWorld.wireNPCMovement(gameSession: gameSession, streamer: streamer)
         streamer.bind(to: game.worldState)
         wireFrame(gameSession: gameSession, streamer: streamer)
         game.audioWorld.wireAudioCallbacks(streamer)
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order.
-        game.scriptWorld.wirePapyrus(
-            provider: provider,
-            gameSession: gameSession,
-            streamer: streamer
-        )
+        buildScripts(provider: provider, gameSession: gameSession, streamer: streamer)
         wireAssetDrains(gameSession: gameSession)
         game.messageWorld.wire(gameSession: gameSession)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
-        game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
+        buildWorldItems(provider: provider, streamer: streamer)
         game.lockWorld.wireLocks(provider: provider, streamer: streamer, gameSession: gameSession)
         game.perkActivationWorld.wire(streamer: streamer)
         // After the item runtime, which owns the equipped set of the body.
@@ -139,11 +139,7 @@ final class WorldSessionWiring {
             streamer: streamer,
             gameSession: gameSession
         )
-        game.effectsWorld.wireEffects(
-            provider: provider,
-            streamer: streamer,
-            gameSession: gameSession
-        )
+        buildEffects(provider: provider, streamer: streamer, gameSession: gameSession)
         game.trapControl.wire(renderer: gameSession.renderer)
         game.combatWorld.wireMelee(gameSession: gameSession)
         game.combatWorld.wireArchery(gameSession: gameSession)
@@ -226,7 +222,7 @@ final class WorldSessionWiring {
     /// Magic effects write through the actor-value runtime, so it comes first.
     private func wireActorSystems(provider: WorldDataStores, gameSession: GameSession) {
         game.actorWorld.wireActorValues(provider: provider, gameSession: gameSession)
-        game.magicWorld.wireMagic(provider: provider, gameSession: gameSession)
+        buildMagic(provider: provider, gameSession: gameSession)
     }
 
     private func wireLateWorldSystems(
@@ -244,7 +240,7 @@ final class WorldSessionWiring {
         // After the locks, whose activation gate it wraps.
         game.mountWorld.wireMounts(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
-        animationEvents.wire(gameSession: gameSession)
+        buildAnimationEvents(gameSession: gameSession)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
         game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)
@@ -252,7 +248,7 @@ final class WorldSessionWiring {
         game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
         game.cinematicWorld.wire(gameSession: gameSession)
         game.loadingWorld.wire(streamer: streamer, gameSession: gameSession)
-        // It wraps the scripts' cell attach, so it comes after `wirePapyrus`.
+        // It wraps the scripts' cell attach, so it comes after `buildScripts`.
         wireCellReset(provider: provider, gameSession: gameSession, streamer: streamer)
     }
 

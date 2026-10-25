@@ -22,21 +22,14 @@ public final class SceneCoordinator {
     /// Ticks between full scans for scenes a save load started.
     static let rescanInterval = 60
 
-    public var catalog = SceneCatalog.empty {
-        didSet {
-            catalogRevision &+= 1
-            rescan()
-        }
-    }
-
-    private(set) var catalogRevision: UInt64 = 0
-    let conditionCache = RevisionCache<SceneConditionKey, SceneConditionBase>()
+    public let catalog: SceneCatalog
+    let conditionCache = RevisionCache<UInt64, SceneConditionBase>()
 
     public private(set) var trace: [SceneEvent] = []
     public private(set) var lines: [SceneLine] = []
     public var lastOutcome: String?
-    /// The wait before a repeating scene plays again; the app sets the install's window.
-    public var repeatPause: ClosedRange<Float> = 10 ... 30
+    /// The wait before a repeating scene plays again.
+    public let repeatPause: ClosedRange<Float>
     /// Scenes known to be playing, so a frame with none builds no runtime.
     public private(set) var playing: Set<FormID> = []
     private var ticksSinceScan = 0
@@ -46,9 +39,17 @@ public final class SceneCoordinator {
     let world: any SceneWorld
     private var pendingCommands: [SceneCommand] = []
 
-    public init(dialogue: DialogueCoordinator, world: any SceneWorld) {
+    public init(
+        dialogue: DialogueCoordinator,
+        world: any SceneWorld,
+        catalog: SceneCatalog = .empty,
+        repeatPause: ClosedRange<Float> = 10 ... 30
+    ) {
         self.dialogue = dialogue
         self.world = world
+        self.catalog = catalog
+        self.repeatPause = repeatPause
+        rescan()
     }
 
     /// Lines said since the last call, also by `start` and `questDidStart`.

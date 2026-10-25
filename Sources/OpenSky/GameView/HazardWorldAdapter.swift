@@ -16,7 +16,7 @@ import OpenSkyWorld
 /// What the hazard adapter reads. The session is a closure, because a reload
 /// replaces it.
 struct HazardWorldDependencies {
-    let hazards: HazardCoordinator
+    let hazards: () -> HazardCoordinator
     let combat: CombatCoordinator
     /// A closure, because session start replaces the coordinator.
     let magic: () -> MagicCoordinator
@@ -38,12 +38,11 @@ final class HazardWorldAdapter {
     }
 
     var hazards: HazardCoordinator {
-        dependencies.hazards
+        dependencies.hazards()
     }
 
     func wireHazards(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
         store = provider.lockTrapData.hazards
-        hazards.world = self
         streamer.cellHazards.register(.hazards) { [weak self] event in
             self?.load(event)
         }

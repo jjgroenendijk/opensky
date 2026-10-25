@@ -36,7 +36,7 @@ public final class HeadTrackingCoordinator {
     public static let eyeHeight: Float = 120
 
     weak var world: (any HeadTrackingWorld)?
-    public var settings = HeadTrackingSettings.vanilla
+    public let settings: HeadTrackingSettings
     public var isEnabled = true {
         didSet {
             guard !isEnabled else { return }
@@ -65,7 +65,12 @@ public final class HeadTrackingCoordinator {
     public private(set) var lookTargets: [ReferenceKey: ReferenceKey] = [:]
 
     /// `settings` gives the persisted head tracking switch.
-    public init(world: (any HeadTrackingWorld)? = nil, settings: PlayerSettingsStore? = nil) {
+    public init(
+        world: (any HeadTrackingWorld)? = nil,
+        settings: PlayerSettingsStore? = nil,
+        tracking: HeadTrackingSettings = .vanilla
+    ) {
+        self.settings = tracking
         self.world = world
         if let settings {
             isEnabled = settings.bool(.characterHeadTracking)

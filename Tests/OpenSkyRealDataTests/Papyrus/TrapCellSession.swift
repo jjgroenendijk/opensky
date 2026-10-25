@@ -150,8 +150,7 @@ final class TrapCellSession {
             .map { ($0, SIMD3<Float>.zero) }
         let (spec, position) = try #require(placed ?? fallback)
         let recorder = HazardRecorder(spells: spells, position: position)
-        let coordinator = HazardCoordinator()
-        coordinator.world = recorder
+        let coordinator = HazardCoordinator(world: recorder)
         coordinator.spawn(HazardPlacement(
             id: .plugin(name: "Skyrim.esm", objectID: 0xFF00_0001), spec: spec, position: position
         ))

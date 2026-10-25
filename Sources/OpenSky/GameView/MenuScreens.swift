@@ -10,7 +10,6 @@ protocol MenuScreensHost: AnyObject {
     var hud: HUDCoordinator { get }
     var journalMenu: JournalMenuController { get }
     var mapMenu: MapMenuCoordinator { get }
-    var menuMode: MenuModeController { get }
     var menuScreensWorld: MenuScreensWorldAdapter { get }
     var swfMovies: SWFMovieSource { get }
 }
@@ -21,6 +20,19 @@ private struct MenuScreenRoute {
     let key: (MenuInputEvent) -> Void
     let pointer: (MenuPointerEvent) -> Void
     let tick: (Double) -> Void
+}
+
+/// The screens' coordinators, built by the session scope.
+struct MenuScreenCoordinators {
+    let sleepWait: SleepWaitMenuCoordinator
+    let training: TrainingMenuCoordinator
+    let book: BookMenuCoordinator
+    let tutorial: TutorialMenuCoordinator
+    let magic: MagicMenuCoordinator
+    let gift: GiftMenuCoordinator
+    let crafting: CraftingMenuCoordinator
+    let textEntry: TextEntryMenuCoordinator
+    let creationClub: CreationClubMenuCoordinator
 }
 
 final class MenuScreens {
@@ -35,36 +47,18 @@ final class MenuScreens {
     let creationClub: CreationClubMenuCoordinator
     let mapMovie: MapMenuMovieScreen
 
-    init(game: any MenuScreensHost) {
+    init(game: any MenuScreensHost, screens: MenuScreenCoordinators) {
         let world = game.menuScreensWorld
-        let (menuMode, movies, hud) = (game.menuMode, game.swfMovies, game.hud)
-        sleepWait = SleepWaitMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        training = TrainingMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        book = BookMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        tutorial = TutorialMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        magic = MagicMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        gift = GiftMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        crafting = CraftingMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        textEntry = TextEntryMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
-        creationClub = CreationClubMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: hud, world: world
-        )
+        let (movies, hud) = (game.swfMovies, game.hud)
+        sleepWait = screens.sleepWait
+        training = screens.training
+        book = screens.book
+        tutorial = screens.tutorial
+        magic = screens.magic
+        gift = screens.gift
+        crafting = screens.crafting
+        textEntry = screens.textEntry
+        creationClub = screens.creationClub
         mapMovie = MapMenuMovieScreen(map: game.mapMenu, movies: movies, hud: hud, world: world)
         mapMovie.onJournal = { [unowned game] in game.journalMenu.open() }
     }

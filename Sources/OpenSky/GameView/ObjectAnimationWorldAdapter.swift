@@ -21,8 +21,9 @@ import simd
 protocol ObjectAnimationWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorWorld: ActorWorldAdapter { get }
+    var objectBehaviors: ObjectBehaviorCoordinator { get }
+    var sequenceDoors: SequenceDoorCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
@@ -32,16 +33,13 @@ protocol ObjectAnimationWorldHost: AnyObject {
 
 final class ObjectAnimationWorldAdapter {
     unowned let game: any ObjectAnimationWorldHost
-    private(set) lazy var objects = ObjectBehaviorCoordinator(
-        settings: game.playerSettings.store,
-        world: self,
-        files: { [unowned game] in game.audioFileSystem }
-    )
-    private(set) lazy var doors: SequenceDoorCoordinator = {
-        let doors = SequenceDoorCoordinator(world: self)
-        doors.isEnabled = objects.isEnabled
-        return doors
-    }()
+    var objects: ObjectBehaviorCoordinator {
+        game.objectBehaviors
+    }
+
+    var doors: SequenceDoorCoordinator {
+        game.sequenceDoors
+    }
 
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
@@ -56,15 +54,6 @@ final class ObjectAnimationWorldAdapter {
     /// After the vehicles, so a cart's events and an object's events keep one order.
     func wire(gameSession: GameSession) {
         guard game.audioFileSystem != nil else { return }
-        objects.onAnimationEvent = { [weak self] reference, name in
-            self?.forward(name, from: reference)
-        }
-        objects.onWaitFinished = { [weak self] token, fired in
-            self?.pendingAnswers[token] = fired
-        }
-        game.actorGraphWorld.graphs.onWaitFinished = { [weak self] token, fired in
-            self?.pendingAnswers[token] = fired
-        }
         gameSession.worldTick.register(.objectAnimation) { [weak self] delta in
             self?.advance(delta)
         }
@@ -84,12 +73,9 @@ final class ObjectAnimationWorldAdapter {
         }
     }
 
-    private func forward(_ name: String, from reference: UInt32) {
-        guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
-            return
-        }
-        game.gameSession?.animationEvents?.handle(name, from: key)
-        game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
+    /// An object's or an actor's graph wait, answered on the next frame.
+    func answerWait(token: UInt64, fired: Bool) {
+        pendingAnswers[token] = fired
     }
 
     private func reference(of key: ReferenceKey) -> UInt32? {
@@ -100,6 +86,18 @@ final class ObjectAnimationWorldAdapter {
 extension ObjectAnimationWorldAdapter: ObjectBehaviorWorld {
     func residentAnimatedObjects() -> [CellAnimatedObject] {
         game.streamer?.residentAnimatedObjects() ?? []
+    }
+
+    func objectGraphFired(_ name: String, from reference: UInt32) {
+        guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
+            return
+        }
+        game.gameSession?.animationEvents?.handle(name, from: key)
+        game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
+    }
+
+    func animationWaitFinished(token: UInt64, fired: Bool) {
+        answerWait(token: token, fired: fired)
     }
 }
 

@@ -30,12 +30,11 @@ struct SceneConditionCacheTests {
             quests: QuestResolution(defaults: DialogueRuntimeFixture.questStore()),
             context: DialogueRuntimeFixture.context()
         )
-        let coordinator = SceneCoordinator(
-            dialogue: DialogueCoordinator(store: store, world: world, index: nil),
-            world: FakeSceneHost()
-        )
+        let dialogue = DialogueCoordinator(store: store, world: world, index: nil)
         let scene = try SceneFixture.scene()
-        coordinator.catalog = SceneCatalog(scenes: [scene])
+        let coordinator = SceneCoordinator(
+            dialogue: dialogue, world: FakeSceneHost(), catalog: SceneCatalog(scenes: [scene])
+        )
         let filled = try aliases(filled: true)
 
         #expect(!coordinator.conditionResolution(aliases: filled).isPlaying(scene.formID))
@@ -50,8 +49,10 @@ struct SceneConditionCacheTests {
         store.reset(.scene, for: scene.key)
         #expect(!coordinator.conditionResolution(aliases: filled).isPlaying(scene.formID))
 
-        coordinator.catalog = SceneCatalog(scenes: [])
+        let empty = SceneCoordinator(
+            dialogue: dialogue, world: FakeSceneHost(), catalog: SceneCatalog(scenes: [])
+        )
         store.set(SceneRuntimeState(phase: 1), for: scene.key)
-        #expect(!coordinator.conditionResolution(aliases: filled).isPlaying(scene.formID))
+        #expect(!empty.conditionResolution(aliases: filled).isPlaying(scene.formID))
     }
 }

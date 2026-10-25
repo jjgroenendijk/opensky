@@ -17,7 +17,7 @@ public final class RuntimeStateCoordinator {
 
     public private(set) var lastSaveOutcome = RuntimeStateSaveOutcome.none
     /// The words of the in-game date line.
-    public var calendarTexts = CalendarTexts.vanilla
+    public let calendarTexts: CalendarTexts
 
     let worldState: WorldStateStore
     weak let world: (any RuntimeStateWorld)?
@@ -34,9 +34,14 @@ public final class RuntimeStateCoordinator {
     /// Accumulated across every evaluation, so the readout shows a running total.
     var conditionTally = ConditionTally()
 
-    public init(store: WorldStateStore, world: any RuntimeStateWorld) {
+    public init(
+        store: WorldStateStore,
+        world: any RuntimeStateWorld,
+        calendarTexts: CalendarTexts = .vanilla
+    ) {
         worldState = store
         self.world = world
+        self.calendarTexts = calendarTexts
         // A global write hands weather and the clock fresh values instead of
         // rebuilding cells. The five time globals write into the clock.
         store.onTimeGlobalWrite = { [weak self] timeGlobal, value in

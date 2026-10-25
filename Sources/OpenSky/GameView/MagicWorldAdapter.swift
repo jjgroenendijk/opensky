@@ -66,11 +66,8 @@ final class MagicWorldAdapter {
 
     /// After `wireActorValues`, because every effect writes an actor value, and after
     /// `wireWorldItems`, because the spellbook reads the equipment.
-    func wireMagic(provider: WorldDataStores, gameSession: GameSession) {
-        let coordinator = MagicCoordinator(
-            world: self, data: sessionData(provider: provider), storyEvents: game.storyWorld
-        )
-        game.magic = coordinator
+    func wireMagic(gameSession: GameSession) {
+        let coordinator = game.magic
         // `Mod Spell Cost` folds through the caster's own copy of the perks.
         coordinator.caster?.perks = game.perks.runtime
         if coordinator.effects != nil {
@@ -81,7 +78,7 @@ final class MagicWorldAdapter {
         }
     }
 
-    private func sessionData(provider: WorldDataStores) -> MagicSessionData {
+    func sessionData(provider: WorldDataStores) -> MagicSessionData {
         let settings = provider.gameSettings
         var data = MagicSessionData()
         if

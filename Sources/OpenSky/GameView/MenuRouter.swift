@@ -42,49 +42,6 @@ final class MenuRouter {
         self.game = game
     }
 
-    func makeSystemMenu() -> SystemMenuCoordinator {
-        SystemMenuCoordinator(
-            menuMode: game.menuMode,
-            movies: game.swfMovies,
-            hud: game.hud,
-            settings: game.playerSettings,
-            saves: game.saveGames,
-            world: game
-        )
-    }
-
-    func makeTitleMenu() -> TitleMenuCoordinator {
-        TitleMenuCoordinator(
-            menuMode: game.menuMode,
-            movies: game.swfMovies,
-            hud: game.hud,
-            saves: game.saveGames,
-            world: game.menuWorld
-        )
-    }
-
-    func makeRaceMenu() -> RaceMenuCoordinator {
-        RaceMenuCoordinator(
-            menuMode: game.menuMode,
-            movies: game.swfMovies,
-            hud: game.hud,
-            world: game.menuWorld
-        )
-    }
-
-    func makeSkillsMenu() -> SkillsMenuCoordinator {
-        SkillsMenuCoordinator(
-            menuMode: game.menuMode,
-            movies: game.swfMovies,
-            hud: game.hud,
-            world: game.menuWorld
-        )
-    }
-
-    func makeMapMenu() -> MapMenuCoordinator {
-        MapMenuCoordinator(menuMode: game.menuMode, world: game.mapWorld)
-    }
-
     /// The bound keys that open a menu or save, outside any menu.
     func run(_ action: GameInputAction) {
         switch action {

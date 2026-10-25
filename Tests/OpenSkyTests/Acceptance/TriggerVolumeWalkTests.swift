@@ -51,7 +51,7 @@ struct TriggerVolumeWalkTests {
     }
 
     /// One resident cell holding a scripted trigger volume, wired to a Papyrus
-    /// world exactly as `ScriptWorldAdapter.wirePapyrus` wires it.
+    /// world exactly as `WorldSessionWiring.buildScripts` wires it.
     private static func makeHarness(isPersistent: Bool = false) throws -> Harness {
         let entry = try PapyrusWorldFixture.referenceEntry(
             objectID: volumeID,

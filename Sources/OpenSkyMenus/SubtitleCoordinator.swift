@@ -36,13 +36,7 @@ public protocol SubtitlePresenting: AnyObject {
 
 @MainActor
 public final class SubtitleCoordinator {
-    public var settings = SubtitleSettings(dialogue: false, general: false) {
-        didSet {
-            if let kind = currentKind, !settings.shows(kind) {
-                clear()
-            }
-        }
-    }
+    public private(set) var settings = SubtitleSettings(dialogue: false, general: false)
 
     public private(set) var current: String?
     private var currentKind: SubtitleKind?
@@ -51,6 +45,14 @@ public final class SubtitleCoordinator {
 
     public init(presenter: any SubtitlePresenting) {
         self.presenter = presenter
+    }
+
+    /// The player's subtitle switches; a line of a kind turned off goes away.
+    public func apply(_ settings: SubtitleSettings) {
+        self.settings = settings
+        if let kind = currentKind, !settings.shows(kind) {
+            clear()
+        }
     }
 
     /// Shows the line for `seconds` when the setting for its kind is on.

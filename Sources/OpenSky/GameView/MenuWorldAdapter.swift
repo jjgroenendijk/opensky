@@ -130,7 +130,7 @@ extension MenuWorldAdapter: PlayerSettingsWorld {
             $0.markersEnabled = hud.floatingMarkers
         }
         game.renderer?.swfOpacity = hud.opacity
-        game.subtitles.settings = hud.subtitles
+        game.subtitles.apply(hud.subtitles)
     }
 
     func applyDifficulty(index: Int) {

@@ -50,11 +50,10 @@ final class PlayerWorldAdapter {
     }
 
     /// The rigs assemble on the session's build queue, beside the cells.
-    func makePlayer() -> PlayerCoordinator {
-        let source = game.cellRunner.map {
+    func rigSource() -> PlayerRigQueue? {
+        game.cellRunner.map {
             PlayerRigQueue(runner: $0, fileSystem: game.worldData?.scriptFileSystem)
         }
-        return PlayerCoordinator(input: game.cameraInput, world: self, source: source)
     }
 
     /// The graph and the body outlive every cell, so this is not streaming.

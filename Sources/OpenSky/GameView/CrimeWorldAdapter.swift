@@ -62,24 +62,18 @@ final class CrimeWorldAdapter {
     }
 
     /// Perception is built first: its pass answers "did anybody see it" for every crime.
-    func makeCrime() -> CrimeCoordinator {
+    func witnesses() -> PerceptionCrimeWitnesses {
         let store = game.worldState
-        let witnesses = PerceptionCrimeWitnesses(
+        return PerceptionCrimeWitnesses(
             perception: game.perception.runtime,
             isAlive: { [weak store] key in
                 store?.component(ActorDeathState.self, for: key)?.isDead != true
             }
         )
-        return CrimeCoordinator(
-            world: self,
-            data: game.worldData.flatMap(sessionData),
-            witnesses: witnesses,
-            storyEvents: game.storyWorld
-        )
     }
 
     /// Ownership reads the same FACT store as the hostility derivation.
-    private func sessionData(_ provider: WorldDataStores) -> CrimeSessionData? {
+    func sessionData(_ provider: WorldDataStores) -> CrimeSessionData? {
         guard
             let factionStore = provider.factionStore,
             let pluginName = provider.magicItemPluginName

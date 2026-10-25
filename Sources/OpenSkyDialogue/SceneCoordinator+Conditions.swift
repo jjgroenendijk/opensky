@@ -8,12 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
-/// The catalog and the scene-state writes the scene seam was built from.
-struct SceneConditionKey: Equatable {
-    let catalog: UInt64
-    let states: UInt64
-}
-
 /// The part of the scene seam that does not depend on the aliases.
 struct SceneConditionBase {
     var playing: [FormID: Set<UInt32>] = [:]
@@ -25,10 +19,8 @@ struct SceneConditionBase {
 extension SceneCoordinator {
     /// Completed actions by their `INAM` index; an action with none keeps its position.
     public func conditionResolution(aliases: QuestAliasResolution) -> SceneConditionResolution {
-        let key = SceneConditionKey(
-            catalog: catalogRevision, states: dialogue.store.revision(of: [.scene])
-        )
-        let base = conditionCache.value(for: key, build: conditionBase)
+        let states = dialogue.store.revision(of: [.scene])
+        let base = conditionCache.value(for: states, build: conditionBase)
         var actors: Set<ReferenceKey> = []
         for held in base.heldAliases {
             if let reference = aliases.reference(alias: held.alias, in: held.quest) {

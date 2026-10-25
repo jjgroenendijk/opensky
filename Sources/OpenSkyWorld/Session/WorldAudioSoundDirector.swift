@@ -90,9 +90,9 @@ public final class WorldAudioSoundDirector {
     /// The routing the last one-shot took, and why, for the readout.
     public private(set) var lastRouting: String?
     /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.
-    public var outputModels: ((FormID) -> OutputModelProfile?)?
+    public let outputModels: ((FormID) -> OutputModelProfile?)?
     /// Resolves an ASPC's raw `BNAM` link to its `REVB` record.
-    public var reverbs: ((FormID) -> ReverbParameters?)?
+    public let reverbs: ((FormID) -> ReverbParameters?)?
     /// The reverb the current acoustic space asked for.
     public private(set) var currentReverb = ReverbSetting.off
     /// The `REVB` record behind `currentReverb`, nil outdoors.
@@ -103,13 +103,16 @@ public final class WorldAudioSoundDirector {
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
         aspcStore: AcousticSpaceStore?,
-        assets: AudioAssetLoader
+        assets: AudioAssetLoader,
+        effectRecords: EffectRecordStore? = nil
     ) {
         self.engine = engine
         self.soundStore = soundStore
         self.weatherStore = weatherStore
         self.aspcStore = aspcStore
         self.assets = assets
+        outputModels = effectRecords.map(Self.outputModels(_:))
+        reverbs = effectRecords.map(Self.reverbs(_:))
     }
 
     /// Test seam: same shape as the production init but takes a file loader
@@ -126,6 +129,8 @@ public final class WorldAudioSoundDirector {
         self.weatherStore = weatherStore
         self.aspcStore = aspcStore
         assets = AudioAssetLoader(immediate: fileLoader)
+        outputModels = nil
+        reverbs = nil
     }
 
     // MARK: - Streamer event hooks

@@ -27,6 +27,7 @@ protocol MountWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }
+    var mounts: MountCoordinator { get }
     var crime: CrimeCoordinator { get }
     var gameSession: GameSession? { get }
     var magicWorld: MagicWorldAdapter { get }
@@ -40,7 +41,10 @@ protocol MountWorldHost: AnyObject {
 
 final class MountWorldAdapter {
     unowned let game: any MountWorldHost
-    private(set) lazy var mounts = MountCoordinator(world: self)
+    var mounts: MountCoordinator {
+        game.mounts
+    }
+
     static let dragonKeyword = "ActorTypeDragon"
 
     init(game: any MountWorldHost) {
@@ -49,11 +53,6 @@ final class MountWorldAdapter {
 
     /// After the locks, whose activation gate this one wraps.
     func wireMounts(gameSession: GameSession) {
-        if let store = game.worldData?.gameSettings {
-            mounts.settings = MountSettings.resolve(store: store) { [game] in
-                game.mapWorld.text($0)
-            }
-        }
         gameSession.playerMount = self
         guard let streamer = game.streamer else { return }
         streamer.activationGate.register(.mount) { [weak self] target in

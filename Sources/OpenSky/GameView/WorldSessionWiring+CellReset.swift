@@ -11,25 +11,23 @@ import OpenSkyWorld
 import OpenSkyWorldState
 
 extension WorldSessionWiring {
-    /// After `wirePapyrus`, so the reset wraps the scripts' attach and detach.
+    /// After `buildScripts`, so the reset wraps the scripts' attach and detach.
     func wireCellReset(
         provider: WorldDataStores,
         gameSession: GameSession,
         streamer: CellStreamer
     ) {
         let store = game.worldState
-        let reset = CellResetCoordinator(
-            store: store, settings: provider.cellResetSettings
-        ) { [weak gameSession] in gameSession?.gameTime.clock }
-        reset.respawns = Self.respawnPolicy(provider: provider)
-        reset.neverResets = { scene in
+        var queries = CellResetQueries()
+        queries.respawns = Self.respawnPolicy(provider: provider)
+        queries.neverResets = { scene in
             guard let zone = scene.encounterZone, let plugin = scene.ownerPluginName else {
                 return false
             }
             return provider.encounterZoneStore?.resolve(zone, fromPlugin: plugin)?
                 .zone.flags.contains(.neverResets) ?? false
         }
-        reset.isCleared = { [weak store] scene in
+        queries.isCleared = { [weak store] scene in
             guard
                 let link = scene.locationLink, let plugin = scene.ownerPluginName,
                 let location = provider.locationStore?.resolvedID(link, fromPlugin: plugin)
@@ -40,6 +38,9 @@ extension WorldSessionWiring {
             )?
                 .flag(ScriptedStateName.cleared) == true
         }
+        let reset = CellResetCoordinator(
+            store: store, settings: provider.cellResetSettings, queries: queries
+        ) { [weak gameSession] in gameSession?.gameTime.clock }
         gameSession.cellReset = reset
         let scripts = game.scripts
         // The prepare step hands its keys to the enqueue step of the same attach.

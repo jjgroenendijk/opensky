@@ -58,15 +58,14 @@ final class RagdollWorldAdapter {
         self.game = game
     }
 
-    /// Without game data the runtime stays nil.
-    func makeRagdoll() -> RagdollCoordinator {
-        let data = game.worldData.map { provider in
+    /// Nil without game data, so the runtime stays nil.
+    func sessionData() -> RagdollSessionData? {
+        game.worldData.map { provider in
             RagdollSessionData(
                 collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init),
                 deathSettings: DeathSettings.resolve(store: provider.gameSettings)
             )
         }
-        return RagdollCoordinator(store: game.worldState, world: self, data: data)
     }
 
     /// A world-tick step, so the ragdolls see the same simulated

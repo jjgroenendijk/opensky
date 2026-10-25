@@ -37,8 +37,6 @@ public final class BenchmarkTourCoordinator {
 
     public private(set) var phase = Phase.idle
     public private(set) var lastResult: BenchmarkTourResult?
-    /// Called once with the result when the tour ends or is stopped.
-    public var onFinish: ((BenchmarkTourResult) -> Void)?
 
     private weak var world: (any BenchmarkTourWorld)?
     private(set) var request = BenchmarkRequest()
@@ -401,7 +399,7 @@ extension BenchmarkTourCoordinator {
         phase = .idle
         self.result = nil
         lastResult = result
-        onFinish?(result)
+        world?.tourFinished(result)
     }
 
     static func origin(
