@@ -125,7 +125,7 @@ nonisolated public struct WalkController: Sendable {
         dt: Float,
         world: StepWorld
     ) {
-        let sampleGround = world.sampleGround
+        let sampleGround = Self.remembering(world.sampleGround)
         let collisionQuery = world.collisionQuery
         let currentPosition = feetPosition
         let plan = world.plan?(LocomotionStepState(
