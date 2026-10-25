@@ -11,8 +11,7 @@ struct AgentCommandLineTests {
                 "quick",
                 "--scenes",
                 "whiterun,riften",
-                "--overlay",
-                "off",
+                "--no-overlay",
                 "--set",
                 "a=1,b=on"
             ]

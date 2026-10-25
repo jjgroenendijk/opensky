@@ -1,0 +1,150 @@
+// The `state` reads and `debug` changes of the command catalog.
+
+import Foundation
+
+nonisolated extension AgentCommandCatalog {
+    private static let refHelp =
+        "The player, the target under the crosshair, or a loaded reference's hex FormID."
+
+    static let state: [AgentCommandSpec] = [
+        command("state.player", "The player: position, cell, worldspace, weather, level, spells."),
+        command("state.target", "The reference under the crosshair."),
+        command(
+            "state.actors", "Loaded actors near the player, with their leveled rolls.",
+            options: [value("radius", "units", "Search radius in game units. Default: 4096.")]
+        ),
+        command("state.menu", "The open menus and the selected rows."),
+        command(
+            "state.quest", "A quest's stage, objectives, and aliases.",
+            positionals: [required("id", "The quest editor ID.")]
+        ),
+        command("state.scenes", "Each playing scene with its quest and phase."),
+        command(
+            "state.scripts", "The script queue, waits, events, faults, and missing natives.",
+            positionals: [optional("ref", "Also list the scripts on this reference or quest.")]
+        ),
+        command(
+            "state.packages", "An actor's package, procedure, and mover state.",
+            positionals: [required("ref", refHelp)]
+        ),
+        command(
+            "state.furniture", "An actor's seat, or a piece of furniture's markers.",
+            positionals: [optional("ref", "Default: player.")]
+        ),
+        command(
+            "state.objects", "Each running object graph; with a reference, also its bones.",
+            positionals: [optional("ref", refHelp)]
+        ),
+        command(
+            "state.changes", "The newest world-state writes and any rebuild in flight.",
+            options: [value("limit", "n", "Writes to list. Default: 20.")]
+        ),
+        command(
+            "state.av", "One actor value: base, current, and modifiers.",
+            positionals: [required("name", "The actor value, such as Health.")],
+            options: [value("ref", "ref", "The actor. Default: player.")]
+        ),
+        command(
+            "state.global", "A global variable's value.",
+            positionals: [required("id", "The global editor ID.")]
+        ),
+        command("state.time", "The game clock."),
+        command("state.frame", "The frame counter and the timeline.")
+    ]
+
+    static let debug: [AgentCommandSpec] = teleportAndTime + actorChanges + menusAndRender
+
+    private static let teleportAndTime: [AgentCommandSpec] = [
+        command(
+            "debug.teleport", "Move the player. Give --cell, --ref, --pos, or --x and --y.",
+            options: [
+                value("cell", "editorID", "Any cell in the load order."),
+                value("ref", "ref", "Next to a placed reference."),
+                value("pos", "x,y,z", "A position in the current cell or worldspace."),
+                value("x", "n", "Exterior cell grid X."),
+                value("y", "n", "Exterior cell grid Y."),
+                value("worldspace", "editorID", "Go to this worldspace first.")
+            ]
+        ),
+        command(
+            "debug.time", "Set the hour of the day.",
+            positionals: [required("hour", "0 to 24, such as 13.5.")]
+        ),
+        command(
+            "debug.weather", "Force a weather; no ID clears it.",
+            positionals: [optional("id", "The weather editor ID.")]
+        ),
+        command(
+            "debug.rest", "Pass hours as the wait menu does, without the refusals.",
+            positionals: [required("hours", "1 to 24.")],
+            options: [flag("sleep", "Pass them as the rest menu does.")]
+        )
+    ]
+
+    private static let actorChanges: [AgentCommandSpec] = [
+        command(
+            "debug.av", "Set or change an actor value. Give --value or --mod.",
+            positionals: [required("name", "The actor value, such as Health.")],
+            options: [
+                value("value", "v", "The new base value."),
+                value("mod", "d", "Add this to the current value."),
+                value("ref", "ref", "The actor. Default: player.")
+            ]
+        ),
+        command(
+            "debug.item", "Add an item to the player, or remove it with a negative count.",
+            positionals: [required("id", "The item editor ID.")],
+            options: [
+                value("count", "n", "Default: 1."),
+                value("ref", "ref", "The container. Default: player.")
+            ]
+        ),
+        command(
+            "debug.quest", "Set a quest stage.",
+            positionals: [required("id", "The quest editor ID."), required("stage", "The stage.")]
+        ),
+        command("debug.kill", "Kill an actor.", positionals: [required("ref", refHelp)]),
+        command("debug.resurrect", "Resurrect an actor.", positionals: [required("ref", refHelp)]),
+        command(
+            "debug.sit", "Seat an actor in furniture.",
+            positionals: [optional("ref", "The actor. Default: player.")],
+            options: [value("furniture", "ref", "Default: the nearest loaded free seat.")]
+        ),
+        command(
+            "debug.stand", "Get an actor up from its seat.",
+            positionals: [optional("ref", "The actor. Default: player.")]
+        )
+    ]
+
+    private static let menusAndRender: [AgentCommandSpec] = [
+        command(
+            "debug.racemenu", "Open the race menu, as the console's ShowRaceMenu.",
+            options: [flag("limited", "Open it as Game.ShowLimitedRaceMenu.")]
+        ),
+        command(
+            "debug.skillsmenu", "Open the skills menu as the Quick Stats key does.",
+            options: [
+                toggle("sky", "Turn the perk sky on or off."),
+                value("levelup", "n", "First earn 1 to 10 character levels.")
+            ]
+        ),
+        command(
+            "debug.overlay", "Turn a debug overlay or render layer on or off.",
+            positionals: [
+                required("name", "One of navmesh, path, detection, hud, ui, or a render layer."),
+                required("on", "Either on or off.")
+            ]
+        ),
+        command(
+            "debug.channel", "Show one debug channel of the scene pass.",
+            positionals: [required(
+                "mode",
+                "One of off, wireframe, worldnormals, miplevel, and more."
+            )]
+        ),
+        command(
+            "debug.shadows", "Set the sun shadow tier until the renderer is rebuilt.",
+            positionals: [required("quality", "One of off, low, or high.")]
+        )
+    ]
+}

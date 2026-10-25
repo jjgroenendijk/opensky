@@ -84,7 +84,7 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("racemenu", args([:])) == .raceMenu(limited: false))
         #expect(try AgentDebugCommand.parse("racemenu", args(["limited": true]))
             == .raceMenu(limited: true))
-        #expect(try AgentCommandLine.request(["debug", "racemenu", "--limited", "on"]).args
+        #expect(try AgentCommandLine.request(["debug", "racemenu", "--limited"]).args
             == ["limited": true])
     }
 
@@ -96,7 +96,7 @@ struct AgentCommandParsingTests {
         #expect(throws: AgentFailure.self) {
             try AgentDebugCommand.parse("skillsmenu", args(["levelup": 11]))
         }
-        #expect(try AgentCommandLine.request(["debug", "skillsmenu", "--sky", "off"]).args
+        #expect(try AgentCommandLine.request(["debug", "skillsmenu", "--no-sky"]).args
             == ["sky": false])
     }
 
@@ -106,7 +106,7 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("sit", args(["ref": "1A2B", "furniture": "target"]))
             == .sit(reference: "1A2B", furniture: "target"))
         #expect(try AgentDebugCommand.parse("stand", args([:])) == .stand("player"))
-        #expect(try AgentCommandLine.request(["debug", "rest", "8", "--sleep", "on"]).args
+        #expect(try AgentCommandLine.request(["debug", "rest", "8", "--sleep"]).args
             == ["hours": 8, "sleep": true])
         #expect(try AgentDebugCommand.parse("rest", args(["hours": 8, "sleep": true]))
             == .passTime(hours: 8, sleeping: true))

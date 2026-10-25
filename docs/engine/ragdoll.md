@@ -178,7 +178,7 @@ script calls `EndDeferredKill`; the next zero-health frame after that kills it.
 
 To see it in the running game, set an essential actor's health near zero with
 `openskycli game debug av Health --value 1 --ref <id>`, then read its `bleedingOut` flag with
-`openskycli game state scripts --ref <id>`.
+`openskycli game state scripts <id>`.
 
 The player does not bleed out yet, and a quest alias that makes an actor essential or protected
 is not read.

@@ -49,7 +49,16 @@ A connection runs one request at a time, in order. Error codes: `malformedReques
 
 The CLI turns words into a request: `game input hold forward --frames 60` becomes
 `{"command":"input.hold","args":{"action":"forward","frames":60}}`. Kebab options become
-camelCase keys, and words that read as numbers or `true`, `false`, `on`, `off` are typed.
+camelCase keys, and positional words that read as numbers or `true`, `false`, `on`, `off`
+are typed. A switch is a flag with no value: `--sleep` sets `sleep` to true, and `--no-overlay`
+sets `overlay` to false.
+
+`AgentCommandCatalog` lists every command with its positionals and options, so there is one
+spelling of each. The CLI refuses an option the catalog does not list, with exit 2, and the
+router refuses an unknown argument key with `invalidArgument`, so a typo is never ignored.
+`openskycli game help` and `openskycli game <command> --help` print the catalog without the
+app. A new app command adds its entry there; `AgentCommandCatalogTests` checks the names,
+the help sentences, and that every key is camel case.
 
 ## Pause and step
 

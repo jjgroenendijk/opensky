@@ -10,7 +10,7 @@ tags: [engine, menu, time]
 
 The Wait key (T) opens the wait menu. Using a bed opens the same menu as the rest menu. The
 player picks 1 to 24 hours, and the [game clock](/engine/game-clock.md) moves forward by that
-much. `openskycli game debug rest <hours> [--sleep on]` passes time the same way without the
+much. `openskycli game debug rest <hours> [--sleep]` passes time the same way without the
 menu and without its refusals. An NPC's Sleep package lies down in a bed
 ([furniture](/engine/furniture.md)).
 

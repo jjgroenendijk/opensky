@@ -26,9 +26,9 @@ public struct GameArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "game",
         abstract: "Drive the running app over its agent control socket.",
-        discussion: "Each call prints one JSON object. Other commands go to the app: "
-            + "status, quit, screenshot, input, time, state, debug, and events. "
-            + "See docs/tools/agent-control.md.",
+        discussion: "Each call prints one JSON object. Every other command goes to the "
+            + "running app. 'openskycli game help' lists them, and "
+            + "'openskycli game help <command>' shows one with its options.",
         subcommands: [Launch.self, Attach.self, Run.self, Send.self],
         defaultSubcommand: Send.self
     )
@@ -87,12 +87,14 @@ public struct GameArguments: ParsableCommand, Sendable {
         public init() {}
     }
 
-    /// Every other command: the words go to the app's own command parser.
+    /// Every other command: the words go to the app's own command parser. It has no help
+    /// names, so `--help` reaches the CLI's own help for the app's commands.
     public struct Send: CLICommandArguments {
         public static let configuration = CommandConfiguration(
             commandName: "send",
             abstract: "Send one command to the app.",
-            shouldDisplay: false
+            shouldDisplay: false,
+            helpNames: []
         )
         @OptionGroup public var global: GlobalOptions
         @OptionGroup public var game: GameOptions

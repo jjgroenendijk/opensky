@@ -4,27 +4,6 @@
 import Foundation
 
 nonisolated public enum AgentCommandLine {
-    /// The positional argument names of each command, after its own words.
-    public static let positionals: [String: [String]] = [
-        "status": [], "quit": [], "screenshot": [], "events": [], "benchmark": ["preset"],
-        "input.press": ["action"], "input.release": ["action"], "input.hold": ["action"],
-        "input.look": [], "input.select": ["label"], "input.text": ["text"],
-        "input.point": [], "input.click": [],
-        "time.pause": [], "time.resume": [], "time.step": ["n"], "time.scale": ["x"],
-        "state.player": [], "state.target": [], "state.actors": [], "state.menu": [],
-        "state.quest": ["id"], "state.scenes": [], "state.scripts": ["ref"],
-        "state.packages": ["ref"], "state.furniture": ["ref"], "state.objects": ["ref"],
-        "state.changes": [],
-        "state.av": ["name"], "state.global": ["id"],
-        "state.time": [], "state.frame": [],
-        "debug.teleport": [], "debug.time": ["hour"], "debug.weather": ["id"],
-        "debug.av": ["name"], "debug.item": ["id"], "debug.quest": ["id", "stage"],
-        "debug.kill": ["ref"], "debug.resurrect": ["ref"], "debug.overlay": ["name", "on"],
-        "debug.channel": ["mode"], "debug.shadows": ["quality"],
-        "debug.racemenu": [], "debug.sit": ["ref"], "debug.stand": ["ref"],
-        "debug.rest": ["hours"], "debug.skillsmenu": []
-    ]
-
     /// Arguments a command gets when the words leave them out.
     static let defaults: [String: [String: AgentJSON]] = [
         "state.av": ["ref": "player"]
@@ -35,58 +14,102 @@ nonisolated public enum AgentCommandLine {
         _ words: [String],
         id: Int = 1
     ) throws(AgentFailure) -> AgentRequest {
-        let (command, rest) = try split(words)
-        var args = defaults[command] ?? [:]
-        var names = positionals[command] ?? []
+        let (spec, rest) = try split(words)
+        var args = defaults[spec.name] ?? [:]
+        var positionals = spec.positionals.map(\.key)
         var index = rest.startIndex
         while index < rest.endIndex {
             let word = rest[index]
             index += 1
-            if word.hasPrefix("--"), word.count > 2 {
-                let option = word.dropFirst(2)
-                if let equals = option.firstIndex(of: "=") {
-                    args[camelCase(String(option[..<equals]))] =
-                        typed(String(option[option.index(after: equals)...]))
-                    continue
+            guard isOption(word) else {
+                guard !positionals.isEmpty else {
+                    throw AgentFailure(
+                        .invalidArgument, "\(spec.name): unexpected argument '\(word)'"
+                    )
                 }
-                let key = camelCase(String(option))
-                if index < rest.endIndex, !isOption(rest[index]) {
-                    args[key] = typed(rest[index])
-                    index += 1
-                } else {
-                    args[key] = true
-                }
+                args[positionals.removeFirst()] = typed(word)
                 continue
             }
-            guard !names.isEmpty else {
-                throw AgentFailure(.invalidArgument, "\(command): unexpected argument '\(word)'")
+            let (key, value) = try option(word, of: spec)
+            if let value {
+                args[key] = value
+                continue
             }
-            args[names.removeFirst()] = typed(word)
+            guard index < rest.endIndex, !isOption(rest[index]) else {
+                throw AgentFailure(.invalidArgument, "\(spec.name): \(word) needs a value")
+            }
+            args[key] = typed(rest[index])
+            index += 1
         }
-        return AgentRequest(id: id, command: command, args: args)
+        if
+            let missing = positionals.first(where: { key in
+                spec.positionals.contains { $0.key == key && !$0.optional }
+            })
+        {
+            throw AgentFailure(.invalidArgument, "\(spec.name): missing <\(missing)>")
+        }
+        return AgentRequest(id: id, command: spec.name, args: args)
+    }
+
+    /// One option word: a switch gives its value, a value option gives nil for the next word.
+    private static func option(
+        _ word: String, of spec: AgentCommandSpec
+    ) throws(AgentFailure) -> (key: String, value: AgentJSON?) {
+        let name = String(word.dropFirst(2))
+        // `--name=value`, as the openskycli options also take it.
+        if
+            let equals = name.firstIndex(of: "="),
+            let found = spec.option(camelCase(String(name[..<equals]))),
+            case .value = found.kind
+        {
+            return (found.key, typed(String(name[name.index(after: equals)...])))
+        }
+        if let found = spec.option(camelCase(name)) {
+            switch found.kind {
+            case .flag, .toggle: return (found.key, true)
+            case .value: return (found.key, nil)
+            case .negatedFlag: break
+            }
+        }
+        if name.hasPrefix("no-"), let found = spec.option(camelCase(String(name.dropFirst(3)))) {
+            switch found.kind {
+            case .negatedFlag, .toggle: return (found.key, false)
+            case .flag, .value: break
+            }
+        }
+        throw AgentFailure(
+            .invalidArgument,
+            "\(spec.name): unknown option \(word); see 'openskycli game help \(displayName(spec))'"
+        )
     }
 
     private static func split(_ words: [String]) throws(AgentFailure)
-        -> (String, ArraySlice<String>)
+        -> (AgentCommandSpec, ArraySlice<String>)
     {
         guard let first = words.first else {
             throw AgentFailure(.invalidArgument, "no game command given")
         }
-        if words.count > 1, positionals["\(first).\(words[1])"] != nil {
-            return ("\(first).\(words[1])", words.dropFirst(2))
+        if words.count > 1, let spec = AgentCommandCatalog.spec("\(first).\(words[1])") {
+            return (spec, words.dropFirst(2))
         }
-        guard positionals[first] != nil else {
+        guard let spec = AgentCommandCatalog.spec(first) else {
             throw AgentFailure(
                 .unknownCommand,
-                "unknown game command: \(words.prefix(2).joined(separator: " "))"
+                "unknown game command: \(words.prefix(2).joined(separator: " ")); "
+                    + "'openskycli game help' lists them"
             )
         }
-        return (first, words.dropFirst())
+        return (spec, words.dropFirst())
+    }
+
+    /// `state.av` reads as `state av` on the command line.
+    static func displayName(_ spec: AgentCommandSpec) -> String {
+        spec.name.replacingOccurrences(of: ".", with: " ")
     }
 
     /// `--name` starts an option; `-5` is a negative number, not an option.
     private static func isOption(_ word: String) -> Bool {
-        word.hasPrefix("--")
+        word.hasPrefix("--") && word.count > 2
     }
 
     static func camelCase(_ kebab: String) -> String {

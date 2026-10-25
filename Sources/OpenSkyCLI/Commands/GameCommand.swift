@@ -31,11 +31,11 @@ struct GameCommandOptions {
 
 enum GameCommand {
     static func send(arguments: GameArguments.Send) throws {
-        let options = try GameCommandOptions(arguments.game)
-        guard !arguments.words.isEmpty else {
-            throw CLIError.usage("game needs a command, such as status")
+        if let help = AgentCommandHelp.text(for: arguments.words) {
+            print(help)
+            return
         }
-        try send(arguments.words, options: options)
+        try send(arguments.words, options: GameCommandOptions(arguments.game))
     }
 
     static func attach(arguments: GameArguments.Attach) throws {
