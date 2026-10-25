@@ -84,8 +84,11 @@ extension WorldItemRuntime {
             throw HarvestError.alreadyHarvested(interaction.reference)
         }
         let baselines = inventory.baselines
+        // A harvested plant's list rolls at the player's own level (CK "LeveledItem").
+        let request = baselines.leveling.request(atLevel: baselines.leveling.playerLevel.level)
+        let seed = LeveledListRoll.seed(text: "\(entry.key) \(moment.day ?? 0)")
         let produce = interaction.produce?.ingredient.map {
-            baselines.expanded($0, count: max(1, count))
+            baselines.expanded($0, count: max(1, count), request: request, seed: seed)
                 .filter { baselines.items.definition($0.item) != nil }
         } ?? []
         guard !produce.isEmpty else { throw HarvestError.noProduce(interaction.base) }

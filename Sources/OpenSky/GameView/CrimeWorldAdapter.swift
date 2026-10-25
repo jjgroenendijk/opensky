@@ -260,7 +260,10 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
 
     func wearJailOutfit(_ outfit: FormID) -> [FormID] {
         guard
-            let pieces = game.inventory.runtime?.inventory.baselines.outfitStacks(outfit),
+            let inventory = game.inventory.runtime?.inventory,
+            let pieces = inventory.baselines.outfitStacks(
+                outfit, roll: inventory.roll(of: .player)
+            ),
             game.inventoryWorld.setOutfit(outfit, on: .player)
         else { return [] }
         return pieces.map(\.item)

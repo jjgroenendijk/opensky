@@ -10,7 +10,14 @@ import OpenSkyGameData
 /// Re-derives actor perk lists from plugin data.
 nonisolated public struct ActorPerkBaselineResolver: Sendable {
     /// Template-chain resolution, which supplies the NPC_ list.
-    public let templates: ActorTemplateResolver
+    public private(set) var templates: ActorTemplateResolver
+
+    /// This resolver for one placed reference's roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.templates = templates.rolling(roll)
+        return copy
+    }
 
     public init(templates: ActorTemplateResolver) {
         self.templates = templates
@@ -38,9 +45,9 @@ nonisolated public struct ActorPerkBaselineResolver: Sendable {
     /// The player has no NPC_ record in this engine and therefore no authored
     /// perks: the player starts with none and takes them, which is what
     /// "seed the player empty" means.
-    public func baseline(for subject: ActorValueSubject) -> [FormID] {
+    public func baseline(for subject: ActorValueSubject, roll: LeveledRoll? = nil) -> [FormID] {
         switch subject {
-        case let .actor(base): baseline(for: base)
+        case let .actor(base): rolling(roll).baseline(for: base)
         case .player, .generated: []
         }
     }

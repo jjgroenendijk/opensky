@@ -90,7 +90,13 @@ public final class PerkCoordinator {
         else { return 0 }
         seededActors.insert(holder.key)
         let report = runtime.seed(
-            baselines.baseline(for: holder.subject), fromPlugin: pluginName, to: holder
+            baselines.baseline(
+                for: holder.subject,
+                roll: baselines.templates.leveling.roll(
+                    of: holder, frozenLevel: runtime.frozenLeveledLevel(of: holder.key)
+                )
+            ),
+            fromPlugin: pluginName, to: holder
         )
         store(runtime)
         guard !report.added.isEmpty else { return 0 }

@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyWorldState
 
 /// Owns the magic runtimes and reads the world through `MagicWorld`.
 @MainActor
@@ -287,7 +288,10 @@ public final class MagicCoordinator {
             !grantedActors.contains(holder.key)
         else { return }
         grantedActors.insert(holder.key)
-        let baseline = spellBaselines.baseline(for: holder.subject)
+        let roll = spellBaselines.templates.leveling.roll(
+            of: holder, frozenLevel: caster.spellbook.store.frozenLeveledLevel(of: holder.key)
+        )
+        let baseline = spellBaselines.baseline(for: holder.subject, roll: roll)
         caster.spellbook.grant(
             caster.spellbook.resolve(baseline.all, fromPlugin: spellPluginName),
             to: holder

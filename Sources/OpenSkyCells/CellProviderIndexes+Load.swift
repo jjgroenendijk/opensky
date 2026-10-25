@@ -25,6 +25,18 @@ nonisolated extension CellProviderIndexes {
         let tuning: SettingIndexes
         let progress: WorldLoadProgress
         let fileSystem: any GameFileSource
+        /// Built first, because a leveled list's `LVLG` chance reads it.
+        let globals: GlobalStore
+        /// The one roller every actor, inventory, and package resolver shares.
+        let leveling: LeveledListRoller
+    }
+
+    /// `LVLG` reads a global's plugin value.
+    private static func roller(tuning: SettingIndexes, globals: GlobalStore) -> LeveledListRoller {
+        LeveledListRoller(
+            settings: tuning.leveledLists,
+            chanceNoneGlobal: { globals.global($0)?.defaultValue.value }
+        )
     }
 
     /// Builds the whole set and returns the session over it. Throws
@@ -52,6 +64,7 @@ nonisolated extension CellProviderIndexes {
         let tuning = try progress.measure(.settings) { SettingIndexes(plugins: plugins) }
         // The item index resolves enchantments, so magic comes before the fan-out.
         let magic = try progress.measure(.magic) { MagicIndexes(plugins: plugins) }
+        let globals = GlobalStore(loadOrder: activeLoadOrder.plugins)
         let context = LoadContext(
             file: file,
             pluginName: ActiveLoadOrder.baseFileName,
@@ -59,7 +72,9 @@ nonisolated extension CellProviderIndexes {
             loadOrder: activeLoadOrder.plugins,
             tuning: tuning,
             progress: progress,
-            fileSystem: fileSystem
+            fileSystem: fileSystem,
+            globals: globals,
+            leveling: roller(tuning: tuning, globals: globals)
         )
         async let records = RecordStores.load(context)
         let built = try progress.measure(.assetLibraries) {
@@ -146,6 +161,7 @@ nonisolated extension CellProviderIndexes {
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
         builder.collisionModels?.assetCache = assets.cache
+        builder.leveling = context.leveling
         builder.loadPhases = assets.loadPhases
         let formIDResolver = builder.formIDResolver
         let placedRecords = builder.placedRecords
@@ -174,6 +190,7 @@ nonisolated extension CellProviderIndexes {
     ) -> InventoryBaselineResolver {
         InventoryBaselineResolver.build(
             from: context.loadOrder,
+            leveling: context.leveling,
             enchantments: ItemEnchantmentResolver(
                 store: enchantments,
                 pluginName: FormIDResolver.loadOrderSpaceName
@@ -196,7 +213,7 @@ nonisolated extension CellProviderIndexes.RecordStores {
             DialogueStore(plugins: context.plugins)
         }
         async let packages = progress.measure(.packages) {
-            PackageStore(loadOrder: context.loadOrder)
+            PackageStore(loadOrder: context.loadOrder, leveling: context.leveling)
         }
         async let world = progress.measure(.factions) {
             CellProviderIndexes.WorldRecords(context)
@@ -251,7 +268,8 @@ nonisolated extension CellProviderIndexes.RecordStores {
                 // Load-order wide, so a patch plugin's CLAS override reaches the derivation.
                 classes: CharacterClassStore(plugins: context.plugins),
                 pluginName: FormIDResolver.loadOrderSpaceName,
-                settings: context.tuning.level
+                settings: context.tuning.level,
+                leveling: context.leveling
             )
         )
     }
@@ -259,7 +277,7 @@ nonisolated extension CellProviderIndexes.RecordStores {
 
 nonisolated extension CellProviderIndexes.WorldRecords {
     init(_ context: CellProviderIndexes.LoadContext) {
-        globals = GlobalStore(loadOrder: context.loadOrder)
+        globals = context.globals
         locations = LocationStore(plugins: context.plugins)
         factions = FactionStore(plugins: context.plugins)
         relationships = RelationshipStore(plugins: context.plugins)

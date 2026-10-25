@@ -66,7 +66,7 @@ protocol DialogueWorldHost: AnyObject {
 final class DialogueWorldAdapter {
     unowned let game: any DialogueWorldHost
     /// `VTCK` by actor base. A template walk per actor per condition context costs too much.
-    private var voiceTypesByBase: [FormID: FormID?] = [:]
+    private var voiceTypesByRoll: [LeveledActorRollKey: FormID?] = [:]
 
     init(game: any DialogueWorldHost) {
         self.game = game
@@ -146,7 +146,7 @@ final class DialogueWorldAdapter {
         if let name = game.streamer?.interactionName(reference: entry.formID), !name.isEmpty {
             return name
         }
-        return entry.placedActor.flatMap { game.actorWorld.displayName(base: $0.base) }
+        return entry.placedActor.flatMap { game.actorWorld.displayName(of: speaker, base: $0.base) }
             ?? speaker.description
     }
 
@@ -161,8 +161,12 @@ final class DialogueWorldAdapter {
         var voices: [ReferenceKey: FormID] = [:]
         for entry in entries {
             guard let base = entry.placedActor?.base else { continue }
-            let voice = voiceTypesByBase[base] ?? records.voiceType(ofBase: base)
-            voiceTypesByBase[base] = voice
+            let roll = game.worldState.leveledRoll(
+                of: entry.key, base: base, with: records.templates.leveling
+            )
+            let key = LeveledActorRollKey(base: base, roll: roll)
+            let voice = voiceTypesByRoll[key] ?? records.voiceType(ofBase: base, roll: roll)
+            voiceTypesByRoll[key] = voice
             voices[entry.key] = voice
         }
         return voices

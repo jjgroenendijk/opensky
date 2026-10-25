@@ -1,5 +1,5 @@
-// LVLN, LVLI, and LVSP leveled lists, which share one entry layout. Selection
-// is deterministic for now: highest level, first among ties.
+// LVLN, LVLI, and LVSP leveled lists, which share one entry layout. The roll is
+// in `LeveledListRoll` (docs/engine/leveled-lists.md).
 // Layout and sources: docs/formats/actors.md (LVSP: shouts-equip-slots.md).
 
 import Foundation
@@ -21,6 +21,8 @@ nonisolated public struct LeveledList: Sendable {
         /// Use every entry — the list is a bundle, not alternatives
         /// (e.g. ArmorStormcloakSet: boots + cuirass + gauntlets + helmet).
         public static let useAll = Flags(rawValue: 0x04)
+        /// Roll at the special loot level instead of the asked level (UESP LVLI).
+        public static let specialLoot = Flags(rawValue: 0x08)
     }
 
     /// One LVLO entry. UESP documents 12 bytes (uint32 level, FormID
@@ -54,15 +56,6 @@ nonisolated public struct LeveledList: Sendable {
     public let chanceNoneGlobal: FormID?
     /// LVLN only: the model the editor shows for the list.
     public let model: ModelData?
-
-    /// Deterministic bind-pose policy: highest level wins, first among ties.
-    public var deterministicEntry: Entry? {
-        entries.enumerated().min { lhs, rhs in
-            lhs.element.level != rhs.element.level
-                ? lhs.element.level > rhs.element.level
-                : lhs.offset < rhs.offset
-        }?.element
-    }
 
     /// The record types this decoder accepts.
     public static let recordTypes: Set<FourCC> = ["LVLN", "LVLI", "LVSP"]

@@ -128,6 +128,7 @@ chunk cannot read into the next.
 | `LOCK` | changed locks | world |
 | `RLOC` | references moved into another cell | world |
 | `RMOT` | motion types scripts set | world |
+| `LVRL` | player level each leveled roll froze | world |
 | `SUMM` | save list row: name, level, race, location, play time | below |
 | `THMB` | save list picture | below |
 | `PIDN` | the player's race, sex, name, and face | world |
@@ -153,6 +154,10 @@ moved back to its plugin cell writes no entry. See
 `RMOT` is a uint32 entry count, then per reference: the key, the cell, and a motion byte, 1
 for dynamic or 4 for keyframed. Any other byte fails the load. A reference no script set a
 motion type on writes no entry. See [traps](/engine/traps.md#motion-type).
+
+`LVRL` is a uint32 entry count, then per reference: the key, the cell, and the player level
+as a uint32. A level below 1 is dropped, so that reference rolls at the live level. See
+[leveled lists](/engine/leveled-lists.md).
 
 `SUMM` holds the character name (string), the level (uint16), the race name and the
 location name (strings), and the real play time in seconds (float64, finite, not negative).

@@ -130,6 +130,26 @@ struct CellResetCoordinatorTests {
 
     // MARK: - Fixtures
 
+    /// A leveled roll freezes its level once, and a reset clears it so the next attach
+    /// freezes the level of that moment (docs/engine/leveled-lists.md).
+    @Test func aLeveledRollStaysFrozenUntilTheCellResets() throws {
+        var now = 1000.0
+        let reset = coordinator { now }
+        let scene = try Self.scene([Self.reference(0x10), Self.reference(0x11)])
+        let rolls: (RuntimeReferenceEntry) -> Bool = { $0.key == Self.key(0x10) }
+        #expect(LeveledRollFreeze
+            .freeze(scene, level: 4, in: store, rolls: rolls) == [Self.key(0x10)])
+        #expect(LeveledRollFreeze.freeze(scene, level: 9, in: store, rolls: rolls).isEmpty)
+        #expect(store.frozenLeveledLevel(of: Self.key(0x10)) == 4)
+        #expect(store.frozenLeveledLevel(of: Self.key(0x11)) == nil)
+        reset.cellDetached(Self.cell)
+        now += 240
+        #expect(reset.cellAttached(scene) == [Self.key(0x10)])
+        #expect(LeveledRollFreeze
+            .freeze(scene, level: 9, in: store, rolls: rolls) == [Self.key(0x10)])
+        #expect(store.frozenLeveledLevel(of: Self.key(0x10)) == 9)
+    }
+
     private static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: "skyrim.esm", objectID: objectID)
     }

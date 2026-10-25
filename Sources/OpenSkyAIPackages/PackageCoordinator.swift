@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyWorldConditions
@@ -15,6 +16,8 @@ import simd
 public protocol PackageWorld: AnyObject {
     /// Nil when no cell is streamed or no renderer runs.
     func packageResidents() -> [RuntimeReferenceEntry]?
+    /// The resident actor's leveled roll, which picks its template's packages.
+    func packageLeveledRoll(of actor: ReferenceKey, base: FormID) -> LeveledRoll?
     /// Nil when no renderer runs.
     var packageClock: GameClock? { get }
     /// The live quest, actor, detection and reference state one selection reads.
@@ -125,6 +128,10 @@ extension PackageWorld {
 
     public var packageDrivesPlayer: Bool {
         false
+    }
+
+    public func packageLeveledRoll(of _: ReferenceKey, base _: FormID) -> LeveledRoll? {
+        nil
     }
 
     public func packageReference(
@@ -291,9 +298,11 @@ public final class PackageCoordinator {
             waitingMoves.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
-            guard (try? runtime.register(actor: arrival.actor, base: arrival.base)) != nil else {
-                continue
-            }
+            let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)
+            guard
+                (try? runtime.register(actor: arrival.actor, base: arrival.base, roll: roll))
+                != nil
+            else { continue }
             registeredActors[arrival.actor] = arrival.base
         }
 

@@ -9,6 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyWorldState
 
 /// The graph names a shout uses (`0_master.hkx`, `shout_behavior.hkx`).
 nonisolated public enum ShoutGraphNames: Sendable {
@@ -58,7 +59,10 @@ extension MagicCoordinator {
     /// The shouts on an NPC's own and race spell lists (`SPLO` entries that name a `SHOU`).
     public func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout] {
         guard let shoutStore, let spellBaselines, let spellPluginName else { return [] }
-        return spellBaselines.baseline(for: holder.subject).all.compactMap {
+        let roll = spellBaselines.templates.leveling.roll(
+            of: holder, frozenLevel: caster?.spellbook.store.frozenLeveledLevel(of: holder.key)
+        )
+        return spellBaselines.baseline(for: holder.subject, roll: roll).all.compactMap {
             shoutStore.resolve($0, fromPlugin: spellPluginName)
         }
     }

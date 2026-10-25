@@ -34,13 +34,19 @@ public enum InventoryBaselineFixture {
     public static let guardActor = FormID(0x0000_3000)
     public static let templatedActor = FormID(0x0000_3010)
     public static let outfitlessActor = FormID(0x0000_3020)
+    /// Carries five gold and a leveled pick, and drops the same pick when it dies.
+    public static let lootedActor = FormID(0x0000_3030)
 
     public static let chest = FormID(0x0000_4000)
     public static let leveledChest = FormID(0x0000_4010)
     public static let emptyChest = FormID(0x0000_4020)
 
-    public static func resolver() throws -> InventoryBaselineResolver {
-        try InventoryBaselineResolver.build(from: ESMFile(data: pluginBytes()))
+    /// At player level 5 the single-pick list reaches its level 5 cuirass.
+    public static func resolver(playerLevel: Int = 5) throws -> InventoryBaselineResolver {
+        try InventoryBaselineResolver.build(
+            from: LoadOrderPlugins(file: ESMFile(data: pluginBytes())),
+            leveling: LeveledListRoller(playerLevel: PlayerLevelSource(playerLevel))
+        )
     }
 
     // MARK: - Items
@@ -232,14 +238,25 @@ public enum InventoryBaselineFixture {
             defaultOutfit: emptyOutfit.rawValue
         )
         records += actor(formID: outfitlessActor.rawValue, defaultOutfit: nil)
-        return records
+        var looted = ESMFixture.field(
+            "CNTO",
+            InventoryFixture.cntoData(item: gold.rawValue, count: 5)
+        )
+            + ESMFixture.field(
+                "CNTO",
+                InventoryFixture.cntoData(item: singlePickList.rawValue, count: 1)
+            )
+            + InventoryFixture.formIDField("INAM", singlePickList.rawValue)
+        looted = actor(formID: lootedActor.rawValue, defaultOutfit: nil, extra: looted)
+        return records + looted
     }
 
     private static func actor(
         formID: UInt32,
         templateFlags: UInt16 = 0,
         template: UInt32? = nil,
-        defaultOutfit: UInt32?
+        defaultOutfit: UInt32?,
+        extra: Data = Data()
     ) -> Data {
         var acbs = Data()
         acbs.appendUInt32(0)
@@ -256,12 +273,42 @@ public enum InventoryBaselineFixture {
         if let defaultOutfit {
             fields += InventoryFixture.formIDField("DOFT", defaultOutfit)
         }
-        return ESMFixture.record("NPC_", formID: formID, data: fields)
+        return ESMFixture.record("NPC_", formID: formID, data: fields + extra)
+    }
+}
+
+extension InventoryBaselineFixture {
+    /// - Parameter playerOutfit: gives the `Player` record that outfit.
+    public static func pluginBytes(playerOutfit: FormID? = nil) -> Data {
+        var contents = ESMFixture.tes4()
+        contents += ESMFixture.topGroup("MISC", contents: miscRecords())
+        contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
+        contents += ESMFixture.topGroup("ARMO", contents: armorRecords())
+        contents += ESMFixture.topGroup("EQUP", contents: equipSlotRecords())
+        contents += ESMFixture.topGroup("LVLI", contents: leveledRecords())
+        contents += ESMFixture.topGroup("OTFT", contents: outfitRecords())
+        contents += ESMFixture.topGroup(
+            "NPC_",
+            contents: actorRecords() + playerRecord(playerOutfit)
+        )
+        contents += ESMFixture.topGroup("CONT", contents: containerRecords())
+        return contents
     }
 
+    /// The `Player` NPC_ record, or nothing when it wears no outfit.
+    private static func playerRecord(_ outfit: FormID?) -> Data {
+        guard let outfit else { return Data() }
+        return actor(
+            formID: InventoryBaselineResolver.playerBase.rawValue,
+            defaultOutfit: outfit.rawValue
+        )
+    }
+}
+
+extension InventoryBaselineFixture {
     // MARK: - Containers
 
-    private static func containerRecords() -> Data {
+    static func containerRecords() -> Data {
         var records = container(
             formID: chest.rawValue,
             editorID: "Chest",
@@ -292,33 +339,5 @@ public enum InventoryBaselineFixture {
             )
         }
         return ESMFixture.record("CONT", formID: formID, data: fields)
-    }
-}
-
-extension InventoryBaselineFixture {
-    /// - Parameter playerOutfit: gives the `Player` record that outfit.
-    public static func pluginBytes(playerOutfit: FormID? = nil) -> Data {
-        var contents = ESMFixture.tes4()
-        contents += ESMFixture.topGroup("MISC", contents: miscRecords())
-        contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
-        contents += ESMFixture.topGroup("ARMO", contents: armorRecords())
-        contents += ESMFixture.topGroup("EQUP", contents: equipSlotRecords())
-        contents += ESMFixture.topGroup("LVLI", contents: leveledRecords())
-        contents += ESMFixture.topGroup("OTFT", contents: outfitRecords())
-        contents += ESMFixture.topGroup(
-            "NPC_",
-            contents: actorRecords() + playerRecord(playerOutfit)
-        )
-        contents += ESMFixture.topGroup("CONT", contents: containerRecords())
-        return contents
-    }
-
-    /// The `Player` NPC_ record, or nothing when it wears no outfit.
-    private static func playerRecord(_ outfit: FormID?) -> Data {
-        guard let outfit else { return Data() }
-        return actor(
-            formID: InventoryBaselineResolver.playerBase.rawValue,
-            defaultOutfit: outfit.rawValue
-        )
     }
 }

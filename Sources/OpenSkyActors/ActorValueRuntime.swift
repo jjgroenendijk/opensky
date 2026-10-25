@@ -23,8 +23,8 @@ public struct ActorValueRuntime: ActorValueAccess {
     /// `Debug.SetGodMode`: the player's values take no damage while it is on.
     public let godMode = GodModeSwitch()
     /// Regeneration reads every actor's baseline each step. A `PC Level Mult` actor
-    /// scales with the player, so the key holds the player level too.
-    private let actorBaselines = BaselineMemo<ActorBaselineKey, ActorValueBaseline>()
+    /// scales with the player and a leveled one with its roll, so the key holds both.
+    private let actorBaselines = BaselineMemo<LeveledActorRollKey, ActorValueBaseline>()
 
     // MARK: - Reading
 
@@ -38,8 +38,18 @@ public struct ActorValueRuntime: ActorValueAccess {
         guard case let .actor(base) = holder.subject else {
             return baselines.baseline(for: holder.subject)
         }
-        let key = ActorBaselineKey(base: base, playerLevel: baselines.playerLevel.level)
-        return actorBaselines.value(for: key) { baselines.baseline(for: holder.subject) }
+        let roll = leveledRoll(of: holder, base: base)
+        return actorBaselines.value(for: LeveledActorRollKey(base: base, roll: roll)) {
+            baselines.baseline(for: holder.subject, roll: roll)
+        }
+    }
+
+    /// A placed actor's roll, at the level its cell froze.
+    public func leveledRoll(of holder: ActorValueHolder, base: FormID) -> LeveledRoll {
+        baselines.leveling.roll(
+            for: holder.key, base: base, cell: holder.cell,
+            frozenLevel: store.frozenLeveledLevel(of: holder.key)
+        )
     }
 
     /// `holder`'s effective state: its runtime component when it has one, a
@@ -314,11 +324,6 @@ public struct ActorValueRuntime: ActorValueAccess {
         self.baselines = baselines
         self.regeneration = regeneration
     }
-}
-
-private struct ActorBaselineKey: Hashable {
-    let base: FormID
-    let playerLevel: Int
 }
 
 /// A switch shared by every copy of the runtime, as the regeneration delays are.

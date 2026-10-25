@@ -47,8 +47,8 @@ The walk rules:
 - Follow `TPLT` always. The flags choose fields, not links.
 - A record passes a field up only while it has a `TPLT` and that field's flag is set. A set
   flag without a `TPLT` does nothing. The last record in the chain always supplies the field.
-- At an LVLN, pick the entry with the highest level, and the first one on a tie. The game
-  rolls against the player level; OpenSky does not yet.
+- At an LVLN, roll for the base at its encounter level and difficulty
+  ([leveled lists](/engine/leveled-lists.md)).
 - Every resolved field records which NPC_ supplied it.
 - A loop, a dangling FormID, or an empty list throws an error.
 
@@ -68,8 +68,8 @@ draugr, and creature ones, where traits and stats give different races.
 
 - Skeleton: the race `ANAM` for the gender.
 - Skin: NPC_ `WNAM`, else race `WNAM`, then the ARMO, then its ARMAs that fit the race.
-- Outfit: NPC_ `DOFT`, then the OTFT entries. An ARMO is used directly. An LVLI with "use
-  all" gives every entry; any other LVLI gives the highest-level entry, first on a tie.
+- Outfit: NPC_ `DOFT`, then the OTFT entries. An ARMO is used directly. An LVLI rolls for the
+  actor's base, the same roll its inventory makes, so the drawn outfit is the carried one.
 - An ARMA fits a race when its primary race matches or its extra-race list contains it.
 - Model: `MOD2` for male and `MOD3` for female. If one is missing, use the other. Vanilla
   has male-only ARMAs that both genders wear (`StormCloakBootsAA`).

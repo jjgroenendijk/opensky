@@ -26,7 +26,7 @@ enum ActorValueCommand {
             classes: CharacterClassStore(plugins: loadOrder.files),
             pluginName: FormIDResolver.loadOrderSpaceName,
             settings: settings,
-            playerLevel: PlayerLevelSource(playerLevel)
+            leveling: LeveledListRoller(playerLevel: PlayerLevelSource(playerLevel))
         )
         if let race {
             try reportRace(race, resolver: resolver)

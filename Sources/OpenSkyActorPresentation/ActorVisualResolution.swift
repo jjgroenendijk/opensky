@@ -198,6 +198,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public let colors: [UInt32: ColorForm]
     /// Records `build` could not decode; they resolve as dangling.
     public private(set) var skippedRecords = SkippedRecords()
+    /// The roll outfit lists go through, shared with the template resolver.
+    public var leveling = LeveledListRoller()
 
     public init(
         races: [UInt32: Race],
@@ -235,7 +237,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
 
     /// Indexes every plugin's decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT records;
     /// a later override wins.
-    public static func build(from loadOrder: LoadOrderPlugins) -> ActorVisualResolver {
+    public static func build(
+        from loadOrder: LoadOrderPlugins,
+        leveling: LeveledListRoller = LeveledListRoller()
+    ) -> ActorVisualResolver {
         var skipped = SkippedRecords()
         var resolver = ActorVisualResolver(
             races: loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
@@ -268,6 +273,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
             }
         )
         resolver.skippedRecords = skipped
+        resolver.leveling = leveling
         return resolver
     }
 
@@ -276,9 +282,11 @@ nonisolated public struct ActorVisualResolver: Sendable {
     ///   - appearance: the template-resolved actor.
     ///   - equipped: a runtime equipped set that replaces the `defaultOutfit` chain;
     ///     nil resolves through DOFT.
+    ///   - roll: the placed actor's leveled roll for the outfit; nil rolls for the base.
     public func resolve(
         appearance: ResolvedActorAppearance,
-        equipped: [FormID]? = nil
+        equipped: [FormID]? = nil,
+        roll: LeveledRoll? = nil
     ) throws -> ResolvedActorVisual {
         guard
             let raceID = appearance.race.value,
@@ -296,7 +304,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         let worn: WornEquipment = if let equipped {
             wornEquipment(equipped: equipped, skips: &skips)
         } else {
-            try WornEquipment(armors: outfitPieces(of: appearance))
+            try WornEquipment(armors: outfitPieces(of: appearance, roll: roll))
         }
         let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []

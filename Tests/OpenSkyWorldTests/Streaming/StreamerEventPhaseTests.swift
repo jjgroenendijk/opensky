@@ -21,8 +21,11 @@ struct StreamerEventPhaseTests {
         #expect(order == InteractionStep.allCases)
     }
 
+    /// The leveled rolls freeze after the reset and before the scripts read inventories.
     @Test func cellResetPreparesBeforeTheScriptsAttachAndQueuesAfter() {
-        #expect(CellAttachStep.allCases == [.resetPrepare, .scripts, .resetEnqueue, .agentEvents])
+        #expect(CellAttachStep.allCases == [
+            .resetPrepare, .leveledRolls, .scripts, .resetEnqueue, .agentEvents
+        ])
         #expect(CellDetachStep.allCases == [.scripts, .reset, .agentEvents])
     }
 

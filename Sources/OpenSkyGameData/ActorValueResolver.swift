@@ -53,7 +53,7 @@ nonisolated public struct ResolvedActorValues: Equatable, Sendable {
 /// Derives actor values from pre-built single-plugin record indexes, the same
 /// raw-`UInt32` keying `ActorTemplateResolver` and `ActorVisualResolver` use.
 nonisolated public struct ActorValueResolver: Sendable {
-    public let templates: ActorTemplateResolver
+    public private(set) var templates: ActorTemplateResolver
     public let races: [UInt32: Race]
     /// Load-order-wide CLAS lookup. The NPC_ plugin travels beside it, because a
     /// class link resolves relative to the plugin carrying it.
@@ -75,6 +75,13 @@ nonisolated public struct ActorValueResolver: Sendable {
     /// The level as of right now.
     public var playerLevel: Int {
         playerLevelSource.level
+    }
+
+    /// This resolver for one placed reference's roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.templates = templates.rolling(roll)
+        return copy
     }
 
     public init(
@@ -109,7 +116,7 @@ nonisolated public struct ActorValueResolver: Sendable {
             classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
             pluginName: pluginName,
             settings: settings,
-            playerLevel: playerLevel
+            leveling: LeveledListRoller(playerLevel: playerLevel)
         )
     }
 
@@ -120,20 +127,20 @@ nonisolated public struct ActorValueResolver: Sendable {
         classes: CharacterClassStore,
         pluginName: String,
         settings: ActorValueLevelSettings = .documentedDefaults,
-        playerLevel: PlayerLevelSource = PlayerLevelSource()
+        leveling: LeveledListRoller = LeveledListRoller()
     ) -> ActorValueResolver {
         var skipped = SkippedRecords()
         let races = loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
             try Race(record: $0, localized: $1)
         }
         return ActorValueResolver(
-            templates: ActorTemplateResolver.build(from: loadOrder),
+            templates: ActorTemplateResolver.build(from: loadOrder, leveling: leveling),
             raceSkips: skipped,
             races: races,
             classes: classes,
             pluginName: pluginName,
             settings: settings,
-            playerLevel: playerLevel
+            playerLevel: leveling.playerLevel
         )
     }
 

@@ -26,7 +26,7 @@ nonisolated public struct ResolvedPackage: Equatable, Sendable {
 
 nonisolated public struct PackageStore: Sendable {
     public let packages: [UInt32: Package]
-    public let actorTemplates: ActorTemplateResolver
+    public private(set) var actorTemplates: ActorTemplateResolver
     /// The entries of every FLST, for the default and override package lists.
     public private(set) var formLists: [UInt32: [FormID]] = [:]
     /// PACK records that failed to decode.
@@ -36,13 +36,21 @@ nonisolated public struct PackageStore: Sendable {
     /// FormIDs move; its conditions stay as written (`ConditionEvaluator`).
     private var translations: [UInt32: FormIDTranslation] = [:]
 
+    /// This resolver for one placed reference's roll.
+    public func rolling(_ roll: LeveledRoll?) -> Self {
+        var copy = self
+        copy.actorTemplates = actorTemplates.rolling(roll)
+        return copy
+    }
+
     public init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 
-    /// Every plugin's PACK records; a later override wins.
-    public init(loadOrder: LoadOrderPlugins) {
-        actorTemplates = ActorTemplateResolver.build(from: loadOrder)
+    /// Every plugin's PACK records; a later override wins. `leveling` is the
+    /// session's, so a leveled actor's packages follow the entry it rolled.
+    public init(loadOrder: LoadOrderPlugins, leveling: LeveledListRoller = LeveledListRoller()) {
+        actorTemplates = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
         var skipped = SkippedRecords()
         let decoded = loadOrder.indexPluginRecords(of: "PACK", skipped: &skipped) {
             try (package: Package(record: $0), translation: $1.translation)
@@ -95,14 +103,18 @@ nonisolated public struct PackageStore: Sendable {
         translations[id.rawValue]
     }
 
-    public func packageStack(for actorBase: FormID) throws -> ActorSourcedField<[FormID]> {
-        try actorTemplates.resolvePackages(base: actorBase).packages
+    public func packageStack(
+        for actorBase: FormID, roll: LeveledRoll? = nil
+    ) throws -> ActorSourcedField<[FormID]> {
+        try actorTemplates.rolling(roll).resolvePackages(base: actorBase).packages
     }
 
     /// The actor's own stack, its default list, and its override lists, read through
     /// the template chain and the FLST records.
-    public func packageLists(for actorBase: FormID) throws -> ActorPackageLists {
-        let resolved = try actorTemplates.resolvePackages(base: actorBase)
+    public func packageLists(
+        for actorBase: FormID, roll: LeveledRoll? = nil
+    ) throws -> ActorPackageLists {
+        let resolved = try actorTemplates.rolling(roll).resolvePackages(base: actorBase)
         let ids = resolved.lists.value
         let entries = { (list: FormID?) in list.flatMap { formLists[$0.rawValue] } ?? [] }
         var overrides: [PackageSituation: [FormID]] = [:]

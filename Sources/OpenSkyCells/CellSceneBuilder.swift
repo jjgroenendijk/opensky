@@ -145,6 +145,9 @@ nonisolated public final class CellSceneBuilder {
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
     public var actorVisualResolver: ActorVisualResolver?
+    /// The session's roller; a cell build records its leveled placements here.
+    public var leveling = LeveledListRoller()
+    var encounterZones: EncounterZoneStore?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
     public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Decoded expression TRI files by resource path. A file does not change while the

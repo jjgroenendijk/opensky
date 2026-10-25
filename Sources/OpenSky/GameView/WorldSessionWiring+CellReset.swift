@@ -50,6 +50,7 @@ extension WorldSessionWiring {
                 ? reset?.cellAttached(attachment.scene) ?? [] : []
             scripts?.runtime?.prepareReset(of: resetKeys)
         }
+        wireLeveledRolls(provider: provider, streamer: streamer) { resetKeys }
         streamer.onCellAttached.register(.resetEnqueue) { [weak scripts] _ in
             scripts?.runtime?.enqueueReset(of: resetKeys)
             resetKeys = []
@@ -57,6 +58,38 @@ extension WorldSessionWiring {
         streamer.onCellDetached.register(.reset) { [weak reset] location in
             reset?.cellDetached(location)
         }
+    }
+
+    /// Freezes the level of each new or reset reference that rolls a leveled list. A
+    /// reset one rolls again at a level its cell was not built with, so the cell rebuilds.
+    private func wireLeveledRolls(
+        provider: WorldDataStores, streamer: CellStreamer,
+        resetKeys: @escaping () -> [ReferenceKey]
+    ) {
+        guard let baselines = provider.inventoryBaselines else { return }
+        let store = game.worldState
+        streamer.onCellAttached.register(.leveledRolls) { [weak store, weak streamer] attachment in
+            guard attachment.isFirstIntegration, let store else { return }
+            let frozen = LeveledRollFreeze.freeze(
+                attachment.scene, level: baselines.leveling.playerLevel.level, in: store
+            ) { baselines.rollsLeveledLists(Self.inventoryOwner(of: $0, baselines: baselines)) }
+            guard !Set(frozen).isDisjoint(with: resetKeys()) else { return }
+            streamer?.noteStateMutation(
+                in: attachment.scene.location, sequence: store.nextJournalSequence
+            )
+        }
+    }
+
+    private static func inventoryOwner(
+        of entry: RuntimeReferenceEntry, baselines: InventoryBaselineResolver
+    ) -> InventoryOwner {
+        if let actor = entry.placedActor {
+            return .actor(base: actor.base)
+        }
+        guard let base = entry.placedReference?.base, baselines.items.container(base) != nil else {
+            return .generated
+        }
+        return .container(base: base)
     }
 
     /// An actor or container respawns only with its base's respawn flag; any other

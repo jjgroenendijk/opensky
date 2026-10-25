@@ -53,33 +53,41 @@ nonisolated public struct WornEquipment: Sendable {
 }
 
 nonisolated extension ActorVisualResolver {
-    /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI expanded via
-    /// the deterministic entry policy. Any unusable link throws — the gate
-    /// forbids silently rendering the actor naked when the chain breaks.
-    public func outfitPieces(of appearance: ResolvedActorAppearance) throws -> [Armor] {
+    /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI rolled by `roll` (else for
+    /// the base), as `InventoryBaselineResolver.outfitStacks` rolls it. Any unusable
+    /// link throws: the gate forbids silently rendering the actor naked.
+    public func outfitPieces(
+        of appearance: ResolvedActorAppearance, roll: LeveledRoll? = nil
+    ) throws -> [Armor] {
         guard let outfitID = appearance.defaultOutfit.value else { return [] }
         guard let outfit = outfits[outfitID.rawValue] else {
             throw ActorVisualError.brokenOutfitChain(
                 outfit: outfitID, item: nil, reason: .missingOutfitRecord
             )
         }
+        let actorRoll = roll ?? leveling.roll(forActor: appearance.base)
+        let roll = OutfitRoll(outfit: outfitID, request: actorRoll.request, seed: actorRoll.seed)
         var pieces: [Armor] = []
         for item in outfit.items {
             var ancestors: Set<UInt32> = []
-            try appendPieces(
-                item: item, outfit: outfitID, ancestors: &ancestors, into: &pieces
-            )
+            try appendPieces(item: item, count: 1, roll: roll, ancestors: &ancestors, into: &pieces)
         }
         return pieces
     }
 
-    /// One INAM entry: an ARMO directly, or an LVLI — a `useAll` list is a
-    /// bundle (every entry equips, e.g. ArmorStormcloakSet), any other list
-    /// picks its deterministic entry. `ancestors` tracks only the active
-    /// chain so duplicate siblings stay legal while cycles throw.
+    private struct OutfitRoll {
+        let outfit: FormID
+        let request: LeveledRequest
+        let seed: UInt64
+    }
+
+    /// One INAM entry: an ARMO directly, or the entries an LVLI roll returns.
+    /// `ancestors` tracks only the active chain so duplicate siblings stay legal
+    /// while cycles throw.
     private func appendPieces(
         item: FormID,
-        outfit: FormID,
+        count: Int32,
+        roll: OutfitRoll,
         ancestors: inout Set<UInt32>,
         into pieces: inout [Armor]
     ) throws {
@@ -89,35 +97,24 @@ nonisolated extension ActorVisualResolver {
         }
         guard let list = leveledItems[item.rawValue] else {
             throw ActorVisualError.brokenOutfitChain(
-                outfit: outfit, item: item, reason: .danglingItem
+                outfit: roll.outfit, item: item, reason: .danglingItem
             )
         }
         guard ancestors.insert(item.rawValue).inserted else {
             throw ActorVisualError.brokenOutfitChain(
-                outfit: outfit, item: item, reason: .leveledListCycle
+                outfit: roll.outfit, item: item, reason: .leveledListCycle
             )
         }
         defer { ancestors.remove(item.rawValue) }
-        if list.flags.contains(.useAll) {
-            guard !list.entries.isEmpty else {
-                throw ActorVisualError.brokenOutfitChain(
-                    outfit: outfit, item: item, reason: .emptyLeveledList
-                )
-            }
-            for entry in list.entries {
-                try appendPieces(
-                    item: entry.reference, outfit: outfit,
-                    ancestors: &ancestors, into: &pieces
-                )
-            }
-        } else {
-            guard let entry = list.deterministicEntry else {
-                throw ActorVisualError.brokenOutfitChain(
-                    outfit: outfit, item: item, reason: .emptyLeveledList
-                )
-            }
+        guard !list.entries.isEmpty else {
+            throw ActorVisualError.brokenOutfitChain(
+                outfit: roll.outfit, item: item, reason: .emptyLeveledList
+            )
+        }
+        let picks = leveling.roll(list, count: count, request: roll.request, seed: roll.seed)
+        for pick in picks {
             try appendPieces(
-                item: entry.reference, outfit: outfit,
+                item: pick.entry.reference, count: pick.count, roll: roll,
                 ancestors: &ancestors, into: &pieces
             )
         }

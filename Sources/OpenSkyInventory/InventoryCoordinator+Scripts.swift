@@ -156,11 +156,13 @@ extension InventoryCoordinator {
     public func scriptSetOutfit(_ outfit: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
         guard
             let equipment, let holder = scriptHolder(key),
-            let pieces = equipment.inventory.baselines.outfitStacks(outfit)
+            let pieces = equipment.inventory.baselines.outfitStacks(
+                outfit, roll: equipment.inventory.roll(of: holder)
+            )
         else { return InventoryResult(false) }
         let inventory = equipment.inventory
         let kept = Set(pieces.map(\.item))
-        let defaults = inventory.baselines.baseline(for: holder.owner).equipped
+        let defaults = inventory.baseline(of: holder).equipped
         for item in defaults where !kept.contains(item) {
             let held = inventory.count(of: item, in: holder)
             if held > 0 {
@@ -182,7 +184,7 @@ extension InventoryCoordinator {
     /// The plugin inventory of a resident holder, for a diff against its first write.
     public func scriptBaselineInventory(of key: ReferenceKey) -> ReferenceInventoryState? {
         guard let runtime, let holder = scriptHolder(key) else { return nil }
-        return runtime.inventory.baselines.baseline(for: holder.owner)
+        return runtime.inventory.baseline(of: holder)
     }
 
     /// The player, a resident actor, or any other resident reference as a container.

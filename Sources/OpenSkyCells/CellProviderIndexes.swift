@@ -65,6 +65,7 @@ nonisolated public struct CellProviderIndexes {
         let level: ActorValueLevelSettings
         let cellReset: CellResetSettings
         let speechChecks: SpeechCheckSettings
+        let leveledLists: LeveledListSettings
         /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
         let store: GameSettingStore
 
@@ -85,6 +86,7 @@ nonisolated public struct CellProviderIndexes {
             level = ActorValueLevelSettings.resolve(store: settings)
             cellReset = CellResetSettings.resolve(store: settings)
             speechChecks = SpeechCheckSettings.resolve(store: settings)
+            leveledLists = LeveledListSettings.resolve(store: settings)
             store = settings
         }
     }

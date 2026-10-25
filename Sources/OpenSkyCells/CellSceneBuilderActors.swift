@@ -105,6 +105,10 @@ nonisolated extension CellSceneBuilder {
             into: .exterior(coordinate),
             deltas: deltas
         ) + spawnedActors(in: .exterior(coordinate), deltas: deltas), collision: collision)
+        recordLeveledPlacements(
+            collected, location: .exterior(coordinate),
+            zone: cell?.cell.encounterZone ?? world.worldspace?.encounterZone
+        )
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
@@ -125,9 +129,38 @@ nonisolated extension CellSceneBuilder {
         let collected = Self.standingOnFloors(relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
         ) + spawnedActors(in: location, deltas: deltas), collision: collision)
+        recordLeveledPlacements(collected, location: location, zone: cell?.cell.encounterZone)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
+    }
+
+    /// Records the cell's zone for its containers, and each actor's zone (its own
+    /// `XEZN`, else the cell's) and `XLCM` by reference and by base, before its
+    /// template chain rolls.
+    nonisolated func recordLeveledPlacements(
+        _ collected: [CollectedActor], location: CellSceneLocation, zone: FormID?
+    ) {
+        let zones = encounterZones ?? EncounterZoneStore(plugins: loadOrderPlugins)
+        encounterZones = zones
+        let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: pluginName)?.zone }
+        leveling.placements.record(cell: location, zone: cellZone)
+        for collectedActor in collected {
+            let actor = collectedActor.actor
+            let own = actor.details.links["XEZN"].flatMap {
+                zones.resolve($0, fromPlugin: FormIDResolver.loadOrderSpaceName)?.zone
+            }
+            let placement = LeveledActorPlacement(
+                zone: own ?? cellZone,
+                difficulty: LeveledActorDifficulty(levelModifier: actor.details.levelModifier)
+            )
+            leveling.placements.record(actor: actor.base, placement)
+            let key = collectedActor.spawnKey
+                ?? ReferenceKey.resolve(actor.formID, using: formIDResolver)
+            if let key {
+                leveling.placements.record(reference: key, placement)
+            }
+        }
     }
 
     /// Counts, indexes, and resolves the collected actors of one cell build.
@@ -140,7 +173,7 @@ nonisolated extension CellSceneBuilder {
     ) -> CellActorBuild {
         var build = CellActorBuild()
         let actors = collected.map(\.actor)
-        build.entries = actorEntries(collected)
+        build.entries = actorEntries(collected, deltas: deltas)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
@@ -245,12 +278,16 @@ nonisolated extension CellSceneBuilder {
                 continue
             }
             do {
-                let appearance = try resolvers.template.resolve(base: actor.base)
+                let roll = indexed[actor.formID].map {
+                    leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
+                }
+                let appearance = try resolvers.template.rolling(roll).resolve(base: actor.base)
                 let visual = try resolvers.visual.resolve(
                     appearance: appearance,
                     equipped: runtimeEquipment(
                         entry: indexed[actor.formID], deltas: deltas
-                    )
+                    ),
+                    roll: roll
                 ).presenting(indexed[actor.formID].flatMap {
                     deltas[$0.key]?.component(ActorPresentationState.self)
                 })
@@ -411,8 +448,8 @@ nonisolated extension CellSceneBuilder {
             return (template, visual)
         }
         let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        let template = ActorTemplateResolver.build(from: loadOrder)
-        let visual = ActorVisualResolver.build(from: loadOrder)
+        let template = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
+        let visual = ActorVisualResolver.build(from: loadOrder, leveling: leveling)
         actorTemplateResolver = template
         actorVisualResolver = visual
         return (template, visual)

@@ -50,7 +50,7 @@ final class ActorWorldAdapter {
     /// What the enemy health bar last showed; nil when it is hidden.
     private var publishedEnemy: HUDEnemyHealth?
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
-    private var baseNames: [UInt32: String?] = [:]
+    private var baseNames: [LeveledActorRollKey: String?] = [:]
     /// `combatActors()` and what it was built from. A death, a move, or a residency
     /// change advances one of the revisions, so the next read builds it again.
     private var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
@@ -158,25 +158,28 @@ final class ActorWorldAdapter {
             scale: actor.scale,
             isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
                 ?? false,
-            label: displayName(base: actor.base).map(ActorLabel.init)
+            label: displayName(of: entry.key, base: actor.base).map(ActorLabel.init)
                 ?? ActorLabel(key: entry.key, base: actor.base)
         )
     }
 
-    /// The FULL name of an NPC_ base after template inheritance, as the crosshair shows it.
-    func displayName(base: FormID) -> String? {
-        if let cached = baseNames[base.rawValue] {
-            return cached
-        }
+    /// The FULL name of the actor `key` of `base` after template inheritance, its
+    /// leveled template picked by its own roll, as the crosshair shows it.
+    func displayName(of key: ReferenceKey, base: FormID) -> String? {
         guard
             let templates = game.worldData?
                 .actorValueBaselines?.resolver?.templates,
             let strings = game.journal.strings
         else { return nil }
-        let name = (try? templates.resolveName(base: base))
+        let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
+        let rollKey = LeveledActorRollKey(base: base, roll: roll)
+        if let cached = baseNames[rollKey] {
+            return cached
+        }
+        let name = (try? templates.rolling(roll).resolveName(base: base))
             .flatMap { strings.resolve($0.value) }
             .flatMap { $0.isEmpty ? nil : $0 }
-        baseNames[base.rawValue] = .some(name)
+        baseNames[rollKey] = .some(name)
         return name
     }
 
@@ -213,7 +216,7 @@ final class ActorWorldAdapter {
             let holder = actorValueHolder(for: actor.key)
         else { return nil }
         let name = game.streamer?.residentActorPlacement(key: actor.key)
-            .flatMap { displayName(base: $0.base) } ?? ""
+            .flatMap { displayName(of: actor.key, base: $0.base) } ?? ""
         return HUDEnemyHealth(name: name, health: runtime.hudMeters(for: holder).health)
     }
 

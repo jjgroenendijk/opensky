@@ -119,7 +119,7 @@ Leveled NPC and leveled item lists share one layout. LVSP (leveled spell) uses i
 | --- | --- | --- |
 | `EDID` | zstring | editor ID |
 | `LVLD` | uint8 | chance none; UESP says always 0 on LVLN |
-| `LVLF` | uint8 | flags: `0x01` all levels, `0x02` each count, `0x04` use all |
+| `LVLF` | uint8 | flags: `0x01` all levels, `0x02` each count, `0x04` use all, `0x08` special loot (UESP `LVLI`) |
 | `LVLO` | struct | one entry; repeated |
 
 With "use all" set, every entry applies together. For example, `ArmorStormcloakSet` gives

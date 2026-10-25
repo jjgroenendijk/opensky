@@ -43,6 +43,8 @@ public enum TriggerTransitionStep: Int, FramePhase {
 public enum CellAttachStep: Int, FramePhase {
     /// Cell reset decides which references reset before the scripts see the cell.
     case resetPrepare
+    /// Each new or reset actor and container freezes the level its leveled lists roll at.
+    case leveledRolls
     /// The scripts attach to the cell's references.
     case scripts
     /// The reset events queue after the scripts attached.

@@ -93,18 +93,22 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    nonisolated public func actorEntries(_ collected: [CollectedActor]) -> [RuntimeReferenceEntry] {
+    nonisolated public func actorEntries(
+        _ collected: [CollectedActor], deltas: [ReferenceKey: ReferenceStateDelta] = [:]
+    ) -> [RuntimeReferenceEntry] {
         collected.compactMap { entry in
             if let key = entry.spawnKey {
                 return RuntimeReferenceEntry(
                     key: key, formID: entry.actor.formID, isPersistent: true,
-                    record: .actor(entry.actor), baseScripts: baseScripts(of: .actor(entry.actor))
+                    record: .actor(entry.actor),
+                    baseScripts: baseScripts(of: .actor(entry.actor), key: key, deltas: deltas)
                 )
             }
             return runtimeEntry(
                 formID: entry.actor.formID,
                 isPersistent: entry.isPersistent,
-                record: .actor(entry.actor)
+                record: .actor(entry.actor),
+                deltas: deltas
             )
         }
     }
@@ -115,24 +119,39 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func runtimeEntry(
         formID: FormID,
         isPersistent: Bool,
-        record: RuntimeReferenceRecord
+        record: RuntimeReferenceRecord,
+        deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> RuntimeReferenceEntry? {
         guard let key = ReferenceKey.resolve(formID, using: formIDResolver) else {
             return nil
         }
         return RuntimeReferenceEntry(
             key: key, formID: formID, isPersistent: isPersistent, record: record,
-            baseScripts: baseScripts(of: record)
+            baseScripts: baseScripts(of: record, key: key, deltas: deltas)
         )
     }
 
-    nonisolated private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
+    /// A placed actor's roll, at the player level `deltas` froze for it.
+    nonisolated func leveledRoll(
+        of key: ReferenceKey, base: FormID, deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> LeveledRoll {
+        leveling.roll(
+            for: key, base: base, cell: nil,
+            frozenLevel: deltas[key]?.component(LeveledRollState.self)?.playerLevel
+        )
+    }
+
+    nonisolated private func baseScripts(
+        of record: RuntimeReferenceRecord, key: ReferenceKey,
+        deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> [AttachedScript] {
         switch record {
         case let .reference(reference):
             return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData
                 .scripts ?? []
         case let .actor(actor):
             let templates = actorResolversBuildingIfNeeded().template
+                .rolling(leveledRoll(of: key, base: actor.base, deltas: deltas))
             return (try? templates.resolveScripts(base: actor.base).value) ?? []
         }
     }

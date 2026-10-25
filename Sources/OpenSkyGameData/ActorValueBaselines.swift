@@ -153,6 +153,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Where the player's own level is published. The same reference the resolver
     /// reads for `PC Level Mult` scaling, so the two cannot disagree.
     public let playerLevel: PlayerLevelSource
+    /// The resolver's roller; without a resolver, one over `playerLevel`.
+    public let leveling: LeveledListRoller
     /// The vanilla `Player` NPC_ record.
     static let playerRecord = FormID(0x7)
 
@@ -169,18 +171,22 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         self.resolver = resolver
         self.playerRace = playerRace
         self.fallback = fallback
-        self.playerLevel = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
+        let level = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
+        self.playerLevel = level
+        leveling = resolver?.templates.leveling ?? LeveledListRoller(playerLevel: level)
     }
 
-    /// The baseline for one subject. Never throws or returns nil: a broken template
-    /// chain degrades to `fallback`. `ActorValueResolver.resolve(base:)` reports the
-    /// failure to a caller that wants it.
-    public func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
+    /// The baseline for one subject, rolled by a placed actor's `roll` or else by its
+    /// base. A broken template chain degrades to `fallback`;
+    /// `ActorValueResolver.resolve(base:)` reports the failure.
+    public func baseline(
+        for subject: ActorValueSubject, roll: LeveledRoll? = nil
+    ) -> ActorValueBaseline {
         switch subject {
         case .player:
             playerBaseline(race: nil)
         case let .actor(base):
-            actorBaseline(base: base)
+            actorBaseline(base: base, resolver: resolver?.rolling(roll))
         case .generated:
             fallback
         }
@@ -234,7 +240,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         return baseline
     }
 
-    private func actorBaseline(base: FormID) -> ActorValueBaseline {
+    private func actorBaseline(base: FormID, resolver: ActorValueResolver?) -> ActorValueBaseline {
         guard
             let resolver,
             let resolved = try? resolver.resolve(base: base)
