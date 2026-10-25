@@ -3,12 +3,14 @@
 
 import AppKit
 import OpenSkyGameData
+import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyWorld
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {
-    func play()
+    /// Opens the Play window at `start`; `.normal` is the main menu.
+    func play(from start: LaunchStart)
     /// Starts Play and loads `slot`, the newest save.
     func continueGame(slot: String)
     func cancelLoad()

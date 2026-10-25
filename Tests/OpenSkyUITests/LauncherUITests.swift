@@ -8,7 +8,6 @@ final class LauncherUITests: OpenSkyUITestCase {
     func testLauncherShowsPlayAndTheGameFolder() throws {
         let app = try launchApp(skipsLauncher: false)
         XCTAssertTrue(app.tables["LauncherSidebar"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["LauncherGameFolderStatsLabel"].exists)
         XCTAssertTrue(app.buttons["LauncherSettingsLinkControl"].exists)
         XCTAssertTrue(app.buttons["LaunchPlayControl"].isEnabled)
     }
@@ -23,11 +22,10 @@ final class LauncherUITests: OpenSkyUITestCase {
     @MainActor
     func testLaunchPageShowsTheStartAndLinksToAssetOptimisation() throws {
         let app = try launchApp(skipsLauncher: false)
-        XCTAssertTrue(app.buttons["LaunchContinueControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["LauncherContinueStatsLabel"].exists)
+        XCTAssertTrue(app.checkBoxes["LaunchResumeControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.checkBoxes["LaunchFullScreenControl"].exists)
         XCTAssertTrue(app.popUpButtons["LaunchStartKindControl"].exists)
         XCTAssertTrue(app.staticTexts["LaunchPlaySummaryStatsLabel"].exists)
-        XCTAssertTrue(app.staticTexts["LauncherAssetOptimisationStatusStatsLabel"].exists)
 
         app.buttons["LauncherAssetOptimisationLinkControl"].click()
         XCTAssertTrue(app.buttons["AssetOptimisationConvertControl"].waitForExistence(timeout: 5))
@@ -58,7 +56,6 @@ final class LauncherUITests: OpenSkyUITestCase {
 
         sidebar.descendants(matching: .any)["LauncherPage-graphics"].firstMatch.click()
         XCTAssertTrue(app.popUpButtons["GraphicsPresetControl"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.checkBoxes["GraphicsFullScreenControl"].exists)
         XCTAssertTrue(app.popUpButtons["GraphicsFrameRateCapControl"].exists)
         XCTAssertTrue(app.textFields["GraphicsOptionfTreeLoadDistanceControl"].exists)
     }

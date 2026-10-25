@@ -23,8 +23,10 @@ The app opens on the launcher. The launcher holds:
   valid start.
 - A page list on the left: Launch, Asset Optimisation, Graphics, Diagnostics, and Settings.
   Settings is the same view as the Cmd+, window.
-  - Launch offers Continue and the start of Play. It shows the game folder in one line and the
-    asset optimisation status, with links to Settings and to the Asset Optimisation page.
+  - Launch puts Play first, with one line that says what Play will do. Launch options hold
+    "Resume latest save", "Skip main menu", and "Full screen"; New game holds where a new
+    game starts and the Survival Mode choice. Game files shows the game folder and only the
+    asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
     language, and the Skyrim saves folder. The game folder is a load setting, so it sits with
     the others and not on the page a player starts from.
@@ -42,7 +44,7 @@ The app opens on the launcher. The launcher holds:
     and opens the Benchmark page.
 
 The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
-`LaunchStart`, `LaunchPreferences`, and `GameFolderStatus`. The app only draws them.
+`LaunchStart`, `LaunchPlan`, `LaunchPreferences`, and `GameFolderStatus`. The app only draws them.
 
 To add a page, such as a mods list, add one descriptor to `LauncherRegistry.pages`. Put the
 page's rules in its own package module, not in the view controller.

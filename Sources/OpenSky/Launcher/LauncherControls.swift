@@ -89,7 +89,11 @@ final class LauncherRow: LauncherHoverView {
     let titleLabel: NSTextField
     let control: NSView?
 
-    init(title: String, control: NSView?, width: CGFloat = LauncherPageLayout.width) {
+    /// `indent` moves the title right, under the row it depends on.
+    init(
+        title: String, control: NSView?, width: CGFloat = LauncherPageLayout.width,
+        indent: CGFloat = 0
+    ) {
         titleLabel = NSTextField(labelWithString: title)
         self.control = control
         super.init(frame: .zero)
@@ -102,7 +106,7 @@ final class LauncherRow: LauncherHoverView {
             heightAnchor.constraint(greaterThanOrEqualToConstant: 34),
             titleLabel.leadingAnchor.constraint(
                 equalTo: leadingAnchor,
-                constant: LauncherStyle.textInset
+                constant: LauncherStyle.textInset + indent
             ),
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
         ]
@@ -162,5 +166,33 @@ final class LauncherRow: LauncherHoverView {
         } else {
             control.performClick(nil)
         }
+    }
+}
+
+/// A row value that opens the page holding its detail: a symbol, a short state, and
+/// a chevron. The long text goes in the tooltip.
+final class LaunchLinkButton: NSButton {
+    init() {
+        super.init(frame: .zero)
+        isBordered = false
+        imagePosition = .imageLeading
+        imageHugsTitle = true
+        lineBreakMode = .byTruncatingMiddle
+        setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        widthAnchor.constraint(lessThanOrEqualToConstant: 360).isActive = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
+    func show(symbol: String, title: String, colour: NSColor) {
+        image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [colour]))
+        attributedTitle = NSAttributedString(string: " \(title)  ›", attributes: [
+            .font: LauncherStyle.font(15), .foregroundColor: colour
+        ])
+        setAccessibilityLabel(title)
     }
 }

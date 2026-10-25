@@ -133,8 +133,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 extension AppDelegate: LauncherActions {
-    func play() {
-        pendingStart = LaunchPreferences.savedStart()
+    func play(from start: LaunchStart) {
+        pendingStart = start
         pendingContinueSlot = nil
         begin(atTitleScreen: pendingStart == .normal)
     }

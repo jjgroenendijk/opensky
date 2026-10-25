@@ -48,7 +48,6 @@ struct GraphicsPageTests {
         )
         #expect(page.statusLabel.accessibilityIdentifier() == "GraphicsStatsLabel")
         #expect(page.presetControl.accessibilityIdentifier() == "GraphicsPresetControl")
-        #expect(page.fullScreenControl.accessibilityIdentifier() == "GraphicsFullScreenControl")
         #expect(page.frameRateCapControl.accessibilityIdentifier() == "GraphicsFrameRateCapControl")
         #expect(page.optionRows.count == GraphicsOptions.all.count)
     }
@@ -60,7 +59,6 @@ struct GraphicsPageTests {
         #expect(page.textureStreamingControl.state == .on)
         #expect(page.textureBudgetControl.titleOfSelectedItem == "Automatic")
         #expect(page.textureBudgetLabel.stringValue.hasPrefix("Automatic: "))
-        #expect(page.fullScreenControl.state == .off)
     }
 
     @Test func eachSwitchSavesItsSetting() {

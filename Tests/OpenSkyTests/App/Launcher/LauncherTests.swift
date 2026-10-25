@@ -15,14 +15,14 @@ import Testing
 @MainActor
 struct LauncherTests {
     private final class RecordingActions: LauncherActions {
-        var plays = 0
+        var plays: [LaunchStart] = []
         var continued: [String] = []
         var folderChanges = 0
         var cancels = 0
         var benchmarks: [BenchmarkRequest] = []
 
-        func play() {
-            plays += 1
+        func play(from start: LaunchStart) {
+            plays.append(start)
         }
 
         func continueGame(slot: String) {
@@ -96,7 +96,6 @@ struct LauncherTests {
         let play = try #require(button("LaunchPlayControl", in: page.view))
         #expect(play.isEnabled == status.isFound)
         #expect(find("LaunchPlaySummaryStatsLabel", in: page.view) != nil)
-        #expect(find("LauncherGameFolderStatsLabel", in: page.view) != nil)
         #expect(find("LauncherSettingsLinkControl", in: page.view) != nil)
         #expect(find("LauncherChooseGameFolderControl", in: page.view) == nil)
     }
@@ -173,27 +172,33 @@ struct LauncherTests {
         #expect(page.startReasonLabel.isHidden)
     }
 
-    @Test func continueLoadsTheNewestSaveOrSaysWhyNot() throws {
-        let actions = RecordingActions()
-        let page = LaunchPageViewController(context: LauncherContext(actions: actions))
-        page.loadViewIfNeeded()
-        page.show(ContinueOffer.noSaves)
-        let label = try #require(find("LauncherContinueStatsLabel", in: page.view) as? NSTextField)
-        #expect(label.stringValue == "Unavailable: No saves yet")
-        #expect(!page.continueButton.isEnabled)
-        page.show(ContinueOffer(
-            slot: "quick",
-            title: "Lydia, level 12",
-            date: nil,
-            disabledReason: nil
-        ))
-        #expect(label.stringValue == "Lydia, level 12")
-        let status = GameFolderStatus()
-        #expect(page.continueButton.isEnabled == status.isFound)
-        if page.continueButton.isEnabled {
-            page.continueButton.performClick(nil)
-            #expect(actions.continued == ["quick"])
+    @Test func playResumesTheNewestSaveOnlyWhenAsked() {
+        let settings = SettingsStore.shared
+        let resumes = settings.value(LaunchPreferences.resumesLatestSaveSetting)
+        let skips = settings.value(LaunchPreferences.skipsMainMenuSetting)
+        defer {
+            settings.set(resumes, for: LaunchPreferences.resumesLatestSaveSetting)
+            settings.set(skips, for: LaunchPreferences.skipsMainMenuSetting)
         }
+        settings.set(false, for: LaunchPreferences.resumesLatestSaveSetting)
+        let page = LaunchPageViewController(context: LauncherContext(actions: RecordingActions()))
+        page.loadViewIfNeeded()
+        page.show(ContinueOffer(
+            slot: "quick", title: "Lydia, level 12", date: nil, disabledReason: nil
+        ))
+        #expect(page.skipMainMenuRow.isHidden)
+        page.resumeControl.performClick(nil)
+        #expect(settings.value(LaunchPreferences.resumesLatestSaveSetting))
+        #expect(!page.skipMainMenuRow.isHidden)
+        if page.skipMainMenuControl.state == .off {
+            page.skipMainMenuControl.performClick(nil)
+        }
+        #expect(page.launchPlan == .resume(slot: "quick"))
+        #expect(page.playSummary.stringValue == "Loads Lydia, level 12")
+        page.skipMainMenuControl.performClick(nil)
+        #expect(page.launchPlan == .mainMenu)
+        page.show(ContinueOffer.noSaves)
+        #expect(page.playSummary.stringValue.hasPrefix("No save to resume: "))
     }
 
     @Test func theAssetStatusLinksToItsPage() throws {
@@ -202,7 +207,6 @@ struct LauncherTests {
         context.showPage = { shown.append($0) }
         let page = LaunchPageViewController(context: context)
         page.loadViewIfNeeded()
-        #expect(find("LauncherAssetOptimisationStatusStatsLabel", in: page.view) != nil)
         try #require(button("LauncherAssetOptimisationLinkControl", in: page.view))
             .performClick(nil)
         #expect(shown == ["assetOptimisation"])

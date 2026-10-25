@@ -81,7 +81,6 @@ extension GraphicsPageViewController {
             textureStreamingControl, "TextureStreaming",
             "Large textures keep only the levels the camera needs; saves GPU memory"
         )
-        checkbox(fullScreenControl, "FullScreen", "Play opens full screen")
         configureShadingCheckboxes()
     }
 
@@ -206,7 +205,7 @@ extension GraphicsPageViewController {
             (combatTemperamentControl, .combatTemperament),
             (combatGameSettingsControl, .combatGameSettings),
             (pipelineCacheControl, .pipelineCacheEnabled),
-            (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
+            (textureStreamingControl, .textureStreaming)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
     }
 
