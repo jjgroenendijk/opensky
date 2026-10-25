@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyTagsTesting
 import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
@@ -152,6 +153,9 @@ struct AICastingAcceptanceRealDataTests {
         casts begun:    \(machine?.castCount ?? 0)
         swings:         \(machine?.attackCount ?? 0)
         spells landed:  \(chain.spellHits.count)
+        absorbed:       \(chain.spellHitReports.map(\.absorbedCount).reduce(0, +))
+        warded:         \(chain.spellHitReports.map(\.wardedCount).reduce(0, +))
+        multipliers:    \(chain.spellHitReports.flatMap(\.adjustments).map(\.multiplier))
         projectiles:    \(chain.firedProjectiles.count)
         player health:  \(chain.playerHealth)
         caster magicka: \(chain.casterMagicka)

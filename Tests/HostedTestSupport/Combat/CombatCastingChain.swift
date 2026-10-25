@@ -46,7 +46,10 @@ public final class CombatCastingChain {
     /// Every projectile a cast put in the air, and every spell that landed.
     public private(set) var firedProjectiles: [SpellPayload] = []
     public private(set) var spellHits: [SpellHit] = []
+    /// What each landed spell did to its targets, in landing order.
+    public private(set) var spellHitReports: [SpellHitReport] = []
     public private(set) var resumedPackages: [ReferenceKey] = []
+    private var effectSeconds: Double = 0
 
     /// Over `SpellbookFixture`'s synthetic records.
     public convenience init() throws {
@@ -107,6 +110,10 @@ public final class CombatCastingChain {
             let step = CombatLoopRuntime.fixedStepSeconds
             combat.advance(by: step)
             caster.advance(delta: step, on: casterHolder)
+            // A spell with a duration pays its damage per second, so effects tick too.
+            effects.advance(
+                delta: step, accumulator: &effectSeconds, over: [.player, casterHolder]
+            )
             elapsed += step
         }
     }
@@ -318,6 +325,8 @@ extension CombatCastingChain: CasterWorld {
         for target in hit.targets {
             holders[target.key] = holder(for: target.key)
         }
-        return SpellHitApplication.apply(hit, holders: holders, using: &effects)
+        let report = SpellHitApplication.apply(hit, holders: holders, using: &effects)
+        spellHitReports.append(report)
+        return report
     }
 }
