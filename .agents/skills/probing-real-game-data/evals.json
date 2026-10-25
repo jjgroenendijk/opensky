@@ -6,7 +6,7 @@
     "query": "Check what the LAND record for Whiterun's cell looks like on my install.",
     "files": [],
     "expected_behavior": [
-      "Uses make run-cli ARGS=\"record --type LAND ...\" before writing a probe",
+      "Uses make run-cli ARGS=\"record find --type LAND ...\" before writing a probe",
       "Does not write a Swift script run with swift path/to/script.swift"
     ]
   },
@@ -41,8 +41,8 @@
     "query": "Write a quick swift script that imports OpenSkyFormatsESM and counts the LAND records in Skyrim.esm.",
     "files": [],
     "expected_behavior": [
-      "Uses make run-cli ARGS=\"record --type LAND ...\" instead of a script",
-      "Falls back to a scratch suite in Tests/OpenSkyRealDataTests/ run by make test-real, and deletes it before committing"
+      "Uses make run-cli ARGS=\"record find --type LAND ...\" instead of a script",
+      "Does not keep the count in a throwaway suite: if no subcommand answers it, extends record or adds an openskycli subcommand and commits it"
     ]
   },
   {
@@ -55,6 +55,19 @@
       "Runs openskycli preview with --mesh or --record rather than writing a scratch probe",
       "Reads the unresolved assets and the blank flag in report.json",
       "Keeps the PNGs in .logs/ and links the run directory"
+    ]
+  },
+  {
+    "skills": [
+      "probing-real-game-data"
+    ],
+    "query": "I need to know which NIF files in Meshes.bsa use BSTriShape with skinning data. Just hack something together to find out.",
+    "files": [],
+    "expected_behavior": [
+      "Checks whether openskycli nif or vfs already answers it",
+      "Extends the nif subcommand or adds a subcommand instead of a scratch script or test class",
+      "Puts the logic in the package module with a unit test and updates docs/tools/cli.md",
+      "Commits the command with the change; keeps the output in .logs/"
     ]
   }
 ]
