@@ -1,0 +1,10 @@
+# <command path>: why tools/probe.sh does not run it. tools/lint/cli-conventions.sh reads this.
+asset-optimisation clear: it deletes the user's asset cache.
+asset-optimisation compare: it needs two rendered captures to compare.
+asset-optimisation extract: it writes every archived asset to disk, which takes minutes.
+asset-optimisation io-bench: it reads the whole cache for timing, which takes minutes.
+ess show: it needs a Skyrim save, which no install ships.
+game attach: it needs a running app, and the probe opens no app.
+game launch: it opens the app window, which the user sees.
+game run: it needs a running app, and the probe opens no app.
+graphics preset: it writes the user's graphics settings.

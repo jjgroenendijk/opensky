@@ -47,7 +47,7 @@ parsed command to its own `CLIRunnable` protocol and runs it on the main actor.
   `game input press jump` reaches the app. The app's own catalog checks those words and
   prints their help ([agent control](/tools/agent-control.md)).
 - The rules for names, typed values, and help text are in the [CLI](/tools/cli.md#conventions)
-  page.
+  page, with the checks that enforce them.
 
 ## Alternatives
 

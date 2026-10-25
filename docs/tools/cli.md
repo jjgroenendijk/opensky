@@ -45,6 +45,9 @@ prints its help and exits 2. `cell` and `render` default to the
 
 ## Conventions
 
+`CLIConventionTests` checks the parsed command tree, and `make cli-conventions`
+(`tools/lint/cli-conventions.sh`) checks the source. Both run in `make check` and CI.
+
 - Names are lowercase kebab case: `asset-optimisation`, `--player-level`. Options are spelled
   out; there are no short options.
 - Each command has one name. There are no aliases and no old names kept for scripts.
@@ -58,7 +61,12 @@ prints its help and exits 2. `cell` and `render` default to the
 - Every command and argument has help that is a sentence. Every option takes
   `parsing: .unconditional`, so a value may start with `-`.
 - Every leaf command has a runner in `CommandRunners.swift`, a row below, and a run in
-  `tools/probe.sh` or `tools/probe-swf.sh`, unless it writes settings or opens the app.
+  `tools/probe.sh` or `tools/probe-swf.sh`. A command the probe cannot run, because it
+  writes settings or opens the app, has a reason in `tools/lint/cli-probe-exceptions.txt`.
+
+`make new-cli-command NAME=<name> GROUP=<help group>` writes the stubs for a new top-level
+command: the arguments struct, the runner, the command file, a row in this page, and a probe
+run. Each stub says TODO, and `make cli-conventions` fails until none is left.
 
 ## Searching records
 
