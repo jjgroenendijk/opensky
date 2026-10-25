@@ -121,6 +121,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     var agentStatus: AgentWorldStatus {
         AgentWorldStatus(
             worldReady: isWorldReady,
+            titleMenuOpen: game.titleMenu.isOpen,
             dataRoot: dataRoot?.dataURL.path(percentEncoded: false)
         )
     }

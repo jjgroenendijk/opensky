@@ -126,6 +126,7 @@ public final class AgentCommandRouter {
             "protocolVersion": .init(AgentProtocol.version),
             "running": .bool(world != nil),
             "worldReady": .bool(status?.worldReady ?? false),
+            "titleMenuOpen": .bool(status?.titleMenuOpen ?? false),
             "dataRoot": .init(status?.dataRoot)
         ]
         if let timeline = world?.agentTimeline {

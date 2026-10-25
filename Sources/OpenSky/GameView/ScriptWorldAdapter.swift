@@ -14,6 +14,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -63,6 +64,7 @@ protocol ScriptWorldHost: AnyObject {
     var combatWorld: CombatWorldAdapter { get }
     var effects: EffectsCoordinator { get }
     var menuWorld: MenuWorldAdapter { get }
+    var loadingScreens: LoadingScreenCoordinator { get }
     var saveGames: SaveGameWorldAdapter { get }
     func quitToMainMenu()
     func quitApplication()

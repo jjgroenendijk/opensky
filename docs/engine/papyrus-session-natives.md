@@ -25,9 +25,9 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | --- | --- |
 | `Game.RequestSave`, `Game.RequestAutoSave` | Writes a save in a new slot, or in the autosave slot |
 | `Game.QuitToMainMenu`, `Debug.QuitGame` | Ends the session, or quits the app |
-| `Game.FadeOutGame` | Covers the world in black, or uncovers it, at once |
+| `Game.FadeOutGame` | Covers the world in black, or uncovers it, at once. A loading screen or a title backdrop keeps its own cover |
 | `Game.TriggerScreenBlood`, `Game.ClearTempEffects` | Adds screen blood splatters, or clears them |
-| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Shows or hides the title backdrop |
+| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Shows or hides the title backdrop. Under a loading screen, the backdrop follows when the screen ends |
 | `Game.ShowFirstPersonGeometry` | Shows or hides the first-person arms |
 | `Debug.TakeScreenshot` | Writes a 1920 by 1080 PNG to `~/Pictures/OpenSky/` |
 | `Debug.ToggleCollisions` | Switches the player between flying and walking |

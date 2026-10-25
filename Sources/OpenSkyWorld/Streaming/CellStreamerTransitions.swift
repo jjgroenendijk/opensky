@@ -109,6 +109,7 @@ extension CellStreamer {
     /// for a teleport out that uses no door. The grid then follows the camera.
     public func leaveInterior(camera: SceneCamera) {
         guard let previous = interiorScene else { return }
+        hasSeededCamera = true
         interiorScene = nil
         interiorSourceDoor = nil
         interiorMutationSequence = 0
@@ -144,6 +145,7 @@ extension CellStreamer {
         let camera = isRebuild
             ? nil
             : SceneCamera.teleport(placement: transition.destinationPlacement)
+        hasSeededCamera = hasSeededCamera || camera != nil
         switch transition.scene.location {
         case .interior:
             let previous = interiorScene

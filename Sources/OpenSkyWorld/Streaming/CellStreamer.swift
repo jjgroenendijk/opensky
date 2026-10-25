@@ -100,9 +100,11 @@ public final class CellStreamer {
     /// by the grid size: at most one entry per in-flight cell. Readable (not
     /// writable) cross-file for the inspection satellite.
     public private(set) var pending: [CellBuildResult] = []
-    /// Set once the first drawable cell frames the camera; every later
-    /// recompose passes a nil camera so the free-fly view is left alone.
-    private var hasSeededCamera = false
+    /// Set once the first drawable cell frames the camera, or a move places it;
+    /// every later recompose passes a nil camera so the free-fly view is left alone.
+    var hasSeededCamera = false
+    /// While held, nothing loads: the main menu shows before the player picks a start.
+    public var isHeld = false
     /// Internal (not private) so the CellStreamerCoverage satellite can read
     /// and write it; the coverage state below is shared for the same reason.
     public var requestedLODCenter: CellCoordinate?
@@ -231,6 +233,7 @@ public final class CellStreamer {
         playerCapsule: PlayerCapsuleState? = nil,
         frameTime: Float = 0
     ) {
+        guard !isHeld else { return }
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
             pending.append(contentsOf: completed.filter(builtHere))
@@ -474,6 +477,20 @@ extension CellStreamer {
     /// recenters the grid at `position` in `editorID`. The runner must already
     /// build in `editorID`, or have that change queued.
     func switchExterior(to editorID: String, at position: SIMD3<Float>) {
+        resetExterior(at: position)
+        worldspaceEditorID = editorID
+        onWorldspaceChanged(editorID)
+    }
+
+    /// Starts the exterior at `position` while no cell has framed the view yet,
+    /// so a start picked in the main menu loads there and not at the launch cell.
+    public func moveStart(to position: SIMD3<Float>) {
+        guard !hasSeededCamera, activeBuild == nil, requestedLODCenter == nil else { return }
+        resetExterior(at: position)
+        hasSeededCamera = true
+    }
+
+    private func resetExterior(at position: SIMD3<Float>) {
         var departed = CellAssets()
         for coordinate in composition.coordinates {
             guard let removed = composition.removeCell(at: coordinate) else { continue }
@@ -501,9 +518,7 @@ extension CellStreamer {
         coverageTransitionActive = false
         lastEmittedRegions = nil
         grid = CellGridManager(initialPosition: position, radius: grid.radius)
-        worldspaceEditorID = editorID
         evictUnused(departed)
-        onWorldspaceChanged(editorID)
     }
 
     /// False for a result built in a worldspace the exterior has left. Its

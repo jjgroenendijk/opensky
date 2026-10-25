@@ -24,7 +24,7 @@ enum GameLaunch {
                 socket: options.socketPath
             )
         }
-        let status = try waitForWorld(options, seconds: wait)
+        let status = try waitForWorld(options, seconds: wait, onTitle: arguments.title)
         print(GameCommand.output(status, options: options))
     }
 
@@ -69,11 +69,14 @@ enum GameLaunch {
         }
     }
 
-    /// Retries the connection until the app reports a loaded world.
+    /// Retries the connection until the app reports a loaded world, or the main
+    /// menu for `onTitle`, because the main menu loads no world.
     private static func waitForWorld(
         _ options: GameCommandOptions,
-        seconds: Double
+        seconds: Double,
+        onTitle: Bool
     ) throws -> AgentJSON {
+        let readyKey = onTitle ? "titleMenuOpen" : "worldReady"
         let deadline = Date().addingTimeInterval(seconds)
         var lastStatus: AgentJSON?
         while Date() < deadline {
@@ -83,7 +86,7 @@ enum GameLaunch {
                 let result = reply.result
             {
                 lastStatus = result
-                if result["worldReady"]?.boolValue == true {
+                if result[readyKey]?.boolValue == true {
                     return result
                 }
             }

@@ -32,10 +32,13 @@ nonisolated public struct AgentTimeline: Equatable, Sendable {
 nonisolated public struct AgentWorldStatus: Equatable, Sendable {
     /// True once the first cell is in the scene and the player can move.
     public var worldReady: Bool
+    /// The main menu is open. It loads no world, so a launch on it waits for this.
+    public var titleMenuOpen: Bool
     public var dataRoot: String?
 
-    public init(worldReady: Bool, dataRoot: String?) {
+    public init(worldReady: Bool, titleMenuOpen: Bool = false, dataRoot: String?) {
         self.worldReady = worldReady
+        self.titleMenuOpen = titleMenuOpen
         self.dataRoot = dataRoot
     }
 }

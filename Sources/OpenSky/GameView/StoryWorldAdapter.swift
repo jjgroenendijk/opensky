@@ -149,15 +149,19 @@ final class StoryWorldAdapter {
     }
 
     /// Its start-up stage moves the player to the opening, so it runs last.
-    func startOpeningQuest() {
+    /// False when the quest is missing or did not start.
+    @discardableResult
+    func startOpeningQuest() -> Bool {
         guard let quest = questRuntime?.quests.formID(editorID: NewGameStart.openingQuest) else {
             game.hud.showNotification("New game: no \(NewGameStart.openingQuest) quest")
-            return
+            return false
         }
         do {
             try startQuest(quest, event: nil)
+            return true
         } catch {
             game.hud.showNotification("New game: \(NewGameStart.openingQuest) did not start")
+            return false
         }
     }
 

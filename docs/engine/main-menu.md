@@ -8,7 +8,7 @@ tags: [engine, ui, menu, save]
 
 # Title menu and new game
 
-The title menu shows Continue, New, Load, and Quit over a paused world. Continue shows only
+The title menu shows Continue, New, Load, and Quit. Continue shows only
 when a save exists and loads the newest one. Quit to Main Menu in the System menu returns
 here. The launcher's Play button opens the game on this menu, as the original game does.
 Developer mode opens in the world.
@@ -35,14 +35,30 @@ install with `openskycli swf movie-probe` and `swf action-list`:
 
 Differences from the game:
 
-- Behind the movie, the game draws the 3D logo `meshes\interface\logo\logo.nif` on black.
-  OpenSky draws it through the loading screen's cover layer, so the world is hidden. The
-  logo faces the camera with its +Y side, which was checked by eye in a capture. Any smoke
-  or lighting effects of the original scene are not drawn.
+- Behind the movie, the game draws the 3D logo `meshes\interface\logo\logo.nif` on black,
+  with smoke around it. The smoke is the model of the `INTMenuFogParticles` `STAT` in
+  `Skyrim.esm`, `meshes\interface\intmenufogparticles.nif`: a particle system that
+  emits `fxsteamthinanim.dds` cards from a mesh, plus that mesh. OpenSky draws both
+  through the loading screen's cover layer, so the world is hidden. The cover's particle
+  systems run on wall time, because the menu pauses the world. The logo faces the camera
+  with its +Y side, which was checked by eye in a capture. [WARNING] How the game places
+  the smoke is not confirmed. The smoke volume is about 850 units wide, so with the logo's
+  transform the camera stands inside it and the screen turns a flat grey. OpenSky faces the
+  smoke's +Y side to the camera too and puts that side at the logo, so the smoke drifts
+  behind it. The lighting of the original scene is not drawn.
 - Credits returns the movie to its main rows. OpenSky has no credits roll.
 - Delete in the Load list does nothing. Saves are deleted in the System menu.
 - The movie has `ConfirmNewGame` and `ConfirmContinue` callbacks, so the game can ask a
   question before New and Continue. OpenSky does not call them and starts at once.
+
+## The held world
+
+No world loads while the title menu is open. The player can pick a save in another
+world, so a world loaded beforehand could be the wrong one. Opening the title menu holds
+the cell streamer; the first move of the player releases it. That move is the opening
+quest's `MoveTo` for New, the save's place for Load and Continue, or a launcher start. A
+start picked before any cell loaded recentres the streamer on the move, so the launch cell
+`Tamriel (6,-2)` never loads first.
 
 ## New game
 
@@ -59,10 +75,20 @@ A new game:
    `PlayerStartMarker` alias, on the cart near Helgen, with `ObjectReference.MoveTo`. The
    fragment reads each alias with `GetRef` ([quests](/engine/papyrus-quests.md)).
 
-The loading screen covers the world from the choice of New until the player stands at the
-marker, and the player is then put back into walk mode. The `MQ101` aliases that name unique
-actors fill from the location records ([quest state](/engine/quest-state.md), "What does not
-fill yet").
+The screen stays covered from the choice of New until the player stands at the marker, and
+the player is then put back into walk mode. Until the quest's `MoveTo`, the cover is a dark
+screen and not the loading menu, because the loading menu pauses the scripts that make the
+move. If no move comes within 30 seconds of simulation time, the cover lifts and the world loads
+where the player stands.
+
+The same fragment then calls `Game.FadeOutGame` and `Game.ShowTitleSequenceMenu`, and
+`MQ101QuestScript` plays `Sequence1` to `Sequence4` with `Game.StartTitleSequence` before
+`Game.HideTitleSequenceMenu`. The CK wiki says a sequence is "a given animation in the title
+menu". OpenSky shows the title backdrop for the whole sequence, so after the loading screen
+the logo shows until the hide, and then the cart. It does not play the four animations.
+
+The `MQ101` aliases that name unique actors fill from the location records ([quest
+state](/engine/quest-state.md), "What does not fill yet").
 
 The race menu then opens where `MQ101` calls `Game.ShowRaceMenu` ([race
 menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart scene. OpenSky

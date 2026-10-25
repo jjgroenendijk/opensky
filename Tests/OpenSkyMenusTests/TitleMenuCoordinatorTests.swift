@@ -15,6 +15,7 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
     var starts: [NewGameStart] = []
     var quits = 0
     var loaded: [String] = []
+    var worldHolds = 0
 
     var menuInputConsumer: (any MenuInputConsumer)? {
         self
@@ -29,6 +30,10 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
     }
 
     func showTitleBackdrop(_: Bool) {}
+
+    func holdWorldLoading() {
+        worldHolds += 1
+    }
 
     func handleMenuInput(_ event: MenuInputEvent) {}
 
@@ -147,6 +152,7 @@ struct TitleMenuCoordinatorTests {
         let (menu, world) = Self.make()
         let menuMode = world.menuMode
         menu.open()
+        #expect(world.worldHolds == 1)
         menu.route(.button(.accept))
         #expect(world.newGames == 1)
         #expect(!menuMode.isMenuMode)

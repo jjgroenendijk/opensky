@@ -12,6 +12,7 @@ import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -42,8 +43,11 @@ extension ScriptWorldAdapter {
         hooks.quitToMainMenu = { [weak game] in game?.quitToMainMenu() }
         hooks.quitGame = { [weak game] in game?.quitApplication() }
         // The fade is instant: a fade out covers the world in black, a fade in uncovers it.
+        // A loading screen or a title logo keeps its own cover.
         hooks.fade = { [weak game] fade in
-            try? game?.renderer?.setLoadingCover(fade.fadingOut ? [] : nil)
+            guard let game, !game.loadingScreens.isCovering, !game.menuWorld.titleBackdropShown
+            else { return }
+            try? game.renderer?.setLoadingCover(fade.fadingOut ? [] : nil)
         }
         hooks
             .showTitleSequenceMenu = { [weak game] shown in
