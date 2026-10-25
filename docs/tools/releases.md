@@ -23,6 +23,14 @@ only our own build. The user's game install is never read or packed.
    publishes nothing.
 3. Name the tag `v<MARKETING_VERSION>-preview.<N>`, one above the last preview of that version.
 
+The release title is `Nightly <UTC date>`, such as `Nightly 2026-10-25`. A second preview on
+the same day gets `Nightly 2026-10-25 (2)`. GitHub's release list cuts long titles, so the
+title starts with the part that differs, and the version stays in the tag.
+
+The newest 20 previews are kept. After it publishes, the script deletes every older pre-release
+with a `-preview.<N>` tag, together with its tag. A night without new commits publishes nothing,
+so it deletes nothing either. A stable release is never deleted.
+
 The macOS job then checks out that commit, runs `make build-app CONFIG=Release` and `make dmg`,
 and publishes a pre-release. The notes are `.github/preview-release-notes.md` followed by
 GitHub's list of the pull requests merged since the last preview.
@@ -39,7 +47,7 @@ preview is then `v<new version>-preview.1`.
 
    ```sh
    gh release create v0.1.0-preview.1 --prerelease --target main \
-     --title "OpenSky 0.1.0 preview 1" --notes-file notes.md .logs/dmg/latest/OpenSky-0.1.0-preview.1.dmg
+     --title "Nightly 2026-10-24" --notes-file notes.md .logs/dmg/latest/OpenSky-0.1.0-preview.1.dmg
    ```
 
 A preview tag ends in `-preview.N`. GitHub marks a pre-release so that "latest release" stays

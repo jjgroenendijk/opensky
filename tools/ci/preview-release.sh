@@ -42,12 +42,24 @@ plan)
 publish)
     dmg="${2:?usage: publish DMG}"
     : "${TAG:?}" "${SHA:?}"
+    # The release list cuts long titles, so the title starts with what differs.
+    title="Nightly $(date -u +%Y-%m-%d)"
+    same_day=$(gh release list --limit 200 --json name --jq '.[].name' | grep -c "^$title" || true)
+    [ "$same_day" -eq 0 ] || title="$title ($((same_day + 1)))"
     # A first preview of a version has no previous tag, so GitHub picks the start.
     gh release create "$TAG" --prerelease --target "$SHA" \
-        --title "OpenSky ${TAG#v}" \
+        --title "$title" \
         --notes-file .github/preview-release-notes.md --generate-notes \
         ${PREVIOUS:+--notes-start-tag "$PREVIOUS"} \
         "$dmg"
+    # Keep the newest 20 previews. Only pre-releases with a preview tag are pruned.
+    gh release list --limit 200 --json tagName,isPrerelease,createdAt --jq \
+        '[.[] | select(.isPrerelease and (.tagName | test("-preview\\.[0-9]+$")))]
+         | sort_by(.createdAt) | reverse | .[20:] | .[].tagName' \
+        | while read -r old; do
+            echo "[INFO] deleting $old: not among the newest 20 previews" >&2
+            gh release delete "$old" --cleanup-tag --yes
+        done
     ;;
 *)
     echo "[ERROR] usage: tools/ci/preview-release.sh plan|publish DMG" >&2
