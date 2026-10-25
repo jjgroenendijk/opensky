@@ -99,7 +99,6 @@ final class GraphicsPageViewController: NSViewController {
     )
     let textureBudgetControl = NSPopUpButton()
     lazy var textureBudgetLabel = layout.line("GraphicsTextureBudgetStatsLabel")
-    let fullScreenControl = NSButton(checkboxWithTitle: "Full screen", target: nil, action: nil)
     let frameRateCapControl = NSPopUpButton()
     lazy var statusLabel = layout.line("GraphicsStatsLabel", mono: true)
     let rayTracing: RayTracingAvailability
@@ -193,9 +192,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.row("Memory for close-up detail", textureBudgetControl),
                 textureBudgetLabel
             ]),
-            layout.group("Window", [
-                layout.toggle(fullScreenControl), layout.row("Frame rate cap", frameRateCapControl)
-            ]),
+            layout.group("Window", [layout.row("Frame rate cap", frameRateCapControl)]),
             statusLabel
         ])
         refresh()

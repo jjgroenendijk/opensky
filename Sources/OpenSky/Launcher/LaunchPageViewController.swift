@@ -1,7 +1,7 @@
-// The launcher's first page: Continue, where Play starts, the new game options,
-// the two launch modes side by side, and what to check before playing. The game
-// folder is set in Settings, or in a picker that opens when none is found. While a
-// world load runs, the load panel takes the place of the mode buttons.
+// The launcher's first page: Play and a line that says what it will do, the launch
+// options, the new game options, and the game files. The game folder is set in
+// Settings, or in a picker that opens when none is found. While a world load runs,
+// the load panel takes the place of the Play button.
 
 import AppKit
 import OpenSkyAssetCache
@@ -18,12 +18,17 @@ protocol LauncherPageRefreshing: AnyObject {
 final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let context: LauncherContext
     let layout = LauncherPageLayout(pageName: "Launch")
-    lazy var folderLabel = layout.line("LauncherGameFolderStatsLabel")
-    let settingsLinkButton = LauncherButton(title: "Open Settings", target: nil, action: nil)
-    let continueButton = LauncherButton(title: "Continue", target: nil, action: nil)
-    lazy var continueLabel = layout.line("LauncherContinueStatsLabel")
+    let folderButton = LaunchLinkButton()
+    /// The newest save, as "Lydia, level 12, 24 Oct 2026 at 13:25".
+    var latestSave = ""
     var continueOffer = ContinueOffer.noSaves
     var continueCheck: Task<Void, Never>?
+    let resumeControl = NSButton(checkboxWithTitle: "Resume latest save", target: nil, action: nil)
+    let skipMainMenuControl = NSButton(
+        checkboxWithTitle: "Skip main menu", target: nil, action: nil
+    )
+    let fullScreenControl = NSButton(checkboxWithTitle: "Full screen", target: nil, action: nil)
+    lazy var skipMainMenuRow = layout.toggle(skipMainMenuControl, indent: 20)
     let startKindPopUp = NSPopUpButton()
     let startCellField = NSTextField()
     let startWorldspaceField = NSTextField()
@@ -37,7 +42,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         checkboxWithTitle: "Survival Mode", target: nil, action: nil
     )
     let survivalModeAskControl = NSButton(
-        checkboxWithTitle: "Ask when a new game starts", target: nil, action: nil
+        checkboxWithTitle: "Let the game ask about Survival Mode", target: nil, action: nil
     )
     private(set) lazy var playButton: LauncherButton = {
         let button = LauncherButton(
@@ -53,13 +58,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         return button
     }()
 
+    lazy var playSummary = layout.line("LaunchPlaySummaryStatsLabel")
     private var playRow = NSView()
-    let assetStatus = LauncherStatusView(name: "LauncherAssetOptimisation")
-    let assetLinkButton = LauncherButton(
-        title: "Open Asset Optimisation",
-        target: nil,
-        action: nil
-    )
+    let assetButton = LaunchLinkButton()
     private let loadPanel = WorldLoadPanel()
     private var didOfferFolderPicker = false
 
@@ -78,14 +79,12 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         loadPanel.isHidden = true
         loadPanel.onCancel = { [weak self] in self?.context.actions?.cancelLoad() }
         configureStartControls()
-        configureContinue()
         view = layout.makeView(title: "OpenSky", groups: [
-            layout.group("Continue", [continueLabel, layout.buttons([continueButton])]),
-            makeStartGroup(),
-            makeNewGameGroup(),
             playRow,
             loadPanel,
-            makeBeforeYouPlayGroup()
+            makeLaunchOptionsGroup(),
+            makeNewGameGroup(),
+            makeGameFilesGroup()
         ])
         context.assetOptimisation.observe { [weak self] in self?.refreshAssetStatus() }
         refreshAssetStatus()
@@ -96,6 +95,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         super.viewWillAppear()
         refreshGameFolder()
         refreshContinue()
+        refreshLaunchOptions()
         refreshNewGame()
         let assets = context.assetOptimisation
         if assets.check == nil, assets.activity == .idle {
@@ -123,32 +123,39 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     func refreshGameFolder() {
         let status = GameFolderStatus()
-        folderLabel.stringValue = status.path.map { "Game folder: \($0)" }
-            ?? "Game folder: not found. Open Settings and press Choose…"
-        folderLabel.toolTip = status.isFound ? status.path : status.note
-        folderLabel.textColor = status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
+        folderButton.show(
+            symbol: status.isFound ? "folder" : "exclamationmark.triangle",
+            title: status.path ?? "Not found: choose it",
+            colour: status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
+        )
+        folderButton.toolTip = status.isFound ? status.path : status.note
         refreshPlay()
     }
 
-    /// Play needs the game folder and a valid start.
+    /// Play needs the game folder and, for a new game, a valid start.
     func refreshPlay() {
         let isFound = GameFolderStatus().isFound
         let startIsValid = (try? startForm.validate().get()) != nil
-        playButton.isEnabled = isFound && startIsValid
+        let resumes = if case .resume = launchPlan {
+            true
+        } else {
+            false
+        }
+        playButton.isEnabled = isFound && (startIsValid || resumes)
         playButton.keyEquivalent = playButton.isEnabled ? "\r" : ""
-        continueButton.isEnabled = continueOffer.isEnabled && isFound
+        playSummary.stringValue = playSummaryText
+        playSummary.toolTip = playSummary.stringValue
     }
 
+    /// Only the state shows here; the Asset Optimisation page holds the detail.
     func refreshAssetStatus() {
         let state = context.assetOptimisation.status
-        let detail = state.needsConversion
-            ? "\(state.detail). The game still starts: waiting files load from the archives"
-            : state.detail
-        assetStatus.show(
-            symbol: state.symbolName, title: "Asset Optimisation: \(state.title)", detail: detail,
+        assetButton.show(
+            symbol: state.symbolName, title: state.title,
             colour: state == .ready ? LauncherStyle.good : state.needsConversion ? LauncherStyle
                 .warning : LauncherStyle.textDim
         )
+        assetButton.toolTip = state.detail
     }
 
     func showLoad(_ timeline: WorldLoadTimeline, elapsed: Duration) {
@@ -166,9 +173,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         guard isViewLoaded, loadPanel.isHidden == loading else { return }
         playRow.isHidden = loading
         loadPanel.isHidden = !loading
-        for button in [settingsLinkButton, continueButton] {
-            button.isEnabled = !loading
-        }
+        folderButton.isEnabled = !loading
         if !loading {
             refreshPlay()
         }
@@ -178,33 +183,32 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     private func makePlayRow() -> NSView {
         playButton.widthAnchor.constraint(equalToConstant: 260).isActive = true
-        let summary = layout.note("The game, from the start you choose")
-        summary.widthAnchor.constraint(equalToConstant: 260).isActive = true
-        summary.setAccessibilityIdentifier("LaunchPlaySummaryStatsLabel")
-        return PanelComponents.group([playButton, summary])
+        return PanelComponents.group([playButton, playSummary])
     }
 
-    private func makeBeforeYouPlayGroup() -> NSView {
+    private func makeGameFilesGroup() -> NSView {
         PanelComponents.configureButton(
-            assetLinkButton, target: self, action: #selector(openAssetOptimisation),
-            identifier: "LauncherAssetOptimisationLinkControl"
-        )
-        assetLinkButton.toolTip = "Convert game files so they load faster"
-        PanelComponents.configureButton(
-            settingsLinkButton, target: self, action: #selector(openSettings),
+            folderButton, target: self, action: #selector(openSettings),
             identifier: "LauncherSettingsLinkControl"
         )
-        settingsLinkButton.toolTip = "Choose the game folder and the other load settings"
-        folderLabel.lineBreakMode = .byTruncatingMiddle
-        return layout.group("Before you play", [
-            folderLabel, assetStatus, layout.buttons([settingsLinkButton, assetLinkButton])
+        PanelComponents.configureButton(
+            assetButton, target: self, action: #selector(openAssetOptimisation),
+            identifier: "LauncherAssetOptimisationLinkControl"
+        )
+        return layout.group("Game files", [
+            layout.row("Game folder", folderButton),
+            layout.row("Asset Optimisation", assetButton)
         ])
     }
 
     // MARK: - Actions
 
     @objc private func play() {
-        context.actions?.play()
+        switch launchPlan {
+        case let .resume(slot): context.actions?.continueGame(slot: slot)
+        case .mainMenu: context.actions?.play(from: .normal)
+        case let .newGame(start): context.actions?.play(from: start)
+        }
     }
 
     @objc private func openAssetOptimisation() {

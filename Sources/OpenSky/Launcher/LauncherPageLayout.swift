@@ -71,9 +71,9 @@ final class LauncherPageLayout {
     }
 
     /// A checkbox row; the row shows the checkbox's title, so the box draws alone.
-    func toggle(_ checkbox: NSButton) -> LauncherRow {
+    func toggle(_ checkbox: NSButton, indent: CGFloat = 0) -> LauncherRow {
         checkbox.imagePosition = .imageOnly
-        return LauncherRow(title: checkbox.title, control: checkbox)
+        return LauncherRow(title: checkbox.title, control: checkbox, indent: indent)
     }
 
     /// Buttons side by side, their left edge in line with the row titles.

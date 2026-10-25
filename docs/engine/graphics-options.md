@@ -49,8 +49,8 @@ change, and an option that starts to work only needs its reason removed.
 - Texture memory: "Full detail only near the camera" is
   [texture streaming](/rendering/texture-streaming.md), and "Memory for close-up detail" is
   its budget. Automatic follows this Mac's GPU memory.
-- Window: full screen for Play, and a frame rate cap of 30, 60, or 120 frames a second. The
-  cap holds the live frame pacing to the chosen rate; Off follows the display.
+- Window: a frame rate cap of 30, 60, or 120 frames a second. The cap holds the live frame
+  pacing to the chosen rate; Off follows the display. Full screen is on the Launch page.
 
 ## Command line
 
