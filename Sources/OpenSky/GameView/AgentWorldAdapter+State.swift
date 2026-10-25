@@ -197,26 +197,50 @@ extension AgentWorldAdapter {
     private func actorsState(radius: Float) throws(AgentFailure) -> AgentJSON {
         guard let gameSession = game.gameSession else { throw notReady() }
         let origin = gameSession.freeFlyCamera.position
-        let rows: [(Float, AgentJSON)] = game.actorWorld.combatActors().compactMap { actor in
-            let distance = simd_distance(actor.feet, origin)
-            guard distance <= radius else { return nil }
-            let entry = game.streamer?.referenceEntry(key: actor.key)
-            let formID = entry?.formID
-            return (distance, [
-                "leveled": leveledState(of: actor.key, base: entry?.placedActor?.base),
-                "ref": formID.map { .formID($0.rawValue) } ?? .null,
-                "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
-                "position": .init(actor.feet),
-                "distance": .init(distance),
-                "dead": .bool(actor.isDead),
-                "hostility": .string("\(game.factions.hostility(of: actor.key))"),
-                "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
-                "detects": game.perception.runtime
-                    .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
-                    ?? .null
-            ])
+        let rows = game.actorWorld.combatActors().compactMap { actor in
+            actorRow(actor, origin: origin, radius: radius)
         }
         return ["actors": .array(rows.sorted { $0.0 < $1.0 }.map(\.1))]
+    }
+
+    private func actorRow(
+        _ actor: CombatActorObservation, origin: SIMD3<Float>, radius: Float
+    ) -> (Float, AgentJSON)? {
+        let distance = simd_distance(actor.feet, origin)
+        guard distance <= radius else { return nil }
+        let entry = game.streamer?.referenceEntry(key: actor.key)
+        let formID = entry?.formID
+        let graph: AgentJSON = game.actorGraphs.readout(for: actor.key).map(graphState) ?? .null
+        return (distance, [
+            "leveled": leveledState(of: actor.key, base: entry?.placedActor?.base),
+            "ref": formID.map { .formID($0.rawValue) } ?? .null,
+            "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
+            "position": .init(actor.feet),
+            "distance": .init(distance),
+            "dead": .bool(actor.isDead),
+            "hostility": .string("\(game.factions.hostility(of: actor.key))"),
+            "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
+            "detects": game.perception.runtime
+                .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
+                ?? .null,
+            "graph": graph
+        ])
+    }
+
+    private func graphState(_ graph: ActorGraphReadout) -> AgentJSON {
+        [
+            "status": .string(graph.status),
+            "project": .string(graph.project),
+            "activeStates": .array(graph.activeStates.map(AgentJSON.string)),
+            "waitingForClip": .bool(graph.isWaitingForClip),
+            "hasPose": .bool(graph.hasPose),
+            "steps": .init(graph.steps),
+            "rate": .string(graph.rate),
+            "recentEvents": .array(graph.recentEvents.map(AgentJSON.string)),
+            "unresolvedClips": .array(graph.unresolvedClips.map(AgentJSON.string)),
+            "clipsLoaded": .init(graph.clipsLoaded),
+            "clipsMissed": .init(graph.clipsMissed)
+        ]
     }
 
     /// The `LVLN` hops of an actor's template chain, the entry each rolled, and the

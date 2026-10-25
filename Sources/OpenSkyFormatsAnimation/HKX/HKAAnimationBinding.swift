@@ -13,6 +13,11 @@ nonisolated public struct HKAAnimationBinding: Sendable {
 
     public static let className = "hkaAnimationBinding"
 
+    /// True for `m_blendHint` 1 and 2: the tracks hold a change to add to a pose, not a pose.
+    public var isAdditive: Bool {
+        blendHint == 1 || blendHint == 2
+    }
+
     public static func bindings(in file: HKXFile) throws -> [HKAAnimationBinding] {
         try bindings(in: HKXObjectGraph(file: file))
     }

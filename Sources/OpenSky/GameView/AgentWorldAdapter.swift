@@ -4,6 +4,7 @@
 import AppKit
 import Foundation
 import MetalKit
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
@@ -30,6 +31,7 @@ import OpenSkyWorldState
 /// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AgentWorldHost: AnyObject {
+    var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var benchmarkWorld: BenchmarkWorldAdapter { get }

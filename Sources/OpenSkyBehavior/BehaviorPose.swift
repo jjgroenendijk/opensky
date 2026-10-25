@@ -45,10 +45,15 @@ nonisolated public struct BehaviorRootMotion: Equatable, Sendable {
 nonisolated public struct BehaviorPose: Equatable, Sendable {
     public var bones: [HKABonePose]
     public var rootMotion: BehaviorRootMotion
+    /// True when `bones` hold changes from an additive clip, to add to another pose.
+    public var isAdditive: Bool
 
-    public init(bones: [HKABonePose], rootMotion: BehaviorRootMotion = .identity) {
+    public init(
+        bones: [HKABonePose], rootMotion: BehaviorRootMotion = .identity, isAdditive: Bool = false
+    ) {
         self.bones = bones
         self.rootMotion = rootMotion
+        self.isAdditive = isAdditive
     }
 }
 
@@ -120,7 +125,8 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         }
         return BehaviorPose(
             bones: bones,
-            rootMotion: blend(lhs.rootMotion, rhs.rootMotion, weight: amount)
+            rootMotion: blend(lhs.rootMotion, rhs.rootMotion, weight: amount),
+            isAdditive: lhs.isAdditive && rhs.isAdditive
         )
     }
 
@@ -284,12 +290,12 @@ nonisolated public enum BehaviorPoseMath: Sendable {
 
     // MARK: - Primitives
 
-    private static func clamped(_ weight: Float) -> Float {
+    static func clamped(_ weight: Float) -> Float {
         guard weight.isFinite else { return 0 }
         return min(max(weight, 0), 1)
     }
 
-    private static func mix(_ lhs: SIMD3<Float>, _ rhs: SIMD3<Float>, _ amount: Float)
+    static func mix(_ lhs: SIMD3<Float>, _ rhs: SIMD3<Float>, _ amount: Float)
         -> SIMD3<Float>
     {
         lhs + (rhs - lhs) * amount

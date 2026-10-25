@@ -234,6 +234,11 @@ These are guesses, marked as guesses:
   ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as ignore-to-generator. No
   independent source confirms that, and each one changes how root motion crosses a blend.
 
+- An additive clip is added as `base * change` for both `m_blendHint` values, and its blender
+  weight is not normalised against the full children
+  ([additive clips](/engine/behavior-clips.md#additive-clips)). No source gives the order or the
+  weighting.
+
 The transition order and the crossfade interrupt rule are also choices, explained on the
 [state machines](/engine/behavior-state-machines.md) page.
 

@@ -11,6 +11,8 @@ import simd
 nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
     /// Seconds between steps past `fullRateDistance`: 15 steps per second.
     public static let reducedStepInterval: Float = 1.0 / 15
+    /// Seconds between steps in the outer half of `fullRateDistance`: 30 steps per second.
+    public static let nearStepInterval: Float = 1.0 / 30
     public static let standard = ActorGraphCutoff(fullRateDistance: 2048, maximumDistance: 6144)
 
     public var fullRateDistance: Float
@@ -23,8 +25,11 @@ nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
 
     /// Zero steps every frame. Nil does not step.
     public func stepInterval(atDistance distance: Float) -> Float? {
-        if distance <= fullRateDistance {
+        if distance <= fullRateDistance * 0.5 {
             return 0
+        }
+        if distance <= fullRateDistance {
+            return Self.nearStepInterval
         }
         return distance <= maximumDistance ? Self.reducedStepInterval : nil
     }

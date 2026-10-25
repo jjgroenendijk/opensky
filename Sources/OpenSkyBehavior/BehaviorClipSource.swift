@@ -25,6 +25,8 @@ nonisolated public protocol BehaviorClip {
     /// which is where Skyrim's `FootLeft` and `FootRight` come from, so a clip
     /// that drops these is silent underfoot (see HKAAnnotationTrack.swift).
     var annotations: [HKAAnnotation] { get }
+    /// True when the samples are changes to add to a pose (`m_blendHint`).
+    var isAdditive: Bool { get }
     /// The name of each transform track, in track order, where the clip names them.
     /// A paired clip names its tracks after the bones of both actors.
     var trackNames: [String?] { get }
@@ -43,6 +45,10 @@ nonisolated extension BehaviorClip {
     /// stays a bone source and nothing else.
     public var annotations: [HKAAnnotation] {
         []
+    }
+
+    public var isAdditive: Bool {
+        false
     }
 
     public var trackNames: [String?] {
@@ -104,6 +110,10 @@ nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
 
     public var annotations: [HKAAnnotation] {
         animation.annotations
+    }
+
+    public var isAdditive: Bool {
+        binding.isAdditive
     }
 
     /// Havok exports one annotation track per transform track, named after its bone.

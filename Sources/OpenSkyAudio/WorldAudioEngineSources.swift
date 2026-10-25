@@ -60,6 +60,8 @@ public final class ActiveAudioSource {
     /// Ramp in flight, or nil when the fade gain is holding steady. Also owned
     /// by WorldAudioEngineFades.swift.
     public var activeFade: GainFade?
+    /// A one-shot buffer on a pooled node: ending it hands the node back.
+    public var returnsToPool = false
     /// Nonisolated snapshot read by one actor's LipSyncPlayback. Voice sources
     /// attach it after adoption; every other audio source leaves it nil.
     public var voiceClock: VoicePlaybackClock?
@@ -160,6 +162,7 @@ extension WorldAudioEngine {
         else {
             throw AudioEngineError.formatUnavailable
         }
+        makeRoomForNewSource()
         let node = makePositionalNode(request: request, format: format)
         let streamer = AudioSourceStreamer(
             file: file,
@@ -189,6 +192,8 @@ extension WorldAudioEngine {
     @discardableResult
     public func playPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
+        guard request.loops else { return playPooled(buffer, request: request) }
+        makeRoomForNewSource()
         let node = makePositionalNode(request: request, format: buffer.format)
         let source = ActiveAudioSource(
             id: takeSourceID(),
@@ -201,6 +206,23 @@ extension WorldAudioEngine {
         schedule(buffer, on: node, for: source, loops: request.loops)
         node.play()
         return source.id
+    }
+
+    /// A one-shot positional buffer on a pooled node; see WorldAudioEngineNodePool.swift.
+    private func playPooled(_ buffer: AVAudioPCMBuffer, request: AudioPlayRequest) -> Int {
+        let id = takeSourceID()
+        // By id: an interrupted buffer's handler must not end the node's next source.
+        let node = startPooledBuffer(buffer, request: request) { [weak self] in
+            Task { @MainActor in
+                self?.sources.first { $0.id == id }?.bufferFinished = true
+            }
+        }
+        let source = ActiveAudioSource(
+            id: id, request: request, routing: .positional, node: node, streamer: nil
+        )
+        source.returnsToPool = true
+        adoptSource(source)
+        return id
     }
 
     /// Starts a non-positional streamed source from framed `.xwm` bytes: the
@@ -357,22 +379,25 @@ extension WorldAudioEngine {
 
     // MARK: - Internals
 
-    private func makePositionalNode(
+    func makePositionalNode(
         request: AudioPlayRequest,
         format: AVAudioFormat
     ) -> AVAudioPlayerNode {
-        makeRoomForNewSource()
         let node = AVAudioPlayerNode()
         engine.attach(node)
         engine.connect(node, to: environment, format: format)
         // Equal-power panning is deterministic and cheap; HRTF waits for the
         // authored attenuation data.
         node.renderingAlgorithm = .equalPowerPanning
+        configure(node, for: request)
+        return node
+    }
+
+    func configure(_ node: AVAudioPlayerNode, for request: AudioPlayRequest) {
         node.reverbBlend = request.outputModel?.reverbSend ?? 0
         let position = AudioSpace.listenerPosition(fromWorld: request.worldPosition)
         node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
         node.volume = audibleVolume(for: request.category) * request.gain
-        return node
     }
 
     /// Non-positional node: stereo (or whatever the material carries) straight
@@ -397,7 +422,7 @@ extension WorldAudioEngine {
     /// At `maxConcurrentSources` positional sources, a new one evicts the oldest
     /// (FIFO): predictable, and short effects expire first anyway. Non-positional
     /// beds are outside the budget, so SFX cannot evict them.
-    private func makeRoomForNewSource() {
+    func makeRoomForNewSource() {
         while
             sources.count(where: \.isPositional) >= Self.maxConcurrentSources,
             let oldest = sources.first(where: \.isPositional)
@@ -420,8 +445,12 @@ extension WorldAudioEngine {
     private func stop(_ source: ActiveAudioSource) {
         source.voiceClock?.publish(nil)
         source.streamer?.requestStop()
+        sources.removeAll { $0 === source }
+        guard !source.returnsToPool else {
+            recycle(source)
+            return
+        }
         source.node.stop()
         engine.detach(source.node)
-        sources.removeAll { $0 === source }
     }
 }

@@ -21,13 +21,10 @@ public enum TalkActivationStep: Int, FramePhase {
 /// goes. One value, because the three parts belong together.
 @MainActor
 public struct TalkTargetingSeam {
-    /// The resident actors the view ray may pick up, sampled once per targeting
-    /// pass. A seam rather than a walk over `residentActorEntries()` inside the
-    /// streamer, because who is worth talking to is a question about death,
-    /// hostility and the world-state components the app owns, not about
-    /// streaming. Nil in a session that never wired it, which is every session
-    /// before the dialogue layer and every test that does not care.
-    public var candidateSource: (() -> [TalkCandidate])?
+    /// The resident actors the view ray may pick up, given that ray so it can skip the
+    /// rest. A seam, because who is worth talking to depends on death, hostility, and
+    /// world state the app owns, not on streaming. Nil in a session that never wired it.
+    public var candidateSource: ((InteractionRay) -> [TalkCandidate])?
     /// Fires when the use key activates a Talk target, in `TalkActivationStep` order.
     public let activations = FrameSchedule<TalkActivationStep, TalkActivationEvent>()
     /// The actor the current interaction target names, retained from the pick
@@ -106,6 +103,18 @@ nonisolated public enum TalkTargetPicker: Sendable {
     /// distance is known from the install, and a second number would let the crosshair
     /// pick an actor the use key then refuses.
     public static let defaultMaximumDistance = InteractionRay.defaultMaximumDistance
+
+    /// False when an actor standing at `feet` with `capsule` is too far from the ray's
+    /// origin for `nearest` to pick it. A cheap test before building a candidate.
+    public static func mayReach(
+        _ feet: SIMD3<Float>,
+        along ray: InteractionRay,
+        capsule: PlayerCapsule = .standard,
+        maximumDistance: Float = defaultMaximumDistance
+    ) -> Bool {
+        let reach = min(ray.maximumDistance, max(0, maximumDistance))
+        return simd_distance(feet, ray.origin) <= reach + capsule.height + capsule.radius
+    }
 
     /// The nearest actor `ray` passes through, or nil when it passes through
     /// none within `maximumDistance`.

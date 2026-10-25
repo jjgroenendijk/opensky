@@ -146,7 +146,7 @@ extension CellStreamer {
         }
         guard
             let actor = TalkTargetPicker.nearest(
-                ray: ray, candidates: talk.candidateSource?() ?? []
+                ray: ray, candidates: talk.candidateSource?(ray) ?? []
             ),
             actor.distance < (hit?.distance ?? .greatestFiniteMagnitude)
         else {

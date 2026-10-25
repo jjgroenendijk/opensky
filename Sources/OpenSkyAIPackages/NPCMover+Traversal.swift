@@ -97,11 +97,24 @@ extension NPCMover {
         )
     }
 
+    /// Travel between cell lookups. Near the target every step looks, so the arrival
+    /// write names the cell the actor ends in.
+    static let cellCheckSpacing: Float = 32
+
     mutating func collectCellHandoff(
         world: NPCMovementWorld,
         into emissions: inout NPCMoverEmissions
     ) {
-        let next = world.cellAt(controller.feetPosition)
+        let feet = controller.feetPosition
+        if
+            let checked = cellCheckedAt,
+            simd_distance(checked, feet) < Self.cellCheckSpacing,
+            simd_distance(path.target, feet) > Self.cellCheckSpacing
+        {
+            return
+        }
+        cellCheckedAt = feet
+        let next = world.cellAt(feet)
         guard let previous = currentCell else {
             currentCell = next
             return

@@ -159,9 +159,7 @@ final class MountWorldAdapter {
     }
 
     private func saddleBone(of key: ReferenceKey) -> String? {
-        MountGraphNames.saddleBones.first {
-            game.vehicleWorld.vehicleBone(of: key, named: $0) != nil
-        }
+        MountGraphNames.saddleBones.first { game.vehicleWorld.vehicleHasBone(key, named: $0) }
     }
 
     private func race(of key: ReferenceKey) -> Race? {

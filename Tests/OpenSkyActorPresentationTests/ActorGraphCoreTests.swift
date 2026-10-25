@@ -9,6 +9,7 @@ struct ActorGraphCoreTests {
     @Test func aGraphStepsEveryFrameNearAndLessOftenFurtherOut() {
         let cutoff = ActorGraphCutoff.standard
         #expect(cutoff.stepInterval(atDistance: 100) == 0)
+        #expect(cutoff.stepInterval(atDistance: 1500) == ActorGraphCutoff.nearStepInterval)
         #expect(cutoff.stepInterval(atDistance: 3000) == ActorGraphCutoff.reducedStepInterval)
         #expect(cutoff.stepInterval(atDistance: 7000) == nil)
     }

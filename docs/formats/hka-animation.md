@@ -121,7 +121,7 @@ This is the only way a Skyrim footstep fires. The walk and run clip generators i
 | 0x18 | 8 | `m_animation` pointer | The animation object |
 | 0x20 | 16 | `m_transformTrackToBoneIndices` `hkArray<int16>` | Empty means track i is bone i |
 | 0x30 | 16 | `m_floatTrackToFloatSlotIndices` `hkArray<int16>` | |
-| 0x40 | 1 | `m_blendHint` | |
+| 0x40 | 1 | `m_blendHint` | 0 a full pose; 1 and 2 additive, a change per bone (vanilla `mt_idle_skinny.hkx` is 1) |
 | 0x41 | 7 | padding | |
 
 HavokLib's exporter uses the track index directly when the map is empty, and so does

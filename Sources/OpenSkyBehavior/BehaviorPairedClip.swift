@@ -66,6 +66,10 @@ nonisolated public struct PairedBehaviorClip: BehaviorClip {
         base.carriesExtractedMotion
     }
 
+    public var isAdditive: Bool {
+        base.isAdditive
+    }
+
     public func samples(at time: Float) -> [HKABoneTransformSample] {
         base.samples(at: time).compactMap { sample in
             map.bones[sample.boneIndex].map {

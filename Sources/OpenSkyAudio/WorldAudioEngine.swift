@@ -74,6 +74,8 @@ public final class WorldAudioEngine {
     public var sources: [ActiveAudioSource] = []
     /// Next source id; taken only by WorldAudioEngineSources.swift.
     public var nextSourceID = 1
+    /// Idle player nodes for one-shot buffers (WorldAudioEngineNodePool.swift).
+    var bufferNodePool = AudioBufferNodePool()
     /// Live half of the playback clock: seconds accumulated from the audio
     /// tick's paused-aware frame delta. Offline the clock reads the engine's
     /// manual-rendering sample time instead; both live in
@@ -285,6 +287,7 @@ public final class WorldAudioEngine {
 
     private func stopEngine() {
         stopAllSources()
+        releasePooledNodes()
         engine.stop()
         unavailableReason = nil
     }

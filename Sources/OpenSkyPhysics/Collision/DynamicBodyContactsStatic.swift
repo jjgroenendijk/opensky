@@ -115,11 +115,19 @@ nonisolated extension DynamicBodyContacts {
         let indices = soup.indices
         var nearest: (distance: Float, penetration: DynamicPenetration?)?
         let end = indices.count - indices.count % 3
+        let reach = LocalReach(
+            point: point,
+            slack: radius + recoveryDepth,
+            transform: soup.transform
+        )
         for offset in stride(from: 0, to: end, by: 3) {
             let first = Int(indices[offset])
             let second = Int(indices[offset + 1])
             let third = Int(indices[offset + 2])
             guard first < vertices.count, second < vertices.count, third < vertices.count else {
+                continue
+            }
+            if let reach, !reach.mayTouch(vertices[first], vertices[second], vertices[third]) {
                 continue
             }
             let triangle = CollisionTriangle(
@@ -139,6 +147,40 @@ nonisolated extension DynamicBodyContacts {
             nearest = hit
         }
         return nearest?.penetration
+    }
+}
+
+/// The query sphere's box in a shape's local space. Most triangles of a large
+/// soup lie far away, so this rejects them before they are placed in the world.
+nonisolated struct LocalReach {
+    let lower: SIMD3<Float>
+    let upper: SIMD3<Float>
+
+    /// Nil where the placement does not invert; the caller then tests every triangle.
+    init?(point: SIMD3<Float>, slack: Float, transform: float4x4) {
+        let linear = float3x3(
+            SIMD3(transform.columns.0.x, transform.columns.0.y, transform.columns.0.z),
+            SIMD3(transform.columns.1.x, transform.columns.1.y, transform.columns.1.z),
+            SIMD3(transform.columns.2.x, transform.columns.2.y, transform.columns.2.z)
+        )
+        // |det| / |M|²_F never exceeds the smallest stretch, so the box holds for any scale.
+        let frobenius = simd_length_squared(linear.columns.0)
+            + simd_length_squared(linear.columns.1) + simd_length_squared(linear.columns.2)
+        let stretch = abs(linear.determinant) / frobenius
+        guard stretch > Float.ulpOfOne, abs(transform.determinant) > Float.ulpOfOne else {
+            return nil
+        }
+        let local = DynamicCollisionMath.transform(point, by: transform.inverse)
+        let reach = SIMD3<Float>(repeating: slack / stretch)
+        guard local.isFiniteVector, reach.isFiniteVector else { return nil }
+        lower = local - reach
+        upper = local + reach
+    }
+
+    func mayTouch(_ first: SIMD3<Float>, _ second: SIMD3<Float>, _ third: SIMD3<Float>) -> Bool {
+        let low = simd_min(simd_min(first, second), third)
+        let high = simd_max(simd_max(first, second), third)
+        return all(low .<= upper) && all(high .>= lower)
     }
 }
 

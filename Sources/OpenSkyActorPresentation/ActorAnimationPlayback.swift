@@ -238,6 +238,14 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         return graphPose ?? clip.worldPose(at: clipTime)
     }
 
+    /// True when the posed skeleton has `bone`, found without posing it.
+    public func hasBone(named bone: String) -> Bool {
+        state.withLock { state in
+            let bones = state.overrideEnd == 0 ? state.graph?.boneIndex : nil
+            return (bones ?? state.clip.boneIndex).index(of: bone) != nil
+        }
+    }
+
     /// Hands the pose to the actor's behaviour graph: `pose` is what the graph publishes,
     /// in the bone order of `skeleton`.
     public func attachGraph(skeleton: HKASkeleton, pose: PlayerPoseBuffer) {

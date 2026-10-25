@@ -34,6 +34,11 @@ non-positional AVAudioPlayerNode (stereo, one per source)
   distance fade, and no position. A positional source cannot go through a submix, because each
   needs its own environment input. So it carries its category factor on its own player node.
 - Routing is set by the call that starts the source, not guessed from the category.
+- A positional one-shot buffer, such as a footstep, reuses an idle player node of the same
+  format. Building a node and starting it blocks the main thread on the audio device: at the
+  Helgen gates, with many NPCs walking, that took two thirds of each frame. A stopped one-shot
+  keeps its node attached and silent, up to 24 idle nodes. Looping and streamed sources still
+  build their own node.
 
 ## Gain
 
