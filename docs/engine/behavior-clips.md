@@ -132,6 +132,24 @@ poses would be averaged over the whole skeleton. A mask shorter than the skeleto
 weight past its end, not zero. Short masks are normal in mod data, and reading the rest as zero
 would drop every bone the author did not reach.
 
+### Additive clips
+
+An additive clip stores a change per bone, not a pose. Its binding's `m_blendHint` is 1 or 2
+([hkaAnimationBinding](/formats/hka-animation.md#binding-layout-72-bytes)). The vanilla
+character graph uses them for body weight: `BodyWeightBlend` mixes `mt_idle.hkx` with the additive
+`mt_idle_skinny.hkx` and `mt_idlemuscularoffset.hkx`. Their tracks hold small turns and identity
+rotations, so played as a pose they lift the arms into a T-pose.
+
+- A clip generator over an additive clip gives an additive pose: its samples land on bones with
+  no change, not on the reference pose.
+- A blender first blends its full children as above. Then it adds each additive child on top, at
+  that child's own weight, scaled by its bone mask. Additive weights are not normalised.
+- A blender with only additive children gives an additive pose.
+- To add a change, the rotation turns the bone in its own frame (`base * change`), the
+  translation adds, and the scale multiplies. Both hint values are added the same way.
+- Every other place that mixes or edits poses (a transition, a crossfade, a bone switch, a
+  modifier, the graph's output) first adds an additive pose to the reference pose.
+
 ## Behavior references
 
 `0_master.hkx` is a shell. Its jump, movement, combat, and magic branches are

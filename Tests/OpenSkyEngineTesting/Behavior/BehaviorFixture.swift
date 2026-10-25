@@ -66,10 +66,12 @@ nonisolated public struct BehaviorRampClip: BehaviorClip {
 nonisolated public struct BehaviorStaticClip: BehaviorClip {
     public let duration: Float
     public let samples: [HKABoneTransformSample]
+    public let isAdditive: Bool
 
-    public init(duration: Float = 1, samples: [HKABoneTransformSample]) {
+    public init(duration: Float = 1, samples: [HKABoneTransformSample], isAdditive: Bool = false) {
         self.duration = duration
         self.samples = samples
+        self.isAdditive = isAdditive
     }
 
     public func samples(at _: Float) -> [HKABoneTransformSample] {

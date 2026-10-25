@@ -75,9 +75,9 @@ nonisolated extension BehaviorGraphInstance {
                 selector, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let wrapper as HKBModifierGenerator:
-            let pose = evaluateGenerator(
+            let pose = skeleton.absolute(evaluateGenerator(
                 at: wrapper.generator, depth: next, deltaTime: deltaTime
-            )
+            ))
             return applyModifier(at: wrapper.modifier, to: pose, deltaTime: deltaTime)
         case let machine as HKBStateMachine:
             return evaluateStateMachine(
@@ -147,14 +147,23 @@ nonisolated extension BehaviorGraphInstance {
         let children = blendChildren(
             blender, threshold: threshold, depth: depth, deltaTime: deltaTime
         )
-        var blended = BehaviorPoseMath.blend(
-            masked: children.map {
-                BehaviorPoseMath.MaskedChild(
-                    pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
-                )
-            },
-            fallback: skeleton.restPose
-        )
+        let masked = children.map {
+            BehaviorPoseMath.MaskedChild(
+                pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
+            )
+        }
+        let full = masked.filter { !$0.pose.isAdditive }
+        var blended = full.isEmpty
+            ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count)
+            : BehaviorPoseMath.blend(masked: full, fallback: skeleton.restPose)
+        // Each additive child adds on top at its own weight; it is not normalised.
+        for layer in masked where layer.pose.isAdditive {
+            blended = BehaviorPoseMath.adding(
+                layer.pose,
+                to: blended,
+                weight: layer.weight(ofBone:)
+            )
+        }
         blended.rootMotion = BehaviorPoseMath
             .blend(
                 children: children.map { ($0.pose, $0.motionWeight) },

@@ -12,11 +12,11 @@ nonisolated extension BehaviorGraphInstance {
     func evaluateBoneSwitch(
         _ switcher: BSBoneSwitchGenerator, depth: Int, deltaTime: Float
     ) -> BehaviorPose {
-        var pose = evaluateGenerator(
+        var pose = skeleton.absolute(evaluateGenerator(
             at: switcher.defaultGenerator,
             depth: depth,
             deltaTime: deltaTime
-        )
+        ))
         for target in switcher.children.compactMap(\.self) {
             guard
                 let node = compiledNode(at: target),
@@ -29,7 +29,9 @@ nonisolated extension BehaviorGraphInstance {
                 !weights.isEmpty
             else { continue }
             markReached(weightsTarget)
-            let child = evaluateGenerator(at: data.generator, depth: depth, deltaTime: deltaTime)
+            let child = skeleton.absolute(
+                evaluateGenerator(at: data.generator, depth: depth, deltaTime: deltaTime)
+            )
             for bone in pose.bones.indices
                 where weights.indices.contains(bone) && weights[bone] > 0
             {
@@ -92,7 +94,7 @@ nonisolated extension BehaviorGraphInstance {
         let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
         let weight = duration > 0
             ? BehaviorBlendCurve.weight(state.elapsed / duration, curve: cyclic.blendCurve) : 1
-        var pose = BehaviorPoseMath.blend(source, live, weight: weight)
+        var pose = blendFull(source, live, weight: weight)
         pose.rootMotion = live.rootMotion
         return pose
     }
@@ -106,11 +108,11 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        var pose = evaluateGenerator(
+        var pose = skeleton.absolute(evaluateGenerator(
             at: offset.defaultGenerator,
             depth: depth,
             deltaTime: deltaTime
-        )
+        ))
         let start = bound.float("fOffsetRangeStart", or: offset.offsetRangeStart)
         let end = bound.float("fOffsetRangeEnd", or: offset.offsetRangeEnd)
         let value = bound.float("fOffsetVariable", or: offset.offsetVariable)
@@ -119,6 +121,9 @@ nonisolated extension BehaviorGraphInstance {
         pendingClipPhase = (fraction, false)
         let layer = evaluateGenerator(at: offset.offsetClipGenerator, depth: depth, deltaTime: 0)
         pendingClipPhase = outer
+        if layer.isAdditive {
+            return BehaviorPoseMath.adding(layer, to: pose) { _ in 1 }
+        }
         let rest = skeleton.referencePose
         for bone in pose.bones.indices
             where layer.bones.indices.contains(bone) && rest.indices.contains(bone)
@@ -133,5 +138,17 @@ nonisolated extension BehaviorGraphInstance {
             )
         }
         return pose
+    }
+
+    /// Blends two poses. When only one is additive, both become full poses first.
+    func blendFull(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float) -> BehaviorPose {
+        guard lhs.isAdditive != rhs.isAdditive else {
+            return BehaviorPoseMath.blend(lhs, rhs, weight: weight)
+        }
+        return BehaviorPoseMath.blend(
+            skeleton.absolute(lhs),
+            skeleton.absolute(rhs),
+            weight: weight
+        )
     }
 }

@@ -300,7 +300,7 @@ nonisolated public final class BehaviorGraphInstance {
         ragdollContactEvent = nil
         physicsRequests = BehaviorPhysicsRequests()
         variablesWrittenThisUpdate = []
-        let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)
+        let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
         activeStates = activeStatesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
 

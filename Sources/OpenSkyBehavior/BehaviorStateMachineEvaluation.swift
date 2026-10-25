@@ -138,7 +138,7 @@ nonisolated extension BehaviorGraphInstance {
             state.currentStateId, machine: machine, depth: depth, deltaTime: deltaTime
         )
         pendingClipPhase = nil
-        return BehaviorPoseMath.blend(outgoing, incoming, weight: transition.weight)
+        return blendFull(outgoing, incoming, weight: transition.weight)
     }
 
     private func statePose(

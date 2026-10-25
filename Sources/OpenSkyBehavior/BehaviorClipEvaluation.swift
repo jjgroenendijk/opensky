@@ -57,8 +57,11 @@ nonisolated extension BehaviorGraphInstance {
         state.phase = state.localTime / window.length
 
         let samples = clip.samples(at: window.start + state.localTime)
+        let base = clip.isAdditive
+            ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count).bones
+            : skeleton.referencePose
         var pose = BehaviorPose(
-            bones: BehaviorPoseMath.applying(samples, to: skeleton.referencePose)
+            bones: BehaviorPoseMath.applying(samples, to: base), isAdditive: clip.isAdditive
         )
         pose.rootMotion = rootMotion(
             &state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped
