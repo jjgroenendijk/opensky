@@ -2,6 +2,7 @@
 // docs/formats/actors.md.
 
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
@@ -172,13 +173,20 @@ struct ActorRecordDecodeTests {
         #expect(list.entries == [LeveledList.Entry(level: 7, reference: FormID(0x40), count: 1)])
     }
 
-    @Test func deterministicEntryPicksHighestLevelFirstAmongTies() throws {
+    @Test func rollPicksAmongTheHighestReachableLevel() throws {
         let list = try lvln(formID: 1, entries: [
             LeveledList.Entry(level: 1, reference: FormID(0x10), count: 1),
             LeveledList.Entry(level: 4, reference: FormID(0x20), count: 1),
             LeveledList.Entry(level: 4, reference: FormID(0x30), count: 1)
         ])
-        #expect(list.deterministicEntry?.reference == FormID(0x20))
+        let picks = Set((0 ..< 32).compactMap { seed -> UInt32? in
+            var random = SplitMix64(seed: UInt64(seed))
+            return LeveledListRoll.roll(
+                list, count: 1, request: LeveledRequest(level: 6, playerLevel: 6),
+                chanceNone: 0, random: &random
+            ).first?.entry.reference.rawValue
+        })
+        #expect(picks == [0x20, 0x30])
     }
 }
 
@@ -315,7 +323,7 @@ struct ActorTemplateResolverTests {
             == ActorSourcedField(value: FormID(0xD1), source: FormID(0x100)))
     }
 
-    @Test func resolvesThroughLeveledListDeterministically() throws {
+    @Test func resolvesThroughLeveledListAtThePlayerLevel() throws {
         let chosen = try npc(formID: 0x400, race: 0xA4)
         let other = try npc(formID: 0x500, race: 0xA5)
         let list = try lvln(formID: 0x300, entries: [
@@ -328,8 +336,9 @@ struct ActorTemplateResolverTests {
             template: 0x300,
             race: 0xA1
         )
-        let resolved = try resolver(npcs: [base, chosen, other], leveled: [list])
-            .resolve(base: FormID(0x100))
+        var templates = resolver(npcs: [base, chosen, other], leveled: [list])
+        templates.leveling = LeveledListRoller(playerLevel: PlayerLevelSource(10))
+        let resolved = try templates.resolve(base: FormID(0x100))
         #expect(resolved.chain == [
             .npc(FormID(0x100)),
             .leveled(list: FormID(0x300), chosen: FormID(0x400)),

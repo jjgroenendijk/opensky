@@ -35,8 +35,8 @@ An entry may name a leveled spell list (`LVSP`), and for vanilla casters the use
 or a heal: Ironflesh, a ward, two heals, a racial ability, and a Breton power. Its attack spells are
 behind two `LVSP` records, `LSpellBandit03FireFrostShock` and `LSpellBandit05FireFrostShock`, each
 with three choices at level 1. Without expanding those, a vanilla caster knows nothing to throw. The
-entry chosen is the highest level, then the first among ties: the same rule the template chain uses
-for an `LVLN` and the outfit chain for an `LVLI`.
+list rolls for the actor's base at its encounter level, the same roll the template chain uses for an
+`LVLN` and the outfit chain for an `LVLI` ([leveled lists](/engine/leveled-lists.md)).
 
 The list is added to the actor's spellbook the first time the combat loop asks what that actor can
 cast, and its abilities are applied in the same pass. This is done late, not at cell build: a cell of

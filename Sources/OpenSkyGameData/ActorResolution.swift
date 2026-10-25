@@ -21,7 +21,7 @@ nonisolated public enum ActorResolveError: Error, Equatable {
 /// One hop in a resolved template chain, base first.
 nonisolated public enum ActorChainLink: Equatable, Sendable {
     case npc(FormID)
-    /// A leveled list hop plus the entry the deterministic policy chose.
+    /// A leveled list hop plus the entry the roll chose.
     case leveled(list: FormID, chosen: FormID)
 }
 
@@ -148,17 +148,21 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     /// build.
     public let leveledSpells: [UInt32: LeveledList]
     public let skippedRecords: SkippedRecords
+    /// The roll an `LVLN` hop and every list an actor carries go through.
+    public var leveling: LeveledListRoller
 
     public init(
         actors: [UInt32: ActorBase],
         leveledActors: [UInt32: LeveledList],
         leveledSpells: [UInt32: LeveledList] = [:],
-        skippedRecords: SkippedRecords = SkippedRecords()
+        skippedRecords: SkippedRecords = SkippedRecords(),
+        leveling: LeveledListRoller = LeveledListRoller()
     ) {
         self.actors = actors
         self.leveledActors = leveledActors
         self.leveledSpells = leveledSpells
         self.skippedRecords = skippedRecords
+        self.leveling = leveling
     }
 
     public static func build(from file: ESMFile, localized _: Bool) -> ActorTemplateResolver {
@@ -167,7 +171,10 @@ nonisolated public struct ActorTemplateResolver: Sendable {
 
     /// Indexes every plugin's decodable NPC_, LVLN, and LVSP records; a later
     /// override wins. Undecodable records resolve as missing targets.
-    public static func build(from loadOrder: LoadOrderPlugins) -> ActorTemplateResolver {
+    public static func build(
+        from loadOrder: LoadOrderPlugins,
+        leveling: LeveledListRoller = LeveledListRoller()
+    ) -> ActorTemplateResolver {
         var skipped = SkippedRecords()
         return ActorTemplateResolver(
             actors: loadOrder.indexRecords(of: "NPC_", skipped: &skipped) {
@@ -179,7 +186,8 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             leveledSpells: loadOrder.indexRecords(of: "LVSP", skipped: &skipped) {
                 try LeveledList(record: $0)
             },
-            skippedRecords: skipped
+            skippedRecords: skipped,
+            leveling: leveling
         )
     }
 
@@ -319,8 +327,8 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         }
     }
 
-    /// Walks TPLT links from `base`, expanding LVLN hops via the
-    /// deterministic entry policy, until a record without a template.
+    /// Walks TPLT links from `base`, rolling each LVLN hop for `base`, until a
+    /// record without a template.
     func resolveChain(
         base: FormID
     ) throws -> (npcs: [ActorBase], chain: [ActorChainLink]) {
@@ -341,7 +349,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
                 next = npc.template
                 referencedBy = current
             } else if let list = leveledActors[current.rawValue] {
-                guard let entry = list.deterministicEntry else {
+                guard let entry = leveling.actorEntry(list, for: base) else {
                     throw ActorResolveError.emptyLeveledList(
                         current, referencedBy: referencedBy
                     )

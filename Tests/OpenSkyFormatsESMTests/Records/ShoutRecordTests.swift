@@ -146,7 +146,7 @@ struct ShoutRecordTests {
         #expect(list.flags.contains(.calculateForEach))
         #expect(list.entries.count == 2)
         #expect(list.entries.map(\.reference) == [FormID(0x0B01), FormID(0x0B02)])
-        #expect(list.deterministicEntry?.level == 25)
+        #expect(list.entries.map(\.level) == [1, 25])
     }
 
     @Test

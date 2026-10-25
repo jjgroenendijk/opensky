@@ -1,8 +1,8 @@
 // The spells an actor is authored with: the NPC_ `SPLO` run through the template chain
 // (ACBS `Use Spell List`) plus its traits race's `SPLO`. Record-side and immutable.
-// LVSP entries are expanded with `LeveledList.deterministicEntry`, because vanilla
-// casters keep their attack spells there (`LvlBanditWizard`). See
-// docs/engine/ai-spell-use.md.
+// LVSP entries roll for the actor's base through the template resolver's
+// `LeveledListRoller`, because vanilla casters keep their attack spells there
+// (`LvlBanditWizard`). See docs/engine/ai-spell-use.md and docs/engine/leveled-lists.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -60,23 +60,28 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
         guard let resolved = try? templates.resolveSpells(base: base) else { return .none }
         let race = resolved.race.value.flatMap { races[$0.rawValue] }
         return ActorSpellBaseline(
-            actorSpells: expand(resolved.spells.value),
-            raceSpells: expand(race?.spells ?? [])
+            actorSpells: expand(resolved.spells.value, for: base),
+            raceSpells: expand(race?.spells ?? [], for: base)
         )
     }
 
-    /// `list` with every entry that names an LVSP replaced by the one spell
-    /// that list's deterministic policy chooses.
+    /// `list` with every entry that names an LVSP replaced by the spells that
+    /// list rolls for `base`.
     ///
     /// An entry naming nothing this index knows is kept as it is: it may be a
     /// SPEL, which this type does not resolve — `SpellbookRuntime.resolve` is
     /// what decides whether a link is a spell the load order still carries.
-    private func expand(_ list: [FormID]) -> [FormID] {
-        list.flatMap { expand($0, depth: 0, visiting: []) }
+    private func expand(_ list: [FormID], for base: FormID) -> [FormID] {
+        let request = templates.leveling.request(forActor: base)
+        return list.flatMap {
+            expand($0, request: request, seed: UInt64(base.rawValue), depth: 0, visiting: [])
+        }
     }
 
     private func expand(
         _ id: FormID,
+        request: LeveledRequest,
+        seed: UInt64,
         depth: Int,
         visiting: Set<UInt32>
     ) -> [FormID] {
@@ -85,12 +90,13 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
             let list = templates.leveledSpells[id.rawValue],
             !visiting.contains(id.rawValue)
         else { return [id] }
-        guard let entry = list.deterministicEntry else { return [] }
-        return expand(
-            entry.reference,
-            depth: depth + 1,
-            visiting: visiting.union([id.rawValue])
-        )
+        let picks = templates.leveling.roll(list, count: 1, request: request, seed: seed)
+        return picks.flatMap {
+            expand(
+                $0.entry.reference, request: request, seed: seed,
+                depth: depth + 1, visiting: visiting.union([id.rawValue])
+            )
+        }
     }
 
     /// The spell list for one actor-value subject, which is what a runtime

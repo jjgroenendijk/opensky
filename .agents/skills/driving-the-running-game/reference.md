@@ -52,6 +52,8 @@ arrow keys.
 `state time`, `state frame`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
+- `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
+  `LVLN` `hops` (list and chosen entry), the `encounterLevel`, and the `difficulty`.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
   draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).

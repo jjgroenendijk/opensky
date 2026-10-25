@@ -124,6 +124,7 @@ extension AgentWorldAdapter {
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)
             let maximum = values.maximums(of: .player)
+            result["level"] = .init(values.baselines.playerLevel.level)
             result["health"] = ["current": .init(current.health), "max": .init(maximum.health)]
             result["magicka"] = ["current": .init(current.magicka), "max": .init(maximum.magicka)]
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
@@ -199,8 +200,10 @@ extension AgentWorldAdapter {
         let rows: [(Float, AgentJSON)] = game.actorWorld.combatActors().compactMap { actor in
             let distance = simd_distance(actor.feet, origin)
             guard distance <= radius else { return nil }
-            let formID = game.streamer?.referenceEntry(key: actor.key)?.formID
+            let entry = game.streamer?.referenceEntry(key: actor.key)
+            let formID = entry?.formID
             return (distance, [
+                "leveled": leveledState(base: entry?.placedActor?.base),
                 "ref": formID.map { .formID($0.rawValue) } ?? .null,
                 "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
                 "position": .init(actor.feet),
@@ -214,6 +217,26 @@ extension AgentWorldAdapter {
             ])
         }
         return ["actors": .array(rows.sorted { $0.0 < $1.0 }.map(\.1))]
+    }
+
+    /// The `LVLN` hops of an actor's template chain, the entry each rolled, and the
+    /// encounter level and difficulty the roll read (docs/engine/leveled-lists.md).
+    private func leveledState(base: FormID?) -> AgentJSON {
+        guard
+            let base, let templates = game.actorValues.runtime?.baselines.resolver?.templates,
+            let chain = try? templates.resolve(base: base).chain
+        else { return .null }
+        let hops: [AgentJSON] = chain.compactMap { link in
+            guard case let .leveled(list, chosen) = link else { return nil }
+            return ["list": .formID(list.rawValue), "chosen": .formID(chosen.rawValue)]
+        }
+        guard !hops.isEmpty else { return .null }
+        let key = templates.leveling.rollKey(forActor: base)
+        return [
+            "hops": .array(hops),
+            "encounterLevel": .init(key.encounterLevel),
+            "difficulty": .string("\(key.difficulty)")
+        ]
     }
 
     private func questState(_ editorID: String) throws(AgentFailure) -> AgentJSON {

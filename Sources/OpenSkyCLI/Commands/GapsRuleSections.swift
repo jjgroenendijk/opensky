@@ -132,6 +132,7 @@ extension GapsGatherer {
         _ = StealthPointSettings.resolve(store: store)
         _ = KillCamSettings.resolve(store: store)
         _ = EnchantedValueSettings.resolve(store: store)
+        _ = LeveledListSettings.resolve(store: store)
         settingTextsRead(store: store)
         return log.editorIDs
     }

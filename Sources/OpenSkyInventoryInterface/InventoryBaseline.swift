@@ -1,9 +1,8 @@
 // What an owner holds before runtime changes: a container's CNTO list, and an
-// actor's resolved default outfit. The player is the `Player` NPC_ record, so
-// the outfit the body is drawn wearing is in the inventory too. Baselines are
-// re-derived on every call, so a reset restores what the records say now.
-// Leveled entries resolve deterministically and `chanceNone` is ignored.
-// Documented in docs/engine/inventory-state.md.
+// actor's carried items and default outfit. Baselines are re-derived on every
+// call, so a reset restores what the records say now. Leveled entries roll
+// through the shared `LeveledListRoller`, seeded by the owner.
+// See docs/engine/inventory-state.md and docs/engine/leveled-lists.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -51,6 +50,7 @@ nonisolated public struct InventoryBaselineResolver {
     ///   string IDs, so a row falls back to the editor ID.
     public static func build(
         from loadOrder: LoadOrderPlugins,
+        leveling: LeveledListRoller = LeveledListRoller(),
         enchantments: ItemEnchantmentResolver? = nil,
         strings: LocalizedStrings? = nil
     ) -> InventoryBaselineResolver {
@@ -65,10 +65,15 @@ nonisolated public struct InventoryBaselineResolver {
             outfits: loadOrder.indexRecords(of: "OTFT", skipped: &skipped) {
                 try Outfit(record: $0)
             },
-            actors: ActorTemplateResolver.build(from: loadOrder)
+            actors: ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
         )
         resolver.skippedRecords = skipped
         return resolver
+    }
+
+    /// The roll every leveled entry goes through, shared with the actor walk.
+    public var leveling: LeveledListRoller {
+        actors.leveling
     }
 
     /// `owner`'s inventory as plugin data describes it, with no runtime state
@@ -80,56 +85,97 @@ nonisolated public struct InventoryBaselineResolver {
         case .generated:
             .empty
         case let .container(base):
-            containerBaseline(base)
+            containerBaseline(base, seed: UInt64(base.rawValue), cell: nil)
         case let .actor(base):
             actorBaseline(base)
         }
+    }
+
+    /// The same baseline for a placed owner. A container rolls by its own key and
+    /// at its cell's encounter level, so two chests of one base differ.
+    public func baseline(of holder: InventoryHolder) -> ReferenceInventoryState {
+        guard case let .container(base) = holder.owner else { return baseline(for: holder.owner) }
+        return containerBaseline(
+            base, seed: LeveledListRoll.seed(text: holder.key.description), cell: holder.cell
+        )
     }
 
     // MARK: - Per-owner derivation
 
     /// A container's CNTO list, leveled entries expanded. Nothing is equipped:
     /// a chest wears nothing.
-    private func containerBaseline(_ base: FormID) -> ReferenceInventoryState {
+    private func containerBaseline(
+        _ base: FormID, seed: UInt64, cell: CellSceneLocation?
+    ) -> ReferenceInventoryState {
         guard let container = items.container(base) else { return .empty }
+        let roll = Roll(request: leveling.request(forCell: cell), seed: seed)
         var stacks: [InventoryStack] = []
         for entry in container.entries {
             // A CNTO count of zero or less is left to
             // `ReferenceInventoryState.init` to drop, which it does for every
             // non-positive stack however it was produced.
-            expand(entry.item, count: entry.count, into: &stacks)
+            expand(entry.item, count: entry.count, roll: roll, into: &stacks)
         }
         return ReferenceInventoryState(stacks: stacks)
     }
 
-    /// An actor's default outfit, also its baseline equipped set, so an NPC does
-    /// not start naked. A broken template chain yields an empty baseline; the
-    /// appearance path already reports it.
+    /// An actor's carried `CNTO` items plus its default outfit. The outfit is also
+    /// its baseline equipped set, so an NPC does not start naked. A broken template
+    /// chain yields an empty baseline; the appearance path already reports it.
     private func actorBaseline(_ base: FormID) -> ReferenceInventoryState {
-        guard
-            let resolved = try? actors.resolve(base: base),
-            let outfitID = resolved.defaultOutfit.value,
-            let stacks = outfitStacks(outfitID)
-        else { return .empty }
-        return ReferenceInventoryState(stacks: stacks, equipped: stacks.map(\.item))
+        guard let resolved = try? actors.resolve(base: base) else { return .empty }
+        let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, for: base) } ?? []
+        var stacks = worn
+        let carried = (try? actors.resolveCarriedItems(base: base).value) ?? []
+        let roll = Roll(request: leveling.request(forActor: base), seed: UInt64(base.rawValue))
+        for entry in carried {
+            expand(entry.item, count: entry.count, roll: roll, into: &stacks)
+        }
+        return ReferenceInventoryState(stacks: stacks, equipped: worn.map(\.item))
     }
 
-    /// One of each `OTFT` item, leveled entries expanded. Nil when no outfit has the ID.
-    public func outfitStacks(_ outfitID: FormID) -> [InventoryStack]? {
+    /// The actor base whose rolls an owner's outfit takes. Nil for a container.
+    public static func actorBase(of owner: InventoryOwner) -> FormID? {
+        switch owner {
+        case .player: playerBase
+        case let .actor(base): base
+        case .container, .generated: nil
+        }
+    }
+
+    /// One of each `OTFT` item, leveled entries rolled for the actor `base`, as
+    /// `ActorVisualResolver` rolls them. Nil when no outfit has the ID.
+    public func outfitStacks(_ outfitID: FormID, for base: FormID) -> [InventoryStack]? {
         guard let outfit = outfits[outfitID.rawValue] else { return nil }
+        let roll = Roll(request: leveling.request(forActor: base), seed: UInt64(base.rawValue))
         var stacks: [InventoryStack] = []
         for item in outfit.items {
-            expand(item, count: 1, into: &stacks)
+            expand(item, count: 1, roll: roll, into: &stacks)
         }
         return ReferenceInventoryState(stacks: stacks).stacks
     }
 
+    /// The death item an actor of `base` gets when it dies, rolled at its own `level`
+    /// (CK "LeveledItem"). Empty when the actor has none or the roll gives nothing.
+    public func deathItemStacks(for base: FormID, level: Int, seed: UInt64) -> [InventoryStack] {
+        guard let item = (try? actors.resolveDeathItem(base: base))?.value else { return [] }
+        return expanded(item, count: 1, request: leveling.request(atLevel: level), seed: seed)
+    }
+
     // MARK: - Leveled expansion
 
-    /// `id` as stacks: itself, or its deterministic leveled pick when it names an LVLI.
-    public func expanded(_ id: FormID, count: Int32) -> [InventoryStack] {
+    /// One owner's leveled request and the seed its lists roll by.
+    private struct Roll {
+        let request: LeveledRequest
+        let seed: UInt64
+    }
+
+    /// `id` as stacks: itself, or its leveled roll at `request` when it names an LVLI.
+    public func expanded(
+        _ id: FormID, count: Int32, request: LeveledRequest, seed: UInt64
+    ) -> [InventoryStack] {
         var stacks: [InventoryStack] = []
-        expand(id, count: count, into: &stacks)
+        expand(id, count: count, roll: Roll(request: request, seed: seed), into: &stacks)
         return ReferenceInventoryState(stacks: stacks).stacks
     }
 
@@ -140,6 +186,7 @@ nonisolated public struct InventoryBaselineResolver {
     private func expand(
         _ id: FormID,
         count: Int32,
+        roll: Roll,
         into stacks: inout [InventoryStack],
         depth: Int = 0,
         visiting: Set<UInt32> = []
@@ -154,26 +201,16 @@ nonisolated public struct InventoryBaselineResolver {
         }
         var visited = visiting
         visited.insert(id.rawValue)
-        for entry in chosenEntries(of: list) {
-            let scaled = Int64(count) * Int64(max(entry.count, 1))
+        let picks = leveling.roll(list, count: count, request: roll.request, seed: roll.seed)
+        for pick in picks {
             expand(
-                entry.reference,
-                count: Int32(clamping: scaled),
+                pick.entry.reference,
+                count: pick.count,
+                roll: roll,
                 into: &stacks,
                 depth: depth + 1,
                 visiting: visited
             )
         }
-    }
-
-    /// The entries one list contributes: every entry for a `useAll` bundle
-    /// (`ArmorStormcloakSet` is boots plus cuirass plus gauntlets plus helmet,
-    /// not a choice between them), otherwise the single deterministic pick.
-    private func chosenEntries(of list: LeveledList) -> [LeveledList.Entry] {
-        if list.flags.contains(.useAll) {
-            return list.entries
-        }
-        guard let entry = list.deterministicEntry else { return [] }
-        return [entry]
     }
 }

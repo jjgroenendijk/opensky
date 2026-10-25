@@ -109,7 +109,7 @@ nonisolated public struct ActorValueResolver: Sendable {
             classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
             pluginName: pluginName,
             settings: settings,
-            playerLevel: playerLevel
+            leveling: LeveledListRoller(playerLevel: playerLevel)
         )
     }
 
@@ -120,20 +120,20 @@ nonisolated public struct ActorValueResolver: Sendable {
         classes: CharacterClassStore,
         pluginName: String,
         settings: ActorValueLevelSettings = .documentedDefaults,
-        playerLevel: PlayerLevelSource = PlayerLevelSource()
+        leveling: LeveledListRoller = LeveledListRoller()
     ) -> ActorValueResolver {
         var skipped = SkippedRecords()
         let races = loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
             try Race(record: $0, localized: $1)
         }
         return ActorValueResolver(
-            templates: ActorTemplateResolver.build(from: loadOrder),
+            templates: ActorTemplateResolver.build(from: loadOrder, leveling: leveling),
             raceSkips: skipped,
             races: races,
             classes: classes,
             pluginName: pluginName,
             settings: settings,
-            playerLevel: playerLevel
+            playerLevel: leveling.playerLevel
         )
     }
 

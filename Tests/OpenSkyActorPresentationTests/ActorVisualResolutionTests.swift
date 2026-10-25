@@ -113,11 +113,15 @@ struct ActorVisualResolutionTests {
         ))
     }
 
-    @Test func outfitExpandsLeveledItemDeterministically() throws {
-        let visual = try makeResolver()
-            .resolve(appearance: appearance(outfit: FID.leveledOutfit))
-        // LVLI holds clothes (level 1) + robes (level 5): highest level wins.
-        #expect(visual.parts.map(\.modelPath) == ["robes_m.nif", "feet_m.nif"])
+    @Test func outfitRollsLeveledItemAtThePlayerLevel() throws {
+        let resolver = makeResolver()
+        // LVLI holds clothes (level 1) + robes (level 5).
+        resolver.leveling.playerLevel.set(5)
+        let high = try resolver.resolve(appearance: appearance(outfit: FID.leveledOutfit))
+        #expect(high.parts.map(\.modelPath) == ["robes_m.nif", "feet_m.nif"])
+        resolver.leveling.playerLevel.set(4)
+        let low = try resolver.resolve(appearance: appearance(outfit: FID.leveledOutfit))
+        #expect(low.parts.first?.origin == .outfit(FormID(FID.clothes)))
     }
 
     @Test func danglingOutfitThrows() throws {

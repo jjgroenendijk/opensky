@@ -40,7 +40,7 @@ public struct InventoryRuntime: InventoryAccess {
     /// its re-derived plugin baseline when it does not.
     public func inventory(of holder: InventoryHolder) -> ReferenceInventoryState {
         store.component(ReferenceInventoryState.self, for: holder.key)
-            ?? baselines.baseline(for: holder.owner)
+            ?? baselines.baseline(of: holder)
     }
 
     /// Whether `holder` has been touched at runtime, as opposed to still

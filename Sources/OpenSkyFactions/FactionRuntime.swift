@@ -33,7 +33,8 @@ public struct FactionRuntime: FactionAccess {
 
     private let worldState: WorldStateStore
     /// Walking the template chain is costly, and hostility asks every frame.
-    private let baselineMemo = BaselineMemo<FormID, ActorFactionBaseline>()
+    /// Keyed by the leveled roll too, as a leveled base's memberships follow its entry.
+    private let baselineMemo = BaselineMemo<LeveledActorRollKey, ActorFactionBaseline>()
 
     public init(
         store: WorldStateStore,
@@ -223,10 +224,12 @@ public struct FactionRuntime: FactionAccess {
 
     // MARK: - Private
 
-    /// The authored baseline, resolved once per base record. Nil resolver reads `.none`.
+    /// The authored baseline, resolved once per base record and leveled roll. Nil
+    /// resolver reads `.none`.
     private func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
         guard let baselines, case let .actor(base) = subject else { return .none }
-        return baselineMemo.value(for: base) { baselines.baseline(for: base) }
+        let key = baselines.templates.leveling.rollKey(forActor: base)
+        return baselineMemo.value(for: key) { baselines.baseline(for: base) }
     }
 
     /// The NPC_ base identity a RELA record would name, resolved through the

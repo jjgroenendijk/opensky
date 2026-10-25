@@ -105,6 +105,10 @@ nonisolated extension CellSceneBuilder {
             into: .exterior(coordinate),
             deltas: deltas
         ) + spawnedActors(in: .exterior(coordinate), deltas: deltas), collision: collision)
+        recordLeveledPlacements(
+            collected, location: .exterior(coordinate),
+            zone: cell?.cell.encounterZone ?? world.worldspace?.encounterZone
+        )
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
@@ -125,9 +129,30 @@ nonisolated extension CellSceneBuilder {
         let collected = Self.standingOnFloors(relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
         ) + spawnedActors(in: location, deltas: deltas), collision: collision)
+        recordLeveledPlacements(collected, location: location, zone: cell?.cell.encounterZone)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
+    }
+
+    /// Records the cell's zone for its containers, and each actor's zone (its own
+    /// `XEZN`, else the cell's) and `XLCM`, before its template chain rolls.
+    nonisolated func recordLeveledPlacements(
+        _ collected: [CollectedActor], location: CellSceneLocation, zone: FormID?
+    ) {
+        let zones = encounterZones ?? EncounterZoneStore(plugins: loadOrderPlugins)
+        encounterZones = zones
+        let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: pluginName)?.zone }
+        leveling.placements.record(cell: location, zone: cellZone)
+        for actor in collected.map(\.actor) {
+            let own = actor.details.links["XEZN"].flatMap {
+                zones.resolve($0, fromPlugin: FormIDResolver.loadOrderSpaceName)?.zone
+            }
+            leveling.placements.record(actor: actor.base, LeveledActorPlacement(
+                zone: own ?? cellZone,
+                difficulty: LeveledActorDifficulty(levelModifier: actor.details.levelModifier)
+            ))
+        }
     }
 
     /// Counts, indexes, and resolves the collected actors of one cell build.
@@ -411,8 +436,8 @@ nonisolated extension CellSceneBuilder {
             return (template, visual)
         }
         let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        let template = ActorTemplateResolver.build(from: loadOrder)
-        let visual = ActorVisualResolver.build(from: loadOrder)
+        let template = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
+        let visual = ActorVisualResolver.build(from: loadOrder, leveling: leveling)
         actorTemplateResolver = template
         actorVisualResolver = visual
         return (template, visual)

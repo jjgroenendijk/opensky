@@ -40,9 +40,10 @@ nonisolated public struct PackageStore: Sendable {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 
-    /// Every plugin's PACK records; a later override wins.
-    public init(loadOrder: LoadOrderPlugins) {
-        actorTemplates = ActorTemplateResolver.build(from: loadOrder)
+    /// Every plugin's PACK records; a later override wins. `leveling` is the
+    /// session's, so a leveled actor's packages follow the entry it rolled.
+    public init(loadOrder: LoadOrderPlugins, leveling: LeveledListRoller = LeveledListRoller()) {
+        actorTemplates = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
         var skipped = SkippedRecords()
         let decoded = loadOrder.indexPluginRecords(of: "PACK", skipped: &skipped) {
             try (package: Package(record: $0), translation: $1.translation)

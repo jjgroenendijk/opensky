@@ -18,7 +18,7 @@ struct InventoryBaselineTests {
     // MARK: - Containers
 
     /// The chest holds three lockpicks, one gold, and one entry that is a
-    /// leveled list. The list resolves deterministically — highest level wins,
+    /// leveled list. At player level 5 only the highest reachable level stays,
     /// so the iron cuirass at level 5 beats the sword at level 1.
     @Test func containerBaselineIsItsCNTOListWithLeveledEntriesExpanded() throws {
         let resolver = try Fixture.resolver()
@@ -50,6 +50,26 @@ struct InventoryBaselineTests {
         )
         #expect(InventoryBaselineResolver.build(from: broken).skippedRecords.count(of: "OTFT") == 1)
         #expect(try Fixture.resolver().skippedRecords.isEmpty)
+    }
+
+    /// An actor carries its `CNTO` items unworn, leveled entries rolled at its level.
+    @Test func anActorCarriesItsOwnItemsUnworn() throws {
+        let resolver = try Fixture.resolver()
+        let baseline = resolver.baseline(for: .actor(base: Fixture.lootedActor))
+        #expect(baseline.count(of: Fixture.gold) == 5)
+        #expect(baseline.count(of: Fixture.cuirass) == 1)
+        #expect(baseline.equipped.isEmpty)
+    }
+
+    /// The death item rolls at the actor's own level, not the player's.
+    @Test func theDeathItemRollsAtTheActorsLevel() throws {
+        let resolver = try Fixture.resolver()
+        resolver.leveling.playerLevel.set(50)
+        let low = resolver.deathItemStacks(for: Fixture.lootedActor, level: 1, seed: 1)
+        #expect(low == [InventoryStack(item: Fixture.sword, count: 1)])
+        let high = resolver.deathItemStacks(for: Fixture.lootedActor, level: 5, seed: 1)
+        #expect(high == [InventoryStack(item: Fixture.cuirass, count: 1)])
+        #expect(resolver.deathItemStacks(for: Fixture.guardActor, level: 5, seed: 1).isEmpty)
     }
 
     @Test func emptyAndUnknownContainersBaselineEmpty() throws {

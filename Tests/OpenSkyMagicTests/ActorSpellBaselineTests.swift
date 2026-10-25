@@ -96,8 +96,7 @@ struct ActorSpellBaselineTests {
     // MARK: - Leveled spell lists
 
     /// The finding the real-data suite pins: a caster's attack spells sit
-    /// behind an LVSP, and the deterministic policy — highest level, first
-    /// among ties — picks the one it ends up knowing.
+    /// behind an LVSP, and the roll at the player level picks the one it knows.
     @Test func anEntryNamingALeveledSpellListExpandsToOneSpell() throws {
         let resolver = try ActorSpellFixture.resolver(
             npcs: [ActorSpellFixture.npc(formID: Form.wizard, spells: [Form.boltList])],
@@ -110,7 +109,10 @@ struct ActorSpellBaselineTests {
             )]
         )
 
+        resolver.templates.leveling.playerLevel.set(10)
         #expect(resolver.baseline(for: FormID(Form.wizard)).actorSpells == [FormID(Form.iceSpike)])
+        resolver.templates.leveling.playerLevel.set(9)
+        #expect(resolver.baseline(for: FormID(Form.wizard)).actorSpells == [FormID(Form.firebolt)])
     }
 
     @Test func aNestedLeveledSpellListIsFollowedToTheSpell() throws {

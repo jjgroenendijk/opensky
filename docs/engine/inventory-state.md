@@ -42,8 +42,8 @@ store knows nothing about record types.
 | Owner | Baseline |
 | --- | --- |
 | Container | The `CONT` `CNTO` list, with leveled entries expanded. Nothing equipped |
-| Actor | The default outfit from the resolved template chain, one of each piece. The same items are the baseline equipped set |
-| Player | Empty. No record describes the player here |
+| Actor | Its carried `CNTO` items and its default outfit from the resolved template chain, one of each piece. The outfit is the baseline equipped set |
+| Player | The `Player` record, read as an actor |
 | Generated | Empty. A runtime object such as a dropped pile or a summon |
 
 The actor case uses the template resolver ([actor records](/formats/actors.md)), which already
@@ -51,14 +51,14 @@ follows `TPLT` links and the `ACBS` "Use Inventory" flag. The outfit is worn, no
 because a default outfit is by definition what the actor has on. Carrying it unworn would start every
 NPC naked.
 
-Four simplifications, each one narrowing rather than wrong:
+Leveled entries roll at the owner's encounter level ([leveled lists](/engine/leveled-lists.md)). The
+roll is seeded by the owner, so a baseline read twice at one level gives the same items. A cycle is
+caught by a visited set and a depth limit of eight.
 
-- Leveled entries resolve the same way every time: the highest level entry, plus the "use all" flag.
-  This is the rule the actor template chain uses for `LVLN`. Rolling against player level needs a
-  player level. A cycle is caught by a visited set and a depth limit of eight.
-- `chanceNone` is ignored. Ignoring it can only add an item the list might have skipped, and an empty
-  container is the harder failure to notice.
-- The actor baseline is its outfit, not any other loot it carries.
+An actor also carries its own `CNTO` items, through the same "Use Inventory" flag, unworn.
+
+One simplification, narrowing rather than wrong:
+
 - A form that is neither a known item nor a leveled list is kept as a plain stack, not dropped. It
   really is in the container. It has no weight or value here, because no loaded index describes it.
 
@@ -149,8 +149,8 @@ that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
 - The `abSilent` flags do nothing, because OpenSky shows no item messages yet.
 
 `SetOutfit` replaces an actor's outfit. The pieces of the actor's default outfit (`DOFT`) leave its
-inventory, then one of each new piece is given and worn. A leveled entry resolves with the same
-fixed pick as a default outfit. The equip-slot rules unequip anything else the new pieces cover.
+inventory, then one of each new piece is given and worn. A leveled entry rolls for the actor's base,
+as a default outfit does. The equip-slot rules unequip anything else the new pieces cover.
 OpenSky differs from the game in two ways. It does not remember an outfit a script set, so a
 second `SetOutfit` removes only the default outfit's pieces. Sleep outfits are not modelled, so a
 call with `abSleepOutfit` set does nothing.

@@ -195,7 +195,19 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
         game.magic.noteDeath(of: key, killer: killer)
+        grantDeathItem(to: key)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
+    }
+
+    /// The death item rolls at the actor's own level (docs/engine/leveled-lists.md).
+    private func grantDeathItem(to key: ReferenceKey) {
+        guard
+            let base = game.streamer?.referenceEntry(key: key)?.placedActor?.base,
+            let values = game.actorValues.runtime
+        else { return }
+        game.inventory.grantDeathItem(
+            to: key, actorLevel: values.baselines.baseline(for: .actor(base: base)).level
+        )
     }
 
     var selectedRagdollActor: ReferenceKey? {

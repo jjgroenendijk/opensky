@@ -153,6 +153,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Where the player's own level is published. The same reference the resolver
     /// reads for `PC Level Mult` scaling, so the two cannot disagree.
     public let playerLevel: PlayerLevelSource
+    /// The resolver's roller; without a resolver, one over `playerLevel`.
+    public let leveling: LeveledListRoller
     /// The vanilla `Player` NPC_ record.
     static let playerRecord = FormID(0x7)
 
@@ -169,7 +171,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         self.resolver = resolver
         self.playerRace = playerRace
         self.fallback = fallback
-        self.playerLevel = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
+        let level = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
+        self.playerLevel = level
+        leveling = resolver?.templates.leveling ?? LeveledListRoller(playerLevel: level)
     }
 
     /// The baseline for one subject. Never throws or returns nil: a broken template

@@ -198,6 +198,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public let colors: [UInt32: ColorForm]
     /// Records `build` could not decode; they resolve as dangling.
     public private(set) var skippedRecords = SkippedRecords()
+    /// The roll outfit lists go through, shared with the template resolver.
+    public var leveling = LeveledListRoller()
 
     public init(
         races: [UInt32: Race],
@@ -235,7 +237,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
 
     /// Indexes every plugin's decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT records;
     /// a later override wins.
-    public static func build(from loadOrder: LoadOrderPlugins) -> ActorVisualResolver {
+    public static func build(
+        from loadOrder: LoadOrderPlugins,
+        leveling: LeveledListRoller = LeveledListRoller()
+    ) -> ActorVisualResolver {
         var skipped = SkippedRecords()
         var resolver = ActorVisualResolver(
             races: loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
@@ -268,6 +273,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
             }
         )
         resolver.skippedRecords = skipped
+        resolver.leveling = leveling
         return resolver
     }
 
