@@ -71,7 +71,7 @@ would keep moving a camera no one steers.
 
 ## The measured movie contract
 
-Measured with `openskycli swf dialogue-menu` and `openskycli swf action-run --movie
+Measured with `openskycli menu dialogue` and `openskycli swf action-run --movie
 dialoguemenu.swf`. The movie starts and ticks with zero faults and zero unimplemented opcodes,
 over 57 display nodes.
 
@@ -95,7 +95,7 @@ The list is the same CLIK family as the other menus. `TopicList` adds `UpdateLis
 is 8 and `iNumTopHalfEntries` is 4. That is why the movie has eight `Entry` clips and keeps the
 selection in the middle.
 
-`SetSelectedTopic` is not used. With `swf dialogue-menu --down 2`, calling it with the row index
+`SetSelectedTopic` is not used. With `menu dialogue --down 2`, calling it with the row index
 leaves the movie at row 0, and not calling it leaves the movie at row 2. So its argument is not
 the index. OpenSky writes `iSelectedIndex` and then calls `UpdateList`, which moves the entry
 clips.
@@ -118,7 +118,7 @@ still gets every key, so its focus art and sounds still run.
 
 ## Text
 
-Measured with `swf dialogue-menu --text`, which reads each field from all three string tables:
+Measured with `menu dialogue --text`, which reads each field from all three string tables:
 
 | Field | Table | Use |
 | --- | --- | --- |

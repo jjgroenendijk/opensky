@@ -27,8 +27,8 @@ public struct GraphicsArguments: ParsableCommand, Sendable {
             abstract: "Set every option from the game's Low, Medium, High, or Ultra preset file."
         )
         @OptionGroup public var global: GlobalOptions
-        @Argument(help: ArgumentHelp(valueName: "low|medium|high|ultra"))
-        public var name: String
+        @Argument(help: ArgumentHelp("The preset file to apply."))
+        public var name: GraphicsPresetName
 
         public init() {}
     }

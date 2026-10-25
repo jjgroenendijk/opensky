@@ -1,5 +1,5 @@
 // Every player setting with its default and range. Vanilla rows keep the menu
-// order measured with `openskycli swf system-menu`; a row no engine system reads
+// order measured with `openskycli menu system`; a row no engine system reads
 // yet is marked not applied. See docs/engine/settings.md.
 
 import Foundation

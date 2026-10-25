@@ -18,8 +18,8 @@ enum CellCommand {
         }
         let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
+        let gridX = arguments.grid.x ?? FirstRenderCell.gridX
+        let gridY = arguments.grid.y ?? FirstRenderCell.gridY
 
         let loadOrder = try context.loadOrder().plugins
         var merged = MergedCell()
@@ -76,14 +76,6 @@ enum CellCommand {
         let formID = winner.plugin.translation(FormID(stored: winner.found.formID))
         print("[INFO] \(editorID) — CELL \(formID), interior, from \(winner.plugin.name)")
         summarize(merged, index: LoadOrderRecordIndex(loadOrder), listRefs: listRefs)
-    }
-
-    private static func int32(_ value: String?, name: String) throws -> Int32? {
-        guard let value else { return nil }
-        guard let parsed = Int32(value) else {
-            throw CLIError.usage("\(name) expects an integer, got \(value)")
-        }
-        return parsed
     }
 
     // MARK: - Summary

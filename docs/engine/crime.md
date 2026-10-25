@@ -82,7 +82,7 @@ A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCri
 bounty with `sRemoveCrimeGold`, "bounty removed from". The settings hold only the words; the order
 of gold, words, and faction is OpenSky's reading.
 
-The prices come from the record, not from game settings. `openskycli gmst list --prefix iCrime`
+The prices come from the record, not from game settings. `openskycli gmst list iCrime`
 on the local install shows two settings, `iCrimeGoldStealHorse` (100) and `iCrimeGoldWerewolf`
 (1000), and neither prices these four. `CrimeFactionWhiterun`'s `CRVA` reads "murder 1000,
 assault 40, trespass 5, pickpocket 25, steal multiplier 0.5000, escape 100, werewolf 1000".

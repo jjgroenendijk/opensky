@@ -1,4 +1,4 @@
-// `actor-values`: prints the resolved race, class and level beside the derived
+// `actor values`: prints the resolved race, class and level beside the derived
 // maximums, so an unexpected number can be traced to its record. `--race`
 // reports one RACE's starting attributes and regen rates instead.
 // Derivation and resolution live in their modules; this file parses and prints.
@@ -9,10 +9,10 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 enum ActorValueCommand {
-    static func run(context: CLIContext, arguments: ActorValuesArguments) throws {
+    static func run(context: CLIContext, arguments: ActorArguments.Values) throws {
         let npc = arguments.npc
         let race = arguments.race
-        let playerLevel = try int(arguments.playerLevel, name: "--player-level") ?? 1
+        let playerLevel = arguments.playerLevel
 
         let loadOrder = try context.loadOrder()
         let settings = ActorValueLevelSettings.resolve(
@@ -33,7 +33,7 @@ enum ActorValueCommand {
             return
         }
         guard let npc else {
-            throw CLIError.usage("actor-values expects --npc or --race")
+            throw CLIError.usage("actor values expects --npc or --race")
         }
         try reportActor(npc, resolver: resolver)
     }
@@ -168,13 +168,5 @@ enum ActorValueCommand {
             return match.formID
         }
         throw CLIError.failure("no NPC_ record matches \(key)")
-    }
-
-    private static func int(_ value: String?, name: String) throws -> Int? {
-        guard let value else { return nil }
-        guard let parsed = Int(value), parsed >= 1 else {
-            throw CLIError.usage("\(name) expects an integer >= 1")
-        }
-        return parsed
     }
 }

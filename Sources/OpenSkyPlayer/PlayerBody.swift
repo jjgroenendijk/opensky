@@ -13,7 +13,7 @@ import simd
 
 nonisolated public final class PlayerBody {
     /// The vanilla player base record: `Skyrim.esm` `NPC_ 00000007`, editor ID
-    /// `Player`. Probed rather than remembered — `openskycli actor --npc
+    /// `Player`. Probed rather than remembered — `openskycli actor appearance --npc
     /// 00000007` resolves it through the same template and visual chains a
     /// streamed ACHR uses and reports a skeleton, an outfit, and a FaceGen head.
     /// A load order without that record leaves the player bodiless and says so,

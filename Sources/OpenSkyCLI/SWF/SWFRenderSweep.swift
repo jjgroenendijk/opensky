@@ -21,12 +21,12 @@ enum SWFRenderSweep {
     private static let channelThreshold = 8
 
     static func run(context: CLIContext, arguments: SWFArguments.RenderSweep) throws {
-        let size = try RenderCommand.parseSize(arguments.size)
+        let size = (width: arguments.size.width, height: arguments.size.height)
         let outputDirectory = arguments.out
         // Substring filter so one movie can be captured on its own; the
         // shared glyph atlas fills up over a 53-movie run, so a single-movie
         // pass is the honest per-movie glyph count.
-        let filter = arguments.movie?.lowercased()
+        let filter = arguments.movie.text?.lowercased()
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)

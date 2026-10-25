@@ -126,7 +126,8 @@ jobs:
       - if: success() || failure()
         run: >-
           make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
-          docs-length agent-files comment-length panel-text load-order-only gap-registries duplicates no-suppressions
+          docs-length agent-files comment-length panel-text load-order-only cli-conventions gap-registries duplicates
+          no-suppressions
       - if: success() || failure()
         run: make file-length ALL=1
       - if: success() || failure()

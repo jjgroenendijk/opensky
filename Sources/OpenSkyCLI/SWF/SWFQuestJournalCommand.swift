@@ -1,4 +1,4 @@
-// `swf quest-journal`: drives the Quests page of `interface\quest_journal.swf`
+// `menu quest-journal`: drives the Quests page of `interface\quest_journal.swf`
 // through `QuestJournalMovieBridge` for a real quest and reports what the movie
 // built. `--text` resolves the quest's FULL, CNAM and NNAM from all three
 // string tables. `--probe-rows` publishes empty rows and prints the
@@ -18,15 +18,14 @@ enum SWFQuestJournalCommand {
     /// `MGRArniel01`: the cheapest journal-visible quest in vanilla
     /// `Skyrim.esm` (2 stages, 1 objective, no conditions).
     private static let defaultQuest = "MGRArniel01"
-    private static let defaultTicks = 20
 
-    static func run(context: CLIContext, arguments: SWFArguments.QuestJournal) throws {
+    static func run(context: CLIContext, arguments: MenuArguments.QuestJournal) throws {
         let editorID = arguments.quest ?? defaultQuest
-        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
-        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
+        let ticks = arguments.drive.ticks
+        let downCount = arguments.drive.down
         let wantsText = arguments.text
         let objectiveState = arguments.objectiveState
-        let probeRows = try positive(arguments.probeRows, name: "--probe-rows")
+        let probeRows = arguments.probeRows
 
         let session = try Session(
             context: context, editorID: editorID, objectiveState: objectiveState
@@ -68,14 +67,6 @@ enum SWFQuestJournalCommand {
         }
         printDiagnostics(runtime)
     }
-
-    private static func positive(_ text: String?, name: String) throws -> Int? {
-        guard let text else { return nil }
-        guard let value = Int(text), value >= 0 else {
-            throw CLIError.usage("\(name) needs a non-negative integer")
-        }
-        return value
-    }
 }
 
 // MARK: - Quest session
@@ -90,7 +81,7 @@ extension SWFQuestJournalCommand {
         let strings: LocalizedStrings
         let model: JournalMenuModel
 
-        init(context: CLIContext, editorID: String, objectiveState: String?) throws {
+        init(context: CLIContext, editorID: String, objectiveState: ObjectiveStateName?) throws {
             let store = try QuestStore(plugins: context.loadOrder().files)
             guard let quest = store.quest(editorID: editorID) else {
                 throw CLIError.failure("the load order defines no quest \"\(editorID)\"")
@@ -107,11 +98,11 @@ extension SWFQuestJournalCommand {
             for objective in quest.objectives.map(\.index) {
                 _ = try? quests.setObjectiveDisplayed(objective, true, on: quest.formID)
                 switch objectiveState {
-                case "completed":
+                case .completed:
                     _ = try? quests.setObjectiveCompleted(objective, true, on: quest.formID)
-                case "failed":
+                case .failed:
                     _ = try? quests.setObjectiveFailed(objective, true, on: quest.formID)
-                default:
+                case nil:
                     break
                 }
             }
@@ -132,7 +123,7 @@ extension SWFQuestJournalCommand {
         /// the table a field belongs to stays a measurement.
         func printText() {
             print(
-                "[INFO] swf quest-journal text: \(quest.editorID ?? "-") "
+                "[INFO] menu quest-journal text: \(quest.editorID ?? "-") "
                     + "\(quest.formID.description), \(quest.kind.name), "
                     + "\(quest.stages.count) stages, \(quest.objectives.count) objectives, "
                     + "\(quest.aliases.count) aliases"
@@ -170,7 +161,7 @@ extension SWFQuestJournalCommand {
     private static func printPage(_ runtime: SWFMovieRuntime) {
         let measured = QuestJournalMovieBridge.measuredQuestsTabIndex(runtime: runtime)
         print(
-            "[INFO] swf quest-journal page: QuestJournalBase.PAGE_QUEST = "
+            "[INFO] menu quest-journal page: QuestJournalBase.PAGE_QUEST = "
                 + "\(measured.map(String.init) ?? "unregistered"), "
                 + "bridge uses \(QuestJournalMovieBridge.questsTabIndex), "
                 + "frontmost \(QuestJournalMovieBridge.isFrontmost(runtime: runtime))"
@@ -185,7 +176,7 @@ extension SWFQuestJournalCommand {
         let quests = QuestJournalMovieBridge.questLabels(runtime: runtime)
         let objectives = QuestJournalMovieBridge.objectiveLabels(runtime: runtime)
         print(
-            "[INFO] swf quest-journal \(stage): \(quests.count) movie quest rows, "
+            "[INFO] menu quest-journal \(stage): \(quests.count) movie quest rows, "
                 + "\(objectives.count) movie objective rows, engine has "
                 + "\(model.entries.count) and \(model.selectedEntry?.objectives.count ?? 0)"
         )
@@ -241,7 +232,7 @@ extension SWFQuestJournalCommand {
         }
         moved.sort { $0.delta == $1.delta ? $0.name < $1.name : $0.delta > $1.delta }
         print(
-            "[INFO] swf quest-journal probe-rows: \(rows) empty rows per list, "
+            "[INFO] menu quest-journal probe-rows: \(rows) empty rows per list, "
                 + "\(moved.count) missing names moved"
         )
         for (name, delta) in moved {
@@ -260,7 +251,7 @@ extension SWFQuestJournalCommand {
     private static func printDiagnostics(_ runtime: SWFMovieRuntime) {
         let diagnostics = QuestJournalMovieBridge.diagnostics(runtime: runtime)
         print(
-            "[INFO] swf quest-journal diagnostics: \(runtime.nodeCount) nodes, "
+            "[INFO] menu quest-journal diagnostics: \(runtime.nodeCount) nodes, "
                 + "\(diagnostics.faults) faults, "
                 + "\(runtime.tally.unimplementedTotal) unimplemented opcodes, "
                 + "\(diagnostics.unhandledInvokes) unhandled of "

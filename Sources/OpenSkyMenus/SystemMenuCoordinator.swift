@@ -203,6 +203,7 @@ public final class SystemMenuCoordinator {
 
     public static func dataRootSourceLabel(_ source: GameDataRoot.Source) -> String {
         switch source {
+        case .commandLine: "command line"
         case .environment: "\(GameDataLocator.environmentKey) environment variable"
         case .userDefaults: "Settings"
         case .steamDefault: "Steam default"

@@ -16,13 +16,8 @@ struct GameCommandOptions {
     static let defaultTimeout = 60.0
     static let connectTimeout = 5.0
 
-    init(_ arguments: GameOptions) throws {
-        timeout = try arguments.replyTimeout.map { text in
-            guard let value = Double(text), value > 0 else {
-                throw CLIError.usage("--reply-timeout needs a positive number of seconds")
-            }
-            return value
-        }
+    init(_ arguments: GameOptions) {
+        timeout = arguments.replyTimeout
         socketPath = arguments.socket ?? AgentSocketLocation.path()
         text = arguments.text
         recordPath = arguments.record
@@ -31,15 +26,15 @@ struct GameCommandOptions {
 
 enum GameCommand {
     static func send(arguments: GameArguments.Send) throws {
-        let options = try GameCommandOptions(arguments.game)
-        guard !arguments.words.isEmpty else {
-            throw CLIError.usage("game needs a command, such as status")
+        if let help = AgentCommandHelp.text(for: arguments.words) {
+            print(help)
+            return
         }
-        try send(arguments.words, options: options)
+        try send(arguments.words, options: GameCommandOptions(arguments.game))
     }
 
     static func attach(arguments: GameArguments.Attach) throws {
-        let options = try GameCommandOptions(arguments.game)
+        let options = GameCommandOptions(arguments.game)
         let session = try connect(options)
         print(output(AgentJSON.object(helloFields(session.hello)), options: options))
     }

@@ -22,11 +22,9 @@ enum InteriorCommand {
     static func run(context: CLIContext, arguments: InteriorArguments) throws {
         let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try RenderCommand.int32(arguments.grid.x, name: "--x")
-            ?? FirstRenderCell.gridX
-        let gridY = try RenderCommand.int32(arguments.grid.y, name: "--y")
-            ?? FirstRenderCell.gridY
-        let radius = try parseRadius(arguments.radius)
+        let gridX = arguments.grid.x ?? FirstRenderCell.gridX
+        let gridY = arguments.grid.y ?? FirstRenderCell.gridY
+        let radius = arguments.radius
         let output = arguments.out
 
         guard
@@ -109,14 +107,6 @@ enum InteriorCommand {
             return Candidate(source: entry.door, transition: transition)
         }
         return nil
-    }
-
-    private static func parseRadius(_ value: String?) throws -> Int32 {
-        guard let value else { return 16 }
-        guard let radius = Int32(value), (0 ... 64).contains(radius) else {
-            throw CLIError.usage("--radius expects an integer in 0-64, got \(value)")
-        }
-        return radius
     }
 
     private static func describe(_ location: CellSceneLocation) -> String {

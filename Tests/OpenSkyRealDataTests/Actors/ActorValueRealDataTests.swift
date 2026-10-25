@@ -2,7 +2,7 @@
 // the derived health, magicka, and stamina must equal the values the Creation
 // Kit baked into DNAM (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_>).
 // DNAM is only compared against, never used. Named-NPC numbers come from
-// `openskycli actor-values --npc <editor-id>`.
+// `openskycli actor values --npc <editor-id>`.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -47,7 +47,7 @@ struct ActorValueRealDataTests {
 
     /// The two game settings the per-level spread reads, as `Skyrim.esm`
     /// actually authors them. Observed 2026-08-07 through
-    /// `openskycli actor-values --race NordRace`, which prints both.
+    /// `openskycli actor values --race NordRace`, which prints both.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theLevelSettingsMatchTheDocumentedDefaults() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
@@ -60,7 +60,7 @@ struct ActorValueRealDataTests {
 
     /// Every playable race authors the same level-1 attributes, which is why
     /// `ActorValueBaselineResolver` can have one documented player fallback.
-    /// Observed through `openskycli actor-values --race <editor-id>`.
+    /// Observed through `openskycli actor values --race <editor-id>`.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func playableRacesShareTheirStartingAttributes() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
@@ -174,7 +174,7 @@ struct ActorValueRealDataTests {
 
     /// `iAVDSkillsLevelUp`, which UESP states as "the fixed 8 skill points per
     /// level" and `Skyrim.esm` authors at exactly that. Observed 2026-08-16
-    /// through `openskycli gmst list --prefix iavd`.
+    /// through `openskycli gmst list iavd`.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theSkillPointSettingMatchesTheDocumentedDefault() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
@@ -231,7 +231,7 @@ struct ActorValueRealDataTests {
     }
 
     /// The whole derived table for one named vanilla actor, with the numbers
-    /// observed through `openskycli actor-values --npc EncBandit03TemplateMelee`
+    /// observed through `openskycli actor values --npc EncBandit03TemplateMelee`
     /// (2026-08-16) rather than recalled: a level-9 Nord bandit whose class
     /// weights One-Handed, Block, Light Armor and Heavy Armor.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))

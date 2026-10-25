@@ -4,7 +4,11 @@ Sections: options, session, time, input, state, debug, events, scripts.
 
 Every call: `openskycli game <command> [--text] [--socket <path>] [--reply-timeout <s>]
 [--record <file>]`. Exit code 0 when `ok` is true, 1 on a game error or no server, 2 on
-a usage error.
+a usage error. A misspelled or unknown option is a usage error, not ignored.
+
+`openskycli game help` lists every command, and `openskycli game <command> --help` shows
+one with its options. Both work without the app. A switch is `--x` or `--no-x` and takes no
+value; a reference that a command acts on is a positional word, such as `debug kill <ref>`.
 
 ## Session
 
@@ -47,7 +51,7 @@ arrow keys.
 
 `state player`, `state target`, `state actors [--radius <units>]`, `state menu`,
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
-`state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
+`state scenes`, `state scripts [<ref or quest editorID>]`, `state packages <ref>`,
 `state furniture [<ref>]`, `state objects [<ref>]`, `state changes [--limit <n>]`,
 `state time`, `state frame`.
 
@@ -102,11 +106,11 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug item <editorID> [--count <n>]` | negative count removes; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
-| `debug racemenu [--limited on]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
-| `debug skillsmenu [--sky on\|off] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
+| `debug racemenu [--limited]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
+| `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
-| `debug rest <hours> [--sleep on]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
+| `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
@@ -115,8 +119,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 
 | Command | What it does |
 | --- | --- |
-| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--overlay on\|off] [--load-passes on\|off] [--screenshots on\|off] [--full-screen on\|off] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
-| `benchmark --stop on` | Stops a running tour; the scenes measured so far are kept |
+| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--no-overlay] [--no-load-passes] [--screenshots] [--windowed] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
+| `benchmark --stop` | Stops a running tour; the scenes measured so far are kept |
 
 The tour takes over the camera, the clock, and the HUD until it ends
 (`docs/tools/benchmark.md`).

@@ -34,7 +34,7 @@ CLI options:
 | --- | --- |
 | `--preset` | `quick` (3 scenes), `standard` (every base-game scene), or `full` (DLC worlds too) |
 | `--scenes a,b` | These scene ids only, in tour order; `--list` prints every id |
-| `--set id=value` | Overrides one player setting for this run only. Repeat it for more |
+| `--set id=value,...` | Overrides player settings for this run only, comma-separated: `--set a=on,b=off` |
 | `--no-overlay` | Starts with the readout hidden |
 | `--capture <id>` | Writes a GPU trace (`.gputrace`) of that scene's first measured frame |
 | `--screenshots` | Saves the window at the start, middle, and end of each shot as PNGs in the run folder |
@@ -58,8 +58,8 @@ lives only in the app's memory and is never saved.
 
 Every way to start a run fills the screen with the game window for the tour, so the
 measured frame is the display's size. The window comes back when the run ends. "Full
-screen" on the launcher page, `--windowed` on `openskycli benchmark`, and
-`--full-screen off` on `game benchmark` keep the window instead.
+screen" on the launcher page and `--windowed` on `openskycli benchmark` or `game benchmark`
+keep the window instead.
 
 The Play window gets a toolbar with two buttons for the length of the run. The overlay
 button shows or hides the readout: the scene, its number, its progress, and the frame rate.
@@ -91,7 +91,7 @@ The quick preset takes one scene each of a city, the wilderness, and an interior
 
 A DLC scene names the plugin it needs. When the load order lacks it, the scene is `skipped`
 with a note, and the result still compares. The positions come from the install's map
-markers and cell lists, read with `openskycli record` and `openskycli cell --refs`
+markers and cell lists, read with `openskycli record show` and `openskycli cell --refs`
 (`--cell <editorID>` lists an interior). An exterior shot's points are offsets from the
 ground under the scene's position. Solitude and Windhelm stand on meshes, and their cells
 hide the terrain under them, so no ground sample exists there. Those scenes give a street

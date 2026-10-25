@@ -18,12 +18,22 @@ nonisolated extension FourCC: ExpressibleByStringLiteral {
     public init(stringLiteral value: StringLiteralType) {
         let bytes = Array(value.utf8)
         precondition(bytes.count == 4, "FourCC literal must be exactly 4 bytes")
-        self.init(
-            rawValue: UInt32(bytes[0])
-                | UInt32(bytes[1]) << 8
-                | UInt32(bytes[2]) << 16
-                | UInt32(bytes[3]) << 24
-        )
+        self.init(rawValue: Self.packed(bytes))
+    }
+
+    fileprivate static func packed(_ bytes: [UInt8]) -> UInt32 {
+        UInt32(bytes[0]) | UInt32(bytes[1]) << 8 | UInt32(bytes[2]) << 16 | UInt32(bytes[3]) << 24
+    }
+}
+
+nonisolated extension FourCC {
+    /// Text from a user, such as a command-line option: four ASCII characters, or nil.
+    public init?(text: String) {
+        let bytes = Array(text.utf8)
+        guard bytes.count == 4, bytes.allSatisfy({ (0x20 ... 0x7E).contains($0) }) else {
+            return nil
+        }
+        self.init(rawValue: Self.packed(bytes))
     }
 }
 

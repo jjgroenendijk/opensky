@@ -1,4 +1,4 @@
-// `record <formid-or-editorid>`: locate the winning record in the load order and
+// `record show <id>`: locate the winning record in the load order and
 // dump it via the shared RecordTextDump (header, decoded engine view, capped field
 // list — same text the preview GUI shows). FormID tokens are 1-8 hex digits
 // (0x prefix optional) in the load-order space; anything else is treated as an
@@ -12,8 +12,8 @@ import OpenSkyGameData
 import OpenSkyPreview
 
 enum RecordCommand {
-    static func run(context: CLIContext, arguments: RecordArguments) throws {
-        let token = arguments.token
+    static func show(context: CLIContext, arguments: RecordArguments.Show) throws {
+        let token = arguments.id
         let loadOrder = try context.loadOrder()
         let found = try find(token: token, in: loadOrder.plugins)
         let index = RecordIndex(
@@ -34,7 +34,7 @@ enum RecordCommand {
     }
 
     /// Placed and geometry records: too many to index for one dump, and rarely a link target.
-    private static let unindexedTypes: Set<FourCC> = [
+    static let unindexedTypes: Set<FourCC> = [
         "REFR",
         "ACHR",
         "PGRE",

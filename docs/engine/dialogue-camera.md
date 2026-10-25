@@ -26,7 +26,7 @@ passes read it, and so does the audio listener: a conversation is heard from whe
 
 ## Where the framing comes from
 
-Nothing in the readable install describes conversation framing. `openskycli gmst list --prefix f`
+Nothing in the readable install describes conversation framing. `openskycli gmst list f`
 on `Skyrim.esm` has no `fDialogueCamera*`, no `fOverShoulder*`, and no camera framing setting at
 all. The only nearby distances are `fAIInDialogueModeWithPlayerDistance` (500) and
 `fAIInDialogueModewithPlayerTimer` (60), which decide when an actor thinks it is in a

@@ -28,10 +28,10 @@ enum AssetCacheCommand {
     ) async throws {
         let options = try Options(
             settings: settings(arguments.settings),
-            width: arguments.width.map { try int($0, "--width") },
+            width: arguments.width,
             paths: arguments.paths.map { try lines(ofFile: $0) },
             out: arguments.out.map { URL(filePath: $0, directoryHint: .isDirectory) },
-            perKind: arguments.perKind.map { try int($0, "--per-kind") } ?? 300
+            perKind: arguments.perKind
         )
         let files = context.makeFileSystem()
         let reader = try AssetCacheReader.open(
@@ -156,25 +156,28 @@ enum AssetCacheCommand {
             AssetCacheSettings(store: PlayerSettingsStore(persistence: try? PlayerSettingsFile
                     .defaultFile()))
         if let name = arguments.textureQuality {
-            guard let quality = TextureQuality.allCases.first(where: { $0.cliName == name }) else {
-                throw CLIError.usage("--texture-quality is original, high, medium, or low")
+            guard
+                let quality = TextureQuality.allCases
+                    .first(where: { $0.cliName == name.rawValue })
+            else {
+                throw CLIError.failure("no texture quality \(name.rawValue)")
             }
             settings.textureOutput.quality = quality
         }
         if let side = arguments.maxTextureSide {
-            settings.textureOutput.maximumSide = try int(side, "--max-texture-side")
+            settings.textureOutput.maximumSide = side
         }
         if let folder = arguments.folder {
             settings.folder = URL(filePath: folder, directoryHint: .isDirectory)
         }
         if let list = arguments.kinds {
-            settings.kinds = try kinds(list)
+            settings.kinds = try kinds(list.items)
         }
         return settings
     }
 
-    private static func kinds(_ list: String) throws -> Set<AssetCacheKind> {
-        try Set(list.split(separator: ",").map { name in
+    private static func kinds(_ list: [String]) throws -> Set<AssetCacheKind> {
+        try Set(list.map { name in
             guard
                 let kind = AssetCacheKind(folderName: String(name)),
                 AssetCacheKind.built.contains(kind)
@@ -184,13 +187,6 @@ enum AssetCacheCommand {
             }
             return kind
         })
-    }
-
-    private static func int(_ text: String, _ option: String) throws -> Int {
-        guard
-            let value = Int(text),
-            value > 0 else { throw CLIError.usage("\(option) needs a positive number") }
-        return value
     }
 
     private static func builder(

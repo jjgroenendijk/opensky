@@ -18,12 +18,16 @@ nonisolated extension GameDataError: LocalizedError {
         switch self {
         case let .overrideInvalid(source, path):
             let origin = switch source {
+            case .commandLine: "--data-root"
             case .environment: "the \(GameDataLocator.environmentKey) environment variable"
             case .userDefaults: "the folder chosen in Settings"
             case .steamDefault, .steamLibrary: "the Steam folder"
             }
+            let fix = source == .commandLine
+                ? "Give the folder that holds Data/Skyrim.esm."
+                : "Choose the folder that holds Data/Skyrim.esm in Settings."
             return "The game folder set by \(origin) has no Skyrim Special Edition in it: "
-                + "\(path). Choose the folder that holds Data/Skyrim.esm in Settings."
+                + "\(path). \(fix)"
         case let .notFound(searched):
             let scope = searched.isEmpty
                 ? "No folder was searched."
@@ -37,6 +41,8 @@ nonisolated extension GameDataError: LocalizedError {
 /// A validated Skyrim SE install location.
 nonisolated public struct GameDataRoot: Equatable, Sendable {
     public enum Source: Equatable, Sendable {
+        /// A tool's own option, such as `openskycli --data-root`.
+        case commandLine
         case environment
         case userDefaults
         case steamDefault
@@ -144,6 +150,13 @@ nonisolated public enum GameDataLocator: Sendable {
                 unique.append(path)
             }
         })
+    }
+
+    /// Validates a path a tool's own option names. It never falls back to another source.
+    public static func locate(
+        commandLinePath path: String, fileManager: FileManager = .default
+    ) throws -> GameDataRoot {
+        try validated(path: path, source: .commandLine, fileManager: fileManager)
     }
 
     /// Persists a user-chosen install path (Settings UI). Validated first;

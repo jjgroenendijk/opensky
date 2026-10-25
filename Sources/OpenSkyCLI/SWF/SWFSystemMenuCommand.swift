@@ -1,4 +1,4 @@
-// `swf system-menu`: brings `interface\quest_journal.swf` up on its System page,
+// `menu system`: brings `interface\quest_journal.swf` up on its System page,
 // starts one `SystemPage` state by its constant name, optionally presses accept on
 // a list row, and prints every GameDelegate call the movie made. This is how the
 // Settings, Controls, and Save pages' host calls were measured.
@@ -10,7 +10,7 @@ import OpenSkyGameData
 import OpenSkyMenus
 
 enum SWFSystemMenuCommand {
-    static func run(context: CLIContext, arguments: SWFArguments.SystemMenu) throws {
+    static func run(context: CLIContext, arguments: MenuArguments.System) throws {
         let state = arguments.state
         let row = arguments.row
         let ticks = arguments.ticks

@@ -32,7 +32,7 @@ enum RenderCommand {
         (-2 ... 2).map { x in (Int32(x), Int32(y)) }
     }
 
-    static func run(context: CLIContext, arguments: ScreenshotArguments) throws {
+    static func run(context: CLIContext, arguments: RenderArguments) throws {
         let options = try parseOptions(arguments)
 
         guard
@@ -196,30 +196,6 @@ enum RenderCommand {
             )
         }
         return result
-    }
-
-    /// Shared with BenchCommand (same scene-build + option surface).
-    static func int32(_ value: String?, name: String) throws -> Int32? {
-        guard let value else { return nil }
-        guard let parsed = Int32(value) else {
-            throw CLIError.usage("\(name) expects an integer, got \(value)")
-        }
-        return parsed
-    }
-
-    /// "--size 1280x720" -> (1280, 720); bounded so a typo cannot ask the
-    /// GPU for a texture it can never allocate.
-    static func parseSize(_ value: String?) throws -> (width: Int, height: Int) {
-        guard let value else { return (1280, 720) }
-        let parts = value.lowercased().split(separator: "x")
-        guard
-            parts.count == 2,
-            let width = Int(parts[0]), let height = Int(parts[1]),
-            (1 ... 8192).contains(width), (1 ... 8192).contains(height)
-        else {
-            throw CLIError.usage("--size expects WxH (each 1-8192), got \(value)")
-        }
-        return (width, height)
     }
 
     /// One VFS + ESM + MeshLibrary/TextureLibrary/CellSceneBuilder trio.

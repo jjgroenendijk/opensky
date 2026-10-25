@@ -19,7 +19,7 @@ import Testing
 struct CrimeRealDataTests {
     /// Belethor's shop: an owned Whiterun interior. Located by editor ID rather
     /// than by FormID so a patch that moves the record does not break the
-    /// suite; `openskycli record WhiterunBelethorsGeneralGoods` on this install
+    /// suite; `openskycli record show WhiterunBelethorsGeneralGoods` on this install
     /// reports one `XOWN` field and an `XLCN`, and Breezehome — the house the
     /// player buys — reports neither, which is what makes this the right cell.
     static let shopEditorID = "WhiterunBelethorsGeneralGoods"

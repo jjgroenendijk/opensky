@@ -30,20 +30,32 @@ public struct OpenSkyCommandLine: ParsableCommand {
     public static let configuration = CommandConfiguration(
         commandName: "openskycli",
         abstract: "Developer checks that run the engine against your own Skyrim SE install.",
-        discussion: "cell, screenshot, and render target the first render cell, "
-            + "Tamriel (6,-2), unless --worldspace, --x, and --y say otherwise.",
-        subcommands: [
-            VFSArguments.self, RecordArguments.self, PluginsArguments.self, InstallArguments.self,
-            GraphicsArguments.self, GapsArguments.self,
-            ESSArguments.self, GMSTArguments.self, ArcheryArguments.self,
-            FootstepArguments.self, CellArguments.self, ActorArguments.self,
-            ActorValuesArguments.self, CollisionArguments.self, InteriorArguments.self,
-            NIFArguments.self, DDSArguments.self, HKXArguments.self, HKTArguments.self,
-            EffectsArguments.self, SkeletonArguments.self, AnimationArguments.self,
-            LODArguments.self, SWFArguments.self, AudioArguments.self,
-            ScreenshotArguments.self, PreviewArguments.self,
-            AssetCacheArguments.self, BenchmarkArguments.self,
-            GameArguments.self
+        discussion: "cell, actor, collision, interior, and render target the first render "
+            + "cell, Tamriel (6,-2), unless --worldspace, --x, and --y say otherwise.",
+        groupedSubcommands: [
+            CommandGroup(name: "Game data", subcommands: [
+                InstallArguments.self, PluginsArguments.self, RecordArguments.self,
+                GMSTArguments.self, ESSArguments.self, GapsArguments.self
+            ]),
+            CommandGroup(name: "World", subcommands: [
+                CellArguments.self, ActorArguments.self, CollisionArguments.self,
+                InteriorArguments.self, LODArguments.self
+            ]),
+            CommandGroup(name: "Game rules", subcommands: [
+                ArcheryArguments.self, FootstepArguments.self, EffectsArguments.self
+            ]),
+            CommandGroup(name: "Assets", subcommands: [
+                VFSArguments.self, NIFArguments.self, DDSArguments.self, HKXArguments.self,
+                HKTArguments.self, SkeletonArguments.self, AnimationArguments.self,
+                AudioArguments.self, SWFArguments.self, MenuArguments.self
+            ]),
+            CommandGroup(name: "Rendering", subcommands: [
+                RenderArguments.self, PreviewArguments.self
+            ]),
+            CommandGroup(name: "The app", subcommands: [
+                GameArguments.self, BenchmarkArguments.self, GraphicsArguments.self,
+                AssetCacheArguments.self
+            ])
         ]
     )
 
@@ -86,8 +98,7 @@ extension OpenSkyCommandLine {
 
     /// Help for one command, printed after a usage error the command found itself.
     public static func help(for command: any ParsableCommand.Type) -> String {
-        // The app's own commands reach a hidden `send`; its parent's help lists them.
-        helpMessage(for: command == GameArguments.Send.self ? GameArguments.self : command)
+        helpMessage(for: command)
     }
 
     private static func exit(for error: any Error) -> CommandLineOutcome {

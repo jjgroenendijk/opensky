@@ -17,9 +17,9 @@ public struct GapsArguments: CLICommandArguments {
     @OptionGroup public var global: GlobalOptions
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Comma-separated sections to run. Default: all.", valueName: "list")
+        help: ArgumentHelp("Sections to run, comma-separated. Default: all.", valueName: "list")
     )
-    public var only: String?
+    public var only: CommaList?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Rows printed per section. Default: all.", valueName: "n")
@@ -36,20 +36,18 @@ public struct GapsArguments: CLICommandArguments {
     /// The sections to run, in the order `sectionKeys` lists them.
     public var sections: [String] {
         guard let only else { return Self.sectionKeys }
-        let asked = Set(only.lowercased().split(separator: ",").map(String.init))
+        let asked = Set(only.items.map { $0.lowercased() })
         return Self.sectionKeys.filter(asked.contains)
     }
 
     public func validate() throws {
         if let only {
-            let unknown = only.lowercased().split(separator: ",").map(String.init)
+            let unknown = only.items.map { $0.lowercased() }
                 .filter { !Self.sectionKeys.contains($0) }
             guard unknown.isEmpty else {
                 throw ValidationError("unknown section: \(unknown.joined(separator: ", "))")
             }
         }
-        if let limit, limit < 1 {
-            throw ValidationError("--limit needs a positive integer")
-        }
+        try OptionCheck.atLeast(limit, 1, "--limit")
     }
 }

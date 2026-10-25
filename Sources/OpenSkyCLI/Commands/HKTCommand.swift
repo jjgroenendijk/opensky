@@ -1,4 +1,4 @@
-// `hkt <key>` decodes one Havok binary tagfile; `hkt sweep` decodes every
+// `hkt show <path>` decodes one Havok binary tagfile; `hkt sweep` decodes every
 // archived `.hkt` and tallies classes, cloth classes, and skeleton bones.
 // See docs/formats/hkt-tagfile.md.
 
@@ -8,14 +8,12 @@ import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 enum HKTCommand {
-    static func run(context: CLIContext, arguments: HKTArguments) throws {
-        let target = arguments.target
-        let fileSystem = context.makeFileSystem()
-        if target == "sweep" {
-            try sweep(fileSystem)
-            return
-        }
-        let census = try decode(target, fileSystem)
+    static func sweep(context: CLIContext) throws {
+        try sweep(context.makeFileSystem())
+    }
+
+    static func show(context: CLIContext, arguments: HKTArguments.Show) throws {
+        let census = try decode(arguments.asset.path, context.makeFileSystem())
         print("version: \(census.version), end tag: \(census.hasEndTag)")
         for definition in census.definitions {
             let objects = census.objectCounts[definition.name] ?? 0

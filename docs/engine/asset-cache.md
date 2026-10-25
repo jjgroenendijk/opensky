@@ -41,7 +41,7 @@ conversion when:
 
 Each entry is one file: `<kind>/<xx>/<hash>.osac`. `<kind>` is `textures`, `meshes`, or
 `collision`. The `animation` and `audio` kinds are retired: their folder names and kind
-numbers stay reserved, and `asset-cache measure` still writes them. `<hash>` is the 64-bit
+numbers stay reserved, and `asset-optimisation measure` still writes them. `<hash>` is the 64-bit
 FNV-1a hash of the source's origin and VFS path, and `<xx>` is its first two hex digits, so no
 folder gets too many files.
 
@@ -246,7 +246,7 @@ The cache stores a kind only when it makes that kind faster to load, or when it 
 Metal 4 loading path. A kind that does neither costs build time and disk space and gives
 nothing back, so the game reads it from the archives and offers no setting for it.
 
-`openskycli asset-cache measure` checks this per kind. It takes up to 300 archive files of
+`openskycli asset-optimisation measure` checks this per kind. It takes up to 300 archive files of
 each kind, spread evenly over the sorted paths, builds their entries, and loads them twice
 each way: cold (the files dropped from the page cache) and warm. The archive path is the
 engine's own read and parse: archive read and decompression, then DDS parse, NIF parse and

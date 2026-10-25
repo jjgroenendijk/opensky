@@ -1,5 +1,5 @@
 // The Settings page of `quest_journal.swf`, mirrored from the engine. Measured with
-// `openskycli swf system-menu`: a category asks the host with
+// `openskycli menu system`: a category asks the host with
 // `RequestGameplayOptions`, `RequestDisplayOptions`, or `RequestAudioOptions`
 // and its list rows carry `text`, `movieType`, `value`, and stepper `options`.
 

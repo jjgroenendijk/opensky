@@ -74,6 +74,9 @@ public final class AgentCommandRouter {
     }
 
     public func handle(_ request: AgentRequest, now: Double) -> AgentHandling {
+        if let refusal = AgentCommandCatalog.refusal(of: request) {
+            return .done(.failure(refusal))
+        }
         let args = AgentArguments(command: request.command, values: request.args)
         if request.command == "status" {
             return .done(.success(status()))

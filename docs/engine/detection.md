@@ -258,4 +258,4 @@ searches.
 ## Checking it
 
 `openskycli gmst detection` prints every setting with its source, and
-`openskycli gmst list --prefix <s>` prints any group of game settings ([CLI](/tools/cli.md)).
+`openskycli gmst list <s>` prints any group of game settings ([CLI](/tools/cli.md)).

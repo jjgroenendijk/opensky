@@ -39,7 +39,7 @@ enum VFSCommand {
 
     static func cat(context: CLIContext, arguments: VFSArguments.Cat) throws {
         let output = arguments.out
-        let key = arguments.key
+        let key = arguments.asset.path
         let data: Data
         do {
             data = try context.makeFileSystem().contents(forPath: key)

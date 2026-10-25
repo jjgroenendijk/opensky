@@ -74,8 +74,8 @@ The player resolves through the same template and appearance code as a placed `A
 no second copy. Two things differ:
 
 - The base record is named directly: `Skyrim.esm` `NPC_` `00000007`, editor ID `Player`. The player
-  has no `ACHR` to read it from. `openskycli actor --npc 00000007` resolves it to a skeleton, an iron
-  outfit, and a FaceGen head.
+  has no `ACHR` to read it from. `openskycli actor appearance --npc 00000007` resolves it to a
+  skeleton, an iron outfit, and a FaceGen head.
 - The transform comes from the character controller, not from a record.
 
 The meshes are assembled on the cell build queue, because the builder and its mesh and texture

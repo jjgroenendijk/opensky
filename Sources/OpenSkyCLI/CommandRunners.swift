@@ -20,9 +20,15 @@ extension VFSArguments.Cat: CLIRunnable {
     }
 }
 
-extension RecordArguments: CLIRunnable {
+extension RecordArguments.Show: CLIRunnable {
     func execute() throws {
-        try RecordCommand.run(context: context(), arguments: self)
+        try RecordCommand.show(context: context(), arguments: self)
+    }
+}
+
+extension RecordArguments.Find: CLIRunnable {
+    func execute() throws {
+        try RecordFindCommand.run(context: context(), arguments: self)
     }
 }
 
@@ -52,19 +58,31 @@ extension GraphicsArguments.Status: CLIRunnable {
 
 extension GraphicsArguments.Preset: CLIRunnable {
     func execute() throws {
-        try GraphicsCommand.preset(context: context(), name: name.lowercased())
+        try GraphicsCommand.preset(context: context(), name: name.rawValue)
     }
 }
 
-extension ESSArguments: CLIRunnable {
+extension ESSArguments.Show: CLIRunnable {
     func execute() async throws {
-        try await ESSCommand.run(arguments: self)
+        try await ESSCommand.show(arguments: self)
     }
 }
 
-extension GMSTArguments: CLIRunnable {
+extension ESSArguments.List: CLIRunnable {
     func execute() throws {
-        try GMSTCommand.run(context: context(), arguments: self)
+        try ESSCommand.list(arguments: self)
+    }
+}
+
+extension GMSTArguments.Subject: CLIRunnable {
+    func execute() throws {
+        try GMSTCommand.run(context: context(), subject: subject)
+    }
+}
+
+extension GMSTArguments.List: CLIRunnable {
+    func execute() throws {
+        try GMSTCommand.runList(context: context(), prefix: prefix)
     }
 }
 
@@ -80,9 +98,15 @@ extension FootstepArguments: CLIRunnable {
     }
 }
 
-extension EffectsArguments: CLIRunnable {
+extension EffectsArguments.Census: CLIRunnable {
     func execute() throws {
-        try EffectsCommand.run(context: context(), arguments: self)
+        try EffectsCommand.census(context: context())
+    }
+}
+
+extension EffectsArguments.IMAD: CLIRunnable {
+    func execute() throws {
+        try EffectsCommand.sampleIMAD(context: context(), arguments: self)
     }
 }
 
@@ -92,13 +116,13 @@ extension CellArguments: CLIRunnable {
     }
 }
 
-extension ActorArguments: CLIRunnable {
+extension ActorArguments.Appearance: CLIRunnable {
     func execute() throws {
         try ActorCommand.run(context: context(), arguments: self)
     }
 }
 
-extension ActorValuesArguments: CLIRunnable {
+extension ActorArguments.Values: CLIRunnable {
     func execute() throws {
         try ActorValueCommand.run(context: context(), arguments: self)
     }
@@ -140,9 +164,15 @@ extension HKXArguments: CLIRunnable {
     }
 }
 
-extension HKTArguments: CLIRunnable {
+extension HKTArguments.Show: CLIRunnable {
     func execute() throws {
-        try HKTCommand.run(context: context(), arguments: self)
+        try HKTCommand.show(context: context(), arguments: self)
+    }
+}
+
+extension HKTArguments.Sweep: CLIRunnable {
+    func execute() throws {
+        try HKTCommand.sweep(context: context())
     }
 }
 
@@ -158,9 +188,9 @@ extension AnimationArguments: CLIRunnable {
     }
 }
 
-extension AudioArguments.Info: CLIRunnable {
+extension AudioArguments.Show: CLIRunnable {
     func execute() throws {
-        try AudioCommand.runInfo(context: context(), path: key)
+        try AudioCommand.runInfo(context: context(), path: asset.path)
     }
 }
 
@@ -182,7 +212,7 @@ extension AudioArguments.AACCheck: CLIRunnable {
     }
 }
 
-extension ScreenshotArguments: CLIRunnable {
+extension RenderArguments: CLIRunnable {
     func execute() throws {
         try RenderCommand.run(context: context(), arguments: self)
     }

@@ -17,7 +17,7 @@ enum HKXCommand {
     private static let nameListLimit = 12
 
     static func run(context: CLIContext, arguments: HKXArguments) throws {
-        let key = arguments.key
+        let key = arguments.asset.path
         let file: HKXFile
         do {
             file = try HKXFile(data: context.makeFileSystem().contents(forPath: key))

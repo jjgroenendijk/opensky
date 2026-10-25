@@ -4,13 +4,13 @@ import ArgumentParser
 
 /// The optimisation settings. Each one the user leaves out comes from the app's settings.
 public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "original|high|medium|low"))
-    public var textureQuality: String?
+    @Option(parsing: .unconditional, help: ArgumentHelp("The texture quality to build."))
+    public var textureQuality: TextureQualityName?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Drop texture levels larger than this side.", valueName: "pixels")
     )
-    public var maxTextureSide: String?
+    public var maxTextureSide: Int?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("The optimised files folder.", valueName: "dir")
@@ -18,32 +18,44 @@ public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {
     public var folder: String?
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Asset kinds, separated by commas.", valueName: "list")
+        help: ArgumentHelp("Asset kinds, comma-separated.", valueName: "list")
     )
-    public var kinds: String?
+    public var kinds: CommaList?
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.atLeast(maxTextureSide, 1, "--max-texture-side")
+    }
 }
 
 /// The options every cache action takes.
 public struct AssetCacheActionOptions: ParsableArguments, Sendable {
     @OptionGroup public var settings: AssetCacheSettingsOptions
     @Option(parsing: .unconditional, help: ArgumentHelp("Build threads.", valueName: "n"))
-    public var width: String?
+    public var width: Int?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Only the files listed here, one per line.", valueName: "file")
     )
     public var paths: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "dir"))
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("The folder extract writes the loose copies to.", valueName: "dir")
+    )
     public var out: String?
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Sample size per asset kind. Default: 300.", valueName: "n")
+        help: ArgumentHelp("Sample size per asset kind.", valueName: "n")
     )
-    public var perKind: String?
+    public var perKind = 300
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.atLeast(width, 1, "--width")
+        try OptionCheck.atLeast(perKind, 1, "--per-kind")
+    }
 }
 
 public enum AssetCacheAction: String, Sendable {
@@ -63,8 +75,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
         subcommands: [
             Build.self, Check.self, Clear.self, Status.self, Extract.self, IOBench.self,
             Measure.self, Compare.self
-        ],
-        aliases: ["asset-cache"]
+        ]
     )
 
     public init() {}
@@ -159,9 +170,9 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
             abstract: "PSNR and largest channel error of two captures of the same view."
         )
         @OptionGroup public var global: GlobalOptions
-        @Argument(help: ArgumentHelp(valueName: "reference.png"))
+        @Argument(help: ArgumentHelp("The capture to compare against.", valueName: "reference.png"))
         public var reference: String
-        @Argument(help: ArgumentHelp(valueName: "candidate.png"))
+        @Argument(help: ArgumentHelp("The capture to check.", valueName: "candidate.png"))
         public var candidate: String
 
         public init() {}

@@ -2,7 +2,7 @@
 // the winning INFO's RNAM (`prompt`) when present, else the parent DIAL's FULL
 // (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO>). A spoken line
 // is the INFO's TRDT text from `.ilstrings`. The tables were measured with
-// `openskycli swf dialogue-menu --text` (docs/engine/dialogue-menu.md).
+// `openskycli menu dialogue --text` (docs/engine/dialogue-menu.md).
 
 import Foundation
 import OpenSkyDialogueInterface

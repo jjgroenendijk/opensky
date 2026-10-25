@@ -41,7 +41,7 @@ protocol DialogueMenuHost: MenuInputConsumer {
 /// Holds the conversation's menu model and movie state for `game`.
 final class DialogueMenuController {
     static let identifier: MenuIdentifier = "Dialogue Menu"
-    /// Measured with `openskycli swf dialogue-menu`: the list's slide-in ends
+    /// Measured with `openskycli menu dialogue`: the list's slide-in ends
     /// before `eMenuState` reaches `TOPIC_LIST_SHOWN`.
     static let activationTicks = 30
 

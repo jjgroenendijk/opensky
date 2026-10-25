@@ -1,7 +1,6 @@
 // Shared command plumbing: data-root resolution and engine entry points
-// (VFS, Skyrim.esm). --data-root reuses GameDataLocator validation by
-// injecting the override as the environment source, so both accepted root
-// shapes and the fail-loud behavior match the app exactly.
+// (VFS, Skyrim.esm). --data-root goes through GameDataLocator's validation, so
+// both accepted root shapes and the fail-loud behavior match the app.
 
 import Foundation
 import OpenSkyGameData
@@ -13,12 +12,10 @@ struct CLIContext {
     /// the locator chain (env var, user default, Steam path). Missing or
     /// invalid -> the locator's typed error (clear message, exit 1).
     static func resolve(dataRootOverride: String?) throws -> CLIContext {
-        let environment: [String: String] = if let dataRootOverride {
-            [GameDataLocator.environmentKey: dataRootOverride]
-        } else {
-            ProcessInfo.processInfo.environment
+        if let dataRootOverride {
+            return try CLIContext(root: GameDataLocator.locate(commandLinePath: dataRootOverride))
         }
-        return try CLIContext(root: GameDataLocator.locate(environment: environment))
+        return try CLIContext(root: GameDataLocator.locate())
     }
 
     func makeFileSystem() -> VirtualFileSystem {

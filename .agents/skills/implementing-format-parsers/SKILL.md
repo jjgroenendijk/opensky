@@ -82,8 +82,9 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
 - Run `make test-package T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
   `make test-unit PLAN=Formats` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
-  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A throwaway probe
-  never lands in a commit.
+  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A new probe
+  becomes an `openskycli` option or subcommand, not throwaway code
+  (`probing-real-game-data` skill).
 
 ## 5. The docs page
 

@@ -90,6 +90,18 @@ struct GameDataLocatorTests {
         #expect(root.source == .userDefaults)
     }
 
+    @Test func aCommandLinePathNamesItsOptionWhenInvalid() throws {
+        let error = GameDataError.overrideInvalid(source: .commandLine, path: "/nope")
+        #expect(throws: error) { try GameDataLocator.locate(commandLinePath: "/nope") }
+        let text = error.localizedDescription
+        #expect(text.contains("--data-root") && !text.contains("environment variable"))
+        #expect(!text.contains("Settings"))
+        let install = try makeInstall(named: "option")
+        defer { try? FileManager.default.removeItem(at: install) }
+        let root = try GameDataLocator.locate(commandLinePath: install.path(percentEncoded: false))
+        #expect(root.source == .commandLine)
+    }
+
     @Test func invalidDefaultsOverrideFailsWithoutFallback() throws {
         let install = try makeInstall(named: "steam")
         defer { try? FileManager.default.removeItem(at: install) }

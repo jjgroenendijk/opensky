@@ -33,7 +33,7 @@ nonisolated public struct AgentBenchmarkRequest: Equatable, Sendable {
         request.settings = try list(args.optionalString("set"))
         request.loadPasses = try args.bool("loadPasses", default: true)
         request.screenshots = try args.bool("screenshots", default: false)
-        request.fullScreen = try args.bool("fullScreen", default: true)
+        request.fullScreen = try !args.bool("windowed", default: false)
         request.stop = try args.bool("stop", default: false)
         return request
     }

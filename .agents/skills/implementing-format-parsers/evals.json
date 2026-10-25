@@ -32,7 +32,7 @@
     "query": "No spec documents this DATA subfield. Figure out its layout.",
     "files": [],
     "expected_behavior": [
-      "Writes a throwaway probe against the real install, or uses make run-cli, instead of guessing",
+      "Probes the real install through make run-cli, extending openskycli when no subcommand covers it, instead of guessing",
       "Flags the uncertainty in the docs/formats page",
       "Deletes the probe before committing"
     ]

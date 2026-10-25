@@ -5,8 +5,7 @@
 #   make fix         autoformat, then run every linter
 #   make test-unit   build and run the unit tests
 #
-# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, BUILD_CACHE_GB=<n>,
-# XCODEBUILD_FLAGS='...'.
+# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, BUILD_CACHE_GB=<n>, XCODEBUILD_FLAGS='...'.
 
 # ------------------------------------------------------------------------------
 # Configuration
@@ -204,7 +203,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         py-format py-format-check py-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
-        docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only comment-blocks comment-apply \
+        docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions comment-blocks comment-apply \
         duplicates no-suppressions file-length module-size
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
@@ -223,7 +222,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text load-order-only gap-registries duplicates no-suppressions file-length module-size ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions gap-registries duplicates no-suppressions file-length module-size ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -322,6 +321,9 @@ panel-text: #| Check launcher and Settings pages hold no prose paragraphs or lon
 load-order-only: #| Check engine code opens plugins only through the whole load order
 	@./tools/lint/load-order-only.sh
 
+cli-conventions: #| Check each openskycli command has a runner, a docs row, and a probe run
+	@./tools/lint/cli-conventions.sh
+
 gap-registries: #| Check the NIF block types openskycli gaps counts as handled match the code
 	@./tools/lint/gap-registries.sh
 
@@ -390,7 +392,7 @@ health-index: link-shared
 
 ##@ Build and run
 
-.PHONY: build-app build-cli run-cli install app-path cli-path probe icon dmg
+.PHONY: build-app build-cli run-cli install app-path cli-path probe new-cli-command icon dmg
 
 # A Debug build of the app or the CLI runs as a test build of the smallest plan, so
 # it shares one build context with every test run and compiles nothing twice
@@ -424,6 +426,9 @@ dmg: ## Pack the Release app into a disk image for a release [NAME=OpenSky-<vers
 
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
+
+new-cli-command: #| Stub a new openskycli command, e.g. make new-cli-command NAME=light-probe GROUP=World
+	@./tools/new-cli-command.sh "$(NAME)" "$(GROUP)"
 
 icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 	@command -v rsvg-convert >/dev/null || { echo "[ERROR] rsvg-convert not found: brew install librsvg" >&2; exit 1; }

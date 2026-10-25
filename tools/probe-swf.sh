@@ -47,17 +47,31 @@ probe_swf_gates() {
   # every engine call they make. Vanilla install: 0 faults and 0 unhandled
   # invokes each, and the barter movie's own vendor-gold field carries the
   # merchant purse.
-  run "swf container-menu (containermenu.swf)" swf container-menu --mode container --down 1
-  grep 'swf container-menu diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
+  run "menu container (containermenu.swf)" menu container --mode container --down 1
+  grep 'menu container diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "containermenu.swf faulted during bring-up"
-  run "swf container-menu (bartermenu.swf)" swf container-menu --mode barter --transfer 1
-  grep 'swf container-menu diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 unhandled of ' \
+  run "menu container (bartermenu.swf)" menu container --mode barter --transfer 1
+  grep 'menu container diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 unhandled of ' \
     || fail "bartermenu.swf made unanswered engine calls"
+
+  # Inventory and journal menus: both movies come up and say how many rows the
+  # movie built from the published lists.
+  run "menu inventory (inventorymenu.swf)" menu inventory --down 1
+  grep 'menu inventory diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
+    || fail "inventorymenu.swf faulted during bring-up"
+  run "menu quest-journal (quest_journal.swf Quests page)" menu quest-journal
+  grep 'menu quest-journal diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
+    || fail "quest_journal.swf faulted during bring-up"
+
+  # One movie's header and tag table, its action records, and an AS2 run.
+  run "swf show (inventorymenu.swf)" swf show 'interface\inventorymenu.swf'
+  run "swf action-list (book.swf)" swf action-list --movie book.swf
+  run "swf action-run (book.swf)" swf action-run --movie book.swf --ticks 2
 
   # M28 menu probes: the System page of quest_journal.swf comes up, and the race
   # menu movie starts and makes host calls.
-  run "swf system-menu (quest_journal.swf System page)" swf system-menu
-  grep -q 'swf probe ' "$swf_log" || fail "swf system-menu printed no host calls"
+  run "menu system (quest_journal.swf System page)" menu system
+  grep -q 'swf probe ' "$swf_log" || fail "menu system printed no host calls"
   run "swf movie-probe (racesex_menu.swf)" swf movie-probe --movie 'interface\racesex_menu.swf'
   grep -q 'swf probe ' "$swf_log" || fail "swf movie-probe printed no host calls"
 
@@ -65,12 +79,12 @@ probe_swf_gates() {
   # DialogueMenuMovieBridge, publishes every entry point the bridge drives, takes
   # a published topic list and says a line. Vanilla install: 0 faults, 0 unhandled
   # invokes, 0 missing entry points.
-  run "swf dialogue-menu (dialoguemenu.swf)" swf dialogue-menu --rows 4 --down 1 --speak
-  grep 'swf dialogue-menu entry points:' "$swf_log" | tail -1 | grep -q ' 0 missing' \
+  run "menu dialogue (dialoguemenu.swf)" menu dialogue --rows 4 --down 1 --speak
+  grep 'menu dialogue entry points:' "$swf_log" | tail -1 | grep -q ' 0 missing' \
     || fail "dialoguemenu.swf is missing an entry point the bridge drives"
-  grep 'swf dialogue-menu diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
+  grep 'menu dialogue diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "dialoguemenu.swf faulted during bring-up"
-  grep 'swf dialogue-menu diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 unhandled of ' \
+  grep 'menu dialogue diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 unhandled of ' \
     || fail "dialoguemenu.swf made unanswered engine calls"
 
   # M8.3.1 SWF action-inventory gate: every movie's action side (DoAction,

@@ -12,7 +12,9 @@ description: Drives the live OpenSky app from the terminal with openskycli game 
 `openskycli game ...` talks to the running app over a local Unix socket. Each call prints
 one JSON object, and the reply carries `ok`, `frame`, `paused`, and `result` or `error`.
 The command list and every argument are in [reference.md](reference.md). The protocol is
-in `docs/tools/agent-control.md`.
+in `docs/tools/agent-control.md`. `openskycli game help` and `openskycli game <command> --help`
+print the same list from the app's own catalog without starting the app, so check a spelling
+there before a run: an unknown option exits 2 instead of being ignored.
 
 Build first with `make build-app` and `make build-cli` (background shell, root `AGENTS.md`).
 Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or through

@@ -1,4 +1,4 @@
-// `swf dialogue-menu`: drives `interface\dialoguemenu.swf` through
+// `menu dialogue`: drives `interface\dialoguemenu.swf` through
 // `DialogueMenuMovieBridge` with real DIAL/INFO records and reports what the
 // movie built. Rows come straight off the store, skipping selection, because
 // the question is whether the movie takes the rows. `--text` prints each field
@@ -14,15 +14,11 @@ import OpenSkyGameData
 import OpenSkyMenus
 
 enum SWFDialogueMenuCommand {
-    private static let defaultTicks = 20
-    private static let defaultRowCount = 6
-
-    static func run(context: CLIContext, arguments: SWFArguments.DialogueMenu) throws {
-        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
-        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
-        let rowCount = try positive(arguments.rows, name: "--rows")
-            ?? defaultRowCount
-        let probeRows = try positive(arguments.probeRows, name: "--probe-rows")
+    static func run(context: CLIContext, arguments: MenuArguments.Dialogue) throws {
+        let ticks = arguments.drive.ticks
+        let downCount = arguments.drive.down
+        let rowCount = arguments.rows
+        let probeRows = arguments.probeRows
         let wantsText = arguments.text
         let speak = arguments.speak
 
@@ -78,14 +74,6 @@ enum SWFDialogueMenuCommand {
         for _ in 0 ..< settleTicks {
             runtime.advance()
         }
-    }
-
-    private static func positive(_ text: String?, name: String) throws -> Int? {
-        guard let text else { return nil }
-        guard let value = Int(text), value >= 0 else {
-            throw CLIError.usage("\(name) needs a non-negative integer")
-        }
-        return value
     }
 }
 
@@ -146,7 +134,7 @@ extension SWFDialogueMenuCommand {
         /// tables, so the table each belongs to is measured rather than
         /// assumed.
         func printText() {
-            print("[INFO] swf dialogue-menu text: \(topics.count) topics")
+            print("[INFO] menu dialogue text: \(topics.count) topics")
             for pair in topics {
                 print("  DIAL \(pair.topic.formID) \(pair.topic.editorID ?? "no editor id")")
                 report("    FULL", pair.topic.name)
@@ -184,16 +172,16 @@ extension SWFDialogueMenuCommand {
             "\(name)=" + (DialogueMenuMovieBridge.stateConstant(name, runtime: runtime)
                 .map(String.init) ?? "absent")
         }
-        print("[INFO] swf dialogue-menu class: \(constants.joined(separator: " "))")
+        print("[INFO] menu dialogue class: \(constants.joined(separator: " "))")
         let missing = DialogueMenuMovieBridge.missingEntryPoints(runtime: runtime)
         print(
-            "[INFO] swf dialogue-menu entry points: "
+            "[INFO] menu dialogue entry points: "
                 + "\(DialogueMenuMovieBridge.requiredEntryPoints.count) required, "
                 + "\(missing.count) missing"
                 + (missing.isEmpty ? "" : " (\(missing.joined(separator: ", ")))")
         )
         print(
-            "[INFO] swf dialogue-menu deferred: "
+            "[INFO] menu dialogue deferred: "
                 + DialogueMenuMovieBridge.deferredEntryPoints.joined(separator: ", ")
         )
     }
@@ -205,7 +193,7 @@ extension SWFDialogueMenuCommand {
         stage: String
     ) {
         let labels = DialogueMenuMovieBridge.topicLabels(runtime: runtime)
-        print("[INFO] swf dialogue-menu \(stage): \(labels.count) movie rows")
+        print("[INFO] menu dialogue \(stage): \(labels.count) movie rows")
         for (index, label) in labels.enumerated() {
             print("  \(index): \(label)")
         }
@@ -251,7 +239,7 @@ extension SWFDialogueMenuCommand {
                 lhs.delta == rhs.delta ? lhs.name < rhs.name : lhs.delta > rhs.delta
             }
         print(
-            "[INFO] swf dialogue-menu probe-rows: \(rows) empty rows, "
+            "[INFO] menu dialogue probe-rows: \(rows) empty rows, "
                 + "\(moved.count) names moved"
         )
         for entry in moved {
@@ -265,7 +253,7 @@ extension SWFDialogueMenuCommand {
         let nodes = runtime.nodeCount
         let opcodes = runtime.tally.unimplementedOpcodes.count
         let invokes = runtime.invokeLog.total
-        let line = "[INFO] swf dialogue-menu diagnostics: \(nodes) nodes, "
+        let line = "[INFO] menu dialogue diagnostics: \(nodes) nodes, "
             + "\(diagnostics.faults) faults, \(opcodes) unimplemented opcodes, "
             + "\(diagnostics.unhandledInvokes) unhandled of \(invokes) invokes, "
             + "\(diagnostics.missingNames) distinct missing names"

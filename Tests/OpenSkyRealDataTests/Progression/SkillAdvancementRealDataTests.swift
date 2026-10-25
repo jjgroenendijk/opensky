@@ -20,7 +20,7 @@ struct SkillAdvancementRealDataTests {
     private static let lockpicking: Int32 = 14
 
     /// The install's own numbers, measured on this machine 2026-08-19 with
-    /// `make run-cli ARGS="record AVOneHanded"` and `record AVLockpicking`.
+    /// `make run-cli ARGS="record show AVOneHanded"` and `record show AVLockpicking`.
     private static let expectedOneHanded = SkillUseParameters(
         useMultiplier: 6.3, useOffset: 0, improveMultiplier: 2, improveOffset: 0
     )

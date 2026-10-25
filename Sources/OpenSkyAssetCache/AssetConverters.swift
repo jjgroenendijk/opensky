@@ -101,7 +101,7 @@ nonisolated public struct ReadyCollisionConverter: AssetConverting {
 }
 
 /// The shipped animation file, copied out. Builds no longer use it: a copy loads no
-/// faster than the archive. `asset-cache measure` keeps measuring it.
+/// faster than the archive. `asset-optimisation measure` keeps measuring it.
 nonisolated public struct LooseAnimationConverter: AssetConverting {
     public init() {}
 

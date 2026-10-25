@@ -8,7 +8,6 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFActionSweep {
-    private static let defaultHostAPILimit = 120
     /// `SWFClipEventFlags` case names in bit order, so the report is
     /// deterministic rather than sorted by (possibly zero) count.
     private static let clipEventOrder = [
@@ -20,8 +19,8 @@ enum SWFActionSweep {
 
     static func run(context: CLIContext, arguments: SWFArguments.ActionSweep) throws {
         // Substring filter mirrors `swf render-sweep --movie`.
-        let filter = arguments.movie?.lowercased()
-        let limit = try parseLimit(arguments.limit)
+        let filter = arguments.movie.text?.lowercased()
+        let limit = arguments.limit
 
         let vfs = context.makeFileSystem()
         let paths = SWFMovieLoader(fileSystem: vfs).moviePaths()
@@ -52,16 +51,6 @@ enum SWFActionSweep {
                 "swf action-sweep failed: \(failures.count) movies did not decode"
             )
         }
-    }
-
-    private static func parseLimit(_ text: String?) throws -> Int {
-        guard let text else {
-            return defaultHostAPILimit
-        }
-        guard let value = Int(text), value > 0 else {
-            throw CLIError.usage("--limit needs a positive integer")
-        }
-        return value
     }
 
     private static func printMovieLine(_ summary: SWFActionMovieSummary) {

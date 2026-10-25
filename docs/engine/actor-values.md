@@ -96,7 +96,7 @@ Magicka, and Stamina if Attribute Offsets or underlying Race or Class Base Attri
 Getting from 61 mismatches to 26 is what showed the `statsRace` rule on the
 [actor records](/formats/actors.md) page.
 
-`openskycli actor-values --npc <formid-or-edid>` prints one actor's derivation with the record each
+`openskycli actor values --npc <formid-or-edid>` prints one actor's derivation with the record each
 input came from. `--race <formid-or-edid>` prints one race's starting attributes, regeneration
 rates, and derived table.
 

@@ -92,7 +92,7 @@ nonisolated public enum DecodedValueDump {
     }
 
     /// The value inside any number of optionals, or nil for an empty one.
-    private static func unwrapped(_ value: Any) -> Any? {
+    static func unwrapped(_ value: Any) -> Any? {
         let mirror = Mirror(reflecting: value)
         guard mirror.displayStyle == .optional else { return value }
         guard let wrapped = mirror.children.first else { return nil }
@@ -119,7 +119,7 @@ nonisolated public enum DecodedValueDump {
         return nil
     }
 
-    private static func isSIMD(_ value: Any) -> Bool {
+    static func isSIMD(_ value: Any) -> Bool {
         String(describing: type(of: value)).hasPrefix("SIMD")
     }
 }

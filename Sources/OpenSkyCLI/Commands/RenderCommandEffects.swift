@@ -35,38 +35,26 @@ struct EffectCaptureOptions {
         options.toneMappingOff = arguments.toneMappingOff
         options.imageSpace = arguments.imgs
         options.modifier = arguments.imad
-        options.modifierAt = try number(arguments.imadAt, name: "--imad-at") ?? 0
+        options.modifierAt = arguments.imadAt
         options.membrane = arguments.membrane
         options.weather = arguments.weather
-        let frames = try number(arguments.frames, name: "--frames") ?? 1
-        guard (1 ... 600).contains(frames) else {
-            throw CLIError.usage("--frames expects 1-600")
-        }
-        options.frames = Int(frames)
+        options.frames = arguments.frames
         options.shadingOff = try shadingSettings(arguments.shadingOff)
         return options
     }
 
-    static func shadingSettings(_ value: String?) throws -> [SurfaceShadingSetting] {
+    static func shadingSettings(_ value: CommaList?) throws -> [SurfaceShadingSetting] {
         guard let value else { return [] }
-        if value == "all" {
+        if value.items == ["all"] {
             return SurfaceShadingSetting.allCases
         }
-        return try value.split(separator: ",").map { name in
+        return try value.items.map { name in
             guard let setting = SurfaceShadingSetting(rawValue: String(name)) else {
                 let names = SurfaceShadingSetting.allCases.map(\.rawValue).joined(separator: ", ")
                 throw CLIError.usage("--shading-off expects all or some of: \(names)")
             }
             return setting
         }
-    }
-
-    private static func number(_ value: String?, name: String) throws -> Float? {
-        guard let value else { return nil }
-        guard let parsed = Float(value), parsed.isFinite, parsed >= 0 else {
-            throw CLIError.usage("\(name) expects a number, got \(value)")
-        }
-        return parsed
     }
 }
 

@@ -14,7 +14,7 @@ enum SkeletonCommand {
 
     static func run(context: CLIContext, arguments: SkeletonArguments) throws {
         let nifKey = arguments.nif
-        let key = arguments.key
+        let key = arguments.asset.path
 
         let fileSystem = context.makeFileSystem()
         let skeletons: [HKASkeleton]

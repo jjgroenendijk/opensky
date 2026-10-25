@@ -13,16 +13,13 @@ import OpenSkyGameData
 import OpenSkyTerrain
 
 enum ActorCommand {
-    static func run(context: CLIContext, arguments: ActorArguments) throws {
+    static func run(context: CLIContext, arguments: ActorArguments.Appearance) throws {
         let npc = arguments.npc
         let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
-        let radius = try int32(arguments.radius, name: "--radius") ?? 1
-        guard radius >= 0 else {
-            throw CLIError.usage("--radius expects a non-negative integer")
-        }
+        let gridX = arguments.grid.x ?? FirstRenderCell.gridX
+        let gridY = arguments.grid.y ?? FirstRenderCell.gridY
+        let radius = arguments.radius
 
         let loadOrder = try context.loadOrder().plugins
         if let npc {
@@ -336,16 +333,6 @@ extension ActorCommand {
                 }
             }
         }
-    }
-}
-
-extension ActorCommand {
-    private static func int32(_ value: String?, name: String) throws -> Int32? {
-        guard let value else { return nil }
-        guard let parsed = Int32(value) else {
-            throw CLIError.usage("\(name) expects an integer, got \(value)")
-        }
-        return parsed
     }
 }
 

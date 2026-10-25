@@ -1,4 +1,4 @@
-// `swf inventory-menu`: drive `inventorymenu.swf` through
+// `menu inventory`: drive `inventorymenu.swf` through
 // `InventoryMenuMovieBridge` with a real inventory. A CLI gate because the
 // real-data XCTest host is unreliable here (docs/tools/environment.md).
 
@@ -13,12 +13,10 @@ import OpenSkyMenus
 import OpenSkyWorldState
 
 enum SWFInventoryMenuCommand {
-    private static let defaultTicks = 20
-
-    static func run(context: CLIContext, arguments: SWFArguments.InventoryMenu) throws {
-        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
-        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
-        let rightCount = try positive(arguments.right, name: "--right") ?? 0
+    static func run(context: CLIContext, arguments: MenuArguments.Inventory) throws {
+        let ticks = arguments.drive.ticks
+        let downCount = arguments.drive.down
+        let rightCount = arguments.right
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(
@@ -78,7 +76,7 @@ enum SWFInventoryMenuCommand {
             return
         }
         guard InventoryMenuMovieBridge.handle(event, runtime: runtime) else {
-            print("[WARNING] swf inventory-menu: the movie declined \(event)")
+            print("[WARNING] menu inventory: the movie declined \(event)")
             return
         }
         if let index = InventoryMenuMovieBridge.selectedCategoryIndex(runtime: runtime) {
@@ -89,14 +87,6 @@ enum SWFInventoryMenuCommand {
         }
         InventoryMenuMovieBridge.publish(model, runtime: runtime)
         runtime.advance()
-    }
-
-    private static func positive(_ text: String?, name: String) throws -> Int? {
-        guard let text else { return nil }
-        guard let value = Int(text), value >= 0 else {
-            throw CLIError.usage("\(name) needs a non-negative integer")
-        }
-        return value
     }
 }
 
@@ -111,7 +101,7 @@ extension SWFInventoryMenuCommand {
         let categories = InventoryMenuMovieBridge.categoryLabels(runtime: runtime)
         let rows = InventoryMenuMovieBridge.entryLabels(runtime: runtime)
         print(
-            "[INFO] swf inventory-menu \(stage): \(categories.count) movie categories, "
+            "[INFO] menu inventory \(stage): \(categories.count) movie categories, "
                 + "\(rows.count) movie rows, engine has \(model.categories.count) and "
                 + "\(model.entries.count)"
         )
@@ -134,7 +124,7 @@ extension SWFInventoryMenuCommand {
     private static func printDiagnostics(_ runtime: SWFMovieRuntime) {
         let diagnostics = InventoryMenuMovieBridge.diagnostics(runtime: runtime)
         print(
-            "[INFO] swf inventory-menu diagnostics: \(runtime.nodeCount) nodes, "
+            "[INFO] menu inventory diagnostics: \(runtime.nodeCount) nodes, "
                 + "\(diagnostics.faults) faults, "
                 + "\(runtime.tally.unimplementedTotal) unimplemented opcodes, "
                 + "\(diagnostics.unhandledInvokes) unhandled of "

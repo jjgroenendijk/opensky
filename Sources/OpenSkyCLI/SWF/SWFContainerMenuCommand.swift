@@ -1,4 +1,4 @@
-// `swf container-menu`: drive the container or barter movie through
+// `menu container`: drive the container or barter movie through
 // `ContainerMenuMovieBridge` with real inventories. A CLI gate because the
 // real-data XCTest host is unreliable here (docs/tools/environment.md).
 
@@ -13,19 +13,18 @@ import OpenSkyMenus
 import OpenSkyWorldState
 
 enum SWFContainerMenuCommand {
-    private static let defaultTicks = 20
     /// How many of the plugin's own item forms seed each side.
     private static let seedPerFamily = 3
     private static let seedCount: Int32 = 2
     private static let playerSeedGold: Int32 = 5000
     private static let merchantSeedGold: Int32 = 800
 
-    static func run(context: CLIContext, arguments: SWFArguments.ContainerMenu) throws {
-        let mode = try mode(arguments.mode)
-        let side = try side(arguments.side)
-        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
-        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
-        let transfers = try positive(arguments.transfer, name: "--transfer") ?? 0
+    static func run(context: CLIContext, arguments: MenuArguments.Container) throws {
+        let mode = mode(arguments.mode)
+        let side = side(arguments.side)
+        let ticks = arguments.drive.ticks
+        let downCount = arguments.drive.down
+        let transfers = arguments.transfer
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(
@@ -61,19 +60,17 @@ enum SWFContainerMenuCommand {
         printDiagnostics(runtime, mode: mode, model: model)
     }
 
-    private static func mode(_ text: String?) throws -> ContainerMenuModel.Mode {
-        switch text {
-        case nil, "container": .container
-        case "barter": .barter
-        default: throw CLIError.usage("--mode takes container or barter")
+    private static func mode(_ name: ContainerMenuMode) -> ContainerMenuModel.Mode {
+        switch name {
+        case .container: .container
+        case .barter: .barter
         }
     }
 
-    private static func side(_ text: String?) throws -> ContainerMenuModel.Side {
-        switch text {
-        case nil, "container": .container
-        case "player": .player
-        default: throw CLIError.usage("--side takes container or player")
+    private static func side(_ name: ContainerMenuSide) -> ContainerMenuModel.Side {
+        switch name {
+        case .container: .container
+        case .player: .player
         }
     }
 
@@ -110,7 +107,7 @@ enum SWFContainerMenuCommand {
         let pricing = BarterPricing.resolve(
             store: GameSettingStore(plugins: loadOrder.files)
         )
-        print("[INFO] swf container-menu pricing: \(describe(pricing))")
+        print("[INFO] menu container pricing: \(describe(pricing))")
         return ProbeWorld(
             items: items,
             container: container,
@@ -155,14 +152,14 @@ enum SWFContainerMenuCommand {
         runtime: SWFMovieRuntime
     ) {
         guard let entry = model.selectedEntry else {
-            print("[WARNING] swf container-menu: nothing selected to transfer")
+            print("[WARNING] menu container: nothing selected to transfer")
             return
         }
         do {
             let outcome = try apply(entry, world: world, model: model)
-            print("[INFO] swf container-menu \(outcome)")
+            print("[INFO] menu container \(outcome)")
         } catch {
-            print("[INFO] swf container-menu refused: \(String(describing: error))")
+            print("[INFO] menu container refused: \(String(describing: error))")
         }
         var rebuilt = ContainerMenuModel.build(
             container: world.container,
@@ -209,7 +206,7 @@ enum SWFContainerMenuCommand {
         model: inout ContainerMenuModel
     ) {
         guard ContainerMenuMovieBridge.handle(event, runtime: runtime) else {
-            print("[WARNING] swf container-menu: the movie declined \(event)")
+            print("[WARNING] menu container: the movie declined \(event)")
             return
         }
         if let index = ContainerMenuMovieBridge.selectedIndex(runtime: runtime) {
@@ -217,14 +214,6 @@ enum SWFContainerMenuCommand {
         }
         ContainerMenuMovieBridge.publish(model, runtime: runtime)
         runtime.advance()
-    }
-
-    private static func positive(_ text: String?, name: String) throws -> Int? {
-        guard let text else { return nil }
-        guard let value = Int(text), value >= 0 else {
-            throw CLIError.usage("\(name) needs a non-negative integer")
-        }
-        return value
     }
 }
 
@@ -250,7 +239,7 @@ extension SWFContainerMenuCommand {
         let categories = ContainerMenuMovieBridge.categoryLabels(runtime: runtime)
         let rows = ContainerMenuMovieBridge.entryLabels(runtime: runtime)
         print(
-            "[INFO] swf container-menu \(stage): side \(model.side.rawValue), "
+            "[INFO] menu container \(stage): side \(model.side.rawValue), "
                 + "\(categories.count) movie categories, \(rows.count) movie rows, "
                 + "engine has \(model.active.categories.count) and \(model.active.entries.count)"
         )
@@ -278,7 +267,7 @@ extension SWFContainerMenuCommand {
     ) {
         let diagnostics = ContainerMenuMovieBridge.diagnostics(runtime: runtime)
         print(
-            "[INFO] swf container-menu diagnostics: "
+            "[INFO] menu container diagnostics: "
                 + "\(ContainerMenuMovieBridge.moviePath(for: mode)), "
                 + "\(runtime.nodeCount) nodes, \(diagnostics.faults) faults, "
                 + "\(runtime.tally.unimplementedTotal) unimplemented opcodes, "

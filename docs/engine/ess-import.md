@@ -37,7 +37,7 @@ it holds. The CLI's `ess list <folder>` prints the same line.
 | Settings, Skyrim Saves Folder | Pick or clear the folder |
 | Load list, in-game and on the title screen | Each `.ess` is a row titled `Skyrim import: <file> - <name>`, with its screenshot. Loading it runs the import |
 | Library, Skyrim Saves | Lists the folder and inspects the selected save without importing. Dry Run Import shows the report an import would give |
-| `openskycli ess <save.ess>` | The inspection as text, with the import report against the current load order |
+| `openskycli ess show <save.ess>` | The inspection as text, with the import report against the current load order |
 
 Import rows are never written over or deleted, and Continue never picks one. The OpenSky
 save an import writes is named `Imported <file>`, so a second import of the same file

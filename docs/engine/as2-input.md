@@ -135,7 +135,7 @@ controller in one focus group, and each focus change calls the `Selection` liste
 `onSetFocus(old, new, 0)`.
 
 With that in place, a menu movie focuses its own lists. Measured with `swf movie-probe` and
-`swf system-menu`:
+`menu system`:
 
 | Movie | Focus the movie sets | Engine step still needed |
 | --- | --- | --- |

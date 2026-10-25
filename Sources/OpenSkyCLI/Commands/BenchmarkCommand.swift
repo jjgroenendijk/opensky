@@ -43,14 +43,13 @@ enum BenchmarkCommand {
     static func makeRequest(_ arguments: BenchmarkArguments) throws -> BenchmarkRequest {
         var request = BenchmarkRequest()
         if let preset = arguments.preset {
-            guard let parsed = BenchmarkPreset(rawValue: preset.lowercased()) else {
-                throw CLIError.usage("--preset must be quick, standard, or full")
+            guard let parsed = BenchmarkPreset(rawValue: preset.rawValue) else {
+                throw CLIError.failure("no benchmark preset \(preset.rawValue)")
             }
             request.preset = parsed
         }
         if let scenes = arguments.scenes {
-            request.sceneIDs = scenes.split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
+            request.sceneIDs = scenes.items
         }
         request.overlay = !arguments.noOverlay
         request.captureScene = arguments.capture
@@ -59,7 +58,7 @@ enum BenchmarkCommand {
         request.fullScreen = !arguments.windowed
         request.quitWhenDone = !arguments.keepOpen
         do throws(BenchmarkRequestError) {
-            for pair in arguments.settings {
+            for pair in arguments.settings?.items ?? [] {
                 let (id, value) = try BenchmarkRequest.parseSetting(pair)
                 request.settings[id] = value
             }

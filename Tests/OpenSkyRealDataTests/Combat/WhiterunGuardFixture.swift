@@ -18,7 +18,7 @@ import simd
 
 enum WhiterunGuardFixture {
     /// Whiterun's own worldspace, and the cell the vanilla guard posts stand in
-    /// — the numbers `openskycli actor --worldspace WhiterunWorld --x 6 --y 0`
+    /// — the numbers `openskycli actor appearance --worldspace WhiterunWorld --x 6 --y 0`
     /// reports on this install.
     static let worldspace = "WhiterunWorld"
     static let cell = CellCoordinate(x: 6, y: 0)

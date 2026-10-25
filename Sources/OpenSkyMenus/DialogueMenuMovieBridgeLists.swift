@@ -24,7 +24,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// Writes the movie's state field to match the engine. The entry points do
-    /// not set it themselves (measured with `swf dialogue-menu --speak`), and a
+    /// not set it themselves (measured with `menu dialogue --speak`), and a
     /// stale state makes the menu answer the wrong key. The value comes from the
     /// movie's own class constants, so a changed movie makes this a no-op.
     public static func setMenuState(_ state: DialogueMenuModel.State, runtime: SWFMovieRuntime) {
@@ -116,7 +116,7 @@ nonisolated extension DialogueMenuMovieBridge {
 
     /// Points the list at `index`, or at nothing when `index` is negative, then
     /// calls `UpdateList`. `TopicList.SetSelectedTopic` does not take the row
-    /// index (measured with `swf dialogue-menu --down 2`), so it is not used.
+    /// index (measured with `menu dialogue --down 2`), so it is not used.
     public static func select(_ index: Int, count: Int, runtime: SWFMovieRuntime) {
         guard let list = runtime.node(atPath: topicListPath, from: runtime.root) else {
             return

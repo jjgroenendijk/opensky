@@ -11,22 +11,13 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 
 enum GMSTCommand {
-    static func run(context: CLIContext, arguments: GMSTArguments) throws {
-        let subject = arguments.subject
-        let prefix = arguments.prefix
+    static func run(context: CLIContext, subject: String) throws {
         switch subject {
-        case "movement":
-            try runMovement(context: context)
-        case "combat":
-            try runCombat(context: context)
-        case "archery":
-            try runArchery(context: context)
-        case "detection":
-            try runDetection(context: context)
-        case "list":
-            try runList(context: context, prefix: prefix)
-        default:
-            throw CLIError.usage("unknown gmst subject: \(subject)")
+        case MovementSubject.name: try runMovement(context: context)
+        case CombatSubject.name: try runCombat(context: context)
+        case ArcherySubject.name: try runArchery(context: context)
+        case DetectionSubject.name: try runDetection(context: context)
+        default: throw CLIError.failure("no runner for gmst \(subject)")
         }
     }
 
@@ -44,7 +35,7 @@ enum GMSTCommand {
     /// family off the install is how a fallback constant is checked against the
     /// number the shipped game actually carries, rather than against a wiki's
     /// transcription of it.
-    private static func runList(context: CLIContext, prefix: String) throws {
+    static func runList(context: CLIContext, prefix: String) throws {
         let store = try GameSettingStore(plugins: context.loadOrder().files)
         let needle = prefix.lowercased()
         let matches = store.values
