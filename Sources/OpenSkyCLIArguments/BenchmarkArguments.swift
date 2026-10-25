@@ -8,20 +8,18 @@ public struct BenchmarkArguments: CLICommandArguments {
         abstract: "Fly the benchmark tour in the app and print its frame, GPU, and load times.",
         discussion: "Opens OpenSky.app, which flies a camera through cities, wilderness, "
             + "interiors, and DLC worldspaces, then quits. result.json and summary.txt go to "
-            + "--out. --set changes a player setting for this run only, e.g. "
-            + "--set rendering.renderScale=1. Exits 1 when a scene fails."
+            + "--out. --set changes player settings for this run only, e.g. "
+            + "--set rendering.renderScale=1,rendering.gpuCulling=off. Exits 1 when a scene "
+            + "fails. 'game benchmark' runs the same tour in an app that is already open."
     )
     @OptionGroup public var global: GlobalOptions
+    @Option(parsing: .unconditional, help: ArgumentHelp("The scene set. Default: standard."))
+    public var preset: BenchmarkPresetName?
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Default: standard.", valueName: "quick|standard|full")
+        help: ArgumentHelp("Scene ids, comma-separated.", valueName: "ids")
     )
-    public var preset: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Scene ids, separated by commas.", valueName: "list")
-    )
-    public var scenes: String?
+    public var scenes: CommaList?
     @Flag(help: "Print the scenes and exit.")
     public var list = false
     @Flag(help: "Start with the overlay hidden.")
@@ -34,10 +32,13 @@ public struct BenchmarkArguments: CLICommandArguments {
     )
     public var capture: String?
     @Option(
-        name: .customLong("set"), parsing: .unconditionalSingleValue,
-        help: ArgumentHelp("A player setting for this run.", valueName: "id=value")
+        name: .customLong("set"), parsing: .unconditional,
+        help: ArgumentHelp(
+            "Player settings for this run, comma-separated.",
+            valueName: "id=value,..."
+        )
     )
-    public var settings: [String] = []
+    public var settings: CommaList?
     @Flag(help: "Save PNGs of the start, middle, and end of each scene into the run folder.")
     public var screenshots = false
     @Flag(help: "Run in a window instead of full screen.")
@@ -48,7 +49,13 @@ public struct BenchmarkArguments: CLICommandArguments {
     public var evict = false
     @Flag(help: "Leave the app open after the tour.")
     public var keepOpen = false
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "path"))
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "The app to open. Default: the build of this checkout.",
+            valueName: "path"
+        )
+    )
     public var app: String?
 
     public init() {}

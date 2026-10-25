@@ -14,12 +14,7 @@ enum AudioVoiceSweep {
     /// Plugins that ship voice archives. Read in this order so the report is
     /// stable; each is skipped when the install does not carry it.
     static func run(context: CLIContext, arguments: AudioArguments.VoiceSweep) throws {
-        let limit = try arguments.limit.map {
-            guard let value = Int($0), value > 0 else {
-                throw CLIError.usage("--limit needs a positive integer")
-            }
-            return value
-        }
+        let limit = arguments.limit
         let namesOnly = arguments.namesOnly
 
         let vfs = context.makeFileSystem()

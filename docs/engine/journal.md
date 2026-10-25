@@ -55,7 +55,7 @@ one from an imported save, shows the highest reached stage that has text.
 
 ### Which string table
 
-Measured with `openskycli swf quest-journal --text`, which reads each field from all three
+Measured with `openskycli menu quest-journal --text`, which reads each field from all three
 tables. On vanilla `Skyrim.esm`, exactly one table answers per field:
 
 | Field | Table |
@@ -109,7 +109,7 @@ fills the same field in this movie, which confirms the name.
 
 An objective entry clip stops on one of these frame labels: `Normal`, `NormalSelected`,
 `Completed`, `CompletedSelected`, `Failed`, `FailedSelected`, `Active`, `ActiveSelected`,
-`None`. With `openskycli swf quest-journal --objective-state completed` it moves from `Normal` to
+`None`. With `openskycli menu quest-journal --objective-state completed` it moves from `Normal` to
 `Completed`, and with `failed` to `Failed`. That confirms `completed` and `failed`. `active`
 marks an open objective of a tracked quest.
 

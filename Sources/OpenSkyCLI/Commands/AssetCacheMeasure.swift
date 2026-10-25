@@ -1,4 +1,4 @@
-// `asset-cache measure`: per asset kind, the time to load a fixed sample from
+// `asset-optimisation measure`: per asset kind, the time to load a fixed sample from
 // the original archive files against the time to load it from the cache, cold
 // and warm. The answer says which kinds are worth caching on this Mac
 // (docs/engine/asset-cache.md, "Where the cache helps").

@@ -8,18 +8,11 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFActionRunCommand {
-    private static let defaultTicks = 10
-    private static let defaultMissingLimit = 40
-    private static let defaultTreeDepth = 4
-
     static func run(context: CLIContext, arguments: SWFArguments.ActionRun) throws {
-        let filter = arguments.movie?.lowercased()
-        let ticks = try positiveOption(arguments.ticks, name: "--ticks")
-            ?? defaultTicks
-        let missingLimit = try positiveOption(arguments.limit, name: "--limit")
-            ?? defaultMissingLimit
-        let treeDepth = try positiveOption(arguments.treeDepth, name: "--tree-depth")
-            ?? defaultTreeDepth
+        let filter = arguments.movie.text?.lowercased()
+        let ticks = arguments.ticks
+        let missingLimit = arguments.limit
+        let treeDepth = arguments.treeDepth
         let callName = arguments.call
         let dumpPath = arguments.dump
         let dumpClass = arguments.dumpClass
@@ -63,14 +56,6 @@ enum SWFActionRunCommand {
         for target in dumpProto?.split(separator: ",") ?? [] {
             printProtoDump(runtime, path: String(target))
         }
-    }
-
-    private static func positiveOption(_ text: String?, name: String) throws -> Int? {
-        guard let text else { return nil }
-        guard let value = Int(text), value > 0 else {
-            throw CLIError.usage("\(name) needs a positive integer")
-        }
-        return value
     }
 }
 

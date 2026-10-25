@@ -2,7 +2,7 @@
 type: Decision
 title: swift-argument-parser for the openskycli command line
 description: Why openskycli declares its commands with Apple's swift-argument-parser, where the
-  declarations live, and how the CLI keeps its old names and exit codes.
+  declarations live, and the parsing rules the CLI keeps.
 tags: [decision, dependency, swiftpm, cli]
 ---
 
@@ -35,13 +35,19 @@ stored properties", and a main-actor one cannot conform to `ParsableCommand`. So
 declarations sit in a package module with the nonisolated default. The CLI target conforms each
 parsed command to its own `CLIRunnable` protocol and runs it on the main actor.
 
-## Compatibility with the old scanner
+## Parsing rules
 
-The old scanner took the next word as an option's value, whatever it was. Every option uses
-`parsing: .unconditional` to keep this, so `--y -2` stays a value. `--data-root` is accepted
-before and after the command name. The parser's usage exit code is 64; the CLI maps it to 2, as
-before. `game` has a hidden default subcommand that collects every word it does not know, so
-`game input press jump --frames 3` reaches the app unchanged.
+- Every option uses `parsing: .unconditional`, so a value may start with `-`: `--y -2`.
+- `--data-root` is accepted before and after the command name.
+- The parser's usage exit code is 64; the CLI maps it to 2, the code every command uses for a
+  usage error.
+- Each command has one name and no alias. A rename changes the scripts and docs that use it in
+  the same commit, so no old name has to be kept working.
+- `game` has a hidden default subcommand that collects every word it does not know, so
+  `game input press jump` reaches the app. The app's own catalog checks those words and
+  prints their help ([agent control](/tools/agent-control.md)).
+- The rules for names, typed values, and help text are in the [CLI](/tools/cli.md#conventions)
+  page.
 
 ## Alternatives
 

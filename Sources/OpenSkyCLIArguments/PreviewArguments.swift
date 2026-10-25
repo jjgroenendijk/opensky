@@ -8,7 +8,8 @@ public struct PreviewArguments: CLICommandArguments {
         abstract: "Render one record, reference, cell, or mesh offscreen, with a JSON report.",
         discussion: "Give one of --record, --ref, --mesh, --cell, or --worldspace with --x "
             + "and --y. With --record, --ref, or --mesh, a cell option names the cell it "
-            + "stands in, and the stage becomes cell. A view that draws nothing exits 1."
+            + "stands in, and the stage becomes cell. A view that draws nothing exits 1. "
+            + "For a whole cell as the game streams it, use render."
     )
     @OptionGroup public var global: GlobalOptions
     @Option(
@@ -29,8 +30,11 @@ public struct PreviewArguments: CLICommandArguments {
     @Option(parsing: .unconditional, help: ArgumentHelp("A cell editor ID.", valueName: "edid"))
     public var cell: String?
     @OptionGroup public var grid: GridOptions
-    @Option(parsing: .unconditional, help: ArgumentHelp("studio or cell.", valueName: "stage"))
-    public var stage: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("Default: studio, or cell with a cell option.")
+    )
+    public var stage: PreviewStage?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("A reference to frame, or to stand the record on.", valueName: "id")
@@ -38,25 +42,28 @@ public struct PreviewArguments: CLICommandArguments {
     public var focus: String?
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("all, or front,side,back,top,three-quarter.", valueName: "list")
+        help: ArgumentHelp(
+            "Either all, or some of front,side,back,top,three-quarter.",
+            valueName: "list"
+        )
     )
-    public var angles: String?
+    public var angles: CommaList?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Degrees from the front.", valueName: "deg")
     )
-    public var yaw: String?
+    public var yaw: Float?
     @Option(parsing: .unconditional, help: ArgumentHelp("Degrees above.", valueName: "deg"))
-    public var pitch: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp("Game units.", valueName: "units"))
-    public var distance: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "WxH"))
-    public var size: String?
+    public var pitch: Float?
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("An hour from 0 to 24. Default: 13.", valueName: "hour")
+        help: ArgumentHelp("Game units from the subject.", valueName: "units")
     )
-    public var timeOfDay: String?
+    public var distance: Float?
+    @Option(parsing: .unconditional, help: ArgumentHelp("The image size.", valueName: "WxH"))
+    public var size = PixelSize.defaultView
+    @Option(parsing: .unconditional, help: ArgumentHelp("An hour, 0 to 24.", valueName: "hour"))
+    public var timeOfDay: Float = 13
     @Option(parsing: .unconditional, help: ArgumentHelp("Force a weather.", valueName: "edid"))
     public var weather: String?
     @Option(
@@ -66,7 +73,7 @@ public struct PreviewArguments: CLICommandArguments {
             valueName: "terms"
         )
     )
-    public var shadingOff: String?
+    public var shadingOff: CommaList?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Default: .logs/preview/<UTC time>/.", valueName: "dir")
@@ -74,4 +81,11 @@ public struct PreviewArguments: CLICommandArguments {
     public var out: String?
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.range(timeOfDay, 0 ... 24, "--time-of-day")
+        if let distance, !(distance > 0) {
+            throw ValidationError("--distance expects a positive number of game units")
+        }
+    }
 }

@@ -8,9 +8,9 @@ extension SWFArguments.Sweep: CLIRunnable {
     }
 }
 
-extension SWFArguments.Info: CLIRunnable {
+extension SWFArguments.Show: CLIRunnable {
     func execute() throws {
-        try SWFCommand.runInfo(context: context(), path: key)
+        try SWFCommand.runInfo(context: context(), path: asset.path)
     }
 }
 
@@ -38,25 +38,25 @@ extension SWFArguments.ActionRun: CLIRunnable {
     }
 }
 
-extension SWFArguments.InventoryMenu: CLIRunnable {
+extension MenuArguments.Inventory: CLIRunnable {
     func execute() throws {
         try SWFInventoryMenuCommand.run(context: context(), arguments: self)
     }
 }
 
-extension SWFArguments.QuestJournal: CLIRunnable {
+extension MenuArguments.QuestJournal: CLIRunnable {
     func execute() throws {
         try SWFQuestJournalCommand.run(context: context(), arguments: self)
     }
 }
 
-extension SWFArguments.ContainerMenu: CLIRunnable {
+extension MenuArguments.Container: CLIRunnable {
     func execute() throws {
         try SWFContainerMenuCommand.run(context: context(), arguments: self)
     }
 }
 
-extension SWFArguments.SystemMenu: CLIRunnable {
+extension MenuArguments.System: CLIRunnable {
     func execute() throws {
         try SWFSystemMenuCommand.run(context: context(), arguments: self)
     }
@@ -68,7 +68,7 @@ extension SWFArguments.MovieProbe: CLIRunnable {
     }
 }
 
-extension SWFArguments.DialogueMenu: CLIRunnable {
+extension MenuArguments.Dialogue: CLIRunnable {
     func execute() throws {
         try SWFDialogueMenuCommand.run(context: context(), arguments: self)
     }

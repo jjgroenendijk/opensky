@@ -137,7 +137,7 @@ seems to be: 2.2x spell effectiveness for 2.8x spell cost".
 - The skill use is that of one cast: "Dual-casting a spell gives the same experience per cast as
   one-handed cast."
 
-The values are read from the install with `openskycli gmst list --prefix fMagicDualCasting`.
+The values are read from the install with `openskycli gmst list fMagicDualCasting`.
 
 ## What refuses a cast
 

@@ -97,7 +97,7 @@ No movie problem throws out of a control.
 
 With the movie up, the Save, Load, Controls, and Quit pages are the movie's own. Each row press
 calls the engine, and the engine answers with data, as the game does. Calls measured with
-`openskycli swf system-menu` and read from the movie's `SystemPage` class:
+`openskycli menu system` and read from the movie's `SystemPage` class:
 
 | Movie calls | Engine answer |
 | --- | --- |

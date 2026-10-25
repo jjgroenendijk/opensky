@@ -12,7 +12,7 @@ import OpenSkyPreview
 
 enum AssetCommand {
     static func runNIF(context: CLIContext, arguments: NIFArguments) throws {
-        let key = arguments.key
+        let key = arguments.asset.path
         let file: NIFFile
         do {
             file = try NIFFile(data: context.makeFileSystem().contents(forPath: key))
@@ -105,7 +105,7 @@ enum AssetCommand {
     }
 
     static func runDDS(context: CLIContext, arguments: DDSArguments) throws {
-        let key = arguments.key
+        let key = arguments.asset.path
         let data: Data
         let file: DDSFile
         do {

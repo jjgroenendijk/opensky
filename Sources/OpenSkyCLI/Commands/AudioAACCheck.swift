@@ -10,12 +10,7 @@ import OpenSkyGameData
 
 enum AudioAACCheck {
     static func run(context: CLIContext, arguments: AudioArguments.AACCheck) throws {
-        let perCategory = try arguments.perCategory.map { text in
-            guard let value = Int(text), value > 0 else {
-                throw CLIError.usage("--per-category needs a positive whole number")
-            }
-            return value
-        } ?? 40
+        let perCategory = arguments.perCategory
         let out = arguments.out
         let files = context.makeFileSystem()
         let converter = CachedAudioConverter()

@@ -6,16 +6,11 @@ import OpenSkyAgentControl
 import OpenSkyCLIArguments
 
 enum GameLaunch {
-    static let defaultWaitSeconds = 180.0
     static let retrySeconds = 0.5
-    static let survivalAnswers = ["on", "off", "ask"]
 
     static func run(arguments: GameArguments.Launch) throws {
-        let options = try GameCommandOptions(arguments.game)
-        guard survivalAnswers.contains(arguments.survivalMode) else {
-            throw CLIError.usage("--survival-mode must be on, off, or ask")
-        }
-        let wait = arguments.wait ?? defaultWaitSeconds
+        let options = GameCommandOptions(arguments.game)
+        let wait = arguments.wait
         // An app already serving the socket is attached to, not launched twice.
         if (try? AgentClientSession(path: options.socketPath, connectTimeout: 2)) == nil {
             try open(
@@ -53,7 +48,7 @@ enum GameLaunch {
             "--env", "OPENSKY_AGENT_CONTROL=1",
             "--env", "OPENSKY_SKIP_LAUNCHER=1",
             "--env", "OPENSKY_START_AT_TITLE=\(launch.title ? 1 : 0)",
-            "--env", "OPENSKY_SURVIVAL_MODE=\(launch.survivalMode)",
+            "--env", "OPENSKY_SURVIVAL_MODE=\(launch.survivalMode.rawValue)",
             "--env", "OPENSKY_AGENT_SOCKET=\(socket)"
         ]
         if let dataRoot = launch.global.dataRoot {
@@ -100,7 +95,7 @@ enum GameLaunch {
 
 enum GameScriptRun {
     static func run(arguments: GameArguments.Run) throws {
-        let options = try GameCommandOptions(arguments.game)
+        let options = GameCommandOptions(arguments.game)
         let path = arguments.script
         let text = try String(contentsOf: URL(filePath: path), encoding: .utf8)
         let steps: [AgentScriptStep]

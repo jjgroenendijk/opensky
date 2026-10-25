@@ -59,7 +59,7 @@
     "query": "Render an offscreen frame of Whiterun to check the new shadow pass.",
     "files": [],
     "expected_behavior": [
-      "Uses the offscreen openskycli screenshot path from probing-real-game-data, not the live game",
+      "Uses the offscreen openskycli render path from probing-real-game-data, not the live game",
       "Does not launch the app"
     ]
   },
@@ -72,6 +72,17 @@
     "expected_behavior": [
       "Uses openskycli preview --record HousecarlWhiterun --angles all instead of launching the game",
       "Points the user to the run directory under .logs/preview/ and does not commit the images"
+    ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "Make the player rest for 8 hours as sleep, not wait, in the running game.",
+    "files": [],
+    "expected_behavior": [
+      "Checks the spelling with openskycli game debug rest --help or reference.md before running",
+      "Uses debug rest 8 --sleep with no on/off value after the flag"
     ]
   }
 ]

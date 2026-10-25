@@ -177,7 +177,7 @@ struct QuestJournalMovieBridgeTests {
 
     /// The row fields are the measured ones. `completed` and `failed` are what
     /// move an objective entry clip off its `Normal` frame — see
-    /// `openskycli swf quest-journal --objective-state completed`.
+    /// `openskycli menu quest-journal --objective-state completed`.
     @Test
     func objectiveRowsCarryTheMeasuredStateFields() {
         let completed = QuestJournalMovieBridge.objectiveRow(

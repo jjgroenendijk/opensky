@@ -8,20 +8,13 @@ import OpenSkyGameData
 import OpenSkySave
 
 enum ESSCommand {
-    static func run(arguments: ESSArguments) async throws {
-        let target = arguments.target
-        if target == "list" {
-            guard let folder = arguments.folder, !arguments.offline else {
-                throw CLIError.usage("ess list takes one <folder>")
-            }
-            try list(URL(filePath: folder))
-            return
-        }
-        if let folder = arguments.folder {
-            throw CLIError.usage("unexpected argument: \(folder)")
-        }
+    static func list(arguments: ESSArguments.List) throws {
+        try list(URL(filePath: arguments.folder))
+    }
+
+    static func show(arguments: ESSArguments.Show) async throws {
         let offline = arguments.offline
-        let file = try await ESSSaveFolder.readFile(at: URL(filePath: target))
+        let file = try await ESSSaveFolder.readFile(at: URL(filePath: arguments.save))
         guard !offline else {
             print(ESSInspection(file: file, currentPlugins: []).text)
             return

@@ -39,7 +39,7 @@ Leftover experience carries over, and one award can cross several levels. The wi
 
 ## Settings
 
-Read from the local install with `make run-cli ARGS="gmst list --prefix fxp"` and the matching
+Read from the local install with `make run-cli ARGS="gmst list fxp"` and the matching
 prefixes:
 
 | Setting | Value | Meaning |
@@ -128,7 +128,7 @@ limits ([perks](/engine/perks.md)).
 
 A node's `CNAM` array is "Line to Index". It points from parent to child. So a box's parents are
 the boxes whose lines reach it. `AVOneHanded` on the local install, from
-`make run-cli ARGS="record AVOneHanded"`:
+`make run-cli ARGS="record show AVOneHanded"`:
 
 ```text
 #0  perk NULL,           lines to [7]

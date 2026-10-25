@@ -12,7 +12,7 @@ The formula that uses these is on the [perception and detection](/engine/detecti
 
 ## Settings from the load order
 
-Values from `openskycli gmst list --prefix fsneak` on the local install:
+Values from `openskycli gmst list fsneak` on the local install:
 
 | Editor ID | Value | Meaning |
 | --- | --- | --- |

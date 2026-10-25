@@ -1,4 +1,4 @@
-// `audio info <path>` inspects one `.xwm` file through the production
+// `audio show <path>` inspects one `.xwm` file through the production
 // `XWMFile` container parser; `audio sweep` frames and WMA-decodes every
 // `.xwm` the install provides (milestones 9.1.2 + 9.1.3, gated in
 // tools/probe.sh).

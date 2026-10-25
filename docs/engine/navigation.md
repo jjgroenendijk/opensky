@@ -159,7 +159,7 @@ flicker against the ground. Both toggles are off by default.
 The overlay pass draws triangles, then lines, with premultiplied alpha and a read-only
 "less or equal" depth test. It runs after the 3D scene and before the UI, both on screen and
 offscreen. It draws at most 65,536 primitives per frame, and counts what it drew and dropped.
-`openskycli screenshot --navmesh-overlay` captures it ([CLI](/tools/cli.md)).
+`openskycli render --navmesh-overlay` captures it ([CLI](/tools/cli.md)).
 
 ## Not done yet
 

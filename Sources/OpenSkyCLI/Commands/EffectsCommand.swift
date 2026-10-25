@@ -11,28 +11,21 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 
 enum EffectsCommand {
-    static func run(context: CLIContext, arguments: EffectsArguments) throws {
-        let mode = arguments.mode
-        let editorID = arguments.editorID
-        let time = arguments.at
-        guard (mode == "imad") == (editorID != nil) else {
-            throw CLIError.usage("effects takes census, or imad <edid>")
-        }
+    static func census(context: CLIContext) throws {
         let store = try EffectRecordStore(plugins: context.loadOrder().files)
-        switch mode {
-        case "census":
-            printAdapters(store)
-            printImageSpaces(store)
-            printParticles(store)
-            printAudio(store)
-            printExplosions(store)
-        case "imad":
-            guard let editorID, let adapter = store.imageSpaceAdapters.record(editorID: editorID)
-            else { throw CLIError.failure("no IMAD \(editorID ?? "")") }
-            printSample(adapter.record, at: time)
-        default:
-            throw CLIError.usage("effects takes census or imad")
+        printAdapters(store)
+        printImageSpaces(store)
+        printParticles(store)
+        printAudio(store)
+        printExplosions(store)
+    }
+
+    static func sampleIMAD(context: CLIContext, arguments: EffectsArguments.IMAD) throws {
+        let store = try EffectRecordStore(plugins: context.loadOrder().files)
+        guard let adapter = store.imageSpaceAdapters.record(editorID: arguments.editorID) else {
+            throw CLIError.failure("no IMAD \(arguments.editorID)")
         }
+        printSample(adapter.record, at: arguments.at)
     }
 
     private static func printAdapters(_ store: EffectRecordStore) {

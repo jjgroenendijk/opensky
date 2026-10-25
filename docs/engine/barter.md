@@ -201,5 +201,5 @@ navigation step, and one transaction from each side:
 ## Checking it
 
 To repeat a run without the app:
-`make run-cli ARGS="swf container-menu --mode barter --side player --down 2 --transfer 1"`.
+`make run-cli ARGS="menu container --mode barter --side player --down 2 --transfer 1"`.
 Frames go to the gitignored `.logs/` folder.

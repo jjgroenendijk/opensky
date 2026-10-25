@@ -13,7 +13,7 @@ import OpenSkyWorld
 
 enum PreviewCommand {
     static func run(context: CLIContext, arguments: PreviewArguments) throws {
-        let options = try options(arguments)
+        let options = options(arguments)
         let request: PreviewRequest
         do {
             request = try options.request()
@@ -51,33 +51,25 @@ enum PreviewCommand {
         }
     }
 
-    private static func options(_ arguments: PreviewArguments) throws -> PreviewOptions {
+    private static func options(_ arguments: PreviewArguments) -> PreviewOptions {
         var options = PreviewOptions()
         options.record = arguments.record
         options.reference = arguments.reference
         options.mesh = arguments.mesh
         options.cell = arguments.cell
         options.worldspace = arguments.grid.worldspace
-        options.x = try RenderCommand.int32(arguments.grid.x, name: "--x")
-        options.y = try RenderCommand.int32(arguments.grid.y, name: "--y")
-        options.stage = arguments.stage
+        options.x = arguments.grid.x
+        options.y = arguments.grid.y
+        options.stage = arguments.stage?.rawValue
         options.focus = arguments.focus
-        options.angles = arguments.angles
-        options.yaw = try number(arguments.yaw, name: "--yaw")
-        options.pitch = try number(arguments.pitch, name: "--pitch")
-        options.distance = try number(arguments.distance, name: "--distance")
-        options.timeOfDay = try RenderCommand.parseTimeOfDay(arguments.timeOfDay)
+        options.angles = arguments.angles?.items.joined(separator: ",")
+        options.yaw = arguments.yaw
+        options.pitch = arguments.pitch
+        options.distance = arguments.distance
+        options.timeOfDay = arguments.timeOfDay == 24 ? 0 : arguments.timeOfDay
         options.weather = arguments.weather
-        (options.width, options.height) = try RenderCommand.parseSize(arguments.size)
+        (options.width, options.height) = (arguments.size.width, arguments.size.height)
         return options
-    }
-
-    private static func number(_ value: String?, name: String) throws -> Float? {
-        guard let value else { return nil }
-        guard let number = Float(value), number.isFinite else {
-            throw CLIError.usage("\(name) expects a number, got \(value)")
-        }
-        return number
     }
 
     private static func directory(_ out: String?) throws -> URL {

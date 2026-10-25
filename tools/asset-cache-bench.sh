@@ -34,9 +34,8 @@ tour() {
 }
 
 tour originals --set assetOptimisation.enabled=off
-tour optimised --set assetOptimisation.enabled=on --set assetOptimisation.directLoad=off
-tour direct --set assetOptimisation.enabled=on --set assetOptimisation.directLoad=on \
-    --set assetOptimisation.directLoad.textures=on --set assetOptimisation.directLoad.meshes=on
+tour optimised --set assetOptimisation.enabled=on,assetOptimisation.directLoad=off
+tour direct --set assetOptimisation.enabled=on,assetOptimisation.directLoad=on,assetOptimisation.directLoad.textures=on,assetOptimisation.directLoad.meshes=on
 
 for name in originals optimised direct; do
     echo "--- $name"

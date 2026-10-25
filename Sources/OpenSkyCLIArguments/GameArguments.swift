@@ -12,7 +12,7 @@ public struct GameOptions: ParsableArguments, Sendable {
         parsing: .unconditional,
         help: ArgumentHelp("Seconds a command may wait for its reply.", valueName: "s")
     )
-    public var replyTimeout: String?
+    public var replyTimeout: Double?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Record each request and reply here.", valueName: "file")
@@ -20,6 +20,12 @@ public struct GameOptions: ParsableArguments, Sendable {
     public var record: String?
 
     public init() {}
+
+    public func validate() throws {
+        if let replyTimeout, !(replyTimeout > 0) {
+            throw ValidationError("--reply-timeout expects a positive number of seconds")
+        }
+    }
 }
 
 public struct GameArguments: ParsableCommand, Sendable {
@@ -42,23 +48,26 @@ public struct GameArguments: ParsableCommand, Sendable {
         )
         @OptionGroup public var global: GlobalOptions
         @OptionGroup public var game: GameOptions
-        @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "path"))
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "The app to open. Default: the build of this checkout.",
+                valueName: "path"
+            )
+        )
         public var app: String?
         @Option(
             parsing: .unconditional,
-            help: ArgumentHelp("Seconds to wait for the world. Default: 180.", valueName: "s")
+            help: ArgumentHelp("Seconds to wait for the world.", valueName: "s")
         )
-        public var wait: Double?
+        public var wait: Double = 180
         @Flag(help: "Open the title screen instead of the world.")
         public var title = false
         @Option(
             parsing: .unconditional,
-            help: ArgumentHelp(
-                "Answer the Survival Mode prompt ahead of time. Default: off.",
-                valueName: "on|off|ask"
-            )
+            help: ArgumentHelp("Answer the Survival Mode prompt ahead of time.")
         )
-        public var survivalMode = "off"
+        public var survivalMode = SurvivalModeAnswer.off
 
         public init() {}
     }
@@ -81,7 +90,10 @@ public struct GameArguments: ParsableCommand, Sendable {
         )
         @OptionGroup public var global: GlobalOptions
         @OptionGroup public var game: GameOptions
-        @Argument(help: ArgumentHelp(valueName: "script.jsonl"))
+        @Argument(help: ArgumentHelp(
+            "The script to run, one JSON request per line.",
+            valueName: "script.jsonl"
+        ))
         public var script: String
 
         public init() {}

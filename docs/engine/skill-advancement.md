@@ -38,7 +38,7 @@ follows the worked example, because it has numbers, and a test checks that numbe
 ## The numbers
 
 The four numbers per skill come from `AVSK` in the user's install. Vanilla values
-(`make run-cli ARGS="record AVOneHanded"`):
+(`make run-cli ARGS="record show AVOneHanded"`):
 
 | Skill | Use mult | Use offset | Improve mult | Improve offset |
 | --- | --- | --- | --- | --- |

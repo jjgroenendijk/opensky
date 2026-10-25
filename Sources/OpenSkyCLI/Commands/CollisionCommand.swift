@@ -16,9 +16,9 @@ enum CollisionCommand {
     static func run(context: CLIContext, arguments: CollisionArguments) throws {
         let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
-        let radius = try gridRadius(arguments.radius)
+        let gridX = arguments.grid.x ?? FirstRenderCell.gridX
+        let gridY = arguments.grid.y ?? FirstRenderCell.gridY
+        let radius = arguments.radius
 
         let loadOrder = try context.loadOrder().plugins
         let materials = MaterialTypeIndex(loadOrder: loadOrder)
@@ -79,22 +79,6 @@ enum CollisionCommand {
         guard grid.passesAcceptance else {
             throw CLIError.failure("collision grid found load, decode, or unsupported failures")
         }
-    }
-
-    private static func int32(_ value: String?, name: String) throws -> Int32? {
-        guard let value else { return nil }
-        guard let parsed = Int32(value) else {
-            throw CLIError.usage("\(name) expects an integer, got \(value)")
-        }
-        return parsed
-    }
-
-    private static func gridRadius(_ value: String?) throws -> Int32 {
-        guard let value else { return 0 }
-        guard let radius = Int32(value), (0 ... 10).contains(radius) else {
-            throw CLIError.usage("--radius expects an integer (0-10), got \(value)")
-        }
-        return radius
     }
 
     private static func printReport(

@@ -25,7 +25,7 @@ No Bethesda code was used.
   [How to generate voice files by batch](https://ck.uesp.net/wiki/How_to_generate_voice_files_by_batch).
   It says the official tools write a `.lip` with the Creation Kit, a `.xwm` with
   `xWMAEncode`, and then join them into a `.fuz`. It also gives the folder part of the path.
-- The vanilla files, read with `openskycli audio info` and `openskycli audio voice-sweep`.
+- The vanilla files, read with `openskycli audio show` and `openskycli audio voice-sweep`.
   The naming rule below was found from them. No published description matches the files.
 
 All integers are little-endian.

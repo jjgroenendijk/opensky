@@ -11,7 +11,10 @@ public struct CellArguments: CLICommandArguments {
     @OptionGroup public var grid: GridOptions
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("An interior cell editor ID, in place of a grid.", valueName: "edid")
+        help: ArgumentHelp(
+            "An interior cell editor ID, in place of a grid cell.",
+            valueName: "edid"
+        )
     )
     public var cell: String?
     @Flag(help: "List every reference.")
@@ -20,54 +23,76 @@ public struct CellArguments: CLICommandArguments {
     public init() {}
 }
 
-public struct ActorArguments: CLICommandArguments {
+public struct ActorArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "actor",
-        abstract: "List placed actors around a cell and resolve how each one looks.",
-        discussion: "Each base NPC_ resolves through its TPLT template chain to a skeleton, "
-            + "body parts with slot masking, FaceGen paths, and reason-tagged skips."
+        abstract: "Resolve how actors look, or how their values are derived.",
+        subcommands: [Appearance.self, Values.self]
     )
-    @OptionGroup public var global: GlobalOptions
-    @OptionGroup public var grid: GridOptions
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Cells around the center. Default: 1.", valueName: "n")
-    )
-    public var radius: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Resolve one base NPC_ directly.", valueName: "formid-or-edid")
-    )
-    public var npc: String?
 
     public init() {}
-}
 
-public struct ActorValuesArguments: CLICommandArguments {
-    public static let configuration = CommandConfiguration(
-        commandName: "actor-values",
-        abstract: "Derive one NPC_'s base health, magicka, and stamina, or one RACE's values.",
-        usage: "openskycli actor-values (--npc <formid-or-edid> | --race <formid-or-edid>) "
-            + "[--player-level <n>]"
-    )
-    @OptionGroup public var global: GlobalOptions
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("The NPC_ to derive.", valueName: "formid-or-edid")
-    )
-    public var npc: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("The RACE to report.", valueName: "formid-or-edid")
-    )
-    public var race: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Scales PC-level-mult actors. Default: 1.", valueName: "n")
-    )
-    public var playerLevel: String?
+    public struct Appearance: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "appearance",
+            abstract: "List placed actors around a cell and resolve how each one looks.",
+            discussion: "Each base NPC_ resolves through its TPLT template chain to a skeleton, "
+                + "body parts with slot masking, FaceGen paths, and reason-tagged skips."
+        )
+        @OptionGroup public var global: GlobalOptions
+        @OptionGroup public var grid: GridOptions
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("Cells around the center.", valueName: "n")
+        )
+        public var radius: Int32 = 1
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Resolve one base NPC_ instead: FormID or editor ID.",
+                valueName: "id"
+            )
+        )
+        public var npc: String?
 
-    public init() {}
+        public init() {}
+
+        public func validate() throws {
+            try OptionCheck.atLeast(radius, 0, "--radius")
+        }
+    }
+
+    public struct Values: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "values",
+            abstract: "Derive one NPC_'s base health, magicka, and stamina, or one RACE's values."
+        )
+        @OptionGroup public var global: GlobalOptions
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The NPC_: FormID or editor ID.", valueName: "id")
+        )
+        public var npc: String?
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The RACE: FormID or editor ID.", valueName: "id")
+        )
+        public var race: String?
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The level PC-level-mult actors scale with.", valueName: "n")
+        )
+        public var playerLevel = 1
+
+        public init() {}
+
+        public func validate() throws {
+            guard (npc == nil) != (race == nil) else {
+                throw ValidationError("give --npc or --race")
+            }
+            try OptionCheck.atLeast(playerLevel, 1, "--player-level")
+        }
+    }
 }
 
 public struct CollisionArguments: CLICommandArguments {
@@ -77,34 +102,37 @@ public struct CollisionArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var grid: GridOptions
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("Cells around the center.", valueName: "n")
-    )
-    public var radius: String?
+    @Option(parsing: .unconditional, help: ArgumentHelp("Cells around the center.", valueName: "n"))
+    public var radius: Int32 = 0
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.range(radius, 0 ... 10, "--radius")
+    }
 }
 
 public struct InteriorArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(
         commandName: "interior",
-        abstract: "Enter the interior behind a nearby door, render the arrival, and come back."
+        abstract: "Go through a nearby door and back; render the arrival as a PNG.",
+        discussion: "A check of the door transition. To look at a cell, use render or preview."
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var grid: GridOptions
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Cells around the center to search.", valueName: "n")
+        help: ArgumentHelp("Cells around the center to search for a door.", valueName: "n")
     )
-    public var radius: String?
-    @Option(
-        parsing: .unconditional,
-        help: ArgumentHelp("The PNG to write.", valueName: "file")
-    )
+    public var radius: Int32 = 16
+    @Option(parsing: .unconditional, help: ArgumentHelp("The PNG to write.", valueName: "file"))
     public var out: String
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.range(radius, 0 ... 64, "--radius")
+    }
 }
 
 public struct LODArguments: CLICommandArguments {
@@ -115,7 +143,7 @@ public struct LODArguments: CLICommandArguments {
     @OptionGroup public var global: GlobalOptions
     @Option(
         parsing: .unconditional,
-        help: ArgumentHelp("Worldspace editor ID.", valueName: "edid")
+        help: ArgumentHelp("Worldspace editor ID. Default: Tamriel.", valueName: "edid")
     )
     public var worldspace: String?
 

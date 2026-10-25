@@ -10,7 +10,7 @@ import simd
 
 enum AnimationCommand {
     static func run(context: CLIContext, arguments: AnimationArguments) throws {
-        let key = arguments.key
+        let key = arguments.asset.path
         let file: HKXFile
         let animations: [HKASplineCompressedAnimation]
         let bindings: [HKAAnimationBinding]

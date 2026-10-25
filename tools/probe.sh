@@ -73,7 +73,7 @@ expect_usage() {
 
 # The benchmark tour checks its options before it opens the app.
 expect_usage "benchmark rejects an unknown preset" \
-  "--preset must be quick, standard, or full" \
+  "The value 'longest' is invalid for '--preset" \
   benchmark --preset longest
 expect_usage "benchmark rejects an unknown setting" \
   "no.such.setting" \
@@ -82,6 +82,14 @@ expect_usage "benchmark rejects an unknown setting" \
 # Agent control offline paths (docs/tools/agent-control.md): an unknown game
 # command is a usage error, and no server at the socket is notRunning, exit 1.
 expect_usage "game rejects an unknown command" "unknown game command" game dance
+expect_usage "game rejects a misspelled option" "unknown option --second" \
+  game time step 2 --second 0.01
+expect_usage "render rejects a bad size" "1280by720" render --size 1280by720
+# The app's command list and one command's options print without an app.
+"$cli" game help 2>>"$log" | grep -q 'state av' || fail "game help did not list state av"
+"$cli" game state av --help 2>>"$log" | grep -q 'USAGE: openskycli game state av' \
+  || fail "game state av --help printed no usage"
+echo "[ OK ] game help (offline)"
 # A Unix socket path holds at most 103 bytes, and a worktree's run directory can be
 # longer, so the socket goes in a short temporary folder.
 socket_dir="$(mktemp -d /tmp/opensky-probe.XXXXXX)"
@@ -101,10 +109,16 @@ mesh_count="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>>"$log" | 
 [ "$mesh_count" -gt 0 ] || fail "vfs ls found no meshes"
 echo "[ OK ] vfs ls ($mesh_count mesh entries)"
 
+# vfs cat reads one archive entry; the copy stays in the run directory.
+vfs_copy="$log_dir/vfs-cat.bin"
+run "vfs cat (book.swf)" vfs cat 'interface\book.swf' --out "$vfs_copy"
+[ -s "$vfs_copy" ] || fail "vfs cat wrote no file"
+
 # Record probe: Tamriel WRLD is FormID 0x3C (UESP "Skyrim Mod:FormIDs").
-"$cli" --data-root "$data_root" record 0x0000003C 2>>"$log" | grep -q Tamriel \
-  || fail "record 0x3C did not decode as Tamriel"
-echo "[ OK ] record 0x0000003C (Tamriel)"
+"$cli" --data-root "$data_root" record show 0x3C 2>>"$log" | grep -q Tamriel \
+  || fail "record show 0x3C did not decode as Tamriel"
+echo "[ OK ] record show 0x3C (Tamriel)"
+
 
 # Plugin load order. Skyrim.esm is first on every install; the plugins.txt line
 # is not pinned, since whether one is findable is a property of the machine
@@ -151,6 +165,13 @@ fi
 # for every value. Do not pin numeric values here: an active user plugin may
 # intentionally override them.
 run "movement GMST resolution" gmst movement
+run "combat GMST resolution" gmst combat
+run "archery GMST resolution" gmst archery
+run "detection GMST resolution" gmst detection
+gmst_list="$("$cli" --data-root "$data_root" gmst list fMoveChar 2>>"$log")" \
+  || fail "gmst list failed"
+printf '%s\n' "$gmst_list" | grep -q '^fMoveCharWalkBase' || fail "gmst list missed fMoveCharWalkBase"
+echo "[ OK ] gmst list fMoveChar"
 movement="$(awk '/^--- movement GMST resolution/{f=1;next} /^--- /{f=0} f' "$log")"
 printf '%s\n' "$movement" | grep -q '^fMoveCharWalkBase = .* units/s \[.*\]$' \
   || fail "movement probe did not report walk value and source"
@@ -202,6 +223,7 @@ run "effects census" effects census
 grep -q '^IMAD [0-9]*: animatable' "$log" || fail "effects census found no image-space modifiers"
 grep -q '^IMGS [0-9]' "$log" || fail "effects census found no image spaces"
 grep -q '^EXPL [0-9]*: damage' "$log" || fail "effects census found no explosions"
+run "effects imad (GetHit at 0.5 s)" effects imad GetHit --at 0.5
 
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
@@ -239,6 +261,10 @@ grep 'voice framing:' "$log" | tail -1 | grep -q ' 0 failed' \
 
 # AAC check for the audio cache: a small sample per category still encodes,
 # decodes, and gets a verdict (docs/engine/asset-cache.md, "Audio").
+voice_key="$("$cli" --data-root "$data_root" vfs ls 'sound\voice\*.fuz' 2>/dev/null \
+  | head -1 | cut -f1)"
+run "audio show ($voice_key)" audio show "$voice_key"
+
 run "aac audio check (small sample)" audio aac-check --per-category 5
 grep -q '^\[INFO\] effects: ' "$log" \
   || fail "aac check printed no verdict for the effects category"
@@ -246,13 +272,13 @@ grep -q '^\[INFO\] effects: ' "$log" \
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".
-run "actor probe (3x3 around first-render cell)" actor
+run "actor probe (3x3 around first-render cell)" actor appearance
 grep 'ACHRs discovered' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "actor probe reported unresolved ACHRs"
 
 # M5.2 named-NPC gate: a named Whiterun resident resolves skeleton, worn
 # parts, and FaceGen paths without a placed ACHR.
-run "actor visual (Heimskr)" actor --npc Heimskr
+run "actor visual (Heimskr)" actor appearance --npc Heimskr
 heimskr="$(sed -n '/^--- actor visual (Heimskr)/,$p' "$log")"
 printf '%s\n' "$heimskr" | grep -q '^  skeleton ' \
   || fail "named NPC probe reported no skeleton"
@@ -260,6 +286,7 @@ printf '%s\n' "$heimskr" | grep -q '^  part ' \
   || fail "named NPC probe reported no body parts"
 printf '%s\n' "$heimskr" | grep -q '^  facegen meshes' \
   || fail "named NPC probe reported no FaceGen path"
+run "actor values (Heimskr at level 10)" actor values --npc Heimskr --player-level 10
 
 # Inspect the first mesh + texture the archives provide.
 mesh_key="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>/dev/null \
@@ -289,6 +316,11 @@ run "hkx idle" hkx 'meshes\actors\character\animations\male\mt_idle.hkx'
 awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q 'hkaSplineCompressedAnimation' \
   || fail "hkx idle missing hkaSplineCompressedAnimation class"
+
+# Havok tagfiles (.hkt): one file and the whole archived set decode.
+hkt_key="$("$cli" --data-root "$data_root" vfs ls '*.hkt' 2>/dev/null | head -1 | cut -f1)"
+run "hkt show ($hkt_key)" hkt show "$hkt_key"
+run "hkt sweep" hkt sweep
 
 # M14.1 behavior census gate: the same `hkx` command reports role, graph name,
 # root generator class, and the variable/event inventories for a behavior file.
@@ -363,17 +395,17 @@ missing_reason="$(printf '%s\n' "$unmatched" | grep -vc ' -> ' || true)"
   || fail "skeleton name-map has $missing_reason mismatch lines without a reason tag"
 echo "[ OK ] skeleton name-map (99-bone rig, 93/99 matched, all mismatches reason-tagged)"
 
-# Offscreen screenshot of the first-render cell -> probe-screenshot.png.
+# Offscreen render of the first-render cell -> probe-screenshot.png.
 png="$log_dir/probe-screenshot.png"
-run "offscreen screenshot" screenshot --out "$png"
-[ -s "$png" ] || fail "screenshot wrote no PNG"
-echo "[ OK ] screenshot output: $png"
+run "offscreen render" render --out "$png"
+[ -s "$png" ] || fail "render wrote no PNG"
+echo "[ OK ] render output: $png"
 
 # M8.1.1 screen-space UI gate: same frame with the sample overlay must draw
 # UI quads + glyphs without exhausting the hard quad budget.
 ui_png="$log_dir/probe-ui-overlay.png"
-run "offscreen screenshot (UI sample overlay)" screenshot --out "$ui_png" --ui-sample
-[ -s "$ui_png" ] || fail "UI overlay screenshot wrote no PNG"
+run "offscreen render (UI sample overlay)" render --out "$ui_png" --ui-sample
+[ -s "$ui_png" ] || fail "UI overlay render wrote no PNG"
 ui_line="$(grep 'ui overlay:' "$log" | tail -1)"
 printf '%s\n' "$ui_line" | grep -q '[1-9][0-9]* quads, [1-9][0-9]* glyphs' \
   || fail "UI overlay reported no quads/glyphs"
@@ -384,9 +416,9 @@ echo "[ OK ] UI sample overlay: $ui_png"
 # Effect capture flags: a forced image space and a forced rain weather must
 # reach the frame, and the rain volume must hold live drops fed by its SPGD.
 fx_png="$log_dir/probe-effects-rain.png"
-run "offscreen screenshot (effects)" screenshot --out "$fx_png" \
+run "offscreen render (effects)" render --out "$fx_png" \
   --imgs BleakFallsTEST01 --weather SkyrimOvercastRain --frames 30
-[ -s "$fx_png" ] || fail "effects screenshot wrote no PNG"
+[ -s "$fx_png" ] || fail "effects render wrote no PNG"
 grep -q 'image space: pass on, baseline BleakFallsTEST01' "$log" \
   || fail "forced image space did not reach the frame"
 grep -E 'rain live [1-9][0-9]*, .*spgd RainParticles' "$log" >/dev/null \
@@ -437,8 +469,11 @@ grep -qE '^textures[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
   || fail "asset-optimisation measure printed no texture row"
 grep -qE '^animation[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
   || fail "asset-optimisation measure printed no animation row: retired kinds must still measure"
+run "asset optimisation status" asset-optimisation status --folder "$cache_dir"
 rm -rf "$(dirname "$cache_dir")"
-echo "[ OK ] asset cache build + check + measure"
+echo "[ OK ] asset cache build + check + measure + status"
+
+run "graphics status" graphics status
 
 
 # The benchmark tour lists its scenes without opening the app.

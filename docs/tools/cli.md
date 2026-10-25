@@ -40,58 +40,108 @@ searched locations ([plugins.txt](/formats/plugins-txt.md)). There is no `--plug
 because the environment variable already covers a one-off run.
 
 Exit codes: 0 success, 1 failure, 2 usage error. A group without its subcommand, such as `swf`,
-prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
+prints its help and exits 2. `cell` and `render` default to the
 [first render cell](/decisions/first-render-cell.md).
 
+## Conventions
+
+- Names are lowercase kebab case: `asset-optimisation`, `--player-level`. Options are spelled
+  out; there are no short options.
+- Each command has one name. There are no aliases and no old names kept for scripts.
+- A group, such as `record`, only holds subcommands. A mode is a subcommand, never a
+  positional word: `record show 0x3C`, `ess list <folder>`. `show` reads one item.
+- A choice is an enum, so the help lists the values and a bad value exits 2:
+  `--preset quick|standard|full`. A number is `Int`, `Int32`, `Float`, or `Double`, and its
+  range is checked in `validate()`, before any game data loads.
+- A list is one comma-separated value: `--scenes a,b`. A switch is a flag, `--x` or `--no-x`,
+  never `--x on`.
+- Every command and argument has help that is a sentence. Every option takes
+  `parsing: .unconditional`, so a value may start with `-`.
+- Every leaf command has a runner in `CommandRunners.swift`, a row below, and a run in
+  `tools/probe.sh` or `tools/probe-swf.sh`, unless it writes settings or opens the app.
+
 ## Subcommands
+
+`openskycli --help` groups the commands the same way.
+
+### Game data
+
+| Command | What it checks |
+| --- | --- |
+| `install` | The game folder check the launcher shows: game version, official DLC, Creation Club plugin count, archive, plugin, and record counts, and each install problem with its fix. Exits 1 on a problem |
+| `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
+| `record show <id>` | One record by FormID or editor ID: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
+| `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
+| `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
+| `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](/engine/ess-import.md)) |
+| `ess list <folder>` | Each save's header in a folder |
+| `gaps [--only a,b] [--limit n] [--summary-out path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table ([gap report](/tools/gaps.md)) |
+
+### World
+
+| Command | What it checks |
+| --- | --- |
+| `cell [--worldspace/--x/--y] [--cell <editorID>] [--refs]` | An exterior cell of any worldspace, or an interior cell by editor ID, without Metal, merged over every active plugin: the winning plugin, reference count, and base type histogram. `--refs` lists each reference with its base editor ID and position |
+| `actor appearance [--worldspace/--x/--y] [--radius n] [--npc id]` | Placed actors in a block of cells: template chain, appearance sources, skeleton, parts, FaceGen path, and reason-tagged skips. Persistent actors are placed by position. `--npc` resolves one base record |
+| `actor values --npc <id>` or `--race <id>` `[--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
+| `collision [--worldspace/--x/--y] [--radius n]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)) |
+| `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
+| `lod [--worldspace edid]` | Every LOD file of a world space through the real decoders ([distant LOD](/engine/distant-lod.md)) |
+
+### Game rules
+
+| Command | What it checks |
+| --- | --- |
+| `archery [--census] [--ammo <text>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](/engine/archery.md)) |
+| `footstep [--set] [--armature] [--material]` | The footstep chain from set to sound file, per gait, with broken links reported ([footstep records](/formats/footstep.md), [material types](/formats/material-type.md)) |
+| `effects census` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions ([image space](/rendering/image-space.md)) |
+| `effects imad <edid> [--at seconds]` | Samples one image-space modifier at one time |
+
+### Assets
 
 | Command | What it checks |
 | --- | --- |
 | `vfs ls [pattern]` | Archive entries as `path<TAB>archive`. `fnmatch` wildcards with `FNM_NOESCAPE`, so `\` stays a separator, or a substring. Loose files are not listed, but `cat` finds them |
-| `vfs cat <key> --out <file>` | Extracts one resource. Loose files win, as in the engine |
-| `record <formid-or-editorid>` | One record: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
-| `install` | The game folder check the launcher shows: game version, official DLC, Creation Club plugin count, archive, plugin, and record counts, and each install problem with its fix. Exits 1 on a problem |
-| `graphics status\|preset low\|medium\|high\|ultra` | The Graphics page without the app. `status` prints the preset that matches the settings, or Custom, and each base game option with its value or why it is unavailable. `preset` writes the values of the game's `Low.ini` to `Ultra.ini` into the player settings file ([graphics options](/engine/graphics-options.md)) |
-| `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
-| `ess <save.ess> [--offline]`, `ess list <folder>` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order. `list` prints each save's header ([ESS import](/engine/ess-import.md)) |
-| `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
-| `gmst list --prefix <s>` | Every resolved GMST starting with `<s>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
-| `archery [--census] [--ammo <substring>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](/engine/archery.md)) |
-| `footstep [--set] [--armature] [--material]` | The footstep chain from set to sound file, per gait, with broken links reported ([footstep records](/formats/footstep.md), [material types](/formats/material-type.md)) |
-| `gaps [--only list] [--limit n] [--summary-out path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table ([gap report](/tools/gaps.md)) |
-| `cell [--worldspace/--x/--y] [--cell <editorID>] [--refs]` | An exterior cell of any worldspace, or an interior cell by editor ID, without Metal, merged over every active plugin: the winning plugin, reference count, and base type histogram. `--refs` lists each reference with its base editor ID and position |
-| `actor [--worldspace/--x/--y] [--radius n] [--npc id]` | Placed actors in a block of cells: template chain, appearance sources, skeleton, parts, FaceGen path, and reason-tagged skips. Persistent actors are placed by position. `--npc` resolves one base record |
-| `actor-values [--npc id \| --race id] [--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
-| `collision [--worldspace/--x/--y] [--radius n]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)) |
-| `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
-| `nif <key> [--sequences]`, `dds <key>` | Container stats, each node with its local translation, the flattened model, and any furniture markers; or the header and mip chain. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
-| `hkx <key>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)) |
-| `hkt <key>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
-| `skeleton <hkx-key> [--nif <nif-key>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
-| `animation <hkx-key>` | Decodes and samples every frame. A bad binding or a non-finite value exits 1 ([animation](/formats/hka-animation.md)) |
-| `lod [--worldspace edid]` | Every LOD file of a world space through the real decoders ([distant LOD](/engine/distant-lod.md)) |
-| `swf sweep` | Every `interface\*.swf`: tags, shapes, bitmaps, fonts, text, frame 1 display lists, and fontconfig aliases. LZMA movies are counted as unsupported, not failed ([SWF container](/formats/swf.md)) |
-| `swf render-sweep [--size] [--movie] [--out dir]` | Renders each movie's frame 1 over a movie-free baseline and counts changed pixels ([SWF layer](/rendering/swf-layer.md)) |
-| `swf action-sweep [--movie] [--limit n]` | Every movie's ActionScript: opcode counts, unknown opcodes (expect none), host API names, clip events, and structure ([SWF actions](/formats/swf-actions.md)) |
-| `swf action-run [--movie] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](/engine/as2-game-delegate.md)) |
-| `swf inventory-menu`, `swf quest-journal`, `swf container-menu`, `swf dialogue-menu` | Drives one vanilla menu through its bridge against real records and reads the rows back out of the movie. In the CLI because the real-data test host is unreliable here |
-| `swf system-menu [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call ([system menu](/engine/system-menu.md)) |
-| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, and `key:<code>` sends a key. Prints the host calls, the dumped nodes, and the focus at the end. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
-| `swf info <key>` | One movie's header and every tag |
-| `audio info <key>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
+| `vfs cat <path> --out <file>` | Extracts one resource. Loose files win, as in the engine |
+| `nif <path> [--sequences]` | Container stats, each node with its local translation, the flattened model, and any furniture markers. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
+| `dds <path>` | The header and mip chain |
+| `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)) |
+| `hkt show <path>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
+| `skeleton <path> [--nif <nif-path>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
+| `animation <path>` | Decodes and samples every frame. A bad binding or a non-finite value exits 1 ([animation](/formats/hka-animation.md)) |
+| `audio show <path>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |
 | `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](/formats/fuz.md)) |
 | `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](/engine/asset-cache.md)) |
-| `effects census`, `effects imad <edid> [--at seconds]` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions. `imad` samples one modifier ([image space](/rendering/image-space.md)) |
-| `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
+| `swf show <path>` | One movie's header and every tag |
+| `swf sweep` | Every `interface\*.swf`: tags, shapes, bitmaps, fonts, text, frame 1 display lists, and fontconfig aliases. LZMA movies are counted as unsupported, not failed ([SWF container](/formats/swf.md)) |
+| `swf render-sweep [--size WxH] [--movie text] [--out dir]` | Renders each movie's frame 1 over a movie-free baseline and counts changed pixels ([SWF layer](/rendering/swf-layer.md)) |
+| `swf action-sweep [--movie text] [--limit n]` | Every movie's ActionScript: opcode counts, unknown opcodes (expect none), host API names, clip events, and structure ([SWF actions](/formats/swf-actions.md)) |
+| `swf action-list --movie <text>` | One movie's action records with names resolved |
+| `swf action-run [--movie text] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](/engine/as2-game-delegate.md)) |
+| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, and `key:<code>` sends a key. Prints the host calls, the dumped nodes, and the focus at the end. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
+| `menu inventory`, `menu quest-journal`, `menu container`, `menu dialogue` | Drives one vanilla menu through its bridge against real records and reads the rows back out of the movie. In the CLI because the real-data test host is unreliable here |
+| `menu system [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call ([system menu](/engine/system-menu.md)) |
+
+### Rendering
+
+| Command | What it checks |
+| --- | --- |
+| `render --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. Use it for a cell or effect check; `preview` frames one record, and `game screenshot` captures the running app |
 | `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](/tools/preview-render.md)) |
-| `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |
-| `asset-optimisation build\|check\|clear\|status [--texture-quality original\|high\|medium\|low] [--max-texture-side <n>] [--folder] [--kinds] [--width] [--paths <file>]` | Asset optimisation without the app; `asset-cache` is the old name and still works. `build` converts every source the folder does not hold yet and prints the space check first, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, texture quality, and location warnings. The texture quality and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](/engine/asset-cache.md)) |
+
+### The app
+
+| Command | What it checks |
+| --- | --- |
+| `game <command> [...]` | Not a probe: drives the running app over its agent control socket. `game help` lists the app's commands and `game <command> --help` shows one. `game launch`, `game attach`, and `game run` start or join a session ([agent control](/tools/agent-control.md)) |
+| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value,...] [--no-overlay] [--screenshots] [--windowed] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour full screen, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
+| `graphics status`, `graphics preset low\|medium\|high\|ultra` | The Graphics page without the app. `status` prints the preset that matches the settings, or Custom, and each base game option with its value or why it is unavailable. `preset` writes the values of the game's `Low.ini` to `Ultra.ini` into the player settings file ([graphics options](/engine/graphics-options.md)) |
+| `asset-optimisation build`, `asset-optimisation check`, `asset-optimisation clear`, `asset-optimisation status` `[--texture-quality original\|high\|medium\|low] [--max-texture-side n] [--folder] [--kinds a,b] [--width n] [--paths <file>]` | Asset optimisation without the app. `build` converts every source the folder does not hold yet and prints the space check first, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, texture quality, and location warnings. The texture quality and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](/engine/asset-cache.md)) |
 | `asset-optimisation extract --paths <file> --out <dir>` | Writes loose copies of the listed files, outside the repo and the install, to time loose files apart from the archives |
 | `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](/engine/asset-cache.md)) |
-| `asset-optimisation measure [--per-kind <n>]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
-| `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two screenshots with the cache off and on. 100 dB means identical |
-| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value] [--no-overlay] [--screenshots] [--windowed] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour full screen, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
+| `asset-optimisation measure [--per-kind n]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
+| `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two renders with the cache off and on. 100 dB means identical |
 
 ## Notes on the probes
 
@@ -101,12 +151,12 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
   that has run this machine out of memory.
 - `audio voice-sweep` exists because the naming rule was derived from the archive listing, so
   checking it against the listing is what keeps it honest.
-- `screenshot` follows the app's launch chain on a headless view. It never touches a drawable. The
+- `render` follows the app's launch chain on a headless view. It never touches a drawable. The
   app and CLI share one PNG readback. `--neighbors` builds a 5 by 5 block and frames the cell bounds
   only. Distant LOD is hidden only in cells actually built: hiding the whole block while building one
   cell left a ring with neither terrain nor LOD. `--ui-sample` draws the UI sample and
   `--navmesh-overlay` draws navmesh triangles ([navigation](/engine/navigation.md)).
-- `screenshot` effect flags make the image-space and effect A/B captures.
+- `render` effect flags make the image-space and effect A/B captures.
   `--image-space-off` skips the composite pass, and `--tone-mapping-off` skips only its
   [HDR tone mapping](/rendering/image-space.md). `--imgs` forces a baseline, and `--imad` starts
   a modifier sampled at `--imad-at` seconds. `--membrane` puts an `EFSH` membrane on the first
@@ -124,8 +174,9 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 `tools/probe.sh` is a smoke run against the local install. Without an install it prints `[INFO]`
 and exits 0, so CI is safe. It runs most commands above and checks their output, for example:
 
-- `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs").
-- `actor` finds no unresolved actors in the default block, and `actor --npc Heimskr` reports a
+- `record show 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs").
+- `actor appearance` finds no unresolved actors in the default block, and
+  `actor appearance --npc Heimskr` reports a
   skeleton, parts, and a FaceGen path.
 - `hkx` on `skeleton.hkx` shows `hk_2010.2.0-r1`, the `__classnames__` and `__data__` sections, and
   an `hkaSkeleton`, and the census of `mt_behavior.hkx` finds root generator `hkbStateMachine` named
@@ -138,8 +189,8 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
   reports no failures, and `check` then counts every entry as current.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.
 - `audio aac-check --per-category 5` prints a verdict for the effects category.
-- `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.
-  Both run without the app or an install.
+- `game status` against an unused socket path exits 1 with `notRunning`. `game dance` and a
+  misspelled option exit 2, and `game help` prints the command list. All run without the app.
 
 Captures and the full `probe.log` go to `.logs/probe/<UTC timestamp>/`
 ([run output](/tools/run-output.md)).

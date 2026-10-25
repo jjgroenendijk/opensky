@@ -84,7 +84,7 @@ nonisolated extension ConditionFunctions {
     }
 
     /// Vanilla perk requirements use these: `Armsman20` reads
-    /// `GetBaseActorValue One-Handed >= 20` (`openskycli record Armsman20`).
+    /// `GetBaseActorValue One-Handed >= 20` (`openskycli record show Armsman20`).
     public static func installLevelAndBaseValue(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the current, unmodified value of the specified stat", the
         // base rather than the total (<https://ck.uesp.net/wiki/GetActorValue>
