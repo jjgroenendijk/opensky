@@ -25,6 +25,10 @@ enum HKXCommand {
             throw CLIError.failure("cannot parse \(key): \(String(describing: error))")
         }
 
+        if arguments.blenders {
+            try HKXBlenderDump.print(file: file)
+            return
+        }
         printHeader(file)
         printSections(file)
         printClassNames(file)

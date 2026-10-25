@@ -142,7 +142,7 @@ the number. A summary line goes to stderr.
 | `vfs cat <path> --out <file>` | Extracts one resource. Loose files win, as in the engine |
 | `nif <path> [--sequences]` | Container stats, each node with its local translation, the flattened model, and any furniture markers. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
 | `dds <path>` | The header and mip chain |
-| `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)) |
+| `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)). `--blenders` lists each blender instead: flags, bound blend parameter, and each child's place and generator |
 | `hkt show <path>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
 | `skeleton <path> [--nif <nif-path>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
 | `animation <path>` | Decodes and samples every frame. A bad binding or a non-finite value exits 1 ([animation](/formats/hka-animation.md)) |
