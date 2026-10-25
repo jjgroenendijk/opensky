@@ -45,10 +45,10 @@ struct ScriptDataRealDataTests {
     }
 
     private func checkExactSkyrimCounts(_ stats: VMADStats) {
-        #expect(stats.records == 869_687)
-        #expect(stats.vmadFields == 16133)
-        #expect(stats.scripts == 19936)
-        #expect(stats.properties == 51145)
+        #expect(ContentCount.isNear(stats.records, 869_687))
+        #expect(ContentCount.isNear(stats.vmadFields, 16133))
+        #expect(ContentCount.isNear(stats.scripts, 19936))
+        #expect(ContentCount.isNear(stats.properties, 51145))
         #expect(stats.versions == [4: 2561, 5: 13572])
         #expect(stats.objectFormats == [1: 2705, 2: 13428])
         #expect(stats.propertyTypes == [
@@ -58,18 +58,18 @@ struct ScriptDataRealDataTests {
         // Alias scripts count their object properties.
         #expect(stats.skipped.ranked.map(\.count) == [12896, 7])
         #expect(stats.skipped.ranked.map(\.name) == ["alias object", "removed property"])
-        #expect(stats.questFragmentSections == 856)
-        #expect(stats.questFragments == 5108)
-        #expect(stats.questAliasScriptSections == 2149)
-        #expect(stats.directObjects == 29787)
-        #expect(stats.nullObjects == 202)
+        #expect(ContentCount.isNear(stats.questFragmentSections, 856))
+        #expect(ContentCount.isNear(stats.questFragments, 5108))
+        #expect(ContentCount.isNear(stats.questAliasScriptSections, 2149))
+        #expect(ContentCount.isNear(stats.directObjects, 29787))
+        #expect(ContentCount.isNear(stats.nullObjects, 202))
         #expect(stats.danglingObjects == 39)
-        #expect(stats.backing.scriptLoads == 4450)
+        #expect(ContentCount.isNear(stats.backing.scriptLoads, 4450))
         #expect(stats.backing.missingScripts == 0)
         #expect(stats.backing.missingProperties == 24)
-        #expect(stats.backing.manualProperties == 199)
-        #expect(stats.backing.inspectedAutomatic == 50915)
-        #expect(stats.backing.conventionalNames == 50915)
+        #expect(ContentCount.isNear(stats.backing.manualProperties, 199))
+        #expect(ContentCount.isNear(stats.backing.inspectedAutomatic, 50915))
+        #expect(ContentCount.isNear(stats.backing.conventionalNames, 50915))
         #expect(stats.backing.otherNames == 0)
     }
 

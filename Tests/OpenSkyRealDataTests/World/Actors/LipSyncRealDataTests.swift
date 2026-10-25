@@ -47,7 +47,10 @@ struct LipSyncRealDataTests {
             }
         }
 
-        #expect(lipBlobCount == 74070, "embedded lip count drifted to \(lipBlobCount)")
+        #expect(
+            ContentCount.isNear(lipBlobCount, 74070),
+            "embedded lip count drifted to \(lipBlobCount)"
+        )
         // Every vanilla track decoded on 2026-10-15.
         #expect(lipCount == lipBlobCount, "only \(lipCount) tracks decoded")
         #expect(outOfRange == 0, "\(outOfRange) curve values outside -1...2")

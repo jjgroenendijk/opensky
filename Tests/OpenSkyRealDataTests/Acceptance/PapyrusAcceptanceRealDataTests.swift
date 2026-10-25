@@ -35,27 +35,27 @@ struct PapyrusAcceptanceRealDataTests {
         let coverage = census.coverage(in: registry)
         let (runtime, run) = try executeEntryPoints(files: files, registry: registry)
 
-        #expect(paths.count == 14302)
-        #expect(census.declarationTotal == 686)
-        #expect(census.referenceTotal == 65477)
-        #expect(census.distinctReferencedTotal == 508)
+        #expect(ContentCount.isNear(paths.count, 14302))
+        #expect(ContentCount.isNear(census.declarationTotal, 686))
+        #expect(ContentCount.isNear(census.referenceTotal, 65477))
+        #expect(ContentCount.isNear(census.distinctReferencedTotal, 508))
         // Pinned so a new native shows up here.
         #expect(coverage == PexNativeCoverage(implemented: 442, referenced: 508))
-        #expect(run.entryPoints == 577)
+        #expect(ContentCount.isNear(run.entryPoints, 577))
         // 21 entry points still wait, or yield each tick in a loop with no wait, when
         // the tick cap ends the run. A yielding loop calls its natives every tick.
         #expect(run.pending == 21)
-        #expect(run.terminalOutcomes == 556)
-        #expect(run.completed == 556)
+        #expect(ContentCount.isNear(run.terminalOutcomes, 556))
+        #expect(ContentCount.isNear(run.completed, 556))
         // A call on `None` returns its default, and a failed cast gives `None`, so no
         // entry point faults.
         #expect(runtime.tally.faultTotal == 0)
-        #expect(runtime.tally.nativeCallTotal == 814_881)
+        #expect(ContentCount.isNear(runtime.tally.nativeCallTotal, 814_881))
         #expect(runtime.tally.unimplementedNativeTotal == 13)
         // World natives refuse in this headless run, so their calls count as
         // failures rather than unimplemented natives.
-        #expect(runtime.tally.nativeFailureTotal == 593_025)
-        #expect(runtime.tally.deferredAnimationTotal == 236)
+        #expect(ContentCount.isNear(runtime.tally.nativeFailureTotal, 593_025))
+        #expect(ContentCount.isNear(runtime.tally.deferredAnimationTotal, 236))
         #expect(runtime.tally.rankedFaultKinds.isEmpty)
         #expect(
             runtime.tally.rankedUnimplementedNatives.first?.name

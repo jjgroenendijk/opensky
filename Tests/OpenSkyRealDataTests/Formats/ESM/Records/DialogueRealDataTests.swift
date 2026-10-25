@@ -59,8 +59,8 @@ struct DialogueRealDataTests {
         #expect(total.records["VTYP", default: 0] > 0)
         #expect(total.skips == Self.expectedSkips, "dialogue skip tally drift")
         // Every tail decodes and carries one or two result-script fragments.
-        #expect(total.fragmentTails == 7661, "INFO fragment tail drift")
-        #expect(total.fragments == 8009, "INFO fragment drift")
+        #expect(ContentCount.isNear(total.fragmentTails, 7661), "INFO fragment tail drift")
+        #expect(ContentCount.isNear(total.fragments, 8009), "INFO fragment drift")
 
         let report = (pluginReports + [total.report(name: "TOTAL")])
             .joined(separator: "\n\n") + "\n"

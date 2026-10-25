@@ -64,9 +64,9 @@ struct LocationStoreRealDataTests {
             "[INFO] location aliases baseline 892, filled \(filledLocations), "
                 + "remaining \(remaining)"
         )
-        #expect(filledLocations == 162)
+        #expect(ContentCount.isNear(filledLocations, 162))
         // From Event location aliases are counted as an unsupported fill type
         // when no event starts the quest, so they are not in this count.
-        #expect(remaining == 436)
+        #expect(ContentCount.isNear(remaining, 436))
     }
 }

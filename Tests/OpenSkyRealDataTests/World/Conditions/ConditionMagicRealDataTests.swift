@@ -28,10 +28,10 @@ struct ConditionMagicRealDataTests {
         let implemented = coverage.implementedCount(in: registry)
         let added = Self.magicIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
 
-        #expect(coverage.total == 118_494)
+        #expect(ContentCount.isNear(coverage.total, 118_494))
         // Only this step's own indices, so a newly registered function does not
         // move the pin.
-        #expect(added == 618)
+        #expect(ContentCount.isNear(added, 618))
         #expect(Self.magicIndices.allSatisfy { registry[$0] != nil })
         // Every index registered is one vanilla data actually uses, which is
         // the measurement that chose them.

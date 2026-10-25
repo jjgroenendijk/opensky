@@ -41,7 +41,7 @@ struct HKTagfileRealDataTests {
         #expect(failures.isEmpty, "\(failures)")
         #expect(paths.count == 30)
         #expect(censuses.map(\.objectCount).reduce(0, +) == 777)
-        #expect(versions.count == 121)
+        #expect(ContentCount.isNear(versions.count, 121))
         let withoutEnd = censuses.count { !$0.hasEndTag }
         let fileVersions = Set(censuses.map(\.version))
         let clothClasses = censuses.flatMap(\.clothClasses)

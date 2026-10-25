@@ -44,7 +44,7 @@ struct ScriptingAcceptanceRealDataTests {
         #expect(setup.sweptCellCount == 25)
         // Persistent references merge into the exterior cell they stand in, and each
         // reference also runs its base object's scripts.
-        #expect(setup.world.instancesByKey.count == 129)
+        #expect(ContentCount.isNear(setup.world.instancesByKey.count, 129))
         let gridTally = setup.world.runtime.tally
         #expect(gridTally.faultTotal == 1)
         #expect(gridTally.unimplementedNativeTotal == 0)

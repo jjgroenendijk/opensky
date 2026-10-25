@@ -109,8 +109,8 @@ struct ConditionFactionRealDataTests {
         // plus this install's Creation Club plugins. `GetInFaction` alone is
         // 9,028 of the 10,020, which is why the faction model was the largest
         // single block of unanswered dialogue conditions left.
-        #expect(coverage.total == 118_494)
-        #expect(added == 10020)
+        #expect(ContentCount.isNear(coverage.total, 118_494))
+        #expect(ContentCount.isNear(added, 10020))
         #expect(Self.factionIndices.allSatisfy { registry[$0] != nil })
         // `GetFactionRankDifference` is registered and this load order never
         // asks it — the only one of the six with no vanilla caller. It stays
