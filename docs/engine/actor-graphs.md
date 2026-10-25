@@ -34,7 +34,8 @@ reaches the graph in the same frame.
 
 | Distance from the camera | Update |
 | --- | --- |
-| Up to the full-rate distance (default 2,048 units) | Every frame |
+| Up to half the full-rate distance (default 1,024 units) | Every frame |
+| Up to the full-rate distance (default 2,048 units) | 30 times a second |
 | Up to the graph distance (default 6,144 units) | 15 times a second |
 | Further | Not at all; the actor keeps its last pose |
 
