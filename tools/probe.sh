@@ -110,7 +110,7 @@ echo "[ OK ] record 0x0000003C (Tamriel)"
 # is not pinned, since whether one is findable is a property of the machine
 # (docs/tools/environment.md).
 plugins="$("$cli" --data-root "$data_root" plugins 2>>"$log")"
-printf '%s\n' "$plugins" | grep -q '^1	Skyrim.esm \[Master\]$' \
+printf '%s\n' "$plugins" | grep -q '^00	Skyrim.esm \[Master\]$' \
   || fail "plugins did not report Skyrim.esm first"
 printf '%s\n' "$plugins" | grep -q '^plugins.txt: ' \
   || fail "plugins did not report where the load order came from"
