@@ -27,6 +27,8 @@ public struct NPCMover {
     private var bestWaypointDistance: Float = .greatestFiniteMagnitude
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
+    /// Where `currentCell` was last looked up.
+    var cellCheckedAt: SIMD3<Float>?
     public let ignoresStatics: Bool
     public let preferredGait: LocomotionGait?
     let runSlowdown: FollowSettings?
