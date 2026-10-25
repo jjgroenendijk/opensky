@@ -65,10 +65,16 @@ nonisolated extension ReferenceKey: CustomStringConvertible {
     public var description: String {
         switch self {
         case let .plugin(name, objectID):
-            String(format: "%@:%06X", name, objectID)
+            // `%06X` by hand: `String(format:)` cost a millisecond a frame in leveled rolls.
+            name + ":" + String(repeating: "0", count: max(0, 6 - Self.hexDigits(objectID)))
+                + String(objectID, radix: 16, uppercase: true)
         case let .generated(sequence):
             "generated:\(sequence)"
         }
+    }
+
+    private static func hexDigits(_ value: UInt32) -> Int {
+        max(1, (UInt32.bitWidth - value.leadingZeroBitCount + 3) / 4)
     }
 }
 

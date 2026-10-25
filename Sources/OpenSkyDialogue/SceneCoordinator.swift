@@ -24,6 +24,7 @@ public final class SceneCoordinator {
 
     public let catalog: SceneCatalog
     let conditionCache = RevisionCache<UInt64, SceneConditionBase>()
+    let playingCache = RevisionCache<ScenePlayingRevision, [CatalogScene]>()
 
     public private(set) var trace: [SceneEvent] = []
     public private(set) var lines: [SceneLine] = []
@@ -67,6 +68,7 @@ public final class SceneCoordinator {
             fragments: world.sceneFragments,
             host: world,
             pendingLines: pendingLines,
+            playingCache: playingCache,
             now: world.sceneSeconds
         )
         runtime.repeatPause = repeatPause

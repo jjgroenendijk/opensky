@@ -75,7 +75,12 @@ public final class PapyrusWorldRuntime {
     /// Script instances of one quest's filled aliases, keyed by the quest so
     /// `detachQuest(key:)` can retire them. The instances are keyed by the filled
     /// reference. See `PapyrusWorldQuests.swift`.
-    public var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:]
+    public var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:] {
+        didSet { aliasInstanceKeysCache = nil }
+    }
+
+    /// Every script cast reads the union of `questAliasInstanceKeys`, so it is kept.
+    var aliasInstanceKeysCache: Set<PapyrusInstanceKey>?
     /// Filled quest aliases that VMAD binding resolves alias properties through. A
     /// value, so binding stays nonisolated. `.empty` without a quest layer.
     public var aliasResolution: QuestAliasResolution = .empty

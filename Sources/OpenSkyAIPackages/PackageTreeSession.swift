@@ -18,15 +18,18 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     let seed: UInt64
     var guardWarnings = GuardWarningSettings.vanilla
     var sandboxSettings = SandboxSettings.vanilla
+    /// Builds the context the branch conditions read; a coordinator shares one per frame.
+    let makeContext: () -> ConditionContext
     /// Read once, on the first branch condition, because a context costs a world walk.
     private var context: ConditionContext?
 
     init(
         world: any PackageWorld, actor: ReferenceKey, aliasQuest: FormID?,
         package: ResolvedPackage, values: [Int8: Package.DataValue], clock: GameClock,
-        translation: FormIDTranslation?
+        translation: FormIDTranslation?, makeContext: (() -> ConditionContext)? = nil
     ) {
         self.world = world
+        self.makeContext = makeContext ?? { world.packageConditionContext(clock: clock) }
         self.actor = actor
         self.aliasQuest = aliasQuest
         self.clock = clock
@@ -36,7 +39,7 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     }
 
     mutating func passes(_ conditions: [Condition]) -> Bool {
-        var live = context ?? world.packageConditionContext(clock: clock)
+        var live = context ?? makeContext()
         live.subject = actor
         live.clock = clock
         context = live

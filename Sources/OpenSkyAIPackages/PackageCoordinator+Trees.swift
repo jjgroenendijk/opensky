@@ -92,7 +92,7 @@ extension PackageCoordinator {
             || package.general.flags.contains(.oncePerDay)
         else { return }
         runtime.packageEnded(
-            actor: actor, clock: clock, context: world.packageConditionContext(clock: clock)
+            actor: actor, clock: clock, context: conditionContext(clock: clock)
         )
         self.runtime = runtime
     }
@@ -135,7 +135,10 @@ extension PackageCoordinator {
             package: current,
             values: execution?.values ?? PackageOverrideExecution.values(of: current),
             clock: clock,
-            translation: store?.translation(of: current.definition.formID)
+            translation: store?.translation(of: current.definition.formID),
+            makeContext: { [weak self] in
+                self?.conditionContext(clock: clock) ?? world.packageConditionContext(clock: clock)
+            }
         )
         session.guardWarnings = guardWarnings
         session.sandboxSettings = sandboxSettings

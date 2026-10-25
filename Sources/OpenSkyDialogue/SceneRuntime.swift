@@ -66,6 +66,9 @@ public struct SceneRuntime {
     public var fragments: (any SceneFragmentDispatching)?
     public weak var host: (any SceneHost)?
     public let pendingLines: ScenePendingLines
+    /// The playing scenes, kept until a scene state changes: a frame asks several times,
+    /// and each ask scanned every scene record.
+    let playingCache: RevisionCache<ScenePlayingRevision, [CatalogScene]>
     /// Scene seconds: game seconds divided by the time scale.
     public var now: Double
     /// The pause after a looping line, between the action's minimum and maximum. Tests fix it.
@@ -80,6 +83,7 @@ public struct SceneRuntime {
         fragments: (any SceneFragmentDispatching)? = nil,
         host: (any SceneHost)? = nil,
         pendingLines: ScenePendingLines = ScenePendingLines(),
+        playingCache: RevisionCache<ScenePlayingRevision, [CatalogScene]> = RevisionCache(),
         now: Double = 0
     ) {
         self.catalog = catalog
@@ -87,6 +91,7 @@ public struct SceneRuntime {
         self.fragments = fragments
         self.host = host
         self.pendingLines = pendingLines
+        self.playingCache = playingCache
         self.now = now
     }
 
@@ -104,7 +109,12 @@ public struct SceneRuntime {
 
     /// Playing scenes in FormID order.
     public func playingScenes() -> [CatalogScene] {
-        catalog.all.filter { store.component(SceneRuntimeState.self, for: $0.key) != nil }
+        let revision = ScenePlayingRevision(
+            store: ObjectIdentifier(store), scenes: store.revision(of: [.scene])
+        )
+        return playingCache.value(for: revision) {
+            catalog.all.filter { store.component(SceneRuntimeState.self, for: $0.key) != nil }
+        }
     }
 
     /// Starts the scene: the begin fragment, then phase 1. A playing scene is left as it is.
@@ -172,4 +182,10 @@ public struct SceneRuntime {
             .filter { $0.scene.flags.contains(.beginOnQuestStart) }
             .flatMap { (try? start($0.formID)) ?? [] }
     }
+}
+
+/// Which store, at which scene-state revision, a cached list of playing scenes reflects.
+public struct ScenePlayingRevision: Equatable, Sendable {
+    let store: ObjectIdentifier
+    let scenes: UInt64
 }

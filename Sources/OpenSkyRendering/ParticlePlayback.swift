@@ -232,24 +232,30 @@ nonisolated public struct ParticleSimulator: Sendable {
             modifiers: activeModifiers,
             modelTransform: placementTransform * definition.worldTransform
         )
+        // A local array: an element of `particles` passed inout to a method of `self`
+        // made Swift copy the whole simulator and its particles for each particle.
+        var live = particles
+        particles = []
         var children: [SimulatedParticle] = []
-        for index in particles.indices.reversed() {
-            particles[index].age += deltaTime
-            if particles[index].age >= particles[index].lifetime {
-                children += spawned(from: particles[index])
-                particles.remove(at: index)
+        var dead = RangeSet<Int>()
+        for index in live.indices.reversed() {
+            live[index].age += deltaTime
+            if live[index].age >= live[index].lifetime {
+                children += spawned(from: live[index])
+                dead.insert(index, within: live)
                 continue
             }
-            particles[index].rotation += particles[index].rotationSpeed * deltaTime
+            live[index].rotation += live[index].rotationSpeed * deltaTime
             for modifier in activeModifiers {
-                apply(modifier, to: &particles[index], wind: windVector * deltaTime)
+                apply(modifier, to: &live[index], wind: windVector * deltaTime)
             }
-            guard field.move(&particles[index], deltaTime: deltaTime, random: &random) else {
-                particles.remove(at: index)
-                continue
+            if !field.move(&live[index], deltaTime: deltaTime, random: &random) {
+                dead.insert(index, within: live)
             }
         }
-        particles += children.prefix(max(capacity - particles.count, 0))
+        live.removeSubranges(dead)
+        live += children.prefix(max(capacity - live.count, 0))
+        particles = live
     }
 
     /// Applies a modifier that changes a live particle by its age. `wind` is this step's push.

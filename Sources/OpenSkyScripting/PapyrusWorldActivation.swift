@@ -112,7 +112,13 @@ extension PapyrusWorldRuntime {
     }
 
     var aliasInstanceKeys: Set<PapyrusInstanceKey> {
-        questAliasInstanceKeys.values.reduce(into: []) { $0.formUnion($1) }
+        if let aliasInstanceKeysCache {
+            return aliasInstanceKeysCache
+        }
+        let keys = questAliasInstanceKeys.values
+            .reduce(into: Set<PapyrusInstanceKey>()) { $0.formUnion($1) }
+        aliasInstanceKeysCache = keys
+        return keys
     }
 
     func allocateOpaqueHandle() -> PapyrusObjectHandle {
