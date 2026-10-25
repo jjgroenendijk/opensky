@@ -73,8 +73,8 @@ final class DialogueWorldAdapter {
     /// Hostility and death decide who is worth talking to, so the candidate
     /// list is built here, not in streaming.
     func wireDialogue(streamer: CellStreamer) {
-        streamer.talk.candidateSource = { [weak self] in
-            self?.talkCandidates() ?? []
+        streamer.talk.candidateSource = { [weak self] ray in
+            self?.talkCandidates(along: ray) ?? []
         }
         // Activating a living actor while sneaking opens its pockets instead of a talk.
         streamer.talk.activations.register(.dialogue) { [weak self] event in
@@ -104,12 +104,13 @@ final class DialogueWorldAdapter {
             }
     }
 
-    /// Dead and hostile actors are left out. An actor with no passing topic
-    /// still opens an empty menu, so the condition trace can explain why.
-    func talkCandidates() -> [TalkCandidate] {
+    /// Dead and hostile actors are left out, and so are actors `ray` cannot reach. An actor
+    /// with no passing topic still opens an empty menu, so the condition trace can explain why.
+    func talkCandidates(along ray: InteractionRay) -> [TalkCandidate] {
         guard let streamer = game.streamer else { return [] }
         return game.actorWorld.combatActors().compactMap { observation in
             guard
+                TalkTargetPicker.mayReach(observation.feet, along: ray),
                 !observation.isDead,
                 game.factions.hostility(of: observation.key) != .hostile,
                 let entry = streamer.referenceEntry(key: observation.key),

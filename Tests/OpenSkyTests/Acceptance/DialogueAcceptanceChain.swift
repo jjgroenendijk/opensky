@@ -54,7 +54,7 @@ final class DialogueAcceptanceChain {
         controller.dialogueWorld.wireDialogue(streamer: streamer)
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
-        streamer.talk.candidateSource = { [Self.candidate] }
+        streamer.talk.candidateSource = { _ in [Self.candidate] }
         streamer.talk.activations.register(.log) { [weak self] event in
             self?.activations.append(event)
         }
@@ -74,7 +74,7 @@ final class DialogueAcceptanceChain {
             maximumDistance: InteractionRay.defaultMaximumDistance
         ))
         let hit = try #require(TalkTargetPicker.nearest(
-            ray: ray, candidates: streamer.talk.candidateSource?() ?? []
+            ray: ray, candidates: streamer.talk.candidateSource?(ray) ?? []
         ))
         streamer.talk.speaker = hit.candidate.key
         streamer.talk.activations(TalkActivationEvent(speaker: hit.candidate.key))

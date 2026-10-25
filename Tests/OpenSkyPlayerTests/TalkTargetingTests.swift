@@ -29,6 +29,17 @@ struct TalkTargetingTests {
     }
 
     @Test
+    func onlyActorsWithinTheRaysReachAreWorthBuilding() throws {
+        let view = try #require(ray())
+        #expect(TalkTargetPicker.mayReach(SIMD3(100, 0, 0), along: view))
+        #expect(!TalkTargetPicker.mayReach(SIMD3(1000, 0, 0), along: view))
+        // The farthest actor `nearest` can pick still counts as reachable.
+        let edge = SIMD3<Float>(InteractionRay.defaultMaximumDistance + 10, 0, 0)
+        #expect(TalkTargetPicker.nearest(ray: view, candidates: [candidate(1, at: edge)]) != nil)
+        #expect(TalkTargetPicker.mayReach(edge, along: view))
+    }
+
+    @Test
     func picksTheActorUnderTheCrosshair() throws {
         let view = try #require(ray())
         let hit = try #require(
