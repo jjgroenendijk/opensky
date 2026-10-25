@@ -1,8 +1,7 @@
-// Clip synchronization. A blender's `m_indexOfSyncMasterChild` publishes the
-// master's phase to its siblings every update, so walk and run clips stay in step. A
-// synced `hkbBlendingTransitionEffect` seeds the incoming clip's phase once. Both write
-// `BehaviorGraphInstance.pendingClipPhase`. The index is used over the unconfirmed
-// flag bits (docs/engine/behavior-clips.md).
+// Clip synchronization. A synced blender publishes its leader's phase to its siblings
+// every update, so walk and run clips stay in step. A synced
+// `hkbBlendingTransitionEffect` seeds the incoming clip's phase once. Both write
+// `BehaviorGraphInstance.pendingClipPhase` (docs/engine/behavior-clips.md).
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -13,6 +12,34 @@ nonisolated extension BehaviorGraphInstance {
     /// none. Depth first in declared order, so the answer is the same on every
     /// run over the same graph.
     public func clipPhase(under target: HKXPointerTarget?) -> Float? {
+        firstClip(under: target) { clipTarget, _ in
+            nodeStates[clipTarget].flatMap { $0.hasSeeded ? $0.phase : nil }
+        }
+    }
+
+    /// Seconds one loop of the first playable clip below `target` lasts at its
+    /// authored speed, or nil when no clip there is loaded.
+    func clipCycleDuration(under target: HKXPointerTarget?) -> Float? {
+        firstClip(under: target) { _, generator in
+            guard
+                let clip = clip(
+                    named: generator.animationName, bindingIndex: generator.animationBindingIndex
+                ),
+                clip.duration > 0
+            else { return nil }
+            let cropped = clip.duration - max(generator.cropStartAmountLocalTime, 0)
+                - max(generator.cropEndAmountLocalTime, 0)
+            let length = generator.enforcedDuration > 0 ? generator.enforcedDuration : cropped
+            let seconds = generator.playbackSpeed > 0 ? length / generator.playbackSpeed : length
+            return seconds > 0 && seconds.isFinite ? seconds : nil
+        }
+    }
+
+    /// The first non-nil answer over the clip generators below `target`.
+    private func firstClip<Answer>(
+        under target: HKXPointerTarget?,
+        _ answer: (HKXPointerTarget, HKBClipGenerator) -> Answer?
+    ) -> Answer? {
         guard let target else { return nil }
         var visited: Set<HKXPointerTarget> = []
         var stack: [(target: HKXPointerTarget, depth: Int)] = [(target, 0)]
@@ -21,8 +48,11 @@ nonisolated extension BehaviorGraphInstance {
                 continue
             }
             guard let node = compiledNode(at: current) else { continue }
-            if node.object is HKBClipGenerator, let state = nodeStates[current], state.hasSeeded {
-                return state.phase
+            if
+                let generator = node.object as? HKBClipGenerator,
+                let found = answer(current, generator)
+            {
+                return found
             }
             for child in node.children.reversed() {
                 stack.append((child, depth + 1))

@@ -79,12 +79,19 @@ event the author never placed.
 
 Two mechanisms keep clips in phase. Clip evaluation reads the phase after it advances local time.
 
-A `hkbBlenderGenerator` whose `m_indexOfSyncMasterChild` names a child copies that child's phase
-onto every other child, every update. Phase is local time as a fraction of the clip's window. This
-stops a walk clip and a run clip of different lengths from drifting apart as the blend weight moves.
-Example: a 2-second master at phase 0.3 holds a 4-second follower at 1.2 seconds. The master runs
-first, so its phase is current when the others read it, and its result goes back at its own index,
-so the blend still adds up in declared order. 28 blenders in the vanilla player graph name a master.
+A `hkbBlenderGenerator` with the sync flag (0x1), or whose `m_indexOfSyncMasterChild` names a
+child, plays its children on one shared cycle. Phase is local time as a fraction of the clip's
+window. The shared cycle is the master's loop, or else the weight-averaged loop of the playing
+children. Each child plays at its own loop over the shared one, so all loops end together.
+Example: loops of 1 s and 2 s at equal weight share 1.5 s; after 0.3 s the short clip is at 0.2 s
+and the long one at 0.4 s, both at phase 0.2. Without this, a walk clip and a run clip of
+different lengths drift apart, and their legs pull against each other.
+
+The leader (the master, or the heaviest child) runs first. Its phase is then copied onto the
+others when they are more than 0.2% of a loop away, which happens when a child starts playing.
+Each result goes back at its own index, so the blend still adds up in declared order. Only the
+leader raises its clips' annotations. The vanilla speed blenders play one clip file at several
+speeds, so every follower would repeat the leader's `FootLeft` and `FootRight`.
 
 A `hkbBlendingTransitionEffect` with the sync bit set copies the old state's phase onto the new one
 once, when the new clip starts. A new clip tied to the old state forever would never advance on its
@@ -124,6 +131,25 @@ normalized. So a blender whose weights all fall away gives the reference pose, n
 
 The pose blend uses `m_weight`. Root travel uses `m_worldFromModelWeight`, which exists so a child
 can drive motion without driving the pose.
+
+### Parametric blend
+
+With the parametric flag (0x10), a child's `m_weight` is not its share but its place along
+`m_blendParameter`. In `mt_behavior.hkx` the speed blenders, such as `MT_ForwardBlend`, bind
+it to `SpeedSampled` and place walk at 82 and run at 351. The direction blender
+`MT_Direction_Blend` leaves it unbound: the `BSCyclicBlendTransitionGenerator` around it binds
+`fBlendParameter` to `Direction` and hands that value down. Only the two children around the
+parameter play, with linear shares. Example: walk at 0, run at 100, and sprint at 300 with a
+speed of 50 give half walk and half run, and the sprint
+clip does not play. Below the first place or above the last, that child plays alone. With the
+cyclic flag (0x20), the axis wraps from `m_maxCyclicBlendParameter` back to
+`m_minCyclicBlendParameter`, so a direction of 315 between children at 270 and 0 (360) is half
+each. The root travel weight `m_worldFromModelWeight` is scaled by the same share.
+
+The flag values come from the class reflection data of `hkbBlenderGenerator`
+([hkxcmd](https://github.com/figment/hkxcmd/blob/master/compat/hkbBlenderGenerator_1.cpp)). Its
+runtime members `m_sortedChildren`, `m_beginIntervalIndex`, `m_endIntervalIndex`, and
+`m_endIntervalWeight` show the two-child interval. The exact maths is not documented.
 
 A child's `m_boneWeights` (`hkbBoneWeightArray`) scales its weight per bone. An upper-body layer
 needs this. Skyrim's player graph blends a full-body movement pose with a left-arm pose and a

@@ -198,17 +198,20 @@ public enum BehaviorStateMachineFixture {
     public static func syncedBlender(
         _ name: String,
         children: [HKXPointerTarget?],
-        masterIndex: Int
+        masterIndex: Int = -1,
+        flags: Int = 0,
+        parameter: Float = 0,
+        cyclic: ClosedRange<Float> = 0 ... 0
     ) -> HKBBlenderGenerator {
         HKBBlenderGenerator(
             node: BehaviorFixture.nodeHeader(name),
             blender: HKBBlenderFields(
                 referencePoseWeightThreshold: 0,
-                blendParameter: 0,
-                minCyclicBlendParameter: 0,
-                maxCyclicBlendParameter: 0,
+                blendParameter: parameter,
+                minCyclicBlendParameter: cyclic.lowerBound,
+                maxCyclicBlendParameter: cyclic.upperBound,
                 indexOfSyncMasterChild: masterIndex,
-                flags: 0,
+                flags: flags,
                 subtractLastChild: false,
                 children: children
             ),

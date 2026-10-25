@@ -165,6 +165,11 @@ instead (see [hkaSplineCompressedAnimation](/formats/hka-animation.md#m_annotati
 | 0x5C | `m_subtractLastChild` | `hkBool` |
 | 0x60 | `m_children` | `hkArray<hkbBlenderGeneratorChild*>` |
 
+`m_flags` bits, from the class reflection data
+([hkxcmd](https://github.com/figment/hkxcmd/blob/master/compat/hkbBlenderGenerator_1.cpp)):
+0x1 sync, 0x4 smooth generator weights, 0x8 do not deactivate children with zero weight, 0x10
+parametric blend, 0x20 cyclic parametric blend, 0x40 force a dense pose.
+
 `hkbBlenderGeneratorChild`, size 80, comes from `hkbBindable`: `m_generator` at 0x30,
 `m_boneWeights` at 0x38, `hkReal m_weight` at 0x40, `hkReal m_worldFromModelWeight` at
 0x44.

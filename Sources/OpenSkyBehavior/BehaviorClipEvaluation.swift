@@ -23,6 +23,9 @@ nonisolated private struct BehaviorClipWindow {
 }
 
 nonisolated extension BehaviorGraphInstance {
+    /// The phase gap, as a fraction of the clip, below which a synced clip keeps its time.
+    static let syncPhaseTolerance: Float = 0.002
+
     /// Advances one clip generator and returns its pose.
     public func evaluateClip(
         _ generator: HKBClipGenerator,
@@ -170,7 +173,12 @@ nonisolated extension BehaviorGraphInstance {
         guard let pending = pendingClipPhase, pending.value.isFinite else { return false }
         guard !pending.seedOnly || justSeeded else { return false }
         let target = min(max(pending.value, 0), 1) * window.length
-        guard target != state.localTime else { return false }
+        // A synced clip that plays at the shared rate is already in step; a jump of
+        // a rounding error would drop its root travel for the update.
+        let gap = abs(target - state.localTime)
+        guard min(gap, window.length - gap) > window.length * Self.syncPhaseTolerance else {
+            return false
+        }
         state.localTime = target
         return true
     }
@@ -266,6 +274,7 @@ nonisolated extension BehaviorGraphInstance {
         wrapped: Bool,
         justSeeded: Bool
     ) {
+        guard !mutesClipAnnotations else { return }
         for annotation in clip.annotations {
             let at = annotation.time - window.start
             guard

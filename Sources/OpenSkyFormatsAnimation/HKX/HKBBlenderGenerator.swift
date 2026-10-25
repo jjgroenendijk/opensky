@@ -16,8 +16,8 @@ nonisolated public struct HKBBlenderFields: Equatable, Sendable {
     public let maxCyclicBlendParameter: Float
     /// Child whose clip time the others follow, or -1 for no sync.
     public let indexOfSyncMasterChild: Int
-    /// `hkbBlenderGenerator::BlenderFlags`: bit 0 sync cycles, bit 1 smooth
-    /// generator weights, bit 2 parametric blend, bit 3 velocity sync.
+    /// `hkbBlenderGenerator::BlenderFlags`: 0x1 sync, 0x4 smooth weights, 0x10
+    /// parametric, 0x20 cyclic parametric (docs/formats/hkx-behavior-nodes.md).
     public let flags: Int
     /// When true the last child is subtracted from the blend rather than added.
     public let subtractLastChild: Bool

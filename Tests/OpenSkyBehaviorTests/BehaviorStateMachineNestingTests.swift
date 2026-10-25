@@ -263,7 +263,7 @@ struct BehaviorStateMachineNestingTests {
         }
         let master = try #require(graph.nodeStates[fast])
         let follower = try #require(graph.nodeStates[slow])
-        #expect(master.phase == follower.phase)
+        #expect(abs(master.phase - follower.phase) < 1e-5)
         #expect(abs(master.localTime - 0.6) < 1e-5)
         #expect(abs(follower.localTime - 1.2) < 1e-5)
     }
