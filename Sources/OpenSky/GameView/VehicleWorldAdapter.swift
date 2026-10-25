@@ -192,6 +192,10 @@ extension VehicleWorldAdapter: VehicleWorld {
         return SIMD3(origin.x, origin.y, origin.z)
     }
 
+    func vehicleHasBone(_ key: ReferenceKey, named bone: String) -> Bool {
+        game.actorPlayback(for: key)?.hasBone(named: bone) ?? false
+    }
+
     func vehicleGround(at point: SIMD3<Float>, excluding vehicles: Set<ReferenceKey>) -> Float? {
         guard let streamer = game.streamer else { return nil }
         let terrain = streamer.sampleTerrain(at: SIMD2(point.x, point.y))?.height
