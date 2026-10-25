@@ -9,12 +9,13 @@ import OpenSkyReference
 
 enum ReferenceCommand {
     static func status(arguments _: ReferenceArguments.Status) {
-        let status = ReferencePrefixStatus(prefix: ReferenceSettings.prefix())
+        let prefix = ReferenceSettings.prefix()
+        let status = ReferencePrefixStatus(prefix: prefix)
         print("[\(status.isReady ? "INFO" : "WARNING")] \(status.message)")
-        if let wine = ReferenceSettings.wine() {
+        if let wine = ReferenceSettings.wine(prefix: prefix) {
             print("[INFO] Wine: \(wine.path(percentEncoded: false))")
         } else {
-            print("[WARNING] No Wine found. Install the gcenx game-porting-toolkit cask.")
+            print("[WARNING] No Wine found. Run make reference-setup.")
         }
     }
 

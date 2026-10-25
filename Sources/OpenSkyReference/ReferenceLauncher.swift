@@ -1,5 +1,6 @@
 // The thin shell around `ReferenceLaunchPlan`: writes the window size into the
-// prefix's `SkyrimPrefs.ini`, then starts Steam and the game. The CLI and the
+// prefix's `SkyrimPrefs.ini`, repairs Steam's browser, then starts Steam and the game. The CLI and
+// the
 // launcher page share it.
 
 import Foundation
@@ -8,12 +9,17 @@ nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, Loca
     case notReady(String)
     case noWine
     case noWineUser
+    case noWrapper
+    case outsidePrefix(String)
 
     public var errorDescription: String? {
         switch self {
         case let .notReady(message): message
         case .noWine: "No Wine found; run make reference-setup."
         case .noWineUser: "The prefix has no Wine user folder; run make reference-setup."
+        case .noWrapper: "The prefix has no Steam web helper wrapper; run make reference-setup."
+        case let .outsidePrefix(path):
+            "Wine links this folder outside the prefix; run make reference-setup: \(path)"
         }
     }
 }
@@ -34,6 +40,7 @@ nonisolated public enum ReferenceLauncher {
         height: Int
     ) throws -> URL {
         guard let ini = prefix.prefsIni() else { throw ReferenceLauncherError.noWineUser }
+        try requireInsidePrefix(ini.deletingLastPathComponent(), prefix: prefix)
         let preset = prefix.gameDirectory.appending(path: "High.ini")
         let text = (try? String(contentsOf: ini, encoding: .utf8))
             ?? (try? String(contentsOf: preset, encoding: .utf8)) ?? ""
@@ -43,6 +50,23 @@ nonisolated public enum ReferenceLauncher {
         try Data(ReferencePrefsIni.apply(to: text, width: width, height: height).utf8)
             .write(to: ini)
         return ini
+    }
+
+    /// Wine's default links the user's `Documents` to the macOS home folder; a write
+    /// through such a link would leave the prefix.
+    static func requireInsidePrefix(_ folder: URL, prefix: ReferencePrefix) throws {
+        var existing = folder
+        while
+            !FileManager.default.fileExists(atPath: existing.path(percentEncoded: false)),
+            existing.pathComponents.count > 1
+        {
+            existing.deleteLastPathComponent()
+        }
+        let resolved = existing.resolvingSymlinksInPath().path(percentEncoded: false)
+        let root = prefix.root.resolvingSymlinksInPath().path(percentEncoded: false)
+        guard resolved.hasPrefix(root) else {
+            throw ReferenceLauncherError.outsidePrefix(resolved)
+        }
     }
 
     /// Wine runs each Windows program as a process whose command line names it.
@@ -76,13 +100,20 @@ nonisolated public enum ReferenceLauncher {
     public static func launch(
         prefix: ReferencePrefix, width: Int, height: Int, steamWait: Int, logs: URL
     ) async throws {
-        guard let wine = ReferenceSettings.wine() else { throw ReferenceLauncherError.noWine }
+        guard let wine = ReferenceSettings.wine(prefix: prefix.root) else {
+            throw ReferenceLauncherError.noWine
+        }
         _ = try writePrefsIni(prefix: prefix, width: width, height: height)
         let plan = ReferenceLaunchPlan(
-            prefix: prefix, wine: wine, baseEnvironment: ProcessInfo.processInfo.environment
+            prefix: prefix, wine: wine, baseEnvironment: ProcessInfo.processInfo.environment,
+            clientDownloaded: FileManager.default.fileExists(
+                atPath: prefix.steamUI.path(percentEncoded: false)
+            )
         )
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         if !isSteamRunning() {
+            ReferenceSteamRepair.removeBrowserLocks(prefix: prefix)
+            try ReferenceSteamRepair.deployWrapper(prefix: prefix)
             try start(
                 plan.steam,
                 environment: plan.environment,

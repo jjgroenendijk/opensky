@@ -36,18 +36,24 @@ struct ReferencePrefixTests {
     @Test func launchRunsSteamThenTheGameInsideThePrefix() {
         let wine = URL(filePath: "/opt/wine64")
         let plan = ReferenceLaunchPlan(
-            prefix: ReferencePrefix(root: root), wine: wine, baseEnvironment: ["HOME": "/h"]
+            prefix: ReferencePrefix(root: root), wine: wine, baseEnvironment: ["HOME": "/h"],
+            clientDownloaded: true
         )
-        #expect(plan.steam.arguments.first == #"C:\Program Files (x86)\Steam\steam.exe"#)
+        #expect(plan.steam.arguments == [
+            #"C:\Program Files (x86)\Steam\steam.exe"#,
+            "-no-cef-sandbox", "-cef-single-process", "-noverifyfiles"
+        ])
+        #expect(!ReferenceLaunchPlan.steamArguments(clientDownloaded: false)
+            .contains("-noverifyfiles"))
         #expect(plan.game.arguments.last?.hasSuffix(#"\SkyrimSE.exe"#) == true)
         #expect(plan.game.workingDirectory == ReferencePrefix(root: root).gameDirectory)
         #expect(plan.environment["WINEPREFIX"] == "/Volumes/x/prefix/")
         #expect(plan.environment["MTL_HUD_ENABLED"] == "0")
-        #expect(plan.environment["D3DM_ENABLE_METALFX"] == "0")
+        #expect(plan.environment["WINEDLLOVERRIDES"]?.hasPrefix("bcrypt=b;ncrypt=b;") == true)
         #expect(plan.environment["HOME"] == "/h")
     }
 
-    @Test func environmentBeatsDefaultsAndWineFallsBackToTheCask() throws {
+    @Test func environmentBeatsDefaultsAndWineFallsBackToThePrefixRuntime() throws {
         let defaults = try #require(UserDefaults(suiteName: "ReferencePrefixTests-\(UUID())"))
         defaults.set("/from/defaults", forKey: ReferenceSettings.prefixDefaultsKey)
         #expect(ReferenceSettings.prefix(environment: [:], userDefaults: defaults)?
@@ -56,10 +62,13 @@ struct ReferencePrefixTests {
             environment: [ReferenceSettings.prefixEnvironmentKey: "/from/env"],
             userDefaults: defaults
         )?.path(percentEncoded: false) == "/from/env/")
-        let wine = ReferenceSettings.wine(environment: [:], userDefaults: nil) {
-            $0 == ReferenceSettings.wineCandidates[1]
+        let bundled = ReferencePrefix(root: root).wine.path(percentEncoded: false)
+        let wine = ReferenceSettings.wine(prefix: root, environment: [:], userDefaults: nil) {
+            $0 == bundled
         }
-        #expect(wine?.path(percentEncoded: false) == ReferenceSettings.wineCandidates[1])
+        #expect(wine?
+            .path(percentEncoded: false) == "/Volumes/x/prefix/opensky-runtime/wine/bin/wine")
+        #expect(ReferenceSettings.wine(prefix: nil, environment: [:], userDefaults: nil) == nil)
     }
 
     @Test func prefsIniSetsTheDisplayKeysAndKeepsTheRest() {

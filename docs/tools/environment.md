@@ -79,16 +79,19 @@ Retires when a `plugins.txt` appears in a searched location.
 
 ## Reference game toolchain
 
-Observed 2026-10-25 on macOS 27.0.1, Xcode 27.1, and Homebrew 7.0.9. The newest
-`gcenx/wine/game-porting-toolkit` cask is 3.0-3 (released 2026-03-03); no GPTK 4 build of
-it exists, so `make reference-setup` copies the GPTK 4 libraries over it
-([reference game](/tools/reference-game.md)). Homebrew 7 refuses the cask until
-`brew tap gcenx/wine` runs, which the setup does. Rosetta 2 was not installed on this machine,
-and `softwareupdate --install-rosetta` needs an administrator password. The setup then ran
-through on GPTK 4.0 beta 3 into `/Volumes/data/opensky-reference`. The Steam installer
-writes `Steam.exe` with a capital S; the case-insensitive volume finds it as `steam.exe`.
+Observed 2026-10-25 on macOS 27.0.1 ([reference game](/tools/reference-game.md)):
 
-Retires when the cask ships a GPTK 4 build, or the reference game moves to another Wine.
+- The Game Porting Toolkit Wine (the gcenx cask, Wine 7.7) cannot run the current Windows
+  Steam: Steam crashes in `bcrypt` on the `BCRYPT_RNG_ALG_HANDLE` pseudo-handle.
+- Plain Wine 11.0 runs Steam, but its window stays black and the client never logs on
+  ("Failed to start auth session ... Transport Error"). The soju recipe fixes both.
+- `steamcmd` logs in under Wine 11, but the game rejects it and restarts through
+  `steam://run/489830`.
+- The Steam installer writes `Steam.exe` with a capital S; the case-insensitive volume
+  finds it as `steam.exe`.
+- Rosetta 2 needed an administrator password to install.
+
+Retires when the Game Porting Toolkit ships a Wine that runs the current Steam.
 
 ## Permission grants
 

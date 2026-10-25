@@ -1,6 +1,5 @@
-// The `SkyrimPrefs.ini` values the reference game needs under Game Porting Toolkit: a
-// borderless window of a fixed size, so its capture matches OpenSky's pixel for pixel.
-// Source: https://www.applegamingwiki.com/wiki/Game_Porting_Toolkit
+// The `SkyrimPrefs.ini` values the reference game needs under Wine: a borderless
+// window of a fixed size, so its capture matches OpenSky's pixel for pixel.
 
 import Foundation
 

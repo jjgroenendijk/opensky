@@ -1,4 +1,4 @@
-// `reference`: the Windows game under Game Porting Toolkit, run beside OpenSky to compare
+// `reference`: the Windows game under Wine, run beside OpenSky to compare
 // the two (docs/tools/reference-game.md). Writes go to the reference prefix and `.logs/`.
 
 import ArgumentParser
@@ -35,7 +35,7 @@ public struct ReferenceBatchOptions: ParsableArguments, Sendable {
 public struct ReferenceArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "reference",
-        abstract: "Run the Windows game under Game Porting Toolkit and compare it with OpenSky.",
+        abstract: "Run the Windows game under Wine and compare it with OpenSky.",
         subcommands: [Status.self, Check.self, Launch.self, ExportView.self, Capture.self]
     )
 

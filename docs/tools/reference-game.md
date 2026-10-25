@@ -1,40 +1,76 @@
 ---
 type: Tool
 title: Reference game
-description: Running the real Windows Skyrim SE under Apple's Game Porting Toolkit 4 on the
-  same Mac, putting it at OpenSky's view, and comparing the two frames side by side.
-tags: [tool, reference, gptk, wine, comparison, rendering]
+description: Running the real Windows Skyrim SE under Wine 11 and DXMT on the same Mac,
+  putting it at OpenSky's view, and comparing the two frames side by side.
+tags: [tool, reference, wine, dxmt, comparison, rendering]
 ---
 
 # Reference game
 
-The reference game is the real Windows Skyrim SE, run on this Mac under Apple's Game Porting
-Toolkit (GPTK). It loads the same data as OpenSky, so a capture from each side at the same
-view shows each difference directly: rendering, lighting, weather, UI, and actors.
+The reference game is the real Windows Skyrim SE, run on this Mac under Wine. It loads the
+same data as OpenSky, so a capture from each side at the same view shows each difference
+directly: rendering, lighting, weather, UI, and actors.
 
 It is developer tooling. The scripts are in `reference/`, the rules in the `OpenSkyReference`
-module, and the commands in `openskycli reference`. No release bundles Wine or GPTK, and the
+module, and the commands in `openskycli reference`. No release bundles Wine or DXMT, and the
 app lists the Reference Game page only once a prefix is set.
 
 ## How the pieces fit
 
-- **Wine** is the gcenx `game-porting-toolkit` Homebrew cask. It runs under Rosetta 2.
-  Apple ships GPTK 4 as an "evaluation environment for Windows games": D3DMetal, which turns
-  DirectX 11 and 12 into Metal, plus Wine-side libraries, but no runnable Wine. The
-  GPTK disk image holds a second image, "Evaluation environment for Windows games". Its
-  `redist/lib/` holds only D3DMetal and the Direct3D, DXGI, and NVAPI parts of Wine, not
-  Wine itself (no `ntdll.so`). Setup keeps the cask's `lib/external` and `lib/wine` as
-  `external.cask` and `wine.cask`, copies them back, and lays `redist/lib/` over them.
-- **The prefix** is one self-contained fake Windows folder tree. It holds Windows Steam,
-  because the game's copy protection needs a logged-in client, and the game's own copy.
-- **The game copy** is an APFS clone of the install OpenSky reads. A clone shares disk
-  blocks with the original until one side writes, so it costs almost no space. Windows Steam
-  may update or repair the copy; the original stays untouched, because OpenSky treats it as
-  read-only input.
+Everything lives in one folder, the prefix, on the external disk:
+
+| Part | Where | What it is |
+| --- | --- | --- |
+| Wine 11.0 | `opensky-runtime/wine/` | Gcenx's `wine-stable-11.0_1` build of upstream Wine. It runs under Rosetta 2 |
+| DXMT | inside that Wine | An open-source (MIT) Direct3D 11 to Metal layer. The game draws through it |
+| Steam helpers | `opensky-runtime/steam-support/` | The web helper wrapper and a Mac driver build that DXMT needs |
+| Wine prefix | `drive_c/`, `*.reg` | One fake Windows folder tree, with Windows Steam in it |
+| Game copy | Steam's `steamapps/common/` | An APFS clone of the install OpenSky reads |
+
+- **Windows Steam** is needed, because the game's copy protection wants a logged-in client.
+  Starting the game without Steam, or removing the protection, is not an option.
+- **The game copy** shares disk blocks with the original until one side writes, so it costs
+  almost no space. Windows Steam may update or repair the copy; the original stays
+  untouched, because OpenSky treats it as read-only input.
+- **DXMT, not D3DMetal.** Apple's D3DMetal comes with the Game Porting Toolkit, whose Wine
+  (7.7) is too old for the current Steam client. Upstream Wine 11 runs Steam, and DXMT gives
+  it a Metal renderer. The game's frames therefore come from DXMT's translation, not from
+  Apple's.
 
 Every write goes into the prefix or `.logs/`: the `SkyrimPrefs.ini` edit, the console batch
-file, the Wine logs, and the captures. A capture shows game assets, so it never leaves
+file, the Wine logs, and the captures. Wine's default breaks this in two ways, and setup
+undoes both. It links the Wine user's `Desktop`, `Documents`, and other folders to the
+macOS home folder, so the game's ini and saves would land in `~/Documents/My Games`; setup
+replaces the links with real folders, and the launcher refuses to write through a link that
+leaves the prefix. `winemenubuilder` writes `.desktop` files to `~/Desktop` and
+`~/.local/share`; setup and the launcher turn it off. A capture shows game assets, so it never leaves
 `.logs/` (root `AGENTS.md`, Legal & IP boundary).
+
+## Why Steam needs repairs under Wine
+
+These facts come from the soju project (<https://github.com/BCD1210/soju>), which runs
+Steam on the same Wine build. OpenSky reimplements its recipe in `reference/setup.sh` and
+`OpenSkyReference`. It copies no soju code; setup downloads soju's published prebuilt
+`steam-support-v2` files and checks the SHA-256 of each one.
+
+- **Black Steam window.** Steam's browser (CEF, the Chromium Embedded Framework) draws
+  nothing under Wine when it uses the GPU or a separate process. The wrapper starts
+  `steamwebhelper_real.exe` with `--disable-gpu --single-process`. A Steam update puts
+  Valve's helper back, so the launcher swaps it again before each start: a helper over
+  500 KB is Valve's, the wrapper is a few KB.
+- **Steam flags.** `steam.exe -no-cef-sandbox -cef-single-process`, plus `-noverifyfiles`
+  once the client is downloaded, so Steam does not restore its own helper.
+- **No login.** Wine's own `bcrypt` and `ncrypt` are forced (`bcrypt=b;ncrypt=b`), and the
+  Steam overlay DLLs are off.
+- **Frozen client.** Wine 11.0 probes each audio device format by format in Steam's main
+  loop. With virtual audio devices this stalls Steam before login, so `steam.exe` gets
+  `winecoreaudio.drv=disabled` as a per-program override.
+- **Windowless start after a crash.** Chromium's `Singleton*` and `*.lock` files in the Wine
+  user's `AppData/Local/Steam/htmlcache` stay behind. The launcher deletes them.
+- **Steam on DXMT crashes.** DXMT is the global Direct3D. Steam's own programs get Wine's
+  Direct3D instead: copies in `system32` with the builtin marker changed, and per-program
+  overrides `d3d11,d3d10core,dxgi=native` and `winemetal=disabled`.
 
 ## Setup
 
@@ -43,45 +79,44 @@ continues where the last one stopped.
 
 1. Install Rosetta 2. It needs an administrator password:
    `softwareupdate --install-rosetta --agree-to-license`.
-2. Sign in at <https://developer.apple.com/games/game-porting-toolkit/>, download the Game
-   Porting Toolkit 4 disk image, open it, and open the "Evaluation environment for Windows
-   games" image inside it. Setup finds that second volume.
-3. Run `make reference-setup PREFIX=<folder>`. Pick a folder on the same APFS volume as the
+2. Run `make reference-setup PREFIX=<folder>`. Pick a folder on the same APFS volume as the
    game, outside the repo and outside the install, so the clone is instant. `GAME=<install>`
    overrides the `OpenSkyDataRoot` setting as the copy's source. The script:
-   1. taps `gcenx/wine` and installs the cask;
-   2. copies the GPTK 4 libraries into the cask's Wine;
-   3. creates the prefix and sets Windows 10;
-   4. downloads and runs the Windows Steam installer;
+   1. downloads Wine 11.0 and checks its SHA-256;
+   2. downloads soju's `steam-support-v2` files, checks each hash, and puts DXMT and the
+      Mac driver into that Wine;
+   3. creates the prefix, sets Windows 10, and writes the DLL overrides above;
+   4. installs Windows Steam and starts it once, so it downloads its client;
    5. clones the game and its `appmanifest_489830.acf` into the prefix's Steam library;
    6. stores the folder as the `OpenSkyReferencePrefix` setting.
-4. Run `make reference-game`. Log in to Steam once in the window that opens. In the game's
+3. Run `make reference-game`. Log in to Steam once in the window that opens. In the game's
    Steam properties, set updates to "Only update this game when I launch it", so the copy
    stays on the same build as the install.
-5. Run `make reference-check`. It compares the Steam `buildid` of both installs and the
+4. Run `make reference-check`. It compares the Steam `buildid` of both installs and the
    SHA-256 of every `.esm`, and names each difference.
 
 The setting has an environment override, `OPENSKY_REFERENCE_PREFIX`. The Wine binary is
-found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then the cask's
-paths. The Settings page shows the prefix with "Show details" on.
+found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
+`opensky-runtime/wine/bin/wine` in the prefix. The Settings page shows the prefix with
+"Show details" on.
 
 ## Launching
 
-`make reference-game` (`openskycli reference launch`) does three things:
+`make reference-game` (`openskycli reference launch`) does four things:
 
 1. It writes `bBorderless=1`, `bFull Screen=0`, `iSize W`, and `iSize H` into the prefix's
    `SkyrimPrefs.ini`, starting from the game's `High.ini` preset when the game has not
-   written the file yet. Under GPTK the window size goes wrong without these keys
-   (<https://www.applegamingwiki.com/wiki/The_Elder_Scrolls_V:_Skyrim_Special_Edition>). The
-   default size is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it.
-2. It starts Windows Steam with `-silent` unless a `steam.exe` already runs, and waits
-   `--steam-wait` seconds for the login.
-3. It starts `SkyrimSE.exe` from its own folder, the way the SKSE loader does, so Steam does
+   written the file yet. Without these keys the game window does not match the capture size.
+   The default size is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it.
+2. Unless a `steam.exe` already runs, it deletes the browser lock files and swaps in the
+   web helper wrapper.
+3. It starts Windows Steam with the flags above, and waits `--steam-wait` seconds for the
+   login.
+4. It starts `SkyrimSE.exe` from its own folder, the way the SKSE loader does, so Steam does
    not open the game's launcher window.
 
-The environment sets `WINEMSYNC=1` for faster thread waits. It turns off the Metal HUD
-(`MTL_HUD_ENABLED=0`) and MetalFX upscaling (`D3DM_ENABLE_METALFX=0`), because both change
-the captured image. Wine's output goes to `.logs/reference-game/<UTC time>/`.
+The environment turns off the Metal HUD (`MTL_HUD_ENABLED=0`), because it changes the
+captured image. Wine's output goes to `.logs/reference-game/<UTC time>/`.
 
 ## Same view, two games
 
@@ -146,10 +181,10 @@ a real bug.
 
 ## Caveats
 
-- The gcenx cask is kept up by one person, and a macOS update can break it. CrossOver is
-  the paid fallback.
-- D3DMetal's output is close to Windows, not identical. Check a rendering difference
-  against a Windows screenshot before filing it as an OpenSky bug.
+- The recipe depends on one Wine build (Gcenx `wine-stable-11.0_1`) and on soju's prebuilt
+  files made for it. A newer Wine needs a matching DXMT and Mac driver.
+- DXMT's output is close to Windows, not identical. Check a rendering difference against a
+  Windows screenshot before filing it as an OpenSky bug.
 - Metal GPU captures of the reference game would show its passes and render targets. They
   need the owner's decision first. Translated shaders could be read for structure only; their
   code never goes into OpenSky.

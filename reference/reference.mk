@@ -1,4 +1,4 @@
-# The Windows reference game under Game Porting Toolkit (docs/tools/reference-game.md).
+# The Windows reference game under Wine 11 and DXMT (docs/tools/reference-game.md).
 # Developer tooling: no release bundles any of it.
 
 ##@ Reference game

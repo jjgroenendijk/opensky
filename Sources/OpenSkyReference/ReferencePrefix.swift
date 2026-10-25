@@ -27,6 +27,30 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
         steamDirectory.appending(path: "steam.exe")
     }
 
+    /// Steam's browser helpers, one `cef.win*` folder each.
+    public var cefDirectory: URL {
+        steamDirectory.appending(path: "bin/cef", directoryHint: .isDirectory)
+    }
+
+    /// Exists once Steam has downloaded its client on the first start.
+    public var steamUI: URL {
+        steamDirectory.appending(path: "steamui.dll")
+    }
+
+    /// The private Wine with DXMT and the Steam helpers that `reference/setup.sh` puts
+    /// beside the prefix's own folders.
+    public var runtimeDirectory: URL {
+        root.appending(path: "opensky-runtime", directoryHint: .isDirectory)
+    }
+
+    public var wine: URL {
+        runtimeDirectory.appending(path: "wine/bin/wine")
+    }
+
+    public var webHelperWrapper: URL {
+        runtimeDirectory.appending(path: "steam-support/steamwebhelper-wrapper.exe")
+    }
+
     public var steamApps: URL {
         steamDirectory.appending(path: "steamapps", directoryHint: .isDirectory)
     }

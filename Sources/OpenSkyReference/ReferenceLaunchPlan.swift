@@ -15,21 +15,33 @@ nonisolated public struct ReferenceLaunchPlan: Equatable, Sendable {
     public var game: ReferenceProcess
     public var environment: [String: String]
 
-    /// `WINEMSYNC` makes thread waits faster. The Metal HUD and MetalFX upscaling stay
-    /// off, because both change the captured image.
+    /// Steam's browser draws nothing under Wine with its sandbox or a separate GPU
+    /// process. `-noverifyfiles` keeps Steam from restoring its own web helper, but
+    /// the first start needs the check to download the client.
+    public static func steamArguments(clientDownloaded: Bool) -> [String] {
+        [ReferencePrefix.steamWindowsPath, "-no-cef-sandbox", "-cef-single-process"]
+            + (clientDownloaded ? ["-noverifyfiles"] : [])
+    }
+
+    /// Wine's own `bcrypt` and `ncrypt` keep Steam's login working. The Steam overlay
+    /// stays off, and `winemenubuilder` cannot write into the macOS home folder. The Metal HUD
+    /// stays off, because it changes the captured image.
     public static func environment(prefix: URL, base: [String: String]) -> [String: String] {
         var environment = base
         environment["WINEPREFIX"] = prefix.path(percentEncoded: false)
-        environment["WINEMSYNC"] = "1"
         environment["WINEDEBUG"] = "-all"
+        environment["WINEDLLOVERRIDES"] =
+            "bcrypt=b;ncrypt=b;gameoverlayrenderer,gameoverlayrenderer64=d;winemenubuilder.exe=d"
         environment["MTL_HUD_ENABLED"] = "0"
-        environment["D3DM_ENABLE_METALFX"] = "0"
         return environment
     }
 
-    public init(prefix: ReferencePrefix, wine: URL, baseEnvironment: [String: String]) {
+    public init(
+        prefix: ReferencePrefix, wine: URL, baseEnvironment: [String: String],
+        clientDownloaded: Bool
+    ) {
         steam = ReferenceProcess(
-            executable: wine, arguments: [ReferencePrefix.steamWindowsPath, "-silent"],
+            executable: wine, arguments: Self.steamArguments(clientDownloaded: clientDownloaded),
             workingDirectory: prefix.steamDirectory
         )
         game = ReferenceProcess(

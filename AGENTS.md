@@ -96,7 +96,7 @@ conflict.
   `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
   Link the run directory, never a loose file (`docs/tools/run-output.md`).
 - `reference/` holds the developer-only tooling for the Windows reference game, run under
-  Game Porting Toolkit beside OpenSky (`docs/tools/reference-game.md`). No release ships it.
+  Wine beside OpenSky (`docs/tools/reference-game.md`). No release ships it.
 - Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it. Each nested
   `AGENTS.md` has a `CLAUDE.md` symlink beside it; `make lint` checks it.
 

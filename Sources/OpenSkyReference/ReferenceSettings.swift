@@ -13,13 +13,6 @@ nonisolated public enum ReferenceSettings {
     /// The newest comparison run, so the launcher page shows it without a terminal.
     public static let latestRunDefaultsKey = "OpenSkyReferenceLatestRun"
 
-    /// Where the Game Porting Toolkit cask puts its Wine, probed when no setting names one.
-    public static let wineCandidates = [
-        "/Applications/Game Porting Toolkit.app/Contents/Resources/wine/bin/wine64",
-        "/usr/local/bin/wine64",
-        "/opt/homebrew/bin/wine64"
-    ]
-
     public static func prefix(
         environment: [String: String] = ProcessInfo.processInfo.environment,
         userDefaults: UserDefaults? = GameDataLocator.persistedRootDefaults
@@ -28,7 +21,9 @@ nonisolated public enum ReferenceSettings {
             .map { URL(filePath: $0, directoryHint: .isDirectory) }
     }
 
+    /// A setting wins; otherwise the private Wine that setup put inside the prefix.
     public static func wine(
+        prefix: URL?,
         environment: [String: String] = ProcessInfo.processInfo.environment,
         userDefaults: UserDefaults? = GameDataLocator.persistedRootDefaults,
         exists: (String) -> Bool = { FileManager.default.isExecutableFile(atPath: $0) }
@@ -36,7 +31,8 @@ nonisolated public enum ReferenceSettings {
         if let path = setting(wineEnvironmentKey, wineDefaultsKey, environment, userDefaults) {
             return URL(filePath: path)
         }
-        return wineCandidates.first(where: exists).map { URL(filePath: $0) }
+        let bundled = prefix.map { ReferencePrefix(root: $0).wine }
+        return bundled.flatMap { exists($0.path(percentEncoded: false)) ? $0 : nil }
     }
 
     public static func latestRun(
