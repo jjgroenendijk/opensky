@@ -20,6 +20,7 @@ extension Renderer: MTKViewDelegate {
         adoptFrameInput(frameDriver?.prepareLiveFrame() ?? frameInput)
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
+        advanceLoadingCoverParticlesFromWallClock()
         updatePrecipitation(deltaTime: particleDelta)
         frameDriver?.finishLiveFrame()
         purgeRetiredResources()

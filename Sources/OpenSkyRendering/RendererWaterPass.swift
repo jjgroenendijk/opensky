@@ -53,8 +53,8 @@ extension Renderer {
         let groups = frameDrawGroups.alphaTested.contains {
             $0.drawsBlended && ($0.material.effect?.flags ?? 0) & soft != 0
         }
-        let particles = particlesEnabled && effectiveRenderLayers.contains(.particles)
-            && (scene.particles + effects.particles).contains { $0.effect.softDepth > 0 }
+        let particles = particlesEnabled && effectiveRenderLayers.contains(activeParticleLayer)
+            && activeParticles.contains { $0.effect.softDepth > 0 }
         return groups || particles
     }
 
