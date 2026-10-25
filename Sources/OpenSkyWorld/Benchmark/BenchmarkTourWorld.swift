@@ -51,6 +51,8 @@ public protocol BenchmarkTourWorld: AnyObject {
     func beginTour(overrides: [PlayerSettingID: Double], passTiming: Bool)
     /// Gives everything `beginTour` took back.
     func endTour()
+    /// Called once with the result when the tour ends or is stopped.
+    func tourFinished(_ result: BenchmarkTourResult)
 
     func startArrival(at place: BenchmarkPlace)
     func arrivalProgress() -> BenchmarkArrival

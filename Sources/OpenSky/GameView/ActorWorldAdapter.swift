@@ -59,21 +59,6 @@ final class ActorWorldAdapter {
         self.game = game
     }
 
-    /// A provider without stat indexes, such as every synthetic scene, leaves
-    /// the runtime nil.
-    func makeActorValues() -> ActorValueCoordinator {
-        guard let data = game.worldData, let baselines = data.actorValueBaselines else {
-            return ActorValueCoordinator(store: game.worldState, world: self, baselines: nil)
-        }
-        return ActorValueCoordinator(
-            store: game.worldState,
-            world: self,
-            baselines: baselines,
-            regeneration: RegenerationSettings.resolve(store: data.gameSettings),
-            stamina: StaminaSettings.resolve(store: data.gameSettings)
-        )
-    }
-
     func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
         baseNames = [:]
         actorList = nil

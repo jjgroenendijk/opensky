@@ -19,7 +19,7 @@ struct SubtitleCoordinatorTests {
     func eachSettingGatesItsKindAndALineClearsOnTime() {
         let presenter = FakeSubtitlePresenter()
         let subtitles = SubtitleCoordinator(presenter: presenter)
-        subtitles.settings = SubtitleSettings(dialogue: true, general: false)
+        subtitles.apply(SubtitleSettings(dialogue: true, general: false))
 
         #expect(!subtitles.say("Hey, you.", kind: .general, seconds: 2, now: 0))
         #expect(subtitles.say("Hey, you.", kind: .dialogue, seconds: 2, now: 0))
@@ -35,11 +35,11 @@ struct SubtitleCoordinatorTests {
     func turningTheSettingOffHidesTheShownLine() {
         let presenter = FakeSubtitlePresenter()
         let subtitles = SubtitleCoordinator(presenter: presenter)
-        subtitles.settings = SubtitleSettings(dialogue: false, general: true)
+        subtitles.apply(SubtitleSettings(dialogue: false, general: true))
         #expect(subtitles.say("Run!", kind: .general, seconds: 5, now: 0))
-        subtitles.settings.dialogue = true
+        subtitles.apply(SubtitleSettings(dialogue: true, general: true))
         #expect(subtitles.current == "Run!")
-        subtitles.settings.general = false
+        subtitles.apply(SubtitleSettings(dialogue: true, general: false))
         #expect(subtitles.current == nil)
         #expect(presenter.shown == ["Run!", nil])
         #expect(!subtitles.say("", kind: .dialogue, seconds: 1, now: 0))

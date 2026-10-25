@@ -12,6 +12,10 @@ import OpenSkyGameData
 public protocol ObjectBehaviorWorld: AnyObject {
     /// The animated objects of every resident cell.
     func residentAnimatedObjects() -> [CellAnimatedObject]
+    /// Each event a graph fires, in fire order.
+    func objectGraphFired(_ event: String, from reference: UInt32)
+    /// A wait that finished, by its token; true when its event fired.
+    func animationWaitFinished(token: UInt64, fired: Bool)
 }
 
 /// One line of the object animation readout.
@@ -66,10 +70,6 @@ public final class ObjectBehaviorCoordinator {
     private var nextToken = firstToken
     /// Off holds every object in the pose it has.
     public var isEnabled = true
-    /// Each event a graph fires, as `(reference, event name)`.
-    public var onAnimationEvent: ((UInt32, String) -> Void)?
-    /// A wait that finished, by its token; true when its event fired.
-    public var onWaitFinished: ((UInt64, Bool) -> Void)?
 
     /// `settings` gives the persisted switch.
     public init(
@@ -98,7 +98,7 @@ public final class ObjectBehaviorCoordinator {
         for reference in running.keys where !seen.contains(reference) {
             running.removeValue(forKey: reference)
             for wait in waits.removeValue(forKey: reference) ?? [] {
-                onWaitFinished?(wait.token, false)
+                world?.animationWaitFinished(token: wait.token, fired: false)
             }
         }
     }
@@ -114,7 +114,7 @@ public final class ObjectBehaviorCoordinator {
                 entry.object.pose.publish(result.bones)
             }
             for name in result.firedEvents.compactMap(\.name) + result.unboundEvents {
-                onAnimationEvent?(reference, name)
+                world?.objectGraphFired(name, from: reference)
                 finishWaits(on: reference, event: name)
             }
         }
@@ -140,7 +140,8 @@ public final class ObjectBehaviorCoordinator {
         running[reference]?.instance.variable(named: name)
     }
 
-    /// A token answered through `onWaitFinished` when the graph fires `event`.
+    /// A token answered through `ObjectBehaviorWorld.animationWaitFinished` when the graph fires
+    /// `event`.
     /// Nil when the object runs no graph, so the caller can fall back.
     public func awaitEvent(_ event: String, on reference: UInt32) -> UInt64? {
         guard running[reference] != nil else { return nil }
@@ -194,7 +195,7 @@ public final class ObjectBehaviorCoordinator {
         pending.removeAll { $0.event.caseInsensitiveCompare(event) == .orderedSame }
         waits[reference] = pending.isEmpty ? nil : pending
         for wait in done {
-            onWaitFinished?(wait.token, true)
+            world?.animationWaitFinished(token: wait.token, fired: true)
         }
     }
 }

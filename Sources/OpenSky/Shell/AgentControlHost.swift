@@ -14,7 +14,14 @@ final class AgentControlHost {
 
     private(set) lazy var coordinator = AgentControlCoordinator(
         socketPath: AgentSocketLocation.path(environment: environment),
-        world: { [weak self] in self?.game?.session?.agentWorld }
+        world: { [weak self] in self?.game?.session?.agentWorld },
+        enabledChanged: { [weak self] enabled in
+            if enabled {
+                self?.startPolling()
+            } else {
+                self?.stopPolling()
+            }
+        }
     )
     private let environment: [String: String]
     private weak var game: GameViewController?
@@ -25,13 +32,6 @@ final class AgentControlHost {
         coordinator.appVersion = Bundle.main
             .object(forInfoDictionaryKey: "CFBundleShortVersionString")
             as? String ?? "dev"
-        coordinator.onEnabledChange = { [weak self] enabled in
-            if enabled {
-                self?.startPolling()
-            } else {
-                self?.stopPolling()
-            }
-        }
         if environment[Self.environmentKey] == "1" {
             coordinator.setEnabled(true)
         }

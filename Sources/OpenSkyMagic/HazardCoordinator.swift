@@ -38,13 +38,15 @@ nonisolated public struct HazardHitRecord: Equatable, Sendable {
 
 @MainActor
 public final class HazardCoordinator {
-    public weak var world: (any HazardWorld)?
+    public weak let world: (any HazardWorld)?
     public private(set) var runtime = HazardRuntime()
     public private(set) var lastHits: [ReferenceKey: HazardHitRecord] = [:]
     public private(set) var hitTotal = 0
     public private(set) var unresolvedSpellTotal = 0
 
-    public init() {}
+    public init(world: (any HazardWorld)? = nil) {
+        self.world = world
+    }
 
     /// Replaces the hazards `cell` placed with `placements`, so a rebuild after an
     /// enable change adds and drops hazards in one step.

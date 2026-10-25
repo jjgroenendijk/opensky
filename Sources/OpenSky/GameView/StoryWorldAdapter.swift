@@ -38,6 +38,8 @@ protocol StoryWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var combat: CombatCoordinator { get }
+    var scenes: SceneCoordinator { get }
+    var storyManager: StoryManagerCoordinator { get }
     var crime: CrimeCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var dialogue: DialogueCoordinator { get }
@@ -80,13 +82,13 @@ final class StoryWorldAdapter {
     var framesSinceAmbientSpeech = 0
     var lastAmbientSpeechSeconds: Double?
 
-    /// Scene playback over the dialogue runtime.
-    lazy var scenes = SceneCoordinator(dialogue: game.dialogue, world: self)
+    var scenes: SceneCoordinator {
+        game.scenes
+    }
 
-    /// Story-manager events and the session-start pass.
-    lazy var storyManager = StoryManagerCoordinator(
-        world: self, social: SocialEventCoordinator(world: self)
-    )
+    var storyManager: StoryManagerCoordinator {
+        game.storyManager
+    }
 
     init(game: any StoryWorldHost) {
         self.game = game
@@ -97,9 +99,6 @@ final class StoryWorldAdapter {
         let data = provider.storyData
         // The quest store's space, so a DLC scene names its quest as the runtime does.
         let questStore = provider.questStore
-        if let store = data.scenes, let quests = questStore {
-            scenes.catalog = SceneCatalog(store: store, resolver: quests.resolver)
-        }
         if
             let dialogue = provider.dialogueStore,
             let files = game.audioFileSystem
@@ -110,8 +109,6 @@ final class StoryWorldAdapter {
                 locator: locator, read: { try files.contents(forPath: $0) }
             )
         }
-        storyManager.story = data.storyManager
-        storyManager.social.settings = data.social
         game.scripts.bridge?.storyNatives.questStarted = { [weak self] quest in
             self?.scenes.questDidStart(quest)
         }

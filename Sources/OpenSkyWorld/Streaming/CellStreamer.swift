@@ -217,7 +217,7 @@ public final class CellStreamer {
         )
         self.runner = runner
         self.sink = sink
-        installTriggerLogging()
+        registerTriggerLog()
     }
 
     /// One frame: collects finished builds, re-grids around the camera,

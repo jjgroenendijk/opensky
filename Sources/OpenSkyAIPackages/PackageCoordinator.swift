@@ -215,20 +215,6 @@ nonisolated public enum PackageCore {
     }
 }
 
-/// The load order's packages and the game settings the procedures read. The
-/// settings default to the vanilla values.
-public struct PackageSessionData {
-    public var store: PackageStore
-    public var guardWarnings = GuardWarningSettings.vanilla
-    public var sandboxSettings = SandboxSettings.vanilla
-    public var bumpSettings = BumpReactionSettings.vanilla
-    public var followSettings = FollowSettings.vanilla
-
-    public init(store: PackageStore) {
-        self.store = store
-    }
-}
-
 /// Owns the package selector. Without game data the runtime stays nil and
 /// every call is a no-op.
 @MainActor

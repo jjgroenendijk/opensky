@@ -22,7 +22,7 @@ public final class SocialEventCoordinator {
     public static let frameInterval = 30
     public static let historyLimit = 12
 
-    public var settings = SocialSettings.documentedDefaults
+    public let settings: SocialSettings
     public private(set) var recent: [StoryEventData] = []
     public private(set) var sentCounts: [FourCC: Int] = [:]
     private var state = SocialState()
@@ -30,8 +30,9 @@ public final class SocialEventCoordinator {
     let world: any SocialEventWorld
     private var pendingCommands: [SocialEventCommand] = []
 
-    public init(world: any SocialEventWorld) {
+    public init(world: any SocialEventWorld, settings: SocialSettings = .documentedDefaults) {
         self.world = world
+        self.settings = settings
     }
 
     /// Called once per frame.

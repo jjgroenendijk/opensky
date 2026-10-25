@@ -118,7 +118,7 @@ extension AudioWorldAdapter: AudioWorld {
         return evaluator.evaluate(conditions).isTrue
     }
 
-    func installAudio(
+    func audioStarted(
         engine: WorldAudioEngine,
         sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector,

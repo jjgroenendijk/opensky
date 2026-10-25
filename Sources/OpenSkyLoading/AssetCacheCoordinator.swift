@@ -45,11 +45,6 @@ public final class AssetCacheCoordinator {
     public private(set) var problem: String?
     /// The disk of the folder, read with each check.
     public private(set) var volume: AssetCacheVolume?
-    /// The page that owns the coordinator. Other pages use `observe`.
-    public var onChange: (() -> Void)? {
-        didSet { notify() }
-    }
-
     private var observers: [() -> Void] = []
 
     private var store: PlayerSettingsStore
@@ -172,7 +167,6 @@ public final class AssetCacheCoordinator {
     }
 
     private func notify() {
-        onChange?()
         for observer in observers {
             observer()
         }

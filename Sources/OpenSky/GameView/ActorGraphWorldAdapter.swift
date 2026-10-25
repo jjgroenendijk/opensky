@@ -23,9 +23,11 @@ import simd
 @MainActor
 protocol ActorGraphWorldHost: AnyObject {
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var actorGraphs: ActorGraphCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var gameSession: GameSession? { get }
+    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var playerSettingsStore: PlayerSettingsStore { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -35,9 +37,10 @@ protocol ActorGraphWorldHost: AnyObject {
 
 final class ActorGraphWorldAdapter {
     unowned let game: any ActorGraphWorldHost
-    private(set) lazy var graphs = ActorGraphCoordinator(
-        world: self, files: { [unowned game] in game.audioFileSystem }
-    )
+    var graphs: ActorGraphCoordinator {
+        game.actorGraphs
+    }
+
     /// Each mover's drive gait, which picks its footstep list.
     private var gaits: [ReferenceKey: LocomotionGait] = [:]
     /// Each actor base's race graph project; nil when its race names none.
@@ -60,9 +63,6 @@ final class ActorGraphWorldAdapter {
         store.observe { [weak self, weak store] id in
             guard let store, Self.settings.contains(id) else { return }
             self?.graphs.load(settings: store)
-        }
-        graphs.onAnimationEvent = { [weak self] actor, name in
-            self?.forward(name, from: actor)
         }
         gameSession.worldTick.register(.actorGraphs) { [weak self] delta in
             self?.graphs.tick(deltaTime: delta)
@@ -89,7 +89,7 @@ final class ActorGraphWorldAdapter {
         graphs.variableResolution(player: game.gameSession?.locomotion.graph?.variables)
     }
 
-    private func forward(_ name: String, from actor: ReferenceKey) {
+    func actorGraphFired(_ name: String, from actor: ReferenceKey) {
         game.gameSession?.animationEvents?.handle(name, from: actor)
         game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
         guard
@@ -116,6 +116,10 @@ final class ActorGraphWorldAdapter {
 }
 
 extension ActorGraphWorldAdapter: ActorGraphWorld {
+    func animationWaitFinished(token: UInt64, fired: Bool) {
+        game.objectAnimationWorld.answerWait(token: token, fired: fired)
+    }
+
     func actorGraphCandidates() -> [ActorGraphCandidate] {
         guard let streamer = game.streamer else { return [] }
         // A rider plays the rider clips of its mount's gait instead.

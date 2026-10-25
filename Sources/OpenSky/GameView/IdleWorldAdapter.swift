@@ -29,6 +29,7 @@ protocol IdleWorldHost: AnyObject {
     var player: PlayerCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
+    var idles: IdleCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var sessionWiring: WorldSessionWiring { get }
     var streamer: CellStreamer? { get }
@@ -39,14 +40,16 @@ protocol IdleWorldHost: AnyObject {
 
 final class IdleWorldAdapter {
     unowned let game: any IdleWorldHost
-    /// Ambient idles at idle markers, with their props. The clip loader is built first.
-    private(set) lazy var idles = IdleCoordinator(world: self, data: sessionData())
+    var idles: IdleCoordinator {
+        game.idles
+    }
 
     init(game: any IdleWorldHost) {
         self.game = game
     }
 
-    private func sessionData() -> IdleSessionData? {
+    /// The clip loader is built first.
+    func sessionData() -> IdleSessionData? {
         guard
             let store = game.worldData?.idleStore,
             let files = game.audioFileSystem,

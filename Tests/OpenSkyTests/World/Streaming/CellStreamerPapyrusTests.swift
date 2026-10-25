@@ -1,6 +1,6 @@
 // Script instances across streaming: created on first integration, kept
 // through a rebuild without new load events, retired on unload, silent while
-// staged offscreen. Wired as `ScriptWorldAdapter.wirePapyrus` wires them, over
+// staged offscreen. Wired as `WorldSessionWiring.buildScripts` wires them, over
 // synthetic references and scripts. No Metal.
 
 import Foundation

@@ -91,14 +91,11 @@ final class ScriptWorldAdapter {
     /// Builds the bridge with every seam, then the VM over it. The streamer, the
     /// renderer, and the provider each feed the VM one way, so the engine never
     /// depends on it. Without compiled scripts there is no VM.
-    func wirePapyrus(
+    func makeBridge(
         provider: WorldDataStores,
         gameSession: GameSession,
         streamer: CellStreamer
-    ) {
-        guard
-            let fileSystem = provider.scriptFileSystem
-        else { return }
+    ) -> PapyrusWorldStateBridge {
         let bridge = PapyrusWorldStateBridge(
             worldState: game.worldState, references: streamer,
             globals: game.runtimeState.globalStore,
@@ -112,8 +109,7 @@ final class ScriptWorldAdapter {
         wireModelNodes(provider: provider, gameSession: gameSession)
         wireGameNatives(bridge: bridge, provider: provider)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
-        let resolver = provider.scriptFormIDResolver
-        bridge.formIDResolver = resolver
+        bridge.formIDResolver = provider.scriptFormIDResolver
         bridge.playerNatives
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
         bridge.playerNatives.dismount = { [weak game] actor in
@@ -123,8 +119,17 @@ final class ScriptWorldAdapter {
             .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
         bridge.playerNatives
             .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
-        let scripts = ScriptCoordinator(world: self, bridge: bridge, fileSystem: fileSystem)
-        game.scripts = scripts
+        return bridge
+    }
+
+    /// The VM's cell, trigger, and frame events.
+    func wireScripts(
+        _ scripts: ScriptCoordinator,
+        resolver: FormIDResolver,
+        gameSession: GameSession,
+        streamer: CellStreamer
+    ) {
+        let bridge = scripts.bridge
         let world = scripts.runtime
         streamer.onInteraction.register(.scripts) { [weak bridge] event in
             bridge?.handleInteraction(event)

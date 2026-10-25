@@ -94,8 +94,7 @@ struct EffectsProbeRealDataTests {
         #expect(blast.hazards == [hazard.hazard])
 
         let actor = ProbeHazardWorld(spells: spells, npc: Self.npc)
-        let coordinator = HazardCoordinator()
-        coordinator.world = actor
+        let coordinator = HazardCoordinator(world: actor)
         coordinator.spawn(HazardPlacement(
             id: .generated(0x8000_0001), spec: hazard, position: .zero
         ))

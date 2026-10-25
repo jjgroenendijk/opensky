@@ -52,11 +52,12 @@ public final class MountCoordinator {
     /// The last actor the player mounted, kept after the dismount.
     public private(set) var lastMount: ReferenceKey?
     public private(set) var lastRefusal: MountRefusal?
-    public var settings = MountSettings.vanilla
+    public let settings: MountSettings
     weak let world: (any MountWorld)?
 
-    public init(world: any MountWorld) {
+    public init(world: any MountWorld, settings: MountSettings = .vanilla) {
         self.world = world
+        self.settings = settings
     }
 
     /// A mount is under the player, in any phase.

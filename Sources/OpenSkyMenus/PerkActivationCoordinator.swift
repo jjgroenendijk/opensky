@@ -40,7 +40,7 @@ nonisolated public struct PerkChoiceRun: Equatable, Sendable {
 }
 
 public final class PerkActivationCoordinator {
-    public weak var world: (any PerkActivationWorld)?
+    public weak let world: (any PerkActivationWorld)?
     private let messages: MessageCoordinator
     public private(set) var lastRun: PerkChoiceRun?
 

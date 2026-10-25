@@ -70,16 +70,7 @@ final class InventoryWorldAdapter {
 
     /// After the audio and Papyrus subscribers, so the activation sound plays
     /// whether or not the take succeeds. The crime reporter joins the take path.
-    func wireWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
-        guard let data = sessionData(provider: provider, streamer: streamer) else { return }
-        game.inventory = InventoryCoordinator(
-            world: self,
-            lockWorld: game.lockWorld,
-            data: data,
-            seams: InventorySeams(
-                recipeConditions: self, skillUses: game.progression, storyEvents: game.storyWorld
-            )
-        )
+    func wireWorldItems(streamer: CellStreamer) {
         streamer.onInteraction.register(.worldItems) { [weak self] event in
             guard let self else { return }
             let action = event.target.interaction.action
@@ -107,7 +98,7 @@ final class InventoryWorldAdapter {
     }
 
     /// Nil without inventory baselines: then there is no item runtime.
-    private func sessionData(
+    func sessionData(
         provider: WorldDataStores, streamer: CellStreamer
     ) -> InventorySessionData? {
         guard let baselines = provider.inventoryBaselines else { return nil }
@@ -120,7 +111,6 @@ final class InventoryWorldAdapter {
         ))
         data.equipment = provider.equipmentCatalog
         data.crafting = provider.craftingCatalog
-        data.vendors = vendors(provider: provider)
         data.rules.barterPricing = provider.barterPricing
         data.rules.cellReset = provider.cellResetSettings
         data.rules.pickpocket = PickpocketSettings.resolve(store: settings)
@@ -191,19 +181,14 @@ final class InventoryWorldAdapter {
     }
 
     /// Nil without a FACT and FLST index. The memberships are read at call time.
-    private func vendors(provider: WorldDataStores) -> VendorCoordinator? {
+    static func vendorCore(provider: WorldDataStores) -> VendorCore? {
         guard
             let factionStore = provider.factionStore,
             let formLists = provider.formListStore
         else { return nil }
-        let core = VendorCore(
+        return VendorCore(
             resolver: VendorResolver(factions: factionStore, formLists: formLists),
             itemPluginName: provider.magicItemPluginName
-        )
-        return VendorCoordinator(
-            core: core,
-            world: self,
-            restockSettings: VendorRestockSettings.resolve(store: provider.gameSettings)
         )
     }
 }

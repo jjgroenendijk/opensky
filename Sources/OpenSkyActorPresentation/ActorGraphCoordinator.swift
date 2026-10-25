@@ -35,6 +35,10 @@ public protocol ActorGraphWorld: AnyObject {
     /// Where the cutoff distance is measured from. Nil steps every graph at full rate.
     var actorGraphViewer: SIMD3<Float>? { get }
     func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback?
+    /// Each event a graph fires, by actor, in fire order.
+    func actorGraphFired(_ event: String, from actor: ReferenceKey)
+    /// A wait that finished, by its token; true when its event fired.
+    func animationWaitFinished(token: UInt64, fired: Bool)
 }
 
 /// A project decoded off the main actor, with its behaviour folder indexed.
@@ -138,10 +142,6 @@ public final class ActorGraphCoordinator {
     }
 
     public var cutoff = ActorGraphCutoff.standard
-    /// Each event a graph fires, by actor, in fire order.
-    public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
-    /// A wait that finished, by its token; true when its event fired.
-    public var onWaitFinished: ((UInt64, Bool) -> Void)?
     private var waits: [ReferenceKey: [(event: String, token: UInt64)]] = [:]
     private var nextToken = firstToken
 
@@ -185,7 +185,8 @@ public final class ActorGraphCoordinator {
         }
     }
 
-    /// A token answered through `onWaitFinished` when the actor's graph fires `event`.
+    /// A token answered through `ActorGraphWorld.animationWaitFinished` when the actor's graph
+    /// fires `event`.
     /// Nil when the actor runs no graph, so the caller can fall back.
     public func awaitEvent(_ event: String, on actor: ReferenceKey) -> UInt64? {
         guard running[actor] != nil else { return nil }
@@ -246,7 +247,7 @@ public final class ActorGraphCoordinator {
         entry.instance.deactivate()
         entry.playback?.detachGraph()
         for wait in waits.removeValue(forKey: actor) ?? [] {
-            onWaitFinished?(wait.token, false)
+            world?.animationWaitFinished(token: wait.token, fired: false)
         }
     }
 
@@ -298,7 +299,7 @@ public final class ActorGraphCoordinator {
         guard !names.isEmpty, let entry = running[actor] else { return }
         entry.recentEvents = Array((entry.recentEvents + names).suffix(Self.recentEventLimit))
         for name in names {
-            onAnimationEvent?(actor, name)
+            world?.actorGraphFired(name, from: actor)
             finishWaits(on: actor, event: name)
         }
     }
@@ -311,7 +312,7 @@ public final class ActorGraphCoordinator {
         let left = pending.filter { !matches($0) }
         waits[actor] = left.isEmpty ? nil : left
         for wait in pending where matches(wait) {
-            onWaitFinished?(wait.token, true)
+            world?.animationWaitFinished(token: wait.token, fired: true)
         }
     }
 

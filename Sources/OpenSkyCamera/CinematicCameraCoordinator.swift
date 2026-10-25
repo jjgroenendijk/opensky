@@ -40,7 +40,7 @@ nonisolated public struct CinematicFrame: Equatable, Sendable {
 }
 
 public final class CinematicCameraCoordinator {
-    public var settings = KillCamSettings()
+    public let settings: KillCamSettings
     public private(set) var player: CinematicShotPlayer?
     public private(set) var attacker: ReferenceKey?
     public private(set) var target: ReferenceKey?
@@ -52,8 +52,9 @@ public final class CinematicCameraCoordinator {
     private var random = ConditionRandom()
     weak let world: (any CinematicCameraWorld)?
 
-    public init(world: any CinematicCameraWorld) {
+    public init(world: any CinematicCameraWorld, settings: KillCamSettings = KillCamSettings()) {
         self.world = world
+        self.settings = settings
     }
 
     public var isPlaying: Bool {

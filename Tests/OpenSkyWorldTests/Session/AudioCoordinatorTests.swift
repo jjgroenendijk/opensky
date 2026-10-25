@@ -39,7 +39,7 @@ private final class FakeAudioWorld: AudioWorld {
         true
     }
 
-    func installAudio(
+    func audioStarted(
         engine _: WorldAudioEngine,
         sounds _: WorldAudioSoundDirector,
         music _: WorldMusicDirector,

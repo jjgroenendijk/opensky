@@ -14,6 +14,19 @@ nonisolated public struct CellResetRecord: Equatable, Sendable {
     public let resetReferences: [ReferenceKey]
 }
 
+/// The record questions a reset asks, answered from the load-order stores.
+public struct CellResetQueries {
+    /// Whether the reference may return to its plugin state, such as a respawning
+    /// actor or container. A No Respawn reference never reaches this test.
+    public var respawns: (RuntimeReferenceEntry) -> Bool = { _ in true }
+    /// Whether the cell's location is cleared, which waits `clearedHours`.
+    public var isCleared: (CellScene) -> Bool = { _ in false }
+    /// The cell's encounter zone has its "never resets" flag.
+    public var neverResets: (CellScene) -> Bool = { _ in false }
+
+    public init() {}
+}
+
 @MainActor
 public final class CellResetCoordinator {
     /// What resets. Enable state, created references, quest and script state do not.
@@ -23,23 +36,19 @@ public final class CellResetCoordinator {
     ]
 
     public let store: WorldStateStore
-    public var settings: CellResetSettings
-    public var clock: () -> GameClock?
-    /// Whether the reference may return to its plugin state, such as a respawning
-    /// actor or container. A No Respawn reference never reaches this test.
-    public var respawns: (RuntimeReferenceEntry) -> Bool = { _ in true }
-    /// Whether the cell's location is cleared, which waits `clearedHours`.
-    public var isCleared: (CellScene) -> Bool = { _ in false }
-    /// The cell's encounter zone has its "never resets" flag.
-    public var neverResets: (CellScene) -> Bool = { _ in false }
+    public let settings: CellResetSettings
+    public let queries: CellResetQueries
+    public let clock: () -> GameClock?
     public private(set) var lastReset: CellResetRecord?
 
     public init(
         store: WorldStateStore, settings: CellResetSettings = .vanilla,
+        queries: CellResetQueries = CellResetQueries(),
         clock: @escaping () -> GameClock?
     ) {
         self.store = store
         self.settings = settings
+        self.queries = queries
         self.clock = clock
     }
 
@@ -81,8 +90,12 @@ public final class CellResetCoordinator {
         store.set(ledger, for: .player)
         let forced = departure == Self.forcedDeparture
         guard
-            forced || !neverResets(scene),
-            forced || settings.isDue(departedAt: departure, now: now, cleared: isCleared(scene))
+            forced || !queries.neverResets(scene),
+            forced || settings.isDue(
+                departedAt: departure,
+                now: now,
+                cleared: queries.isCleared(scene)
+            )
         else { return [] }
         let reset = scene.references.sortedEntries().filter(reset)
         lastReset = CellResetRecord(location: location, resetReferences: reset.map(\.key))
@@ -113,7 +126,7 @@ public final class CellResetCoordinator {
         guard
             let delta = store.delta(for: entry.key), delta[.spawn] == nil,
             entry.placedReference?.isNoRespawn != true, entry.placedActor?.isNoRespawn != true,
-            respawns(entry)
+            queries.respawns(entry)
         else { return false }
         var changed = false
         for kind in Self.resetKinds where store.reset(kind, for: entry.key) {

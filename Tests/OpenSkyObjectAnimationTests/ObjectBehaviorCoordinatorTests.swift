@@ -8,6 +8,10 @@ private final class EmptyObjectWorld: ObjectBehaviorWorld {
     func residentAnimatedObjects() -> [CellAnimatedObject] {
         []
     }
+
+    func objectGraphFired(_: String, from _: UInt32) {}
+
+    func animationWaitFinished(token _: UInt64, fired _: Bool) {}
 }
 
 @MainActor

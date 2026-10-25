@@ -99,8 +99,9 @@ struct CinematicCameraCoordinatorTests {
 
     @Test func forcedKillCamSkipsTheOdds() throws {
         let world = try Self.world()
-        let camera = CinematicCameraCoordinator(world: world)
-        camera.settings.enabled = false
+        var settings = KillCamSettings()
+        settings.enabled = false
+        let camera = CinematicCameraCoordinator(world: world, settings: settings)
         #expect(camera.playKillCam(
             attacker: Self.attacker, target: Self.target, remainingHostiles: 3, force: true
         ))

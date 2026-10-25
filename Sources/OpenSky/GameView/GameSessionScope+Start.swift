@@ -97,10 +97,6 @@ extension GameSessionScope {
         guard let renderer, let playback = actorPlayback(for: key) else { return nil }
         return playback.clip.namedWorldTransforms(at: renderer.animationTime)
     }
-
-    var scenes: SceneCoordinator {
-        storyWorld.scenes
-    }
 }
 
 // MARK: - The app scope's services

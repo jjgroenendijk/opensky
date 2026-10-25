@@ -181,8 +181,9 @@ Every coordinator takes its session data in the initializer. Two parts of the st
 after the scope is built:
 
 - `start()` builds the streamer, so its users read it as an optional.
-- Session start replaces the inventory, magic, and effects coordinators with ones built over
-  the loaded world, instead of the scope building them once.
+- Session start replaces the inventory, magic, effects, and Papyrus coordinators with ones
+  built over the streamer and the frame session, instead of the scope building them once.
+  `WorldSessionWiring` builds them, so they stay in the session scope's files.
 
 The `Papyrus` bridge's native families stay as they are. Each family is a value with optional
 closures, and a missing family answers nothing on purpose, so a native refuses instead of
@@ -198,13 +199,29 @@ frame steps, such as an arrow's or a script's, runs the commands at once, so the
 and the ragdoll's push land in the same frame as the damage. Every cast reaches the Papyrus
 `OnSpellCast` event through the `MagicWorld` port.
 
-## What the checks enforce afterwards
+## The checks
 
-- A lint rule fails a method in a package module whose name starts with `wire` or `install`.
-  The existing rule `late_attached_world` keeps failing `attach(world:)` and the like.
-- A lint rule fails a coordinator property that is settable from outside its module and holds a
-  dependency: a type ending in `Store`, `Settings`, `Texts`, `Runtime`, `Catalog`, `Resolver`,
-  `World`, `Seam`, `Reporting`, or `Presenting`, or a closure named `on...`.
-- A lint rule fails a coordinator built under `Sources/` outside the session scope's files.
+SwiftLint runs these rules in `make check` and CI (`tools/lint/.swiftlint.yml`):
+
+- `late_setter_method` fails a method in a package module whose name starts with `wire` or
+  `install`. A `static` method is allowed, because it fills a registry value, such as the
+  Papyrus native installers. A `private` helper is allowed, because only its own type calls
+  it. The older rule `late_attached_world` keeps failing `attach(world:)` and the like.
+- `late_setter_property` fails a `public` or `package` settable property in a coordinator
+  file that holds a dependency: a type ending in `Store`, `Settings`, `Texts`, `Runtime`,
+  `Catalog`, `Resolver`, `World`, `Seam`, `Reporting`, or `Presenting`, or a closure named
+  `on...`. A value type in a coordinator file trips it too, so such a type gets its own file.
+  Live input, such as the player's subtitle switches, arrives through a method, such as
+  `SubtitleCoordinator.apply(_:)`.
+- `coordinator_outside_session_scope` fails a coordinator initializer call in the app outside
+  the `GameSessionScope` and `WorldSessionWiring` files. The app shell and the launcher build
+  the app-scope coordinators, so they are excluded too. A package module may still build its
+  own part, such as the inventory's lock coordinator.
+
+A coordinator sends an event through its world port, not an `on...` closure, such as
+`ActorGraphWorld.actorGraphFired(_:from:)`. The adapter that answers the port forwards it.
+
+Two more checks keep the design:
+
 - There is no registration-ordered multicast type left, so a new event needs a phase enum.
 - A unit test builds the session scope from a synthetic load and checks that it builds.

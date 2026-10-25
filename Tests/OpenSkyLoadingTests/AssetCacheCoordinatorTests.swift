@@ -63,14 +63,16 @@ struct AssetCacheCoordinatorTests {
     /// Runs `start` and returns when the job it started is done.
     private func run(_ coordinator: AssetCacheCoordinator, _ start: () -> Void) async {
         var sawJob = false
+        var finished = false
         await withCheckedContinuation { continuation in
-            coordinator.onChange = { [weak coordinator] in
+            coordinator.observe { [weak coordinator] in
+                guard !finished else { return }
                 guard coordinator?.activity == .idle else {
                     sawJob = true
                     return
                 }
                 guard sawJob else { return }
-                coordinator?.onChange = nil
+                finished = true
                 continuation.resume()
             }
             start()

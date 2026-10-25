@@ -30,13 +30,17 @@ protocol VehicleWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
+    var vehicles: VehicleCoordinator { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
 }
 
 final class VehicleWorldAdapter {
     unowned let game: any VehicleWorldHost
-    private(set) lazy var vehicles = VehicleCoordinator(world: self)
+    var vehicles: VehicleCoordinator {
+        game.vehicles
+    }
+
     /// True after `SetPlayerAIDriven(true)`: the player's packages move the player.
     private(set) var isPlayerAIDriven = false
     /// The cell each follower is moving into while its old cell still draws it.

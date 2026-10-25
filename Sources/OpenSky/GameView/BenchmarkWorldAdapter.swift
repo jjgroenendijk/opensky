@@ -28,6 +28,7 @@ import simd
 protocol BenchmarkWorldHost: AnyObject {
     var agentWorld: AgentWorldAdapter { get }
     var benchmarkLoadPhases: LoadPhaseRecorder? { get }
+    var benchmarkTour: BenchmarkTourCoordinator { get }
     var effects: EffectsCoordinator { get }
     var gameSession: GameSession? { get }
     var hostView: NSView { get }
@@ -53,7 +54,10 @@ final class BenchmarkWorldAdapter {
         category: "Benchmark"
     )
     unowned let game: any BenchmarkWorldHost
-    private(set) lazy var tour = BenchmarkTourCoordinator(world: self)
+    var tour: BenchmarkTourCoordinator {
+        game.benchmarkTour
+    }
+
     let overlay = BenchmarkOverlayView()
     /// Started on the first frame the world is ready.
     var pendingRequest: BenchmarkRequest?
@@ -90,7 +94,6 @@ final class BenchmarkWorldAdapter {
 
     init(game: any BenchmarkWorldHost) {
         self.game = game
-        tour.onFinish = { [weak self] result in self?.finishAfterScreenshots(result) }
     }
 
     func wire(gameSession: GameSession) {
@@ -262,6 +265,10 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         renderer.gpuFrameLog = GPUFrameLog()
         renderer.setPassTimingEnabled(passTiming)
         game.simulationClock.freeze()
+    }
+
+    func tourFinished(_ result: BenchmarkTourResult) {
+        finishAfterScreenshots(result)
     }
 
     func endTour() {

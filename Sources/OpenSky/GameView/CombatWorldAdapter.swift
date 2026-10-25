@@ -76,14 +76,10 @@ final class CombatWorldAdapter {
         self.game = game
     }
 
-    /// Without game data the runtimes stay nil, and no fight starts with
+    /// Nil without game data: the runtimes stay nil, and no fight starts with
     /// invented numbers.
-    func makeCombat() -> CombatCoordinator {
-        guard let provider = game.worldData else {
-            return CombatCoordinator(
-                world: self, data: nil, explosions: game.effectsWorld.makeExplosions()
-            )
-        }
+    func sessionData() -> CombatSessionData? {
+        guard let provider = game.worldData else { return nil }
         let settings = provider.gameSettings
         let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
         var data = CombatSessionData(
@@ -100,9 +96,7 @@ final class CombatWorldAdapter {
         data.staggers = StaggerSettings.resolve(store: settings)
         data.combatAI = CombatAISettings.resolve(store: settings)
         data.arrows = ArrowSettings.resolve(store: settings, text: text)
-        return CombatCoordinator(
-            world: self, data: data, explosions: game.effectsWorld.makeExplosions()
-        )
+        return data
     }
 
     func wireMelee(gameSession: GameSession) {

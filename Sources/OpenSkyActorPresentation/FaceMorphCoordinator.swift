@@ -32,7 +32,7 @@ public final class FaceMorphCoordinator {
     }
 
     weak let world: (any FaceMorphWorld)?
-    public var settings = FaceAnimationSettings.vanilla
+    public let settings: FaceAnimationSettings
     public var automaticBlinkingEnabled = true
     public var dialogueExpressionsEnabled = true
     public var eyeMovementEnabled = true
@@ -43,7 +43,12 @@ public final class FaceMorphCoordinator {
     private var lastTick: Float?
 
     /// `settings` gives the persisted blinking, expression, and eye switches.
-    public init(world: (any FaceMorphWorld)? = nil, settings: PlayerSettingsStore? = nil) {
+    public init(
+        world: (any FaceMorphWorld)? = nil,
+        settings: PlayerSettingsStore? = nil,
+        animation: FaceAnimationSettings = .vanilla
+    ) {
+        self.settings = animation
         self.world = world
         if let settings {
             automaticBlinkingEnabled = settings.bool(.characterBlinking)

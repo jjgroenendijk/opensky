@@ -56,28 +56,20 @@ final class ProgressionWorldAdapter {
 
     /// The caster takes the runtime when its cast loop is built. The live
     /// conditions carry the globals, so no snapshot of them is kept.
-    func makePerks() -> PerkCoordinator {
-        guard let data = game.worldData, let store = data.perkStore else {
-            return PerkCoordinator(world: self, runtime: nil)
-        }
+    func perkRuntime() -> PerkRuntime? {
+        guard let store = game.worldData?.perkStore else { return nil }
         var runtime = PerkRuntime(
             store: game.worldState, perks: store, conditionRegistry: .standard
         )
         runtime.liveConditions = { [weak game] references in
             game?.runtimeState.conditionContext(indexing: references) ?? ConditionContext()
         }
-        return PerkCoordinator(
-            world: self,
-            runtime: runtime,
-            baselines: data.actorValueBaselines?.resolver
-                .map(ActorPerkBaselineResolver.init(actorValues:)),
-            pluginName: data.magicItemPluginName
-        )
+        return runtime
     }
 
     /// Every skill write goes through the actor-value runtime.
-    func makeProgression() -> ProgressionCoordinator {
-        let data = game.worldData.flatMap { provider in
+    func progressionData() -> ProgressionSessionData? {
+        game.worldData.flatMap { provider in
             game.actorValues.runtime.map { values in
                 ProgressionSessionData(
                     values: values,
@@ -92,9 +84,6 @@ final class ProgressionWorldAdapter {
                 )
             }
         }
-        return ProgressionCoordinator(
-            perks: game.perks, world: self, data: data, storyEvents: game.storyWorld
-        )
     }
 
     private func inventoryHolder(of key: ReferenceKey) -> InventoryHolder? {

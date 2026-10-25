@@ -160,6 +160,9 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
 | No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
 | No late-attach method in a package module | SwiftLint `late_attached_world` |
+| No `wire...` or `install...` method in a package module, except a static one | SwiftLint `late_setter_method` |
+| No coordinator property that holds a dependency and other modules can set | SwiftLint `late_setter_property` |
+| Only the session scope builds a game coordinator | SwiftLint `coordinator_outside_session_scope` |
 | An action returns a typed outcome, not `String` | SwiftLint `action_returns_text` |
 | A pure core imports no AppKit, Metal, or audio, and reads no clock | SwiftLint `pure_core_side_effect` |
 | The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |

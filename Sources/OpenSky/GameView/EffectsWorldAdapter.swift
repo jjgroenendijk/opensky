@@ -70,18 +70,9 @@ final class EffectsWorldAdapter {
     }
 
     func wireEffects(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
-        let renderer = gameSession.renderer
         guard let records = provider.effectRecords else { return }
         gameSession.imageSpaceLinks = ImageSpaceLinks(
             records: records, weatherPlugin: Self.basePlugin
-        )
-        game.effects = EffectsCoordinator(
-            records: records,
-            meshes: Self.meshes(provider: provider, renderer: renderer),
-            blood: BloodEffectSettings.resolve(store: provider.gameSettings) { [game] in
-                game.mapWorld.text($0)
-            },
-            world: self
         )
         game.effects.applyGraphicsSettings(game.playerSettings.store)
         let frameSteps = gameSession.frameSteps
@@ -138,7 +129,7 @@ final class EffectsWorldAdapter {
     }
 
     /// A main-thread library of its own: the cell build queue owns the other one.
-    private static func meshes(
+    static func meshes(
         provider: WorldDataStores,
         renderer: Renderer
     ) -> MeshLibrary? {

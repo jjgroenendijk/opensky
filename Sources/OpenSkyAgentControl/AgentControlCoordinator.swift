@@ -47,7 +47,7 @@ public final class AgentControlCoordinator {
     /// Host seconds, injectable so a test can move time.
     public var now: () -> Double = { ProcessInfo.processInfo.systemUptime }
     /// Called after the server starts or stops, so the host can start or stop polling.
-    public var onEnabledChange: ((Bool) -> Void)?
+    private let enabledChanged: (Bool) -> Void
 
     private var server: AgentSocketServer?
     private var connections: [Int: Connection] = [:]
@@ -56,10 +56,12 @@ public final class AgentControlCoordinator {
     /// the server outlives each game window.
     public init(
         socketPath: String = AgentSocketLocation.path(),
-        world: @escaping () -> (any AgentControlWorld)?
+        world: @escaping () -> (any AgentControlWorld)?,
+        enabledChanged: @escaping (Bool) -> Void = { _ in }
     ) {
         self.socketPath = socketPath
         router = AgentCommandRouter(world: world)
+        self.enabledChanged = enabledChanged
     }
 
     public var isEnabled: Bool {
@@ -72,7 +74,7 @@ public final class AgentControlCoordinator {
 
     public func setEnabled(_ enabled: Bool) {
         guard enabled != isEnabled else { return }
-        defer { onEnabledChange?(isEnabled) }
+        defer { enabledChanged(isEnabled) }
         guard enabled else {
             server?.stop()
             server = nil

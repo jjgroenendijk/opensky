@@ -21,7 +21,7 @@ extension CellStreamer {
     /// bridge, so nothing in `dispatchTriggerEdges` knows a readout exists.
     /// Weak, because the schedule this streamer owns would otherwise retain it
     /// back.
-    public func installTriggerLogging() {
+    func registerTriggerLog() {
         onTriggerTransition.register(.readout) { [weak self] event in
             guard let self else { return }
             triggerLog.record(event, formID: referenceEntry(key: event.reference)?.formID)

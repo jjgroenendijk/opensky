@@ -21,7 +21,7 @@ public protocol StoryManagerWorld: AnyObject {
 @MainActor
 public final class StoryManagerCoordinator {
     /// Nil without game data.
-    public var story: StoryManagerStore?
+    public let story: StoryManagerStore?
     public private(set) var lastWalk: StoryManagerWalk?
     public private(set) var sessionStart = SessionStartReport.empty
     /// Events fired this session, by code.
@@ -31,9 +31,12 @@ public final class StoryManagerCoordinator {
     public let social: SocialEventCoordinator
     let world: any StoryManagerWorld
 
-    public init(world: any StoryManagerWorld, social: SocialEventCoordinator) {
+    public init(
+        world: any StoryManagerWorld, social: SocialEventCoordinator, story: StoryManagerStore?
+    ) {
         self.world = world
         self.social = social
+        self.story = story
     }
 
     public var runtime: StoryManagerRuntime? {

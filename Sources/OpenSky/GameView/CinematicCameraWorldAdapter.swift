@@ -45,11 +45,17 @@ final class CinematicCameraWorldAdapter {
         self.game = game
     }
 
+    /// The install's base odds; the rest stay at their defaults.
+    static func killCamSettings(_ data: WorldDataStores?) -> KillCamSettings {
+        var settings = KillCamSettings()
+        if let store = data?.gameSettings {
+            settings.baseOdds = KillCamSettings.resolve(store: store).baseOdds
+        }
+        return settings
+    }
+
     func wire(gameSession: GameSession) {
         wireTracks(gameSession: gameSession)
-        if let store = game.worldData?.gameSettings {
-            game.cinematicCamera.settings.baseOdds = KillCamSettings.resolve(store: store).baseOdds
-        }
         // Frame steps run under a menu too; the shot keeps real time, so a
         // paused frame advances nothing.
         gameSession.frameSteps.register(.cinematicCamera) { [weak self, weak gameSession] _ in

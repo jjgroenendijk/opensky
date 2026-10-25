@@ -140,6 +140,30 @@ custom_rules:
     included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
     message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
     severity: error
+  # docs/decisions/session-scope.md: a static installer fills a registry, so it may keep the name.
+  late_setter_method:
+    name: "Late setter method"
+    regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*((public|open|package|internal|final|override|nonisolated|mutating)\s+)*func\s+(wire|install)\w*\s*[<(]'
+    included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Take the dependency in the initializer; no wire or install method (docs/decisions/session-scope.md)"
+    severity: error
+  # A value type in a coordinator file trips this too: move it to its own file.
+  late_setter_property:
+    name: "Late setter property"
+    regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*(public|open|package)\s+((final|nonisolated|weak|unowned|lazy)\s+)*var\s+(on[A-Z]\w*\b|\w+\s*:\s*[^=\n{]*\b\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b[^={\n]*(=[^{\n]*)?(\{\s*(didSet|willSet)[^\n]*)?$|\w+\s*=\s*\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b)'
+    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]*Coordinator(\+[A-Za-z]+)?\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Take the dependency in the initializer, or make the property private(set) (docs/decisions/session-scope.md)"
+    severity: error
+  coordinator_outside_session_scope:
+    name: "Coordinator outside the session scope"
+    regex: '\b[A-Z]\w*Coordinator\s*\('
+    included: 'Sources/OpenSky/.*\.swift$'
+    excluded: 'Sources/OpenSky/(Shell/.*|Launcher/.*|GameView/(GameSessionScope|WorldSessionWiring)[^/]*)\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "Only the session scope builds a game coordinator; the app shell builds app-scope ones (docs/decisions/session-scope.md)"
+    severity: error
   # The composition root is the app shell and the GameViewController files.
   controller_outside_composition_root:
     name: "Controller outside the composition root"

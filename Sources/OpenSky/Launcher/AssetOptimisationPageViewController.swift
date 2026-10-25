@@ -92,7 +92,8 @@ final class AssetOptimisationPageViewController: NSViewController {
                 layout.buttons([chooseFolderButton, defaultFolderButton, clearButton])
             ])
         ])
-        coordinator.onChange = { [weak self] in self?.refresh() }
+        coordinator.observe { [weak self] in self?.refresh() }
+        refresh()
     }
 
     override func viewWillAppear() {
