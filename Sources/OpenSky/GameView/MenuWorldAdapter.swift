@@ -47,7 +47,9 @@ protocol MenuWorldHost: MenuInputConsumer {
     var gameSession: GameSession? { get }
     var saveGames: SaveGameWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
+    var simulationClock: SteppedWallClock { get }
     var storyWorld: StoryWorldAdapter { get }
+    var streamer: CellStreamer? { get }
     var subtitles: SubtitleCoordinator { get }
     var swfMovies: SWFMovieSource { get }
     var hostView: NSView { get }
@@ -70,6 +72,11 @@ final class MenuWorldAdapter {
     /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
     private var coverNextTeleport = false
     private var teleportCovered = false
+    /// From New until the opening quest moves the player. A dark cover, not the
+    /// loading menu, because that menu pauses the scripts that make the move. On the
+    /// simulation clock, so a game paused by agent control does not run out the limit.
+    private var newGameCoverSince: Double?
+    static let newGameCoverLimitSeconds = 30.0
     /// The camera the logo was placed for, while the title backdrop shows.
     var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 
@@ -260,12 +267,19 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.storyWorld.rerunSessionStart()
         game.saveGames.resetPlayTime()
         game.player.refreshBody()
+        coverNextTeleport = true
         switch start {
         case .vanilla:
-            coverNextTeleport = true
-            game.storyWorld.startOpeningQuest()
+            coverUntilFirstMove()
+            if !game.storyWorld.startOpeningQuest() {
+                abandonNewGameCover()
+            }
         case let .cell(editorID): teleportPlayer(.cell(editorID), openingRaceMenu: true)
         }
+    }
+
+    func holdWorldLoading() {
+        game.streamer?.isHeld = true
     }
 
     func quitApplication() {
@@ -431,6 +445,8 @@ extension MenuWorldAdapter {
         job: () throws(AgentFailure) -> AgentTeleportJob
     ) {
         raceMenuAfterTeleport = openingRaceMenu
+        // In the same frame, so no world shows between the two covers.
+        liftNewGameCover()
         if coverNextTeleport {
             coverNextTeleport = false
             teleportCovered = true
@@ -444,6 +460,10 @@ extension MenuWorldAdapter {
             openRaceMenuIfAsked()
             return
         }
+        installStartTicker()
+    }
+
+    private func installStartTicker() {
         guard !startTickerInstalled, let gameSession = game.gameSession else { return }
         startTickerInstalled = true
         gameSession.frameSteps.register(.newGameTeleport) { [weak self] _ in
@@ -451,7 +471,34 @@ extension MenuWorldAdapter {
         }
     }
 
+    private func coverUntilFirstMove() {
+        newGameCoverSince = game.simulationClock.now
+        try? game.renderer?.setLoadingCover([])
+        game.hud.setCovered(true)
+        installStartTicker()
+    }
+
+    private func liftNewGameCover() {
+        guard newGameCoverSince != nil else { return }
+        newGameCoverSince = nil
+        try? game.renderer?.setLoadingCover(nil)
+        game.hud.setCovered(false)
+    }
+
+    /// The opening quest did not move the player, so the world loads where it stands.
+    private func abandonNewGameCover() {
+        liftNewGameCover()
+        game.streamer?.isHeld = false
+    }
+
     private func pollNewGameTeleport(now: Double) {
+        if
+            let since = newGameCoverSince,
+            game.simulationClock.now - since > Self.newGameCoverLimitSeconds
+        {
+            Self.logger.warning("[WARNING] the opening quest did not move the player")
+            abandonNewGameCover()
+        }
         guard let wait = newGameTeleport else { return }
         guard let result = wait.poll(now).finish else { return }
         newGameTeleport = nil

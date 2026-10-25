@@ -6,6 +6,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -65,6 +66,8 @@ public final class EffectLayer {
     public internal(set) var bloodyWeapons: [MembraneTarget: Float] = [:]
     /// The loading screen's object. While set, the world does not draw.
     public internal(set) var loadingCover: RenderScene?
+    /// Wall time for the cover's particle systems, which run while a menu pauses the world.
+    var loadingCoverClock = FrameSimClock()
     /// Membranes the last frame drew, for the readout.
     public internal(set) var lastMembraneDraws = 0
     /// The particle systems of effect models, simulated like the scene's.

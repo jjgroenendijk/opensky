@@ -14,11 +14,12 @@ extension Renderer {
         items: [ParticlePlayback],
         enabled: Bool,
         sorted: Bool = false,
+        layer: RenderLayer = .particles,
         state: inout ScenePassState
     ) {
         // The feature switch ANDed with the view filter: `enabled` is the
-        // subsystem's own toggle, `.particles` is the dev shell's layer mask.
-        guard enabled, effectiveRenderLayers.contains(.particles), !items.isEmpty else { return }
+        // subsystem's own toggle, `layer` is checked against the dev shell's layer mask.
+        guard enabled, effectiveRenderLayers.contains(layer), !items.isEmpty else { return }
         state.encoder.setDepthStencilState(waterDepthState)
         // Billboards carry no wire worth drawing, so the wireframe view leaves
         // them filled; the geometry paths after this one get their mode back.

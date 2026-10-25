@@ -1,4 +1,4 @@
-// The title menu: Continue, New, Load, and Quit over a paused world. It shows
+// The title menu: Continue, New, Load, and Quit over a held world. It shows
 // the vanilla main menu movie when it loads; see docs/engine/main-menu.md.
 
 import Foundation
@@ -11,6 +11,8 @@ public protocol TitleMenuWorld: AnyObject {
     var renderer: Renderer? { get }
     /// Shows the logo scene in place of the world, as the game does.
     func showTitleBackdrop(_ shown: Bool)
+    /// Loads no world until the player picks a start, because a save can be in another world.
+    func holdWorldLoading()
     /// Clears the session, starts the opening quests, and places the player.
     func startNewGame(at start: NewGameStart)
     func quitApplication()
@@ -148,6 +150,7 @@ public final class TitleMenuCoordinator {
         loadPage = nil
         menuMode.inputConsumer = world?.menuInputConsumer
         menuMode.present(Self.identifier)
+        world?.holdWorldLoading()
         guard let saves else {
             if movieEnabled {
                 startMovie()

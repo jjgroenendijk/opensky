@@ -45,6 +45,7 @@ extension Renderer {
         (frameInput.rigs.body?.render.drawCount ?? 0)
             + (frameInput.rigs.arms?.render.drawCount ?? 0)
             + (effects.loadingCover?.drawCount ?? 0) + effects.particles.count
+            + (effects.loadingCover?.particles.count ?? 0)
     }
 
     var rigInstanceCount: Int {

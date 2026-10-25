@@ -215,6 +215,7 @@ final class AgentTeleportJob {
             guard let entryDoor else {
                 throw AgentFailure(.unsupported, "the interior has no door to enter through")
             }
+            game.streamer?.isHeld = false
             guard game.streamer?.requestDoorTransition(from: entryDoor) == true else {
                 throw AgentFailure(.notReady, "a door transition is still loading")
             }
@@ -266,6 +267,8 @@ final class AgentTeleportJob {
         leavingInterior: Bool = true
     ) {
         let renderer = gameSession.renderer
+        // The move is a picked start, so the world held by the main menu loads now.
+        streamer.isHeld = false
         let rotation = SIMD3<Float>(0, 0, exactYaw ?? gameSession.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(position: feet, rotation: rotation))
         if let worldspace, worldspace != streamer.worldspaceEditorID {
@@ -273,6 +276,7 @@ final class AgentTeleportJob {
         } else if leavingInterior, streamer.interiorScene != nil {
             streamer.leaveInterior(camera: camera)
         } else {
+            streamer.moveStart(to: feet)
             renderer.camera = camera
             gameSession.reseedMovement(camera: camera)
         }
