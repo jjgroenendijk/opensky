@@ -47,6 +47,7 @@ extension AgentWorldAdapter {
         case let .global(editorID): try globalState(editorID)
         case .time: timeState()
         case .frame: frameState()
+        case .view: try viewState()
         }
     }
 

@@ -53,9 +53,11 @@ arrow keys.
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [<ref or quest editorID>]`, `state packages <ref>`,
 `state furniture [<ref>]`, `state objects [<ref>]`, `state changes [--limit <n>]`,
-`state time`, `state frame`.
+`state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
+- `state view` gives what the reference game's console takes: the player's `feet`, the
+  angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` (`docs/tools/reference-game.md`).
 - `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
   `LVLN` `hops` (list and chosen entry), the `playerLevel` it rolls at, whether that level is
   `frozen`, the `encounterLevel`, and the `difficulty`. `debug skillsmenu --levelup <n>` raises

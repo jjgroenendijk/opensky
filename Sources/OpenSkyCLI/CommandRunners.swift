@@ -277,3 +277,33 @@ extension GameArguments.Send: CLIRunnable {
         try GameCommand.send(arguments: self)
     }
 }
+
+extension ReferenceArguments.Status: CLIRunnable {
+    func execute() {
+        ReferenceCommand.status(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Check: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceCommand.check(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Launch: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceCommand.launch(arguments: self)
+    }
+}
+
+extension ReferenceArguments.ExportView: CLIRunnable {
+    func execute() throws {
+        try ReferenceCommand.exportView(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Capture: CLIRunnable {
+    func execute() throws {
+        try ReferenceCapture.capture(arguments: self)
+    }
+}

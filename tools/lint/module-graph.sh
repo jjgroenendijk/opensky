@@ -29,7 +29,7 @@ LAYERS = [
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
      "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
     ["OpenSkyGameData"],
-    ["OpenSkyBehavior", "OpenSkyLaunch", "OpenSkyAssetCache"],
+    ["OpenSkyBehavior", "OpenSkyLaunch", "OpenSkyAssetCache", "OpenSkyReference"],
     ["OpenSkyPhysics", "OpenSkyDiagnostics", "OpenSkyAgentControl"],
     ["OpenSkyRenderCore", "OpenSkyRenderResources"],
     ["OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState"],

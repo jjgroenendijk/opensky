@@ -326,6 +326,11 @@
     {
       "parallelizable" : true,
       "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyReferenceTests", "name" : "OpenSkyReferenceTests"}
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {"tags" : ["gpu"]},
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAssetCacheTests", "name" : "OpenSkyAssetCacheTests"}
     },
     {

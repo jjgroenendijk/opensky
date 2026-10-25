@@ -50,7 +50,11 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("id", "The global editor ID.")]
         ),
         command("state.time", "The game clock."),
-        command("state.frame", "The frame counter and the timeline.")
+        command("state.frame", "The frame counter and the timeline."),
+        command(
+            "state.view",
+            "The view for the reference game: feet, angles, place, hour, and weather."
+        )
     ]
 
     static let debug: [AgentCommandSpec] = teleportAndTime + actorChanges + menusAndRender
