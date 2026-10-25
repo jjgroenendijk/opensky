@@ -28,8 +28,9 @@ The app opens on the launcher. The launcher holds:
     game starts and the Survival Mode choice. Game files shows the game folder and only the
     asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
-    language, and the Skyrim saves folder. The game folder is a load setting, so it sits with
-    the others and not on the page a player starts from.
+    language, the Skyrim saves folder, and, under "Show details", the reference game
+    prefix. The game folder is a load setting, so it sits with the others and not on the
+    page a player starts from.
   - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
     converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
     `AssetCacheCoordinator` in `OpenSkyLoading`, shared by the pages through `LauncherContext`.
@@ -40,6 +41,9 @@ The app opens on the launcher. The launcher holds:
     which the game reads when it starts.
   - Benchmark picks the tour length and runs the [benchmark tour](/tools/benchmark.md) in the
     Play window, then shows the newest result as a chart and its summary.
+  - Reference Game is listed only once a reference prefix is set. It starts the Windows
+    game, exports OpenSky's view to it, imports its newest save, and shows the newest
+    comparison pair ([reference game](/tools/reference-game.md)).
   - Diagnostics opens the logs folder, copies a system report with the newest benchmark result,
     and opens the Benchmark page.
 
@@ -100,6 +104,7 @@ Accessibility ids are the UI test API and never change silently.
 | Launcher Graphics page | `Graphics<Thing>Control`, `GraphicsOption<key>Control`, and `GraphicsStatsLabel` |
 | Launcher Benchmark page | `Benchmark<Thing>Control`, `BenchmarkPresetStatsLabel`, `BenchmarkResultStatsLabel`, `BenchmarkChart` |
 | Launcher Diagnostics page | `Diagnostics<Thing>Control` and `Diagnostics<Thing>StatsLabel` |
+| Launcher Reference Game page | `Reference<Thing>Control`, `Reference<Thing>StatsLabel`, `ReferenceFirstImage`, `ReferenceSecondImage` |
 | Launcher page details | `<Page>ShowDetailsControl`, `<Name>StatusStatsLabel` |
 | Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
 | Benchmark overlay | `BenchmarkOverlay`, `BenchmarkOverlayLabel` |

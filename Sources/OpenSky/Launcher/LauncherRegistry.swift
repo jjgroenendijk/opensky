@@ -5,6 +5,7 @@ import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
+import OpenSkyReference
 import OpenSkyWorld
 
 /// What a launcher page may ask of the app.
@@ -17,6 +18,8 @@ protocol LauncherActions: AnyObject {
     func gameFolderDidChange()
     /// Opens the Play window and runs the benchmark tour in it.
     func runBenchmark(_ request: BenchmarkRequest)
+    /// The running game's view for the reference game, or nil with no game open.
+    func referenceView() -> ReferenceView?
 }
 
 /// What the pages share: the app's actions and one asset optimisation coordinator,
@@ -44,6 +47,8 @@ struct LauncherPageDescriptor {
     let title: String
     let symbolName: String
     let makeController: (LauncherContext) -> NSViewController
+    /// Read when the sidebar loads; a developer page hides until it is set up.
+    var isListed: () -> Bool = { true }
 
     var sidebarIdentifier: String {
         "LauncherPage-\(id)"
@@ -51,7 +56,11 @@ struct LauncherPageDescriptor {
 }
 
 enum LauncherRegistry {
-    static let pages: [LauncherPageDescriptor] = [
+    static var pages: [LauncherPageDescriptor] {
+        allPages.filter { $0.isListed() }
+    }
+
+    static let allPages: [LauncherPageDescriptor] = [
         LauncherPageDescriptor(
             id: "launch",
             title: "Launch",
@@ -85,6 +94,13 @@ enum LauncherRegistry {
             title: "Diagnostics",
             symbolName: "stethoscope",
             makeController: { DiagnosticsPageViewController(context: $0) }
+        ),
+        LauncherPageDescriptor(
+            id: "reference",
+            title: "Reference Game",
+            symbolName: "rectangle.split.2x1",
+            makeController: { ReferencePageViewController(context: $0) },
+            isListed: { ReferenceSettings.prefix() != nil }
         ),
         LauncherPageDescriptor(
             id: "settings",

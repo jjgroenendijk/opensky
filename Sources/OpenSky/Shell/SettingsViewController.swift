@@ -1,7 +1,7 @@
 // Settings: the game folder and its install check, plugins.txt, the string-table
-// language, and the Skyrim saves folder. The Cmd+, window and the launcher's
-// Settings page both host it, in the launcher's look. Choices go to the shared
-// defaults domain so the CLI sees them too.
+// language, the Skyrim saves folder, and the reference game prefix. The Cmd+,
+// window and the launcher's Settings page both host it, in the launcher's look.
+// Choices go to the shared defaults domain so the CLI sees them too.
 
 import AppKit
 import OpenSkyGameData
@@ -22,12 +22,13 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     let languageField = NSTextField(string: "")
     lazy var languageNoteLabel = layout.line("SettingsLanguageStatsLabel")
     lazy var savesNoteLabel = layout.line("SettingsSkyrimSavesStatsLabel")
+    lazy var referenceNoteLabel = layout.line("SettingsReferenceStatsLabel")
     private var installCheck: Task<Void, Never>?
 
     override func loadView() {
         view = layout.makeView(title: "Settings", groups: [
             makeGameFolderGroup(), makePluginsTextGroup(), makeLanguageGroup(),
-            makeSavesFolderGroup()
+            makeSavesFolderGroup(), makeReferenceGroup()
         ])
         view.frame = NSRect(x: 0, y: 0, width: LauncherPageLayout.minimumPageWidth, height: 560)
         refresh()
@@ -91,6 +92,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
         refreshPluginsText(root: root, problem: pluginsProblem)
         refreshLanguage(root: root)
         refreshSavesFolder()
+        refreshReferencePrefix()
     }
 
     /// The check reads every plugin and archive header, so it runs off the main actor.
