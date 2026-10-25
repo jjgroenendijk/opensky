@@ -4,6 +4,7 @@ import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 @MainActor
@@ -148,6 +149,16 @@ extension CellStreamingWalkDriver {
 
     public func updateNavigationProgress(distance: Float, routeIndex: Int) {
         navigationState.update(distance: distance, routeIndex: routeIndex)
+    }
+
+    /// Passes the step as frame time, so the door activation delay counts down.
+    public func updateStreamer(interactionRay: InteractionRay? = nil, activate: Bool = false) {
+        streamer.update(
+            cameraPosition: gameSession.freeFlyCamera.position,
+            interactionRay: interactionRay,
+            activate: activate,
+            frameTime: Self.inputTimeStep
+        )
     }
 
     public func updateController(moveForward: Float, moveRight: Float = 0) {
