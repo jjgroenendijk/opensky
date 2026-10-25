@@ -267,9 +267,10 @@ Who speaks:
 - A hello comes from the nearest NPC that detects the player inside the greeting distance, is not
   fighting, not in a scene or the conversation, and whose package allows hellos (`PKDT` interrupt
   flag 0x01). It looks at the player.
-- An idle line comes from a free NPC within 1000 units of the player, in a seeded order. The
-  distance is OpenSky's; no setting names it. No hello and no idle line plays while the player is
-  in a conversation.
+- An idle line comes from a free NPC within 1000 units of the player. Each pass, one such
+  NPC, picked by the seeded random source, looks for a line, so a crowd costs no more frame
+  time than one NPC. The distance is OpenSky's; no setting names it. No hello and no idle line
+  plays while the player is in a conversation.
 - A taunt comes from any fighting NPC that is free, with no head turn.
 - A comment on the player comes from the nearest free NPC within 1000 units that detects the
   player. The acts that start one: a shout (`PCSH`), a melee swing out of combat (`SWMW`), a bow

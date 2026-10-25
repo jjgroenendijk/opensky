@@ -37,6 +37,14 @@ struct ReferenceKeyTests {
         #expect(shouting.description == "skyrim.esm:00003C")
     }
 
+    @Test func descriptionPadsTheObjectIDToSixHexDigits() {
+        #expect(ReferenceKey.plugin(name: "a.esp", objectID: 0).description == "a.esp:000000")
+        #expect(ReferenceKey.plugin(name: "a.esp", objectID: 0xABCDEF)
+            .description == "a.esp:ABCDEF")
+        #expect(ReferenceKey.plugin(name: "a.esp", objectID: 0x1ABCDEF)
+            .description == "a.esp:1ABCDEF")
+    }
+
     @Test func nullFormIDHasNoKey() {
         let resolver = FormIDResolver(pluginName: "Skyrim.esm", masters: [])
         #expect(ReferenceKey.resolve(FormID(0), using: resolver) == nil)

@@ -25,6 +25,8 @@ nonisolated public final class QuestStore: Sendable {
     /// Raw FormID -> master list of the plugin whose record won. The FormIDs
     /// inside a record, such as an ALFR reference, are relative to that plugin.
     private let sourceResolvers: [UInt32: FormIDResolver]
+    /// `sourceResolvers` as translations, built once, because condition checks ask often.
+    private let sourceTranslations: [UInt32: FormIDTranslation]
     /// QUST records in the top group that failed to decode. Zero in vanilla data.
     public let skippedRecords: SkippedRecords
     /// Sorted once, because condition contexts read quests in order every frame.
@@ -137,6 +139,7 @@ nonisolated public final class QuestStore: Sendable {
         sortedKeys = ordered.compactMap { keys[$0.formID.rawValue] }
         self.resolver = resolver
         self.sourceResolvers = sourceResolvers
+        sourceTranslations = FormIDTranslation.table(sourceResolvers, into: resolver)
         self.skippedRecords = skippedRecords
     }
 
@@ -186,7 +189,7 @@ nonisolated public final class QuestStore: Sendable {
     /// From the plugin of quest `id` to this store's FormID space, or nil when the
     /// two are the same.
     public func translation(of id: FormID) -> FormIDTranslation? {
-        sourceResolvers[id.rawValue].map { FormIDTranslation(source: $0, target: resolver) }
+        sourceTranslations[id.rawValue]
     }
 
     /// The plugin whose record of quest `id` won, whose string tables hold its text.

@@ -260,6 +260,10 @@ public final class PackageCoordinator {
     /// The `Player` `NPC_` record in `Skyrim.esm`.
     static let playerBase = FormID(0x7)
     private var absentSeconds: [ReferenceKey: Float] = [:]
+    /// One condition context for every actor in one `advance(by:)`. A context walks every
+    /// loaded reference, and a cell of new actors built one per actor in a frame.
+    private var frameContext: ConditionContext?
+    private var sharesFrameContext = false
 
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
         self.world = world
@@ -306,15 +310,12 @@ public final class PackageCoordinator {
             registeredActors[arrival.actor] = arrival.base
         }
 
-        var context: ConditionContext?
-        let live = {
-            if let context {
-                return context
-            }
-            let fresh = world.packageConditionContext(clock: clock)
-            context = fresh
-            return fresh
+        sharesFrameContext = true
+        defer {
+            sharesFrameContext = false
+            frameContext = nil
         }
+        let live = { self.conditionContext(clock: clock) }
         aliasRefreshSeconds -= delta
         if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
             aliasRefreshSeconds = Self.aliasRefreshInterval
@@ -369,7 +370,6 @@ public final class PackageCoordinator {
         to runtime: inout ActorPackageRuntime,
         clock: GameClock
     ) {
-        guard let world else { return }
         // The loop changes only this local runtime, so every actor reads one context.
         var shared: ConditionContext?
         for actor in registeredActors.keys.sorted() {
@@ -377,11 +377,23 @@ public final class PackageCoordinator {
                 if let shared {
                     return shared
                 }
-                let live = world.packageConditionContext(clock: clock)
+                let live = self.conditionContext(clock: clock)
                 shared = live
                 return live
             }
         }
+    }
+
+    /// The frame's shared context inside `advance(by:)`, else a fresh one.
+    func conditionContext(clock: GameClock) -> ConditionContext {
+        if let frameContext {
+            return frameContext
+        }
+        let fresh = world?.packageConditionContext(clock: clock) ?? ConditionContext()
+        if sharesFrameContext {
+            frameContext = fresh
+        }
+        return fresh
     }
 
     // MARK: - Scene and alias packages

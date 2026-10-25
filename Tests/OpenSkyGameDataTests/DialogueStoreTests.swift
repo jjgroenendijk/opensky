@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyEngineTesting
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
@@ -45,6 +46,22 @@ struct DialogueStoreTests {
         #expect(store.info(FormID(0x202))?.responses.first?.number == 2)
         #expect(store.voiceType(editorID: "malenord")?.formID == FormID(0x300))
         #expect(store.skippedRecordCount == 0)
+    }
+
+    @Test func topicsOfOneSubtypeComeInFormIDOrder() throws {
+        func topic(_ formID: UInt32, _ subtype: String) -> Data {
+            DialogueFixture.topicRecord(
+                formID: formID,
+                fields: DialogueFixture.topicData() + DialogueFixture.subtype(subtype)
+            )
+        }
+        let store = try DialogueFixture.store(
+            dialogueChildren: topic(0x300, "IDLE") + topic(0x100, "HELO") + topic(0x200, "IDLE")
+        )
+        #expect(store.sortedTopics().map(\.formID) == [FormID(0x100), FormID(0x200), FormID(0x300)])
+        #expect(store.sortedTopics(subtype: "IDLE").map(\.formID) == [FormID(0x200), FormID(0x300)])
+        #expect(store.sortedTopics(subtype: "HELO").map(\.formID) == [FormID(0x100)])
+        #expect(store.sortedTopics(subtype: "CUST").isEmpty)
     }
 
     @Test func countsStructurallyUnreadableRecords() throws {

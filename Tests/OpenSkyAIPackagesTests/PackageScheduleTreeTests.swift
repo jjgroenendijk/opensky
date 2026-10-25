@@ -3,6 +3,7 @@
 // Synthetic records only.
 
 @testable import OpenSkyAIPackages
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
@@ -31,6 +32,17 @@ struct PackageScheduleTreeTests {
         #expect(coordinator.readout(for: Self.guardKey)?.editorID == "Linger")
         #expect(world.scriptEvents == [.begin, .change, .begin])
         #expect(world.stops == [Self.guardKey])
+    }
+
+    @Test func treesStartedInOneAdvanceShareOneConditionContext() throws {
+        let (coordinator, world) = try Self.coordinator(base: 0x614)
+        // Each tree checks a branch condition when it starts.
+        world.residents = try [
+            PackageRuntimeFixture.residentActor(0x500, base: 0x614),
+            PackageRuntimeFixture.residentActor(0x501, base: 0x614)
+        ]
+        coordinator.advance()
+        #expect(world.contextReads == 1, "a context walks the world, so a frame builds one")
     }
 
     @Test func aScenePackageWinsAndTheScheduleTreeResumes() throws {
@@ -159,13 +171,15 @@ struct PackageScheduleTreeTests {
             ),
             PackageRuntimeFixture.package(
                 id: 0x114, editorID: "Loiter", procedureNames: ["Sandbox"], dataInputs: place
-            )
+            ),
+            checkedWalk(place: place)
         ]
         let actors: [UInt32: ActorBase] = try [
             0x610: PackageRuntimeFixture.actorBase(id: 0x610, packages: [0x110, 0x111]),
             0x611: PackageRuntimeFixture.actorBase(id: 0x611, packages: [0x112, 0x111]),
             0x612: PackageRuntimeFixture.actorBase(id: 0x612, packages: [0x113, 0x111]),
-            0x613: PackageRuntimeFixture.actorBase(id: 0x613, packages: [0x114])
+            0x613: PackageRuntimeFixture.actorBase(id: 0x613, packages: [0x114]),
+            0x614: PackageRuntimeFixture.actorBase(id: 0x614, packages: [0x115])
         ]
         let world = FakePackageWorld()
         world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: base)]
@@ -177,5 +191,19 @@ struct PackageScheduleTreeTests {
             ))
         )
         return (coordinator, world)
+    }
+
+    /// A walk whose one branch carries a condition, so starting its tree reads a context.
+    private static func checkedWalk(place: [Package.DataInput]) throws -> Package {
+        var package = try PackageRuntimeFixture.package(
+            id: 0x115, editorID: "CheckedWalk", procedureNames: ["Travel"], dataInputs: place
+        )
+        var conditions = ConditionList()
+        try conditions.decode(field: ConditionEvaluatorFixture.field(functionIndex: 999))
+        package.details.branches = [PackageDetails.Branch(
+            type: "Procedure", conditionList: conditions, procedureType: "Travel",
+            dataInputIndexes: [0]
+        )]
+        return package
     }
 }
