@@ -113,8 +113,8 @@ is never half built. The adapter holds the session `unowned`, so there is no ret
 When the adapter owns the coordinator, or the port is the view controller itself, the
 coordinator keeps the port as `weak let`, and the app builds it in a `lazy var`. The lint rule
 `late_attached_world` fails a late-attach method, such as `attach(world:)`, in a package
-module. How the other dependencies reach a coordinator, and which late setters remain, is in
-[session scope](/decisions/session-scope.md).
+module. How the other dependencies reach a coordinator, and the lint rules that keep late
+setters out, are in [session scope](/decisions/session-scope.md).
 
 An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
 protocol lists only the coordinators and values that adapter reads. `GameViewController`
