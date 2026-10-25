@@ -60,6 +60,10 @@ arrow keys.
   `LVLN` `hops` (list and chosen entry), the `playerLevel` it rolls at, whether that level is
   `frozen`, the `encounterLevel`, and the `difficulty`. `debug skillsmenu --levelup <n>` raises
   the level; a frozen roll keeps its level until its cell resets (`debug rest 240` away from it).
+- `state actors` also gives each actor's behaviour `graph`: its `status` (`running`, `loading`,
+  `failed: <reason>`, or `waiting for playback`), `project`, `activeStates`, `waitingForClip`,
+  `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, and `clipsMissed`.
+  A rider or cart passenger has no graph until it gets off.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
   draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).

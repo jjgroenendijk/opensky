@@ -10,7 +10,8 @@ nonisolated extension AgentCommandCatalog {
         command("state.player", "The player: position, cell, worldspace, weather, level, spells."),
         command("state.target", "The reference under the crosshair."),
         command(
-            "state.actors", "Loaded actors near the player, with their leveled rolls.",
+            "state.actors",
+            "Loaded actors near the player, with their leveled rolls and behaviour graphs.",
             options: [value("radius", "units", "Search radius in game units. Default: 4096.")]
         ),
         command("state.menu", "The open menus and the selected rows."),
