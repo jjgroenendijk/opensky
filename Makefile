@@ -247,8 +247,8 @@ md-format: #| Autofix Markdown
 md-lint: #| Lint Markdown strictly
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-sh-lint: #| Shellcheck the tools/ scripts
-	@shellcheck -s sh $$(find tools -type f -name '*.sh' -not -path '*/.venv/*')
+sh-lint: #| Shellcheck the tools/ and reference/ scripts
+	@shellcheck -s sh $$(find tools reference -type f -name '*.sh' -not -path '*/.venv/*')
 
 py-format: #| Autoformat the Python tools with ruff
 	@$(UV_RUN) ruff format $(PY_PROJECT)
@@ -587,9 +587,8 @@ launch-sample: ## Sample the installed app's main thread through its first minut
 prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RUN=1]
 	@./tools/prune.sh --days $(PRUNE_DAYS) $(if $(DRY_RUN),--dry-run,)
 
-# Keeps the shared compilation cache store. Its entries are keyed on the full
-# compile command and inputs, so they cannot go stale. DEEP=1 removes it too, for
-# timing a truly cold build; every worktree then starts cold.
+# Keeps the shared compile cache: keyed on the full command and inputs, it cannot go stale.
+# DEEP=1 removes it too, for timing a cold build; every worktree then starts cold.
 clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
 	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
 	@rm -rf DerivedData DerivedData-optimized DerivedData-index .build
@@ -598,3 +597,4 @@ clean: ## Remove build output and caches [DEEP=1 also drops the shared compile c
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
 			-type d -name 'OpenSky-*' -exec rm -rf {} +; \
 	fi
+include reference/reference.mk

@@ -77,6 +77,19 @@ game wrote. A probe of a modded load order needs a hand-made file named by `OPEN
 
 Retires when a `plugins.txt` appears in a searched location.
 
+## Reference game toolchain
+
+Observed 2026-10-25 on macOS 27.0.1, Xcode 27.1, and Homebrew 7.0.9. The newest
+`gcenx/wine/game-porting-toolkit` cask is 3.0-3 (released 2026-03-03); no GPTK 4 build of
+it exists, so `make reference-setup` copies the GPTK 4 libraries over it
+([reference game](/tools/reference-game.md)). Homebrew 7 refuses the cask until
+`brew tap gcenx/wine` runs, which the setup does. Rosetta 2 was not installed on this machine,
+and `softwareupdate --install-rosetta` needs an administrator password. The setup then ran
+through on GPTK 4.0 beta 3 into `/Volumes/data/opensky-reference`. The Steam installer
+writes `Steam.exe` with a capital S; the case-insensitive volume finds it as `steam.exe`.
+
+Retires when the cask ships a GPTK 4 build, or the reference game moves to another Wine.
+
 ## Permission grants
 
 UI tests need Automation Mode, and XCTest turns it on at the start of each UI run. If the Mac asks
