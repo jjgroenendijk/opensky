@@ -47,6 +47,12 @@ Each step sets the locomotion variables from the actor's movement: `Speed`, `Dir
 movement raises `moveStart`, `moveStop`, `SprintStart`, `SprintStop`, `SneakStart`, or
 `SneakStop`.
 
+`Speed` is the actor's measured travel, smoothed over 0.2 s, so one frame without a move does
+not drop it to zero. The parametric locomotion blender reads it to pick walk or run. A mover
+that asks to walk but stays under 10 units per second for 0.5 s is shown to its graph as
+stopped: it gets `moveStop`, and `moveStart` again once it moves. Example: an NPC blocked by
+another in a doorway stands instead of walking on the spot. The thresholds are OpenSky's.
+
 ## Pose
 
 While a graph runs, it poses the actor. A combat or idle clip that overrides the pose still wins

@@ -7,11 +7,8 @@ import OpenSkyFormatsESM
 extension ActorGraphCoordinator {
     /// The drive's locomotion state. A change raises its events on the next step.
     public func setMotion(_ motion: ActorGraphMotion, for actor: ReferenceKey) {
-        let previous = motions[actor] ?? .still
         motions[actor] = motion
-        guard let entry = running[actor] else { return }
-        entry.pendingEvents += ActorGraphCore.events(from: previous, to: motion)
-        entry.motion = motion
+        running[actor]?.motion = motion
     }
 
     /// Raises `event` on the actor's graph. False when it runs none or lacks the event.
@@ -55,9 +52,9 @@ extension ActorGraphCoordinator {
         entry.lastFeet = nil
         entry.lastRotation = nil
         // The ridden graph may be left moving: stop events return it to the drive's state.
-        let lent = ActorGraphMotion(isMoving: true, isSprinting: true, isInCombatStance: true)
+        entry.shown = ActorGraphMotion(isMoving: true, isSprinting: true, isInCombatStance: true)
         entry.motion = motions[actor] ?? .still
-        entry.pendingEvents += ActorGraphCore.events(from: lent, to: entry.motion)
+        entry.gait = ActorGraphGait()
     }
 }
 
