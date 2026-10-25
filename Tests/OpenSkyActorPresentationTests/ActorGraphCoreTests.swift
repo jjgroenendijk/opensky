@@ -50,6 +50,30 @@ struct ActorGraphCoreTests {
         #expect(ActorGraphCore.speed(from: [0, 0, 0], to: [30, 40, 0], seconds: 0) == 0)
     }
 
+    @Test func aDrivenActorThatDoesNotMoveStopsItsWalk() {
+        var gait = ActorGraphGait()
+        let walking = ActorGraphMotion(isMoving: true)
+        for _ in 0 ..< 10 {
+            gait.sample(0, seconds: 0.1, isDriven: true)
+        }
+        #expect(gait.isStalled)
+        #expect(gait.shown(walking) == .still)
+        gait.sample(120, seconds: 0.1, isDriven: true)
+        #expect(!gait.isStalled)
+        #expect(gait.shown(walking) == walking)
+    }
+
+    @Test func aWalkerKeepsItsWalkThroughAFrameWithoutAMove() {
+        var gait = ActorGraphGait()
+        for _ in 0 ..< 20 {
+            gait.sample(100, seconds: 1.0 / 60, isDriven: true)
+        }
+        let settled = gait.speed
+        gait.sample(0, seconds: 1.0 / 60, isDriven: true)
+        #expect(gait.speed > settled * 0.8)
+        #expect(!gait.isStalled)
+    }
+
     @Test func aTurnTakesTheShortWayRound() {
         let turn = ActorGraphCore.turnDelta(from: 3, to: -3)
         #expect(abs(turn - (2 * Float.pi - 6)) < 0.0001)

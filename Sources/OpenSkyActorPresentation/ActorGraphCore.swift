@@ -56,6 +56,45 @@ nonisolated public struct ActorGraphMotion: Equatable, Sendable {
     }
 }
 
+/// An NPC's measured speed, smoothed, and whether its walk has stalled. A mover blocked
+/// in place still asks to walk; its graph is told it stopped, so it does not walk on the spot.
+nonisolated public struct ActorGraphGait: Equatable, Sendable {
+    /// Seconds over which the measured speed settles, so a frame without a move does
+    /// not drop `Speed` to zero.
+    public static let smoothingTime: Float = 0.2
+    /// Below this many units per second a driven actor is not getting anywhere.
+    public static let stallSpeed: Float = 10
+    /// How long a driven actor stays below `stallSpeed` before its graph stops.
+    public static let stallDelay: Float = 0.5
+    /// Faster than any gait; a teleport would read as a run otherwise.
+    public static let maximumSpeed: Float = 1000
+
+    public private(set) var speed: Float = 0
+    public private(set) var stalledFor: Float = 0
+
+    public init() {}
+
+    public var isStalled: Bool {
+        stalledFor >= Self.stallDelay
+    }
+
+    public mutating func sample(_ measured: Float, seconds: Float, isDriven: Bool) {
+        guard seconds > 0 else { return }
+        let clamped = measured.isFinite ? min(max(measured, 0), Self.maximumSpeed) : 0
+        speed += (clamped - speed) * (1 - exp(-seconds / Self.smoothingTime))
+        stalledFor = isDriven && speed < Self.stallSpeed ? stalledFor + seconds : 0
+    }
+
+    /// The drive's motion as the graph should hear it.
+    public func shown(_ drive: ActorGraphMotion) -> ActorGraphMotion {
+        guard isStalled else { return drive }
+        var motion = drive
+        motion.isMoving = false
+        motion.isSprinting = false
+        return motion
+    }
+}
+
 /// Graph names an actor's step writes and raises. The human graph declares all of them;
 /// a creature graph declares a subset, and a missing name is skipped.
 nonisolated public enum ActorGraphNames {

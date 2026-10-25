@@ -106,9 +106,9 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         /// approximated by differencing the root bone rather than by decoding
         /// that reference frame. No file in a vanilla install reaches this.
         case clipExtractedMotionApproximated
-        /// A blender's cyclic or parametric blend flags were ignored and the
-        /// authored child weights were used directly.
-        case blenderParametricAsWeights
+        /// A blender's smooth-generator-weights flag was ignored, so a weight
+        /// change takes effect at once.
+        case blenderSmoothWeightsIgnored
         /// A blender subtracted-last-child blend was run as an ordinary blend.
         case blenderSubtractLastChild
         /// `hkbPoseMatchingGenerator` was run as its blender base.

@@ -44,10 +44,9 @@ nonisolated extension BehaviorGraphInstance {
         return pose
     }
 
-    /// `BSCyclicBlendTransitionGenerator`: runs its blender. `m_EventToCrossBlend`
-    /// starts a crossfade from the pose of that moment to the live blend, over
-    /// `m_fTransitionDuration` with `m_eBlendCurve`. `m_EventToFreezeBlendValue`
-    /// holds `m_fBlendParameter`, which matters only to a parametric blend.
+    /// `BSCyclicBlendTransitionGenerator`: runs its blender with `m_fBlendParameter` as
+    /// the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of
+    /// that moment to the live blend, over `m_fTransitionDuration` with `m_eBlendCurve`.
     func evaluateCyclicBlend(
         _ cyclic: BSCyclicBlendTransitionGenerator,
         at target: HKXPointerTarget,
@@ -55,6 +54,11 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
+        if let blender = cyclic.blenderGenerator {
+            blendParameterOverrides[blender] = bound.float(
+                "fBlendParameter", or: cyclic.blendParameter
+            )
+        }
         let live = evaluateGenerator(
             at: cyclic.blenderGenerator,
             depth: depth,

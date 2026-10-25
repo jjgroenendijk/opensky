@@ -98,7 +98,10 @@ public final class ActorGraphCoordinator {
         let instance: BehaviorGraphInstance
         let pose = PlayerPoseBuffer()
         weak var playback: ActorAnimationPlayback?
+        /// The drive's motion, and the motion the graph last heard about.
         var motion = ActorGraphMotion.still
+        var shown = ActorGraphMotion.still
+        var gait = ActorGraphGait()
         var pendingEvents: [String] = []
         var lastFeet: SIMD3<Float>?
         var lastRotation: Float?
@@ -237,7 +240,6 @@ public final class ActorGraphCoordinator {
         let entry = Running(project: project, instance: instance)
         entry.playback = playback
         entry.motion = motions[actor] ?? .still
-        entry.pendingEvents = ActorGraphCore.events(from: .still, to: entry.motion)
         playback.attachGraph(skeleton: project.asset.skeleton, pose: entry.pose)
         return entry
     }
@@ -261,19 +263,7 @@ public final class ActorGraphCoordinator {
 
     private func step(_ entry: Running, _ candidate: ActorGraphCandidate, actor: ReferenceKey) {
         let seconds = entry.sinceStep
-        let input = ActorGraphStepInput(
-            motion: entry.motion,
-            speed: entry.lastFeet.map {
-                ActorGraphCore.speed(from: $0, to: candidate.feet, seconds: seconds)
-            } ?? 0,
-            turnDelta: entry.lastRotation.map {
-                // Placement rotation turns clockwise; the graph's turn is counter-clockwise.
-                -ActorGraphCore.turnDelta(from: $0, to: candidate.rotationZ)
-            } ?? 0,
-            deltaTime: seconds
-        )
-        entry.lastFeet = candidate.feet
-        entry.lastRotation = candidate.rotationZ
+        let input = entry.stepInput(for: candidate, seconds: seconds)
         let instance = entry.instance
         for (name, value) in ActorGraphCore.variables(input) {
             instance.setVariable(value, named: name)

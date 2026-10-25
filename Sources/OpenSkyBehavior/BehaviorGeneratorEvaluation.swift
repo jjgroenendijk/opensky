@@ -62,6 +62,10 @@ nonisolated extension BehaviorGraphInstance {
         case let clip as HKBClipGenerator:
             return evaluateClip(clip, at: target, bound: bound, deltaTime: deltaTime)
         case let blender as HKBBlenderGenerator:
+            var bound = bound
+            if let parameter = blendParameterOverrides[target] {
+                bound["blendParameter"] = .real(parameter)
+            }
             return evaluateBlend(
                 blender.blender, bound: bound, depth: next, deltaTime: deltaTime
             )
@@ -138,14 +142,13 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        noteBlendGaps(blender)
         let threshold = bound.float(
             "m_referencePoseWeightThreshold",
             or: blender
                 .referencePoseWeightThreshold
         )
         let children = blendChildren(
-            blender, threshold: threshold, depth: depth, deltaTime: deltaTime
+            blender, bound: bound, threshold: threshold, depth: depth, deltaTime: deltaTime
         )
         let masked = children.map {
             BehaviorPoseMath.MaskedChild(
@@ -173,65 +176,9 @@ nonisolated extension BehaviorGraphInstance {
         return blended
     }
 
-    /// Evaluates every contributing child, the sync master first so its phase is
-    /// current for the rest. Its result returns to its own index, keeping blend order.
-    private func blendChildren(
-        _ blender: HKBBlenderFields,
-        threshold: Float,
-        depth: Int,
-        deltaTime: Float
-    ) -> [BehaviorBlendChild] {
-        let targets = blender.children.compactMap(\.self)
-        var results = [BehaviorBlendChild?](repeating: nil, count: targets.count)
-        let master = blender.indexOfSyncMasterChild
-        if targets.indices.contains(master) {
-            results[master] = blendChild(
-                at: targets[master], threshold: threshold, depth: depth, deltaTime: deltaTime
-            )
-            pendingClipPhase = continuousClipPhase(
-                of: object(at: targets[master], as: HKBBlenderGeneratorChild.self)?.generator
-            )
-        }
-        for (index, target) in targets.enumerated() where index != master {
-            results[index] = blendChild(
-                at: target, threshold: threshold, depth: depth, deltaTime: deltaTime
-            )
-        }
-        pendingClipPhase = nil
-        return results.compactMap(\.self)
-    }
-
-    /// One `hkbBlenderGeneratorChild`, or nil when it is not one or its weight
-    /// leaves it out of the blend.
-    private func blendChild(
-        at target: HKXPointerTarget,
-        threshold: Float,
-        depth: Int,
-        deltaTime: Float
-    ) -> BehaviorBlendChild? {
-        guard
-            let node = compiledNode(at: target),
-            let child = node.object as? HKBBlenderGeneratorChild
-        else {
-            return nil
-        }
-        markReached(target)
-        let bound = boundValues(of: node)
-        let weight = bound.float("m_weight", or: child.weight)
-        guard weight > threshold else { return nil }
-        return BehaviorBlendChild(
-            pose: evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),
-            weight: weight,
-            motionWeight: bound.float(
-                "m_worldFromModelWeight", or: child.worldFromModelWeight
-            ),
-            boneWeights: boneWeights(at: child.boneWeights)
-        )
-    }
-
     /// The decoded per-bone mask at `target`, honouring a binding on it, or nil
     /// when the child carries none.
-    private func boneWeights(at target: HKXPointerTarget?) -> [Float]? {
+    func boneWeights(at target: HKXPointerTarget?) -> [Float]? {
         guard
             let target,
             let array = object(at: target, as: HKBBoneWeightArray.self),
@@ -239,17 +186,6 @@ nonisolated extension BehaviorGraphInstance {
         else { return nil }
         markReached(target)
         return array.boneWeights
-    }
-
-    private func noteBlendGaps(_ blender: HKBBlenderFields) {
-        // Bit 2 is the parametric blend and bit 0 the cyclic sync; both change
-        // how weights are derived, and neither is implemented here.
-        if blender.flags & 0x5 != 0 {
-            tally.note(.blenderParametricAsWeights)
-        }
-        if blender.subtractLastChild {
-            tally.note(.blenderSubtractLastChild)
-        }
     }
 
     // MARK: - Selection

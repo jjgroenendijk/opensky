@@ -32,11 +32,14 @@ nonisolated extension LocomotionBridge {
         return direction
     }
 
-    /// Movement direction as the graph wants it: radians away from facing,
-    /// positive to the left, zero straight ahead, and zero when standing still.
+    /// Movement direction as the graph wants it: the fraction of a turn clockwise from
+    /// facing, in [0, 1), so 0.25 is right. Zero when standing still. Source: the
+    /// places of `MT_Direction_Blend` (docs/engine/locomotion-graph.md).
     public static func graphDirection(of direction: SIMD2<Float>, yaw: Float) -> Float {
         guard direction != SIMD2<Float>() else { return 0 }
-        return shortestAngle(from: yaw, to: atan2f(direction.y, direction.x))
+        let left = shortestAngle(from: yaw, to: atan2f(direction.y, direction.x))
+        let turn = -left / (2 * .pi)
+        return turn < 0 ? turn + 1 : turn
     }
 
     /// Signed angle from one heading to another, in (-pi, pi].

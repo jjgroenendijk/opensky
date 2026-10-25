@@ -74,7 +74,7 @@ struct BehaviorStateMachineRealDataTests {
     /// to be documented before it lands.
     private func assertGaps(_ instance: BehaviorGraphInstance, log: inout [String]) throws {
         let known: Set = [
-            "blenderParametricAsWeights",
+            "blenderSmoothWeightsIgnored",
             "blenderSubtractLastChild",
             "clipPingPongAsLoop",
             "clipMirrored",

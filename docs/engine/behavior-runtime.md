@@ -119,14 +119,14 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | Class | What it does |
 | --- | --- |
 | `hkbClipGenerator` | Plays a clip ([clips](/engine/behavior-clips.md)) |
-| `hkbBlenderGenerator` | Weighted blend of every child, masked per bone ([blending](/engine/behavior-clips.md)) |
+| `hkbBlenderGenerator` | Weighted or parametric blend of its children, masked per bone and optionally synced ([blending](/engine/behavior-clips.md)) |
 | `hkbManualSelectorGenerator` | Runs the child at `selectedGeneratorIndex`. Out of range gives the reference pose |
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
 | `hkbPoseMatchingGenerator` | Runs as its blender base, and is counted |
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
 | `BSiStateTaggingGenerator` | Runs its default generator |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
-| `BSCyclicBlendTransitionGenerator` | Its blender. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
+| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
 | `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
 | `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
@@ -207,11 +207,12 @@ Buckets: `unevaluatedGenerators`, `passthroughModifiers`, `unresolvedClips`,
 
 These are guesses, marked as guesses:
 
-- Blender flags are not used. `HKBBlenderFields.flags` is decoded, and local decode notes read bit
-  0 as cycle sync and bit 2 as parametric blend. No independent source confirms that. So the
-  authored `m_weight` values are used as weights directly, and each such blender counts one
-  `blenderParametricAsWeights`. `blendParameter` is the most-bound member in the vanilla player
-  graph, so a parametric blend is the largest piece of locomotion still owed.
+- The parametric weights and the shared cycle of a synced blender follow the flag names and the
+  runtime members in the class reflection data, not a description of Havok's maths
+  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). The smooth-weights flag
+  (0x4) is not used; each such blender counts one `blenderSmoothWeightsIgnored`. That only the
+  leader of a synced blender raises annotations is also a choice; authored triggers still fire
+  from every child.
 - Root motion is the difference of two samples of the root bone, in its own local frame. Vanilla
   data has no root motion to measure ([walk mode](/engine/walk-mode.md)), so the extracted motion
   class is not decoded.
@@ -225,8 +226,8 @@ These are guesses, marked as guesses:
   `BSSpeedSamplerModifier` (passes `goalSpeed` to `speedOut`), `hkbDampingModifier` (one PID
   step per update), `BSTweenerModifier`, `BSLimbIKModifier`, and the aim axis conventions of the
   look-at and direct-at modifiers.
-- `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing, because only a
-  parametric blend reads the frozen parameter.
+- `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing: the parameter
+  of its parametric blender is not held.
 - A state machine does not write its current state back to `m_syncVariableIndex`. In vanilla data
   that variable is an engine input, and writing it back would overwrite the input on the next
   update. No source says whether Havok syncs it both ways.

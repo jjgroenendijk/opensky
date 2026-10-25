@@ -95,6 +95,15 @@ struct LocomotionBridgeTests {
 
     // MARK: - Graph writes
 
+    /// Facing +X: a move to the right is a quarter turn clockwise, to the left three quarters.
+    @Test
+    func directionIsTheFractionOfATurnClockwiseFromFacing() {
+        #expect(LocomotionBridge.graphDirection(of: SIMD2(1, 0), yaw: 0) == 0)
+        #expect(abs(LocomotionBridge.graphDirection(of: SIMD2(0, -1), yaw: 0) - 0.25) < 1e-6)
+        #expect(abs(LocomotionBridge.graphDirection(of: SIMD2(0, 1), yaw: 0) - 0.75) < 1e-6)
+        #expect(abs(LocomotionBridge.graphDirection(of: SIMD2(-1, 0), yaw: 0) - 0.5) < 1e-6)
+    }
+
     @Test
     func writesTheCensusVariablesAndReportsUnknownOnes() {
         let graph = Self.graph()

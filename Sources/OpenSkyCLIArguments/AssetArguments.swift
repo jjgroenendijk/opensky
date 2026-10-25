@@ -84,6 +84,8 @@ public struct HKXArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var asset: AssetPathArgument
+    @Flag(help: "List every blender: flags, bound blend parameter, and each child.")
+    public var blenders = false
 
     public init() {}
 }
