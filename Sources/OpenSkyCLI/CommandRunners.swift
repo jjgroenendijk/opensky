@@ -26,6 +26,12 @@ extension RecordArguments.Show: CLIRunnable {
     }
 }
 
+extension RecordArguments.Find: CLIRunnable {
+    func execute() throws {
+        try RecordFindCommand.run(context: context(), arguments: self)
+    }
+}
+
 extension PluginsArguments: CLIRunnable {
     func execute() throws {
         try PluginsCommand.run(context: context())

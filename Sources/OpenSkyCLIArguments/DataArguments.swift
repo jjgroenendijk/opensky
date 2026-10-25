@@ -34,8 +34,8 @@ public struct PluginsArguments: CLICommandArguments {
 public struct RecordArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "record",
-        abstract: "Show one record by FormID or editor ID.",
-        subcommands: [Show.self]
+        abstract: "Show one record, or find every record of a type that matches filters.",
+        subcommands: [Show.self, Find.self]
     )
 
     public init() {}
@@ -53,6 +53,62 @@ public struct RecordArguments: ParsableCommand, Sendable {
         public var id: String
 
         public init() {}
+    }
+
+    public struct Find: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "find",
+            abstract: "List the winning records of one type that match every --where filter.",
+            discussion: """
+            A filter is <field><op><value>, or <field> alone for "has a value". Operators: \
+            = and != (exact), ~ and !~ (contains, any case), <, <=, >, >= (numbers). A field \
+            is a decoded field path, such as editorID, keywords, or data.damage; a list \
+            matches when any element does, and FormIDs read as editor IDs. formID, plugin, \
+            and subrecords (the signatures, such as XCLW) work for every type.
+            Example: record find --type WEAP --where 'keywords=WeapTypeDagger' \
+            --fields editorID,data.damage
+            """
+        )
+        @OptionGroup public var global: GlobalOptions
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The record type, such as WEAP or NPC_.", valueName: "type")
+        )
+        public var type: String
+        @Option(
+            name: .customLong("where"), parsing: .unconditionalSingleValue,
+            help: ArgumentHelp("A filter. Repeat it to require more.", valueName: "filter")
+        )
+        public var filters: [String] = []
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Field paths to print per match. Default: editorID.",
+                valueName: "list"
+            )
+        )
+        public var fields: CommaList?
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("Print at most this many matches.", valueName: "n")
+        )
+        public var limit: Int?
+        @Flag(help: "Print only the number of matches.")
+        public var count = false
+        @Flag(help: "Print one JSON object per match, with every field.")
+        public var json = false
+
+        public init() {}
+
+        public func validate() throws {
+            guard type.utf8.count == 4 else {
+                throw ValidationError("--type expects a four-letter record type, got \(type)")
+            }
+            try OptionCheck.atLeast(limit, 1, "--limit")
+            if count, json {
+                throw ValidationError("--count and --json cannot be used together")
+            }
+        }
     }
 }
 

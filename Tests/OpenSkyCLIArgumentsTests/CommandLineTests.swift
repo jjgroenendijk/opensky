@@ -214,6 +214,24 @@ struct CommandLineTests {
         )
     }
 
+    @Test func recordFindTakesFiltersAndFields() throws {
+        let find = try command(
+            [
+                "record", "find", "--type", "WEAP", "--where", "keywords=WeapTypeDagger",
+                "--where", "data.damage>5", "--fields", "editorID,data.damage", "--limit", "3"
+            ],
+            as: RecordArguments.Find.self
+        )
+        #expect(find.type == "WEAP")
+        #expect(find.filters == ["keywords=WeapTypeDagger", "data.damage>5"])
+        #expect(find.fields?.items == ["editorID", "data.damage"])
+        #expect(find.limit == 3)
+        #expect(exitCode(["record", "find", "--type", "WEAPON"]) == OpenSkyCommandLine
+            .usageExitCode)
+        #expect(exitCode(["record", "find", "--type", "WEAP", "--count", "--json"])
+            == OpenSkyCommandLine.usageExitCode)
+    }
+
     @Test func aUsageErrorExitsWithTwoAndHelpWithZero() {
         #expect(exitCode(["cell", "--bogus"]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["no-such-command"]) == OpenSkyCommandLine.usageExitCode)

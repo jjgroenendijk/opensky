@@ -49,7 +49,7 @@ prints its help and exits 2. `cell` and `render` default to the
   out; there are no short options.
 - Each command has one name. There are no aliases and no old names kept for scripts.
 - A group, such as `record`, only holds subcommands. A mode is a subcommand, never a
-  positional word: `record show 0x3C`, `ess list <folder>`. `show` reads one item.
+  positional word: `record show 0x3C`, `record find --type WEAP`. `show` reads one item.
 - A choice is an enum, so the help lists the values and a bad value exits 2:
   `--preset quick|standard|full`. A number is `Int`, `Int32`, `Float`, or `Double`, and its
   range is checked in `validate()`, before any game data loads.
@@ -59,6 +59,34 @@ prints its help and exits 2. `cell` and `render` default to the
   `parsing: .unconditional`, so a value may start with `-`.
 - Every leaf command has a runner in `CommandRunners.swift`, a row below, and a run in
   `tools/probe.sh` or `tools/probe-swf.sh`, unless it writes settings or opens the app.
+
+## Searching records
+
+`record find --type <TYPE>` walks every winning record of one type through its decoder. Each
+`--where` filter must match:
+
+| Filter | Matches |
+| --- | --- |
+| `field=value`, `field!=value` | Some value equals, or no value equals, ignoring case |
+| `field~text`, `field!~text` | Some value contains, or no value contains, the text |
+| `field<n`, `field<=n`, `field>n`, `field>=n` | Some value compares as a number |
+| `field` | The field has a value |
+
+A field is a path through the decoded record, such as `data.damage`. The last parts are enough:
+`damage` matches `data.damage`. Every element of a list shares the list's path, so
+`keywords=WeapTypeDagger` matches a weapon with that keyword anywhere in its list. A FormID reads
+as the target's editor ID. Every type also has `formID`, `plugin`, and `subrecords` (one per
+subrecord signature), so an undecoded type can still be searched by its fields.
+
+```sh
+openskycli record find --type WEAP --where keywords=WeapTypeDagger --where 'damage>=10' \
+  --fields editorID,damage
+openskycli record find --type LAND --where subrecords=VTEX --count
+```
+
+Output is one tab-separated line per record, `formID` then each `--fields` path (default
+`editorID`). `--json` prints one object per record with every field, and `--count` prints only
+the number. A summary line goes to stderr.
 
 ## Subcommands
 
@@ -71,6 +99,7 @@ prints its help and exits 2. `cell` and `render` default to the
 | `install` | The game folder check the launcher shows: game version, official DLC, Creation Club plugin count, archive, plugin, and record counts, and each install problem with its fix. Exits 1 on a problem |
 | `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
 | `record show <id>` | One record by FormID or editor ID: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
+| `record find --type <TYPE> [--where <filter>]... [--fields a,b] [--limit n] [--count] [--json]` | Every winning record of one type that matches the filters ([searching records](#searching-records)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
 | `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
 | `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](/engine/ess-import.md)) |
@@ -174,7 +203,8 @@ prints its help and exits 2. `cell` and `render` default to the
 `tools/probe.sh` is a smoke run against the local install. Without an install it prints `[INFO]`
 and exits 0, so CI is safe. It runs most commands above and checks their output, for example:
 
-- `record show 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs").
+- `record show 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"), and `record find` finds it
+  by editor ID and counts the daggers by keyword.
 - `actor appearance` finds no unresolved actors in the default block, and
   `actor appearance --npc Heimskr` reports a
   skeleton, parts, and a FaceGen path.

@@ -119,6 +119,17 @@ run "vfs cat (book.swf)" vfs cat 'interface\book.swf' --out "$vfs_copy"
   || fail "record show 0x3C did not decode as Tamriel"
 echo "[ OK ] record show 0x3C (Tamriel)"
 
+# Record search: Tamriel is one WRLD by editor ID, and daggers carry their keyword.
+tamriel="$("$cli" --data-root "$data_root" record find --type WRLD \
+  --where editorID=Tamriel --fields editorID 2>>"$log")" || fail "record find failed"
+printf '%s\n' "$tamriel" | grep -q '	editorID=Tamriel$' \
+  || fail "record find did not find Tamriel by editor ID"
+daggers="$("$cli" --data-root "$data_root" record find --type WEAP \
+  --where keywords=WeapTypeDagger --count 2>>"$log")" || fail "record find --count failed"
+[ "$daggers" -gt 0 ] || fail "record find counted no daggers"
+expect_usage "record find rejects a bad filter" "cannot read --where" \
+  record find --type WEAP --where '=1'
+echo "[ OK ] record find (Tamriel, $daggers daggers)"
 
 # Plugin load order. Skyrim.esm is first on every install; the plugins.txt line
 # is not pinned, since whether one is findable is a property of the machine
@@ -223,7 +234,10 @@ run "effects census" effects census
 grep -q '^IMAD [0-9]*: animatable' "$log" || fail "effects census found no image-space modifiers"
 grep -q '^IMGS [0-9]' "$log" || fail "effects census found no image spaces"
 grep -q '^EXPL [0-9]*: damage' "$log" || fail "effects census found no explosions"
-run "effects imad (GetHit at 0.5 s)" effects imad GetHit --at 0.5
+run "effects imad (first IMAD at 0.5 s)" effects imad "$(
+  "$cli" --data-root "$data_root" record find --type IMAD --limit 1 2>>"$log" \
+    | sed -n 's/.*editorID=//p'
+)" --at 0.5
 
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
