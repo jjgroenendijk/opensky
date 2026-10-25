@@ -17,4 +17,12 @@ struct FourCCTests {
         #expect(FourCC(stringLiteral: "WRLD").description == "WRLD")
         #expect(FourCC(rawValue: 0x0000_0001).description == "0x00000001")
     }
+
+    @Test func userTextReadsOnlyFourPrintableCharacters() {
+        #expect(FourCC(text: "WEAP") == "WEAP")
+        #expect(FourCC(text: "NPC_") == "NPC_")
+        #expect(FourCC(text: "WEAPON") == nil)
+        #expect(FourCC(text: "AB\u{1}D") == nil)
+        #expect(FourCC(text: "") == nil)
+    }
 }
