@@ -33,6 +33,8 @@ nonisolated public struct GameFolderStatus: Equatable, Sendable {
 
     public static func sourceNote(for source: GameDataRoot.Source) -> String {
         switch source {
+        case .commandLine:
+            "Set by a command-line option for this run."
         case .environment:
             "Set by the \(GameDataLocator.environmentKey) environment variable — "
                 + "it overrides the choice made here."
