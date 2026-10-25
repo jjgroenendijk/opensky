@@ -25,6 +25,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case global(String)
     case time
     case frame
+    /// The view in the values the reference game's console takes.
+    case view
 
     public static let defaultActorRadius: Float = 4096
 
@@ -40,6 +42,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "global": return try .global(args.string("id"))
         case "time": return .time
         case "frame": return .frame
+        case "view": return .view
         default:
             guard let query = try inspection(name, args) else {
                 throw AgentFailure(.unknownCommand, "unknown state query: \(name)")

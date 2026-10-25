@@ -179,6 +179,11 @@ the number. A summary line goes to stderr.
 | `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](/engine/asset-cache.md)) |
 | `asset-optimisation measure [--per-kind n]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
 | `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two renders with the cache off and on. 100 dB means identical |
+| `reference status` | The reference game prefix and what it still lacks, and the Wine that runs it ([reference game](/tools/reference-game.md)) |
+| `reference check` | Compares the Steam build and the SHA-256 of every `.esm` of the reference copy and the OpenSky install. Exits 1 on a difference |
+| `reference launch [--width n] [--height n] [--steam-wait s]` | Sets the window size in the prefix's `SkyrimPrefs.ini`, then starts Windows Steam and the game |
+| `reference export-view [--no-hide-menus] [--freeze]` | Writes the running OpenSky view as the batch file `bat opensky` runs in the reference game |
+| `reference capture [--width n] [--height n]` | Captures both games at one size and writes the pair, their difference, the batch file, and a report to `.logs/reference/<UTC time>/` |
 
 ## Notes on the probes
 

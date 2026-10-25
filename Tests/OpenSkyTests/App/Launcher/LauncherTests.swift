@@ -8,6 +8,7 @@ import OpenSkyCells
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
+import OpenSkyReference
 import OpenSkySave
 import OpenSkyWorld
 import Testing
@@ -40,6 +41,10 @@ struct LauncherTests {
         func runBenchmark(_ request: BenchmarkRequest) {
             benchmarks.append(request)
         }
+
+        func referenceView() -> ReferenceView? {
+            nil
+        }
     }
 
     @Test func registryIdsArePinned() {
@@ -48,6 +53,12 @@ struct LauncherTests {
             "LauncherPage-benchmark", "LauncherPage-diagnostics", "LauncherPage-settings"
         ])
         #expect(LauncherRegistry.page(id: LauncherRegistry.defaultPageID) != nil)
+    }
+
+    /// The test host sets no reference prefix, so the developer page stays unlisted.
+    @Test func referencePageIsListedOnlyOnceAPrefixIsSet() {
+        #expect(LauncherRegistry.allPages.contains { $0.id == "reference" })
+        #expect(!LauncherRegistry.pages.contains { $0.id == "reference" })
     }
 
     @Test func launcherOpensOnTheLaunchPageAndCachesPages() {

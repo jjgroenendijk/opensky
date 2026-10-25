@@ -71,7 +71,7 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 | --- | --- |
 | `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests; builds no app |
 | `Formats` | the `OpenSkyFormats*Tests` targets |
-| `Engine` | game data, behavior, launch, agent control, physics, rendering, audio, world state |
+| `Engine` | game data, behavior, launch, reference game, agent control, physics, rendering, audio, world state |
 | `Features` | every feature's tests, the world domains, save, menus, preview |
 | `App` | `OpenSkyTests`, hosted by the app |
 | `GPU` | every unit target, only the `.gpu` tests |

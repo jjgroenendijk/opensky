@@ -172,6 +172,12 @@ else
   echo "[INFO] OPENSKY_SKYRIM_SAVES not set — skipping the ess probe"
 fi
 
+# The reference game prefix: read-only status, so it runs with or without a prefix.
+reference="$("$cli" reference status 2>>"$log")" || fail "reference status failed"
+printf '%s\n' "$reference" | grep -Eq '^\[(INFO|WARNING)\] ' \
+  || fail "reference status printed no prefix line"
+echo "[ OK ] reference status ($(printf '%s\n' "$reference" | head -n 1))"
+
 # Movement tuning resolves active GMST overrides and reports an explicit source
 # for every value. Do not pin numeric values here: an active user plugin may
 # intentionally override them.

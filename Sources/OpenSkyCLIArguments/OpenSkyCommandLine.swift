@@ -54,7 +54,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
             ]),
             CommandGroup(name: "The app", subcommands: [
                 GameArguments.self, BenchmarkArguments.self, GraphicsArguments.self,
-                AssetCacheArguments.self
+                AssetCacheArguments.self, ReferenceArguments.self
             ])
         ]
     )

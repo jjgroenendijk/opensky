@@ -232,6 +232,25 @@ struct CommandLineTests {
             == OpenSkyCommandLine.usageExitCode)
     }
 
+    @Test func referenceTakesAWindowSizeAndBatchToggles() throws {
+        let launch = try command(
+            ["reference", "launch", "--width", "1920", "--height", "1080", "--steam-wait", "5"],
+            as: ReferenceArguments.Launch.self
+        )
+        #expect(launch.window.width == 1920 && launch.window.height == 1080)
+        #expect(launch.steamWait == 5)
+        let export = try command(
+            ["reference", "export-view", "--no-hide-menus", "--freeze"],
+            as: ReferenceArguments.ExportView.self
+        )
+        #expect(!export.batch.hideMenus && export.batch.freeze)
+        _ = try command(["reference", "capture"], as: ReferenceArguments.Capture.self)
+        _ = try command(["reference", "check"], as: ReferenceArguments.Check.self)
+        _ = try command(["reference", "status"], as: ReferenceArguments.Status.self)
+        #expect(exitCode(["reference", "launch", "--width", "10"])
+            == OpenSkyCommandLine.usageExitCode)
+    }
+
     @Test func aUsageErrorExitsWithTwoAndHelpWithZero() {
         #expect(exitCode(["cell", "--bogus"]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["no-such-command"]) == OpenSkyCommandLine.usageExitCode)

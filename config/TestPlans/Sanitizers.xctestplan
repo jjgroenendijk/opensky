@@ -323,6 +323,10 @@
     },
     {
       "parallelizable" : true,
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyReferenceTests", "name" : "OpenSkyReferenceTests"}
+    },
+    {
+      "parallelizable" : true,
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyAssetCacheTests", "name" : "OpenSkyAssetCacheTests"}
     },
     {

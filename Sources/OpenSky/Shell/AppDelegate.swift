@@ -6,6 +6,7 @@ import AppKit
 import MetalKit
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyReference
 import OpenSkyWorld
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -157,6 +158,11 @@ extension AppDelegate: LauncherActions {
     func cancelLoad() {
         worldLoader.cancel()
         launcher?.endLoad()
+    }
+
+    func referenceView() -> ReferenceView? {
+        let game = gameWindow?.contentViewController as? GameViewController
+        return try? game?.session?.agentWorld.referenceView()
     }
 
     func runBenchmark(_ request: BenchmarkRequest) {

@@ -140,17 +140,24 @@ extension SettingsViewController {
     }
 
     @objc func chooseSavesFolder() {
+        chooseFolder("Select the folder holding your Skyrim .ess saves.") { [weak self] url in
+            ESSSaveFolderSetting.store(url)
+            self?.refreshSavesFolder()
+        }
+    }
+
+    /// A folder sheet; `store` runs on the choice, then the settings change is reported.
+    func chooseFolder(_ message: String, store: @escaping (URL) -> Void) {
         guard let window = view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.message = "Select the folder holding your Skyrim .ess saves."
+        panel.message = message
         panel.prompt = "Use Folder"
         panel.beginSheetModal(for: window) { [weak self] response in
             guard let self, response == .OK, let url = panel.url else { return }
-            ESSSaveFolderSetting.store(url)
-            refreshSavesFolder()
+            store(url)
             onSettingsChanged?()
         }
     }

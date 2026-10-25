@@ -345,6 +345,13 @@ targets += foundation(
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
     tests: ["OpenSkyFormatsCore", "OpenSkyGameData", "OpenSkyFormatsTesting"]
 )
+// The Windows reference game: its prefix, launch, batch file, and version check
+// (docs/tools/reference-game.md). Developer tooling; the app shows it only once set up.
+targets += foundation(
+    "OpenSkyReference",
+    dependencies: ["OpenSkyGameData"],
+    tests: ["OpenSkyGameData"]
+)
 targets += foundation("OpenSkyDiagnostics", dependencies: ["OpenSkyShaderTypes"])
 // The agent control protocol, socket, and router; the app and openskycli both link it.
 targets += foundation("OpenSkyAgentControl", tests: [])

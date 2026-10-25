@@ -117,6 +117,7 @@ struct AgentCommandParsingTests {
             == .furniture(reference: "target"))
         #expect(try AgentStateQuery
             .parse("furniture", args([:])) == .furniture(reference: "player"))
+        #expect(try AgentStateQuery.parse("view", args([:])) == .view)
     }
 
     @Test func theDebugChannelIsAPositionalMode() throws {
