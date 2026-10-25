@@ -30,7 +30,11 @@ private final class RecordingActorAI: PapyrusActorAIBridge {
 
 @MainActor
 struct OpeningScriptRealDataTests {
-    private static let cartDriver = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0654F6)
+    /// `MQ101CartDriverA` and `MQ101CartDriverB`. Which one the first cart's alias
+    /// names is data, and an update has moved it.
+    private static let cartDrivers = Set([0x0654F5, 0x0654F6].map {
+        ReferenceKey.plugin(name: "skyrim.esm", objectID: $0)
+    })
 
     /// Stage 42 asks the first cart's driver to climb down. His exit idle sends
     /// `ExitCartEnd`, and the last rider down sets stage 45.
@@ -38,8 +42,9 @@ struct OpeningScriptRealDataTests {
     func theFirstCartUnloadsAfterStage42() throws {
         let session = try Session()
         try session.setStage(42)
-        #expect(session.actorAI.idles.contains { $0.actor == Self.cartDriver })
-        #expect(session.ridersExiting().contains(Self.cartDriver))
+        let driver = try #require(session.actorAI.idles.first?.actor)
+        #expect(Self.cartDrivers.contains(driver))
+        #expect(session.ridersExiting().contains(driver))
         session.finishExits()
         #expect(session.newFaults.isEmpty, "\(session.newFaults)")
         #expect(try session.state().isStageDone(45))

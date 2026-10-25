@@ -26,9 +26,9 @@ struct DialogueRuntimeRealDataTests {
         "DialogueSolitudeSybille02Topic01",
         "OffersTrainingTopic"
     ]
-    /// The greeting she opens with under the same state.
+    /// The greeting topic she opens with under the same state. Its responses are
+    /// a random group, so which one wins moves when an update reorders them.
     private static let expectedGreetingTopic: UInt32 = 0x0001_42B5
-    private static let expectedGreetingInfo: UInt32 = 0x0008_7940
 
     @MainActor
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
@@ -69,7 +69,10 @@ struct DialogueRuntimeRealDataTests {
         let world = try Self.world()
         let greeting = try #require(world.runtime.greeting(for: Self.speakerKey))
         #expect(greeting.topic.rawValue == Self.expectedGreetingTopic)
-        #expect(greeting.info.rawValue == Self.expectedGreetingInfo)
+        // The first response of the random group, because the test fixes the pick.
+        let first = greeting.considered.first { $0.isWinner || $0.rejection == .lostRandomPick }
+        #expect(first?.info == greeting.info)
+        #expect(world.runtime.greeting(for: Self.speakerKey)?.info == greeting.info)
     }
 
     /// Choosing a response records it, and a say-once response then drops out
@@ -137,13 +140,14 @@ struct DialogueRuntimeRealDataTests {
             file: file, pluginName: "Skyrim.esm", localized: localized
         )
         let quests = QuestStore(file: file, pluginName: "Skyrim.esm")
-        let runtime = try DialogueRuntime(
+        var runtime = try DialogueRuntime(
             store: WorldStateStore(),
             dialogue: dialogue,
             questStates: QuestResolution(defaults: quests),
             context: speaker.context(root: root, file: file),
             registry: .standard
         )
+        runtime.randomPick = { _ in 0 }
         return World(dialogue: dialogue, runtime: runtime)
     }
 

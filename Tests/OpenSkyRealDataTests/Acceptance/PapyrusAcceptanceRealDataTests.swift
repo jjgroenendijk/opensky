@@ -40,7 +40,7 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(ContentCount.isNear(census.referenceTotal, 65477))
         #expect(ContentCount.isNear(census.distinctReferencedTotal, 508))
         // Pinned so a new native shows up here.
-        #expect(coverage == PexNativeCoverage(implemented: 442, referenced: 508))
+        #expect(coverage == PexNativeCoverage(implemented: 508, referenced: 508))
         #expect(ContentCount.isNear(run.entryPoints, 577))
         // 21 entry points still wait, or yield each tick in a loop with no wait, when
         // the tick cap ends the run. A yielding loop calls its natives every tick.
@@ -51,17 +51,13 @@ struct PapyrusAcceptanceRealDataTests {
         // entry point faults.
         #expect(runtime.tally.faultTotal == 0)
         #expect(ContentCount.isNear(runtime.tally.nativeCallTotal, 814_881))
-        #expect(runtime.tally.unimplementedNativeTotal == 13)
+        #expect(runtime.tally.unimplementedNativeTotal == 0)
         // World natives refuse in this headless run, so their calls count as
         // failures rather than unimplemented natives.
         #expect(ContentCount.isNear(runtime.tally.nativeFailureTotal, 593_025))
         #expect(ContentCount.isNear(runtime.tally.deferredAnimationTotal, 236))
         #expect(runtime.tally.rankedFaultKinds.isEmpty)
-        #expect(
-            runtime.tally.rankedUnimplementedNatives.first?.name
-                == "Actor.playSubgraphAnimation"
-        )
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 3)
+        #expect(runtime.tally.rankedUnimplementedNatives.isEmpty)
 
         let report = Self.report(
             paths: paths,

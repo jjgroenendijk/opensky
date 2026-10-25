@@ -1,4 +1,4 @@
-// M13 acceptance, pixel half: advancing a stage adds a journal paragraph. The
+// M13 acceptance, pixel half: advancing a stage replaces the journal paragraph. The
 // advanced page must also be byte-identical to a page built at that stage
 // directly. Needs Metal 4 and the install; frames go to gitignored `.logs/`.
 
@@ -38,7 +38,12 @@ struct QuestAcceptanceRenderTests {
         #expect(walked.earlyPage.selectedEntry?.logEntries.count == 1)
 
         let advanced = try Self.publish(walked.advancedPage, renderer: renderer)
-        #expect(walked.advancedPage.selectedEntry?.logEntries.count == 2)
+        // The page shows the newest log entry only, so the advance swaps the text.
+        #expect(walked.advancedPage.selectedEntry?.logEntries.count == 1)
+        #expect(
+            walked.advancedPage.selectedEntry?.logEntries
+                != walked.earlyPage.selectedEntry?.logEntries
+        )
         let grew = Self.changedPixels(early.pixels, advanced.pixels)
         #expect(
             grew >= Self.minimumChangedPixels,
