@@ -66,10 +66,6 @@ final class DialogueMenuController {
         movie.isLoaded
     }
 
-    var movieError: String? {
-        movie.error
-    }
-
     var dialogue: DialogueCoordinator {
         game.dialogue
     }

@@ -87,16 +87,12 @@ public final class WorldAudioSoundDirector {
     /// Most recent SFX outcome, surfaced through the audio readout.
     public private(set) var lastSFXDescription: String?
     public internal(set) var lastSFXError: String?
-    /// The routing the last one-shot took, and why, for the readout.
-    public private(set) var lastRouting: String?
     /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.
     public let outputModels: ((FormID) -> OutputModelProfile?)?
     /// Resolves an ASPC's raw `BNAM` link to its `REVB` record.
     public let reverbs: ((FormID) -> ReverbParameters?)?
     /// The reverb the current acoustic space asked for.
     public private(set) var currentReverb = ReverbSetting.off
-    /// The `REVB` record behind `currentReverb`, nil outdoors.
-    public private(set) var currentReverbRecord: ReverbParameters?
 
     public init(
         engine: WorldAudioEngine,
@@ -214,7 +210,6 @@ public final class WorldAudioSoundDirector {
             .flatMap { aspcStore?.acousticSpace($0)?.reverbModel }
             .flatMap { reverbs?($0) }
         let setting = ReverbSetting(record: reverb)
-        currentReverbRecord = reverb
         guard setting != currentReverb else { return }
         currentReverb = setting
         engine.applyReverb(setting)
@@ -288,7 +283,6 @@ extension WorldAudioSoundDirector {
                 profile: profile,
                 channelCount: profile == nil ? asset.channelCount : nil
             )
-            lastRouting = "\(routing.rawValue) (\(profile?.name ?? "channel count"))"
             let sourceID = try routing == .positional
                 ? engine.playPositional(asset: asset, request: request)
                 : engine.playNonPositional(asset: asset, request: request)

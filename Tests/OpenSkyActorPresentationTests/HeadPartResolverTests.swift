@@ -75,7 +75,7 @@ struct HeadPartResolverTests {
         )
         #expect(set.parts.map(\.formID.rawValue) == [0x10, 0x11, 0x12])
         #expect(set.parts.map(\.origin) == [.npcOverride, .extraPart, .extraPart])
-        #expect(set.misses == [HeadPartMiss(formID: FormID(0x10), reason: .cycle)])
+        #expect(set.misses == [HeadPartMiss(reason: .cycle)])
     }
 
     @Test func theRaceListFiltersAndAMissingPartDegrades() throws {

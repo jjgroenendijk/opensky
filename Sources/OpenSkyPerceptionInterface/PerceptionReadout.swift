@@ -78,17 +78,13 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
     /// complete one.
     public let droppedPairCount: Int
     public let lineOfSightQueryCount: Int
-    public let stepCount: Int
-    /// What each target brings into the formula this frame.
-    public let targets: [DetectionTargetReadout]
 
     public static let empty = PerceptionReadout(
         pairs: [],
         observerCount: 0,
         targetCount: 0,
         droppedPairCount: 0,
-        lineOfSightQueryCount: 0,
-        stepCount: 0
+        lineOfSightQueryCount: 0
     )
 
     /// Every pair involving `actor` on either side, which is what a
@@ -102,54 +98,12 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
         observerCount: Int,
         targetCount: Int,
         droppedPairCount: Int,
-        lineOfSightQueryCount: Int,
-        stepCount: Int,
-        targets: [DetectionTargetReadout] = []
+        lineOfSightQueryCount: Int
     ) {
         self.pairs = pairs
         self.observerCount = observerCount
         self.targetCount = targetCount
         self.droppedPairCount = droppedPairCount
         self.lineOfSightQueryCount = lineOfSightQueryCount
-        self.stepCount = stepCount
-        self.targets = targets
-    }
-}
-
-/// One target's non-geometric inputs, as the Detection section shows them.
-nonisolated public struct DetectionTargetReadout: Equatable, Sendable {
-    public let name: String
-    public let traits: DetectionTargetTraits
-    public let stealthPoints: StealthPointPool?
-
-    public init(
-        name: String,
-        traits: DetectionTargetTraits,
-        stealthPoints: StealthPointPool? = nil
-    ) {
-        self.name = name
-        self.traits = traits
-        self.stealthPoints = stealthPoints
-    }
-
-    public var summaryLine: String {
-        let pool = stealthPoints.map {
-            String(
-                format: ", stealth points %.0f%@", $0.points,
-                $0.isExposed ? " (exposed)" : $0.refillWait > 0
-                    ? String(format: " (refill in %.1f s)", $0.refillWait) : ""
-            )
-        } ?? ""
-        return String(
-            format: "%@: light %.2f, armour weight %.1f, muffle %.2f, action %.0f, Sneak %.0f%@%@",
-            name,
-            traits.lightLevel,
-            traits.equippedWeight,
-            traits.muffle,
-            traits.actionSound,
-            traits.sneakSkill,
-            traits.isInvisible ? ", invisible" : "",
-            pool
-        )
     }
 }

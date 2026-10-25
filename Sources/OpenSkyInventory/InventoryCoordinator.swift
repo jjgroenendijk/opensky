@@ -8,7 +8,6 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
-import OpenSkyWorldState
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
 /// Without game data every runtime is nil, and each action then says so.
@@ -51,8 +50,6 @@ public final class InventoryCoordinator {
     public let soulTexts: SoulTexts
     /// The quality names of an improved item.
     public let temperingTexts: TemperingTexts
-    /// The load order's cell reset intervals, which a harvested plant waits for.
-    public let cellReset: CellResetSettings
     /// The ingredients chosen at the open alchemy lab, in the order chosen. Nil when no
     /// lab is open.
     public internal(set) var alchemySelection: [FormID]?
@@ -93,7 +90,6 @@ public final class InventoryCoordinator {
         storyEvents = seams.storyEvents
         let rules = data?.rules ?? InventoryRules()
         barterPricing = rules.barterPricing
-        cellReset = rules.cellReset
         pickpocketSettings = rules.pickpocket
         craftingSkillUse = rules.craftingSkillUse
         let texts = data?.texts ?? InventoryTexts()

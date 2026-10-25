@@ -31,20 +31,6 @@ extension CellStreamer {
         activate(InteractionTarget(interaction: entered, hitPosition: feet, distance: 0))
     }
 
-    /// The automatic door count and the `DoorSettings` distances, for state reads.
-    public var automaticDoorReadout: String {
-        let count = residentScenes.reduce(0) { total, scene in
-            total + scene.interactions.values.count { $0.automaticArea != nil }
-        }
-        let occupied = automaticDoorOccupancy?.count ?? 0
-        return String(
-            format: "Automatic doors: %d resident  Occupied: %d\n"
-                + "Doors: open %.0f  name %.0f  load delay %.1f s",
-            count, occupied, doors.autoActivateDistance, doors.autoDisplayDistance,
-            doors.teleportDelay
-        )
-    }
-
     /// The nearest automatic door within `fAutoDoorDisplayDistance`, which the HUD names
     /// when the crosshair is on nothing else.
     func nearestAutomaticDoor(to origin: SIMD3<Float>) -> InteractionTarget? {

@@ -17,8 +17,6 @@ final class GameLaunchContext {
     nonisolated struct LoadedWorld {
         let fileSystem: VirtualFileSystem
         let session: CellSession?
-        let assetCache: AssetCacheReader?
-        var fastTextureLoad: FastTextureLoadControl?
     }
 
     nonisolated private static let logger = EngineLogger(
@@ -27,9 +25,6 @@ final class GameLaunchContext {
     )
 
     private(set) var gameDataRoot: GameDataRoot?
-    /// The asset cache the loaded world reads; nil without game data or a usable folder.
-    private(set) var assetCache: AssetCacheReader?
-    private(set) var fastTextureLoad: FastTextureLoadControl?
     private(set) var virtualFileSystem: VirtualFileSystem?
     /// Built by `load`, handed to the next game view, which owns it from then on.
     private var cellSession: CellSession?
@@ -101,8 +96,6 @@ final class GameLaunchContext {
             completion: { [weak self, weak loader] world in
                 self?.virtualFileSystem = world.fileSystem
                 self?.cellSession = world.session
-                self?.assetCache = world.assetCache
-                self?.fastTextureLoad = world.fastTextureLoad
                 self?.worldLoadReport = loader.map {
                     WorldLoadReport(timeline: $0.timeline, total: $0.elapsed)
                 }
@@ -137,8 +130,6 @@ final class GameLaunchContext {
             }
             // Audio picker and playback source.
             controller.audioFileSystem = vfs
-            controller.assetCache = assetCache
-            controller.fastTextureLoad = fastTextureLoad
             // UI text. Records from another plugin read through `scoped(to:)`.
             controller.localizedStringsLoader = {
                 LocalizedStrings(
@@ -162,9 +153,9 @@ final class GameLaunchContext {
         logger.info("VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order")
         let cache = openAssetCache(settings: cacheSettings, files: vfs, root: root)
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
-            return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
+            return LoadedWorld(fileSystem: vfs, session: nil)
         }
-        // The control exists whenever the cache does, so the readout can turn it on later.
+        // The control exists whenever the cache does.
         let fastLoad = cache.map { _ in
             FastTextureLoadControl(
                 isEnabled: cacheSettings.directLoad.loadsTextures,
@@ -184,9 +175,7 @@ final class GameLaunchContext {
                 fastLoad: fastLoad,
                 loadPhases: request.loadPhases
             )
-            return LoadedWorld(
-                fileSystem: vfs, session: session, assetCache: cache, fastTextureLoad: fastLoad
-            )
+            return LoadedWorld(fileSystem: vfs, session: session)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -194,7 +183,7 @@ final class GameLaunchContext {
             logger.error(
                 "[ERROR] cell provider setup failed, using demo scene: \(reason, privacy: .public)"
             )
-            return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
+            return LoadedWorld(fileSystem: vfs, session: nil)
         }
     }
 

@@ -79,19 +79,6 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     ]
 }
 
-/// One root-motion trace entry: the step where gait or motion source changed, and the
-/// capsule position then. Changes only, so a whole route costs little.
-nonisolated public struct LocomotionMotionSample: Equatable, Sendable {
-    public let gait: LocomotionGait
-    public let source: LocomotionMotionSource
-    /// Capsule bottom when the change happened.
-    public let feetPosition: SIMD3<Float>
-    /// Horizontal displacement the step that changed it asked for.
-    public let displacement: SIMD2<Float>
-    public let isGrounded: Bool
-    public let isSwimming: Bool
-}
-
 /// What the bridge did, for the locomotion readout and for
 /// the tests. Value type, snapshot-per-read, like the other readout bridges.
 nonisolated public struct LocomotionStatus: Equatable, Sendable {
@@ -137,13 +124,9 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
     /// tell them apart.
     public var rootMotionDistance: Float = 0
     public var configuredSpeedDistance: Float = 0
-    /// Where the resolved gait or the motion source last changed, oldest first.
-    public var motionTrace: [LocomotionMotionSample] = []
 
     /// How many recent graph events are kept for the readout.
     public static let recentEventLimit = 12
-    /// How many motion-trace samples are kept.
-    public static let motionTraceLimit = 16
 
     public init(graphAvailable: Bool = false, firstPersonGraphAvailable: Bool = false) {
         self.graphAvailable = graphAvailable
@@ -164,7 +147,6 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         state: LocomotionStepState,
         waterSurface: Float?
     ) {
-        let changed = gait != self.gait || plan.motionSource != lastPlan.motionSource
         self.gait = gait
         lastPlan = plan
         feetPosition = state.feetPosition
@@ -173,29 +155,16 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         yaw = state.yaw
         isGrounded = state.isGrounded
         waterSurfaceHeight = waterSurface
-        recordMotion(plan: plan, changed: changed || motionTrace.isEmpty)
+        recordMotion(plan: plan)
     }
 
-    /// Adds the step's travel to its source's total and, when the step changed
-    /// what is driving the character, appends a trace sample.
-    private mutating func recordMotion(plan: LocomotionStepPlan, changed: Bool) {
+    /// Adds the step's travel to its source's total.
+    private mutating func recordMotion(plan: LocomotionStepPlan) {
         let travelled = simd_length(plan.horizontalDisplacement)
         switch plan.motionSource {
         case .rootMotion: rootMotionDistance += travelled
         case .configuredSpeed: configuredSpeedDistance += travelled
         case .idle: break
-        }
-        guard changed else { return }
-        motionTrace.append(LocomotionMotionSample(
-            gait: gait,
-            source: plan.motionSource,
-            feetPosition: feetPosition,
-            displacement: plan.horizontalDisplacement,
-            isGrounded: isGrounded,
-            isSwimming: plan.isSwimming
-        ))
-        if motionTrace.count > Self.motionTraceLimit {
-            motionTrace.removeFirst(motionTrace.count - Self.motionTraceLimit)
         }
     }
 

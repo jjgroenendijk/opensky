@@ -17,11 +17,6 @@ nonisolated public struct DeathEffectCounts: Equatable, Sendable {
     public var removedBodies = 0
 
     public init() {}
-
-    public var readout: String {
-        "Death effects: \(pushedBodies) pushed · \(droppedWeapons) weapons dropped · "
-            + "\(dismemberments) dismembered · \(removedBodies) bodies removed"
-    }
 }
 
 extension RagdollCoordinator {

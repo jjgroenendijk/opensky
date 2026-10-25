@@ -3,6 +3,7 @@
 // movie while a pick is owed and the stats movie after; see docs/engine/skills-menu.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyProgressionInterface
 
@@ -15,12 +16,10 @@ public protocol SkillsMenuWorld: SWFLayerWorld {
 }
 
 nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
-    public let isOpen: Bool
     public let page: String
     /// The rows the engine fallback would draw, one per choice of this page.
     public let rows: [String]
     public let selectedIndex: Int?
-    public let lastResult: String?
     public let movie: TitleMenuMovieSnapshot
     public let isSkyEnabled: Bool
     /// True while the level-up movie is drawn over the stats movie.
@@ -29,16 +28,17 @@ nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
     public let sky: String?
 
     public init(
-        isOpen: Bool = false, page: String = "Closed", rows: [String] = [],
-        selectedIndex: Int? = nil, lastResult: String? = nil,
-        movie: TitleMenuMovieSnapshot = .init(), isSkyEnabled: Bool = true,
-        isLevelUpMovieLoaded: Bool = false, sky: String? = nil
+        page: String = "Closed",
+        rows: [String] = [],
+        selectedIndex: Int? = nil,
+        movie: TitleMenuMovieSnapshot = .init(),
+        isSkyEnabled: Bool = true,
+        isLevelUpMovieLoaded: Bool = false,
+        sky: String? = nil
     ) {
-        self.isOpen = isOpen
         self.page = page
         self.rows = rows
         self.selectedIndex = selectedIndex
-        self.lastResult = lastResult
         self.movie = movie
         self.isSkyEnabled = isSkyEnabled
         self.isLevelUpMovieLoaded = isLevelUpMovieLoaded
@@ -50,7 +50,6 @@ public final class SkillsMenuCoordinator {
     public static let identifier: MenuIdentifier = "StatsMenu"
 
     public internal(set) var model: SkillsMenuModel?
-    public internal(set) var lastResult: String?
     public private(set) var movieEnabled = true
     public internal(set) var skyEnabled = true
     /// True while the sky plays `CameraOutro` after a close; input waits.
@@ -141,9 +140,6 @@ public final class SkillsMenuCoordinator {
         if let action {
             perform(action)
         }
-        if let message = self.model?.message {
-            lastResult = message
-        }
         syncMovie()
     }
 
@@ -178,14 +174,16 @@ public final class SkillsMenuCoordinator {
 
     private func report(_ outcome: SkillsMenuOutcome) {
         switch outcome {
-        case let .done(text), let .refused(text): lastResult = text
+        case let .done(text), let .refused(text):
+            Self.logger.info("skills menu: \(text, privacy: .public)")
         }
     }
 
     public var snapshot: SkillsMenuSnapshot {
         guard let model else {
             return SkillsMenuSnapshot(
-                lastResult: lastResult, movie: movieSnapshot, isSkyEnabled: skyEnabled
+                movie: movieSnapshot,
+                isSkyEnabled: skyEnabled
             )
         }
         let rows: [String]
@@ -210,15 +208,20 @@ public final class SkillsMenuCoordinator {
             selected = confirmation.selectedIndex
         }
         return SkillsMenuSnapshot(
-            isOpen: true, page: isClosing ? "Closing" : page, rows: rows, selectedIndex: selected,
-            lastResult: lastResult, movie: movieSnapshot, isSkyEnabled: skyEnabled,
-            isLevelUpMovieLoaded: levelUpMovie.isLoaded, sky: skyLine
+            page: isClosing ? "Closing" : page,
+            rows: rows,
+            selectedIndex: selected,
+            movie: movieSnapshot,
+            isSkyEnabled: skyEnabled,
+            isLevelUpMovieLoaded: levelUpMovie.isLoaded,
+            sky: skyLine
         )
     }
 
     private var movieSnapshot: TitleMenuMovieSnapshot {
         TitleMenuMovieSnapshot(
-            isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError,
+            isLoaded: movieLoaded,
+            error: movieError,
             state: movie.path.map { ($0 as NSString).lastPathComponent }
         )
     }
@@ -233,4 +236,9 @@ public final class SkillsMenuCoordinator {
         let state = perk.refusal.map { " - \($0)" } ?? " - available"
         return "\(perk.name)\(rank)\(state)"
     }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "SkillsMenu"
+    )
 }

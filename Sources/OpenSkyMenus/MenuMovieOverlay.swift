@@ -3,13 +3,13 @@
 // newest open.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
 
 public final class MenuMovieOverlay {
     public private(set) var isLoaded = false
-    public private(set) var error: String?
     private var request = 0
     private let movies: SWFMovieSource?
     private let renderer: () -> Renderer?
@@ -55,7 +55,6 @@ public final class MenuMovieOverlay {
         record { renderer in
             guard try renderer.setSWFOverlay(result.get(), prepare: prepare) != nil else { return }
             isLoaded = true
-            error = nil
             try renderer.updateSWFOverlay(activate)
         }
     }
@@ -65,7 +64,13 @@ public final class MenuMovieOverlay {
         do {
             try body(renderer)
         } catch {
-            self.error = String(describing: error)
+            Self.logger
+                .error("menu overlay movie failed: \(String(describing: error), privacy: .public)")
         }
     }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "MenuMovieOverlay"
+    )
 }

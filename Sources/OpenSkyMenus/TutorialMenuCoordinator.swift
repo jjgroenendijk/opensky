@@ -7,12 +7,10 @@ import OpenSkyFormatsSWF
 
 /// One help topic's text.
 nonisolated public struct HelpTopic: Equatable, Sendable {
-    public var editorID: String
     public var title: String
     public var text: String
 
-    public init(editorID: String, title: String, text: String) {
-        self.editorID = editorID
+    public init(title: String, text: String) {
         self.title = title
         self.text = text
     }

@@ -246,7 +246,7 @@ public final class CrimeCoordinator {
         let location = world.currentCellLocation
         if lastPlayerCell != location {
             lastPlayerCell = location
-            trespassWatch.enter(location)
+            trespassWatch.enterNewCell()
             let flags = location.map(world.cellTrespassFlags(at:)) ?? CellTrespassFlags()
             isPlayerTrespassing = !flags.isPublicArea
                 && cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true

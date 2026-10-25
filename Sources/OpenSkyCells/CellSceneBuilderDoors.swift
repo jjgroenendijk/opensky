@@ -72,7 +72,7 @@ nonisolated extension CellSceneBuilder {
                 skeleton: rig.skeleton, pose: pose, models: [model]
             )
             let door = CellSequenceDoor(
-                reference: instance.formID, modelPath: instance.modelPath, rig: rig, pose: pose
+                reference: instance.formID, rig: rig, pose: pose
             )
             result.append((door, playback))
         }

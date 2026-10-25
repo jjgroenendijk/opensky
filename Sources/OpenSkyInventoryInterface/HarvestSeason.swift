@@ -14,16 +14,6 @@ nonisolated public enum HarvestSeason: Int, CaseIterable, Equatable, Sendable {
         self.init(rawValue: ((month + 9) % 12) / 3)
     }
 
-    /// The string setting that names the season, such as `sSeasonSpring`.
-    public var settingName: String {
-        switch self {
-        case .spring: "sSeasonSpring"
-        case .summer: "sSeasonSummer"
-        case .fall: "sSeasonFall"
-        case .winter: "sSeasonWinter"
-        }
-    }
-
     /// The percent chance a plant yields in this season. Nil when `chances` holds no
     /// chance at all: six vanilla plants, such as `ChickenNest`, have 0 in every
     /// season and still yield in the game.

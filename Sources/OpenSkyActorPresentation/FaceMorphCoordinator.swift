@@ -139,12 +139,9 @@ extension FaceMorphCoordinator {
         guard let playback = selectedPlayback else { return .empty }
         return FaceMorphControlSnapshot(
             actor: playback.actor,
-            targetNames: playback.targetNames,
-            weights: playback.weights,
             pairedPaths: playback.pairedPaths,
             associationMisses: playback.misses.map { "\($0.headPart): \($0.reason)" },
-            unknownTargetCount: playback.unknownTargetCount,
-            expressionWeights: playback.expressionWeights
+            unknownTargetCount: playback.unknownTargetCount
         )
     }
 

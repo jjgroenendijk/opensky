@@ -38,13 +38,6 @@ nonisolated public struct BenchmarkLoadPass: Codable, Equatable, Sendable {
         self.phases = phases
         self.cells = cells
     }
-
-    /// Phases with `other`, largest first.
-    public var rankedPhases: [(name: String, ms: Double)] {
-        let named = LoadPhase.allCases.map { (name: $0.rawValue, ms: phases[$0]) }
-            + [(name: "other", ms: phases.otherMS)]
-        return named.sorted { $0.ms > $1.ms }
-    }
 }
 
 nonisolated public enum BenchmarkBuildConfiguration: String, Codable, Sendable {

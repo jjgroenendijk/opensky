@@ -2,7 +2,6 @@
 // rider may not do. `MountCoordinator` is the shell. See docs/engine/riding.md.
 
 import Foundation
-import OpenSkyFormatsESM
 import OpenSkyRendering
 import simd
 
@@ -26,7 +25,6 @@ nonisolated public enum MountOwnership: Equatable, Sendable {
 
 /// What the world says about one actor the player wants to mount.
 nonisolated public struct MountCandidate: Equatable, Sendable {
-    public var key: ReferenceKey
     public var isDead = false
     /// The saddle bone the skeleton has, or nil when it has none.
     public var saddleBone: String?
@@ -39,9 +37,7 @@ nonisolated public struct MountCandidate: Equatable, Sendable {
     public var isRidden = false
     public var ownership = MountOwnership.free
 
-    public init(key: ReferenceKey) {
-        self.key = key
-    }
+    public init() {}
 }
 
 nonisolated public enum MountRefusal: String, Equatable, Sendable {

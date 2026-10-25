@@ -82,10 +82,6 @@ nonisolated public enum SpellDefenceOutcome: Equatable, Sendable {
     case absorbed(magicka: Float)
     /// A ward took `damage`. A broken ward still blocks the spell.
     case warded(damage: Float, broken: Bool, magicka: Float)
-
-    public var stopsSpell: Bool {
-        self != .lands && self != .landsThroughWard
-    }
 }
 
 extension SpellHitApplication {

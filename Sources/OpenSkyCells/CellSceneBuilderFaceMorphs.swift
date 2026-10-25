@@ -7,7 +7,6 @@ import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 

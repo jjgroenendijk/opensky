@@ -2,7 +2,6 @@
 // and parks there; a walking actor takes the push on its mover.
 
 @testable import OpenSkyAIPackages
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer

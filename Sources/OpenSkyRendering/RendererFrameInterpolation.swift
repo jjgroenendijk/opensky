@@ -60,7 +60,6 @@ extension Renderer {
         let presents = upscale.interpolation.latency.take()
         return FrameInterpolationStatus(
             enabled: upscale.interpolation.enabled,
-            unsupportedReason: upscale.resources.interpolatorUnavailableReason,
             unavailableReason: frameInterpolationUnavailableReason,
             interpolatedFrames: upscale.interpolation.interpolatedFrames,
             realFPS: frameStats.snapshot().fps,

@@ -43,7 +43,7 @@ struct MountCoordinatorTests {
 
     private func world(ownership: MountOwnership = .free) -> FakeMountWorld {
         let world = FakeMountWorld()
-        var candidate = MountCandidate(key: Self.horse)
+        var candidate = MountCandidate()
         candidate.saddleBone = "SaddleBone"
         candidate.ownership = ownership
         world.candidates[Self.horse] = candidate

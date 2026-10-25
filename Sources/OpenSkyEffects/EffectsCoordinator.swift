@@ -30,7 +30,6 @@ public final class EffectsCoordinator {
 
     public weak let world: (any EffectsWorld)?
     public let records: EffectRecordStore
-    public let catalog: EffectCatalog
     public internal(set) var visualEffects = VisualEffectRuntime()
     public private(set) var spellHitCount = 0
     public private(set) var lastSpellHit = "No spell hit yet."
@@ -66,7 +65,6 @@ public final class EffectsCoordinator {
         self.records = records
         self.meshes = meshes
         self.world = world
-        catalog = EffectCatalog(records: records)
         bloodSettings = blood
         screenBlood.settings = blood
         weaponBlood.settings = blood

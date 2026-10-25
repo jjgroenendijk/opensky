@@ -24,7 +24,6 @@ struct VoiceLabState {
     var lastError: String?
     var lipSyncEnabled = true
     var lipPlayback: LipSyncPlayback?
-    var lipError: String?
 }
 
 extension AudioCoordinator {
@@ -174,13 +173,9 @@ extension AudioCoordinator {
     private func startLipSync(playback: VoicePlayback, path: String) {
         voice.lipPlayback?.resetToBindPose()
         voice.lipPlayback = nil
-        guard voice.lipSyncEnabled else {
-            voice.lipError = nil
-            return
-        }
+        guard voice.lipSyncEnabled else { return }
         let started = startLipSync(playback: playback, path: path, on: world?.lipSyncTarget())
         voice.lipPlayback = started.driver
-        voice.lipError = started.error
     }
 
     /// Drives `target`'s mouth from the line's lip track. Returns the driver, or

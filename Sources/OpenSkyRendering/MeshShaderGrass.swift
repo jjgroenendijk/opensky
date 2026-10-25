@@ -116,16 +116,13 @@ nonisolated public struct MeshletCounts: Equatable, Sendable {
 /// What the rendering performance readout shows for mesh-shader grass.
 nonisolated public struct MeshShaderGrassStatus: Equatable, Sendable {
     public var enabled = false
-    /// Why this GPU or this run cannot use it; nil when it can.
-    public var unavailableReason: String?
     /// Counts the GPU wrote, a few frames late.
     public var counts = MeshletCounts()
 
     public init(
-        enabled: Bool = false, unavailableReason: String? = nil, counts: MeshletCounts = .init()
+        enabled: Bool = false, counts: MeshletCounts = .init()
     ) {
         self.enabled = enabled
-        self.unavailableReason = unavailableReason
         self.counts = counts
     }
 }

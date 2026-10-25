@@ -20,7 +20,6 @@ protocol DialogueCameraHost: AnyObject {
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var raceMenu: RaceMenuCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var streamer: CellStreamer? { get }
 }

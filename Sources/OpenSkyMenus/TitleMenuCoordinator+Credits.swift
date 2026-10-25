@@ -13,7 +13,7 @@ extension TitleMenuCoordinator {
             try? world?.renderer?.updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
             return
         }
-        creditsWork = Task {
+        Task {
             let credits = await MenuTextFile.load(CreditsMenuMovieBridge.creditsPath, from: files)
             guard self.isOpen else { return }
             if let credits {

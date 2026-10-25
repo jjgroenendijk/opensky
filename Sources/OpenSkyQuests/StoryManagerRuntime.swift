@@ -51,9 +51,8 @@ public struct StoryManagerRuntime {
     @discardableResult
     public func fire(_ event: StoryEventData) -> StoryManagerWalk {
         var walk = Walk(runtime: self, event: event)
-        _ = story.roots(forEvent: event.event).contains { walk.visit($0.id, depth: 0) }
+        _ = story.roots(forEvent: event.event).contains { walk.visit($0.id) }
         return StoryManagerWalk(
-            event: event,
             steps: walk.steps,
             startedQuests: walk.started,
             tally: walk.evaluator.tally

@@ -31,10 +31,6 @@ public final class CellStreamingWalkDriver {
     public var interiorDistance: Float = 0
     public var navigationState = WalkBenchmarkNavigationState()
 
-    public var renderer: Renderer {
-        gameSession.renderer
-    }
-
     public init(
         gameSession: GameSession,
         provider: sending any CellSceneProvider,
@@ -101,14 +97,10 @@ public final class CellStreamingWalkDriver {
             throw CellStreamingWalkBenchmarkError.interiorNotCrossed(interiorDistance)
         }
         return CellStreamingWalkBenchmarkResult(
-            render: render,
             physicsRender: CellStreamingWalkBenchmark.activePhysicsResult(
                 render: render,
                 frameMask: physicsFrameMask
-            ),
-            exteriorStepGain: stepGain,
-            interiorDistance: interiorDistance,
-            finalFeetPosition: gameSession.walkController.feetPosition
+            )
         )
     }
 

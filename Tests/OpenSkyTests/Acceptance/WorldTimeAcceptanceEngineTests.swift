@@ -255,7 +255,7 @@ struct WorldTimeAcceptanceTests {
         #expect(restored.floatValue(editorID: "GameHour") == 7.25)
         // What the clock readout would show for the restored session.
         let sample = RuntimeStateClockSnapshot(
-            clock: restoredClock, timescale: 3600, isPaused: false
+            clock: restoredClock, timescale: 3600
         )
         #expect(sample.timeText == "07:15")
         // Only the hour was scrubbed, so the date is still the vanilla start.

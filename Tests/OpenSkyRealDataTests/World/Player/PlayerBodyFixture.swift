@@ -8,7 +8,6 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPlayer
-@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import simd

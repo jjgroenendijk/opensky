@@ -4,7 +4,6 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
-import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -15,8 +14,6 @@ struct ScriptCoordinatorTests {
     @Test func withoutAVMThePanelReadsEmpty() {
         let coordinator = ScriptCoordinator(world: world)
         #expect(coordinator.scriptsSnapshot == .empty)
-        #expect(coordinator.questAliasQuestEditorIDs.isEmpty)
-        #expect(coordinator.questAliasTable(editorID: "MQ101") == nil)
         coordinator.setScriptsPaused(true)
         coordinator.stepScripts(ticks: 3)
     }

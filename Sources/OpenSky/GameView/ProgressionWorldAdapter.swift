@@ -36,14 +36,12 @@ protocol ProgressionWorldHost: AnyObject {
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var perks: PerkCoordinator { get }
-    var progression: ProgressionCoordinator { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
     var journalMenu: JournalMenuController { get }
     var scripts: ScriptCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
 }
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.

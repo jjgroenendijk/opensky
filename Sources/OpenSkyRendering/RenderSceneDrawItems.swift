@@ -53,13 +53,10 @@ nonisolated public struct TerrainDrawItem: Sendable {
 nonisolated public struct TerrainNormalMaps: Sendable {
     public let base: MTLTexture
     public let layers: [MTLTexture]
-    /// Base and layer maps that came from a TX01 path, for the readout.
-    public let resolvedCount: Int
 
-    public init(base: MTLTexture, layers: [MTLTexture], resolvedCount: Int) {
+    public init(base: MTLTexture, layers: [MTLTexture]) {
         self.base = base
         self.layers = layers
-        self.resolvedCount = resolvedCount
     }
 }
 

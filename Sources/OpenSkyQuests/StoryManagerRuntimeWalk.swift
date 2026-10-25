@@ -33,7 +33,7 @@ extension StoryManagerRuntime {
         }
 
         /// Returns true when the event is consumed and the walk stops.
-        mutating func visit(_ id: ResolvedFormID, depth: Int) -> Bool {
+        mutating func visit(_ id: ResolvedFormID) -> Bool {
             guard visited.insert(id).inserted, let node = runtime.story.nodes.record(id) else {
                 return false
             }
@@ -42,20 +42,19 @@ extension StoryManagerRuntime {
                 .resolver(ofPlugin: node.sourcePlugin)
                 .map { FormIDTranslation(source: $0, target: runtime.quests.quests.resolver) }
             guard evaluator.evaluate(node.record.conditions).isTrue else {
-                note(node, depth, .conditionsFailed)
+                note(.conditionsFailed)
                 return false
             }
-            note(node, depth, .entered)
+            note(.entered)
             if node.record.kind == .quest {
-                return startQuests(of: node, depth: depth)
+                return startQuests(of: node)
             }
             let children = ordered(runtime.story.forest.children(of: id), random: node.record)
-            return children.contains { visit($0, depth: depth + 1) }
+            return children.contains { visit($0) }
         }
 
         private mutating func startQuests(
-            of node: ResolvedRecord<StoryManagerNode>,
-            depth: Int
+            of node: ResolvedRecord<StoryManagerNode>
         ) -> Bool {
             let record = node.record
             let entries = record.quests.compactMap { entry in
@@ -65,7 +64,7 @@ extension StoryManagerRuntime {
                 let max = record.maxConcurrentQuests, max > 0,
                 entries.count(where: { runtime.isRunning($0.quest) }) >= Int(max)
             {
-                note(node, depth, .concurrentLimit)
+                note(.concurrentLimit)
                 return false
             }
             let limit = record.flags.contains(.numberOfQuestsToRun)
@@ -73,19 +72,19 @@ extension StoryManagerRuntime {
             var startedHere = 0
             for candidate in candidates(entries, record: record) {
                 guard startedHere < limit else {
-                    note(node, depth, .questRejected(candidate.quest, .limitReached))
+                    note(.questRejected(candidate.quest, .limitReached))
                     continue
                 }
                 if let rejection = tryStart(candidate.quest, entry: candidate.entry) {
-                    note(node, depth, .questRejected(candidate.quest, rejection))
+                    note(.questRejected(candidate.quest, rejection))
                 } else {
                     startedHere += 1
                     started.append(candidate.quest)
-                    note(node, depth, .questStarted(candidate.quest))
+                    note(.questStarted(candidate.quest))
                 }
             }
             guard startedHere > 0, !record.flags.contains(.sharesEvent) else { return false }
-            note(node, depth, .consumed)
+            note(.consumed)
             return true
         }
 
@@ -141,13 +140,8 @@ extension StoryManagerRuntime {
             return Array(items[start...] + items[..<start])
         }
 
-        private mutating func note(
-            _ node: ResolvedRecord<StoryManagerNode>,
-            _ depth: Int,
-            _ outcome: StoryNodeOutcome
-        ) {
-            steps.append(StoryManagerStep(
-                node: node.id, editorID: node.record.editorID, depth: depth, outcome: outcome
+        private mutating func note(_ outcome: StoryNodeOutcome) {
+            steps.append(StoryManagerStep(outcome: outcome
             ))
         }
     }

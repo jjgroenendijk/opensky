@@ -4,7 +4,6 @@
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyPhysics
-import OpenSkyPlayer
 import OpenSkyWorld
 import OpenSkyWorldFixtures
 import OpenSkyWorldTesting

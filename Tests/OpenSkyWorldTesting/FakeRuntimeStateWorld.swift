@@ -19,7 +19,6 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public var crosshairReference: FormID?
     public var gameClock: GameClock?
     public var timescale: Float?
-    public var isWorldSimPaused = false
     public var musicStore: MusicRecordStore?
     public var globalStore: GlobalStore?
     public private(set) var timeOfDayWrites: [Float] = []
@@ -32,10 +31,6 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public private(set) var slotListings = 0
 
     public init() {}
-
-    public var residentReferenceCount: Int {
-        entries.count
-    }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
         entries.first { $0.formID == formID }

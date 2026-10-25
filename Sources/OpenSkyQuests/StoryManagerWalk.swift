@@ -32,14 +32,10 @@ nonisolated public enum StoryNodeOutcome: Equatable, Sendable {
 }
 
 nonisolated public struct StoryManagerStep: Equatable, Sendable {
-    public let node: ResolvedFormID
-    public let editorID: String?
-    public let depth: Int
     public let outcome: StoryNodeOutcome
 }
 
 nonisolated public struct StoryManagerWalk: Equatable, Sendable {
-    public let event: StoryEventData
     public let steps: [StoryManagerStep]
     public let startedQuests: [FormID]
     public let tally: ConditionTally

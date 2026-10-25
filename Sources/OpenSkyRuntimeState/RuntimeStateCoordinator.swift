@@ -29,7 +29,6 @@ public final class RuntimeStateCoordinator {
     public private(set) var saveWork: Task<Void, Never>?
     private(set) var slotListing: Task<Void, Never>?
     var globalNamesByKey: [ReferenceKey: String]?
-    var globalEditorIDs: [String]?
     var conditionSourceFormIDs: [String: FormID]?
     /// Accumulated across every evaluation, so the readout shows a running total.
     var conditionTally = ConditionTally()
@@ -59,7 +58,6 @@ public final class RuntimeStateCoordinator {
     /// and hand weather and the clock the new values.
     public func reloadGlobals() {
         globalNamesByKey = nil
-        globalEditorIDs = nil
         world?.applyGlobalResolution(
             worldState.globalResolution(defaults: globalStore), reroll: false
         )
@@ -97,15 +95,11 @@ public final class RuntimeStateCoordinator {
 extension RuntimeStateCoordinator {
     public var runtimeStateSnapshot: RuntimeStateSnapshot {
         RuntimeStateSnapshot(
-            residentReferenceCount: world?.residentReferenceCount ?? 0,
-            dirtyReferenceCount: worldState.dirtyCount,
             journalTail: RuntimeStateCore.journalTail(
                 entries: worldState.journalEntries,
                 globalEntries: worldState.globalJournalEntries,
                 names: globalNames()
             ),
-            droppedJournalEntryCount: worldState.droppedJournalEntryCount
-                + worldState.droppedGlobalJournalEntryCount,
             nextJournalSequence: worldState.nextJournalSequence,
             currentTargetDescription: currentTargetDescription,
             overriddenGlobalCount: worldState.overriddenGlobalCount

@@ -3,7 +3,6 @@
 
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyRenderResources
 import Testing
 
 struct RayTracingAvailabilityTests {

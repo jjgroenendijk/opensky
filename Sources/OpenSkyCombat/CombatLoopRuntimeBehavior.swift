@@ -268,10 +268,8 @@ extension CombatLoopRuntime {
             && (raiseStagger(weapon: weapon, damage: damage, world: world)
                 || raiseRecoil(magnitude: damage.applied, world: world))
         append(CombatIncomingHit(
-            aggressor: actor.key,
             damage: damage,
-            playedReaction: played,
-            attackID: nextAttackID()
+            playedReaction: played
         ))
     }
 

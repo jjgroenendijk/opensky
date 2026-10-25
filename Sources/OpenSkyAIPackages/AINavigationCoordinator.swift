@@ -22,21 +22,11 @@ public protocol AINavigationWorld: AnyObject {
     func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit?
     /// The resident actor placed by `reference`, or nil when it is not an actor.
     func residentActor(for reference: FormID) -> ReferenceKey?
-    func movementReadout(for actor: ReferenceKey) -> NPCMovementReadout?
-    var activeMoverCount: Int { get }
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
     /// False when the actor had no mover.
     func stopActor(_ actor: ReferenceKey) -> Bool
     func isHostile(_ actor: ReferenceKey) -> Bool
     func setHostile(_ hostile: Bool, actor: ReferenceKey)
-    /// What the actor rides, such as a cart, or nil.
-    func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey?
-}
-
-extension AINavigationWorld {
-    public func vehicleCarrier(of _: ReferenceKey) -> ReferenceKey? {
-        nil
-    }
 }
 
 @MainActor
@@ -61,28 +51,12 @@ public final class AINavigationCoordinator {
         guard let world, world.isStreaming else { return .unavailable }
         let actors = actorOptions()
         let selected = AINavigationCore.resolve(chosenActor, in: actors)
-        var snapshot = AINavigationSnapshot(
-            isAvailable: true,
+        return AINavigationSnapshot(
             actors: actors,
             selectedActor: selected,
-            selectedActorName: AINavigationCore.name(of: selected, in: actors),
-            movement: selected.flatMap(world.movementReadout(for:)),
-            moverCount: world.activeMoverCount,
-            moverLimit: NPCMovementRuntime.maximumSimultaneousMovers,
-            package: selected.flatMap(packages.readout(for:)),
-            packagedActorCount: packages.registeredActors.count,
             crosshairPoint: crosshairHit()?.position,
-            selectedActorIsHostile: selected.map(world.isHostile) ?? false,
-            lastActionText: lastAction.text
+            selectedActorIsHostile: selected.map(world.isHostile) ?? false
         )
-        let runner = selected.flatMap { packages.executions[$0]?.runner }
-        snapshot.procedure = runner?.primary
-        snapshot.runningProcedures = runner?.runningMachines ?? []
-        snapshot.carrier = selected.flatMap(world.vehicleCarrier(of:))
-        snapshot.socialText = AIPackageReadout.socialText(
-            bumps: packages.bumps, bump: packages.bumpSettings, follow: packages.followSettings
-        )
-        return snapshot
     }
 
     public var selectedAIActor: ReferenceKey? {

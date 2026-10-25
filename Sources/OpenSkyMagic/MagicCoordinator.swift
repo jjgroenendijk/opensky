@@ -24,8 +24,6 @@ public final class MagicCoordinator {
     public let pluginName: String
     /// The plugin an actor's `SPLO` links are relative to.
     public let spellPluginName: String?
-    /// What the most recent landed spell applied. Nil until one lands.
-    public private(set) var lastHit: SpellHitReport?
     /// The ENCH index.
     public let enchantmentStore: EnchantmentStore?
 
@@ -58,9 +56,6 @@ public final class MagicCoordinator {
     public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
     public let soulTrapSettings: SoulTrapSettings
     public let enchantingSettings: EnchantingSettings
-    public let soulTexts: SoulTexts
-    public internal(set) var lastSoulTrap: SoulTrapOutcome?
-    public internal(set) var lastRecharge: RechargeOutcome?
     public internal(set) var lastEnchanting = EnchantingOutcome.idle
     /// Every SHOU in the load order, by key.
     public let shouts: [ReferenceKey: ResolvedShout]
@@ -124,7 +119,6 @@ public final class MagicCoordinator {
         shouts = Self.shoutsByKey(data.shouts)
         magicTexts = data.texts.magic
         castNotices = data.texts.castNotices
-        soulTexts = data.texts.souls
         spellCostSettings = data.rules.spellCost
         soulTrapSettings = data.rules.soulTrap
         holdSettings = data.rules.holds
@@ -383,7 +377,6 @@ extension MagicCoordinator: CasterWorld {
                     }
             })
         else { return .none }
-        lastHit = report
         breakWards(report.brokenWards)
         for wardHit in report.wardHits {
             pendingCommands.append(

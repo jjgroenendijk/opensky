@@ -32,10 +32,6 @@ nonisolated public struct ActorPresentationState: WorldStateComponent {
     public init(headSource: ActorHeadSource = .baked) {
         self.headSource = headSource
     }
-
-    public var isDefault: Bool {
-        self == ActorPresentationState()
-    }
 }
 
 nonisolated extension WorldStateComponentKind {

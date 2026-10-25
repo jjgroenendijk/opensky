@@ -45,9 +45,6 @@ final class ContainerMenuController {
     /// Nominated for barter, or taken from the crosshair for a container.
     private(set) var container: InventoryHolder?
     private(set) var containerName: String?
-    /// Kept beside the holder, because a `ReferenceKey` does not carry the
-    /// FormID the merchant popup selects by.
-    private(set) var containerReference: FormID?
     /// Nil for a nominated or looted container, which trades anything.
     private(set) var vendor: Vendor?
     /// The actor the player barters with, whom the price perks name.
@@ -63,7 +60,6 @@ final class ContainerMenuController {
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
-    private(set) var lastActionText: String?
     let movie: MenuMovieSession
 
     init(game: any ContainerMenuHost) {
@@ -72,14 +68,6 @@ final class ContainerMenuController {
             movies: game.swfMovies, hud: game.hud, label: "container menu movie",
             logger: Self.logger
         ) { [unowned game] in game.renderer }
-    }
-
-    var movieLoaded: Bool {
-        movie.isLoaded
-    }
-
-    var movieError: String? {
-        movie.error
     }
 
     /// The two modes are two movies, so each has its own stack identifier.
@@ -94,7 +82,7 @@ final class ContainerMenuController {
     func open() {
         guard !isOpen else { return }
         guard resolveTarget() else {
-            lastActionText = "No container selected. Look at one, or nominate a merchant."
+            noteAction("No container selected. Look at one, or nominate a merchant.")
             return
         }
         isOpen = true
@@ -130,7 +118,6 @@ final class ContainerMenuController {
     func target(
         _ holder: InventoryHolder,
         name: String,
-        reference: FormID?,
         vendor: Vendor? = nil,
         merchant: ReferenceKey? = nil
     ) {
@@ -138,13 +125,13 @@ final class ContainerMenuController {
         pickpocketTarget = nil
         pickedOpenPockets = false
         containerName = name
-        containerReference = reference
         self.vendor = vendor
         self.merchant = merchant
     }
 
+    /// The vanilla menus show no action line, so the outcome goes to the log.
     func noteAction(_ text: String) {
-        lastActionText = text
+        Self.logger.info("\(text, privacy: .public)")
     }
 
     private func resolveTarget() -> Bool {
@@ -276,9 +263,9 @@ final class ContainerMenuController {
 
     private func equipSelection() {
         guard let entry = model.selectedEntry else { return }
-        lastActionText = entry.isEquipped
+        noteAction(entry.isEquipped
             ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
-            : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text
+            : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text)
         refreshModel()
     }
 

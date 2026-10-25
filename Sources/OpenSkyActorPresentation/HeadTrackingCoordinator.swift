@@ -61,8 +61,6 @@ public final class HeadTrackingCoordinator {
     /// When each actor last had the player within its notice distance.
     private var lastNoticed: [ReferenceKey: Float] = [:]
     public private(set) var looks: [ReferenceKey: HeadLook] = [:]
-    /// The target each actor looked at in the last tick, for the readout.
-    public private(set) var lookTargets: [ReferenceKey: ReferenceKey] = [:]
 
     /// `settings` gives the persisted head tracking switch.
     public init(
@@ -127,7 +125,6 @@ public final class HeadTrackingCoordinator {
             nextTargets[subject.key] = aim == nil ? nil : target
         }
         looks = nextLooks
-        lookTargets = nextTargets
         turning.formIntersection(nextLooks.keys)
         lastNoticed = lastNoticed.filter { clock - $0.value <= settings.holdDefault }
     }

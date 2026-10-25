@@ -3,26 +3,18 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
 extension ActorValueCoordinator {
     public var snapshot: ActorValueControlSnapshot {
-        guard let runtime else { return .unavailable }
+        guard runtime != nil else { return .unavailable }
         let nearest = world?.nearestActorValueHolder()
         return ActorValueControlSnapshot(
-            isAvailable: true,
-            player: readout(of: .player, name: "Player", runtime: runtime),
-            nearestActor: nearest.map {
-                readout(of: $0, name: Self.name(of: $0), runtime: runtime)
-            },
-            target: target,
-            selection: inspection(runtime: runtime),
+            nearestActor: nearest.map { readout(name: Self.name(of: $0)) },
             runtimeActorCount: store.snapshot().entries.count { entry in
                 entry.delta.component(ActorValueState.self) != nil
-            },
-            lastActionText: lastAction.text
+            }
         )
     }
 
@@ -74,58 +66,8 @@ extension ActorValueCoordinator {
         }
     }
 
-    private func readout(
-        of holder: ActorValueHolder,
-        name: String,
-        runtime: ActorValueRuntime
-    ) -> ActorValueReadout {
-        let derived = derivedValues(of: holder, runtime: runtime)
-        return ActorValueReadout(
-            name: name,
-            current: runtime.current(of: holder),
-            // Effective maximums, so a base write and a fortify both show on the bar.
-            maximums: runtime.maximums(of: holder),
-            regenPercentPerSecond: runtime.baseline(of: holder).regenPercentPerSecond,
-            level: derived?.level ?? 1,
-            autoCalculatesStats: derived?.autoCalculatesStats ?? false,
-            hasZeroHealth: runtime.hasZeroHealth(holder)
-        )
-    }
-
-    /// Nil for the player and for a broken template chain.
-    private func derivedValues(
-        of holder: ActorValueHolder,
-        runtime: ActorValueRuntime
-    ) -> ResolvedActorValues? {
-        guard case let .actor(base) = holder.subject, let resolver = runtime.baselines.resolver
-        else { return nil }
-        return try? resolver.rolling(runtime.leveledRoll(of: holder, base: base))
-            .resolve(base: base)
-    }
-
-    /// Falls back to the player when no resident actor answers, so the line is
-    /// never blank.
-    private func inspection(runtime: ActorValueRuntime) -> ActorValueInspection {
-        let holder = selectedHolder() ?? .player
-        let index = selection
-        let name = ActorValueIdentity.description(of: index)
-        guard let current = runtime.value(at: index, on: holder) else {
-            return ActorValueInspection(
-                name: name, index: index, current: 0, base: 0, permanent: 0, temporary: 0,
-                damage: 0, resistanceFraction: nil
-            )
-        }
-        let entry = runtime.entry(at: index, on: holder)
-        return ActorValueInspection(
-            name: name,
-            index: index,
-            current: current,
-            base: runtime.baseValue(at: index, on: holder) ?? 0,
-            permanent: entry?.permanent ?? 0,
-            temporary: entry?.temporary ?? 0,
-            damage: entry?.damage ?? 0,
-            resistanceFraction: runtime.resistanceFraction(at: index, on: holder)
-        )
+    private func readout(name: String) -> ActorValueReadout {
+        ActorValueReadout(name: name)
     }
 
     /// Reports the selected value afterwards, not the three bars: the point of

@@ -40,10 +40,7 @@ extension PapyrusNativeFunctions {
         gameHook("Game", "FadeOutGame", into: &registry) { call, hooks in
             guard let fade = hooks.fade else { return nil }
             fade(PapyrusFade(
-                fadingOut: boolean(call, at: 0, default: true),
-                black: boolean(call, at: 1, default: true),
-                delay: max(0, float(call, at: 2) ?? 0),
-                duration: max(0, float(call, at: 3) ?? 0)
+                fadingOut: boolean(call, at: 0, default: true)
             ))
             return .returned(.none)
         }

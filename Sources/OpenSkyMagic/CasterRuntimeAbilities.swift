@@ -11,13 +11,10 @@ import OpenSkyMagicInterface
 
 /// What one ability reconcile did.
 nonisolated public struct AbilityReconcileReport: Equatable, Sendable {
-    /// Abilities newly applied and taken off, in key order.
-    public let applied: [ReferenceKey]
-    public let removed: [ReferenceKey]
     /// Constant effects stored across every newly applied ability.
     public let storedCount: Int
 
-    public static let none = AbilityReconcileReport(applied: [], removed: [], storedCount: 0)
+    public static let none = AbilityReconcileReport(storedCount: 0)
 }
 
 @MainActor
@@ -60,7 +57,7 @@ public enum SpellAbilityApplication {
             storedCount += stored.count
             applied.append(key)
         }
-        return AbilityReconcileReport(applied: applied, removed: removed, storedCount: storedCount)
+        return AbilityReconcileReport(storedCount: storedCount)
     }
 }
 

@@ -9,21 +9,15 @@ nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
     /// (`RenderLayerPolicy`). Differs from `layers` when a layer is checked
     /// here but switched off by its own readout section.
     public let effectiveLayers: RenderLayer
-    public let stats: SceneDrawStats
-    public let shadowStats: ShadowDrawStats
 
     public init(
         mode: RenderDebugMode,
         layers: RenderLayer,
-        effectiveLayers: RenderLayer,
-        stats: SceneDrawStats,
-        shadowStats: ShadowDrawStats
+        effectiveLayers: RenderLayer
     ) {
         self.mode = mode
         self.layers = layers
         self.effectiveLayers = effectiveLayers
-        self.stats = stats
-        self.shadowStats = shadowStats
     }
 }
 

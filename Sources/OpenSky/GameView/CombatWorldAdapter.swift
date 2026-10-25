@@ -41,7 +41,6 @@ protocol CombatWorldHost: AnyObject {
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }

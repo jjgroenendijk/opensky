@@ -7,9 +7,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMenus
 import OpenSkyObjectAnimation
-import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -24,7 +22,6 @@ protocol ObjectAnimationWorldHost: AnyObject {
     var objectBehaviors: ObjectBehaviorCoordinator { get }
     var sequenceDoors: SequenceDoorCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }

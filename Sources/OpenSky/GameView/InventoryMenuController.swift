@@ -57,14 +57,6 @@ final class InventoryMenuController {
         ) { [unowned game] in game.renderer }
     }
 
-    var movieLoaded: Bool {
-        movie.isLoaded
-    }
-
-    var movieError: String? {
-        movie.error
-    }
-
     // MARK: - Lifecycle
 
     func open() {
@@ -242,36 +234,9 @@ final class InventoryMenuController {
     // MARK: - Readout
 
     var snapshot: InventoryMenuControlSnapshot {
-        let runtime = movie.runtime
-        let diagnostics = runtime.map(InventoryMenuMovieBridge.diagnostics(runtime:))
-        return InventoryMenuControlSnapshot(
-            isOpen: isOpen,
-            openMenus: game.menuMode.stack.identifiers.map(\.name),
-            worldSimPaused: game.menuMode.isWorldSimPaused,
-            categoryLabels: model.categoryLabels,
-            selectedCategoryIndex: model.selectedCategoryIndex,
+        InventoryMenuControlSnapshot(
             entryLines: model.entries.map(\.readoutLine),
-            selectedIndex: model.selectedIndex,
-            carriedWeight: model.carriedWeight,
-            gold: model.gold,
-            lastActionText: lastActionText,
-            enchantmentLines: game.inventory.equippedReadout(on: .player)
-                .compactMap { readout in
-                    readout.enchantment.map { "\(readout.name) — \($0)" }
-                },
-            movieEnabled: movieEnabled,
-            movieLoaded: movieLoaded,
-            movieError: movieError,
-            movieDrawStats: movieLoaded
-                ? (game.renderer?.lastSWFDrawStats ?? SWFDrawStats())
-                : SWFDrawStats(),
-            movieFaults: diagnostics?.faults ?? 0,
-            movieMissingNames: diagnostics?.missingNames ?? 0,
-            movieUnhandledInvokes: diagnostics?.unhandledInvokes ?? 0,
-            movieEntryTitles: runtime.map(InventoryMenuMovieBridge.entryLabels(runtime:)) ?? [],
-            movieCategoryTitles: runtime
-                .map(InventoryMenuMovieBridge.categoryLabels(runtime:)) ?? [],
-            extras: extrasSnapshot
+            selectedIndex: model.selectedIndex
         )
     }
 

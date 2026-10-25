@@ -51,10 +51,6 @@ final class FakeMessageWorld: MessageWorld, MenuInputConsumer {
         false
     }
 
-    var messageEditorIDs: [String] {
-        ["Note", "Question"]
-    }
-
     func messageKey(editorID: String) -> ReferenceKey? {
         switch editorID {
         case "Question": MessageCoordinatorTests.question

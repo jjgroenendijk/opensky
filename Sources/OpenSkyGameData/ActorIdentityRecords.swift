@@ -7,13 +7,6 @@ nonisolated public struct ActorIdentityRecords: Sendable {
     public private(set) var templates: ActorTemplateResolver
     public let races: [UInt32: Race]
 
-    /// This resolver for one placed reference's roll.
-    public func rolling(_ roll: LeveledRoll?) -> Self {
-        var copy = self
-        copy.templates = templates.rolling(roll)
-        return copy
-    }
-
     public init(templates: ActorTemplateResolver, races: [UInt32: Race]) {
         self.templates = templates
         self.races = races

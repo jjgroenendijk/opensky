@@ -5,15 +5,9 @@ import OpenSkyFormatsESM
 
 /// One placed idle marker, as the readout lists it.
 nonisolated public struct IdleMarkerReadout: Equatable, Sendable {
-    public let reference: ReferenceKey
     public let editorID: String
     /// IDLA editor IDs, in file order.
     public let idles: [String]
-    public let idleIDs: [ResolvedFormID]
-    public let inSequence: Bool
-    public let doOnce: Bool
-    /// IDLT, seconds.
-    public let timer: Float
     /// The actor standing at or walking to it.
     public let claimedBy: ReferenceKey?
 }

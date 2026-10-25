@@ -1,18 +1,15 @@
 // Who the player may mount, how a ridden mount steers, and what a rider may not do.
 
-import OpenSkyFormatsESM
 @testable import OpenSkyPlayer
 import OpenSkyRendering
 import simd
 import Testing
 
 struct MountRulesTests {
-    private static let horse = ReferenceKey.generated(100)
-
     private static func candidate(_ change: (inout MountCandidate) -> Void = { _ in })
         -> MountCandidate
     {
-        var candidate = MountCandidate(key: horse)
+        var candidate = MountCandidate()
         candidate.saddleBone = "SaddleBone"
         change(&candidate)
         return candidate

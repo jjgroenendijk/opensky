@@ -22,11 +22,9 @@ public protocol StoryManagerWorld: AnyObject {
 public final class StoryManagerCoordinator {
     /// Nil without game data.
     public let story: StoryManagerStore?
-    public private(set) var lastWalk: StoryManagerWalk?
     public private(set) var sessionStart = SessionStartReport.empty
     /// Events fired this session, by code.
     public private(set) var firedCounts: [FourCC: Int] = [:]
-    public var lastOutcome: String?
     /// NPC conversations, hellos, and found bodies, which fire through this coordinator.
     public let social: SocialEventCoordinator
     let world: any StoryManagerWorld
@@ -51,18 +49,11 @@ public final class StoryManagerCoordinator {
         )
     }
 
-    /// Fires one event. Nil, with the reason in `lastOutcome`, without a runtime.
+    /// Fires one event. Nil without a runtime.
     @discardableResult
     public func fire(_ event: StoryEventData) -> StoryManagerWalk? {
         firedCounts[event.event, default: 0] += 1
-        guard let runtime else {
-            lastOutcome = "no story manager data loaded"
-            return nil
-        }
-        let walk = runtime.fire(event)
-        lastWalk = walk
-        lastOutcome = StoryManagerCore.summary(walk)
-        return walk
+        return runtime?.fire(event)
     }
 
     /// Starts every quest the plugins' `.seq` lists name that has no state yet.

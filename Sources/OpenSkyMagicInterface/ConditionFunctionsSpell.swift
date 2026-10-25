@@ -55,11 +55,6 @@ nonisolated extension ResolvedSpell {
         effects.max { $0.cost < $1.cost }?.effect?.effect.data?.magicSkill
     }
 
-    /// The costliest effect's minimum skill, which sets the spell's level.
-    public var minimumSkillLevel: UInt32? {
-        effects.max { $0.cost < $1.cost }?.effect?.effect.data?.minimumSkillLevel
-    }
-
     public func hasEffectKeyword(_ keyword: ReferenceKey, in store: MagicEffectStore) -> Bool {
         effects.contains { $0.effect?.keywordKeys(in: store).contains(keyword) == true }
     }

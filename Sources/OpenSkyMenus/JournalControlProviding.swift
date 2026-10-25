@@ -4,45 +4,17 @@
 // so the two readouts cannot disagree.
 
 import Foundation
-import OpenSkyRendering
 
 /// One quest as the readout lists it — running state, current stage, and the
 /// display state of each objective the record declares.
 nonisolated public struct JournalQuestRow: Equatable, Sendable {
-    public let editorID: String
     /// FULL, resolved, or the editor ID when the plugin's tables answer nothing.
     public let title: String
-    /// `Quest.Kind.name`, so a row states which journal category it belongs to.
-    public let kind: String
-    public let isRunning: Bool
-    public let isCompleted: Bool
-    /// Highest stage reached, nil when the quest has reached none.
-    public let stage: UInt16?
-    /// Stages the quest declares, for the stage control's range.
-    public let declaredStages: [UInt16]
-    /// One entry per objective the record declares, worded as
-    /// `"<index> <state>"`, where the state is `displayed`, `completed`,
-    /// `failed` or `untouched`.
-    public let objectives: [String]
 
     public init(
-        editorID: String,
-        title: String,
-        kind: String,
-        isRunning: Bool,
-        isCompleted: Bool,
-        stage: UInt16?,
-        declaredStages: [UInt16],
-        objectives: [String]
+        title: String
     ) {
-        self.editorID = editorID
         self.title = title
-        self.kind = kind
-        self.isRunning = isRunning
-        self.isCompleted = isCompleted
-        self.stage = stage
-        self.declaredStages = declaredStages
-        self.objectives = objectives
     }
 }
 
@@ -54,144 +26,25 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
     public static let rowLimit = 12
 
     public static let empty = JournalControlSnapshot(
-        hasQuestIndex: false,
-        questCount: 0,
-        runningCount: 0,
-        completedCount: 0,
         rows: [],
-        droppedRowCount: 0,
-        selectedEditorID: "",
-        selectedRow: nil,
-        selectedObjectives: [],
-        selectedLogEntries: [],
-        lastOutcome: nil,
-        isOpen: false,
-        openMenus: [],
-        showsCompleted: false,
-        listedQuestCount: 0,
-        selectedIndex: -1,
-        movieLoaded: false,
-        movieError: nil,
-        movieQuestRows: 0,
-        movieObjectiveRows: 0,
-        movieTitleText: nil,
-        movieObjectiveFrames: [],
-        movieFaults: 0,
-        movieMissingNames: 0,
-        movieUnhandledInvokes: 0,
-        movieDrawStats: SWFDrawStats()
+        selectedIndex: -1
     )
 
     // MARK: Quest state
 
-    /// False when the session loaded no plugin, which is the one case the
-    /// readout states rather than showing zeros that look like an empty index.
-    public let hasQuestIndex: Bool
-    /// Quests the plugin declares that the journal would ever list.
-    public let questCount: Int
-    public let runningCount: Int
-    public let completedCount: Int
     /// The rows the readout shows, at most `rowLimit` of them.
     public let rows: [JournalQuestRow]
-    public let droppedRowCount: Int
-    /// Quest the dev controls act on, trimmed. Empty means none picked.
-    public let selectedEditorID: String
-    /// That quest's row, or nil when no loaded plugin defines it.
-    public let selectedRow: JournalQuestRow?
-    /// The journal text of that quest as the page would show it.
-    public let selectedObjectives: [String]
-    public let selectedLogEntries: [String]
-    /// Result of the last dev control, worded for the readout. Nil until one
-    /// runs.
-    public let lastOutcome: String?
 
     // MARK: Journal presentation
 
-    public let isOpen: Bool
-    /// Menu-stack identifiers currently open, top last. Proves the journal
-    /// drives the engine's own stack rather than a private flag.
-    public let openMenus: [String]
-    public let showsCompleted: Bool
-    /// Rows the page is listing — the active or the completed list.
-    public let listedQuestCount: Int
     /// Row the page has selected, or -1 for none.
     public let selectedIndex: Int
 
-    public let movieLoaded: Bool
-    public let movieError: String?
-    /// Rows the movie's own `QuestTitleList` holds, read back out of it.
-    public let movieQuestRows: Int
-    public let movieObjectiveRows: Int
-    /// Text the page's own title field holds.
-    public let movieTitleText: String?
-    /// Frame label of each visible objective entry clip.
-    public let movieObjectiveFrames: [String]
-    public let movieFaults: Int
-    public let movieMissingNames: Int
-    public let movieUnhandledInvokes: Int
-    public let movieDrawStats: SWFDrawStats
-    /// Editor IDs of the tracked quests, whose targets the compass shows.
-    public var trackedQuests: [String] = []
-    /// The counted misc stats, as "name value", for the Stats page.
-    public var statLines: [String] = []
-
     public init(
-        hasQuestIndex: Bool,
-        questCount: Int,
-        runningCount: Int,
-        completedCount: Int,
         rows: [JournalQuestRow],
-        droppedRowCount: Int,
-        selectedEditorID: String,
-        selectedRow: JournalQuestRow?,
-        selectedObjectives: [String],
-        selectedLogEntries: [String],
-        lastOutcome: String?,
-        isOpen: Bool,
-        openMenus: [String],
-        showsCompleted: Bool,
-        listedQuestCount: Int,
-        selectedIndex: Int,
-        movieLoaded: Bool,
-        movieError: String?,
-        movieQuestRows: Int,
-        movieObjectiveRows: Int,
-        movieTitleText: String?,
-        movieObjectiveFrames: [String],
-        movieFaults: Int,
-        movieMissingNames: Int,
-        movieUnhandledInvokes: Int,
-        movieDrawStats: SWFDrawStats,
-        trackedQuests: [String] = [],
-        statLines: [String] = []
+        selectedIndex: Int
     ) {
-        self.trackedQuests = trackedQuests
-        self.statLines = statLines
-        self.hasQuestIndex = hasQuestIndex
-        self.questCount = questCount
-        self.runningCount = runningCount
-        self.completedCount = completedCount
         self.rows = rows
-        self.droppedRowCount = droppedRowCount
-        self.selectedEditorID = selectedEditorID
-        self.selectedRow = selectedRow
-        self.selectedObjectives = selectedObjectives
-        self.selectedLogEntries = selectedLogEntries
-        self.lastOutcome = lastOutcome
-        self.isOpen = isOpen
-        self.openMenus = openMenus
-        self.showsCompleted = showsCompleted
-        self.listedQuestCount = listedQuestCount
         self.selectedIndex = selectedIndex
-        self.movieLoaded = movieLoaded
-        self.movieError = movieError
-        self.movieQuestRows = movieQuestRows
-        self.movieObjectiveRows = movieObjectiveRows
-        self.movieTitleText = movieTitleText
-        self.movieObjectiveFrames = movieObjectiveFrames
-        self.movieFaults = movieFaults
-        self.movieMissingNames = movieMissingNames
-        self.movieUnhandledInvokes = movieUnhandledInvokes
-        self.movieDrawStats = movieDrawStats
     }
 }

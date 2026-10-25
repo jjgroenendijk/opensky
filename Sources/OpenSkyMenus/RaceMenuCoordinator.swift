@@ -41,9 +41,7 @@ nonisolated public struct RacePreset: Equatable, Sendable {
 }
 
 nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
-    public let isOpen: Bool
     public let isLimited: Bool
-    public let isEditingName: Bool
     public let rows: [String]
     public let selectedIndex: Int
     public let lastResult: String?
@@ -52,14 +50,16 @@ nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
     public let movie: TitleMenuMovieSnapshot
 
     public init(
-        isOpen: Bool, isLimited: Bool, isEditingName: Bool, rows: [String], selectedIndex: Int,
-        lastResult: String?, face: [String] = [], movie: TitleMenuMovieSnapshot = .init()
+        isLimited: Bool,
+        rows: [String],
+        selectedIndex: Int,
+        lastResult: String?,
+        face: [String] = [],
+        movie: TitleMenuMovieSnapshot = .init()
     ) {
         self.face = face
         self.movie = movie
-        self.isOpen = isOpen
         self.isLimited = isLimited
-        self.isEditingName = isEditingName
         self.rows = rows
         self.selectedIndex = selectedIndex
         self.lastResult = lastResult
@@ -238,9 +238,7 @@ public final class RaceMenuCoordinator {
 
     public var snapshot: RaceMenuSnapshot {
         RaceMenuSnapshot(
-            isOpen: isOpen,
             isLimited: model?.isLimited ?? false,
-            isEditingName: isEditingName,
             rows: model.map { model in
                 model.rows.map { row in
                     let value = isEditingName && row == .name ? typedName + "_" : model.value(row)
@@ -252,7 +250,8 @@ public final class RaceMenuCoordinator {
             face: ((model?.identity ?? world?.playerIdentity).map { Self.faceLines($0.face) } ?? [])
                 + (model?.bodyToneLine.map { [$0] } ?? []),
             movie: TitleMenuMovieSnapshot(
-                isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError
+                isLoaded: movieLoaded,
+                error: movieError
             )
         )
     }

@@ -81,77 +81,25 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     /// The nearest resident actor, or nil. The same actor as
     /// `ActorValueControlSnapshot.nearestActor`, so effects and resistances match.
     public let nearestActorName: String?
-    /// Every effect currently acting on that actor, in application order.
-    /// Empty both when the actor carries none and when there is no actor; the
-    /// name above is what tells those two apart.
-    public let nearestActorEffects: [ActiveEffectReadout]
-    /// How many references carry an active-effect component, across every cell
-    /// whether resident or not.
-    public let runtimeActorCount: Int
-    /// Timed effects stored this session.
-    public let appliedCount: Int
-    /// Zero-duration effects applied this session.
-    public let instantCount: Int
-    /// Effects that ran out this session.
-    public let expiredCount: Int
-    /// Effects removed by an explicit dispel this session.
-    public let dispelledCount: Int
-    /// Everything the runtime declined to do, for any reason.
-    public let skippedCount: Int
-    /// The unimplemented archetypes seen, most frequent first, already spelled
-    /// as `name x count`.
-    public let unimplementedLines: [String]
-    /// Human-readable result of the last control action.
-    public let lastActionText: String
     /// What the player's effects force on the player, such as paralysis.
     public var playerInfluence = ActorMagicInfluence.none
     /// What the nearest actor's effects force on it, such as fear.
     public var nearestActorInfluence = ActorMagicInfluence.none
-    /// Running holds and placed lights: Detect Life paint, Telekinesis, Grab Actor,
-    /// Guide, and Light.
-    public var worldEffectLines: [String] = []
 
     /// The reading with no runtime attached.
     public static let unavailable = MagicEffectControlSnapshot(
         isAvailable: false,
         playerEffects: [],
-        nearestActorName: nil,
-        nearestActorEffects: [],
-        runtimeActorCount: 0,
-        appliedCount: 0,
-        instantCount: 0,
-        expiredCount: 0,
-        dispelledCount: 0,
-        skippedCount: 0,
-        unimplementedLines: [],
-        lastActionText: "Magic effects unavailable: no game data loaded."
+        nearestActorName: nil
     )
 
     public init(
         isAvailable: Bool,
         playerEffects: [ActiveEffectReadout],
-        nearestActorName: String?,
-        nearestActorEffects: [ActiveEffectReadout],
-        runtimeActorCount: Int,
-        appliedCount: Int,
-        instantCount: Int,
-        expiredCount: Int,
-        dispelledCount: Int,
-        skippedCount: Int,
-        unimplementedLines: [String],
-        lastActionText: String
+        nearestActorName: String?
     ) {
         self.isAvailable = isAvailable
         self.playerEffects = playerEffects
         self.nearestActorName = nearestActorName
-        self.nearestActorEffects = nearestActorEffects
-        self.runtimeActorCount = runtimeActorCount
-        self.appliedCount = appliedCount
-        self.instantCount = instantCount
-        self.expiredCount = expiredCount
-        self.dispelledCount = dispelledCount
-        self.skippedCount = skippedCount
-        self.unimplementedLines = unimplementedLines
-        self.lastActionText = lastActionText
     }
 }

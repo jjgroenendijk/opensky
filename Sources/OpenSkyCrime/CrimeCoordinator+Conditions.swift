@@ -10,7 +10,7 @@ import OpenSkyWorldState
 
 /// What the crime seam was built from: the coordinator's own state, the store kinds
 /// it reads, where the player stands, and the run-ons asked about.
-struct CrimeConditionKey: Equatable {
+struct CrimeConditionKey: Hashable {
     let coordinator: UInt64
     let store: UInt64
     let scriptedOwners: UInt64?

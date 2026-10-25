@@ -13,10 +13,6 @@ nonisolated public struct DialogueMenuDiagnostics: Equatable, Sendable {
     public let faults: Int
     public let missingNames: Int
     public let unhandledInvokes: Int
-
-    public static let none = DialogueMenuDiagnostics(
-        faults: 0, missingNames: 0, unhandledInvokes: 0
-    )
 }
 
 nonisolated public enum DialogueMenuMovieBridge: Sendable {

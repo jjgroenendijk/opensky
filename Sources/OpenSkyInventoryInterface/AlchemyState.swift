@@ -76,10 +76,6 @@ nonisolated public struct CreatedPotionState: WorldStateComponent, Sendable {
         self.potions = potions.sorted { $0.id.rawValue < $1.id.rawValue }
     }
 
-    public var isEmpty: Bool {
-        potions.isEmpty
-    }
-
     /// The made potion with these effects, so two equal brews stack.
     public func potion(isPoison: Bool, effects: [CreatedPotionEffect]) -> CreatedPotion? {
         potions.first { $0.isPoison == isPoison && $0.effects == effects }
@@ -114,10 +110,6 @@ nonisolated public struct IngredientKnowledgeState: WorldStateComponent, Sendabl
 
     public init(known: [FormID: UInt8] = [:]) {
         self.known = known.filter { $0.value != 0 }
-    }
-
-    public var isEmpty: Bool {
-        known.isEmpty
     }
 
     public func knows(_ index: Int, of ingredient: FormID) -> Bool {

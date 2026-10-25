@@ -40,7 +40,6 @@ nonisolated public enum TitleMenuEntry: String, CaseIterable, Sendable {
 }
 
 nonisolated public struct TitleMenuSnapshot: Equatable, Sendable {
-    public let isOpen: Bool
     public let rows: [String]
     public let selectedIndex: Int
     public let isLoadPageOpen: Bool
@@ -48,10 +47,12 @@ nonisolated public struct TitleMenuSnapshot: Equatable, Sendable {
     public let movie: TitleMenuMovieSnapshot
 
     public init(
-        isOpen: Bool, rows: [String], selectedIndex: Int, isLoadPageOpen: Bool,
-        lastResult: String?, movie: TitleMenuMovieSnapshot = TitleMenuMovieSnapshot()
+        rows: [String],
+        selectedIndex: Int,
+        isLoadPageOpen: Bool,
+        lastResult: String?,
+        movie: TitleMenuMovieSnapshot = TitleMenuMovieSnapshot()
     ) {
-        self.isOpen = isOpen
         self.rows = rows
         self.selectedIndex = selectedIndex
         self.isLoadPageOpen = isLoadPageOpen
@@ -61,7 +62,6 @@ nonisolated public struct TitleMenuSnapshot: Equatable, Sendable {
 }
 
 nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
-    public let isEnabled: Bool
     public let isLoaded: Bool
     public let error: String?
     public let rows: [String]
@@ -69,10 +69,12 @@ nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
     public let state: String?
 
     public init(
-        isEnabled: Bool = false, isLoaded: Bool = false, error: String? = nil,
-        rows: [String] = [], selectedIndex: Int? = nil, state: String? = nil
+        isLoaded: Bool = false,
+        error: String? = nil,
+        rows: [String] = [],
+        selectedIndex: Int? = nil,
+        state: String? = nil
     ) {
-        self.isEnabled = isEnabled
         self.isLoaded = isLoaded
         self.error = error
         self.rows = rows
@@ -95,8 +97,6 @@ public final class TitleMenuCoordinator {
     public internal(set) var creditsShown = false
     /// The credits movie asked to close; applied after its step.
     var creditsClosing = false
-    /// Reads the credits text before the credits movie starts.
-    var creditsWork: Task<Void, Never>?
     /// A row the movie picked during input, applied once the movie returns.
     var pendingRequest: TitleMenuMovieBridge.Request?
     /// Load list calls from the movie, answered once its input event ends.
@@ -264,13 +264,11 @@ public final class TitleMenuCoordinator {
     public var snapshot: TitleMenuSnapshot {
         let runtime = movie.runtime
         return TitleMenuSnapshot(
-            isOpen: isOpen,
             rows: loadPage?.titles ?? entries.map(\.rawValue),
             selectedIndex: loadPage?.selectedIndex ?? selectedIndex,
             isLoadPageOpen: loadPage != nil,
             lastResult: lastResult,
             movie: TitleMenuMovieSnapshot(
-                isEnabled: movieEnabled,
                 isLoaded: movieLoaded,
                 error: movieError,
                 rows: runtime.map(TitleMenuMovieBridge.entryLabels(runtime:)) ?? [],

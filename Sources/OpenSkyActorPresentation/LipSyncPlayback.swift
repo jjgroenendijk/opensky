@@ -22,36 +22,20 @@ nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
 
 nonisolated public struct LipSyncSnapshot: Equatable, Sendable {
     public static let empty = LipSyncSnapshot(
-        actor: nil,
         activeLine: nil,
         trackTime: 0,
         clockMode: .audio,
-        liveWeights: [:],
         unmappedActiveSlots: [],
         isDecaying: false,
-        layout: nil,
         head: .zero
     )
 
-    public let actor: FormID?
     public let activeLine: String?
     public let trackTime: Double
     public let clockMode: LipSyncClockMode
-    public let liveWeights: [String: Float]
     public let unmappedActiveSlots: [Int]
     public let isDecaying: Bool
-    /// How the active track framed itself: header size, tuple width, vocabulary and slot
-    /// stride. The corpus has several of each, so the readout shows which one this used.
-    public let layout: String?
     public let head: LipHeadMotion
-}
-
-nonisolated extension LIPFile {
-    /// One line naming the layout this track decoded as.
-    public var layoutDescription: String {
-        "\(header.targetCount) targets · \(header.slotsPerFrame) slots/frame · "
-            + "\(header.frameCount) frames from \(header.firstFrame)"
-    }
 }
 
 nonisolated private struct LipSyncSession: Sendable {
@@ -102,19 +86,16 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         actor = faceMorph.actor
         self.faceMorph = faceMorph
         self.head = head
-        state = Mutex(State(snapshot: Self.idleSnapshot(actor: faceMorph.actor)))
+        state = Mutex(State(snapshot: Self.idleSnapshot()))
     }
 
-    private static func idleSnapshot(actor: FormID) -> LipSyncSnapshot {
+    private static func idleSnapshot() -> LipSyncSnapshot {
         LipSyncSnapshot(
-            actor: actor,
             activeLine: nil,
             trackTime: 0,
             clockMode: .audio,
-            liveWeights: [:],
             unmappedActiveSlots: [],
             isDecaying: false,
-            layout: nil,
             head: .zero
         )
     }
@@ -136,14 +117,11 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             startAnimationTime: animationTime
         )
         let snapshot = LipSyncSnapshot(
-            actor: actor,
             activeLine: line,
             trackTime: 0,
             clockMode: .audio,
-            liveWeights: [:],
             unmappedActiveSlots: [],
             isDecaying: false,
-            layout: track.layoutDescription,
             head: .zero
         )
         state.withLock {
@@ -178,14 +156,11 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             current.finishAnimationTime = time
         }
         let snapshot = LipSyncSnapshot(
-            actor: actor,
             activeLine: current.line,
             trackTime: trackTime,
             clockMode: current.clockMode,
-            liveWeights: mapped.weights,
             unmappedActiveSlots: mapped.unmappedActiveSlots,
             isDecaying: false,
-            layout: current.track.layoutDescription,
             head: mapped.head
         )
         state.withLock { [current] in
@@ -198,7 +173,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
 
     @discardableResult
     public func resetToBindPose() -> Int {
-        let idle = Self.idleSnapshot(actor: actor)
+        let idle = Self.idleSnapshot()
         state.withLock {
             $0.session = nil
             $0.snapshot = idle
@@ -216,14 +191,11 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         let headMotion = current.lastHead.scaled(by: scale)
         state.withLock {
             $0.snapshot = LipSyncSnapshot(
-                actor: actor,
                 activeLine: current.line,
                 trackTime: $0.snapshot.trackTime,
                 clockMode: current.clockMode,
-                liveWeights: weights,
                 unmappedActiveSlots: $0.snapshot.unmappedActiveSlots,
                 isDecaying: true,
-                layout: current.track.layoutDescription,
                 head: headMotion
             )
         }

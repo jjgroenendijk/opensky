@@ -5,7 +5,6 @@ import OpenSkyScriptingInterface
 
 nonisolated public struct MessageControlSnapshot: Equatable, Sendable {
     public var isAvailable = false
-    public var messageNames: [String] = []
     public var visible: [String] = []
     public var waitingCount = 0
     public var postedCount = 0
@@ -27,7 +26,6 @@ extension MessageCoordinator {
     public func snapshot(lastOutcome: String?) -> MessageControlSnapshot {
         var snapshot = MessageControlSnapshot()
         snapshot.isAvailable = world != nil
-        snapshot.messageNames = world?.messageEditorIDs ?? []
         snapshot.visible = notifications.visible.map(\.text)
         snapshot.waitingCount = notifications.waiting.count
         snapshot.postedCount = notifications.postedCount

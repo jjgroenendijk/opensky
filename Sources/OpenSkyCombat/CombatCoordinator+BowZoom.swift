@@ -2,7 +2,6 @@
 // share, its bow `Mod Power Attack Stamina` the drain per second, and Steady Hand's
 // `Bow Speed Bonus` the time scale while zoomed. See docs/engine/archery.md.
 
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

@@ -35,16 +35,12 @@ public enum CrimeFactionSnapshotFixture {
             stolenStacks: [
                 ItemStackReadout(item: FormID(0x42), count: 2, name: "Ring", stolen: true)
             ],
-            crimeFactions: [hold],
-            selectedCrimeFaction: hold.key,
             playerMemberships: [MembershipReadout(faction: guild, rank: 2)],
             subject: SocialSubjectReadout(
                 key: .plugin(name: "base.esm", objectID: 0x900), name: "Guard",
                 memberships: [MembershipReadout(faction: hold, rank: 0)],
                 towardPlayer: nil, crimeFaction: hold, policedFaction: hold, vendor: vendor
             ),
-            factions: [guild, hold, shop],
-            selectedFaction: guild.key,
             vendorFactions: [shop],
             vendorOverride: nil,
             effectiveVendor: vendor,

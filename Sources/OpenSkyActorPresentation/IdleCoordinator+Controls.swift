@@ -16,13 +16,8 @@ extension IdleCoordinator {
                 let idles = store.idles(of: placement.marker)
                 let record = placement.marker.record
                 return IdleMarkerReadout(
-                    reference: placement.reference,
                     editorID: record.editorID ?? placement.marker.id.description,
                     idles: idles.map { $0.record.editorID ?? $0.id.description },
-                    idleIDs: idles.map(\.id),
-                    inSequence: IdleCore.selectionOrder(of: record) == .sequence,
-                    doOnce: IdleCore.isDoOnce(record),
-                    timer: record.idleTimer ?? 0,
                     claimedBy: holders[placement.reference]
                 )
             },

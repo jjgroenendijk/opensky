@@ -3,7 +3,6 @@
 // See docs/engine/locks.md.
 
 import OpenSkyGameData
-import OpenSkyPlayer
 import OpenSkyWorldInterface
 
 @MainActor

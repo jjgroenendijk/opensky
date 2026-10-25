@@ -7,9 +7,7 @@ import AppKit
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyActors
-import OpenSkyAgentControl
 import OpenSkyAIPackages
-import OpenSkyAssetCache
 import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
@@ -21,7 +19,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
@@ -31,9 +28,7 @@ import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
-import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyWorld
@@ -140,11 +135,6 @@ final class GameSessionScope {
         store: worldState,
         world: dialogueWorld,
         index: worldData?.dialogueStore,
-        topicSubtypes: worldData.map { data in
-            TopicSubtypeTexts.resolve(store: data.gameSettings) { [unowned self] in
-                mapWorld.text($0)
-            }
-        } ?? .vanilla,
         speechTimers: worldData.map { SpeechTimerSettings.resolve(store: $0.gameSettings) }
             ?? .vanilla
     )
@@ -219,8 +209,6 @@ final class GameSessionScope {
     lazy var effects = EffectsCoordinator()
     lazy var effectsWorld = EffectsWorldAdapter(game: self)
     lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
-        hazards: hazards,
-        worldState: worldState,
         streamer: { [unowned self] in streamer }
     ))
     /// The player graphs, the body, and the locomotion and first-person readouts.

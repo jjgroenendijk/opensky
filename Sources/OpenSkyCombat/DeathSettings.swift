@@ -95,16 +95,4 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
     private var spellMult: Float {
         spellImpactMult.isFinite ? max(spellImpactMult, 0) : 0
     }
-
-    /// The Death & Ragdoll readout's settings line.
-    public var readout: String {
-        String(
-            format: "Death settings: melee push %.0f-%.0f for %.0f-%.0f damage · ranged %.0f-%.0f "
-                + "for %.0f-%.0f · spell x%.1f · drop weapon %d%% · dismember %d%% · "
-                + "bodies over %d go after %.0f s",
-            melee.forceMin, melee.forceMax, melee.damageMin, melee.damageMax,
-            ranged.forceMin, ranged.forceMax, ranged.damageMin, ranged.damageMax,
-            spellImpactMult, dropWeaponChance, dismemberChance, excessDeadCount, excessDeadSeconds
-        )
-    }
 }

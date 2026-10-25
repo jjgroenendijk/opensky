@@ -254,14 +254,6 @@ nonisolated public struct CellSceneComposition {
             .map(\.value.summary)
     }
 
-    /// Every resident container, by FormID, for picking a merchant without knowing one.
-    /// Ordered by reference, so menu rows do not reshuffle when a cell streams in.
-    public func containerInteractions() -> [PlacedInteraction] {
-        cells.values
-            .flatMap { $0.interactions.values.filter { $0.action == .search } }
-            .sorted { $0.reference.rawValue < $1.reference.rawValue }
-    }
-
     public func door(reference: FormID) -> PlacedDoor? {
         cells.values
             .flatMap(\.doors)

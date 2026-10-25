@@ -32,10 +32,6 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
         self.costPerUse = costPerUse.isFinite ? max(0, costPerUse) : 0
         self.name = name
     }
-
-    public var isWeapon: Bool {
-        capacity > 0
-    }
 }
 
 nonisolated public struct EnchantingState: WorldStateComponent, Sendable {

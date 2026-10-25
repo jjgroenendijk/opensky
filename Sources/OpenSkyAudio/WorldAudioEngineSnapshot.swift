@@ -4,30 +4,15 @@
 import AVFAudio
 
 extension WorldAudioEngine {
-    /// Output device format line for the readout.
-    public var outputFormatDescription: String {
-        let format = engine.outputNode.outputFormat(forBus: 0)
-        return "\(Int(format.sampleRate)) Hz, \(format.channelCount) ch"
-    }
-
     public func statsSnapshot() -> AudioStatsSnapshot {
-        let output: String = if let unavailableReason {
-            "failed: \(unavailableReason)"
-        } else if isRunning {
-            outputFormatDescription
-        } else {
-            "stopped"
-        }
-        return AudioStatsSnapshot(
+        AudioStatsSnapshot(
             enabled: isEnabled,
             engineRunning: isRunning,
-            outputDescription: output,
             sources: sources.map { source in
                 AudioSourceStatsSnapshot(
                     name: source.name,
                     categoryName: source.category.displayName,
                     isPositional: source.isPositional,
-                    worldPosition: source.worldPosition,
                     distanceMeters: source.isPositional ? AudioSpace.distanceMeters(
                         fromWorld: listenerWorldPosition,
                         toWorld: source.worldPosition
@@ -35,9 +20,7 @@ extension WorldAudioEngine {
                     fadeGain: source.fadeGain,
                     isFading: source.activeFade != nil,
                     effectiveGain: effectiveGain(of: source),
-                    positionSeconds: playbackPosition(ofSource: source.id),
-                    outputModel: source.outputModelName,
-                    distanceGain: source.distanceGain
+                    positionSeconds: playbackPosition(ofSource: source.id)
                 )
             },
             sourceCap: Self.maxConcurrentSources,

@@ -25,13 +25,6 @@ nonisolated public struct TranslationFile: Equatable, Sendable {
         entries.isEmpty
     }
 
-    /// Builds a file directly from already-parsed entries. Used by in-app
-    /// synthetic sample content and tests;
-    /// `init(data:)` remains the only on-disk path.
-    public init(entries: [String: String]) {
-        self.entries = entries
-    }
-
     public init(data: Data) throws {
         let text = try Self.decodeUTF16(data)
         var entries: [String: String] = [:]

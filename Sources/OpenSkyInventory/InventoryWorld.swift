@@ -23,8 +23,6 @@ public protocol InventoryWorld: AnyObject {
     func dropPlacement() -> DropPlacement?
     /// The resident ACHR nearest the camera.
     func nearestActorEntry() -> RuntimeReferenceEntry?
-    /// Every resident container interaction, for merchant nomination.
-    func containerInteractions() -> [PlacedInteraction]
     /// What the actor's cell build could not draw, tagged by its ACHR FormID.
     func appearanceSkipReasons(forActor reference: FormID) -> [String]
     /// The bounty taking one `item` from `reference` would accrue. Zero
@@ -39,8 +37,6 @@ public protocol InventoryWorld: AnyObject {
     var gameMonth: Int? { get }
     /// The player's current Speech skill. Nil without actor values.
     func playerSpeechSkill() -> Float?
-    /// The player's `CarryWeight` actor value. Nil without actor values.
-    var playerCarryCapacity: Float? { get }
     /// `key`'s current Pickpocket skill. Nil without actor values.
     func pickpocketSkill(of key: ReferenceKey) -> Float?
     /// Whether `observer` has detected the player right now.
@@ -80,10 +76,6 @@ extension InventoryWorld {
     }
 
     public var gameMonth: Int? {
-        nil
-    }
-
-    public var playerCarryCapacity: Float? {
         nil
     }
 

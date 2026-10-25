@@ -112,15 +112,6 @@ nonisolated public struct LeveledListRoller: Sendable {
         self.chanceNoneGlobal = chanceNoneGlobal
     }
 
-    /// A request at the encounter level of a place in `zone`.
-    public func request(in zone: EncounterZone?) -> LeveledRequest {
-        let player = playerLevel.level
-        return LeveledRequest(
-            level: EncounterLevel.level(playerLevel: player, zone: zone, settings: settings),
-            playerLevel: player
-        )
-    }
-
     /// The roll of an actor base with no placed reference in hand, seeded by the base.
     public func roll(forActor base: FormID) -> LeveledRoll {
         roll(

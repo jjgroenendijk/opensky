@@ -368,10 +368,6 @@ extension InventoryCoordinatorTests {
             nil
         }
 
-        func containerInteractions() -> [PlacedInteraction] {
-            []
-        }
-
         func appearanceSkipReasons(forActor _: FormID) -> [String] {
             []
         }

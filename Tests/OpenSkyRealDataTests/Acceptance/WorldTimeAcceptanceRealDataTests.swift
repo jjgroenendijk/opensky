@@ -75,7 +75,7 @@ struct WorldTimeAcceptanceRealDataTests {
         )
         #expect(projected == clock.hourOfDay)
         let sample = RuntimeStateClockSnapshot(
-            clock: clock, timescale: overriddenTimescale, isPaused: false
+            clock: clock, timescale: overriddenTimescale
         )
         #expect(sample.timeText == "05:00")
 

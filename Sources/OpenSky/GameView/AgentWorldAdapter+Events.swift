@@ -12,7 +12,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
-import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScripting

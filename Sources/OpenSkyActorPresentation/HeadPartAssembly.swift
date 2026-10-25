@@ -40,7 +40,6 @@ nonisolated public struct HeadPartMiss: Equatable, Sendable {
         case cycle
     }
 
-    public let formID: FormID
     public let reason: Reason
 }
 
@@ -115,14 +114,14 @@ nonisolated public struct HeadPartResolver: Sendable {
         misses: inout [HeadPartMiss]
     ) -> HeadPart? {
         guard let part = headParts[id.rawValue] else {
-            misses.append(HeadPartMiss(formID: id, reason: .missingRecord))
+            misses.append(HeadPartMiss(reason: .missingRecord))
             return nil
         }
         if
             let list = part.validRaces.flatMap({ formLists[$0.rawValue] }),
             !list.entries.contains(race)
         {
-            misses.append(HeadPartMiss(formID: id, reason: .wrongRace))
+            misses.append(HeadPartMiss(reason: .wrongRace))
             return nil
         }
         return part
@@ -138,7 +137,7 @@ nonisolated public struct HeadPartResolver: Sendable {
     ) {
         guard result.taken.insert(part.formID.rawValue).inserted else {
             if origin == .extraPart {
-                result.misses.append(HeadPartMiss(formID: part.formID, reason: .cycle))
+                result.misses.append(HeadPartMiss(reason: .cycle))
             }
             return
         }
@@ -146,7 +145,7 @@ nonisolated public struct HeadPartResolver: Sendable {
             result.parts.append(resolved(part, origin: origin, path: path, hairColor: hairColor))
         } else if part.extraParts.isEmpty {
             // A part without a mesh may only group its extra parts.
-            result.misses.append(HeadPartMiss(formID: part.formID, reason: .noModel))
+            result.misses.append(HeadPartMiss(reason: .noModel))
         }
         for extra in part.extraParts {
             guard let next = accepted(extra, race: race, misses: &result.misses) else { continue }

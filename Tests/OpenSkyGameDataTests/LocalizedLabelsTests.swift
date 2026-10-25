@@ -16,7 +16,6 @@ struct LocalizedLabelsTests {
 
     @Test func resolvesKnownKey() throws {
         let labels = try LocalizedLabels(
-            language: "english",
             files: [table([(key: "$ExitGame", value: "Quit")])]
         )
         #expect(labels.label(for: "$ExitGame") == "Quit")
@@ -26,13 +25,13 @@ struct LocalizedLabelsTests {
     }
 
     @Test func unknownKeyFallsBackToToken() throws {
-        let labels = try LocalizedLabels(language: "english", files: [table([])])
+        let labels = try LocalizedLabels(files: [table([])])
         #expect(labels.label(for: "$Missing") == "$Missing")
         #expect(labels.value(forKey: "$Missing") == nil)
     }
 
     @Test func argumentTokenFillsItsSlots() throws {
-        let labels = try LocalizedLabels(language: "english", files: [table([
+        let labels = try LocalizedLabels(files: [table([
             (key: "$Picked up {} {}.", value: "You took {} {}."),
             (key: "$Coins", value: "coins")
         ])])
@@ -40,13 +39,13 @@ struct LocalizedLabelsTests {
     }
 
     @Test func nonTokenPassesThrough() {
-        let labels = LocalizedLabels(language: "english", files: [])
+        let labels = LocalizedLabels(files: [])
         #expect(labels.label(for: "Plain text") == "Plain text")
         #expect(labels.label(for: "").isEmpty)
     }
 
     @Test func mergeAcrossFilesLastWins() throws {
-        let labels = try LocalizedLabels(language: "english", files: [
+        let labels = try LocalizedLabels(files: [
             table([(key: "$A", value: "base"), (key: "$Shared", value: "old")]),
             table([(key: "$B", value: "extra"), (key: "$Shared", value: "new")])
         ])

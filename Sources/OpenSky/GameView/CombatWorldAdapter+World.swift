@@ -19,7 +19,6 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyNavigation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
@@ -89,8 +88,7 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.applyWeaponEnchantment(hit)
     }
 
-    @discardableResult
-    func applyWeaponPoison(_ hit: WeaponPoisonHit) -> WeaponPoisonReport? {
+    func applyWeaponPoison(_ hit: WeaponPoisonHit) {
         game.magic.applyWeaponPoison(hit)
     }
 

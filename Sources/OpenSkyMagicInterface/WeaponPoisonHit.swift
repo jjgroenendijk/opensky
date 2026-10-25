@@ -17,23 +17,7 @@ nonisolated public struct WeaponPoisonHit: Equatable, Sendable {
     }
 }
 
-/// What one poisoned hit did.
-nonisolated public struct WeaponPoisonReport: Equatable, Sendable {
-    public let poison: FormID
-    public let dosesLeft: Int32
-    /// Timed effects the runtime stored on the target.
-    public let storedCount: Int
-
-    public init(poison: FormID, dosesLeft: Int32, storedCount: Int) {
-        self.poison = poison
-        self.dosesLeft = dosesLeft
-        self.storedCount = storedCount
-    }
-}
-
 extension WeaponEnchantmentApplying {
     /// A world without an effect runtime delivers no poison.
-    public func applyWeaponPoison(_: WeaponPoisonHit) -> WeaponPoisonReport? {
-        nil
-    }
+    public func applyWeaponPoison(_: WeaponPoisonHit) {}
 }

@@ -62,7 +62,6 @@ nonisolated public struct PerkTreeNodeReadout: Equatable, Sendable {
     /// which every vanilla tree has and which the first real box hangs from,
     /// and a box whose `PNAM` this load order carries no PERK for.
     public let grantsNoPerk: Bool
-    public let isOwned: Bool
     /// Whether the box's `FNAM` asks for an owned parent.
     public let requiresParent: Bool
     /// `INAM`s of the boxes this one draws a line to.
@@ -78,7 +77,6 @@ nonisolated public struct PerkTreeNodeReadout: Equatable, Sendable {
         node: UInt32,
         name: String,
         grantsNoPerk: Bool,
-        isOwned: Bool,
         requiresParent: Bool,
         connections: [UInt32],
         ownedRank: Int,
@@ -88,7 +86,6 @@ nonisolated public struct PerkTreeNodeReadout: Equatable, Sendable {
         self.node = node
         self.name = name
         self.grantsNoPerk = grantsNoPerk
-        self.isOwned = isOwned
         self.requiresParent = requiresParent
         self.connections = connections
         self.ownedRank = ownedRank
@@ -201,11 +198,6 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     /// record for it.
     public var selectedSkillReadout: SkillProgressReadout? {
         skills.first { $0.index == selectedSkill }
-    }
-
-    /// The selected box, or nil when the tree carries none with that identity.
-    public var selectedNodeReadout: PerkTreeNodeReadout? {
-        treeNodes.first { $0.node == selectedNode }
     }
 
     public init(

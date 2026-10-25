@@ -42,8 +42,6 @@ public final class CombatCoordinator {
     public let weaponDamage: WeaponDamageSettings
     /// What a block costs.
     public let stamina: StaminaSettings
-    /// The Block experience of blocks and bashes.
-    public let skillUses: MeleeSkillUseSettings
     /// Stagger and disarm chances.
     public let staggers: StaggerSettings
     /// The game's combat AI settings.
@@ -76,7 +74,6 @@ public final class CombatCoordinator {
         difficultySettings = data?.difficulty ?? .synthetic
         weaponDamage = data?.weaponDamage ?? .vanilla
         stamina = data?.stamina ?? .vanilla
-        skillUses = data?.skillUses ?? .vanilla
         staggers = data?.staggers ?? .vanilla
         combatAI = data?.combatAI ?? .vanilla
         guard let data else { return }

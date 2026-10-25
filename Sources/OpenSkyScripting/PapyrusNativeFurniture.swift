@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
 
 /// What the furniture natives reach. The app answers it.
 @MainActor

@@ -220,10 +220,6 @@ final class FakeAlchemyWorld: InventoryWorld {
         nil
     }
 
-    func containerInteractions() -> [PlacedInteraction] {
-        []
-    }
-
     func appearanceSkipReasons(forActor _: FormID) -> [String] {
         []
     }

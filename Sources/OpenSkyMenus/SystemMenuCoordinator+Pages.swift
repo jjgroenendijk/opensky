@@ -9,20 +9,15 @@ import OpenSkyRendering
 
 /// The open page and its rows, for the readout and the readout.
 nonisolated public struct SystemMenuPageSnapshot: Equatable, Sendable {
-    public let page: String
     public let rows: [String]
     public let selectedIndex: Int
-    public let question: String?
-    public let message: String?
 
     public init(
-        page: String, rows: [String], selectedIndex: Int, question: String?, message: String?
+        rows: [String],
+        selectedIndex: Int
     ) {
-        self.page = page
         self.rows = rows
         self.selectedIndex = selectedIndex
-        self.question = question
-        self.message = message
     }
 }
 
@@ -264,21 +259,13 @@ extension SystemMenuCoordinator {
                     ?? "none"
                 return "\(slot.event): \(key)"
             } + [ControlsPageModel.resetTitle]
-            return page(
-                rows: rows, selected: controlsPage.selectedIndex,
-                question: controlsPage.waitingForKey
-                    ? "Press a key" : controlsPage.confirmation?.question
-            )
+            return page(rows: rows, selected: controlsPage.selectedIndex)
         case .save, .load:
             return page(
-                rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0,
-                question: saveLoadPage?.confirmation?.question
+                rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0
             )
         case .quit:
-            return page(
-                rows: quitPage?.options ?? [], selected: quitPage?.selectedIndex ?? 0,
-                question: quitPage?.question
-            )
+            return page(rows: quitPage?.options ?? [], selected: quitPage?.selectedIndex ?? 0)
         }
     }
 
@@ -308,14 +295,7 @@ extension SystemMenuCoordinator {
         }
     }
 
-    private func page(
-        rows: [String],
-        selected: Int,
-        question: String? = nil
-    ) -> SystemMenuPageSnapshot {
-        SystemMenuPageSnapshot(
-            page: model.page.rawValue, rows: rows, selectedIndex: selected, question: question,
-            message: lastMessage
-        )
+    private func page(rows: [String], selected: Int) -> SystemMenuPageSnapshot {
+        SystemMenuPageSnapshot(rows: rows, selectedIndex: selected)
     }
 }

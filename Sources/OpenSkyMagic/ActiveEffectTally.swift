@@ -3,7 +3,6 @@
 // See docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormatsESM
 
 nonisolated public struct ActiveEffectTally: Equatable, Sendable {
     /// Timed effects that became components on an actor.
@@ -33,28 +32,6 @@ nonisolated public struct ActiveEffectTally: Equatable, Sendable {
     public private(set) var secondsPaid = 0
     /// Why entries produced no application, by reason.
     public private(set) var skips: [MagicEffectPlanFailure: Int] = [:]
-
-    /// Everything that was counted as declining to do something.
-    public var totalSkips: Int {
-        skips.values.reduce(0, +) + conditionSkipped + effectConditionSkipped + recastRefused
-            + unresolvedEffect
-    }
-
-    /// Every unimplemented archetype seen, with its count — the listing a
-    /// coverage readout shows.
-    public var unimplementedArchetypes: [(archetype: MagicEffectArchetype, count: Int)] {
-        skips
-            .compactMap { failure, count -> (MagicEffectArchetype, Int)? in
-                guard case let .unimplementedArchetype(archetype) = failure else { return nil }
-                return (archetype, count)
-            }
-            .sorted { left, right in
-                left.1 == right.1
-                    ? left.0.description < right.0.description
-                    : left.1 > right.1
-            }
-            .map { (archetype: $0.0, count: $0.1) }
-    }
 
     public mutating func note(_ failure: MagicEffectPlanFailure) {
         skips[failure, default: 0] += 1

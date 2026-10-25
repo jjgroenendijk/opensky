@@ -41,7 +41,6 @@ protocol InventoryWorldHost: AnyObject {
     var furniture: FurnitureCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get set }
-    var lockWorld: LockWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
@@ -49,12 +48,8 @@ protocol InventoryWorldHost: AnyObject {
     var perkActivation: PerkActivationCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
     var worldData: WorldDataStores? { get }
@@ -221,10 +216,6 @@ extension InventoryWorldAdapter: InventoryWorld {
         return game.streamer?.nearestActorEntry(to: gameSession.freeFlyCamera.position)
     }
 
-    func containerInteractions() -> [PlacedInteraction] {
-        game.streamer?.containerInteractions() ?? []
-    }
-
     func appearanceSkipReasons(forActor reference: FormID) -> [String] {
         game.streamer?.appearanceSkipReasons(forActor: reference) ?? []
     }
@@ -269,10 +260,6 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool {
         game.magic.applyPlacedPoison(poison, by: .player, on: target) != nil
-    }
-
-    var playerCarryCapacity: Float? {
-        game.actorValues.runtime?.value(at: ActorValueIdentity.carryWeightIndex, on: .player)
     }
 
     func perkModified(

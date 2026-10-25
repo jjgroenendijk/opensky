@@ -20,17 +20,11 @@ nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
     /// first-person model.
     public let armModelCount: Int
     public let droppedPieceCount: Int
-    /// Whether the rig declares `Camera1st [Cam1]`, and where that bone is in
-    /// rig space right now.
-    public let hasCameraBone: Bool
-    public let cameraBoneHeight: Float?
     /// Graph updates the first-person instance has run, and the variable and
     /// event names it declares no home for.
     public let graphUpdates: Int
     public let missingVariables: [String]
     public let missingEvents: [String]
-    /// Vertical field of view, degrees.
-    public let fovYDegrees: Float
 
     public static let unavailable = FirstPersonSnapshot(
         rendererAvailable: false,
@@ -40,12 +34,9 @@ nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
         failureReason: nil,
         armModelCount: 0,
         droppedPieceCount: 0,
-        hasCameraBone: false,
-        cameraBoneHeight: nil,
         graphUpdates: 0,
         missingVariables: [],
-        missingEvents: [],
-        fovYDegrees: 0
+        missingEvents: []
     )
 
     public init(
@@ -56,12 +47,9 @@ nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
         failureReason: String?,
         armModelCount: Int,
         droppedPieceCount: Int,
-        hasCameraBone: Bool,
-        cameraBoneHeight: Float?,
         graphUpdates: Int,
         missingVariables: [String],
-        missingEvents: [String],
-        fovYDegrees: Float
+        missingEvents: [String]
     ) {
         self.rendererAvailable = rendererAvailable
         self.active = active
@@ -70,11 +58,8 @@ nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
         self.failureReason = failureReason
         self.armModelCount = armModelCount
         self.droppedPieceCount = droppedPieceCount
-        self.hasCameraBone = hasCameraBone
-        self.cameraBoneHeight = cameraBoneHeight
         self.graphUpdates = graphUpdates
         self.missingVariables = missingVariables
         self.missingEvents = missingEvents
-        self.fovYDegrees = fovYDegrees
     }
 }

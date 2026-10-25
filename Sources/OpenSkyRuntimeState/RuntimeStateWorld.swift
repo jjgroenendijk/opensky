@@ -7,7 +7,6 @@ import OpenSkyWorldState
 /// through here because `OpenSkyWorld` may not import `OpenSkySave`.
 @MainActor
 public protocol RuntimeStateWorld: AnyObject {
-    var residentReferenceCount: Int { get }
     func referenceEntry(formID: FormID) -> RuntimeReferenceEntry?
     /// The reference under the crosshair, nil when nothing is targeted.
     var crosshairReference: FormID? { get }
@@ -15,7 +14,6 @@ public protocol RuntimeStateWorld: AnyObject {
     /// Nil without a renderer.
     var gameClock: GameClock? { get set }
     var timescale: Float? { get }
-    var isWorldSimPaused: Bool { get }
     /// Moves the renderer's hour directly, for a session with no globals.
     func setTimeOfDay(_ hour: Float)
     /// Seeds the next launch's clock.

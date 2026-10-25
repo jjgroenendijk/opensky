@@ -235,29 +235,11 @@ public final class SystemMenuCoordinator {
     }
 
     public var snapshot: SystemMenuControlSnapshot {
-        let runtime = movie.runtime
-        let diagnostics = renderer?.swfRuntime.map(SystemMenuMovieBridge.diagnostics(runtime:))
-        return SystemMenuControlSnapshot(
-            isOpen: model.isOpen,
-            entryTitles: model.entries.map(\.title),
-            selectedIndex: model.selectedIndex,
-            lastOutcome: model.lastOutcome?.label,
-            settingsRevealed: model.settingsRevealed,
-            openMenus: menuMode.stack.identifiers.map(\.name),
-            worldSimPaused: menuMode.isWorldSimPaused,
+        SystemMenuControlSnapshot(
             dataRootPath: dataRootValue?.installURL.path(percentEncoded: false),
             dataRootSource: dataRootValue.map { Self.dataRootSourceLabel($0.source) },
             audioEnabled: world?.audioEnabled ?? false,
             movieEnabled: movieEnabled,
-            movieLoaded: movieLoaded,
-            movieError: movieError,
-            movieDrawStats: movieLoaded
-                ? (renderer?.lastSWFDrawStats ?? SWFDrawStats())
-                : SWFDrawStats(),
-            movieFaults: diagnostics?.faults ?? 0,
-            movieMissingNames: diagnostics?.missingNames ?? 0,
-            movieEntryTitles: runtime.map(SystemMenuMovieBridge.entryLabels(runtime:)) ?? [],
-            movieState: runtime.flatMap(SystemMenuMovieBridge.currentState(runtime:)),
             page: pageSnapshot
         )
     }

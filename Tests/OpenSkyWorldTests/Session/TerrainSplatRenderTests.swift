@@ -133,7 +133,7 @@ struct TerrainSplatRenderTests {
             weightsBuffer: weightsBuffer,
             material: material,
             layerTextures: [layer],
-            normals: TerrainNormalMaps(base: normalMap, layers: [normalMap], resolvedCount: 2),
+            normals: TerrainNormalMaps(base: normalMap, layers: [normalMap]),
             modelMatrix: matrix_identity_float4x4,
             normalMatrix: matrix_identity_float4x4,
             bounds: nil

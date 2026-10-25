@@ -70,10 +70,9 @@ struct CraftingCatalogTests {
             isKnownItem: known, failingFunction: nil
         )
         #expect(!short.isEligible)
-        #expect(short.shortfalls == [
-            ComponentShortfall(item: FormID(Self.ingot), required: 2, held: 1),
-            ComponentShortfall(item: FormID(Self.leather), required: 1, held: 0)
-        ])
+        #expect(short.shortfalls.map(\.item) == [FormID(Self.ingot), FormID(Self.leather)])
+        #expect(short.shortfalls.map(\.required) == [2, 1])
+        #expect(short.shortfalls.map(\.held) == [1, 0])
         let gated = CraftingCatalog.eligibility(
             of: recipe, held: { _ in 9 }, isKnownItem: known, failingFunction: "HasPerk"
         )

@@ -2,29 +2,24 @@
 // main actor. Each connection runs one request at a time, in order.
 
 import Foundation
+import OSLog
 
 /// What the server reports about itself.
 nonisolated public struct AgentControlSnapshot: Equatable, Sendable {
     public var enabled: Bool
     public var socketPath: String
     public var connections: Int
-    public var lastError: String?
-    public var recentCommands: [String]
     public var timeline: AgentTimeline?
 
     public init(
         enabled: Bool,
         socketPath: String,
         connections: Int,
-        lastError: String?,
-        recentCommands: [String],
         timeline: AgentTimeline?
     ) {
         self.enabled = enabled
         self.socketPath = socketPath
         self.connections = connections
-        self.lastError = lastError
-        self.recentCommands = recentCommands
         self.timeline = timeline
     }
 }
@@ -40,7 +35,6 @@ public final class AgentControlCoordinator {
 
     public let router: AgentCommandRouter
     public let socketPath: String
-    public private(set) var lastError: String?
     public private(set) var recentCommands: [String] = []
     /// The app's version string for the hello line.
     public var appVersion = "dev"
@@ -85,9 +79,8 @@ public final class AgentControlCoordinator {
         do {
             try candidate.start()
             server = candidate
-            lastError = nil
         } catch {
-            lastError = error.message
+            Self.logger.error("agent socket failed: \(error.message, privacy: .public)")
         }
     }
 
@@ -96,8 +89,6 @@ public final class AgentControlCoordinator {
             enabled: isEnabled,
             socketPath: socketPath,
             connections: connectionCount,
-            lastError: lastError,
-            recentCommands: recentCommands,
             timeline: router.world?.agentTimeline
         )
     }
@@ -213,6 +204,11 @@ public final class AgentControlCoordinator {
             recentCommands.removeFirst(recentCommands.count - Self.recentCommandLimit)
         }
     }
+
+    private static let logger = Logger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "AgentControl"
+    )
 }
 
 extension AgentControlCoordinator {

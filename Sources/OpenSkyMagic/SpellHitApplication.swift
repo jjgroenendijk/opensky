@@ -150,7 +150,6 @@ public enum SpellHitApplication {
                 element: element, on: holder, settings: resistances
             )
             adjustments.append(SpellMagnitudeAdjustment(
-                target: holder.key,
                 name: resolved.displayName,
                 resistance: element,
                 baseMagnitude: entry.magnitude,

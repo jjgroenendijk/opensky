@@ -38,7 +38,6 @@ protocol PlayerWorldHost: AnyObject {
     var worldState: WorldStateStore { get }
     var worldData: WorldDataStores? { get }
     var cellRunner: SerialCellBuildRunner? { get }
-    var cameraInput: CameraInputState { get }
 }
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
@@ -119,14 +118,6 @@ final class PlayerRigQueue: PlayerRigSource {
 extension PlayerWorldAdapter: PlayerWorld {
     var playerLocomotion: LocomotionBridge? {
         game.gameSession?.locomotion
-    }
-
-    var playerBreath: PlayerBreath? {
-        game.gameSession?.breath
-    }
-
-    var isWalkModeActive: Bool {
-        game.gameSession?.movementMode.isPlayerControlled ?? false
     }
 
     var isPlayerGrounded: Bool {

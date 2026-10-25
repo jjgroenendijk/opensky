@@ -185,7 +185,7 @@ public struct SceneRuntime {
 }
 
 /// Which store, at which scene-state revision, a cached list of playing scenes reflects.
-public struct ScenePlayingRevision: Equatable, Sendable {
+public struct ScenePlayingRevision: Hashable, Sendable {
     let store: ObjectIdentifier
     let scenes: UInt64
 }

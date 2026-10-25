@@ -4,11 +4,7 @@
 import AppKit
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyAgentControl
-import OpenSkyAssetCache
-import OpenSkyCamera
 import OpenSkyCells
-import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -17,10 +13,8 @@ import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyRenderResources
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -82,10 +76,6 @@ extension GameSessionScope {
         }
     }
 
-    func writeScreenshot(to url: URL) async throws {
-        try await WindowCapture.write(from: renderer, to: url)
-    }
-
     /// The playback drawing one resident actor, matched by its ACHR.
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
         guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
@@ -136,18 +126,6 @@ extension GameSessionScope {
 
     var controlMapLoader: (() throws -> ControlMapFile)? {
         services.controlMapLoader
-    }
-
-    var assetCache: AssetCacheReader? {
-        services.assetCache
-    }
-
-    var fastTextureLoad: FastTextureLoadControl? {
-        services.fastTextureLoad
-    }
-
-    var sessionStart: SessionStartRecorder {
-        services.sessionStart
     }
 
     var sessionStartTiming: SessionStartTiming {
@@ -210,10 +188,6 @@ extension GameSessionScope: @MainActor SystemMenuWorld {
 extension GameSessionScope: RenderControlWorld {
     var playerSettingsStore: PlayerSettingsStore {
         playerSettings.store
-    }
-
-    func makePipelineCache(device: MTLDevice) throws -> PipelineCache {
-        try PipelineCache.fromSettings(device: device, store: playerSettings.store)
     }
 
     func refocusGameView() {

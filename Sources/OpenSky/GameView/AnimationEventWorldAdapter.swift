@@ -7,7 +7,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -18,7 +17,6 @@ import simd
 protocol AnimationEventWorldHost: AnyObject {
     var cinematicCamera: CinematicCameraCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
-    var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }

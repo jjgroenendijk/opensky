@@ -12,12 +12,8 @@ nonisolated public final class LocalizedLabels: Sendable {
         category: "Strings"
     )
 
-    /// Language segment of the translation file names; vanilla ships nine.
-    public let language: String
     /// Number of translation files merged into this provider.
     public let fileCount: Int
-    /// The vanilla file that was read, or nil when the install has none.
-    public let vanillaPath: String?
     /// Merged `$key` -> value across every discovered file.
     private let entries: [String: String]
 
@@ -27,9 +23,7 @@ nonisolated public final class LocalizedLabels: Sendable {
 
     /// Merges parsed files in the given order; on a duplicate key the later file
     /// wins (provisional load-order rule, see docs/formats/translation-strings.md).
-    public init(language: String, files: [TranslationFile], vanillaPath: String? = nil) {
-        self.language = language
-        self.vanillaPath = vanillaPath
+    public init(files: [TranslationFile]) {
         fileCount = files.count
         var merged: [String: String] = [:]
         for file in files {
@@ -77,7 +71,7 @@ nonisolated extension LocalizedLabels {
             .filter { $0.hasSuffix(suffix) }
             .sorted()
         files += paths.compactMap { read($0, vfs: vfs) }
-        return LocalizedLabels(language: language, files: files, vanillaPath: vanilla)
+        return LocalizedLabels(files: files)
     }
 
     private static func read(_ path: String, vfs: any GameFileSource) -> TranslationFile? {

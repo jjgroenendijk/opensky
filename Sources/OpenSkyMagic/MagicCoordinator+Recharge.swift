@@ -27,10 +27,10 @@ extension MagicCoordinator {
     @discardableResult
     public func rechargeEquippedWeapon() -> RechargeOutcome {
         guard let runtime = effects, let inventory = world.inventory else {
-            return noteRecharge(.unavailable)
+            return .unavailable
         }
         guard let weapon = rechargeableWeapon(on: .player, staves: true) else {
-            return noteRecharge(.nothingToRecharge)
+            return .nothingToRecharge
         }
         let missing = weapon.charge.capacity - weapon.charge.remaining
         let worth = { (gem: SoulGemCandidate) in
@@ -41,13 +41,13 @@ extension MagicCoordinator {
         guard
             let gem = fitting.min(by: { worth($0) < worth($1) })
             ?? filled.max(by: { worth($0) < worth($1) })
-        else { return noteRecharge(.noFilledGem) }
+        else { return .noFilledGem }
         let amount = worth(gem)
         spendGem(gem, in: inventory)
         reportEnchantingUse(EnchantingRules.rechargeExperience(gem.soul))
         let charge = EnchantmentLedger(store: runtime.store, inventory: inventory)
             .recharge(weapon.profile, by: amount, on: .player)
-        return noteRecharge(.recharged(item: weapon.profile.item, gem: gem.item, charge: charge))
+        return .recharged(item: weapon.profile.item, gem: gem.item, charge: charge)
     }
 
     /// Soul Siphon: entry point 78 gives the share of `victim`'s soul that goes into
@@ -111,22 +111,6 @@ extension MagicCoordinator {
         }
         guard !world.itemHasKeyword("ReusableSoulGem", on: gem.item) else { return }
         _ = try? inventory.remove(gem.item, count: 1, from: .player)
-    }
-
-    private func noteRecharge(_ outcome: RechargeOutcome) -> RechargeOutcome {
-        lastRecharge = outcome
-        return outcome
-    }
-
-    func rechargeText(_ outcome: RechargeOutcome) -> String {
-        switch outcome {
-        case let .recharged(item, gem, charge):
-            "Recharged \(world.itemName(item)) from \(world.itemName(gem)): "
-                + charge.describedLine
-        case .nothingToRecharge: "No equipped enchanted weapon is short of charge."
-        case .noFilledGem: "The player carries no filled soul gem."
-        case .unavailable: "Recharging needs an inventory and the effect runtime."
-        }
     }
 }
 

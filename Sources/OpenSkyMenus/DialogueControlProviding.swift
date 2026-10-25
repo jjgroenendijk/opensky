@@ -10,17 +10,11 @@ import OpenSkyFormatsESM
 
 /// One topic as the readout lists it.
 nonisolated public struct DialogueTopicRow: Equatable, Sendable {
-    /// The INFO that won the topic, which is what choosing the row delivers.
-    public let info: FormID
     /// What the row reads in the menu.
     public let text: String
-    /// Whether the winning response ends the conversation.
-    public let endsConversation: Bool
 
-    public init(info: FormID, text: String, endsConversation: Bool) {
-        self.info = info
+    public init(text: String) {
         self.text = text
-        self.endsConversation = endsConversation
     }
 }
 
@@ -30,13 +24,10 @@ nonisolated public struct DialogueRejectionRow: Equatable, Sendable {
     /// One phrase per considered response, in evaluation order: the reason it
     /// was not chosen, worded the way `DialogueRejection` states it.
     public let reasons: [String]
-    /// The topic's subtype name, such as Hello, from the `sTopicSubtypeText*` settings.
-    public let subtype: String?
 
-    public init(topic: FormID, reasons: [String], subtype: String? = nil) {
+    public init(topic: FormID, reasons: [String]) {
         self.topic = topic
         self.reasons = reasons
-        self.subtype = subtype
     }
 }
 
@@ -48,51 +39,22 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     public static let rowLimit = 12
 
     public static let empty = DialogueControlSnapshot(
-        hasDialogueIndex: false,
-        topicCount: 0,
-        infoCount: 0,
-        targetName: nil,
-        targetKey: nil,
-        speaker: "",
         isOpen: false,
         openMenus: [],
         worldSimPaused: false,
-        state: "closed",
         rows: [],
-        droppedRowCount: 0,
         selectedIndex: -1,
         subtitle: nil,
         rejections: [],
-        unresolvedConditionCount: 0,
-        lastOutcome: nil,
-        movieLoaded: false,
-        movieError: nil,
-        movieTopicRows: 0,
-        movieSelectedIndex: nil,
-        movieSubtitle: nil,
-        movieMenuState: nil,
-        movieDiagnostics: .none
+        unresolvedConditionCount: 0
     )
 
     // MARK: Records
 
-    /// False when the session loaded no plugin, which is the one case the
-    /// readout states rather than showing zeros that look like an empty index.
-    public let hasDialogueIndex: Bool
-    public let topicCount: Int
-    public let infoCount: Int
-
     // MARK: Talk target
-
-    /// The actor the crosshair is on, when it is on one. Nil means the use key
-    /// would not start a conversation.
-    public let targetName: String?
-    public let targetKey: ReferenceKey?
 
     // MARK: Conversation
 
-    /// Who the open conversation is with, empty when none is open.
-    public let speaker: String
     public let isOpen: Bool
     /// Menu-stack identifiers currently open, top last. Proves the menu drives
     /// the engine's own stack rather than a private flag.
@@ -101,10 +63,7 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// policy is that this stays false with the dialogue menu open, so the
     /// readout shows it rather than assuming it.
     public let worldSimPaused: Bool
-    /// `DialogueMenuModel.State`, or `closed`.
-    public let state: String
     public let rows: [DialogueTopicRow]
-    public let droppedRowCount: Int
     public let selectedIndex: Int
     /// The line being said, nil when none is.
     public let subtitle: String?
@@ -115,71 +74,26 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// Condition calls the evaluator could not answer while selecting, which is
     /// the number that says how much of the trace is real.
     public let unresolvedConditionCount: Int
-    /// Result of the last control, worded for the readout.
-    public let lastOutcome: String?
 
     // MARK: Movie
 
-    public let movieLoaded: Bool
-    public let movieError: String?
-    /// Rows the movie's own topic list holds, read back out of it.
-    public let movieTopicRows: Int
-    public let movieSelectedIndex: Int?
-    /// Text the movie's own subtitle field holds.
-    public let movieSubtitle: String?
-    /// The movie's own `eMenuState`, which the engine writes and reads back.
-    public let movieMenuState: Int?
-    public let movieDiagnostics: DialogueMenuDiagnostics
-
     public init(
-        hasDialogueIndex: Bool,
-        topicCount: Int,
-        infoCount: Int,
-        targetName: String?,
-        targetKey: ReferenceKey?,
-        speaker: String,
         isOpen: Bool,
         openMenus: [String],
         worldSimPaused: Bool,
-        state: String,
         rows: [DialogueTopicRow],
-        droppedRowCount: Int,
         selectedIndex: Int,
         subtitle: String?,
         rejections: [DialogueRejectionRow],
-        unresolvedConditionCount: Int,
-        lastOutcome: String?,
-        movieLoaded: Bool,
-        movieError: String?,
-        movieTopicRows: Int,
-        movieSelectedIndex: Int?,
-        movieSubtitle: String?,
-        movieMenuState: Int?,
-        movieDiagnostics: DialogueMenuDiagnostics
+        unresolvedConditionCount: Int
     ) {
-        self.hasDialogueIndex = hasDialogueIndex
-        self.topicCount = topicCount
-        self.infoCount = infoCount
-        self.targetName = targetName
-        self.targetKey = targetKey
-        self.speaker = speaker
         self.isOpen = isOpen
         self.openMenus = openMenus
         self.worldSimPaused = worldSimPaused
-        self.state = state
         self.rows = rows
-        self.droppedRowCount = droppedRowCount
         self.selectedIndex = selectedIndex
         self.subtitle = subtitle
         self.rejections = rejections
         self.unresolvedConditionCount = unresolvedConditionCount
-        self.lastOutcome = lastOutcome
-        self.movieLoaded = movieLoaded
-        self.movieError = movieError
-        self.movieTopicRows = movieTopicRows
-        self.movieSelectedIndex = movieSelectedIndex
-        self.movieSubtitle = movieSubtitle
-        self.movieMenuState = movieMenuState
-        self.movieDiagnostics = movieDiagnostics
     }
 }

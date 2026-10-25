@@ -14,12 +14,10 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var containerMenu: ContainerMenuController { get }
     var controlMapLoader: (() throws -> ControlMapFile)? { get }
     var dialogueMenu: DialogueMenuController { get }
-    var hud: HUDCoordinator { get }
     var inventoryMenu: InventoryMenuController { get }
     var journalMenu: JournalMenuController { get }
     var lockpickingMenu: LockpickingMenuController { get }
     var mapMenu: MapMenuCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var menuTextLoader: (() -> LocalizedLabels)? { get }
     var menuScreens: MenuScreens { get }
@@ -29,7 +27,6 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var raceMenu: RaceMenuCoordinator { get }
     var saveGames: SaveGameWorldAdapter { get }
     var skillsMenu: SkillsMenuCoordinator { get }
-    var swfMovies: SWFMovieSource { get }
     var systemMenu: SystemMenuCoordinator { get }
     var titleMenu: TitleMenuCoordinator { get }
     var hostView: NSView { get }

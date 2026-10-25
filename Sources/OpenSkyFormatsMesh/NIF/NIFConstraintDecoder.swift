@@ -36,11 +36,6 @@ nonisolated public enum NIFConstraintDecoder: Sendable {
         return try [decode(reader: &reader, typeName: block.typeName, index: index)]
     }
 
-    public static func decode(block: NIFFile.Block, index: Int) throws -> NIFCollisionConstraint {
-        var reader = BinaryReader(block.data)
-        return try decode(reader: &reader, typeName: block.typeName, index: index)
-    }
-
     static func decode(
         reader: inout BinaryReader,
         typeName: String,

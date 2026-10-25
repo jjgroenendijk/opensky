@@ -13,16 +13,6 @@ nonisolated public struct NIFCameraPath: Equatable, Sendable {
     /// Equal fractions cover equal distances, not equal spans of point time.
     public let hasConstantVelocity: Bool
 
-    public init(
-        points: [NIFKey<SIMD3<Float>>],
-        percent: [NIFKey<Float>],
-        hasConstantVelocity: Bool
-    ) {
-        self.points = points
-        self.percent = percent
-        self.hasConstantVelocity = hasConstantVelocity
-    }
-
     /// The path of the `NiPathInterpolator` at `ref`; nil for another block type.
     init?(interpolatorRef ref: Int32, file: NIFFile) throws {
         guard ref >= 0, Int(ref) < file.blocks.count else { return nil }
@@ -81,11 +71,6 @@ nonisolated public struct NIFCameraPath: Equatable, Sendable {
 nonisolated public struct NIFFieldOfViewTrack: Equatable, Sendable {
     public let timing: ControllerTiming
     public let degrees: [NIFKey<Float>]
-
-    public init(timing: ControllerTiming, degrees: [NIFKey<Float>]) {
-        self.timing = timing
-        self.degrees = degrees
-    }
 
     /// The first field of view controller on the chain from `ref`; nil when none.
     init?(controllerRef ref: Int32, file: NIFFile) throws {

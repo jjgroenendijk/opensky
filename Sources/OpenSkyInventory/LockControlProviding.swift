@@ -20,10 +20,6 @@ nonisolated public struct LockReadoutRow: Equatable, Sendable {
         self.key = key
         self.isLocked = isLocked
     }
-
-    public var title: String {
-        "\(name) (\(reference))"
-    }
 }
 
 nonisolated public struct LockControlSnapshot: Equatable, Sendable {

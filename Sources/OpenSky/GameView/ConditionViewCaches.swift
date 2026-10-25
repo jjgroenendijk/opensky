@@ -19,7 +19,7 @@ final class ConditionViewCaches {
 
 /// A death is an `ActorDeathState` write. A spawned actor's base is known only while
 /// its cell is resident, so the resident cells are part of the key.
-struct DeathViewKey: Equatable {
+struct DeathViewKey: Hashable {
     let store: ObjectIdentifier
     let streamer: ObjectIdentifier?
     let cells: Set<CellSceneLocation>?
@@ -31,7 +31,7 @@ struct DeathView {
     var counts: [FormID: Int] = [:]
 }
 
-struct MarkerViewKey: Equatable {
+struct MarkerViewKey: Hashable {
     let store: ObjectIdentifier
     let markers: UInt64
     let references: [ReferenceKey]
@@ -39,7 +39,7 @@ struct MarkerViewKey: Equatable {
 
 /// Item stacks and equip flags are inventory writes; an actor's baseline equipment is
 /// fixed by its record. The hand type also reads which hands hold a spell.
-struct InventoryViewKey: Equatable {
+struct InventoryViewKey: Hashable {
     let runtime: ObjectIdentifier
     let writes: UInt64
     let actors: [ReferenceKey]
@@ -49,7 +49,7 @@ struct InventoryViewKey: Equatable {
 
 /// The NPC states only: the player's also reads its gait, melee graph and race menu,
 /// so it is built fresh every frame.
-struct ActorViewKey: Equatable {
+struct ActorViewKey: Hashable {
     let store: ObjectIdentifier
     let writes: UInt64
     let playerLevel: Int
@@ -59,7 +59,7 @@ struct ActorViewKey: Equatable {
     let phases: [ReferenceKey: CombatBehaviorPhase]?
 }
 
-struct ActorViewMember: Equatable {
+struct ActorViewMember: Hashable {
     let holder: ActorValueHolder
     let isDead: Bool
 }

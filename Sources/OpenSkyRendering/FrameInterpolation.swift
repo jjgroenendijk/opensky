@@ -97,8 +97,6 @@ nonisolated enum FrameInterpolationPacing {
 /// What frame interpolation did; the rendering performance readout reads it.
 nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
     public var enabled = false
-    /// Why this GPU can never run it; the switch stays off and disabled.
-    public var unsupportedReason: String?
     /// Why it cannot run now; nil while it runs or is off.
     public var unavailableReason: String?
     public var interpolatedFrames = 0
@@ -109,12 +107,11 @@ nonisolated public struct FrameInterpolationStatus: Equatable, Sendable {
     public var pacing: PresentPacing?
 
     public init(
-        enabled: Bool = false, unsupportedReason: String? = nil,
+        enabled: Bool = false,
         unavailableReason: String? = nil, interpolatedFrames: Int = 0, realFPS: Double = 0,
         presentLatencyMS: Double? = nil, pacing: PresentPacing? = nil
     ) {
         self.enabled = enabled
-        self.unsupportedReason = unsupportedReason
         self.unavailableReason = unavailableReason
         self.interpolatedFrames = interpolatedFrames
         self.realFPS = realFPS

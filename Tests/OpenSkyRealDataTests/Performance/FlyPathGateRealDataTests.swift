@@ -42,7 +42,7 @@ struct FlyPathGateRealDataTests {
         )
         // The engine gate already threw on a missed build or memory budget; these
         // check that each living system ran during the flight.
-        #expect(result.actorCellReports.count == 35, "three settled 5 by 5 grids")
+        #expect(result.actorCellCount == 35, "three settled 5 by 5 grids")
         #expect(result.actorAnimatedCount > 0)
         #expect(!result.weatherName.isEmpty)
         #expect(result.animationUpdatedBoneCount > 0)

@@ -9,15 +9,9 @@ import simd
 /// A fade the `Game.FadeOutGame` arguments describe.
 nonisolated public struct PapyrusFade: Equatable, Sendable {
     public let fadingOut: Bool
-    public let black: Bool
-    public let delay: Float
-    public let duration: Float
 
-    public init(fadingOut: Bool, black: Bool, delay: Float, duration: Float) {
+    public init(fadingOut: Bool) {
         self.fadingOut = fadingOut
-        self.black = black
-        self.delay = delay
-        self.duration = duration
     }
 }
 

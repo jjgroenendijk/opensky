@@ -47,15 +47,6 @@ extension CellStreamer {
         return composition.triggerVolumes(intersecting: capsule, at: feetPosition)
     }
 
-    /// Summed trigger accounting over whatever is currently live, for the
-    /// inspection surface.
-    public func triggerStats() -> TriggerVolumeStats {
-        if let interiorScene {
-            return interiorScene.triggerVolumes.stats
-        }
-        return composition.triggerStats()
-    }
-
     /// One frame's occupancy test and diff. A nil state (fly mode) freezes occupancy, so
     /// switching modes inside a volume fakes no leave.
     public func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {

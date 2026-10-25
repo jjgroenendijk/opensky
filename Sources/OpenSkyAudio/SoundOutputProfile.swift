@@ -46,7 +46,6 @@ nonisolated public struct AttenuationCurve: Equatable, Sendable {
 }
 
 nonisolated public struct OutputModelProfile: Equatable, Sendable {
-    public let name: String
     /// Type 0 (HRTF) plays in 3D; type 1 (defined speaker output) plays flat.
     public let routing: AudioRouting
     /// Nil when the model does not set its attenuates-with-distance flag.
@@ -55,12 +54,10 @@ nonisolated public struct OutputModelProfile: Equatable, Sendable {
     public let reverbSend: Float
 
     public init(
-        name: String,
         routing: AudioRouting,
         attenuation: AttenuationCurve?,
         reverbSend: Float
     ) {
-        self.name = name
         self.routing = routing
         self.attenuation = attenuation
         self.reverbSend = min(max(reverbSend.isFinite ? reverbSend : 0, 0), 1)
@@ -71,7 +68,6 @@ nonisolated public struct OutputModelProfile: Equatable, Sendable {
         guard let type = model.type else { return nil }
         let attenuates = (model.flags ?? 0) & 0x01 != 0
         self.init(
-            name: model.editorID ?? "\(model.formID)",
             routing: type == 1 ? .nonPositional : .positional,
             attenuation: attenuates ? AttenuationCurve(model.attenuation) : nil,
             reverbSend: Float(model.reverbSendPercent ?? 0) / 100

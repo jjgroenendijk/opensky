@@ -33,8 +33,6 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     /// An `ALCH` with the food flag, which the Food tab takes instead of Potions.
     public let isFood: Bool
     public let isFavourite: Bool
-    /// The number key 1 to 8 bound to the item, if any.
-    public let hotkey: Int?
 
     public init(
         item: FormID,
@@ -46,8 +44,7 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         family: ItemDefinition.Family?,
         stolenCount: Int32 = 0,
         isFood: Bool = false,
-        isFavourite: Bool = false,
-        hotkey: Int? = nil
+        isFavourite: Bool = false
     ) {
         self.item = item
         self.name = name
@@ -59,7 +56,6 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         self.stolenCount = stolenCount
         self.isFood = isFood
         self.isFavourite = isFavourite
-        self.hotkey = hotkey
     }
 
     /// Whether any copy in this row is stolen, which is what the "Stolen"

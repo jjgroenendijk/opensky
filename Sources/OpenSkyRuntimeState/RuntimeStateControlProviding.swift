@@ -35,18 +35,12 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
     /// history, not the whole bounded window, which is thousands of entries.
     public static let journalTailLimit = 8
 
-    /// Runtime references retained by the currently resident cell scenes.
-    public let residentReferenceCount: Int
-    /// References in the store deviating from plugin data.
-    public let dirtyReferenceCount: Int
     /// Globals carrying a runtime override.
     public let overriddenGlobalCount: Int
     /// Preformatted journal lines, most recent last, at most
     /// `journalTailLimit` of them. Preformatted because the readout must not
     /// have to know how to render a `WorldStateJournalEntry`.
     public let journalTail: [String]
-    /// Journal entries dropped because the retained window filled up.
-    public let droppedJournalEntryCount: Int
     /// Sequence number the next journalled mutation will carry.
     public let nextJournalSequence: UInt64
     /// `ReferenceKey.description` of the current interaction target, or nil
@@ -57,18 +51,12 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
 
     /// Explicit, so `overriddenGlobalCount` can default to zero.
     public init(
-        residentReferenceCount: Int,
-        dirtyReferenceCount: Int,
         journalTail: [String],
-        droppedJournalEntryCount: Int,
         nextJournalSequence: UInt64,
         currentTargetDescription: String?,
         overriddenGlobalCount: Int = 0
     ) {
-        self.residentReferenceCount = residentReferenceCount
-        self.dirtyReferenceCount = dirtyReferenceCount
         self.journalTail = journalTail
-        self.droppedJournalEntryCount = droppedJournalEntryCount
         self.nextJournalSequence = nextJournalSequence
         self.currentTargetDescription = currentTargetDescription
         self.overriddenGlobalCount = overriddenGlobalCount

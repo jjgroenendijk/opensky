@@ -16,19 +16,6 @@ public protocol SequenceDoorWorld: AnyObject {
     func sequenceDoorWantsOpen(_ reference: UInt32) -> Bool
 }
 
-/// One line of the doors readout.
-nonisolated public struct SequenceDoorRow: Equatable, Sendable {
-    public let reference: UInt32
-    public let modelPath: String
-    public let phase: SequenceDoorMotion.Phase
-
-    public init(reference: UInt32, modelPath: String, phase: SequenceDoorMotion.Phase) {
-        self.reference = reference
-        self.modelPath = modelPath
-        self.phase = phase
-    }
-}
-
 public final class SequenceDoorCoordinator {
     final class Running {
         var door: CellSequenceDoor
@@ -109,16 +96,5 @@ public final class SequenceDoorCoordinator {
             wantsOpen != phase.isOpenSide
         else { return phase.openStateCode }
         return (wantsOpen ? SequenceDoorMotion.Phase.opening : .closing).openStateCode
-    }
-
-    /// One row per resident door, in reference order.
-    public var rows: [SequenceDoorRow] {
-        running.keys.sorted().compactMap { reference in
-            running[reference].map {
-                SequenceDoorRow(
-                    reference: reference, modelPath: $0.door.modelPath, phase: $0.motion.phase
-                )
-            }
-        }
     }
 }
