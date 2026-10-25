@@ -84,8 +84,9 @@ where the player stands.
 The same fragment then calls `Game.FadeOutGame` and `Game.ShowTitleSequenceMenu`, and
 `MQ101QuestScript` plays `Sequence1` to `Sequence4` with `Game.StartTitleSequence` before
 `Game.HideTitleSequenceMenu`. The CK wiki says a sequence is "a given animation in the title
-menu". OpenSky shows the title backdrop for the whole sequence, so after the loading screen
-the logo shows until the hide, and then the cart. It does not play the four animations.
+menu". In the game, `interface\titles.swf` draws these titles over the cart ride. OpenSky does
+not build that movie yet, so the calls change nothing: after the loading screen the cart shows
+at once, with no titles.
 
 The `MQ101` aliases that name unique actors fill from the location records ([quest
 state](/engine/quest-state.md), "What does not fill yet").

@@ -24,7 +24,6 @@ protocol LoadingScreenWorldHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var journal: JournalCoordinator { get }
     var loadingScreens: LoadingScreenCoordinator { get }
-    var menuWorld: MenuWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -163,10 +162,8 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
         do {
             if let frame, frame.drawsObject {
                 try renderer.setLoadingCover(placement(frame, gameSession: gameSession))
-            } else if frame != nil || !game.menuWorld.restoreTitleBackdrop() {
-                // The logo of a title sequence takes over in the same frame, so the world
-                // does not show between the two covers.
-                try renderer.setLoadingCover(frame == nil ? nil : [])
+            } else {
+                try renderer.setLoadingCover(nil)
             }
         } catch {
             Self.logger
@@ -175,7 +172,7 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
                 )
         }
         gameSession.uiScene = frame?.overlay ?? .empty
-        game.hud.setCovered(frame != nil || game.menuWorld.titleBackdropShown)
+        game.hud.setCovered(frame != nil)
     }
 
     func setLoadingPaused(_ paused: Bool) {

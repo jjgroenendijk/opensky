@@ -17,36 +17,14 @@ extension MenuWorldAdapter {
         category: "Menus"
     )
 
-    /// While a loading screen shows, this only records the wish; the loading
-    /// screen hands the view to the logo when it ends.
     func showTitleBackdrop(_ shown: Bool) {
         titleLogoView = nil
         guard let gameSession = game.gameSession else { return }
-        let covering = game.loadingScreens.isCovering
-        if covering {
-            let camera = gameSession.freeFlyCamera
-            titleLogoView = shown ? (camera.position, camera.forward) : nil
-        } else {
-            place(shown ? backdrop(gameSession: gameSession) : nil, gameSession: gameSession)
-        }
-        game.hud.setCovered(shown || covering)
-    }
-
-    /// The title menu or the opening's title sequence wants the logo.
-    var titleBackdropShown: Bool {
-        titleLogoView != nil
-    }
-
-    /// Puts the logo back after another cover, such as the loading screen, let go.
-    /// False when no logo is wanted.
-    func restoreTitleBackdrop() -> Bool {
-        guard titleLogoView != nil, let gameSession = game.gameSession else { return false }
-        place(backdrop(gameSession: gameSession), gameSession: gameSession)
-        return true
+        place(shown ? backdrop(gameSession: gameSession) : nil, gameSession: gameSession)
     }
 
     /// The camera settles after the title opens, so the logo follows it. The loading
-    /// screen owns the cover while it shows, and gives the logo back when it ends.
+    /// screen owns the cover while it shows.
     func refreshTitleBackdrop() {
         guard
             !game.loadingScreens.isCovering,
