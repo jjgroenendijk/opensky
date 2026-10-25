@@ -50,6 +50,8 @@ final class ActorWorldAdapter {
     private var publishedEnemy: HUDEnemyHealth?
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     private var baseNames: [LeveledActorRollKey: String?] = [:]
+    /// Each reference's name, kept until a leveled roll is written or the strings load.
+    private var referenceNames: (key: ReferenceNamesKey, names: [ReferenceKey: String?])?
     /// `combatActors()` and what it was built from. A death, a move, or a residency
     /// change advances one of the revisions, so the next read builds it again.
     private var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
@@ -60,6 +62,7 @@ final class ActorWorldAdapter {
 
     func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
         baseNames = [:]
+        referenceNames = nil
         actorList = nil
         let coordinator = game.actorValues
         guard coordinator.runtime != nil else { return }
@@ -165,6 +168,22 @@ final class ActorWorldAdapter {
     /// The FULL name of the actor `key` of `base` after template inheritance, its
     /// leveled template picked by its own roll, as the crosshair shows it.
     func displayName(of key: ReferenceKey, base: FormID) -> String? {
+        let namesKey = ReferenceNamesKey(
+            rolls: game.worldState.revision(of: [.leveledRoll]),
+            namesResolve: game.journal.strings != nil
+        )
+        if referenceNames?.key != namesKey {
+            referenceNames = (namesKey, [:])
+        }
+        if let cached = referenceNames?.names[key] {
+            return cached
+        }
+        let name = resolveDisplayName(of: key, base: base)
+        referenceNames?.names[key] = .some(name)
+        return name
+    }
+
+    private func resolveDisplayName(of key: ReferenceKey, base: FormID) -> String? {
         guard
             let templates = game.worldData?
                 .actorValueBaselines?.resolver?.templates,
@@ -293,6 +312,12 @@ extension ActorWorldAdapter: ActorValueWorld {
                 ?? "You are carrying too much to be able to run."
         )
     }
+}
+
+/// The inputs of `ActorWorldAdapter`'s per-reference names.
+private struct ReferenceNamesKey: Equatable {
+    let rolls: UInt64
+    let namesResolve: Bool
 }
 
 /// The inputs of one `ActorWorldAdapter.combatActors()` list.
