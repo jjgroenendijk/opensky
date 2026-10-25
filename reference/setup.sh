@@ -1,7 +1,7 @@
 #!/bin/sh
-# Builds the reference game in one folder: a private Wine 11.0 runtime with DXMT
-# (Direct3D 11 on Metal), a Wine prefix with Windows Steam, and an APFS clone of
-# the game. The OpenSky install is only read. See docs/tools/reference-game.md.
+# Builds the reference game in one folder: a private Wine 11.0 runtime, DXVK
+# (Direct3D 11 on Vulkan, which Wine runs on Metal through MoltenVK), GStreamer for
+# the game's audio, a Wine prefix with Windows Steam, and an APFS clone of the game. The OpenSky install is only read. See docs/tools/reference-game.md.
 #
 # Usage: reference/setup.sh PREFIX [GAME]
 #   PREFIX  the folder for everything, outside the repo and the game install.
@@ -14,6 +14,11 @@ wine_url=https://github.com/Gcenx/macOS_Wine_builds/releases/download/11.0_1/win
 wine_sha=b50dc50ec7f41d58b115a6b685d4d1315ba3c797bd3aa0f49213f2703cb82388
 support_url=https://github.com/BCD1210/soju/releases/download/steam-support-v2/soju-steam-support-v2.tar.gz
 support_sha=66cb0d95c2bf76d35b525b40e423e8b610e891bc61975078ae54661b51a2a86e
+dxvk_url=https://github.com/Gcenx/DXVK-macOS/releases/download/v1.10.3-20230507-repack/dxvk-macOS-async-v1.10.3-20230507-repack.tar.gz
+dxvk_sha=acd1520ad105d8ef124a09c8e11a259a5dc8bdc565ad18e0e52693f9807b2477
+gst_version=1.28.8
+gst_url=https://gstreamer.freedesktop.org/data/pkg/osx/$gst_version/gstreamer-1.0-$gst_version-universal.pkg
+gst_sha=d371ab04a7632713626836c2fc234e863cc98484c74c473eba99b0fbd9b3a3fe
 steam_setup_url=https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -49,7 +54,6 @@ esac
 
 runtime="$prefix/opensky-runtime"
 wine_dir="$runtime/wine"
-lib="$wine_dir/lib/wine"
 support="$runtime/steam-support"
 mkdir -p "$runtime/downloads"
 
@@ -70,32 +74,37 @@ if [ ! -x "$wine_dir/bin/wine" ]; then
 fi
 "$wine_dir/bin/wine" --version
 
-echo "[INFO] Step 3: DXMT, the patched Mac driver, and the Steam web helper wrapper"
+echo "[INFO] Step 3: the Steam web helper wrapper, DXVK, and GStreamer"
 if [ ! -f "$support/SOURCES.txt" ]; then
     download "$support_url" "$support_sha" "$runtime/downloads/soju-steam-support-v2.tar.gz"
     mkdir -p "$support"
     tar -xzf "$runtime/downloads/soju-steam-support-v2.tar.gz" -C "$support"
 fi
-(cd "$support" && shasum -a 256 -c --quiet) <<'EOF' || fail "steam-support files changed"
-539a8ad69f424f596e038ae3d4e7e4b1973c155f25dd7529578f73b424dc7b97  dxmt-x64/d3d11.dll
-ec286d4323c2ac18fc405067526c93b07a9f5f1cef719ab15829e48b8bed79b9  dxmt-x64/dxgi.dll
-53bc695d1408abd9067cf219a70e11c2f00d0c9c4c1065516de0fcfc81b95186  dxmt-x64/d3d10core.dll
-799b0a094e6b0b9d1d967956ea8bff67792abdf24741a7a7035bf3e08febf7c5  dxmt-x64/winemetal.dll
-6ae39285534a645ce4f33e55c07bcdc111847231bf42b005d260b1b2ae6913dc  dxmt-x64/winemetal.so
-750784fccc7a0f6cd77a4bc4b372f81c09ba29bc62e79897b38240b142808547  winemac-patched.so
-9302da71a4eed969dd4d679ba133c7735dafd08abcd491acddd6015dee579898  steamwebhelper-wrapper.exe
+dxvk="$runtime/dxvk"
+if [ ! -d "$dxvk/x64" ]; then
+    download "$dxvk_url" "$dxvk_sha" "$runtime/downloads/dxvk-macOS-1.10.3.tar.gz"
+    mkdir -p "$dxvk"
+    tar -xzf "$runtime/downloads/dxvk-macOS-1.10.3.tar.gz" -C "$dxvk" --strip-components 1
+fi
+(cd "$runtime" && shasum -a 256 -c --quiet) <<'EOF' || fail "downloaded files changed"
+9302da71a4eed969dd4d679ba133c7735dafd08abcd491acddd6015dee579898  steam-support/steamwebhelper-wrapper.exe
+0ff0b0835dde29556bd01dfce7b1ae348d7f229cb1e1a37cc71ea1a028beeca4  dxvk/x64/d3d11.dll
+0fa08bba860c63e3abeeabfc96d0e7aa327411a975f8f23d2dc63594ef5f796e  dxvk/x64/d3d10core.dll
 EOF
-for dll in d3d11 dxgi d3d10core; do
-    vanilla="$lib/x86_64-windows/$dll.dll.vanilla"
-    [ -f "$vanilla" ] || cp "$lib/x86_64-windows/$dll.dll" "$vanilla"
-done
-[ -f "$lib/x86_64-unix/winemac.so.vanilla" ] ||
-    cp "$lib/x86_64-unix/winemac.so" "$lib/x86_64-unix/winemac.so.vanilla"
-for dll in d3d11 dxgi d3d10core winemetal; do
-    cp "$support/dxmt-x64/$dll.dll" "$lib/x86_64-windows/"
-done
-cp "$support/dxmt-x64/winemetal.so" "$lib/x86_64-unix/"
-cp "$support/winemac-patched.so" "$lib/x86_64-unix/winemac.so"
+# Wine decodes the game's xWMA audio through GStreamer, which it otherwise looks for
+# in /Library/Frameworks. The package is unpacked here instead of installed.
+gst="$runtime/gstreamer"
+if [ ! -x "$gst/libexec/gstreamer-1.0/gst-plugin-scanner" ]; then
+    download "$gst_url" "$gst_sha" "$runtime/downloads/gstreamer-$gst_version.pkg"
+    rm -rf "$runtime/gst-unpack" "$gst"
+    pkgutil --expand-full "$runtime/downloads/gstreamer-$gst_version.pkg" "$runtime/gst-unpack"
+    mkdir -p "$gst"
+    for part in base-system-1.0 base-crypto gstreamer-1.0-core gstreamer-1.0-system \
+        gstreamer-1.0-playback gstreamer-1.0-codecs gstreamer-1.0-libav; do
+        cp -R "$runtime/gst-unpack/$part-$gst_version-universal.pkg/Payload/" "$gst/"
+    done
+    rm -rf "$runtime/gst-unpack"
+fi
 
 # winemenubuilder writes menu and desktop files into the macOS home folder.
 export WINEPREFIX="$prefix" WINEDEBUG=-all WINEDLLOVERRIDES="winemenubuilder.exe=d"
@@ -114,26 +123,11 @@ for link in "$prefix"/drive_c/users/*/*; do
     rm "$link"
     mkdir "$link"
 done
-system32="$prefix/drive_c/windows/system32"
-# DXMT needs a winemetal.dll in system32 to be found by name.
-cp "$lib/x86_64-windows/winemetal.dll" "$system32/"
-# Steam's own processes crash on DXMT, so they load Wine's own Direct3D from
-# system32. Wine redirects a file with its builtin marker to the builtin (DXMT),
-# so the copies get the marker changed.
-for dll in d3d11 dxgi d3d10core; do
-    cp "$lib/x86_64-windows/$dll.dll.vanilla" "$system32/$dll.dll"
-    perl -pi -e 's/Wine builtin DLL/Xine builtin DLL/' "$system32/$dll.dll"
-done
 key='HKCU\Software\Wine'
 wine reg add "$key\\DllOverrides" /v winemenubuilder.exe /t REG_SZ /d "" /f >/dev/null
-for dll in d3d11 d3d10core dxgi winemetal; do
-    wine reg add "$key\\DllOverrides" /v "$dll" /t REG_SZ /d builtin /f >/dev/null
-done
-for app in steam.exe steamwebhelper.exe steamwebhelper_real.exe steamservice.exe; do
-    for dll in d3d11 d3d10core dxgi; do
-        wine reg add "$key\\AppDefaults\\$app\\DllOverrides" /v "$dll" /t REG_SZ /d native /f >/dev/null
-    done
-    wine reg add "$key\\AppDefaults\\$app\\DllOverrides" /v winemetal /t REG_SZ /d disabled /f >/dev/null
+# DXVK draws the game; Steam keeps Wine's own Direct3D.
+for dll in d3d11 d3d10core; do
+    wine reg add "$key\\AppDefaults\\SkyrimSE.exe\\DllOverrides" /v "$dll" /t REG_SZ /d native /f >/dev/null
 done
 # Wine 11.0 probes each audio device format by format in Steam's main loop;
 # with microphones or virtual devices that stalls the client before login.
@@ -173,6 +167,8 @@ if [ ! -f "$apps/common/Skyrim Special Edition/SkyrimSE.exe" ]; then
     cp -cR "$game" "$apps/common/" 2>/dev/null || cp -R "$game" "$apps/common/"
     cp "$game/../../appmanifest_489830.acf" "$apps/"
 fi
+# The game loads a native DLL from its own folder first.
+cp "$dxvk/x64/d3d11.dll" "$dxvk/x64/d3d10core.dll" "$apps/common/Skyrim Special Edition/"
 "$wine_dir/bin/wineserver" -w
 
 defaults write "$domain" OpenSkyReferencePrefix "$prefix"

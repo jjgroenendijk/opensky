@@ -121,7 +121,11 @@ nonisolated public enum ReferenceLauncher {
             )
             try await Task.sleep(for: .seconds(steamWait))
         }
-        try start(plan.game, environment: plan.environment, log: logs.appending(path: "game.log"))
+        try start(
+            plan.game,
+            environment: plan.gameEnvironment,
+            log: logs.appending(path: "game.log")
+        )
     }
 
     /// The newest `.ess` the reference game wrote, for an import into OpenSky.

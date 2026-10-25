@@ -50,6 +50,12 @@ struct ReferencePrefixTests {
         #expect(plan.environment["WINEPREFIX"] == "/Volumes/x/prefix/")
         #expect(plan.environment["MTL_HUD_ENABLED"] == "0")
         #expect(plan.environment["WINEDLLOVERRIDES"]?.hasPrefix("bcrypt=b;ncrypt=b;") == true)
+        #expect(plan.environment["SteamAppId"] == nil)
+        #expect(plan.gameEnvironment["SteamAppId"] == "489830")
+        #expect(plan.gameEnvironment["SteamGameId"] == "489830")
+        #expect(plan.gameEnvironment["GST_PLUGIN_SYSTEM_PATH"]
+            == "/Volumes/x/prefix/opensky-runtime/gstreamer/lib/gstreamer-1.0")
+        #expect(plan.environment["DYLD_FALLBACK_LIBRARY_PATH"] == nil)
         #expect(plan.environment["HOME"] == "/h")
     }
 

@@ -37,14 +37,19 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
         steamDirectory.appending(path: "steamui.dll")
     }
 
-    /// The private Wine with DXMT and the Steam helpers that `reference/setup.sh` puts
-    /// beside the prefix's own folders.
+    /// The private Wine, DXVK, GStreamer, and the Steam helpers that `reference/setup.sh`
+    /// puts beside the prefix's own folders.
     public var runtimeDirectory: URL {
         root.appending(path: "opensky-runtime", directoryHint: .isDirectory)
     }
 
     public var wine: URL {
         runtimeDirectory.appending(path: "wine/bin/wine")
+    }
+
+    /// Unpacked rather than installed, so Wine finds it only through the launch environment.
+    public var gstreamerDirectory: URL {
+        runtimeDirectory.appending(path: "gstreamer", directoryHint: .isDirectory)
     }
 
     public var webHelperWrapper: URL {

@@ -1,9 +1,9 @@
 ---
 type: Tool
 title: Reference game
-description: Running the real Windows Skyrim SE under Wine 11 and DXMT on the same Mac,
+description: Running the real Windows Skyrim SE under Wine 11 and DXVK on the same Mac,
   putting it at OpenSky's view, and comparing the two frames side by side.
-tags: [tool, reference, wine, dxmt, comparison, rendering]
+tags: [tool, reference, wine, dxvk, comparison, rendering]
 ---
 
 # Reference game
@@ -13,7 +13,7 @@ same data as OpenSky, so a capture from each side at the same view shows each di
 directly: rendering, lighting, weather, UI, and actors.
 
 It is developer tooling. The scripts are in `reference/`, the rules in the `OpenSkyReference`
-module, and the commands in `openskycli reference`. No release bundles Wine or DXMT, and the
+module, and the commands in `openskycli reference`. No release bundles Wine or DXVK, and the
 app lists the Reference Game page only once a prefix is set.
 
 ## How the pieces fit
@@ -23,8 +23,9 @@ Everything lives in one folder, the prefix, on the external disk:
 | Part | Where | What it is |
 | --- | --- | --- |
 | Wine 11.0 | `opensky-runtime/wine/` | Gcenx's `wine-stable-11.0_1` build of upstream Wine. It runs under Rosetta 2 |
-| DXMT | inside that Wine | An open-source (MIT) Direct3D 11 to Metal layer. The game draws through it |
-| Steam helpers | `opensky-runtime/steam-support/` | The web helper wrapper and a Mac driver build that DXMT needs |
+| DXVK | `opensky-runtime/dxvk/`, copied into the game folder | Direct3D 11 on Vulkan (zlib licence). Wine runs Vulkan on Metal through MoltenVK |
+| GStreamer | `opensky-runtime/gstreamer/` | Decodes the game's xWMA audio for Wine (LGPL) |
+| Steam helper | `opensky-runtime/steam-support/` | soju's web helper wrapper (MIT) |
 | Wine prefix | `drive_c/`, `*.reg` | One fake Windows folder tree, with Windows Steam in it |
 | Game copy | Steam's `steamapps/common/` | An APFS clone of the install OpenSky reads |
 
@@ -33,10 +34,8 @@ Everything lives in one folder, the prefix, on the external disk:
 - **The game copy** shares disk blocks with the original until one side writes, so it costs
   almost no space. Windows Steam may update or repair the copy; the original stays
   untouched, because OpenSky treats it as read-only input.
-- **DXMT, not D3DMetal.** Apple's D3DMetal comes with the Game Porting Toolkit, whose Wine
-  (7.7) is too old for the current Steam client. Upstream Wine 11 runs Steam, and DXMT gives
-  it a Metal renderer. The game's frames therefore come from DXMT's translation, not from
-  Apple's.
+- **DXVK, not D3DMetal.** The game's frames come from DXVK's translation, not from
+  Apple's. "Why not D3DMetal or DXMT" below gives the reasons.
 
 Every write goes into the prefix or `.logs/`: the `SkyrimPrefs.ini` edit, the console batch
 file, the Wine logs, and the captures. Wine's default breaks this in two ways, and setup
@@ -51,8 +50,8 @@ leaves the prefix. `winemenubuilder` writes `.desktop` files to `~/Desktop` and
 
 These facts come from the soju project (<https://github.com/BCD1210/soju>), which runs
 Steam on the same Wine build. OpenSky reimplements its recipe in `reference/setup.sh` and
-`OpenSkyReference`. It copies no soju code; setup downloads soju's published prebuilt
-`steam-support-v2` files and checks the SHA-256 of each one.
+`OpenSkyReference`. It copies no soju code; setup downloads soju's published
+`steam-support-v2` package, uses only its web helper wrapper, and checks its SHA-256.
 
 - **Black Steam window.** Steam's browser (CEF, the Chromium Embedded Framework) draws
   nothing under Wine when it uses the GPU or a separate process. The wrapper starts
@@ -68,9 +67,38 @@ Steam on the same Wine build. OpenSky reimplements its recipe in `reference/setu
   `winecoreaudio.drv=disabled` as a per-program override.
 - **Windowless start after a crash.** Chromium's `Singleton*` and `*.lock` files in the Wine
   user's `AppData/Local/Steam/htmlcache` stay behind. The launcher deletes them.
-- **Steam on DXMT crashes.** DXMT is the global Direct3D. Steam's own programs get Wine's
-  Direct3D instead: copies in `system32` with the builtin marker changed, and per-program
-  overrides `d3d11,d3d10core,dxgi=native` and `winemetal=disabled`.
+
+## What the game needs under Wine
+
+- **The Steam API restart.** `SkyrimSE.exe` started outside Steam asks Steam to start it
+  again (`steam://run/489830`), and Steam opens the game's launcher window. Steam marks the
+  games it starts with the `SteamAppId` and `SteamGameId` environment variables; the launcher
+  sets both for the game. The game still needs the logged-in client for its ownership check.
+- **Direct3D.** `SkyrimSE.exe` gets `d3d11,d3d10core=native` as per-program overrides and
+  loads DXVK's DLLs from its own folder. `dxgi` stays Wine's own. Steam keeps Wine's own
+  Direct3D.
+- **Audio.** The game's music and many sounds are xWMA (`.xwm`). Wine decodes them through
+  GStreamer, which this Wine build looks for only in `/Library/Frameworks`. Without it Wine
+  logs `GStreamer doesn't support WMA decoding`. Setup unpacks the official GStreamer runtime
+  package (<https://gstreamer.freedesktop.org/data/pkg/osx/>) into the runtime folder instead
+  of installing it. The launcher points `DYLD_FALLBACK_LIBRARY_PATH`, `GST_PLUGIN_SYSTEM_PATH`,
+  and `GST_PLUGIN_SCANNER` at it, and `GST_REGISTRY` keeps GStreamer's plugin cache out of
+  `~/.cache`.
+
+## Why not D3DMetal or DXMT
+
+- **D3DMetal** comes with Apple's Game Porting Toolkit. Its Wine (7.7) crashes in the
+  current Steam client, and GPTK 4 ships no Wine of its own: only D3DMetal and the Direct3D
+  parts of Wine. Laid over Wine 11 it crashed Steam.
+- **DXMT** (<https://github.com/3Shain/dxmt>), Direct3D 11 on Metal, aborts Skyrim at
+  startup with `Pure virtual function called`. The game releases one texture twice. On
+  Windows and DXVK the second call lands on a harmless function; in DXMT v0.80 it lands on
+  a pure virtual one (DXMT issue #231). The fix is only on DXMT's main branch, and that
+  branch needs a `macdrv_functions` table that only DXMT's own Wine exports.
+- **DXVK** runs on Vulkan, which Wine 11 maps to Metal through its bundled MoltenVK. The
+  newest macOS build is Gcenx's DXVK-macOS 1.10.3 (<https://github.com/Gcenx/DXVK-macOS>).
+  It reaches the main menu. MoltenVK is fine here, because the "Metal 4 only, no MoltenVK"
+  rule is about OpenSky's own renderer.
 
 ## Setup
 
@@ -83,15 +111,15 @@ continues where the last one stopped.
    game, outside the repo and outside the install, so the clone is instant. `GAME=<install>`
    overrides the `OpenSkyDataRoot` setting as the copy's source. The script:
    1. downloads Wine 11.0 and checks its SHA-256;
-   2. downloads soju's `steam-support-v2` files, checks each hash, and puts DXMT and the
-      Mac driver into that Wine;
+   2. downloads soju's web helper wrapper, DXVK, and GStreamer, and checks each SHA-256;
    3. creates the prefix, sets Windows 10, and writes the DLL overrides above;
    4. installs Windows Steam and starts it once, so it downloads its client;
-   5. clones the game and its `appmanifest_489830.acf` into the prefix's Steam library;
+   5. clones the game and its `appmanifest_489830.acf` into the prefix's Steam library, and
+      copies DXVK's DLLs into the copy's game folder;
    6. stores the folder as the `OpenSkyReferencePrefix` setting.
-3. Run `make reference-game`. Log in to Steam once in the window that opens. In the game's
-   Steam properties, set updates to "Only update this game when I launch it", so the copy
-   stays on the same build as the install.
+3. Run `make reference-game`. Log in to Steam once in the window that opens. Steam does not
+   start an out-of-date game, so it updates the copy to the current build first. In the
+   game's Steam properties, set updates to "Only update this game when I launch it".
 4. Run `make reference-check`. It compares the Steam `buildid` of both installs and the
    SHA-256 of every `.esm`, and names each difference.
 
@@ -112,8 +140,8 @@ found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
    web helper wrapper.
 3. It starts Windows Steam with the flags above, and waits `--steam-wait` seconds for the
    login.
-4. It starts `SkyrimSE.exe` from its own folder, the way the SKSE loader does, so Steam does
-   not open the game's launcher window.
+4. It starts `SkyrimSE.exe` from its own folder with the Steam app IDs and the GStreamer
+   paths set, so Steam does not open the game's launcher window.
 
 The environment turns off the Metal HUD (`MTL_HUD_ENABLED=0`), because it changes the
 captured image. Wine's output goes to `.logs/reference-game/<UTC time>/`.
@@ -181,9 +209,10 @@ a real bug.
 
 ## Caveats
 
-- The recipe depends on one Wine build (Gcenx `wine-stable-11.0_1`) and on soju's prebuilt
-  files made for it. A newer Wine needs a matching DXMT and Mac driver.
-- DXMT's output is close to Windows, not identical. Check a rendering difference against a
+- The recipe depends on one Wine build (Gcenx `wine-stable-11.0_1`), whose GStreamer link
+  needs GStreamer 1.28, and on a DXVK build from 2023. A DXMT release with the fix for
+  issue #231 would give a Metal path without Vulkan.
+- DXVK's output is close to Windows, not identical. Check a rendering difference against a
   Windows screenshot before filing it as an OpenSky bug.
 - Metal GPU captures of the reference game would show its passes and render targets. They
   need the owner's decision first. Translated shaders could be read for structure only; their

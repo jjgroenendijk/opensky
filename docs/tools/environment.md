@@ -87,11 +87,17 @@ Observed 2026-10-25 on macOS 27.0.1 ([reference game](/tools/reference-game.md))
   ("Failed to start auth session ... Transport Error"). The soju recipe fixes both.
 - `steamcmd` logs in under Wine 11, but the game rejects it and restarts through
   `steam://run/489830`.
+- DXMT v0.80 (April 2026) is the newest release and aborts Skyrim at startup (DXMT issue
+  #231). The fix is only on DXMT's main branch, which needs DXMT's own Wine. The reference
+  game uses DXVK-macOS 1.10.3 until a DXMT release has the fix.
+- Steam updated the reference copy from build 13189953 (the OpenSky install) to 24914197
+  before it would start the game; the update downloaded 1.6 GB.
 - The Steam installer writes `Steam.exe` with a capital S; the case-insensitive volume
   finds it as `steam.exe`.
 - Rosetta 2 needed an administrator password to install.
 
-Retires when the Game Porting Toolkit ships a Wine that runs the current Steam.
+Retires when a DXMT release runs Skyrim, or the Game Porting Toolkit ships a Wine that
+runs the current Steam.
 
 ## Permission grants
 
