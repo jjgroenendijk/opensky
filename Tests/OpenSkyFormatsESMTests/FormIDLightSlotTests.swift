@@ -65,6 +65,23 @@ struct FormIDLightSlotTests {
         #expect(translation(FormID(stored: 0xFE00_1801)).isNull)
     }
 
+    @Test func ownRecordsPastTheMastersTranslateLikeThePluginItself() {
+        let mod = FormIDResolver(pluginName: "Mod.esp", masters: ["Skyrim.esm"])
+        let translation = FormIDTranslation(source: mod, target: space)
+        #expect(translation(FormID(stored: 0x0100_0ABC)) == FormID(stored: 0x0100_0ABC))
+        #expect(translation(FormID(stored: 0x0700_0ABC)) == FormID(stored: 0x0100_0ABC))
+    }
+
+    @Test func tableSharesOneTranslationPerSourcePlugin() {
+        let small = FormIDResolver(pluginName: "Small.esl", masters: ["Skyrim.esm"])
+        let patch = FormIDResolver(pluginName: "Patch.esp", masters: ["Skyrim.esm", "Flagged.esp"])
+        let table = FormIDTranslation.table([1: small, 2: patch, 3: small], into: space)
+        #expect(table[1] == FormIDTranslation(source: small, target: space))
+        #expect(table[2] == FormIDTranslation(source: patch, target: space))
+        #expect(table[3] == table[1])
+        #expect(table[4] == nil)
+    }
+
     @Test func pluginsOpenAsLightFromFlagOrExtension() throws {
         let base = try ESMFile(data: ESMFixture.tes4())
         let flagged = try ESMFile(data: ESMFixture.tes4(flags: 0x201, masters: ["Skyrim.esm"]))

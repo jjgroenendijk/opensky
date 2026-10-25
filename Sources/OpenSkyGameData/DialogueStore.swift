@@ -3,10 +3,14 @@
 // session-stable `ReferenceKey`, which said-state is keyed by.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public final class DialogueStore: Sendable {
     private let topicsByFormID: [UInt32: DialogueTopic]
+    /// Topics in FormID order, sorted once, because idle chatter scans them often.
+    private let orderedTopics: [DialogueTopic]
+    private let orderedTopicsBySubtype: [FourCC: [DialogueTopic]]
     private let topicFormIDsByEditorID: [String: UInt32]
     private let infosByTopicFormID: [UInt32: [TopicInfo]]
     private let infosByFormID: [UInt32: TopicInfo]
@@ -24,6 +28,9 @@ nonisolated public final class DialogueStore: Sendable {
     /// INFO FormID -> master list of the plugin whose record won, for a load-order
     /// store. The FormIDs inside that INFO's conditions are relative to it.
     private let infoSources: [UInt32: FormIDResolver]
+    /// `infoSources` as translations, built once: a translation maps 256 master
+    /// slots, and dialogue checks ask for one per INFO.
+    private let infoTranslations: [UInt32: FormIDTranslation]
 
     /// DIAL, INFO or VTYP records that failed to decode.
     public let skippedRecords: SkippedRecords
@@ -94,6 +101,14 @@ nonisolated public final class DialogueStore: Sendable {
             }
         }
         self.topicsByFormID = topicsByFormID
+        orderedTopics = topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
+        var bySubtype: [FourCC: [DialogueTopic]] = [:]
+        for topic in orderedTopics {
+            if let subtype = topic.subtype {
+                bySubtype[subtype, default: []].append(topic)
+            }
+        }
+        orderedTopicsBySubtype = bySubtype
         topicFormIDsByEditorID = topicIDs
         infosByTopicFormID = infosByTopic
         self.infosByFormID = infosByFormID
@@ -105,6 +120,7 @@ nonisolated public final class DialogueStore: Sendable {
         self.resolver = resolver
         self.skippedRecords = skippedRecords
         self.infoSources = infoSources
+        infoTranslations = FormIDTranslation.table(infoSources, into: resolver)
     }
 
     public var topicCount: Int {
@@ -169,7 +185,12 @@ nonisolated public final class DialogueStore: Sendable {
     /// Topics in FormID order, which is the deterministic order selection
     /// walks them in when two topics share a priority.
     public func sortedTopics() -> [DialogueTopic] {
-        topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
+        orderedTopics
+    }
+
+    /// The topics of one SNAM subtype, in FormID order.
+    public func sortedTopics(subtype: FourCC) -> [DialogueTopic] {
+        orderedTopicsBySubtype[subtype] ?? []
     }
 
     public func branch(_ id: FormID) -> DialogueBranch? {
@@ -214,7 +235,7 @@ nonisolated public final class DialogueStore: Sendable {
     /// From INFO `id`'s own plugin to this store's FormID space, or nil when the
     /// two are the same.
     public func translation(ofInfo id: FormID) -> FormIDTranslation? {
-        infoSources[id.rawValue].map { FormIDTranslation(source: $0, target: resolver) }
+        infoTranslations[id.rawValue]
     }
 
     public func voiceType(_ id: FormID) -> VoiceType? {

@@ -167,8 +167,7 @@ nonisolated public struct FormIDTranslation: Equatable, Sendable {
     public init(source: FormIDResolver, target: FormIDResolver) {
         self.source = source
         self.target = target
-        prefixes = (0 ... 0xFF).map { index in
-            let plugin = index < source.masters.count ? source.masters[index] : source.pluginName
+        let prefix = { (plugin: String) -> Prefix? in
             guard
                 let base = target.localFormID(of: ResolvedFormID(plugin: plugin, objectID: 0))
             else { return nil }
@@ -179,11 +178,32 @@ nonisolated public struct FormIDTranslation: Equatable, Sendable {
                 objectMask: isLight ? FormIDResolver.lightObjectIDMask : 0x00FF_FFFF
             )
         }
+        // Every top byte past the masters names the plugin itself, so it is looked up once.
+        let masterCount = min(source.masters.count, 0x100)
+        let own = prefix(source.pluginName)
+        prefixes = source.masters.prefix(masterCount).map(prefix)
+            + Array(repeating: own, count: 0x100 - masterCount)
         isIdentity = source.lightPlugins == target.lightPlugins
             && prefixes.enumerated().allSatisfy { index, prefix in
                 index > source.masters.count
                     || prefix == Prefix(base: UInt32(index) << 24, objectMask: 0x00FF_FFFF)
             }
+    }
+
+    /// One translation per record from each record's source plugin, sharing one
+    /// translation per plugin, because a store can hold thousands of records.
+    public static func table(
+        _ sources: [UInt32: FormIDResolver], into target: FormIDResolver
+    ) -> [UInt32: FormIDTranslation] {
+        var byPlugin: [String: FormIDTranslation] = [:]
+        return sources.mapValues { source in
+            if let known = byPlugin[source.pluginName], known.source == source {
+                return known
+            }
+            let translation = FormIDTranslation(source: source, target: target)
+            byPlugin[source.pluginName] = translation
+            return translation
+        }
     }
 
     public func callAsFunction(_ id: FormID) -> FormID {
