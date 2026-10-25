@@ -113,14 +113,13 @@ extension DialogueCoordinator {
             .filter { $0.isFree && !$0.isFighting }
             .filter { $0.distanceToPlayer <= AmbientSpeechFrame.idleChatterDistance }
         guard !candidates.isEmpty else { return [] }
-        let start = Int(speechRandom.percent()) % candidates.count
-        for offset in candidates.indices {
-            let speaker = candidates[(start + offset) % candidates.count]
-            if let info = npcLine(.idleChatter, speaker: speaker.key, now: frame.now) {
-                return [AmbientLine(info: info, speaker: speaker.key, kind: .idleChatter)]
-            }
+        // One speaker a pass: a line search runs every IDLE topic's conditions, so a
+        // crowd that searched all at once stalled the frame.
+        let speaker = candidates[Int(speechRandom.percent()) % candidates.count]
+        guard let info = npcLine(.idleChatter, speaker: speaker.key, now: frame.now) else {
+            return []
         }
-        return []
+        return [AmbientLine(info: info, speaker: speaker.key, kind: .idleChatter)]
     }
 }
 

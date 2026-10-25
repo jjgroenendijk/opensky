@@ -136,14 +136,14 @@ public struct DialogueRuntime: DialogueAccess {
             return blocking.offer
         }
         return selectTopics(
-            dialogue.sortedTopics().filter { $0.subtype == "HELO" },
+            dialogue.sortedTopics(subtype: "HELO"),
             speaker: speaker
         ).offers.first
     }
 
     /// Selection over the topics of one `SNAM` subtype, such as `TRES` trespass lines.
     public func topics(subtype: FourCC, speaker: ReferenceKey) -> DialogueSelection {
-        selectTopics(dialogue.sortedTopics().filter { $0.subtype == subtype }, speaker: speaker)
+        selectTopics(dialogue.sortedTopics(subtype: subtype), speaker: speaker)
     }
 
     /// Selection restricted to the topics `ids` names, which is what a chosen
