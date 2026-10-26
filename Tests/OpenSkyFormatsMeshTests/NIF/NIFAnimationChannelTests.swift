@@ -21,7 +21,7 @@ struct NIFAnimationChannelTests {
             ])),
             .init("NiFloatData", NIFBlockFixture.keyGroup([(0, [0]), (2, [1])]))
         ]))
-        let decoded = try NIFCameraPath(interpolatorRef: 0, file: file)
+        let decoded = try NIFPath(interpolatorRef: 0, file: file)
         let path = try #require(decoded)
         let position = try #require(path.position(at: 1))
         #expect(simd_distance(position, expected) < 1e-5)

@@ -24,7 +24,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
     /// Nil when neither the camera nor a node above it has a transform controller.
     public let keys: NIFTransformData?
     /// Set when an `NiPathInterpolator` moves the animated node instead of keys.
-    public let path: NIFCameraPath?
+    public let path: NIFPath?
     /// Horizontal field of view from the frustum, radians.
     public let horizontalFieldOfView: Float
     /// The camera's `BSFrustumFOVController` keys; nil keeps the frustum's view.
@@ -62,7 +62,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
                 startTime = controller.start
                 stopTime = controller.stop
                 keys = try Self.data(of: controller.interpolator, file)
-                path = try NIFCameraPath(interpolatorRef: controller.interpolator, file: file)
+                path = try NIFPath(interpolatorRef: controller.interpolator, file: file)
                 restTranslation = node.object.translation
                 restRotation = simd_quatf(node.object.rotation)
                 offsetTranslation = offset.translation

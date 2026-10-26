@@ -134,7 +134,7 @@ nonisolated struct NIFSequenceDecoder {
                 channel: .shaderFloat(variable: variable, keys: keys)
             )
         }
-        let keys = try colorKeys(controlled.interpolator)
+        let keys = try pointKeys(controlled.interpolator)
         return NIFSequenceTrack(
             target: target,
             channel: .shaderColor(variable: variable, keys: keys)
@@ -143,7 +143,7 @@ nonisolated struct NIFSequenceDecoder {
 
     /// `NiTransformInterpolator`: translation, rotation (w first), scale, then a
     /// `NiTransformData` ref. A part equal to `#INV_FLT#` is unset.
-    private func transform(_ ref: Int32) throws -> NIFTransformChannel? {
+    func transform(_ ref: Int32) throws -> NIFTransformChannel? {
         let block = try NIFParticleControllerDecoder.block(ref, file)
         guard block.typeName == "NiTransformInterpolator" else { return nil }
         var reader = BinaryReader(block.data)
@@ -168,7 +168,7 @@ nonisolated struct NIFSequenceDecoder {
     }
 
     /// `NiPoint3Interpolator`: a pose, then a `NiPosData` ref.
-    private func colorKeys(_ ref: Int32) throws -> [NIFKey<SIMD3<Float>>] {
+    func pointKeys(_ ref: Int32) throws -> [NIFKey<SIMD3<Float>>] {
         let block = try NIFParticleControllerDecoder.block(ref, file)
         guard block.typeName == "NiPoint3Interpolator" else { return [] }
         var reader = BinaryReader(block.data)

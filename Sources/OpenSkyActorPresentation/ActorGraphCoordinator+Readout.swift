@@ -1,6 +1,7 @@
 // What `openskycli game state actors` shows of an actor's behaviour graph.
 
 import OpenSkyBehavior
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 
 /// One actor's graph, or why it runs none.
@@ -18,6 +19,8 @@ nonisolated public struct ActorGraphReadout: Equatable, Sendable {
     public let unresolvedClips: [String]
     public let clipsLoaded: Int
     public let clipsMissed: Int
+    /// The first rig bone that bone LOD holds, and every bone after it; nil moves all.
+    public var heldFromBone: String?
 }
 
 extension ActorGraphCoordinator {
@@ -38,7 +41,8 @@ extension ActorGraphCoordinator {
                 recentEvents: entry.recentEvents,
                 unresolvedClips: instance.tally.unresolvedClips.keys.sorted(),
                 clipsLoaded: entry.project.clips.loadedCount,
-                clipsMissed: entry.project.clips.missCount
+                clipsMissed: entry.project.clips.missCount,
+                heldFromBone: entry.heldFromBone.map { entry.project.asset.skeleton.boneNames[$0] }
             )
         }
         guard

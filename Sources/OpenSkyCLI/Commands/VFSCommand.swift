@@ -15,11 +15,18 @@ enum VFSCommand {
     /// the pattern is accepted and converted.
     static func list(context: CLIContext, arguments: VFSArguments.List) throws {
         let pattern = arguments.pattern
-        let entries = context.makeFileSystem().archiveEntries()
+        let fileSystem = context.makeFileSystem()
+        let entries = fileSystem.archiveEntries()
         guard !entries.isEmpty else {
             throw CLIError.failure("no archive entries — no readable .bsa in Data/?")
         }
-        let matched = entries.filter { matches($0.path, pattern: pattern) }
+        var matched = entries.filter { matches($0.path, pattern: pattern) }
+        if let text = arguments.containing {
+            let needle = Data(text.utf8)
+            matched = matched.filter {
+                (try? fileSystem.contents(forPath: $0.path))?.range(of: needle) != nil
+            }
+        }
         for entry in matched {
             print("\(entry.path)\t\(entry.archive)")
         }

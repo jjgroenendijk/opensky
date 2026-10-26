@@ -27,7 +27,7 @@ a fire-and-forget spell. The payload shapes below come from the install's clips.
 
 ## Sources
 
-Four runtimes raise annotations, and all four send them to `AnimationEventCoordinator`:
+Five runtimes raise annotations, and all five send them to `AnimationEventCoordinator`:
 
 - the player's third-person graph, through its event queue. The first-person graph runs the same
   clips, so it is not read, or every sound would play twice;
@@ -35,7 +35,12 @@ Four runtimes raise annotations, and all four send them to `AnimationEventCoordi
   events is not sent;
 - the object graphs, such as the sawmill and traps;
 - each NPC's and creature's own graph ([actor graphs](/engine/actor-graphs.md)). Its idle events
-  are not sent again by the idle runtime.
+  are not sent again by the idle runtime;
+- the graphs of the effects on an actor ([effect graphs](/engine/effect-graphs.md)). Their
+  events count as the actor's.
+
+The coordinator first passes every event on to the graphs of the effects on its source, so a
+hand effect hears its caster's release event.
 
 A graph declares only some of these names as events. The vanilla player graph declares about a
 hundred `SoundPlay` names, such as the weapon draw sounds its states raise, but not the clip-only
@@ -146,8 +151,8 @@ events" ([gap report](/tools/gaps.md)).
 - The cast and shout release frame: `MLh_SpellFire_Event`, `MRh_SpellFire_Event`,
   `Voice_SpellFire_Event`, and `Spellfire` on the staff release clips. The cast is timed by a
   clock ([spellcasting](/engine/spellcasting.md)). The magic and shout effect graphs, such as
-  `dragonmouthfire.hkx`, wait for these events, so the game sends an actor's events on to the
-  graphs of its effects too.
+  `dragonmouthfire.hkx`, hear these events ([effect graphs](/engine/effect-graphs.md)), but the
+  release itself does not wait for them.
 - Dragon flight and its effects: `FlightLandingEffect`, `DragonTakeoffEffect`,
   `DragonLandEffect`, the crash landing events, `DiveSplashStart`, and the wing and tail attack
   effects.

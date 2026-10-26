@@ -23,28 +23,32 @@ nonisolated extension CellSceneBuilder {
                 let key = try? meshes.meshKey(for: instance.modelPath),
                 let file = try? NIFFile(data: fileSystem.contents(forPath: key)),
                 let rig = try? VehicleWheelRig(file: file),
-                let model = try? meshes.animatedObjectModel(
-                    path: instance.modelPath, bones: Set(rig.skeleton.boneNames),
-                    reference: instance.formID, surface: instance.surface
-                )
+                let copy = posedCopy(of: instance, skeleton: rig.skeleton)
             else { continue }
-            instances[index] = ResolvedInstance(
-                sortKey: instance.sortKey, formID: instance.formID,
-                modelPath: instance.modelPath, model: model, surface: instance.surface,
-                transform: instance.transform, emittance: instance.emittance
-            )
-            let pose = PlayerPoseBuffer()
-            let playback = PlayerAnimationPlayback(
-                skeleton: rig.skeleton,
-                pose: pose,
-                models: [model]
-            )
-            result.append((
-                CellAnimatedVehicle(reference: instance.formID, rig: rig, pose: pose),
-                playback
-            ))
+            instances[index] = copy.instance
+            let vehicle = CellAnimatedVehicle(reference: instance.formID, rig: rig, pose: copy.pose)
+            result.append((vehicle, copy.playback))
         }
         return result
+    }
+
+    /// Swaps `instance` for its own node-skinned copy of its model, posed through a new buffer.
+    func posedCopy(
+        of instance: ResolvedInstance, skeleton: HKASkeleton
+    ) -> PosedCopy? {
+        guard let model = try? meshes.animatedObjectModel(
+            path: instance.modelPath, bones: Set(skeleton.boneNames),
+            reference: instance.formID, surface: instance.surface
+        ) else { return nil }
+        var posed = ResolvedInstance(
+            sortKey: instance.sortKey, formID: instance.formID,
+            modelPath: instance.modelPath, model: model, surface: instance.surface,
+            transform: instance.transform, emittance: instance.emittance
+        )
+        posed.isSequenceDoor = instance.isSequenceDoor
+        let pose = PlayerPoseBuffer()
+        let playback = PlayerAnimationPlayback(skeleton: skeleton, pose: pose, models: [model])
+        return PosedCopy(instance: posed, pose: pose, playback: playback)
     }
 
     /// The last steps of a cell build: hazards, the vehicles' moving collision, and
@@ -59,4 +63,11 @@ nonisolated extension CellSceneBuilder {
         scene.assets = drainTouchedAssets()
         return scene
     }
+}
+
+/// A reference's own node-skinned copy, with the buffer its playback reads.
+nonisolated struct PosedCopy {
+    let instance: ResolvedInstance
+    let pose: PlayerPoseBuffer
+    let playback: any RenderAnimation
 }

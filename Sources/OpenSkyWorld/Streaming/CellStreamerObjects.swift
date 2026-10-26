@@ -17,6 +17,12 @@ extension CellStreamer {
         return scenes.flatMap(\.sequenceDoors)
     }
 
+    /// The placed meshes that play node controllers, in the same scenes.
+    public func residentNodeAnimations() -> [CellNodeAnimation] {
+        let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)
+        return scenes.flatMap(\.nodeAnimations)
+    }
+
     /// The towed carts with turning wheels, in the same scenes.
     public func residentAnimatedVehicles() -> [CellAnimatedVehicle] {
         let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)

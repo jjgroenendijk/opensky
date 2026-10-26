@@ -7,6 +7,7 @@ import OpenSkyBehavior
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 
@@ -45,6 +46,8 @@ public protocol ActorGraphWorld: AnyObject {
 nonisolated struct LoadedActorGraphProject: Sendable {
     let asset: BehaviorProjectAsset
     let referencePaths: [String: String]
+    /// From the `skeleton.nif` beside the rig.
+    let boneLOD: ActorBoneLOD?
 
     static func load(_ files: any GameFileSource) -> @Sendable (String) throws -> Self {
         { path in
@@ -54,8 +57,23 @@ nonisolated struct LoadedActorGraphProject: Sendable {
             let references = InstallBehaviorReferenceSource.index(
                 files, rootPath: asset.behaviorPath
             )
-            return Self(asset: asset, referencePaths: references)
+            return Self(
+                asset: asset, referencePaths: references, boneLOD: boneLOD(of: asset, files)
+            )
         }
+    }
+
+    static func boneLOD(
+        of asset: BehaviorProjectAsset,
+        _ files: any GameFileSource
+    ) -> ActorBoneLOD? {
+        guard asset.rigPath.hasSuffix(".hkx") else { return nil }
+        let nifPath = String(asset.rigPath.dropLast(4)) + ".nif"
+        guard
+            let data = try? files.contents(forPath: nifPath),
+            let bones = (try? NIFNodeAnimation(file: NIFFile(data: data)))?.boneLOD?.bones
+        else { return nil }
+        return ActorBoneLOD(bones: bones, rig: asset.skeleton)
     }
 }
 
@@ -67,6 +85,7 @@ public final class ActorGraphCoordinator {
         let clips: InstallBehaviorClipSource
         let references: InstallBehaviorReferenceSource
         let skeleton: BehaviorSkeleton
+        let boneLOD: ActorBoneLOD?
         /// One decode of the graph file for every actor of the race.
         let objects: SharedBehaviorObjectSource
         /// Every actor of the race reaches the same clips, so the first one asks for them.
@@ -84,6 +103,7 @@ public final class ActorGraphCoordinator {
                 fileSystem: files, pathsByName: loaded.referencePaths
             )
             skeleton = BehaviorSkeleton(loaded.asset.skeleton)
+            boneLOD = loaded.boneLOD
         }
     }
 
@@ -109,6 +129,10 @@ public final class ActorGraphCoordinator {
         var steps = 0
         var rate = ActorGraphStepRate.full
         var recentEvents: [String] = []
+        /// The last published pose, which bone LOD holds bones in.
+        var lastBones: [HKABonePose] = []
+        /// The first rig bone bone LOD held at the last step.
+        var heldFromBone: Int?
         /// The player's mount drive steps this graph while it is lent.
         var isLent = false
 
@@ -178,7 +202,7 @@ public final class ActorGraphCoordinator {
             entry.rate = interval == 0 ? .full : .reduced
             entry.sinceStep += deltaTime
             guard entry.sinceStep >= interval else { continue }
-            step(entry, candidate, actor: candidate.key)
+            step(entry, candidate, actor: candidate.key, distance: distance)
             entry.sinceStep = 0
             if interval == 0 {
                 fullRateCount += 1
@@ -261,7 +285,9 @@ public final class ActorGraphCoordinator {
 
     // MARK: - Stepping
 
-    private func step(_ entry: Running, _ candidate: ActorGraphCandidate, actor: ReferenceKey) {
+    private func step(
+        _ entry: Running, _ candidate: ActorGraphCandidate, actor: ReferenceKey, distance: Float
+    ) {
         let seconds = entry.sinceStep
         let input = entry.stepInput(for: candidate, seconds: seconds)
         let instance = entry.instance
@@ -279,7 +305,11 @@ public final class ActorGraphCoordinator {
         let result = instance.update(deltaTime: seconds)
         entry.steps += 1
         if !result.bones.isEmpty {
-            entry.pose.publish(result.bones)
+            entry.heldFromBone = entry.project.boneLOD?.firstHeldBone(atDistance: distance)
+            entry.lastBones = ActorBoneLOD.holding(
+                result.bones, previous: entry.lastBones, from: entry.heldFromBone
+            )
+            entry.pose.publish(entry.lastBones)
         }
         report(result.firedEvents.compactMap(\.name) + result.unboundEvents, from: actor)
     }

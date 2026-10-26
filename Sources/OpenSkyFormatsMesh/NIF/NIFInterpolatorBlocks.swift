@@ -110,6 +110,16 @@ nonisolated public struct NIFPathInterpolator: Equatable, Sendable {
     public var follows: Bool {
         flags & 0x20 != 0
     }
+
+    /// Flag bit 3: a following object tilts into a turn.
+    public var banks: Bool {
+        flags & 0x8 != 0
+    }
+
+    /// Flag bit 6: the follow axis points backwards along the path.
+    public var flips: Bool {
+        flags & 0x40 != 0
+    }
 }
 
 /// `NiLookAtInterpolator`: turns an object to face another node.

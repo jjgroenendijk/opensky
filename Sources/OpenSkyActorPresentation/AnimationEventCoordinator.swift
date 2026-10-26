@@ -21,6 +21,8 @@ public protocol AnimationEventWorld: AnyObject {
     func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey)
     /// Sends `name` to the `OnAnimationEvent` of the scripts that registered on `source`.
     func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey)
+    /// Sends `name` to the behaviour graphs of the effects on `source`.
+    func sendEffectGraphEvent(_ name: String, from source: ReferenceKey)
 }
 
 public final class AnimationEventCoordinator {
@@ -38,9 +40,15 @@ public final class AnimationEventCoordinator {
         self.world = world
     }
 
-    /// Runs the annotation's action. Returns it, or nil when `name` is not one.
+    /// Runs the annotation's action. Returns it, or nil when `name` is not one. Every
+    /// event also reaches the source's effect graphs, unless one of them raised it.
     @discardableResult
-    public func handle(_ name: String, from source: ReferenceKey) -> AnimationEventAction? {
+    public func handle(
+        _ name: String, from source: ReferenceKey, reachesEffectGraphs: Bool = true
+    ) -> AnimationEventAction? {
+        if reachesEffectGraphs {
+            world.sendEffectGraphEvent(name, from: source)
+        }
         guard isEnabled, let action = AnimationEventAction.parse(name) else {
             return nil
         }

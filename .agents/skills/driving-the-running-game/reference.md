@@ -52,7 +52,8 @@ arrow keys.
 `state player`, `state target`, `state actors [--radius <units>]`, `state menu`,
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [<ref or quest editorID>]`, `state packages <ref>`,
-`state furniture [<ref>]`, `state objects [<ref>]`, `state changes [--limit <n>]`,
+`state furniture [<ref>]`, `state objects [<ref>]`, `state effects [<ref>]`,
+`state nodes [<ref>]`, `state changes [--limit <n>]`,
 `state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
@@ -91,6 +92,11 @@ arrow keys.
   `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
   `bones`: each bone's `position` in the object's own space and its `rotationDegrees` angle
   there, so two reads a few frames apart show a blade swing.
+- `state effects` lists each running effect graph: `effect`, `actor`, `name`, `project`,
+  `state`, `lastEvent`, and `eventsTaken`. With a ref it lists only that actor's effects.
+- `state nodes` lists the placed meshes that play node controllers. With a ref it lists each
+  driven node with its `position` and `forward` axis in the mesh, `controllers`, `active`,
+  and `frozen` (stopped by bone LOD).
 - `state changes` lists the newest world-state writes (`ref`, `kind`, `reset`) and whether a
   door transition or an interior rebuild is in flight. A cell that never settles shows the
   reference that keeps writing.

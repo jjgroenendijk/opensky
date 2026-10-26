@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyCamera
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
@@ -17,6 +18,7 @@ import simd
 protocol AnimationEventWorldHost: AnyObject {
     var cinematicCamera: CinematicCameraCoordinator { get }
     var headTracking: HeadTrackingCoordinator { get }
+    var effectGraphs: EffectGraphCoordinator { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -82,5 +84,9 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
 
     func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey) {
         game.scripts.runtime?.queueAnimationEvent(sender: source, name: name)
+    }
+
+    func sendEffectGraphEvent(_ name: String, from source: ReferenceKey) {
+        game.effectGraphs.deliver(name, from: source)
     }
 }

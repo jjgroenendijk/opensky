@@ -41,7 +41,7 @@ struct FrameScheduleTests {
             .survivalMode, .scripts, .actorValues, .magicEffects, .breath, .archery, .ragdoll,
             .combatLoop,
             .packages, .perception, .idles, .actorGraphs, .vehicles, .furniture,
-            .objectAnimation,
+            .objectAnimation, .effectGraphs,
             .dialogueCamera, .story
         ])
     }

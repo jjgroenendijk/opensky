@@ -37,6 +37,16 @@ nonisolated extension AgentCommandCatalog {
             positionals: [optional("ref", refHelp)]
         ),
         command(
+            "state.effects",
+            "Each running effect graph: its actor, state, and the last actor event it took.",
+            positionals: [optional("ref", "Only the effects on this actor.")]
+        ),
+        command(
+            "state.nodes",
+            "Placed meshes playing node controllers, or the nodes of one.",
+            positionals: [optional("ref", refHelp)]
+        ),
+        command(
             "state.changes", "The newest world-state writes and any rebuild in flight.",
             options: [value("limit", "n", "Writes to list. Default: 20.")]
         ),

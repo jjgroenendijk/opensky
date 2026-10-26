@@ -73,7 +73,7 @@ extension GapsGatherer {
         let footsteps = footstepTags()
         let scripts = scriptAnimationCensus()
         let handled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
-            .union(scripts.registeredEvents)
+            .union(scripts.registeredEvents).union(effectGraphEvents(census.hearing))
         let boundVariables = Set(
             (CombatGraphNames.variables + CombatGraphNames.loopVariables
                 + ArcheryGraphNames.variables
@@ -100,7 +100,7 @@ extension GapsGatherer {
                 usesUnit: "clips",
                 notes: [
                     "done means engine code reacts to it, a script registers for it, "
-                        + "or a graph of the clip's own folder waits for it"
+                        + "or a graph of the clip's own folder or of an effect art waits for it"
                 ]
             ),
             GapSection(
@@ -236,6 +236,26 @@ extension GapsGatherer {
             try AnimatedObject(record: $0)
         }) ?? []
         return objects.compactMap(\.unloadEvent)
+    }
+
+    /// The events the graphs of `ARTO` models wait for. An actor's events reach the
+    /// graphs of the effects on it (docs/engine/effect-graphs.md).
+    private func effectGraphEvents(_ hearing: HKXAnnotationHearing) -> Set<String> {
+        var skipped = SkippedRecords()
+        let arts = (try? requirePlugins().decodeRecords(of: "ARTO", skipped: &skipped) {
+            try ArtObject(record: $0)
+        }) ?? []
+        var projects = Set<String>()
+        for model in Set(arts.compactMap { $0.modelPath?.lowercased() }) {
+            let path = model.hasPrefix("meshes\\") ? model : "meshes\\" + model
+            guard
+                let data = try? fileSystem.contents(forPath: path),
+                let file = try? NIFFile(data: data),
+                let project = NIFBehaviorGraphExtraData.projectPath(in: file)
+            else { continue }
+            projects.insert(HKXAnnotationHearing.project(of: project))
+        }
+        return hearing.listenedEvents(inProjects: projects)
     }
 
     /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.

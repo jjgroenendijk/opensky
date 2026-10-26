@@ -72,7 +72,13 @@ nonisolated public struct HKXAnnotationHearing: Sendable {
         return heard
     }
 
-    static func project(of path: String) -> String {
+    /// The folded events, in lower case, that the graphs of `projects` wait for.
+    /// An effect's graph hears the events of the actor it is on, whatever their folder.
+    public func listenedEvents(inProjects projects: Set<String>) -> Set<String> {
+        Set(projects.flatMap { listened[$0] ?? [] }.map { HKXGapCensus.event($0).lowercased() })
+    }
+
+    public static func project(of path: String) -> String {
         let parts = path.lowercased().split(separator: "\\", omittingEmptySubsequences: false)
         let cut = parts.firstIndex { $0 == "animations" || $0.hasPrefix("behaviors") }
             ?? max(parts.count - 1, 0)

@@ -51,3 +51,33 @@ extension AgentWorldAdapter {
         ]
     }
 }
+
+extension AgentWorldAdapter {
+    /// Every running effect graph, or those on one actor (docs/engine/effect-graphs.md),
+    /// and every effect model drawn as its own posed copy.
+    func effectsState(reference: String?) throws(AgentFailure) -> AgentJSON {
+        var rows = game.effectGraphs.rows
+        if let reference {
+            let target = try resolveReference(reference)
+            rows = rows.filter { $0.actor == target.key }
+        }
+        let posed = game.effectModelPoser.rows.map { row -> AgentJSON in
+            [
+                "effect": .init(row.effectID),
+                "model": .string(row.modelPath),
+                "bones": .array(row.bones.map { .string($0) })
+            ]
+        }
+        return ["posed": .array(posed), "effects": .array(rows.map { row in
+            [
+                "effect": .init(row.effectID),
+                "actor": .string("\(row.actor)"),
+                "name": .string(row.effectName),
+                "project": .string(row.project),
+                "state": .init(row.activeState),
+                "lastEvent": .init(row.lastEvent),
+                "eventsTaken": .init(row.takenCount)
+            ]
+        })]
+    }
+}

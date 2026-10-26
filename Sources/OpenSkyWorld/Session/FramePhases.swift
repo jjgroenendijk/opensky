@@ -69,6 +69,8 @@ public enum WorldTickStep: Int, FramePhase {
     /// After the vehicles, which clear the seat of a player who rides none.
     case furniture
     case objectAnimation
+    /// After the actor and object graphs, so their events reach effect graphs in the same frame.
+    case effectGraphs
     /// Samples the speaker's head bone in the same tick.
     case dialogueCamera
     /// Scenes speak through the dialogue index.

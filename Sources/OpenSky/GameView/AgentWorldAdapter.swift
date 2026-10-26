@@ -17,6 +17,7 @@ import OpenSkyInventory
 import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyProgression
@@ -40,6 +41,8 @@ protocol AgentWorldHost: AnyObject {
     var containerMenu: ContainerMenuController { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var effectGraphs: EffectGraphCoordinator { get }
+    var effectModelPoser: EffectModelPoser { get }
     var factions: FactionCoordinator { get }
     var aiWorld: AIWorldAdapter { get }
     var furniture: FurnitureCoordinator { get }
@@ -109,8 +112,9 @@ final class AgentWorldAdapter {
     /// Cells are in, whether or not a loading screen still covers them. A teleport
     /// that put up the cover waits for this, because it lifts the cover itself.
     var isWorldLoaded: Bool {
-        guard game.renderer != nil, let streamer = game.streamer else { return false }
-        guard streamer.transitionInFlight == nil else { return false }
+        guard
+            game.renderer != nil, let streamer = game.streamer,
+            streamer.transitionInFlight == nil else { return false }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
     }
 
