@@ -45,20 +45,21 @@ struct LauncherTests {
         func referenceView() -> ReferenceView? {
             nil
         }
+
+        func placeNextGameWindow(contentRect _: CGRect) {}
+
+        func captureWorld(to _: URL, width _: Int, height _: Int) throws {}
+
+        let referenceSession = ReferenceGameSession()
     }
 
     @Test func registryIdsArePinned() {
         #expect(LauncherRegistry.pages.map(\.sidebarIdentifier) == [
             "LauncherPage-launch", "LauncherPage-assetOptimisation", "LauncherPage-graphics",
-            "LauncherPage-benchmark", "LauncherPage-diagnostics", "LauncherPage-settings"
+            "LauncherPage-benchmark", "LauncherPage-diagnostics", "LauncherPage-reference",
+            "LauncherPage-settings"
         ])
         #expect(LauncherRegistry.page(id: LauncherRegistry.defaultPageID) != nil)
-    }
-
-    /// The test host sets no reference prefix, so the developer page stays unlisted.
-    @Test func referencePageIsListedOnlyOnceAPrefixIsSet() {
-        #expect(LauncherRegistry.allPages.contains { $0.id == "reference" })
-        #expect(!LauncherRegistry.pages.contains { $0.id == "reference" })
     }
 
     @Test func launcherOpensOnTheLaunchPageAndCachesPages() {

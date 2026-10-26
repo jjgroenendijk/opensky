@@ -47,15 +47,16 @@ enum ReferenceCommand {
                 "[INFO] Starting Windows Steam; waiting \(arguments.steamWait) s for it to log in."
             )
         }
+        let frame = ReferenceWindowFrame(
+            x: 0, y: 0, width: arguments.window.width, height: arguments.window.height
+        )
+        let options = ReferenceLaunchOptions(frame: frame, steamWait: arguments.steamWait)
         do {
-            try await ReferenceLauncher.launch(
-                prefix: prefix, width: arguments.window.width, height: arguments.window.height,
-                steamWait: arguments.steamWait, logs: run
-            )
+            try await ReferenceLauncher.launch(prefix: prefix, options: options, logs: run)
         } catch let error as ReferenceLauncherError {
             throw CLIError.failure(error.localizedDescription)
         }
-        print("[INFO] Started the game at \(arguments.window.width) x \(arguments.window.height).")
+        print("[INFO] Started the game at \(frame.width) x \(frame.height).")
         print("[INFO] Wine output: \(run.path(percentEncoded: false))")
     }
 

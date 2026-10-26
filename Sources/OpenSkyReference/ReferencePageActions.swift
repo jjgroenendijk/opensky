@@ -16,6 +16,34 @@ nonisolated public struct ReferenceNotice: Equatable, Sendable {
 nonisolated public enum ReferencePageActions {
     public static let exportHint =
         "Export writes 'opensky' into the game folder; type 'bat opensky' in the game console."
+    public static let startHint = "Start Both puts OpenSky on the left half of the main screen "
+        + "and the Windows game on the right."
+    public static let startedMessage = "Started the Windows game. Choose Continue there, "
+        + "then use the Game menu to export the view and capture both."
+    /// The reference window size when the game starts alone, as `make reference-game` uses.
+    public static let defaultWindowSize = (1280, 720)
+    /// Seconds a newly started Steam gets to log in before the game starts.
+    public static let steamWait = 30
+
+    public static func startingMessage(waitsForSteam: Bool) -> String {
+        waitsForSteam
+            ? "Starting Windows Steam; the game follows in \(steamWait) seconds."
+            : "Starting the Windows game."
+    }
+
+    /// `~/Library/Application Support/OpenSky/Reference/<kind>/<UTC time>/`. The app has no
+    /// checkout, so its captures and Wine logs go here instead of `.logs/`.
+    public static func runFolder(_ kind: String, at date: Date = Date()) throws -> URL {
+        let stamp = date.formatted(
+            .iso8601.year().month().day().time(includingFractionalSeconds: false)
+                .timeSeparator(.omitted).dateSeparator(.omitted)
+        )
+        let folder = URL.applicationSupportDirectory.appending(
+            path: "OpenSky/Reference/\(kind)/\(stamp)", directoryHint: .isDirectory
+        )
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
 
     /// Writes the batch file with the HUD hidden; `view` is nil when no game runs.
     public static func exportView(_ view: ReferenceView?, prefix: URL?) -> ReferenceNotice {

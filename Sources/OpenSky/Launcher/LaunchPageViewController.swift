@@ -204,11 +204,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     // MARK: - Actions
 
     @objc private func play() {
-        switch launchPlan {
-        case let .resume(slot): context.actions?.continueGame(slot: slot)
-        case .mainMenu: context.actions?.play(from: .normal)
-        case let .newGame(start): context.actions?.play(from: start)
-        }
+        context.actions?.start(launchPlan)
     }
 
     @objc private func openAssetOptimisation() {

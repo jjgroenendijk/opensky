@@ -12,6 +12,15 @@ nonisolated public enum ReferenceSettings {
     public static let wineDefaultsKey = "OpenSkyReferenceWine"
     /// The newest comparison run, so the launcher page shows it without a terminal.
     public static let latestRunDefaultsKey = "OpenSkyReferenceLatestRun"
+    /// Two games share one GPU, so Start Both sets both to the Low preset by default.
+    public static let lowGraphicsSideBySide = SettingKey(
+        "OpenSkyReferenceLowGraphics", default: true
+    )
+    /// Start Both makes OpenSky load the newest Windows save, the one the Windows game's
+    /// Continue loads, so both start from one save.
+    public static let startsFromNewestSave = SettingKey(
+        "OpenSkyReferenceStartsFromNewestSave", default: false
+    )
 
     public static func prefix(
         environment: [String: String] = ProcessInfo.processInfo.environment,

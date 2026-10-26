@@ -41,9 +41,9 @@ The app opens on the launcher. The launcher holds:
     which the game reads when it starts.
   - Benchmark picks the tour length and runs the [benchmark tour](/tools/benchmark.md) in the
     Play window, then shows the newest result as a chart and its summary.
-  - Reference Game is listed only once a reference prefix is set. It starts the Windows
-    game, exports OpenSky's view to it, imports its newest save, and shows the newest
-    comparison pair ([reference game](/tools/reference-game.md)).
+  - Reference Game starts OpenSky and the Windows game side by side, from one save if asked,
+    exports OpenSky's view to it, captures both, imports its newest save, and
+    shows the newest comparison pair ([reference game](/tools/reference-game.md)).
   - Diagnostics opens the logs folder, copies a system report with the newest benchmark result,
     and opens the Benchmark page.
 
@@ -78,7 +78,9 @@ stage with its time, and Cancel. The game window opens when the load ends. A set
 change reloads the same way, and the new game view replaces the old one after the load.
 
 Closing the game window, or `Game > Return to Launcher`, ends the game and shows the launcher
-again. Closing the launcher quits the app.
+again. Closing the launcher quits the app. The launcher hides while the game window is open,
+so the Game menu holds the Reference Game page's actions that need a running game, such as
+`Game > Capture Both Games`, and shows their result as the window's subtitle.
 
 Set `OPENSKY_SKIP_LAUNCHER` to `1` to skip the launcher and open the game. The load still
 runs, without the load panel. The UI tests and `openskycli game launch` set it.
