@@ -44,6 +44,19 @@ struct MovementTypeRecordTests {
     }
 
     @Test
+    func theTenFloatFormHasNoRotateWhileMovingSpeed() throws {
+        let short = Array(Self.speeds.prefix(10))
+        let record = try Self.parse(Self.record(
+            editorID: "Dragon_Flying_MT", name: "DragonFlying", speeds: short
+        ))
+        let decoded = try MovementType(record: record)
+
+        #expect(decoded.speeds?.values == short)
+        #expect(decoded.speeds?.forwardRun == 222)
+        #expect(decoded.speeds?.rotateWhileMovingRun == nil)
+    }
+
+    @Test
     func aNonMovementRecordThrows() throws {
         let record = try GlobalFixture.parse(GlobalFixture.record(
             formID: 1, editorID: "x", type: .float, value: 1

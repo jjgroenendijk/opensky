@@ -1,7 +1,8 @@
 // MOVT record decoded into engine types: a movement type and its directional
 // speeds. The player's gaits are four MOVT records, so locomotion reads their
 // forward speeds instead of inventing multipliers. SPED is 11 floats in xEdit's
-// order; forward sits at indices 4 and 5. Layout: docs/formats/records.md.
+// order, or 10 without the last; forward sits at indices 4 and 5. Layout:
+// docs/formats/records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -22,36 +23,44 @@ nonisolated public struct MovementType: Equatable, Sendable {
         public let backRun: Float
         public let rotateInPlaceWalk: Float
         public let rotateInPlaceRun: Float
-        public let rotateWhileMovingRun: Float
+        /// Nil in the 10-float form the dragon flight types use.
+        public let rotateWhileMovingRun: Float?
 
-        /// The 11 floats in file order, for round-trip tests and reporting.
+        /// The floats in file order, for round-trip tests and reporting.
         public var values: [Float] {
             [
                 leftWalk, leftRun, rightWalk, rightRun,
                 forwardWalk, forwardRun, backWalk, backRun,
-                rotateInPlaceWalk, rotateInPlaceRun, rotateWhileMovingRun
-            ]
+                rotateInPlaceWalk, rotateInPlaceRun
+            ] + (rotateWhileMovingRun.map { [$0] } ?? [])
         }
 
         public static let floatCount = 11
+        /// `Dragon_Flying_MT` and the other dragon types end after rotate in place run.
+        public static let shortFloatCount = 10
 
-        /// Decodes SPED, or nil when the field is short. A truncated struct is
-        /// dropped whole rather than zero-padded: a half-read speed would read
-        /// as a legitimate "this actor cannot move".
+        /// Decodes SPED, or nil when the field is neither 10 nor 11 finite floats. A
+        /// truncated struct is dropped whole rather than zero-padded: a half-read speed
+        /// would read as a legitimate "this actor cannot move".
         public init?(field data: Data) {
+            guard
+                [Self.shortFloatCount, Self.floatCount].contains(data.count / 4),
+                data.count % 4 == 0
+            else { return nil }
             var reader = BinaryReader(data)
             var floats: [Float] = []
-            floats.reserveCapacity(Self.floatCount)
-            for _ in 0 ..< Self.floatCount {
+            for _ in 0 ..< data.count / 4 {
                 guard let value = try? reader.readFloat32(), value.isFinite else { return nil }
                 floats.append(value)
             }
             self.init(values: floats)
         }
 
-        /// Builds from 11 file-order floats; nil for any other count.
+        /// Builds from 10 or 11 file-order floats; nil for any other count.
         public init?(values: [Float]) {
-            guard values.count == Self.floatCount else { return nil }
+            guard [Self.shortFloatCount, Self.floatCount].contains(values.count) else {
+                return nil
+            }
             leftWalk = values[0]
             leftRun = values[1]
             rightWalk = values[2]
@@ -62,7 +71,7 @@ nonisolated public struct MovementType: Equatable, Sendable {
             backRun = values[7]
             rotateInPlaceWalk = values[8]
             rotateInPlaceRun = values[9]
-            rotateWhileMovingRun = values[10]
+            rotateWhileMovingRun = values.count == Self.floatCount ? values[10] : nil
         }
     }
 
