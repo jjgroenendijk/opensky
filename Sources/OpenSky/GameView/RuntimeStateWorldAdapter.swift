@@ -38,6 +38,7 @@ import OpenSkyWorldState
 /// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RuntimeStateWorldHost: AnyObject {
+    var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
@@ -155,6 +156,7 @@ final class RuntimeStateWorldAdapter {
             race: baseline.race
         )
         state.isFemale = baseline.isFemale
+        state.isFlying = game.dragonFlightWorld.isFlying(holder.key)
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
         if holder.key != .player {
             state.recordFlags = baseline.recordFlags

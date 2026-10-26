@@ -32,6 +32,11 @@ import OpenSkyWorldState
 /// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AgentWorldHost: AnyObject {
+    var combatWorld: CombatWorldAdapter { get }
+    var dragonFlight: DragonFlightCoordinator { get }
+    var dragonFlightWorld: DragonFlightWorldAdapter { get }
+    var mounts: MountCoordinator { get }
+    var mountWorld: MountWorldAdapter { get }
     var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }

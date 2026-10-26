@@ -133,6 +133,18 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("shadows", args(["quality": "low"])) == .shadows("low"))
     }
 
+    @Test func flightOrdersNameTheActorAndTheOrder() throws {
+        let request = try AgentCommandLine.request(["debug", "flight", "1A2B", "takeoff"])
+        #expect(request.args == ["ref": "1A2B", "order": "takeoff"])
+        #expect(try AgentDebugCommand.parse("flight", args(["ref": "1A2B", "order": "Land"]))
+            == .flight(reference: "1A2B", order: .land))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("flight", args(["ref": "1A2B", "order": "dive"]))
+        }
+        #expect(try AgentStateQuery.parse("flight", args([:])) == .flight(reference: nil))
+        #expect(try AgentStateQuery.parse("mount", args([:])) == .mount)
+    }
+
     @Test func aNegativeItemCountRemoves() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "Gold001", "count": -5]))
             == .removeItem(reference: "player", item: "Gold001", count: 5))

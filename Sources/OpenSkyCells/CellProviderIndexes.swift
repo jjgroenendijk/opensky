@@ -3,6 +3,7 @@
 // `CellProviderIndexes+Load.swift` builds it off the main actor, in stages.
 
 import Metal
+import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCombatInterface
@@ -55,6 +56,7 @@ nonisolated public struct CellProviderIndexes {
         let movement: PlayerMovementConfiguration
         /// A ridden horse's gaits.
         let mountMovement: PlayerMovementConfiguration
+        let dragonFlight: DragonFlightSettings
         let barter: BarterPricing
         let combat: CombatSettings
         let difficulty: DifficultySettings
@@ -76,6 +78,7 @@ nonisolated public struct CellProviderIndexes {
                 store: settings, movementTypes: movementTypes
             )
             mountMovement = .mount(movementTypes: movementTypes, rider: movement)
+            dragonFlight = .resolve(movementTypes: movementTypes)
             barter = BarterPricing.resolve(store: settings)
             combat = CombatSettings.resolve(store: settings)
             difficulty = DifficultySettings.resolve(store: settings)
@@ -205,6 +208,7 @@ nonisolated public struct CellProviderIndexes {
         stores.speechCheckSettings = tuning.speechChecks
         stores.gameSettings = tuning.store
         stores.mountMovementConfiguration = tuning.mountMovement
+        stores.dragonFlightSettings = tuning.dragonFlight
         return stores
     }
 }

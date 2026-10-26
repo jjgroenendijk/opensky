@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 
@@ -61,11 +62,15 @@ public final class PlayerMountDrive {
     /// Walk yaw, counter-clockwise from +X.
     public private(set) var heading: Float
     public private(set) var motion = MountMotion.still
-    /// False during the mount and dismount clips, and for a dragon, which OpenSky does
-    /// not fly: the mount stands still.
+    /// False during the mount and dismount clips, and for a dragon, which the rider
+    /// does not steer: it flies (`fly(toward:deltaTime:world:)`).
     public var isSteerable = false
     public var settings = MountSettings.vanilla
-    private let events: LocomotionGraphEventQueue.Consumer
+    /// A dragon's flight; nil for a horse.
+    public private(set) var flight: DragonFlightState?
+    public var flightSettings = DragonFlightSettings.standard
+    let events: LocomotionGraphEventQueue.Consumer
+    let configuration: PlayerMovementConfiguration
 
     public init(_ start: PlayerMountDriveStart) {
         mount = start.mount
@@ -82,6 +87,10 @@ public final class PlayerMountDrive {
         )
         bridge.isPlayerGraph = false
         events = bridge.graphEvents.addConsumer()
+        configuration = start.configuration
+        if start.kind == .dragon {
+            flight = DragonFlightState(feet: start.feet, yaw: start.yaw)
+        }
     }
 
     /// Steps the mount by one input frame, steered by the rider's input against the
@@ -125,9 +134,51 @@ public final class PlayerMountDrive {
         return bridge.graphEvents.drain(events)
     }
 
-    /// The mount's draw transform: feet and heading.
+    /// The mount's draw transform: feet and heading. A dragon in the air is where its
+    /// flight holds it.
     public var transform: (feet: SIMD3<Float>, yaw: Float) {
-        (walk.feetPosition, heading)
+        guard let flight, flight.phase.isFlying else { return (walk.feetPosition, heading) }
+        return (flight.feet, heading)
+    }
+
+    /// Steps a dragon toward `goal`: the flight moves it and its graph follows. Returns
+    /// the events its graph fired and the flight's own events.
+    public func fly(
+        toward goal: DragonFlightGoal, deltaTime: Float, world: MountStepWorld
+    ) -> (graph: [String], flight: [DragonFlightEvent]) {
+        guard var state = flight else { return ([], []) }
+        let step = min(max(deltaTime, 0), WalkController.maximumFrameTime)
+        if !state.phase.isFlying {
+            state.feet = walk.feetPosition
+            state.yaw = heading
+        }
+        let start = state.feet
+        let result = DragonFlightRules.step(
+            state, goal: goal, settings: flightSettings, deltaTime: step,
+            ground: { world.sampleGround($0)?.height }
+        )
+        let previousHeading = heading
+        state = result.state
+        flight = state
+        heading = state.yaw
+        let travel = state.feet - start
+        motion = MountMotion(
+            speed: step > 0 ? simd_length(SIMD2(travel.x, travel.y)) / step : 0,
+            turnDelta: remainder(heading - previousHeading, 2 * Float.pi),
+            pitch: state.phase.isFlying ? state.pitch : 0
+        )
+        if result.events.contains(.landed) {
+            walk = WalkController(
+                cameraPosition: state.feet + SIMD3(0, 0, MountMovementTypes.capsule.eyeHeight),
+                capsule: MountMovementTypes.capsule, configuration: configuration
+            )
+        }
+        bridge.advanceFlying(
+            deltaTime: step, feet: state.feet, motion: motion,
+            events: result.events.compactMap(DragonFlightGraphNames.event(for:)),
+            inputs: DragonFlightGraphNames.inputs(state, settings: flightSettings)
+        )
+        return (bridge.graphEvents.drain(events), result.events)
     }
 
     private func raiseStance(_ weaponDrawn: Bool) {
@@ -153,6 +204,8 @@ public protocol PlayerMountDriving: AnyObject {
     var isMountActive: Bool { get }
     /// How far, in radians, the rider may look down.
     var maximumLookDown: Float { get }
+    /// What the player rides, or nil on foot.
+    var mountKind: MountKind? { get }
     /// Steps the mount by one input frame. Nil when no mount is under the player.
     func advanceMount(
         input: CameraInput, cameraYaw: Float, weaponDrawn: Bool, world: MountStepWorld

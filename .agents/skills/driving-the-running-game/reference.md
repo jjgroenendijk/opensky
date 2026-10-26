@@ -53,7 +53,7 @@ arrow keys.
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [<ref or quest editorID>]`, `state packages <ref>`,
 `state furniture [<ref>]`, `state objects [<ref>]`, `state effects [<ref>]`,
-`state nodes [<ref>]`, `state changes [--limit <n>]`,
+`state nodes [<ref>]`, `state flight [<ref>]`, `state mount`, `state changes [--limit <n>]`,
 `state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
@@ -87,6 +87,11 @@ arrow keys.
   `rootMotion`; for a piece of furniture it gives the record's `rules` and lists each
   marker with its type, whether `MNAM` turns it on, its entry sides, its `position` and
   floor-level `root`, its holder, and `inUse`.
+- `state flight` lists each actor in the air with its `phase`, `state` (the `GetFlyingState`
+  value), `feet`, `speed`, `approaching`, `landingPoint`, and forced `order`; with a reference it
+  gives that actor, `getIsFlying` included. `state mount` gives the player's mount: `kind`,
+  `phase`, `speed`, a dragon's `flight`, and the rider's `orders` (`landingRequested`,
+  `lockedTarget`, `attacking`).
 - `state objects` lists each running object behaviour graph, such as a trap's or a door's,
   with its project, innermost active `state`, every active state in `states`,
   `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
@@ -122,6 +127,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
+| `debug flight <ref> takeoff\|land` | forces an actor whose race flies to take off or land; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |

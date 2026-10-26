@@ -37,6 +37,7 @@ import simd
 /// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AIWorldHost: AnyObject {
+    var dragonFlightWorld: DragonFlightWorldAdapter { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
@@ -511,6 +512,7 @@ extension AIWorldAdapter: PerceptionSessionWorld {
                 sneakSkill: sneakSkill(of: actor.key)
             )
             observer.isSleeping = sleepers.contains(actor.key)
+            observer.isFlying = game.dragonFlightWorld.isFlying(actor.key)
             observer.blindness = blindness(of: actor.key)
             observer.combatTarget = game.combat.loop?.combatTarget(of: actor.key)
             return PerceptionCandidate(

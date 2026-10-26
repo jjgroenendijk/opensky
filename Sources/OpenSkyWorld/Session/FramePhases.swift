@@ -63,6 +63,8 @@ public enum WorldTickStep: Int, FramePhase {
     case packages
     case perception
     case idles
+    /// Before the actor graphs, so a flight's events and inputs reach them in the same frame.
+    case dragonFlight
     /// After the idles, so an idle's event reaches the actor's graph in the same frame.
     case actorGraphs
     case vehicles

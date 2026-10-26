@@ -37,10 +37,8 @@ extension AgentWorldAdapter {
             return try done(changeActor(command))
         case let .setQuestStage(quest, stage):
             return try done(setQuestStage(quest, stage: stage))
-        case let .kill(reference):
-            return try done(kill(reference))
-        case let .resurrect(reference):
-            return try done(resurrect(reference))
+        case .kill, .resurrect, .flight:
+            return try done(actorDebug(command))
         case .overlay, .channel, .shadows:
             return try done(renderDebug(command))
         case let .raceMenu(limited):
@@ -51,6 +49,15 @@ extension AgentWorldAdapter {
             return try benchmark(request)
         case .sit, .stand, .passTime:
             return try done(performFurniture(command))
+        }
+    }
+
+    private func actorDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .kill(reference): try kill(reference)
+        case let .resurrect(reference): try resurrect(reference)
+        case let .flight(reference, order): try orderFlight(reference, order: order)
+        default: throw AgentFailure(.invalidArgument, "not an actor debug command")
         }
     }
 

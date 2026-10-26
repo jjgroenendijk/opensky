@@ -45,6 +45,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var inventory: InventoryCoordinator { get set }
     var inventoryWorld: InventoryWorldAdapter { get }
     var mountWorld: MountWorldAdapter { get }
+    var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockWorld: LockWorldAdapter { get }
     var perkActivationWorld: PerkActivationWorldAdapter { get }
@@ -237,6 +238,7 @@ final class WorldSessionWiring {
         game.aiWorld.wireFurniture(gameSession: gameSession)
         // After the locks, whose activation gate it wraps.
         game.mountWorld.wireMounts(gameSession: gameSession)
+        game.dragonFlightWorld.wire(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
         game.effectGraphWorld.wire(gameSession: gameSession)
         buildAnimationEvents(gameSession: gameSession)

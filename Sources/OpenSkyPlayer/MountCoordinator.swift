@@ -3,6 +3,7 @@
 // app applies them to the vehicles, the streamer, and crime. See docs/engine/riding.md.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import simd
@@ -17,6 +18,10 @@ public protocol MountWorld: AnyObject {
         -> PlayerMountDriveStart?
     /// The race's dismount offset in the mount's frame: x right, y forward.
     func dismountOffset(of key: ReferenceKey) -> SIMD3<Float>
+    /// The actor in view a ridden dragon's rider locks, or nil.
+    func lockCandidate() -> ReferenceKey?
+    /// Where a living, loaded actor stands; nil once it is dead or gone.
+    func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>?
 }
 
 nonisolated public enum MountCommand: Equatable, Sendable {
@@ -36,6 +41,10 @@ nonisolated public enum MountCommand: Equatable, Sendable {
     case askToSteal(ReferenceKey)
     case reportTheft(ReferenceKey)
     case refused(MountRefusal)
+    /// A short message on screen, such as the landing order.
+    case notify(String)
+    /// The ridden dragon breathes at its locked target.
+    case dragonBreath(ReferenceKey, at: ReferenceKey)
 }
 
 nonisolated public enum MountPhase: Equatable, Sendable {
@@ -51,12 +60,19 @@ public final class MountCoordinator {
     public private(set) var phase = MountPhase.none
     /// The last actor the player mounted, kept after the dismount.
     public private(set) var lastMount: ReferenceKey?
+    /// What the rider asked of a ridden dragon.
+    public internal(set) var dragonOrders = RiddenDragonOrders()
     public let settings: MountSettings
+    public let flightSettings: DragonFlightSettings
     weak let world: (any MountWorld)?
 
-    public init(world: any MountWorld, settings: MountSettings = .vanilla) {
+    public init(
+        world: any MountWorld, settings: MountSettings = .vanilla,
+        flightSettings: DragonFlightSettings = .standard
+    ) {
         self.world = world
         self.settings = settings
+        self.flightSettings = flightSettings
     }
 
     /// A mount is under the player, in any phase.
@@ -80,6 +96,8 @@ public final class MountCoordinator {
             }
             let drive = PlayerMountDrive(start)
             drive.settings = settings
+            drive.flightSettings = flightSettings
+            dragonOrders = RiddenDragonOrders()
             drive.bridge.raise(kind.events.mountEnter)
             self.drive = drive
             lastMount = key
@@ -89,9 +107,13 @@ public final class MountCoordinator {
         }
     }
 
-    /// Starts the dismount clips. Only a seated rider dismounts.
+    /// Starts the dismount clips. Only a seated rider dismounts; on a dragon in the air
+    /// the same key orders the landing or calls it off.
     public func dismount() -> [MountCommand] {
         guard let drive, phase == .riding else { return [] }
+        if drive.flight?.phase.isFlying == true {
+            return orderLanding(drive)
+        }
         drive.isSteerable = false
         drive.bridge.raise(drive.kind.events.mountExit)
         phase = .dismounting(elapsed: 0)
@@ -121,6 +143,9 @@ public final class MountCoordinator {
         guard let drive else { return [] }
         guard let candidate = world?.mountCandidate(drive.mount), !candidate.isDead else {
             return finishDismount()
+        }
+        if phase == .riding, drive.kind == .dragon {
+            return advanceDragon(drive, input: input, world: stepWorld)
         }
         let events = drive.advance(
             input: input, cameraYaw: cameraYaw, weaponDrawn: weaponDrawn, world: stepWorld
@@ -152,6 +177,7 @@ public final class MountCoordinator {
         guard let drive else { return [] }
         phase = .riding
         drive.isSteerable = true
+        dragonOrders.home = drive.transform.feet
         return [.seatPlayer(drive.mount, bone: drive.saddleBone)]
     }
 

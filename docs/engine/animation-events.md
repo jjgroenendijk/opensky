@@ -59,6 +59,7 @@ or an object's placed position. A source that is not loaded does nothing.
 | `SoundStop`, `SoundRelease` | `SNDR` editor ID, maybe a node name | Ends that source's loop of the sound |
 | `CameraShake` | Strength, such as `0.3` | Shakes the camera; a far source shakes it less |
 | `HeadTrackingOn`, `HeadTrackingOff` | none | Lets the head turn, or holds it forward |
+| `FlightLandingEffect`, `FlightForcefulLandStart`, `FlightCrashLand*` | none | Dust and touchdown of a landing dragon ([dragon flight](/engine/dragon-flight.md#clip-events)) |
 
 A `SoundPlay` key means the same in a NIF text key ([NIF sequences](/formats/nif-sequences.md)).
 A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which plays the same way
@@ -153,9 +154,6 @@ events" ([gap report](/tools/gaps.md)).
   clock ([spellcasting](/engine/spellcasting.md)). The magic and shout effect graphs, such as
   `dragonmouthfire.hkx`, hear these events ([effect graphs](/engine/effect-graphs.md)), but the
   release itself does not wait for them.
-- Dragon flight and its effects: `FlightLandingEffect`, `DragonTakeoffEffect`,
-  `DragonLandEffect`, the crash landing events, `DiveSplashStart`, and the wing and tail attack
-  effects.
 - `StartAnimationDriven`: about 29 creature graphs declare it and none waits for it, so the engine
   reads it. It likely moves the actor by the clip's root motion; no source confirms it.
 - The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and

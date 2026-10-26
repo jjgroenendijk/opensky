@@ -23,6 +23,10 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case effects(reference: String?)
     /// The placed meshes that play node controllers; with a reference, its driven nodes.
     case nodes(reference: String?)
+    /// Each actor in the air, or one actor's flight, with the player's dragon.
+    case flight(reference: String?)
+    /// The player's mount: its kind, phase, motion, and a dragon's flight and orders.
+    case mount
     /// The newest world-state writes, and whether the streamer is loading or rebuilding.
     case changes(limit: Int)
     case actorValue(reference: String, name: String)
@@ -68,9 +72,17 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "effects": try .effects(reference: args.optionalString("ref"))
         case "nodes": try .nodes(reference: args.optionalString("ref"))
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
+        case "flight": try .flight(reference: args.optionalString("ref"))
+        case "mount": .mount
         default: nil
         }
     }
+}
+
+/// What `debug flight` asks of a flying actor.
+nonisolated public enum AgentFlightOrder: String, Equatable, Sendable {
+    case takeOff = "takeoff"
+    case land
 }
 
 /// Where a teleport goes.
@@ -117,6 +129,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case stand(String)
     /// Passes the hours as the wait menu does; `sleeping` as the rest menu does.
     case passTime(hours: Int, sleeping: Bool)
+    /// Forces an actor that flies to take off or to land.
+    case flight(reference: String, order: AgentFlightOrder)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
@@ -168,8 +182,16 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
+        case "flight": try parseFlight(args)
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
+    }
+
+    private static func parseFlight(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        guard let order = try AgentFlightOrder(rawValue: args.string("order").lowercased()) else {
+            throw args.invalid("order", "takeoff or land")
+        }
+        return try .flight(reference: args.string("ref"), order: order)
     }
 
     private static func parseTeleport(

@@ -2,6 +2,7 @@
 // reads every archived file of its kind once, one at a time, so memory stays flat.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCombat
@@ -67,7 +68,8 @@ extension GapsGatherer {
             (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
                 + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
                 + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
-                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents())
+                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
+                + DragonFlightGraphNames.observedEvents)
                 .map { $0.lowercased() }
         )
         let footsteps = footstepTags()
@@ -79,7 +81,8 @@ extension GapsGatherer {
                 + ArcheryGraphNames.variables
                 + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
                 + ActorStateGraphNames.inputs + ActorStateGraphNames.outputs
-                + ActorGraphState.allCases.map(\.variableName) + perkGraphVariables())
+                + ActorGraphState.allCases.map(\.variableName) + perkGraphVariables()
+                + DragonFlightGraphNames.variables)
                 .map { $0.lowercased() }
         )
         let note = "\(census.fileCount) .hkx files, \(unread) did not read, "

@@ -2,6 +2,7 @@
 // mount (PlayerMountDrive.swift); this one only tells the rider's graph how the mount
 // moves, so `0_master.hkx` picks the riding clips. See docs/engine/riding.md.
 
+import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyPhysics
 import simd
@@ -13,13 +14,18 @@ nonisolated public struct MountMotion: Equatable, Sendable {
     /// Yaw change of the last step, radians, counter-clockwise.
     public var turnDelta: Float = 0
     public var isSprinting = false
+    /// A flying mount's climb angle, radians; positive climbs.
+    public var pitch: Float = 0
 
     public static let still = MountMotion()
 
-    public init(speed: Float = 0, turnDelta: Float = 0, isSprinting: Bool = false) {
+    public init(
+        speed: Float = 0, turnDelta: Float = 0, isSprinting: Bool = false, pitch: Float = 0
+    ) {
         self.speed = speed
         self.turnDelta = turnDelta
         self.isSprinting = isSprinting
+        self.pitch = pitch
     }
 
     public var isMoving: Bool {
@@ -50,6 +56,7 @@ nonisolated extension LocomotionBridge {
         write(.real(mount.turnDelta), to: LocomotionGraphNames.turnDelta)
         write(.bool(mount.isSprinting), to: LocomotionGraphNames.isSprinting)
         write(.bool(false), to: LocomotionGraphNames.isSneaking)
+        write(.real(mount.pitch), to: DragonFlightGraphNames.riderPitchOffset)
         writeCharacterVariables(state: LocomotionStepState(
             feetPosition: feet, verticalVelocity: 0, isGrounded: true, yaw: yaw, dt: deltaTime
         ))
