@@ -56,7 +56,7 @@ nonisolated public struct NIFNodeAnimation: Sendable {
 
     /// Node blocks that carry a transform and controllers.
     static let nodeTypes = NIFNode.traversedTypes.union([
-        NIFSwitchNode.typeName, "NiBillboardNode", "NiLODNode", NIFCameraTrack.cameraTypeName
+        NIFSwitchNode.typeName, "NiBillboardNode", NIFCameraTrack.cameraTypeName
     ])
 
     public init(nodes: [Node], controllers: [Controller], boneLOD: NIFBoneLODLevels? = nil) {

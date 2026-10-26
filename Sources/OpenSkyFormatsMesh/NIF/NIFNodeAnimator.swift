@@ -104,12 +104,10 @@ nonisolated public struct NIFNodeAnimator: Sendable {
         let parent = parentTransform(of: node)
         let goal = parent.inverse.composed(with: modelTransform(of: target)).translation
         let roll = NIFKeySampler.float(lookAt.roll, at: time) ?? 0
-        if let rotation = NIFPathOrientation.facing(
-            goal - pose.translation,
-            axis: lookAt.axis,
-            roll: roll
-        ) {
-            pose.rotation = rotation
+        let toward = goal - pose.translation
+        let facing = NIFPathOrientation.facing(toward, axis: lookAt.axis, roll: roll)
+        if let facing {
+            pose.rotation = facing
         }
         return pose
     }

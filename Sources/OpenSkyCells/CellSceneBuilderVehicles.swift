@@ -36,10 +36,13 @@ nonisolated extension CellSceneBuilder {
     func posedCopy(
         of instance: ResolvedInstance, skeleton: HKASkeleton
     ) -> PosedCopy? {
-        guard let model = try? meshes.animatedObjectModel(
-            path: instance.modelPath, bones: Set(skeleton.boneNames),
-            reference: instance.formID, surface: instance.surface
-        ) else { return nil }
+        let bones = Set(skeleton.boneNames)
+        guard
+            let model = try? meshes.animatedObjectModel(
+                path: instance.modelPath, bones: bones,
+                reference: instance.formID, surface: instance.surface
+            )
+        else { return nil }
         var posed = ResolvedInstance(
             sortKey: instance.sortKey, formID: instance.formID,
             modelPath: instance.modelPath, model: model, surface: instance.surface,
