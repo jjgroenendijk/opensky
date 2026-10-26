@@ -68,16 +68,27 @@ extension AgentWorldAdapter {
                 "bones": .array(row.bones.map { .string($0) })
             ]
         }
-        return ["posed": .array(posed), "effects": .array(rows.map { row in
-            [
-                "effect": .init(row.effectID),
-                "actor": .string("\(row.actor)"),
-                "name": .string(row.effectName),
-                "project": .string(row.project),
-                "state": .init(row.activeState),
-                "lastEvent": .init(row.lastEvent),
-                "eventsTaken": .init(row.takenCount)
-            ]
-        })]
+        return ["posed": .array(posed), "effects": .array(rows.map(Self.subGraphFields))]
+    }
+
+    private static func subGraphFields(_ row: EffectGraphRow) -> AgentJSON {
+        var fields: [String: AgentJSON] = [
+            "actor": .init(row.actor.map { "\($0)" }),
+            "name": .string(row.name),
+            "project": .string(row.project),
+            "state": .init(row.activeState),
+            "lastEvent": .init(row.lastEvent),
+            "eventsTaken": .init(row.takenCount)
+        ]
+        switch row.id {
+        case let .effect(id):
+            fields["effect"] = .init(id)
+        case let .armorAddon(_, armature):
+            fields["armorAddon"] = .formID(armature)
+        }
+        if case let .point(position) = row.anchor {
+            fields["point"] = .array([position.x, position.y, position.z].map { AgentJSON($0) })
+        }
+        return .object(fields)
     }
 }

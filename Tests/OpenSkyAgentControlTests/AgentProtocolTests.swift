@@ -120,6 +120,19 @@ struct AgentCommandParsingTests {
         #expect(try AgentStateQuery.parse("view", args([:])) == .view)
     }
 
+    @Test func subGraphCommandsSendAnEventOrSetAVariable() throws {
+        #expect(try AgentCommandLine.request(["debug", "subgraph", "target", "--event", "Start"])
+            .args == ["ref": "target", "event": "Start"])
+        #expect(try AgentDebugCommand.parse("subgraph", args(["ref": "target", "event": "Start"]))
+            == .subGraphEvent(reference: "target", event: "Start"))
+        #expect(try AgentDebugCommand.parse(
+            "subgraph", args(["ref": "target", "var": "fBlendTime", "value": 1])
+        ) == .subGraphVariable(reference: "target", name: "fBlendTime", value: 1))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("subgraph", args(["ref": "target"]))
+        }
+    }
+
     @Test func theDebugChannelIsAPositionalMode() throws {
         let request = try AgentCommandLine.request(["debug", "channel", "wireframe"])
         #expect(request.args == ["mode": "wireframe"])

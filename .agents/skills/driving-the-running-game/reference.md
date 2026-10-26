@@ -97,8 +97,9 @@ arrow keys.
   `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
   `bones`: each bone's `position` in the object's own space and its `rotationDegrees` angle
   there, so two reads a few frames apart show a blade swing.
-- `state effects` lists each running effect graph: `effect`, `actor`, `name`, `project`,
-  `state`, `lastEvent`, and `eventsTaken`. With a ref it lists only that actor's effects.
+- `state effects` lists each running actor sub-graph: `effect` or `armorAddon`, `actor` (null
+  for an effect at a `point`), `name`, `project`, `state`, `lastEvent`, and `eventsTaken`. With a
+  ref it lists only that actor's sub-graphs.
 - `state nodes` lists the placed meshes that play node controllers. With a ref it lists each
   driven node with its `position` and `forward` axis in the mesh, `controllers`, `active`,
   and `frozen` (stopped by bone LOD).
@@ -123,6 +124,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug item <editorID> [--count <n>]` | negative count removes; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
+| `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable`; answers `taken` and the actor's sub-graphs |
 | `debug racemenu [--limited]` | opens the race menu now, as the console's `ShowRaceMenu`; `--limited` is `Game.ShowLimitedRaceMenu` |
 | `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |

@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuests
@@ -49,7 +50,28 @@ extension AgentWorldAdapter {
             return try benchmark(request)
         case .sit, .stand, .passTime:
             return try done(performFurniture(command))
+        case .subGraphEvent, .subGraphVariable:
+            return try done(driveSubGraphs(command))
         }
+    }
+
+    /// Answers whether a sub-graph took the change, with the actor's sub-graphs after it.
+    private func driveSubGraphs(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        let taken: Bool
+        let reference: String
+        switch command {
+        case let .subGraphEvent(ref, event):
+            reference = ref
+            taken = try game.effectGraphs.deliver(event, from: resolveReference(ref).key)
+        case let .subGraphVariable(ref, name, value):
+            reference = ref
+            taken = try game.effectGraphs.setSubGraphVariable(
+                value, named: name, on: resolveReference(ref).key
+            )
+        default:
+            throw AgentFailure(.invalidArgument, "not a sub-graph command")
+        }
+        return try ["taken": .bool(taken), "subGraphs": effectsState(reference: reference)]
     }
 
     private func actorDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {

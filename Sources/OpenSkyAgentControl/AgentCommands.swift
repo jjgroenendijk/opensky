@@ -19,7 +19,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case furniture(reference: String)
     /// Each running object graph, such as a trap's, with its state and bone positions.
     case objects(reference: String?)
-    /// Each running effect graph, with its actor, state, and the last actor event it took.
+    /// Each running effect or armour addon graph, with its actor, state, and last event taken.
     case effects(reference: String?)
     /// The placed meshes that play node controllers; with a reference, its driven nodes.
     case nodes(reference: String?)
@@ -131,6 +131,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case passTime(hours: Int, sleeping: Bool)
     /// Forces an actor that flies to take off or to land.
     case flight(reference: String, order: AgentFlightOrder)
+    /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
+    case subGraphEvent(reference: String, event: String)
+    /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
+    case subGraphVariable(reference: String, name: String, value: Float)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
@@ -170,8 +174,20 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             let hours = try args.int("hours")
             guard (1 ... 24).contains(hours) else { throw args.invalid("hours", "1 to 24") }
             return try .passTime(hours: hours, sleeping: args.bool("sleep", default: false))
+        case "subgraph": return try parseSubGraph(args)
         default: return try parseRender(name, args)
         }
+    }
+
+    private static func parseSubGraph(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let reference = try args.string("ref")
+        if let event = try args.optionalString("event") {
+            return .subGraphEvent(reference: reference, event: event)
+        }
+        guard let name = try args.optionalString("var") else {
+            throw args.invalid("event", "an event, or --var with --value")
+        }
+        return try .subGraphVariable(reference: reference, name: name, value: args.float("value"))
     }
 
     private static func parseRender(

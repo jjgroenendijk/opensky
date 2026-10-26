@@ -160,6 +160,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     private let meshes: [RenderMesh]
     /// Hand node to sheath node, from `ResolvedActorVisual.sheathNodes`.
     public let sheathNodes: [String: String]
+    /// The armour addon models the actor wears; one that names a graph runs it as a sub-graph.
+    public let armorAddons: [WornArmorAddon]
 
     /// The clip currently playing: the idle one, or a bounded combat override.
     public var clip: ActorAnimationClip {
@@ -172,10 +174,12 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         models: [RenderModel],
         female: Bool = false,
         transform: float4x4 = matrix_identity_float4x4,
-        sheathNodes: [String: String] = [:]
+        sheathNodes: [String: String] = [:],
+        armorAddons: [WornArmorAddon] = []
     ) {
         self.actor = actor
         self.sheathNodes = sheathNodes
+        self.armorAddons = armorAddons
         self.female = female
         self.transform = transform
         idleClip = clip
@@ -340,5 +344,22 @@ nonisolated public struct ActorAnimationCacheKey: Hashable, Sendable {
     public init(skeletonPath: String, female: Bool) {
         self.skeletonPath = skeletonPath
         self.female = female
+    }
+}
+
+/// One worn armour addon model.
+nonisolated public struct WornArmorAddon: Equatable, Sendable {
+    public let armature: FormID
+    public let modelPath: String
+
+    public init(armature: FormID, modelPath: String) {
+        self.armature = armature
+        self.modelPath = modelPath
+    }
+}
+
+nonisolated extension ResolvedActorVisual {
+    public var wornArmorAddons: [WornArmorAddon] {
+        parts.map { WornArmorAddon(armature: $0.armature, modelPath: $0.modelPath) }
     }
 }

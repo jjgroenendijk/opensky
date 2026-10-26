@@ -74,10 +74,10 @@ open source gives the game's angle, so this cone is OpenSky's own.
 ## Traced stubs
 
 These natives return a fixed value and write a trace line, because the subsystem they need is not
-built: `SetSubGraphFloatVariable`, `PlaySubGraphAnimation`, `SetEyeTexture`, `PathToReference`
-(false), `AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false),
-`Game.PlayBink`, `Game.StartTitleSequence`, `Game.SendWereWolfTransformation`, `Debug.SetFootIK`,
-`ShaderParticleGeometry.Apply` and `Remove`, and `Sound.SetInstanceVolume`.
+built: `SetEyeTexture`, `PathToReference` (false), `AddHavokBallAndSocketConstraint` (false),
+`RemoveHavokConstraints` (false), `Game.PlayBink`, `Game.StartTitleSequence`,
+`Game.SendWereWolfTransformation`, `Debug.SetFootIK`, `ShaderParticleGeometry.Apply` and `Remove`,
+and `Sound.SetInstanceVolume`. The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 
 ## Engine events
 
