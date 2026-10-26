@@ -45,7 +45,7 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "state.effects",
-            "Each running effect or armour addon graph: its actor, state, and last event taken.",
+            "Each running effect or armour addon graph: its actor, state, and last event.",
             positionals: [optional("ref", "Only the sub-graphs on this actor.")]
         ),
         command(
