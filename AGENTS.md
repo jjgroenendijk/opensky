@@ -19,8 +19,10 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 - NEVER commit game content. No `.bsa`/`.ba2` archives, `.esm`/`.esp` plugins, `.nif`
   meshes, `.dds` textures, `.hkx` animations, `.pex` scripts, audio, or anything extracted
   from the install. Not even as test fixtures.
-- NEVER copy Bethesda code. No decompiled, disassembled, or leaked source. No pasted
-  SKSE or Creation Kit internals. Reimplement from observed behavior and open format docs.
+- NEVER copy Bethesda code. No decompiled, disassembled, or leaked source. No code,
+  offsets, layouts, or binary class names from SKSE, CommonLibSSE, or other projects built
+  on the game binary. Facts and behaviour from them are fine through the clean-room read in
+  the `using-outside-sources` skill. Reimplement from observed behaviour and open format docs.
 - A frame OpenSky renders embeds the user's game assets, so a rendered capture is game
   content too. Verification captures go to gitignored `.logs/`; link the local path in the
   PR rather than committing the image. The one exception is a screenshot of OpenSky's own
@@ -236,7 +238,8 @@ better name instead.
 - An issue body states intent, not code locations: no file paths, line numbers, or pasted
   code. Code moves faster than issues are worked. `starting-roadmap-work` has the rules.
 - Do the whole task in the main session. Do not split work across sub-agents: parallel
-  agents have edited the same worktree and collided.
+  agents have edited the same worktree and collided. The one exception is the read-only
+  clean-room read in `using-outside-sources`, which edits nothing.
 
 ## Skills — load before the matching work
 
@@ -254,4 +257,5 @@ the skill.
 | `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game` |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
 | `consulting-uesp-wikis` | Looking up anything on the Creation Kit wiki (ck.uesp.net) or the UESP wiki (en.uesp.net), or syncing their offline copies |
+| `using-outside-sources` | Reading, citing, or taking anything from SKSE, CommonLibSSE, xEdit, nif.xml, OpenMW, or another third-party source about Skyrim internals |
 | `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |

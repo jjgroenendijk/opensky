@@ -4,8 +4,8 @@
 
 import Foundation
 
-/// `GetAttackState` codes, from the game's attack-state enumeration as CommonLibSSE
-/// names it (`ATTACK_STATE_ENUM`). OpenSky reaches the melee codes only.
+/// `GetAttackState` codes, from the Creation Kit wiki page `GetAttackState`.
+/// OpenSky reaches the melee codes only.
 nonisolated public enum ActorAttackState: Int, Equatable, Sendable {
     case none = 0
     case draw = 1
