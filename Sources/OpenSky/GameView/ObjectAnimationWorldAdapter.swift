@@ -20,6 +20,7 @@ import simd
 protocol ObjectAnimationWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorWorld: ActorWorldAdapter { get }
+    var effectGraphs: EffectGraphCoordinator { get }
     var objectBehaviors: ObjectBehaviorCoordinator { get }
     var sequenceDoors: SequenceDoorCoordinator { get }
     var nodeControllers: NodeControllerCoordinator { get }
@@ -152,6 +153,16 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
             return true
         }
         return actorGraphs.setVariable(graphValue, named: name, on: key)
+    }
+
+    func playSubGraphAnimation(_ event: String, on actor: ReferenceKey) -> Bool {
+        game.effectGraphs.deliver(event, from: actor)
+    }
+
+    func setSubGraphFloatVariable(_ name: String, to value: Float, on actor: ReferenceKey)
+        -> Bool
+    {
+        game.effectGraphs.setSubGraphVariable(value, named: name, on: actor)
     }
 
     func openStateCode(of key: ReferenceKey) -> Int32? {

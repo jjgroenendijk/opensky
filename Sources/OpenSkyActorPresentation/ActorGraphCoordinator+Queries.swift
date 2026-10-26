@@ -28,6 +28,16 @@ extension ActorGraphCoordinator {
         running[actor]?.instance.setVariable(value, named: name) ?? false
     }
 
+    /// The graph the actor runs, whose placement and variables its sub-graphs read.
+    public func instance(of actor: ReferenceKey) -> BehaviorGraphInstance? {
+        running[actor]?.instance
+    }
+
+    /// Where the actor's graph publishes its pose; an armour addon's graph moves bones there.
+    public func pose(of actor: ReferenceKey) -> PlayerPoseBuffer? {
+        running[actor]?.pose
+    }
+
     /// Every running graph's variables, and the player's, for the condition functions.
     public func variableResolution(player: BehaviorVariableStore?) -> GraphVariableResolution {
         var graphs: [ReferenceKey: any GraphVariableReading] = running.mapValues {

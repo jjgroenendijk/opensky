@@ -39,6 +39,19 @@ private final class FakeObjectAnimation: PapyrusObjectAnimationBridge {
 
     var openState: Int32?
 
+    var subGraphEvents: [String] = []
+    var subGraphVariables: [String: Float] = [:]
+
+    func playSubGraphAnimation(_ event: String, on _: ReferenceKey) -> Bool {
+        subGraphEvents.append(event)
+        return hasGraph
+    }
+
+    func setSubGraphFloatVariable(_ name: String, to value: Float, on _: ReferenceKey) -> Bool {
+        subGraphVariables[name] = value
+        return hasGraph
+    }
+
     func openStateCode(of _: ReferenceKey) -> Int32? {
         openState
     }
@@ -178,6 +191,25 @@ struct PapyrusNativeTrapTests {
         ))
         #expect(send == .returned(.none))
         #expect(graphs.played == ["Open"])
+    }
+
+    @Test func subGraphNativesReachTheActorsSubGraphs() throws {
+        let fixture = try Fixture.make()
+        let actorCall = { (name: String, arguments: [PapyrusValue]) in
+            fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "Actor", name, receiver: fixture.receiver, arguments: arguments,
+                returnType: .none
+            ))
+        }
+        let headless = actorCall("PlaySubGraphAnimation", [.string("Start")])
+        #expect(headless == .deviated(.none, .deferredAnimation))
+        let graphs = FakeObjectAnimation()
+        fixture.session.bridge.objectAnimation = graphs
+        #expect(actorCall("PlaySubGraphAnimation", [.string("Start")]) == .returned(.none))
+        let set = actorCall("SetSubGraphFloatVariable", [.string("fBlendTime"), .float(1)])
+        #expect(set == .returned(.none))
+        #expect(graphs.subGraphEvents == ["Start"])
+        #expect(graphs.subGraphVariables == ["fBlendTime": 1])
     }
 
     @Test func processTrapHitNeedsAnActor() throws {

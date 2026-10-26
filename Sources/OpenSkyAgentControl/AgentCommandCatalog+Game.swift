@@ -45,8 +45,8 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "state.effects",
-            "Each running effect graph: its actor, state, and the last actor event it took.",
-            positionals: [optional("ref", "Only the effects on this actor.")]
+            "Each running effect or armour addon graph: its actor, state, and last event taken.",
+            positionals: [optional("ref", "Only the sub-graphs on this actor.")]
         ),
         command(
             "state.nodes",
@@ -127,6 +127,15 @@ nonisolated extension AgentCommandCatalog {
         ),
         command("debug.kill", "Kill an actor.", positionals: [required("ref", refHelp)]),
         command("debug.resurrect", "Resurrect an actor.", positionals: [required("ref", refHelp)]),
+        command(
+            "debug.subgraph", "Send an event or set a variable on an actor's sub-graphs.",
+            positionals: [required("ref", refHelp)],
+            options: [
+                value("event", "name", "The event, as PlaySubGraphAnimation sends it."),
+                value("var", "name", "The variable, as SetSubGraphFloatVariable sets it."),
+                value("value", "v", "The variable's new value.")
+            ]
+        ),
         command(
             "debug.sit", "Seat an actor in furniture.",
             positionals: [optional("ref", "The actor. Default: player.")],

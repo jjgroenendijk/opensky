@@ -44,7 +44,8 @@ nonisolated extension CellSceneBuilder {
             models: assembly.models.map(\.asset.model),
             female: assembly.visual.appearance.isFemale.value,
             transform: assembly.transform,
-            sheathNodes: assembly.visual.sheathNodes
+            sheathNodes: assembly.visual.sheathNodes,
+            armorAddons: assembly.visual.wornArmorAddons
         ))
     }
 

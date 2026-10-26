@@ -192,6 +192,14 @@ private final class MovingDoors: PapyrusObjectAnimationBridge {
         false
     }
 
+    func playSubGraphAnimation(_: String, on _: ReferenceKey) -> Bool {
+        false
+    }
+
+    func setSubGraphFloatVariable(_: String, to _: Float, on _: ReferenceKey) -> Bool {
+        false
+    }
+
     func openStateCode(of _: ReferenceKey) -> Int32? {
         code
     }

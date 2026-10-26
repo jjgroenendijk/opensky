@@ -1,6 +1,6 @@
-// Traced stubs for natives whose engine system OpenSky does not have yet: attached
-// sub-graphs, Havok constraints, shader particles, sound instances, Bink movies, the
-// title sequence, werewolf change, eye textures, foot IK, and scripted pathing. Each
+// Traced stubs for natives whose engine system OpenSky does not have yet: Havok
+// constraints, shader particles, sound instances, Bink movies, the title sequence,
+// werewolf change, eye textures, foot IK, and scripted pathing. Each
 // answers the type's empty value and counts as `.stubbed`; each gap has an issue.
 
 import Foundation
@@ -20,8 +20,6 @@ private struct EngineStub {
 
 extension PapyrusNativeFunctions {
     private static let engineStubs: [EngineStub] = [
-        EngineStub("Actor", "SetSubGraphFloatVariable", .none),
-        EngineStub("Actor", "PlaySubGraphAnimation", .none),
         EngineStub("Actor", "SetEyeTexture", .none),
         // "Whether the actor completed the path": OpenSky cannot path for a script.
         EngineStub("Actor", "PathToReference", .boolean(false)),

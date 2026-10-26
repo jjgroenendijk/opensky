@@ -21,6 +21,11 @@ public protocol PapyrusObjectAnimationBridge: AnyObject {
     /// False when the object runs no graph or the graph declares no such variable.
     func setAnimationVariable(_ name: String, to value: PapyrusValue, on reference: ReferenceKey)
         -> Bool
+    /// Raises `event` on every sub-graph of the actor. False when none declares it.
+    func playSubGraphAnimation(_ event: String, on actor: ReferenceKey) -> Bool
+    /// Sets the variable on every sub-graph of the actor. False when none declares it.
+    func setSubGraphFloatVariable(_ name: String, to value: Float, on actor: ReferenceKey)
+        -> Bool
     /// The `GetOpenState` code of a door whose mesh sequences move it, opening and
     /// closing included. Nil for any other reference.
     func openStateCode(of reference: ReferenceKey) -> Int32?
@@ -73,6 +78,7 @@ extension PapyrusNativeFunctions {
             return .deviated(.none, .deferredAnimation)
         })
         installAnimationVariables(into: &registry)
+        installSubGraphNatives(into: &registry)
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "PlayGamebryoAnimation"
