@@ -5,19 +5,6 @@ import OpenSkyCLIArguments
 import Testing
 
 struct CommandLineTests {
-    private func command<T>(_ arguments: [String], as _: T.Type) throws -> T {
-        guard case let .run(command) = OpenSkyCommandLine.outcome(arguments) else {
-            Issue.record("\(arguments) did not parse to a command")
-            throw CommandLineTestError.notACommand
-        }
-        return try #require(command as? T)
-    }
-
-    private func exitCode(_ arguments: [String]) -> Int32? {
-        guard case let .exit(code, _) = OpenSkyCommandLine.outcome(arguments) else { return nil }
-        return code
-    }
-
     @Test func theDataRootWorksBeforeAndAfterTheCommand() throws {
         let before = try command(["--data-root", "/a", "cell"], as: CellArguments.self)
         let after = try command(["cell", "--data-root", "/b"], as: CellArguments.self)
@@ -44,6 +31,21 @@ struct CommandLineTests {
         #expect(exitCode(["render", "--out", "a.png", "--size", "0x10"])
             == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["actor", "values"]) == OpenSkyCommandLine.usageExitCode)
+    }
+
+    @Test func hkxRaisesEventsAndHoldsNumberVariables() throws {
+        let probe = try command(
+            [
+                "hkx", "a.hkx", "--raise", "TakeOff", "--raise", "FlyStopDefault", "--set",
+                "DistToGoal=0"
+            ],
+            as: HKXArguments.self
+        )
+        #expect(probe.raise == ["TakeOff", "FlyStopDefault"])
+        #expect(probe.variables == ["DistToGoal=0"])
+        #expect(exitCode(["hkx", "a.hkx", "--set", "Speed=1"]) == OpenSkyCommandLine.usageExitCode)
+        #expect(exitCode(["hkx", "a.hkx", "--raise", "A", "--set", "Speed"])
+            == OpenSkyCommandLine.usageExitCode)
     }
 
     @Test func installChecksTheGivenFolder() throws {
@@ -265,4 +267,19 @@ struct CommandLineTests {
 
 private enum CommandLineTestError: Error {
     case notACommand
+}
+
+extension CommandLineTests {
+    private func command<T>(_ arguments: [String], as _: T.Type) throws -> T {
+        guard case let .run(command) = OpenSkyCommandLine.outcome(arguments) else {
+            Issue.record("\(arguments) did not parse to a command")
+            throw CommandLineTestError.notACommand
+        }
+        return try #require(command as? T)
+    }
+
+    private func exitCode(_ arguments: [String]) -> Int32? {
+        guard case let .exit(code, _) = OpenSkyCommandLine.outcome(arguments) else { return nil }
+        return code
+    }
 }

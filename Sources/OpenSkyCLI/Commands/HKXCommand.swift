@@ -4,6 +4,7 @@
 // parse failure here reproduces what later animation/skeleton loading sees.
 
 import Foundation
+import OpenSkyBehavior
 import OpenSkyCLIArguments
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
@@ -18,6 +19,10 @@ enum HKXCommand {
 
     static func run(context: CLIContext, arguments: HKXArguments) throws {
         let key = arguments.asset.path
+        if !arguments.raise.isEmpty {
+            try printRaise(key, arguments: arguments, fileSystem: context.makeFileSystem())
+            return
+        }
         let file: HKXFile
         do {
             file = try HKXFile(data: context.makeFileSystem().contents(forPath: key))
@@ -35,6 +40,35 @@ enum HKXCommand {
         printObjects(file)
         printCensus(file)
         HKXTopologyDump.print(file: file)
+    }
+
+    /// One line per step: the event, whether the graph took it, the active states, and
+    /// the events the graph fired after it.
+    private static func printRaise(
+        _ key: String, arguments: HKXArguments, fileSystem: VirtualFileSystem
+    ) throws {
+        var variables: [String: Float] = [:]
+        for entry in arguments.variables {
+            let parts = entry.split(separator: "=")
+            variables[String(parts[0])] = parts.last.flatMap { Float($0) }
+        }
+        let steps: [BehaviorEventProbe.Step]
+        do {
+            steps = try BehaviorEventProbe.run(
+                path: key, events: arguments.raise, variables: variables, fileSystem: fileSystem
+            )
+        } catch {
+            throw CLIError.failure("cannot step \(key): \(String(describing: error))")
+        }
+        for step in steps {
+            let taken = step.accepted ? "" : " (not declared)"
+            print("== \(step.event ?? "idle")\(taken)")
+            for state in step.states {
+                print("  state \(state)")
+            }
+            let fired = Array(Set(step.fired)).sorted()
+            print("  fired: \(fired.isEmpty ? "none" : fired.joined(separator: ", "))")
+        }
     }
 
     /// Behavior census: the same role, variable, event, and
