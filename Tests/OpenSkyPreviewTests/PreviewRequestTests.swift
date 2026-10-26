@@ -149,7 +149,7 @@ struct PreviewRequestTests {
     }
 }
 
-struct PreviewSidebarOptionsTests {
+struct PreviewOptionsTextTests {
     @Test func aCellTextIsAnEditorIDOrAGrid() throws {
         let interior = try PreviewOptions(kind: .cell, target: "WhiterunBanneredMare", inCell: "")
         #expect(interior.cell == "WhiterunBanneredMare")
