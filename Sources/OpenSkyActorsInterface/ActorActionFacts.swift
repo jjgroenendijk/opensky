@@ -5,7 +5,6 @@
 import Foundation
 
 /// `GetAttackState` codes, from the Creation Kit wiki page `GetAttackState`.
-/// OpenSky reaches the melee codes only.
 nonisolated public enum ActorAttackState: Int, Equatable, Sendable {
     case none = 0
     case draw = 1
@@ -14,6 +13,9 @@ nonisolated public enum ActorAttackState: Int, Equatable, Sendable {
     case nextAttack = 4
     case followThrough = 5
     case bash = 6
+    case drawingBow = 9
+    case holdingBowDrawn = 10
+    case loosingArrow = 12
 
     public var isAttacking: Bool {
         self != .none

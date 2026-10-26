@@ -217,6 +217,16 @@ struct MeleeCombatRuntimeTests {
         #expect(world.variables[CombatGraphNames.isAttacking] == .bool(false))
     }
 
+    @Test func aBashReportsTheBashAttackState() {
+        let runtime = Self.runtime(world: FakeMeleeWorld(), damage: 10)
+        runtime.handleGraphEvents(Self.drawEvents)
+        runtime.handleGraphEvents([CombatGraphNames.attackStart])
+        #expect(runtime.actionFacts.attackState != .bash)
+
+        runtime.strikeKind = .bash
+        #expect(runtime.actionFacts.attackState == .bash)
+    }
+
     @Test func resetForgetsTheSwingAndTheTrace() {
         let world = FakeMeleeWorld()
         world.targets = [MeleeTarget(key: .generated(1), feet: SIMD3(80, 0, 0))]

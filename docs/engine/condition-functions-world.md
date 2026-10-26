@@ -26,8 +26,10 @@ does model. Each such answer is listed below.
 fight. The combat loop fills this for NPCs, and the melee state for the player.
 
 - `GetAttackState` codes follow the
-  [Creation Kit wiki](https://ck.uesp.net/wiki/GetAttackState). OpenSky reaches only the
-  melee codes.
+  [Creation Kit wiki](https://ck.uesp.net/wiki/GetAttackState). The player's bow shot gives
+  9 while nocking and drawing, 10 at full draw, and 12 on the release frame. This mapping is
+  not yet confirmed in the game. A shield or weapon bash gives 6 for its whole length. OpenSky
+  has no chained attacks, so it never reports 4 (next attack).
 - OpenSky has no power attacks, no recoil, and no knock-down while alive. So
   `IsPowerAttacking` and `IsRecoiling` are 0, and `GetKnockedStateEnum` is 0, the standing
   state.

@@ -168,11 +168,11 @@ final class RuntimeStateWorldAdapter {
         return state
     }
 
-    /// The player's from its melee graph state; an NPC's from its combat behaviour, and
+    /// The player's from its melee and bow state; an NPC's from its combat behaviour, and
     /// standing still when it has none.
     private func actionFacts(of key: ReferenceKey, isDead: Bool) -> ActorActionFacts? {
         if key == .player {
-            return game.combat.melee?.actionFacts
+            return game.combat.playerActionFacts
         }
         guard let loop = game.combat.loop else { return nil }
         guard !isDead, let phase = loop.phase(of: key) else { return .still }
