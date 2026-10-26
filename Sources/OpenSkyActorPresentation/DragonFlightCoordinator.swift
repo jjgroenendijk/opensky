@@ -114,9 +114,8 @@ public final class DragonFlightCoordinator {
     @discardableResult
     public func handle(_ name: String, from actor: ReferenceKey) -> Bool {
         typealias Names = DragonFlightGraphNames
-        guard let event = Names.observedEvents.first(where: {
-            $0.caseInsensitiveCompare(name) == .orderedSame
-        }) else { return false }
+        let matches: (String) -> Bool = { $0.caseInsensitiveCompare(name) == .orderedSame }
+        guard let event = Names.observedEvents.first(where: matches) else { return false }
         handledEvents += 1
         guard let world, let state = flights[actor] else { return true }
         let below = SIMD2(state.feet.x, state.feet.y)

@@ -46,9 +46,10 @@ nonisolated public enum BehaviorEventProbe {
     ) throws -> [Step] {
         let key = path.lowercased().replacingOccurrences(of: "/", with: "\\")
         let paths = fileSystem.archiveEntries().map(\.path)
-        guard let set = BehaviorGapSweep.fileSets(in: paths).first(where: {
-            $0.behaviors.contains(key)
-        }) else { throw Failure.notActorBehavior(path) }
+        let sets = BehaviorGapSweep.fileSets(in: paths)
+        guard let set = sets.first(where: { $0.behaviors.contains(key) }) else {
+            throw Failure.notActorBehavior(path)
+        }
         guard
             let skeletonPath = set.skeleton,
             let data = try? fileSystem.contents(forPath: skeletonPath),
