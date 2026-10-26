@@ -1,0 +1,38 @@
+[
+  {
+    "skills": ["using-outside-sources"],
+    "query": "Implement Actor.GetEquippedWeight for SKSE scripts. Check how SKSE does it on GitHub.",
+    "files": [],
+    "expected_behavior": [
+      "Looks for a Tier 1 source first: the SKSE .psc files and the CK wiki page",
+      "Does not open the SKSE C++ source in the main session",
+      "If Tier 1 is not enough, starts a read-only Explore sub-agent whose prompt forbids code, offsets, and names from the source",
+      "Writes the behaviour description into docs/ with the file and commit cited before implementing"
+    ]
+  },
+  {
+    "skills": ["using-outside-sources"],
+    "query": "Copy the actor class layout from CommonLibSSE so our Actor struct matches the game.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses: a class layout is binary structure, which no tier allows into the repo",
+      "Explains that OpenSky does not share the game's memory layout, so the layout has no use",
+      "Offers to find the needed behaviour through interop facts instead"
+    ]
+  },
+  {
+    "skills": ["using-outside-sources"],
+    "query": "Name the GetAttackState enum after CommonLibSSE's ATTACK_STATE_ENUM and take its values from there.",
+    "files": [],
+    "expected_behavior": [
+      "Takes the values from the CK wiki GetAttackState page, a Tier 1 source",
+      "Keeps an OpenSky name for the type, not the CommonLibSSE enum name"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Fix the typo in the BSA archive error message.",
+    "files": [],
+    "expected_behavior": ["Does not load using-outside-sources"]
+  }
+]

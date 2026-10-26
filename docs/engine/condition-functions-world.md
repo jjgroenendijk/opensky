@@ -25,8 +25,9 @@ does model. Each such answer is listed below.
 `IsRecoiling` (702), and `GetKnockedStateEnum` (725) read what the actor's body does in a
 fight. The combat loop fills this for NPCs, and the melee state for the player.
 
-- `GetAttackState` codes follow the game's attack-state enumeration as CommonLibSSE names it
-  (`ATTACK_STATE_ENUM`). OpenSky reaches only the melee codes.
+- `GetAttackState` codes follow the
+  [Creation Kit wiki](https://ck.uesp.net/wiki/GetAttackState). OpenSky reaches only the
+  melee codes.
 - OpenSky has no power attacks, no recoil, and no knock-down while alive. So
   `IsPowerAttacking` and `IsRecoiling` are 0, and `GetKnockedStateEnum` is 0, the standing
   state.

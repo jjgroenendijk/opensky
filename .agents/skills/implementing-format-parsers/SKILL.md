@@ -27,7 +27,8 @@ The root `AGENTS.md` section "Legal & IP boundary" is the contract. This skill i
   Papyrus docs. Note the exact version or commit you read, because the page cites it.
 - No spec covers it -> do not guess. A guessed byte layout is wrong more often than not.
   Write a probe (`probing-real-game-data` skill), and flag the uncertainty in the page.
-- Bethesda code, decompiles, and SKSE internals are off limits.
+- Before you read or cite a source not listed here, load the `using-outside-sources` skill.
+  It says which sources are allowed and what may be taken from them.
 - Upstream hosts have access quirks (blocked hosts, non-default branches). Check
   `docs/tools/environment.md` before fighting a 403 or a 404.
 
