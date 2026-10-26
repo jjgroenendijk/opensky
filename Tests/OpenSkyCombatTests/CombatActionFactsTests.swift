@@ -15,6 +15,15 @@ struct CombatActionFactsTests {
         #expect(MeleeAttackPhase.recovery.attackState == .followThrough)
     }
 
+    @Test func bowShotPhasesMapOntoTheBowAttackStates() {
+        #expect(ArcheryShotPhase.idle.attackState == .none)
+        #expect(ArcheryShotPhase.nocked.attackState == .drawingBow)
+        #expect(ArcheryShotPhase.drawing.attackState == .drawingBow)
+        #expect(ArcheryShotPhase.drawn.attackState == .holdingBowDrawn)
+        #expect(ArcheryShotPhase.loosed.attackState == .loosingArrow)
+        #expect(ActorAttackState.loosingArrow.rawValue == 12)
+    }
+
     @Test func thePlayerGuardAndStaggerComeFromTheGraphEvents() {
         var state = MeleeCombatState()
         state.handle(CombatGraphNames.blockStart)

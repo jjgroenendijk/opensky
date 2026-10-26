@@ -1,5 +1,6 @@
 // The combat state as conditions read it (`ActorActionFacts`): the player's melee
-// graph state and strike, and each NPC's behaviour phase. See docs/engine/condition-functions.md.
+// graph state, strike, and bow shot, and each NPC's behaviour phase.
+// See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -20,6 +21,9 @@ extension MeleeCombatRuntime {
     public var actionFacts: ActorActionFacts {
         var facts = state.actionFacts
         guard state.attackPhase != .idle else { return facts }
+        if strikeKind.isBash {
+            facts.attackState = .bash
+        }
         facts.isPowerAttacking = strikeKind.isPowerAttack
         facts.attackTypeKeyword = switch strikeKind {
         case .power: powerDirection?.attackTypeKeyword
@@ -71,5 +75,28 @@ nonisolated extension CombatBehaviorPhase {
             isStaggered: self == .staggered,
             isFleeing: self == .fleeing
         )
+    }
+}
+
+nonisolated extension ArcheryShotPhase {
+    /// The wiki has no nock code, so nocking counts as drawing.
+    public var attackState: ActorAttackState {
+        switch self {
+        case .idle: .none
+        case .nocked, .drawing: .drawingBow
+        case .drawn: .holdingBowDrawn
+        case .loosed: .loosingArrow
+        }
+    }
+}
+
+extension CombatCoordinator {
+    /// A shot in progress decides the attack state; otherwise the melee graph does.
+    public var playerActionFacts: ActorActionFacts? {
+        guard var facts = melee?.actionFacts else { return nil }
+        if let phase = archery?.state.phase, phase != .idle {
+            facts.attackState = phase.attackState
+        }
+        return facts
     }
 }
