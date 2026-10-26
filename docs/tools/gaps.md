@@ -139,7 +139,9 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   camera shake, head tracking, or an animation object
   ([animation events](/engine/animation-events.md)). An `ANIO` unload event (`BNAM`) counts
   too. So does an event a graph of the clip's own folder waits for: a transition, an
-  event-driven modifier, or another node that switches on it. So does an event an archived
+  event-driven modifier, or another node that switches on it. So does an event the graph of an
+  `ARTO` model waits for, because an actor's events reach the graphs of the effects on it
+  ([effect graphs](/engine/effect-graphs.md)). So does an event an archived
   script passes as a string to `RegisterForAnimationEvent`, because the engine sends every
   graph event to the `OnAnimationEvent` of the scripts that registered for it. `Func.X` counts
   as done, because it sends `X` to the scripts. The folder is the one above

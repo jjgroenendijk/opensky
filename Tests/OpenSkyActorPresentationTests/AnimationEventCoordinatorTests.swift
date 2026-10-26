@@ -21,6 +21,7 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
     var shakes: [(SIMD3<Float>, Float)] = []
     var headTracking: [(Bool, ReferenceKey)] = []
     var scriptEvents: [(String, ReferenceKey)] = []
+    var effectGraphEvents: [(String, ReferenceKey)] = []
 
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>? {
         positions[source]
@@ -48,6 +49,10 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
     func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey) {
         scriptEvents.append((name, source))
     }
+
+    func sendEffectGraphEvent(_ name: String, from source: ReferenceKey) {
+        effectGraphEvents.append((name, source))
+    }
 }
 
 @MainActor
@@ -60,6 +65,14 @@ struct AnimationEventCoordinatorTests {
         world.knownSounds = ["TestClap"]
         let coordinator = AnimationEventCoordinator(world: world)
         return (coordinator, world)
+    }
+
+    @Test func everyEventReachesTheSourcesEffectGraphsUnlessOneRaisedIt() {
+        let (coordinator, world) = make()
+        coordinator.handle("MLh_SpellFire_Event", from: actor)
+        coordinator.handle("SoundPlay.TestClap", from: actor, reachesEffectGraphs: false)
+        #expect(world.effectGraphEvents.map(\.0) == ["MLh_SpellFire_Event"])
+        #expect(world.effectGraphEvents.first?.1 == actor)
     }
 
     @Test func aSoundPlaysWhereTheSourceStands() {

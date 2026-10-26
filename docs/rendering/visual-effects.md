@@ -37,6 +37,27 @@ effect that is already on the same anchor is not attached twice, so a reload doe
 race glows.
 At most 32 effects live at once; the oldest timed one goes first. This is OpenSky's limit.
 
+## Posed effect models
+
+Most art models draw as one shared copy. A model whose nodes move draws as its own copy, posed
+each frame by `EffectModelPoser`. A model moves when it has an active node controller
+([NIF controllers](/formats/nif-controllers.md#node-controller-rules)), when it names a behaviour
+graph ([effect graphs](/engine/effect-graphs.md)), or both. About 60 vanilla magic and FX models
+carry a lag bone, such as `magic\absorbbeam01.nif`, and many name a graph.
+
+- The poser reads each model's node controllers off the main actor, once per model. A model that
+  names a graph plays only its lag bones, as a placed mesh does
+  ([object animation](/engine/object-animation.md#node-controllers)).
+- Its bones are the bones of the graph's rig, then the moved nodes the rig does not name. Each
+  bone is a root at its model-frame transform. The graph's pose sets the rig bones, and the
+  node controllers set the moved nodes. A lag bone trails the effect's anchor.
+- An effect on an actor runs its graph ([effect graphs](/engine/effect-graphs.md)). An effect at a
+  point runs none, so its graph bones keep the rig's reference pose.
+- A copy goes back to a pool when its effect ends, and the next effect of the same model takes
+  it, so a model has at most as many copies as effects of it that live at once.
+- `openskycli game state effects` lists each posed effect under `posed`, with its model and
+  bones. The "Animated objects" setting draws every model as authored.
+
 ## Membrane
 
 The membrane is an extra pass over the target's meshes after the opaque and alpha-tested
@@ -99,6 +120,7 @@ OpenSky's numbers.
   particles are not drawn.
 - Art and membranes follow the actor's feet and facing, not a named bone. The `RFCT` node
   index is not used.
+- A posed model's particle systems do not follow its moved nodes; they stay at the node's rest.
 - [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
   `VisualEffect.Play` does not pass its facing object on yet.
 - An actor's membrane covers every mesh drawn for that actor, including worn armor.

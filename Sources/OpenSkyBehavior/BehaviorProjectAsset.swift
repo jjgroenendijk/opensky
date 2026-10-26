@@ -21,6 +21,8 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
     public let objectGraph: HKXObjectGraph
     public let behavior: HKBBehaviorGraph
     public let skeleton: HKASkeleton
+    /// The rig's archive path, such as `...\character assets\skeleton.hkx`.
+    public let rigPath: String
     /// Archive paths of the clips the character file lists. With `folderClips`, then the
     /// other clips of the project's `animations` folder, which a referenced file can name.
     public let clipPaths: [String]
@@ -73,6 +75,7 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
             objectGraph: graph,
             behavior: behavior,
             skeleton: rig,
+            rigPath: rigPath,
             clipPaths: listed + extra
         )
     }

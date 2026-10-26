@@ -312,6 +312,14 @@ run "actor values (Heimskr at level 10)" actor values --npc Heimskr --player-lev
 mesh_key="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>/dev/null \
   | head -1 | cut -f1)"
 run "nif inspect ($mesh_key)" nif "$mesh_key"
+# Node controllers: the torch's lag bone, found by its block type name.
+lag_mesh="$("$cli" --data-root "$data_root" vfs ls 'meshes\weapons\torch\*.nif' \
+  --containing BSLagBoneController 2>/dev/null | head -1 | cut -f1)"
+[ -n "$lag_mesh" ] || fail "vfs ls --containing found no torch lag bone"
+run "nif controllers ($lag_mesh)" nif "$lag_mesh" --controllers
+awk '/^--- nif controllers/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q '^controller BSLagBoneController on LagBone active' \
+  || fail "nif --controllers missed the torch lag bone"
 dds_key="$("$cli" --data-root "$data_root" vfs ls 'textures\*.dds' 2>/dev/null \
   | head -1 | cut -f1)"
 run "dds inspect ($dds_key)" dds "$dds_key"
@@ -408,6 +416,9 @@ printf '%s\n' "$skeleton_map" | grep -q 'skeleton 0 "NPC Root \[Root\]": 99 bone
   || fail "skeleton rig not 99 bones"
 printf '%s\n' "$skeleton_map" | grep -q '93 of 99 matched' \
   || fail "skeleton name-map not 93 of 99 matched"
+run "skeleton all bones" skeleton 'meshes\actors\character\character assets\skeleton.hkx' --all
+awk '/^--- skeleton all bones/{f=1;next} /^--- /{f=0} f' "$log" | grep -q '^  bone 98 ' \
+  || fail "skeleton --all did not list bone 98"
 unmatched="$(printf '%s\n' "$skeleton_map" | grep 'unmatched ' || true)"
 [ -n "$unmatched" ] || fail "skeleton name-map reported no mismatches"
 missing_reason="$(printf '%s\n' "$unmatched" | grep -vc ' -> ' || true)"

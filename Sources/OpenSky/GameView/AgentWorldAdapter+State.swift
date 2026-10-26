@@ -42,7 +42,8 @@ extension AgentWorldAdapter {
         case .menu: menuState
         case let .quest(editorID): try questState(editorID)
         case .scenes: scenesState()
-        case .scripts, .packages, .furniture, .objects, .changes: try inspection(query)
+        case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes:
+            try inspection(query)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
         case .time: timeState()
@@ -58,6 +59,8 @@ extension AgentWorldAdapter {
         case let .packages(reference): try packagesState(reference: reference)
         case let .furniture(reference): try furnitureState(reference: reference)
         case let .objects(reference): try objectsState(reference: reference)
+        case let .effects(reference): try effectsState(reference: reference)
+        case let .nodes(reference): try nodesState(reference: reference)
         case let .changes(limit): changesState(limit: limit)
         default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
@@ -240,7 +243,8 @@ extension AgentWorldAdapter {
             "recentEvents": .array(graph.recentEvents.map(AgentJSON.string)),
             "unresolvedClips": .array(graph.unresolvedClips.map(AgentJSON.string)),
             "clipsLoaded": .init(graph.clipsLoaded),
-            "clipsMissed": .init(graph.clipsMissed)
+            "clipsMissed": .init(graph.clipsMissed),
+            "boneLODHeldFrom": .init(graph.heldFromBone)
         ]
     }
 

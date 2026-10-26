@@ -1,4 +1,4 @@
-// `skeleton <hkx-key> [--nif <nif-key>]`: decode every hkaSkeleton in a
+// `skeleton <hkx-key> [--nif <nif-key>] [--all]`: decode every hkaSkeleton in a
 // packfile and, with --nif, map its bones onto the NIF skeleton's node names.
 // Uses the engine's own parsers, so a mismatch here is what animation sees.
 
@@ -26,22 +26,25 @@ enum SkeletonCommand {
         }
         print("[INFO] \(key): \(skeletons.count) hkaSkeleton object(s)")
         for (index, skeleton) in skeletons.enumerated() {
-            printSkeleton(index: index, skeleton: skeleton)
+            printSkeleton(
+                index: index, skeleton: skeleton,
+                limit: arguments.all ? skeleton.boneCount : boneListLimit
+            )
         }
 
         guard let nifKey else { return }
         try printNameMap(skeletons: skeletons, nifKey: nifKey, fileSystem: fileSystem)
     }
 
-    private static func printSkeleton(index: Int, skeleton: HKASkeleton) {
+    private static func printSkeleton(index: Int, skeleton: HKASkeleton, limit: Int) {
         let name = skeleton.name ?? "<unnamed>"
         print("skeleton \(index) \"\(name)\": \(skeleton.boneCount) bones, "
             + "\(skeleton.rootIndices.count) roots")
-        for boneIndex in 0 ..< min(skeleton.boneCount, boneListLimit) {
+        for boneIndex in 0 ..< min(skeleton.boneCount, limit) {
             let parent = skeleton.parentIndices[boneIndex]
             print("  bone \(boneIndex) \"\(skeleton.boneNames[boneIndex])\" parent \(parent)")
         }
-        let hidden = skeleton.boneCount - min(skeleton.boneCount, boneListLimit)
+        let hidden = skeleton.boneCount - min(skeleton.boneCount, limit)
         if hidden > 0 {
             print("  ... \(hidden) more bones")
         }

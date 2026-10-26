@@ -46,6 +46,9 @@ enum AssetCommand {
         if arguments.sequences {
             NIFSequenceReport.print(file: file)
         }
+        if arguments.controllers {
+            NIFControllerReport.print(file: file)
+        }
     }
 
     private static func decodedNode(

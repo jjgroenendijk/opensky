@@ -2,7 +2,8 @@
 type: Subsystem
 title: Object animation
 description: How traps, doors, and levers run the Havok behaviour graph their mesh names, how
-  doors without a graph play their mesh's Open and Close sequences, and how Papyrus drives both.
+  doors without a graph play their mesh's Open and Close sequences, how placed meshes play their
+  free-running node controllers, and how Papyrus drives them.
 tags: [engine, animation, behavior, scripting, app-ui]
 ---
 
@@ -127,3 +128,31 @@ path. A body on no leaf, such as a frame, stays where it is.
 - `GetOpenState` answers 1 or 3 for any other reference, where the game answers 0 for a
   reference that cannot open.
 - Text keys reach Papyrus `OnAnimationEvent` only through the graph path, not from sequence doors.
+
+## Node controllers
+
+Some placed meshes move a node with a controller that plays on its own clock, outside any
+sequence ([NIF controllers](/formats/nif-controllers.md#what-opensky-does-with-them)). Examples on
+the install: the hawk of `effects\fxbirdoprey02.nif` that circles a path, and the moths that fly
+a banked path beside a lag bone in `dlc01\effects\ambient\dlc1fxambbeamgladespot.nif`.
+
+A cell build gives a reference such a mesh when no object graph and no door sequence animates
+it, and its mesh has an active controller with more than one key on a named node. A mesh that
+names a behaviour graph plays only its lag bones. Its keyed controllers are a baked preview that
+the graph replaces: the forge markers carry 149 transform controllers that replay a 33-second
+smithing idle, and the Dwemer astrolabe hub moves its arms only through its graph. A lag bone is
+not baked, so it still trails, as on the magic beam `magic\absorbbeam01.nif`. Many actor
+skeletons carry active controllers with a single key, which hold the rest pose and are skipped.
+Like a sequence door, such a mesh draws its own node-skinned copy, with one root bone per moved
+node at its model-frame rest. The cell build reads each mesh once, and parses it only when its
+bytes name `NiTransformController` or `BSLagBoneController`.
+
+`NodeControllerCoordinator` steps each such mesh on the main actor, in reference order, after the
+sequence doors. Each mesh has its own clock, which starts when the mesh first loads and keeps
+running through a cell rebuild. Lag bones trail the reference's placement, and bone LOD measures
+from the camera to the reference. The "Animated objects" setting turns the node controllers off
+with the object graphs.
+
+`openskycli game state nodes` lists the references that play node controllers. With a
+reference, it lists each driven node: its position and forward axis in the mesh, its controllers,
+whether one is active, and whether bone LOD froze it.

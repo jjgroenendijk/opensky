@@ -245,6 +245,7 @@ nonisolated extension CellSceneBuilder {
         var instances = instances + addOnInstances(for: instances)
         let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let doors = animatedDoors(&instances)
+        let nodes = animatedNodes(&instances)
         let actors = geometry.actors
         let particles = makeParticlePlaybacks(instances: instances)
         // A simulated reference draws at its live pose, so it keeps its FormID.
@@ -256,7 +257,7 @@ nonisolated extension CellSceneBuilder {
         let renderScene = RenderScene(
             instances: placed + actors.placements,
             animations: actors.animations + objects.map(\.playback) + vehicles.map(\.playback)
-                + doors.map(\.playback),
+                + doors.map(\.playback) + nodes.map(\.playback),
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
             sky: found.cell.isInterior ? nil : geometry.sky,
@@ -271,7 +272,6 @@ nonisolated extension CellSceneBuilder {
             found: found, grid: grid, instanceCount: instances.count,
             geometry: geometry, counts: counts
         )
-        Self.logger.info("\(summary.summaryLine, privacy: .public)")
         var scene = CellScene(
             renderScene: renderScene,
             summary: summary,
@@ -301,6 +301,7 @@ nonisolated extension CellSceneBuilder {
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         scene.sequenceDoors = doors.map(\.door)
+        scene.nodeAnimations = nodes.map(\.mesh)
         return scene
     }
 
@@ -391,6 +392,7 @@ nonisolated extension CellSceneBuilder {
         summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
         summary.actorAppearanceSkipReasons = actors.counts.appearanceSkipReasons
         summary.skippedRecords = skippedRecords
+        Self.logger.info("\(summary.summaryLine, privacy: .public)")
         return summary
     }
 }

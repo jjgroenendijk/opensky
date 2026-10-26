@@ -19,6 +19,10 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case furniture(reference: String)
     /// Each running object graph, such as a trap's, with its state and bone positions.
     case objects(reference: String?)
+    /// Each running effect graph, with its actor, state, and the last actor event it took.
+    case effects(reference: String?)
+    /// The placed meshes that play node controllers; with a reference, its driven nodes.
+    case nodes(reference: String?)
     /// The newest world-state writes, and whether the streamer is loading or rebuilding.
     case changes(limit: Int)
     case actorValue(reference: String, name: String)
@@ -61,6 +65,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "packages": try .packages(reference: args.string("ref"))
         case "furniture": try .furniture(reference: args.optionalString("ref") ?? "player")
         case "objects": try .objects(reference: args.optionalString("ref"))
+        case "effects": try .effects(reference: args.optionalString("ref"))
+        case "nodes": try .nodes(reference: args.optionalString("ref"))
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         default: nil
         }
@@ -159,9 +165,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     ) throws(AgentFailure) -> Self {
         switch name {
         case "overlay":
-            return try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
-        case "channel": return try .channel(args.string("mode"))
-        case "shadows": return try .shadows(args.string("quality"))
+            try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
+        case "channel": try .channel(args.string("mode"))
+        case "shadows": try .shadows(args.string("quality"))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

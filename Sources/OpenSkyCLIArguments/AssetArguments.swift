@@ -32,6 +32,14 @@ public struct VFSArguments: ParsableCommand, Sendable {
             "An fnmatch wildcard or a substring. Default: every entry.", valueName: "pattern"
         ))
         public var pattern: String?
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Keep only entries whose bytes hold this text, such as a NIF block type.",
+                valueName: "text"
+            )
+        )
+        public var containing: String?
 
         public init() {}
     }
@@ -62,6 +70,8 @@ public struct NIFArguments: CLICommandArguments {
     @OptionGroup public var asset: AssetPathArgument
     @Flag(help: "Also print the node tree, unlit shapes, and controller sequences.")
     public var sequences = false
+    @Flag(help: "Also print the node controllers that play on their own clock, and bone LOD.")
+    public var controllers = false
 
     public init() {}
 }
@@ -133,6 +143,8 @@ public struct SkeletonArguments: CLICommandArguments {
         help: ArgumentHelp("Map the rig onto this NIF's skeleton nodes.", valueName: "nif-path")
     )
     public var nif: String?
+    @Flag(help: "List every bone, not only the first 12.")
+    public var all = false
 
     public init() {}
 }

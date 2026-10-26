@@ -349,6 +349,28 @@ final class GameSessionScope {
         return doors
     }()
 
+    lazy var nodeControllers: NodeControllerCoordinator = {
+        let nodes = NodeControllerCoordinator(world: objectAnimationWorld)
+        nodes.isEnabled = objectBehaviors.isEnabled
+        return nodes
+    }()
+
+    /// The behaviour graphs of the effects on actors, which hear the actors' events.
+    lazy var effectGraphWorld = EffectGraphWorldAdapter(game: self)
+    lazy var effectGraphs = EffectGraphCoordinator(
+        world: effectGraphWorld, files: { [unowned self] in audioFileSystem }
+    )
+    /// Poses the effect models whose nodes move; the "Animated objects" setting turns it off.
+    lazy var effectModelPoser: EffectModelPoser = {
+        let poser = EffectModelPoser(
+            files: { [unowned self] in audioFileSystem },
+            meshes: { [unowned self] in effects.meshes },
+            graphs: effectGraphs
+        )
+        poser.isEnabled = objectBehaviors.isEnabled
+        return poser
+    }()
+
     /// The behaviour graph each loaded NPC and creature runs.
     lazy var actorGraphWorld = ActorGraphWorldAdapter(game: self)
     lazy var actorGraphs = ActorGraphCoordinator(

@@ -11,6 +11,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
@@ -36,6 +37,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var combatWorld: CombatWorldAdapter { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var effects: EffectsCoordinator { get set }
+    var effectModelPoser: EffectModelPoser { get }
     var effectsWorld: EffectsWorldAdapter { get }
     var hazardWorld: HazardWorldAdapter { get }
     var hud: HUDCoordinator { get }
@@ -52,6 +54,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var messageWorld: MessageWorldAdapter { get }
     var npcAnimation: NPCAnimationCoordinator { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var effectGraphWorld: EffectGraphWorldAdapter { get }
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var playerWorld: PlayerWorldAdapter { get }
     var progression: ProgressionCoordinator { get }
@@ -235,6 +238,7 @@ final class WorldSessionWiring {
         // After the locks, whose activation gate it wraps.
         game.mountWorld.wireMounts(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
+        game.effectGraphWorld.wire(gameSession: gameSession)
         buildAnimationEvents(gameSession: gameSession)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(streamer: streamer)

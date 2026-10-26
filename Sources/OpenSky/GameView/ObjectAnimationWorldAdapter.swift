@@ -1,13 +1,14 @@
-// App side of the object behaviour graphs and the sequence doors: hands the
-// coordinators the resident objects, steps them in the world update, and answers
-// Papyrus. The rules live in `ObjectBehaviorCoordinator` and `SequenceDoorCoordinator`
-// (docs/engine/object-animation.md).
+// App side of the object behaviour graphs, the sequence doors, and the node controllers:
+// hands the coordinators the resident objects, steps them in the world update, and
+// answers Papyrus. The rules live in `ObjectBehaviorCoordinator`, `SequenceDoorCoordinator`,
+// and `NodeControllerCoordinator` (docs/engine/object-animation.md).
 
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyObjectAnimation
+import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -21,6 +22,7 @@ protocol ObjectAnimationWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var objectBehaviors: ObjectBehaviorCoordinator { get }
     var sequenceDoors: SequenceDoorCoordinator { get }
+    var nodeControllers: NodeControllerCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
@@ -61,6 +63,8 @@ final class ObjectAnimationWorldAdapter {
         objects.tick(deltaTime: delta)
         run(doors.sync())
         run(doors.tick(deltaTime: delta))
+        game.nodeControllers.sync()
+        game.nodeControllers.tick(deltaTime: delta)
         advanceTrapContact(delta)
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
         for (token, fired) in pendingAnswers
@@ -178,5 +182,15 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
                 game.streamer?.sequenceDoorLeaves[reference] = deltas
             }
         }
+    }
+}
+
+extension ObjectAnimationWorldAdapter: NodeControllerWorld {
+    func residentNodeAnimations() -> [CellNodeAnimation] {
+        game.streamer?.residentNodeAnimations() ?? []
+    }
+
+    var nodeControllerViewer: SIMD3<Float>? {
+        game.gameSession?.freeFlyCamera.position
     }
 }

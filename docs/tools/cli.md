@@ -138,13 +138,13 @@ the number. A summary line goes to stderr.
 
 | Command | What it checks |
 | --- | --- |
-| `vfs ls [pattern]` | Archive entries as `path<TAB>archive`. `fnmatch` wildcards with `FNM_NOESCAPE`, so `\` stays a separator, or a substring. Loose files are not listed, but `cat` finds them |
+| `vfs ls [pattern] [--containing <text>]` | Archive entries as `path<TAB>archive`. `fnmatch` wildcards with `FNM_NOESCAPE`, so `\` stays a separator, or a substring. `--containing` keeps the entries whose bytes hold the text, such as a NIF block type name. Loose files are not listed, but `cat` finds them |
 | `vfs cat <path> --out <file>` | Extracts one resource. Loose files win, as in the engine |
-| `nif <path> [--sequences]` | Container stats, each node with its local translation, the flattened model, and any furniture markers. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
+| `nif <path> [--sequences] [--controllers]` | Container stats, each node with its local translation, the flattened model, and any furniture markers. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)). `--controllers` adds each node controller that plays on its own clock, and the bone LOD bones and levels ([controllers](/formats/nif-controllers.md#node-controller-rules)) |
 | `dds <path>` | The header and mip chain |
 | `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)). `--blenders` lists each blender instead: flags, bound blend parameter, and each child's place and generator |
 | `hkt show <path>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
-| `skeleton <path> [--nif <nif-path>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
+| `skeleton <path> [--nif <nif-path>] [--all]` | Every `hkaSkeleton` with its first 12 bones, or every bone with `--all`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
 | `animation <path>` | Decodes and samples every frame. A bad binding or a non-finite value exits 1 ([animation](/formats/hka-animation.md)) |
 | `audio show <path>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |

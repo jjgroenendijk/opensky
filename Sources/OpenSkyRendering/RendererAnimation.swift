@@ -9,8 +9,9 @@ extension Renderer {
         let started = DispatchTime.now().uptimeNanoseconds
         let sceneBones = if actorAnimationsEnabled {
             scene.updateAnimations(at: animationTime)
+                + effects.scene.updateAnimations(at: animationTime)
         } else {
-            scene.resetAnimationsToBindPose()
+            scene.resetAnimationsToBindPose() + effects.scene.resetAnimationsToBindPose()
         }
         // The simulation steps the player's animation; this only publishes the pose and
         // honours the same A/B toggle (PlayerAnimationPlayback.swift).

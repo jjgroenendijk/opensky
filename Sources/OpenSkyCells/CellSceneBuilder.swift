@@ -159,6 +159,8 @@ nonisolated public final class CellSceneBuilder {
     var objectBehaviorAssets: [String: BehaviorProjectAsset?] = [:]
     /// Sequence door rigs by mesh key; nil inside records a mesh without one.
     var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
+    /// Node controller rigs by mesh key; nil inside records a mesh without one.
+    var nodeControllerRigs: [String: NodeControllerRig?] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver

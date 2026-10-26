@@ -10,8 +10,10 @@ import simd
 extension Renderer {
     /// Replaces the effect models. Rings grow to fit, new allocations go resident,
     /// and the previous models retire once in-flight frames drain.
-    public func setEffectPlacements(_ placements: [RenderPlacement]) throws {
-        let next = RenderScene(instances: placements)
+    public func setEffectPlacements(
+        _ placements: [RenderPlacement], animations: [any RenderAnimation] = []
+    ) throws {
+        let next = RenderScene(instances: placements, animations: animations)
         try growRings(
             drawCount: scene.drawCount + rigDrawCount + next.drawCount,
             instanceCount: scene.instanceCount + rigInstanceCount + next.instanceCount

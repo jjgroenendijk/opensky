@@ -17,6 +17,7 @@ extension GameSessionScope: @MainActor CrimeWorldHost {}
 extension GameSessionScope: @MainActor DialogueCameraHost {}
 extension GameSessionScope: @MainActor DialogueMenuHost {}
 extension GameSessionScope: @MainActor DialogueWorldHost {}
+extension GameSessionScope: @MainActor EffectGraphWorldHost {}
 extension GameSessionScope: @MainActor EffectsWorldHost {}
 extension GameSessionScope: @MainActor IdleWorldHost {}
 extension GameSessionScope: @MainActor InventoryMenuHost {}

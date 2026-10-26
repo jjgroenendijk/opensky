@@ -90,11 +90,11 @@ enum NIFSequenceReport {
             .joined(separator: " ")
     }
 
-    private static func format(_ value: Float) -> String {
+    static func format(_ value: Float) -> String {
         String(format: "%.3f", value)
     }
 
-    private static func format<Vector: SIMD>(_ value: Vector) -> String
+    static func format<Vector: SIMD>(_ value: Vector) -> String
         where Vector.Scalar == Float
     {
         "(" + value.indices.map { format(value[$0]) }.joined(separator: ", ") + ")"

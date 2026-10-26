@@ -76,6 +76,7 @@ extension WorldSessionWiring {
                 world: world
             )
         }
+        game.effects.posing = game.effectModelPoser
         world.wireEffects(provider: provider, streamer: streamer, gameSession: gameSession)
     }
 

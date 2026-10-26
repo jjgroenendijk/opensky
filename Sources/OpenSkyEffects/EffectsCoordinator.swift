@@ -46,7 +46,9 @@ public final class EffectsCoordinator {
     /// The particle systems of each live effect, by instance id.
     var effectParticles: [Int: EffectParticles] = [:]
     /// A library only the main thread uses; nil draws membranes only.
-    let meshes: MeshLibrary?
+    public let meshes: MeshLibrary?
+    /// Poses the effect models whose nodes move; nil draws every model as authored.
+    public weak var posing: (any EffectModelPosing)?
     private var drewModels = false
     /// Blood that lasts: on the screen after the player is hit, and on weapons.
     public internal(set) var screenBlood = ScreenBloodRuntime()
@@ -180,15 +182,28 @@ public final class EffectsCoordinator {
         visualEffects.advance(seconds)
         stepBlood(seconds, renderer: renderer)
         let world = world
-        let models = visualEffects.models(camera: world?.effectCamera) { anchor in
+        let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in
             switch anchor {
             case let .actor(key): world?.effectTransform(of: key)
             case let .point(position): Self.translation(position)
             case let .surface(position, normal): Self.surfaceTransform(position, normal: normal)
             }
-        } + extraModels
+        }
+        let posed = posing?.pose(effectModels, deltaTime: seconds) ?? [:]
+        let models = effectModels + extraModels
         if !models.isEmpty || drewModels {
-            try renderer.setEffectPlacements(models.compactMap(placement))
+            let placements = effectModels.compactMap { model -> RenderPlacement? in
+                if let id = model.instanceID, let copy = posed[id] {
+                    return RenderPlacement(
+                        model: copy.model, transform: model.transform,
+                        castsShadows: false, layer: .particles
+                    )
+                }
+                return placement(model)
+            } + extraModels.compactMap(placement)
+            try renderer.setEffectPlacements(
+                placements, animations: posed.keys.sorted().compactMap { posed[$0]?.animation }
+            )
             drewModels = !models.isEmpty
         }
         try syncParticles(models, renderer: renderer)
