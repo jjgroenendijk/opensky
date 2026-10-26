@@ -1,5 +1,4 @@
-// The mount functions read who rides what; the flight functions answer the grounded
-// value, because no actor flies yet.
+// The mount functions read who rides what; the flight functions read each flight.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -49,6 +48,14 @@ struct ConditionMountFunctionTests {
             mounts: [Self.subject: Self.target], playersLastMount: nil
         )
         #expect(try Self.outcome(730, equals: 0, mounts: horse) == .true)
+    }
+
+    @Test func theFlyingStateAndThePlaceAnswer() throws {
+        var flying = MountConditionResolution(mounts: [:], playersLastMount: nil)
+        flying.flyingStates = [Self.subject: 3]
+        flying.canFlyHere = true
+        #expect(try Self.outcome(633, equals: 3, mounts: flying) == .true)
+        #expect(try Self.outcome(731, equals: 1, mounts: flying) == .true)
     }
 
     @Test func flightReadsTheGroundedValue() throws {

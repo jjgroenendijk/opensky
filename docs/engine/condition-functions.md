@@ -106,7 +106,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
 | 580 | `IsBleedingOut` | none | 1 while the actor bleeds out; always 0 |
 | 590 | `IsInScene` | none | 1 while a playing scene holds the actor |
-| 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
+| 594 | `GetIsFlying` | none | 1 while the actor flies ([dragon flight](/engine/dragon-flight.md)) |
 | 606 | `GetKeywordDataForLocation` | `LCTN`, `KYWD` | the location's keyword data |
 | 608 | `GetKeywordDataForAlias` | location alias, `KYWD` | the keyword data of the alias's location |
 | 613 | `IsFurnitureAnimType` | animation type | 1 when the actor's marker has that type |
@@ -262,8 +262,8 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.
-- `GetPairedAnimation` and `GetIsFlying` return 0. OpenSky plays no paired animation, such
-  as a kill move, and no actor flies yet. The systems that add them set the actor state.
+- `GetPairedAnimation` returns 0. OpenSky plays no paired animation, such as a kill move.
+  The system that adds one sets the actor state.
 - `GetDead` reads the death flag, not health. The Creation Kit says: "This is more accurate
   than checking the actor's health because there are circumstances when the actor can die
   without losing all of their health."

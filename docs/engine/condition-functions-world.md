@@ -86,11 +86,14 @@ These read what a native or the dialogue stored in the actor's
   mount. `IsBeingRidden` (714) is 1 for the mount under such a rider.
 - `IsPlayersLastRiddenMount` (339) is the horse the player sat on last, kept after they get
   off.
-- `IsOnFlyingMount` (730) is 1 while the player sits on a dragon ([riding](/engine/riding.md)).
+- `IsOnFlyingMount` (730) is 1 while the player sits on a dragon in the air
+  ([riding](/engine/riding.md)).
 - `IsHorseStolen` (282) is always 0. The Creation Kit wiki says the function does nothing
   (<https://ck.uesp.net/wiki/IsHorseStolen>).
-- `GetFlyingState` (633) is 0, `FLY_STATE_NONE`. `CanFlyHere` (731), the land requests
-  (646, 647), and the other flying-mount functions (732, 733) are 0. No actor flies yet.
+- `GetFlyingState` (633) is the flight phase, 0 to 4 ([dragon flight](/engine/dragon-flight.md)).
+  `CanFlyHere` (731) is 1 in an exterior. The hasty and crash land requests (646, 647) and the
+  flying patrol and fast travel (732, 733) are 0: OpenSky lands only the default way and has
+  neither.
 
 ## Crime
 

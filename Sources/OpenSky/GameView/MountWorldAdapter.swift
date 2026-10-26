@@ -11,11 +11,13 @@ import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -30,9 +32,11 @@ protocol MountWorldHost: AnyObject {
     var mounts: MountCoordinator { get }
     var crime: CrimeCoordinator { get }
     var gameSession: GameSession? { get }
+    var magic: MagicCoordinator { get }
     var magicWorld: MagicWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var perks: PerkCoordinator { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var vehicleWorld: VehicleWorldAdapter { get }
     var worldData: WorldDataStores? { get }
@@ -91,9 +95,9 @@ final class MountWorldAdapter {
         return true
     }
 
-    /// The player's dragon, for `IsOnFlyingMount`.
+    /// The player's dragon while it flies, for `IsOnFlyingMount`.
     var flyingMounts: Set<ReferenceKey> {
-        guard let drive = mounts.drive, drive.kind == .dragon else { return [] }
+        guard let drive = mounts.drive, drive.flight?.phase.isFlying == true else { return [] }
         return [drive.mount]
     }
 
@@ -137,12 +141,23 @@ final class MountWorldAdapter {
         case let .releaseMount(mount):
             game.streamer?.releaseRiddenActor(mount)
             game.actorGraphWorld.graphs.giveBack(mount)
+        case .askToSteal, .reportTheft, .refused, .notify, .dragonBreath:
+            applyOutcome(command)
+        }
+    }
+
+    /// The commands that reach crime, messages, and magic rather than the bodies.
+    private func applyOutcome(_ command: MountCommand) {
+        switch command {
         case let .askToSteal(mount): askToSteal(mount)
         case let .reportTheft(mount):
             let owner = game.crime.ownershipVerdict(on: mount).owner
             game.crime.reporter?.reportHorseTheft(of: mount, owner: owner)
         case let .refused(reason):
             _ = game.messages.postNotification("Cannot mount: \(reason.rawValue).")
+        case let .notify(text): _ = game.messages.postNotification(text)
+        case let .dragonBreath(mount, target): breathe(from: mount, at: target)
+        default: break
         }
     }
 
@@ -230,6 +245,10 @@ extension MountWorldAdapter: PlayerMountDriving {
 
     var maximumLookDown: Float {
         mounts.settings.maximumLookDown
+    }
+
+    var mountKind: MountKind? {
+        mounts.drive?.kind
     }
 
     func advanceMount(

@@ -61,6 +61,13 @@ nonisolated public struct MeleeImpactResolver: Sendable {
         weapon.impactDataSet.flatMap { resolve(dataSet: $0, material: material) }
     }
 
+    /// The IPDS with `editorID`, matched without case.
+    public func dataSet(editorID: String) -> FormID? {
+        impactDataSets.values.first {
+            $0.editorID?.caseInsensitiveCompare(editorID) == .orderedSame
+        }?.formID
+    }
+
     /// The impact one IPDS plays on `material`, as Papyrus `PlayImpactEffect` asks.
     public func resolve(dataSet dataSetID: FormID, material: FormID?) -> ResolvedMeleeImpact? {
         guard

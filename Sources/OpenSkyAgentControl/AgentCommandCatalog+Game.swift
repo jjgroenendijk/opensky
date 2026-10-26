@@ -33,6 +33,13 @@ nonisolated extension AgentCommandCatalog {
             positionals: [optional("ref", "Default: player.")]
         ),
         command(
+            "state.flight", "Each actor in the air, or one actor's flight, and the ridden dragon.",
+            positionals: [optional("ref", refHelp)]
+        ),
+        command(
+            "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
+        ),
+        command(
             "state.objects", "Each running object graph; with a reference, also its bones.",
             positionals: [optional("ref", refHelp)]
         ),
@@ -128,6 +135,10 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.stand", "Get an actor up from its seat.",
             positionals: [optional("ref", "The actor. Default: player.")]
+        ),
+        command(
+            "debug.flight", "Force an actor that flies to take off or land.",
+            positionals: [required("ref", refHelp), required("order", "Either takeoff or land.")]
         )
     ]
 

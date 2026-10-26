@@ -47,4 +47,5 @@ extension GameSessionScope: @MainActor ScriptWorldHost {}
 extension GameSessionScope: @MainActor StoryWorldHost {}
 extension GameSessionScope: @MainActor VehicleWorldHost {}
 extension GameSessionScope: @MainActor MountWorldHost {}
+extension GameSessionScope: @MainActor DragonFlightWorldHost {}
 extension GameSessionScope: @MainActor WorldSessionWiringHost {}

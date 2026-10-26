@@ -198,9 +198,9 @@ in three stages: in the air, on a perch, and on the ground. A fight starts in th
   ground settings by the style's ground attack time (`CSFL`,
   [combat style](/formats/combat-style.md)).
 
-After a perch or ground stage the actor goes back to the air. OpenSky has no flight movement yet,
-so "in the air" moves the actor on the ground around its target. The stage order and the time
-mapping are OpenSky's reading.
+After a perch or ground stage the actor goes back to the air. The stages pick where the actor
+flies: [dragon flight](/engine/dragon-flight.md) takes off, circles, hovers, and lands it. The
+stage order and the time mapping are OpenSky's reading.
 
 ## Fleeing
 

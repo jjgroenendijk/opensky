@@ -1,5 +1,6 @@
 // The session stores the main actor reads. The build queue never touches them.
 
+import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCombatInterface
@@ -120,6 +121,8 @@ nonisolated public struct WorldDataStores {
     public var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// A ridden horse's gaits, from its movement types.
     public var mountMovementConfiguration: PlayerMovementConfiguration = .synthetic
+    /// A dragon's flight, from the dragon movement types.
+    public var dragonFlightSettings: DragonFlightSettings = .standard
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
     /// Speech value, defaulting to the documented vanilla numbers.
     public var barterPricing: BarterPricing = .vanilla

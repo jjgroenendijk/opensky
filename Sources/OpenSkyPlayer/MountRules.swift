@@ -107,20 +107,28 @@ nonisolated public enum MountRules: Sendable {
 
     /// The input a rider keeps. On horseback the game allows melee weapons, bows, and
     /// crossbows in the right hand, and blocks sneaking, blocking, magic, shouts,
-    /// unarmed attacks, and staves (UESP "Skyrim:Combat", Horse-Mounted Combat).
-    /// The jump key goes to the mount.
-    public static func riderInput(_ input: CameraInput, rightHandType: Int32) -> CameraInput {
+    /// unarmed attacks, and staves (UESP "Skyrim:Combat", Horse-Mounted Combat). A dragon
+    /// rider shouts and casts readied spells (UESP "Skyrim:Dragon Riding"). Jump and
+    /// sneak go to the mount.
+    public static func riderInput(
+        _ input: CameraInput, rightHandType: Int32, kind: MountKind = .horse
+    ) -> CameraInput {
         var kept = input
         kept.sneak = false
         kept.block = false
-        kept.shout = false
         kept.jump = false
-        if !isMountedWeapon(rightHandType) {
+        kept.shout = kind == .dragon && input.shout
+        let attacks = kind == .dragon
+            ? rightHandType == readiedSpell : isMountedWeapon(rightHandType)
+        if !attacks {
             kept.attack = false
             kept.attackHeld = false
         }
         return kept
     }
+
+    /// `iRightHandType` of a readied spell, the one thing a dragon rider casts by hand.
+    public static let readiedSpell: Int32 = 9
 
     /// Where a rider stands after a dismount, from the mount's feet: the race's
     /// dismount offset turned into the world, x to the mount's right, y forward.

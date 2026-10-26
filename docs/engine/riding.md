@@ -8,8 +8,9 @@ tags: [engine, player, animation]
 # Riding
 
 The player mounts a horse or a tamed dragon with the use key. While mounted, the movement keys
-drive the horse, and the use key dismounts. A cart rider, which the player does not steer, is in
-[vehicles](/engine/vehicles.md).
+drive the horse, and the use key dismounts. A dragon flies, and the rider gives it orders instead
+([dragon flight](/engine/dragon-flight.md#riding)). A cart rider, which the player does not
+steer, is in [vehicles](/engine/vehicles.md).
 
 ## Who can be mounted
 
@@ -61,7 +62,7 @@ graph only follows: it reads the mount's speed, turn, and sprint.
 - The rider may look down at most `fMountedMaxLookingDown` (40) degrees.
 - The rider keeps melee weapons, bows, and crossbows. Sneak, block, shouts, and attacks with
   anything else (fists, staves, spells) are dropped. Source: UESP "Skyrim:Combat", Horse-Mounted
-  Combat. Drawing a
+  Combat. A dragon rider keeps shouts and readied spells instead, and no weapon. Drawing a
   weapon writes `iCombatStance` on the mount ([actor state graph](/engine/actor-state-graph.md)).
 - A door is refused with `sNotAllowedToUseAutoDoorsWhileonHorse`
   ([interaction](/engine/interaction.md)).
@@ -75,12 +76,12 @@ the dismount. A mount that dies or unloads drops the rider at once.
 ## Conditions and scripts
 
 `IsRidingMount`, `IsBeingRidden`, and `IsPlayersLastRiddenMount` answer for the player too.
-`IsOnFlyingMount` is 1 on a dragon ([world condition functions](/engine/condition-functions-world.md)).
+`IsOnFlyingMount` is 1 while the ridden dragon flies
+([world condition functions](/engine/condition-functions-world.md)).
 `Actor.Dismount()` starts the dismount clips and returns true when it did.
 
 ## Where OpenSky differs
 
-- [WARNING] A dragon is not flown. It stands still while the player sits on it.
 - [INFO] The ridden mount's capsule (radius 40, height 160) is OpenSky's value.
 - [INFO] `iHorseTurnDegreesRampUpPerSecond` is not used; the turn rate is constant.
 - [INFO] Horse stamina is not spent while sprinting.

@@ -114,7 +114,7 @@ extension AgentWorldAdapter {
         ]
     }
 
-    private func formID(of key: ReferenceKey) -> AgentJSON? {
+    func formID(of key: ReferenceKey) -> AgentJSON? {
         game.streamer?.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
     }
 }

@@ -177,7 +177,7 @@ struct PerkActivationCoordinatorTests {
         #expect(world.fragments.map(\.index) == [2])
     }
 
-    @Test func theSidebarListsAndRunsTheCrosshairChoices() throws {
+    @Test func theSnapshotListsAndRunsTheCrosshairChoices() throws {
         let harness = try PerkActivationHarness(choices(of: "VampireFeed"))
         let (coordinator, world) = (harness.coordinator, harness.world)
         world.crosshairTarget = target

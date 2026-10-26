@@ -188,8 +188,10 @@ A movement type says how fast an actor moves in each direction. The player's gai
 forward walk, forward run, back walk, back run, rotate in place walk, rotate in place run,
 rotate while moving run. The first eight are units per second, the last three radians per
 second. The data agrees: `NPC_Sprinting_MT` is 0 in every side slot and 500 in the forward
-pair, which fits only if forward is at float index 4 and 5. A shorter `SPED` is not used,
-because zeros would mean "this actor cannot move".
+pair, which fits only if forward is at float index 4 and 5. The four dragon types
+(`Dragon_Default_MT`, `Dragon_Flying_MT`, `Dragon_Hovering_MT`, `Dragon_Perching_MT`) carry
+a 40-byte `SPED`: the first 10 floats, without rotate while moving run. Any other length is
+not used, because zeros would mean "this actor cannot move".
 
 `Skyrim.esm`, forward walk and run in units per second:
 

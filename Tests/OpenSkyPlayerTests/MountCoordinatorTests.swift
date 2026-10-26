@@ -32,6 +32,14 @@ private final class FakeMountWorld: MountWorld {
     func dismountOffset(of _: ReferenceKey) -> SIMD3<Float> {
         SIMD3(-50, 0, 65)
     }
+
+    func lockCandidate() -> ReferenceKey? {
+        nil
+    }
+
+    func livingActorFeet(_: ReferenceKey) -> SIMD3<Float>? {
+        nil
+    }
 }
 
 @MainActor

@@ -18,6 +18,11 @@ nonisolated public struct MountSettings: Equatable, Sendable {
     /// `sYes` and `sNo`: the buttons of the steal question.
     public var yes = "Yes"
     public var no = "No"
+    /// `sTESVDLC2FlyingMountLandingMessage`: the rider ordered a ridden dragon to land.
+    /// The vanilla text is localised; this default is OpenSky's.
+    public var landingMessage = "Landing."
+    /// `sTESVDLC2FlyingMountCancelLandingMessage`: the rider called the landing off.
+    public var cancelLandingMessage = "Landing cancelled."
 
     public static let vanilla = Self()
 
@@ -50,6 +55,13 @@ nonisolated public struct MountSettings: Equatable, Sendable {
         store.read("sRide", into: &settings, \.ride, text: text)
         store.read("sYes", into: &settings, \.yes, text: text)
         store.read("sNo", into: &settings, \.no, text: text)
+        store.read(
+            "sTESVDLC2FlyingMountLandingMessage", into: &settings, \.landingMessage, text: text
+        )
+        store.read(
+            "sTESVDLC2FlyingMountCancelLandingMessage", into: &settings,
+            \.cancelLandingMessage, text: text
+        )
         return settings
     }
 }

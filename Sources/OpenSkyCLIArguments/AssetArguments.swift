@@ -96,8 +96,29 @@ public struct HKXArguments: CLICommandArguments {
     @OptionGroup public var asset: AssetPathArgument
     @Flag(help: "List every blender: flags, bound blend parameter, and each child.")
     public var blenders = false
+    @Option(
+        parsing: .unconditionalSingleValue,
+        help: "Step the actor graph, raise this event, print each state reached. Repeatable."
+    )
+    public var raise: [String] = []
+    @Option(
+        name: .customLong("set"), parsing: .unconditionalSingleValue,
+        help: "With --raise: hold a variable, as name=value. Repeatable."
+    )
+    public var variables: [String] = []
 
     public init() {}
+
+    public mutating func validate() throws {
+        for entry in variables where entry.split(separator: "=").count != 2
+            || Float(entry.split(separator: "=").last ?? "") == nil
+        {
+            throw ValidationError("--set takes name=value with a number, got \(entry)")
+        }
+        if !variables.isEmpty, raise.isEmpty {
+            throw ValidationError("--set needs --raise")
+        }
+    }
 }
 
 public struct HKTArguments: ParsableCommand, Sendable {

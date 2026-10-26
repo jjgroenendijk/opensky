@@ -26,6 +26,7 @@ protocol ActorGraphWorldHost: AnyObject {
     var actorGraphs: ActorGraphCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var audioFileSystem: (any GameFileSource)? { get }
+    var dragonFlight: DragonFlightCoordinator { get }
     var gameSession: GameSession? { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var playerSettingsStore: PlayerSettingsStore { get }
@@ -91,6 +92,7 @@ final class ActorGraphWorldAdapter {
 
     func actorGraphFired(_ name: String, from actor: ReferenceKey) {
         game.gameSession?.animationEvents?.handle(name, from: actor)
+        game.dragonFlight.handle(name, from: actor)
         game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
         guard
             let feet = game.actorWorld.combatActor(key: actor)?.feet,

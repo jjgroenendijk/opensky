@@ -331,11 +331,11 @@ final class GameSessionScope {
     /// The player's horse or dragon.
     lazy var mountWorld = MountWorldAdapter(game: self)
     lazy var mounts = MountCoordinator(
-        world: mountWorld,
-        settings: worldData.map { data in
-            MountSettings.resolve(store: data.gameSettings) { [unowned self] in mapWorld.text($0) }
-        } ?? .vanilla
+        world: mountWorld, settings: mountSettings, flightSettings: dragonFlightSettings
     )
+    /// Dragons nobody rides: take-off, flight, and landing.
+    lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: self)
+    lazy var dragonFlight = DragonFlightCoordinator(world: dragonFlightWorld)
     /// Traps, doors, and levers that a behaviour graph runs.
     lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
     lazy var objectBehaviors = ObjectBehaviorCoordinator(

@@ -184,7 +184,8 @@ extension GameSession {
             pitch: freeFlyCamera.pitch
         )
         let rider = MountRules.riderInput(
-            frameInput, rightHandType: locomotion.actorState.rightHandType
+            frameInput, rightHandType: locomotion.actorState.rightHandType,
+            kind: playerMount?.mountKind ?? .horse
         )
         locomotion.acceptFrame(rider)
         let world = MountStepWorld(

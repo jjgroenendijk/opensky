@@ -50,6 +50,8 @@ extension RuntimeStateWorldAdapter {
             mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
             flyingMounts: game.mountWorld.flyingMounts
         )
+        context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
+        context.mounts.canFlyHere = game.streamer?.interiorScene == nil
         context.menus = MenuConditionResolution(
             isMenuOpen: game.menuMode.topMenu != nil,
             isLoading: game.menuMode.topMenu == LoadingScreenWorldAdapter.identifier

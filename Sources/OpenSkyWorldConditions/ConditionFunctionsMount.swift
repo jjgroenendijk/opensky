@@ -16,8 +16,12 @@ nonisolated public struct MountConditionResolution: ConditionResolution, Sendabl
     /// Rider to mount. Nil when nothing was wired.
     public let mounts: [ReferenceKey: ReferenceKey]?
     public let playersLastMount: ReferenceKey?
-    /// The mounts that fly, such as a tamed dragon.
+    /// The mounts in the air, such as a tamed dragon.
     public let flyingMounts: Set<ReferenceKey>
+    /// `GetFlyingState` of each actor that is not on the ground.
+    public var flyingStates: [ReferenceKey: Int32] = [:]
+    /// No actor flies in an interior.
+    public var canFlyHere = false
 
     public init(
         mounts: [ReferenceKey: ReferenceKey]?, playersLastMount: ReferenceKey?,
@@ -57,11 +61,19 @@ nonisolated extension ConditionFunctions {
                 Self.isTrue(mounts[key].map(flying.contains) ?? false)
             }
         })
-        // No actor flies yet, so every other flight read is the grounded value: state 0
-        // is FLY_STATE_NONE.
+        // 0 not flying, 1 taking off, 2 cruising, 3 hovering, 4 landing (CK wiki
+        // "GetFlyingState - Actor").
+        registry.register(ConditionFunction(index: 633, name: "GetFlyingState") { call in
+            let states = call.context.mounts.flyingStates
+            return mount(call) { _, key, _ in Float(states[key] ?? 0) }
+        })
+        registry.register(ConditionFunction(index: 731, name: "CanFlyHere") { call in
+            let canFly = call.context.mounts.canFlyHere
+            return mount(call) { _, _, _ in Self.isTrue(canFly) }
+        })
+        // OpenSky lands only in the default way, and has no flying patrol or fast travel.
         let flight: [String: UInt16] = [
-            "GetFlyingState": 633, "GetIsCrashLandRequest": 646,
-            "GetIsHastyLandRequest": 647, "CanFlyHere": 731,
+            "GetIsCrashLandRequest": 646, "GetIsHastyLandRequest": 647,
             "IsFlyingMountPatrolQueud": 732, "IsFlyingMountFastTravelling": 733
         ]
         for (name, index) in flight.sorted(by: { $0.key < $1.key }) {
