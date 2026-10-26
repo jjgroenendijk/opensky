@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyAgentControl
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyReference
@@ -14,16 +15,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let worldLoader = WorldLoader()
     private var launcher: LauncherViewController?
     private var launcherWindow: NSWindow?
-    private var gameWindow: NSWindow?
+    private(set) var gameWindow: NSWindow?
     private var settingsController: SettingsWindowController?
     private var agentControl: AgentControlHost?
     private let benchmarkHost = BenchmarkRunHost()
+    let referenceSession = ReferenceGameSession()
 
     /// True while the game window is up.
     private(set) var isPlaying = false
     /// Where the next Play window starts: a launcher start option or a save to continue.
     private var pendingStart = LaunchStart.normal
     private var pendingContinueSlot: String?
+    /// Where the next Play window's content goes, such as beside the reference game.
+    private var pendingContentRect: CGRect?
 
     func applicationDidFinishLaunching(_: Notification) {
         // The shell is a committed dark design (Theme.swift): forcing dark
@@ -165,6 +169,25 @@ extension AppDelegate: LauncherActions {
         return try? game?.session?.agentWorld.referenceView()
     }
 
+    func placeNextGameWindow(contentRect: CGRect) {
+        pendingContentRect = contentRect
+    }
+
+    func captureWorld(to url: URL, width: Int, height: Int) throws {
+        let game = gameWindow?.contentViewController as? GameViewController
+        guard let world = game?.session?.agentWorld else {
+            throw ReferenceCaptureError.openSkyFailed("Start the game in OpenSky first.")
+        }
+        let request = AgentScreenshotRequest(
+            path: url.path(percentEncoded: false), width: width, height: height, worldOnly: true
+        )
+        do {
+            _ = try world.captureScreenshot(request)
+        } catch {
+            throw ReferenceCaptureError.openSkyFailed(error.message)
+        }
+    }
+
     func runBenchmark(_ request: BenchmarkRequest) {
         benchmarkHost.queueLauncherRun(request)
         pendingStart = .normal
@@ -212,7 +235,10 @@ extension AppDelegate: LauncherActions {
         }
         window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
-        if Self.savedSettings().bool(.fullScreen), !window.styleMask.contains(.fullScreen) {
+        if let rect = pendingContentRect {
+            pendingContentRect = nil
+            window.setFrame(window.frameRect(forContentRect: rect), display: true)
+        } else if Self.savedSettings().bool(.fullScreen), !window.styleMask.contains(.fullScreen) {
             window.toggleFullScreen(nil)
         }
     }
@@ -232,6 +258,11 @@ extension AppDelegate: NSWindowDelegate {
 
 extension AppDelegate: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        menuItem.action == #selector(returnToLauncher(_:)) ? isPlaying : true
+        switch menuItem.action {
+        case #selector(returnToLauncher(_:)): isPlaying
+        case #selector(exportReferenceView(_:)), #selector(captureReferencePair(_:)):
+            isPlaying && ReferenceSettings.prefix() != nil
+        default: true
+        }
     }
 }

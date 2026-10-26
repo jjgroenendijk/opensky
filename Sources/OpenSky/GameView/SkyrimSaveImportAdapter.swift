@@ -29,6 +29,10 @@ enum SkyrimSaveImportAdapter {
         slot.hasPrefix(slotPrefix)
     }
 
+    nonisolated static func slot(for save: URL) -> String {
+        slotPrefix + save.path(percentEncoded: false)
+    }
+
     /// The folder setting's saves, or none when it is unset or unreadable.
     static func rows() async -> [SaveSlotRow] {
         guard let folder = ESSSaveFolderSetting.folder() else { return [] }
@@ -40,7 +44,7 @@ enum SkyrimSaveImportAdapter {
         let header = listing.summary?.header
         let picture = listing.summary.flatMap { ESSSaveFolder.thumbnail(of: $0.screenshot) }
         return SaveSlotRow(
-            slot: slotPrefix + listing.url.path(percentEncoded: false),
+            slot: slot(for: listing.url),
             title: titlePrefix + listing.name + (header.map { " - \($0.playerName)" } ?? ""),
             detail: header.map { "Level \($0.playerLevel), \($0.playerLocation)" }
                 ?? listing.error ?? "",

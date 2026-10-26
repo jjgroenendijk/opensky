@@ -1,9 +1,9 @@
-// The thin shell around `ReferenceLaunchPlan`: writes the window size into the
-// prefix's `SkyrimPrefs.ini`, repairs Steam's browser, then starts Steam and the game. The CLI and
-// the
-// launcher page share it.
+// The thin shell around `ReferenceLaunchPlan`: writes the window frame into the
+// prefix's `SkyrimPrefs.ini`, repairs Steam's browser, then starts Steam and the
+// game. The CLI and the launcher page share it.
 
 import Foundation
+import OpenSkyGameData
 
 nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, LocalizedError {
     case notReady(String)
@@ -34,21 +34,25 @@ nonisolated public enum ReferenceLauncher {
     }
 
     /// Starts from the game's `High.ini` preset when the game never wrote its own file.
+    /// A `preset` sets every value its file names, such as Low when two games share the GPU.
     public static func writePrefsIni(
-        prefix: ReferencePrefix,
-        width: Int,
-        height: Int
+        prefix: ReferencePrefix, frame: ReferenceWindowFrame, preset: GraphicsPreset? = nil
     ) throws -> URL {
         guard let ini = prefix.prefsIni() else { throw ReferenceLauncherError.noWineUser }
         try requireInsidePrefix(ini.deletingLastPathComponent(), prefix: prefix)
-        let preset = prefix.gameDirectory.appending(path: "High.ini")
-        let text = (try? String(contentsOf: ini, encoding: .utf8))
-            ?? (try? String(contentsOf: preset, encoding: .utf8)) ?? ""
+        func read(_ url: URL) -> String? {
+            try? String(contentsOf: url, encoding: .utf8)
+        }
+        let high = prefix.gameDirectory.appending(path: GraphicsPreset.high.fileName)
+        var text = read(ini) ?? read(high) ?? ""
+        if let preset {
+            let file = prefix.gameDirectory.appending(path: preset.fileName)
+            text = ReferencePrefsIni.apply(preset: read(file) ?? "", to: text)
+        }
         try FileManager.default.createDirectory(
             at: ini.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-        try Data(ReferencePrefsIni.apply(to: text, width: width, height: height).utf8)
-            .write(to: ini)
+        try Data(ReferencePrefsIni.apply(to: text, frame: frame).utf8).write(to: ini)
         return ini
     }
 
@@ -98,12 +102,12 @@ nonisolated public enum ReferenceLauncher {
 
     /// Starts Steam unless it runs, waits `steamWait` seconds for it, then the game.
     public static func launch(
-        prefix: ReferencePrefix, width: Int, height: Int, steamWait: Int, logs: URL
+        prefix: ReferencePrefix, options: ReferenceLaunchOptions, logs: URL
     ) async throws {
         guard let wine = ReferenceSettings.wine(prefix: prefix.root) else {
             throw ReferenceLauncherError.noWine
         }
-        _ = try writePrefsIni(prefix: prefix, width: width, height: height)
+        _ = try writePrefsIni(prefix: prefix, frame: options.frame, preset: options.preset)
         let plan = ReferenceLaunchPlan(
             prefix: prefix, wine: wine, baseEnvironment: ProcessInfo.processInfo.environment,
             clientDownloaded: FileManager.default.fileExists(
@@ -119,7 +123,7 @@ nonisolated public enum ReferenceLauncher {
                 environment: plan.environment,
                 log: logs.appending(path: "steam.log")
             )
-            try await Task.sleep(for: .seconds(steamWait))
+            try await Task.sleep(for: .seconds(options.steamWait))
         }
         try start(
             plan.game,
@@ -140,5 +144,19 @@ nonisolated public enum ReferenceLauncher {
             return (left?.contentModificationDate ?? .distantPast)
                 < (right?.contentModificationDate ?? .distantPast)
         }
+    }
+}
+
+nonisolated public struct ReferenceLaunchOptions: Equatable, Sendable {
+    public var frame: ReferenceWindowFrame
+    /// Seconds to wait for a newly started Steam to log in before the game starts.
+    public var steamWait: Int
+    /// The game's own preset to apply first; `nil` keeps the current graphics settings.
+    public var preset: GraphicsPreset?
+
+    public init(frame: ReferenceWindowFrame, steamWait: Int, preset: GraphicsPreset? = nil) {
+        self.frame = frame
+        self.steamWait = steamWait
+        self.preset = preset
     }
 }

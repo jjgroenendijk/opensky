@@ -1035,7 +1035,7 @@ targets += composition(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
         "OpenSkyFormatsAnimation", "OpenSkyGameData", "OpenSkyConditions", "OpenSkyRendering",
-        "OpenSkyWorld", "OpenSkyRenderCore", "OpenSkyRenderResources"
+        "OpenSkyWorld", "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyReference"
     ] + worldDomains,
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",

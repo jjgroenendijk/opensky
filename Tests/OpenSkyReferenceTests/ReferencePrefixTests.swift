@@ -1,5 +1,6 @@
 // The prefix layout, its status, the launch plan, the settings, and the ini edit.
 
+import CoreGraphics
 import Foundation
 @testable import OpenSkyReference
 import Testing
@@ -80,15 +81,57 @@ struct ReferencePrefixTests {
     @Test func prefsIniSetsTheDisplayKeysAndKeepsTheRest() {
         let text = "[Display]\r\nbFull Screen=1\r\niSize W=1920\r\nfGamma=1.0\r\n\r\n"
             + "[Audio]\r\nfVal=1\r\n"
-        let result = ReferencePrefsIni.apply(to: text, width: 1280, height: 720)
+        let frame = ReferenceWindowFrame(x: 0, y: 25, width: 1280, height: 720)
+        let result = ReferencePrefsIni.apply(to: text, frame: frame)
         #expect(result == "[Display]\r\nbFull Screen=0\r\niSize W=1280\r\nfGamma=1.0\r\n"
-            + "bBorderless=1\r\niSize H=720\r\n\r\n[Audio]\r\nfVal=1\r\n")
+            + "bBorderless=1\r\niSize H=720\r\n\r\n"
+            + "[Audio]\r\nfVal=1\r\n[General]\r\nbAlwaysActive=1\r\n")
     }
 
     @Test func prefsIniAddsAMissingSection() {
-        let result = ReferencePrefsIni.apply(to: "[General]\nsA=b\n", width: 800, height: 600)
-        #expect(result == "[General]\r\nsA=b\r\n[Display]\r\nbBorderless=1\r\nbFull Screen=0\r\n"
-            + "iSize W=800\r\niSize H=600\r\n")
+        let frame = ReferenceWindowFrame(x: 10, y: 20, width: 800, height: 600)
+        let result = ReferencePrefsIni.apply(to: "[General]\nsA=b\n", frame: frame)
+        #expect(result == "[General]\r\nsA=b\r\nbAlwaysActive=1\r\n"
+            + "[Display]\r\nbBorderless=1\r\nbFull Screen=0\r\niSize W=800\r\niSize H=600\r\n")
+    }
+
+    @Test func presetSetsItsKeysAndKeepsTheOthers() {
+        let preset = "; Low\r\n[Display]\r\niShadowMapResolution=1024\r\n[Grass]\r\nb=0\r\n"
+        let text = "[Display]\r\niShadowMapResolution=4096\r\niSize W=1280\r\n"
+            + "[Controls]\r\nfMouse=1\r\n"
+        #expect(ReferencePrefsIni.apply(preset: preset, to: text)
+            == "[Display]\r\niShadowMapResolution=1024\r\niSize W=1280\r\n"
+            + "[Controls]\r\nfMouse=1\r\n[Grass]\r\nb=0\r\n")
+    }
+
+    @Test func sideBySideSplitsTheScreenIntoTwoEqualPictures() {
+        let layout = ReferenceSideBySide(
+            visible: CGRect(x: 0, y: 80, width: 1728, height: 1000),
+            screenHeight: 1117, titleBar: 28
+        )
+        #expect(layout.openSkyContent == CGRect(x: 0, y: 566, width: 864, height: 486))
+        #expect(layout.reference == ReferenceWindowFrame(x: 864, y: 65, width: 864, height: 486))
+    }
+
+    @Test func sideBySideFitsAShortScreenByHeight() {
+        let layout = ReferenceSideBySide(
+            visible: CGRect(x: 0, y: 0, width: 3000, height: 628), screenHeight: 628, titleBar: 28
+        )
+        #expect(layout.reference == ReferenceWindowFrame(x: 1500, y: 28, width: 1066, height: 600))
+        #expect(layout.openSkyContent.maxX == 1500)
+    }
+
+    @Test func removingAKeyFromAMissingSectionChangesNothing() {
+        let text = ReferenceIni.set(
+            [ReferenceIniValue("sA", nil)],
+            in: "General",
+            of: "[D]\nfA=1\n"
+        )
+        #expect(text == "[D]\r\nfA=1\r\n")
+        let removed = ReferenceIni.set(
+            [ReferenceIniValue("sa", nil)], in: "general", of: "[General]\nsA=b\nsB=c\n"
+        )
+        #expect(removed == "[General]\r\nsB=c\r\n")
     }
 }
 
@@ -120,6 +163,22 @@ struct ReferenceWindowTests {
         ]
         #expect(ReferenceWindow.pick(windows)?.id == 2)
         #expect(ReferenceWindow.pick([windows[3]]) == nil)
+        let small = ReferenceWindowFrame(x: 0, y: 0, width: 400, height: 300)
+        #expect(ReferenceWindow.pick(windows, expected: small)?.id == 1)
+    }
+
+    @Test func aWindowIsPlacedOnlyAtItsFramesCornerAndSize() {
+        let frame = ReferenceWindowFrame(x: 720, y: 62, width: 720, height: 405)
+        let window = ReferenceWindowInfo(
+            id: 1, ownerName: "wine", layer: 0, width: 720, height: 405, x: 720, y: 62
+        )
+        #expect(window.isPlaced(at: frame))
+        var moved = window
+        moved.x = 0
+        #expect(!moved.isPlaced(at: frame))
+        var resized = window
+        resized.height = 720
+        #expect(!resized.isPlaced(at: frame))
     }
 
     @Test func manifestSitsInSteamapps() {

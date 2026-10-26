@@ -41,8 +41,39 @@ enum MainMenu {
         launcherItem.target = target
         launcherItem.identifier = NSUserInterfaceItemIdentifier("ReturnToLauncherCommand")
         gameMenu.addItem(launcherItem)
+        gameMenu.addItem(.separator())
+        for entry in referenceEntries {
+            let menuItem = item(
+                title: entry.title, action: entry.action, keyEquivalent: entry.key,
+                modifiers: entry.key.isEmpty ? [] : [.shift, .command]
+            )
+            menuItem.identifier = NSUserInterfaceItemIdentifier(entry.identifier)
+            menuItem.target = target
+            gameMenu.addItem(menuItem)
+        }
         return gameMenu
     }
+
+    private struct Entry {
+        let title: String
+        let action: Selector
+        /// Shift-Cmd plus this key; empty for none.
+        let key: String
+        let identifier: String
+    }
+
+    /// The Windows reference game's items (docs/tools/reference-game.md).
+    private static let referenceEntries = [
+        Entry(
+            title: "Export View to Windows Game",
+            action: #selector(AppDelegate.exportReferenceView(_:)),
+            key: "e", identifier: "ExportReferenceViewCommand"
+        ),
+        Entry(
+            title: "Capture Both Games", action: #selector(AppDelegate.captureReferencePair(_:)),
+            key: "k", identifier: "CaptureReferenceCommand"
+        )
+    ]
 
     private static func makeEditMenu() -> NSMenu {
         let editMenu = NSMenu(title: "Edit")

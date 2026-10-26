@@ -12,9 +12,9 @@ The reference game is the real Windows Skyrim SE, run on this Mac under Wine. It
 same data as OpenSky, so a capture from each side at the same view shows each difference
 directly: rendering, lighting, weather, UI, and actors.
 
-It is developer tooling. The scripts are in `reference/`, the rules in the `OpenSkyReference`
-module, and the commands in `openskycli reference`. No release bundles Wine or DXVK, and the
-app lists the Reference Game page only once a prefix is set.
+The setup script is in `reference/`, the rules in the `OpenSkyReference` module, the
+commands in `openskycli reference`, and the buttons on the launcher's Reference Game page.
+No release bundles Wine or DXVK; setup downloads them.
 
 ## How the pieces fit
 
@@ -130,12 +130,16 @@ found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
 
 ## Launching
 
-`make reference-game` (`openskycli reference launch`) does four things:
+`make reference-game` (`openskycli reference launch`) and the launcher's Start buttons do
+four things:
 
-1. It writes `bBorderless=1`, `bFull Screen=0`, `iSize W`, and `iSize H` into the prefix's
-   `SkyrimPrefs.ini`, starting from the game's `High.ini` preset when the game has not
-   written the file yet. Without these keys the game window does not match the capture size.
-   The default size is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it.
+1. They write `bBorderless=1`, `bFull Screen=0`, `iSize W`, and `iSize H` into the
+   prefix's `SkyrimPrefs.ini`, starting from the game's `High.ini` preset when the game has
+   not written the file yet. Without these keys the game window does not match the capture
+   size. The default is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it. Wine
+   opens the window at the top left and ignores `iLocation X` and `iLocation Y`. They also
+   set `bAlwaysActive=1` in `[General]`, so the game keeps drawing while another app is in
+   front. Without it the game pauses and drops typed console keys.
 2. Unless a `steam.exe` already runs, it deletes the browser lock files and swaps in the
    web helper wrapper.
 3. It starts Windows Steam with the flags above, and waits `--steam-wait` seconds for the
@@ -144,7 +148,57 @@ found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
    paths set, so Steam does not open the game's launcher window.
 
 The environment turns off the Metal HUD (`MTL_HUD_ENABLED=0`), because it changes the
-captured image. Wine's output goes to `.logs/reference-game/<UTC time>/`.
+captured image. Wine's output goes to `.logs/reference-game/<UTC time>/`, or, from the
+launcher, to `~/Library/Application Support/OpenSky/Reference/Wine/<UTC time>/`.
+
+## Side by side from the launcher
+
+The Reference Game page needs no terminal once a prefix exists. Choose Prefix picks one
+that `make reference-setup` built.
+
+- **Start Both** splits the main screen. The Windows game opens borderless on the right
+  half, and OpenSky's Play window on the left half, both with a 16:9 picture of the same
+  size and their tops in line. OpenSky starts the way the Launch page's Play button would.
+  Wine ignores the window place in `SkyrimPrefs.ini`, so once the game window is on screen
+  OpenSky moves it through the Accessibility API. Wine places the window again while the
+  game sets up its display, so OpenSky repeats the move until the window has stayed in
+  place for 5 seconds. The move needs the Accessibility permission for OpenSky. Those
+  coordinates start at the top left of the main screen, in points, so the page converts
+  AppKit's bottom-left frame.
+- **Low graphics in both games** is on by default, because the two games share one GPU.
+  It sets OpenSky's Graphics preset to Low, and sets every key of the game's `Low.ini` in
+  the prefix's `SkyrimPrefs.ini`. Both stay set afterwards; the Graphics page changes
+  OpenSky back.
+- **OpenSky loads the newest Windows save** makes Start Both start from one save. OpenSky
+  imports the newest `.ess` in the prefix's `Saves/` folder. In the Windows game, choose
+  Continue on the main menu: it loads the same save.
+- **Start Windows Game** starts only the Windows game, at the default size.
+
+The launcher hides while OpenSky's game window is open, so the Game menu holds the actions
+that need a running game. Each result shows as the game window's subtitle.
+
+| Game menu item | Keys | What it does |
+| --- | --- | --- |
+| Export View to Windows Game | Shift-Cmd-E | Writes the batch file for a `bat opensky` typed in the Windows console |
+| Capture Both Games | Shift-Cmd-K | Writes a comparison run |
+
+## Why OpenSky does not type into the Windows game
+
+OpenSky does not send keys to the Windows game. Typing into its console through Wine was
+tried, and it is not reliable (observed 2026-10-26):
+
+- Wine drops keys while the game is not the front app, and macOS refuses a plain
+  `activate()` from an app that is not in front itself.
+- With `bAlwaysActive=1`, letters and Backspace arrive while another app is in front, but
+  Return does not reach the console.
+- At the main menu, Return goes to the menu behind the console. It opens a confirm
+  dialog, and the game then hangs.
+- `sStartingConsoleCommand=load <save>` in `[General]` of `Skyrim.ini` does nothing.
+- On an ISO keyboard Wine swaps the key codes of the key left of 1 (10) and the grave
+  key (50), so the console key depends on the keyboard.
+
+A plugin inside the game that takes commands and reports the player's state would avoid
+all of these.
 
 ## Same view, two games
 
@@ -199,8 +253,14 @@ folder, `.logs/reference/<UTC time>/`:
 | `opensky.txt` | The batch file of this view |
 | `report.json` | The view, the size, the RGB PSNR, and the largest channel error |
 
-The reference window is the biggest normal window whose owner name holds "wine" or
-"skyrim". The capture needs the Screen Recording permission for the terminal.
+The reference window is the normal window of the size the game was started with, whose
+owner name holds "wine" or "skyrim"; without such a window it is the biggest one. The
+capture needs the Screen Recording permission for the terminal, or for OpenSky when the
+Game menu or the Reference Game page captures; OpenSky asks for it on the first capture.
+Those write the same files to
+`~/Library/Application Support/OpenSky/Reference/Captures/<UTC time>/`, because the app
+has no checkout. The batch file is not copied into the game folder there; Export View does
+that.
 
 The Reference Game page shows the newest run: side by side, Flip (one image at full width;
 press it again to swap the games), and Difference. PSNR is only a rough signal between two

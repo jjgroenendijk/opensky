@@ -20,6 +20,23 @@ protocol LauncherActions: AnyObject {
     func runBenchmark(_ request: BenchmarkRequest)
     /// The running game's view for the reference game, or nil with no game open.
     func referenceView() -> ReferenceView?
+    /// Puts the next Play window's content at `contentRect`, in screen points, not full screen.
+    func placeNextGameWindow(contentRect: CGRect)
+    /// Renders the running world without the interface into a PNG of this size.
+    func captureWorld(to url: URL, width: Int, height: Int) throws
+    /// The Windows reference game, shared with the Game menu.
+    var referenceSession: ReferenceGameSession { get }
+}
+
+extension LauncherActions {
+    /// What the Launch page's Play button does for `plan`.
+    func start(_ plan: LaunchPlan) {
+        switch plan {
+        case let .resume(slot): continueGame(slot: slot)
+        case .mainMenu: play(from: .normal)
+        case let .newGame(start): play(from: start)
+        }
+    }
 }
 
 /// What the pages share: the app's actions and one asset optimisation coordinator,
@@ -47,8 +64,6 @@ struct LauncherPageDescriptor {
     let title: String
     let symbolName: String
     let makeController: (LauncherContext) -> NSViewController
-    /// Read when the sidebar loads; a developer page hides until it is set up.
-    var isListed: () -> Bool = { true }
 
     var sidebarIdentifier: String {
         "LauncherPage-\(id)"
@@ -56,11 +71,7 @@ struct LauncherPageDescriptor {
 }
 
 enum LauncherRegistry {
-    static var pages: [LauncherPageDescriptor] {
-        allPages.filter { $0.isListed() }
-    }
-
-    static let allPages: [LauncherPageDescriptor] = [
+    static let pages: [LauncherPageDescriptor] = [
         LauncherPageDescriptor(
             id: "launch",
             title: "Launch",
@@ -99,8 +110,7 @@ enum LauncherRegistry {
             id: "reference",
             title: "Reference Game",
             symbolName: "rectangle.split.2x1",
-            makeController: { ReferencePageViewController(context: $0) },
-            isListed: { ReferenceSettings.prefix() != nil }
+            makeController: { ReferencePageViewController(context: $0) }
         ),
         LauncherPageDescriptor(
             id: "settings",
