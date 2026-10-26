@@ -241,15 +241,20 @@ extension GapsGatherer {
         return objects.compactMap(\.unloadEvent)
     }
 
-    /// The events the graphs of `ARTO` models wait for. An actor's events reach the
-    /// graphs of the effects on it (docs/engine/effect-graphs.md).
+    /// The events the graphs of `ARTO` and `ARMA` models wait for. An actor's events
+    /// reach the graphs of the effects and armour addons on it (docs/engine/effect-graphs.md).
     private func effectGraphEvents(_ hearing: HKXAnnotationHearing) -> Set<String> {
         var skipped = SkippedRecords()
         let arts = (try? requirePlugins().decodeRecords(of: "ARTO", skipped: &skipped) {
             try ArtObject(record: $0)
         }) ?? []
+        let addons = (try? requirePlugins().decodeRecords(of: "ARMA", skipped: &skipped) {
+            try ArmorAddon(record: $0)
+        }) ?? []
+        let models = arts.compactMap(\.modelPath)
+            + addons.flatMap { [$0.maleModelPath, $0.femaleModelPath].compactMap(\.self) }
         var projects = Set<String>()
-        for model in Set(arts.compactMap { $0.modelPath?.lowercased() }) {
+        for model in Set(models.map { $0.lowercased() }) {
             let path = model.hasPrefix("meshes\\") ? model : "meshes\\" + model
             guard
                 let data = try? fileSystem.contents(forPath: path),
