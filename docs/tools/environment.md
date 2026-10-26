@@ -307,6 +307,25 @@ error. `tools/failed-build-records.sh` works around it
 Retires when the driver keeps the skipped dependents in its record after a failed job: then the
 reproduction passes with the script's call removed from `tools/xcodebuild-run.sh`.
 
+## xcodebuild aborts when the test step re-resolves the package graph
+
+Observed 2026-10-26 on Xcode 27.1 (27A9275), three runs in a row in the main checkout.
+`make test-unit` built the Quick plan (`** TEST BUILD SUCCEEDED **`). The test step then
+printed `Resolve Package Graph` 16 to 20 times and aborted with `** INTERNAL ERROR:
+DVTInvalidation.swift:37 ... Message sent to invalidated object:
+<IDESwiftPackageTestBundleProductBuildable ...>`. Every run in a linked worktree from
+2026-10-17 to 2026-10-23 printed it once or twice and passed.
+
+The likely cause: the main checkout is the package root, and it holds `.cache/Build/`, where
+every build writes, and `.claude/worktrees/`, where other sessions edit and build their own
+`Package.swift` trees. Xcode re-resolves when it sees files change under the root. In a
+linked worktree neither folder is under the root. So build and test from a linked worktree.
+`make test-rerun` runs a built plan through its `.xctestrun`, without the package graph,
+and passed in the main checkout.
+
+Retires when `make test-unit` in the main checkout runs its tests while another worktree
+builds.
+
 ## A stopped signing step leaves a `.cstemp` file
 
 Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`
