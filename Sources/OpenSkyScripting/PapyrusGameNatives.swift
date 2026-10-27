@@ -71,6 +71,8 @@ public struct PapyrusGameNatives {
     /// Moves the player into the named cell. False when no cell has the name.
     public var centerOnCell: ((String) -> Bool)?
     public var setGodMode: ((Bool) -> Void)?
+    /// `Debug.SetFootIK`: foot IK on or off for every actor and the player.
+    public var setFootIK: ((Bool) -> Void)?
     public var showFirstPersonGeometry: ((Bool) -> Void)?
     public var clearPrison: (() -> Void)?
     public var setPlayerReportsCrime: ((Bool) -> Void)?

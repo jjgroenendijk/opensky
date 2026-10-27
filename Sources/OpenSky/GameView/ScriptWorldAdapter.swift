@@ -36,6 +36,7 @@ import simd
 /// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ScriptWorldHost: AnyObject {
+    var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }

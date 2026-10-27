@@ -4,6 +4,7 @@
 
 import Foundation
 import MetalKit
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
@@ -15,6 +16,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
@@ -76,6 +78,10 @@ extension ScriptWorldAdapter {
 
     private func wirePlayerRules(_ hooks: inout PapyrusGameNatives) {
         hooks.setGodMode = { [weak game] isOn in game?.actorValues.runtime?.godMode = isOn }
+        hooks.setFootIK = { [weak game] isOn in
+            game?.actorGraphs.footIk = isOn
+            game?.gameSession?.locomotion.footIk = isOn
+        }
         hooks.clearPrison = { [weak game] in game?.crime.clearPrison() }
         hooks.setPlayerReportsCrime = { [weak game] reports in
             game?.crime.reporter?.runtime.reportsPlayerCrimes = reports

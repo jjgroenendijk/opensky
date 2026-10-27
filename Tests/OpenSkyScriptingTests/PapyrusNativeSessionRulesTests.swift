@@ -72,6 +72,14 @@ struct PapyrusNativeSessionRulesTests {
         #expect(godMode == false)
     }
 
+    @Test func footIkSwitchesThroughItsHook() throws {
+        let fixture = try Fixture.make()
+        var footIk: Bool?
+        fixture.session.bridge.gameNatives.setFootIK = { footIk = $0 }
+        #expect(call(fixture, "Debug", "SetFootIK", [.boolean(false)]) == .returned(.none))
+        #expect(footIk == false)
+    }
+
     @Test func aFadeCarriesItsColourAndTimes() throws {
         let fixture = try Fixture.make()
         var fade: PapyrusFade?

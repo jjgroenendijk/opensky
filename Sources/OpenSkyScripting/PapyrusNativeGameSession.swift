@@ -88,6 +88,11 @@ extension PapyrusNativeFunctions {
             setGodMode(boolean(call, at: 0, default: true))
             return .returned(.none)
         }
+        gameHook("Debug", "SetFootIK", into: &registry) { call, hooks in
+            guard let setFootIK = hooks.setFootIK else { return nil }
+            setFootIK(boolean(call, at: 0, default: true))
+            return .returned(.none)
+        }
         // "Moves the player to the cell and waits for it to load."
         gameHook("Debug", "CenterOnCellAndWait", into: &registry) { call, hooks in
             guard let center = hooks.centerOnCell else { return nil }

@@ -33,6 +33,7 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | `Debug.TakeScreenshot` | Writes a PNG of the view, at its size, to `~/Pictures/OpenSky/` |
 | `Debug.ToggleCollisions` | Switches the player between flying and walking |
 | `Debug.SetGodMode` | The player takes no damage while it is on. A save keeps it |
+| `Debug.SetFootIK` | Turns foot IK on or off for the player and every actor, until the session ends |
 | `Debug.CenterOnCellAndWait` | Moves the player to the cell |
 | `Game.ClearPrison`, `Game.SetPlayerReportCrime` | Ends a jail stay; stops crime reports against the player. A save keeps the switch |
 | `Game.GetPlayerGrabbedRef` | The body the player holds with telekinesis |
@@ -109,9 +110,17 @@ open source gives the game's angle, so this cone is OpenSky's own.
 ## Traced stubs
 
 These natives return a fixed value and write a trace line, because the subsystem they need is not
-built: `SetEyeTexture`, `AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints`
-(false), `Game.PlayBink`, `Game.StartTitleSequence`, `Game.SendWereWolfTransformation`, and
-`Debug.SetFootIK`. The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
+built. The vanilla scripts that call each one show what it is for:
+
+| Native | Vanilla callers | Needs |
+| --- | --- | --- |
+| `Actor.SetEyeTexture` | `DLC1VampireTurnScript`, `DLC1SeranaCureQuestScript` | Changing a live actor's model |
+| `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
+| `Game.PlayBink` | `E3DemoDragonFinaleScript` only, which no game path runs | A Bink movie player |
+| `Game.StartTitleSequence` | `MQ101QuestScript` | The title sequence movie |
+| `Game.SendWereWolfTransformation` | `PlayerWerewolfChangeScript`, `DLC1PlayerVampireChangeScript` | Beast forms |
+
+The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 
 ## Engine events
 

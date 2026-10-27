@@ -11,6 +11,10 @@ nonisolated extension BehaviorGraphInstance {
     func applyFootIk(
         _ modifier: HKBFootIkModifier, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
+        guard characterContext.footIk else {
+            footIkError = SIMD3()
+            return pose
+        }
         let bound = step.bound
         var state = markReached(step.target)
         if state.weights.count != modifier.legs.count {
