@@ -86,4 +86,8 @@ nonisolated public struct ScriptSoundInstances: Equatable, Sendable {
     public var count: Int {
         instances.count
     }
+
+    public var isEmpty: Bool {
+        instances.isEmpty
+    }
 }

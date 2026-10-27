@@ -266,7 +266,7 @@ public struct CrimeRuntime {
 }
 
 @MainActor
-nonisolated extension CrimeEvent {
+extension CrimeEvent {
     /// This event with `witnessed` set from a witness source.
     public func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
         guard !witnessed else { return self }

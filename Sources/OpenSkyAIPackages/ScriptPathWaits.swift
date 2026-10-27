@@ -37,6 +37,10 @@ nonisolated public struct ScriptPathWaits: Equatable, Sendable {
         actors.count
     }
 
+    public var isEmpty: Bool {
+        actors.isEmpty
+    }
+
     private static func outcome(of state: NPCMovementState?) -> Bool? {
         switch state {
         case .moving, .awaitingRepath, .turning:
