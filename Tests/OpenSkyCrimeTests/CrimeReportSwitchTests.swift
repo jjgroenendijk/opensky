@@ -11,7 +11,7 @@ struct CrimeReportSwitchTests {
     /// Papyrus `SetPlayerReportCrime(false)` stops every report of the player's crimes.
     @Test
     func switchedOffReportsChargeThePlayerNothing() throws {
-        var runtime = try CrimeFixture.runtime()
+        let runtime = try CrimeFixture.runtime()
         runtime.reportsPlayerCrimes = false
         let outcome = runtime.report(CrimeFixture.event(.murder))
         #expect(outcome.gold == 0)

@@ -182,8 +182,8 @@ nonisolated extension OpenSkySaveDecoder {
         return true
     }
 
-    /// `CPOT`, `INGK`, `WPSN`, `FAVS`, and `ENCK`: state of the player and its items.
-    static func mergePlayerItems(
+    /// `CPOT`, `INGK`, `WPSN`, `FAVS`, `PRUL`, and `ENCK`: state of the player and its items.
+    static func mergePlayerState(
         _ body: Body,
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -191,6 +191,7 @@ nonisolated extension OpenSkySaveDecoder {
         entries = OpenSkySaveDeltaMerge.merge(body.ingredientKnowledge, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.weaponPoisons, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.favourites, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.playerRules, into: entries)
         return OpenSkySaveDeltaMerge.merge(body.enchanting, into: entries)
     }
 }

@@ -166,6 +166,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let dialogueBranches = "DLBS"
         /// Help messages per input event: times shown and whether the event happened.
         public static let helpMessages = "HELP"
+        /// God mode and the crime-report switch scripts set for the player.
+        public static let playerRules = "PRUL"
         /// The player's misc stats: name and value.
         public static let miscStats = "MSTS"
         /// Whether the player tracks each quest the journal showed.

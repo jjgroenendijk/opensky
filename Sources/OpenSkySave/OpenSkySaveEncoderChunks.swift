@@ -52,6 +52,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeStoryManagerQuests(entries, into: &writer)
         writeDialogueBranches(entries, into: &writer)
         writeHelpMessages(entries, into: &writer)
+        writePlayerRules(entries, into: &writer)
         writeScriptedStates(entries, into: &writer)
         writeJournal(entries, into: &writer)
         writeIdentityAndMap(entries, into: &writer)
