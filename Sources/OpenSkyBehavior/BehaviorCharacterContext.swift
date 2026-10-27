@@ -21,15 +21,19 @@ nonisolated public struct BehaviorCharacterContext {
     public var worldPosition: SIMD3<Float>
     public var worldRotation: simd_quatf
     public var ground: (any BehaviorGroundProbe)?
+    /// Papyrus `Debug.SetFootIK`: off, foot IK leaves the pose as animated.
+    public var footIk: Bool
 
     public init(
         worldPosition: SIMD3<Float> = SIMD3(),
         worldRotation: simd_quatf = BehaviorPoseMath.identityRotation,
-        ground: (any BehaviorGroundProbe)? = nil
+        ground: (any BehaviorGroundProbe)? = nil,
+        footIk: Bool = true
     ) {
         self.worldPosition = worldPosition
         self.worldRotation = worldRotation
         self.ground = ground
+        self.footIk = footIk
     }
 
     public func modelPoint(fromWorld point: SIMD3<Float>) -> SIMD3<Float> {

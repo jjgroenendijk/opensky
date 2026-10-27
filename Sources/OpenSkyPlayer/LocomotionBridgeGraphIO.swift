@@ -48,7 +48,8 @@ nonisolated extension LocomotionBridge {
         write(.real(state.verticalVelocity), to: LocomotionGraphNames.velocityZ)
         let context = BehaviorCharacterContext(
             worldPosition: state.feetPosition,
-            worldRotation: simd_quatf(angle: state.yaw - .pi / 2, axis: SIMD3(0, 0, 1))
+            worldRotation: simd_quatf(angle: state.yaw - .pi / 2, axis: SIMD3(0, 0, 1)),
+            footIk: footIk
         )
         graph?.characterContext = context
         firstPersonGraph?.characterContext = context

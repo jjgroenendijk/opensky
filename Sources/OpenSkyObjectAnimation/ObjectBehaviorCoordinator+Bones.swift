@@ -1,7 +1,9 @@
 // The posed bones of a running object graph, for trap contact and the agent readout.
 
+import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyFormatsAnimation
 import simd
 
 extension ObjectBehaviorCoordinator {
@@ -18,6 +20,17 @@ extension ObjectBehaviorCoordinator {
         return try? SkeletonPoseMath.worldMatrices(
             skeleton: entry.object.asset.skeleton, localPoses: entry.object.pose.bones
         )
+    }
+
+    /// One named bone in the object's own space, from the pose last published.
+    public func boneMatrix(of reference: UInt32, named name: String) -> simd_float4x4? {
+        guard
+            let entry = running[reference],
+            let index = entry.object.asset.skeleton.bones
+                .firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }),
+            let matrices = boneMatrices(of: reference), matrices.indices.contains(index)
+        else { return nil }
+        return matrices[index]
     }
 
     /// The references that run a graph now.

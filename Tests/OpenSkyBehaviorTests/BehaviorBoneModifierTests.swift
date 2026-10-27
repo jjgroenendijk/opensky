@@ -80,6 +80,14 @@ struct BehaviorBoneModifierTests {
         #expect(simd_distance(ankle(bones), SIMD3(0, 0, 15)) < 0.05)
     }
 
+    @Test func footIkSwitchedOffLeavesTheLegOnRaisedGround() {
+        let graph = legGraph(FlatGround(height: 10))
+        graph.characterContext.footIk = false
+        let bones = graph.update(deltaTime: 1 / 30).bones
+        #expect(simd_distance(ankle(bones), SIMD3(0, 0, 5)) < 1e-3)
+        #expect(graph.footIkError == SIMD3())
+    }
+
     private func physicsRequests(after modifier: any HKBClass) -> BehaviorPhysicsRequests {
         var table = BehaviorObjectTable()
         let target = table.add(modifier, at: 0x100)

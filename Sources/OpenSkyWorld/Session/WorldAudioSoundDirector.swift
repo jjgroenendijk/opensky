@@ -25,6 +25,7 @@ private struct PendingSound {
     let kind: String
     let loops: Bool
     let adopt: ((Int) -> Bool)?
+    let failed: (() -> Void)?
 }
 
 @MainActor
@@ -61,6 +62,10 @@ public final class WorldAudioSoundDirector {
     var animationLoopSourceIDs: [AnimationSoundKey: Int] = [:]
     /// Lowercased SNDR editor ID -> FormID, built on the first animation sound.
     var soundIDsByEditorID: [String: FormID]?
+    /// The sounds scripts play, by their Papyrus instance ID.
+    var scriptSounds = ScriptSoundInstances()
+    /// Script sounds whose file failed to load since the last retire.
+    var failedScriptSounds: Set<Int32> = []
 
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the control writes back here.
@@ -134,8 +139,8 @@ public final class WorldAudioSoundDirector {
     /// CellStreamer.onInteraction subscriber. Plays the activator's activation
     /// sound (DOOR.SNAM, ACTI.VNAM, CONT.SNAM) at the placed position.
     public func handleInteraction(_ event: InteractionEvent) {
-        guard sfxEnabled, engine.isRunning else { return }
         guard
+            sfxEnabled, engine.isRunning,
             let sounds = event.target.interaction.sounds,
             let activationID = sounds.activation
         else { return }
@@ -236,17 +241,20 @@ public final class WorldAudioSoundDirector {
         at position: SIMD3<Float>?,
         kind: String,
         loops: Bool = false,
-        adopt: ((Int) -> Bool)? = nil
+        adopt: ((Int) -> Bool)? = nil,
+        failed: (() -> Void)? = nil
     ) {
         guard let resolved = resolveSound(id: id) else {
             lastSFXError = "unresolved \(id.description)"
             Self.logger.debug(
                 "[INFO] \(kind, privacy: .public) unresolved: \(id.description, privacy: .public)"
             )
+            failed?()
             return
         }
         let pending = PendingSound(
-            resolved: resolved, position: position, kind: kind, loops: loops, adopt: adopt
+            resolved: resolved, position: position, kind: kind, loops: loops, adopt: adopt,
+            failed: failed
         )
         assets.request(resolved.path) { [weak self] result in
             self?.start(result, pending)
@@ -293,6 +301,7 @@ extension WorldAudioSoundDirector {
             lastSFXDescription = resolved.path
             lastSFXError = nil
         } catch {
+            pending.failed?()
             let reason = String(describing: error)
             lastSFXError = reason
             let kind = pending.kind

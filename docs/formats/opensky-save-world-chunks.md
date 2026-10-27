@@ -221,6 +221,13 @@ per input event, sorted by event name. A record is the event name as a string, a
 count of times the [help message](/engine/messages.md#help-messages) showed, and a done
 byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per record.
 
+## PRUL: player rules
+
+One entry for the player: the player's key, the cell, a god mode byte, and a crime-report
+byte, each 1 for on. Scripts set them with `Debug.SetGodMode` and `Game.SetPlayerReportCrime`
+([session natives](/engine/papyrus-session-natives.md)). No entry means god mode is off and
+the player's crimes are reported. Size: 10 bytes per entry.
+
 ## MSTS: misc stats
 
 One entry for the player: the key, the cell, a uint32 stat count, then per stat its name as a
@@ -256,8 +263,8 @@ as a float64, in key order. A chest with no entry counts as stocked at the next 
 ([vendor factions](/engine/vendor-factions.md)). An hour that is not finite is dropped.
 Minimum size: 15 bytes per entry.
 
-`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, `SCRS`, `CRST`, and `VRST` merge into the
-`RDLT` deltas by key, like the other component chunks.
+`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `PRUL`, `MSTS`, `QTRK`, `SCRS`, `CRST`, and `VRST` merge
+into the `RDLT` deltas by key, like the other component chunks.
 
 ## PIDN: player identity
 

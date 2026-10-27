@@ -25,7 +25,10 @@ public struct CrimeRuntime {
     /// The default prices, the sentence, and the alarm reach, from the load order.
     public var settings = CrimeSettings.vanilla
     /// Papyrus `Game.SetPlayerReportCrime`: off, the player's crimes cost nothing.
-    public var reportsPlayerCrimes = true
+    public var reportsPlayerCrimes: Bool {
+        get { worldState.playerRules.reportsCrime }
+        nonmutating set { worldState.playerRules.reportsCrime = newValue }
+    }
 
     private let worldState: WorldStateStore
 
@@ -262,9 +265,9 @@ public struct CrimeRuntime {
     }
 }
 
-nonisolated extension CrimeEvent {
+@MainActor
+extension CrimeEvent {
     /// This event with `witnessed` set from a witness source.
-    @MainActor
     public func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
         guard !witnessed else { return self }
         var seen = CrimeEvent(

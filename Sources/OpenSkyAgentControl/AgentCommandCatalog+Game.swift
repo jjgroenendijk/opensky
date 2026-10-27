@@ -180,6 +180,15 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.shadows", "Set the sun shadow tier until the renderer is rebuilt.",
             positionals: [required("quality", "One of off, low, or high.")]
+        ),
+        command(
+            "debug.fade", "Fade the screen as Papyrus Game.FadeOutGame does.",
+            positionals: [required("direction", "Either out or in.")],
+            options: [
+                flag("white", "Fade to white instead of black."),
+                value("delay", "s", "Seconds to wait before the fade."),
+                value("duration", "s", "Seconds the fade takes.")
+            ]
         )
     ]
 }

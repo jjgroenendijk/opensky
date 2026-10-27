@@ -14,7 +14,10 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func queueInventoryEvents() -> Int {
         let next = worldState.nextJournalSequence
-        defer { inventoryJournalCursor = next }
+        defer {
+            inventoryJournalCursor = next
+            scriptedEquipHolders = []
+        }
         guard let cursor = inventoryJournalCursor, cursor < next, let world else { return 0 }
         let changes = worldState.journalEntries(since: cursor)
             .filter { $0.kind == .inventory }
@@ -46,11 +49,19 @@ extension PapyrusWorldStateBridge {
         )
     }
 
+    /// Marks `holder`'s next equip changes as a script's, so the items' own scripts hear
+    /// nothing of them. An item the script's equip pushes out of its slot counts too.
+    public func noteScriptedEquip(on holder: ReferenceKey) {
+        scriptedEquipHolders.insert(holder)
+    }
+
     /// `OnEquipped(Actor akActor)` and `OnUnequipped(Actor akActor)` on the item's own
-    /// scripts, whoever wears it (<https://ck.uesp.net/wiki/OnUnequipped_-_ObjectReference>).
+    /// scripts, whoever wears it. The wiki says an equip by a script or the console sends
+    /// neither (<https://ck.uesp.net/wiki/OnEquipped_-_ObjectReference>).
     private func queueItemEquipEvents(
         _ change: InventoryChange, in world: PapyrusWorldRuntime
     ) -> Int {
+        guard !scriptedEquipHolders.contains(change.holder) else { return 0 }
         let old = Set(change.old.equipped)
         let new = Set(change.new.equipped)
         let actor = PapyrusValue.object(world.objectHandle(for: change.holder))
@@ -70,6 +81,7 @@ extension PapyrusWorldStateBridge {
     /// Starts the next read at the journal's end, so a load is not read as item moves.
     public func skipInventoryJournal() {
         inventoryJournalCursor = worldState.nextJournalSequence
+        scriptedEquipHolders = []
     }
 
     private func inventoryChange(_ entry: WorldStateJournalEntry) -> InventoryChange? {

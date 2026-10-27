@@ -12,6 +12,7 @@ extension PapyrusNativeFunctions {
         installScreen(into: &registry)
         installDebugSession(into: &registry)
         installPlayerSession(into: &registry)
+        installSound(into: &registry)
     }
 
     private static func installSaveAndQuit(into registry: inout PapyrusNativeRegistry) {
@@ -40,7 +41,10 @@ extension PapyrusNativeFunctions {
         gameHook("Game", "FadeOutGame", into: &registry) { call, hooks in
             guard let fade = hooks.fade else { return nil }
             fade(PapyrusFade(
-                fadingOut: boolean(call, at: 0, default: true)
+                fadingOut: boolean(call, at: 0, default: true),
+                black: boolean(call, at: 1, default: true),
+                secondsBeforeFade: float(call, at: 2) ?? 0,
+                duration: float(call, at: 3) ?? 0
             ))
             return .returned(.none)
         }
@@ -82,6 +86,11 @@ extension PapyrusNativeFunctions {
         gameHook("Debug", "SetGodMode", into: &registry) { call, hooks in
             guard let setGodMode = hooks.setGodMode else { return nil }
             setGodMode(boolean(call, at: 0, default: true))
+            return .returned(.none)
+        }
+        gameHook("Debug", "SetFootIK", into: &registry) { call, hooks in
+            guard let setFootIK = hooks.setFootIK else { return nil }
+            setFootIK(boolean(call, at: 0, default: true))
             return .returned(.none)
         }
         // "Moves the player to the cell and waits for it to load."

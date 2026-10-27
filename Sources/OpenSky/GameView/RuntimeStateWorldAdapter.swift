@@ -358,6 +358,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.inventory.registerCreatedPotions()
         // A save without a CLOK chunk restores the vanilla-start clock.
         game.gameSession?.gameClock = file.clock ?? GameClock()
+        game.gameSession?.clearScriptScreenEffects()
         // After the world state, so the fired `OnInit` set is in place before the
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)

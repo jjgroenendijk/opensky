@@ -169,6 +169,8 @@ public final class ActorGraphCoordinator {
     }
 
     public var cutoff = ActorGraphCutoff.standard
+    /// Papyrus `Debug.SetFootIK`, for every actor graph.
+    public var footIk = true
     private var waits: [ReferenceKey: [(event: String, token: UInt64)]] = [:]
     private var nextToken = firstToken
 
@@ -296,7 +298,8 @@ public final class ActorGraphCoordinator {
         }
         instance.characterContext = BehaviorCharacterContext(
             worldPosition: candidate.feet,
-            worldRotation: ActorGraphCore.worldRotation(placementRotationZ: candidate.rotationZ)
+            worldRotation: ActorGraphCore.worldRotation(placementRotationZ: candidate.rotationZ),
+            footIk: footIk
         )
         for event in entry.pendingEvents {
             instance.raiseEvent(named: event)

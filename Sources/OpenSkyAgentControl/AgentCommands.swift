@@ -97,6 +97,21 @@ nonisolated public enum AgentTeleportTarget: Equatable, Sendable {
     case position(SIMD3<Float>, worldspace: String? = nil)
 }
 
+/// `Game.FadeOutGame`'s arguments, in seconds.
+nonisolated public struct AgentFadeRequest: Equatable, Sendable {
+    public let fadingOut: Bool
+    public let black: Bool
+    public let delay: Float
+    public let duration: Float
+
+    public init(fadingOut: Bool, black: Bool, delay: Float, duration: Float) {
+        self.fadingOut = fadingOut
+        self.black = black
+        self.delay = delay
+        self.duration = duration
+    }
+}
+
 /// A debug change. Each follows the vanilla console command of the same
 /// meaning where one exists.
 nonisolated public enum AgentDebugCommand: Equatable, Sendable {
@@ -115,6 +130,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case channel(String)
     /// The sun shadow tier: `off`, `low`, or `high`.
     case shadows(String)
+    /// Fades the screen as Papyrus `Game.FadeOutGame` does.
+    case fade(AgentFadeRequest)
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -198,9 +215,21 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
+        case "fade": try parseFade(args)
         case "flight": try parseFlight(args)
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
+    }
+
+    private static func parseFade(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let direction = try args.string("direction").lowercased()
+        guard direction == "out" || direction == "in" else {
+            throw args.invalid("direction", "out or in")
+        }
+        return try .fade(AgentFadeRequest(
+            fadingOut: direction == "out", black: !args.bool("white", default: false),
+            delay: args.optionalFloat("delay") ?? 0, duration: args.optionalFloat("duration") ?? 0
+        ))
     }
 
     private static func parseFlight(_ args: AgentArguments) throws(AgentFailure) -> Self {

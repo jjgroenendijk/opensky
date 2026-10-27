@@ -2,6 +2,7 @@
 // stolen values, flying, the app hooks, model nodes, the sun gaze, and traced stubs.
 
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
@@ -71,6 +72,26 @@ struct PapyrusNativeSessionRulesTests {
         #expect(godMode == false)
     }
 
+    @Test func footIkSwitchesThroughItsHook() throws {
+        let fixture = try Fixture.make()
+        var footIk: Bool?
+        fixture.session.bridge.gameNatives.setFootIK = { footIk = $0 }
+        #expect(call(fixture, "Debug", "SetFootIK", [.boolean(false)]) == .returned(.none))
+        #expect(footIk == false)
+    }
+
+    @Test func aFadeCarriesItsColourAndTimes() throws {
+        let fixture = try Fixture.make()
+        var fade: PapyrusFade?
+        fixture.session.bridge.gameNatives.fade = { fade = $0 }
+        _ = call(fixture, "Game", "FadeOutGame", [
+            .boolean(false), .boolean(false), .float(2), .float(1)
+        ])
+        #expect(fade == PapyrusFade(
+            fadingOut: false, black: false, secondsBeforeFade: 2, duration: 1
+        ))
+    }
+
     @Test func theGrabbedReferenceComesFromTheHook() throws {
         let fixture = try Fixture.make()
         #expect(call(fixture, "Game", "GetPlayerGrabbedRef", returnType: .object("ObjectReference"))
@@ -83,18 +104,18 @@ struct PapyrusNativeSessionRulesTests {
     /// A model still loading suspends the call on the token the app answers.
     @Test func nodeLookupsAnswerFoundMissingOrLater() throws {
         let fixture = try Fixture.make()
-        var answer = PapyrusNodeAnswer.found([7, 8, 9])
-        fixture.session.bridge.gameNatives.nodePosition = { _, _, _ in answer }
+        var answer = PapyrusNodeAnswer.found(
+            MatrixMath.placement(position: [7, 8, 9], rotation: [0, 0, 0.5], scale: 1)
+        )
+        fixture.session.bridge.gameNatives.nodeTransform = { _, _, _ in answer }
         #expect(call(fixture, "ObjectReference", "HasNode", [.string("Seat")], returnType: .boolean)
             == .returned(.boolean(true)))
         let target = PapyrusValue.object(fixture.handle(Fixture.doorID))
         #expect(call(fixture, "ObjectReference", "MoveToNode", [target, .string("Seat")])
             == .returned(.none))
-        #expect(fixture.session.bridge.referenceState(for: fixture.key)?.transform.position == [
-            7,
-            8,
-            9
-        ])
+        let moved = try #require(fixture.session.bridge.referenceState(for: fixture.key))
+        #expect(moved.transform.position == [7, 8, 9])
+        #expect(abs(moved.transform.rotation.z - 0.5) < 1e-4)
         answer = .missing
         #expect(call(fixture, "ObjectReference", "HasNode", [.string("Seat")], returnType: .boolean)
             == .returned(.boolean(false)))
@@ -105,9 +126,7 @@ struct PapyrusNativeSessionRulesTests {
 
     @Test func aMissingSubsystemIsATracedStub() throws {
         let fixture = try Fixture.make()
-        let target = PapyrusValue.object(fixture.handle(Fixture.doorID))
-        #expect(call(fixture, "Actor", "PathToReference", [target, .float(1)], returnType: .boolean)
-            == .deviated(.boolean(false), .stubbed))
+        #expect(call(fixture, "Actor", "SetEyeTexture", [.none]) == .deviated(.none, .stubbed))
     }
 
     @Test func gazingNeedsTheLookWithinTheCone() {

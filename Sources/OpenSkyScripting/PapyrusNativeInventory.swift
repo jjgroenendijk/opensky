@@ -112,6 +112,7 @@ extension PapyrusNativeFunctions {
             guard bridge.equipItem(item, on: actor) else {
                 return failure(call, "EquipItem could not equip the item")
             }
+            world.noteScriptedEquip(on: actor)
             if !boolean(call, at: 2, default: false) {
                 world.postItemNotice(item, to: actor, word: \.equipped)
             }
@@ -121,6 +122,7 @@ extension PapyrusNativeFunctions {
             guard bridge.unequipItem(item, on: actor) else {
                 return failure(call, "UnequipItem needs an inventory")
             }
+            world.noteScriptedEquip(on: actor)
             if !boolean(call, at: 2, default: false) {
                 world.postItemNotice(item, to: actor, word: \.unequipped)
             }
@@ -149,17 +151,19 @@ extension PapyrusNativeFunctions {
                 return .returned(item.map { formHandle($0, in: world) } ?? .none)
             }
         }
-        withHolder("Actor", "UnequipAll", into: &registry) { call, _, bridge, actor in
-            bridge.unequipAll(on: actor) ? .returned(.none) : failure(
-                call,
-                "UnequipAll needs an inventory"
-            )
+        withHolder("Actor", "UnequipAll", into: &registry) { call, world, bridge, actor in
+            guard bridge.unequipAll(on: actor) else {
+                return failure(call, "UnequipAll needs an inventory")
+            }
+            world.noteScriptedEquip(on: actor)
+            return .returned(.none)
         }
         // `UnequipItemSlot(int aiSlot)`: a biped slot from 30 to 61.
-        withHolder("Actor", "UnequipItemSlot", into: &registry) { call, _, bridge, actor in
+        withHolder("Actor", "UnequipItemSlot", into: &registry) { call, world, bridge, actor in
             guard let slot = integer(call, at: 0), bridge.unequipSlot(slot, on: actor) else {
                 return failure(call, "UnequipItemSlot needs an actor and a slot from 30 to 61")
             }
+            world.noteScriptedEquip(on: actor)
             return .returned(.none)
         }
     }

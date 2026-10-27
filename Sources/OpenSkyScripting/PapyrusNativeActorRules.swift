@@ -104,22 +104,25 @@ extension PapyrusNativeFunctions {
         installAshPile(into: &registry)
     }
 
-    /// `AttachAshPile(Form akAshPileBase = None)`: the pile is placed at the actor's feet
-    /// and linked to it. None would pick the default pile, which OpenSky does not know.
+    /// `AttachAshPile(Form akAshPileBase = None)`: the pile is placed at the actor's feet,
+    /// and each links to the other, so activating the pile activates the actor.
     private static func installAshPile(into registry: inout PapyrusNativeRegistry) {
         scriptState("Actor", "AttachAshPile", into: &registry) { call, bridge, key in
-            guard let base = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
-                return .deviated(.none, .stubbed)
-            }
+            let base = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+                ?? defaultAshPile
             guard let pile = bridge.trapWorld?.placeAtMe(base, at: key, count: 1) else {
                 return failure(call, "AttachAshPile could not place the pile")
             }
             bridge.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
+            bridge.updateScriptedState(of: pile) { $0.setForm(ashPileOwnerName, key) }
             return .returned(.none)
         }
     }
 
     static let ashPileName = "ashPile"
+    static let ashPileOwnerName = "ashPileOwner"
+    /// `DefaultAshPile1`. Its ID is below 0x800, the range the engine itself names.
+    static let defaultAshPile = ReferenceKey.plugin(name: "Skyrim.esm", objectID: 0x1B)
 
     /// "This actor unlocks all teleport doors he owns in his current parent cell."
     private static func installOwnedDoors(into registry: inout PapyrusNativeRegistry) {

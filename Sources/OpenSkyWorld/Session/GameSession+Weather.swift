@@ -70,6 +70,7 @@ extension GameSession {
                 in: links.records, plugin: links.weatherPlugin
             ))
         }
+        applyScriptParticles(deltaTime: deltaTime)
     }
 
     public func updateWeatherFromWallClock() {
@@ -77,10 +78,29 @@ extension GameSession {
         updateWeather(deltaTime: delta)
     }
 
+    /// A script's `SPGD` replaces the weather's particle look while it shows, and adds
+    /// its rain or snow to the weather's.
+    private func applyScriptParticles(deltaTime: Float) {
+        scriptParticles.advance(deltaTime)
+        guard let record = scriptParticles.record else { return }
+        precipitationTuning = PrecipitationTuning(record: record)
+        if var resolved = currentResolvedWeather {
+            resolved.precipitation = scriptParticles.adding(to: resolved.precipitation)
+            currentResolvedWeather = resolved
+        }
+    }
+
+    /// A load or a new game drops the fade and the particles a script left running.
+    public func clearScriptScreenEffects() {
+        imageSpace.screenFade = ScreenFade()
+        scriptParticles = ScriptParticleGeometry()
+    }
+
     /// Ages the running modifiers and resolves the baseline from the interior cell or
     /// the weather blend (docs/rendering/image-space.md).
     public func updateImageSpace(deltaTime: Float) {
         imageSpace.modifiers.advance(deltaTime)
+        imageSpace.screenFade.advance(deltaTime)
         guard let links = imageSpaceLinks else {
             imageSpace.baseline = .none
             return

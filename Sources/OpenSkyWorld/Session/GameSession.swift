@@ -38,6 +38,8 @@ public final class GameSession: RenderFrameDriver {
     public internal(set) var currentResolvedWeather: ResolvedWeather?
     /// The weather's rain or snow particles; nil until the weather links are wired.
     public internal(set) var precipitationTuning: PrecipitationTuning?
+    /// The precipitation a script applied with `ShaderParticleGeometry.Apply`.
+    public var scriptParticles = ScriptParticleGeometry()
     /// The post-process values and running modifiers the composite pass applies.
     public var imageSpace = ImageSpaceState()
     /// The HUD, menus, and dev overlays the UI pass draws. Default empty -> zero draws.

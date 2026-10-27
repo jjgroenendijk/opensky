@@ -350,7 +350,17 @@ extension AgentWorldAdapter {
             "gpuMS": stats.gpuMS.map(AgentJSON.number) ?? .null,
             "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
             "interpolation": interpolationState(),
-            "terrainLOD": terrainLODState()
+            "terrainLOD": terrainLODState(),
+            "screenFade": screenFadeState()
+        ]
+    }
+
+    /// The `Game.FadeOutGame` fader: its colour, how much it covers, and whether it moves.
+    func screenFadeState() -> AgentJSON {
+        guard let fade = game.gameSession?.imageSpace.screenFade else { return .null }
+        return [
+            "colour": .string(fade.colour == .zero ? "black" : "white"),
+            "cover": .init(fade.cover), "running": .bool(fade.isRunning)
         ]
     }
 

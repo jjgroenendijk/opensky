@@ -3,9 +3,11 @@
 // See docs/engine/papyrus-world.md#session-natives.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
+import simd
 
 extension PapyrusNativeFunctions {
     static let stolenValueCrimeName = "stolenValueCrime"
@@ -33,12 +35,24 @@ extension PapyrusNativeFunctions {
         }
         // The node, pick direction, and rotation arguments are not read: the impact
         // plays where the reference stands.
+        // `PlayImpactEffect(ImpactDataSet, string asNodeName = "", float afPickDirX = 0.0,
+        // afPickDirY = 0.0, afPickDirZ = -1.0, afPickLength = 512.0,
+        // bool abApplyNodeRotation = false, bool abUseNodeLocalRotation = false)`.
         scriptState("ObjectReference", "PlayImpactEffect", into: &registry) { call, bridge, key in
             guard
                 let impacts = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let play = bridge.gameNatives.playImpact
             else { return failure(call, "PlayImpactEffect needs an impact data set") }
-            return .returned(.boolean(play(impacts, key)))
+            let pick = PapyrusImpactPick(
+                source: key, node: string(call, at: 1) ?? "",
+                direction: SIMD3(
+                    float(call, at: 2) ?? 0, float(call, at: 3) ?? 0, float(call, at: 4) ?? -1
+                ),
+                length: float(call, at: 5) ?? 512,
+                appliesNodeRotation: boolean(call, at: 6, default: false),
+                usesNodeLocalRotation: boolean(call, at: 7, default: false)
+            )
+            return .returned(.boolean(play(impacts, pick)))
         }
         for (name, valueName) in [
             ("GetStolenItemValueCrime", stolenValueCrimeName),
@@ -57,10 +71,11 @@ extension PapyrusNativeFunctions {
     }
 
     /// `bool HasNode(string asNodeName)` and `MoveToNode(ObjectReference akTarget, string
-    /// asNodeName)`. A model still loading answers once it has loaded.
+    /// asNodeName)`, which takes the node's position and rotation. A model still loading
+    /// answers once it has loaded.
     private static func installNodes(into registry: inout PapyrusNativeRegistry) {
         scriptState("ObjectReference", "HasNode", into: &registry) { call, bridge, key in
-            guard let name = string(call, at: 0), let lookup = bridge.gameNatives.nodePosition
+            guard let name = string(call, at: 0), let lookup = bridge.gameNatives.nodeTransform
             else { return failure(call, "HasNode needs a node name") }
             switch lookup(key, name, { .boolean($0 != nil) }) {
             case .found: return .returned(.boolean(true))
@@ -71,17 +86,17 @@ extension PapyrusNativeFunctions {
         scriptState("ObjectReference", "MoveToNode", into: &registry) { call, bridge, key in
             guard
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
-                let name = string(call, at: 1), let lookup = bridge.gameNatives.nodePosition
+                let name = string(call, at: 1), let lookup = bridge.gameNatives.nodeTransform
             else { return failure(call, "MoveToNode needs a target and a node name") }
-            let move = { [weak bridge] (point: SIMD3<Float>?) -> PapyrusValue in
-                if let point, let bridge {
-                    bridge.move(key, to: point)
+            let move = { [weak bridge] (node: simd_float4x4?) -> PapyrusValue in
+                if let node, let bridge {
+                    bridge.move(key, to: node)
                 }
                 return .none
             }
             switch lookup(target, name, move) {
-            case let .found(point):
-                bridge.move(key, to: point)
+            case let .found(node):
+                bridge.move(key, to: node)
                 return .returned(.none)
             case .missing: return failure(call, "MoveToNode found no node \(name)")
             case let .loading(token): return .suspended(.external(token))
@@ -99,6 +114,21 @@ extension PapyrusWorldStateBridge {
         updateScriptedState(of: faction) { state in
             state.setValue(name, (state.value(name) ?? 0) + Float(value))
         }
+    }
+
+    /// Places `key` at a node's position and rotation, keeping its scale.
+    func move(_ key: ReferenceKey, to node: simd_float4x4) {
+        guard let state = referenceState(for: key) else { return }
+        let basis = simd_float3x3(
+            simd_normalize(SIMD3(node.columns.0.x, node.columns.0.y, node.columns.0.z)),
+            simd_normalize(SIMD3(node.columns.1.x, node.columns.1.y, node.columns.1.z)),
+            simd_normalize(SIMD3(node.columns.2.x, node.columns.2.y, node.columns.2.z))
+        )
+        write(ReferenceTransformOverride(
+            position: SIMD3(node.columns.3.x, node.columns.3.y, node.columns.3.z),
+            rotation: MatrixMath.eulerAngles(of: simd_quatf(basis)),
+            scale: state.transform.scale
+        ).erased, for: key)
     }
 
     /// Places `key` at `point`, keeping its rotation and scale.
