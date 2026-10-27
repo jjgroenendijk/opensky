@@ -134,6 +134,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
+| `debug fade <out\|in> [--white] [--delay <s>] [--duration <s>]` | Fades the screen as `Game.FadeOutGame` does; `state frame` shows the `screenFade` |
 
 ## Benchmark
 

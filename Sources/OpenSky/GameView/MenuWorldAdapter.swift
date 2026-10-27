@@ -258,6 +258,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.worldState.restore(from: .empty)
         game.inventory.registerCreatedPotions()
         game.gameSession?.gameClock = GameClock()
+        game.gameSession?.clearScriptScreenEffects()
         game.scripts.restore(instances: [], timers: [])
         game.messages.reloadHelpRecords()
         game.storyWorld.rerunSessionStart()
@@ -495,8 +496,7 @@ extension MenuWorldAdapter {
             Self.logger.warning("[WARNING] the opening quest did not move the player")
             abandonNewGameCover()
         }
-        guard let wait = newGameTeleport else { return }
-        guard let result = wait.poll(now).finish else { return }
+        guard let wait = newGameTeleport, let result = wait.poll(now).finish else { return }
         newGameTeleport = nil
         if case let .failure(error) = result {
             game.hud.showNotification("Move: \(error.message)")

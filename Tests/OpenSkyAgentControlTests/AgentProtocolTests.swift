@@ -100,6 +100,19 @@ struct AgentCommandParsingTests {
             == ["sky": false])
     }
 
+    @Test func aFadeTakesItsDirectionColourAndTimes() throws {
+        #expect(try AgentDebugCommand.parse("fade", args(["direction": "out"]))
+            == .fade(AgentFadeRequest(fadingOut: true, black: true, delay: 0, duration: 0)))
+        let request = try AgentCommandLine.request([
+            "debug", "fade", "in", "--white", "--delay", "2", "--duration", "1"
+        ])
+        #expect(try AgentDebugCommand.parse("fade", args(request.args))
+            == .fade(AgentFadeRequest(fadingOut: false, black: false, delay: 2, duration: 1)))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("fade", args(["direction": "sideways"]))
+        }
+    }
+
     @Test func furnitureCommandsDefaultToThePlayer() throws {
         #expect(try AgentDebugCommand.parse("sit", args([:]))
             == .sit(reference: "player", furniture: nil))

@@ -2,6 +2,7 @@
 // their collaborators, binds script lifetime to cell streaming, and ticks the
 // VM from the renderer. The readout logic lives in the coordinator.
 
+import AppKit
 import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyAIPackages
@@ -14,7 +15,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -31,6 +31,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 
 /// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
@@ -60,11 +61,12 @@ protocol ScriptWorldHost: AnyObject {
     var progression: ProgressionCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
+    var hostView: NSView { get }
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var gameSession: GameSession? { get }
     var combatWorld: CombatWorldAdapter { get }
     var effects: EffectsCoordinator { get }
     var menuWorld: MenuWorldAdapter { get }
-    var loadingScreens: LoadingScreenCoordinator { get }
     var saveGames: SaveGameWorldAdapter { get }
     func quitToMainMenu()
     func quitApplication()
@@ -81,10 +83,15 @@ protocol ScriptWorldHost: AnyObject {
 final class ScriptWorldAdapter {
     unowned let game: any ScriptWorldHost
     /// Each model's node origins in model space, keyed by lowercased node name.
-    var modelNodes: AssetLoader<String, [String: SIMD3<Float>]>?
+    var modelNodes: AssetLoader<String, [String: simd_float4x4]>?
     /// Node lookups that wait for their model to load.
     var nodeWaits: [ModelNodeWait] = []
     var nextNodeToken = ModelNodeWait.firstToken
+    /// `Sound.PlayAndWait` answers the scheduler has not taken yet.
+    var soundWaitAnswers: [UInt64: Bool] = [:]
+    var pathWaits = ScriptPathWaits()
+    /// `PathToReference` answers the scheduler has not taken yet.
+    var pathWaitAnswers: [UInt64: Bool] = [:]
 
     init(game: any ScriptWorldHost) {
         self.game = game
@@ -133,8 +140,10 @@ final class ScriptWorldAdapter {
     ) {
         let bridge = scripts.bridge
         let world = scripts.runtime
-        streamer.onInteraction.register(.scripts) { [weak bridge] event in
-            bridge?.handleInteraction(event)
+        streamer.onInteraction.register(.scripts) { [weak self, weak bridge] event in
+            guard let bridge else { return }
+            bridge.handleInteraction(event)
+            self?.searchAshPileOwner(of: event, bridge: bridge)
         }
         // The streamer tests trigger volumes once per walk-mode frame; each edge
         // queues one event per script on the volume's reference.
@@ -155,12 +164,24 @@ final class ScriptWorldAdapter {
             world?.detach(cell: location)
         }
         gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in
+            self?.answerSoundWaits()
+            self?.answerPathWaits()
             self?.game.scripts.advance(delta: delta)
             let menuTime = gameSession?.consumeMenuTime() ?? 0
             if menuTime > 0 {
                 self?.game.scripts.advanceMenuTime(delta: menuTime)
             }
         }
+    }
+
+    /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
+    private func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
+        guard
+            let entry = game.streamer?.referenceEntry(formID: event.target.interaction.reference),
+            let actor = bridge.ashPileOwner(of: entry.key),
+            game.ragdoll.searchCorpse(actor)
+        else { return }
+        game.containerMenu.open()
     }
 
     /// The features the natives reach, each answered by its world adapter.

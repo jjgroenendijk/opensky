@@ -40,7 +40,7 @@ extension AgentWorldAdapter {
             return try done(setQuestStage(quest, stage: stage))
         case .kill, .resurrect, .flight:
             return try done(actorDebug(command))
-        case .overlay, .channel, .shadows:
+        case .overlay, .channel, .shadows, .fade:
             return try done(renderDebug(command))
         case let .raceMenu(limited):
             return try done(openRaceMenu(limited: limited))
@@ -88,6 +88,7 @@ extension AgentWorldAdapter {
         case let .overlay(name, enabled): try setOverlay(name, enabled: enabled)
         case let .channel(name): try setChannel(name)
         case let .shadows(name): try setShadowQuality(name)
+        case let .fade(request): try fade(request)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -287,6 +288,16 @@ extension AgentWorldAdapter {
         }
         renderer.renderDebug.mode = mode
         return ["channel": .string("\(mode)".lowercased())]
+    }
+
+    /// Goes through the script hook, so the reply shows what a script's fade does.
+    private func fade(_ request: AgentFadeRequest) throws(AgentFailure) -> AgentJSON {
+        guard let fade = game.scripts.bridge?.gameNatives.fade else { throw notReady() }
+        fade(PapyrusFade(
+            fadingOut: request.fadingOut, black: request.black,
+            secondsBeforeFade: request.delay, duration: request.duration
+        ))
+        return ["screenFade": screenFadeState()]
     }
 
     private func setShadowQuality(_ name: String) throws(AgentFailure) -> AgentJSON {

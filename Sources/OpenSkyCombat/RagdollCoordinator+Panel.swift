@@ -34,6 +34,15 @@ extension RagdollCoordinator {
         return [.publishPoses([:])]
     }
 
+    /// Nominates `key`'s body for the container menu, as an ash pile's activation does.
+    /// - Returns: true when the body was nominated.
+    @discardableResult
+    public func searchCorpse(_ key: ReferenceKey) -> Bool {
+        guard world.searchCorpse(key) else { return false }
+        runtime?.noteLooted(key)
+        return true
+    }
+
     /// Opens the container menu over the nearest corpse. Nearest, not the
     /// crosshair target, because an ACHR carries no `PlacedInteraction`.
     /// - Returns: true when a corpse was nominated.

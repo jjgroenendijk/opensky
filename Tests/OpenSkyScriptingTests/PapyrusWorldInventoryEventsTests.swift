@@ -90,6 +90,27 @@ struct PapyrusWorldInventoryEventsTests {
         #expect(fixture.session.dispatch.notes == ["combat", "combat"])
     }
 
+    @Test func onlyAnEquipNoScriptMadeReachesTheItemScripts() throws {
+        let fixture = try Fixture.make(events: ["OnEquipped", "OnUnequipped"].map {
+            ($0, PapyrusWorldFixture.probeBody(note: $0.lowercased()))
+        })
+        fixture.session.bridge.sessionNatives.itemScripts = { _ in
+            [AttachedScript(name: "Lever", flags: [], properties: [])]
+        }
+        Self.write(fixture, [(Self.sword, 1)])
+        _ = Self.run(fixture)
+
+        Self.write(fixture, [(Self.sword, 1)], equipped: [Self.sword])
+        #expect(Self.run(fixture) == ["onequipped"])
+
+        fixture.session.bridge.noteScriptedEquip(on: fixture.key)
+        Self.write(fixture, [(Self.sword, 1)])
+        #expect(Self.run(fixture).isEmpty)
+
+        Self.write(fixture, [(Self.sword, 1)], equipped: [Self.sword])
+        #expect(Self.run(fixture) == ["onequipped"])
+    }
+
     @Test func aLoadIsNotReadAsItemMoves() throws {
         let fixture = try Self.fixture()
         _ = Self.run(fixture)

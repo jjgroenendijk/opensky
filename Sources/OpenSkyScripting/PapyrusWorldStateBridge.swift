@@ -95,6 +95,10 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var alchemy: (any PapyrusAlchemyBridge)?
     /// The first journal entry `queueInventoryEvents` has not read; nil before its first call.
     var inventoryJournalCursor: UInt64?
+    /// The next `Sound.PlayAndWait` token.
+    var latentWaitToken = PapyrusWorldStateBridge.firstLatentWaitToken
+    /// Holders a script equipped or unequipped since the last `queueInventoryEvents`.
+    var scriptedEquipHolders: Set<ReferenceKey> = []
     /// The first journal entry `queueMagicEffectEvents` has not read; nil before its first call.
     var effectJournalCursor: UInt64?
     /// The first journal entry `queueReferenceStateEvents` has not read.
@@ -242,6 +246,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Activation
 
+    /// The actor an `AttachAshPile` pile stands for; nil for anything else.
+    public func ashPileOwner(of key: ReferenceKey) -> ReferenceKey? {
+        scriptedState(of: key).form(PapyrusNativeFunctions.ashPileOwnerName)
+    }
+
     /// Records one activation, queues `OnActivate` on the target's scripts, and
     /// passes it to the target's `XAPR` activate children, each activated by its
     /// parent. A child with a delay waits for `advanceDelayedActivations`. Each
@@ -256,6 +265,9 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         guard !outcome.cappedByRecursion else { return outcome }
         var queuedEvents = outcome.queuedEvents
         var visited: Set = [target]
+        if let actor = ashPileOwner(of: target), visited.insert(actor).inserted {
+            queuedEvents += activateOne(actor, by: activator, togglesOpen: false).queuedEvents
+        }
         var parents = [target]
         while let parent = parents.popLast() {
             for child in references?.activateChildren(of: parent) ?? []
