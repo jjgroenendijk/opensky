@@ -219,7 +219,8 @@ better name instead.
   Training data is confidently wrong about byte layouts.
 - A performance idea, or a performance problem spotted mid-task, becomes a GitHub issue
   (`gh issue create`) rather than an inline fix. One issue per idea; the title states the
-  win, the body states why it can be faster. No measurement is needed to file it.
+  win, the body states why it can be faster. Give it the `performance` label. No
+  measurement is needed to file it.
 - When the task shows that something is missing, such as a shader term, a record field, or
   a step of a game rule, check the same area for more gaps before you finish: the rest of
   the shader, the other fields of the record, the other steps of the rule. Implement every
@@ -230,9 +231,10 @@ better name instead.
   states how to reproduce it, what was observed, and what is expected. This keeps the bug from
   being lost and keeps the fix out of an unrelated PR. Fix it inline only when it blocks
   the task, and say so in the commit.
-- Every difference found between Skyrim and OpenSky is recorded in a GitHub issue: a rule
-  approximated, a field read but not used, a behaviour left out, or a different result.
-  Search the open issues first and add to a matching one. A note in `docs/` or a code
+- Every difference found between Skyrim and OpenSky is recorded in a GitHub issue with the
+  `gap` label: a rule approximated, a field read but not used, a behaviour left out, or a
+  different result. The label lets one query list all of them. Search the open issues
+  first and add to a matching one. A note in `docs/` or a code
   comment does not replace the issue, because open work lives only in issues. A
   difference the same PR closes needs no issue.
 - An issue body states intent, not code locations: no file paths, line numbers, or pasted

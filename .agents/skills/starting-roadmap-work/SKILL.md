@@ -20,7 +20,10 @@ fresh session starts from `gh`, not from a doc.
   and the issue list and merged PRs already show them.
 - Each issue is one numbered roadmap item, such as `9.1.2 .xwm framing parser`, and carries
   its own acceptance gate.
-- Labels: `roadmap`, `acceptance-gate`, `format-parser`, `app-ui`.
+- Labels: each issue has one type, `bug`, `enhancement`, `performance`, or
+  `documentation`. Add `gap` when the issue describes a difference from Skyrim, so
+  `gh issue list --label gap` lists all of them. Area labels: `format-parser`, `app-ui`,
+  `tooling`, `release`, `code-health`. Plan labels: `roadmap`, `acceptance-gate`.
 - The `OpenSky roadmap` project board
   (<https://github.com/users/jjgroenendijk/projects/7>) is a view across milestones. It is
   not the source of truth. Live branch and PR state comes from `gh pr list` and `git log`.
