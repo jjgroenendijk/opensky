@@ -210,9 +210,9 @@ fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
 check: swift-baseline format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
 
-format: swift-format metal-format md-format py-format ## Autoformat Swift, Metal, Markdown, and Python
+format: swift-format metal-format cpp-format md-format py-format ## Autoformat Swift, Metal, C++, Markdown, and Python
 
-format-check: swift-format-check metal-format-check md-lint py-format-check #| Fail if anything is unformatted, without writing
+format-check: swift-format-check metal-format-check cpp-format-check md-lint py-format-check #| Fail if anything is unformatted, without writing
 
 swift-format-check: #| Fail if any changed Swift file is unformatted [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to check"; exit 0; }; \

@@ -15,3 +15,9 @@ Nothing here ships in a release.
   prefix, which needs `curl` and Rosetta 2.
 - Wine, DXVK, GStreamer, and the Steam helper are never committed or bundled; setup downloads them
   and checks each SHA-256. A capture of either game is game content and stays in `.logs/`.
+- `bridge/` is the C++ SKSE plugin OpenSky drives the game through
+  (`docs/decisions/reference-bridge.md`). It builds only into the prefix, through
+  `make reference-bridge`, and pins every download by SHA-256. It may use CommonLibSSE-NG's
+  API by name; that exception is in the `using-outside-sources` skill. Keep it to commands
+  and state: it changes no game rule and draws nothing, so the game stays a vanilla
+  reference. `make cpp-format` formats it.

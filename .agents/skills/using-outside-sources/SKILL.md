@@ -94,3 +94,12 @@ right file for the prompt. It does not open source files.
   the game's memory layout, so these have no use anyway.
 - A task that needs binary structure, such as loading SKSE DLL plugins, is out of scope.
   Surface it to the user.
+
+## The one exception: the bridge plugin
+
+`reference/bridge/` is an SKSE plugin that runs inside the Windows reference game, so it
+must call CommonLibSSE-NG's API by name. The owner approved this
+(`docs/decisions/reference-bridge.md`). Inside that folder you may read CommonLibSSE-NG's
+public headers and call its API. Copy no code from it or from SKSE. Nothing from that
+folder enters OpenSky's Swift code except the bridge's JSON state, which holds interop
+facts such as the player's position and the hour.

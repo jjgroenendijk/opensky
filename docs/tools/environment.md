@@ -108,6 +108,22 @@ Observed 2026-10-25 on macOS 27.0.1 ([reference game](/tools/reference-game.md))
 Retires when a DXMT release runs Skyrim, or the Game Porting Toolkit ships a Wine that
 runs the current Steam.
 
+## Reference game bridge downloads
+
+Observed 2026-10-28 ([bridge plugin](/decisions/reference-bridge.md)):
+
+- The reference copy runs game version 1.7.104 (Steam build 24914197). SKSE 2.3.1 supports
+  it, but skse.silverlock.org links only to Nexus for that build, and GitHub's releases end
+  at 2.2.6. The Address Library for 1.7.104 is on Nexus only too, behind a login.
+- CommonLibSSE-NG's `v15.0.1` clang-cl bundle was built with clang-cl 22.1.3, so the
+  build uses Homebrew's `llvm@22` (22.1.8) rather than the current `llvm` (23).
+- xwin's default manifest gives MSVC 14.44, which lacks STL helpers the library calls;
+  `--manifest-version 18` gives 14.51. xwin logs checksum mismatches for a few Windows SDK
+  packages and still completes.
+
+Retires when SKSE and the Address Library have a download without a login, or the bridge
+build moves to another library build.
+
 ## Permission grants
 
 UI tests need Automation Mode, and XCTest turns it on at the start of each UI run. If the Mac asks

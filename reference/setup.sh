@@ -174,3 +174,4 @@ cp "$dxvk/x64/d3d11.dll" "$dxvk/x64/d3d10core.dll" "$apps/common/Skyrim Special 
 defaults write "$domain" OpenSkyReferencePrefix "$prefix"
 echo "[ OK ] Reference prefix ready: $prefix"
 echo "[INFO] Next: make reference-game, log in to Steam once, then load a save."
+echo "[INFO] Then make reference-bridge, so OpenSky drives the game without typed keys."
