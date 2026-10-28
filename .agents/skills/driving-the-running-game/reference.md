@@ -57,6 +57,9 @@ arrow keys.
 `state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
+- `state player` gives the beast `form` (`none`, `werewolf`, `vampireLord`, or `otherBeast`)
+  and the race `behaviorProject` the body runs, null for the character graphs, with
+  `behaviorProjectFailure` when that project did not load.
 - `state view` gives what the reference game's console takes: the player's `feet`, the
   angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` (`docs/tools/reference-game.md`).
 - `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
@@ -138,6 +141,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug stand [<ref>]` | gets the actor up from its seat |
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
+| `debug form werewolf\|vampirelord\|none` | puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it; answers `form` |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |

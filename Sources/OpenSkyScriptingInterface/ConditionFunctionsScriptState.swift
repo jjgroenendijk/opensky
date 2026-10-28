@@ -47,6 +47,8 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let doingFavor = "doingFavor"
     public static let talkedToPlayer = "talkedToPlayer"
     public static let eaten = "eaten"
+    /// On the player: `Game.SetBeastForm(true)` until `SetBeastForm(false)`.
+    public static let beastForm = "beastForm"
     /// An actor kneeling at zero health instead of dying.
     public static let bleedingOut = "bleedingOut"
     /// `Actor.SetNoBleedoutRecovery(true)` keeps a kneeling actor down.

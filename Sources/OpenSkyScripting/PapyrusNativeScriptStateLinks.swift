@@ -98,8 +98,8 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("Game", "SetBeastForm", into: &registry) { call, bridge, key in
-            let entering = boolean(call, at: 0, default: false)
-            bridge.updateScriptedState(of: key) { $0.setFlag("beastForm", entering ? true : nil) }
+            let flag: Bool? = boolean(call, at: 0, default: false) ? true : nil
+            bridge.updateScriptedState(of: key) { $0.setFlag(ScriptedStateName.beastForm, flag) }
             return .returned(.none)
         }
     }

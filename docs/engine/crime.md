@@ -83,7 +83,7 @@ actor in high who can detect the player call a werewolf crime against the player
 that detects the player as that witness. The Creation Kit's Crime page calls it a "Special
 Crime"; OpenSky puts its gold in the violent half, beside murder, which costs the same. It adds
 no crime count, because the save keeps four counts per faction and the change script counts the
-"Werewolf Transformations" stat itself.
+"Werewolf Transformations" stat itself. See [beast forms](/engine/beast-forms.md).
 
 A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
 "bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared

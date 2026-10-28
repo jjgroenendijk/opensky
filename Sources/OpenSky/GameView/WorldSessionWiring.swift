@@ -32,6 +32,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var audio: AudioCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var audioWorld: AudioWorldAdapter { get }
+    var beastForms: BeastFormWorldAdapter { get }
     var cameraInput: CameraInputState { get }
     var cinematicWorld: CinematicCameraWorldAdapter { get }
     var combatWorld: CombatWorldAdapter { get }
@@ -238,6 +239,7 @@ final class WorldSessionWiring {
         game.aiWorld.wireFurniture(gameSession: gameSession)
         // After the locks, whose activation gate it wraps.
         game.mountWorld.wireMounts(gameSession: gameSession)
+        game.beastForms.wire()
         game.dragonFlightWorld.wire(gameSession: gameSession)
         game.objectAnimationWorld.wire(gameSession: gameSession)
         game.effectGraphWorld.wire(gameSession: gameSession)

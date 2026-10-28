@@ -28,6 +28,8 @@ public enum ActivationRefusalStep: Int, FramePhase {
 public enum ActivationGateStep: Int, FramePhase {
     /// A rider cannot open a door.
     case mount
+    /// A beast cannot take items or talk.
+    case beastForm
     case lock
 }
 

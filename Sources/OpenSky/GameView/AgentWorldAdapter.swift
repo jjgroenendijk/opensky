@@ -32,6 +32,8 @@ import OpenSkyWorldState
 /// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AgentWorldHost: AnyObject {
+    var beastForms: BeastFormWorldAdapter { get }
+    var playerBeastForm: PlayerBeastForm { get }
     var combatWorld: CombatWorldAdapter { get }
     var dragonFlight: DragonFlightCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
@@ -106,7 +108,8 @@ final class AgentWorldAdapter {
             menuMode: game.menuMode,
             openJournal: { [weak game] in game?.journalMenu.open() },
             openInventory: { [weak game] in game?.inventoryMenu.open() },
-            onCommand: { [weak game] in game?.runCommand($0) }
+            onCommand: { [weak game] in game?.runCommand($0) },
+            isBeastForm: game.playerBeastForm.isBeast
         )
     }
 

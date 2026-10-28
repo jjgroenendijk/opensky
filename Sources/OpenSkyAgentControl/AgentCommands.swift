@@ -158,6 +158,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
     /// `IdleDrunkStop` do.
     case drunk(reference: String, drunk: Bool)
+    /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
+    case beastForm(String)
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
     case subGraphEvent(reference: String, event: String)
     /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
@@ -230,6 +232,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
+        case "form": try .beastForm(args.string("form").lowercased())
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

@@ -208,6 +208,7 @@ extension GameViewController {
             self?.session?.messages.noteInputEvent(event)
         }
         gameView.onCommand = { [weak self] action in self?.session?.runCommand(action) }
+        gameView.isBeastForm = { [weak self] in self?.session?.playerBeastForm.isBeast ?? false }
         gameView.onCapturedKey = { [weak self] code in
             self?.session?.systemMenu.captureKey(scanCode: code) ?? false
         }

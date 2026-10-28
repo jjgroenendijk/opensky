@@ -101,6 +101,8 @@ nonisolated public struct Race: Sendable {
         public static let noBloodSpray = Flags(rawValue: 0x0000_2000)
         public static let noBloodDecal = Flags(rawValue: 0x0000_4000)
         public static let noWeaponBlood = Flags(rawValue: 0x0200_0000)
+        /// Clear on the werewolf and vampire lord races: the player cannot take items.
+        public static let canPickUpItems = Flags(rawValue: 0x1000_0000)
     }
 
     /// Level-1 starting attributes and their regen rates. Regen is a percentage
