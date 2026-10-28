@@ -1,6 +1,6 @@
 // Actor graphs on the real install: the Nord and wolf races name their graph projects, each
-// graph steps, and a walking NPC's graph fires its own footstep events. Asserts on event
-// names and counts only.
+// graph steps, a walking NPC's graph fires its own footstep events, and a standing NPC's pose
+// follows its weight. Asserts on event names, counts, and joint positions only.
 
 import Foundation
 @testable import OpenSkyActorPresentation
@@ -83,10 +83,50 @@ struct ActorGraphRealDataTests {
         #expect(drop > 45, "the arm stays near the T-pose")
     }
 
+    /// The body-weight layers draw a thin NPC's arms in (`MT_Idle_Skinny`) and push a heavy
+    /// NPC's arms out (`MT_IdleMuscularOffset`), so the hands sit closer on a thin NPC.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func aThinNPCHoldsItsHandsCloserThanAHeavyOne() throws {
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let loadOrder = try ActiveLoadOrder.open(root: root).plugins
+        var skipped = SkippedRecords()
+        let races = loadOrder.decodeRecords(of: "RACE", skipped: &skipped) {
+            try Race(record: $0, localized: $1)
+        }
+        let vfs = VirtualFileSystem(root: root)
+        func handGap(weight: Float) throws -> Float {
+            let nord = try run(
+                race: "NordRace",
+                races: races,
+                files: vfs,
+                motion: .still,
+                weight: weight
+            )
+            let skeleton = try #require(nord.skeleton)
+            let model = try Self.modelPositions(#require(nord.lastBones), skeleton: skeleton)
+            let hands = ["NPC L Hand", "NPC R Hand"].compactMap { name in
+                skeleton.boneNames.firstIndex { $0.hasPrefix(name) }
+            }
+            try #require(hands.count == 2, "no hands")
+            return simd_distance(model[hands[0]], model[hands[1]])
+        }
+        let thin = try handGap(weight: 0), heavy = try handGap(weight: 100)
+        print("[INFO] hand gap: weight 0 \(thin), weight 100 \(heavy)")
+        #expect(thin + 5 < heavy, "the body-weight layers do not reach the pose")
+    }
+
     /// Degrees the shoulder-to-elbow line points below the model's horizontal plane.
     private static func armDrop(
         _ pose: [HKABonePose], skeleton: BehaviorSkeleton, from arm: Int, to forearm: Int
     ) -> Float {
+        let model = modelPositions(pose, skeleton: skeleton)
+        let line = model[forearm] - model[arm]
+        return asin(-line.z / simd_length(line)) * 180 / .pi
+    }
+
+    private static func modelPositions(_ pose: [HKABonePose], skeleton: BehaviorSkeleton)
+        -> [SIMD3<Float>]
+    {
         var model = [simd_float4x4](repeating: matrix_identity_float4x4, count: pose.count)
         for (index, bone) in pose.enumerated() {
             var local = simd_float4x4(bone.rotation)
@@ -94,14 +134,12 @@ struct ActorGraphRealDataTests {
             let parent = skeleton.parent(of: index)
             model[index] = parent >= 0 ? model[parent] * local : local
         }
-        let elbow = model[forearm].columns.3, shoulder = model[arm].columns.3
-        let line = SIMD3(elbow.x - shoulder.x, elbow.y - shoulder.y, elbow.z - shoulder.z)
-        return asin(-line.z / simd_length(line)) * 180 / .pi
+        return model.map { SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z) }
     }
 
     private func run(
         race editorID: String, races: [Race], files: VirtualFileSystem,
-        motion: ActorGraphMotion = ActorGraphMotion(isMoving: true)
+        motion: ActorGraphMotion = ActorGraphMotion(isMoving: true), weight: Float = 50
     ) throws -> Run {
         let race = try #require(races.last { $0.editorID == editorID }, "no \(editorID)")
         let model = try #require(race.details.behaviorGraphs.male, "\(editorID) names no graph")
@@ -122,10 +160,11 @@ struct ActorGraphRealDataTests {
         let walking = motion
         var result = Run(declaredEvents: Set(asset.eventNames), skeleton: instance.skeleton)
         for step in 0 ..< Self.stepCount {
-            let input = ActorGraphStepInput(
+            var input = ActorGraphStepInput(
                 motion: walking, speed: walking.isMoving ? Self.walkSpeed : 0, turnDelta: 0,
                 deltaTime: Self.timestep
             )
+            input.weight = weight
             for (name, value) in ActorGraphCore.variables(input) {
                 instance.setVariable(value, named: name)
             }

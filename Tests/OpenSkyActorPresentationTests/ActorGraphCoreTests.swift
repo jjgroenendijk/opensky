@@ -54,6 +54,18 @@ struct ActorGraphCoreTests {
         #expect(npc == .bool(true))
     }
 
+    /// `mt_behavior.hkx` turns `weapAdj` into the body-weight layer weights.
+    @Test func theWeightReachesTheGraphAsAFraction() {
+        #expect(ActorGraphCore.weaponAdjust(weight: 0) == 0)
+        #expect(ActorGraphCore.weaponAdjust(weight: 25) == 0.25)
+        #expect(ActorGraphCore.weaponAdjust(weight: 250) == 1)
+        #expect(ActorGraphCore.weaponAdjust(weight: .nan) == 0.5)
+        var input = ActorGraphStepInput(motion: .still, speed: 0, turnDelta: 0, deltaTime: 0.1)
+        input.weight = 100
+        let written = ActorGraphCore.variables(input).first { $0.name == "weapAdj" }?.value
+        #expect(written == .real(1))
+    }
+
     @Test func speedIsHorizontalTravelPerSecond() {
         #expect(ActorGraphCore.speed(from: [0, 0, 0], to: [30, 40, 99], seconds: 0.5) == 100)
         #expect(ActorGraphCore.speed(from: [0, 0, 0], to: [30, 40, 0], seconds: 0) == 0)

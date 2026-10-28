@@ -43,7 +43,9 @@ Both distances are settings, so a crowded scene can trade distance for frame tim
 are OpenSky's; the game does not state its own.
 
 Each step sets the locomotion variables from the actor's movement: `Speed`, `Direction`,
-`TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. A change of
+`TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. It also
+sets `weapAdj` from the NPC's weight
+([body-weight layer](/engine/behavior-clips.md#body-weight-layer)). A change of
 movement raises `moveStart`, `moveStop`, `SprintStart`, `SprintStop`, `SneakStart`, or
 `SneakStop`.
 

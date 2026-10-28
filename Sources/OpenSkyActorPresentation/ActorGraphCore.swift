@@ -109,6 +109,11 @@ nonisolated public enum ActorGraphNames {
     public static let isPlayerInt = "iIsPlayer"
     public static let isNPC = "IsNPC"
     public static let timeDelta = "TimeDelta"
+    /// The actor's weight as 0 to 1. `mt_behavior.hkx` turns it into the body-weight layer
+    /// weights `bodyMorphWeight` and `bodyMorphMuscular` with an expression. Real.
+    public static let weaponAdjust = "weapAdj"
+    public static let bodyMorphWeight = "bodyMorphWeight"
+    public static let bodyMorphMuscular = "bodyMorphMuscular"
 
     public static let moveStart = "moveStart"
     public static let moveStop = "moveStop"
@@ -141,6 +146,8 @@ nonisolated public struct ActorGraphStepInput: Equatable, Sendable {
     /// Yaw change since the last step, radians.
     public var turnDelta: Float
     public var deltaTime: Float
+    /// The NPC weight, 0 (thin) to 100 (heavy).
+    public var weight: Float = 50
 
     public init(motion: ActorGraphMotion, speed: Float, turnDelta: Float, deltaTime: Float) {
         self.motion = motion
@@ -171,7 +178,7 @@ nonisolated public enum ActorGraphCore {
     }
 
     /// The variables one step writes, in write order. An NPC walks where it faces, so
-    /// `Direction` stays 0.
+    /// `Direction` stays 0. `weapAdj` comes last.
     public static func variables(_ input: ActorGraphStepInput)
         -> [(name: String, value: BehaviorVariableValue)]
     {
@@ -189,7 +196,8 @@ nonisolated public enum ActorGraphCore {
             (Names.isPlayerInt, .int(0)),
             (Names.isNPC, .bool(true)),
             (Names.combatStance, .int(input.motion.isInCombatStance ? 1 : 0)),
-            (Names.timeDelta, .real(input.deltaTime))
+            (Names.timeDelta, .real(input.deltaTime)),
+            (Names.weaponAdjust, .real(weaponAdjust(weight: input.weight)))
         ]
     }
 
@@ -198,6 +206,12 @@ nonisolated public enum ActorGraphCore {
     public static func stateConstant(wasDrunk: Bool, isDrunk: Bool) -> String? {
         guard wasDrunk != isDrunk else { return nil }
         return isDrunk ? ActorGraphNames.drunkState : ActorGraphNames.defaultState
+    }
+
+    /// `weapAdj` for an actor weight from 0 (thin) to 100 (heavy)
+    /// (docs/engine/behavior-clips.md#body-weight-layer).
+    public static func weaponAdjust(weight: Float) -> Float {
+        weight.isFinite ? min(max(weight / 100, 0), 1) : 0.5
     }
 
     /// Horizontal speed between two feet positions, or 0 without a time step.

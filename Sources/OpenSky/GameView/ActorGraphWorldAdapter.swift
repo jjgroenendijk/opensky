@@ -45,8 +45,14 @@ final class ActorGraphWorldAdapter {
 
     /// Each mover's drive gait, which picks its footstep list.
     private var gaits: [ReferenceKey: LocomotionGait] = [:]
-    /// Each rolled actor base's race graph project; nil when its race names none.
-    private var projectPaths: [LeveledActorRollKey: String?] = [:]
+    /// Each rolled actor base's race graph project and weight.
+    private var graphBases: [LeveledActorRollKey: GraphBase] = [:]
+
+    /// `path` is nil when the race names no graph.
+    private struct GraphBase {
+        let path: String?
+        let weight: Float
+    }
 
     private static let settings: Set<PlayerSettingID> = [
         .actorGraphs, .actorGraphFullRateDistance, .actorGraphDistance
@@ -101,13 +107,13 @@ final class ActorGraphWorldAdapter {
         footsteps.handleActorGraphEvents([name], gait: gaits[actor] ?? .walk, position: feet)
     }
 
-    private func projectPath(of actor: ReferenceKey, base: FormID) -> String? {
+    private func graphBase(of actor: ReferenceKey, base: FormID) -> GraphBase? {
         guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return nil }
         let roll = game.worldState.leveledRoll(
             of: actor, base: base, with: resolver.templates.leveling
         )
         let key = LeveledActorRollKey(base: base, roll: roll)
-        if let cached = projectPaths[key] {
+        if let cached = graphBases[key] {
             return cached
         }
         let identity = ActorIdentityRecords(resolver: resolver)
@@ -116,8 +122,10 @@ final class ActorGraphWorldAdapter {
         let female = identity.isFemale(ofBase: base, roll: roll) ?? false
         let model = (female ? graphs?.female : nil) ?? graphs?.male
         let path = model.map { ActorGraphCore.projectPath(modelPath: $0.path) }
-        projectPaths[key] = .some(path)
-        return path
+        let weight = (try? resolver.templates.rolling(roll).resolve(base: base).weight) ?? 50
+        let graphBase = GraphBase(path: path, weight: weight)
+        graphBases[key] = graphBase
+        return graphBase
     }
 }
 
@@ -134,10 +142,12 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
             guard
                 !actor.isDead, links[actor.key] == nil,
                 let base = streamer.residentActorEntry(key: actor.key)?.placedActor?.base,
-                let path = projectPath(of: actor.key, base: base)
+                let graphBase = graphBase(of: actor.key, base: base),
+                let path = graphBase.path
             else { return nil }
             return ActorGraphCandidate(
-                key: actor.key, projectPath: path, feet: actor.feet, rotationZ: actor.facing
+                key: actor.key, projectPath: path, feet: actor.feet, rotationZ: actor.facing,
+                weight: graphBase.weight
             )
         }
     }

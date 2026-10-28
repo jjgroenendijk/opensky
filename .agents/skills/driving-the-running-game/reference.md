@@ -66,7 +66,8 @@ arrow keys.
 - `state actors` also gives each actor's behaviour `graph`: its `status` (`running`, `loading`,
   `failed: <reason>`, or `waiting for playback`), `project`, `activeStates`, `waitingForClip`,
   `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, `clipsMissed`,
-  `drunk`, `iState`, and `iStateTag` (the value the graph's state tagging generators publish).
+  `drunk`, `iState`, `iStateTag` (the value the graph's state tagging generators publish), and
+  `bodyWeight` (`weapAdj` and the body-weight layer weights the graph derives from it).
   `state player` gives the same `drunk` and `iState` under `graph`.
   A rider or cart passenger has no graph until it gets off.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
