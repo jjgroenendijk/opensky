@@ -27,9 +27,9 @@ extension ReferencePageViewController {
             }
             save = chosen
         }
-        guard actions.referenceSession.startGame(
-            at: split.reference, lowGraphics: lowGraphics, save: save
-        ) else { return }
+        let session = actions.referenceSession
+        let started = session.startGame(at: split.reference, lowGraphics: lowGraphics, save: save)
+        guard started else { return }
         if lowGraphics {
             GraphicsPageViewController.installPresets()
                 .apply(.low, to: GraphicsPageViewController.installSettings())
