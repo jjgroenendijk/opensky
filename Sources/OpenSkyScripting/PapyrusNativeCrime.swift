@@ -110,7 +110,7 @@ extension PapyrusNativeFunctions {
         })
     }
 
-    /// The two `Actor` alarms.
+    /// The `Actor` and `ObjectReference` alarms, and the werewolf crime.
     private static func installCrimeAlarms(into registry: inout PapyrusNativeRegistry) {
         // "Have this actor behave as if he was assaulted by the player." —
         // `Function SendAssaultAlarm() native`
@@ -168,6 +168,22 @@ extension PapyrusNativeFunctions {
                 actor.world.sendTrespassAlarm(witness: actor.key, criminal: criminal) != nil
             else {
                 return failure(call, "SendTrespassAlarm needs a session with a crime runtime")
+            }
+            return .returned(.none)
+        })
+
+        // "Has an actor in high who can detect the player call a werewolf crime
+        // against the player." — `Function SendWereWolfTransformation() native global`
+        // (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>)
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "SendWereWolfTransformation"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge,
+                world.sendWerewolfTransformation() != nil
+            else {
+                return failure(call, "SendWereWolfTransformation needs a crime runtime")
             }
             return .returned(.none)
         })

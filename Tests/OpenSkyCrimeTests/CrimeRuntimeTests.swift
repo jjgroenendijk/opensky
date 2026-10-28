@@ -41,7 +41,7 @@ struct CrimeRuntimeTests {
         #expect(runtime.crimeGold(of: hold, violent: true) == 1040)
         #expect(runtime.crimeGold(of: hold, violent: false) == 55)
         #expect(runtime.crimeGold(of: hold) == 1095)
-        #expect(CrimeKind.allCases.filter(\.isViolent) == [.assault, .murder])
+        #expect(CrimeKind.allCases.filter(\.isViolent) == [.assault, .murder, .werewolf])
     }
 
     /// `modifyCrimeGold` and `setCrimeGold` move one half; `clearCrimeGold`

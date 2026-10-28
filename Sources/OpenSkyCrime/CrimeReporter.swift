@@ -166,6 +166,20 @@ public final class CrimeReporter: CrimeReporting {
         ))
     }
 
+    /// `Game.SendWereWolfTransformation`: "Has an actor in high who can detect the
+    /// player call a werewolf crime against the player"
+    /// (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>). The first actor
+    /// that detects `actor` calls it. Nil when nobody does.
+    @discardableResult
+    public func reportWerewolfTransformation(by actor: ReferenceKey = .player) -> CrimeOutcome? {
+        guard let witness = runtime.witnesses.witnesses(of: actor).first else { return nil }
+        let located = event(.werewolf, victim: witness, by: actor)
+        return recordAsIs(CrimeEvent(
+            kind: .werewolf, perpetrator: actor, victim: witness,
+            crimeFaction: located.crimeFaction, cell: located.cell, witnessed: true
+        ))
+    }
+
     // MARK: - Private
 
     /// `ASSU` for every assault, `ADCR` when the crime cost gold.
@@ -270,6 +284,7 @@ extension CrimeKind {
         case .assault: .assault
         case .murder: .murder
         case .trespass: .trespass
+        case .werewolf: .werewolf
         }
     }
 }

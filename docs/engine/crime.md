@@ -68,14 +68,22 @@ A chain with no `FNAM` has no crime faction. That is a real answer: a dungeon or
 to no one, which is why killing a bandit on the road costs nothing. No default is used. A broken
 `FNAM` link also stops the walk. Skipping past it would charge the wrong hold.
 
-## The four crimes
+## The crimes
 
-The crimes are theft, assault, murder, and trespass. They are the four that the `FACT` `CRVA`
-field prices and that this engine can observe.
+The crimes are theft, assault, murder, trespass, and a seen werewolf or vampire lord change.
+The `FACT` `CRVA` field prices each one.
 
 Bounty text names them with the string settings `sCrimeTypeSteal`, `sCrimeTypeAttack`,
-`sCrimeTypeMurder`, and `sCrimeTypeTrespass`. The game also names `sCrimeTypePickpocket`,
-`sCrimeTypeEscape`, and `sCrimeTypeWerewolf`; OpenSky reads those when it counts those crimes.
+`sCrimeTypeMurder`, `sCrimeTypeTrespass`, and `sCrimeTypeWerewolf`. The game also names
+`sCrimeTypePickpocket` and `sCrimeTypeEscape`; OpenSky reads those when it counts those crimes.
+
+The change is a crime only when somebody sees it. `Game.SendWereWolfTransformation` "has an
+actor in high who can detect the player call a werewolf crime against the player"
+(<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>). OpenSky takes the first actor
+that detects the player as that witness. The Creation Kit's Crime page calls it a "Special
+Crime"; OpenSky puts its gold in the violent half, beside murder, which costs the same. It adds
+no crime count, because the save keeps four counts per faction and the change script counts the
+"Werewolf Transformations" stat itself.
 
 A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
 "bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared
@@ -84,7 +92,7 @@ of gold, words, and faction is OpenSky's reading.
 
 The prices come from the record, not from game settings. `openskycli gmst list iCrime`
 on the local install shows two settings, `iCrimeGoldStealHorse` (100) and `iCrimeGoldWerewolf`
-(1000), and neither prices these four. `CrimeFactionWhiterun`'s `CRVA` reads "murder 1000,
+(1000), and neither prices the first four. `CrimeFactionWhiterun`'s `CRVA` reads "murder 1000,
 assault 40, trespass 5, pickpocket 25, steal multiplier 0.5000, escape 100, werewolf 1000".
 UESP's bounty table gives the same numbers.
 
@@ -94,6 +102,7 @@ UESP's bounty table gives the same numbers.
 | Assault | `CRVA` assault (40 in Whiterun) | `CRVA`, and UESP "Assault ... 40" |
 | Murder | `CRVA` murder (1000) | `CRVA`, and UESP "Murder ... 1000" |
 | Trespass | `CRVA` trespass (5) | `CRVA`, and UESP "Trespassing ... 5" |
+| Werewolf change | `CRVA` werewolf (1000) | `CRVA`, and UESP "Shapeshifting ... 1000" |
 
 A faction with the "Use Defaults" flag ignores its own `CRVA` and charges the default prices.
 The Creation Kit's Category:Settings page gives them: `iCrimeGoldMurder` 1000,

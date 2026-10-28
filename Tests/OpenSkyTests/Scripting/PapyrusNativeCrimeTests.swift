@@ -332,3 +332,35 @@ struct PapyrusNativeCrimeTests {
         #expect(fixture.reporter.runtime.ledger().isEmpty)
     }
 }
+
+// MARK: - The werewolf crime
+
+extension PapyrusNativeCrimeTests {
+    private static let werewolfCall = PapyrusNativeCall(
+        kind: .staticFunction, scriptName: "Game", functionName: "SendWereWolfTransformation",
+        receiver: nil, arguments: []
+    )
+
+    /// `Game.SendWereWolfTransformation()` charges the `CRVA` werewolf price to the violent
+    /// half when an actor detects the player, and nothing when nobody does.
+    @Test func theWerewolfTransformationIsChargedOnlyWhenSeen() throws {
+        let fixture = try Self.fixture()
+        let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+        let global = Self.werewolfCall
+
+        #expect(!isFailure(fixture.registry.invoke(global)))
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
+
+        let witness = try #require(fixture.session.bridge.referenceKey(for: fixture.actor))
+        fixture.reporter.witnesses = FixedCrimeWitnesses(watching: .player, by: [witness])
+        #expect(!isFailure(fixture.registry.invoke(global)))
+        #expect(fixture.reporter.runtime.crimeGold(of: hold, violent: true) == 1000)
+        #expect(fixture.reporter.runtime.crimeCounts(of: hold).isEmpty)
+    }
+
+    /// Without a crime runtime the werewolf crime refuses, like the alarms.
+    @Test func theWerewolfTransformationNeedsACrimeRuntime() throws {
+        let fixture = try Self.fixture(wireReporter: false)
+        #expect(isFailure(fixture.registry.invoke(Self.werewolfCall)))
+    }
+}

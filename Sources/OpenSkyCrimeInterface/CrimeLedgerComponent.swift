@@ -45,6 +45,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         case .assault: assault
         case .murder: murder
         case .trespass: trespass
+        case .werewolf: 0
         }
     }
 
@@ -52,6 +53,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
     /// a session long enough to overflow `Int32` murders should report
     /// `Int32.max` rather than a negative number.
     public func incrementing(_ kind: CrimeKind) -> CrimeCounts {
+        guard CrimeKind.counted.contains(kind) else { return self }
         let raised = Int32(clamping: Int64(self[kind]) + 1)
         var result = self
         switch kind {
@@ -59,6 +61,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         case .assault: result.assault = raised
         case .murder: result.murder = raised
         case .trespass: result.trespass = raised
+        case .werewolf: break
         }
         return result
     }
