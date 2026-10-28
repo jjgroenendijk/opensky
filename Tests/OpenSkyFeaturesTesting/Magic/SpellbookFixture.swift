@@ -73,9 +73,9 @@ public enum SpellbookFixture {
     /// Every fixture record in one index, which is what each store below is
     /// built over. Built once per call rather than cached, so a suite that
     /// mutates nothing shares nothing.
-    public static func index() throws -> RecordIndex {
+    public static func index(extraRecords: [Data] = []) throws -> RecordIndex {
         try RecordIndex(
-            plugins: [(pluginName, plugin())],
+            plugins: [(pluginName, plugin(extraRecords: extraRecords))],
             recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "PROJ"]
         )
     }

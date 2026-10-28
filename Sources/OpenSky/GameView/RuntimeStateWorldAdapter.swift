@@ -3,6 +3,7 @@
 // The rules live in the coordinator (docs/engine/coordinators.md).
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -38,6 +39,7 @@ import OpenSkyWorldState
 /// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RuntimeStateWorldHost: AnyObject {
+    var dragonFlight: DragonFlightCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
@@ -158,6 +160,7 @@ final class RuntimeStateWorldAdapter {
         state.isFemale = baseline.isFemale
         state.isFlying = game.dragonFlightWorld.isFlying(holder.key)
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
+        state.injuredHealthPercent = baseline.injuredHealthPercent
         if holder.key != .player {
             state.recordFlags = baseline.recordFlags
         }

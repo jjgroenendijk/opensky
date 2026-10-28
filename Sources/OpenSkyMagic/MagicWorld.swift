@@ -100,9 +100,16 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func isActorDead(_ key: ReferenceKey) -> Bool
     /// Every cast, for the Papyrus `OnSpellCast` event.
     func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey)
+    /// The actor rides a dragon in the air (`IsOnFlyingMount`).
+    func isOnFlyingMount(_ key: ReferenceKey) -> Bool
 }
 
 extension MagicWorld {
+    /// A session with no mounts has no rider in the air.
+    public func isOnFlyingMount(_: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A session with no perks leaves every value as authored.
     public func perkModified(
         _ value: Float,

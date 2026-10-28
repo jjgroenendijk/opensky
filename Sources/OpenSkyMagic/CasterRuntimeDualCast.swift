@@ -18,6 +18,12 @@ extension SpellHand {
 }
 
 extension CasterRuntime {
+    /// The `SPIT` charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
+    func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
+        let single = max(0, spell.data?.chargeTime ?? 0)
+        return dual ? single * max(0, costSettings.dualCastTimeMult) : single
+    }
+
     public static let canDualCastEntryPoint = PerkEntryPoint.canDualCastSpell
     /// How long after the first hand the second may begin and still join it.
     /// OpenSky's choice: no record states a window.

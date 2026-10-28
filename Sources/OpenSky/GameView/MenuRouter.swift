@@ -5,6 +5,7 @@ import AppKit
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
 
@@ -23,6 +24,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var menuScreens: MenuScreens { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
+    var mounts: MountCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
     var saveGames: SaveGameWorldAdapter { get }
@@ -58,9 +60,12 @@ final class MenuRouter {
             game.saveGames.autosave(.pause)
             game.systemMenu.open()
         default:
-            if let slot = action.hotkeySlot {
-                game.inventoryMenu.useHotkey(slot)
+            guard let slot = action.hotkeySlot else { return }
+            // On a flying dragon, 1 and 2 switch the target (UESP "Skyrim:Controls").
+            if slot <= 2, game.mounts.switchDragonTarget(forward: slot == 2) {
+                return
             }
+            game.inventoryMenu.useHotkey(slot)
         }
     }
 

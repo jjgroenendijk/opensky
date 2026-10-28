@@ -309,6 +309,10 @@ extension MagicCoordinator: CasterWorld {
         MagicCore.gameDay(world.gameDaysPassed)
     }
 
+    public func castsFromFlyingMount(key: ReferenceKey) -> Bool {
+        world.isOnFlyingMount(key)
+    }
+
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         world.reportSkillUse(use)

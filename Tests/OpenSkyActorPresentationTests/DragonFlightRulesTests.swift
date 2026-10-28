@@ -1,7 +1,9 @@
-// The flight rules: take-off, the circle, the hover, and the landing with its approach.
+// The flight rules: take-off, the circle, the hover, the landing with its approach, the
+// forced landings, and the perch.
 
 @testable import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyFormatsESM
 import simd
 import Testing
 
@@ -139,5 +141,45 @@ struct DragonFlightRulesTests {
         #expect(DragonFlightGraphNames.event(for: .beginApproach) == "FlyStopDefault")
         #expect(DragonFlightGraphNames.event(for: .takeOff) == "TakeOff")
         #expect(DragonFlightGraphNames.event(for: .beginLanding) == nil)
+    }
+
+    @Test func aLandingRequestStartsTheApproachAtOnce() {
+        let start = Self.cruising(at: SIMD3(0, 0, 1500))
+        let step = Self.fly(start, toward: .ground(nil, .crash), seconds: Self.step)
+        #expect(step.events == [.beginLanding, .beginApproach])
+        #expect(step.state.landingRequest == .crash && step.state.isApproaching)
+        let down = Self.fly(step.state, toward: .ground(nil, .crash), seconds: 30)
+        #expect(down.state.phase == .grounded)
+        #expect(down.state.landingRequest == .none)
+    }
+
+    @Test func aDragonLandsOnItsPerchAndTakesOffWhenTheGoalChanges() {
+        let perch = DragonPerch(reference: .generated(9), feet: SIMD3(3000, 0, 800), yaw: 1)
+        let start = Self.cruising(at: SIMD3(0, 0, 1500))
+        let sat = Self.fly(start, toward: .perch(perch), seconds: 60)
+        #expect(sat.state.phase == .perched)
+        #expect(sat.events.contains(.beginApproach) && sat.events.last == .perched)
+        #expect(sat.state.feet == perch.feet && sat.state.yaw == perch.yaw)
+        #expect(sat.state.phase.isFlying, "a perch has no navmesh")
+        let held = Self.fly(sat.state, toward: .perch(perch), seconds: 2)
+        #expect(held.state.phase == .perched && held.events.isEmpty)
+        let away = Self.fly(sat.state, toward: .circle(center: .zero, radius: 4000), seconds: 1)
+        #expect(away.events.first == .takeOff)
+        #expect(away.state.phase == .takingOff && away.state.perch == nil)
+    }
+
+    @Test func aPerchFacingTheTargetWithinReachIsChosen() {
+        let target = SIMD3<Float>(0, 0, 0)
+        let facing = DragonPerch(reference: .generated(1), feet: SIMD3(3000, 0, 0), yaw: .pi)
+        let away = DragonPerch(reference: .generated(2), feet: SIMD3(1000, 0, 0), yaw: 0)
+        let far = DragonPerch(reference: .generated(3), feet: SIMD3(9000, 0, 0), yaw: .pi)
+        let chosen = DragonPerchRules.choose(
+            [facing, away, far], target: target, settings: Self.settings
+        )
+        #expect(chosen == facing)
+        #expect(DragonPerchRules.choose([away, far], target: target, settings: Self.settings)
+            == nil)
+        #expect(DragonPerchRules.nearest([facing, away], to: target, settings: Self.settings)
+            == away)
     }
 }

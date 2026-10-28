@@ -44,7 +44,7 @@ Signatures and defaults are from the Creation Kit wiki script pages, for example
 | `Location` | `SetCleared`, `SetKeywordData(Keyword, float)` | `IsCleared`, `GetKeywordData(Keyword)` |
 | `Cell` | `SetPublic` | none |
 | `Quest` | `SetActive` | `IsActive` |
-| `Game` | `SetInChargen`, `SetBeastForm` | none |
+| `Game` | `SetInChargen`, `SetBeastForm`, `SetAllowFlyingMountLandingRequests` | none |
 
 `GetCrimeFaction` answers a faction a script set before the `CRIF` of the actor's base.
 

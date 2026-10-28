@@ -146,8 +146,11 @@ nonisolated extension AgentCommandCatalog {
             positionals: [optional("ref", "The actor. Default: player.")]
         ),
         command(
-            "debug.flight", "Force an actor that flies to take off or land.",
-            positionals: [required("ref", refHelp), required("order", "Either takeoff or land.")]
+            "debug.flight", "Force an actor that flies to take off, land, or perch.",
+            positionals: [
+                required("ref", refHelp),
+                required("order", "One of takeoff, land, perch, hasty, or crash.")
+            ]
         ),
         command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",

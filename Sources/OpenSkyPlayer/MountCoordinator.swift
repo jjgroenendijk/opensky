@@ -20,6 +20,10 @@ public protocol MountWorld: AnyObject {
     func dismountOffset(of key: ReferenceKey) -> SIMD3<Float>
     /// The actor in view a ridden dragon's rider locks, or nil.
     func lockCandidate() -> ReferenceKey?
+    /// The actors in view a rider can switch to, left to right.
+    func switchCandidates() -> [ReferenceKey]
+    /// `Game.SetAllowFlyingMountLandingRequests`; true until a script says otherwise.
+    func allowsFlyingMountLandingRequests() -> Bool
     /// Where a living, loaded actor stands; nil once it is dead or gone.
     func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>?
 }

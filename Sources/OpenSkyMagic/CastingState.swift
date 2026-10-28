@@ -56,6 +56,8 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
     case powerAlreadyUsedToday(day: Int32)
     /// Both hands began the spell, but no perk lets this caster dual cast it.
     case notDualCastable
+    /// The caster rides a flying dragon, and this kind of spell cannot be cast from it.
+    case notFromFlyingMount
 
     public var describedReason: String {
         switch self {
@@ -70,6 +72,7 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
         case .abilityNotCastable: "an ability is carried, not cast"
         case let .powerAlreadyUsedToday(day): "this power was already used on day \(day)"
         case .notDualCastable: "no dual casting perk covers this spell"
+        case .notFromFlyingMount: "this kind of spell cannot be cast from a flying dragon"
         }
     }
 }

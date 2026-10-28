@@ -43,6 +43,7 @@ protocol MagicWorldHost: AnyObject {
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
+    var mountWorld: MountWorldAdapter { get }
     var perks: PerkCoordinator { get }
     var storyWorld: StoryWorldAdapter { get }
     var progression: ProgressionCoordinator { get }
@@ -176,6 +177,11 @@ final class MagicWorldAdapter {
 
     func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
         game.scripts.runtime?.queueSpellCast(spell, by: caster)
+    }
+
+    /// Only the player rides.
+    func isOnFlyingMount(_ key: ReferenceKey) -> Bool {
+        key == .player && !game.mountWorld.flyingMounts.isEmpty
     }
 }
 

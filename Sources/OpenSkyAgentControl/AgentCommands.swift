@@ -83,6 +83,11 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
 nonisolated public enum AgentFlightOrder: String, Equatable, Sendable {
     case takeOff = "takeoff"
     case land
+    /// Land on the nearest perch.
+    case perch
+    /// Land at once, as a hasty or a crash landing request does.
+    case hasty
+    case crash
 }
 
 /// Where a teleport goes.
@@ -239,7 +244,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
 
     private static func parseFlight(_ args: AgentArguments) throws(AgentFailure) -> Self {
         guard let order = try AgentFlightOrder(rawValue: args.string("order").lowercased()) else {
-            throw args.invalid("order", "takeoff or land")
+            throw args.invalid("order", "takeoff, land, perch, hasty, or crash")
         }
         return try .flight(reference: args.string("ref"), order: order)
     }

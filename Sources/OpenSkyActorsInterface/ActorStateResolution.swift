@@ -61,6 +61,14 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isOverEncumbered: Bool?
     /// Whether a weapon is equipped in either hand. Nil when nothing reads equipment.
     public var holdsWeapon: Bool?
+    /// The race's injured health share, 0 to 1.
+    public var injuredHealthPercent: Float = 0
+
+    /// `GetIsInjured`: health below the race's injured share (Creation Kit wiki).
+    public var isInjured: Bool {
+        guard maximums.health > 0, !isDead else { return false }
+        return current.health / maximums.health < injuredHealthPercent
+    }
 
     public init(
         current: ActorValues,

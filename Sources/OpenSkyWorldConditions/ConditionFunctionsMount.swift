@@ -22,6 +22,9 @@ nonisolated public struct MountConditionResolution: ConditionResolution, Sendabl
     public var flyingStates: [ReferenceKey: Int32] = [:]
     /// No actor flies in an interior.
     public var canFlyHere = false
+    /// The actors the engine asks to land at once, by kind of landing.
+    public var crashLandRequests: Set<ReferenceKey> = []
+    public var hastyLandRequests: Set<ReferenceKey> = []
 
     public init(
         mounts: [ReferenceKey: ReferenceKey]?, playersLastMount: ReferenceKey?,
@@ -61,8 +64,8 @@ nonisolated extension ConditionFunctions {
                 Self.isTrue(mounts[key].map(flying.contains) ?? false)
             }
         })
-        // 0 not flying, 1 taking off, 2 cruising, 3 hovering, 4 landing (CK wiki
-        // "GetFlyingState - Actor").
+        // 0 not flying, 1 taking off, 2 cruising, 3 hovering, 4 landing, 5 perched (CK
+        // wiki "GetFlyingState - Actor").
         registry.register(ConditionFunction(index: 633, name: "GetFlyingState") { call in
             let states = call.context.mounts.flyingStates
             return mount(call) { _, key, _ in Float(states[key] ?? 0) }
@@ -71,9 +74,16 @@ nonisolated extension ConditionFunctions {
             let canFly = call.context.mounts.canFlyHere
             return mount(call) { _, _, _ in Self.isTrue(canFly) }
         })
-        // OpenSky lands only in the default way, and has no flying patrol or fast travel.
+        registry.register(ConditionFunction(index: 646, name: "GetIsCrashLandRequest") { call in
+            let requests = call.context.mounts.crashLandRequests
+            return mount(call) { _, key, _ in Self.isTrue(requests.contains(key)) }
+        })
+        registry.register(ConditionFunction(index: 647, name: "GetIsHastyLandRequest") { call in
+            let requests = call.context.mounts.hastyLandRequests
+            return mount(call) { _, key, _ in Self.isTrue(requests.contains(key)) }
+        })
+        // OpenSky has no flying patrol or fast travel.
         let flight: [String: UInt16] = [
-            "GetIsCrashLandRequest": 646, "GetIsHastyLandRequest": 647,
             "IsFlyingMountPatrolQueud": 732, "IsFlyingMountFastTravelling": 733
         ]
         for (name, index) in flight.sorted(by: { $0.key < $1.key }) {

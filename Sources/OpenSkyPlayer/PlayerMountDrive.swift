@@ -181,6 +181,11 @@ public final class PlayerMountDrive {
         return (bridge.graphEvents.drain(events), result.events)
     }
 
+    /// Raises an event on the mount's graph, such as a dragon's breath.
+    public func raiseGraphEvent(_ name: String) {
+        bridge.raise(name)
+    }
+
     private func raiseStance(_ weaponDrawn: Bool) {
         bridge.write(
             .int(MountGraphNames.combatStanceValue(weaponDrawn)), to: MountGraphNames.combatStance

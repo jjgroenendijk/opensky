@@ -66,6 +66,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var recordFlags: ActorBase.Flags = []
     /// The race's `KWDA` keywords, which `IsUndead` tests.
     public var raceKeywords: [FormID] = []
+    /// The race's injured health share, 0 to 1: below it `GetIsInjured` is 1.
+    public var injuredHealthPercent: Float = 0
 
     public init(
         maximums: ActorValues,
@@ -258,8 +260,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             isFemale: (try? resolver.templates.resolve(base: base))?.isFemale.value
         )
         baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
-        baseline.raceKeywords = resolved.race
-            .flatMap { resolver.races[$0.rawValue]?.details.keywords } ?? []
+        let race = resolved.race.flatMap { resolver.races[$0.rawValue] }
+        baseline.raceKeywords = race?.details.keywords ?? []
+        baseline.injuredHealthPercent = race?.details.properties?.injuredHealthPercent ?? 0
         return baseline
     }
 }

@@ -91,10 +91,12 @@ arrow keys.
   marker with its type, whether `MNAM` turns it on, its entry sides, its `position` and
   floor-level `root`, its holder, and `inUse`.
 - `state flight` lists each actor in the air with its `phase`, `state` (the `GetFlyingState`
-  value), `feet`, `speed`, `approaching`, `landingPoint`, and forced `order`; with a reference it
-  gives that actor, `getIsFlying` included. `state mount` gives the player's mount: `kind`,
-  `phase`, `speed`, a dragon's `flight`, and the rider's `orders` (`landingRequested`,
-  `lockedTarget`, `attacking`).
+  value), `feet`, `speed`, `approaching`, `landingPoint`, `landingRequest` (none, hasty, crash),
+  `landingEvent`, `perched`, `perch`, and forced `order`; the ridden flight adds `rider`
+  (`lockedTarget`, `switchedTarget`, `attacking`). With a reference it gives that actor,
+  `getIsFlying` included. `state mount` gives the player's mount: `kind`, `phase`, `speed`, a
+  dragon's `flight`, and the rider's `orders` (`landingRequested`, `lockedTarget`,
+  `switchedTarget`, `attacking`, `breath`).
 - `state objects` lists each running object behaviour graph, such as a trap's or a door's,
   with its project, innermost active `state`, every active state in `states`,
   `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
@@ -132,7 +134,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
-| `debug flight <ref> takeoff\|land` | forces an actor whose race flies to take off or land; on the ridden dragon it gives the rider's land order or calls it off |
+| `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |

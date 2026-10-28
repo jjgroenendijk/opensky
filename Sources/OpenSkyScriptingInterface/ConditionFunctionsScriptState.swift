@@ -37,6 +37,7 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let restrained = "restrained"
     public static let playerTeammate = "playerTeammate"
     public static let allowFlying = "allowFlying"
+    public static let flyingMountLandingRefused = "flyingMountLandingRefused"
     public static let alerted = "alerted"
     public static let bribed = "bribed"
     public static let cleared = "cleared"

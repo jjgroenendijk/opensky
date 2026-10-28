@@ -4,36 +4,70 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 /// The `GetFlyingState` values (<https://ck.uesp.net/wiki/GetFlyingState_-_Actor>).
-/// 5, perched on a word wall or a rock, is not modelled.
 nonisolated public enum DragonFlightPhase: Int32, Equatable, Sendable, CaseIterable {
     case grounded = 0
     case takingOff = 1
     case cruising = 2
     case hovering = 3
     case landing = 4
+    /// Sitting on a perch: a word wall, a tower, or a rock.
+    case perched = 5
 
-    /// `GetIsFlying`: 1 until the landing is done.
+    /// `GetIsFlying`: 1 until the landing on the ground is done. A perch has no navmesh,
+    /// so a perched dragon still counts.
     public var isFlying: Bool {
         self != .grounded
+    }
+}
+
+/// A landing the engine asks for, which `GetIsHastyLandRequest` and
+/// `GetIsCrashLandRequest` report. It lands at once, without the long approach.
+nonisolated public enum DragonLandingRequest: String, Equatable, Sendable {
+    case none
+    case hasty
+    case crash
+}
+
+/// A dragon perch: furniture whose `MNAM` marks it as one, such as `DragonPerchTower`.
+nonisolated public struct DragonPerch: Equatable, Sendable {
+    public let reference: ReferenceKey
+    /// Where the dragon's feet go.
+    public let feet: SIMD3<Float>
+    /// The walk yaw the perch faces, counter-clockwise from +X.
+    public let yaw: Float
+
+    public init(reference: ReferenceKey, feet: SIMD3<Float>, yaw: Float) {
+        self.reference = reference
+        self.feet = feet
+        self.yaw = yaw
     }
 }
 
 /// Where a dragon wants to be.
 nonisolated public enum DragonFlightGoal: Equatable, Sendable {
     /// On the ground: at the point, or ahead of where it flies when nil.
-    case ground(SIMD3<Float>?)
+    case ground(SIMD3<Float>?, DragonLandingRequest = .none)
     case circle(center: SIMD3<Float>, radius: Float)
     /// Still in the air, turned toward the point.
     case hover(facing: SIMD3<Float>)
+    case perch(DragonPerch)
 
     public var isAirborne: Bool {
         if case .ground = self {
             return false
         }
         return true
+    }
+
+    var perch: DragonPerch? {
+        if case let .perch(perch) = self {
+            return perch
+        }
+        return nil
     }
 }
 
@@ -58,6 +92,10 @@ nonisolated public struct DragonFlightSettings: Equatable, Sendable {
     public var landingSpeed: Float = 300
     /// How far ahead of the dragon, in radians round the circle, it steers.
     public var circleLead: Float = 0.6
+    /// `fCombatLandingSearchDistance`: how far from its target a dragon looks for a perch.
+    public var perchSearchDistance: Float = 6000
+    /// `fCombatPerchMaxTargetAngle`, in radians: how far off a perch's facing the target may be.
+    public var perchMaxTargetAngle: Float = 75 * .pi / 180
 
     public static let standard = Self()
 
@@ -66,9 +104,17 @@ nonisolated public struct DragonFlightSettings: Equatable, Sendable {
     public static let flyingType = "Dragon_Flying_MT"
     public static let hoveringType = "Dragon_Hovering_MT"
 
-    /// The vanilla numbers, with the speeds and turns of the load order's dragon types.
-    public static func resolve(movementTypes: MovementTypeStore) -> Self {
+    /// The vanilla numbers, with the load order's dragon movement types and perch settings.
+    public static func resolve(
+        movementTypes: MovementTypeStore, settings store: GameSettingStore
+    ) -> Self {
         var settings = Self.standard
+        if let distance = store.number("fCombatLandingSearchDistance") {
+            settings.perchSearchDistance = distance
+        }
+        if let degrees = store.number("fCombatPerchMaxTargetAngle") {
+            settings.perchMaxTargetAngle = degrees * .pi / 180
+        }
         if let flying = movementTypes.type(editorID: flyingType)?.speeds {
             settings.cruiseSpeed = flying.forwardWalk
             settings.turnRate = flying.rotateInPlaceWalk
@@ -99,6 +145,9 @@ nonisolated public struct DragonFlightState: Equatable, Sendable {
     public var landingPoint: SIMD3<Float>?
     /// The graph plays its approach clip; the landing can no longer be cancelled.
     public var isApproaching = false
+    public var landingRequest = DragonLandingRequest.none
+    /// The perch it lands on or sits on.
+    public var perch: DragonPerch?
     /// The last ground height known, for where the ground has no height.
     public var lastGround: Float?
 
@@ -130,6 +179,8 @@ nonisolated public enum DragonFlightEvent: Equatable, Sendable {
     /// Close enough that the approach clip ends at the landing point.
     case beginApproach
     case landed
+    /// Sat down on its perch.
+    case perched
 }
 
 nonisolated public struct DragonFlightStep: Equatable, Sendable {
@@ -209,6 +260,7 @@ nonisolated private struct Flight {
         case .cruising: cruise(goal)
         case .hovering: hover(goal)
         case .landing: land(goal)
+        case .perched: sit(goal)
         }
     }
 
@@ -235,7 +287,7 @@ nonisolated private struct Flight {
 
     private mutating func cruise(_ goal: DragonFlightGoal) {
         switch goal {
-        case .ground: beginLanding(goal)
+        case .ground, .perch: beginLanding(goal)
         case .hover: enter(.hovering, raising: .startHover)
         case let .circle(center, radius):
             let point = DragonFlightRules.circlePoint(
@@ -249,7 +301,7 @@ nonisolated private struct Flight {
 
     private mutating func hover(_ goal: DragonFlightGoal) {
         switch goal {
-        case .ground:
+        case .ground, .perch:
             events.append(.stopHover)
             beginLanding(goal)
         case .circle: enter(.cruising, raising: .stopHover)
@@ -266,17 +318,34 @@ nonisolated private struct Flight {
     private mutating func beginLanding(_ goal: DragonFlightGoal) {
         let ahead = position + SIMD2(cos(state.yaw), sin(state.yaw)) * state.speed * 1.5
         var point = SIMD3(ahead.x, ahead.y, 0)
-        if case let .ground(.some(wanted)) = goal {
-            point = wanted
+        state.landingRequest = .none
+        state.perch = goal.perch
+        switch goal {
+        case let .ground(wanted, request):
+            point = wanted ?? point
+            point.z = groundHeight(at: SIMD2(point.x, point.y))
+            state.landingRequest = request
+        case let .perch(perch): point = perch.feet
+        case .circle, .hover: point.z = groundHeight(at: SIMD2(point.x, point.y))
         }
-        point.z = groundHeight(at: SIMD2(point.x, point.y))
         state.landingPoint = point
         enter(.landing, raising: .beginLanding)
+        if state.landingRequest != .none {
+            state.isApproaching = true
+            events.append(.beginApproach)
+        }
+    }
+
+    /// The landing still wanted: on the ground, or on the same perch.
+    private func keepsLanding(_ goal: DragonFlightGoal) -> Bool {
+        guard let perch = state.perch else { return !goal.isAirborne }
+        return goal.perch?.reference == perch.reference
     }
 
     private mutating func land(_ goal: DragonFlightGoal) {
-        guard let target = state.landingPoint, state.isApproaching || !goal.isAirborne else {
+        guard let target = state.landingPoint, state.isApproaching || keepsLanding(goal) else {
             state.landingPoint = nil
+            state.perch = nil
             return enter(.cruising, raising: .cancelLanding)
         }
         let offset = SIMD2(target.x, target.y) - position
@@ -297,12 +366,32 @@ nonisolated private struct Flight {
             left <= DragonFlightRules.arrivalDistance,
             state.feet.z - target.z <= DragonFlightRules.arrivalDistance
         else { return }
-        state.feet = SIMD3(state.feet.x, state.feet.y, groundHeight(at: position))
         state.speed = 0
         state.verticalSpeed = 0
         state.landingPoint = nil
         state.isApproaching = false
+        state.landingRequest = .none
+        if let perch = state.perch {
+            state.feet = perch.feet
+            state.yaw = perch.yaw
+            return enter(.perched, raising: .perched)
+        }
+        state.feet = SIMD3(state.feet.x, state.feet.y, groundHeight(at: position))
         enter(.grounded, raising: .landed)
+    }
+
+    /// Sits while the goal is this perch; any other goal takes off from it.
+    private mutating func sit(_ goal: DragonFlightGoal) {
+        if let perch = state.perch, goal.perch?.reference == perch.reference {
+            state.feet = perch.feet
+            state.yaw = perch.yaw
+            state.speed = 0
+            state.verticalSpeed = 0
+            return
+        }
+        state.perch = nil
+        state.lastGround = groundHeight(at: position)
+        enter(.takingOff, raising: .takeOff)
     }
 
     private mutating func move(

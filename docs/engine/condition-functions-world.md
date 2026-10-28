@@ -90,10 +90,11 @@ These read what a native or the dialogue stored in the actor's
   ([riding](/engine/riding.md)).
 - `IsHorseStolen` (282) is always 0. The Creation Kit wiki says the function does nothing
   (<https://ck.uesp.net/wiki/IsHorseStolen>).
-- `GetFlyingState` (633) is the flight phase, 0 to 4 ([dragon flight](/engine/dragon-flight.md)).
-  `CanFlyHere` (731) is 1 in an exterior. The hasty and crash land requests (646, 647) and the
-  flying patrol and fast travel (732, 733) are 0: OpenSky lands only the default way and has
-  neither.
+- `GetFlyingState` (633) is the flight phase, 0 to 5 ([dragon flight](/engine/dragon-flight.md)).
+  `CanFlyHere` (731) is 1 in an exterior. `GetIsCrashLandRequest` (646) and
+  `GetIsHastyLandRequest` (647) are 1 while that dragon comes down with a crash or hasty landing
+  ([landings](/engine/dragon-flight.md#landings)). The flying patrol and fast travel (732, 733)
+  are 0: OpenSky has neither.
 
 ## Crime
 
@@ -200,8 +201,10 @@ reads it back.
 - `GetGroupMemberCount` (415) counts the actors in the run-on's fight. OpenSky has no combat
   groups, so every NPC in combat counts as one group: the count of NPCs that fight now. The
   player counts as a group of 1, and an actor out of combat reads 0.
-- OpenSky models no injury, attack types, item-use reactions, player actions, or bump
-  reactions. So `GetIsInjured` (645), `IsAttackType` (697), `GetIsUsedItemType` (247),
+- `GetIsInjured` (645) is 1 when health is below the race's injured health share
+  (<https://ck.uesp.net/wiki/GetIsInjured>).
+- OpenSky models no attack types, item-use reactions, player actions, or bump reactions. So
+  `IsAttackType` (697), `GetIsUsedItemType` (247),
   `GetPlayerAction` (305), `IsSmallBump` (274), and `GetLastBumpDirection` (642) read 0.
 - `GetBribeSuccess` (654) and `GetIntimidateSuccess` (655) follow the
   [speech checks](/engine/speech-checks.md).
