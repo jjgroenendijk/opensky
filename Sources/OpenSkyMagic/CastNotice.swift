@@ -13,6 +13,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case enhanceWeaponEnchanted = "sMagicEnhanceWeaponWeaponEnchanted"
     case guideNoMarker = "sMagicGuideNoMarker"
     case guideNoPath = "sMagicGuideNoPath"
+    case flyingMountNoCast = "sTESVDLC2FlyingDragonNoCastMessage"
 
     public var fallback: String {
         switch self {
@@ -25,6 +26,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .enhanceWeaponEnchanted: "This weapon is already enchanted."
         case .guideNoMarker: "There is no quest target to guide you to."
         case .guideNoPath: "No path leads to the quest target."
+        case .flyingMountNoCast: "You cannot cast that type of spell while riding a dragon."
         }
     }
 
@@ -33,6 +35,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         switch failure {
         case .insufficientMagicka: .insufficientMagicka
         case .powerAlreadyUsedToday: .powerUsed
+        case .notFromFlyingMount: .flyingMountNoCast
         case .noSpellReadied, .unknownSpell, .notCharged, .deliveryUnsupported,
              .abilityNotCastable, .notDualCastable: nil
         }

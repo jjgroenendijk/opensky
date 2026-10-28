@@ -78,7 +78,7 @@ nonisolated public struct CellProviderIndexes {
                 store: settings, movementTypes: movementTypes
             )
             mountMovement = .mount(movementTypes: movementTypes, rider: movement)
-            dragonFlight = .resolve(movementTypes: movementTypes)
+            dragonFlight = .resolve(movementTypes: movementTypes, settings: settings)
             barter = BarterPricing.resolve(store: settings)
             combat = CombatSettings.resolve(store: settings)
             difficulty = DifficultySettings.resolve(store: settings)

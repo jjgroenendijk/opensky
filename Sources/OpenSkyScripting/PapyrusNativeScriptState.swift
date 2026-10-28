@@ -83,6 +83,18 @@ extension PapyrusNativeFunctions {
 
     public static func installScriptState(into registry: inout PapyrusNativeRegistry) {
         installDoingFavor(into: &registry)
+        // Landing requests are allowed by default, so the flag stores the refusal.
+        scriptState(
+            "Game",
+            "SetAllowFlyingMountLandingRequests",
+            into: &registry
+        ) { call, bridge, key in
+            let allows = boolean(call, at: 0, default: true)
+            bridge.updateScriptedState(of: key) {
+                $0.setFlag(ScriptedStateName.flyingMountLandingRefused, allows ? nil : true)
+            }
+            return .returned(.none)
+        }
         for flag in scriptedFlags {
             scriptState(flag.script, flag.setter, into: &registry) { call, bridge, key in
                 let isSet = boolean(call, at: 0, default: true)

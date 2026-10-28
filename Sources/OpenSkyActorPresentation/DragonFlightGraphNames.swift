@@ -12,6 +12,17 @@ nonisolated public enum DragonFlightGraphNames {
     public static let land = "FlyStopDefault"
     public static let hoverStart = "HoverStart"
     public static let hoverStop = "HoverStop"
+    /// The idle action whose tree picks the landing event: a perch by its furniture,
+    /// then the hasty, crash, and injured landings (`FlyStopRootDragon`).
+    public static let landingAction = "ActionFlyStop"
+    public static let hastyLanding = "FlyStopHasty"
+    public static let crashLanding = "FlyStopCrash"
+
+    /// Moves the flying graph into the breath's inhale clip.
+    public static let breathStart = "shoutStart"
+    /// Moves the inhale into the exhale, whose `Voice_SpellFire_Event` casts the breath.
+    public static let breathRelease = "shoutRelease"
+    public static let breathFire = "Voice_SpellFire_Event"
 
     /// Wing beats of the landing approach clips, close over the ground.
     public static let landingEffect = "FlightLandingEffect"
@@ -58,7 +69,16 @@ nonisolated public enum DragonFlightGraphNames {
         case .startHover: hoverStart
         case .stopHover: hoverStop
         case .beginApproach: land
-        case .beginLanding, .cancelLanding, .landed: nil
+        case .beginLanding, .cancelLanding, .landed, .perched: nil
+        }
+    }
+
+    /// The landing event when no idle tree picks one.
+    public static func landingEvent(for request: DragonLandingRequest) -> String {
+        switch request {
+        case .none: land
+        case .hasty: hastyLanding
+        case .crash: crashLanding
         }
     }
 
@@ -70,7 +90,7 @@ nonisolated public enum DragonFlightGraphNames {
         let goal = state.landingPoint ?? state.feet
         let distance = state.landingPoint.map { simd_distance($0, state.feet) } ?? noGoalDistance
         let target: Float = switch state.phase {
-        case .grounded, .hovering: 0
+        case .grounded, .hovering, .perched: 0
         case .takingOff, .cruising: settings.cruiseSpeed
         case .landing: settings.landingSpeed
         }
@@ -83,7 +103,7 @@ nonisolated public enum DragonFlightGraphNames {
             (distanceToGoal, .real(distance)),
             (tweenPosition, .quad(SIMD4(goal, 0))),
             (tweenRotation, .quad(rotation.vector)),
-            (isOnGround, .bool(!state.phase.isFlying))
+            (isOnGround, .bool(state.phase == .grounded || state.phase == .perched))
         ]
     }
 }

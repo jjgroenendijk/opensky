@@ -29,11 +29,14 @@ nonisolated extension ConditionFunctions {
                 }
             }
         })
+        // The CK wiki: the graph's `Injured`, set below the race's injured health share.
+        registry.register(ConditionFunction(index: 645, name: "GetIsInjured") { call in
+            call.actorState().map { Self.isTrue($0.isInjured) }
+        })
         installAttackType(&registry)
-        // OpenSky has no injured walk, no item use by an actor, no reaction to a
-        // player action, and no bump reaction, so these read 0.
+        // OpenSky has no item use by an actor, no reaction to a player action, and no bump
+        // reaction, so these read 0.
         for function in [
-            unmodelled(645, "GetIsInjured"),
             unmodelled(247, "GetIsUsedItemType", .integer), unmodelled(305, "GetPlayerAction"),
             unmodelled(274, "IsSmallBump"), unmodelled(642, "GetLastBumpDirection")
         ] {

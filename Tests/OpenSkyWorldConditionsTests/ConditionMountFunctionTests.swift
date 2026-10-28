@@ -58,6 +58,18 @@ struct ConditionMountFunctionTests {
         #expect(try Self.outcome(731, equals: 1, mounts: flying) == .true)
     }
 
+    @Test func landingRequestsAnswerForTheDragonAskedToLand() throws {
+        var crashing = MountConditionResolution(mounts: [:], playersLastMount: nil)
+        crashing.crashLandRequests = [Self.subject]
+        #expect(try Self.outcome(646, equals: 1, mounts: crashing) == .true)
+        #expect(try Self.outcome(647, equals: 0, mounts: crashing) == .true)
+        var hasty = MountConditionResolution(mounts: [:], playersLastMount: nil)
+        hasty.hastyLandRequests = [Self.subject]
+        hasty.flyingStates = [Self.subject: 5]
+        #expect(try Self.outcome(647, equals: 1, mounts: hasty) == .true)
+        #expect(try Self.outcome(633, equals: 5, mounts: hasty) == .true)
+    }
+
     @Test func flightReadsTheGroundedValue() throws {
         let grounded = MountConditionResolution(mounts: [:], playersLastMount: nil)
         for function: UInt16 in [282, 633, 646, 647, 730, 731, 732, 733] {

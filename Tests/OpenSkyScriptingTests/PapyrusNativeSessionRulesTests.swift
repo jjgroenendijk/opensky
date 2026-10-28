@@ -63,6 +63,15 @@ struct PapyrusNativeSessionRulesTests {
             .returned(.boolean(true)))
     }
 
+    @Test func flyingMountLandingRequestsAreKeptOnThePlayer() throws {
+        let fixture = try Fixture.make()
+        let name = ScriptedStateName.flyingMountLandingRefused
+        _ = call(fixture, "Game", "SetAllowFlyingMountLandingRequests", [.boolean(false)])
+        #expect(flags(fixture, of: .player).flag(name) == true)
+        _ = call(fixture, "Game", "SetAllowFlyingMountLandingRequests", [.boolean(true)])
+        #expect(flags(fixture, of: .player).flag(name) == nil)
+    }
+
     @Test func aGameHookRunsAndAMissingHookFails() throws {
         let fixture = try Fixture.make()
         #expect(PapyrusWorldFixture.isInvalidArguments(call(fixture, "Debug", "SetGodMode")))

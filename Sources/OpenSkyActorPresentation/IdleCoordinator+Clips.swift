@@ -51,7 +51,8 @@ extension IdleCoordinator {
         return context
     }
 
-    func selector(for actor: ReferenceKey) -> IdleSelector {
+    /// `target` replaces the furniture as the conditions' Target, such as a dragon's perch.
+    func selector(for actor: ReferenceKey, target: ReferenceKey? = nil) -> IdleSelector {
         var base: ConditionContext?
         let project = graphProject(of: actor)
         let check: IdleSelector.Check = { [weak self] idle in
@@ -59,7 +60,10 @@ extension IdleCoordinator {
             if let project, !IdleCore.idle(behaviorFile: idle.fileName, belongsTo: project) {
                 return "behavior graph"
             }
-            let context = base ?? self?.conditionContext(for: actor) ?? ConditionContext()
+            var context = base ?? self?.conditionContext(for: actor) ?? ConditionContext()
+            if let target {
+                context.target = target
+            }
             base = context
             var evaluator = ConditionEvaluator(context: context)
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))

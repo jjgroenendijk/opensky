@@ -23,6 +23,8 @@ nonisolated public struct MountSettings: Equatable, Sendable {
     public var landingMessage = "Landing."
     /// `sTESVDLC2FlyingMountCancelLandingMessage`: the rider called the landing off.
     public var cancelLandingMessage = "Landing cancelled."
+    /// `sTESVDLC2FlyingMountCannotLandMessage`: a script refuses landing requests here.
+    public var cannotLandMessage = "You cannot land here."
 
     public static let vanilla = Self()
 
@@ -61,6 +63,10 @@ nonisolated public struct MountSettings: Equatable, Sendable {
         store.read(
             "sTESVDLC2FlyingMountCancelLandingMessage", into: &settings,
             \.cancelLandingMessage, text: text
+        )
+        store.read(
+            "sTESVDLC2FlyingMountCannotLandMessage", into: &settings,
+            \.cannotLandMessage, text: text
         )
         return settings
     }

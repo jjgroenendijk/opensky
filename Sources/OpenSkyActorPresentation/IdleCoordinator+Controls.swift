@@ -31,6 +31,18 @@ extension IdleCoordinator {
         sessions[actor]?.marker != nil
     }
 
+    /// The event the idle tree under `action` picks for the actor, testing `target` as
+    /// the Target. Nil when no idle passes or no tree is loaded.
+    public func actionEvent(
+        _ action: String, for actor: ReferenceKey, target: ReferenceKey?
+    ) -> String? {
+        guard let store else { return nil }
+        let roots = store.roots(underAction: action)
+        guard !roots.isEmpty else { return nil }
+        return selector(for: actor, target: target).select(roots: roots).chosen?
+            .record.animationEvent
+    }
+
     @discardableResult
     public func fireIdle(
         _ idle: ResolvedFormID,

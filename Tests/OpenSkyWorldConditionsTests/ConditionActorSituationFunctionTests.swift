@@ -70,6 +70,19 @@ struct ConditionActorSituationFunctionTests {
         }
     }
 
+    @Test func anActorBelowItsRacesInjuredShareIsInjured() throws {
+        var hurt = Self.actor()
+        hurt.injuredHealthPercent = 0.35
+        hurt.current.health = 30
+        #expect(try Self.evaluate(645, equals: 1) {
+            $0.actors = ActorStateResolution(states: [Self.subject: hurt])
+        } == .true)
+        hurt.current.health = 40
+        #expect(try Self.evaluate(645, equals: 0) {
+            $0.actors = ActorStateResolution(states: [Self.subject: hurt])
+        } == .true)
+    }
+
     /// The player at level 30 with Speech 50 against a level 10 actor with Speech 20.
     private static func speechContext(
         confidence: Float, gold: Int, _ context: inout ConditionContext

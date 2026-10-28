@@ -1,5 +1,5 @@
-// A ridden dragon: the rider's orders, the flight in the mount drive, and what a rider
-// keeps of the input.
+// A ridden dragon: the rider's orders, the breath through the graph, Switch Target, the
+// flight in the mount drive, and what a rider keeps of the input.
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsESM
@@ -13,8 +13,10 @@ import Testing
 private final class FakeDragonMountWorld: MountWorld {
     static let dragon = ReferenceKey.generated(200)
     static let enemy = ReferenceKey.generated(201)
+    static let other = ReferenceKey.generated(202)
     var inView: ReferenceKey?
     var enemyFeet: SIMD3<Float>? = SIMD3(0, 2000, 0)
+    var allowsLanding = true
 
     func mountCandidate(_ key: ReferenceKey) -> MountCandidate? {
         guard key == Self.dragon else { return nil }
@@ -40,6 +42,14 @@ private final class FakeDragonMountWorld: MountWorld {
 
     func lockCandidate() -> ReferenceKey? {
         inView
+    }
+
+    func allowsFlyingMountLandingRequests() -> Bool {
+        allowsLanding
+    }
+
+    func switchCandidates() -> [ReferenceKey] {
+        inView.map { [$0, Self.other] } ?? []
     }
 
     func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>? {
@@ -87,9 +97,6 @@ struct RiddenDragonTests {
         let enemy = SIMD3<Float>(0, 2000, 0)
         #expect(orders.goal(home: .zero, target: enemy)
             == .circle(center: enemy, radius: RiddenDragonOrders.attackRadius))
-        let first = orders.breathes(from: .zero, at: enemy, deltaTime: 0.1)
-        let second = orders.breathes(from: .zero, at: enemy, deltaTime: 0.1)
-        #expect(first && !second, "the breath recovers")
         orders.lock(FakeDragonMountWorld.enemy)
         #expect(orders.lockedTarget == nil && !orders.isAttacking)
         orders.landingRequested = true
@@ -115,6 +122,16 @@ struct RiddenDragonTests {
         #expect(mounts.phase == .riding)
         let off = mounts.dismount()
         #expect(off.last == .raiseOnPlayer(MountKind.dragon.events.riderExit))
+    }
+
+    @Test func aScriptCanRefuseTheLandingOrder() {
+        let (mounts, world) = seated()
+        world.allowsLanding = false
+        fly(mounts, seconds: 6)
+        #expect(mounts.dismount() == [.notify(mounts.settings.cannotLandMessage)])
+        #expect(!mounts.dragonOrders.landingRequested)
+        world.allowsLanding = true
+        #expect(mounts.dismount() == [.notify(mounts.settings.landingMessage)])
     }
 
     @Test func jumpLocksAndASneakChangeAttacksWithBreath() {
@@ -144,5 +161,57 @@ struct RiddenDragonTests {
         #expect(spell.shout && spell.attack && !spell.jump)
         #expect(!MountRules.riderInput(input, rightHandType: 1, kind: .dragon).attack)
         #expect(!MountRules.riderInput(input, rightHandType: 1).shout)
+    }
+
+    @Test func theBreathInhalesThenExhalesThenCastsOnTheClipEvent() {
+        var orders = RiddenDragonOrders()
+        orders.lock(FakeDragonMountWorld.enemy)
+        _ = orders.toggleAttack()
+        let ahead = SIMD3<Float>(2000, 0, 0)
+        let behind = SIMD3<Float>(-2000, 0, 0)
+        func step(_ target: SIMD3<Float>, fired: Bool = false, _ delta: Float = 0.1)
+            -> RiddenDragonBreathStep?
+        {
+            orders.advanceBreath(
+                from: .zero, yaw: 0, at: target, fired: fired, deltaTime: delta
+            )
+        }
+        #expect(step(behind) == nil, "the target must be ahead")
+        #expect(step(ahead) == .inhale)
+        #expect(step(ahead, 0.5) == nil)
+        #expect(step(ahead, 0.5) == .exhale)
+        #expect(step(ahead) == nil)
+        #expect(step(ahead, fired: true) == .fire)
+        #expect(orders.breathCooldown == RiddenDragonOrders.breathInterval)
+        #expect(step(ahead) == nil, "the breath recovers")
+    }
+
+    @Test func switchTargetCyclesTheActorsInViewAndCallsTheAttackOff() {
+        var orders = RiddenDragonOrders()
+        let first = ReferenceKey.generated(1)
+        let second = ReferenceKey.generated(2)
+        let none = orders.switchTarget(among: [], forward: true)
+        let switched = orders.switchTarget(among: [first, second], forward: true)
+        #expect(!none && switched)
+        #expect(orders.lockedTarget == first && orders.switchedTarget == first)
+        _ = orders.toggleAttack()
+        _ = orders.switchTarget(among: [first, second], forward: true)
+        #expect(orders.lockedTarget == second && !orders.isAttacking)
+        _ = orders.switchTarget(among: [first, second], forward: true)
+        #expect(orders.lockedTarget == first, "it wraps round")
+        _ = orders.switchTarget(among: [first, second], forward: false)
+        #expect(orders.lockedTarget == second)
+    }
+
+    @Test func theHotkeysSwitchOnlyWhileRidingADragon() {
+        let world = FakeDragonMountWorld()
+        let idle = MountCoordinator(world: world)
+        #expect(!idle.switchDragonTarget(forward: true))
+        let (mounts, seatedWorld) = seated()
+        seatedWorld.inView = FakeDragonMountWorld.enemy
+        #expect(mounts.switchDragonTarget(forward: true))
+        #expect(mounts.dragonOrders.switchedTarget == FakeDragonMountWorld.enemy)
+        #expect(mounts.switchDragonTarget(forward: true))
+        #expect(mounts.dragonOrders.switchedTarget == FakeDragonMountWorld.other)
     }
 }

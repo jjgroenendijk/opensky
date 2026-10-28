@@ -52,6 +52,9 @@ extension RuntimeStateWorldAdapter {
         )
         context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
         context.mounts.canFlyHere = game.streamer?.interiorScene == nil
+        let requests = game.dragonFlight.landingRequests
+        context.mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
+        context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
         context.menus = MenuConditionResolution(
             isMenuOpen: game.menuMode.topMenu != nil,
             isLoading: game.menuMode.topMenu == LoadingScreenWorldAdapter.identifier

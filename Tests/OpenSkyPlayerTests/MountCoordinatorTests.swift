@@ -37,6 +37,14 @@ private final class FakeMountWorld: MountWorld {
         nil
     }
 
+    func allowsFlyingMountLandingRequests() -> Bool {
+        true
+    }
+
+    func switchCandidates() -> [ReferenceKey] {
+        []
+    }
+
     func livingActorFeet(_: ReferenceKey) -> SIMD3<Float>? {
         nil
     }

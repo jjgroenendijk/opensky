@@ -23,6 +23,9 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// compares.
     var castingGameDay: Int32 { get }
 
+    /// The caster rides a dragon in the air (`IsOnFlyingMount`).
+    func castsFromFlyingMount(key: ReferenceKey) -> Bool
+
     /// Applies one spell's effect list to `target`.
     ///
     /// - Returns: how many timed effects were stored.
@@ -61,6 +64,11 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
 
 extension CasterWorld {
     public func spellWasCast(_: ReferenceKey, by _: ReferenceKey) {}
+
+    /// A world with no mounts has no rider in the air.
+    public func castsFromFlyingMount(key _: ReferenceKey) -> Bool {
+        false
+    }
 
     /// A world with no ground lands nothing at a location.
     public func deliverToLocation(
@@ -286,6 +294,12 @@ public final class CasterRuntime {
         guard SpellDelivery.isImplemented(delivery, castingType: spell.data?.castingType) else {
             return .deliveryUnsupported(delivery)
         }
+        if
+            world?.castsFromFlyingMount(key: caster.key) == true,
+            !FlyingMountSpellRules.allows(spell)
+        {
+            return .notFromFlyingMount
+        }
         if spell.spellType == .power, let world {
             let day = world.castingGameDay
             if spellbook.state(of: caster).hasSpentPower(key, onDay: day) {
@@ -298,12 +312,6 @@ public final class CasterRuntime {
             return .insufficientMagicka(cost: cost, available: available)
         }
         return nil
-    }
-
-    /// The `SPIT` charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
-    func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
-        let single = max(0, spell.data?.chargeTime ?? 0)
-        return dual ? single * max(0, costSettings.dualCastTimeMult) : single
     }
 
     private func advance(_ hand: SpellHand, delta: Float, on caster: ActorValueHolder) {
