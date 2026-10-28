@@ -26,6 +26,9 @@ nonisolated public struct ActorGraphReadout: Equatable, Sendable {
     /// The graph's `iState`, and the value its state tagging generators publish.
     public var state: Int32?
     public var stateTag: Int32?
+    /// `weapAdj` and the body-weight layer weights the graph derives from it; empty when the
+    /// graph declares none of them.
+    public var bodyWeight: [String: Float] = [:]
 }
 
 extension ActorGraphCoordinator {
@@ -53,6 +56,12 @@ extension ActorGraphCoordinator {
             readout.state = instance.variable(named: ActorGraphNames.state)
                 .map { Int32(truncatingIfNeeded: $0.intValue) }
             readout.stateTag = instance.stateTag?.value
+            for name in [
+                ActorGraphNames.weaponAdjust, ActorGraphNames.bodyMorphWeight,
+                ActorGraphNames.bodyMorphMuscular
+            ] {
+                readout.bodyWeight[name] = instance.variable(named: name)?.realValue
+            }
             return readout
         }
         guard

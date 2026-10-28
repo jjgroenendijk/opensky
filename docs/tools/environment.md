@@ -40,6 +40,15 @@ other in one checkout.
 
 Retires when an app build that overlaps a package test in the same checkout passes.
 
+## xcodebuild asserts before the unit tests start
+
+Observed 2026-10-28 on Xcode 27. `make test-unit` built every target, then `xcodebuild` stopped
+with `DVTAssertInvalidatableObjectIsValid` in `IDESwiftPackageBuildable.blueprint`, before any test
+ran. A failed build in the run just before had removed the `OpenSky` driver records. The same
+`make test-unit` passed when run again.
+
+Retires when a failed build is no longer followed by this assertion.
+
 ## Upstream spec hosts
 
 Quirks that cost time in every format parser session. Each retires when the host changes behavior.

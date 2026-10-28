@@ -4,6 +4,7 @@
 // character graphs, not memory (docs/engine/actor-state-graph.md).
 
 import Foundation
+import OpenSkyActorPresentation
 
 nonisolated public enum ActorStateGraphNames: Sendable {
     // MARK: - Inputs the engine writes
@@ -41,12 +42,15 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     public static let isBeastRace = "IsBeastRace"
     /// The pose matcher a get-up uses: 0 reanimate, 1 get up, 2 swimming. Int32.
     public static let getUpType = "iGetUpType"
+    /// The player's weight as 0 to 1, for the body-weight layer (`ActorGraphNames`). Real.
+    public static let weaponAdjust = ActorGraphNames.weaponAdjust
 
     /// Every input, in write order.
     public static let inputs = [
         headTracking, targetLocation, cameraFromX, cameraFromY, cameraFromZ, pitch,
         sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState,
-        combatStance, rightHandEquipped, leftHandEquipped, isBeastRace, getUpType, state
+        combatStance, rightHandEquipped, leftHandEquipped, isBeastRace, getUpType,
+        weaponAdjust, state
     ]
 
     // MARK: - Outputs the graph publishes
@@ -63,7 +67,8 @@ nonisolated public enum ActorStateGraphNames: Sendable {
         "bHeadTrackSpine", "PitchOverride", "PitchManualOverride", "1stPRot", "1stPRotDamped",
         "iSyncIdleLocomotion", "iSyncIdleState", "iSyncTurnState", "iSyncSprintState",
         "TurnDeltaDamped", "bIsInMT", "bIsRiding", "bAttached", "bTalkable",
-        "bHumanoidFootIKEnable", "bHumanoidFootIKDisable", "bodyMorphWeight", "iDrunkVariable"
+        "bHumanoidFootIKEnable", "bHumanoidFootIKDisable", "bodyMorphWeight", "iDrunkVariable",
+        "bodyMorphMuscular"
     ]
 }
 

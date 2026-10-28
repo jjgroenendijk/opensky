@@ -3,6 +3,7 @@
 // combat, magic, and the camera; the locomotion bridge writes the result.
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyPhysics
 import simd
@@ -19,6 +20,8 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var leftHandType: Int32 = 0
     /// The race has the `IsBeastRace` keyword.
     public var isBeastRace = false
+    /// The player's weight, 0 (thin) to 100 (heavy).
+    public var weight: Float = 50
     /// The player swims, so a get-up uses the swimming pose matcher.
     public var swimming = false
     public var castingLeft = false
@@ -136,7 +139,11 @@ nonisolated public enum ActorStateGraphCore: Sendable {
             (ActorStateGraphNames.rightHandEquipped, .int(drawn(inputs.rightHandType))),
             (ActorStateGraphNames.leftHandEquipped, .int(drawn(inputs.leftHandType))),
             (ActorStateGraphNames.isBeastRace, .bool(inputs.isBeastRace)),
-            (ActorStateGraphNames.getUpType, .int(getUpType(swimming: inputs.swimming)))
+            (ActorStateGraphNames.getUpType, .int(getUpType(swimming: inputs.swimming))),
+            (
+                ActorStateGraphNames.weaponAdjust,
+                .real(ActorGraphCore.weaponAdjust(weight: inputs.weight))
+            )
         ]
         if let stateValue {
             writes.append((ActorStateGraphNames.state, .int(stateValue)))

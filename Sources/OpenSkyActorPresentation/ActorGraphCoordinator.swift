@@ -19,12 +19,18 @@ nonisolated public struct ActorGraphCandidate: Equatable, Sendable {
     public let feet: SIMD3<Float>
     /// The placement's Z rotation.
     public let rotationZ: Float
+    /// The NPC weight, 0 (thin) to 100 (heavy).
+    public let weight: Float
 
-    public init(key: ReferenceKey, projectPath: String, feet: SIMD3<Float>, rotationZ: Float) {
+    public init(
+        key: ReferenceKey, projectPath: String, feet: SIMD3<Float>, rotationZ: Float,
+        weight: Float = 50
+    ) {
         self.key = key
         self.projectPath = projectPath
         self.feet = feet
         self.rotationZ = rotationZ
+        self.weight = weight
     }
 }
 

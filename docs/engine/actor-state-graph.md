@@ -35,6 +35,7 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `iRightHandEquipped`, `iLeftHandEquipped` | int32 | The hand's `iRightHandType` value while drawn, else 0 | Jump, sprint, stagger, and shout selectors |
 | `IsBeastRace` | bool | The race has the `IsBeastRace` keyword | The unarmed attack selector |
 | `iGetUpType` | int32 | 2 while swimming, else 1 | The get-up pose matcher |
+| `weapAdj` | real | The player's weight / 100 | The expression that weights the [body-weight layer](/engine/behavior-clips.md#body-weight-layer) |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
 
 The hand selectors list their children in the `iRightHandType` order: 0 unarmed, 1 to 4 one-handed,

@@ -176,6 +176,47 @@ rotations, so played as a pose they lift the arms into a T-pose.
 - Every other place that mixes or edits poses (a transition, a crossfade, a bone switch, a
   modifier, the graph's output) first adds an additive pose to the reference pose.
 
+Two parts of this rule are not confirmed. No open source describes them, and the install's data
+cannot tell the options apart (see the next section):
+
+- the order for hint 1, the older Havok form: `base * change` or `change * base`;
+- whether a blender normalises an additive child's weight against its other children.
+
+### Body-weight layer
+
+`BodyWeightBlend` in `mt_behavior.hkx` has the idle behaviour at weight 1 and three additive
+clips. Two of the clip weights are bound to variables:
+
+| Child | Clip | Weight | What it changes at full weight |
+| --- | --- | --- | --- |
+| 1 | `MT_IdleMuscularOffset.hkx` | `bodyMorphMuscular` | Pushes the arms out, about 2 units at the hand |
+| 2 | `MT_Idle_Skinny.hkx` | `bodyMorphWeight` | Draws the arms in, 3 to 5 units at the hand |
+| 3 | `FemaleBodyMorph.hkx` | 0, not bound | Never plays |
+
+The graph sets both variables itself. `BodyMorphWeightExpressionModifier` in the same file
+evaluates:
+
+```text
+bodyMorphWeight = clamp((1 - 2*weapAdj), 0 , 1)
+bodyMorphMuscular = clamp((2*weapAdj), 0 , 1)
+```
+
+The engine writes `weapAdj`: the actor's weight divided by 100. The range 0 to 1 is OpenSky's
+reading of the expression, which crosses over at 0.5, the default weight of 50. No source states
+it. Example: weight 0 gives the full skinny layer; weight 50 and above give the full muscular
+layer. `openskycli game state actors` shows all three values under `graph.bodyWeight`.
+
+Each clip holds no change at frame 0 and the full change from the middle frame on. All three
+clips have hint 1. The skinny and muscular generators loop, but their crop windows keep only the
+full change, so each plays as a constant. Example: `MT_Idle_Skinny` lasts 0.333 s, and its
+`m_cropStartAmountLocalTime` of 0.2 s skips the frames before the full change.
+
+A probe compared the two add orders on these clips on 2026-10-28. It added each clip at full
+weight to the first frame of `mt_idle.hkx`. Then it measured how far the left arm's change differs
+from the mirrored right arm's change. Neither order was clearly more symmetric, and on the
+reference pose both orders gave the same result. So OpenSky keeps `base * change`, the bone's own
+frame.
+
 ## Behavior references
 
 `0_master.hkx` is a shell. Its jump, movement, combat, and magic branches are

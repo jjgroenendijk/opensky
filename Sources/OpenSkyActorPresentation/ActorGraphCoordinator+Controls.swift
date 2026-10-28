@@ -32,9 +32,11 @@ extension ActorGraphCoordinator.Running {
         } ?? 0
         lastFeet = candidate.feet
         lastRotation = candidate.rotationZ
-        return ActorGraphStepInput(
+        var input = ActorGraphStepInput(
             motion: next, speed: gait.speed, turnDelta: turn, deltaTime: seconds
         )
+        input.weight = candidate.weight
+        return input
     }
 }
 

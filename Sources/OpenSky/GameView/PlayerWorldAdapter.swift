@@ -86,6 +86,8 @@ final class PlayerWorldAdapter {
                     ActorStateGraphNames.isBeastRace, on: holder
                 )
             }
+            inputs.weight = game.worldState.component(PlayerIdentityState.self, for: .player)?
+                .face.weight ?? 50
             inputs.isBowDrawn = game.combat.archery?.state.phase.isFullyDrawn ?? false
             inputs.castingLeft = game.magic.wantsCast(.left)
             inputs.castingRight = game.magic.wantsCast(.right)

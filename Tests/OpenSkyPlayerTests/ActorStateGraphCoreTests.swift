@@ -88,6 +88,7 @@ struct ActorStateGraphCoreTests {
         var inputs = ActorStateGraphInputs()
         inputs.setCamera(position: SIMD3(1, 2, 3), forward: SIMD3(0, 1, 0), pitch: 0.25)
         inputs.castingRight = true
+        inputs.weight = 100
         let writes = Dictionary(
             uniqueKeysWithValues: ActorStateGraphCore.writes(
                 inputs, sprintAllowed: false, wantsBlock: true, stateValue: 10
@@ -104,6 +105,7 @@ struct ActorStateGraphCoreTests {
         #expect(writes[ActorStateGraphNames.wantCastRight] == .bool(true))
         #expect(writes[ActorStateGraphNames.inCastState] == .real(1))
         #expect(writes[ActorStateGraphNames.state] == .int(10))
+        #expect(writes[ActorStateGraphNames.weaponAdjust] == .real(1))
         #expect(Set(writes.keys) == Set(ActorStateGraphNames.inputs))
     }
 

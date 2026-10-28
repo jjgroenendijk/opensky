@@ -253,7 +253,8 @@ extension AgentWorldAdapter {
             "boneLODHeldFrom": .init(graph.heldFromBone),
             "drunk": .bool(graph.isDrunk),
             "iState": graph.state.map { .init(Int($0)) } ?? .null,
-            "iStateTag": graph.stateTag.map { .init(Int($0)) } ?? .null
+            "iStateTag": graph.stateTag.map { .init(Int($0)) } ?? .null,
+            "bodyWeight": .object(graph.bodyWeight.mapValues(AgentJSON.init))
         ]
     }
 
