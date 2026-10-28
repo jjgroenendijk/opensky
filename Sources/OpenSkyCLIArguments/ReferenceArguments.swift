@@ -36,7 +36,10 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "reference",
         abstract: "Run the Windows game under Wine and compare it with OpenSky.",
-        subcommands: [Status.self, Check.self, Launch.self, ExportView.self, Capture.self]
+        subcommands: [
+            Status.self, Check.self, Launch.self, ExportView.self, Capture.self, State.self,
+            Send.self, Sync.self, Follow.self, Load.self
+        ]
     )
 
     public init() {}

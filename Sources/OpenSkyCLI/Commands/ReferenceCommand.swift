@@ -17,6 +17,13 @@ enum ReferenceCommand {
         } else {
             print("[WARNING] No Wine found. Run make reference-setup.")
         }
+        guard status.isReady, let prefix else { return }
+        let layout = ReferencePrefix(root: prefix)
+        for part in ReferenceBridgePart.missing(in: layout) {
+            print("[WARNING] The bridge lacks \(part.rawValue). Run make reference-bridge.")
+        }
+        let running = ReferenceBridge(prefix: layout).state() != nil
+        print("[INFO] Bridge: \(running ? "the Windows game is running" : "no game running").")
     }
 
     static func check(arguments: ReferenceArguments.Check) async throws {

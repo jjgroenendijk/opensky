@@ -184,6 +184,11 @@ the number. A summary line goes to stderr.
 | `reference launch [--width n] [--height n] [--steam-wait s]` | Sets the window size in the prefix's `SkyrimPrefs.ini`, then starts Windows Steam and the game |
 | `reference export-view [--no-hide-menus] [--freeze]` | Writes the running OpenSky view as the batch file `bat opensky` runs in the reference game |
 | `reference capture [--width n] [--height n]` | Captures both games at one size and writes the pair, their difference, the batch file, and a report to `.logs/reference/<UTC time>/` |
+| `reference state` | The Windows game's state as the bridge plugin reports it: place, angles, hour, weather, and field of view |
+| `reference send <command>...` | Runs console commands in the Windows game through the bridge plugin, without typed keys |
+| `reference sync [--no-hide-menus] [--freeze]` | Puts the Windows game at the running OpenSky's view through the bridge plugin |
+| `reference follow` | Puts the running OpenSky at the Windows game's view, through `debug.view` |
+| `reference load [<save>]` | Waits for the Windows game's main menu, then loads the save, by default the newest |
 
 ## Notes on the probes
 

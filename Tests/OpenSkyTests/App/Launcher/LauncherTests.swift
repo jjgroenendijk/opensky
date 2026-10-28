@@ -46,6 +46,10 @@ struct LauncherTests {
             nil
         }
 
+        func followReference(_: ReferenceView) -> Bool {
+            false
+        }
+
         func placeNextGameWindow(contentRect _: CGRect) {}
 
         func captureWorld(to _: URL, width _: Int, height _: Int) throws {}

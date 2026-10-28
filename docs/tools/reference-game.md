@@ -169,9 +169,10 @@ that `make reference-setup` built.
   It sets OpenSky's Graphics preset to Low, and sets every key of the game's `Low.ini` in
   the prefix's `SkyrimPrefs.ini`. Both stay set afterwards; the Graphics page changes
   OpenSky back.
-- **OpenSky loads the newest Windows save** makes Start Both start from one save. OpenSky
-  imports the newest `.ess` in the prefix's `Saves/` folder. In the Windows game, choose
-  Continue on the main menu: it loads the same save.
+- **Both games load this Windows save** makes Start Both start from one save, chosen in
+  the Save pop-up, newest first. OpenSky imports the `.ess` from the prefix's `Saves/`
+  folder. With the bridge installed, the Windows game loads it from its main menu; without
+  it, choose Continue there for the newest save.
 - **Start Windows Game** starts only the Windows game, at the default size.
 
 The launcher hides while OpenSky's game window is open, so the Game menu holds the actions
@@ -179,32 +180,53 @@ that need a running game. Each result shows as the game window's subtitle.
 
 | Game menu item | Keys | What it does |
 | --- | --- | --- |
-| Export View to Windows Game | Shift-Cmd-E | Writes the batch file for a `bat opensky` typed in the Windows console |
+| Send View to Windows Game | Shift-Cmd-E | Moves the Windows game to OpenSky's view through the bridge; without it, writes the batch file for `bat opensky` |
+| Follow Windows Game | Shift-Cmd-F | Moves OpenSky to the Windows game's view through the bridge |
 | Capture Both Games | Shift-Cmd-K | Writes a comparison run |
 
-## Why OpenSky does not type into the Windows game
+## The bridge plugin
 
-OpenSky does not send keys to the Windows game. Typing into its console through Wine was
-tried, and it is not reliable (observed 2026-10-26):
+OpenSky does not type into the Windows game's console, because Wine drops and misroutes
+the keys ([the decision](/decisions/reference-bridge.md) lists what was observed). The
+`OpenSkyBridge` SKSE plugin runs inside the game instead: it runs the console commands
+OpenSky sends and reports the player's state. It changes no game rule and draws nothing.
 
-- Wine drops keys while the game is not the front app, and macOS refuses a plain
-  `activate()` from an app that is not in front itself.
-- With `bAlwaysActive=1`, letters and Backspace arrive while another app is in front, but
-  Return does not reach the console.
-- At the main menu, Return goes to the menu behind the console. It opens a confirm
-  dialog, and the game then hangs.
-- `sStartingConsoleCommand=load <save>` in `[General]` of `Skyrim.ini` does nothing.
-- On an ISO keyboard Wine swaps the key codes of the key left of 1 (10) and the grave
-  key (50), so the console key depends on the keyboard.
+Install it once per prefix. SKSE and the Address Library are only on Nexus, so download
+both first: SKSE's build for the game's version (mod 30379) and the Address Library's
+"All in one (Anniversary Edition)" (mod 32444). Then run:
 
-A plugin inside the game that takes commands and reports the player's state would avoid
-all of these.
+```sh
+make reference-bridge SKSE=<skse archive> ADDRESS_LIBRARY=<address library archive>
+```
+
+It copies SKSE's loader and DLL and the `versionlib-*.bin` files into the game copy,
+installs Homebrew's `llvm@22`, `lld@22`, and `xwin`, downloads the Windows SDK with xwin,
+and builds `Data/SKSE/Plugins/OpenSkyBridge.dll`. A later run only rebuilds the plugin.
+Once `skse64_loader.exe` is in the game copy, every start goes through it.
+
+| Command | What it does |
+| --- | --- |
+| `openskycli reference state` | Prints the game's state: place, angles, hour, weather, field of view |
+| `openskycli reference send <command>...` | Runs console commands, one per argument |
+| `openskycli reference sync` | Puts the Windows game at the running OpenSky's view |
+| `openskycli reference follow` | Puts the running OpenSky at the Windows game's view, through `game debug view` |
+| `openskycli reference load [<save>]` | Waits for the main menu, then loads the save, by default the newest |
+
+The launcher's Send View and Follow Windows Game buttons do the same as `sync` and
+`follow`. Sync runs the `cow` or `coc` line alone, waits until the new cell has loaded,
+then runs the rest, because a cell change puts the player at the cell's own marker. It
+leaves out `tm`, which would show the HUD again on every second send.
+
+The bridge and OpenSky share `OpenSkyBridge/` in the game copy's folder:
+`commands/<name>.txt` holds one batch of console lines, and `state.json` holds the game's
+state, rewritten four times a second. `state.json` reports the console's angles: positive
+`pitchDegrees` looks down, and `headingDegrees` is 0 at north and turns clockwise.
 
 ## Same view, two games
 
 Put both games in first person first. The console has no command for the camera mode.
 
-From OpenSky to the reference game:
+Without the bridge, from OpenSky to the reference game:
 
 1. With OpenSky running, `make reference-view` (`openskycli reference export-view`) reads
    `game state view` and writes the batch file `opensky` into the reference copy's game
@@ -226,7 +248,7 @@ The batch file holds standard console commands:
 | `tm` | Hides the HUD. It toggles, so a second run shows it again; `--no-hide-menus` leaves it out |
 | `tfc 1` | Only with `--freeze`: frees the camera and freezes the world. It toggles too |
 
-From the reference game to OpenSky: save in the reference game, then use Import Newest Save
+From the reference game to OpenSky without the bridge: save there, then use Import Newest Save
 on the Reference Game page. It runs the normal Skyrim save import
 ([save import](/engine/ess-import.md)) on the newest `.ess` in the prefix's `Saves/` folder,
 which puts OpenSky at the save's position and time. Pointing the Skyrim saves folder setting

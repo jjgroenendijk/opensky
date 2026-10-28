@@ -20,6 +20,8 @@ protocol LauncherActions: AnyObject {
     func runBenchmark(_ request: BenchmarkRequest)
     /// The running game's view for the reference game, or nil with no game open.
     func referenceView() -> ReferenceView?
+    /// Moves the running game's player to the Windows game's view; false with no game open.
+    func followReference(_ view: ReferenceView) -> Bool
     /// Puts the next Play window's content at `contentRect`, in screen points, not full screen.
     func placeNextGameWindow(contentRect: CGRect)
     /// Renders the running world without the interface into a PNG of this size.

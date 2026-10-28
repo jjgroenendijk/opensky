@@ -15,6 +15,8 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     public var worldspaceEditorID: String?
     public var cellGrid: [Int32]?
     public var interiorEditorID: String?
+    /// The interior cell's FormID, which OpenSky moves to; `coc` takes the editor ID.
+    public var interiorFormID: UInt32?
     public var firstPerson: Bool
 
     public init(
@@ -45,10 +47,23 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
         return .exterior(worldspace: worldspaceEditorID, grid: SIMD2(cellGrid[0], cellGrid[1]))
     }
 
+    /// OpenSky's view when the game has not set one.
+    public static let defaultFOVYDegrees: Float = 65
+
     /// Skyrim's `setangle z`: 0 looks north (+Y) and turns clockwise.
     public var skyrimHeadingDegrees: Float {
-        let heading = (90 - yawDegrees).truncatingRemainder(dividingBy: 360)
-        return heading < 0 ? heading + 360 : heading
+        Self.wrapped(90 - yawDegrees)
+    }
+
+    /// The inverse of `skyrimHeadingDegrees`, in (-180, 180].
+    public static func yaw(fromHeading heading: Float) -> Float {
+        let yaw = wrapped(90 - heading)
+        return yaw > 180 ? yaw - 360 : yaw
+    }
+
+    private static func wrapped(_ degrees: Float) -> Float {
+        let value = degrees.truncatingRemainder(dividingBy: 360)
+        return value < 0 ? value + 360 : value
     }
 
     /// Skyrim's `setangle x`: positive looks down.
@@ -61,6 +76,12 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     public var skyrimFOVDegrees: Float {
         let halfY = fovYDegrees * .pi / 360
         return 2 * atan(tan(halfY) * 4 / 3) * 180 / .pi
+    }
+
+    /// The inverse of `skyrimFOVDegrees`.
+    public static func fovY(fromSkyrimFOV fov: Float) -> Float {
+        let halfX = fov * .pi / 360
+        return 2 * atan(tan(halfX) * 3 / 4) * 180 / .pi
     }
 }
 

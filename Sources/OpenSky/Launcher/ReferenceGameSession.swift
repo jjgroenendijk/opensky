@@ -12,6 +12,7 @@ final class ReferenceGameSession {
     /// The reference window's frame from the last start, so a capture uses its size.
     private(set) var frame: ReferenceWindowFrame?
     private var start: Task<Void, Never>?
+    private var send: Task<Void, Never>?
     /// Each status line, such as when Steam is up or a capture ended.
     var onStatus: (ReferenceNotice) -> Void = { _ in }
 
@@ -30,7 +31,8 @@ final class ReferenceGameSession {
     }
 
     /// Starts Steam and the game without blocking; false when the prefix is not ready.
-    func startGame(at frame: ReferenceWindowFrame, lowGraphics: Bool) -> Bool {
+    /// With the bridge installed, the game then loads `save` from its main menu.
+    func startGame(at frame: ReferenceWindowFrame, lowGraphics: Bool, save: URL? = nil) -> Bool {
         let prefix: ReferencePrefix
         do {
             prefix = try ReferenceLauncher.readyPrefix()
@@ -54,7 +56,7 @@ final class ReferenceGameSession {
                 let logs = try ReferencePageActions.runFolder("Wine")
                 try await ReferenceLauncher.launch(prefix: prefix, options: options, logs: logs)
                 try await self?.moveWindow(to: frame)
-                notice = ReferenceNotice(ReferencePageActions.startedMessage, isProblem: false)
+                notice = try await Self.load(save, prefix: prefix)
             } catch {
                 notice = ReferenceNotice(error.localizedDescription, isProblem: true)
             }
@@ -91,8 +93,63 @@ final class ReferenceGameSession {
         }
     }
 
+    private static func load(_ save: URL?, prefix: ReferencePrefix) async throws
+        -> ReferenceNotice
+    {
+        guard let save, ReferenceBridgePart.missing(in: prefix).isEmpty else {
+            return ReferenceNotice(ReferencePageActions.startedMessage, isProblem: false)
+        }
+        let name = save.lastPathComponent
+        _ = try await ReferenceBridge(prefix: prefix).loadSave(named: name)
+        return ReferenceNotice("The Windows game loaded \(name).", isProblem: false)
+    }
+
     func exportView(_ view: ReferenceView?) -> ReferenceNotice {
         ReferencePageActions.exportView(view, prefix: ReferenceSettings.prefix())
+    }
+
+    /// Moves the Windows game to `view` through the bridge, or, with no bridge running,
+    /// writes the batch file for `bat opensky`. `done` gets the bridge's result.
+    func sendView(
+        _ view: ReferenceView?, done: @escaping @MainActor (ReferenceNotice) -> Void
+    ) -> ReferenceNotice {
+        guard
+            let view, let prefix = try? ReferenceLauncher.readyPrefix(),
+            ReferenceBridge(prefix: prefix).state() != nil
+        else { return exportView(view) }
+        let bridge = ReferenceBridge(prefix: prefix)
+        // The bridge runs each send, so `tm` would show the HUD again on every second one.
+        let toggles = ReferenceBatchToggles(hideMenus: false, freezeWorld: false)
+        send?.cancel()
+        send = Task {
+            do {
+                _ = try await bridge.sendView(view, toggles: toggles)
+                done(ReferenceNotice(ReferencePageActions.sentMessage, isProblem: false))
+            } catch {
+                done(ReferenceNotice(error.localizedDescription, isProblem: true))
+            }
+        }
+        return ReferenceNotice(ReferencePageActions.sendingMessage, isProblem: false)
+    }
+
+    /// Hands the Windows game's view to `apply`, which moves OpenSky's player.
+    func follow(_ apply: (ReferenceView) -> Bool) -> ReferenceNotice {
+        guard
+            let prefix = try? ReferenceLauncher.readyPrefix(),
+            let state = ReferenceBridge(prefix: prefix).state()
+        else {
+            return ReferenceNotice(
+                ReferenceBridgeError.notRunning.localizedDescription,
+                isProblem: true
+            )
+        }
+        guard let view = state.view else {
+            return ReferenceNotice(ReferencePageActions.noPlayerMessage, isProblem: true)
+        }
+        guard apply(view) else {
+            return ReferenceNotice("Start the game in OpenSky first.", isProblem: true)
+        }
+        return ReferenceNotice(ReferencePageActions.followedMessage, isProblem: false)
     }
 
     /// Writes the batch file and both captures into one run folder.

@@ -108,12 +108,15 @@ nonisolated public enum ReferenceLauncher {
             throw ReferenceLauncherError.noWine
         }
         _ = try writePrefsIni(prefix: prefix, frame: options.frame, preset: options.preset)
+        func exists(_ url: URL) -> Bool {
+            FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
+        }
         let plan = ReferenceLaunchPlan(
             prefix: prefix, wine: wine, baseEnvironment: ProcessInfo.processInfo.environment,
-            clientDownloaded: FileManager.default.fileExists(
-                atPath: prefix.steamUI.path(percentEncoded: false)
-            )
+            clientDownloaded: exists(prefix.steamUI),
+            scriptExtender: exists(prefix.scriptExtenderLoader)
         )
+        ReferenceBridge(prefix: prefix).reset()
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         if !isSteamRunning() {
             ReferenceSteamRepair.removeBrowserLocks(prefix: prefix)
@@ -134,16 +137,21 @@ nonisolated public enum ReferenceLauncher {
 
     /// The newest `.ess` the reference game wrote, for an import into OpenSky.
     public static func newestSave(in prefix: ReferencePrefix) -> URL? {
-        guard let saves = prefix.savesDirectory() else { return nil }
+        saves(in: prefix).first
+    }
+
+    /// Every `.ess` the reference game wrote, newest first.
+    public static func saves(in prefix: ReferencePrefix) -> [URL] {
+        guard let saves = prefix.savesDirectory() else { return [] }
         let files = (try? FileManager.default.contentsOfDirectory(
             at: saves, includingPropertiesForKeys: [.contentModificationDateKey]
         )) ?? []
-        return files.filter { $0.pathExtension.lowercased() == "ess" }.max { lhs, rhs in
-            let left = try? lhs.resourceValues(forKeys: [.contentModificationDateKey])
-            let right = try? rhs.resourceValues(forKeys: [.contentModificationDateKey])
-            return (left?.contentModificationDate ?? .distantPast)
-                < (right?.contentModificationDate ?? .distantPast)
+        func written(_ url: URL) -> Date {
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+            return values?.contentModificationDate ?? .distantPast
         }
+        return files.filter { $0.pathExtension.lowercased() == "ess" }
+            .sorted { written($0) > written($1) }
     }
 }
 

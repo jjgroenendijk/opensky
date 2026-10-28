@@ -11,4 +11,9 @@ graphics preset: it writes the user's graphics settings.
 reference capture: it needs the running app and the reference game window.
 reference check: it hashes the master files of a reference prefix the probe machine may not have.
 reference export-view: it needs a running app, and the probe opens no app.
+reference follow: it needs a running app and a running reference game.
 reference launch: it opens the reference game window, which the user sees.
+reference load: it needs a running reference game.
+reference send: it needs a running reference game.
+reference state: it needs a running reference game.
+reference sync: it needs a running app and a running reference game.

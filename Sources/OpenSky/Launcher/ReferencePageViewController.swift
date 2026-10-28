@@ -17,8 +17,11 @@ final class ReferencePageViewController: NSViewController {
         checkboxWithTitle: "Low graphics in both games", target: nil, action: nil
     )
     let newestSaveControl = NSButton(
-        checkboxWithTitle: "OpenSky loads the newest Windows save", target: nil, action: nil
+        checkboxWithTitle: "Both games load this Windows save", target: nil, action: nil
     )
+    let savePopUp = NSPopUpButton(frame: .zero, pullsDown: false)
+    /// The reference saves the pop-up lists, newest first.
+    var saves: [URL] = []
     let comparison = ReferenceComparisonView(width: LauncherPageLayout.width)
     private let modes: [ReferenceComparisonMode] = [.sideBySide, .flip, .difference]
     let context: LauncherContext
@@ -45,7 +48,8 @@ final class ReferencePageViewController: NSViewController {
             layout.group("Same view", [
                 viewLabel,
                 layout.buttons([
-                    button("Export View", #selector(exportView), "ExportView"),
+                    button("Send View", #selector(sendView), "SendView"),
+                    button("Follow Windows Game", #selector(followReference), "Follow"),
                     button("Capture Both", #selector(captureBoth), "Capture"),
                     button("Import Newest Save", #selector(importSave), "ImportSave")
                 ])
@@ -66,8 +70,10 @@ final class ReferencePageViewController: NSViewController {
         )
         configure(
             newestSaveControl, ReferenceSettings.startsFromNewestSave, "NewestSave",
-            "The same save Continue loads in the Windows game, so both start from one place."
+            "OpenSky imports the save; the Windows game loads it through the bridge plugin."
         )
+        savePopUp.setAccessibilityIdentifier("ReferenceSaveControl")
+        savePopUp.toolTip = "The Windows game's saves, newest first."
         show(ReferenceNotice(ReferencePageActions.startHint, isProblem: false), in: startLabel)
         context.actions?.referenceSession.onStatus = { [weak self] notice in
             guard let self else { return }
@@ -76,6 +82,7 @@ final class ReferencePageViewController: NSViewController {
         return layout.group("Play side by side", [
             layout.toggle(lowGraphicsControl),
             layout.toggle(newestSaveControl),
+            layout.row("Save", savePopUp),
             layout.buttons([
                 button("Start Both", #selector(startBoth), "StartBoth"),
                 button("Start Windows Game", #selector(startReferenceOnly), "StartReference")
@@ -127,6 +134,7 @@ final class ReferencePageViewController: NSViewController {
         }
         let status = ReferencePrefixStatus(prefix: ReferenceSettings.prefix())
         show(ReferenceNotice(status.message, isProblem: !status.isReady), in: prefixLabel)
+        refreshSaves()
         guard let folder = ReferenceSettings.latestRun() else {
             comparisonLabel.stringValue = "No comparison yet. Start both games, then Capture Both."
             return

@@ -68,14 +68,25 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
         gameDirectory.appending(path: Self.gameExecutableName)
     }
 
+    /// SKSE's loader, which starts the game with the bridge plugin loaded.
+    public var scriptExtenderLoader: URL {
+        gameDirectory.appending(path: "skse64_loader.exe")
+    }
+
+    public var bridgePlugin: URL {
+        gameDirectory.appending(path: "Data/SKSE/Plugins/OpenSkyBridge.dll")
+    }
+
     public var appManifest: URL {
         steamApps.appending(path: "appmanifest_\(Self.appID).acf")
     }
 
     /// The Windows path Wine runs, because Wine resolves `C:` inside the prefix.
     public static let steamWindowsPath = #"C:\Program Files (x86)\Steam\steam.exe"#
-    public static let gameWindowsPath =
-        #"C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition\SkyrimSE.exe"#
+    static let gameFolderWindowsPath =
+        #"C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition"#
+    public static let gameWindowsPath = gameFolderWindowsPath + #"\SkyrimSE.exe"#
+    public static let scriptExtenderWindowsPath = gameFolderWindowsPath + #"\skse64_loader.exe"#
 
     /// `My Games/Skyrim Special Edition` of the first Wine user, where the game keeps
     /// `SkyrimPrefs.ini` and `Saves/`.

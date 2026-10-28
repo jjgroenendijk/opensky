@@ -14,12 +14,21 @@ nonisolated public struct ReferenceNotice: Equatable, Sendable {
 }
 
 nonisolated public enum ReferencePageActions {
-    public static let exportHint =
-        "Export writes 'opensky' into the game folder; type 'bat opensky' in the game console."
+    public static let exportHint = "Send View moves the Windows game to OpenSky's view; "
+        + "Follow moves OpenSky to the Windows game's."
     public static let startHint = "Start Both puts OpenSky on the left half of the main screen "
         + "and the Windows game on the right."
     public static let startedMessage = "Started the Windows game. Choose Continue there, "
         + "then use the Game menu to export the view and capture both."
+    public static let sendingMessage = "Sending OpenSky's view to the Windows game."
+    public static let sentMessage = "The Windows game stands at OpenSky's view."
+    public static let followedMessage = "OpenSky moves to the Windows game's view."
+    public static let noPlayerMessage = "The Windows game has no player in a cell yet."
+
+    public static func loadingMessage(save: String) -> String {
+        "Started the Windows game; it loads \(save) from its main menu."
+    }
+
     /// The reference window size when the game starts alone, as `make reference-game` uses.
     public static let defaultWindowSize = (1280, 720)
     /// Seconds a newly started Steam gets to log in before the game starts.

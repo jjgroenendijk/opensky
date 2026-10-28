@@ -16,8 +16,8 @@ nonisolated public enum ReferenceSettings {
     public static let lowGraphicsSideBySide = SettingKey(
         "OpenSkyReferenceLowGraphics", default: true
     )
-    /// Start Both makes OpenSky load the newest Windows save, the one the Windows game's
-    /// Continue loads, so both start from one save.
+    /// Start Both makes both games load the save chosen on the page: OpenSky imports it,
+    /// and the Windows game loads it through the bridge plugin.
     public static let startsFromNewestSave = SettingKey(
         "OpenSkyReferenceStartsFromNewestSave", default: false
     )
