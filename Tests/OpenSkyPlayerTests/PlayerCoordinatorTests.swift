@@ -1,5 +1,5 @@
-// The player shell against fake worlds: graph loading failures, the body
-// rebuild on an equipment change, and the two readout snapshots.
+// The player shell against fake worlds: graph loading failures, the race graph swap, the
+// body rebuild on an equipment change, and the two readout snapshots.
 
 import Foundation
 import OpenSkyEngineTesting
@@ -95,6 +95,29 @@ struct PlayerCoordinatorTests {
         #expect(provider.requests.map(\.generation) == [1, 1, 2, 2])
         player.drainClipLoads()
         #expect(player.firstPersonFailureReason != nil)
+    }
+
+    /// A race with its own project holds the body back until that graph loads. One that
+    /// cannot load is reported once, and the body rebuilds on the character graphs.
+    @Test
+    func aRaceGraphThatFailsToLoadKeepsTheCharacterGraphs() {
+        let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
+        let (player, world) = Self.session(source: provider)
+        let graph = PlayerBehaviorGraph.fixture()
+        player.attach(graph: graph, firstPerson: .success(.fixture()))
+        #expect(provider.bodyRequests.count == 1)
+        let project = "meshes\\actors\\werewolfbeast\\werewolfbeastproject.hkx"
+        world.playerBehaviorProject = project
+        world.playerEquippedSet = [FormID(0x12EB7)]
+        player.refreshBody()
+        #expect(provider.bodyRequests.count == 1, "the race graph is not in yet")
+        player.drainClipLoads()
+        player.drainClipLoads()
+        let expected = PlayerBodyError.behavior(.missing(project))
+        #expect(player.raceGraphFailureReason == expected.localizedDescription)
+        #expect(player.graphProject == nil)
+        #expect(world.playerLocomotion?.graph === graph.instance)
+        #expect(provider.bodyRequests.last == [FormID(0x12EB7)])
     }
 
     @Test

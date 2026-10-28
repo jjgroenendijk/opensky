@@ -333,6 +333,9 @@ final class GameSessionScope {
     lazy var mounts = MountCoordinator(
         world: mountWorld, settings: mountSettings, flightSettings: dragonFlightSettings
     )
+    /// The werewolf and vampire lord forms.
+    lazy var beastForms = BeastFormWorldAdapter(game: self)
+
     /// Dragons nobody rides: take-off, flight, and landing.
     lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: self)
     lazy var dragonFlight = DragonFlightCoordinator(world: dragonFlightWorld)

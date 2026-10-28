@@ -155,6 +155,10 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
+        ),
+        command(
+            "debug.form", "Put the player in a beast form, or end it.",
+            positionals: [required("form", "One of werewolf, vampirelord, or none.")]
         )
     ]
 

@@ -1,5 +1,5 @@
 // Traced stubs for natives whose engine system OpenSky does not have yet: Havok
-// constraints, Bink movies, the title sequence, werewolf change, and eye textures.
+// constraints, Bink movies, the title sequence, and eye textures.
 // Each answers the type's empty value and counts as `.stubbed`; each gap has an issue.
 
 import Foundation
@@ -23,8 +23,7 @@ extension PapyrusNativeFunctions {
         EngineStub("Game", "AddHavokBallAndSocketConstraint", .boolean(false)),
         EngineStub("Game", "RemoveHavokConstraints", .boolean(false)),
         EngineStub("Game", "PlayBink", .none),
-        EngineStub("Game", "StartTitleSequence", .none),
-        EngineStub("Game", "SendWereWolfTransformation", .none)
+        EngineStub("Game", "StartTitleSequence", .none)
     ]
 
     static func installEngineStubs(into registry: inout PapyrusNativeRegistry) {

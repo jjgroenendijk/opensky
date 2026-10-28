@@ -38,7 +38,7 @@ extension AgentWorldAdapter {
             return try done(changeActor(command))
         case let .setQuestStage(quest, stage):
             return try done(setQuestStage(quest, stage: stage))
-        case .kill, .resurrect, .flight, .drunk:
+        case .kill, .resurrect, .flight, .drunk, .beastForm:
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode:
             return try done(renderDebug(command))
@@ -80,6 +80,7 @@ extension AgentWorldAdapter {
         case let .resurrect(reference): try resurrect(reference)
         case let .flight(reference, order): try orderFlight(reference, order: order)
         case let .drunk(reference, drunk): try setDrunk(reference, drunk: drunk)
+        case let .beastForm(name): try forceBeastForm(name)
         default: throw AgentFailure(.invalidArgument, "not an actor debug command")
         }
     }

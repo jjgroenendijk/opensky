@@ -67,6 +67,27 @@ struct GameInputDispatcherTests {
         #expect(opened == ["inventory", "journal"])
     }
 
+    /// A beast form keeps the journal, the wait key, and jumping, and loses the
+    /// inventory, the map, the camera switch, and the favourites.
+    @Test func aBeastFormBlocksTheCharacterMenusAndFavourites() {
+        var opened: [String] = []
+        let dispatcher = GameInputDispatcher(
+            input: input,
+            menuMode: menuMode,
+            openJournal: { opened.append("journal") },
+            openInventory: { opened.append("inventory") },
+            onCommand: { opened.append($0.rawValue) },
+            isBeastForm: true
+        )
+        for action: GameInputAction in [.inventory, .map, .magic, .skills, .hotkey1, .wait] {
+            dispatcher.apply(action, .press)
+        }
+        dispatcher.apply(.journal, .press)
+        dispatcher.apply(.jump, .press)
+        #expect(opened == ["wait", "journal"])
+        #expect(input.makeInput(dt: 0.1).jump)
+    }
+
     @Test func aMenuTurnsMovementIntoMenuEventsAndSwallowsTheRest() {
         let consumer = SpyMenuConsumer()
         menuMode.inputConsumer = consumer

@@ -126,7 +126,10 @@ extension AgentWorldAdapter {
             "cell": cellState(at: camera.position),
             "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
             "weather": gameSession.weather?.currentWeatherEditorID.map(AgentJSON.string) ?? .null,
-            "bodyFailure": .init(game.player.failureReason)
+            "bodyFailure": .init(game.player.failureReason),
+            "form": .string(game.playerBeastForm.rawValue),
+            "behaviorProject": .init(game.player.graphProject),
+            "behaviorProjectFailure": .init(game.player.raceGraphFailureReason)
         ]
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)

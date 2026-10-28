@@ -1,7 +1,7 @@
 // The names of crime kinds, from the `sCrimeType*` string settings, and the bounty
 // notices from `sAddCrimeGold` and `sRemoveCrimeGold`. The game also
-// names pickpocketing, escaping jail, and werewolf transformation, which OpenSky
-// does not count yet. See docs/engine/crime.md.
+// names pickpocketing and escaping jail, which OpenSky does not count yet. See
+// docs/engine/crime.md.
 
 import OpenSkyGameData
 
@@ -31,6 +31,7 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
         case .assault: "sCrimeTypeAttack"
         case .murder: "sCrimeTypeMurder"
         case .trespass: "sCrimeTypeTrespass"
+        case .werewolf: "sCrimeTypeWerewolf"
         }
     }
 

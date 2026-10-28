@@ -1,5 +1,5 @@
-// What a crime is, and what one is worth. Four kinds: theft, assault, murder,
-// and trespass, the ones this engine can observe. Prices come from each crime
+// What a crime is, and what one is worth. Five kinds: theft, assault, murder,
+// trespass, and a seen werewolf or vampire lord transformation. Prices come from each crime
 // faction's `CRVA`, or from the `iCrimeGold*` settings when the faction sets
 // "Use Defaults"; both match UESP's bounty table
 // (<https://en.uesp.net/wiki/Skyrim:Crime>). See docs/engine/crime.md.
@@ -19,6 +19,13 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
     case murder
     /// Being somewhere an owner has not let this actor be.
     case trespass
+    /// Being seen changing into or out of a werewolf or a vampire lord
+    /// (`Game.SendWereWolfTransformation`).
+    case werewolf
+
+    /// The kinds the ledger counts, in the order the save writes them. A werewolf
+    /// change adds gold only; its script counts the "Werewolf Transformations" stat.
+    public static let counted: [CrimeKind] = [.theft, .assault, .murder, .trespass]
 
     /// Report ordering, which is also the order the save writes counts in.
     public static func < (lhs: Self, rhs: Self) -> Bool {
@@ -39,14 +46,16 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
         case .assault: .ignoreAssault
         case .murder: .ignoreMurder
         case .trespass: .ignoreTrespass
+        case .werewolf: .ignoreWerewolf
         }
     }
 
     /// Whether the bounty lands in the violent half of the ledger: the "Major
-    /// Crimes" of <https://ck.uesp.net/wiki/Crime> (assault, murder).
+    /// Crimes" of <https://ck.uesp.net/wiki/Crime> (assault, murder). [WARNING] The
+    /// werewolf change is a "Special Crime" there; violent is our reading.
     public var isViolent: Bool {
         switch self {
-        case .assault, .murder: true
+        case .assault, .murder, .werewolf: true
         case .theft, .trespass: false
         }
     }
@@ -141,6 +150,7 @@ nonisolated public struct CrimeGoldTable: Equatable, Sendable {
         case .assault: prices.assault
         case .murder: prices.murder
         case .trespass: prices.trespass
+        case .werewolf: prices.werewolf
         }
     }
 

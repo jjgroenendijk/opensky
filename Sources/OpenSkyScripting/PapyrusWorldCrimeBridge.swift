@@ -46,4 +46,10 @@ public protocol PapyrusWorldCrimeBridge {
     /// - Returns: the bounty accrued, or nil without a crime runtime.
     @discardableResult
     func sendTrespassAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int?
+
+    /// The first actor that detects the player calls the werewolf crime
+    /// (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>).
+    /// - Returns: the bounty accrued, zero when nobody saw, or nil without a crime runtime.
+    @discardableResult
+    func sendWerewolfTransformation() -> Int?
 }
