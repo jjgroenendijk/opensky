@@ -196,6 +196,10 @@ nonisolated extension AgentCommandCatalog {
                 value("delay", "s", "Seconds to wait before the fade."),
                 value("duration", "s", "Seconds the fade takes.")
             ]
+        ),
+        command(
+            "debug.cartmode", "Hide the HUD for a cart ride, as Game.SetHudCartMode does.",
+            positionals: [required("on", "Either on or off.")]
         )
     ]
 }

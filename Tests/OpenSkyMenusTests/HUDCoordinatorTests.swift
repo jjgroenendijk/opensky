@@ -73,6 +73,18 @@ struct HUDCoordinatorTests {
     }
 
     @Test @MainActor
+    func cartModeOutlivesThePlayerModes() {
+        let hud = HUDCoordinator(movies: SWFMovieSource())
+        hud.setCartMode(true)
+        hud.updatePlayerModes(HUDModeInputs(sneaking: true))
+        #expect(hud.isCartMode)
+        #expect(hud.modeInputs.sneaking)
+        hud.setCartMode(false)
+        #expect(!hud.isCartMode)
+        #expect(hud.shownModes.isEmpty)
+    }
+
+    @Test @MainActor
     func startWithoutARendererDoesNothing() {
         let hud = HUDCoordinator(movies: SWFMovieSource())
         hud.start()

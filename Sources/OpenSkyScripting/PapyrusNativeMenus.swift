@@ -1,6 +1,6 @@
-// The race menu, map marker, fast travel, identity, and MoveTo natives. The menus answer
-// through `PapyrusMenuBridge`, which the app sets. Signatures follow the Creation
-// Kit wiki pages for `Game`, `ObjectReference`, `Actor`, `ActorBase`, and `Form`.
+// The race menu, map marker, fast travel, HUD cart mode, identity, and MoveTo natives.
+// The menus answer through `PapyrusMenuBridge`, which the app sets. Signatures follow
+// the Creation Kit wiki pages for `Game`, `ObjectReference`, `Actor`, `ActorBase`, and `Form`.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -14,6 +14,8 @@ public protocol PapyrusMenuBridge: AnyObject {
     /// True when the trip started; a refusal shows its message and returns false.
     func fastTravel(to marker: ReferenceKey) -> Bool
     func setFastTravelEnabled(_ enabled: Bool)
+    /// Puts the HUD into or out of the cart ride's mode, which hides it.
+    func setHUDCartMode(_ enabled: Bool)
     /// False while a script has fast travel switched off with `EnableFastTravel(false)`.
     var isFastTravelEnabled: Bool { get }
     /// The marker is on the map and the player may travel to it.
@@ -63,6 +65,10 @@ extension PapyrusNativeFunctions {
         }
         game("IsFastTravelControlsEnabled", into: &registry) { _, menus in
             .returned(.boolean(menus.isFastTravelEnabled))
+        }
+        game("SetHudCartMode", into: &registry) { call, menus in
+            menus.setHUDCartMode(boolean(call, at: 0, default: true))
+            return .returned(.none)
         }
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",

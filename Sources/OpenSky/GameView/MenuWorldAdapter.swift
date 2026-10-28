@@ -299,6 +299,10 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         game.mapMenu.fastTravelEnabled = enabled
     }
 
+    func setHUDCartMode(_ enabled: Bool) {
+        game.hud.setCartMode(enabled)
+    }
+
     var isFastTravelEnabled: Bool {
         game.mapMenu.fastTravelEnabled
     }

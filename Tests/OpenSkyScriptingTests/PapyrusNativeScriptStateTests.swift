@@ -83,9 +83,11 @@ struct PapyrusNativeScriptStateTests {
         }
         #expect(call(fixture, "Game", "DisablePlayerControls") == .returned(.none))
         #expect(isEnabled("Movement") == .returned(.boolean(false)))
+        #expect(!fixture.session.bridge.isPlayerMovementEnabled)
         #expect(isEnabled("Looking") == .returned(.boolean(true)))
         #expect(call(fixture, "Game", "EnablePlayerControls") == .returned(.none))
         #expect(isEnabled("Movement") == .returned(.boolean(true)))
+        #expect(fixture.session.bridge.isPlayerMovementEnabled)
         #expect(fixture.session.worldState.component(ScriptedReferenceState.self, for: .player)
             == nil)
     }

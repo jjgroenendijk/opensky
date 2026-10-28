@@ -206,7 +206,8 @@ final class ActorWorldAdapter {
             return
         }
         let meters = meters.publishing(runtime.hudMeters(for: .player))
-        let enemy = engagedEnemyHealth(runtime: runtime, gameSession: gameSession)
+        let enemy = game.hud.shows(.enemyHealth)
+            ? engagedEnemyHealth(runtime: runtime, gameSession: gameSession) : nil
         let enemyChanged = enemy != publishedEnemy
         guard meters != nil || enemyChanged else { return }
         publishedEnemy = enemy

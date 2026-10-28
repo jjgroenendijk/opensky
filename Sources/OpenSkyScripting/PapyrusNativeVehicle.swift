@@ -38,14 +38,6 @@ extension PapyrusNativeFunctions {
         }
         installAnimationEvents(into: &registry)
         installActorAI(into: &registry)
-        for name in ["SetHudCartMode"] {
-            registry.register(PapyrusNativeFunction(
-                scriptName: "Game", functionName: name
-            ) { call, context in
-                context.log.append("Stubbed \(call.qualifiedName)")
-                return .deviated(.none, .stubbed)
-            })
-        }
     }
 
     private static func installAnimationEvents(into registry: inout PapyrusNativeRegistry) {
