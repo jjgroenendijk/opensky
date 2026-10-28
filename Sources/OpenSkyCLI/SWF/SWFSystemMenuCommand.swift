@@ -176,10 +176,14 @@ enum SWFSystemMenuCommand {
             return
         }
         print("[INFO] swf probe dump \(path):")
+        for property in [AS2DisplayProperty.visible, .alpha] {
+            let value = runtime.displayProperty(property, of: node)
+            print("[INFO]   \(property.actionScriptName) = \(SWFInvokeLog.describe(value))")
+        }
         for name in node.object.ownPropertyNames.sorted() {
             let value = node.object.lookup(name)?.property.value ?? .undefined
             print("[INFO]   \(name) = \(SWFInvokeLog.describe(value))")
-            if name == "EntriesA" || name == "entryList" {
+            if ["EntriesA", "entryList", "HUDModes", "HudElements"].contains(name) {
                 printArguments("\(path).\(name)", [value])
             }
         }
