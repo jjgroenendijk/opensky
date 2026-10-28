@@ -437,6 +437,14 @@ extension MenuWorldAdapter {
         }
     }
 
+    /// The launcher's Follow Windows Game, behind the loading screen like a load.
+    func followView(_ target: AgentViewTarget) {
+        coverNextTeleport = true
+        movePlayer(openingRaceMenu: false) { [game] () throws(AgentFailure) in
+            try game.agentWorld.viewJob(target)
+        }
+    }
+
     private func movePlayer(
         openingRaceMenu: Bool,
         job: () throws(AgentFailure) -> AgentTeleportJob

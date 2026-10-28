@@ -121,6 +121,8 @@ nonisolated public struct AgentFadeRequest: Equatable, Sendable {
 /// meaning where one exists.
 nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case teleport(AgentTeleportTarget)
+    /// Moves the player and sets the camera, hour, and weather in one step.
+    case view(AgentViewTarget)
     case setTime(hour: Float)
     case weather(String?)
     case setActorValue(reference: String, name: String, value: Float)
@@ -164,6 +166,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
         case "teleport": try .teleport(parseTeleport(args))
+        case "view": try .view(AgentViewTarget.parse(args))
         case "time": try .setTime(hour: parseHour(args))
         case "weather": try .weather(args.optionalString("id"))
         case "av": try parseActorValue(args)

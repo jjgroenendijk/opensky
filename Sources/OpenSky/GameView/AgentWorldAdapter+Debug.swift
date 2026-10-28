@@ -27,8 +27,8 @@ extension AgentWorldAdapter {
 
     func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling {
         switch command {
-        case let .teleport(target):
-            return try .waiting(AgentTeleportJob(adapter: self, target: target).wait)
+        case .teleport, .view:
+            return try .waiting(moveJob(command).wait)
         case let .setTime(hour):
             game.runtimeState.setGameClockHour(hour)
             return done(["hour": .init(game.runtimeState.runtimeStateClock.hourOfDay)])
@@ -52,6 +52,14 @@ extension AgentWorldAdapter {
             return try done(performFurniture(command))
         case .subGraphEvent, .subGraphVariable:
             return try done(driveSubGraphs(command))
+        }
+    }
+
+    private func moveJob(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentTeleportJob {
+        switch command {
+        case let .teleport(target): try AgentTeleportJob(adapter: self, target: target)
+        case let .view(target): try viewJob(target)
+        default: throw AgentFailure(.invalidArgument, "not a move")
         }
     }
 
