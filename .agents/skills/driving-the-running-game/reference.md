@@ -65,7 +65,9 @@ arrow keys.
   the level; a frozen roll keeps its level until its cell resets (`debug rest 240` away from it).
 - `state actors` also gives each actor's behaviour `graph`: its `status` (`running`, `loading`,
   `failed: <reason>`, or `waiting for playback`), `project`, `activeStates`, `waitingForClip`,
-  `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, and `clipsMissed`.
+  `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, `clipsMissed`,
+  `drunk`, `iState`, and `iStateTag` (the value the graph's state tagging generators publish).
+  `state player` gives the same `drunk` and `iState` under `graph`.
   A rider or cart passenger has no graph until it gets off.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
@@ -130,6 +132,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
 | `debug flight <ref> takeoff\|land` | forces an actor whose race flies to take off or land; on the ridden dragon it gives the rider's land order or calls it off |
+| `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |

@@ -10,6 +10,7 @@ nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {
         guard isPlayerGraph else { return }
         actorState.swimming = gait == .swim
+        actorState.isDrunk = graph?.isTaggingState(ActorGraphState.npcDrunk.variableName) ?? false
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,

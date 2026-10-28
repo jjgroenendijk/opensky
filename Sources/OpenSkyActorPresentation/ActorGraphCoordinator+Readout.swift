@@ -21,6 +21,11 @@ nonisolated public struct ActorGraphReadout: Equatable, Sendable {
     public let clipsMissed: Int
     /// The first rig bone that bone LOD holds, and every bone after it; nil moves all.
     public var heldFromBone: String?
+    /// The graph tags the drunk state.
+    public var isDrunk = false
+    /// The graph's `iState`, and the value its state tagging generators publish.
+    public var state: Int32?
+    public var stateTag: Int32?
 }
 
 extension ActorGraphCoordinator {
@@ -28,7 +33,7 @@ extension ActorGraphCoordinator {
     public func readout(for actor: ReferenceKey) -> ActorGraphReadout? {
         if let entry = running[actor] {
             let instance = entry.instance
-            return ActorGraphReadout(
+            var readout = ActorGraphReadout(
                 status: entry.isLent ? "lent" : "running",
                 project: entry.project.asset.projectPath,
                 activeStates: instance.activeStates.map {
@@ -44,6 +49,11 @@ extension ActorGraphCoordinator {
                 clipsMissed: entry.project.clips.missCount,
                 heldFromBone: entry.heldFromBone.map { entry.project.asset.skeleton.boneNames[$0] }
             )
+            readout.isDrunk = entry.isDrunk
+            readout.state = instance.variable(named: ActorGraphNames.state)
+                .map { Int32(truncatingIfNeeded: $0.intValue) }
+            readout.stateTag = instance.stateTag?.value
+            return readout
         }
         guard
             let projectPath = world?.actorGraphCandidates().first(where: { $0.key == actor })?

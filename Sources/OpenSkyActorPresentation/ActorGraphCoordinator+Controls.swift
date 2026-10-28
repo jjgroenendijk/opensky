@@ -1,5 +1,7 @@
-// The persisted settings of `ActorGraphCoordinator`, and the inputs of one step.
+// The persisted settings of `ActorGraphCoordinator`, the inputs of one step, and the
+// `iState` a step writes back when the drunk tag changes.
 
+import OpenSkyBehavior
 import OpenSkyGameData
 
 extension ActorGraphCoordinator {
@@ -33,5 +35,19 @@ extension ActorGraphCoordinator.Running {
         return ActorGraphStepInput(
             motion: next, speed: gait.speed, turnDelta: turn, deltaTime: seconds
         )
+    }
+}
+
+extension ActorGraphCoordinator.Running {
+    /// Tells the graph `iState` when its drunk tag changed (docs/engine/actor-state-graph.md).
+    func noteDrunkTag() {
+        let drunk = instance.isTaggingState(ActorGraphNames.drunkState)
+        if
+            let name = ActorGraphCore.stateConstant(wasDrunk: isDrunk, isDrunk: drunk),
+            let value = instance.variable(named: name)
+        {
+            instance.setVariable(value, named: ActorGraphNames.state)
+        }
+        isDrunk = drunk
     }
 }

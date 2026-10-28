@@ -1,6 +1,7 @@
-// Steps one actor behaviour graph of the install, raises named events in order, and
-// records the states each event reaches. `openskycli hkx --raise` prints it, so a
-// reader can check which event moves a graph where, such as a dragon's take-off.
+// Steps one actor behaviour graph of the install, with its sub-graphs, raises named events
+// in order, and records the states each event reaches and the `iState` the graph tags.
+// `openskycli hkx --raise` prints it, so a reader can check which event moves a graph
+// where, such as a dragon's take-off.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -16,6 +17,10 @@ nonisolated public enum BehaviorEventProbe {
         /// The innermost active state of each running state machine.
         public let states: [String]
         public let fired: [String]
+        /// The `iState` value the graph's state tagging generators publish, or nil.
+        public let stateTag: Int32?
+        /// The `iState_*` constants of the graph that hold `stateTag`.
+        public let stateTagNames: [String]
     }
 
     nonisolated public enum Failure: Error, Equatable, CustomStringConvertible {
@@ -63,6 +68,7 @@ nonisolated public enum BehaviorEventProbe {
             graph: graph, in: objects, skeleton: BehaviorSkeleton(rig),
             clips: InstallBehaviorClipSource(fileSystem: fileSystem, paths: set.animations)
         )
+        instance.references = InstallBehaviorReferenceSource(fileSystem: fileSystem, rootPath: key)
         instance.activate()
         var steps = [advance(instance, event: nil, accepted: true, idleUpdates, variables)]
         for event in events {
@@ -90,6 +96,13 @@ nonisolated public enum BehaviorEventProbe {
         let states = instance.activeStates.map { state in
             "\(state.machineName ?? "?"): \(state.stateName ?? String(state.stateId))"
         }
-        return Step(event: event, accepted: accepted, states: states, fired: fired)
+        let tag = instance.stateTag?.value
+        let names = instance.variables.names.compactMap(\.self).filter { name in
+            name.hasPrefix("iState_") && instance.isTaggingState(name)
+        }
+        return Step(
+            event: event, accepted: accepted, states: states, fired: fired,
+            stateTag: tag, stateTagNames: names.sorted()
+        )
     }
 }

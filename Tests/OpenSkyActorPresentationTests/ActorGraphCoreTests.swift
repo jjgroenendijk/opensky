@@ -6,6 +6,15 @@ import OpenSkyBehavior
 import Testing
 
 struct ActorGraphCoreTests {
+    @Test func onlyAChangeOfTheDrunkTagWritesIState() {
+        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: false) == nil)
+        #expect(ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: true) == nil)
+        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: true) == "iState_NPCDrunk")
+        #expect(
+            ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: false) == "iState_NPCDefault"
+        )
+    }
+
     @Test func aGraphStepsEveryFrameNearAndLessOftenFurtherOut() {
         let cutoff = ActorGraphCutoff.standard
         #expect(cutoff.stepInterval(atDistance: 100) == 0)

@@ -171,6 +171,15 @@ struct AgentCommandParsingTests {
         #expect(try AgentStateQuery.parse("mount", args([:])) == .mount)
     }
 
+    @Test func drunkNamesTheActorAndTheSwitch() throws {
+        let request = try AgentCommandLine.request(["debug", "drunk", "1A2B", "off"])
+        #expect(request.args == ["ref": "1A2B", "on": false])
+        #expect(try AgentDebugCommand.parse("drunk", args(request.args))
+            == .drunk(reference: "1A2B", drunk: false))
+        #expect(try AgentDebugCommand.parse("drunk", args(["ref": "player", "on": true]))
+            == .drunk(reference: "player", drunk: true))
+    }
+
     @Test func aNegativeItemCountRemoves() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "Gold001", "count": -5]))
             == .removeItem(reference: "player", item: "Gold001", count: 5))
