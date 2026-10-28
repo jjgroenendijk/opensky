@@ -135,6 +135,8 @@ public final class ActorGraphCoordinator {
         var heldFromBone: Int?
         /// The player's mount drive steps this graph while it is lent.
         var isLent = false
+        /// The graph tagged the drunk state on the last step.
+        var isDrunk = false
 
         init(project: Project, instance: BehaviorGraphInstance) {
             self.project = project
@@ -307,6 +309,7 @@ public final class ActorGraphCoordinator {
         entry.pendingEvents = []
         let result = instance.update(deltaTime: seconds)
         entry.steps += 1
+        entry.noteDrunkTag()
         if !result.bones.isEmpty {
             entry.heldFromBone = entry.project.boneLOD?.firstHeldBone(atDistance: distance)
             entry.lastBones = ActorBoneLOD.holding(
@@ -324,18 +327,6 @@ public final class ActorGraphCoordinator {
         for name in names {
             world?.actorGraphFired(name, from: actor)
             finishWaits(on: actor, event: name)
-        }
-    }
-
-    private func finishWaits(on actor: ReferenceKey, event: String) {
-        guard let pending = waits[actor] else { return }
-        let matches = { (wait: (event: String, token: UInt64)) in
-            wait.event.caseInsensitiveCompare(event) == .orderedSame
-        }
-        let left = pending.filter { !matches($0) }
-        waits[actor] = left.isEmpty ? nil : left
-        for wait in pending where matches(wait) {
-            world?.animationWaitFinished(token: wait.token, fired: true)
         }
     }
 
@@ -375,6 +366,20 @@ public final class ActorGraphCoordinator {
             case let .failure(failure):
                 projects[completion.key] = .failed(failure.reason)
             }
+        }
+    }
+}
+
+extension ActorGraphCoordinator {
+    private func finishWaits(on actor: ReferenceKey, event: String) {
+        guard let pending = waits[actor] else { return }
+        let matches = { (wait: (event: String, token: UInt64)) in
+            wait.event.caseInsensitiveCompare(event) == .orderedSame
+        }
+        let left = pending.filter { !matches($0) }
+        waits[actor] = left.isEmpty ? nil : left
+        for wait in pending where matches(wait) {
+            world?.animationWaitFinished(token: wait.token, fired: true)
         }
     }
 }

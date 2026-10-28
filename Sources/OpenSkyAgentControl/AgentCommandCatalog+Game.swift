@@ -148,6 +148,10 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.flight", "Force an actor that flies to take off or land.",
             positionals: [required("ref", refHelp), required("order", "Either takeoff or land.")]
+        ),
+        command(
+            "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
+            positionals: [required("ref", refHelp), required("on", "Either on or off.")]
         )
     ]
 

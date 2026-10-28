@@ -148,6 +148,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case passTime(hours: Int, sleeping: Bool)
     /// Forces an actor that flies to take off or to land.
     case flight(reference: String, order: AgentFlightOrder)
+    /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
+    /// `IdleDrunkStop` do.
+    case drunk(reference: String, drunk: Bool)
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
     case subGraphEvent(reference: String, event: String)
     /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
@@ -217,6 +220,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "shadows": try .shadows(args.string("quality"))
         case "fade": try parseFade(args)
         case "flight": try parseFlight(args)
+        case "drunk":
+            try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

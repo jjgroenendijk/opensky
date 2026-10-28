@@ -155,7 +155,10 @@ extension AgentWorldAdapter {
             "recentEvents": .array(status.recentGraphEvents.map(AgentJSON.string)),
             "activeStates": .array((gameSession.locomotion.graph?.activeStates ?? []).map {
                 .string("\($0.machineName ?? "?") / \($0.stateName ?? "?")")
-            })
+            }),
+            "drunk": .bool(gameSession.locomotion.actorState.isDrunk),
+            "iState": gameSession.locomotion.graph?.variable(named: ActorGraphNames.state)
+                .map { .init($0.intValue) } ?? .null
         ]
         return .object(result)
     }
@@ -247,7 +250,10 @@ extension AgentWorldAdapter {
             "unresolvedClips": .array(graph.unresolvedClips.map(AgentJSON.string)),
             "clipsLoaded": .init(graph.clipsLoaded),
             "clipsMissed": .init(graph.clipsMissed),
-            "boneLODHeldFrom": .init(graph.heldFromBone)
+            "boneLODHeldFrom": .init(graph.heldFromBone),
+            "drunk": .bool(graph.isDrunk),
+            "iState": graph.state.map { .init(Int($0)) } ?? .null,
+            "iStateTag": graph.stateTag.map { .init(Int($0)) } ?? .null
         ]
     }
 

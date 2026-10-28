@@ -62,13 +62,61 @@ The state is picked in a fixed order. The first match wins:
 4. A cast in either hand (`iState_NPCMagicCasting`).
 5. Riding: `iState_HorseSprint` while the mount sprints, else `iState_NPCHorse`. `bIsRiding` is
    true while the player sits on a mount ([riding](/engine/riding.md)).
-6. A sprint or sneak gait.
-7. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
+6. Drunk (`iState_NPCDrunk`), while the graph tags it (see below).
+7. A sprint or sneak gait.
+8. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
    spell. The type uses the `iRightHandType` encoding ([combat graph names](/engine/combat-graph-names.md)).
-8. Otherwise `iState_NPCDefault`.
+9. Otherwise `iState_NPCDefault`.
 
 [INFO] This order is OpenSky's own. No source states the game's order. Bleedout,
-drunk, quick shot, and shield charge have no OpenSky system yet, so no step picks them.
+quick shot, and shield charge have no OpenSky system yet, so no step picks them.
+
+## Drunk actors
+
+An actor is drunk while its graph is in the `MT_Drunk` state of `mt_behavior.hkx`. Two idle
+records in `Skyrim.esm` move it there and back. Both name `Actors\Character\Behaviors\0_Master.hkx`,
+with no conditions and no parent:
+
+| Idle | Form ID | Event |
+| --- | --- | --- |
+| `IdleDrunkStart` | `0CEFD0` | `DrunkStart` |
+| `IdleDrunkStop` | `0CEFD1` | `DrunkStop` |
+
+`0_master.hkx` passes the event to `mt_behavior.hkx`. There the state machine
+`DefaultOrDrunkBehavior` goes from `NonDrunkState` to `MT_Drunk` on `DrunkStart`, and back on
+`DrunkStop`. Inside `MT_Drunk`, `DrunkStanding` plays `IdleDrunk.hkx` and its two turn clips, and
+`moveStart` leads to `DrunkLocomotion`, which plays `IdleDrunk_Walk.hkx`. The machine's sync
+variable is `iDrunkVariable`.
+
+`MT_Drunk` runs the `BSiStateTaggingGenerator` `MT_Drunk_iStateGen`. While it runs, the graph
+tags the value 15, which is the value of `iState_NPCDrunk` in `0_master.hkx`. The graph files
+hold many such generators, for example `Sprint_iStateGen` and `BleedOut_iStateGen`. OpenSky
+reads the tag with the highest `m_iPriority`; on a tie the first one reached wins. No source
+states the game's tie rule.
+
+OpenSky treats an actor as drunk while its graph's tag equals `iState_NPCDrunk`:
+
+- The player's `iState` takes `iState_NPCDrunk` (step 6 above).
+- An NPC's `iState` is set to `iState_NPCDefault` or `iState_NPCDrunk` when the tag changes. OpenSky
+  writes no other `iState` for an NPC yet.
+
+After `DrunkStop` the actor stays drunk until the blend out of `MT_Drunk` ends, because the
+tagging generator runs as long as the old state is blended in.
+
+`openskycli hkx meshes\actors\character\behaviors\0_master.hkx --raise DrunkStart --raise moveStart`
+shows the states and the tag. `openskycli game debug drunk <ref> on|off` raises the event on a
+running actor, and `state player` and `state actors` give `drunk` and `iState`.
+
+In the vanilla data nothing plays the two idles. No `PACK`, `SCEN`, `QUST`, or `NPC_` record names
+them, and no script in `Skyrim - Misc.bsa` sends `DrunkStart`. Tavern drunks such as the ones of
+`FavorJobsDrunksFaction` walk normally in the game as well. A mod reaches the state with
+`PlayIdle(IdleDrunkStart)` (<https://ck.uesp.net/wiki/PlayIdle_-_Actor>) or
+`Debug.SendAnimationEvent(akActor, "DrunkStart")`
+(<https://ck.uesp.net/wiki/SendAnimationEvent_-_Debug>). The animation variable list names
+`iState_NPCDrunk` "Sets actor in a drunk state" (<https://ck.uesp.net/wiki/List_of_Animation_Variables>).
+
+[WARNING] Whether the game keeps the drunk state in a save, or after the actor's graph reloads,
+is not known. OpenSky loses it when the graph stops.
 
 ## How `iCombatStance` is encoded
 

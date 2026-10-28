@@ -48,6 +48,42 @@ struct ActorStateGraphCoreTests {
         #expect(ActorStateGraphCore.state(for: inputs, gait: .sneak) == .npcBowDrawn)
     }
 
+    @Test func drunkOutranksTheGaitButNotACast() {
+        var inputs = ActorStateGraphInputs()
+        inputs.isDrunk = true
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .sprint) == .npcDrunk)
+        inputs.castingRight = true
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .walk) == .npcMagicCasting)
+        inputs.riding = .riding
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .walk) == .npcHorse)
+    }
+
+    @Test func theBridgeReportsTheGraphsDrunkTagThroughIState() {
+        var table = BehaviorObjectTable()
+        let binding = table.add(
+            BehaviorFixture.bindingSet([BehaviorBindingSpec("iStateToSetAs", 1)]), at: 0x08
+        )
+        let root = table.add(
+            BSiStateTaggingGenerator(
+                node: BehaviorFixture.nodeHeader("MT_Drunk_iStateGen", bindingSet: binding),
+                defaultGenerator: nil, stateToSetAs: 0, priority: 0, unresolved: []
+            ),
+            at: 0x10
+        )
+        let graph = BehaviorFixture.instance(
+            root: root, table: table,
+            data: BehaviorFixture.graphData(variables: [
+                BehaviorVariableSpec(ActorStateGraphNames.state, .int32, 0),
+                BehaviorVariableSpec(ActorGraphState.npcDrunk.variableName, .int32, 22)
+            ])
+        )
+        let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
+        _ = bridge.plan(LocomotionBridgeTests.state())
+        _ = bridge.plan(LocomotionBridgeTests.state())
+        #expect(bridge.actorState.isDrunk)
+        #expect(graph.variable(named: ActorStateGraphNames.state) == .int(22))
+    }
+
     @Test func writesCarryTheCameraTheKeysAndTheState() {
         var inputs = ActorStateGraphInputs()
         inputs.setCamera(position: SIMD3(1, 2, 3), forward: SIMD3(0, 1, 0), pitch: 0.25)

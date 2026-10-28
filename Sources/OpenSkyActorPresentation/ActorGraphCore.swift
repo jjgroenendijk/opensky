@@ -122,6 +122,15 @@ nonisolated public enum ActorGraphNames {
     public static let combatStance = "iCombatStance"
     public static let combatStanceStart = "combatStanceStart"
     public static let combatStanceStop = "combatStanceStop"
+
+    /// The events of the idles `IdleDrunkStart` and `IdleDrunkStop`; `mt_behavior.hkx`
+    /// enters and leaves `MT_Drunk` on them.
+    public static let drunkStart = "DrunkStart"
+    public static let drunkStop = "DrunkStop"
+    public static let state = "iState"
+    /// The `iState` constants a drunk and a sober actor report.
+    public static let drunkState = "iState_NPCDrunk"
+    public static let defaultState = "iState_NPCDefault"
 }
 
 /// What one actor's graph is fed in one step.
@@ -182,6 +191,13 @@ nonisolated public enum ActorGraphCore {
             (Names.combatStance, .int(input.motion.isInCombatStance ? 1 : 0)),
             (Names.timeDelta, .real(input.deltaTime))
         ]
+    }
+
+    /// The `iState` constant to write after the graph's drunk tag changed, else nil. Only
+    /// the change is written, so an NPC keeps any other `iState` its graph holds.
+    public static func stateConstant(wasDrunk: Bool, isDrunk: Bool) -> String? {
+        guard wasDrunk != isDrunk else { return nil }
+        return isDrunk ? ActorGraphNames.drunkState : ActorGraphNames.defaultState
     }
 
     /// Horizontal speed between two feet positions, or 0 without a time step.

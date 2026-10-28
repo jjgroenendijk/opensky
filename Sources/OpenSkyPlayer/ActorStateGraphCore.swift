@@ -34,6 +34,8 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var cameraPitch: Float = 0
     /// The player sits on a mount, and whether the mount sprints. Nil on foot.
     public var riding: RiderGait?
+    /// The graph tags the drunk state: `DrunkStart` reached `MT_Drunk`.
+    public var isDrunk = false
 
     public init() {}
 
@@ -56,9 +58,8 @@ nonisolated public enum RiderGait: Equatable, Sendable {
 
 nonisolated public enum ActorStateGraphCore: Sendable {
     /// The state `iState` reports. The order is ours: riding wins over everything, an
-    /// attack over a guard, a guard over a drawn bow, and a cast over movement.
-    /// Bleedout, drunk, quick shot, and shield charge have no OpenSky system, so no
-    /// step picks them.
+    /// attack over a guard, a guard over a drawn bow, a cast over drunk, and drunk over
+    /// movement. Bleedout, quick shot, and shield charge have no step yet.
     public static func state(
         for inputs: ActorStateGraphInputs, gait: LocomotionGait
     ) -> ActorGraphState {
@@ -80,6 +81,9 @@ nonisolated public enum ActorStateGraphCore: Sendable {
         }
         if inputs.castingLeft || inputs.castingRight {
             return .npcMagicCasting
+        }
+        if inputs.isDrunk {
+            return .npcDrunk
         }
         switch gait {
         case .sprint: return .npcSprinting
