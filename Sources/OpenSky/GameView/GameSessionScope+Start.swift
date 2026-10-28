@@ -5,6 +5,7 @@ import AppKit
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyCells
+import OpenSkyCombat
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -12,9 +13,11 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -39,11 +42,23 @@ extension GameSessionScope {
             guard let self else { return }
             // Before the HUD draws, so a skill notice from this frame shows now.
             progressionWorld.run(progression.takeCommands())
+            hud.updatePlayerModes(hudModeInputs(gameSession))
             hud.updateFrame()
         }
         // The engine reads the world's sound records once, so it starts after they load.
         audio.audioEnabled = playerSettings.store.bool(.audioEnabled)
         openLaunchChoice()
+    }
+
+    /// The player states the HUD movie has a mode for.
+    private func hudModeInputs(_ gameSession: GameSession) -> HUDModeInputs {
+        HUDModeInputs(
+            movementDisabled: scripts.bridge?.isPlayerMovementEnabled == false,
+            sneaking: player.isSneaking,
+            swimming: gameSession.walkController.isSwimming,
+            ridingHorse: mounts.drive?.kind == .horse,
+            weaponDrawn: combat.isWeaponDrawn
+        )
     }
 
     /// After the world data, because the title's logo loads through it.

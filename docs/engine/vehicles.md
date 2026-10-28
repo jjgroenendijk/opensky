@@ -117,6 +117,9 @@ A rider's vehicle pose is its live pose. Every system that asks where an actor i
 dialogue camera and the speaker's position, the AI packages, combat, perception, and magic. So a
 rider talks from its seat, not from where it was placed.
 
+`MQ101` calls `Game.SetHudCartMode` for the ride, which hides the HUD but keeps the subtitles
+([HUD modes](/rendering/hud.md#hud-modes)).
+
 ## Drawing
 
 A follower that is not the player is drawn with a delta matrix: its live pose times the inverse of
@@ -150,9 +153,7 @@ before it got on no longer counts as where it is.
 
 ## Where OpenSky differs
 
-- `Game.SetHudCartMode` does nothing yet. The HUD movie has a `CartMode` among its HUD modes, but
-  OpenSky does not drive HUD modes yet. `Game.SetSittingRotation` turns only a player who sits in
-  furniture ([furniture](/engine/furniture.md#papyrus)); on a cart seat the player keeps the view
-  it had.
+- `Game.SetSittingRotation` turns only a player who sits in furniture
+  ([furniture](/engine/furniture.md#papyrus)); on a cart seat the player keeps the view it had.
 - The front axle does not swivel under the cart, and the wheels do not turn at different speeds
   in a curve.

@@ -43,6 +43,67 @@ public final class HUDCoordinator {
         renderer.swfEnabled = layerVisible
     }
 
+    /// `Game.SetHudCartMode` sets `cart`; the frame sets the rest from the player.
+    public private(set) var modeInputs = HUDModeInputs()
+    /// The stack the movie holds, bottom first.
+    public private(set) var shownModes: [HUDMode] = []
+
+    public var isCartMode: Bool {
+        modeInputs.cart
+    }
+
+    public func setCartMode(_ enabled: Bool) {
+        var inputs = modeInputs
+        inputs.cart = enabled
+        updateModes(inputs)
+    }
+
+    /// Keeps the script's cart mode; every other input comes from `inputs`.
+    public func updatePlayerModes(_ inputs: HUDModeInputs) {
+        var inputs = inputs
+        inputs.cart = modeInputs.cart
+        updateModes(inputs)
+    }
+
+    private func updateModes(_ inputs: HUDModeInputs) {
+        modeInputs = inputs
+        let modes = HUDModeRules.modes(inputs)
+        guard isLoaded, modes != shownModes else { return }
+        callMovie { applyModes(modes, runtime: $0) }
+    }
+
+    /// Pops every shown mode, then pushes the new stack, so the movie's own
+    /// stack always matches `shownModes`.
+    private func applyModes(_ modes: [HUDMode], runtime: SWFMovieRuntime) {
+        for mode in shownModes.reversed() {
+            HUDMovieBridge.showElements(mode, false, runtime: runtime)
+        }
+        for mode in modes {
+            HUDMovieBridge.showElements(mode, true, runtime: runtime)
+        }
+        shownModes = modes
+        applyClipSwitches(runtime: runtime)
+    }
+
+    /// OpenSky's switches write the same `_visible` the movie's modes write, so each
+    /// one is applied again after a mode change, and never shows what the top mode hides.
+    private func applyClipSwitches(runtime: SWFMovieRuntime) {
+        let meters = Set([HUDModeClip.health, .magicka, .stamina].filter {
+            settings.metersEnabled && shows($0)
+        })
+        HUDMovieBridge.setMetersVisible(meters, runtime: runtime)
+        HUDMovieBridge.setAuthoredPlaceholderTextEnabled(
+            settings.placeholderTextEnabled && shows(.itemInfo), runtime: runtime
+        )
+        if let shownSubtitle {
+            HUDMovieBridge.setSubtitleText(shownSubtitle, runtime: runtime)
+        }
+    }
+
+    public func shows(_ clip: HUDModeClip) -> Bool {
+        HUDModeRules.shows(clip, under: shownModes)
+    }
+
     private var layerVisible: Bool {
         settings.layerEnabled && !isCovered
     }
@@ -219,13 +280,13 @@ public final class HUDCoordinator {
                 HUDMovieBridge.setActivationPrompt(effectivePrompt, runtime: runtime)
             }
             HUDMovieBridge.setCrosshairEnabled(settings.crosshairEnabled, runtime: runtime)
-            HUDMovieBridge.setMetersEnabled(settings.metersEnabled, runtime: runtime)
+            if initialize {
+                shownModes = []
+            }
             HUDMovieBridge.setCompassHeading(
                 heading, visible: settings.compassEnabled, runtime: runtime
             )
-            HUDMovieBridge.setAuthoredPlaceholderTextEnabled(
-                settings.placeholderTextEnabled, runtime: runtime
-            )
+            applyModes(HUDModeRules.modes(modeInputs), runtime: runtime)
         }
         markSynced(cameraPosition: camera.position, heading: heading)
     }

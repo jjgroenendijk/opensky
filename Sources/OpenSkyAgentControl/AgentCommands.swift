@@ -137,6 +137,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case shadows(String)
     /// Fades the screen as Papyrus `Game.FadeOutGame` does.
     case fade(AgentFadeRequest)
+    /// Puts the HUD into or out of cart mode, as Papyrus `Game.SetHudCartMode` does.
+    case cartMode(Bool)
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -224,6 +226,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
         case "fade": try parseFade(args)
+        case "cartmode": try .cartMode(args.bool("on", default: true))
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))

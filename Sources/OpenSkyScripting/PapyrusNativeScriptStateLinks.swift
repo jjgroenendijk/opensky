@@ -148,3 +148,11 @@ extension PapyrusWorldStateBridge {
         })
     }
 }
+
+extension PapyrusWorldStateBridge {
+    /// False after `DisablePlayerControls` turned movement off; the HUD reads it.
+    public var isPlayerMovementEnabled: Bool {
+        let name = PapyrusNativeFunctions.controlDisabledName("Movement")
+        return scriptedState(of: playerKey).flag(name) != true
+    }
+}

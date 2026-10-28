@@ -51,6 +51,7 @@ protocol AgentWorldHost: AnyObject {
     var factions: FactionCoordinator { get }
     var aiWorld: AIWorldAdapter { get }
     var furniture: FurnitureCoordinator { get }
+    var hud: HUDCoordinator { get }
     var menuScreensWorld: MenuScreensWorldAdapter { get }
     var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
