@@ -200,6 +200,10 @@ nonisolated public final class BehaviorGraphInstance {
     public private(set) var activeStates: [BehaviorActiveState] = []
     /// The list being built by the update in progress.
     public var activeStatesThisUpdate: [BehaviorActiveState] = []
+    /// The `iState` the last update's state tagging generators published, or nil.
+    public private(set) var stateTag: BehaviorStateTag?
+    /// The tag being chosen by the update in progress.
+    public var stateTagThisUpdate: BehaviorStateTag?
 
     /// What the update in progress raised that this graph declares no event for.
     public var unboundEvents: [String] = []
@@ -272,6 +276,7 @@ nonisolated public final class BehaviorGraphInstance {
         deactivateNodes(Set(nodeStates.keys))
         nodeStates = [:]
         activeStates = []
+        stateTag = nil
         pulledEventNames = [:]
         isActive = false
     }
@@ -295,6 +300,7 @@ nonisolated public final class BehaviorGraphInstance {
         let previouslyReached = reachedThisUpdate
         reachedThisUpdate = []
         activeStatesThisUpdate = []
+        stateTagThisUpdate = nil
         referencedResults = [:]
         pendingClipPhase = nil
         unboundEvents = []
@@ -306,6 +312,7 @@ nonisolated public final class BehaviorGraphInstance {
         variablesWrittenThisUpdate = []
         let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
         activeStates = activeStatesThisUpdate
+        stateTag = stateTagThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
 
         var bones = pose.bones
@@ -339,14 +346,6 @@ nonisolated public final class BehaviorGraphInstance {
             nodeStates[target] = nil
         }
         reachedThisUpdate.subtract(targets)
-    }
-
-    /// Packfile order: section first, then offset. Only used to make the
-    /// deactivation sweep deterministic.
-    public static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
-        lhs.sectionIndex == rhs.sectionIndex
-            ? lhs.dataOffset < rhs.dataOffset
-            : lhs.sectionIndex < rhs.sectionIndex
     }
 
     // MARK: - Object access
@@ -532,5 +531,15 @@ nonisolated extension BehaviorGraphInstance {
     @discardableResult
     public func raiseEvent(named name: String, payload: String? = nil) -> Bool {
         events.raise(named: name, payload: payload)
+    }
+}
+
+nonisolated extension BehaviorGraphInstance {
+    /// Packfile order: section first, then offset. Only used to make the
+    /// deactivation sweep deterministic.
+    public static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
+        lhs.sectionIndex == rhs.sectionIndex
+            ? lhs.dataOffset < rhs.dataOffset
+            : lhs.sectionIndex < rhs.sectionIndex
     }
 }

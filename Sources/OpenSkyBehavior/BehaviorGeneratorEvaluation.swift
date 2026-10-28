@@ -105,8 +105,7 @@ nonisolated extension BehaviorGraphInstance {
     ) -> BehaviorPose {
         switch object {
         case let tagging as BSiStateTaggingGenerator:
-            // The tag it publishes is read through the graph's own variables,
-            // which the authored bindings already write; nothing else to do.
+            noteStateTag(of: tagging, bound: bound)
             return evaluateGenerator(
                 at: tagging.defaultGenerator, depth: depth, deltaTime: deltaTime
             )

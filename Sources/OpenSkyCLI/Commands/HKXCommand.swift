@@ -66,6 +66,10 @@ enum HKXCommand {
             for state in step.states {
                 print("  state \(state)")
             }
+            if let tag = step.stateTag {
+                let names = step.stateTagNames.joined(separator: ", ")
+                print("  iState tag: \(tag)\(names.isEmpty ? "" : " (\(names))")")
+            }
             let fired = Array(Set(step.fired)).sorted()
             print("  fired: \(fired.isEmpty ? "none" : fired.joined(separator: ", "))")
         }

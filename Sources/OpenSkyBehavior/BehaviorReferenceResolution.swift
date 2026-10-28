@@ -47,6 +47,9 @@ nonisolated extension BehaviorGraphInstance {
         unboundEvents += result.unboundEvents
         pullEvents(from: child, key: key)
         activeStatesThisUpdate += child.activeStates
+        if let tag = child.stateTag {
+            noteStateTag(tag)
+        }
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
     }
 

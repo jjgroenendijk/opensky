@@ -124,7 +124,7 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
 | `hkbPoseMatchingGenerator` | Runs as its blender base, and is counted |
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
-| `BSiStateTaggingGenerator` | Runs its default generator |
+| `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](/engine/actor-state-graph.md#drunk-actors)) |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
 | `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
 | `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
