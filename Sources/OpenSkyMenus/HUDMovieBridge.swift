@@ -81,10 +81,10 @@ nonisolated public enum HUDMovieBridge: Sendable {
         "SetMagickaMeterPercent",
         "SetStaminaMeterPercent"
     ]
-    private static let meterPaths = [
-        "/HUDMovieBaseInstance/Health",
-        "/HUDMovieBaseInstance/Magica",
-        "/HUDMovieBaseInstance/Stamina"
+    private static let meterPaths: [(HUDModeClip, String)] = [
+        (.health, "/HUDMovieBaseInstance/Health"),
+        (.magicka, "/HUDMovieBaseInstance/Magica"),
+        (.stamina, "/HUDMovieBaseInstance/Stamina")
     ]
     private static let enemyHealthPath = "/HUDMovieBaseInstance/EnemyHealth_mc"
     private static let enemyNamePath =
@@ -157,11 +157,16 @@ nonisolated public enum HUDMovieBridge: Sendable {
     }
 
     public static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
-        for path in meterPaths {
+        setMetersVisible(enabled ? [.health, .magicka, .stamina] : [], runtime: runtime)
+    }
+
+    /// Shows the meters in `visible` and hides the rest.
+    public static func setMetersVisible(_ visible: Set<HUDModeClip>, runtime: SWFMovieRuntime) {
+        for (clip, path) in meterPaths {
             guard let meter = runtime.node(atPath: path, from: runtime.root) else {
                 continue
             }
-            runtime.setDisplayProperty(.visible, of: meter, to: .boolean(enabled))
+            runtime.setDisplayProperty(.visible, of: meter, to: .boolean(visible.contains(clip)))
         }
     }
 
@@ -178,6 +183,12 @@ nonisolated public enum HUDMovieBridge: Sendable {
             }
             runtime.setDisplayProperty(.visible, of: node, to: .boolean(enabled))
         }
+    }
+
+    /// Pushes `mode` onto the movie's mode stack, or takes it off. Each element shows
+    /// only when the top mode is among its modes.
+    public static func showElements(_ mode: HUDMode, _ show: Bool, runtime: SWFMovieRuntime) {
+        call("ShowElements", [.string(mode.rawValue), .boolean(show)], runtime: runtime)
     }
 
     public static func setActivationPrompt(_ prompt: String?, runtime: SWFMovieRuntime) {

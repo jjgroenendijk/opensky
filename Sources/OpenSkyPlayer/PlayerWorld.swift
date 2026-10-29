@@ -14,6 +14,9 @@ public protocol PlayerWorld: AnyObject {
     var playerEquippedSet: [FormID]? { get }
     /// The race menu choices; nil keeps the `Player` record.
     var playerAppearanceOverride: PlayerAppearanceOverride? { get }
+    /// The behaviour project of a race with its own, such as a beast form's; nil for a race
+    /// that runs the character graphs.
+    var playerBehaviorProject: String? { get }
     /// True while the weapon rides the hand node rather than its sheath.
     var playerWeaponsDrawn: Bool { get }
     func showPlayerBody(_ body: PlayerBody) throws

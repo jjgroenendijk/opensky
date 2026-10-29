@@ -118,7 +118,6 @@ built. The vanilla scripts that call each one show what it is for:
 | `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
 | `Game.PlayBink` | `E3DemoDragonFinaleScript` only, which no game path runs | A Bink movie player |
 | `Game.StartTitleSequence` | `MQ101QuestScript` | The title sequence movie |
-| `Game.SendWereWolfTransformation` | `PlayerWerewolfChangeScript`, `DLC1PlayerVampireChangeScript` | Beast forms |
 
 The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 

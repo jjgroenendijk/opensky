@@ -111,14 +111,14 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
         )
     }
 
-    /// The faction, the gold, then the four counts in `CrimeKind.allCases`
+    /// The faction, the gold, then the four counts in `CrimeKind.counted`
     /// order. Read positionally rather than by name, so a build that adds a
     /// fifth kind reads an older file's four and leaves the new one at zero.
     private static func decodeLedgerRow(_ reader: inout SaveReader) throws -> CrimeLedgerEntry {
         let faction = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let gold = try Int32(bitPattern: reader.uint32("CRIM row gold"))
         var counts: [CrimeKind: Int32] = [:]
-        for kind in CrimeKind.allCases {
+        for kind in CrimeKind.counted {
             counts[kind] = try Int32(bitPattern: reader.uint32("CRIM row count"))
         }
         // The whole total restores as non-violent here; `CRVG`, when present,

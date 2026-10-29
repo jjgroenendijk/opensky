@@ -43,6 +43,12 @@ extension PapyrusWorldStateBridge {
         alarm(.trespass, witness: witness, criminal: criminal)
     }
 
+    @discardableResult
+    public func sendWerewolfTransformation() -> Int? {
+        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
+        return Int(reporter.reportWerewolfTransformation(by: playerKey)?.gold ?? 0)
+    }
+
     /// The thief taking `reference` as a witnessed theft. Zero when the thief may take it.
     @discardableResult
     public func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {

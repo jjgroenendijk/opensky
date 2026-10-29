@@ -32,6 +32,10 @@ final class FakeMenuBridge: PapyrusMenuBridge {
         calls.append("travel(\(enabled))")
     }
 
+    func setHUDCartMode(_ enabled: Bool) {
+        calls.append("cart(\(enabled))")
+    }
+
     var isFastTravelEnabled = true
     var travelMarkers: Set<ReferenceKey> = []
 
@@ -119,7 +123,11 @@ struct PapyrusNativeMenusTests {
         #expect(registry.invoke(Self.game("ShowLimitedRaceMenu")) == .returned(.none))
         let enable = Self.game("EnableFastTravel", [.boolean(false)])
         #expect(registry.invoke(enable) == .returned(.none))
-        #expect(menus.calls == ["race(false)", "race(true)", "travel(false)"])
+        #expect(registry.invoke(Self.game("SetHudCartMode")) == .returned(.none))
+        #expect(registry.invoke(Self.game("SetHudCartMode", [.boolean(false)])) == .returned(.none))
+        #expect(menus.calls == [
+            "race(false)", "race(true)", "travel(false)", "cart(true)", "cart(false)"
+        ])
     }
 
     @Test func fastTravelReadsAnswerFromTheMenus() throws {

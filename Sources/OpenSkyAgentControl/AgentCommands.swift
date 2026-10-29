@@ -139,6 +139,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case shadows(String)
     /// Fades the screen as Papyrus `Game.FadeOutGame` does.
     case fade(AgentFadeRequest)
+    /// Puts the HUD into or out of cart mode, as Papyrus `Game.SetHudCartMode` does.
+    case cartMode(Bool)
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -158,6 +160,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
     /// `IdleDrunkStop` do.
     case drunk(reference: String, drunk: Bool)
+    /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
+    case beastForm(String)
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
     case subGraphEvent(reference: String, event: String)
     /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
@@ -227,9 +231,11 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
         case "fade": try parseFade(args)
+        case "cartmode": try .cartMode(args.bool("on", default: true))
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
+        case "form": try .beastForm(args.string("form").lowercased())
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

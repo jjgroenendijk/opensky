@@ -15,6 +15,7 @@ final class FakePlayerWorld: PlayerWorld {
     var isPlayerGrounded = true
     var playerEquippedSet: [FormID]?
     var playerAppearanceOverride: PlayerAppearanceOverride?
+    var playerBehaviorProject: String?
     var playerWeaponsDrawn = false
     var playerFirstPersonRig: PlayerFirstPersonRig?
     var areFirstPersonArmsVisible = false

@@ -195,6 +195,20 @@ struct AgentCommandParsingTests {
             == .drunk(reference: "player", drunk: true))
     }
 
+    @Test func cartModeTakesTheSwitch() throws {
+        let request = try AgentCommandLine.request(["debug", "cartmode", "off"])
+        #expect(request.args == ["on": false])
+        #expect(try AgentDebugCommand.parse("cartmode", args(request.args)) == .cartMode(false))
+        #expect(try AgentDebugCommand.parse("cartmode", args(["on": true])) == .cartMode(true))
+    }
+
+    @Test func formNamesTheBeastFormInLowercase() throws {
+        let request = try AgentCommandLine.request(["debug", "form", "VampireLord"])
+        #expect(request.args == ["form": "VampireLord"])
+        #expect(try AgentDebugCommand.parse("form", args(request.args))
+            == .beastForm("vampirelord"))
+    }
+
     @Test func aNegativeItemCountRemoves() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "Gold001", "count": -5]))
             == .removeItem(reference: "player", item: "Gold001", count: 5))

@@ -159,6 +159,22 @@ extension PlayerWorldAdapter: PlayerWorld {
         }
     }
 
+    /// The character races share `Actors\Character`'s graphs; a beast race names its own.
+    var playerBehaviorProject: String? {
+        guard
+            let identity = game.worldState.component(PlayerIdentityState.self, for: .player),
+            let race = game.worldData?.actorValueBaselines?.resolver?.races[identity.race.rawValue]
+        else { return nil }
+        let graphs = race.details.behaviorGraphs
+        guard let model = (identity.isFemale ? graphs.female : nil) ?? graphs.male else {
+            return nil
+        }
+        let project = ActorGraphCore.projectPath(modelPath: model.path)
+        return project.hasPrefix(Self.characterFolder) ? nil : project
+    }
+
+    private static let characterFolder = "meshes\\actors\\character\\"
+
     /// The footstep set follows the boots of the assembly just built.
     func showPlayerBody(_ body: PlayerBody) throws {
         game.audio.updateFootstepSet(feetArmatures: body.feetArmatures)

@@ -26,6 +26,10 @@ public protocol CrimeReporting: AnyObject {
     @discardableResult
     func reportPickpocket(of victim: ReferenceKey, by actor: ReferenceKey) -> CrimeOutcome
 
+    /// The first actor that detects `actor` calls the werewolf crime. Nil when nobody does.
+    @discardableResult
+    func reportWerewolfTransformation(by actor: ReferenceKey) -> CrimeOutcome?
+
     /// Reports `event` as it stands, with no witness check.
     @discardableResult
     func report(_ event: CrimeEvent) -> CrimeOutcome

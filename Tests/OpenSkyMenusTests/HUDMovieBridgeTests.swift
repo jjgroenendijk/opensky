@@ -30,7 +30,8 @@ struct HUDMovieBridgeTests {
         "SetMagickaMeterPercent",
         "SetStaminaMeterPercent",
         "SetCompassMarkers",
-        "SetCompassAngle"
+        "SetCompassAngle",
+        "ShowElements"
     ]
 
     private func makeRuntime() throws -> HUDHarness {
@@ -74,6 +75,15 @@ struct HUDMovieBridgeTests {
             .number(270), .number(270), .boolean(true)
         ])
         #expect(harness.log.calls["SetCrosshairTarget"]?.first?.first == .boolean(false))
+    }
+
+    @Test func aModeIsPushedAndPoppedByItsMovieName() throws {
+        let harness = try makeRuntime()
+        HUDMovieBridge.showElements(.cart, true, runtime: harness.runtime)
+        HUDMovieBridge.showElements(.warHorse, false, runtime: harness.runtime)
+        #expect(harness.log.calls["ShowElements"] == [
+            [.string("CartMode"), .boolean(true)], [.string("WarHorseMode"), .boolean(false)]
+        ])
     }
 
     @Test func validationRejectsAMovieWithoutTheHUDEntryPoints() throws {

@@ -1,5 +1,6 @@
 // `openskycli game debug drunk`: raise the drunk idle's event on an actor's graph
-// (docs/engine/actor-state-graph.md).
+// (docs/engine/actor-state-graph.md). `debug form`: put the player in a beast form or end
+// it (docs/engine/beast-forms.md).
 
 import OpenSkyActorPresentation
 import OpenSkyAgentControl
@@ -24,5 +25,18 @@ extension AgentWorldAdapter {
         return [
             "ref": .formID(actor.formID.rawValue), "event": .string(event), "taken": .bool(taken)
         ]
+    }
+
+    func forceBeastForm(_ name: String) throws(AgentFailure) -> AgentJSON {
+        let forms: [String: PlayerBeastForm] = [
+            "none": .none, "werewolf": .werewolf, "vampirelord": .vampireLord
+        ]
+        guard let form = forms[name] else {
+            throw AgentFailure(.invalidArgument, "form must be werewolf, vampirelord, or none")
+        }
+        guard game.beastForms.force(form) else {
+            throw AgentFailure(.notFound, "the \(name) race is not in the load order")
+        }
+        return ["form": .string(game.playerBeastForm.rawValue)]
     }
 }

@@ -22,6 +22,15 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
         }
     }
 
+    /// A beast form cannot open the character menus or the map, switch the camera, or
+    /// use favourites (UESP "Skyrim:Lycanthropy", "Skyrim:Vampire Lord").
+    public var isBlockedInBeastForm: Bool {
+        switch self {
+        case .inventory, .magic, .map, .skills, .cameraMode: true
+        default: hotkeySlot != nil
+        }
+    }
+
     /// The favourites slot, 1 to 8, a hotkey action uses.
     public var hotkeySlot: Int? {
         let hotkeys: [Self] = [
@@ -80,19 +89,23 @@ public struct GameInputDispatcher {
     public let openInventory: (() -> Void)?
     /// Map, magic, wait, saves, pause, and skills: commands the app carries out.
     public let onCommand: ((GameInputAction) -> Void)?
+    /// The player is in a beast form, so `isBlockedInBeastForm` actions do nothing.
+    public let isBeastForm: Bool
 
     public init(
         input: CameraInputState?,
         menuMode: MenuModeController?,
         openJournal: (() -> Void)? = nil,
         openInventory: (() -> Void)? = nil,
-        onCommand: ((GameInputAction) -> Void)? = nil
+        onCommand: ((GameInputAction) -> Void)? = nil,
+        isBeastForm: Bool = false
     ) {
         self.input = input
         self.menuMode = menuMode
         self.openJournal = openJournal
         self.openInventory = openInventory
         self.onCommand = onCommand
+        self.isBeastForm = isBeastForm
     }
 
     @discardableResult
@@ -128,7 +141,7 @@ public struct GameInputDispatcher {
             applyHeld(action, pressed: pressed)
             return
         }
-        guard pressed else { return }
+        guard pressed, !(isBeastForm && action.isBlockedInBeastForm) else { return }
         switch action {
         case .sneak: input?.toggleSneak()
         case .jump: input?.requestJump()

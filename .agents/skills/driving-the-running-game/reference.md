@@ -57,6 +57,9 @@ arrow keys.
 `state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
+- `state player` gives the beast `form` (`none`, `werewolf`, `vampireLord`, or `otherBeast`)
+  and the race `behaviorProject` the body runs, null for the character graphs, with
+  `behaviorProjectFailure` when that project did not load.
 - `state view` gives what the reference game's console takes: the player's `feet`, the
   angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` (`docs/tools/reference-game.md`).
 - `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
@@ -70,6 +73,8 @@ arrow keys.
   `bodyWeight` (`weapAdj` and the body-weight layer weights the graph derives from it).
   `state player` gives the same `drunk` and `iState` under `graph`.
   A rider or cart passenger has no graph until it gets off.
+- `state menu` gives `hud`: whether the HUD movie is `loaded`, `cartMode`, and the `modes` stack
+  the movie holds, bottom first, such as `["StealthMode", "CartMode"]`.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
   draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).
@@ -137,11 +142,13 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug stand [<ref>]` | gets the actor up from its seat |
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
+| `debug form werewolf\|vampirelord\|none` | puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it; answers `form` |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
 | `debug fade <out\|in> [--white] [--delay <s>] [--duration <s>]` | Fades the screen as `Game.FadeOutGame` does; `state frame` shows the `screenFade` |
+| `debug cartmode on\|off` | Puts the HUD into or out of cart mode, as `Game.SetHudCartMode` does; `state menu` shows `hud.cartMode` and `hud.modes` |
 
 ## Benchmark
 

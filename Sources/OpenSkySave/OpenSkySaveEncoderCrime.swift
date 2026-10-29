@@ -23,7 +23,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// The `CRIM` chunk, in key order: per row the faction, the gold, then the four
-    /// counts in `CrimeKind.allCases` order. Counts travel because an unwitnessed crime
+    /// counts in `CrimeKind.counted` order. Counts travel because an unwitnessed crime
     /// moves a count and not the gold.
     public static func writeCrimeLedgers(
         _ entries: [WorldStateSnapshotEntry],
@@ -46,7 +46,7 @@ nonisolated extension OpenSkySaveEncoder {
                 for row in each.ledger.entries {
                     writeKey(row.faction, into: &payload)
                     payload.writeUInt32(UInt32(bitPattern: row.gold))
-                    for kind in CrimeKind.allCases {
+                    for kind in CrimeKind.counted {
                         payload.writeUInt32(UInt32(bitPattern: row.counts[kind]))
                     }
                 }

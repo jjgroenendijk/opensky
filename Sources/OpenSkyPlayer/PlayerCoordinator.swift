@@ -1,7 +1,8 @@
 // The shell of the player: loads both behavior graphs as a late asset, assembles the body and
-// the first-person arms, and rebuilds them when the equipped set changes. A
-// load failure is recorded and shown, not retried, because it is a fact about
-// the install. See docs/engine/coordinators.md.
+// the first-person arms, and rebuilds them when the equipped set changes. A race with its
+// own project, such as a beast form, swaps in that graph alone. A load failure is recorded
+// and shown, not retried, because it is a fact about the install. See
+// docs/engine/coordinators.md and docs/engine/beast-forms.md.
 
 import Foundation
 import OpenSkyActorPresentation
@@ -28,6 +29,15 @@ public final class PlayerCoordinator {
     public private(set) var graph: PlayerBehaviorGraph?
     /// Runs beside the third-person graph; the camera mode decides which is drawn.
     public private(set) var firstPersonGraph: PlayerBehaviorGraph?
+    /// The race project `graph` runs, or nil for the character graphs.
+    public private(set) var graphProject: String?
+    /// The character graphs, kept while a race graph runs so the change back is instant.
+    private var characterGraphs: (graph: PlayerBehaviorGraph, firstPerson: PlayerBehaviorGraph?)?
+    /// The race project being loaded, and the one that failed to load.
+    private var loadingProject: String?
+    private var failedProject: String?
+    /// Why the race project did not load. The body then rebuilds on the character graphs.
+    public private(set) var raceGraphFailureReason: String?
     /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
     private var appearance: PlayerAppearanceOverride?
@@ -71,13 +81,19 @@ public final class PlayerCoordinator {
     }
 
     private func drainGraphs() {
-        guard let graphLoads, graph == nil else { return }
+        guard let graphLoads else { return }
         for completion in graphLoads.takeFinished() {
-            decodedGraphs[completion.key] = completion.result
+            let result = completion.result
                 .mapError { PlayerBehaviorGraphError.invalid($0.reason) }
                 .flatMap(\.self)
+            if case let .race(project) = completion.key {
+                attachRace(project, result)
+            } else {
+                decodedGraphs[completion.key] = result
+            }
         }
         guard
+            graph == nil,
             let thirdPerson = decodedGraphs[.thirdPerson],
             let firstPerson = decodedGraphs[.firstPerson],
             let fileSystem = source?.playerAssetFileSystem
@@ -113,6 +129,7 @@ public final class PlayerCoordinator {
     /// Moves finished clip loads and rigs in. Runs at the frame's drain point.
     public func drainClipLoads() {
         drainGraphs()
+        followRaceProject()
         graph?.clips.drain()
         firstPersonGraph?.clips.drain()
         drainRigs()
@@ -134,6 +151,60 @@ public final class PlayerCoordinator {
         case let .failure(error):
             firstPersonFailureReason = String(describing: error)
         }
+        characterGraphs = (graph, firstPersonGraph)
+        rebuildBody()
+    }
+
+    /// The race project the body should run: the world's, unless it failed to load.
+    private var wantedProject: String? {
+        guard let wanted = world?.playerBehaviorProject, wanted != failedProject else {
+            return nil
+        }
+        return wanted
+    }
+
+    /// A race change loads that race's graph, or puts the character graphs back.
+    private func followRaceProject() {
+        guard let characterGraphs, wantedProject != graphProject else { return }
+        guard let wanted = wantedProject else {
+            loadingProject = nil
+            show(graph: characterGraphs.graph, firstPerson: characterGraphs.firstPerson, nil)
+            return
+        }
+        guard loadingProject != wanted else { return }
+        loadingProject = wanted
+        graphLoads?.submit(.race(wanted), priority: .needed)
+    }
+
+    /// A race graph runs alone: a beast form has no first-person rig.
+    private func attachRace(_ project: String, _ result: PlayerGraphDecode) {
+        guard project == loadingProject else { return }
+        loadingProject = nil
+        guard let fileSystem = source?.playerAssetFileSystem else { return }
+        switch result {
+        case let .success(files):
+            let raceGraph = PlayerBehaviorGraph.build(
+                files, fileSystem: fileSystem, clipWorker: Self.clipWorker(fileSystem)
+            )
+            show(graph: raceGraph, firstPerson: nil, project)
+        case let .failure(error):
+            failedProject = project
+            raceGraphFailureReason = PlayerBodyError.behavior(error).localizedDescription
+            Self.logger.error(
+                "[ERROR] race behavior graph: \(String(describing: error), privacy: .public)"
+            )
+            rebuildBody()
+        }
+    }
+
+    private func show(
+        graph: PlayerBehaviorGraph, firstPerson: PlayerBehaviorGraph?, _ project: String?
+    ) {
+        self.graph = graph
+        firstPersonGraph = firstPerson
+        graphProject = project
+        world?.playerLocomotion?.attach(graph: graph.instance)
+        world?.playerLocomotion?.attachFirstPerson(graph: firstPerson?.instance)
         rebuildBody()
     }
 
@@ -152,7 +223,7 @@ public final class PlayerCoordinator {
 
     /// Both rigs are built from one equipped set, so an equip change reaches both.
     func rebuildBody() {
-        guard let source, let world, graph != nil else { return }
+        guard let source, let world, graph != nil, wantedProject == graphProject else { return }
         let equipped = world.playerEquippedSet
         let appearance = world.playerAppearanceOverride
         self.equipped = equipped
@@ -224,10 +295,11 @@ public final class PlayerCoordinator {
     }
 }
 
-/// The two graphs the player runs side by side.
+/// The two graphs the player runs side by side, and a race's own project in their place.
 nonisolated public enum PlayerGraphKind: Hashable, Sendable {
     case thirdPerson
     case firstPerson
+    case race(String)
 
     /// Decodes one graph's files; it runs on a load worker, off the main actor.
     public static func loader(
@@ -243,6 +315,10 @@ nonisolated public enum PlayerGraphKind: Hashable, Sendable {
                         fileSystem: fileSystem,
                         behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
                         skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+                    )
+                case let .race(project):
+                    try PlayerBehaviorGraphFiles.decode(
+                        fileSystem: fileSystem, projectPath: project
                     )
                 }
             }

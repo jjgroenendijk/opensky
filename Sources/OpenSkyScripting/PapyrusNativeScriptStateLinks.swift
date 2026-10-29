@@ -98,8 +98,8 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("Game", "SetBeastForm", into: &registry) { call, bridge, key in
-            let entering = boolean(call, at: 0, default: false)
-            bridge.updateScriptedState(of: key) { $0.setFlag("beastForm", entering ? true : nil) }
+            let flag: Bool? = boolean(call, at: 0, default: false) ? true : nil
+            bridge.updateScriptedState(of: key) { $0.setFlag(ScriptedStateName.beastForm, flag) }
             return .returned(.none)
         }
     }
@@ -146,5 +146,13 @@ extension PapyrusWorldStateBridge {
         return .some(state.form("factionOwner").map {
             .faction($0, requiredRank: 0)
         })
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// False after `DisablePlayerControls` turned movement off; the HUD reads it.
+    public var isPlayerMovementEnabled: Bool {
+        let name = PapyrusNativeFunctions.controlDisabledName("Movement")
+        return scriptedState(of: playerKey).flag(name) != true
     }
 }

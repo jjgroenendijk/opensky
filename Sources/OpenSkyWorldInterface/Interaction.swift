@@ -228,6 +228,8 @@ nonisolated public enum ActivationRefusal: Equatable, Sendable {
     case filteredByPerk
     /// The player rides, and a rider cannot use a door.
     case mounted
+    /// The player is in a beast form, which cannot take items or start a conversation.
+    case beastForm
 }
 
 /// A use-key press the activation gate refused. No `InteractionEvent` follows it.

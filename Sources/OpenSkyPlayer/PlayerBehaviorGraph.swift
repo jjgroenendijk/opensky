@@ -136,6 +136,38 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         )
     }
 
+    /// A race's own project, such as the werewolf's `WerewolfBeastProject.hkx`: the graph and
+    /// rig its character names, with every clip of its `animations` folder.
+    public static func decode(
+        fileSystem: any GameFileSource, projectPath: String
+    ) throws(PlayerBehaviorGraphError) -> PlayerBehaviorGraphFiles {
+        let asset: BehaviorProjectAsset
+        do {
+            asset = try BehaviorProjectAsset.load(
+                fileSystem: fileSystem, projectPath: projectPath, folderClips: true
+            )
+        } catch let error as BehaviorProjectAssetError {
+            throw projectError(error)
+        } catch {
+            throw PlayerBehaviorGraphError.invalid(projectPath)
+        }
+        return PlayerBehaviorGraphFiles(
+            behaviorPath: asset.behaviorPath, objectGraph: asset.objectGraph,
+            behavior: asset.behavior, rig: asset.skeleton, clipPaths: asset.clipPaths
+        )
+    }
+
+    private static func projectError(
+        _ error: BehaviorProjectAssetError
+    ) -> PlayerBehaviorGraphError {
+        switch error {
+        case let .missing(path): .missing(path)
+        case let .invalid(path), let .noCharacter(path): .invalid(path)
+        case let .noGraph(path): .noGraph(path)
+        case let .noSkeleton(path): .noSkeleton(path)
+        }
+    }
+
     private static func read(
         _ path: String,
         from fileSystem: any GameFileSource

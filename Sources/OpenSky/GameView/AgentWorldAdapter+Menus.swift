@@ -90,7 +90,8 @@ extension AgentWorldAdapter {
         var result: [String: AgentJSON] = [
             "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
             "top": .init(game.menuMode.topMenu?.name),
-            "worldPaused": .bool(game.menuMode.isWorldSimPaused)
+            "worldPaused": .bool(game.menuMode.isWorldSimPaused),
+            "hud": hudState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -100,6 +101,13 @@ extension AgentWorldAdapter {
             result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
         }
         return .object(result)
+    }
+
+    var hudState: AgentJSON {
+        [
+            "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
+            "modes": .array(game.hud.shownModes.map { .string($0.rawValue) })
+        ]
     }
 
     /// The page, the movies, and the perk sky line, such as "812 draws, turned 40°, ring".
