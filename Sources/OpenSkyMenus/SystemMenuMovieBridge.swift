@@ -29,7 +29,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     /// consumers are outside the system-page surface.
     public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RememberCurrentTabIndex",
-        "RequestPlayerInfo"
+        "RequestPlayerInfo", "SetVersionText", "ShouldShowKinectTunerOption"
     ]
     public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
@@ -163,6 +163,8 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
             // in OpenSky, so publish the same page/index pair and focus explicitly.
             menu.object.assign(.object(systemPage.object), for: "TopmostPage")
             menu.object.assign(.integer(systemTabIndex), for: "iCurrentTab")
+            // The tab group's `onTabChange` calls this; it adds the row press listeners.
+            runtime.callMovie("startPage", atPath: systemPagePath)
             runtime.focus(categoryList)
         }
         for path in [questsFaderPath, statsFaderPath] {

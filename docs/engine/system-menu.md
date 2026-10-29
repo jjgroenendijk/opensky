@@ -76,7 +76,9 @@ Start-up order:
    and player info.
 2. Call `SetPlatform(0)`, `InitExtensions`, `ShowMenu`, and `SwitchPageToFront(2, true)`.
 3. The game normally sets `TopmostPage`, `iCurrentTab`, and focus through tab buttons backed by
-   game data. OpenSky sets the System page and index directly, and focuses its list.
+   game data. OpenSky sets the System page and index directly, calls the page's `startPage`, and
+   focuses its list. The tab group's `onTabChange` is what calls `startPage` in the game, and
+   `startPage` adds the list's `itemPress` listener. Without it, accept on a row does nothing.
 
 The other two pages fade to `hide`. System stops at its `forceFade` label.
 
