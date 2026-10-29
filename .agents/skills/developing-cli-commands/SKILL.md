@@ -9,9 +9,9 @@ description: Adds or changes an openskycli command or option - where the declara
 
 # Developing CLI commands
 
-`openskycli` is the developer tool over the engine (`docs/tools/cli.md`). One command is
-spread over three places, and the rules for each live in different files, so an edit in one
-place easily misses a rule from another. This skill lists them all.
+`openskycli` is the developer tool over the engine (`docs/tools/cli.md`). It runs the same
+engine code as the app, so a CLI failure reproduces the app's behaviour. One command is
+spread over three places; this skill holds the rules for all of them.
 
 ## Where each part goes
 
@@ -20,7 +20,7 @@ place easily misses a rule from another. This skill lists them all.
 | Arguments: names, options, flags, help, `validate()` | `Sources/OpenSkyCLIArguments/`, one struct per command, swift-argument-parser |
 | Runner: the `CLIRunnable` extension that calls the command | `Sources/OpenSkyCLI/CommandRunners.swift` |
 | Command: parse results in, print out | `Sources/OpenSkyCLI/Commands/<Name>Command.swift` |
-| Logic worth a test | The package module of its domain, unit-tested there |
+| Logic worth a test | The package module of its domain, unit-tested there; the command only parses and prints |
 | An app command for `game` | `AgentCommandCatalog` in `OpenSkyAgentControl`; the CLI reads it |
 
 A new top-level command starts with `make new-cli-command NAME=<name> GROUP=<help group>`.
@@ -42,6 +42,8 @@ A new subcommand copies a sibling, such as `ReferenceArguments+Bridge.swift`.
   data loads. A list is one comma-separated value. A switch is a flag, `--x` or `--no-x`.
 - A group only holds subcommands; a mode is a subcommand, never a positional word.
 - User-facing failures throw `CLIError`; `CLIError.usage` exits 2.
+- The install is read-only. A command writes only where `--out` points, and logs go to
+  `.logs/`.
 
 ## The same commit also changes
 

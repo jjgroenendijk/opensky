@@ -28,7 +28,7 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 2. If one comes close, extend it with an option or a report section. For example, a new
    NIF block field goes into the `nif` output, not into a new script.
 3. Otherwise add a subcommand: `make new-cli-command NAME=<name> GROUP=<help group>` writes
-   every stub, and the rules are in `Sources/OpenSkyCLI/AGENTS.md`. The logic goes into the
+   every stub, and the rules are in the `developing-cli-commands` skill. The logic goes into the
    package module of its domain, with a unit test, and the command only parses and prints.
 4. Run it with `make run-cli ARGS=...` and commit it with the change it checked.
 
@@ -82,7 +82,7 @@ above step 1 for that check only — the ranked list above still governs everyth
 ## What lands in the commit
 
 - The new or extended `openskycli` command, with `docs/tools/cli.md` and the other updates
-  `Sources/OpenSkyCLI/AGENTS.md` lists, or the real-data test that stays.
+  the `developing-cli-commands` skill lists, or the real-data test that stays.
 - The finding itself, in `docs/formats/<name>.md` or a comment at the parse site.
 - Never the probe output: captures and reports stay in `.logs/`. Check `git status` before
   committing.
