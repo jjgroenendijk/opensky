@@ -64,8 +64,8 @@ struct SWFRuntimeNativesTests {
         )
         let node = try #require(SWFDisplayObject.resolve(attached.objectValue))
         #expect(node.name == "copy")
-        #expect(node.depth == 20)
-        #expect(runtime.root.child(atDepth: 20) === node)
+        #expect(node.depth == 16404)
+        #expect(try call(runtime, "getDepth", on: node) == .number(20))
         // The registered class ran on the attached instance too.
         #expect(node.object.lookup("built")?.property.value == .number(1))
     }
@@ -88,16 +88,29 @@ struct SWFRuntimeNativesTests {
         let node = try #require(SWFDisplayObject.resolve(created.objectValue))
         #expect(runtime.root.child(named: "holder") === node)
         _ = try call(runtime, "removeMovieClip", on: node)
-        #expect(runtime.root.child(atDepth: 30) == nil)
+        #expect(runtime.root.child(named: "holder") == nil)
+    }
+
+    /// A CLIK `TextArea` makes `container` at script depth 1; its `textField` sits at SWF depth 1.
+    @Test func aScriptDepthDoesNotReplaceTheTimelineChildAtTheSameNumber() throws {
+        let runtime = try started()
+        let panel = try #require(runtime.root.child(named: "panel"))
+        _ = try call(
+            runtime, "createEmptyMovieClip", on: runtime.root, [.string("holder"), .number(1)]
+        )
+        #expect(runtime.root.child(named: "panel") === panel)
+        #expect(runtime.root.child(named: "holder") != nil)
     }
 
     @Test func depthQueriesAndSwapsUseTheLiveTree() throws {
         let runtime = try started()
         let panel = try #require(runtime.root.child(named: "panel"))
-        #expect(try call(runtime, "getDepth", on: panel) == .number(1))
-        #expect(try call(runtime, "getNextHighestDepth", on: runtime.root) == .number(2))
+        // Author-time content sits below 0, so the next free script depth is 0.
+        #expect(try call(runtime, "getDepth", on: panel) == .number(-16383))
+        #expect(try call(runtime, "getNextHighestDepth", on: runtime.root) == .number(0))
         _ = try call(runtime, "swapDepths", on: panel, [.number(9)])
-        #expect(panel.depth == 9)
+        #expect(try call(runtime, "getDepth", on: panel) == .number(9))
+        #expect(try call(runtime, "getNextHighestDepth", on: runtime.root) == .number(10))
         #expect(runtime.root.child(atDepth: 1) == nil)
         let atDepth = try call(runtime, "getInstanceAtDepth", on: runtime.root, [.number(9)])
         #expect(atDepth.objectValue === panel.object)

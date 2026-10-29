@@ -32,6 +32,14 @@ A display object is one placed character: depth, instance name, matrix, color tr
 visibility, and, for a clip, its timeline, playhead, and play state. Children are kept by depth and
 read in rising depth, which is paint order.
 
+A node keeps its SWF depth. ActionScript sees that depth minus 16384, as Flash does: content placed
+by the timeline sits below 0, and `attachMovie`, `createEmptyMovieClip`, `duplicateMovieClip`, and
+`swapDepths` with a number place a clip at 0 or above. So a script depth never replaces a timeline
+child. CLIK's `TextArea` needs this: its `configUI` makes `container` at depth 1, while its
+`textField` is placed at SWF depth 1. Source: the Adobe ActionScript 2.0 Language Reference,
+`MovieClip.getDepth()` and `MovieClip.getNextHighestDepth()`. Depths are stored as 16 bits, so a
+script depth above 49151 is clamped to the top slot.
+
 Every node has an ActionScript object face. The node owns the object, and the object's host payload
 points back at the node weakly. A strong pair would never be freed. The weak side also gives the
 right behavior: a script that kept a removed clip sees its members turn `undefined` instead of
@@ -83,7 +91,8 @@ A child the target frame still places at the same depth with the same character 
 can attach a handler to a child, jump its own timeline, and still find the handler. `tweenmenu.swf`
 does exactly that: it puts `onRollOver` and `onMouseDown` on its four input rectangles in
 `InitExtensions`, then opens with a `gotoAndPlay` two frames on. Rebuilding from scratch left the
-menu unclickable. Children the target frame does not place are unloaded. New depths are created.
+menu unclickable. Children the target frame does not place are unloaded, except clips a script
+made at depth 0 or above: Flash keeps those. New depths are created.
 
 The target frame's `DoAction` blocks run. Skipped frames' blocks do not, matching `gotoAndStop`. A
 frame action that jumps its own clip comes back into this path, so this nests at most 8 deep, and
