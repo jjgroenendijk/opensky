@@ -20,7 +20,11 @@ that window.
 
 - Local time advances by `deltaTime * m_playbackSpeed`. When `m_enforcedDuration` is positive, it
   is also multiplied by `window / m_enforcedDuration`.
-- `m_startTime` places a clip that just became active.
+- `m_startTime` places a clip that just became active. A bound value wins over the authored one,
+  as for every bound member. The sword swings in `1hm_behavior.hkx` author 0.333 s but bind
+  `attackIntroLength`, which starts at 0. Played from 0.333 s, a swing skips its `preHitFrame` and
+  `weaponSwing` triggers, and `weaponSwing` opens the window in which `attackStart` chains the next
+  swing.
 - `m_mode` 0 stops at the window end. Mode 1 loops. Mode 2 reads `m_userControlledTimeFraction`.
   Mode 3, ping-pong, runs as a loop and is counted.
 - Sampling goes through the spline animation decoder, behind a clip interface, so the runtime does
