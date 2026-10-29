@@ -256,6 +256,7 @@ the skill.
 | `implementing-format-parsers` | Adding or changing any file format parser: ESM, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
+| `developing-cli-commands` | Adding or changing an `openskycli` command, option, or help text |
 | `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game`, or the Windows reference game through `openskycli reference` |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
 | `consulting-uesp-wikis` | Looking up anything on the Creation Kit wiki (ck.uesp.net) or the UESP wiki (en.uesp.net), or syncing their offline copies |

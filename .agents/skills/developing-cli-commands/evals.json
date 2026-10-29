@@ -1,0 +1,31 @@
+[
+  {
+    "skills": ["developing-cli-commands"],
+    "query": "Add a --preset option to openskycli reference launch that picks the game's graphics preset.",
+    "files": [],
+    "expected_behavior": [
+      "Declares the option in OpenSkyCLIArguments with parsing: .unconditional and a help sentence",
+      "Uses the existing GraphicsPresetName enum instead of a String",
+      "Updates the reference launch row in docs/tools/cli.md in the same commit",
+      "Runs make test-unit T=OpenSkyCLIArgumentsTests and make check"
+    ]
+  },
+  {
+    "skills": ["developing-cli-commands"],
+    "query": "Add an openskycli reference answer command that presses a button in the Windows game's message box.",
+    "files": [],
+    "expected_behavior": [
+      "Adds the arguments struct, a runner in CommandRunners.swift, and the command function",
+      "Adds a line to tools/lint/cli-probe-exceptions.txt because the probe has no running reference game",
+      "Adds rows to docs/tools/cli.md and the reference-game docs"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Read where the player stands in the running OpenSky game.",
+    "files": [],
+    "expected_behavior": [
+      "Loads driving-the-running-game, not developing-cli-commands, because nothing in the CLI changes"
+    ]
+  }
+]
