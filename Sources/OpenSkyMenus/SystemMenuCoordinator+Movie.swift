@@ -11,9 +11,13 @@ extension SystemMenuCoordinator {
     /// `SystemPage` state numbers, measured from the movie's class constants.
     static let moviePages: [Int: SystemMenuPage] = [
         0: .main, 3: .settings, 4: .settings, 5: .settings, 6: .controls,
-        7: .quit, 8: .quit, 9: .quit
+        7: .quit, 8: .quit, 9: .quit, 11: .installedContent, 12: .installedContent,
+        13: .help, 14: .help
     ]
     static let movieSaveLoadStates: Set = [1, 2, 10, 16, 17]
+    /// `CREATIONS_LIST_STATE` and `HELP_LIST_STATE`: the list, with no topic open.
+    static let movieTopicListStates: Set = [11, 13]
+    static let movieTopicTextStates: Set = [12, 14]
 
     /// Settings stays with the engine model, which the movie mirrors. Cancel on the
     /// main page is Resume.
@@ -29,7 +33,7 @@ extension SystemMenuCoordinator {
             guard event == .button(.accept) else { return false }
             let entry = renderer?.swfRuntime.flatMap(SystemMenuMovieBridge.selectedEntry)
             return entry != .settings
-        case .save, .load, .controls, .quit:
+        case .save, .load, .controls, .quit, .installedContent, .help:
             return true
         }
     }
@@ -210,9 +214,17 @@ extension SystemMenuCoordinator {
         let page: SystemMenuPage? = Self.movieSaveLoadStates.contains(state)
             ? (movieListSaving ? .save : .load)
             : Self.moviePages[state]
+        if
+            Self.movieTopicListStates.contains(state), let last = lastMovieState, last != state,
+            Self.movieTopicTextStates.contains(last)
+        {
+            topicPage?.showList()
+        }
+        lastMovieState = state
         guard let page, page != model.page else { return }
         switch page {
         case .main:
+            topicPage = nil
             model.showMain()
         case .save, .load:
             model.show(page)
@@ -223,11 +235,44 @@ extension SystemMenuCoordinator {
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
         case .settings, .controls:
             model.show(page)
+        case .installedContent, .help:
+            showTopicPage(page)
         }
+    }
+
+    /// The movie's `SystemPage` state and its script faults, for the readout.
+    public var movieDiagnostics: SystemMenuMovieDiagnostics? {
+        guard movieLoaded, let runtime = renderer?.swfRuntime else { return nil }
+        return SystemMenuMovieDiagnostics(
+            state: SystemMenuMovieBridge.pageState(runtime: runtime),
+            faults: runtime.tally.faultTotal,
+            missingNames: runtime.tally.missingNames.keys.sorted()
+        )
+    }
+
+    /// The System rows the movie shows, by engine title, and its highlighted row.
+    /// Nil without the movie or off the main page.
+    public var movieMainPage: SystemMenuPageSnapshot? {
+        guard movieLoaded, model.page == .main, let runtime = renderer?.swfRuntime else {
+            return nil
+        }
+        let rows = SystemMenuMovieBridge.entryLabels(runtime: runtime).map {
+            SystemMenuMovieBridge.rowEntries[$0]?.title ?? $0
+        }
+        let selected = SystemMenuMovieBridge.selectedRow(runtime: runtime) ?? -1
+        return SystemMenuPageSnapshot(rows: rows, selectedIndex: selected)
     }
 
     private func updateMovie(_ body: (SWFMovieRuntime) -> Void) {
         guard movieLoaded, let renderer else { return }
         try? renderer.updateSWFRuntime(body)
     }
+}
+
+nonisolated public struct SystemMenuMovieDiagnostics: Equatable, Sendable {
+    /// `SystemPage.iCurrentState`.
+    public let state: Int?
+    public let faults: Int
+    /// Names the movie looked up and did not find.
+    public let missingNames: [String]
 }

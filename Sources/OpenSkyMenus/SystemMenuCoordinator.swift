@@ -54,6 +54,10 @@ public final class SystemMenuCoordinator {
     public internal(set) var saveLoadPage: SaveLoadPageModel?
     public internal(set) var controlsPage = ControlsPageModel()
     public internal(set) var quitPage: ConfirmationModel?
+    /// The Help or Installed Content page while one is up.
+    public internal(set) var topicPage: SystemMenuTopicPageModel?
+    /// Set by the app; nil leaves both topic pages empty.
+    public weak var topicSource: (any SystemMenuTopicSource)?
     /// The result of the last save, load, or remap, for the readout.
     public internal(set) var lastMessage: String?
     /// The running save, load, or delete; one at a time.
@@ -69,6 +73,8 @@ public final class SystemMenuCoordinator {
     var movieSaveRows: [SaveSlotRow] = []
     var movieListSaving = false
     var framePacer = MenuMovieFramePacer()
+    /// The movie's `SystemPage` state at the last check, to see a topic's text close.
+    var lastMovieState: Int?
     /// Called once; finding the data root walks the file system.
     public var locateDataRoot: () -> GameDataRoot? = { try? GameDataLocator.locate() }
     private var dataRoot: GameDataRoot?
@@ -229,6 +235,14 @@ public final class SystemMenuCoordinator {
                 }
                 SystemMenuMovieBridge.registerCalls(runtime: runtime) { [weak self] call in
                     self?.pendingMovieCalls.append(call)
+                }
+                SystemMenuMovieBridge.registerTopics(
+                    runtime: runtime,
+                    topics: { [weak self] page in self?.showTopicPage(page)?.topics ?? [] },
+                    open: { [weak self] index in self?.openTopic(index) }
+                )
+                MenuMovieButtonArt.register(runtime: runtime) { [weak self] event in
+                    self?.settings.buttonName(forUserEvent: event)
                 }
             }
         ))

@@ -7,7 +7,7 @@ import OpenSkyMenus
 
 extension GameSessionScope {
     func makeSystemMenu() -> SystemMenuCoordinator {
-        SystemMenuCoordinator(
+        let menu = SystemMenuCoordinator(
             menuMode: menuMode,
             movies: swfMovies,
             hud: hud,
@@ -15,6 +15,8 @@ extension GameSessionScope {
             saves: saveGames,
             world: self
         )
+        menu.topicSource = messageWorld
+        return menu
     }
 
     func makeRaceMenu() -> RaceMenuCoordinator {

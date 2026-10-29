@@ -46,6 +46,10 @@ extension AgentWorldAdapter {
             )
         case TitleMenuCoordinator.identifier:
             return titleMenuRows(top)
+        case SystemMenuCoordinator.identifier:
+            let menu = game.systemMenu
+            let page = menu.movieMainPage ?? menu.snapshot.page
+            return AgentMenuRows(menu: top.name, rows: page.rows, selected: page.selectedIndex)
         case RaceMenuCoordinator.identifier:
             let snapshot = game.raceMenu.snapshot
             return AgentMenuRows(
@@ -99,6 +103,19 @@ extension AgentWorldAdapter {
         }
         if game.menuMode.topMenu == SkillsMenuCoordinator.identifier {
             result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
+        }
+        if game.systemMenu.isOpen {
+            result["systemPage"] = .string(game.systemMenu.model.page.rawValue)
+            result["topic"] = .init(game.systemMenu.topicPage?.openTopic?.title)
+            if let movie = game.systemMenu.movieDiagnostics {
+                result["systemMovie"] = [
+                    "state": movie.state.map { .init($0) } ?? .null, "faults": .init(movie.faults),
+                    "missing": .array(movie.missingNames.map { .string($0) })
+                ]
+            }
+        }
+        if game.titleMenu.isOpen {
+            result["credits"] = .bool(game.titleMenu.creditsShown)
         }
         return .object(result)
     }

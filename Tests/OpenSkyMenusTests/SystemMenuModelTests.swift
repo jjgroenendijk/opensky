@@ -8,9 +8,13 @@ struct SystemMenuModelTests {
     func startsClosedWithTheVanillaRows() {
         let model = SystemMenuModel()
         #expect(!model.isOpen)
-        #expect(model.entries == [.resume, .quicksave, .save, .load, .settings, .controls, .quit])
+        #expect(model.entries == [
+            .resume, .quicksave, .save, .load, .installedContent, .settings, .controls, .help,
+            .quit
+        ])
         #expect(model.entries.map(\.title) == [
-            "Resume", "Quicksave", "Save", "Load", "Settings", "Controls", "Quit"
+            "Resume", "Quicksave", "Save", "Load", "Installed Content", "Settings", "Controls",
+            "Help", "Quit"
         ])
         #expect(model.selectedEntry == .resume)
         #expect(model.lastOutcome == nil)
@@ -86,7 +90,8 @@ struct SystemMenuModelTests {
     @Test
     func eachRowOpensItsPage() {
         let pages: [SystemMenuEntry: SystemMenuPage] = [
-            .save: .save, .load: .load, .controls: .controls, .quit: .quit
+            .save: .save, .load: .load, .controls: .controls, .quit: .quit,
+            .installedContent: .installedContent, .help: .help
         ]
         for (entry, page) in pages {
             var model = SystemMenuModel()
@@ -172,6 +177,7 @@ struct SystemMenuModelTests {
         #expect(SystemMenuOutcome.resume.label == "Resume")
         #expect(SystemMenuOutcome.showPage(.settings).label == "Settings")
         #expect(SystemMenuOutcome.showPage(.quit).label == "Quit")
+        #expect(SystemMenuOutcome.showPage(.installedContent).label == "InstalledContent")
         #expect(SystemMenuOutcome.quicksave.label == "Quicksave")
     }
 

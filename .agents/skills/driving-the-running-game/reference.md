@@ -78,6 +78,9 @@ arrow keys.
 - `state menu` on the skills menu adds `skills`: the `page` (`Closing` while `CameraOutro`
   plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its
   draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`).
+- `state menu` on the system menu adds `systemPage` (`main`, `help`, `installedContent`, and
+  more) and `topic`, the title of the open Help or Installed Content topic. Open a page with
+  `input select Help` then `input press menuAccept`. On the title menu it adds `credits`.
 - `state player` also gives `firstPerson`: whether the arms graph and rig are attached and
   drawn, the failure reason, the arm model count, and the bones the last pose reached.
 - `state quest` also lists each reference alias with the reference that fills it, or null.

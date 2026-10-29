@@ -62,6 +62,18 @@ private final class FakeSaves: SaveGameService {
 }
 
 @MainActor
+private final class FakeTopics: SystemMenuTopicSource {
+    func systemMenuTopics(_ page: SystemMenuPage) -> [SystemMenuTopic] {
+        page == .help
+            ? [
+                SystemMenuTopic(title: "Sprinting", text: "Hold Shift."),
+                SystemMenuTopic(title: "Attack", text: "Click.")
+            ]
+            : [SystemMenuTopic(title: "Skyrim.esm", text: "")]
+    }
+}
+
+@MainActor
 private struct Harness {
     let menuMode = MenuModeController()
     let world = FakeSystemMenuWorld()
@@ -289,5 +301,33 @@ struct SystemMenuCoordinatorTests {
         #expect(harness.settings.store.value(.masterVolume) == 0.25)
         harness.world.audioEnabled = false
         #expect(!harness.menu.snapshot.audioEnabled)
+    }
+
+    @Test @MainActor
+    func helpListsTheTopicsAndOpensOne() {
+        let harness = Harness()
+        let topics = FakeTopics()
+        harness.menu.topicSource = topics
+        harness.open(.help)
+        #expect(harness.menu.model.page == .help)
+        #expect(harness.menu.snapshot.page.rows == ["Attack", "Sprinting"])
+        harness.menu.route(.move(.down))
+        harness.menu.route(.button(.accept))
+        #expect(harness.menu.snapshot.page.rows == ["Sprinting", "Hold Shift."])
+        harness.menu.route(.button(.cancel))
+        #expect(harness.menu.snapshot.page.rows == ["Attack", "Sprinting"])
+        harness.menu.route(.button(.cancel))
+        #expect(harness.menu.model.page == .main)
+        #expect(harness.menu.isOpen, "leaving the page keeps the menu open")
+    }
+
+    @Test @MainActor
+    func installedContentListsThePlugins() {
+        let harness = Harness()
+        let topics = FakeTopics()
+        harness.menu.topicSource = topics
+        harness.open(.installedContent)
+        #expect(harness.menu.model.page == .installedContent)
+        #expect(harness.menu.snapshot.page.rows == ["Skyrim.esm"])
     }
 }

@@ -4,15 +4,16 @@
 
 import Foundation
 
-/// One row of the system menu, in the vanilla order. Installed Content and Help
-/// are left out: OpenSky has no online content and no help pages.
+/// One row of the system menu, in the vanilla order.
 nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     case resume
     case quicksave
     case save
     case load
+    case installedContent
     case settings
     case controls
+    case help
     case quit
 
     public var title: String {
@@ -21,9 +22,26 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
         case .quicksave: "Quicksave"
         case .save: "Save"
         case .load: "Load"
+        case .installedContent: "Installed Content"
         case .settings: "Settings"
         case .controls: "Controls"
+        case .help: "Help"
         case .quit: "Quit"
+        }
+    }
+
+    /// What activating the row asks the host to do.
+    public var outcome: SystemMenuOutcome {
+        switch self {
+        case .resume: .resume
+        case .quicksave: .quicksave
+        case .save: .showPage(.save)
+        case .load: .showPage(.load)
+        case .installedContent: .showPage(.installedContent)
+        case .settings: .showPage(.settings)
+        case .controls: .showPage(.controls)
+        case .help: .showPage(.help)
+        case .quit: .showPage(.quit)
         }
     }
 
@@ -36,7 +54,19 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
 
 /// The page the menu shows. A sub-page has its own model in the coordinator.
 nonisolated public enum SystemMenuPage: String, Equatable, Sendable {
-    case main, settings, controls, save, load, quit
+    case main, settings, controls, save, load, quit, installedContent, help
+
+    /// The Help and Installed Content pages: a topic list and the text of one topic.
+    public var isTopicPage: Bool {
+        self == .installedContent || self == .help
+    }
+}
+
+nonisolated extension SystemMenuPage {
+    /// The rawValue with its first letter capitalized, such as "InstalledContent".
+    public var label: String {
+        rawValue.prefix(1).uppercased() + rawValue.dropFirst()
+    }
 }
 
 /// What activating a row asks the host to do.
@@ -49,7 +79,7 @@ nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
         switch self {
         case .resume: "Resume"
         case .quicksave: "Quicksave"
-        case let .showPage(page): page.rawValue.prefix(1).uppercased() + page.rawValue.dropFirst()
+        case let .showPage(page): page.label
         }
     }
 }
@@ -124,15 +154,7 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
     @discardableResult
     public mutating func activateSelection() -> SystemMenuOutcome? {
         guard isOpen, page == .main, let entry = selectedEntry else { return nil }
-        let outcome: SystemMenuOutcome = switch entry {
-        case .resume: .resume
-        case .quicksave: .quicksave
-        case .save: .showPage(.save)
-        case .load: .showPage(.load)
-        case .settings: .showPage(.settings)
-        case .controls: .showPage(.controls)
-        case .quit: .showPage(.quit)
-        }
+        let outcome = entry.outcome
         lastOutcome = outcome
         switch outcome {
         case .resume:

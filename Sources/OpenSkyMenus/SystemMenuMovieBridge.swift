@@ -194,20 +194,27 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
 
     public static let settingsCategoryIndex = 4
 
-    /// The movie's row text for each engine row. Installed Content and Help have none.
+    /// The movie's row text for each engine row.
     public static let rowEntries: [String: SystemMenuEntry] = [
-        "$QUICKSAVE": .quicksave, "$SAVE": .save, "$LOAD": .load, "$SETTINGS": .settings,
-        "$CONTROLS": .controls, "$QUIT": .quit
+        "$QUICKSAVE": .quicksave, "$SAVE": .save, "$LOAD": .load,
+        "$INSTALLED CONTENT": .installedContent, "$SETTINGS": .settings,
+        "$CONTROLS": .controls, "$HELP": .help, "$QUIT": .quit
     ]
 
     /// The engine row the movie's highlighted row stands for.
     public static func selectedEntry(runtime: SWFMovieRuntime) -> SystemMenuEntry? {
+        guard let index = selectedRow(runtime: runtime) else { return nil }
+        let labels = entryLabels(runtime: runtime)
+        return labels.indices.contains(index) ? rowEntries[labels[index]] : nil
+    }
+
+    /// The movie's highlighted row of the System list.
+    public static func selectedRow(runtime: SWFMovieRuntime) -> Int? {
         guard
             let list = runtime.node(atPath: systemCategoryListPath, from: runtime.root),
-            case let .number(selected) = list.object.lookup("iSelectedIndex")?.property.value
+            case let .number(selected) = list.object.lookup("iSelectedIndex")?.property.value,
+            selected.isFinite
         else { return nil }
-        let labels = entryLabels(runtime: runtime)
-        let index = Int(selected)
-        return labels.indices.contains(index) ? rowEntries[labels[index]] : nil
+        return Int(selected)
     }
 }
