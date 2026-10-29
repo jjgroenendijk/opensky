@@ -209,7 +209,7 @@ Once `skse64_loader.exe` is in the game copy, every start goes through it.
 
 | Command | What it does |
 | --- | --- |
-| `openskycli reference state` | Prints the game's state: place, angles, hour, weather, field of view |
+| `openskycli reference state` | Prints the game's state: place, angles, hour, weather, field of view, and the playing scenes |
 | `openskycli reference send <command>...` | Runs console commands, one per argument |
 | `openskycli reference sync` | Puts the Windows game at the running OpenSky's view |
 | `openskycli reference follow` | Puts the running OpenSky at the Windows game's view, through `game debug view` |

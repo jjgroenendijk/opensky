@@ -76,16 +76,28 @@ completed actions:
    is tried.
 2. Entering runs the phase's begin fragments, then starts each action whose start phase is
    this phase.
-3. A phase is done when every action whose end phase is this phase has finished, or when its
-   completion conditions pass. An action with no end phase ends in its start phase. A phase
-   with completion conditions and no actions to wait for waits for the conditions. For
-   example, phase 2 of `MQ101`'s first scene waits for stage 12.
+3. A phase with completion conditions is done when they pass, and only then. A phase with
+   none is done when every action whose end phase is this phase has finished. An action with
+   no end phase ends in its start phase. For example, phase 2 of `MQ101`'s first scene waits
+   for stage 12.
 4. Finishing completes the actions that should end by now, runs the phase's end fragments, and
    moves to the next phase.
 5. After the last phase, a scene with flag 0x08 (repeat while true) starts again from phase 1
    when its scene conditions pass. It first waits a random time between
    `fRandomSceneAgainMinTime` and `fRandomSceneAgainMaxTime` (10 to 30 s in `Skyrim.esm`); the
    wait is OpenSky's reading of the names. Otherwise it ends.
+
+The Creation Kit's [Scenes Tab](https://ck.uesp.net/wiki/Scenes_Tab) page gives the phase end as
+a choice: "End when all actions are complete" (the default) or "End on conditions". The
+[Category:Scenes](https://ck.uesp.net/wiki/Category:Scenes) page says either one ends the phase.
+OpenSky follows the choice, for two reasons:
+
+- The data: in `Skyrim.esm`, 1,133 phases have completion conditions and an action that ends
+  in them. 738 of those add `IsSceneActionComplete` to the conditions, which would do nothing if
+  a finished action already ended the phase.
+- The reference game: scenes such as `IvarsteadSSScene` and `MorthalInitialScene` stay in their
+  first phase while its condition (`GetVMQuestVariable ::pGo_var`, `GetDistance`) is false,
+  although that phase's actions are done at once.
 
 Conditions are checked with the player as subject, no target, and the scene's quest as the
 alias quest. Several phases can pass in one tick. A tick takes at most twice as many steps as
@@ -173,6 +185,22 @@ in the `SCNP` chunk ([world chunks](/formats/opensky-save-world-chunks.md)). Aft
 scene goes on from the same phase with the same running actions, still paused if it was.
 The wait before a repeat is not saved: a save made during it plays the scene again at once after
 the load.
+
+## Scenes far from the player
+
+The game starts a scene whose actors are not loaded, and plays it. This was observed in the
+Windows reference game through the bridge plugin's scene readout
+([reference game](/tools/reference-game.md)):
+
+- During the opening cart ride, far-away scenes such as `IvarsteadSSScene`,
+  `DialogueRiftenSS02Scene`, and `MorthalInitialScene` play while every actor is unloaded. Each
+  waits in its first phase on a completion condition, as above.
+- `WindhelmIntroScene`, started with `StartScene` from Riverwood, ran its 2.5 s timer and five
+  lines with both speakers unloaded, then ended. It did the same after a save made during the
+  scene was loaded.
+
+So OpenSky starts and plays such scenes too. Their lines are silent, because the speaker has
+no loaded body to speak from.
 
 ## Observed on the install
 

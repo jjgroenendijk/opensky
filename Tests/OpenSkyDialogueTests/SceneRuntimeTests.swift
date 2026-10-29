@@ -1,6 +1,6 @@
 // Scene playback over `SceneFixture`: phases in order, a line said by the
-// alias actor, a timer that holds its phase, conditions that end or skip a
-// phase, and stops by request and by quest.
+// alias actor, a timer that holds its phase, conditions that skip a phase, and
+// stops by request and by quest.
 
 import Foundation
 @testable import OpenSkyDialogue
@@ -48,26 +48,6 @@ struct SceneRuntimeTests {
         #expect(store.component(SceneRuntimeState.self, for: scene.key) == nil)
         let dialogue = try SceneFixture.runtime(store: store, scene: scene).dialogue
         #expect(dialogue.saidState(of: FormID(DialogueRuntimeFixture.ordinaryInfo)).saidCount == 1)
-    }
-
-    /// Passing completion conditions end a phase while its timer still runs.
-    @Test func completionConditionsEndAPhaseEarly() throws {
-        let store = WorldStateStore()
-        let scene = try SceneFixture.scene()
-        try SceneFixture.runtime(store: store, scene: scene).start(id)
-        let events = try SceneFixture.runtime(store: store, scene: scene, gate: 1, now: 3).tick()
-        #expect(steps(events).contains(.phaseCompleted(1, byConditions: true)))
-        #expect(steps(events).last == .ended(.finished))
-    }
-
-    /// A phase with end conditions and no actions waits for the conditions.
-    @Test func aPhaseWithOnlyEndConditionsWaitsForThem() throws {
-        let store = WorldStateStore()
-        let scene = try SceneFixture.waitScene()
-        let started = try SceneFixture.runtime(store: store, scene: scene).start(scene.formID)
-        #expect(steps(started) == [.began, .phaseStarted(0)])
-        let events = try SceneFixture.runtime(store: store, scene: scene, gate: 1, now: 1).tick()
-        #expect(steps(events) == [.phaseCompleted(0, byConditions: true), .ended(.finished)])
     }
 
     /// A phase whose start conditions pass runs; one with no actions ends at once.

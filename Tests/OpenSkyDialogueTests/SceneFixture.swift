@@ -1,5 +1,5 @@
-// A three-phase scene over the dialogue fixture world: a line, a timer that a
-// global can cut short, and a phase only a global value lets start.
+// A three-phase scene over the dialogue fixture world: a line, a timer, and a
+// phase only a global value lets start. A variant ends the timer phase on a global.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -25,16 +25,21 @@ enum SceneFixture {
             .dropFirst(6)
     }
 
+    /// `waitEndsOnGate` gives the timer phase the completion condition "gate is 1".
     static func scene(
         flags: UInt32 = 0,
-        quest: UInt32 = DialogueRuntimeFixture.runningQuest
+        quest: UInt32 = DialogueRuntimeFixture.runningQuest,
+        waitEndsOnGate: Bool = false
     ) throws -> CatalogScene {
+        let waitConditions: [(String, Data)] = waitEndsOnGate
+            ? [("CTDA", condition(gateEquals: 1))] : []
         let fields: [(String, Data)] = [
             ("EDID", ESMFixture.zstring("TestScene")), ("FNAM", ESMFixture.u32(flags)),
             ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Greet")), ("NEXT", Data()),
             ("NEXT", Data()), ("HNAM", Data()),
-            ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Wait")), ("NEXT", Data()),
-            ("CTDA", condition(gateEquals: 1)), ("NEXT", Data()), ("HNAM", Data()),
+            ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Wait")), ("NEXT", Data())
+        ] + waitConditions + [
+            ("NEXT", Data()), ("HNAM", Data()),
             ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Gated")),
             ("CTDA", condition(gateEquals: 2)), ("NEXT", Data()), ("NEXT", Data()), (
                 "HNAM",

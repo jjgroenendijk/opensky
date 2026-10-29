@@ -94,6 +94,19 @@ struct ReferenceBridgeTests {
         #expect(dialog.buttonIndex(of: "Maybe") == nil)
     }
 
+    @Test func playingScenesNameTheirPhaseAndActors() throws {
+        let state = try decode("""
+        {"version":1,"batch":"","mainMenu":false,"loading":false,"scenes":[\
+        {"formID":661852,"phase":-1,"actors":[\
+        {"alias":29,"referenceFormID":656849,"loaded":false,"disabled":false,"dead":false}]}]}
+        """)
+        let scene = try #require(state.scenes?.first)
+        #expect(scene.formID == 0xA195C)
+        #expect(scene.phase == -1)
+        #expect(scene.actors.map(\.alias) == [29])
+        #expect(scene.actors.first?.loaded == false)
+    }
+
     @Test func sendWritesOneWholeBatchWithWindowsLineEnds() throws {
         let bridge = try ReferenceBridge(folder: temporaryFolder())
         let name = try bridge.send(["fov 80", "set gamehour to 12"])

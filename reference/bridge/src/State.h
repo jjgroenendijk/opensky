@@ -1,4 +1,5 @@
-// What OpenSky reads to follow the game: place, view, hour, weather, and field of view.
+// What OpenSky reads to follow the game: place, view, hour, weather, field of view, and
+// playing scenes.
 #pragma once
 
 #include <string>
