@@ -23,20 +23,28 @@ extension MeleeCombatRuntime {
             held: intent.attackHeld || forced,
             deltaTime: forced ? MeleeHold.powerAttackDelay : intent.deltaTime
         )
+        if let outcome {
+            queuedOutcome = outcome
+        }
+        // Mid-swing, a press waits for the combo window, so the graph takes the
+        // start event. It is dropped when the swing ends first.
+        guard
+            let queued = queuedOutcome,
+            !state.attackPhase.isAttacking || state.isChainWindowOpen
+        else { return }
+        queuedOutcome = nil
         let direction = MeleePowerDirection(
             moveForward: intent.moveForward, moveRight: intent.moveRight
         )
-        switch outcome {
-        case let .tapped(kind)?:
+        switch queued {
+        case let .tapped(kind):
             start(kind, direction: direction, world: world)
-        case let .held(kind)?:
+        case let .held(kind):
             if pay(for: kind, world: world) {
                 start(kind, direction: direction, world: world)
             } else {
                 start(kind.isBash ? .bash : .normal, direction: direction, world: world)
             }
-        case nil:
-            break
         }
     }
 

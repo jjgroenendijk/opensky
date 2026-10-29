@@ -8,10 +8,15 @@ import OpenSkyActorsInterface
 nonisolated extension MeleeCombatState {
     public var actionFacts: ActorActionFacts {
         ActorActionFacts(
-            attackState: attackPhase.attackState,
+            attackState: attackState,
             isBlocking: isBlocking,
             isStaggered: isStaggering
         )
+    }
+
+    /// After contact, an open combo window reads as the next attack.
+    public var attackState: ActorAttackState {
+        isChainWindowOpen && attackPhase == .recovery ? .nextAttack : attackPhase.attackState
     }
 }
 

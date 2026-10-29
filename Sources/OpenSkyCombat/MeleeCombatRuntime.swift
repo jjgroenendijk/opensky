@@ -66,6 +66,8 @@ public final class MeleeCombatRuntime {
     public internal(set) var powerDirection: MeleePowerDirection?
     var hold = MeleeHold()
     var pendingPower = false
+    /// A press resolved mid-swing, waiting for the combo window.
+    var queuedOutcome: MeleeHoldOutcome?
 
     private weak var world: (any MeleeCombatWorld)?
     /// Targets this swing has already landed on, cleared when the swing id
@@ -142,6 +144,9 @@ public final class MeleeCombatRuntime {
             swingCount += 1
             landed += resolveSwing()
         }
+        if !state.attackPhase.isAttacking {
+            queuedOutcome = nil
+        }
         state.endFrame()
         writeVariables()
         return landed
@@ -161,6 +166,7 @@ public final class MeleeCombatRuntime {
         pendingAttack = false
         pendingToggle = false
         pendingPower = false
+        queuedOutcome = nil
         hold.reset()
         strikeKind = .normal
         powerDirection = nil
@@ -199,8 +205,8 @@ public final class MeleeCombatRuntime {
             pendingAttack = false
             // Dropped rather than queued when the weapon is away: a press that
             // sat in a latch would fire a swing the moment the draw finished,
-            // seconds after the player asked for it.
-            if state.drawState.canAttack, !state.attackPhase.isAttacking, hold.pending == nil {
+            // seconds after the player asked for it. Mid-swing it may chain.
+            if state.drawState.canAttack, hold.pending == nil, queuedOutcome == nil {
                 hold.pressed(asBash: blocking)
             }
         }
