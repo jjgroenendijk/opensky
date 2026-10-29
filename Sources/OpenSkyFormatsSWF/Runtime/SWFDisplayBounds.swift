@@ -96,7 +96,7 @@ nonisolated extension SWFMovieRuntime {
         case let .shape(id):
             return movie.shape(id).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
         case let .editText(id):
-            return movie.editText(id).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
+            return editText(id).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
         case let .staticText(id):
             guard let text = movie.staticText(id) else {
                 return .empty

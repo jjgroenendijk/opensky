@@ -20,10 +20,35 @@ nonisolated extension SWFRuntimeNatives {
         }
         // Formatting is accepted and ignored: the text layout path renders one
         // font and color per field, so a format object has nothing to change.
-        AS2Natives.method(runtime, on: prototype, name: "setTextFormat") { _ in .undefined }
-        AS2Natives.method(runtime, on: prototype, name: "getTextFormat") { context in
-            .object(context.runtime.makeObject())
+        for name in ["setTextFormat", "setNewTextFormat"] {
+            AS2Natives.method(runtime, on: prototype, name: name) { _ in .undefined }
         }
+        for name in ["getTextFormat", "getNewTextFormat"] {
+            AS2Natives.method(runtime, on: prototype, name: name) { context in
+                .object(context.runtime.makeObject())
+            }
+        }
+        AS2Natives.method(runtime, on: prototype, name: "addListener") { context in
+            guard let field = context.thisObject else { return .boolean(false) }
+            return addListener(context.argument(0), to: listeners(of: field, context.runtime))
+        }
+        AS2Natives.method(runtime, on: prototype, name: "removeListener") { context in
+            guard let field = context.thisObject else { return .boolean(false) }
+            return removeListener(context.argument(0), from: listeners(of: field, context.runtime))
+        }
+    }
+
+    /// Each field keeps its own list, so it lives on the instance, not the prototype.
+    private static func listeners(of field: AS2Object, _ runtime: AS2Runtime) -> AS2Object {
+        if
+            let found = field.lookup("_listeners"), found.owner === field,
+            let list = found.property.value.objectValue
+        {
+            return list
+        }
+        let list = runtime.makeArray()
+        field.define(.object(list), for: "_listeners", flags: .dontEnumerate)
+        return list
     }
 
     private static func assignText(_ context: AS2CallContext, html: Bool) throws -> AS2Value {

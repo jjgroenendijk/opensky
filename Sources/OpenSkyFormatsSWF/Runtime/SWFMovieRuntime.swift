@@ -40,6 +40,8 @@ nonisolated public final class SWFMovieRuntime {
     public internal(set) var gamepadCount = 0
     /// The last `SetPlatform` call, replayed when a gamepad connects or leaves.
     var platformCall: SWFPlatformCall?
+    /// Text fields `createTextField` made, by their runtime character id.
+    var scriptEditTexts: [UInt16: SWFEditText] = [:]
     /// Nesting guard for a frame action that jumps the same clip again.
     public var gotoDepth = 0
     /// Instances placed in the current batch, waiting for their constructors.

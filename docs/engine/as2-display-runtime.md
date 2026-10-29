@@ -157,8 +157,11 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
   `attachMovie`, `createEmptyMovieClip`, `hitTest`, `toString`, `getBounds`, `localToGlobal`,
   `globalToLocal`, and `duplicateMovieClip`.
 - `TextField.prototype`: `SetText` and `SetTextHTML` (GFx additions, 595 calls across 31 vanilla
-  movies), and `setTextFormat` and `getTextFormat`, which are accepted and ignored, because layout
-  draws one font and color per field.
+  movies), and `setTextFormat`, `getTextFormat`, `setNewTextFormat`, and `getNewTextFormat`, which are
+  accepted and ignored, because layout draws one font and color per field. `addListener` and
+  `removeListener` keep a list on each field; a change of `scroll` sends `onScroller` to it, which
+  CLIK's `ScrollBar` uses. `selectable` answers the inverse of the DefineEditText `NoSelect` flag until
+  a script sets it.
 - `Stage`: a plain object. `width` and `height` come from the movie's `FrameSize`: OpenSky letterboxes
   instead of reflowing, so the stage never resizes. `visibleRect` and `safeRect` are separate objects
   covering the full frame, because OpenSky has no overscan crop or safe area. The vanilla
@@ -189,8 +192,10 @@ be re-entered. CLIK's icon loader then gives up cleanly.
   interpreter runs.
 - Shape-level hit testing. Both `MovieClip.hitTest` and pointer routing use bounding boxes.
 - Text input. No key event edits a field.
-- `createTextField`. A field made at runtime has no character to lay out, so it would hold text and
-  draw nothing.
+- Device fonts. `createTextField` makes a field with the given name, depth, position, and size, and
+  the runtime keeps its definition under a character id counted down from 65535. Flash draws such a
+  field in a device font, and OpenSky has none, so the field holds text but draws nothing. The one
+  vanilla use, the journal's `LevelText`, is hidden.
 - Opcodes no vanilla movie uses: `ActionWith`, `ActionTry`, `ActionThrow`, `ActionSetTarget`,
   `ActionSetTarget2`, `ActionGetURL`, `ActionGetURL2`, `ActionWaitForFrame`, `ActionWaitForFrame2`,
   and `ActionEnumerate` (only `ActionEnumerate2` occurs). They parse and run as counted no-ops.

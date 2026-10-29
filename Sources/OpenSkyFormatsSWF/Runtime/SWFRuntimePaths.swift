@@ -69,6 +69,10 @@ nonisolated extension SWFMovieRuntime {
             return textMember(of: node)
         case "scroll", "maxscroll", "bottomScroll":
             return scrollMember(name, of: node)
+        case "selectable":
+            if case let .editText(id) = node.content, let field = editText(id) {
+                return .boolean(!field.flags.noSelect)
+            }
         default:
             break
         }
@@ -142,7 +146,7 @@ nonisolated extension SWFMovieRuntime {
         node.textOverride = value
         if
             let characterId = node.characterId,
-            let field = movie.editText(characterId), !field.variableName.isEmpty
+            let field = editText(characterId), !field.variableName.isEmpty
         {
             writeVariable(field.variableName, from: node, to: .string(value))
         }
@@ -159,7 +163,7 @@ nonisolated extension SWFMovieRuntime {
         if let override = node.textOverride {
             return override
         }
-        guard let characterId = node.characterId, let field = movie.editText(characterId) else {
+        guard let characterId = node.characterId, let field = editText(characterId) else {
             return nil
         }
         if

@@ -45,8 +45,13 @@ nonisolated extension SWFMovieRuntime {
         guard editTextField(of: node) != nil else { return false }
         let number = runtime.coercion.toNumber(value)
         guard number.isFinite else { return true }
+        let shown = textScroll(of: node)
         node.textScroll = min(max(1, Int(number)), maxScroll(of: node))
         markDirty()
+        if node.textScroll != shown {
+            // CLIK's `ScrollBar` listens to its target field for `onScroller`.
+            broadcast("onScroller", from: node.object, arguments: [.object(node.object)])
+        }
         return true
     }
 
@@ -68,6 +73,6 @@ nonisolated extension SWFMovieRuntime {
 
     private func editTextField(of node: SWFDisplayObject) -> SWFEditText? {
         guard case let .editText(id) = node.content else { return nil }
-        return movie.editText(id)
+        return editText(id)
     }
 }
