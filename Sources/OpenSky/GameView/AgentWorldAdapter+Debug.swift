@@ -110,8 +110,8 @@ extension AgentWorldAdapter {
             try writeActorValue(reference, name: name) { _ in value }
         case let .modActorValue(reference, name, delta):
             try writeActorValue(reference, name: name) { $0 + delta }
-        case let .addItem(reference, item, count):
-            try changeItem(reference, item: item, by: count)
+        case let .addItem(reference, item, count, equip):
+            try changeItem(reference, item: item, by: count, equip: equip)
         case let .removeItem(reference, item, count):
             try changeItem(reference, item: item, by: -count)
         default:
@@ -190,7 +190,8 @@ extension AgentWorldAdapter {
     private func changeItem(
         _ text: String,
         item editorID: String,
-        by count: Int32
+        by count: Int32,
+        equip: Bool = false
     ) throws(AgentFailure) -> AgentJSON {
         guard text.lowercased() == "player" else {
             throw AgentFailure(.unsupported, "items can only be changed on the player")
@@ -211,10 +212,20 @@ extension AgentWorldAdapter {
         } catch {
             throw AgentFailure(.invalidArgument, "item change refused: \(error)")
         }
-        return [
+        var result: [String: AgentJSON] = [
             "item": .string(editorID), "name": .string(game.inventory.name(of: definition.formID)),
             "count": .init(Int(runtime.inventory.count(of: definition.formID, in: runtime.player)))
         ]
+        if equip {
+            let outcome = game.inventoryWorld.run(
+                game.inventory.equipItem(definition.formID, on: .player)
+            )
+            guard case .equipped = outcome else {
+                throw AgentFailure(.invalidArgument, "equip refused: \(outcome.text)")
+            }
+            result["equipped"] = true
+        }
+        return .object(result)
     }
 
     private func setQuestStage(_ editorID: String, stage: Int) throws(AgentFailure) -> AgentJSON {

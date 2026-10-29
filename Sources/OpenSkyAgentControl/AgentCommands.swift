@@ -127,7 +127,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case weather(String?)
     case setActorValue(reference: String, name: String, value: Float)
     case modActorValue(reference: String, name: String, delta: Float)
-    case addItem(reference: String, item: String, count: Int32)
+    /// `equip` then equips the item on the player, as `EquipItem` does.
+    case addItem(reference: String, item: String, count: Int32, equip: Bool = false)
     case removeItem(reference: String, item: String, count: Int32)
     case setQuestStage(quest: String, stage: Int)
     case kill(String)
@@ -301,12 +302,17 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         let reference = try args.optionalString("ref") ?? "player"
         let item = try args.string("id")
         let count = try args.optionalInt("count") ?? 1
+        let equip = try args.bool("equip", default: false)
         guard let amount = Int32(exactly: count), amount != 0 else {
             throw args.invalid("count", "a non-zero whole number")
         }
-        return amount > 0
-            ? .addItem(reference: reference, item: item, count: amount)
-            : .removeItem(reference: reference, item: item, count: -amount)
+        guard amount > 0 else {
+            if equip {
+                throw args.invalid("equip", "only with a positive count")
+            }
+            return .removeItem(reference: reference, item: item, count: -amount)
+        }
+        return .addItem(reference: reference, item: item, count: amount, equip: equip)
     }
 }
 

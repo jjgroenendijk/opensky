@@ -103,6 +103,19 @@ struct AgentCommandParsingTests {
             == ["limited": true])
     }
 
+    @Test func anAddedItemCanBeEquipped() throws {
+        #expect(try AgentDebugCommand.parse("item", args(["id": "IronSword", "equip": true]))
+            == .addItem(reference: "player", item: "IronSword", count: 1, equip: true))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse(
+                "item",
+                args(["id": "IronSword", "count": -1, "equip": true])
+            )
+        }
+        #expect(try AgentCommandLine.request(["debug", "item", "IronSword", "--equip"]).args
+            == ["id": "IronSword", "equip": true])
+    }
+
     @Test func theSkillsMenuCanTurnTheSkyAndEarnLevels() throws {
         #expect(try AgentDebugCommand.parse("skillsmenu", args([:]))
             == .skillsMenu(sky: nil, levels: 0))

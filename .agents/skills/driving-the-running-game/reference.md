@@ -137,7 +137,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug time <hour>` | `debug time 13.5` |
 | `debug weather [<editorID>]` | no ID clears the forced weather |
 | `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | `debug av Health --value 50` |
-| `debug item <editorID> [--count <n>]` | negative count removes; player only |
+| `debug item <editorID> [--count <n>] [--equip]` | negative count removes; `--equip` then equips it; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable`; answers `taken` and the actor's sub-graphs |
