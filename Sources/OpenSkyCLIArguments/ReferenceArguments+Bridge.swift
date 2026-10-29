@@ -1,4 +1,4 @@
-// `reference state|send|sync|follow|load`: the Windows game through the OpenSkyBridge
+// `reference state|send|sync|follow|load|answer`: the Windows game through the OpenSkyBridge
 // plugin, with no typed console keys (docs/tools/reference-game.md#the-bridge-plugin).
 
 import ArgumentParser
@@ -64,6 +64,19 @@ extension ReferenceArguments {
         @OptionGroup public var global: GlobalOptions
         @Argument(help: "The save's file name, with or without .ess.")
         public var save: String?
+
+        public init() {}
+    }
+
+    public struct Answer: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "answer",
+            abstract: "Press a button of the message box open in the Windows game.",
+            discussion: "reference state lists the box's text and buttons under dialog."
+        )
+        @OptionGroup public var global: GlobalOptions
+        @Argument(help: "The button's index, from 0, or its text.")
+        public var button: String
 
         public init() {}
     }

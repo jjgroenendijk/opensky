@@ -188,6 +188,7 @@ the number. A summary line goes to stderr.
 | `reference send <command>...` | Runs console commands in the Windows game through the bridge plugin, without typed keys |
 | `reference sync [--no-hide-menus] [--freeze]` | Puts the Windows game at the running OpenSky's view through the bridge plugin |
 | `reference follow` | Puts the running OpenSky at the Windows game's view, through `debug.view` |
+| `reference answer <button>` | Presses a button of the message box open in the Windows game, by index or text |
 | `reference load [<save>]` | Waits for the Windows game's main menu, then loads the save, by default the newest |
 
 ## Notes on the probes

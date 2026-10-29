@@ -74,6 +74,20 @@ struct ReferenceBridgeTests {
         #expect(!state.inWorld)
     }
 
+    @Test func anOpenMessageBoxNamesItsButtons() throws {
+        let state = try decode("""
+        {"version":1,"batch":"","mainMenu":false,"loading":false,\
+        "dialog":{"text":"Enable Survival Mode?","buttons":["Yes","No"]}}
+        """)
+        let dialog = try #require(state.dialog)
+        #expect(dialog.buttons == ["Yes", "No"])
+        #expect(dialog.buttonIndex(of: "no") == 1)
+        #expect(dialog.buttonIndex(of: " Yes ") == 0)
+        #expect(dialog.buttonIndex(of: "1") == 1)
+        #expect(dialog.buttonIndex(of: "2") == nil)
+        #expect(dialog.buttonIndex(of: "Maybe") == nil)
+    }
+
     @Test func sendWritesOneWholeBatchWithWindowsLineEnds() throws {
         let bridge = try ReferenceBridge(folder: temporaryFolder())
         let name = try bridge.send(["fov 80", "set gamehour to 12"])

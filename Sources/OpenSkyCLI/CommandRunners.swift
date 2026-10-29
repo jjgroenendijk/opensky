@@ -337,3 +337,9 @@ extension ReferenceArguments.Load: CLIRunnable {
         try await ReferenceBridgeCommand.load(arguments: self)
     }
 }
+
+extension ReferenceArguments.Answer: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceBridgeCommand.answer(arguments: self)
+    }
+}

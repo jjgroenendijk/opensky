@@ -1,5 +1,5 @@
-// The three things the bridge does for the launcher and `openskycli reference`: put the
-// Windows game at OpenSky's view, read its view back, and load a save at its main menu.
+// What the bridge does for the launcher and `openskycli reference`: put the Windows game
+// at OpenSky's view, load a save at its main menu, and answer a message box.
 
 import Foundation
 
@@ -30,6 +30,16 @@ nonisolated extension ReferenceBridge {
         let name = save.lowercased().hasSuffix(".ess") ? String(save.dropLast(4)) : save
         try await run(["load \(name)"])
         return try await wait("load the save", timeout: Self.loadTimeout) { $0.inWorld }
+    }
+
+    /// Presses one button of the open message box, such as the Survival Mode question
+    /// after a load; `button` is its index or its text.
+    public func answer(_ button: String) async throws -> ReferenceBridgeState {
+        guard let dialog = state()?.dialog else { throw ReferenceBridgeError.noDialog }
+        guard let index = dialog.buttonIndex(of: button) else {
+            throw ReferenceBridgeError.noSuchButton(button, dialog.buttons)
+        }
+        return try await run(["answer \(index)"])
     }
 }
 

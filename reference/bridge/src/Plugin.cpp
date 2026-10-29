@@ -36,16 +36,17 @@ void WriteSnapshot()
     snapshotQueued = false;
 }
 
-// Game objects are touched only on the main thread, through SKSE's task queue.
+// Game objects are touched only on the main thread. SKSE's UI task queue also drains
+// while a menu pauses the game, such as a message box waiting for an answer.
 [[noreturn]] void Poll()
 {
     const auto *tasks = SKSE::GetTaskInterface();
     while (true) {
         for (auto &batch : bridge::TakeBatches()) {
-            tasks->AddTask([batch = std::move(batch)] { RunBatch(batch); });
+            tasks->AddUITask([batch = std::move(batch)] { RunBatch(batch); });
         }
         if (!snapshotQueued.exchange(true)) {
-            tasks->AddTask(WriteSnapshot);
+            tasks->AddUITask(WriteSnapshot);
         }
         std::this_thread::sleep_for(pollInterval);
     }

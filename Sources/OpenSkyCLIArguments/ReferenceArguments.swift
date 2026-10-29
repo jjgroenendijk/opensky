@@ -38,7 +38,7 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
         abstract: "Run the Windows game under Wine and compare it with OpenSky.",
         subcommands: [
             Status.self, Check.self, Launch.self, ExportView.self, Capture.self, State.self,
-            Send.self, Sync.self, Follow.self, Load.self
+            Send.self, Sync.self, Follow.self, Load.self, Answer.self
         ]
     )
 

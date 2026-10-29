@@ -78,9 +78,16 @@ needs no network permission, works the same under Wine, and can be read by hand.
 - OpenSky writes each batch of console lines to `commands/<name>.tmp` and renames it to
   `<name>.txt`, so the plugin never reads half a file. Names sort by time.
 - The plugin polls the folder every 0.25 s, runs each batch on the game's main thread
-  through SKSE's task queue, and deletes it.
+  through SKSE's UI task queue, and deletes it. SKSE's main task queue stops while a menu
+  pauses the game, such as the Survival Mode question after a load (observed 2026-10-29).
+  The UI task queue keeps running then.
 - On the main thread, the plugin writes `state.json` four times a second, also through a
   rename. Its `batch` field names the last batch that ran, so OpenSky knows when a batch
   is done. A file older than 3 s means no game runs.
 - `load <save>` goes to the game's save manager rather than the console, so it works at
   the main menu.
+- `answer <index>` presses that button of the open message box. `state.json` lists the
+  box's text and buttons under `dialog`, so no message box can hold the game.
+- `save <name>` goes to the save manager through the main task queue. A save started
+  from the UI task queue wrote an empty `.ess.tmp` and stopped the game (observed
+  2026-10-29).

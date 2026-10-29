@@ -1,4 +1,4 @@
-// `reference state|send|sync|follow|load`: the Windows game through the OpenSkyBridge
+// `reference state|send|sync|follow|load|answer`: the Windows game through the OpenSkyBridge
 // plugin (docs/tools/reference-game.md#the-bridge-plugin).
 
 import Foundation
@@ -59,6 +59,12 @@ enum ReferenceBridgeCommand {
         print("[INFO] Waiting for the Windows game's main menu, then loading \(save).")
         let state = try await ReferenceBridge(prefix: prefix).loadSave(named: save)
         print("[INFO] The Windows game stands at \(place(of: state)).")
+    }
+
+    static func answer(arguments: ReferenceArguments.Answer) async throws {
+        let state = try await liveBridge().bridge.answer(arguments.button)
+        let next = state.dialog.map { " The next message box: \($0.text)" } ?? ""
+        print("[INFO] The Windows game took the answer.\(next)")
     }
 
     private static func liveBridge() throws

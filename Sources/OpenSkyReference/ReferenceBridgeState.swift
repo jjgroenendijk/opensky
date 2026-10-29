@@ -26,6 +26,8 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     public var worldFOV: Float?
     public var firstPersonFOV: Float?
     public var firstPerson: Bool?
+    /// The open message box. The game waits until one of its buttons is pressed.
+    public var dialog: ReferenceDialog?
 
     public init(version: Int = 1, batch: String = "", mainMenu: Bool, loading: Bool = false) {
         self.version = version

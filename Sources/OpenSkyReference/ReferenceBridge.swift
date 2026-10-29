@@ -7,6 +7,8 @@ import Foundation
 nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, LocalizedError {
     case notRunning
     case timedOut(String)
+    case noDialog
+    case noSuchButton(String, [String])
 
     public var errorDescription: String? {
         switch self {
@@ -14,6 +16,10 @@ nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, Locali
             "The Windows game's bridge is not running. Start the game with "
                 + "make reference-game, after make reference-bridge."
         case let .timedOut(what): "The Windows game did not \(what) in time."
+        case .noDialog: "The Windows game shows no message box."
+        case let .noSuchButton(button, buttons):
+            "The message box has no button \(button). "
+                + "Its buttons: \(buttons.joined(separator: ", "))."
         }
     }
 }

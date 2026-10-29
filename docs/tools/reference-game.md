@@ -211,6 +211,7 @@ Once `skse64_loader.exe` is in the game copy, every start goes through it.
 | `openskycli reference sync` | Puts the Windows game at the running OpenSky's view |
 | `openskycli reference follow` | Puts the running OpenSky at the Windows game's view, through `game debug view` |
 | `openskycli reference load [<save>]` | Waits for the main menu, then loads the save, by default the newest |
+| `openskycli reference answer <button>` | Presses a button of the open message box, by index from 0 or by text |
 
 The launcher's Send View and Follow Windows Game buttons do the same as `sync` and
 `follow`. Sync runs the `cow` or `coc` line alone, waits until the new cell has loaded,
@@ -219,8 +220,13 @@ leaves out `tm`, which would show the HUD again on every second send.
 
 The bridge and OpenSky share `OpenSkyBridge/` in the game copy's folder:
 `commands/<name>.txt` holds one batch of console lines, and `state.json` holds the game's
-state, rewritten four times a second. `state.json` reports the console's angles: positive
-`pitchDegrees` looks down, and `headingDegrees` is 0 at north and turns clockwise.
+state, rewritten four times a second. While a message box is open, such as the Survival
+Mode question after loading an old save, `state.json` holds its text and buttons under
+`dialog`, and `answer` presses one. `send 'save <name>'` saves into the prefix's
+`Saves/` folder. The plugin runs its work on SKSE's UI task queue,
+because the game's main task queue stops while a message box pauses the game.
+`state.json` reports the console's angles: positive `pitchDegrees` looks down, and
+`headingDegrees` is 0 at north and turns clockwise.
 
 ## Same view, two games
 

@@ -1,5 +1,6 @@
 #include "State.h"
 
+#include <charconv>
 #include <cmath>
 #include <format>
 
@@ -14,9 +15,8 @@ std::string Quoted(std::string_view text)
         if (character == '"' || character == '\\') {
             quoted += '\\';
         }
-        if (static_cast<unsigned char>(character) >= 0x20) {
-            quoted += character;
-        }
+        // A message box breaks its lines with control characters; JSON needs them escaped.
+        quoted += static_cast<unsigned char>(character) >= 0x20 ? character : ' ';
     }
     return quoted + "\"";
 }
@@ -77,6 +77,32 @@ std::string View()
     }
     return json;
 }
+// The open message box, which waits for a button before the game goes on.
+std::string Dialog()
+{
+    const auto *data = RE::MessageBoxMenu::GetCurrentMessageBoxData();
+    if (!data) {
+        return "";
+    }
+    std::string buttons;
+    for (const auto &button : data->buttonText) {
+        buttons += (buttons.empty() ? "" : ",") + Quoted(button.c_str());
+    }
+    return std::format(
+        ",\"dialog\":{{\"text\":{},\"buttons\":[{}]}}", Quoted(data->bodyText.c_str()), buttons);
+}
+
+// `answer <index>` presses that button of the open message box.
+void Answer(std::string_view digits)
+{
+    std::uint32_t index = 0;
+    const auto end = digits.data() + digits.size();
+    const auto *data = RE::MessageBoxMenu::GetCurrentMessageBoxData();
+    if (std::from_chars(digits.data(), end, index).ec == std::errc{} && data &&
+        index < data->buttonText.size()) {
+        RE::MessageBoxMenu::SelectOption(static_cast<std::int32_t>(index));
+    }
+}
 } // namespace
 
 std::string Snapshot(const std::string &lastBatch)
@@ -87,6 +113,7 @@ std::string Snapshot(const std::string &lastBatch)
     auto json = std::format(
         "{{\"version\":1,\"batch\":{},\"mainMenu\":{},\"loading\":{}", Quoted(lastBatch), mainMenu,
         loading);
+    json += Dialog();
     auto *player = RE::PlayerCharacter::GetSingleton();
     if (player && !mainMenu && !loading) {
         json += Place(player);
@@ -98,6 +125,21 @@ std::string Snapshot(const std::string &lastBatch)
 void RunLine(const std::string &line)
 {
     constexpr auto loadVerb = "load "sv;
+    constexpr auto answerVerb = "answer "sv;
+    constexpr auto saveVerb = "save "sv;
+    // A save started inside the UI task queue never finishes, so it waits for the main one.
+    if (line.starts_with(saveVerb)) {
+        SKSE::GetTaskInterface()->AddTask([name = line.substr(saveVerb.size())] {
+            if (auto *saves = RE::BGSSaveLoadManager::GetSingleton()) {
+                saves->Save(name.c_str());
+            }
+        });
+        return;
+    }
+    if (line.starts_with(answerVerb)) {
+        Answer(std::string_view(line).substr(answerVerb.size()));
+        return;
+    }
     if (line.starts_with(loadVerb)) {
         if (auto *saves = RE::BGSSaveLoadManager::GetSingleton()) {
             saves->Load(line.substr(loadVerb.size()).c_str());
