@@ -9,7 +9,7 @@ import OpenSkyLoading
 
 final class AssetOptimisationPageViewController: NSViewController {
     let coordinator: AssetCacheCoordinator
-    let layout = LauncherPageLayout(pageName: "AssetOptimisation")
+    let layout = LauncherPageLayout()
     let status = LauncherStatusView(name: "AssetOptimisation")
     let convertButton = LauncherButton(title: "Convert", target: nil, action: nil)
     let cancelButton = LauncherButton(title: "Cancel", target: nil, action: nil)

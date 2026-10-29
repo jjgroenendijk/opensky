@@ -132,7 +132,7 @@ PSNR. A normal map uses the mean angle between the decoded normals. A colour tex
 transparent texels has cut-out alpha, where a wrong edge shows as holes, so its alpha uses
 the stricter target. The winning format then encodes every level.
 
-"Show details" on the page has a format menu for each group: Automatic follows the quality,
+With "Show details" on, the page has a format menu for each group: Automatic follows the quality,
 Shipped keeps the BC blocks, and an ASTC size forces that format. It also shows a size limit,
 which drops the top mip levels of larger textures.
 

@@ -55,8 +55,9 @@ scripts in `.logs/`: they need the user's install, so no tracked suite runs them
 
 ## When it fails
 
-- `notRunning`: the server is off by default. `game launch` turns it on, or the app is
-  started with `OPENSKY_AGENT_CONTROL=1`. There is no network port.
+- `notRunning`: no app serves the socket. Start one with `game launch`. An app the user
+  opened serves the default socket unless its Settings "Agent control" switch is off or
+  it was started with `OPENSKY_AGENT_CONTROL=0`. There is no network port.
 - `versionMismatch`: the app and the CLI come from different builds. Rebuild both.
 - `notReady`: the world is still loading or a door is opening. Wait with
   `events --until cell.loaded`, then retry.

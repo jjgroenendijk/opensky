@@ -171,6 +171,30 @@ struct LauncherTests {
         #expect(find("SettingsChooseGameFolderControl", in: page.view) != nil)
     }
 
+    @Test func agentControlIsOnByDefaultAndTheBoxWritesTheSetting() throws {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = SettingsViewController()
+        page.playerSettings = { store }
+        page.loadViewIfNeeded()
+        let box = try #require(button("SettingsAgentControlControl", in: page.view))
+        #expect(box.state == .on)
+        box.performClick(nil)
+        #expect(!store.bool(.agentControl))
+    }
+
+    @Test func theSidebarSwitchShowsDetailsOnEveryPage() throws {
+        let defaults = try #require(UserDefaults(suiteName: "LauncherDetailsTests"))
+        defaults.removePersistentDomain(forName: "LauncherDetailsTests")
+        defer { defaults.removePersistentDomain(forName: "LauncherDetailsTests") }
+        let layout = LauncherPageLayout(userDefaults: defaults)
+        let note = layout.detail(NSView())
+        #expect(note.isHidden)
+        let toggle = LauncherDetailsSwitchView(defaults: defaults)
+        #expect(toggle.control.accessibilityIdentifier() == "LauncherShowDetailsControl")
+        toggle.control.performClick(nil)
+        #expect(!note.isHidden)
+    }
+
     @Test func anInvalidStartTurnsPlayOffAndSaysWhy() throws {
         let saved = LaunchPreferences.savedStart()
         defer { LaunchPreferences.remember(saved) }

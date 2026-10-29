@@ -1,14 +1,15 @@
 // Runs the agent control server for the app's lifetime and points it at the
-// running game. Off unless the launch environment turns it on
-// (docs/tools/agent-control.md).
+// running game. The "Agent control" setting turns it on; the launch environment
+// can override it (docs/tools/agent-control.md).
 
 import AppKit
 import OpenSkyAgentControl
 import OpenSkyGameData
+import OpenSkyLaunch
 
 final class AgentControlHost {
-    /// `openskycli game launch` sets this to 1.
-    static let environmentKey = "OPENSKY_AGENT_CONTROL"
+    /// The Settings page posts this after it changes the "Agent control" setting.
+    static let settingChanged = Notification.Name("OpenSkyAgentControlSettingChanged")
     /// Faster than the display, so a step reply leaves in the frame it finished.
     static let pollInterval = 1.0 / 240
 
@@ -32,9 +33,17 @@ final class AgentControlHost {
         coordinator.appVersion = Bundle.main
             .object(forInfoDictionaryKey: "CFBundleShortVersionString")
             as? String ?? "dev"
-        if environment[Self.environmentKey] == "1" {
-            coordinator.setEnabled(true)
-        }
+        applySetting()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(applySetting), name: Self.settingChanged, object: nil
+        )
+    }
+
+    @objc private func applySetting() {
+        let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+        coordinator.setEnabled(LaunchPreferences.opensAgentControl(
+            setting: store.bool(.agentControl), environment: environment
+        ))
     }
 
     func attach(game: GameViewController, root: GameDataRoot?) {

@@ -5,7 +5,7 @@ import AppKit
 import OpenSkyWorld
 
 final class BenchmarkPageViewController: NSViewController {
-    let layout = LauncherPageLayout(pageName: "Benchmark")
+    let layout = LauncherPageLayout()
     let presetControl = NSPopUpButton()
     let overlayControl = NSButton(checkboxWithTitle: "Show the overlay", target: nil, action: nil)
     let loadPassesControl = NSButton(

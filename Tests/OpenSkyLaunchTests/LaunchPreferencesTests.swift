@@ -24,6 +24,14 @@ struct LaunchPreferencesTests {
         #expect(!LaunchPreferences.forcedTitleScreen(environment: [:]))
     }
 
+    @Test func theEnvironmentOverridesTheAgentControlSetting() {
+        let key = LaunchPreferences.agentControlKey
+        #expect(LaunchPreferences.opensAgentControl(setting: false, environment: [key: "1"]))
+        #expect(!LaunchPreferences.opensAgentControl(setting: true, environment: [key: "0"]))
+        #expect(LaunchPreferences.opensAgentControl(setting: true, environment: [:]))
+        #expect(!LaunchPreferences.opensAgentControl(setting: false, environment: [key: "yes"]))
+    }
+
     @Test func theGameFolderIsFoundOnlyWhenTheInstallLocates() {
         let missing = GameFolderStatus { throw MissingInstall() }
         #expect(!missing.isFound)
