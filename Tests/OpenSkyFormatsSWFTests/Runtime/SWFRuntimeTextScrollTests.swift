@@ -73,6 +73,26 @@ struct SWFRuntimeTextScrollTests {
         #expect(runtime.member("bottomScroll", of: field) == .number(4))
     }
 
+    /// CLIK's `ScrollBar` follows its field through `onScroller`, once per real change.
+    @Test func aScrollChangeTellsTheFieldsListeners() throws {
+        let (runtime, field) = try Self.started()
+        let listener = runtime.runtime.makeObject()
+        AS2Natives.method(runtime.runtime, on: listener, name: "onScroller") { context in
+            context.thisObject?.assign(context.argument(0), for: "heard")
+            return .undefined
+        }
+        let add = try #require(field.object.lookup("addListener")?.property.value)
+        runtime.runtime.invoke(
+            add,
+            thisValue: .object(field.object),
+            arguments: [.object(listener)]
+        )
+        _ = runtime.setMember("scroll", of: field, to: .number(1))
+        #expect(listener.lookup("heard") == nil)
+        _ = runtime.setMember("scroll", of: field, to: .number(2))
+        #expect(listener.lookup("heard")?.property.value == .object(field.object))
+    }
+
     /// GFx `textAutoSize` fits the text to the field instead, so every line is drawn.
     @Test func aSelfSizingFieldDrawsEveryLine() throws {
         let (runtime, field) = try Self.started()

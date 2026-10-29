@@ -208,6 +208,7 @@ nonisolated extension SWFMovieRuntime {
     /// engine has one entry point either way.
     @discardableResult
     public func callMovie(_ name: String, arguments: [AS2Value] = []) -> AS2Value {
+        let arguments = platformArguments(name, arguments, path: nil)
         var result = AS2Value.undefined
         var handled = false
         if let delegate = gameDelegate, hasCallback(name, on: delegate) {
@@ -241,6 +242,7 @@ nonisolated extension SWFMovieRuntime {
         atPath path: String,
         arguments: [AS2Value] = []
     ) -> AS2Value {
+        let arguments = platformArguments(name, arguments, path: path)
         guard
             let target = node(atPath: path, from: root),
             let function = target.object.lookup(name)?.property.value.functionValue

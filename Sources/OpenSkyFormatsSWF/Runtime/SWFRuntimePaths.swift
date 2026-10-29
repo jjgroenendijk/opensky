@@ -69,14 +69,29 @@ nonisolated extension SWFMovieRuntime {
             return textMember(of: node)
         case "scroll", "maxscroll", "bottomScroll":
             return scrollMember(name, of: node)
+        case "selectable":
+            if case let .editText(id) = node.content, let field = editText(id) {
+                return .boolean(!field.flags.noSelect)
+            }
         default:
             break
         }
         if let child = node.child(named: name) {
             return .object(child.object)
         }
+        if Self.unsetComponentMembers.contains(name) {
+            return .undefined
+        }
         return builtinMethod(name, of: node)
     }
+
+    /// CLIK members a movie reads before it sets them, where Flash also answers `undefined`.
+    /// `focusIndicator` and `textField` are children a component may lack; `width` and
+    /// `height` are tested against null before `_width`; the rest are tested, then set.
+    public static let unsetComponentMembers: Set = [
+        "focusIndicator", "_listeners", "invalidationIntervalID", "inspectableGroupName",
+        "buttonRepeatInterval", "textField", "width", "height", "_password", "_selectable"
+    ]
 
     /// A clip's built-in methods stay reachable even when `registerClass`
     /// replaced its `__proto__` with a class that does not `extend MovieClip`.
@@ -131,7 +146,7 @@ nonisolated extension SWFMovieRuntime {
         node.textOverride = value
         if
             let characterId = node.characterId,
-            let field = movie.editText(characterId), !field.variableName.isEmpty
+            let field = editText(characterId), !field.variableName.isEmpty
         {
             writeVariable(field.variableName, from: node, to: .string(value))
         }
@@ -148,7 +163,7 @@ nonisolated extension SWFMovieRuntime {
         if let override = node.textOverride {
             return override
         }
-        guard let characterId = node.characterId, let field = movie.editText(characterId) else {
+        guard let characterId = node.characterId, let field = editText(characterId) else {
             return nil
         }
         if

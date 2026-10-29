@@ -43,31 +43,37 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
         SWFDisplayObject.resolve(context.thisObject)
     }
 
-    /// A listener list recorded on a built-in. Nothing dispatches to it yet —
-    /// event routing is phase 3 — but recording keeps `addListener` off the
-    /// missing-API tally and leaves the list where the dispatcher will find it.
+    /// A built-in's `addListener` list, read by `broadcast(_:from:arguments:)`.
     public static func installListenerList(_ runtime: AS2Runtime, on object: AS2Object) {
         let listeners = runtime.makeArray()
         object.define(.object(listeners), for: "_listeners", flags: .dontEnumerate)
         AS2Natives.method(runtime, on: object, name: "addListener") { context in
-            guard let listener = context.argument(0).objectValue else {
-                return .boolean(false)
-            }
-            listeners.appendElement(.object(listener))
-            return .boolean(true)
+            addListener(context.argument(0), to: listeners)
         }
         AS2Natives.method(runtime, on: object, name: "removeListener") { context in
-            guard let listener = context.argument(0).objectValue else {
-                return .boolean(false)
-            }
-            let before = listeners.elements
-            let kept = before.filter { $0.objectValue !== listener }
-            listeners.resizeArray(to: 0)
-            for element in kept {
-                listeners.appendElement(element)
-            }
-            return .boolean(kept.count < before.count)
+            removeListener(context.argument(0), from: listeners)
         }
+    }
+
+    static func addListener(_ value: AS2Value, to listeners: AS2Object) -> AS2Value {
+        guard let listener = value.objectValue else {
+            return .boolean(false)
+        }
+        listeners.appendElement(.object(listener))
+        return .boolean(true)
+    }
+
+    static func removeListener(_ value: AS2Value, from listeners: AS2Object) -> AS2Value {
+        guard let listener = value.objectValue else {
+            return .boolean(false)
+        }
+        let before = listeners.elements
+        let kept = before.filter { $0.objectValue !== listener }
+        listeners.resizeArray(to: 0)
+        for element in kept {
+            listeners.appendElement(element)
+        }
+        return .boolean(kept.count < before.count)
     }
 
     // MARK: - MovieClip
@@ -175,6 +181,21 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
             created.name = try context.string(0)
             try node.addChild(created, atDepth: depthValue(context.number(1)))
             owner.markDirty()
+            return .object(created.object)
+        }
+        AS2Natives.method(runtime, on: prototype, name: "createTextField") { context in
+            guard let owner = movieRuntime(context), let node = node(context) else {
+                return .undefined
+            }
+            let (left, top) = try (context.number(2), context.number(3))
+            let (width, height) = try (context.number(4), context.number(5))
+            let created = try owner.createTextField(
+                named: context.string(0), in: node, depth: depthValue(context.number(1)),
+                frame: SWFRect(
+                    xMin: SWFMovieRuntime.twips(left), xMax: SWFMovieRuntime.twips(left + width),
+                    yMin: SWFMovieRuntime.twips(top), yMax: SWFMovieRuntime.twips(top + height)
+                )
+            )
             return .object(created.object)
         }
     }

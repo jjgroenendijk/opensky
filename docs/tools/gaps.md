@@ -117,7 +117,7 @@ counts as done when `MenuMovieBridges.moviePaths` lists it. A new bridge adds it
 The AS2 section lists the names the runtime did not provide, the opcodes it did not run, and
 its faults, over all movies. GameDelegate calls are not in it, because a bridge answers them.
 A movie that needs its bridge before it does anything shows few gaps here. A name a movie reads
-before it sets it, such as a CLIK component's `_listeners`, counts too, so the top rows need a
+before it sets it, such as a CLIK button's `textField`, counts too, so the top rows need a
 check before they become an issue.
 
 The SWF tag section counts every tag in every movie, nested sprites included. GFx extension

@@ -36,6 +36,12 @@ nonisolated public final class SWFMovieRuntime {
     /// Accepted `Selection.setFocus` calls, so a test can assert focus moved
     /// without depending on which node it moved to.
     public var focusChanges = 0
+    /// Connected gamepads. Each adds a GFx controller beside keyboard and mouse.
+    public internal(set) var gamepadCount = 0
+    /// The last `SetPlatform` call, replayed when a gamepad connects or leaves.
+    var platformCall: SWFPlatformCall?
+    /// Text fields `createTextField` made, by their runtime character id.
+    var scriptEditTexts: [UInt16: SWFEditText] = [:]
     /// Nesting guard for a frame action that jumps the same clip again.
     public var gotoDepth = 0
     /// Instances placed in the current batch, waiting for their constructors.
@@ -71,6 +77,10 @@ nonisolated public final class SWFMovieRuntime {
     /// per second, which is far past anything a menu waits for.
     public static let maximumTimerTicks = 3600
 
+    /// Every class preamble runs `if (!_global.gfx) _global.gfx = new Object()` for its
+    /// package roots, and CLIK `UIComponent.onLoad` tests `_global.CLIK_loadCallback`.
+    public static let unsetGlobals: Set = ["gfx", "Shared", "Components", "CLIK_loadCallback"]
+
     public var movie: SWFMovie {
         movieScene.movie
     }
@@ -103,6 +113,7 @@ nonisolated public final class SWFMovieRuntime {
         movieClipPrototype = natives.movieClipPrototype
         textFieldPrototype = natives.textFieldPrototype
         root.object.prototype = movieClipPrototype
+        runtime.unsetGlobals = Self.unsetGlobals
         host.owner = self
     }
 

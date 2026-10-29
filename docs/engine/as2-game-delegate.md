@@ -60,9 +60,9 @@ registered class's constructor and prototype, and `--dump-proto` walks a node's 
 ([CLI](/tools/cli.md)). All 53 vanilla movies bring up and tick with no fault and no unimplemented
 opcode, and register 305 classes.
 
-The names still missing are mostly CLIK component state, headed by `_listeners`,
-`invalidationIntervalID`, `textField`, `height`, `width`, `CLIK_loadCallback`, `focusIndicator`, and
-`inspectableGroupName`. Menu data is published only where a feature needs it.
+The names still missing are mostly CLIK component state, such as `myLog` and `onButtonLoad`. CLIK
+fields and globals a movie reads before it sets them are not counted
+([AS2 input](/engine/as2-input.md)). Menu data is published only where a feature needs it.
 
 ### tweenmenu.swf
 
@@ -127,6 +127,4 @@ Two details were found by driving it:
 - An objective row's state is plain `completed` and `failed` booleans. Setting them moves the entry
   clip from its `Normal` frame to `Completed` or `Failed`.
 
-Two missing names change the picture: with no `textField` on an entry clip, the clip cannot draw its
-row's text, and with no `height`, a text field keeps its authored size, so a long journal paragraph
-overlaps the objective list below it ([journal](/engine/journal.md)).
+A long journal paragraph overlaps the objective list below it ([journal](/engine/journal.md)).

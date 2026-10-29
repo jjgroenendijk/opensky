@@ -130,9 +130,51 @@ no `handleInput`, so an unfiltered path dropped every key.
 
 CLIK's `UIComponent.focused` setter reads `Selection.numFocusGroups` and
 `System.capabilities.numControllers`, then calls `Selection.setFocus` once per controller. GFx adds
-these fields; Flash has none of them. Without them, no CLIK control takes focus. OpenSky answers one
-controller in one focus group, and each focus change calls the `Selection` listeners'
-`onSetFocus(old, new, 0)`.
+these fields; Flash has none of them. Without them, no CLIK control takes focus. OpenSky answers
+keyboard and mouse as controller 0 and each connected gamepad as one more controller, all in focus
+group 0. Every controller shares one focus, and each focus change calls the `Selection` listeners'
+`onSetFocus(old, new, 0)`. Whether Skyrim counts a gamepad as a second GFx controller is not
+confirmed; a menu sees the same focus either way.
+
+CLIK's `Button` reads its `focusIndicator` member and tests it with `== null`. When it is null, the
+button shows focus with its own `over` state; when it is a child clip, the child plays `show` and
+`hide`. A scan of every node of all 53 vanilla movies after bring-up found no clip named
+`focusIndicator`, so Flash's answer is `undefined`. The runtime answers that without counting it as
+a missing name.
+
+Four more CLIK fields get the same answer, because the movies read them before they set them:
+`_listeners` (tested `== undefined`, then created), `invalidationIntervalID` (tested, then set by
+`setInterval`), `inspectableGroupName` (tested `== null` and `== ""`), and `buttonRepeatInterval`
+(cleared, then deleted). More names get it for the same reason, each checked in the bytecode:
+
+- `textField` on a CLIK button with no label, such as a scroll bar's thumb, track, and arrows, and on
+  a scroll target holder. Each read is tested against `null` or only passed on.
+- `width` and `height` on a text field. CLIK's `Constraints` tests them against `null`, then uses
+  `_width` and `_height`.
+- `_selectable` and `_password` on CLIK's `TextInput`. Both are copied to the inner field before the
+  component sets them.
+
+The class preamble `if (!_global.gfx) _global.gfx = new Object()` tests each package root (`gfx`,
+`Shared`, `Components`), and `UIComponent.onLoad` tests `_global.CLIK_loadCallback`. Those four
+globals are not counted either.
+
+### Gamepads
+
+The app reads every gamepad through Apple's Game Controller framework once a frame. The menu buttons
+follow the install's `interface\controls\pc\controlmap.txt`: in "Menu Mode", Accept is A (`0x1000`),
+Cancel is B (`0x2000`), the D-pad is Up, Down, Left, and Right (`0x0001` to `0x0008`), and the left
+stick (`0x000b`) moves too; in "Item Menus", XButton is X (`0x4000`) and YButton is Y (`0x8000`). The
+codes are the XInput button masks. A gamepad press becomes the same menu event as the matching key.
+OpenSky repeats a held direction after half a second, then every 0.12 seconds.
+
+Button art comes from `SetPlatform(platform, ...)`. `Shared.ButtonChange` sets `PLATFORM_PC` to 0
+and `PLATFORM_PC_GAMEPAD` to 1. While a gamepad is connected, the runtime sends 1 in every
+`SetPlatform` call, and it sends the movie's last call again when a gamepad connects or leaves. The
+game may instead follow the last device used; that is not confirmed.
+
+`openskycli game debug gamepad --count 1` reports a gamepad without one connected, and
+`--press down,a` presses buttons. `state menu` shows the movie's focused clip, its frame label, the
+controller count, and the platform.
 
 With that in place, a menu movie focuses its own lists. Measured with `swf movie-probe` and
 `menu system`:

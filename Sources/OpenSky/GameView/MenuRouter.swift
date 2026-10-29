@@ -36,6 +36,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
 
 final class MenuRouter {
     unowned let game: any MenuRouterHost
+    let gamepads = GamepadMonitor()
 
     init(game: any MenuRouterHost) {
         self.game = game
@@ -82,9 +83,12 @@ final class MenuRouter {
         }
         let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
-        gameSession.frameSteps.register(.menuRouting) { [weak game] _ in
+        gameSession.frameSteps.register(.menuRouting) { [weak game, weak renderer, gamepads] _ in
             game?.mapMenu.tick()
             let now = Date().timeIntervalSinceReferenceDate
+            if let game, let renderer {
+                gamepads.poll(now: now, renderer: renderer, menuMode: game.menuMode)
+            }
             game?.titleMenu.tick(now: now)
             game?.raceMenu.tick(now: now)
             game?.skillsMenu.tick(now: now)

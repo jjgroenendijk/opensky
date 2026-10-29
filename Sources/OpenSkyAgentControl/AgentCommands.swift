@@ -163,6 +163,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case drunk(reference: String, drunk: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
     case beastForm(String)
+    /// Reports `count` gamepads when fewer are real, and presses gamepad buttons for a frame.
+    case gamepad(count: Int?, press: [String])
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
     case subGraphEvent(reference: String, event: String)
     /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
@@ -237,8 +239,19 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
+        case "gamepad": try parseGamepad(args)
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
+    }
+
+    private static func parseGamepad(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let count = try args.optionalInt("count")
+        if let count, !(0 ... 3).contains(count) {
+            throw args.invalid("count", "0 to 3")
+        }
+        let press = try args.optionalString("press")?.lowercased()
+            .split(separator: ",").map(String.init) ?? []
+        return .gamepad(count: count, press: press)
     }
 
     private static func parseFade(_ args: AgentArguments) throws(AgentFailure) -> Self {

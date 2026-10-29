@@ -143,19 +143,13 @@ action-list --movie quest_journal.swf`:
 ### Coverage
 
 The driven page has 0 faults, 0 unimplemented opcodes, and 0 unhandled invokes of 52, at 1052
-display nodes. 81 API names stay unresolved. None stops the page from showing its data. These
-change how it looks:
+display nodes. None of the unresolved names stops the page from showing its data. Without
+`statusIcon`, the objective status icon is not drawn.
 
-| Name | Hits | Effect |
-| --- | --- | --- |
-| `_listeners` | 327 | CLIK event dispatch. Nothing subscribes |
-| `invalidationIntervalID` | 270 | The delayed re-layout timer never starts |
-| `textField` | 167 | Entry clips cannot draw their own row text |
-| `height`, `width` | 77 each | Fields do not grow with their text, so long text can overlap |
-| `statusIcon` | 32 | The objective status icon is not drawn |
-
-Because of `textField`, a row is read back from `EntriesA`, not from the clip. Because of
-`height` and `width`, the description and the objective list overlap on a long journal text.
+`_listeners`, `invalidationIntervalID`, `textField`, `width`, and `height` are not gaps. The page
+reads them before it sets them, or tests them against `null`, and Flash answers `undefined` too
+([AS2 input](/engine/as2-input.md)). A row is read back from `EntriesA`, not from the clip. On a long
+journal text the description and the objective list overlap; the cause is not known yet.
 
 ## Alias text
 

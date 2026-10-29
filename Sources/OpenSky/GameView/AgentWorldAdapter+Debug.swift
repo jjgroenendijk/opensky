@@ -42,10 +42,8 @@ extension AgentWorldAdapter {
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode:
             return try done(renderDebug(command))
-        case let .raceMenu(limited):
-            return try done(openRaceMenu(limited: limited))
-        case let .skillsMenu(sky, levels):
-            return try done(openSkillsMenu(sky: sky, levels: levels))
+        case .raceMenu, .skillsMenu, .gamepad:
+            return try done(menuDebug(command))
         case let .benchmark(request):
             return try benchmark(request)
         case .sit, .stand, .passTime:
@@ -60,6 +58,15 @@ extension AgentWorldAdapter {
         case let .teleport(target): try AgentTeleportJob(adapter: self, target: target)
         case let .view(target): try viewJob(target)
         default: throw AgentFailure(.invalidArgument, "not a move")
+        }
+    }
+
+    private func menuDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .raceMenu(limited): try openRaceMenu(limited: limited)
+        case let .skillsMenu(sky, levels): try openSkillsMenu(sky: sky, levels: levels)
+        case let .gamepad(count, press): try driveGamepad(count: count, press: press)
+        default: throw AgentFailure(.invalidArgument, "not a menu debug command")
         }
     }
 

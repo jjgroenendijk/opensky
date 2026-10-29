@@ -142,7 +142,10 @@ nonisolated extension AS2Interpreter {
     /// class such as `MovieClip` or `gfx`. A miss on an ordinary object is just
     /// ECMAScript producing `undefined`.
     private func noteMissingMember(_ name: String, of object: AS2Object) {
-        guard object.isHostBacked || object === runtime.globalObject else {
+        let demanded = object === runtime.globalObject
+            ? !runtime.unsetGlobals.contains(name)
+            : object.isHostBacked
+        guard demanded else {
             return
         }
         runtime.noteMissing(name)

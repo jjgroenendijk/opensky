@@ -31,6 +31,7 @@ extension Renderer {
         residencySet.commit()
         let runtime = SWFMovieRuntime(movieScene: scene, limits: .standard)
         runtime.textTranslator = swfTextTranslator
+        runtime.setGamepadCount(swf.gamepadCount)
         prepare?(runtime)
         runtime.start()
         swf.overlay = SWFOverlayLayer(movie: movie, runtime: runtime)

@@ -26,6 +26,7 @@ extension Renderer {
         }
         let runtime = SWFMovieRuntime(movieScene: movie.scene, limits: limits)
         runtime.textTranslator = swfTextTranslator
+        runtime.setGamepadCount(swf.gamepadCount)
         prepare?(runtime)
         registerMenuSounds(runtime)
         runtime.start()
