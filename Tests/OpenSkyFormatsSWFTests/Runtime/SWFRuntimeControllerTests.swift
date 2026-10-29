@@ -61,10 +61,13 @@ struct SWFRuntimeControllerTests {
         #expect(log.calls.allSatisfy { $0.last == .boolean(false) })
     }
 
-    @Test func anAbsentFocusIndicatorIsUndefinedWithoutATally() throws {
-        let runtime = try started(readMember("focusIndicator") + readMember("unknownChild"))
+    @Test func unsetComponentMembersAreUndefinedWithoutATally() throws {
+        let names = SWFMovieRuntime.unsetComponentMembers.sorted()
+        let runtime = try started(names.flatMap(readMember) + readMember("unknownChild"))
         #expect(runtime.root.object.lookup("result")?.property.value == .undefined)
-        #expect(runtime.tally.missingNames["focusIndicator"] == nil)
+        for name in names {
+            #expect(runtime.tally.missingNames[name] == nil, "\(name)")
+        }
         #expect(runtime.tally.missingNames["unknownChild"] == 1)
     }
 

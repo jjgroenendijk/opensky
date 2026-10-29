@@ -60,9 +60,9 @@ registered class's constructor and prototype, and `--dump-proto` walks a node's 
 ([CLI](/tools/cli.md)). All 53 vanilla movies bring up and tick with no fault and no unimplemented
 opcode, and register 305 classes.
 
-The names still missing are mostly CLIK component state, headed by `_listeners`,
-`invalidationIntervalID`, `textField`, `height`, `width`, `CLIK_loadCallback`, `focusIndicator`, and
-`inspectableGroupName`. Menu data is published only where a feature needs it.
+The names still missing are mostly CLIK component state, headed by `height`, `width`, `textField`,
+`CLIK_loadCallback`, and `myLog`. CLIK fields a movie reads before it sets them are not counted
+([AS2 input](/engine/as2-input.md)). Menu data is published only where a feature needs it.
 
 ### tweenmenu.swf
 

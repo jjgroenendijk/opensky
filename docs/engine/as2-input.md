@@ -142,6 +142,12 @@ button shows focus with its own `over` state; when it is a child clip, the child
 `focusIndicator`, so Flash's answer is `undefined`. The runtime answers that without counting it as
 a missing name.
 
+Four more CLIK fields get the same answer, because the movies read them before they set them:
+`_listeners` (tested `== undefined`, then created), `invalidationIntervalID` (tested, then set by
+`setInterval`), `inspectableGroupName` (tested `== null` and `== ""`), and `buttonRepeatInterval`
+(cleared, then deleted). `textField` still counts: some reads are not guarded, and a button whose
+label clip failed to build would look the same.
+
 ### Gamepads
 
 The app reads every gamepad through Apple's Game Controller framework once a frame. The menu buttons
