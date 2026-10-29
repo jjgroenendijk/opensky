@@ -130,7 +130,9 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                     content: .editText(id),
                     transform: transform,
                     colorTransform: color,
-                    textOverride: runtime.text(of: node)
+                    textOverride: runtime.text(of: node),
+                    textFirstLine: runtime.windowsLines(node) ? runtime
+                        .textScroll(of: node) - 1 : nil
                 ),
                 clipCount: clipCount
             )

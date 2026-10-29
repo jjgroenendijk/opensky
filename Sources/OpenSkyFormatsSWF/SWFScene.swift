@@ -23,6 +23,9 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     /// the static path always produces. Declared last so the memberwise
     /// initializer of the static path keeps its three-argument spelling.
     public var textOverride: String?
+    /// The zero-based first line of a field that shows only the lines fitting its bounds;
+    /// nil draws every line.
+    public var textFirstLine: Int?
     /// The nine-slice grid of the sprite this shape sits in directly, if any.
     public var scalingGrid: SWFSceneScalingGrid?
 }

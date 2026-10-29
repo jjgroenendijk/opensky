@@ -29,9 +29,11 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     /// consumers are outside the system-page surface.
     public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RememberCurrentTabIndex",
-        "RequestPlayerInfo"
+        "RequestPlayerInfo", "SetVersionText", "ShouldShowKinectTunerOption"
     ]
     public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
+    /// The Quit row asks this and builds its Main Menu and Desktop list only on true.
+    public static let trueHostFunctions = ["RequestIsOnPC"]
 
     /// Scaleform's UI-sound hook, which the movie reaches for as a plain
     /// `_global` function rather than through `GameDelegate`. OpenSky has no UI
@@ -52,6 +54,9 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         }
         for name in falseHostFunctions {
             runtime.registerHostFunction(name) { _ in .boolean(false) }
+        }
+        for name in trueHostFunctions {
+            runtime.registerHostFunction(name) { _ in .boolean(true) }
         }
         let global = runtime.runtime.globalObject
         for name in globalSinkFunctions {
@@ -97,7 +102,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         {
             return true
         }
-        guard let key = event.swfKey ?? letterKey(event) else {
+        guard let key = pageKey(event) ?? event.swfKey else {
             return false
         }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
@@ -106,8 +111,10 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     }
 
     /// The System page reads X as Delete and T as Characters, beside the gamepad buttons.
-    static func letterKey(_ event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+    /// Its pages go back on `NavigationCode.TAB`, never on `ESCAPE`, so cancel is Tab.
+    static func pageKey(_ event: MenuInputEvent) -> (code: Int, ascii: Int)? {
         switch event {
+        case .button(.cancel): (SWFKeyCode.tab, 9)
         case .button(.xButton): (88, 120)
         case .button(.yButton): (84, 116)
         default: nil
@@ -163,6 +170,8 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
             // in OpenSky, so publish the same page/index pair and focus explicitly.
             menu.object.assign(.object(systemPage.object), for: "TopmostPage")
             menu.object.assign(.integer(systemTabIndex), for: "iCurrentTab")
+            // The tab group's `onTabChange` calls this; it adds the row press listeners.
+            runtime.callMovie("startPage", atPath: systemPagePath)
             runtime.focus(categoryList)
         }
         for path in [questsFaderPath, statsFaderPath] {
@@ -192,20 +201,27 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
 
     public static let settingsCategoryIndex = 4
 
-    /// The movie's row text for each engine row. Installed Content and Help have none.
+    /// The movie's row text for each engine row.
     public static let rowEntries: [String: SystemMenuEntry] = [
-        "$QUICKSAVE": .quicksave, "$SAVE": .save, "$LOAD": .load, "$SETTINGS": .settings,
-        "$CONTROLS": .controls, "$QUIT": .quit
+        "$QUICKSAVE": .quicksave, "$SAVE": .save, "$LOAD": .load,
+        "$INSTALLED CONTENT": .installedContent, "$SETTINGS": .settings,
+        "$CONTROLS": .controls, "$HELP": .help, "$QUIT": .quit
     ]
 
     /// The engine row the movie's highlighted row stands for.
     public static func selectedEntry(runtime: SWFMovieRuntime) -> SystemMenuEntry? {
+        guard let index = selectedRow(runtime: runtime) else { return nil }
+        let labels = entryLabels(runtime: runtime)
+        return labels.indices.contains(index) ? rowEntries[labels[index]] : nil
+    }
+
+    /// The movie's highlighted row of the System list.
+    public static func selectedRow(runtime: SWFMovieRuntime) -> Int? {
         guard
             let list = runtime.node(atPath: systemCategoryListPath, from: runtime.root),
-            case let .number(selected) = list.object.lookup("iSelectedIndex")?.property.value
+            case let .number(selected) = list.object.lookup("iSelectedIndex")?.property.value,
+            selected.isFinite
         else { return nil }
-        let labels = entryLabels(runtime: runtime)
-        let index = Int(selected)
-        return labels.indices.contains(index) ? rowEntries[labels[index]] : nil
+        return Int(selected)
     }
 }

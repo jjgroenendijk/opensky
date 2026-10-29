@@ -114,13 +114,16 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
 
     private static func installDepths(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.method(runtime, on: prototype, name: "getDepth") { context in
-            node(context).map { .integer(Int($0.depth)) } ?? .undefined
+            node(context).map { .integer(Int($0.depth) - SWFDisplayObject.scriptDepthBase) }
+                ?? .undefined
         }
         AS2Natives.method(runtime, on: prototype, name: "getNextHighestDepth") { context in
             guard let node = node(context) else {
                 return .undefined
             }
-            return .integer(Int(node.children.last?.depth ?? 0) + 1)
+            let highest = node.children.last
+                .map { Int($0.depth) - SWFDisplayObject.scriptDepthBase }
+            return .integer(max(0, (highest ?? -1) + 1))
         }
         AS2Natives.method(runtime, on: prototype, name: "getInstanceAtDepth") { context in
             guard let node = node(context) else {
@@ -250,11 +253,13 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
             && box.minY <= target.maxY && box.maxY >= target.minY
     }
 
-    /// A depth argument clamped into the SWF `UI16` depth domain.
+    /// An ActionScript depth as a SWF depth, clamped into the `UI16` domain, so script
+    /// depths above 49151 share the top slot.
     public static func depthValue(_ number: Double) -> UInt16 {
         guard number.isFinite else {
-            return 0
+            return UInt16(SWFDisplayObject.scriptDepthBase)
         }
-        return UInt16(max(0, min(Double(UInt16.max), number.rounded())))
+        let depth = number.rounded() + Double(SWFDisplayObject.scriptDepthBase)
+        return UInt16(max(0, min(Double(UInt16.max), depth)))
     }
 }

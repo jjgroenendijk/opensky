@@ -63,6 +63,15 @@ public final class PlayerSettingsCoordinator {
         keyNames?.name(scanCode) ?? DirectInputKeyCodes.fallbackName(scanCode)
     }
 
+    /// The key bound to a controlmap user event, such as "E" for "Activate".
+    public func buttonName(forUserEvent event: String) -> String? {
+        guard
+            let slot = InputBindings.slots.first(where: { $0.event == event }),
+            let scanCode = bindings.scanCode(for: slot.action)
+        else { return nil }
+        return keyName(scanCode)
+    }
+
     public func resetBindings() {
         store.replaceKeyBindings([:])
     }

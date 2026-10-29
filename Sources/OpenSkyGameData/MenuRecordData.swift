@@ -47,6 +47,8 @@ nonisolated public struct MenuRecordData: Sendable {
     /// The menus read every setting that has this prefix, so `openskycli gaps` counts
     /// them as read.
     public static let statsPrefix = "fStats"
+    /// The default object naming the PC help topic list.
+    public static let helpManualTag = "HMPC"
 
     /// A string setting the fast-travel, race, or alchemy menus or the HUD show.
     public static func isMenuText(_ editorID: String) -> Bool {
@@ -75,6 +77,10 @@ nonisolated public struct MenuRecordData: Sendable {
     public let chargen: ChargenRecords
     /// The `fStats` float GMSTs that shape the skills menu's perk sky.
     public let statsSettings: [String: Float]
+    /// The active plugins in load order, for the System page's Installed Content.
+    public let installedPlugins: [InstalledPlugin]
+    /// The FLST of help topics the System page's Help lists: the DOBJ `HMPC` default object.
+    public let helpManual: ResolvedFormID?
     /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Filled
     /// from the install after the records load.
     public var chargenTypes: [ChargenTypeKey: [Int: Int]] = [:]
@@ -105,6 +111,8 @@ nonisolated public struct MenuRecordData: Sendable {
         self.player = player
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
         markers = MapMarkerIndex(plugins: loadOrder.files)
+        installedPlugins = loadOrder.plugins.map { InstalledPlugin(name: $0.name, file: $0.file) }
+        helpManual = DefaultObjectStore(plugins: loadOrder.files).object(tag: Self.helpManualTag)
         mapSettings = MenuMapSettings(store: settings)
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID

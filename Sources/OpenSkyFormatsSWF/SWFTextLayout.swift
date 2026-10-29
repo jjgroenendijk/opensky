@@ -29,6 +29,9 @@ nonisolated public struct SWFTextLayoutResult: Equatable, Sendable {
     public let runs: [SWFTextRun]
     /// Characters with no glyph in the font (skipped, never fatal).
     public let missingGlyphs: Int
+    /// Lines after wrapping, and how many of them fit the field from the first shown one.
+    public var lineCount = 0
+    public var visibleLineCount = 0
 }
 
 nonisolated public enum SWFTextLayout: Sendable {
@@ -76,11 +79,13 @@ nonisolated public enum SWFTextLayout: Sendable {
 
     /// Lays out an edit text with the resolved font. A non-nil `content`
     /// replaces `InitialText`, for text set by ActionScript. Alignment comes
-    /// from the layout block; justify falls back to left.
+    /// from the layout block; justify falls back to left. A non-nil `firstLine`
+    /// draws from that zero-based line and only the lines that fit the bounds.
     public static func editText(
         _ text: SWFEditText,
         font: SWFFontDefinition,
-        content override: String? = nil
+        content override: String? = nil,
+        firstLine: Int? = nil
     ) -> SWFTextLayoutResult {
         let content = override ?? text.plainText
         guard let content, !content.isEmpty, !font.glyphs.isEmpty else {
@@ -106,15 +111,34 @@ nonisolated public enum SWFTextLayout: Sendable {
                 lines.append(shaped)
             }
         }
+        var shown = lines[...]
+        if let firstLine {
+            let fitting = fittingLineCount(text: text, metrics: metrics)
+            let start = min(max(0, firstLine), max(0, lines.count - 1))
+            shown = lines[start ..< min(lines.count, start + fitting)]
+        }
         let placed = place(
-            lines: lines, text: text, metrics: metrics,
+            lines: Array(shown), text: text, metrics: metrics,
             leftInset: leftInset, availableWidth: availableWidth
         )
         let color = text.color ?? SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
         let runs = placed.isEmpty ? [] : [SWFTextRun(
             fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed
         )]
-        return SWFTextLayoutResult(runs: runs, missingGlyphs: shaper.missingGlyphs)
+        var result = SWFTextLayoutResult(runs: runs, missingGlyphs: shaper.missingGlyphs)
+        result.lineCount = lines.count
+        result.visibleLineCount = shown.count
+        return result
+    }
+
+    /// Whole lines whose descent stays inside the bounds, at least one. A line cut by the
+    /// bottom edge is left out rather than clipped.
+    private static func fittingLineCount(text: SWFEditText, metrics: FontScaledMetrics) -> Int {
+        let extraLeading = Float(text.layout?.leading ?? 0)
+        let lineAdvance = metrics.ascent + metrics.descent + metrics.leading + extraLeading
+        let room = Float(text.bounds.yMax - text.bounds.yMin) - metrics.ascent - metrics.descent
+        guard lineAdvance > 0, room > 0 else { return 1 }
+        return Int(room / lineAdvance) + 1
     }
 
     /// Positions shaped lines inside the field bounds: first baseline sits one

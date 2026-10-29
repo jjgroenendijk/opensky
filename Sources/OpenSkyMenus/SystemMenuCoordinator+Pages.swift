@@ -1,9 +1,9 @@
-// The sub-pages of the system menu: Settings, Controls, Save, Load, and Quit.
+// The sub-pages of the system menu: Settings, Controls, Save, Load, Quit, Help, and
+// Installed Content.
 // Each page has its own model; this routes events to it and carries out what it
 // returns. The movie mirrors the Settings page (docs/engine/system-menu.md).
 
 import Foundation
-import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
 
@@ -42,7 +42,26 @@ extension SystemMenuCoordinator {
             refreshSaveRows()
         case .quit:
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
+        case .installedContent, .help:
+            showTopicPage(page)
         }
+    }
+
+    /// Reads the page's topics and shows it. The movie asks for them when its row is pressed.
+    @discardableResult
+    func showTopicPage(_ page: SystemMenuPage) -> SystemMenuTopicPageModel? {
+        guard model.isOpen, page.isTopicPage else { return nil }
+        let topics = topicSource?.systemMenuTopics(page) ?? []
+        let built = SystemMenuTopicPageModel(topics: topics)
+        topicPage = built
+        model.show(page)
+        return built
+    }
+
+    /// The movie opened a row of the topic list.
+    func openTopic(_ index: Int) -> SystemMenuTopic? {
+        topicPage?.open(index)
+        return topicPage?.openTopic
     }
 
     func routePage(_ event: MenuInputEvent) {
@@ -57,6 +76,11 @@ extension SystemMenuCoordinator {
             routeSaveLoad(event)
         case .quit:
             routeQuit(event)
+        case .installedContent, .help:
+            if topicPage?.handle(event) == .back {
+                topicPage = nil
+                showPage(.main)
+            }
         }
     }
 
@@ -266,6 +290,13 @@ extension SystemMenuCoordinator {
             )
         case .quit:
             return page(rows: quitPage?.options ?? [], selected: quitPage?.selectedIndex ?? 0)
+        case .installedContent, .help:
+            if let topic = topicPage?.openTopic {
+                return page(rows: [topic.title, topic.text], selected: 0)
+            }
+            return page(
+                rows: topicPage?.topics.map(\.title) ?? [], selected: topicPage?.selectedIndex ?? 0
+            )
         }
     }
 

@@ -33,7 +33,16 @@ nonisolated public final class SWFDisplayObject {
     public let object: AS2Object
 
     public weak var parent: SWFDisplayObject?
+    /// The SWF depth. ActionScript sees `depth - scriptDepthBase`: author-time content sits
+    /// below 0 and script-made clips from 0 up, so the two never collide.
     public var depth: UInt16
+    public static let scriptDepthBase = 16384
+
+    /// Script-made: a goto on the parent's timeline leaves it in place.
+    public var hasScriptDepth: Bool {
+        Int(depth) >= Self.scriptDepthBase
+    }
+
     /// PlaceObject2 `Name` — the instance name ActionScript addresses.
     public var name: String?
     public var matrix = SWFMatrix.identity
@@ -47,6 +56,8 @@ nonisolated public final class SWFDisplayObject {
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?
+    /// `TextField.scroll`: the one-based first line shown.
+    public var textScroll = 1
     /// CLIPACTIONS handlers the placement attached, if any.
     public var clipActions: SWFClipActions?
 

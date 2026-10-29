@@ -23,11 +23,6 @@ extension MenuScreensWorldAdapter: TutorialMenuWorld {
     }
 
     func buttonName(forUserEvent event: String) -> String? {
-        let settings = game.playerSettings
-        guard
-            let slot = InputBindings.slots.first(where: { $0.event == event }),
-            let scanCode = settings.bindings.scanCode(for: slot.action)
-        else { return nil }
-        return settings.keyName(scanCode)
+        game.playerSettings.buttonName(forUserEvent: event)
     }
 }

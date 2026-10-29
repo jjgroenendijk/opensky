@@ -19,11 +19,7 @@ nonisolated public enum TutorialMenuMovieBridge: Sendable {
         for name in ["PlaySound", "myLog"] {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
-        runtime.registerHostFunction("GetButtonFromUserEvent") { call in
-            guard case let .string(event)? = call.arguments.first else { return nil }
-            let name = MainActor.assumeIsolated { buttonName(event) }
-            return name.map(AS2Value.string)
-        }
+        MenuMovieButtonArt.register(runtime: runtime, buttonName: buttonName)
         runtime.registerHostFunction("CloseMenu") { _ in
             MainActor.assumeIsolated { onClose() }
             return .undefined

@@ -8,8 +8,8 @@ tags: [engine, ui, menu, swf, settings]
 
 # System menu
 
-The system menu is the pause menu: Resume, Quicksave, Save, Load, Settings, Controls, and Quit,
-the rows of the vanilla System page. It was the first real consumer of
+The system menu is the pause menu: Resume, Quicksave, Save, Load, Installed Content, Settings,
+Controls, Help, and Quit, the rows of the vanilla System page. It was the first real consumer of
 [menu mode](/engine/menu-mode.md) input. It can also show itself through the vanilla
 `Interface\quest_journal.swf` movie.
 
@@ -26,13 +26,14 @@ Activating a row returns a result instead of doing the action:
 | --- | --- | --- |
 | Resume | resume | The selector closes; the host closes the menu |
 | Quicksave | quicksave | The host writes the `Quicksave` slot; the menu stays open |
-| Save, Load, Settings, Controls, Quit | show page | The page model takes the keys |
+| Every other row | show page | The page model takes the keys |
 
 Each page is its own model: the Settings page steps the [player settings](/engine/settings.md),
 the Save and Load pages list saves newest first and ask before an overwrite or a delete, the
 Controls page waits for the next key and rebinds it ([control map](/formats/controlmap.md)),
-and Quit asks Main Menu, Desktop, or Cancel, with Cancel selected. Main Menu opens the
-[title menu](/engine/main-menu.md). Cancel on a page returns to the row list.
+Help and Installed Content list topics and show the text of one, and Quit asks Main Menu,
+Desktop, or Cancel, with Cancel selected. Main Menu opens the [title menu](/engine/main-menu.md).
+Cancel on a page returns to the row list.
 
 Up and down wrap around, as the vanilla list does.
 Left and right are accepted and ignored, so they count as handled and do not reach the world.
@@ -76,11 +77,15 @@ Start-up order:
    and player info.
 2. Call `SetPlatform(0)`, `InitExtensions`, `ShowMenu`, and `SwitchPageToFront(2, true)`.
 3. The game normally sets `TopmostPage`, `iCurrentTab`, and focus through tab buttons backed by
-   game data. OpenSky sets the System page and index directly, and focuses its list.
+   game data. OpenSky sets the System page and index directly, calls the page's `startPage`, and
+   focuses its list. The tab group's `onTabChange` is what calls `startPage` in the game, and
+   `startPage` adds the list's `itemPress` listener. Without it, accept on a row does nothing.
 
 The other two pages fade to `hide`. System stops at its `forceFade` label.
 
-Menu events become Flash key down and key up events. The Settings row opens
+Menu events become Flash key down and key up events. Cancel becomes Tab, not Escape:
+`SystemPage.handleInput` goes back a page on `NavigationCode.TAB` and ignores `ESCAPE`, as the
+vanilla inventory menus do. The Settings row opens
 `SystemPage.SETTINGS_CATEGORY_STATE` by its named constant, through `StartState(aiState)`. No state
 number is written into OpenSky. The movie's `CloseMenu` call closes the engine menu. If the movie
 is missing or refuses the input, the engine selector handles it.
@@ -123,6 +128,35 @@ there is no cell. Without game data, the pages keep OpenSky's English words.
 
 The Settings page stays the engine's, because its values are the
 [player settings](/engine/settings.md).
+
+## Help and Installed Content
+
+The movie builds both rows itself. `SystemPage.onCategoryButtonPress` maps a row to a case of
+its switch, so the row index is not the case number. Without the `$CREATIONS` row
+(`SetShowMod(false)`), every row from `MOD_MANAGER_BUTTON_INDEX` (4) on moves up one case.
+`$INSTALLED CONTENT` is row 3 and `$HELP` is row 6.
+
+| Row | Movie calls | Then |
+| --- | --- | --- |
+| Installed Content | `PopulateCreationClubTopics([entryList])` | Sorts the list, then `CREATIONS_LIST_STATE` (11) if it has rows |
+| Help | `PopulateHelpTopics([entryList])` | Sorts the list, then `HELP_LIST_STATE` (13) if it has rows |
+| A topic | `RequestCreationClubText` or `RequestHelpText([entry.index, titleField, textField])` | `CREATIONS_TEXT_STATE` (12) or `HELP_TEXT_STATE` (14) |
+
+The movie checks the list length right after the populate call, so the engine fills the list
+inside the call, not after the event as it does for the save calls. Each entry has `text` and
+`index`; the movie hands `index` back when a topic is pressed. The engine writes the title and
+the text into the two fields it passes. The text field is a component, so the engine writes
+its `textField`. The movie then turns each `[Event]` tag into key art: its `CreateButtonArt` calls
+`GetButtonFromUserEvent` with the controlmap user event, and the engine answers with the bound
+key's name. Without that answer the movie faults before it shows the text.
+
+Help lists the `HelpManualPC` form list, which the `HMPC` default object names
+([UESP DOBJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ)). Each entry is a
+`MESG`: its `FULL` is the title and its `DESC` the text.
+
+Installed Content lists the active plugins with their author, description, and masters from
+the `TES4` header. The game shows the names of Creations here instead. A Creation plugin has
+no such name in its header, so the game takes it from data outside the plugin files.
 
 ## Not done yet
 

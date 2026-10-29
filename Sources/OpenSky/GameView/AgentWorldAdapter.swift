@@ -79,6 +79,7 @@ protocol AgentWorldHost: AnyObject {
     var simulationClock: SteppedWallClock { get }
     var skillsMenu: SkillsMenuCoordinator { get }
     var streamer: CellStreamer? { get }
+    var systemMenu: SystemMenuCoordinator { get }
     var titleMenu: TitleMenuCoordinator { get }
     var vehicleWorld: VehicleWorldAdapter { get }
     var hostView: NSView { get }

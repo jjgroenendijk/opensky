@@ -106,6 +106,8 @@ public typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
 /// One movie-to-engine call as a handler sees it.
 nonisolated public struct SWFHostCall {
     public let arguments: [AS2Value]
+    /// The movie making the call, for a handler that must answer inside it.
+    public unowned let movie: SWFMovieRuntime
 }
 
 nonisolated extension SWFMovieRuntime {
@@ -155,7 +157,7 @@ nonisolated extension SWFMovieRuntime {
             return nil
         }
         lastHostArguments[name] = arguments
-        let result = handler(SWFHostCall(arguments: arguments))
+        let result = handler(SWFHostCall(arguments: arguments, movie: self))
         noteInvoke(
             SWFInvokeEntry(
                 direction: .movieToEngine, name: name,
