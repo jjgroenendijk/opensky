@@ -24,9 +24,8 @@ struct AgentCommandListTests {
 
     @MainActor @Test func theRouterAnswersCatalogWithoutAGame() throws {
         let router = AgentCommandRouter(world: { nil })
-        guard case let .done(result) = router.handle(
-            AgentRequest(command: "catalog"), now: 0
-        ) else {
+        let handling = router.handle(AgentRequest(command: "catalog"), now: 0)
+        guard case let .done(result) = handling else {
             Issue.record("catalog waited")
             return
         }
