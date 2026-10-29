@@ -77,6 +77,9 @@ fi
 
 echo "[INFO] Step 4: the bridge plugin"
 build="$runtime/bridge-build"
+# CMake ties a build folder to one source folder; each worktree has its own.
+grep -qxF "CMAKE_HOME_DIRECTORY:INTERNAL=$source" "$build/CMakeCache.txt" 2>/dev/null ||
+    rm -rf "$build"
 cmake -S "$source" -B "$build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE="$source/cmake/macos-clangcl.cmake" \
     -DLLVM_PREFIX="$llvm" -DLLD_PREFIX="$lld" -DXWIN_SYSROOT="$sysroot" >/dev/null
