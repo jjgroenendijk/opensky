@@ -14,8 +14,16 @@ is in the `driving-the-running-game` skill; this page explains how the parts fit
 
 ## The server
 
-The server is off by default. `OPENSKY_AGENT_CONTROL=1` in the app's environment turns it on.
-`openskycli game launch` opens the app with it set, and with `OPENSKY_SKIP_LAUNCHER=1`.
+The server runs whenever the app runs, so a game the user started from the launcher or from
+`/Applications` can be inspected without a restart. The "Agent control" switch under
+"Developer" on the Settings page turns it off; it shows with "Show details" on. It is a player
+setting, `developer.agentControl`, on by default, and a change applies at once.
+
+`OPENSKY_AGENT_CONTROL` in the app's environment overrides the setting for one launch: `1` turns
+the server on and `0` turns it off. `openskycli game launch` opens the app with `1`, so it works
+with the switch off, and with `OPENSKY_SKIP_LAUNCHER=1`. UI test runs set `0`, so they never take
+the socket of a game the user has open. App-hosted unit test runs never start the app delegate,
+so they open no socket either.
 
 `game launch` also sets `OPENSKY_SURVIVAL_MODE`, from `--survival-mode on|off|ask` with `off` as
 the default. So the Survival Mode question never stops an agent session unless the script asks

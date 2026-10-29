@@ -171,6 +171,17 @@ struct LauncherTests {
         #expect(find("SettingsChooseGameFolderControl", in: page.view) != nil)
     }
 
+    @Test func agentControlIsOnByDefaultAndTheBoxWritesTheSetting() throws {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = SettingsViewController()
+        page.playerSettings = { store }
+        page.loadViewIfNeeded()
+        let box = try #require(button("SettingsAgentControlControl", in: page.view))
+        #expect(box.state == .on)
+        box.performClick(nil)
+        #expect(!store.bool(.agentControl))
+    }
+
     @Test func theSidebarSwitchShowsDetailsOnEveryPage() throws {
         let defaults = try #require(UserDefaults(suiteName: "LauncherDetailsTests"))
         defaults.removePersistentDomain(forName: "LauncherDetailsTests")

@@ -244,6 +244,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "rendering.meshShaderGrass", .opensky, .toggle, "Mesh-shader grass", 0, applied: true
         ),
         row("window.fullScreen", .opensky, .toggle, "Full screen", 0, applied: true),
+        row("developer.agentControl", .opensky, .toggle, "Agent control", 1, applied: true),
         row(
             "window.frameRateCap", .opensky,
             .choice(options: frameRateCapOptions.map(frameRateCapTitle)),
@@ -359,6 +360,8 @@ nonisolated extension PlayerSettingID {
     /// Draws grass with object and mesh shaders that cull meshlets on the GPU.
     public static let meshShaderGrass = Self("rendering.meshShaderGrass")
     public static let fullScreen = Self("window.fullScreen")
+    /// The app opens the `openskycli game` socket at start (docs/tools/agent-control.md).
+    public static let agentControl = Self("developer.agentControl")
     /// Actors blink on their own.
     public static let characterBlinking = Self("characters.blinking")
     /// Actors' eyes drift by the emotion they show.

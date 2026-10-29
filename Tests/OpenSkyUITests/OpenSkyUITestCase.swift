@@ -25,6 +25,8 @@ class OpenSkyUITestCase: XCTestCase {
         app.launchEnvironment.merge(environment) { _, given in given }
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = install.path(percentEncoded: false)
         app.launchEnvironment["OPENSKY_SKIP_LAUNCHER"] = skipsLauncher ? "1" : "0"
+        // Keeps the socket of a game the user has open free.
+        app.launchEnvironment["OPENSKY_AGENT_CONTROL"] = "0"
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
         return app
@@ -37,6 +39,8 @@ class OpenSkyUITestCase: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = dataRoot
         app.launchEnvironment["OPENSKY_SKIP_LAUNCHER"] = skipsLauncher ? "1" : "0"
+        // Keeps the socket of a game the user has open free.
+        app.launchEnvironment["OPENSKY_AGENT_CONTROL"] = "0"
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
         return app

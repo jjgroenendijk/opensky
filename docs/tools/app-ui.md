@@ -30,9 +30,10 @@ The app opens on the launcher. The launcher holds:
     game starts and the Survival Mode choice. Game files shows the game folder and only the
     asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
-    language, the Skyrim saves folder, and, under "Show details", the reference game
-    prefix. The game folder is a load setting, so it sits with the others and not on the
-    page a player starts from.
+    language, the Skyrim saves folder, and, under "Show details", the
+    [agent control](/tools/agent-control.md) switch and the reference game prefix. The
+    game folder is a load setting, so it sits with the others and not on the page a
+    player starts from.
   - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
     converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
     `AssetCacheCoordinator` in `OpenSkyLoading`, shared by the pages through `LauncherContext`.

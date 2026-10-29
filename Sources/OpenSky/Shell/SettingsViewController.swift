@@ -1,6 +1,6 @@
 // Settings: the game folder and its install check, plugins.txt, the string-table
-// language, the Skyrim saves folder, and the reference game prefix. The Cmd+,
-// window and the launcher's Settings page both host it, in the launcher's look.
+// language, the Skyrim saves folder, agent control, and the reference game prefix.
+// The Cmd+, window and the launcher's Settings page both host it, in the launcher's look.
 // Choices go to the shared defaults domain so the CLI sees them too.
 
 import AppKit
@@ -23,12 +23,20 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     lazy var languageNoteLabel = layout.line("SettingsLanguageStatsLabel")
     lazy var savesNoteLabel = layout.line("SettingsSkyrimSavesStatsLabel")
     lazy var referenceNoteLabel = layout.line("SettingsReferenceStatsLabel")
+    let agentControlCheckbox = NSButton(
+        checkboxWithTitle: "Agent control", target: nil, action: nil
+    )
+    /// Read again each time, because the game window may have changed the file.
+    var playerSettings: () -> PlayerSettingsStore = {
+        PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+    }
+
     private var installCheck: Task<Void, Never>?
 
     override func loadView() {
         view = layout.makeView(title: "Settings", groups: [
             makeGameFolderGroup(), makePluginsTextGroup(), makeLanguageGroup(),
-            makeSavesFolderGroup(), makeReferenceGroup()
+            makeSavesFolderGroup(), makeAgentControlGroup(), makeReferenceGroup()
         ])
         view.frame = NSRect(x: 0, y: 0, width: LauncherPageLayout.minimumPageWidth, height: 560)
         refresh()
@@ -93,6 +101,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
         refreshLanguage(root: root)
         refreshSavesFolder()
         refreshReferencePrefix()
+        refreshAgentControl()
     }
 
     /// The check reads every plugin and archive header, so it runs off the main actor.
