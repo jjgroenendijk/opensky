@@ -76,6 +76,13 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let preHitFrame = "preHitFrame"
     /// The contact frame itself. This is the one that runs the sweep.
     public static let hitFrame = "HitFrame"
+    /// The attack clip's combo window: an `attackStart` raised between the two
+    /// chains into the next swing. A left-hand clip, such as the left punch, fires
+    /// the `Left` pair.
+    public static let attackWinStart = "AttackWinStart"
+    public static let attackWinEnd = "AttackWinEnd"
+    public static let attackWinStartLeft = "AttackWinStartLeft"
+    public static let attackWinEndLeft = "AttackWinEndLeft"
     /// Fired when a block absorbs a hit; `blockbehavior.hkx` plays the shield
     /// impact off it.
     public static let blockHitStart = "blockHitStart"
@@ -92,6 +99,7 @@ nonisolated public enum CombatGraphNames: Sendable {
         beginWeaponDraw, beginWeaponSheathe,
         weapEquipOut, unequipOut,
         weaponSwing, preHitFrame, hitFrame,
+        attackWinStart, attackWinEnd, attackWinStartLeft, attackWinEndLeft,
         attackStart, attackStop, bashStart, bashStop, blockStart, blockStop,
         staggerStart, staggerStop, blockHitStart
     ]

@@ -85,6 +85,27 @@ swing that fires `HitFrame` and nothing else does not stay in the hit phase fore
 A sheath or a `staggerStart` drops the phase to idle. No swing starts with a sheathed weapon or
 during a stagger.
 
+## Combos
+
+An attack clip marks a combo window with `AttackWinStart` and `AttackWinEnd`. A left-hand clip,
+such as the left punch of the unarmed combo, uses `AttackWinStartLeft` and `AttackWinEndLeft`. In
+`1hm_behavior.hkx`, an `attackStart` raised inside that window takes the transition into the next
+swing of the combo. The graph owns the window and the next clip, so OpenSky adds no timer.
+
+The engine follows the same two marks:
+
+1. A press during a swing resolves as usual: a tap, or a hold into a power attack.
+2. The resolved strike waits until the window opens, then its start event is raised. A press
+   inside the window raises at once.
+3. The graph fires the start event back. That begins a new swing, with a new swing number, so
+   the next swing can hit the same target again.
+4. A swing that ends before its window opens drops the waiting strike. The player returns to
+   idle.
+
+After the contact frame, an open window reads as `GetAttackState` 4 (next attack). Before
+contact, the swing's own phase wins, so a window that opens early cannot hide the hit. `state
+player` shows `melee`: the `attackPhase`, the `attackState` code, and `chainWindowOpen`.
+
 ## Reach and the hit volume
 
 Reach is the documented combat distance formula:

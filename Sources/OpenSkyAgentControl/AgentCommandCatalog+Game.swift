@@ -130,7 +130,8 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("id", "The item editor ID.")],
             options: [
                 value("count", "n", "Default: 1."),
-                value("ref", "ref", "The container. Default: player.")
+                value("ref", "ref", "The container. Default: player."),
+                flag("equip", "Then equip it on the player.")
             ]
         ),
         command(

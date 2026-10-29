@@ -62,6 +62,8 @@ arrow keys.
   `behaviorProjectFailure` when that project did not load.
 - `state view` gives what the reference game's console takes: the player's `feet`, the
   angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` (`docs/tools/reference-game.md`).
+- `state player` gives `melee`: the swing's `attackPhase`, `attackState` (the `GetAttackState`
+  code, 4 inside a combo window after contact), `chainWindowOpen`, and `swingID`.
 - `state player` gives the player `level`. `state actors` gives each actor's `leveled` roll: the
   `LVLN` `hops` (list and chosen entry), the `playerLevel` it rolls at, whether that level is
   `frozen`, the `encounterLevel`, and the `difficulty`. `debug skillsmenu --levelup <n>` raises
@@ -135,7 +137,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug time <hour>` | `debug time 13.5` |
 | `debug weather [<editorID>]` | no ID clears the forced weather |
 | `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | `debug av Health --value 50` |
-| `debug item <editorID> [--count <n>]` | negative count removes; player only |
+| `debug item <editorID> [--count <n>] [--equip]` | negative count removes; `--equip` then equips it; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
 | `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable`; answers `taken` and the actor's sub-graphs |

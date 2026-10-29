@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyBehavior
 import OpenSkyCells
@@ -144,6 +145,7 @@ extension AgentWorldAdapter {
             .string(spell.editorID ?? "\(spell.id)")
         })
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
+        result["melee"] = meleeState()
         result["bowZoom"] = [
             "zoomed": .bool(gameSession.bowZoomViewShare < 1),
             "viewShare": .init(gameSession.bowZoomViewShare),
@@ -164,6 +166,17 @@ extension AgentWorldAdapter {
                 .map { .init($0.intValue) } ?? .null
         ]
         return .object(result)
+    }
+
+    /// `attackState` is the `GetAttackState` value conditions read.
+    private func meleeState() -> AgentJSON {
+        guard let melee = game.combat.melee else { return .null }
+        return [
+            "attackPhase": .string(melee.state.attackPhase.rawValue),
+            "attackState": .init(game.combat.playerActionFacts?.attackState.rawValue ?? 0),
+            "chainWindowOpen": .bool(melee.state.isChainWindowOpen),
+            "swingID": .init(melee.state.swingID)
+        ]
     }
 
     private func firstPersonState(gameSession: GameSession) -> AgentJSON {

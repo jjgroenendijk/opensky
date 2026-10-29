@@ -43,6 +43,9 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
     public private(set) var isBlocking = false
     /// Whether a stagger is playing, from `staggerStart` and `staggerStop`.
     public private(set) var isStaggering = false
+    /// Whether the swing's combo window is open, from `AttackWinStart` to
+    /// `AttackWinEnd`. A press now chains into the next swing.
+    public private(set) var isChainWindowOpen = false
     /// How many swings have reached their contact frame since construction.
     public private(set) var contactCount = 0
     /// Monotonic id of the swing in progress, so a hit filter can say "this
@@ -61,6 +64,9 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         if let change = handleAttack(event) {
             return change
         }
+        if let change = handleChainWindow(event) {
+            return change
+        }
         return handleFlags(event)
     }
 
@@ -77,7 +83,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
             drawState = .sheathing
             // A sheath cancels whatever swing was in flight; the graph takes
             // the attack state away at the same moment.
-            attackPhase = .idle
+            endSwing()
         // Two names per edge, because only some equip clips carry `BeginWeaponDraw`
         // (`1HM_Equip.hkx` does, `Dag_Equip.hkx` does not). `WeapEquip_Out` fires for
         // all of them at the clip end, so it is the backstop; the annotation wins.
@@ -87,7 +93,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         case CombatGraphNames.beginWeaponSheathe, CombatGraphNames.unequipOut:
             moved = drawState.isWeaponInHand
             drawState = .sheathed
-            attackPhase = .idle
+            endSwing()
         default:
             return nil
         }
@@ -101,6 +107,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         case let name where CombatGraphNames.strikeStarts.contains(name):
             guard drawState.canAttack, !isStaggering else { return nil }
             attackPhase = .windup
+            isChainWindowOpen = false
             swingID += 1
         case CombatGraphNames.preHitFrame:
             guard attackPhase == .windup else { return nil }
@@ -112,11 +119,31 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
             openedHitWindow = true
         case CombatGraphNames.attackStop, CombatGraphNames.bashStop:
             guard attackPhase != .idle else { return nil }
-            attackPhase = .idle
+            endSwing()
         default:
             return nil
         }
         return change(openedHitWindow: openedHitWindow)
+    }
+
+    /// The combo window. Only a swing in progress has one.
+    private mutating func handleChainWindow(_ event: String) -> MeleeStateChange? {
+        switch event {
+        case CombatGraphNames.attackWinStart, CombatGraphNames.attackWinStartLeft:
+            guard attackPhase.isAttacking, !isChainWindowOpen else { return nil }
+            isChainWindowOpen = true
+        case CombatGraphNames.attackWinEnd, CombatGraphNames.attackWinEndLeft:
+            guard isChainWindowOpen else { return nil }
+            isChainWindowOpen = false
+        default:
+            return nil
+        }
+        return change()
+    }
+
+    private mutating func endSwing() {
+        attackPhase = .idle
+        isChainWindowOpen = false
     }
 
     /// Blocking and staggering, both plain edges.
@@ -132,7 +159,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
             isStaggering = true
             // The stagger transition is what takes the attack state away, so
             // the phase follows it rather than being cancelled independently.
-            attackPhase = .idle
+            endSwing()
         case CombatGraphNames.staggerStop:
             guard isStaggering else { return nil }
             isStaggering = false

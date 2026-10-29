@@ -47,7 +47,7 @@ nonisolated extension BehaviorGraphInstance {
 
         var state = markReached(target)
         let wasSeeded = state.hasSeeded
-        seedIfNeeded(&state, clip: clip, window: window, generator: generator)
+        seedIfNeeded(&state, clip: clip, window: window, generator: generator, bound: bound)
         let advance = step(generator, bound: bound, window: window, deltaTime: deltaTime)
         state.previousLocalTime = state.localTime
         var wrapped = advanceTime(
@@ -95,19 +95,22 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Places a freshly activated clip at `m_startTime` and records the root
     /// bone at both window edges, so a wrap can report the travel across the
-    /// seam without sampling twice every update.
+    /// seam without sampling twice every update. A bound start time wins: the
+    /// sword swings author 0.333 but bind `attackIntroLength`, whose starting value is 0.
     private func seedIfNeeded(
         _ state: inout BehaviorNodeState,
         clip: any BehaviorClip,
         window: BehaviorClipWindow,
-        generator: HKBClipGenerator
+        generator: HKBClipGenerator,
+        bound: [String: BehaviorVariableValue]
     ) {
         // Keyed on `hasSeeded` rather than on a sampled root pose, because a
         // clip that animates no root bone would otherwise reseed every update
         // and never advance.
         guard !state.hasSeeded else { return }
         state.hasSeeded = true
-        state.localTime = min(max(generator.startTime, 0), window.length)
+        let start = bound.float("m_startTime", or: generator.startTime)
+        state.localTime = min(max(start.isFinite ? start : 0, 0), window.length)
         state.previousLocalTime = state.localTime
         state.windowStartRootPose = rootPose(of: clip.samples(at: window.start))
         state.windowEndRootPose = rootPose(
@@ -170,8 +173,9 @@ nonisolated extension BehaviorGraphInstance {
         window: BehaviorClipWindow,
         justSeeded: Bool
     ) -> Bool {
-        guard let pending = pendingClipPhase, pending.value.isFinite else { return false }
-        guard !pending.seedOnly || justSeeded else { return false }
+        guard
+            let pending = pendingClipPhase, pending.value.isFinite,
+            !pending.seedOnly || justSeeded else { return false }
         let target = min(max(pending.value, 0), 1) * window.length
         // A synced clip that plays at the shared rate is already in step; a jump of
         // a rounding error would drop its root travel for the update.
