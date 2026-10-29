@@ -217,9 +217,12 @@ Once `skse64_loader.exe` is in the game copy, every start goes through it.
 | `openskycli reference answer <button>` | Presses a button of the open message box, by index from 0 or by text |
 
 The launcher's Send View and Follow Windows Game buttons do the same as `sync` and
-`follow`. Sync runs the `cow` or `coc` line alone, waits until the new cell has loaded,
-then runs the rest, because a cell change puts the player at the cell's own marker. It
-leaves out `tm`, which would show the HUD again on every second send.
+`follow`. Sync runs the `cow` or `coc` line alone, waits until the state names the new
+cell, then runs the rest, because a cell change puts the player at the cell's own marker.
+The state names the new cell before its load starts, and the load stops the plugin for a
+few seconds, so sync checks the feet a second later and runs the rest again if the load
+undid it, up to three times. It leaves out `tm`, which would show the HUD again on every
+second send.
 
 The bridge and OpenSky share `OpenSkyBridge/` in the game copy's folder:
 `commands/<name>.txt` holds one batch of console lines, and `state.json` holds the game's

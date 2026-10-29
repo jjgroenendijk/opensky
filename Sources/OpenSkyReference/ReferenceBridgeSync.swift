@@ -2,10 +2,14 @@
 // at OpenSky's view, load a save at its main menu, and answer a message box.
 
 import Foundation
+import simd
 
 nonisolated extension ReferenceBridge {
     /// Seconds a cell change or a save load may take, with the loading screen.
     public static let loadTimeout = Duration.seconds(180)
+    /// A late cell load can still put the player at the cell's marker this long after.
+    static let settleTime = Duration.seconds(1)
+    static let viewAttempts = 3
 
     /// The place command runs first and alone: the rest only holds once the new cell has
     /// loaded, because a cell change puts the player at the cell's own marker.
@@ -20,7 +24,20 @@ nonisolated extension ReferenceBridge {
         _ = try await wait("load the cell", timeout: Self.loadTimeout) {
             $0.inWorld && $0.isAt(place)
         }
-        return try await run(Array(lines.dropFirst()))
+        // The new cell shows in the state before its load starts; no loading flag shows,
+        // because the load stops the plugin too. So the rest runs again if it was undone.
+        let rest = Array(lines.dropFirst())
+        let feet = SIMD3(view.feet[0], view.feet[1], view.feet[2])
+        var result = try await run(rest)
+        for _ in 1 ..< Self.viewAttempts {
+            try await Task.sleep(for: Self.settleTime)
+            let now = try await wait("load the cell", timeout: Self.loadTimeout) { $0.inWorld }
+            if now.stands(at: feet) {
+                return now
+            }
+            result = try await run(rest)
+        }
+        return result
     }
 
     /// Waits for the main menu, loads `save` (a file name, with or without `.ess`), then
@@ -44,6 +61,12 @@ nonisolated extension ReferenceBridge {
 }
 
 nonisolated extension ReferenceBridgeState {
+    /// Whether the player's feet are within a step of `feet` on the ground plane.
+    public func stands(at feet: SIMD3<Float>) -> Bool {
+        guard let position, position.count == 3 else { return false }
+        return simd_distance(SIMD2(position[0], position[1]), SIMD2(feet.x, feet.y)) < 32
+    }
+
     /// Whether the player stands in `place`; editor IDs compare without case, as the
     /// console reads them.
     public func isAt(_ place: ReferencePlace) -> Bool {

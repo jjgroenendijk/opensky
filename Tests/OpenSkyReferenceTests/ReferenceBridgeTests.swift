@@ -74,6 +74,12 @@ struct ReferenceBridgeTests {
         #expect(!state.inWorld)
     }
 
+    @Test func standingNearTheFeetIgnoresHeight() throws {
+        let state = try decode(exterior)
+        #expect(state.stands(at: SIMD3(1010, -2000, 0)))
+        #expect(!state.stands(at: SIMD3(1100, -2000, 300)))
+    }
+
     @Test func anOpenMessageBoxNamesItsButtons() throws {
         let state = try decode("""
         {"version":1,"batch":"","mainMenu":false,"loading":false,\
