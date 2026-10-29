@@ -137,7 +137,9 @@ four things:
    prefix's `SkyrimPrefs.ini`, starting from the game's `High.ini` preset when the game has
    not written the file yet. Without these keys the game window does not match the capture
    size. The default is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it. Wine
-   opens the window at the top left and ignores `iLocation X` and `iLocation Y`. They also
+   opens the window at the top left and ignores `iLocation X` and `iLocation Y`. The CLI
+   applies the game's Low preset first, so both games fit on one GPU;
+   `ARGS='--preset high'` picks another. They also
    set `bAlwaysActive=1` in `[General]` of `Skyrim.ini`, so the game keeps running while
    another app is in front. Without it the game pauses on alt-tab, and the bridge pauses
    with it. The game ignores the key in `SkyrimPrefs.ini` (observed 2026-10-29).

@@ -57,7 +57,10 @@ enum ReferenceCommand {
         let frame = ReferenceWindowFrame(
             x: 0, y: 0, width: arguments.window.width, height: arguments.window.height
         )
-        let options = ReferenceLaunchOptions(frame: frame, steamWait: arguments.steamWait)
+        let preset = GraphicsPreset.allCases.first { arguments.preset.rawValue == "\($0)" }
+        let options = ReferenceLaunchOptions(
+            frame: frame, steamWait: arguments.steamWait, preset: preset
+        )
         do {
             try await ReferenceLauncher.launch(prefix: prefix, options: options, logs: run)
         } catch let error as ReferenceLauncherError {

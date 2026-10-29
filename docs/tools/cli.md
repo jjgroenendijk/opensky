@@ -181,7 +181,7 @@ the number. A summary line goes to stderr.
 | `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two renders with the cache off and on. 100 dB means identical |
 | `reference status` | The reference game prefix and what it still lacks, and the Wine that runs it ([reference game](/tools/reference-game.md)) |
 | `reference check` | Compares the Steam build and the SHA-256 of every `.esm` of the reference copy and the OpenSky install. Exits 1 on a difference |
-| `reference launch [--width n] [--height n] [--steam-wait s]` | Sets the window size in the prefix's `SkyrimPrefs.ini`, then starts Windows Steam and the game |
+| `reference launch [--width n] [--height n] [--steam-wait s] [--preset low\|medium\|high\|ultra]` | Sets the window size and the game's own graphics preset, Low by default, in the prefix's `SkyrimPrefs.ini`, then starts Windows Steam and the game |
 | `reference export-view [--no-hide-menus] [--freeze]` | Writes the running OpenSky view as the batch file `bat opensky` runs in the reference game |
 | `reference capture [--width n] [--height n]` | Captures both games at one size and writes the pair, their difference, the batch file, and a report to `.logs/reference/<UTC time>/` |
 | `reference state` | The Windows game's state as the bridge plugin reports it: place, angles, hour, weather, and field of view |
