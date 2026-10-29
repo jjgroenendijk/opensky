@@ -3,7 +3,9 @@
 
 import AppKit
 import OpenSkyAgentControl
+import OpenSkyFormatsSWF
 import OpenSkyMenus
+import OpenSkyRendering
 
 struct AgentMenuRows: Equatable {
     let menu: String
@@ -95,7 +97,8 @@ extension AgentWorldAdapter {
             "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
             "top": .init(game.menuMode.topMenu?.name),
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
-            "hud": hudState
+            "hud": hudState,
+            "movie": movieFocusState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -119,6 +122,40 @@ extension AgentWorldAdapter {
         }
         return .object(result)
     }
+
+    /// The menu movie's focused clip, its frame label, controllers, and button-art platform.
+    var movieFocusState: AgentJSON {
+        guard let runtime = game.renderer?.swfRuntime else { return .null }
+        let focus = runtime.focusTarget
+        return [
+            "focus": .init(focus?.targetPath),
+            "focusLabel": .init(focus.flatMap(runtime.currentFrameLabel(of:))),
+            "controllers": .init(runtime.controllerCount),
+            "platform": .number(runtime.inputPlatform)
+        ]
+    }
+
+    /// `debug gamepad`: the reported gamepads change at once; presses arrive next frame.
+    func driveGamepad(count: Int?, press: [String]) throws(AgentFailure) -> AgentJSON {
+        let gamepads = game.menuRouter.gamepads
+        var buttons: Set<GamepadButton> = []
+        for name in press {
+            guard let button = Self.gamepadButtons[name] else {
+                throw AgentFailure(.invalidArgument, "unknown gamepad button: \(name)")
+            }
+            buttons.insert(button)
+        }
+        if let count {
+            gamepads.simulatedCount = count
+        }
+        gamepads.simulatedPress.formUnion(buttons)
+        return ["simulated": .init(gamepads.simulatedCount), "pressed": .init(buttons.count)]
+    }
+
+    private static let gamepadButtons: [String: GamepadButton] = [
+        "a": .a, "b": .b, "x": .x, "y": .y,
+        "up": .dpadUp, "down": .dpadDown, "left": .dpadLeft, "right": .dpadRight
+    ]
 
     var hudState: AgentJSON {
         [

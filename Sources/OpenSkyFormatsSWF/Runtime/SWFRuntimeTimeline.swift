@@ -13,6 +13,15 @@ nonisolated extension SWFMovieRuntime {
         node.timeline?.frames ?? []
     }
 
+    /// The last label at or before the playhead, as Flash 9's `_currentlabel` reads.
+    /// A CLIK button's label names its state, such as `over` when focused.
+    public func currentFrameLabel(of node: SWFDisplayObject) -> String? {
+        let frames = frames(of: node)
+        guard !frames.isEmpty else { return nil }
+        let last = min(max(0, node.currentFrame), frames.count - 1)
+        return frames[...last].last { $0.label != nil }?.label
+    }
+
     /// Moves `node`'s playhead to `index` and executes that frame.
     public func enterFrame(_ index: Int, of node: SWFDisplayObject) {
         let frames = frames(of: node)

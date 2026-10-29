@@ -36,6 +36,10 @@ nonisolated public final class SWFMovieRuntime {
     /// Accepted `Selection.setFocus` calls, so a test can assert focus moved
     /// without depending on which node it moved to.
     public var focusChanges = 0
+    /// Connected gamepads. Each adds a GFx controller beside keyboard and mouse.
+    public internal(set) var gamepadCount = 0
+    /// The last `SetPlatform` call, replayed when a gamepad connects or leaves.
+    var platformCall: SWFPlatformCall?
     /// Nesting guard for a frame action that jumps the same clip again.
     public var gotoDepth = 0
     /// Instances placed in the current batch, waiting for their constructors.

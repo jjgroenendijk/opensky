@@ -177,6 +177,13 @@ nonisolated extension AgentCommandCatalog {
 
     private static let menusAndRender: [AgentCommandSpec] = [
         command(
+            "debug.gamepad", "Report gamepads to the menus, or press gamepad buttons.",
+            options: [
+                value("count", "n", "Gamepads to report when fewer are connected, 0 to 3."),
+                value("press", "buttons", "Buttons to press, such as down,a: a, b, x, y, up.")
+            ]
+        ),
+        command(
             "debug.racemenu", "Open the race menu, as the console's ShowRaceMenu.",
             options: [flag("limited", "Open it as Game.ShowLimitedRaceMenu.")]
         ),

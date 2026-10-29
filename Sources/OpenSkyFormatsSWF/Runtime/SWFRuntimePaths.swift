@@ -75,8 +75,15 @@ nonisolated extension SWFMovieRuntime {
         if let child = node.child(named: name) {
             return .object(child.object)
         }
+        if Self.optionalComponentChildren.contains(name) {
+            return .undefined
+        }
         return builtinMethod(name, of: node)
     }
+
+    /// Child clips a CLIK control tests with `== null` and does without. A `Button` with no
+    /// `focusIndicator` shows focus through its own `over` state; no vanilla movie places one.
+    public static let optionalComponentChildren: Set = ["focusIndicator"]
 
     /// A clip's built-in methods stay reachable even when `registerClass`
     /// replaced its `__proto__` with a class that does not `extend MovieClip`.

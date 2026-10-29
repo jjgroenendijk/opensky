@@ -40,14 +40,19 @@ enum SWFMovieProbeCommand {
         for path in dumps {
             SWFSystemMenuCommand.printNode(path, runtime: runtime)
         }
-        print("[INFO] swf probe focus: \(runtime.focusTarget?.targetPath ?? "none")")
+        let focus = runtime.focusTarget
+        print(
+            "[INFO] swf probe focus: \(focus?.targetPath ?? "none"), label "
+                + "\(focus.flatMap(runtime.currentFrameLabel(of:)) ?? "none"), "
+                + "\(runtime.controllerCount) controllers, platform \(runtime.inputPlatform)"
+        )
         print("[INFO] swf probe callbacks: \(runtime.movieCallbackNames.joined(separator: " "))")
         let missing = runtime.tally.missingNames.keys.sorted()
         print("[INFO] swf probe missing: \(missing.joined(separator: " "))")
     }
 
-    /// `call:<path>:<method>[:<JSON array of arguments>]`, `focus:<path>`, or
-    /// `key:<Flash key code>`. An
+    /// `call:<path>:<method>[:<JSON array of arguments>]`, `focus:<path>`,
+    /// `gamepads:<count>`, or `key:<Flash key code>`. An
     /// empty path calls a GameDelegate callback.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
         if step.hasPrefix("focus:") {
@@ -55,6 +60,10 @@ enum SWFMovieProbeCommand {
                 atPath: String(step.dropFirst(6)),
                 from: runtime.root
             ))
+            return
+        }
+        if step.hasPrefix("gamepads:"), let count = Int(step.dropFirst(9)) {
+            runtime.setGamepadCount(count)
             return
         }
         if step.hasPrefix("key:"), let code = Int(step.dropFirst(4)) {

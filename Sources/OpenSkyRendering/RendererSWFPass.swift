@@ -50,6 +50,17 @@ extension Renderer {
         set { swf.soundPlayer = newValue }
     }
 
+    /// Connected gamepads, told to every running and later movie. A gamepad
+    /// switches the movies' button art to the gamepad platform.
+    public var swfGamepadCount: Int {
+        get { swf.gamepadCount }
+        set {
+            swf.gamepadCount = newValue
+            swf.runtime?.setGamepadCount(newValue)
+            swf.overlay?.runtime.setGamepadCount(newValue)
+        }
+    }
+
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
     public var swfScene: SWFMovieScene? {
         swf.movie?.scene
