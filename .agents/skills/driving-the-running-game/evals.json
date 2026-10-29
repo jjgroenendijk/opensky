@@ -84,5 +84,38 @@
       "Checks the spelling with openskycli game debug rest --help or reference.md before running",
       "Uses debug rest 8 --sleep with no on/off value after the flag"
     ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "Where does the player stand in the Windows reference game right now?",
+    "files": [],
+    "expected_behavior": [
+      "Runs openskycli reference state and reads position, cell, and angles from it",
+      "Does not type console keys into the Wine window or rely on a screenshot to find the place"
+    ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "I loaded a save in the reference game and now it seems stuck on a Survival Mode popup.",
+    "files": [],
+    "expected_behavior": [
+      "Reads the dialog's buttons from openskycli reference state",
+      "Presses No with openskycli reference answer no instead of asking the user to click"
+    ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "Put the Windows reference game at the same view as OpenSky, then close both games.",
+    "files": [],
+    "expected_behavior": [
+      "Uses openskycli reference sync with the OpenSky app running",
+      "Closes both games afterwards with game quit and reference send qqq"
+    ]
   }
 ]

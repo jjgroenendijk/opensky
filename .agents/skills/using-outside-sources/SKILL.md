@@ -79,8 +79,8 @@ with the main session's worktree.
 4. Write the description into the matching `docs/` page, citing the file and commit as
    "behaviour described from".
 5. Implement from the description, in OpenSky's own names and structure.
-6. Confirm the behaviour in the reference game with SKSE installed (`reference/`,
-   `docs/tools/reference-game.md`), or record in the page that it is unconfirmed.
+6. Confirm the behaviour in the reference game, driven through `openskycli reference`
+   (`driving-the-running-game`), or record in the page that it is unconfirmed.
 
 The main session may open the Tier 2 source's README, licence, and file list to find the
 right file for the prompt. It does not open source files.
