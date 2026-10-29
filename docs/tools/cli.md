@@ -158,7 +158,7 @@ the number. A summary line goes to stderr.
 | `swf action-run [--movie text] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](/engine/as2-game-delegate.md)) |
 | `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, and `key:<code>` sends a key. Prints the host calls, the dumped nodes, and the focus at the end. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
 | `menu inventory`, `menu quest-journal`, `menu container`, `menu dialogue` | Drives one vanilla menu through its bridge against real records and reads the rows back out of the movie. In the CLI because the real-data test host is unreliable here |
-| `menu system [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call ([system menu](/engine/system-menu.md)) |
+| `menu system [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call, the faults, and the missing names. Help and Installed Content answer with two sample topics. `--dump` also prints a node's sprite frames and display children ([system menu](/engine/system-menu.md)) |
 
 ### Rendering
 

@@ -32,6 +32,7 @@ enum SWFSystemMenuCommand {
         }
         runtime.start()
         SystemMenuMovieBridge.activate(runtime: runtime) {}
+        registerSampleTopics(runtime)
         tick(runtime, ticks)
         runtime.clearInvokeLog()
         guard
@@ -65,6 +66,30 @@ enum SWFSystemMenuCommand {
         for path in dumps {
             printNode(path, runtime: runtime)
         }
+        printFaults(runtime)
+    }
+
+    /// Two topics on each topic page, with key-art tags and the CRLF breaks of `DESC`.
+    private static func registerSampleTopics(_ runtime: SWFMovieRuntime) {
+        let topics = [
+            SystemMenuTopic(title: "Sprinting", text: "Hold [Sprint] to run.\r\nIt costs stamina."),
+            SystemMenuTopic(title: "Archery", text: "Press [Right Attack/Block] to draw.")
+        ]
+        SystemMenuMovieBridge.registerTopics(
+            runtime: runtime, topics: { _ in topics },
+            open: { topics.indices.contains($0) ? topics[$0] : nil }
+        )
+    }
+
+    static func printFaults(_ runtime: SWFMovieRuntime) {
+        let tally = runtime.tally
+        print("[INFO] swf probe faults: \(tally.faultTotal)")
+        for fault in tally.faults {
+            print("[INFO]   \(fault)")
+        }
+        print(
+            "[INFO] swf probe missing: \(tally.missingNames.keys.sorted().joined(separator: " "))"
+        )
     }
 
     /// A menu key, `state:<CONSTANT>`, `focus:<path>`, or `call:<path>:<method>`.
@@ -186,6 +211,21 @@ enum SWFSystemMenuCommand {
             if ["EntriesA", "entryList", "HUDModes", "HudElements"].contains(name) {
                 printArguments("\(path).\(name)", [value])
             }
+        }
+        if let id = node.characterId, let sprite = runtime.movie.sprite(id) {
+            print("[INFO]   sprite \(id) frame \(node.currentFrame) of \(sprite.frameCount)")
+            for (index, frame) in sprite.timeline.frames.enumerated() {
+                let names = frame.steps.compactMap { step -> String? in
+                    guard case let .place(placement) = step else { return "remove" }
+                    return "\(placement.depth):\(placement.name ?? "-")"
+                }
+                print(
+                    "[INFO]   frame \(index) \(frame.label ?? "") \(names.joined(separator: " "))"
+                )
+            }
+        }
+        for child in node.children {
+            print("[INFO]   child \(child.depth) \(child.name ?? "-") \(child.content)")
         }
     }
 }
