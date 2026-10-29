@@ -221,6 +221,14 @@ extension SystemMenuCoordinator {
             topicPage?.showList()
         }
         lastMovieState = state
+        defer {
+            if
+                Self.movieTopicListStates.contains(state),
+                let row = SystemMenuMovieBridge.selectedTopicRow(model.page, runtime: runtime)
+            {
+                topicPage?.select(row)
+            }
+        }
         guard let page, page != model.page else { return }
         switch page {
         case .main:

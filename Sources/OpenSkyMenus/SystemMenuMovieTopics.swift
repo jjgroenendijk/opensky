@@ -46,6 +46,20 @@ nonisolated extension SystemMenuMovieBridge {
         }
     }
 
+    /// The movie's highlighted row on a topic page. `SystemPage` keeps each list as a member.
+    public static func selectedTopicRow(
+        _ page: SystemMenuPage, runtime: SWFMovieRuntime
+    ) -> Int? {
+        let member = page == .help ? "HelpList" : "CreationsList"
+        guard
+            let systemPage = runtime.node(atPath: systemPagePath, from: runtime.root),
+            let list = systemPage.object.lookup(member)?.property.value.objectValue,
+            case let .number(selected) = list.lookup("iSelectedIndex")?.property.value,
+            selected.isFinite, selected >= 0
+        else { return nil }
+        return Int(selected)
+    }
+
     /// Writes the topic into the title and text fields a text request passed.
     public static func writeTopic(
         _ topic: SystemMenuTopic, arguments: [AS2Value], runtime: SWFMovieRuntime
@@ -62,11 +76,17 @@ nonisolated extension SystemMenuMovieBridge {
         }
     }
 
-    /// A text field, or a component that holds one as `textField`.
+    /// A text field, or a CLIK component. A component redraws its `textField` from its own
+    /// `text`, so the text goes through that setter.
     static func writeText(_ text: String, to value: AS2Value?, runtime: SWFMovieRuntime) {
-        let object = value?.objectValue
-        let inner = object?.lookup("textField")?.property.value.objectValue
-        guard let field = SWFDisplayObject.resolve(inner ?? object) else { return }
-        runtime.setText(text, of: field)
+        guard let object = value?.objectValue else { return }
+        if let setter = object.lookup("text")?.property.setter {
+            runtime.markDirty()
+            runtime.runtime.invoke(.object(setter), thisValue: .object(object), arguments: [
+                .string(text)
+            ])
+        } else if let field = SWFDisplayObject.resolve(object) {
+            runtime.setText(text, of: field)
+        }
     }
 }

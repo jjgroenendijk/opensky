@@ -41,6 +41,14 @@ struct SystemMenuTopicPageTests {
         #expect(page.openTopic == nil)
     }
 
+    @Test func theMovieMovesTheSelection() {
+        var page = SystemMenuTopicPageModel(topics: Self.topics)
+        page.select(2)
+        #expect(page.selectedIndex == 2)
+        page.select(-1)
+        #expect(page.selectedIndex == 2, "an index outside the list is ignored")
+    }
+
     @Test func helpTopicsSkipMessagesWithoutATitle() {
         let messages = [
             BuiltMessage(

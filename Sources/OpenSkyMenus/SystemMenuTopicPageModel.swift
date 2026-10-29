@@ -49,6 +49,12 @@ nonisolated public struct SystemMenuTopicPageModel: Equatable, Sendable {
         openIndex.flatMap { topics.indices.contains($0) ? topics[$0] : nil }
     }
 
+    /// The movie moved its own list.
+    public mutating func select(_ index: Int) {
+        guard topics.indices.contains(index) else { return }
+        selectedIndex = index
+    }
+
     /// The movie opened a topic itself.
     public mutating func open(_ index: Int) {
         guard topics.indices.contains(index) else { return }

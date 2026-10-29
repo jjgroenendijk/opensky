@@ -83,7 +83,9 @@ Start-up order:
 
 The other two pages fade to `hide`. System stops at its `forceFade` label.
 
-Menu events become Flash key down and key up events. The Settings row opens
+Menu events become Flash key down and key up events. Cancel becomes Tab, not Escape:
+`SystemPage.handleInput` goes back a page on `NavigationCode.TAB` and ignores `ESCAPE`, as the
+vanilla inventory menus do. The Settings row opens
 `SystemPage.SETTINGS_CATEGORY_STATE` by its named constant, through `StartState(aiState)`. No state
 number is written into OpenSky. The movie's `CloseMenu` call closes the engine menu. If the movie
 is missing or refuses the input, the engine selector handles it.

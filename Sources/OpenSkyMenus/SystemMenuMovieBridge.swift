@@ -32,6 +32,8 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         "RequestPlayerInfo", "SetVersionText", "ShouldShowKinectTunerOption"
     ]
     public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
+    /// The Quit row asks this and builds its Main Menu and Desktop list only on true.
+    public static let trueHostFunctions = ["RequestIsOnPC"]
 
     /// Scaleform's UI-sound hook, which the movie reaches for as a plain
     /// `_global` function rather than through `GameDelegate`. OpenSky has no UI
@@ -52,6 +54,9 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         }
         for name in falseHostFunctions {
             runtime.registerHostFunction(name) { _ in .boolean(false) }
+        }
+        for name in trueHostFunctions {
+            runtime.registerHostFunction(name) { _ in .boolean(true) }
         }
         let global = runtime.runtime.globalObject
         for name in globalSinkFunctions {
@@ -97,7 +102,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         {
             return true
         }
-        guard let key = event.swfKey ?? letterKey(event) else {
+        guard let key = pageKey(event) ?? event.swfKey else {
             return false
         }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
@@ -106,8 +111,10 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     }
 
     /// The System page reads X as Delete and T as Characters, beside the gamepad buttons.
-    static func letterKey(_ event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+    /// Its pages go back on `NavigationCode.TAB`, never on `ESCAPE`, so cancel is Tab.
+    static func pageKey(_ event: MenuInputEvent) -> (code: Int, ascii: Int)? {
         switch event {
+        case .button(.cancel): (SWFKeyCode.tab, 9)
         case .button(.xButton): (88, 120)
         case .button(.yButton): (84, 116)
         default: nil
