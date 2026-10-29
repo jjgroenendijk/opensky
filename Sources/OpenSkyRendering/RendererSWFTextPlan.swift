@@ -36,7 +36,9 @@ nonisolated public final class SWFTextPlanner {
                 plans[index] = planStaticText(text)
             case let .editText(id):
                 guard let text = scene.movie.editText(id) else { continue }
-                plans[index] = planEditText(text, content: item.textOverride)
+                plans[index] = planEditText(
+                    text, content: item.textOverride, firstLine: item.textFirstLine
+                )
             }
         }
         return plans
@@ -67,7 +69,7 @@ nonisolated public final class SWFTextPlanner {
 
     /// `content` is the runtime string an `SWFSceneItem` carried; nil keeps the
     /// character's authored `InitialText`.
-    private func planEditText(_ text: SWFEditText, content: String?)
+    private func planEditText(_ text: SWFEditText, content: String?, firstLine: Int?)
         -> [SWFMovieResources.PlannedTextRun]
     {
         let resolved = content ?? text.plainText
@@ -76,7 +78,9 @@ nonisolated public final class SWFTextPlanner {
             skipped += 1
             return []
         }
-        let layout = SWFTextLayout.editText(text, font: font, content: content)
+        let layout = SWFTextLayout.editText(
+            text, font: font, content: content, firstLine: firstLine
+        )
         return layout.runs.map { run in
             SWFMovieResources.PlannedTextRun(
                 font: font,

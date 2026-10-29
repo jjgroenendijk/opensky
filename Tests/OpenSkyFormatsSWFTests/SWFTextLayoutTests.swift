@@ -123,6 +123,20 @@ struct SWFTextLayoutTests {
         #expect(run.glyphs[1].x == 0)
     }
 
+    /// Bounds 2000 twips high fit two 1000-twip lines; the window starts at the first line.
+    @Test func aFirstLineShowsOnlyTheLinesThatFit() throws {
+        let font = try Self.makeFont()
+        let text = try Self.makeEditText(text: "A\nB\nA\nB")
+        let all = SWFTextLayout.editText(text, font: font)
+        #expect(all.runs.first?.glyphs.count == 4)
+        let window = SWFTextLayout.editText(text, font: font, firstLine: 1)
+        #expect(window.lineCount == 4)
+        #expect(window.visibleLineCount == 2)
+        let run = try #require(window.runs.first)
+        #expect(run.glyphs.map(\.glyphIndex) == [1, 0])
+        #expect(run.glyphs[0].y == 800)
+    }
+
     @Test func wordWrapBreaksAtSpaces() throws {
         let font = try Self.makeFont()
         // "AB AB AB": word width 1100 (600 - 100 kern + 500? no kern across

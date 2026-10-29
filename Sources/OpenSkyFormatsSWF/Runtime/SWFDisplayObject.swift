@@ -56,6 +56,8 @@ nonisolated public final class SWFDisplayObject {
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?
+    /// `TextField.scroll`: the one-based first line shown.
+    public var textScroll = 1
     /// CLIPACTIONS handlers the placement attached, if any.
     public var clipActions: SWFClipActions?
 

@@ -67,6 +67,8 @@ nonisolated extension SWFMovieRuntime {
             return node.parent.map { .object($0.object) }
         case "text", "htmlText":
             return textMember(of: node)
+        case "scroll", "maxscroll", "bottomScroll":
+            return scrollMember(name, of: node)
         default:
             break
         }
@@ -106,6 +108,8 @@ nonisolated extension SWFMovieRuntime {
             let text = runtime.coercion.toString(value)
             setText(name == "htmlText" ? SWFEditText.stripHTML(text) : text, of: node)
             return true
+        case "scroll":
+            return setTextScroll(value, of: node)
         default:
             return false
         }
@@ -147,10 +151,11 @@ nonisolated extension SWFMovieRuntime {
         guard let characterId = node.characterId, let field = movie.editText(characterId) else {
             return nil
         }
-        if !field.variableName.isEmpty, let bound = readVariable(field.variableName, from: node) {
-            if bound != .undefined {
-                return runtime.coercion.toString(bound)
-            }
+        if
+            !field.variableName.isEmpty, let bound = readVariable(field.variableName, from: node),
+            bound != .undefined
+        {
+            return runtime.coercion.toString(bound)
         }
         return field.plainText
     }
