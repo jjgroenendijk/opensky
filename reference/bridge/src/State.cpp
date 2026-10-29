@@ -77,6 +77,37 @@ std::string View()
     }
     return json;
 }
+// Playing scenes, each with its phase and whether each actor is loaded, disabled, or dead, to
+// compare scene rules with OpenSky (docs/engine/scenes.md).
+std::string Scenes()
+{
+    auto *data = RE::TESDataHandler::GetSingleton();
+    if (!data) {
+        return "";
+    }
+    std::string scenes;
+    for (auto *scene : data->GetFormArray<RE::BGSScene>()) {
+        if (!scene || !scene->isPlaying) {
+            continue;
+        }
+        std::string actors;
+        for (const auto alias : scene->actors) {
+            auto reference = scene->parentQuest ? scene->parentQuest->GetAliasedRef(alias).get()
+                                                : RE::NiPointer<RE::TESObjectREFR>{};
+            actors += std::format(
+                "{}{{\"alias\":{},\"referenceFormID\":{},\"loaded\":{},\"disabled\":{},"
+                "\"dead\":{}}}",
+                actors.empty() ? "" : ",", alias, reference ? reference->GetFormID() : 0,
+                reference && reference->Is3DLoaded(), reference && reference->IsDisabled(),
+                reference && reference->IsDead(false));
+        }
+        scenes += std::format(
+            "{}{{\"formID\":{},\"phase\":{},\"actors\":[{}]}}", scenes.empty() ? "" : ",",
+            scene->GetFormID(), static_cast<std::int32_t>(scene->currentPhaseIndex), actors);
+    }
+    return std::format(",\"scenes\":[{}]", scenes);
+}
+
 // The open message box, which waits for a button before the game goes on.
 std::string Dialog()
 {
@@ -118,6 +149,7 @@ std::string Snapshot(const std::string &lastBatch)
     if (player && !mainMenu && !loading) {
         json += Place(player);
         json += View();
+        json += Scenes();
     }
     return json + "}\n";
 }
