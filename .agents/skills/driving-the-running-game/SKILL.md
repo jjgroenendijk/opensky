@@ -19,11 +19,15 @@ in `docs/tools/agent-control.md`. `openskycli game help` and `openskycli game <c
 print the same list from the app's own catalog without starting the app, so check a spelling
 there before a run: an unknown option exits 2 instead of being ignored.
 
-Build first with `make build-app` and `make build-cli` (background shell, root `AGENTS.md`).
-For a live run build both with `CONFIG=Release` and launch with `--app`: in Debug a cell
-load can take minutes, longer than the 120 s a teleport waits.
-Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or through
-`make run-cli ARGS="game ..."`.
+To inspect or drive the game without changing the app's code, build nothing: use the CLI
+installed inside the app, `/Applications/OpenSky.app/Contents/MacOS/openskycli game ...`
+(`docs/tools/agent-control.md#the-installed-cli`). Any CLI drives any app, because the CLI
+reads the commands from the running app.
+
+When the change is in the app's code, build with `make build-app CONFIG=Release` and
+`make build-cli CONFIG=Release` (background shell, root `AGENTS.md`) and launch with `--app`:
+in Debug a cell load can take minutes, longer than the 120 s a teleport waits.
+Run that CLI as `"$(make -s app-path CONFIG=Release | xargs dirname)/openskycli" game ...`.
 
 To only look at an asset, an NPC, or a cell, do not launch the game:
 `openskycli preview --record <id> --angles all` renders it offscreen and writes a PNG and a
@@ -58,7 +62,10 @@ scripts in `.logs/`: they need the user's install, so no tracked suite runs them
 - `notRunning`: no app serves the socket. Start one with `game launch`. An app the user
   opened serves the default socket unless its Settings "Agent control" switch is off or
   it was started with `OPENSKY_AGENT_CONTROL=0`. There is no network port.
-- `versionMismatch`: the app and the CLI come from different builds. Rebuild both.
+- `unknownCommand` or `invalidArgument` on stdout, exit 2: the running app does not know
+  that command or option. `game help` lists what it knows. Nothing was sent.
+- `versionMismatch`: the line format changed between the two builds. Use the CLI inside
+  the app you drive.
 - `notReady`: the world is still loading or a door is opening. Wait with
   `events --until cell.loaded`, then retry.
 - `timeout` on `time step`: the window is hidden or minimized, so no frame draws. Ask
