@@ -3,8 +3,11 @@ name: driving-the-running-game
 description: Drives the live OpenSky app from the terminal with openskycli game - launch,
   pause and step frames, press or hold input, read player, target, menu, quest and actor
   state, teleport, change actor values or items, wait for events, take screenshots, and
-  replay JSONL scripts. Use when a task asks to play, walk, test, or debug something in the
-  running game window, or when openskycli game reports notRunning.
+  replay JSONL scripts. Also drives the Windows reference game under Wine with openskycli
+  reference - start it, load a save, read its state, run console commands, answer a
+  message box, save, and sync the view between both games. Use when a task asks to play,
+  walk, test, or debug something in the running game window or the reference game, or when
+  openskycli game or reference reports notRunning.
 ---
 
 # Driving the running game
@@ -17,6 +20,8 @@ print the same list from the app's own catalog without starting the app, so chec
 there before a run: an unknown option exits 2 instead of being ignored.
 
 Build first with `make build-app` and `make build-cli` (background shell, root `AGENTS.md`).
+For a live run build both with `CONFIG=Release` and launch with `--app`: in Debug a cell
+load can take minutes, longer than the 120 s a teleport waits.
 Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or through
 `make run-cli ARGS="game ..."`.
 
@@ -59,3 +64,31 @@ scripts in `.logs/`: they need the user's install, so no tracked suite runs them
   the user to keep it visible.
 - A wrong answer from the game is a bug in OpenSky, not in the script. File it with the
   `bug` label (root `AGENTS.md`).
+
+## The Windows reference game
+
+The real Skyrim SE runs under Wine beside OpenSky, to compare behaviour and views
+(`docs/tools/reference-game.md`). The `OpenSkyBridge` SKSE plugin inside it runs console
+lines and reports the player's state, so never type keys into its window: Wine drops and
+misroutes them. `openskycli reference status` says what the prefix still lacks;
+`make reference-bridge` installs the plugin once per prefix.
+
+1. Start it with `make reference-game`, which uses the game's Low preset so both games fit
+   on one GPU. Wait for `reference state` to report `"mainMenu" : true`.
+2. `reference load [<save>]` loads a save from the main menu, by default the newest.
+3. Read with `reference state`: place, angles, hour, weather, field of view. Its angles are
+   the console's: positive pitch looks down, heading 0 is north and turns clockwise.
+4. Act with `reference send '<console line>'...`, one line per argument. It returns once the
+   game ran them. `send 'save <name>'` saves into the prefix.
+5. A message box holds the game until a button is pressed. `state` then lists it under
+   `dialog`; press one with `reference answer <index or text>`. Old saves ask about
+   Survival Mode after loading; answer `No` to keep a vanilla reference.
+6. `reference sync` puts the Windows game at OpenSky's view; `reference follow` puts OpenSky
+   at the Windows game's view. Both need the running OpenSky app.
+7. Close both games when the check is done, because two games slow the machine:
+   `game quit`, then `reference send qqq`.
+
+If `reference` reports that the bridge is not running while the game is up, the game has
+not written its state for 3 s. A cell load stops it for a few seconds; wait and retry. A
+longer stall while another app is in front means the game paused, because `Skyrim.ini`
+lacks `bAlwaysActive=1`; `make reference-game` writes it, so restart the game that way.
