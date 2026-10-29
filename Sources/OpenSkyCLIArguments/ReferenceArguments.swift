@@ -76,7 +76,10 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
             help: "Seconds to wait for a Steam this command started. Default: 30."
         )
         public var steamWait = 30
-        @Option(help: "The game's own graphics preset. Low leaves the GPU to OpenSky too.")
+        @Option(
+            parsing: .unconditional,
+            help: "The game's own graphics preset. Low leaves the GPU to OpenSky too."
+        )
         public var preset: GraphicsPresetName = .low
 
         public init() {}
