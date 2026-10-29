@@ -29,6 +29,16 @@ struct MeleeComboTests {
         #expect(state.actionFacts.attackState == .followThrough)
     }
 
+    @Test func aLeftHandClipOpensTheWindowWithItsOwnPair() {
+        var state = Self.drawnState()
+        state.handle(CombatGraphNames.attackStart)
+
+        state.handle(CombatGraphNames.attackWinStartLeft)
+        #expect(state.isChainWindowOpen)
+        state.handle(CombatGraphNames.attackWinEndLeft)
+        #expect(!state.isChainWindowOpen)
+    }
+
     @Test func aChainedStartBeginsANewSwingAndClosesTheWindow() {
         var state = Self.drawnState()
         state.handle(CombatGraphNames.attackStart)

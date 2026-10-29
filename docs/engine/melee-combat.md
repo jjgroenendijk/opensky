@@ -87,7 +87,8 @@ during a stagger.
 
 ## Combos
 
-An attack clip marks a combo window with `AttackWinStart` and `AttackWinEnd`. In
+An attack clip marks a combo window with `AttackWinStart` and `AttackWinEnd`. A left-hand clip,
+such as the left punch of the unarmed combo, uses `AttackWinStartLeft` and `AttackWinEndLeft`. In
 `1hm_behavior.hkx`, an `attackStart` raised inside that window takes the transition into the next
 swing of the combo. The graph owns the window and the next clip, so OpenSky adds no timer.
 

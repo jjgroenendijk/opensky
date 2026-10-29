@@ -38,7 +38,7 @@ split below says which way OpenSky uses each name. It is not a property of the d
 | `weaponSwing` | The audible start of the swing, before contact |
 | `preHitFrame` | The frame before contact |
 | `HitFrame` | The contact frame, which runs the sweep |
-| `AttackWinStart`, `AttackWinEnd` | The combo window: an `attackStart` inside it chains the next swing |
+| `AttackWinStart`, `AttackWinEnd`, and the `Left` pair | The combo window: an `attackStart` inside it chains the next swing |
 | `bashStop` | A bash ended |
 | `blockHitStart` | A block absorbed a hit |
 

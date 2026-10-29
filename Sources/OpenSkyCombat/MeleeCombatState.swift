@@ -129,10 +129,10 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
     /// The combo window. Only a swing in progress has one.
     private mutating func handleChainWindow(_ event: String) -> MeleeStateChange? {
         switch event {
-        case CombatGraphNames.attackWinStart:
+        case CombatGraphNames.attackWinStart, CombatGraphNames.attackWinStartLeft:
             guard attackPhase.isAttacking, !isChainWindowOpen else { return nil }
             isChainWindowOpen = true
-        case CombatGraphNames.attackWinEnd:
+        case CombatGraphNames.attackWinEnd, CombatGraphNames.attackWinEndLeft:
             guard isChainWindowOpen else { return nil }
             isChainWindowOpen = false
         default:
