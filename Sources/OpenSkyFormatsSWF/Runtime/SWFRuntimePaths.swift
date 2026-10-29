@@ -103,7 +103,8 @@ nonisolated extension SWFMovieRuntime {
             guard case .editText = node.content else {
                 return false
             }
-            setText(runtime.coercion.toString(value), of: node)
+            let text = runtime.coercion.toString(value)
+            setText(name == "htmlText" ? SWFEditText.stripHTML(text) : text, of: node)
             return true
         default:
             return false
