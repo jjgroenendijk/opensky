@@ -135,20 +135,19 @@ extension SceneRuntime {
         }
 
         /// Nil while the current phase waits, else whether its conditions ended it.
+        /// A phase with completion conditions ends only on them, even when its actions are done.
         mutating func phaseDone() -> Bool? {
             let index = state.phase
             let phase = scene.phases[Int(index)]
+            guard phase.completionConditions.isEmpty else {
+                return evaluator.evaluate(phase.completionConditions).isTrue ? true : nil
+            }
             let ending = scene.actions.indices.filter { Self.endPhase(scene.actions[$0]) == index }
-            let hasConditions = !phase.completionConditions.isEmpty
-            // A phase with end conditions and no actions waits for the conditions.
             // A looping line that was said once does not hold its phase.
-            let actionsDone = !(ending.isEmpty && hasConditions)
-                && ending.allSatisfy {
-                    !state.isRunning(UInt32($0)) || state.completed.contains(UInt32($0))
-                }
-            let byConditions = hasConditions
-                && evaluator.evaluate(phase.completionConditions).isTrue
-            return actionsDone || byConditions ? byConditions : nil
+            let actionsDone = ending.allSatisfy {
+                !state.isRunning(UInt32($0)) || state.completed.contains(UInt32($0))
+            }
+            return actionsDone ? false : nil
         }
 
         static func endPhase(_ action: SceneAction) -> UInt32 {
