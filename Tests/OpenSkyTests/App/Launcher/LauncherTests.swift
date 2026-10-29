@@ -171,6 +171,19 @@ struct LauncherTests {
         #expect(find("SettingsChooseGameFolderControl", in: page.view) != nil)
     }
 
+    @Test func theSidebarSwitchShowsDetailsOnEveryPage() throws {
+        let defaults = try #require(UserDefaults(suiteName: "LauncherDetailsTests"))
+        defaults.removePersistentDomain(forName: "LauncherDetailsTests")
+        defer { defaults.removePersistentDomain(forName: "LauncherDetailsTests") }
+        let layout = LauncherPageLayout(userDefaults: defaults)
+        let note = layout.detail(NSView())
+        #expect(note.isHidden)
+        let toggle = LauncherDetailsSwitchView(defaults: defaults)
+        #expect(toggle.control.accessibilityIdentifier() == "LauncherShowDetailsControl")
+        toggle.control.performClick(nil)
+        #expect(!note.isHidden)
+    }
+
     @Test func anInvalidStartTurnsPlayOffAndSaysWhy() throws {
         let saved = LaunchPreferences.savedStart()
         defer { LaunchPreferences.remember(saved) }

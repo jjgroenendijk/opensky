@@ -1,6 +1,6 @@
-// The one pattern every launcher page follows: a title, grouped settings, a short
-// default view, and a "Show details" switch for the technical notes. A status
-// shows a symbol and words, never colour alone.
+// The one pattern every launcher page follows: a title, grouped settings, and a short
+// default view. The sidebar's "Show details" switch reveals the technical notes on
+// every page at once. A status shows a symbol and words, never colour alone.
 
 import AppKit
 import OpenSkyGameData
@@ -11,21 +11,19 @@ final class LauncherPageLayout {
     static let margin: CGFloat = 40
     /// The narrowest page area that shows `width` and both margins without clipping.
     static let minimumPageWidth = width + 2 * margin
-    static let detailsKey = "OpenSkyLauncherShowsDetails"
 
-    let detailsControl = NSSwitch()
-    private let pageName: String
     private var detailViews: [NSView] = []
     private let userDefaults: UserDefaults
 
-    /// `pageName` prefixes the ids, such as `Graphics` in `GraphicsShowDetailsControl`.
-    init(pageName: String, userDefaults: UserDefaults = GameDataLocator.settingsDefaults) {
-        self.pageName = pageName
+    init(userDefaults: UserDefaults = GameDataLocator.settingsDefaults) {
         self.userDefaults = userDefaults
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(detailsChanged), name: LauncherDetails.changed, object: nil
+        )
     }
 
     var showsDetails: Bool {
-        detailsControl.state == .on
+        LauncherDetails.isShown(userDefaults)
     }
 
     /// Marks `view` as a technical note that only "Show details" reveals.
@@ -98,7 +96,7 @@ final class LauncherPageLayout {
         return stack
     }
 
-    /// The page: title, status, groups, and the details switch, in a scroll view.
+    /// The page: title, status, and groups, in a scroll view.
     func makeView(title: String, status: LauncherStatusView? = nil, groups: [NSView]) -> NSView {
         let stack = NSStackView(
             views: [makeHeader(title: title)] + (status.map { [$0] } ?? []) + groups
@@ -114,33 +112,17 @@ final class LauncherPageLayout {
     }
 
     private func makeHeader(title: String) -> NSView {
-        detailsControl.state = userDefaults.bool(forKey: Self.detailsKey) ? .on : .off
-        detailsControl.controlSize = .small
-        detailsControl.target = self
-        detailsControl.action = #selector(toggleDetails)
-        detailsControl.setAccessibilityIdentifier("\(pageName)ShowDetailsControl")
-        detailsControl.setAccessibilityLabel("Show details")
-        detailsControl.toolTip = "Show the technical notes, such as setting keys and measurements"
-        let detailsLabel = NSTextField(labelWithAttributedString: LauncherStyle.caps(
-            "Show details", size: 13, colour: LauncherStyle.textDim
-        ))
-        let detailsRow = NSStackView(views: [detailsLabel, detailsControl])
-        detailsRow.spacing = 8
         let heading = NSTextField(labelWithAttributedString: LauncherStyle.caps(
             title, size: 32, colour: LauncherStyle.text
         ))
-        let titleRow = NSStackView(views: [heading, NSView(), detailsRow])
-        titleRow.alignment = .firstBaseline
-        titleRow.widthAnchor.constraint(equalToConstant: Self.width).isActive = true
-        let header = NSStackView(views: [titleRow, LauncherStyle.rule(width: Self.width)])
+        let header = NSStackView(views: [heading, LauncherStyle.rule(width: Self.width)])
         header.orientation = .vertical
         header.alignment = .leading
         header.spacing = 10
         return header
     }
 
-    @objc private func toggleDetails() {
-        userDefaults.set(showsDetails, forKey: Self.detailsKey)
+    @objc private func detailsChanged() {
         applyDetails()
     }
 

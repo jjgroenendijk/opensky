@@ -11,7 +11,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     /// Called after a persisted engine-load setting changes.
     var onSettingsChanged: (() -> Void)?
 
-    let layout = LauncherPageLayout(pageName: "Settings")
+    let layout = LauncherPageLayout()
     lazy var folderPathLabel = layout.line("SettingsGameFolderStatsLabel", mono: true)
     lazy var folderNoteLabel = layout.line("SettingsGameFolderNoteStatsLabel")
     lazy var installLabel = layout.line("SettingsInstallStatsLabel")

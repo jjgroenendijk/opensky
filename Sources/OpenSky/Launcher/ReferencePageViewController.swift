@@ -7,7 +7,7 @@ import OpenSkyGameData
 import OpenSkyReference
 
 final class ReferencePageViewController: NSViewController {
-    let layout = LauncherPageLayout(pageName: "Reference")
+    let layout = LauncherPageLayout()
     lazy var prefixLabel = layout.line("ReferencePrefixStatsLabel")
     lazy var startLabel = layout.line("ReferenceStartStatsLabel")
     lazy var viewLabel = layout.line("ReferenceViewStatsLabel")

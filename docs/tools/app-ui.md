@@ -22,7 +22,9 @@ The app opens on the launcher. The launcher holds:
 - The Play button. It opens the game in its own window. Play needs a valid game folder and a
   valid start.
 - A page list on the left: Launch, Asset Optimisation, Graphics, Diagnostics, and Settings.
-  Settings is the same view as the Cmd+, window.
+  Settings is the same view as the Cmd+, window. Under the list, the "Show details" switch
+  shows or hides the technical notes and developer settings on every page at once, and in
+  the Cmd+, window too.
   - Launch puts Play first, with one line that says what Play will do. Launch options hold
     "Resume latest save", "Skip main menu", and "Full screen"; New game holds where a new
     game starts and the Survival Mode choice. Game files shows the game folder and only the
@@ -107,7 +109,7 @@ Accessibility ids are the UI test API and never change silently.
 | Launcher Benchmark page | `Benchmark<Thing>Control`, `BenchmarkPresetStatsLabel`, `BenchmarkResultStatsLabel`, `BenchmarkChart` |
 | Launcher Diagnostics page | `Diagnostics<Thing>Control` and `Diagnostics<Thing>StatsLabel` |
 | Launcher Reference Game page | `Reference<Thing>Control`, `Reference<Thing>StatsLabel`, `ReferenceFirstImage`, `ReferenceSecondImage` |
-| Launcher page details | `<Page>ShowDetailsControl`, `<Name>StatusStatsLabel` |
+| Launcher details and status | `LauncherShowDetailsControl`, `<Name>StatusStatsLabel` |
 | Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
 | Benchmark overlay | `BenchmarkOverlay`, `BenchmarkOverlayLabel` |
 | Benchmark toolbar | `BenchmarkOverlayButton`, `BenchmarkStopButton` (window chrome, the one exception to the suffix rule) |

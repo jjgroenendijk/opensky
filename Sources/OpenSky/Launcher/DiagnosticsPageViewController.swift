@@ -8,7 +8,7 @@ import OpenSkyLaunch
 import OpenSkyWorld
 
 final class DiagnosticsPageViewController: NSViewController {
-    let layout = LauncherPageLayout(pageName: "Diagnostics")
+    let layout = LauncherPageLayout()
     let logsButton = LauncherButton(title: "Open Logs Folder", target: nil, action: nil)
     lazy var logsLabel = layout.line("DiagnosticsLogsStatsLabel")
     let copyButton = LauncherButton(title: "Copy System Report", target: nil, action: nil)

@@ -1,6 +1,6 @@
-// The launcher window: a page list on the left and the selected page on the
-// right. Pages come from `LauncherRegistry`, are built on first selection, and
-// stay cached.
+// The launcher window: a page list on the left, with the "Show details" switch
+// under it, and the selected page on the right. Pages come from `LauncherRegistry`,
+// are built on first selection, and stay cached.
 
 import AppKit
 import OpenSkyLoading
@@ -100,6 +100,7 @@ final class LauncherViewController: NSSplitViewController {
 final class LauncherSidebarViewController: NSViewController {
     var onSelect: ((LauncherPageDescriptor) -> Void)?
     private let tableView = NSTableView()
+    let detailsSwitch = LauncherDetailsSwitchView()
 
     override func loadView() {
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("page"))
@@ -121,7 +122,23 @@ final class LauncherSidebarViewController: NSViewController {
         scroll.documentView = tableView
         scroll.automaticallyAdjustsContentInsets = false
         scroll.contentInsets = NSEdgeInsets(top: 24, left: 0, bottom: 0, right: 0)
-        view = scroll
+        let container = NSView()
+        container.wantsLayer = true
+        container.layer?.backgroundColor = LauncherStyle.sidebarBackground.cgColor
+        for subview in [scroll, detailsSwitch] {
+            subview.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(subview)
+        }
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: container.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: detailsSwitch.topAnchor),
+            detailsSwitch.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            detailsSwitch.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            detailsSwitch.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        view = container
     }
 
     func select(id: String) {

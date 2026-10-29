@@ -17,7 +17,7 @@ protocol LauncherPageRefreshing: AnyObject {
 
 final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let context: LauncherContext
-    let layout = LauncherPageLayout(pageName: "Launch")
+    let layout = LauncherPageLayout()
     let folderButton = LaunchLinkButton()
     /// The newest save, as "Lydia, level 12, 24 Oct 2026 at 13:25".
     var latestSave = ""

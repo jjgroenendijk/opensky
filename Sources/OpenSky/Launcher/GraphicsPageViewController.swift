@@ -14,7 +14,7 @@ final class GraphicsPageViewController: NSViewController {
     private(set) var presets: GraphicsPresetFiles
     private let reloadStore: @MainActor () -> PlayerSettingsStore
     private let reloadPresets: @MainActor () -> GraphicsPresetFiles
-    let layout = LauncherPageLayout(pageName: "Graphics")
+    let layout = LauncherPageLayout()
     let presetControl = NSPopUpButton()
     lazy var presetLabel = layout.line("GraphicsPresetStatsLabel")
     var optionRows: [GraphicsOptionRow] = []

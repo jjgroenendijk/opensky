@@ -46,8 +46,7 @@ struct AssetOptimisationPageTests {
             "AssetOptimisationDirectLoadAllDisksControl",
             "AssetOptimisationDirectLoadStatsLabel", "AssetOptimisationFolderStatsLabel",
             "AssetOptimisationSizeStatsLabel", "AssetOptimisationChooseFolderControl",
-            "AssetOptimisationResetFolderControl", "AssetOptimisationClearControl",
-            "AssetOptimisationShowDetailsControl"
+            "AssetOptimisationResetFolderControl", "AssetOptimisationClearControl"
         ] {
             #expect(find(identifier, in: page.view) != nil, "\(identifier)")
         }
