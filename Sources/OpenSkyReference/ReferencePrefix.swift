@@ -116,6 +116,10 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
         documentsDirectory()?.appending(path: "SkyrimPrefs.ini")
     }
 
+    public func gameIni() -> URL? {
+        documentsDirectory()?.appending(path: "Skyrim.ini")
+    }
+
     /// `bat <name>` reads a file with no extension from the game folder
     /// (https://en.uesp.net/wiki/Skyrim:Console#Using_Batch_Files_with_the_bat_Command).
     public func batchFile(named name: String) -> URL {

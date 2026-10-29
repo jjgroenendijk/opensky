@@ -56,6 +56,19 @@ nonisolated public enum ReferenceLauncher {
         return ini
     }
 
+    /// Starts from the game's `Skyrim_Default.ini`, as the game does when the file is missing.
+    public static func writeGameIni(prefix: ReferencePrefix) throws {
+        guard let ini = prefix.gameIni() else { throw ReferenceLauncherError.noWineUser }
+        try requireInsidePrefix(ini.deletingLastPathComponent(), prefix: prefix)
+        let fallback = prefix.gameDirectory.appending(path: "Skyrim_Default.ini")
+        let text = (try? String(contentsOf: ini, encoding: .utf8))
+            ?? (try? String(contentsOf: fallback, encoding: .utf8)) ?? ""
+        try FileManager.default.createDirectory(
+            at: ini.deletingLastPathComponent(), withIntermediateDirectories: true
+        )
+        try Data(ReferencePrefsIni.applyGameIni(to: text).utf8).write(to: ini)
+    }
+
     /// Wine's default links the user's `Documents` to the macOS home folder; a write
     /// through such a link would leave the prefix.
     static func requireInsidePrefix(_ folder: URL, prefix: ReferencePrefix) throws {
@@ -108,6 +121,7 @@ nonisolated public enum ReferenceLauncher {
             throw ReferenceLauncherError.noWine
         }
         _ = try writePrefsIni(prefix: prefix, frame: options.frame, preset: options.preset)
+        try writeGameIni(prefix: prefix)
         func exists(_ url: URL) -> Bool {
             FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
         }

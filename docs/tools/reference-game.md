@@ -138,8 +138,9 @@ four things:
    not written the file yet. Without these keys the game window does not match the capture
    size. The default is 1280 x 720; `ARGS='--width 1920 --height 1080'` changes it. Wine
    opens the window at the top left and ignores `iLocation X` and `iLocation Y`. They also
-   set `bAlwaysActive=1` in `[General]`, so the game keeps drawing while another app is in
-   front. Without it the game pauses and drops typed console keys.
+   set `bAlwaysActive=1` in `[General]` of `Skyrim.ini`, so the game keeps running while
+   another app is in front. Without it the game pauses on alt-tab, and the bridge pauses
+   with it. The game ignores the key in `SkyrimPrefs.ini` (observed 2026-10-29).
 2. Unless a `steam.exe` already runs, it deletes the browser lock files and swaps in the
    web helper wrapper.
 3. It starts Windows Steam with the flags above, and waits `--steam-wait` seconds for the
