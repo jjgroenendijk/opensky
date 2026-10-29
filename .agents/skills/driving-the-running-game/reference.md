@@ -17,6 +17,7 @@ value; a reference that a command acts on is a positional word, such as `debug k
 | `launch [--title] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does, and waits for `titleMenuOpen` instead, because the main menu loads no world. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
 | `attach` | Prints the hello line: protocol version, data root, `worldReady` |
 | `status` | Running, data root, frame, paused |
+| `catalog` | Every command this app answers, with its arguments; the CLI parses against it |
 | `quit` | Quits the app after the reply |
 | `screenshot [--out <png>] [--offscreen] [--size WxH] [--world-only]` | The window's next presented frame, debug view included. `--offscreen`, `--size`, or `--world-only` render a second frame instead |
 

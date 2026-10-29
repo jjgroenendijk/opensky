@@ -67,6 +67,7 @@ nonisolated public enum AgentCommandCatalog {
 
     private static let session: [AgentCommandSpec] = [
         command("status", "Running, data root, frame, and paused."),
+        command("catalog", "Every command this app answers, with its arguments."),
         command("quit", "Quit the app after the reply."),
         command(
             "screenshot",

@@ -62,11 +62,43 @@ are typed. A switch is a flag with no value: `--sleep` sets `sleep` to true, and
 sets `overlay` to false.
 
 `AgentCommandCatalog` lists every command with its positionals and options, so there is one
-spelling of each. The CLI refuses an option the catalog does not list, with exit 2, and the
-router refuses an unknown argument key with `invalidArgument`, so a typo is never ignored.
-`openskycli game help` and `openskycli game <command> --help` print the catalog without the
-app. A new app command adds its entry there; `AgentCommandCatalogTests` checks the names,
-the help sentences, and that every key is camel case.
+spelling of each. A new app command adds its entry there; `AgentCommandCatalogTests` checks
+the names, the help sentences, and that every key is camel case.
+
+## Any CLI drives any app
+
+The CLI and the app do not have to come from one build. Before it parses the words, the CLI
+asks the running app for its own list with the `catalog` command, and parses against that
+list. So an older CLI can send a command only a newer app knows, and a newer CLI sees which
+commands an older app lacks. An app from before the `catalog` command answers
+`unknownCommand`, and the CLI then uses its own list.
+
+A word the list does not hold is never sent and never ignored. The CLI prints the failure
+on stdout, in the shape of a reply, and exits with 2:
+
+```json
+{"error":{"code":"unknownCommand","message":"unknown game command: state weather; 'openskycli game help' lists the commands the app answers (the running app is OpenSky 0.4.0)"},"ok":false}
+```
+
+An unknown option gives `invalidArgument` the same way. The router also refuses an argument
+key it does not read, for a request that did not come through the CLI. `openskycli game help`
+prints the running app's list, or the CLI's own list when no app runs.
+
+Only `protocolVersion` must match: it changes when the line format itself changes, not when
+a command is added.
+
+## The installed CLI
+
+`make install` puts the Release `openskycli` inside the app, at
+`/Applications/OpenSky.app/Contents/MacOS/openskycli`, and signs the bundle again. That CLI
+finds its app from where it sits, so `game launch` opens that app. A session that only
+inspects or drives the game needs no build:
+
+```sh
+/Applications/OpenSky.app/Contents/MacOS/openskycli game status
+```
+
+Build the app only when the change is in the app's own code.
 
 ## Pause and step
 

@@ -81,6 +81,9 @@ public final class AgentCommandRouter {
         if request.command == "status" {
             return .done(.success(status()))
         }
+        if request.command == "catalog" {
+            return .done(.success(AgentCommandList.builtIn.json))
+        }
         guard let world else {
             return .done(.failure(AgentFailure(.notReady, "no game is running in the app")))
         }
