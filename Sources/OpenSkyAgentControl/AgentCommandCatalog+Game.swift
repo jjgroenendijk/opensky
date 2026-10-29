@@ -89,6 +89,18 @@ nonisolated extension AgentCommandCatalog {
             ]
         ),
         command(
+            "debug.view", "Put the player at a view: place, facing, hour, and weather.",
+            options: [
+                value("pos", "x,y,z", "The feet, in the cell's space for an interior."),
+                value("yaw", "deg", "0 looks east (+X); turns towards north."),
+                value("pitch", "deg", "Up is positive. Default: 0."),
+                value("worldspace", "editorID", "The exterior worldspace."),
+                value("interior", "formID", "The interior cell, instead of a worldspace."),
+                value("hour", "h", "0 to 24."),
+                value("weather", "formID", "Force this weather at once.")
+            ]
+        ),
+        command(
             "debug.time", "Set the hour of the day.",
             positionals: [required("hour", "0 to 24, such as 13.5.")]
         ),

@@ -20,15 +20,16 @@ extension ReferencePageViewController {
         let lowGraphics = lowGraphicsControl.state == .on
         var save: URL?
         if newestSaveControl.state == .on {
-            switch ReferencePageActions.newestSave(prefix: ReferenceSettings.prefix()) {
-            case let .success(newest): save = newest
-            case let .failure(error):
-                show(ReferenceNotice(error.message, isProblem: true), in: startLabel)
+            guard let chosen = chosenSave else {
+                let notice = ReferenceNotice("The reference game has no save yet.", isProblem: true)
+                show(notice, in: startLabel)
                 return
             }
+            save = chosen
         }
-        guard actions.referenceSession.startGame(at: split.reference, lowGraphics: lowGraphics)
-        else { return }
+        let session = actions.referenceSession
+        let started = session.startGame(at: split.reference, lowGraphics: lowGraphics, save: save)
+        guard started else { return }
         if lowGraphics {
             GraphicsPageViewController.installPresets()
                 .apply(.low, to: GraphicsPageViewController.installSettings())
@@ -76,9 +77,34 @@ extension ReferencePageViewController {
         }
     }
 
-    @objc func exportView() {
+    @objc func sendView() {
         guard let actions = context.actions else { return }
-        show(actions.referenceSession.exportView(actions.referenceView()), in: viewLabel)
+        show(actions.referenceSession.sendView(actions.referenceView()) { [weak self] notice in
+            guard let self else { return }
+            show(notice, in: viewLabel)
+        }, in: viewLabel)
+    }
+
+    @objc func followReference() {
+        guard let actions = context.actions else { return }
+        show(actions.referenceSession.follow { actions.followReference($0) }, in: viewLabel)
+    }
+
+    var chosenSave: URL? {
+        let index = savePopUp.indexOfSelectedItem
+        return saves.indices.contains(index) ? saves[index] : nil
+    }
+
+    /// Lists the Windows saves, keeping the chosen one when it still exists.
+    func refreshSaves() {
+        let chosen = chosenSave
+        saves = (try? ReferenceLauncher.readyPrefix()).map(ReferenceLauncher.saves(in:)) ?? []
+        savePopUp.removeAllItems()
+        savePopUp.addItems(withTitles: saves.map(\.lastPathComponent))
+        if let chosen, let index = saves.firstIndex(of: chosen) {
+            savePopUp.selectItem(at: index)
+        }
+        savePopUp.isEnabled = !saves.isEmpty
     }
 
     @objc func captureBoth() {

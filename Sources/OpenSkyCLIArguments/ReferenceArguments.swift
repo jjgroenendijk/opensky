@@ -36,7 +36,10 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "reference",
         abstract: "Run the Windows game under Wine and compare it with OpenSky.",
-        subcommands: [Status.self, Check.self, Launch.self, ExportView.self, Capture.self]
+        subcommands: [
+            Status.self, Check.self, Launch.self, ExportView.self, Capture.self, State.self,
+            Send.self, Sync.self, Follow.self, Load.self, Answer.self
+        ]
     )
 
     public init() {}
@@ -73,6 +76,11 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
             help: "Seconds to wait for a Steam this command started. Default: 30."
         )
         public var steamWait = 30
+        @Option(
+            parsing: .unconditional,
+            help: "The game's own graphics preset. Low leaves the GPU to OpenSky too."
+        )
+        public var preset: GraphicsPresetName = .low
 
         public init() {}
 

@@ -9,7 +9,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 report="$(
   git ls-files -z -- 'Sources/*.swift' 'Sources/*.metal' 'Sources/*.h' \
-    'Tests/*.swift' |
+    'Tests/*.swift' 'reference/*.cpp' 'reference/*.h' |
     xargs -0 awk -v limit="$limit" '
       function flush() {
         if (n > limit) printf "%s:%d: %d comment lines\n", file, start, n

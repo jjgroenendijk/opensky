@@ -80,6 +80,21 @@ struct AgentCommandParsingTests {
         }
     }
 
+    @Test func viewTakesAPlaceAFacingAndHexFormIDs() throws {
+        let target = AgentViewTarget(
+            feet: SIMD3(1, 2, 3), yawDegrees: 90, pitchDegrees: -10, worldspace: nil,
+            interiorCell: 0x0001_6BDB, hour: 13.5, weather: 0x0010_E1EC
+        )
+        #expect(try AgentDebugCommand.parse("view", args(target.arguments)) == .view(target))
+        #expect(target.arguments["interior"] == "00016BDB")
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("view", args(["pos": "1,2,3", "yaw": 0, "hour": 24]))
+        }
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("view", args(["pos": "1,2,3", "yaw": 0, "weather": "x"]))
+        }
+    }
+
     @Test func theRaceMenuOpensFullOrLimited() throws {
         #expect(try AgentDebugCommand.parse("racemenu", args([:])) == .raceMenu(limited: false))
         #expect(try AgentDebugCommand.parse("racemenu", args(["limited": true]))

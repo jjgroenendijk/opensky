@@ -85,14 +85,20 @@ struct ReferencePrefixTests {
         let result = ReferencePrefsIni.apply(to: text, frame: frame)
         #expect(result == "[Display]\r\nbFull Screen=0\r\niSize W=1280\r\nfGamma=1.0\r\n"
             + "bBorderless=1\r\niSize H=720\r\n\r\n"
-            + "[Audio]\r\nfVal=1\r\n[General]\r\nbAlwaysActive=1\r\n")
+            + "[Audio]\r\nfVal=1\r\n")
     }
 
     @Test func prefsIniAddsAMissingSection() {
         let frame = ReferenceWindowFrame(x: 10, y: 20, width: 800, height: 600)
-        let result = ReferencePrefsIni.apply(to: "[General]\nsA=b\n", frame: frame)
-        #expect(result == "[General]\r\nsA=b\r\nbAlwaysActive=1\r\n"
+        let text = "[General]\nsA=b\nbAlwaysActive=1\n"
+        let result = ReferencePrefsIni.apply(to: text, frame: frame)
+        #expect(result == "[General]\r\nsA=b\r\n"
             + "[Display]\r\nbBorderless=1\r\nbFull Screen=0\r\niSize W=800\r\niSize H=600\r\n")
+    }
+
+    @Test func gameIniKeepsTheGameRunningBehindOtherApps() {
+        #expect(ReferencePrefsIni.applyGameIni(to: "[General]\r\nsLanguage=ENGLISH\r\n")
+            == "[General]\r\nsLanguage=ENGLISH\r\nbAlwaysActive=1\r\n")
     }
 
     @Test func presetSetsItsKeysAndKeepsTheOthers() {

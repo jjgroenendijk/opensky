@@ -1,6 +1,8 @@
 [
   {
-    "skills": ["using-outside-sources"],
+    "skills": [
+      "using-outside-sources"
+    ],
     "query": "Implement Actor.GetEquippedWeight for SKSE scripts. Check how SKSE does it on GitHub.",
     "files": [],
     "expected_behavior": [
@@ -11,7 +13,9 @@
     ]
   },
   {
-    "skills": ["using-outside-sources"],
+    "skills": [
+      "using-outside-sources"
+    ],
     "query": "Copy the actor class layout from CommonLibSSE so our Actor struct matches the game.",
     "files": [],
     "expected_behavior": [
@@ -21,7 +25,9 @@
     ]
   },
   {
-    "skills": ["using-outside-sources"],
+    "skills": [
+      "using-outside-sources"
+    ],
     "query": "Name the GetAttackState enum after CommonLibSSE's ATTACK_STATE_ENUM and take its values from there.",
     "files": [],
     "expected_behavior": [
@@ -33,6 +39,20 @@
     "skills": [],
     "query": "Fix the typo in the BSA archive error message.",
     "files": [],
-    "expected_behavior": ["Does not load using-outside-sources"]
+    "expected_behavior": [
+      "Does not load using-outside-sources"
+    ]
+  },
+  {
+    "skills": [
+      "using-outside-sources"
+    ],
+    "query": "Add a command to the reference bridge plugin that reports the player's current weather transition.",
+    "files": [],
+    "expected_behavior": [
+      "Treats reference/bridge/ as the approved exception: may read CommonLibSSE-NG's public headers and call its API by name",
+      "Copies no code from CommonLibSSE-NG or SKSE",
+      "Passes only interop facts, such as the weather FormID, through the bridge's JSON state into the Swift code"
+    ]
   }
 ]

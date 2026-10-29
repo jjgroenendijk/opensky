@@ -128,6 +128,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug teleport --cell <editorID>` | `--cell WhiterunBanneredMare` (any cell in the load order) |
 | `debug teleport --x <n> --y <n> [--worldspace <editorID>]` | an exterior cell grid; `--worldspace DLC2SolstheimWorld` goes to another worldspace first |
 | `debug teleport --pos x,y,z` or `--ref <ref>` | inside the current cell; interior positions are local |
+| `debug view --pos x,y,z --yaw <deg> [--pitch <deg>] [--worldspace <editorID> \| --interior <formID>] [--hour <h>] [--weather <formID>]` | a whole view at once, as `reference follow` sends it |
 | `debug time <hour>` | `debug time 13.5` |
 | `debug weather [<editorID>]` | no ID clears the forced weather |
 | `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | `debug av Health --value 50` |

@@ -307,3 +307,39 @@ extension ReferenceArguments.Capture: CLIRunnable {
         try ReferenceCapture.capture(arguments: self)
     }
 }
+
+extension ReferenceArguments.State: CLIRunnable {
+    func execute() throws {
+        try ReferenceBridgeCommand.state(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Send: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceBridgeCommand.send(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Sync: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceBridgeCommand.sync(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Follow: CLIRunnable {
+    func execute() throws {
+        try ReferenceBridgeCommand.follow(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Load: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceBridgeCommand.load(arguments: self)
+    }
+}
+
+extension ReferenceArguments.Answer: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceBridgeCommand.answer(arguments: self)
+    }
+}

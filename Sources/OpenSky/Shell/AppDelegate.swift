@@ -169,6 +169,17 @@ extension AppDelegate: LauncherActions {
         return try? game?.session?.agentWorld.referenceView()
     }
 
+    func followReference(_ view: ReferenceView) -> Bool {
+        let game = gameWindow?.contentViewController as? GameViewController
+        guard let session = game?.session, view.feet.count == 3 else { return false }
+        session.menuWorld.followView(AgentViewTarget(
+            feet: SIMD3(view.feet[0], view.feet[1], view.feet[2]), yawDegrees: view.yawDegrees,
+            pitchDegrees: view.pitchDegrees, worldspace: view.worldspaceEditorID,
+            interiorCell: view.interiorFormID, hour: view.gameHour, weather: view.weatherFormID
+        ))
+        return true
+    }
+
     func placeNextGameWindow(contentRect: CGRect) {
         pendingContentRect = contentRect
     }
@@ -260,7 +271,8 @@ extension AppDelegate: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         switch menuItem.action {
         case #selector(returnToLauncher(_:)): isPlaying
-        case #selector(exportReferenceView(_:)), #selector(captureReferencePair(_:)):
+        case #selector(sendReferenceView(_:)), #selector(followReferenceGame(_:)),
+             #selector(captureReferencePair(_:)):
             isPlaying && ReferenceSettings.prefix() != nil
         default: true
         }

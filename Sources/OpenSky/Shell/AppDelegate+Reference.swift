@@ -10,8 +10,16 @@ extension AppDelegate {
         showReference(referenceSession.capture(referenceView(), captureWorld: captureWorld))
     }
 
-    @objc func exportReferenceView(_: Any?) {
-        showReference(referenceSession.exportView(referenceView()))
+    @objc func sendReferenceView(_: Any?) {
+        showReference(referenceSession.sendView(referenceView()) { [weak self] notice in
+            self?.showReference(notice)
+        })
+    }
+
+    @objc func followReferenceGame(_: Any?) {
+        showReference(referenceSession.follow { [weak self] view in
+            self?.followReference(view) ?? false
+        })
     }
 
     private func showReference(_ notice: ReferenceNotice) {

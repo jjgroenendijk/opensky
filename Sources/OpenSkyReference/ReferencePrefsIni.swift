@@ -31,13 +31,19 @@ nonisolated public enum ReferencePrefsIni {
         ]
     }
 
-    /// `bAlwaysActive` keeps the game drawing and reading keys while another app is in
-    /// front; without it the game pauses and drops typed console keys.
+    /// `bAlwaysActive` keeps the game running while another app is in front. The game
+    /// reads it from `Skyrim.ini`; in `SkyrimPrefs.ini` it does nothing (observed 2026-10-29).
     public static let alwaysActive = ReferenceIniValue("bAlwaysActive", "1")
 
     public static func apply(to text: String, frame: ReferenceWindowFrame) -> String {
         let display = ReferenceIni.set(displayValues(frame), in: section, of: text)
-        return ReferenceIni.set([alwaysActive], in: "General", of: display)
+        let removed = ReferenceIniValue(alwaysActive.key, nil)
+        return ReferenceIni.set([removed], in: "General", of: display)
+    }
+
+    /// The `Skyrim.ini` values: the game keeps running behind OpenSky.
+    public static func applyGameIni(to text: String) -> String {
+        ReferenceIni.set([alwaysActive], in: "General", of: text)
     }
 
     /// Sets every key a preset file such as `Low.ini` names, and keeps the rest.

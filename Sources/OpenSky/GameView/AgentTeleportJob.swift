@@ -37,6 +37,8 @@ final class AgentTeleportJob {
     private var exactFeet: SIMD3<Float>?
     /// A saved facing; other moves keep the current one.
     private var exactYaw: Float?
+    /// Radians up; a move without one looks level.
+    private var exactPitch: Float?
     /// The exterior worldspace to stand in; nil keeps the current one.
     private var worldspace: String?
 
@@ -98,7 +100,9 @@ final class AgentTeleportJob {
     }
 
     /// A loaded save's place: its cell loads first, then the player stands where the save was made.
-    init(adapter: AgentWorldAdapter, place: SavePlayerPlace) throws(AgentFailure) {
+    init(
+        adapter: AgentWorldAdapter, place: SavePlayerPlace, pitch: Float? = nil
+    ) throws(AgentFailure) {
         self.adapter = adapter
         guard let streamer = adapter.game.streamer, adapter.game.renderer != nil else {
             throw adapter.notReady()
@@ -108,6 +112,7 @@ final class AgentTeleportJob {
         }
         exactFeet = place.feet
         exactYaw = place.yaw
+        exactPitch = pitch
         worldspace = place.worldspace
         phase = .lookingUp
         switch place.cell {
@@ -269,7 +274,7 @@ final class AgentTeleportJob {
         let renderer = gameSession.renderer
         // The move is a picked start, so the world held by the main menu loads now.
         streamer.isHeld = false
-        let rotation = SIMD3<Float>(0, 0, exactYaw ?? gameSession.freeFlyCamera.yaw)
+        let rotation = SIMD3<Float>(exactPitch ?? 0, 0, exactYaw ?? gameSession.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(position: feet, rotation: rotation))
         if let worldspace, worldspace != streamer.worldspaceEditorID {
             streamer.enterWorldspace(worldspace, camera: camera)

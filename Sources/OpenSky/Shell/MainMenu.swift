@@ -65,9 +65,14 @@ enum MainMenu {
     /// The Windows reference game's items (docs/tools/reference-game.md).
     private static let referenceEntries = [
         Entry(
-            title: "Export View to Windows Game",
-            action: #selector(AppDelegate.exportReferenceView(_:)),
-            key: "e", identifier: "ExportReferenceViewCommand"
+            title: "Send View to Windows Game",
+            action: #selector(AppDelegate.sendReferenceView(_:)),
+            key: "e", identifier: "SendReferenceViewCommand"
+        ),
+        Entry(
+            title: "Follow Windows Game",
+            action: #selector(AppDelegate.followReferenceGame(_:)),
+            key: "f", identifier: "FollowReferenceCommand"
         ),
         Entry(
             title: "Capture Both Games", action: #selector(AppDelegate.captureReferencePair(_:)),

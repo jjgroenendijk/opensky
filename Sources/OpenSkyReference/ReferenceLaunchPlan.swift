@@ -1,6 +1,7 @@
 // How the reference game starts: Windows Steam first, because the game's copy
-// protection needs a logged-in client, then `SkyrimSE.exe` straight from its folder,
-// so Steam does not open the game's launcher window.
+// protection needs a logged-in client, then the game straight from its folder, so Steam
+// does not open the game's launcher window. SKSE's loader starts it when installed, so
+// the bridge plugin loads.
 
 import Foundation
 
@@ -39,14 +40,18 @@ nonisolated public struct ReferenceLaunchPlan: Equatable, Sendable {
 
     public init(
         prefix: ReferencePrefix, wine: URL, baseEnvironment: [String: String],
-        clientDownloaded: Bool
+        clientDownloaded: Bool, scriptExtender: Bool = false
     ) {
         steam = ReferenceProcess(
             executable: wine, arguments: Self.steamArguments(clientDownloaded: clientDownloaded),
             workingDirectory: prefix.steamDirectory
         )
         game = ReferenceProcess(
-            executable: wine, arguments: [ReferencePrefix.gameWindowsPath],
+            executable: wine,
+            arguments: [
+                scriptExtender
+                    ? ReferencePrefix.scriptExtenderWindowsPath : ReferencePrefix.gameWindowsPath
+            ],
             workingDirectory: prefix.gameDirectory
         )
         environment = Self.environment(prefix: prefix.root, base: baseEnvironment)
