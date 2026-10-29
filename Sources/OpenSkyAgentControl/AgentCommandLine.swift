@@ -12,9 +12,10 @@ nonisolated public enum AgentCommandLine {
     /// `words` start at the command, as in `state av Health --ref target`.
     public static func request(
         _ words: [String],
-        id: Int = 1
+        id: Int = 1,
+        commands: AgentCommandList = .builtIn
     ) throws(AgentFailure) -> AgentRequest {
-        let (spec, rest) = try split(words)
+        let (spec, rest) = try split(words, commands: commands)
         var args = defaults[spec.name] ?? [:]
         var positionals = spec.positionals.map(\.key)
         var index = rest.startIndex
@@ -83,20 +84,20 @@ nonisolated public enum AgentCommandLine {
         )
     }
 
-    private static func split(_ words: [String]) throws(AgentFailure)
-        -> (AgentCommandSpec, ArraySlice<String>)
-    {
+    private static func split(
+        _ words: [String], commands: AgentCommandList
+    ) throws(AgentFailure) -> (AgentCommandSpec, ArraySlice<String>) {
         guard let first = words.first else {
             throw AgentFailure(.invalidArgument, "no game command given")
         }
-        if words.count > 1, let spec = AgentCommandCatalog.spec("\(first).\(words[1])") {
+        if words.count > 1, let spec = commands.spec("\(first).\(words[1])") {
             return (spec, words.dropFirst(2))
         }
-        guard let spec = AgentCommandCatalog.spec(first) else {
+        guard let spec = commands.spec(first) else {
             throw AgentFailure(
                 .unknownCommand,
                 "unknown game command: \(words.prefix(2).joined(separator: " ")); "
-                    + "'openskycli game help' lists them"
+                    + "'openskycli game help' lists the commands the app answers"
             )
         }
         return (spec, words.dropFirst())

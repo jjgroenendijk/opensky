@@ -126,7 +126,8 @@ with an example. When you add code:
 plus strict lint) before committing; `make check` is the same gate without writes. Both lint
 the Swift files the branch changed; `ALL=1` lints every file. `make install` refreshes
 `/Applications/OpenSky.app` after landing rendering work, because the user checks progress
-there.
+there. It puts `openskycli` inside the app, so driving the game with `openskycli game` needs
+no build unless the change is in the app's code (`driving-the-running-game`).
 
 Every build or test run costs minutes, so make every edit a change needs, then run one
 check, and fix everything it reports at once. CI runs the whole unit plan on every push to a

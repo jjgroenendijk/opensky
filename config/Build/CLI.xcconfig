@@ -20,8 +20,9 @@ SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
 
 // The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
-// it loads the dylibs straight from .vendor at run time.
-LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
+// it loads the dylibs straight from .vendor at run time. `make install` puts a copy in
+// the app's Contents/MacOS, where it uses the app's own copies.
+LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib @executable_path/../Frameworks
 LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib $(SRCROOT)/.vendor/astcenc/lib
 // astcenc is static (docs/decisions/astcenc.md) and needs the C++ runtime.
 OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample -lastcenc -lc++

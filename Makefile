@@ -406,13 +406,13 @@ build-cli: link-shared ## Build the openskycli dev tool [CONFIG]
 run-cli: build-cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 	@"$(PRODUCTS)/openskycli" $(ARGS)
 
-# Release shares the Debug cache directory (xcodebuild keeps the configurations
-# apart inside it), so a repeat install builds incrementally.
-install: link-shared ## Build the Release app and copy it to /Applications
+# Release shares the Debug cache directory, so a repeat install builds incrementally.
+# The CLI goes inside the app, so a session drives the installed app with no build.
+install: link-shared ## Build the Release app and CLI and copy them to /Applications
 	@$(XCB_RUN) install $(XCB_RELEASE) build
-	@rm -rf /Applications/OpenSky.app
-	@ditto $(DERIVED_DATA)/Build/Products/Release/OpenSky.app /Applications/OpenSky.app
-	@echo "[ OK ] /Applications/OpenSky.app updated"
+	@$(XCB_RUN) install-cli $(call xcb,$(CLI_SCHEME),Release) build
+	@./tools/install-app.sh $(DERIVED_DATA)/Build/Products/Release/OpenSky.app \
+		$(DERIVED_DATA)/Build/Products/Release/openskycli /Applications/OpenSky.app
 
 app-path: #| Print the built OpenSky.app path [CONFIG]
 	@echo "$(PRODUCTS)/OpenSky.app"

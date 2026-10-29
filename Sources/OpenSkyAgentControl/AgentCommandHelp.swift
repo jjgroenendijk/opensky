@@ -1,12 +1,14 @@
 // `openskycli game help [command]`: help for the app's commands, printed from the
-// catalog, so it works without a running app.
+// running app's catalog, or from this build's catalog without a running app.
 
 import Foundation
 
 nonisolated public enum AgentCommandHelp {
     /// Help text when `words` ask for it: no words, `help ...`, or a `--help` or `-h`
     /// anywhere. Nil means the words are a command to send.
-    public static func text(for words: [String]) -> String? {
+    public static func text(
+        for words: [String], commands: AgentCommandList = .builtIn
+    ) -> String? {
         let helpWords: Set = ["--help", "-h"]
         let asked = words.isEmpty || words.first == "help" || words
             .contains(where: helpWords.contains)
@@ -14,14 +16,13 @@ nonisolated public enum AgentCommandHelp {
         let rest = words.filter { $0 != "help" && !helpWords.contains($0) && !$0.hasPrefix("--") }
         let name = rest.prefix(2).joined(separator: ".")
         if
-            let spec = AgentCommandCatalog.spec(name) ?? rest.first
-                .flatMap(AgentCommandCatalog.spec)
+            let spec = commands.spec(name) ?? rest.first.flatMap(commands.spec)
         {
             return text(spec)
         }
         let group = rest.first ?? ""
-        let members = AgentCommandCatalog.all.filter { $0.name.hasPrefix("\(group).") }
-        return overview(members.isEmpty ? AgentCommandCatalog.all : members)
+        let members = commands.specs.filter { $0.name.hasPrefix("\(group).") }
+        return overview(members.isEmpty ? commands.specs : members)
     }
 
     static let commonOptions = "[--text] [--socket <path>] [--reply-timeout <s>] [--record <file>]"

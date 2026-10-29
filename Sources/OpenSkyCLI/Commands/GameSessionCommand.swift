@@ -23,12 +23,18 @@ enum GameLaunch {
         print(GameCommand.output(status, options: options))
     }
 
-    /// `--app`, then the app built beside this binary, then `/Applications`.
+    /// `--app`, then the app this binary is installed in, then the app built beside it,
+    /// then `/Applications`.
     static func locateApp(_ path: String?) throws -> URL {
         if let path {
             return URL(filePath: path)
         }
         let binary = URL(filePath: CommandLine.arguments[0]).resolvingSymlinksInPath()
+        let bundle = binary.deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+        if bundle.pathExtension == "app" {
+            return bundle
+        }
         let sibling = binary.deletingLastPathComponent().appending(path: "OpenSky.app")
         if FileManager.default.fileExists(atPath: sibling.path(percentEncoded: false)) {
             return sibling

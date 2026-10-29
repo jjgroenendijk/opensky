@@ -117,5 +117,16 @@
       "Uses openskycli reference sync with the OpenSky app running",
       "Closes both games afterwards with game quit and reference send qqq"
     ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "Check what the player has equipped in the game I have open. I did not change any code.",
+    "files": [],
+    "expected_behavior": [
+      "Uses /Applications/OpenSky.app/Contents/MacOS/openskycli game state player without building the app or the CLI",
+      "Does not run make build-app or make build-cli"
+    ]
   }
 ]

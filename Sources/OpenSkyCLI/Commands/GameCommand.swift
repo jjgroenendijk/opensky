@@ -1,6 +1,7 @@
 // `openskycli game ...`: drives the running app over its agent control socket
 // (docs/tools/agent-control.md). Each call prints one JSON object; `--text`
-// prints `path: value` lines instead.
+// prints `path: value` lines instead. Words parse against the running app's own
+// command list, so a CLI from another build drives it.
 
 import Foundation
 import OpenSkyAgentControl
@@ -26,11 +27,27 @@ struct GameCommandOptions {
 
 enum GameCommand {
     static func send(arguments: GameArguments.Send) throws {
-        if let help = AgentCommandHelp.text(for: arguments.words) {
+        let options = GameCommandOptions(arguments.game)
+        let session = try? AgentClientSession(
+            path: options.socketPath, connectTimeout: GameCommandOptions.connectTimeout
+        )
+        let commands = session.map(commandList) ?? .builtIn
+        if let help = AgentCommandHelp.text(for: arguments.words, commands: commands) {
             print(help)
             return
         }
-        try send(arguments.words, options: GameCommandOptions(arguments.game))
+        try send(arguments.words, options: options, session: session, commands: commands)
+    }
+
+    /// The app's own commands; an app older than the `catalog` command answers with
+    /// this build's list.
+    static func commandList(_ session: AgentClientSession) -> AgentCommandList {
+        guard
+            let reply = try? session.call("catalog", timeout: GameCommandOptions.connectTimeout),
+            let result = reply.result,
+            let list = AgentCommandList(json: result)
+        else { return .builtIn }
+        return list
     }
 
     static func attach(arguments: GameArguments.Attach) throws {
@@ -58,19 +75,30 @@ enum GameCommand {
         ]
     }
 
-    static func send(_ words: [String], options: GameCommandOptions) throws {
+    static func send(
+        _ words: [String],
+        options: GameCommandOptions,
+        session: AgentClientSession?,
+        commands: AgentCommandList
+    ) throws {
         var request: AgentRequest
         do {
-            request = try AgentCommandLine.request(words)
+            request = try AgentCommandLine.request(words, commands: commands)
         } catch {
-            throw CLIError.usage(error.message)
+            var failure = error
+            if failure.code == .unknownCommand, let hello = session?.hello {
+                failure.message += " (the running app is \(hello.app) \(hello.appVersion))"
+            }
+            // On stdout, where a script reads the replies, and with the usage exit code.
+            print(output(failure, options: options))
+            exit(2)
         }
         if request.command == "screenshot" {
             request
                 .args["out"] = try .string(GameScreenshotPath
                     .resolve(request.args["out"]?.stringValue))
         }
-        let session = try connect(options)
+        let session = try session ?? connect(options)
         let reply: AgentReply
         do {
             reply = try session.call(
@@ -124,6 +152,19 @@ enum GameCommand {
             return "[ERROR] \(error.code.rawValue): \(error.message)"
         }
         return AgentCommandLine.textLines(reply.result ?? .null).joined(separator: "\n")
+    }
+
+    static func output(_ failure: AgentFailure, options: GameCommandOptions) -> String {
+        guard options.text else {
+            return line(AgentJSON.object([
+                "ok": false,
+                "error": [
+                    "code": .string(failure.code.rawValue),
+                    "message": .string(failure.message)
+                ]
+            ]))
+        }
+        return "[ERROR] \(failure.code.rawValue): \(failure.message)"
     }
 
     static func output(_ event: AgentEvent, options: GameCommandOptions) -> String {
