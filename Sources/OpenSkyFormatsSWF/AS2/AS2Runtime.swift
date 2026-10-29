@@ -12,6 +12,8 @@ nonisolated public final class AS2Runtime {
 
     /// `_global`, and the last stop of every unqualified name lookup.
     public let globalObject = AS2Object()
+    /// Globals a movie tests before it sets them, so a miss on them is no demand on the engine.
+    public var unsetGlobals: Set<String> = []
     /// The variable target a stream runs against when the caller names none.
     /// A later milestone replaces this with the movie's root display object.
     public let root = AS2Object()

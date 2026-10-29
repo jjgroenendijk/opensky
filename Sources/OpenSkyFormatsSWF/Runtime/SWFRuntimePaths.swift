@@ -82,10 +82,11 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// CLIK members a movie reads before it sets them, where Flash also answers `undefined`.
-    /// `focusIndicator` is a child no vanilla movie places; the rest are tested, then set.
+    /// `focusIndicator` and `textField` are children a component may lack; `width` and
+    /// `height` are tested against null before `_width`; the rest are tested, then set.
     public static let unsetComponentMembers: Set = [
         "focusIndicator", "_listeners", "invalidationIntervalID", "inspectableGroupName",
-        "buttonRepeatInterval"
+        "buttonRepeatInterval", "textField", "width", "height", "_password", "_selectable"
     ]
 
     /// A clip's built-in methods stay reachable even when `registerClass`

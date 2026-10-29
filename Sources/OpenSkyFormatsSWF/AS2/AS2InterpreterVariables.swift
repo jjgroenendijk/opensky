@@ -71,7 +71,9 @@ nonisolated extension AS2Interpreter {
         if let value = try qualifiedVariable(name, frame: frame, offset: offset) {
             return value
         }
-        runtime.noteMissing(name)
+        if !runtime.unsetGlobals.contains(name) {
+            runtime.noteMissing(name)
+        }
         return .undefined
     }
 

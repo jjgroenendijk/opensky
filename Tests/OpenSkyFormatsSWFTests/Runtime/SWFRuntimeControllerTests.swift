@@ -1,4 +1,5 @@
-// GFx controllers, the `SetPlatform` platform, and CLIK's optional `focusIndicator`.
+// GFx controllers, the `SetPlatform` platform, and the CLIK fields and globals read before
+// they are set.
 // Synthetic fixtures only.
 
 import Foundation
@@ -69,6 +70,26 @@ struct SWFRuntimeControllerTests {
             #expect(runtime.tally.missingNames[name] == nil, "\(name)")
         }
         #expect(runtime.tally.missingNames["unknownChild"] == 1)
+    }
+
+    /// Read both as a bare variable and as a `_global` member, as the class preambles do.
+    @Test func unsetGlobalsAreUndefinedWithoutATally() throws {
+        let names = SWFMovieRuntime.unsetGlobals.sorted() + ["UnknownPackage"]
+        let reads = names.flatMap { name -> [Action] in
+            [AS2Fixture.push([.string("result")])] + AS2Fixture.getVariable(name)
+                + [AS2Fixture.opcode(0x1D), AS2Fixture.push([.string("result")])]
+                + AS2Fixture.getVariable("_global")
+                + [
+                    AS2Fixture.push([.string(name)]),
+                    AS2Fixture.opcode(0x4E),
+                    AS2Fixture.opcode(0x1D)
+                ]
+        }
+        let runtime = try started(reads)
+        for name in SWFMovieRuntime.unsetGlobals {
+            #expect(runtime.tally.missingNames[name] == nil, "\(name)")
+        }
+        #expect(runtime.tally.missingNames["UnknownPackage"] == 2)
     }
 
     @Test func currentFrameLabelIsTheLastLabelAtOrBeforeThePlayhead() throws {

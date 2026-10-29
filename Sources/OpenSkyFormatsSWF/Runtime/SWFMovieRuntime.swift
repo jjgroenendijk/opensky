@@ -75,6 +75,10 @@ nonisolated public final class SWFMovieRuntime {
     /// per second, which is far past anything a menu waits for.
     public static let maximumTimerTicks = 3600
 
+    /// Every class preamble runs `if (!_global.gfx) _global.gfx = new Object()` for its
+    /// package roots, and CLIK `UIComponent.onLoad` tests `_global.CLIK_loadCallback`.
+    public static let unsetGlobals: Set = ["gfx", "Shared", "Components", "CLIK_loadCallback"]
+
     public var movie: SWFMovie {
         movieScene.movie
     }
@@ -107,6 +111,7 @@ nonisolated public final class SWFMovieRuntime {
         movieClipPrototype = natives.movieClipPrototype
         textFieldPrototype = natives.textFieldPrototype
         root.object.prototype = movieClipPrototype
+        runtime.unsetGlobals = Self.unsetGlobals
         host.owner = self
     }
 

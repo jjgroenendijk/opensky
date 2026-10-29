@@ -145,8 +145,18 @@ a missing name.
 Four more CLIK fields get the same answer, because the movies read them before they set them:
 `_listeners` (tested `== undefined`, then created), `invalidationIntervalID` (tested, then set by
 `setInterval`), `inspectableGroupName` (tested `== null` and `== ""`), and `buttonRepeatInterval`
-(cleared, then deleted). `textField` still counts: some reads are not guarded, and a button whose
-label clip failed to build would look the same.
+(cleared, then deleted). More names get it for the same reason, each checked in the bytecode:
+
+- `textField` on a CLIK button with no label, such as a scroll bar's thumb, track, and arrows, and on
+  a scroll target holder. Each read is tested against `null` or only passed on.
+- `width` and `height` on a text field. CLIK's `Constraints` tests them against `null`, then uses
+  `_width` and `_height`.
+- `_selectable` and `_password` on CLIK's `TextInput`. Both are copied to the inner field before the
+  component sets them.
+
+The class preamble `if (!_global.gfx) _global.gfx = new Object()` tests each package root (`gfx`,
+`Shared`, `Components`), and `UIComponent.onLoad` tests `_global.CLIK_loadCallback`. Those four
+globals are not counted either.
 
 ### Gamepads
 
