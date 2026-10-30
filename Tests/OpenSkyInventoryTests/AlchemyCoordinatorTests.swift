@@ -178,7 +178,10 @@ struct AlchemyCoordinatorTests {
         #expect(doses == 2)
         #expect(lab.playerWeaponPoisons.poisons[InventoryBaselineFixture.sword]?.doses == 2)
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
+        #expect(lab.applyPoison(Fixture.poison) == .alreadyPoisoned)
+        #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
         #expect(lab.applyPoison(Fixture.wheat) == .notAPoison("Wheat"))
+        #expect(AlchemyActionOutcome.noWeapon.text(.vanilla) == PoisonText.noWeapon.fallback)
     }
 
     @Test func aLoadPutsTheSavedPotionsBackInTheItemIndex() throws {

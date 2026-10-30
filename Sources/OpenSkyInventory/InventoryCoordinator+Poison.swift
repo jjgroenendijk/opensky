@@ -31,13 +31,20 @@ extension InventoryCoordinator {
             ?? weapons.first
     }
 
-    /// Uses one `poison` on the right-hand weapon, replacing any poison it carries.
+    /// Uses one `poison` on the right-hand weapon. A staff, or a weapon that still carries a
+    /// poison, refuses it, as `sPoisonUnableToPoison` and `sPoisonAlreadyPoisonedMessage` say.
     @discardableResult
     public func applyPoison(_ poison: FormID) -> AlchemyActionOutcome {
         guard let runtime else { return noteAlchemy(.unavailable) }
         let poisonName = name(of: poison)
         guard isPoison(poison) else { return noteAlchemy(.notAPoison(poisonName)) }
         guard let weapon = poisonableWeapon else { return noteAlchemy(.noWeapon) }
+        if runtime.inventory.baselines.items.weapon(weapon)?.animationType == .staff {
+            return noteAlchemy(.cannotPoison)
+        }
+        if playerWeaponPoisons.poisons[weapon] != nil {
+            return noteAlchemy(.alreadyPoisoned)
+        }
         do {
             try runtime.inventory.remove(poison, count: 1, from: runtime.player)
         } catch {

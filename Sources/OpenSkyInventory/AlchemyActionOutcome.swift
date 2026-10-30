@@ -47,6 +47,8 @@ nonisolated public enum AlchemyActionOutcome: Equatable, Sendable {
     case learned(ingredient: String, effects: [String])
     case poisoned(weapon: String, poison: String, doses: Int32)
     case noWeapon
+    case alreadyPoisoned
+    case cannotPoison
     case notAPoison(String)
     case brewFailed(reason: String)
 
@@ -70,7 +72,9 @@ nonisolated public enum AlchemyActionOutcome: Equatable, Sendable {
             "Ate \(ingredient): learned \(effects.joined(separator: ", "))."
         case let .poisoned(weapon, poison, doses):
             "Applied \(poison) to \(weapon): \(doses) hit(s)."
-        case .noWeapon: "No weapon is drawn to poison."
+        case .noWeapon: PoisonText.noWeapon.fallback
+        case .alreadyPoisoned: PoisonText.alreadyPoisoned.fallback
+        case .cannotPoison: PoisonText.cannotPoison.fallback
         case let .notAPoison(name): "\(name) is no poison."
         case let .brewFailed(reason): "Brew failed: \(reason)"
         }
