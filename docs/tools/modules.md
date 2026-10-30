@@ -125,7 +125,7 @@ OpenSkyImageKernels       CPU pixel loops: BC block decode, tint paint, mip halv
 OpenSkyFormatsCore        binary readers, compression, geometry values, BSA, string tables
   ^
 OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI, LOD, DDS
-OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ
+OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ, BIK
 OpenSkyFormatsPEX         compiled Papyrus        OpenSkyFormatsSWF     Flash menus, AS2
 OpenSkyFormatsESS         Skyrim saves (.ess)
   ^

@@ -88,6 +88,8 @@ public final class EffectLayer {
     let uniformBuffer: MTLBuffer
     /// Screen blood quads (`ScreenBlood.swift`).
     public let screenBlood: ScreenBloodLayer
+    /// A playing movie over the frame (`MovieLayer.swift`).
+    public let movie: MovieLayer
 
     init(
         device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache
@@ -111,6 +113,7 @@ public final class EffectLayer {
         screenBlood = try ScreenBloodLayer(
             device: device, library: library, view: view, compiler: compiler
         )
+        movie = try MovieLayer(device: device, library: library, view: view, compiler: compiler)
         menuScene = try MenuSceneResources(
             device: device, library: library, view: view, compiler: compiler
         )
@@ -134,7 +137,7 @@ public final class EffectLayer {
 
     /// The buffers that stay resident for the renderer's life.
     var residentBuffers: [MTLAllocation] {
-        [uniformBuffer, screenBlood.vertexBuffer]
+        [uniformBuffer, screenBlood.vertexBuffer, movie.vertexBuffer]
     }
 
     /// Blends over the surface by the decal's alpha.

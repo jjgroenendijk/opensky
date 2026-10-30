@@ -24,6 +24,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var menuScreens: MenuScreens { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
+    var movies: MoviePlayerCoordinator { get }
     var mounts: MountCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
@@ -89,6 +90,7 @@ final class MenuRouter {
             if let game, let renderer {
                 gamepads.poll(now: now, renderer: renderer, menuMode: game.menuMode)
             }
+            game?.movies.tick(now: now)
             game?.titleMenu.tick(now: now)
             game?.raceMenu.tick(now: now)
             game?.skillsMenu.tick(now: now)
@@ -124,6 +126,9 @@ final class MenuRouter {
         }
         table.register(MessageCoordinator.identifier) { [unowned game] in game.messages.route($0) }
         table.register(LoadingScreenWorldAdapter.identifier) { _ in }
+        table.register(MoviePlayerCoordinator.identifier) { [unowned game] in
+            game.movies.route($0)
+        }
         table
             .register(TitleMenuCoordinator.identifier) { [unowned game] in
                 game.titleMenu.route($0)

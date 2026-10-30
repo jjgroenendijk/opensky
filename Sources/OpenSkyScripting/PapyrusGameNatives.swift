@@ -6,6 +6,25 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import simd
 
+/// The `Game.PlayBink` arguments (<https://ck.uesp.net/wiki/PlayBink_-_Game>).
+nonisolated public struct PapyrusBinkRequest: Equatable, Sendable {
+    public let fileName: String
+    public let interruptible: Bool
+    public let muteAudio: Bool
+    public let muteMusic: Bool
+    public let letterbox: Bool
+
+    public init(
+        fileName: String, interruptible: Bool, muteAudio: Bool, muteMusic: Bool, letterbox: Bool
+    ) {
+        self.fileName = fileName
+        self.interruptible = interruptible
+        self.muteAudio = muteAudio
+        self.muteMusic = muteMusic
+        self.letterbox = letterbox
+    }
+}
+
 /// A fade the `Game.FadeOutGame` arguments describe.
 nonisolated public struct PapyrusFade: Equatable, Sendable {
     public let fadingOut: Bool
@@ -107,6 +126,9 @@ public struct PapyrusGameNatives {
         (_ actor: ReferenceKey, _ target: ReferenceKey, _ speed: Float, _ waitToken: UInt64)
             -> Bool
     )?
+    /// `Game.PlayBink`: starts the movie and answers `waitToken` once it ends. False when
+    /// it cannot start.
+    public var playBink: ((PapyrusBinkRequest, _ waitToken: UInt64) -> Bool)?
     /// Resets a cell the next time it loads. False when the cell is unknown.
     public var resetCell: ((ReferenceKey) -> Bool)?
 

@@ -20,9 +20,21 @@ nonisolated extension CellSceneBuilder {
         let template = cell.lightingTemplate.flatMap {
             lightingTemplateIndexBuildingIfNeeded()[$0.rawValue]?.values
         }
-        guard let values = Self.resolvedLighting(cell: cell.lighting, template: template) else {
-            return nil
-        }
+        guard
+            let lighting = Self.renderLighting(cell: cell.lighting, template: template)
+        else { return nil }
+        return InteriorLightingBuild(
+            lighting: lighting,
+            pointLights: resolvePointLights(references)
+        )
+    }
+
+    /// A cell's light over its template, as the renderer takes it.
+    nonisolated public static func renderLighting(
+        cell: CellLightingValues?,
+        template: CellLightingValues?
+    ) -> RenderLighting? {
+        guard let values = resolvedLighting(cell: cell, template: template) else { return nil }
         let ambient = values.directionalAmbient ?? .black
         let azimuth = MatrixMath.radians(fromDegrees: Float(values.directionalRotationXY))
         let elevation = MatrixMath.radians(fromDegrees: Float(values.directionalRotationZ))
@@ -43,16 +55,12 @@ nonisolated extension CellSceneBuilder {
         } else {
             nil
         }
-        let lighting = RenderLighting(
+        return RenderLighting(
             ambientColor: values.ambientColor,
             directionalAmbient: ambient,
             directionalDirection: direction,
             directionalColor: values.directionalColor * max(0, values.directionalFade),
             fog: fog
-        )
-        return InteriorLightingBuild(
-            lighting: lighting,
-            pointLights: resolvePointLights(references)
         )
     }
 

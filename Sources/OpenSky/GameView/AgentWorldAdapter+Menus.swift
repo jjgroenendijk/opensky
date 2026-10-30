@@ -98,7 +98,8 @@ extension AgentWorldAdapter {
             "top": .init(game.menuMode.topMenu?.name),
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
             "hud": hudState,
-            "movie": movieFocusState
+            "movie": movieFocusState,
+            "bink": binkState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -121,6 +122,24 @@ extension AgentWorldAdapter {
             result["credits"] = .bool(game.titleMenu.creditsShown)
         }
         return .object(result)
+    }
+
+    /// The Bink movie on screen, and how the last one ended.
+    var binkState: AgentJSON {
+        let readout = game.movies.readout
+        let outcome: AgentJSON = switch readout.lastOutcome {
+        case .finished: "finished"
+        case .skipped: "skipped"
+        case let .failed(reason): .string("failed: \(reason)")
+        case nil: .null
+        }
+        let frame: AgentJSON = readout.frame.map { AgentJSON($0) } ?? .null
+        let frameCount: AgentJSON = readout.frameCount.map { AgentJSON($0) } ?? .null
+        return .object([
+            "file": AgentJSON(readout.fileName), "loading": .bool(readout.loading),
+            "frame": frame, "frameCount": frameCount,
+            "interruptible": .bool(readout.interruptible), "lastOutcome": outcome
+        ])
     }
 
     /// The menu movie's focused clip, its frame label, controllers, and button-art platform.

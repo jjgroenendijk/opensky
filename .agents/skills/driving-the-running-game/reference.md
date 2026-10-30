@@ -155,6 +155,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
 | `debug fade <out\|in> [--white] [--delay <s>] [--duration <s>]` | Fades the screen as `Game.FadeOutGame` does; `state frame` shows the `screenFade` |
 | `debug cartmode on\|off` | Puts the HUD into or out of cart mode, as `Game.SetHudCartMode` does; `state menu` shows `hud.cartMode` and `hud.modes` |
+| `debug playbink <file> [--interruptible]` | Plays a Bink movie from `Data\Video`, as `Game.PlayBink` does; `state menu` shows `bink.frame` and `bink.lastOutcome` |
+| `debug skipbink` | Ends the playing movie, even one a key cannot skip |
 | `debug gamepad [--count n] [--press down,a]` | Reports `n` gamepads to the menu movies when fewer are connected (0 to 3), and presses gamepad buttons (`a`, `b`, `x`, `y`, `up`, `down`, `left`, `right`) on the next frame; `state menu` shows `movie.focus`, `movie.focusLabel`, `movie.controllers`, and `movie.platform` |
 
 ## Benchmark

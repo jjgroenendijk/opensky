@@ -44,12 +44,12 @@ nonisolated public struct DecodedAudio: Equatable, Sendable {
 
 /// Failures the decoder reports. Every case is recoverable by the caller: nothing here
 /// leaves a half-built decoder behind, and no case is reachable from valid input.
-nonisolated public enum WMADecoderError: Error, Equatable {
+nonisolated public enum FFmpegDecoderError: Error, Equatable {
     /// The container described a codec this decoder does not implement.
     case unsupportedFormatTag(UInt16)
     /// A header field is outside the range the decoder can act on.
     case invalidParameters(String)
-    /// The linked ffmpeg build has no WMAv2 decoder, which means it was misconfigured.
+    /// The linked ffmpeg build lacks the decoder, which means it was misconfigured.
     case decoderUnavailable
     /// An ffmpeg allocation returned null; the argument names what could not be allocated.
     case allocationFailed(String)
@@ -61,4 +61,6 @@ nonisolated public enum WMADecoderError: Error, Equatable {
     case resampleFailed(code: Int32)
     /// The decoder emitted a sample format libswresample declined to convert.
     case unsupportedSampleFormat(Int32)
+    /// A video decoder emitted a pixel format other than 8-bit YCbCr 4:2:0.
+    case unsupportedPixelFormat(Int32)
 }

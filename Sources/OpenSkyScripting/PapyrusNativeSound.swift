@@ -1,7 +1,7 @@
 // `Sound` natives the app answers: `Play`, `PlayAndWait`, `StopInstance`, and
-// `SetInstanceVolume` (<https://ck.uesp.net/wiki/Sound_Script>), and the
+// `SetInstanceVolume` (<https://ck.uesp.net/wiki/Sound_Script>), the
 // `ShaderParticleGeometry` natives `Apply` and `Remove`, and the latent
-// `Actor.PathToReference`, which the app answers the same way as `PlayAndWait`.
+// `Actor.PathToReference` and `Game.PlayBink`, answered the same way as `PlayAndWait`.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -44,6 +44,31 @@ extension PapyrusNativeFunctions {
         }
         installParticleGeometry(into: &registry)
         installPathToReference(into: &registry)
+        installPlayBink(into: &registry)
+    }
+
+    /// `PlayBink(string asFileName, bool abInterruptible = false, bool abMuteAudio = true,
+    /// bool abMuteMusic = true, bool abLetterbox = true)`: latent until the movie ends.
+    private static func installPlayBink(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game", functionName: "PlayBink"
+        ) { call, context in
+            guard let bridge = context.world as? PapyrusWorldStateBridge else {
+                return needsWorld(call)
+            }
+            guard let play = bridge.gameNatives.playBink, let name = string(call, at: 0) else {
+                return failure(call, "PlayBink needs a file name and the running game")
+            }
+            let request = PapyrusBinkRequest(
+                fileName: name,
+                interruptible: boolean(call, at: 1, default: false),
+                muteAudio: boolean(call, at: 2, default: true),
+                muteMusic: boolean(call, at: 3, default: true),
+                letterbox: boolean(call, at: 4, default: true)
+            )
+            let token = bridge.nextLatentWaitToken()
+            return play(request, token) ? .suspended(.external(token)) : .returned(.none)
+        })
     }
 
     /// `bool PathToReference(ObjectReference aTarget, float afWalkRunPercent)`: latent,

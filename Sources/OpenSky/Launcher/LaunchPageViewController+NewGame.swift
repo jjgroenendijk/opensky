@@ -1,6 +1,6 @@
-// The Launch page's New game group: where a new game starts, and the Survival Mode
-// answer, so the plugin's prompt does not stop a new game unless the player asks for
-// it. The start rules live in `LaunchStartForm`; this file only shows them.
+// The Launch page's New game group: where a new game starts, the startup logo, and
+// the Survival Mode answer, so the plugin's prompt does not stop a new game unless the
+// player asks for it. The start rules live in `LaunchStartForm`; this file only shows them.
 
 import AppKit
 import OpenSkyGameData
@@ -21,10 +21,15 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         )
         survivalModeAskControl.toolTip =
             "The game asks in a new game; the Survival Mode box above is then ignored"
+        PanelComponents.configureCheckbox(
+            startupLogoControl, target: self, action: #selector(startupLogoChanged),
+            identifier: "LaunchStartupLogoControl"
+        )
+        startupLogoControl.toolTip = "The logo movie before the main menu; a key skips it"
         refreshNewGame()
         return layout.group("New game", [
             layout.row("Starts at", startKindPopUp), startCellRow, startGridRow,
-            startReasonLabel, layout.toggle(survivalModeControl),
+            startReasonLabel, layout.toggle(startupLogoControl), layout.toggle(survivalModeControl),
             layout.toggle(survivalModeAskControl)
         ])
     }
@@ -35,6 +40,11 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         survivalModeAskControl.state = ask ? .on : .off
         survivalModeControl.state = store.bool(.survivalMode) ? .on : .off
         survivalModeControl.isEnabled = !ask
+        startupLogoControl.state = store.bool(.startupLogo) ? .on : .off
+    }
+
+    @objc private func startupLogoChanged() {
+        context.playerSettings().set(.startupLogo, to: startupLogoControl.state == .on ? 1 : 0)
     }
 
     @objc private func survivalModeChanged() {

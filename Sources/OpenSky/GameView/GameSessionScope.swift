@@ -46,10 +46,6 @@ final class GameSessionScope {
     /// The session's runtime world state. Every cell build reads a snapshot of it.
     let worldState = WorldStateStore()
 
-    var renderer: Renderer? {
-        gameSession?.renderer
-    }
-
     lazy var playerSettings = PlayerSettingsCoordinator(
         store: services.playerSettingsStore,
         world: menuWorld,
@@ -123,6 +119,9 @@ final class GameSessionScope {
         menuMode: menuMode, movies: swfMovies, hud: hud, world: menuWorld
     )
     lazy var mapMenu = MapMenuCoordinator(menuMode: menuMode, world: mapWorld)
+    /// Bink movies: the startup logo and `Game.PlayBink`.
+    lazy var movies = MoviePlayerCoordinator(menuMode: menuMode, world: movieWorld)
+    lazy var movieWorld = MovieWorldAdapter(game: self)
 
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)

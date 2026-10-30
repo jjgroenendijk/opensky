@@ -142,6 +142,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case fade(AgentFadeRequest)
     /// Puts the HUD into or out of cart mode, as Papyrus `Game.SetHudCartMode` does.
     case cartMode(Bool)
+    /// Plays a Bink movie from `Data\Video`, as Papyrus `Game.PlayBink` does.
+    case playBink(file: String, interruptible: Bool)
+    /// Ends the playing movie, even one a key cannot skip.
+    case skipBink
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -235,6 +239,11 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "shadows": try .shadows(args.string("quality"))
         case "fade": try parseFade(args)
         case "cartmode": try .cartMode(args.bool("on", default: true))
+        case "playbink":
+            try .playBink(
+                file: args.string("file"), interruptible: args.bool("interruptible", default: false)
+            )
+        case "skipbink": .skipBink
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))

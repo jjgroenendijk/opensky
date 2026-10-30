@@ -224,6 +224,12 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.cartmode", "Hide the HUD for a cart ride, as Game.SetHudCartMode does.",
             positionals: [required("on", "Either on or off.")]
-        )
+        ),
+        command(
+            "debug.playbink", "Play a Bink movie from Data/Video, as Game.PlayBink does.",
+            positionals: [required("file", "The movie file, such as BGS_Logo.bik.")],
+            options: [flag("interruptible", "Let a key skip the movie.")]
+        ),
+        command("debug.skipbink", "End the playing movie, even one a key cannot skip.")
     ]
 }

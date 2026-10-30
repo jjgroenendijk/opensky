@@ -1,5 +1,6 @@
 // Frame-fog resolution: active exterior weather overrides the fog uniforms, not
-// interior lighting. The weather advance runs in the session (`GameSession+Weather.swift`).
+// interior lighting or a cover. The weather advance runs in the session
+// (`GameSession+Weather.swift`).
 
 import Metal
 import OpenSkyRenderCore
@@ -16,9 +17,12 @@ extension Renderer {
     }
 
     /// Where no sky draws, as in an interior or Blackreach, a gap in the geometry shows
-    /// the far fog colour instead of black (docs/rendering/metal4-renderer.md).
-    public static func background(fog: FrameFog, drawsSky: Bool) -> MTLClearColor {
-        guard !drawsSky, fog.enabled != 0 else {
+    /// the far fog colour instead of black (docs/rendering/metal4-renderer.md). A
+    /// loading or menu cover stands on black, as in the game.
+    public static func background(
+        fog: FrameFog, drawsSky: Bool, covered: Bool = false
+    ) -> MTLClearColor {
+        guard !drawsSky, !covered, fog.enabled != 0 else {
             return MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         }
         let colour = SIMD3<Double>(fog.farColor)
@@ -28,13 +32,16 @@ extension Renderer {
     /// The frame's fog, and the background colour that follows from it.
     func resolveFrameFog(weatherLight: ResolvedWeather?) -> FrameFog {
         let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorFog)
-        sceneBackground = Self.background(fog: fog, drawsSky: scene.sky != nil)
+        sceneBackground = Self.background(
+            fog: fog, drawsSky: scene.sky != nil, covered: effects.loadingCover != nil
+        )
         return fog
     }
 
-    /// The loaded interior's fog, with a script's change when it still applies.
+    /// The loaded interior's or the cover's fog, with a script's change when it still applies.
     var interiorFog: FogParameters? {
-        frameInput.interiorFog?.fog(for: scene.lighting) ?? scene.lighting?.fog
+        let lighting = activeLighting
+        return frameInput.interiorFog?.fog(for: lighting) ?? lighting?.fog
     }
 
     public static func resolvedFog(

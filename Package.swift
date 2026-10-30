@@ -943,7 +943,8 @@ targets += feature(
 targets += feature(
     "OpenSkyMenus",
     dependencies: [
-        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyAudio", "OpenSkyFormatsAudio", "OpenSkyConditions", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
         "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
         "OpenSkyQuestsInterface", "OpenSkyScriptingInterface", "OpenSkyWorldInterface",
@@ -951,7 +952,7 @@ targets += feature(
         "OpenSkyRenderResources"
     ],
     tests: [
-        "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
+        "OpenSkyAudio", "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyInventoryInterface",
         "OpenSkyProgressionInterface",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",

@@ -35,6 +35,7 @@ extension GameSessionScope: @MainActor MenuScreensWorldHost {}
 extension GameSessionScope: @MainActor MenuSoundHost {}
 extension GameSessionScope: @MainActor MenuWorldHost {}
 extension GameSessionScope: @MainActor MessageWorldHost {}
+extension GameSessionScope: @MainActor MovieWorldHost {}
 extension GameSessionScope: @MainActor ObjectAnimationWorldHost {}
 extension GameSessionScope: @MainActor PlayerWorldHost {}
 extension GameSessionScope: @MainActor ProgressionWorldHost {}

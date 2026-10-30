@@ -41,6 +41,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let survivalModeControl = NSButton(
         checkboxWithTitle: "Survival Mode", target: nil, action: nil
     )
+    let startupLogoControl = NSButton(
+        checkboxWithTitle: "Play the startup logo", target: nil, action: nil
+    )
     let survivalModeAskControl = NSButton(
         checkboxWithTitle: "Let the game ask about Survival Mode", target: nil, action: nil
     )

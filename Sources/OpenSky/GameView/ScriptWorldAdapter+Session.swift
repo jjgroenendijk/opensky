@@ -33,6 +33,7 @@ extension ScriptWorldAdapter {
         wireReferenceRules(&hooks, provider: provider)
         wireSounds(&hooks)
         wirePaths(&hooks)
+        game.movieWorld.wire(&hooks)
         hooks.nodeTransform = modelNodes.flatMap { nodes in
             { [weak self] key, name, then in
                 self?.nodeTransform(of: key, named: name, nodes: nodes, then: then) ?? .missing
