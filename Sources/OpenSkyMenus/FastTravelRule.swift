@@ -14,8 +14,7 @@ nonisolated public enum FastTravelRefusal: String, Equatable, Sendable, CaseIter
     case noFastTravelHere = "sNoFastTravelCell"
     case scriptBlock = "sNoFastTravelScriptBlock"
     case undiscovered = "sNoFastTravelUndiscovered"
-    /// The install has no own setting for this refusal, so the default text shows.
-    case takingHealthDamage = "sNoFastTravelDefault"
+    case takingHealthDamage = "sFastTravelNoTravelHealthDamage"
 }
 
 nonisolated public struct FastTravelContext: Equatable, Sendable {

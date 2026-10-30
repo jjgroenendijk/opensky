@@ -69,8 +69,8 @@ health damage, being in the air, and being overencumbered, checked in that order
 Overencumbered means the carried weight is above the `CarryWeight` actor value. An alarm
 means guards pursue the player for a crime. Taking health damage means a harmful effect
 lowers health each second, such as poison or fire. The message is the matching
-`sNoFastTravel*` GMST string. `Skyrim.esm` has no such string for health damage, so that
-refusal shows `sNoFastTravelDefault`. The vanilla wording for this case is not confirmed.
+`sNoFastTravel*` GMST string. The health damage refusal has a name outside that pattern:
+`sFastTravelNoTravelHealthDamage`, "You can't fast travel while taking health damage."
 
 Two natives read this state. `Game.IsFastTravelControlsEnabled()` is false while a script
 block from `EnableFastTravel(false)` holds. `ObjectReference.CanFastTravelToMarker()` is true

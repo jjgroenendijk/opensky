@@ -270,7 +270,7 @@ struct MapMenuCoordinatorTests {
         #expect(FastTravelRule.refusal(context) == .overencumbered)
         context.takingHealthDamage = true
         #expect(FastTravelRule.refusal(context) == .takingHealthDamage)
-        #expect(FastTravelRefusal.takingHealthDamage.rawValue == "sNoFastTravelDefault")
+        #expect(FastTravelRefusal.takingHealthDamage.rawValue == "sFastTravelNoTravelHealthDamage")
         context.alarmed = true
         #expect(FastTravelRule.refusal(context) == .alarm)
     }
