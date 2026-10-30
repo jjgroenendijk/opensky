@@ -8,11 +8,16 @@ import OpenSkyRenderCore
 
 extension Renderer {
     /// Shows `placements` and `particles` in place of the world, or the world again
-    /// for nil. An empty list is a dark screen with only the overlay.
+    /// for nil. An empty list is a dark screen with only the overlay. `lighting` is
+    /// the cover's own light; without it the cover keeps the world's sun and ambient.
     public func setLoadingCover(
-        _ placements: [RenderPlacement]?, particles: [ParticlePlayback] = []
+        _ placements: [RenderPlacement]?,
+        particles: [ParticlePlayback] = [],
+        lighting: RenderLighting? = nil
     ) throws {
-        let next = placements.map { RenderScene(instances: $0, particles: particles) }
+        let next = placements.map {
+            RenderScene(instances: $0, lighting: lighting, particles: particles)
+        }
         let retiring = effects.loadingCover?.residencyAllocations ?? []
         effects.loadingCover = next
         if let next {
@@ -27,6 +32,11 @@ extension Renderer {
             }
         }
         retireAllocations(retiring)
+    }
+
+    /// The cover's light while a cover with its own light shows, else the loaded cell's.
+    var activeLighting: RenderLighting? {
+        effects.loadingCover?.lighting ?? scene.lighting
     }
 
     /// The cover's systems while a cover shows, else the world's and the effects'.

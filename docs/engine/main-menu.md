@@ -45,7 +45,16 @@ Differences from the game:
   the smoke is not confirmed. The smoke volume is about 850 units wide, so with the logo's
   transform the camera stands inside it and the screen turns a flat grey. OpenSky faces the
   smoke's +Y side to the camera too and puts that side at the logo, so the smoke drifts
-  behind it. The lighting of the original scene is not drawn.
+  behind it.
+- The game draws the logo in `MainMenuCell` (`Skyrim.esm` `CELL 0006F3EB`), the cell the
+  `MMCL` default object names. The cell holds only a `COCMarker`. Its `XCLL` gives a dim
+  blue ambient light, no directional light, and fog distances of 0, so there is no fog.
+  OpenSky lights the logo and the smoke with this cell's light over its `LTMP` template, and
+  clears the screen to black. Sources: UESP "Skyrim Mod:Mod File Format/DOBJ" and
+  "Skyrim:Inaccessible Cells", and `openskycli cell --cell MainMenuCell --refs`.
+- The smoke model's emitter mesh is not drawn in the game: all of its 538 vertices have
+  alpha 0, and its shader sets `Vertex_Alpha`, so the palette lookup gives alpha 0. Only the
+  particles show.
 - Credits returns the movie to its main rows. OpenSky has no credits roll.
 - Delete in the Load list does nothing. Saves are deleted in the System menu.
 - The movie has `ConfirmNewGame` and `ConfirmContinue` callbacks, so the game can ask a

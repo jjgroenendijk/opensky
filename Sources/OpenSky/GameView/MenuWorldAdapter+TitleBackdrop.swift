@@ -4,8 +4,10 @@
 import Foundation
 import OpenSkyCells
 import OpenSkyFormatsCore
+import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWorld
@@ -47,10 +49,19 @@ extension MenuWorldAdapter {
     private func place(_ backdrop: TitleBackdropScene?, gameSession: GameSession) {
         do {
             try gameSession.renderer.setLoadingCover(
-                backdrop?.placements, particles: backdrop?.particles ?? []
+                backdrop?.placements,
+                particles: backdrop?.particles ?? [],
+                lighting: backdrop.flatMap { _ in titleLighting }
             )
         } catch {
             Self.logger.error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    /// The game draws the logo in `MainMenuCell`, so it takes that cell's light.
+    private var titleLighting: RenderLighting? {
+        game.worldData?.menuRecords?.mainMenuLighting.flatMap {
+            CellSceneBuilder.renderLighting(cell: $0.cell, template: $0.template)
         }
     }
 

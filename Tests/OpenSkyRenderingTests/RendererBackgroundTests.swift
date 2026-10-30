@@ -25,4 +25,9 @@ struct RendererBackgroundTests {
         let black = Renderer.background(fog: noFog, drawsSky: false)
         #expect(black.red == 0 && black.green == 0 && black.blue == 0)
     }
+
+    @Test func aCoverStandsOnBlackInsteadOfTheFogColour() {
+        let covered = Renderer.background(fog: Self.fog, drawsSky: false, covered: true)
+        #expect(covered.red == 0 && covered.green == 0 && covered.blue == 0)
+    }
 }

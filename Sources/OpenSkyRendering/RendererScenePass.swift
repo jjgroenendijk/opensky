@@ -39,15 +39,16 @@ extension Renderer {
     /// come from the injected SceneCamera.
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let interiorLighting = scene.lighting
+        let interiorLighting = activeLighting
         // Weather is an exterior-only source: interiors keep their own baked
         // CELL/LGTM lighting untouched (weatherLight nil there). The sky
         // palette applies only when the scene actually draws a sky.
         let weatherLight = interiorLighting == nil ? frameInput.weather : nil
-        let weatherSky = scene.sky != nil ? weatherLight : nil
+        let covered = effects.loadingCover != nil
+        let weatherSky = scene.sky != nil && !covered ? weatherLight : nil
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
-        let fog = resolveFrameFog(weatherLight: weatherLight)
+        let fog = resolveFrameFog(weatherLight: covered ? nil : weatherLight)
         let grassDistance = clampedGrassDrawDistance
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,

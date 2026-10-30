@@ -81,6 +81,8 @@ nonisolated public struct MenuRecordData: Sendable {
     public let installedPlugins: [InstalledPlugin]
     /// The FLST of help topics the System page's Help lists: the DOBJ `HMPC` default object.
     public let helpManual: ResolvedFormID?
+    /// The light the main menu's logo and smoke are drawn under.
+    public let mainMenuLighting: MainMenuCellLighting?
     /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Filled
     /// from the install after the records load.
     public var chargenTypes: [ChargenTypeKey: [Int: Int]] = [:]
@@ -112,7 +114,11 @@ nonisolated public struct MenuRecordData: Sendable {
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
         markers = MapMarkerIndex(plugins: loadOrder.files)
         installedPlugins = loadOrder.plugins.map { InstalledPlugin(name: $0.name, file: $0.file) }
-        helpManual = DefaultObjectStore(plugins: loadOrder.files).object(tag: Self.helpManualTag)
+        let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
+        helpManual = defaultObjects.object(tag: Self.helpManualTag)
+        mainMenuLighting = MainMenuCellLighting(
+            loadOrder: loadOrder, defaultObjects: defaultObjects
+        )
         mapSettings = MenuMapSettings(store: settings)
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID

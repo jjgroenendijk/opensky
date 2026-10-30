@@ -49,6 +49,9 @@ so without a minimum the screen would flash for one frame and the tip could not 
 - The tip, the `DESC` text, is drawn at the bottom in the UI overlay.
 - During the fade, the world draws again under a black panel whose opacity falls to zero.
 - A screen with no model shows the tip on black.
+- The cover stands on black and takes no weather fog, also when no cell is loaded behind it.
+  It keeps the sun and ambient light of the loaded world, unless the cover brings its own
+  light, as the main menu logo does ([title menu](/engine/main-menu.md)).
 
 ## Differences from the game
 
