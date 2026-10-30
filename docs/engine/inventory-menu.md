@@ -104,6 +104,30 @@ Every change reads the inventory again and writes it to the movie, so weight and
 `ItemSelect` and `DropItem` are registered as host functions, because they appear in the movie's
 bytecode. No measured run has called either, so they are not confirmed. Only `CloseMenu` is.
 
+## Refused actions
+
+`ItemRefusalRule` refuses some actions with a HUD notice, from string settings:
+
+| Action | When | Notice |
+| --- | --- | --- |
+| Drop | A quest item | `sDropQuestItemWarning` |
+| Drop | A key (`KEYM`) | `sNoKeyDropWarning` |
+| Drop | The player is in the air | `sNoJumpWarning` |
+| Drop | An equipped item while the player attacks | `sDropEquippedItemWarning` |
+| Drop | No resident cell to drop into | `sNotEnoughRoomWarning` |
+| Use | Eating or drinking a quest item | `sNoEatQuestItem` |
+| Equip | While the player attacks | `sAnimationCanNotEquipWeapon`, or `sAnimationCanNotEquipArmor` for armour |
+| Unequip | While the player attacks | `sAnimationCanNotUnequip` |
+| Unequip | A non-playable item | `sCantUnequipGeneric` |
+| Favourite | Not a weapon, armour, ammunition, potion, food, ingredient, or scroll | `sCantHotkeyItem` |
+
+Which actions refuse when is OpenSky's reading of the settings' words. OpenSky does not mark
+quest items yet, so their refusals do not happen
+([#1472](https://github.com/jjgroenendijk/opensky/issues/1472)). The rule also holds the texts
+`sCantEquipGeneric`, `sCanNotEquipWornEnchantment`, and `sCantRemoveWornItem`, for gear the
+player's race cannot wear, an enchantment that cannot apply, and a worn quest item moved to a
+container.
+
 ## Quantity
 
 The quantity prompt asks how many of a stack to drop. It starts at the whole stack: the movie's

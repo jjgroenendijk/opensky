@@ -175,5 +175,6 @@ extension GapsGatherer {
         _ = GameSettingTexts<PlayerDeathText>.resolve(store: store)
         _ = GameSettingTexts<GamepadNoticeText>.resolve(store: store)
         _ = GameSettingTexts<ActivationRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<ItemRefusalText>.resolve(store: store)
     }
 }

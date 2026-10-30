@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyCells
+import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -14,14 +15,18 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyWorld
 
 /// What `InventoryMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol InventoryMenuHost: MenuInputConsumer {
+    var combat: CombatCoordinator { get }
+    var gameSession: GameSession? { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var inventoryWorld: InventoryWorldAdapter { get }
     var magic: MagicCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var menuScreens: MenuScreens { get }
     var renderer: Renderer? { get }
@@ -219,7 +224,10 @@ final class InventoryMenuController {
     }
 
     func dropSelection(count: Int32 = 1) {
-        perform { game.inventory.dropPlayerItem($0.item, count: count).text }
+        perform { entry in
+            refusal(.drop, of: entry.item)
+                ?? game.inventory.dropPlayerItem(entry.item, count: count).text
+        }
     }
 
     func perform(_ action: (InventoryMenuEntry) -> String) {

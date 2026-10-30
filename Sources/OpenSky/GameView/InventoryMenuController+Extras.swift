@@ -16,7 +16,7 @@ extension InventoryMenuController {
     // MARK: - Favourites and hotkeys
 
     func toggleFavouriteSelection() {
-        perform { game.inventory.toggleFavourite($0.item).text }
+        perform { refusal(.favourite, of: $0.item) ?? game.inventory.toggleFavourite($0.item).text }
     }
 
     /// A number key in play: equips or unequips the bound item, or uses a potion,
@@ -26,6 +26,12 @@ extension InventoryMenuController {
         case let .failure(outcome):
             lastActionText = outcome.text
         case let .success(item):
+            // A refusal shows its own notice.
+            let request = request(for: game.inventory.use(of: item), item: item)
+            if let refused = refusal(request, of: item) {
+                lastActionText = refused
+                return
+            }
             lastActionText = use(item)
         }
         game.hud.showNotification(lastActionText ?? "")
@@ -36,7 +42,11 @@ extension InventoryMenuController {
 
     func use(_ item: FormID) -> String {
         let inventory = game.inventory
-        switch inventory.use(of: item) {
+        let use = inventory.use(of: item)
+        if let refused = refusal(request(for: use, item: item), of: item) {
+            return refused
+        }
+        switch use {
         case .applyPoison: return inventory.applyPoison(item).text
         case .consume: return game.magic.consumeMagicItem(item).text
         case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
