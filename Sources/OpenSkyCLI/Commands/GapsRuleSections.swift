@@ -176,5 +176,6 @@ extension GapsGatherer {
         _ = GameSettingTexts<GamepadNoticeText>.resolve(store: store)
         _ = GameSettingTexts<ActivationRefusalText>.resolve(store: store)
         _ = GameSettingTexts<ItemRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<WorldNoticeText>.resolve(store: store)
     }
 }

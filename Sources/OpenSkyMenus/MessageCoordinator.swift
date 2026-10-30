@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyScriptingInterface
 
@@ -18,6 +19,8 @@ public protocol MessageWorld: SWFLayerWorld {
     /// The persisted help counts; the save carries them.
     var helpMessageRecords: [String: HelpMessageRecord] { get set }
     func showHUDNotification(_ text: String)
+    /// The texts of the HUD's world notices, from their string settings.
+    var worldNoticeTexts: GameSettingTexts<WorldNoticeText> { get }
     func setHUDHelpMessage(_ text: String?)
     func shakeCamera(source: ReferenceKey?, strength: Float, duration: Float) -> Bool
     func forceCameraMode(firstPerson: Bool) -> Bool
@@ -240,6 +243,19 @@ extension MessageCoordinator: PapyrusPresenting {
     @discardableResult
     public func postNotification(_ text: String) -> Bool {
         notifications.post(text, frame: frame)
+    }
+
+    @discardableResult
+    public func postWorldNotice(_ notice: WorldNotice) -> Bool {
+        let texts = world?.worldNoticeTexts ?? .vanilla
+        switch WorldNoticeShape(notice, texts: texts) {
+        case let .big(big):
+            guard let hud else { return false }
+            hud.showBigNotice(big)
+            return true
+        case let .line(text):
+            return postNotification(text)
+        }
     }
 
     public func showMessage(

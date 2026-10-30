@@ -8,6 +8,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -101,6 +102,13 @@ extension PapyrusWorldStateBridge {
             values.hasZeroHealth(holder)
         {
             actorNatives.ragdollRuntime?()?.noteZeroHealth(of: key)
+        }
+        if
+            write == .modify, value > 0, key == .player,
+            index == ActorValueIdentity.index(named: "Dragon Souls"),
+            let souls = values.value(at: index, on: holder)
+        {
+            presenter?.postWorldNotice(.dragonSoulAbsorbed(souls: Int(souls)))
         }
         return actorState(for: key)
     }

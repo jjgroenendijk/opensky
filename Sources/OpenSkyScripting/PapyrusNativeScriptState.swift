@@ -98,7 +98,14 @@ extension PapyrusNativeFunctions {
         for flag in scriptedFlags {
             scriptState(flag.script, flag.setter, into: &registry) { call, bridge, key in
                 let isSet = boolean(call, at: 0, default: true)
+                let wasSet = bridge.scriptedState(of: key).flag(flag.name) == true
                 bridge.updateScriptedState(of: key) { $0.setFlag(flag.name, isSet ? true : nil) }
+                if
+                    flag.name == ScriptedStateName.cleared, isSet, !wasSet,
+                    let name = bridge.formName(of: key)
+                {
+                    bridge.presenter?.postWorldNotice(.locationCleared(name: name))
+                }
                 return .returned(.none)
             }
             guard let getter = flag.getter else { continue }

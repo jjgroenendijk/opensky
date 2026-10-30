@@ -177,8 +177,12 @@ extension PapyrusNativeFunctions {
     }
 
     private static func installMarkerNatives(into registry: inout PapyrusNativeRegistry) {
-        withReference("ObjectReference", "AddToMap", into: &registry) { call, _, menus, key in
+        withReference("ObjectReference", "AddToMap", into: &registry) { call, bridge, menus, key in
+            let wasVisible = menus.isMapMarkerVisible(key)
             menus.addToMap(key, allowFastTravel: boolean(call, at: 0, default: false))
+            if !wasVisible, menus.isMapMarkerVisible(key) {
+                bridge.presenter?.postWorldNotice(.mapMarkerAdded)
+            }
             return .returned(.none)
         }
         withReference(

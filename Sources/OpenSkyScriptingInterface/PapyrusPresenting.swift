@@ -41,8 +41,23 @@ nonisolated public struct PapyrusHelpMessageRequest: Equatable, Sendable {
     }
 }
 
+/// A world change the HUD announces in its big centred notice or as a line.
+nonisolated public enum WorldNotice: Equatable, Sendable {
+    case locationDiscovered(name: String)
+    case locationCleared(name: String)
+    case spellLearned(name: String)
+    case wordLearned(word: String)
+    /// `souls` is the player's count after the absorb.
+    case dragonSoulAbsorbed(souls: Int)
+    case mapMarkerAdded
+}
+
 @MainActor
 public protocol PapyrusPresenting: AnyObject {
+    /// Announces `notice` on the HUD. False when nothing showed.
+    @discardableResult
+    func postWorldNotice(_ notice: WorldNotice) -> Bool
+
     /// Queues a HUD notification. False when the text is empty or hidden.
     @discardableResult
     func postNotification(_ text: String) -> Bool

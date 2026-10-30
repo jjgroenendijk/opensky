@@ -21,6 +21,7 @@ import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -37,6 +38,7 @@ protocol MapWorldHost: MenuInputConsumer {
     var inventory: InventoryCoordinator { get }
     var journal: JournalCoordinator { get }
     var magic: MagicCoordinator { get }
+    var messages: MessageCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -196,6 +198,10 @@ extension MapWorldAdapter: MapMenuWorld {
 
     func showNotification(_ text: String) {
         game.hud.showNotification(text)
+    }
+
+    func showWorldNotice(_ notice: WorldNotice) {
+        game.messages.postWorldNotice(notice)
     }
 
     func incrementStat(_ name: String) {

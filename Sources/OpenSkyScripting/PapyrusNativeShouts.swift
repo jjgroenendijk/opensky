@@ -18,7 +18,11 @@ extension PapyrusNativeFunctions {
         ]
         for (name, flag) in names {
             withForm("Game", name, into: &registry) { _, bridge, player, word in
+                let known = bridge.scriptedState(of: player).flag(flag(word)) == true
                 bridge.updateScriptedState(of: player) { $0.setFlag(flag(word), true) }
+                if name == "TeachWord", !known, let text = bridge.formName(of: word) {
+                    bridge.presenter?.postWorldNotice(.wordLearned(word: text))
+                }
                 return .returned(.none)
             }
         }

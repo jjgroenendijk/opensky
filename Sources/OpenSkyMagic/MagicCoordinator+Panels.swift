@@ -116,6 +116,12 @@ extension MagicCoordinator {
             return recordCasting(.unresolvedTome(book: itemName(item), plugin: pluginName))
         }
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
+        if
+            reading.taught,
+            let learned = caster.spellbook.knownSpells(of: .player).first(where: { $0.key == spellKey })
+        {
+            world.announceSpellLearned(learned.displayName)
+        }
         return recordCasting(.readTome(reading, book: itemName(item)))
     }
 
