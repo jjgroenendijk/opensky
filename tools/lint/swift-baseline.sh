@@ -20,7 +20,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 # The Apple Swift release of the Xcode that CI selects. A release without a
 # patch number, such as "6.4", also matches "6.4.0".
-required="6.4"
+required="6.4.2"
 
 # Language mode every SWIFT_VERSION build setting must carry.
 required_language_mode="6.0"
@@ -32,7 +32,7 @@ if ! command -v swiftc >/dev/null 2>&1; then
   exit 1
 fi
 
-# "swift-driver version: ... Apple Swift version 6.4 (swiftlang-6.4.0.34.1 ...)"
+# "swift-driver version: ... Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 ...)"
 version_line="$(swiftc --version 2>&1 | grep -m1 'Apple Swift version' || true)"
 if [ -z "$version_line" ]; then
   {
