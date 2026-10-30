@@ -380,14 +380,3 @@ the upstream repository is archived, and plans to disable it on 2027-08-12.
 
 Retires when Periphery has a maintained install path again, or when `make health` moves to
 another tool.
-
-## Local Xcode 27.2 is newer than the CI pin
-
-Observed 2026-10-30. This machine updated to Xcode 27.2 (27B52), with Apple Swift 6.4.2.
-CI pins Xcode 27.0 and Swift 6.4, so `make check` fails at `swift-baseline`. The update also
-removed the Metal Toolchain: the shader step failed until `xcodebuild -downloadComponent
-MetalToolchain` ran again. Nobody has checked yet whether the `xcode-27` runner has Xcode 27.2.
-Until the pins match, run the other `check` steps on their own:
-`make format-check lint docs-links`.
-
-Retires when local Xcode and the CI pin name the same Swift version.

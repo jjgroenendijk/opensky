@@ -7,7 +7,7 @@ tags: [tool, build, concurrency, swift]
 
 # Swift toolchain and language mode
 
-OpenSky builds with Apple Swift 6.4 (Xcode 27.0), locally and in CI, and every Xcode build
+OpenSky builds with Apple Swift 6.4.2 (Xcode 27.2), locally and in CI, and every Xcode build
 configuration is in Swift 6 language mode. Both facts are checked by `tools/lint/swift-baseline.sh`,
 reachable as `make swift-baseline`, so neither can regress silently.
 
@@ -15,10 +15,10 @@ reachable as `make swift-baseline`, so neither can regress silently.
 
 `tools/lint/swift-baseline.sh` fails, naming what it found, when either half slips:
 
-* The compiler reported by `swiftc --version` is not Apple Swift 6.4. Each Swift release
+* The compiler reported by `swiftc --version` is not Apple Swift 6.4.2. Each Swift release
   accepts code that another one rejects. So a newer local compiler passes code that fails in
   CI, and an older one fails code that passes there. The check wants the same version, not a
-  minimum, so 6.3.3 and 6.4.1 both fail. A version without a patch number matches the same
+  minimum, so 6.4.1 and 6.4.3 both fail. A version without a patch number matches the same
   version with `.0`. A missing or non-Apple `swiftc` fails the same way.
 * Any `SWIFT_VERSION` build setting reads something other than `6.0`. Both places a
   setting can be declared are scanned: `config/Build/*.xcconfig`, where the one declaration
@@ -106,9 +106,14 @@ nonisolated VM would need a `MainActor.assumeIsolated` hop in every world call.
 
 ## Moving to a new Xcode
 
-The version lives in two places that change in one commit: `required` at the top of
-`tools/lint/swift-baseline.sh`, and `DEVELOPER_DIR` in `.github/workflows/ci.yml`, which
-names the Xcode the runner uses ([CI](/tools/ci.md)). Install the new Xcode locally, then
-change both; the language mode is a
+The version lives in places that change in one commit: `required` at the top of
+`tools/lint/swift-baseline.sh`, and `DEVELOPER_DIR` in `ci.yml`, `preview.yml`, and
+`weekly.yml` under `.github/workflows/`, which names the Xcode the runner uses
+([CI](/tools/ci.md)). Install the new Xcode locally, then change them all; the language mode is a
 separate constant in the same script and changes only when a new Swift language version
 ships and every configuration moves to it together.
+
+An Xcode update can remove the Metal Toolchain. Run `make bootstrap` again after one, or the
+shader step fails. The runner image can name a release candidate under the final path:
+`Xcode_27.2.app` there is build 27B48, while the local release is 27B52. Both report Apple
+Swift 6.4.2, so the version gate still compares like with like.

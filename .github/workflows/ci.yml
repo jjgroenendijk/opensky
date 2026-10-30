@@ -39,7 +39,7 @@ env:
   UV_VERSION: 0.13.1
   # The image holds several Xcodes and its default moves. Name the one that matches the
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
-  DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+  DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
   # The build cache and the compilation cache store inside the workspace, where the
   # cache actions find them, under a hidden folder that xcodebuild's start-up scan
   # of the package root skips. Locally both default to paths outside the checkout.
