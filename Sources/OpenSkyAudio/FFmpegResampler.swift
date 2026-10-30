@@ -16,7 +16,7 @@ nonisolated public final class FFmpegResampler {
     public init(matching frame: UnsafeMutablePointer<AVFrame>) throws {
         let sourceFormat = frame.pointee.format
         guard sourceFormat >= 0 else {
-            throw WMADecoderError.unsupportedSampleFormat(sourceFormat)
+            throw FFmpegDecoderError.unsupportedSampleFormat(sourceFormat)
         }
         channelCount = Int(frame.pointee.ch_layout.nb_channels)
 
@@ -24,7 +24,7 @@ nonisolated public final class FFmpegResampler {
         // be released whether swr_alloc_set_opts2 succeeds or not.
         var outputLayout = AVChannelLayout()
         let copyStatus = av_channel_layout_copy(&outputLayout, &frame.pointee.ch_layout)
-        guard copyStatus >= 0 else { throw WMADecoderError.resampleFailed(code: copyStatus) }
+        guard copyStatus >= 0 else { throw FFmpegDecoderError.resampleFailed(code: copyStatus) }
         defer { av_channel_layout_uninit(&outputLayout) }
 
         var created: OpaquePointer?
@@ -37,14 +37,14 @@ nonisolated public final class FFmpegResampler {
         )
         guard status >= 0 else {
             swr_free(&created)
-            throw WMADecoderError.resampleFailed(code: status)
+            throw FFmpegDecoderError.resampleFailed(code: status)
         }
-        guard created != nil else { throw WMADecoderError.allocationFailed("SwrContext") }
+        guard created != nil else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
 
         let initStatus = swr_init(created)
         guard initStatus >= 0 else {
             swr_free(&created)
-            throw WMADecoderError.resampleFailed(code: initStatus)
+            throw FFmpegDecoderError.resampleFailed(code: initStatus)
         }
         context = created
     }
@@ -54,7 +54,7 @@ nonisolated public final class FFmpegResampler {
     /// Converts one decoded frame. The returned array is interleaved and sized to the
     /// samples libswresample actually wrote, which can differ from the frame's own count.
     public func interleavedFloats(from frame: UnsafeMutablePointer<AVFrame>) throws -> [Float] {
-        guard let context else { throw WMADecoderError.allocationFailed("SwrContext") }
+        guard let context else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
         guard let extended = frame.pointee.extended_data else { return [] }
         let inputCount = frame.pointee.nb_samples
         let capacity = Int(swr_get_out_samples(context, inputCount))
@@ -69,7 +69,7 @@ nonisolated public final class FFmpegResampler {
                 .assumingMemoryBound(to: UnsafePointer<UInt8>?.self)
             return swr_convert(context, &plane, Int32(capacity), input, inputCount)
         }
-        guard written >= 0 else { throw WMADecoderError.resampleFailed(code: written) }
+        guard written >= 0 else { throw FFmpegDecoderError.resampleFailed(code: written) }
         output.removeLast(output.count - Int(written) * channelCount)
         return output
     }

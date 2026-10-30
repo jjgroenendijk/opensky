@@ -10,31 +10,31 @@ import Testing
 struct WMADecoderTests {
     @Test func rejectsForeignFormatTag() {
         let parameters = WMADecoderFixture.parameters(formatTag: 0x0001)
-        #expect(throws: WMADecoderError.unsupportedFormatTag(0x0001)) {
+        #expect(throws: FFmpegDecoderError.unsupportedFormatTag(0x0001)) {
             _ = try WMADecoder(parameters: parameters)
         }
     }
 
     @Test func rejectsZeroChannels() {
-        #expect(throws: WMADecoderError.self) {
+        #expect(throws: FFmpegDecoderError.self) {
             _ = try WMADecoder(parameters: WMADecoderFixture.parameters(channelCount: 0))
         }
     }
 
     @Test func rejectsAbsurdChannelCount() {
-        #expect(throws: WMADecoderError.self) {
+        #expect(throws: FFmpegDecoderError.self) {
             _ = try WMADecoder(parameters: WMADecoderFixture.parameters(channelCount: 4096))
         }
     }
 
     @Test(arguments: [0, -1, 1_000_000]) func rejectsImplausibleSampleRate(rate: Int) {
-        #expect(throws: WMADecoderError.self) {
+        #expect(throws: FFmpegDecoderError.self) {
             _ = try WMADecoder(parameters: WMADecoderFixture.parameters(sampleRate: rate))
         }
     }
 
     @Test func rejectsZeroBlockAlign() {
-        #expect(throws: WMADecoderError.self) {
+        #expect(throws: FFmpegDecoderError.self) {
             _ = try WMADecoder(parameters: WMADecoderFixture.parameters(blockAlign: 0))
         }
     }
@@ -45,7 +45,7 @@ struct WMADecoderTests {
         do {
             _ = try WMADecoder(parameters: parameters)
             Issue.record("expected the WMAPro format tag to be rejected")
-        } catch let error as WMADecoderError {
+        } catch let error as FFmpegDecoderError {
             #expect(error == .unsupportedFormatTag(0x0162))
         }
     }
@@ -101,7 +101,7 @@ struct WMADecoderTests {
     @Test func rejectsMoreChannelsThanWMAv2Defines() {
         // WMA carries at most two channels, so this header passes OpenSky's own validation
         // and is refused by avcodec_open2 instead.
-        #expect(throws: WMADecoderError.self) {
+        #expect(throws: FFmpegDecoderError.self) {
             _ = try WMADecoder(parameters: WMADecoderFixture.parameters(channelCount: 6))
         }
     }
