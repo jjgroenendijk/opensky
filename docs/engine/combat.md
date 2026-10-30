@@ -173,6 +173,17 @@ Before a save, and after a load, the loop drops what a reload cannot rebuild: ar
 falling corpses, attack phases, and the damage flash. What stays is what a component holds:
 hostility, actor values, and death. A fight saved mid-swing loads as a fight, without the swing.
 
+## Fall damage
+
+The walk controller keeps the highest point of a fall and reports the drop when the actor lands.
+A drop above `fJumpFallHeightMin` hurts: damage is
+`(height - fJumpFallHeightMin) * fJumpFallHeightMult` raised to `fJumpFallHeightExponent`. The
+player and NPCs use separate settings (`fJumpFallHeight*` and `fJumpFallHeight*NPC`). A landing
+slower than `fJumpFallVelocityMin` does no damage. The perk entry point `Mod Falling Damage`
+scales it, and for the player the difficulty's damage-to-player multiplier does too, at most 1.
+The formula follows the setting names; no open source gives it. `openskycli game state player`
+shows the last fall under `lastFall`.
+
 ## Limits
 
 - No power attacks, bashing, or dodging.

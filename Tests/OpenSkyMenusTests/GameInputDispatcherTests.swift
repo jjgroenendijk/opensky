@@ -3,6 +3,7 @@
 
 @testable import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyScriptingInterface
 import Testing
 
 @MainActor
@@ -77,15 +78,36 @@ struct GameInputDispatcherTests {
             openJournal: { opened.append("journal") },
             openInventory: { opened.append("inventory") },
             onCommand: { opened.append($0.rawValue) },
-            isBeastForm: true
+            locks: PlayerControlLocks(isBeastForm: true),
+            onRefused: { opened.append("\($0)") }
         )
-        for action: GameInputAction in [.inventory, .map, .magic, .skills, .hotkey1, .wait] {
+        for action: GameInputAction in [.inventory, .cameraMode, .hotkey1, .wait] {
             dispatcher.apply(action, .press)
         }
         dispatcher.apply(.journal, .press)
         dispatcher.apply(.jump, .press)
-        #expect(opened == ["wait", "journal"])
+        #expect(opened == ["menusDisabled", "silent", "menusDisabled", "wait", "journal"])
         #expect(input.makeInput(dt: 0.1).jump)
+    }
+
+    /// `DisablePlayerControls` locks its groups; a lock only shows the menu text unless
+    /// `SetInChargen` asked for the bound-hands message.
+    @Test func scriptLocksRefuseTheirGroups() {
+        var refused: [PlayerControlRefusal] = []
+        var locks = PlayerControlLocks(disabled: [.movement, .menu])
+        var dispatcher: GameInputDispatcher {
+            GameInputDispatcher(
+                input: input, menuMode: menuMode, locks: locks, onRefused: { refused.append($0) }
+            )
+        }
+        dispatcher.apply(.forward, .press)
+        dispatcher.apply(.map, .press)
+        dispatcher.apply(.sneak, .press)
+        #expect(refused == [.silent, .menusDisabled])
+        #expect(input.makeInput(dt: 0.1).moveForward == 0)
+        locks.showsChargenMessage = true
+        dispatcher.apply(.map, .press)
+        #expect(refused.last == .chargenControls)
     }
 
     @Test func aMenuTurnsMovementIntoMenuEventsAndSwallowsTheRest() {
@@ -102,6 +124,17 @@ struct GameInputDispatcherTests {
             .move(.up), .release(.down), .button(.cancel), .button(.xButton), .button(.yButton)
         ])
         #expect(input.makeInput(dt: 0.1).moveForward == 0)
+    }
+
+    @Test func quickKeysInAMenuAreRefused() {
+        var refused: [PlayerControlRefusal] = []
+        let dispatcher = GameInputDispatcher(
+            input: input, menuMode: menuMode, onRefused: { refused.append($0) }
+        )
+        menuMode.present(MenuIdentifier("InventoryMenu"))
+        #expect(dispatcher.apply(.quicksave, .press) == .swallowed)
+        #expect(dispatcher.apply(.quickload, .press) == .swallowed)
+        #expect(refused == [.quickSaveWhilePaused, .quickLoadWhilePaused])
     }
 
     @Test func menuActionsDoNothingWithoutAMenu() {

@@ -115,9 +115,29 @@ extension SystemMenuCoordinator {
     }
 
     public func quicksave() {
-        perform(saveTexts.quickSaving, done: saveTexts.quickSaved) {
-            _ = try await $0.saveGame(slot: AutosavePolicy.quicksaveSlot)
+        save(slot: AutosavePolicy.quicksaveSlot, running: saveTexts.quickSaving)
+    }
+
+    /// Writes `slot`, or a new slot for nil, unless `SetInChargen` turned saving off.
+    func save(slot: String?, running: String = "Saving") {
+        guard saves?.isSavingDisabled != true else {
+            report(saveTexts.cannotSaveNow)
+            return
         }
+        let done = slot == AutosavePolicy.quicksaveSlot ? saveTexts.quickSaved : saveTexts.saved
+        perform(running, done: done) { _ = try await $0.saveGame(slot: slot) }
+    }
+
+    /// Loads `slot`. A changed load order asks `sSaveGameContentIsMissing` first.
+    func load(slot: String, acceptingChangedContent: Bool = false) {
+        perform(saveTexts.loading, done: "Loaded", closes: true, slot: slot) {
+            try await $0.loadGame(slot: slot, acceptingChangedContent: acceptingChangedContent)
+        }
+    }
+
+    private func report(_ message: String) {
+        lastMessage = message
+        hud.showNotification(message)
     }
 
     /// Asks before deleting the selected save, as the Delete key does in vanilla.
@@ -166,11 +186,11 @@ extension SystemMenuCoordinator {
         saveLoadPage = page
         switch action {
         case let .save(slot):
-            perform("Saving", done: saveTexts.saved) { _ = try await $0.saveGame(slot: slot) }
+            save(slot: slot)
         case let .load(slot):
-            perform(saveTexts.loading, done: "Loaded", closes: true) {
-                try await $0.loadGame(slot: slot)
-            }
+            load(slot: slot)
+        case let .loadChangedContent(slot):
+            load(slot: slot, acceptingChangedContent: true)
         case let .delete(slot):
             perform("Deleting", done: saveTexts.deleted) { try await $0.deleteSave(slot: slot) }
         case .exportSkyrim:
@@ -212,7 +232,7 @@ extension SystemMenuCoordinator {
 
     /// Shows `running` until the file work ends. A finished load closes the menu.
     func perform(
-        _ running: String, done: String, closes: Bool = false,
+        _ running: String, done: String, closes: Bool = false, slot: String? = nil,
         _ body: @escaping @MainActor (SaveGameService) async throws -> Void
     ) {
         guard let saves else {
@@ -227,6 +247,11 @@ extension SystemMenuCoordinator {
                 self.lastMessage = done
                 if closes {
                     self.close()
+                }
+            } catch let failure as SaveFailure {
+                self.report(self.saveTexts.text(for: failure))
+                if failure == .contentMissing, let slot {
+                    self.saveLoadPage?.askToLoadChangedContent(slot: slot)
                 }
             } catch {
                 self.lastMessage = "\(self.saveTexts.saveFailed) \(error)"

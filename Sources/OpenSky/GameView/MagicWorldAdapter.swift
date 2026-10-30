@@ -30,6 +30,7 @@ import OpenSkyWorldState
 /// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MagicWorldHost: AnyObject {
+    var controllerRumble: ControllerRumble { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var combat: CombatCoordinator { get }
@@ -117,6 +118,7 @@ final class MagicWorldAdapter {
         data.rules.enchanting = EnchantingSettings.resolve(store: settings)
         data.rules.shouts = ShoutSettings.resolve(store: settings)
         data.rules.runes = RuneSettings.resolve(store: settings)
+        data.rules.summons = SummonSettings.resolve(store: settings)
         data.texts.magic = MagicTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         data.texts.castNotices = game.mapWorld.settingTexts()
         data.texts.souls = SoulTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }

@@ -13,6 +13,18 @@ nonisolated extension HUDMovieBridge {
         runtime.callMovie("ShowMessage", atPath: targetPath, arguments: [.string(text)])
     }
 
+    /// The big centred notice through the movie's `ShowNotification` callback: a quest
+    /// title over its status, or a learned word under its shout. The movie plays the
+    /// sound through its `PlaySound` call.
+    public static func showBigNotice(_ notice: HUDBigNotice, runtime: SWFMovieRuntime) {
+        let shout = notice.kind == .shout
+        runtime.callMovie("ShowNotification", arguments: [
+            .string(shout ? "" : notice.title), .string(notice.status), .string(notice.sound ?? ""),
+            .integer(0), .integer(shout ? 3 : 0), .integer(0), .integer(0), .integer(0),
+            .string(shout ? notice.title : "")
+        ])
+    }
+
     /// Shows a help message, or hides it when `text` is nil.
     public static func setHelpMessage(_ text: String?, runtime: SWFMovieRuntime) {
         runtime.callMovie(
@@ -30,5 +42,26 @@ nonisolated extension HUDMovieBridge {
             case let .bytecode(body) = function.callable
         else { return nil }
         return body.definition.parameterNames
+    }
+}
+
+/// One centred HUD notice. The movie writes both lines in capitals.
+nonisolated public struct HUDBigNotice: Equatable, Sendable {
+    nonisolated public enum Kind: Equatable, Sendable {
+        case quest
+        case shout
+    }
+
+    public let kind: Kind
+    public let title: String
+    public let status: String
+    /// The `SNDR` editor ID the notice plays, such as `UIQuestNew`.
+    public let sound: String?
+
+    public init(kind: Kind = .quest, title: String, status: String, sound: String? = nil) {
+        self.kind = kind
+        self.title = title
+        self.status = status
+        self.sound = sound
     }
 }

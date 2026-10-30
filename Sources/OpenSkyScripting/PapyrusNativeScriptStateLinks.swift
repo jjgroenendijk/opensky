@@ -9,10 +9,13 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions {
     /// The eight control groups of `DisablePlayerControls`, in argument order, with the
     /// default each argument has there. `EnablePlayerControls` defaults every one to true.
-    static let playerControls: [(name: String, disabledByDefault: Bool)] = [
-        ("Movement", true), ("Fighting", true), ("CamSwitch", false), ("Looking", false),
-        ("Sneaking", false), ("Menu", true), ("Activate", true), ("Journal", false)
-    ]
+    static let playerControls: [(name: String, disabledByDefault: Bool)] =
+        PlayerControlGroup.allCases.map {
+            ($0.rawValue, [.movement, .fighting, .menu, .activate].contains($0))
+        }
+
+    /// The flags `SetInChargen` sets, in argument order.
+    static let chargenFlags = ["chargenNoSaving", "chargenNoWaiting", "chargenMessage"]
 
     static func controlDisabledName(_ control: String) -> String {
         "controlDisabled:\(control)"
@@ -89,9 +92,7 @@ extension PapyrusNativeFunctions {
         }
         scriptState("Game", "SetInChargen", into: &registry) { call, bridge, key in
             bridge.updateScriptedState(of: key) { state in
-                for (index, name) in ["chargenNoSaving", "chargenNoWaiting", "chargenMessage"]
-                    .enumerated()
-                {
+                for (index, name) in chargenFlags.enumerated() {
                     state.setFlag(name, boolean(call, at: index, default: false) ? true : nil)
                 }
             }
@@ -150,6 +151,19 @@ extension PapyrusWorldStateBridge {
 }
 
 extension PapyrusWorldStateBridge {
+    /// The control groups and `SetInChargen` switches scripts set on the player. The beast
+    /// form is the shell's to add.
+    public var playerControlLocks: PlayerControlLocks {
+        let state = scriptedState(of: playerKey)
+        let flags = PapyrusNativeFunctions.chargenFlags.map { state.flag($0) == true }
+        return PlayerControlLocks(
+            disabled: Set(PlayerControlGroup.allCases.filter {
+                state.flag(PapyrusNativeFunctions.controlDisabledName($0.rawValue)) == true
+            }),
+            savingDisabled: flags[0], waitingDisabled: flags[1], showsChargenMessage: flags[2]
+        )
+    }
+
     /// False after `DisablePlayerControls` turned movement off; the HUD reads it.
     public var isPlayerMovementEnabled: Bool {
         let name = PapyrusNativeFunctions.controlDisabledName("Movement")

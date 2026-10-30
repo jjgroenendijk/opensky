@@ -18,14 +18,16 @@ nonisolated public enum CombatAllyRule {
     /// An ally defends its commander against foes this close to the commander.
     public static let defendRadius: Float = 2048
 
-    /// Where `ally` walks to stay near `commander`, or nil when it is near enough.
+    /// Where `ally` walks to stay near `commander`, or nil when it is near enough. It
+    /// walks back once past `followDistance` and stops `keep` from the commander.
     public static func followPoint(
-        ally: SIMD3<Float>, commander: SIMD3<Float>, followDistance: Float = followDistance
+        ally: SIMD3<Float>, commander: SIMD3<Float>, followDistance: Float = followDistance,
+        keep: Float = keepDistance
     ) -> SIMD3<Float>? {
         let offset = ally - commander
         let distance = simd_length(offset)
-        guard distance > max(followDistance, keepDistance) else { return nil }
-        return commander + offset / distance * keepDistance
+        guard distance > max(followDistance, keep) else { return nil }
+        return commander + offset / distance * keep
     }
 
     /// The foe nearest `ally` among those within `defendRadius` of `commander`.

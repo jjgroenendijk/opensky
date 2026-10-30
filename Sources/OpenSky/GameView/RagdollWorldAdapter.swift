@@ -15,6 +15,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
@@ -47,6 +48,12 @@ protocol RagdollWorldHost: AnyObject {
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
+    var hud: HUDCoordinator { get }
+    var messages: MessageCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var saveGames: SaveGameWorldAdapter { get }
+    var titleMenu: TitleMenuCoordinator { get }
+    func quitToMainMenu()
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
@@ -82,6 +89,7 @@ final class RagdollWorldAdapter {
                 controls: locomotion.ragdollGraphControls,
                 delta: delta
             ))
+            self?.advancePlayerDeath(delta: delta)
         }
         gameSession.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
             self?.run(ragdoll?.publishPoses() ?? [])
@@ -127,6 +135,9 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     func holder(of key: ReferenceKey) -> ActorValueHolder? {
+        if key == .player {
+            return .player
+        }
         guard
             let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor

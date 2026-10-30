@@ -26,6 +26,7 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -34,6 +35,8 @@ import OpenSkyWorldState
 protocol AgentWorldHost: AnyObject {
     var beastForms: BeastFormWorldAdapter { get }
     var playerBeastForm: PlayerBeastForm { get }
+    var playerControlLocks: PlayerControlLocks { get }
+    func showControlRefusal(_ refusal: PlayerControlRefusal)
     var combatWorld: CombatWorldAdapter { get }
     var dragonFlight: DragonFlightCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
@@ -45,6 +48,8 @@ protocol AgentWorldHost: AnyObject {
     var benchmarkWorld: BenchmarkWorldAdapter { get }
     var cameraInput: CameraInputState { get }
     var combat: CombatCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
+    var controllerRumble: ControllerRumble { get }
     var containerMenu: ContainerMenuController { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
@@ -113,7 +118,8 @@ final class AgentWorldAdapter {
             openJournal: { [weak game] in game?.journalMenu.open() },
             openInventory: { [weak game] in game?.inventoryMenu.open() },
             onCommand: { [weak game] in game?.runCommand($0) },
-            isBeastForm: game.playerBeastForm.isBeast
+            locks: game.playerControlLocks,
+            onRefused: { [weak game] in game?.showControlRefusal($0) }
         )
     }
 

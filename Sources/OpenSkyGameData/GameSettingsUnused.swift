@@ -33,6 +33,9 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Speech challenge difficulties. A Skyrim persuasion line tests Speech against the
     /// globals `SpeechVeryEasy` to `SpeechVeryHard` in its own conditions.
     case speechGlobals
+    /// Lower-case sex words. The pronoun tags of the Creation Kit wiki "Text Replacement"
+    /// read the `sPronoun` settings, and the race menu reads `sGenderMale` and `sGenderFemale`.
+    case sexWords
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -57,6 +60,10 @@ nonisolated public enum GameSettingsUnused: Sendable {
         .creations: creationsSettings,
         .consoles: consolesSettings,
         .movieLabel: movieLabelSettings,
+        .sexWords: [
+            "sSexFemale", "sSexFemalePossessive", "sSexFemalePronoun",
+            "sSexMale", "sSexMalePossessive", "sSexMalePronoun"
+        ],
         .rewardXP: rewardXPSettings,
         .speechGlobals: speechGlobalsSettings
     ]
@@ -202,6 +209,8 @@ nonisolated private let firearmsSettings = [
 ]
 
 nonisolated private let falloutSystemsSettings = [
+    "sActiveMineDescription",
+    "sAlreadyPlacedMine",
     "fAddictionUsageMonitorThreshold",
     "fKarmaModKillingEvilActor",
     "fKarmaModStealing",
@@ -345,6 +354,8 @@ nonisolated private let creationsSettings = [
 ]
 
 nonisolated private let consolesSettings = [
+    "sControllerOption",
+    "sLostController",
     "sDevice",
     "sDeviceRemoved",
     "sDisableXBoxController",

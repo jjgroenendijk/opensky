@@ -141,6 +141,9 @@ final class AIWorldAdapter {
             graphs?.drive(update)
             animation?.drive(update)
         }
+        streamer.onNPCLanding = { [weak combat = game.combat] actor, landing in
+            combat?.applyFall(height: landing.height, speed: landing.speed, to: actor)
+        }
     }
 
     func packageData() -> PackageSessionData? {

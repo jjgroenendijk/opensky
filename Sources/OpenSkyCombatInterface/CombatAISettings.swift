@@ -24,6 +24,10 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
     /// than `combatDistance` times this from its leader walks back.
     public var followRadiusMult: Float = 3
     public var teammateFollowRadiusMult: Float = 3
+    /// `fSummonedCreatureMinFollowDist` and `...MaxFollowDist`: a summon walks back once
+    /// past the far one, and stops at the near one.
+    public var summonFollowNear: Float = 250
+    public var summonFollowFar: Float = 400
     /// `fCombatAdvanceInnerRadiusMin`, `...Mid`, `...Max`: how far a caster backs off before
     /// it casts, picked by the style's defense.
     public var advanceInnerRadius = CombatRadii(low: 0, mid: 0, high: 256)
@@ -67,6 +71,8 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
         store.read("fCombatDistance", into: &settings, \.combatDistance)
         store.read("fCombatFollowRadiusMult", into: &settings, \.followRadiusMult)
         store.read("fCombatTeammateFollowRadiusMult", into: &settings, \.teammateFollowRadiusMult)
+        store.read("fSummonedCreatureMinFollowDist", into: &settings, \.summonFollowNear)
+        store.read("fSummonedCreatureMaxFollowDist", into: &settings, \.summonFollowFar)
         settings.readRanges(store: store)
         return settings
     }

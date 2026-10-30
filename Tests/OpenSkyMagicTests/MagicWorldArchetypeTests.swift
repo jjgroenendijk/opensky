@@ -114,6 +114,7 @@ struct MagicWorldArchetypeTests {
 
         Self.cast(Effect.banish, on: Self.summon, by: Self.rival, coordinator)
         #expect(coordinator.commanded.isEmpty)
+        coordinator.advanceCommanded(delta: 2)
         #expect(world.releasedActors.map(\.actor) == [Self.summon])
     }
 

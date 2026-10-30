@@ -1,5 +1,6 @@
 // Bleedout: an essential actor whose health share falls to its class's bleedout ratio
-// kneels instead of dying, and stands up with full health after `fEssentialDeathTime`.
+// kneels instead of dying. It stands once its health is back above the ratio, or with
+// full health after `fEssentialDeathTime`.
 // Sources: UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs", and the Creation
 // Kit wiki "Class". See docs/engine/ragdoll.md#bleedout.
 
@@ -34,16 +35,19 @@ nonisolated public struct BleedoutTracker: Equatable, Sendable {
         seconds[key] = nil
     }
 
-    /// Ages every actor and returns, in key order, those whose time is up. They leave
-    /// the tracker. A `held` actor keeps kneeling.
+    /// Ages every actor and returns, in key order, those who stand up. They leave the
+    /// tracker. A `held` actor keeps kneeling. `recovered` says whose health is back
+    /// above its kneel ratio by `fBleedoutRecover`; it counts after `fBleedoutMin`.
     public mutating func advance(
-        by delta: Float, settings: DeathSettings, held: (ReferenceKey) -> Bool = { _ in false }
+        by delta: Float, settings: DeathSettings, held: (ReferenceKey) -> Bool = { _ in false },
+        recovered healthBack: (ReferenceKey) -> Bool = { _ in false }
     ) -> [ReferenceKey] {
         let step = delta.isFinite ? max(delta, 0) : 0
         var recovered: [ReferenceKey] = []
         for key in seconds.keys.sorted() {
             let knelt = (seconds[key] ?? 0) + step
-            if !held(key), knelt >= settings.bleedoutSeconds {
+            let healed = knelt >= settings.bleedoutMinSeconds && healthBack(key)
+            if !held(key), healed || knelt >= settings.bleedoutSeconds {
                 seconds[key] = nil
                 recovered.append(key)
             } else {

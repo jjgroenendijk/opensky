@@ -97,6 +97,11 @@ final class GameSessionScope {
     lazy var audioWorld = AudioWorldAdapter(game: self)
 
     lazy var hud = HUDCoordinator(movies: swfMovies, world: self)
+    lazy var questNotices = QuestNoticeCoordinator(hud: hud) { [unowned self] in
+        mapWorld.settingTexts(QuestNoticeText.self)
+    }
+
+    lazy var controllerRumble = ControllerRumble()
 
     lazy var systemMenu = makeSystemMenu()
 
@@ -345,17 +350,8 @@ final class GameSessionScope {
         world: objectAnimationWorld,
         files: { [unowned self] in audioFileSystem }
     )
-    lazy var sequenceDoors: SequenceDoorCoordinator = {
-        let doors = SequenceDoorCoordinator(world: objectAnimationWorld)
-        doors.isEnabled = objectBehaviors.isEnabled
-        return doors
-    }()
-
-    lazy var nodeControllers: NodeControllerCoordinator = {
-        let nodes = NodeControllerCoordinator(world: objectAnimationWorld)
-        nodes.isEnabled = objectBehaviors.isEnabled
-        return nodes
-    }()
+    lazy var sequenceDoors = makeSequenceDoors()
+    lazy var nodeControllers = makeNodeControllers()
 
     /// The behaviour graphs of the effects on actors, which hear the actors' events.
     lazy var effectGraphWorld = EffectGraphWorldAdapter(game: self)

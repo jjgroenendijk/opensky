@@ -14,6 +14,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case guideNoMarker = "sMagicGuideNoMarker"
     case guideNoPath = "sMagicGuideNoPath"
     case flyingMountNoCast = "sTESVDLC2FlyingDragonNoCastMessage"
+    case telekinesisNoRecast = "sMagicTelekinesisNoRecast"
 
     public var fallback: String {
         switch self {
@@ -27,6 +28,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .guideNoMarker: "There is no quest target to guide you to."
         case .guideNoPath: "No path leads to the quest target."
         case .flyingMountNoCast: "You cannot cast that type of spell while riding a dragon."
+        case .telekinesisNoRecast: "You're already holding something."
         }
     }
 

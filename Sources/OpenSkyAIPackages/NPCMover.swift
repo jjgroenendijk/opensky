@@ -97,6 +97,7 @@ public struct NPCMover {
         } else {
             glide(toward: waypoint, distance: step.speed * max(frameTime, 0))
         }
+        emissions.landing = controller.takeLanding()
         emissions.drive = NPCLocomotionDriveUpdate(
             actor: actor,
             intent: LocomotionIntent(moveForward: 1, run: gait == .run),

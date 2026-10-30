@@ -34,11 +34,24 @@ public protocol SaveGameService: AnyObject {
     func exportSkyrimSave() async throws -> String
     /// The words the save pages and progress lines use.
     var saveTexts: SaveTexts { get }
+    /// `SetInChargen` turned saving off.
+    var isSavingDisabled: Bool { get }
+    /// Loads `slot` even though the load order changed since it was written, after the
+    /// player answered `sSaveGameContentIsMissing`.
+    func loadGame(slot: String, acceptingChangedContent: Bool) async throws
 }
 
 extension SaveGameService {
     public var saveTexts: SaveTexts {
         .vanilla
+    }
+
+    public var isSavingDisabled: Bool {
+        false
+    }
+
+    public func loadGame(slot: String, acceptingChangedContent _: Bool) async throws {
+        try await loadGame(slot: slot)
     }
 
     public func exportSkyrimSave() async throws -> String {
@@ -82,7 +95,7 @@ public final class SystemMenuCoordinator {
 
     private let menuMode: MenuModeController
     private let movies: SWFMovieSource
-    private let hud: HUDCoordinator
+    let hud: HUDCoordinator
     weak let world: SystemMenuWorld?
 
     public init(

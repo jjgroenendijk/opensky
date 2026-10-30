@@ -23,6 +23,7 @@ import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkyScriptingInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -146,6 +147,7 @@ extension AgentWorldAdapter {
         })
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
         result["melee"] = meleeState()
+        result.merge(playerStatusState()) { _, new in new }
         result["bowZoom"] = [
             "zoomed": .bool(gameSession.bowZoomViewShare < 1),
             "viewShare": .init(gameSession.bowZoomViewShare),
@@ -166,6 +168,32 @@ extension AgentWorldAdapter {
                 .map { .init($0.intValue) } ?? .null
         ]
         return .object(result)
+    }
+
+    /// The last fall and rumble, the death phase, and the locked controls.
+    private func playerStatusState() -> [String: AgentJSON] {
+        let locks = game.playerControlLocks
+        return [
+            "lastFall": game.combat.lastFall.map { fall in
+                [
+                    "actor": .string("\(fall.actor)"), "height": .init(fall.height),
+                    "speed": .init(fall.speed), "damage": .init(fall.damage)
+                ]
+            } ?? .null,
+            "lastRumble": game.controllerRumble.lastRumble.map { rumble in
+                [
+                    "big": [.init(rumble.bigSeconds), .init(rumble.bigStrength)],
+                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)]
+                ]
+            } ?? .null,
+            "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
+            "controls": [
+                "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
+                "savingDisabled": .bool(locks.savingDisabled),
+                "waitingDisabled": .bool(locks.waitingDisabled),
+                "chargenMessage": .bool(locks.showsChargenMessage)
+            ]
+        ]
     }
 
     /// `attackState` is the `GetAttackState` value conditions read.

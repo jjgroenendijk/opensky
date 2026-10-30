@@ -92,9 +92,16 @@ extension MagicCoordinator {
     // MARK: - Telekinesis
 
     /// "Applies the Telekinesis effect to the target object." The first landing picks
-    /// the loose body under the aim; later landings keep holding it.
+    /// the loose body under the aim; later landings keep holding it. A second
+    /// Telekinesis, as from the other hand, finds the hands full: `sMagicTelekinesisNoRecast`.
     private func grabBody(caster: ReferenceKey, effect: ReferenceKey, lifetime: Float) {
         let existing = holds.first { $0.kind == .telekinesis && $0.caster == caster }
+        if let existing, !existing.held.isEmpty, existing.effect != effect {
+            if caster == .player {
+                pendingCommands.append(.notice(castNotices[.telekinesisNoRecast]))
+            }
+            return
+        }
         if existing == nil || existing?.held.isEmpty == true {
             holds.removeAll { $0.kind == .telekinesis && $0.caster == caster }
             let body = world.telekinesisTarget(

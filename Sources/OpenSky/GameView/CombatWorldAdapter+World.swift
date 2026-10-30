@@ -222,7 +222,8 @@ extension CombatWorldAdapter: CombatWorld {
             let runtime = game.actorValues.runtime,
             let holder = game.actorWorld.actorValueHolder(for: key)
         else { return false }
-        runtime.damage(.health, by: amount, on: holder)
+        let kept = key == .player ? game.ragdoll.playerDeath.incomingDamageMult : 1
+        runtime.damage(.health, by: amount * kept, on: holder)
         return true
     }
 

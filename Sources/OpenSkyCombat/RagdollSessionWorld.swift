@@ -94,6 +94,8 @@ public protocol RagdollSessionWorld: AnyObject {
     func bleedoutThreshold(of key: ReferenceKey) -> Float?
     /// Papyrus `SetNoBleedoutRecovery(true)` keeps the actor kneeling.
     func blocksBleedoutRecovery(of key: ReferenceKey) -> Bool
+    /// Restores `share` of the actor's maximum health while it kneels.
+    func restoreHealthShare(_ share: Float, of key: ReferenceKey)
 }
 
 extension RagdollSessionWorld {
@@ -137,4 +139,6 @@ extension RagdollSessionWorld {
     public func blocksBleedoutRecovery(of _: ReferenceKey) -> Bool {
         false
     }
+
+    public func restoreHealthShare(_: Float, of _: ReferenceKey) {}
 }

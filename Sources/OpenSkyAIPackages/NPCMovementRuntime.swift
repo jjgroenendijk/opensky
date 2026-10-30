@@ -118,6 +118,8 @@ public struct NPCMovementRuntime {
     public var onPersist: ((NPCMovementPersistence) -> Void)?
     public var onTriggerTransition: ((TriggerTransitionEvent) -> Void)?
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    /// A walking or pushed actor's fall ended on the ground.
+    public var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
 
     private var movers: [ReferenceKey: NPCMover] = [:]
     private var parked: [ReferenceKey: NPCParkedMovement] = [:]
@@ -227,7 +229,7 @@ public struct NPCMovementRuntime {
             guard var mover = movers[key] else { continue }
             let near = crowd.filter { $0.key != key }
             let outcome = mover.advance(by: frameTime, world: world, neighbours: near)
-            publish(outcome.emissions)
+            publish(outcome.emissions, actor: key)
             if outcome.isFinished {
                 parked[key] = NPCParkedMovement(mover, readout: mover.readout)
                 movers.removeValue(forKey: key)
@@ -398,7 +400,10 @@ public struct NPCMovementRuntime {
             ?? parked[actor]?.drawnPlacement
     }
 
-    private func publish(_ emissions: NPCMoverEmissions) {
+    private func publish(_ emissions: NPCMoverEmissions, actor: ReferenceKey) {
+        if let landing = emissions.landing {
+            onLanding?(actor, landing)
+        }
         if let drive = emissions.drive {
             onDrive?(drive)
         }
@@ -450,7 +455,11 @@ extension NPCMovementRuntime {
     private mutating func advanceSlides(by frameTime: Float, world: NPCMovementWorld) {
         for key in slides.keys.sorted() {
             guard var slide = slides[key] else { continue }
-            guard slide.advance(by: frameTime, world: world) else {
+            let settled = slide.advance(by: frameTime, world: world)
+            if let landing = slide.takeLanding() {
+                onLanding?(key, landing)
+            }
+            guard settled else {
                 slides[key] = slide
                 continue
             }
@@ -504,6 +513,8 @@ public struct NPCMoverEmissions {
     public var persistence: [NPCMovementPersistence] = []
     public var triggers: [TriggerTransitionEvent] = []
     public var doors: [(actor: ReferenceKey, reference: FormID)] = []
+    /// A fall of the mover's actor that ended this step.
+    public var landing: WalkLanding?
 }
 
 public struct NPCMoverAdvanceOutcome {

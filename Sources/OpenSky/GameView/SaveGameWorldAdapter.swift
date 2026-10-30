@@ -11,11 +11,14 @@ import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkySave
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 
 /// What `SaveGameWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol SaveGameWorldHost: SkyrimSaveExportHost, SkyrimSaveImportHost {
+    var scripts: ScriptCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var playerSettings: PlayerSettingsCoordinator { get }
@@ -41,6 +44,8 @@ final class SaveGameWorldAdapter: SaveGameService {
     private(set) var saveRows: [SaveSlotRow] = []
     private(set) var lastSkyrimExport = SkyrimExportOutcome.none
     private var hasListed = false
+    /// An autosave found the disk full; autosaves stay off until the app restarts.
+    private var autosavesDisabled = false
 
     init(game: any SaveGameWorldHost) {
         self.game = game
@@ -67,11 +72,19 @@ final class SaveGameWorldAdapter: SaveGameService {
     func saveGame(slot: String?) async throws -> String {
         let name = slot ?? Self.newSlotName(existing: Set(ownRows.map(\.slot)))
         lastSaveDate = Date()
-        try await game.runtimeStateWorld.saveSession(
-            slot: name, summary: summary(), thumbnail: thumbnail()
-        )
+        do {
+            try await game.runtimeStateWorld.saveSession(
+                slot: name, summary: summary(), thumbnail: thumbnail()
+            )
+        } catch {
+            throw Self.failure(error)
+        }
         await refreshSaveRows()
         return name
+    }
+
+    var isSavingDisabled: Bool {
+        game.scripts.bridge?.playerControlLocks.savingDisabled ?? false
     }
 
     /// The summary and picture are taken now, as for an OpenSky save.
@@ -92,8 +105,20 @@ final class SaveGameWorldAdapter: SaveGameService {
         }
     }
 
-    /// Play time continues from the loaded save. A Skyrim save starts it from zero.
     func loadGame(slot: String) async throws {
+        try await loadGame(slot: slot, acceptingChangedContent: false)
+    }
+
+    /// Play time continues from the loaded save. A Skyrim save starts it from zero.
+    func loadGame(slot: String, acceptingChangedContent: Bool) async throws {
+        do {
+            try await load(slot: slot, checksLoadOrder: !acceptingChangedContent)
+        } catch {
+            throw Self.failure(error)
+        }
+    }
+
+    private func load(slot: String, checksLoadOrder: Bool) async throws {
         if SkyrimSaveImportAdapter.isImport(slot) {
             try await SkyrimSaveImportAdapter.load(slot: slot, game: game)
             await refreshSaveRows()
@@ -105,7 +130,7 @@ final class SaveGameWorldAdapter: SaveGameService {
             await refreshSaveRows()
         }
         let playSeconds = listings.first { $0.slot == slot }?.summary?.summary?.playSeconds
-        try await game.runtimeStateWorld.loadSession(slot: slot)
+        try await game.runtimeStateWorld.loadSession(slot: slot, checksLoadOrder: checksLoadOrder)
         playSecondsBefore = playSeconds ?? 0
         sessionStart = Date()
         lastSaveDate = Date()
@@ -163,8 +188,10 @@ final class SaveGameWorldAdapter: SaveGameService {
         return true
     }
 
-    /// Writes an autosave when the player's settings ask for one.
+    /// Writes an autosave when the player's settings ask for one. A script's saving lock
+    /// skips it without a word.
     func autosave(_ trigger: AutosaveTrigger) {
+        guard !autosavesDisabled, !isSavingDisabled else { return }
         let settings = game.playerSettings.store
         let due = trigger == .pause
             ? autosaves.shouldSaveOnPause(settings: settings, lastSave: lastSaveDate, now: Date())
@@ -178,10 +205,32 @@ final class SaveGameWorldAdapter: SaveGameService {
             let dates = Dictionary(ownRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
             do {
                 try await saveGame(slot: autosaves.nextSlot(saved: dates))
+            } catch SaveFailure.outOfDiskSpace {
+                autosavesDisabled = true
+                game.hud.showNotification(saveTexts.autosaveDisabled)
             } catch {
                 Self.logger
                     .error("[ERROR] autosave: \(String(describing: error), privacy: .public)")
             }
+        }
+    }
+
+    /// The game's kind of failure for a save or load error.
+    static func failure(_ error: Error) -> Error {
+        switch error {
+        case is SaveFailure: error
+        case OpenSkySaveStoreError.slotNotFound: SaveFailure.noLongerAvailable
+        case is OpenSkySaveError: SaveFailure.corrupt
+        case let cocoa as CocoaError where cocoa.code == .fileWriteOutOfSpace:
+            SaveFailure.outOfDiskSpace
+        case let posix as POSIXError where posix.code == .ENOSPC:
+            SaveFailure.outOfDiskSpace
+        case let cocoa as CocoaError
+            where cocoa.code == .fileReadNoSuchFile || cocoa.code == .fileNoSuchFile:
+            SaveFailure.fileNotFound
+        case let cocoa as CocoaError where cocoa.isFileError:
+            SaveFailure.deviceError
+        default: error
         }
     }
 

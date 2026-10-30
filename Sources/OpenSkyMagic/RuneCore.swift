@@ -11,6 +11,12 @@ import OpenSkyPhysics
 nonisolated public struct RuneSettings: Equatable, Sendable {
     /// `iMaxPlayerRunes`: how many runes the player keeps at once.
     public var maximumPlayerRunes = 1
+    /// `fMinesDelayMin`: seconds before a placed rune can go off.
+    public var armSeconds: Float = 0.2
+    /// `fMineExteriorRadiusMult`: a rune outdoors reaches this much farther.
+    public var exteriorProximityMult: Float = 1.6
+    /// `iProjectileMineShooterCanTrigger`: nonzero lets the caster set off its own rune.
+    public var casterCanTrigger = 0
 
     public static let vanilla = Self()
 
@@ -19,6 +25,24 @@ nonisolated public struct RuneSettings: Equatable, Sendable {
     public static func resolve(store: GameSettingStore) -> Self {
         var settings = vanilla
         store.read("iMaxPlayerRunes", into: &settings, \.maximumPlayerRunes)
+        store.read("fMinesDelayMin", into: &settings, \.armSeconds)
+        store.read("fMineExteriorRadiusMult", into: &settings, \.exteriorProximityMult)
+        store.read("iProjectileMineShooterCanTrigger", into: &settings, \.casterCanTrigger)
+        return settings
+    }
+}
+
+/// `fSummonedCreatureFadeOutSeconds`: how long a dismissed summon stays before it goes.
+nonisolated public struct SummonSettings: Equatable, Sendable {
+    public var fadeOutSeconds: Float = 1.5
+
+    public static let vanilla = Self()
+
+    public init() {}
+
+    public static func resolve(store: GameSettingStore) -> Self {
+        var settings = vanilla
+        store.read("fSummonedCreatureFadeOutSeconds", into: &settings, \.fadeOutSeconds)
         return settings
     }
 }
@@ -29,6 +53,8 @@ nonisolated public struct PlacedRune: Equatable, Sendable {
     public let position: SIMD3<Float>
     /// How near an actor must come, world units.
     public let proximity: Float
+    /// Seconds since it was placed.
+    public var age: Float = 0
 
     public init(payload: SpellPayload, position: SIMD3<Float>, proximity: Float) {
         self.payload = payload
@@ -78,12 +104,22 @@ nonisolated public enum RuneCore {
         }
     }
 
-    /// The nearest of `triggers` inside the rune's proximity, or nil.
-    public static func trigger(of rune: PlacedRune, among triggers: [MeleeTarget])
-        -> MeleeTarget?
+    /// The rune's proximity: the projectile's, or the default, and farther outdoors.
+    public static func proximity(_ projectile: Float, outdoors: Bool, settings: RuneSettings)
+        -> Float
     {
-        triggers
-            .filter { $0.key != rune.payload.caster }
+        let base = projectile > 0 ? projectile : defaultProximity
+        return outdoors ? base * max(settings.exteriorProximityMult, 0) : base
+    }
+
+    /// The nearest of `triggers` inside the rune's proximity, or nil. An unarmed rune
+    /// waits, and the caster sets off its own rune only when the setting allows it.
+    public static func trigger(
+        of rune: PlacedRune, among triggers: [MeleeTarget], settings: RuneSettings = .vanilla
+    ) -> MeleeTarget? {
+        guard rune.age >= settings.armSeconds else { return nil }
+        return triggers
+            .filter { $0.key != rune.payload.caster || settings.casterCanTrigger != 0 }
             .map { (target: $0, distance: SpellHitTargeting.distance(from: rune.position, to: $0)) }
             .filter { $0.distance <= rune.proximity }
             .min { ($0.distance, $0.target.key) < ($1.distance, $1.target.key) }?

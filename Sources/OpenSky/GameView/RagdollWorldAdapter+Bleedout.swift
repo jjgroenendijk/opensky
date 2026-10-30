@@ -7,6 +7,7 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -49,6 +50,15 @@ extension RagdollWorldAdapter {
             .flag(ScriptedStateName.noBleedoutRecovery) == true
     }
 
+    func restoreHealthShare(_ share: Float, of key: ReferenceKey) {
+        guard let values = game.actorValues.runtime, let holder = holder(of: key) else { return }
+        let missing = values.maximums(of: holder)[.health] - values.current(of: holder)[.health]
+        let amount = min(values.maximums(of: holder)[.health] * share, missing)
+        if amount > 0 {
+            values.restore(.health, by: amount, on: holder)
+        }
+    }
+
     func enterBleedout(_ key: ReferenceKey) {
         game.scripts.bridge?.updateScriptedState(of: key) {
             $0.setFlag(ScriptedStateName.bleedingOut, true)
@@ -56,6 +66,20 @@ extension RagdollWorldAdapter {
         _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.bleedOutStart, on: key)
         _ = game.scripts.bridge?.stopActorCombat(key)
         game.scripts.runtime?.queueEnterBleedout(actor: key)
+        announceWoundedTeammate(key)
+    }
+
+    /// OpenSky's reading of `sEssentialCharacterDown`: a follower going down is named.
+    private func announceWoundedTeammate(_ key: ReferenceKey) {
+        guard
+            game.scripts.bridge?.scriptedState(of: key)
+                .flag(ScriptedStateName.playerTeammate) == true,
+            let streamer = game.streamer,
+            let form = streamer.referenceEntry(key: key)?.formID,
+            let name = streamer.interactionName(reference: form), !name.isEmpty
+        else { return }
+        let down = game.mapWorld.settingTexts(PlayerDeathText.self)[.essentialDown]
+        game.hud.showNotification("\(name) \(down)")
     }
 
     /// The actor stands up with full health (UESP "Skyrim:Essential NPCs").

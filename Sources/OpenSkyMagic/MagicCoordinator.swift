@@ -78,6 +78,9 @@ public final class MagicCoordinator {
     /// Runes waiting on the ground, oldest first. Not saved.
     public internal(set) var runes: [PlacedRune] = []
     public let runeSettings: RuneSettings
+    public let summonSettings: SummonSettings
+    /// Dismissed summons and the seconds before each goes.
+    var fadingSummons: [(actor: CommandedActor, seconds: Float)] = []
     public internal(set) var detonatedRunes = 0
     /// Summoned and reanimated actors, oldest first. Not saved.
     public internal(set) var commanded: [CommandedActor] = []
@@ -125,6 +128,7 @@ public final class MagicCoordinator {
         enchantingSettings = data.rules.enchanting
         shoutSettings = data.rules.shouts
         runeSettings = data.rules.runes
+        summonSettings = data.rules.summons
         if let casting = data.casting {
             let runtime = CasterRuntime(
                 spellbook: casting.spellbook, values: casting.values, world: self
@@ -211,8 +215,8 @@ public final class MagicCoordinator {
             }
         }
         advanceActorCasts(delta: intent.deltaTime)
-        advanceRunes()
-        advanceCommanded()
+        advanceRunes(delta: intent.deltaTime)
+        advanceCommanded(delta: intent.deltaTime)
         advanceCastingCues(weaponsDrawn: weaponsDrawn)
         return takeCommands()
     }

@@ -164,6 +164,10 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
 - A commanded actor follows its caster and fights the caster's foes, and foes fight it back
   ([combat allies](/engine/combat.md#allies)). A commanded actor that dies ends its effect, so a
   summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
+- A summon walks back to its caster once it is `fSummonedCreatureMaxFollowDist` away and stops
+  `fSummonedCreatureMinFollowDist` from them. A summon whose effect ends stays
+  `fSummonedCreatureFadeOutSeconds` before it goes; it does not fade visually yet.
+- A second Telekinesis cast while one object is held shows `sMagicTelekinesisNoRecast`.
 
 ## Summons, races, and feeding
 

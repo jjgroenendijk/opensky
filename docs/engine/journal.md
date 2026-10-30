@@ -230,6 +230,19 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 the one its name gives: main quests count "Main Quests Completed", Dawnguard quests (type 10)
 "Dawnguard Quests Completed", and so on. Every other stat stays 0 until a script counts it.
 
+## HUD notices
+
+When a quest starts, completes, or fails, the HUD shows its title over `sHUDStarted`,
+`sHUDCompleted`, or `sHUDFailed` through the movie's `ShowNotification` call. Started plays
+`UIQuestNew`, and completed plays `UIQuestComplete`. A new objective shows as one line with
+`UIObjectiveNew`. A load shows nothing for the quests the save already had. Which change shows
+which text is OpenSky's reading. `openskycli game state hud` lists the shown notices.
+
+Journal text fills `<Alias=Name>` tags and the pronoun subtags of the Creation Kit wiki
+[Text Replacement](https://ck.uesp.net/wiki/Text_Replacement): `Pronoun`, `PronounObj`,
+`PronounPos`, `PronounPosObj`, `PronounRef`, and `PronounInt`, each from its `sPronoun` setting.
+A `Cap` suffix capitalises the word. `<Alias=Player>` works without a `Player` alias.
+
 ## Not done yet
 
 - A quest the runtime does not track is not shown. The page shows runtime state, not the plugin.

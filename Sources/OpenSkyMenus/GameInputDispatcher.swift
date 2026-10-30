@@ -3,6 +3,7 @@
 // a key press from an injected one (docs/tools/agent-control.md).
 
 import OpenSkyRendering
+import OpenSkyScriptingInterface
 
 /// One logical action. The raw value is the name `openskycli game input` takes.
 nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
@@ -29,6 +30,27 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
         case .inventory, .magic, .map, .skills, .cameraMode: true
         default: hotkeySlot != nil
         }
+    }
+
+    /// The `DisablePlayerControls` group that locks this action, or nil when none does.
+    /// The wait key and the favourites open menus, so the menu group locks them.
+    public var controlGroup: PlayerControlGroup? {
+        switch self {
+        case .forward, .back, .left, .right, .up, .down, .run, .sprint, .jump: .movement
+        case .attack, .block, .shout, .readyWeapon: .fighting
+        case .cameraMode: .camSwitch
+        case .sneak: .sneaking
+        case .activate: .activate
+        case .journal: .journal
+        case .inventory, .magic, .map, .skills, .wait: .menu
+        default: hotkeySlot != nil ? .menu : nil
+        }
+    }
+
+    /// Map, magic, wait, saves, pause, skills, and the hotkeys: the app carries these out.
+    var isAppCommand: Bool {
+        [.map, .magic, .wait, .quicksave, .quickload, .pause, .skills].contains(self)
+            || hotkeySlot != nil
     }
 
     /// The favourites slot, 1 to 8, a hotkey action uses.
@@ -89,8 +111,10 @@ public struct GameInputDispatcher {
     public let openInventory: (() -> Void)?
     /// Map, magic, wait, saves, pause, and skills: commands the app carries out.
     public let onCommand: ((GameInputAction) -> Void)?
-    /// The player is in a beast form, so `isBlockedInBeastForm` actions do nothing.
-    public let isBeastForm: Bool
+    /// What scripts and a beast form have locked; a locked action does nothing.
+    public let locks: PlayerControlLocks
+    /// A locked action the player pressed, so the shell can show the game's text.
+    public let onRefused: ((PlayerControlRefusal) -> Void)?
 
     public init(
         input: CameraInputState?,
@@ -98,14 +122,16 @@ public struct GameInputDispatcher {
         openJournal: (() -> Void)? = nil,
         openInventory: (() -> Void)? = nil,
         onCommand: ((GameInputAction) -> Void)? = nil,
-        isBeastForm: Bool = false
+        locks: PlayerControlLocks = .none,
+        onRefused: ((PlayerControlRefusal) -> Void)? = nil
     ) {
         self.input = input
         self.menuMode = menuMode
         self.openJournal = openJournal
         self.openInventory = openInventory
         self.onCommand = onCommand
-        self.isBeastForm = isBeastForm
+        self.locks = locks
+        self.onRefused = onRefused
     }
 
     @discardableResult
@@ -123,6 +149,10 @@ public struct GameInputDispatcher {
     }
 
     private func applyToMenu(_ action: GameInputAction, _ phase: GameInputPhase) -> Outcome {
+        if phase == .press, action == .quicksave || action == .quickload {
+            onRefused?(action == .quicksave ? .quickSaveWhilePaused : .quickLoadWhilePaused)
+            return .swallowed
+        }
         let event: MenuInputEvent? = switch (action, phase) {
         case (.menuAccept, .press): .button(.accept)
         case (.menuCancel, .press): .button(.cancel)
@@ -137,11 +167,15 @@ public struct GameInputDispatcher {
     }
 
     private func applyToWorld(_ action: GameInputAction, pressed: Bool) {
+        if pressed, let refusal = refusal(of: action) {
+            onRefused?(refusal)
+            return
+        }
         if action.isHeld {
             applyHeld(action, pressed: pressed)
             return
         }
-        guard pressed, !(isBeastForm && action.isBlockedInBeastForm) else { return }
+        guard pressed else { return }
         switch action {
         case .sneak: input?.toggleSneak()
         case .jump: input?.requestJump()
@@ -150,12 +184,16 @@ public struct GameInputDispatcher {
         case .cameraMode: input?.requestCameraModeCycle()
         case .journal: openJournal?()
         case .inventory: openInventory?()
-        case .map, .magic, .wait, .quicksave, .quickload, .pause, .skills: onCommand?(action)
         default:
-            if action.hotkeySlot != nil {
+            if action.isAppCommand {
                 onCommand?(action)
             }
         }
+    }
+
+    private func refusal(of action: GameInputAction) -> PlayerControlRefusal? {
+        guard let group = action.controlGroup else { return nil }
+        return locks.refusal(for: group, beastLocked: action.isBlockedInBeastForm)
     }
 
     private func applyHeld(_ action: GameInputAction, pressed: Bool) {

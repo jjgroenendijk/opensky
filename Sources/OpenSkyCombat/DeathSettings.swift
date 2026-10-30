@@ -51,6 +51,16 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
     /// `fBleedoutDefault`: the health share at which an actor kneels when its class
     /// gives no ratio. Read from the name; no open source defines it.
     public var bleedoutThreshold: Float = 0.15
+    /// `fBleedoutMin`: seconds an actor kneels before it may stand.
+    public var bleedoutMinSeconds: Float = 5
+    /// `fBleedoutRate`: health percent a kneeling actor regains each second.
+    public var bleedoutRegenPercent: Float = 15
+    /// `fBleedoutRecover`: the health share above the kneel ratio at which it stands.
+    public var bleedoutRecoverMargin: Float = 0.05
+    /// `fCombatPlayerBleedoutHealthDamageMult`: what a hit on the kneeling player keeps.
+    public var playerBleedoutDamageMult: Float = 0
+    /// `fPlayerDeathReloadTime`: seconds from the player's death to the reload.
+    public var playerReloadSeconds: Float = 5
 
     public static let vanilla = Self()
 
@@ -70,7 +80,12 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
             ("fDeathForceSpellImpactMult", \.spellImpactMult),
             ("fRemoveExcessDeadTime", \.excessDeadSeconds),
             ("fEssentialDeathTime", \.bleedoutSeconds),
-            ("fBleedoutDefault", \.bleedoutThreshold)
+            ("fBleedoutDefault", \.bleedoutThreshold),
+            ("fBleedoutMin", \.bleedoutMinSeconds),
+            ("fBleedoutRate", \.bleedoutRegenPercent),
+            ("fBleedoutRecover", \.bleedoutRecoverMargin),
+            ("fCombatPlayerBleedoutHealthDamageMult", \.playerBleedoutDamageMult),
+            ("fPlayerDeathReloadTime", \.playerReloadSeconds)
         ]
         for (editorID, keyPath) in fields {
             store.read(editorID, into: &settings, keyPath)

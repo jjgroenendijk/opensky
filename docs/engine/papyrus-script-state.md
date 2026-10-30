@@ -98,6 +98,9 @@ group: movement, fighting, camera switch, looking, sneaking, menu, activate, and
 for the rest. For `EnablePlayerControls` every default is true. Only an argument that is true
 changes its group. `IsMovementControlsEnabled` and the seven other reads answer the stored state.
 
+While the player bleeds out, movement, fighting, sneaking, and activate are locked. A dead player
+has every group locked (see [Player death](/engine/ragdoll.md#player-death)).
+
 ## Added forms
 
 `FormList.AddForm` appends a form once. `RemoveAddedForm` removes a form a script added, and

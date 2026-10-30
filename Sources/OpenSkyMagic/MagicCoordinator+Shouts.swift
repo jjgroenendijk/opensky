@@ -167,7 +167,7 @@ extension MagicCoordinator {
             recovery: shout.words[words - 1].entry.recoveryTime, multiplier: multiplier
         )
         shoutMachine.startCooldown(cooldown)
-        pendingCommands.append(.playerShouted)
+        pendingCommands.append(.playerShouted(words: words))
         noteShout(.shouted(shout: shout.displayName, words: words, cooldown: cooldown))
     }
 

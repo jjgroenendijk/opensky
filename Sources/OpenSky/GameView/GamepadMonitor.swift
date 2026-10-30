@@ -9,6 +9,9 @@ import OpenSkyRendering
 final class GamepadMonitor {
     private var input = GamepadMenuInput()
     private(set) var count = 0
+    private var realCount = 0
+    /// The last real gamepad went away.
+    var onDisconnect: (() -> Void)?
     /// Set by `openskycli game debug gamepad`: gamepads to report when none is real.
     var simulatedCount = 0
     /// Buttons `debug gamepad --press` holds for one frame.
@@ -16,6 +19,10 @@ final class GamepadMonitor {
 
     func poll(now: Double, renderer: Renderer, menuMode: MenuModeController) {
         let pads = GCController.controllers().compactMap(\.extendedGamepad)
+        if pads.count < realCount, pads.isEmpty {
+            onDisconnect?()
+        }
+        realCount = pads.count
         let connected = max(pads.count, simulatedCount)
         if connected != count {
             count = connected

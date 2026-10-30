@@ -48,12 +48,15 @@ public final class RagdollCoordinator {
     /// Essential and protected actors kneeling at zero health.
     public internal(set) var bleedout = BleedoutTracker()
     public internal(set) var deathEffects = DeathEffectCounts()
+    /// The player's own zero health. The app steps it each world tick.
+    public var playerDeath = PlayerDeath()
 
     public init(store: WorldStateStore, world: any RagdollSessionWorld, data: RagdollSessionData?) {
         self.store = store
         self.world = world
         loadDefinition = data?.loadDefinition
         deathSettings = data?.deathSettings ?? .vanilla
+        playerDeath = PlayerDeath(settings: deathSettings)
         if data != nil {
             runtime = RagdollRuntime(seam: self)
         }
@@ -157,9 +160,19 @@ public final class RagdollCoordinator {
         for key in unloaded {
             bleedout.remove(key)
         }
-        let recovered = bleedout.advance(by: delta, settings: deathSettings) {
-            world.blocksBleedoutRecovery(of: $0)
+        let regen = deathSettings.bleedoutRegenPercent / 100 * max(delta, 0)
+        for key in bleedout.seconds.keys.sorted() where regen > 0 {
+            world.restoreHealthShare(regen, of: key)
         }
+        let recovered = bleedout.advance(
+            by: delta, settings: deathSettings,
+            held: { world.blocksBleedoutRecovery(of: $0) },
+            recovered: { key in
+                let ratio = world.bleedoutThreshold(of: key) ?? deathSettings.bleedoutThreshold
+                let share = world.healthFraction(of: key) ?? 0
+                return share >= ratio + deathSettings.bleedoutRecoverMargin
+            }
+        )
         return (unloaded + recovered).map { .leaveBleedout($0) }
     }
 

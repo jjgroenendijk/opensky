@@ -85,7 +85,7 @@ struct ShoutTests {
     @Test func aTapShoutsOneWordOnTheGraphEvent() throws {
         var trial = try session()
         let commands = trial.shout(holding: Self.frame)
-        #expect(commands == [.playerGraphEvent(ShoutGraphNames.release), .playerShouted])
+        #expect(commands == [.playerGraphEvent(ShoutGraphNames.release), .playerShouted(words: 1)])
         #expect(trial.world.spellCasts == [spell(ShoutPluginFixture.Form.spell1)])
         #expect(trial.coordinator.shoutMachine.cooldownTotal == 20)
     }

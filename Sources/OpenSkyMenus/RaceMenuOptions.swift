@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One colour choice: a `CLFM` colour with the strength it paints at.
 nonisolated public struct RaceMenuColor: Equatable, Sendable {
@@ -131,12 +132,29 @@ nonisolated public struct RaceMenuLabels: Equatable, Sendable {
 
     /// The install's text by editor ID; a missing one falls back to English.
     public var texts: [String: String]
+    public var genders: GameSettingTexts<GenderText>
 
-    public init(texts: [String: String] = [:]) {
+    public init(
+        texts: [String: String] = [:], genders: GameSettingTexts<GenderText> = .vanilla
+    ) {
         self.texts = texts
+        self.genders = genders
     }
 
     public func text(_ key: String) -> String {
         texts[key] ?? Self.english[key] ?? key
+    }
+}
+
+/// The Sex row's value.
+nonisolated public enum GenderText: String, GameSettingTextKey {
+    case male = "sGenderMale"
+    case female = "sGenderFemale"
+
+    public var fallback: String {
+        switch self {
+        case .male: "Male"
+        case .female: "Female"
+        }
     }
 }

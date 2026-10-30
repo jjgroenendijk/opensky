@@ -3,6 +3,9 @@
 // `$` keys such as `$Actor Fade` and `$SAVE CORRUPT`. See docs/formats/gmst.md.
 
 nonisolated let movieLabelSettings = [
+    "sLoadFromMainMenu",
+    "sLoadWhilePlaying",
+    "sNewSave",
     "sActionMapping",
     "sActorFade",
     "sBrightness",

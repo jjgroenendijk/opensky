@@ -18,6 +18,7 @@ public struct CellStreamerNPCMovementState {
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
     public var onPosesChanged: (([UInt32: float4x4]) -> Void)?
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    public var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
     /// An actor walked into another cell. Called after its rest write.
     public var onCellHandoff: ((NPCMovementPersistence) -> Void)?
     /// The player and the standing actors walkers steer around.
@@ -75,6 +76,11 @@ extension CellStreamer {
     public var onNPCDoorCrossing: ((ReferenceKey, FormID) -> Void)? {
         get { npcMovementState.onDoorCrossing }
         set { npcMovementState.onDoorCrossing = newValue }
+    }
+
+    public var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? {
+        get { npcMovementState.onLanding }
+        set { npcMovementState.onLanding = newValue }
     }
 
     public var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? {
@@ -360,6 +366,9 @@ extension CellStreamer {
         }
         npcMovement.onDoorCrossing = { [weak self] actor, door in
             self?.onNPCDoorCrossing?(actor, door)
+        }
+        npcMovement.onLanding = { [weak self] actor, landing in
+            self?.onNPCLanding?(actor, landing)
         }
     }
 }

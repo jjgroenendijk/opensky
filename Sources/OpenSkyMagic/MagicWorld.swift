@@ -83,6 +83,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func spellHitCandidates() -> [MeleeTarget]
     /// The `explosionProximity` of the payload's `PROJ`; zero when it has none.
     func projectileProximity(of payload: SpellPayload) -> Float
+    /// The player stands in an exterior cell, where runes reach farther.
+    var isOutdoors: Bool { get }
     /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
     func perkChoices(
         at entryPoint: PerkEntryPoint,
@@ -97,6 +99,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool
     /// A summon fades away; a reanimated actor falls dead again.
     func releaseCommandedActor(_ actor: CommandedActor)
+    /// A dismissed summon stops fighting while it fades.
+    func stopCommandedActor(_ key: ReferenceKey)
     func isActorDead(_ key: ReferenceKey) -> Bool
     /// Every cast, for the Papyrus `OnSpellCast` event.
     func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey)
@@ -174,6 +178,10 @@ extension MagicWorld {
         0
     }
 
+    public var isOutdoors: Bool {
+        false
+    }
+
     public func perkChoices(
         at _: PerkEntryPoint,
         on _: ReferenceKey,
@@ -195,6 +203,8 @@ extension MagicWorld {
     }
 
     public func releaseCommandedActor(_: CommandedActor) {}
+
+    public func stopCommandedActor(_: ReferenceKey) {}
 
     public func isActorDead(_: ReferenceKey) -> Bool {
         false

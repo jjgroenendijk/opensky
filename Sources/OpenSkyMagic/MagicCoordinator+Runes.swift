@@ -21,11 +21,13 @@ extension MagicCoordinator {
     @discardableResult
     func land(_ payload: SpellPayload, at aim: SpellAim) -> Int {
         if isRune(payload) {
-            let proximity = world.projectileProximity(of: payload)
             let rune = PlacedRune(
                 payload: payload,
                 position: aim.position,
-                proximity: proximity > 0 ? proximity : RuneCore.defaultProximity
+                proximity: RuneCore.proximity(
+                    world.projectileProximity(of: payload), outdoors: world.isOutdoors,
+                    settings: runeSettings
+                )
             )
             runes = RuneCore.placing(rune, in: runes, settings: runeSettings)
             return 0
@@ -48,16 +50,20 @@ extension MagicCoordinator {
     }
 
     /// Sets off every rune a hostile actor came near, oldest first.
-    func advanceRunes() {
+    func advanceRunes(delta: Float) {
         guard !runes.isEmpty else { return }
+        let step = delta.isFinite ? max(delta, 0) : 0
         var triggers: [ReferenceKey: [MeleeTarget]] = [:]
         var waiting: [PlacedRune] = []
         var fired: [(rune: PlacedRune, struck: ReferenceKey)] = []
-        for rune in runes {
+        let casterMay = runeSettings.casterCanTrigger != 0
+        for var rune in runes {
+            rune.age += step
             let caster = rune.payload.caster
             let near = triggers[caster] ?? world.runeTriggers(for: caster)
+                + (casterMay ? world.spellHitCandidates().filter { $0.key == caster } : [])
             triggers[caster] = near
-            if let trigger = RuneCore.trigger(of: rune, among: near) {
+            if let trigger = RuneCore.trigger(of: rune, among: near, settings: runeSettings) {
                 fired.append((rune: rune, struck: trigger.key))
             } else {
                 waiting.append(rune)

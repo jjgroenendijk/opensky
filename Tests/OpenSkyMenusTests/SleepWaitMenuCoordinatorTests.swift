@@ -112,6 +112,15 @@ struct SleepWaitMenuCoordinatorTests {
         #expect(RestRefusal.alarm.settingEditorID(sleeping: true) == "sNoSleepWhileAlarm")
         #expect(RestRule.refusal(RestContext()) == nil)
     }
+
+    @Test func chargenWaitingLockComesFirst() {
+        var context = RestContext()
+        context.hostilesNear = true
+        context.waitingDisabled = true
+        #expect(RestRule.refusal(context) == .disabled)
+        #expect(RestRefusal.disabled.settingEditorID(sleeping: false) == "sNoWaitDefault")
+        #expect(RestRefusal.disabled.settingEditorID(sleeping: true) == "sNoSleepDefault")
+    }
 }
 
 struct RestStepTests {
