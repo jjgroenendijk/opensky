@@ -170,6 +170,16 @@ struct ConditionFunctionTests {
         #expect(!unloaded.evaluate(condition).isTrue)
     }
 
+    @Test func hasLoaded3DRunOnPlayerRefReadsThePlayer() throws {
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        let condition = try ConditionEvaluatorFixture.condition(
+            comparisonValue: Float(1).bitPattern, functionIndex: 555, runOn: 2, reference: 0x14
+        )
+        context.data = ConditionDataResolution(interiors: [.player: false])
+        var evaluator = ConditionEvaluator(context: context)
+        #expect(evaluator.evaluate(condition).isTrue)
+    }
+
     // MARK: - GetIsID
 
     @Test func getIsIDComparesTheReferenceBaseForm() throws {
