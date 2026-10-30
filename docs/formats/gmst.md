@@ -80,7 +80,7 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | V.A.T.S. | `fVATSPlaybackDelay` | Fallout targeting. Skyrim has none |
 | Action points | `fActionPointsReload` | Only V.A.T.S. spends them |
 | Firearms | `fGunSpreadArmBase`, `fWeaponConditionJam1` | Guns, grenades, and item condition are Fallout systems |
-| Fallout systems | `fKarmaModStealing`, `sRepairCost` | Karma, chems, repair, the Pip-Boy, radio, hacking, traits |
+| Fallout systems | `fKarmaModStealing`, `sRepairCost`, `sFullHealth` | Karma, chems, repair, the Pip-Boy and its notes, radio, hacking, traits |
 | Oblivion | `fMoveEncumEffect`, `sHolidayNewLifeFestival` | The wiki marks them "Unused". UESP "Skyrim:Calendar": "no holidays were specifically given" |
 | Marked unused | `sHeavyArmorSink` | The wiki says "Unused"; `sHairColor0` to `15` hold their own names |
 | Creations | `sReportModConfirm` | The Bethesda.net Creations manager. OpenSky does not connect to it |
@@ -88,6 +88,8 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Movie labels | `sActorFade`, `sConfirmSave` | `interface\quest_journal.swf` builds the settings and save pages from its own `$` keys, such as `$Actor Fade`, in `interface\translate_english.txt` |
 | Reward XP | `iXPRewardPickLock`, `sRewardXP` | UESP [Skyrim:Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) gives level experience only for skill increases. A picked lock trains Lockpicking through `fSkillUsageLockPick` |
 | Speech globals | `iSpeechChallengeDifficultyEasy` | UESP [Skyrim:Speech](https://en.uesp.net/wiki/Skyrim:Speech) gives the persuasion thresholds 10, 25, 50, 75, 100. A line tests the globals `SpeechVeryEasy` and so on ([CK tutorial](https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks)) |
+| Replaced notices | `sQuestAddedText`, `sDungeonCleared`, `sSneakAttack` | The HUD shows these notices with `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`. See [journal](/engine/journal.md) and [melee damage](/engine/melee-damage.md) |
+| Debug dialog | `sContinueText`, `sAbortText` | The developer assert box ("Continue Running Executable?", Abort, Retry, Ignore). A release build never opens it |
 
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.
