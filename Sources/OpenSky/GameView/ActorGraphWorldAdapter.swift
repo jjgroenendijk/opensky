@@ -45,6 +45,8 @@ final class ActorGraphWorldAdapter {
 
     /// Each mover's drive gait, which picks its footstep list.
     private var gaits: [ReferenceKey: LocomotionGait] = [:]
+    /// Each mover's ground material, which picks its footstep sound.
+    private var groundMaterials: [ReferenceKey: FormID] = [:]
     /// Each rolled actor base's race graph project and weight.
     private var graphBases: [LeveledActorRollKey: GraphBase] = [:]
 
@@ -81,6 +83,7 @@ final class ActorGraphWorldAdapter {
     func drive(_ update: NPCLocomotionDriveUpdate) {
         let moving = update.intent != .still
         gaits[update.actor] = update.gait
+        groundMaterials[update.actor] = update.groundMaterial
         graphs.setMotion(
             ActorGraphMotion(
                 isMoving: moving,
@@ -104,7 +107,11 @@ final class ActorGraphWorldAdapter {
             let feet = game.actorWorld.combatActor(key: actor)?.feet,
             let footsteps = game.gameSession?.footstepDirector
         else { return }
-        footsteps.handleActorGraphEvents([name], gait: gaits[actor] ?? .walk, position: feet)
+        footsteps.handleActorGraphEvents(
+            [name], gait: gaits[actor] ?? .walk, position: feet,
+            armatures: game.actorPlayback(for: actor)?.armorAddons.footstepArmatures ?? [],
+            material: groundMaterials[actor]
+        )
     }
 
     private func graphBase(of actor: ReferenceKey, base: FormID) -> GraphBase? {
