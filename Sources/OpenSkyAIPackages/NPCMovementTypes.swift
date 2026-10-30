@@ -56,6 +56,8 @@ nonisolated public struct NPCLocomotionDriveUpdate: Equatable, Sendable {
     public let actor: ReferenceKey
     public let intent: LocomotionIntent
     public let gait: LocomotionGait
+    /// The MATT under the mover's feet, so its steps sound like the ground. Nil when unknown.
+    public var groundMaterial: FormID?
 }
 
 /// The rigid move from where the cell build drew an actor to where it stands now.

@@ -224,7 +224,8 @@ struct WorldAudioFootstepDirectorTests {
 
     /// Store shaped like vanilla's humanoid sets: a default set answering
     /// `FootLeft` while walking and `FootSprintLeft` while sprinting, a boot
-    /// set the armature `0x900` declares, and nothing for swimming.
+    /// set the armature `0x900` declares, a hoof set `0x902` declares, and nothing
+    /// for swimming.
     func makeDirector(
         engine: WorldAudioEngine, outputModel: UInt32? = nil
     ) -> WorldAudioFootstepDirector {
@@ -262,11 +263,15 @@ struct WorldAudioFootstepDirectorTests {
                     editorID: FootstepStore.defaultSetEditorID,
                     lists: lists
                 ),
-                FootstepSet(formID: FormID(0x11), editorID: "BootSet", lists: lists)
+                FootstepSet(formID: FormID(0x11), editorID: "BootSet", lists: lists),
+                FootstepSet(
+                    formID: FormID(0x12), editorID: "HoofSet", lists: [.walking: [FormID(0x102)]]
+                )
             ],
             footsteps: [
                 decodeFootstep(0x100, tag: "FootLeft", set: 0x200),
-                decodeFootstep(0x101, tag: "FootSprintLeft", set: 0x200)
+                decodeFootstep(0x101, tag: "FootSprintLeft", set: 0x200),
+                decodeFootstep(0x102, tag: "FootFront", set: 0x200)
             ],
             impactDataSets: [
                 ImpactDataSet(
@@ -288,7 +293,7 @@ struct WorldAudioFootstepDirectorTests {
                 decodeImpact(0x300, sound: 0xAAA),
                 decodeImpact(0x301, sound: 0xBBB)
             ],
-            armatureSets: [FormID(0x900): FormID(0x11)]
+            armatureSets: [FormID(0x900): FormID(0x11), FormID(0x902): FormID(0x12)]
         )
     }
 

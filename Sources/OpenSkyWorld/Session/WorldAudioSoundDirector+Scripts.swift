@@ -7,15 +7,19 @@ import simd
 
 extension WorldAudioSoundDirector {
     /// Starts `formID` at `position` and returns its instance ID; 0 when it cannot play.
+    /// A Papyrus `Sound` is a `SOUN`, which names its `SNDR`; a bare `SNDR` plays too.
     /// A `waitToken` is answered through `retireScriptSounds` when the sound ends.
     public func playScriptSound(
         formID: FormID, at position: SIMD3<Float>, waitToken: UInt64? = nil
     ) -> Int32 {
-        guard engine.isRunning, soundStore?.descriptor(formID) != nil else { return 0 }
+        guard
+            engine.isRunning,
+            let descriptor = try? soundStore?.resolveAny(formID).descriptor
+        else { return 0 }
         let id = scriptSounds.begin(waitToken: waitToken)
         playResolved(
             id: formID, at: position, kind: "Script",
-            loops: soundStore?.descriptor(formID).map(Self.loops) ?? false,
+            loops: Self.loops(descriptor),
             adopt: { [weak self] source in
                 guard let self else { return false }
                 let adoption = scriptSounds.adopt(id, source: source)

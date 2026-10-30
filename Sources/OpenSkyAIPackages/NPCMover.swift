@@ -100,7 +100,8 @@ public struct NPCMover {
         emissions.drive = NPCLocomotionDriveUpdate(
             actor: actor,
             intent: LocomotionIntent(moveForward: 1, run: gait == .run),
-            gait: gait
+            gait: gait,
+            groundMaterial: controller.groundMaterial
         )
         collectTriggerEdges(world: world, into: &emissions)
         collectCellHandoff(world: world, into: &emissions)

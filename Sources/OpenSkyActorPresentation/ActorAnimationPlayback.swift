@@ -351,15 +351,29 @@ nonisolated public struct ActorAnimationCacheKey: Hashable, Sendable {
 nonisolated public struct WornArmorAddon: Equatable, Sendable {
     public let armature: FormID
     public let modelPath: String
+    public let slots: BodySlots
 
-    public init(armature: FormID, modelPath: String) {
+    public init(armature: FormID, modelPath: String, slots: BodySlots = BodySlots()) {
         self.armature = armature
         self.modelPath = modelPath
+        self.slots = slots
     }
 }
 
 nonisolated extension ResolvedActorVisual {
     public var wornArmorAddons: [WornArmorAddon] {
-        parts.map { WornArmorAddon(armature: $0.armature, modelPath: $0.modelPath) }
+        parts.map {
+            WornArmorAddon(armature: $0.armature, modelPath: $0.modelPath, slots: $0.slots)
+        }
+    }
+}
+
+nonisolated extension [WornArmorAddon] {
+    /// The armatures whose `ARMA` footstep set may apply, feet-slot parts first. A
+    /// creature skin such as a horse's names its set on a part with no feet slot.
+    public var footstepArmatures: [FormID] {
+        let feet = filter { $0.slots.contains(.feet) }
+        let rest = filter { !$0.slots.contains(.feet) }
+        return (feet + rest).map(\.armature)
     }
 }

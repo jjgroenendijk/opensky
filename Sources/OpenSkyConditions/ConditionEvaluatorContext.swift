@@ -186,6 +186,9 @@ nonisolated public struct ConditionCall: Sendable {
         case .target:
             return key(swapped ? context.subject : context.target, runOn: runOn)
         case .reference:
+            if namesPlayer(condition.reference) {
+                return .success(.player)
+            }
             guard let entry = referenceEntry(condition.reference) else {
                 return .failure(.unresolvedReference(runOn))
             }
@@ -201,6 +204,16 @@ nonisolated public struct ConditionCall: Sendable {
         default:
             return .failure(.unsupportedRunOn(runOn))
         }
+    }
+
+    /// True for `PlayerRef` (`00000014`), which no loaded cell holds: the engine knows the
+    /// player only as `.player`. `MQ101Scene1` waits on `HasLoaded3D` run on it.
+    private func namesPlayer(_ formID: FormID) -> Bool {
+        guard let target = context.formIDTranslation?.target else {
+            // Load-order space: index 00 is `Skyrim.esm`.
+            return formID.rawValue == 0x14
+        }
+        return ReferenceKey.resolve(formID, using: target)?.namingPlayer == .player
     }
 
     /// The reference the subject is fighting (run-on type 3), from the actor seam.

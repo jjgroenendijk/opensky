@@ -101,15 +101,18 @@ public final class WorldAudioFootstepDirector {
         route(names, gait: gait, position: position, walker: walker)
     }
 
-    /// Routes one NPC's or creature's graph events. Its steps use the default footstep set
-    /// and no ground material, and leave the player's readout alone.
+    /// Routes one NPC's or creature's graph events and leaves the player's readout alone.
+    /// The set is that of the first of `armatures` that names one, else the default set.
+    /// A horse's skin names the set that answers `FootFront`.
     public func handleActorGraphEvents(
         _ names: [String],
         gait: LocomotionGait,
-        position: SIMD3<Float>
+        position: SIMD3<Float>,
+        armatures: [FormID] = [],
+        material: FormID? = nil
     ) {
-        guard let set = footstepStore?.defaultSet else { return }
-        let walker = Walker(set: set, material: nil, isPlayer: false)
+        guard let set = footstepStore?.set(forArmatures: armatures) else { return }
+        let walker = Walker(set: set, material: material, isPlayer: false)
         route(names, gait: gait, position: position, walker: walker)
     }
 

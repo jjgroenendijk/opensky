@@ -68,8 +68,15 @@ A rider on a horse does not run a graph. It plays the rider clip of its mount's 
 Every event a graph fires goes where the player's events go: sounds and effects
 ([animation events](/engine/animation-events.md)), Papyrus `OnAnimationEvent`, and footsteps.
 `FootLeft` and `FootRight` play a footstep at the actor's feet
-(<https://ck.uesp.net/wiki/Animation_Events>). The footstep uses the default footstep set, because
-OpenSky does not yet keep each NPC's boots after the cell is built.
+(<https://ck.uesp.net/wiki/Animation_Events>). The footstep set comes from the actor's own armour
+addons ([footstep](/formats/footstep.md#arma-sndd)): worn feet pieces first, then every other part
+it was drawn with, then the default set. A creature's skin names its set on a part with no feet
+slot. Example: `SkinHorse` lists `NakedHorseAA`, whose set `NPCHorseFootFootstepSet` answers the
+`FootFront` and `FootBack` events of the horse's walk and run clips. The skin also lists
+`NakedDogAA`, but that addon is for `DogRace`, so a horse is never drawn with it.
+
+A walking NPC's step uses the material its walk controller stands on, as the player's does, so a
+horse on a stone road sounds different from one on snow.
 
 A step farther from the listener than its sound's output model reaches is skipped before a voice
 starts. Vanilla NPC steps use `SOMMono01800`, whose attenuation ends at 1,800 units, so the game
