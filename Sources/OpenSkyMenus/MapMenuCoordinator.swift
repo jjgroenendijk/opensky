@@ -4,9 +4,9 @@
 // docs/engine/world-map.md.
 
 import Foundation
-import OpenSkyScriptingInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import simd
 

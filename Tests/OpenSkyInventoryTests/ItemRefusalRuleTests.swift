@@ -20,8 +20,10 @@ struct ItemRefusalRuleTests {
     @Test func anAttackBlocksGearChanges() {
         var facts = ItemRequestFacts()
         facts.playerIsAttacking = true
-        #expect(ItemRefusalRule.refusal(.equip(isArmour: true), facts) == .equipArmourWhileAttacking)
-        #expect(ItemRefusalRule.refusal(.equip(isArmour: false), facts) == .equipWeaponWhileAttacking)
+        #expect(ItemRefusalRule
+            .refusal(.equip(isArmour: true), facts) == .equipArmourWhileAttacking)
+        #expect(ItemRefusalRule
+            .refusal(.equip(isArmour: false), facts) == .equipWeaponWhileAttacking)
         #expect(ItemRefusalRule.refusal(.unequip, facts) == .unequipWhileAttacking)
         facts.isEquipped = true
         #expect(ItemRefusalRule.refusal(.drop, facts) == .dropWhileActing)

@@ -41,7 +41,8 @@ struct LockTextsTests {
         #expect(LockCore.refusalNotice(for: .adept, lockpicks: 0) == .outOfLockpicks)
         #expect(LockCore.refusalNotice(for: .adept, lockpicks: 1) == nil)
         #expect(LockCore.refusalNotice(for: .adept, lockpicks: 1, pursued: true) == .pursued)
-        #expect(LockCore.refusalNotice(for: .requiresKey, lockpicks: 1, pursued: true) == .requiresKey)
+        #expect(LockCore
+            .refusalNotice(for: .requiresKey, lockpicks: 1, pursued: true) == .requiresKey)
         #expect(texts.text(for: .requiresKey) == "sImpossibleLock")
         #expect(texts.text(for: LockActionOutcome.notice(.outOfLockpicks)) == "sOutOfLockpicks")
         #expect(texts

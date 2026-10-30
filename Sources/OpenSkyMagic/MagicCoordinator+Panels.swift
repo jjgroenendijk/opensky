@@ -118,7 +118,8 @@ extension MagicCoordinator {
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
         if
             reading.taught,
-            let learned = caster.spellbook.knownSpells(of: .player).first(where: { $0.key == spellKey })
+            let learned = caster.spellbook.knownSpells(of: .player)
+                .first(where: { $0.key == spellKey })
         {
             world.announceSpellLearned(learned.displayName)
         }

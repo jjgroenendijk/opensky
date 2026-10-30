@@ -56,9 +56,14 @@ enum GMSTCommand {
     }
 
     /// The quoted text of a string-table setting, or nil for any other value.
-    private static func tableText(_ value: GameSetting.Value, _ strings: LocalizedStrings) -> String? {
+    private static func tableText(
+        _ value: GameSetting.Value,
+        _ strings: LocalizedStrings
+    ) -> String? {
         guard case let .string(text) = value else { return nil }
-        if case .inline = text { return nil }
+        if case .inline = text {
+            return nil
+        }
         return strings.resolve(text).map { "\"\($0)\"" } ?? "(no text)"
     }
 

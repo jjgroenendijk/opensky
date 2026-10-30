@@ -39,7 +39,8 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Older notice texts. The HUD shows these notices through newer settings:
     /// `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`.
     case replacedNotice
-    /// The developer assert box ("Continue Running Executable?"), which a release build never opens.
+    /// The developer assert box ("Continue Running Executable?"), which a release build never
+    /// opens.
     case debugDialog
 }
 
@@ -75,7 +76,13 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "sDungeonCleared", "sQuestAddedText", "sQuestCompletedText", "sQuestUpdatedText",
             "sSneakAttack"
         ],
-        .debugDialog: ["sAbortText", "sContinueText", "sDefaultMessage", "sIgnoreText", "sRetryText"]
+        .debugDialog: [
+            "sAbortText",
+            "sContinueText",
+            "sDefaultMessage",
+            "sIgnoreText",
+            "sRetryText"
+        ]
     ]
 }
 

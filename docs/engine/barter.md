@@ -33,7 +33,8 @@ sell price   = round(value of item * sell price modifier / base price factor)
 ```
 
 `fBarterMax` defaults to 3.3 and `fBarterMin` to 2.0. A skill above 100 has no effect. Two caps
-apply: the sell price is at most `value * 1.00`, and the buy price is at least `value * fMinBuyMult`, 1.05 in `Skyrim.esm`.
+apply: the sell price is at most `value * 1.00`, and the buy price is at least `value *
+fMinBuyMult`, 1.05 in `Skyrim.esm`.
 The same page lists results the code is tested against: a factor of 3.3 at Speech 0, 3.10 at 15,
 and 2 at 100, and a sell factor of 0.322 at 15.
 

@@ -137,7 +137,9 @@ nonisolated extension CellSceneBuilder {
             // XAPD: only an activate parent or a script may activate the reference.
             interaction.parentActivateOnly = ref.details.parentActivateOnly == true
             if base.isAutomaticDoor {
-                guard !interaction.parentActivateOnly, let area = Self.automaticArea(of: base, at: ref) else { continue }
+                let area = interaction.parentActivateOnly
+                    ? nil : Self.automaticArea(of: base, at: ref)
+                guard let area else { continue }
                 interaction.automaticArea = area
             }
             interactions[ref.formID] = interaction

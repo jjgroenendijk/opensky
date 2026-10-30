@@ -73,7 +73,10 @@ nonisolated public struct ItemRequestFacts: Equatable, Sendable {
 
 nonisolated public enum ItemRefusalRule {
     /// The refusal of `request`, or nil when it goes on.
-    public static func refusal(_ request: ItemRequest, _ facts: ItemRequestFacts) -> ItemRefusalText? {
+    public static func refusal(
+        _ request: ItemRequest,
+        _ facts: ItemRequestFacts
+    ) -> ItemRefusalText? {
         switch request {
         case .drop: dropRefusal(facts)
         case .consume: facts.isQuestItem ? .eatQuestItem : nil
@@ -107,7 +110,10 @@ nonisolated public enum ItemRefusalRule {
         return facts.isNonPlayable ? .cannotUnequip : nil
     }
 
-    private static func equipRefusal(isArmour: Bool, _ facts: ItemRequestFacts) -> ItemRefusalText? {
+    private static func equipRefusal(
+        isArmour: Bool,
+        _ facts: ItemRequestFacts
+    ) -> ItemRefusalText? {
         if facts.playerIsAttacking {
             return isArmour ? .equipArmourWhileAttacking : .equipWeaponWhileAttacking
         }

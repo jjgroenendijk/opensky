@@ -43,11 +43,8 @@ extension PapyrusWorldStateBridge {
     ) -> PapyrusActorState? {
         guard
             let values = actorNatives.actorValueRuntime?(),
-            let holder = actorHolder(for: key)
-        else {
-            return nil
-        }
-        guard values.damage(at: index, by: amount, on: holder) else { return nil }
+            let holder = actorHolder(for: key),
+            values.damage(at: index, by: amount, on: holder) else { return nil }
         // The zero-health check is here rather than in the native because this
         // is the layer that can act on it: a blow that empties the bar has to
         // become a death on the same call, or a script that damages and then
@@ -67,11 +64,8 @@ extension PapyrusWorldStateBridge {
     ) -> PapyrusActorState? {
         guard
             let values = actorNatives.actorValueRuntime?(),
-            let holder = actorHolder(for: key)
-        else {
-            return nil
-        }
-        guard values.restore(at: index, by: amount, on: holder) else { return nil }
+            let holder = actorHolder(for: key),
+            values.restore(at: index, by: amount, on: holder) else { return nil }
         return actorState(for: key)
     }
 
