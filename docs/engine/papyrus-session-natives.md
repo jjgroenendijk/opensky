@@ -95,9 +95,11 @@ rotation, and keeps the reference's scale.
 ## Sounds
 
 `Sound.Play` starts the sound at the source reference and returns an instance ID; 0 means it
-did not play. `PlayAndWait` waits until the sound ends, and answers false when it could not
-play or was stopped. `StopInstance` and `SetInstanceVolume` act on the ID, also when the sound
-file is still loading. The volume is clamped to 0 to 1, as the
+did not play. A Papyrus `Sound` is a `SOUN` record, which names its `SNDR` descriptor. Example:
+`MQ101` plays `OBJCarriageMove2DLPM` on the player for the cart ride, a loop it stops with
+`StopInstance` when the cart arrives. `PlayAndWait` waits until the sound ends, and answers
+false when it could not play or was stopped. `StopInstance` and `SetInstanceVolume` act on the
+ID, also when the sound file is still loading. The volume is clamped to 0 to 1, as the
 [wiki](https://ck.uesp.net/wiki/SetInstanceVolume_-_Sound) says.
 
 ## The sun
