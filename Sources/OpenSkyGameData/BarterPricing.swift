@@ -35,6 +35,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// become live the moment a plugin retunes `fBarterMin` or a perk lands.
     public static let maximumSellFraction = 1.0
     public static let minimumBuyFraction = 1.05
+    /// `fMinBuyMult`, which holds the 1.05.
+    public static let minimumBuySettingName = "fMinBuyMult"
 
     public let barterMin: Double
     public let barterMax: Double
@@ -43,6 +45,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// Fortify Barter. 1 without perks.
     public let buyModifier: Double
     public let sellModifier: Double
+    /// The buy price floor as a fraction of the value, from `fMinBuyMult`.
+    public var minimumBuy = BarterPricing.minimumBuyFraction
 
     /// Where `barterMin` and `barterMax` came from, for the verification
     /// readout: the plugin that authored the winning GMST, or the fallback.
@@ -76,7 +80,7 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     public func trading(
         speechSkill: Double, buyModifier: Double, sellModifier: Double
     ) -> BarterPricing {
-        BarterPricing(
+        var priced = BarterPricing(
             barterMin: barterMin,
             barterMax: barterMax,
             speechSkill: speechSkill,
@@ -84,6 +88,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
             sellModifier: sellModifier.isFinite ? max(0, sellModifier) : 1,
             source: source
         )
+        priced.minimumBuy = minimumBuy
+        return priced
     }
 
     // MARK: - The formula
@@ -107,7 +113,7 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
         guard value > 0 else { return 0 }
         let base = Double(value)
         let priced = base * buyModifier * basePriceFactor
-        return whole(max(priced, base * Self.minimumBuyFraction))
+        return whole(max(priced, base * minimumBuy))
     }
 
     /// What the merchant pays the player for one of an item worth `value`.
@@ -160,13 +166,17 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
             store: store,
             fallback: vanillaBarterMax
         )
-        return BarterPricing(
+        var pricing = BarterPricing(
             barterMin: minimum.value,
             barterMax: maximum.value,
             speechSkill: speechSkill,
             source: "\(barterMinSettingName) \(minimum.source), "
                 + "\(barterMaxSettingName) \(maximum.source)"
         )
+        pricing.minimumBuy = float(
+            editorID: minimumBuySettingName, store: store, fallback: minimumBuyFraction
+        ).value
+        return pricing
     }
 
     private static func float(
