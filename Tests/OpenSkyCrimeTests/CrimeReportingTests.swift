@@ -105,6 +105,7 @@ struct CrimeReportingTests {
         #expect(coordinator.crimeGold(of: Self.hold) == 0)
         #expect(coordinator.pendingReports.isEmpty)
         #expect(coordinator.lastCrime.text.hasPrefix("Every witness died"))
+        #expect(coordinator.takeCommands().contains(.showNotice("Last witness killed.")))
     }
 
     @Test func aWitnessNearAGuardDeliversTheReport() throws {

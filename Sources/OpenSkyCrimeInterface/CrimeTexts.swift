@@ -9,6 +9,8 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
     public var names: [CrimeKind: String] = [:]
     public var bountyAdded = "bounty added to"
     public var bountyRemoved = "bounty removed from"
+    /// `sWitnessKilled`: the last witness of an open report died.
+    public var witnessKilled = "Last witness killed."
     /// The owner's warning. The game speaks it as dialogue; no setting holds a text.
     public var trespassWarning = "You are trespassing. Leave, or you will be reported."
 
@@ -46,6 +48,7 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
         }
         store.read("sAddCrimeGold", into: &settings, \.bountyAdded, text: text)
         store.read("sRemoveCrimeGold", into: &settings, \.bountyRemoved, text: text)
+        store.read("sWitnessKilled", into: &settings, \.witnessKilled, text: text)
         return settings
     }
 }

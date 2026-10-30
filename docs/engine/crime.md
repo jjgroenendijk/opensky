@@ -194,7 +194,8 @@ reported. Quick Hands sets it to 0, so nothing is reported.
 A seen crime charges the bounty at once. The report then stays open until a witness reaches a
 guard. A witness reaches a guard when it is one, or when it stands within
 `iCrimeAlarmRecDistance` (4000 units) of a living guard who polices the crime's faction. If every
-witness dies first, the bounty comes off again and the HUD says so. The Creation Kit's Crime page:
+witness dies first, the bounty comes off again. The HUD shows `sWitnessKilled` ("Last witness
+killed.") and then the bounty removed. The Creation Kit's Crime page:
 "If the last Actor who viewed a crime is killed before guards arrive, the crime gold is removed".
 
 The open reports live in the session, not in a save. A loaded save keeps the bounty.

@@ -46,6 +46,7 @@ extension CrimeCoordinator {
                 )
                 reporter.modifyCrimeGold(by: -removed, violent: report.violent, of: report.faction)
                 lastCrime = .reportLost(gold: removed, faction: factionName(report.faction))
+                pendingCommands.append(.showNotice(crimeTexts.witnessKilled))
                 showBountyNotice(gold: removed, added: false, faction: report.faction)
                 return false
             }
