@@ -34,18 +34,32 @@ enum GMSTCommand {
     /// order. The provenance probe behind every settings table above: reading a
     /// family off the install is how a fallback constant is checked against the
     /// number the shipped game actually carries, rather than against a wiki's
-    /// transcription of it.
+    /// transcription of it. A string setting also prints its text, read through the
+    /// string table of the plugin that set it.
     static func runList(context: CLIContext, prefix: String) throws {
         let store = try GameSettingStore(plugins: context.loadOrder().files)
+        let strings = LocalizedStrings(vfs: context.makeFileSystem(), pluginName: "Skyrim.esm")
         let needle = prefix.lowercased()
         let matches = store.values
             .filter { needle.isEmpty || $0.key.hasPrefix(needle) }
             .sorted { $0.key < $1.key }
         for match in matches {
-            print("\(match.value.setting.editorID) = "
-                + "\(Self.text(match.value.setting.value)) [\(match.value.sourcePlugin)]")
+            let plugin = match.value.sourcePlugin
+            var line = "\(match.value.setting.editorID) = "
+                + "\(Self.text(match.value.setting.value)) [\(plugin)]"
+            if let shown = Self.tableText(match.value.setting.value, strings.scoped(to: plugin)) {
+                line += " " + shown
+            }
+            print(line)
         }
         print("[INFO] \(matches.count) settings matched \"\(prefix)\"")
+    }
+
+    /// The quoted text of a string-table setting, or nil for any other value.
+    private static func tableText(_ value: GameSetting.Value, _ strings: LocalizedStrings) -> String? {
+        guard case let .string(text) = value else { return nil }
+        if case .inline = text { return nil }
+        return strings.resolve(text).map { "\"\($0)\"" } ?? "(no text)"
     }
 
     private static func text(_ value: GameSetting.Value) -> String {
