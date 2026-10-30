@@ -9,6 +9,15 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
+nonisolated public enum PickpocketText: String, GameSettingTextKey {
+    /// The HUD notice when the target notices.
+    case caught = "sPickpocketFail"
+
+    public var fallback: String {
+        "You've been caught pickpocketing."
+    }
+}
+
 /// What one pickpocket take did.
 nonisolated public enum PickpocketOutcome: Equatable, Sendable {
     case took(item: String, chance: Int)

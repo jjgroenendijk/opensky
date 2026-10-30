@@ -8,6 +8,8 @@ import OpenSkyInventoryInterface
 nonisolated public enum LockNotice: Equatable, Sendable {
     case requiresKey
     case outOfLockpicks
+    /// Guards chase the player.
+    case pursued
 }
 
 nonisolated public enum LockActionOutcome: Equatable, Sendable {
@@ -34,6 +36,7 @@ nonisolated extension LockTexts {
         switch notice {
         case .requiresKey: requiresKey
         case .outOfLockpicks: outOfLockpicks
+        case .pursued: pursued
         }
     }
 

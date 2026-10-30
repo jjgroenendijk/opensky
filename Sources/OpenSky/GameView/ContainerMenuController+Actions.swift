@@ -118,6 +118,7 @@ extension ContainerMenuController {
         }
         if outcome.wasCaught {
             close()
+            game.hud.showNotification(game.mapWorld.settingTexts(PickpocketText.self)[.caught])
         }
     }
 

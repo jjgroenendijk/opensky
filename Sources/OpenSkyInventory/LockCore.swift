@@ -55,9 +55,14 @@ nonisolated public enum LockCore {
 
     /// Why a press the gate refused cannot become a picking session, or nil when
     /// the minigame opens.
-    public static func refusalNotice(for band: LockDifficulty, lockpicks: Int32) -> LockNotice? {
+    public static func refusalNotice(
+        for band: LockDifficulty, lockpicks: Int32, pursued: Bool = false
+    ) -> LockNotice? {
         if !band.isPickable {
             return .requiresKey
+        }
+        if pursued {
+            return .pursued
         }
         return lockpicks > 0 ? nil : .outOfLockpicks
     }

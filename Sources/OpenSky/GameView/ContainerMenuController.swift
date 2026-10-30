@@ -24,6 +24,7 @@ protocol ContainerMenuHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var inventoryWorld: InventoryWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
