@@ -34,6 +34,7 @@ nonisolated extension ConditionContext {
 /// The names natives store flags and values under, shared with the conditions.
 nonisolated public enum ScriptedStateName: Sendable {
     public static let ghost = "ghost"
+    public static let unconscious = "unconscious"
     public static let restrained = "restrained"
     public static let playerTeammate = "playerTeammate"
     public static let allowFlying = "allowFlying"

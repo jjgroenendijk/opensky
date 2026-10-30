@@ -21,6 +21,7 @@ public enum InteractionStep: Int, FramePhase {
 public enum ActivationRefusalStep: Int, FramePhase {
     case lockpicking
     case mount
+    case notice
     case agentEvents
 }
 
@@ -31,6 +32,8 @@ public enum ActivationGateStep: Int, FramePhase {
     /// A beast cannot take items or talk.
     case beastForm
     case lock
+    /// Actor state, used furniture, parent activation, and combat (`ActivationRefusalRule`).
+    case notice
 }
 
 /// The player entered or left a trigger volume.

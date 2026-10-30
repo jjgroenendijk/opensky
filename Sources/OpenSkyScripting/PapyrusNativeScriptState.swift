@@ -44,7 +44,7 @@ extension PapyrusNativeFunctions {
         ScriptedFlag("Actor", "SetAllowFlyingEx", ScriptedStateName.allowFlying),
         ScriptedFlag("Actor", "SetIntimidated", "IsIntimidated", "intimidated"),
         ScriptedFlag("Actor", "SetBribed", "IsBribed", ScriptedStateName.bribed),
-        ScriptedFlag("Actor", "SetUnconscious", "IsUnconscious", "unconscious"),
+        ScriptedFlag("Actor", "SetUnconscious", "IsUnconscious", ScriptedStateName.unconscious),
         ScriptedFlag("Actor", "SetRestrained", ScriptedStateName.restrained),
         ScriptedFlag(
             "Actor", "SetNoBleedoutRecovery", "GetNoBleedoutRecovery",

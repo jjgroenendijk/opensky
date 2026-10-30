@@ -72,6 +72,9 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public var automaticArea: AutomaticDoorArea?
     /// The base authors its own verb (`ACTI` `RNAM`), which the game's verbs never replace.
     public var hasLabelOverride = false
+    /// `XAPD` Parent Activate Only: the use key shows `sRemoteActivation`; a script or the
+    /// activate parent opens it.
+    public var parentActivateOnly = false
 
     /// A FURN with a sleep marker. Using it opens the rest menu.
     public var isBed: Bool {
@@ -230,6 +233,8 @@ nonisolated public enum ActivationRefusal: Equatable, Sendable {
     case mounted
     /// The player is in a beast form, which cannot take items or start a conversation.
     case beastForm
+    /// A refusal the HUD shows as this notice, such as a fleeing actor's.
+    case notice(String)
 }
 
 /// A use-key press the activation gate refused. No `InteractionEvent` follows it.

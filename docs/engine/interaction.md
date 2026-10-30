@@ -119,8 +119,29 @@ A reference with `XAPR` children passes its activation on to them
 (Creation Kit wiki "Reference", <https://ck.uesp.net/wiki/Reference>). A child with a delay
 above 0 activates once that many seconds of world time have passed, so a menu pause holds it.
 A reference with `XAPD`
-"Parent Activate Only" can be activated only by its parent or a script: it has no use-key
-target.
+"Parent Activate Only" can be activated only by its parent or a script. The use key on it shows
+`sRemoteActivation`, "This object is activated from somewhere else.", as the Creation Kit wiki
+[settings list](https://ck.uesp.net/wiki/Category:Settings) describes. An automatic door with the
+flag has no target.
+
+## Refused activations
+
+After the lock gate, `ActivationRefusalRule` refuses a press with a notice. The checks, in order:
+
+| Case | Notice |
+| --- | --- |
+| Parent Activate Only | `sRemoteActivation` |
+| Talking to an unconscious actor (`SetUnconscious`) | name + `sNoTalkUnConscious` |
+| Talking to a calmed actor | `sActivateCreatureCalmed` for a creature, else name + `sActivateNPCCalmed` |
+| Talking to an actor that flees | name + `sNoTalkFleeing` |
+| Talking to an actor in a playing scene | `sSceneBlockingActorActivation` |
+| Furniture whose every seat another actor sits in | `sObjectInUse` |
+| Furniture whose every seat another actor walks to | `sFailedActivation` |
+| A crafting station or bed while the player is in combat | `sCombatCannotActivate` |
+| Furniture, when the player's race is a child race | `sNoChildUse` |
+
+A creature is an actor without the `ActorTypeNPC` keyword. The order, and which targets refuse
+use in combat, are OpenSky's reading of the settings' words.
 
 ## Locks
 

@@ -99,10 +99,10 @@ extension CellSceneBuilderTests {
         ))
     }
 
-    /// An automatic door covers its `OBND` box at its pose; a parent-only reference is no
-    /// use-key target at all.
+    /// An automatic door covers its `OBND` box at its pose; a parent-only reference stays a
+    /// target, flagged so the gate refuses it with `sRemoteActivation`.
     @Test(.enabled(if: Self.hasDevice))
-    func automaticDoorsGetAnAreaAndParentOnlyReferencesNone() throws {
+    func automaticDoorsGetAnAreaAndParentOnlyReferencesTheirFlag() throws {
         var bounds = Data()
         for value: Int16 in [-10, -20, 0, 10, 20, 100] {
             bounds.appendUInt16(UInt16(bitPattern: value))
@@ -128,7 +128,7 @@ extension CellSceneBuilderTests {
         #expect(area.contains([115, 0, 50]))
         #expect(!area.contains([100, 15, 50]))
         #expect(!area.contains([100, 0, 150]))
-        #expect(scene.interactions[FormID(0x401)] == nil)
+        #expect(scene.interactions[FormID(0x401)]?.parentActivateOnly == true)
     }
 
     /// The actor uses the allowed side that faces it most; up only when no side is allowed.

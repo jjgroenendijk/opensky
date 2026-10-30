@@ -108,8 +108,6 @@ nonisolated extension CellSceneBuilder {
             guard
                 let base = modelBaseIndex[ref.base.rawValue],
                 base.allowsManualInteraction || base.isAutomaticDoor,
-                // XAPD: only an activate parent or a script may activate the reference.
-                ref.details.parentActivateOnly != true,
                 let action = interactionAction(for: base.recordType)
             else { continue }
             let override = resolvedText(base.activateTextOverride)
@@ -136,8 +134,10 @@ nonisolated extension CellSceneBuilder {
             )
             interaction.seats = seats
             interaction.hasLabelOverride = override != nil
+            // XAPD: only an activate parent or a script may activate the reference.
+            interaction.parentActivateOnly = ref.details.parentActivateOnly == true
             if base.isAutomaticDoor {
-                guard let area = Self.automaticArea(of: base, at: ref) else { continue }
+                guard !interaction.parentActivateOnly, let area = Self.automaticArea(of: base, at: ref) else { continue }
                 interaction.automaticArea = area
             }
             interactions[ref.formID] = interaction
