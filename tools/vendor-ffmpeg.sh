@@ -1,6 +1,7 @@
 #!/bin/sh
 # OpenSky vendored ffmpeg: a minimal, decode-only, LGPL-only build of libavutil,
-# libavcodec and libswresample, used by Sources/OpenSkyAudio to turn WMAv2 payloads into PCM.
+# libavcodec and libswresample, used by Sources/OpenSkyAudio to turn WMAv2 payloads into PCM
+# and Bink movie packets into pictures and PCM.
 #
 # Homebrew's ffmpeg is deliberately not used: it is configured --enable-gpl
 # --enable-version3, which would relicense a redistributed OpenSky, and it drags in
@@ -18,8 +19,9 @@ FFMPEG_VERSION=9.0.2
 # Cross-checked against the sha256 Homebrew pins for the same tarball, since ffmpeg.org
 # publishes only detached GPG signatures and no checksum file.
 FFMPEG_SHA256=8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
-# Bump when the configure flags below change, so existing prefixes rebuild.
-FLAGS_REVISION=1
+# Bump when the configure flags below change, so existing prefixes rebuild. A prefix
+# built with a later revision is kept, because each revision only adds decoders.
+FLAGS_REVISION=2
 
 ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT"
@@ -47,8 +49,10 @@ fail() {
   exit 1
 }
 
-if [ "${OPENSKY_FFMPEG_FORCE:-0}" != "1" ] && [ -f "$STAMP" ] &&
-  [ "$(cat "$STAMP")" = "$WANT_STAMP" ]; then
+HAVE_REVISION=$(sed -n "s/^ffmpeg $FFMPEG_VERSION flags \([0-9][0-9]*\)$/\1/p" \
+  "$STAMP" 2>/dev/null || true)
+if [ "${OPENSKY_FFMPEG_FORCE:-0}" != "1" ] && [ -n "$HAVE_REVISION" ] &&
+  [ "$HAVE_REVISION" -ge "$FLAGS_REVISION" ]; then
   echo "  [ OK ] ffmpeg $FFMPEG_VERSION (vendored, decode-only LGPL)"
   exit 0
 fi
@@ -75,10 +79,15 @@ if [ "$got" != "$FFMPEG_SHA256" ]; then
   fail "tarball checksum mismatch: expected $FFMPEG_SHA256, got $got"
 fi
 
-rm -rf "$BUILD_DIR" "$PREFIX"
+# The install lands in STAGE first and replaces PREFIX only after every check passed, so
+# a build in another worktree never sees a half-built or missing prefix.
+STAGE="$SRC_DIR/ffmpeg-stage"
+STAGED="$STAGE$PREFIX"
+rm -rf "$BUILD_DIR" "$STAGE"
 tar -xf "$TARBALL" -C "$SRC_DIR" >>"$LOG" 2>&1 || fail "extract failed"
 
-# --disable-everything turns off every component, then wmav2 is switched back on by hand.
+# --disable-everything turns off every component, then the decoders are switched back on by
+# hand: wmav2 for xWMA sound, and bink (video) and binkaudio for Data/Video/*.bik movies.
 # --disable-autodetect stops configure from picking up anything installed on this machine,
 # which is what keeps the result free of third-party (and possibly GPL) code.
 # --install-name-dir=@rpath makes the dylibs relocatable so they can be embedded in
@@ -100,13 +109,13 @@ tar -xf "$TARBALL" -C "$SRC_DIR" >>"$LOG" 2>&1 || fail "extract failed"
       --disable-swscale \
       --disable-static \
       --enable-shared \
-      --enable-decoder=wmav2 \
+      --enable-decoder=wmav2,bink,binkaudio_dct,binkaudio_rdft \
       --install-name-dir=@rpath \
       --extra-cflags=-mmacosx-version-min=26.0 \
       --extra-ldflags=-mmacosx-version-min=26.0
 ) >>"$LOG" 2>&1 || fail "configure failed"
 
-(cd "$BUILD_DIR" && make -j"$(sysctl -n hw.ncpu)" install) >>"$LOG" 2>&1 ||
+(cd "$BUILD_DIR" && make -j"$(sysctl -n hw.ncpu)" install DESTDIR="$STAGE") >>"$LOG" 2>&1 ||
   fail "build failed"
 
 # Licensing is a correctness gate here, not paperwork: linking a GPL-configured libavcodec
@@ -123,12 +132,19 @@ int main(void) {
   printf("configuration: %s\n", avcodec_configuration());
   printf("wmav2: %s\n",
          avcodec_find_decoder(AV_CODEC_ID_WMAV2) ? "present" : "missing");
+  printf("binkvideo: %s\n",
+         avcodec_find_decoder(AV_CODEC_ID_BINKVIDEO) ? "present" : "missing");
+  printf("binkaudio: %s\n",
+         avcodec_find_decoder(AV_CODEC_ID_BINKAUDIO_DCT) &&
+                 avcodec_find_decoder(AV_CODEC_ID_BINKAUDIO_RDFT)
+             ? "present"
+             : "missing");
   return 0;
 }
 CHECK
 
-clang "$CHECK_SRC" -I"$PREFIX/include" -L"$PREFIX/lib" -lavutil -lavcodec \
-  -Wl,-rpath,"$PREFIX/lib" -o "$SRC_DIR/opensky-ffmpeg-check" >>"$LOG" 2>&1 ||
+clang "$CHECK_SRC" -I"$STAGED/include" -L"$STAGED/lib" -lavutil -lavcodec \
+  -Wl,-rpath,"$STAGED/lib" -o "$SRC_DIR/opensky-ffmpeg-check" >>"$LOG" 2>&1 ||
   fail "license-check probe failed to build"
 
 report=$("$SRC_DIR/opensky-ffmpeg-check") || fail "license-check probe failed to run"
@@ -136,7 +152,10 @@ printf '%s\n' "$report" >>"$LOG"
 
 echo "$report" | grep -q '^license: LGPL version 2.1 or later' ||
   fail "vendored ffmpeg is not LGPL 2.1: $(echo "$report" | grep '^license:')"
-echo "$report" | grep -q '^wmav2: present' || fail "wmav2 decoder missing from the build"
+for decoder in wmav2 binkvideo binkaudio; do
+  echo "$report" | grep -q "^$decoder: present" ||
+    fail "$decoder decoder missing from the build"
+done
 echo "$report" | grep -q -- '--disable-gpl' || fail "--disable-gpl absent from configuration"
 echo "$report" | grep -q -- '--disable-nonfree' ||
   fail "--disable-nonfree absent from configuration"
@@ -146,13 +165,20 @@ fi
 
 # Every dependency must be either a sibling dylib (@rpath) or an OS library, so the three
 # copies embedded in OpenSky.app are the whole closure.
-for lib in "$PREFIX"/lib/libavutil.dylib "$PREFIX"/lib/libavcodec.dylib \
-  "$PREFIX"/lib/libswresample.dylib; do
+for lib in "$STAGED"/lib/libavutil.dylib "$STAGED"/lib/libavcodec.dylib \
+  "$STAGED"/lib/libswresample.dylib; do
   [ -f "$lib" ] || fail "expected library missing: $lib"
   stray=$(otool -L "$lib" | tail -n +2 | awk '{print $1}' |
     grep -vE '^(@rpath/|/usr/lib/|/System/)' || true)
   [ -z "$stray" ] || fail "$(basename "$lib") links non-system libraries: $stray"
 done
+
+# Every check passed: swap the staged prefix in. The two renames are quick, so the window
+# with no prefix is far shorter than a build.
+rm -rf "$PREFIX.old"
+[ ! -d "$PREFIX" ] || mv "$PREFIX" "$PREFIX.old"
+mv "$STAGED" "$PREFIX"
+rm -rf "$PREFIX.old" "$STAGE"
 
 # Xcode's user-script sandbox grants a build phase read and write access only to the exact
 # paths it declares, and the dylib version numbers are this script's business rather than
@@ -175,4 +201,4 @@ done
 rm -rf "$BUILD_DIR"
 
 echo "$WANT_STAMP" >"$STAMP"
-echo "  [ OK ] ffmpeg $FFMPEG_VERSION vendored (LGPL 2.1, decoders: wmav2)"
+echo "  [ OK ] ffmpeg $FFMPEG_VERSION vendored (LGPL 2.1, decoders: wmav2, bink)"

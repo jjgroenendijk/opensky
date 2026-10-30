@@ -1,16 +1,17 @@
 ---
 type: Decision
-title: ffmpeg for audio decode
+title: ffmpeg for audio and movie decode
 description: Vendor a minimal decode-only LGPL ffmpeg built from source, link it through a
   system-library module map, embed the three dylibs in the app bundle, and share one prefix across
   worktrees - with why Homebrew's build and every alternative were rejected.
 tags: [decision, audio, dependency, licensing, ffmpeg]
 ---
 
-# ffmpeg for audio decode
+# ffmpeg for audio and movie decode
 
 Skyrim ships its sound and music as `.xwm` files: an xWMA container holding Windows Media Audio 2
-packets. Nothing in Apple's frameworks decodes that codec. This page covers which ffmpeg, how it is
+packets, and its movies as [Bink](/formats/bink.md) files. Nothing in Apple's frameworks decodes
+either codec. This page covers which ffmpeg, how it is
 linked, and what happens when it is missing.
 
 ## Decision
@@ -19,16 +20,18 @@ linked, and what happens when it is missing.
   `make ffmpeg`. The prefix is `.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
   dylibs never enter the repository.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,
-  `libavcodec`, and `libswresample`, about 1.2 MB, with one decoder (`wmav2`), no external libraries,
-  and nothing outside `libSystem` and the OS frameworks.
+  `libavcodec`, and `libswresample`, with four decoders (`wmav2`, `bink`, `binkaudio_dct`, and
+  `binkaudio_rdft`), no external libraries, and nothing outside `libSystem` and the OS frameworks.
 - Wrap it in a small C target of the package, `CFFmpeg`, so the few files that need it write
   `import CFFmpeg`.
 - ffmpeg is a hard build requirement. A missing prefix fails the build with a message naming
   `make bootstrap`, and the app bundle carries its own copies of the dylibs.
-- Every ffmpeg type stays behind `Sources/OpenSkyAudio/WMADecoder.swift`. Callers pass container
-  fields and `Data`, and get interleaved 32-bit float PCM or a typed error. A vanilla music track
-  decodes to about 37 MB, so besides the call that returns a whole track there is a streaming call
-  that hands each chunk to a callback. Sweeps and playback use streaming and drop each chunk.
+- Every ffmpeg type stays behind the decoders in `OpenSkyAudio`: `WMADecoder`, `BinkVideoDecoder`,
+  and `BinkAudioDecoder`, which share one codec session type. Callers pass container fields and
+  `Data`, and get interleaved 32-bit float PCM, a picture of three planes, or a typed error. A
+  vanilla music track decodes to about 37 MB, so besides the call that returns a whole track there
+  is a streaming call that hands each chunk to a callback. Sweeps and playback use streaming and
+  drop each chunk.
 
 ## Why not Homebrew's ffmpeg
 
@@ -54,7 +57,7 @@ for the same file. It configures:
 --disable-everything --disable-gpl --disable-nonfree --disable-autodetect
 --disable-programs --disable-doc --disable-network --disable-avdevice --disable-avfilter
 --disable-avformat --disable-swscale --disable-static --enable-shared
---enable-decoder=wmav2 --install-name-dir=@rpath
+--enable-decoder=wmav2,bink,binkaudio_dct,binkaudio_rdft --install-name-dir=@rpath
 ```
 
 Three flags carry the weight:
@@ -69,9 +72,13 @@ Three flags carry the weight:
 The script then checks the license instead of trusting the flags. A small probe against the new
 prefix asserts that `avutil_license()` reports `LGPL version 2.1 or later`, that
 `avcodec_configuration()` has `--disable-gpl` and `--disable-nonfree` and no `--enable-gpl`,
-`--enable-nonfree`, `--enable-version3`, or `--enable-lib*`, and that the WMAv2 decoder exists.
+`--enable-nonfree`, `--enable-version3`, or `--enable-lib*`, and that each decoder exists.
 `otool -L` over each dylib fails on anything outside `@rpath`, `/usr/lib`, and `/System`. A stamp
-file makes reruns free.
+file with the flags revision makes reruns free; a newer revision rebuilds.
+
+The build installs into a staging folder first. The probe and the `otool` check run there, and
+only a build that passes replaces the prefix. So a failed rebuild leaves the working prefix, which
+every worktree shares, in place.
 
 ## LGPL obligations
 
