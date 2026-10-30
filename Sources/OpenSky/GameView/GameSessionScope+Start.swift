@@ -12,6 +12,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
@@ -28,6 +29,8 @@ extension GameSessionScope {
         guard let gameSession, let worldData, let cellRunner else { return }
         effects.applyGraphicsSettings(playerSettings.store)
         hud.start()
+        controllerRumble.settings = ShoutRumbleSettings.resolve(store: worldData.gameSettings)
+        controllerRumble.isEnabled = { [store = playerSettings.store] in store.bool(.vibration) }
         menuRouter.wire(gameSession: gameSession)
         benchmarkWorld.wire(gameSession: gameSession)
         wireMenuMode(gameSession: gameSession)
@@ -42,6 +45,7 @@ extension GameSessionScope {
             guard let self else { return }
             // Before the HUD draws, so a skill notice from this frame shows now.
             progressionWorld.run(progression.takeCommands())
+            updateQuestNotices()
             hud.updatePlayerModes(hudModeInputs(gameSession))
             hud.updateFrame()
         }

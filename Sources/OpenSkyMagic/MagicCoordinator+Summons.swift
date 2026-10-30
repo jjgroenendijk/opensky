@@ -29,10 +29,27 @@ extension MagicCoordinator {
 
     /// "On death, the creature automatically fades out": a fallen actor ends its effect,
     /// and the end sends it away.
-    func advanceCommanded() {
+    func advanceCommanded(delta: Float) {
         for actor in commanded where world.isActorDead(actor.actor) {
             dispel(actor.sequence, on: actor.holder)
         }
+        let step = delta.isFinite ? max(delta, 0) : 0
+        fadingSummons = fadingSummons.map { ($0.actor, $0.seconds - step) }
+        for gone in fadingSummons where gone.seconds <= 0 {
+            world.releaseCommandedActor(gone.actor)
+        }
+        fadingSummons.removeAll { $0.seconds <= 0 }
+    }
+
+    /// A summon stays `fSummonedCreatureFadeOutSeconds` before it goes; a raised corpse
+    /// falls at once.
+    private func send(_ actor: CommandedActor) {
+        guard actor.kind == .summoned, summonSettings.fadeOutSeconds > 0 else {
+            world.releaseCommandedActor(actor)
+            return
+        }
+        world.stopCommandedActor(actor.actor)
+        fadingSummons.append((actor, summonSettings.fadeOutSeconds))
     }
 
     /// The readout line: who the player commands, against the limit.
@@ -95,7 +112,7 @@ extension MagicCoordinator {
         )
         commanded = outcome.kept
         for old in outcome.released {
-            world.releaseCommandedActor(old)
+            send(old)
             dispel(old.sequence, on: old.holder)
         }
     }
@@ -103,7 +120,7 @@ extension MagicCoordinator {
     private func release(_ action: MagicWorldAction) {
         guard let index = SummonCore.ending(action.sequence, on: action.target.key, in: commanded)
         else { return }
-        world.releaseCommandedActor(commanded.remove(at: index))
+        send(commanded.remove(at: index))
     }
 
     private func dispel(_ sequence: UInt64, on key: ReferenceKey) {

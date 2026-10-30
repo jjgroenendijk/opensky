@@ -35,8 +35,13 @@ struct RuneTests {
         )
     }
 
+    /// An armed rune: older than `fMinesDelayMin`.
     private static func rune(at x: Float, caster: ReferenceKey = .player) -> PlacedRune {
-        PlacedRune(payload: payload(caster: caster), position: SIMD3(x, 0, 0), proximity: 150)
+        var rune = PlacedRune(
+            payload: payload(caster: caster), position: SIMD3(x, 0, 0), proximity: 150
+        )
+        rune.age = 1
+        return rune
     }
 
     private func makeCoordinator() throws -> MagicCoordinator {
@@ -89,6 +94,28 @@ struct RuneTests {
         #expect(RuneCore.reach(range: -1) == 0)
     }
 
+    @Test func aRuneArmsAfterTheDelayAndOnlyTheSettingLetsItsCasterSetItOff() {
+        var rune = Self.rune(at: 0)
+        rune.age = 0.1
+        let near = MeleeTarget(key: Self.victim, feet: SIMD3(50, 0, 0))
+        #expect(RuneCore.trigger(of: rune, among: [near]) == nil)
+        rune.age = 0.2
+        #expect(RuneCore.trigger(of: rune, among: [near])?.key == Self.victim)
+        let caster = MeleeTarget(key: .player, feet: SIMD3(10, 0, 0))
+        #expect(RuneCore.trigger(of: rune, among: [caster]) == nil)
+        var settings = RuneSettings.vanilla
+        settings.casterCanTrigger = 1
+        #expect(RuneCore.trigger(of: rune, among: [caster], settings: settings)?.key == .player)
+    }
+
+    @Test func aRuneOutdoorsReachesFarther() {
+        let settings = RuneSettings.vanilla
+        #expect(RuneCore.proximity(100, outdoors: false, settings: settings) == 100)
+        #expect(RuneCore.proximity(100, outdoors: true, settings: settings) == 160)
+        #expect(RuneCore.proximity(0, outdoors: false, settings: settings) == RuneCore
+            .defaultProximity)
+    }
+
     // MARK: - Coordinator
 
     @Test func aRuneSpellWaitsWhereTheCasterAims() throws {
@@ -103,11 +130,11 @@ struct RuneTests {
         let coordinator = try makeCoordinator()
         let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
         coordinator.land(Self.payload(), at: aim)
-        coordinator.advanceRunes()
+        coordinator.advanceRunes(delta: 1)
         #expect(coordinator.runes.count == 1)
 
         world.runeTargets = [MeleeTarget(key: Self.victim, feet: SIMD3(350, 0, 0))]
-        coordinator.advanceRunes()
+        coordinator.advanceRunes(delta: 1)
         #expect(coordinator.runes.isEmpty)
         #expect(coordinator.detonatedRunes == 1)
         let detonation = MagicCommand.detonateRune(Self.payload(), at: SIMD3(300, 0, 0))

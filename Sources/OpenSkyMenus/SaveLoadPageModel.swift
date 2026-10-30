@@ -77,6 +77,8 @@ nonisolated public enum SaveLoadAction: Equatable, Sendable {
     /// Nil writes a new slot.
     case save(slot: String?)
     case load(slot: String)
+    /// The player chose to load a save whose load order changed.
+    case loadChangedContent(slot: String)
     case delete(slot: String)
     /// Writes the session as a Skyrim `.ess` under a new name.
     case exportSkyrim
@@ -102,11 +104,13 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
         rows.sorted { ($0.savedAt, $1.slot) > ($1.savedAt, $0.slot) }
     }
 
-    /// The Save page starts with a New Save row and ends with the export row.
+    /// The Save page starts with a New Save row and ends with the export row. An empty
+    /// Load page shows `sNoSaves`.
     public var titles: [String] {
-        mode == .save
-            ? [texts.newSave] + rows.map(\.listText) + [texts.exportSkyrim]
-            : rows.map(\.listText)
+        switch mode {
+        case .save: [texts.newSave] + rows.map(\.listText) + [texts.exportSkyrim]
+        case .load: rows.isEmpty ? [texts.noSavesRow] : rows.map(\.listText)
+        }
     }
 
     private var isExportSelected: Bool {
@@ -176,6 +180,11 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
         case (.load, _):
             return nil
         }
+    }
+
+    /// Asks `sSaveGameContentIsMissing` after a load found the load order changed.
+    public mutating func askToLoadChangedContent(slot: String) {
+        ask(texts.contentMissing, then: .loadChangedContent(slot: slot))
     }
 
     private mutating func ask(_ question: String, then action: SaveLoadAction) {

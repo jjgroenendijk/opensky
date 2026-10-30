@@ -18,6 +18,7 @@ import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -93,6 +94,7 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         }
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
+        context.waitingDisabled = game.scripts.bridge?.playerControlLocks.waitingDisabled ?? false
         guard let refusal = RestRule.refusal(context) else { return nil }
         return game.mapWorld.settingTexts(RestText.self)[refusal.text(sleeping: sleeping)]
     }

@@ -144,14 +144,12 @@ extension SystemMenuCoordinator {
         guard let listIndex else { return }
         let slot = listIndex == 0 ? nil : movieRow(listIndex - 1)?.slot
         guard listIndex == 0 || slot != nil else { return }
-        perform("Saving", done: saveTexts.saved) { _ = try await $0.saveGame(slot: slot) }
+        save(slot: slot)
     }
 
     private func loadFromMovie(row: SaveSlotRow?) {
         guard let row, row.error == nil else { return }
-        perform(saveTexts.loading, done: "Loaded", closes: true) {
-            try await $0.loadGame(slot: row.slot)
-        }
+        load(slot: row.slot)
     }
 
     /// The movie already took the row out of its list.

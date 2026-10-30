@@ -20,6 +20,7 @@ public struct CombatSessionData {
     public var staggers = StaggerSettings.vanilla
     public var combatAI = CombatAISettings.vanilla
     public var arrows = ArrowSettings.vanilla
+    public var falls = FallDamageSettings.vanilla
 
     public init(
         combat: CombatSettings,

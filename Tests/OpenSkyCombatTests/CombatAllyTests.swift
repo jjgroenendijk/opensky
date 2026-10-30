@@ -5,6 +5,7 @@
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
+import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd
@@ -30,7 +31,8 @@ struct CombatAllyTests {
         world.actors.removeAll { $0.key == Fixture.opponent }
         Fixture.run(runtime, seconds: 0.1)
         let walk = try #require(world.moveRequests.last { $0.key == Self.ally })
-        #expect(abs(simd_length(walk.point) - CombatAllyRule.keepDistance) < 0.01)
+        // A summon stops `fSummonedCreatureMinFollowDist` from its caster.
+        #expect(abs(simd_length(walk.point) - runtime.combatAI.summonFollowNear) < 0.01)
         #expect(world.moveRequests.count { $0.key == Self.ally } == 1)
         #expect(runtime.following[Self.ally] != nil)
     }

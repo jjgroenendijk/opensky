@@ -123,7 +123,7 @@ nonisolated extension RaceMenuModel {
     public func value(_ row: RaceMenuRow) -> String {
         switch row {
         case .race: races.first { $0.formID == identity.race }?.name ?? "\(identity.race)"
-        case .sex: identity.isFemale ? "Female" : "Male"
+        case .sex: labels.genders[identity.isFemale ? .female : .male]
         case .name: identity.name
         case .slider: String(format: "%.1f", position(row))
         default: "\(Int(position(row)))"

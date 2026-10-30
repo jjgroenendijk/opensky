@@ -23,8 +23,9 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case castingArt(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
     /// Show this line on the HUD, such as a refused cast's.
     case notice(String)
-    /// The player's shout went off, which a witness may comment on.
-    case playerShouted
+    /// The player's shout of `words` words went off: a witness may comment on it, and
+    /// the controller rumbles.
+    case playerShouted(words: Int)
     /// Show or hide an `EFSH`, written in `plugin`, on the actor, as Detect Life paints.
     case paintActor(ReferenceKey, shader: FormID, plugin: String, shown: Bool)
     /// A spell reached someone: its hit shaders, art, sounds, and image-space modifier.

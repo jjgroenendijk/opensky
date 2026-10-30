@@ -206,12 +206,17 @@ public final class TitleMenuCoordinator {
             guard
                 let newest = saves?.saveRows.filter({ !$0.isImport })
                     .max(by: { $0.savedAt < $1.savedAt })
-            else { return }
+            else {
+                notify(saveTexts.noSavesNotice)
+                return
+            }
             load(newest.slot)
         case .new:
             newGame(at: .vanilla)
         case .load:
-            loadPage = SaveLoadPageModel(mode: .load, rows: saves?.saveRows ?? [])
+            loadPage = SaveLoadPageModel(
+                mode: .load, rows: saves?.saveRows ?? [], texts: saveTexts
+            )
             refreshSaveRows()
         case .quit:
             world?.quitApplication()
@@ -233,24 +238,41 @@ public final class TitleMenuCoordinator {
         loadPage = page
         switch action {
         case let .load(slot): load(slot)
+        case let .loadChangedContent(slot): load(slot, acceptingChangedContent: true)
         case .back: loadPage = nil
         default: break
         }
     }
 
-    public func load(_ slot: String) {
+    public func load(_ slot: String, acceptingChangedContent: Bool = false) {
         guard let saves, loadWork == nil else { return }
         lastResult = "Loading \(slot)"
         loadWork = Task {
             do {
-                try await saves.loadGame(slot: slot)
+                try await saves.loadGame(
+                    slot: slot, acceptingChangedContent: acceptingChangedContent
+                )
                 self.close()
                 self.lastResult = "Loaded \(slot)"
+            } catch let failure as SaveFailure {
+                self.notify(self.saveTexts.text(for: failure, fromMainMenu: true))
+                if failure == .contentMissing {
+                    self.loadPage?.askToLoadChangedContent(slot: slot)
+                }
             } catch {
                 self.lastResult = "Load failed: \(error)"
             }
             self.loadWork = nil
         }
+    }
+
+    private var saveTexts: SaveTexts {
+        saves?.saveTexts ?? .vanilla
+    }
+
+    private func notify(_ text: String) {
+        lastResult = text
+        hud?.showNotification(text)
     }
 
     private func refreshSaveRows() {

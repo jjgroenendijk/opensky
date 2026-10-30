@@ -179,7 +179,11 @@ extension AgentWorldAdapter {
     var hudState: AgentJSON {
         [
             "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
-            "modes": .array(game.hud.shownModes.map { .string($0.rawValue) })
+            "modes": .array(game.hud.shownModes.map { .string($0.rawValue) }),
+            "notifications": .array(game.hud.shownNotifications.map { .string($0) }),
+            "bigNotices": .array(game.hud.shownBigNotices.map { notice in
+                .string("\(notice.title) | \(notice.status)")
+            })
         ]
     }
 

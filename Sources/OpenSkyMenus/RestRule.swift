@@ -15,6 +15,8 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
     case ownedBed = "InOwnedBed"
     case inAir = "InAir"
     case takingHealthDamage = "TakingHealthDamage"
+    /// `SetInChargen` turned waiting off.
+    case disabled = "Default"
 
     /// The game setting that holds the text, such as `sNoWaitInAir`.
     public func settingEditorID(sleeping: Bool) -> String {
@@ -30,6 +32,7 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
         case .ownedBed: .sleepInOwnedBed
         case .inAir: sleeping ? .sleepInAir : .waitInAir
         case .takingHealthDamage: sleeping ? .sleepTakingHealthDamage : .waitTakingHealthDamage
+        case .disabled: sleeping ? .sleepDefault : .waitDefault
         }
     }
 }
@@ -49,6 +52,8 @@ nonisolated public enum RestText: String, GameSettingTextKey {
     case waitTrespass = "sNoWaitTrespass"
     case waitInAir = "sNoWaitInAir"
     case waitTakingHealthDamage = "sNoWaitTakingHealthDamage"
+    case sleepDefault = "sNoSleepDefault"
+    case waitDefault = "sNoWaitDefault"
 
     public var fallback: String {
         let verb = rawValue.hasPrefix("sNoSleep") ? "rest" : "wait"
@@ -62,6 +67,7 @@ nonisolated public enum RestText: String, GameSettingTextKey {
         case .sleepInAir, .waitInAir: "You cannot \(verb) in the air."
         case .sleepTakingHealthDamage, .waitTakingHealthDamage:
             "You are losing health; you cannot \(verb)."
+        case .sleepDefault, .waitDefault: "You cannot \(verb) at this time."
         }
     }
 }
@@ -77,6 +83,8 @@ nonisolated public struct RestContext: Equatable, Sendable {
     public var bedOwnedByOther = false
     public var inAir = false
     public var takingHealthDamage = false
+    /// `SetInChargen` turned waiting off.
+    public var waitingDisabled = false
 
     public init() {}
 }
@@ -95,6 +103,9 @@ nonisolated public enum RestTimeSteps {
 nonisolated public enum RestRule {
     /// The first reason the player may not rest, or nil when resting is allowed.
     public static func refusal(_ context: RestContext) -> RestRefusal? {
+        if context.waitingDisabled {
+            return .disabled
+        }
         if context.inCombat || context.hostilesNear {
             return .hostileActorsNear
         }

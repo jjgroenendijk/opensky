@@ -6,6 +6,7 @@ import AppKit
 import MetalKit
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyScriptingInterface
 
 final class GameMetalView: MTKView {
     /// Shared with the renderer; nil before wiring (renderer then stays on its
@@ -59,8 +60,10 @@ final class GameMetalView: MTKView {
     var bindings = InputBindings()
     /// Map, quicksave, quickload, and pause.
     var onCommand: ((GameInputAction) -> Void)?
-    /// True while the player is in a beast form.
-    var isBeastForm: (() -> Bool)?
+    /// What scripts and a beast form lock now.
+    var controlLocks: (() -> PlayerControlLocks)?
+    /// A locked control was pressed.
+    var onControlRefused: ((PlayerControlRefusal) -> Void)?
     /// The Controls page waiting for a key; true when it took the key.
     var onCapturedKey: ((UInt32) -> Bool)?
     /// A menu that takes typed text, such as the race menu name; true when it did.
@@ -74,7 +77,8 @@ final class GameMetalView: MTKView {
             openJournal: onJournalKey,
             openInventory: onInventoryKey,
             onCommand: onCommand,
-            isBeastForm: isBeastForm?() ?? false
+            locks: controlLocks?() ?? .none,
+            onRefused: onControlRefused
         )
     }
 

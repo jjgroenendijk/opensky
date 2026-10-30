@@ -166,8 +166,11 @@ the last blow. A kneeling actor leaves combat, and its scripts get `OnEnterBleed
 `SetEssential` or `SetProtected` wins over the base flag. After `fEssentialDeathTime` seconds the
 actor stands up with full health (UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs").
 An actor whose class is unknown uses `fBleedoutDefault` as its ratio. No open source defines the
-two settings; OpenSky reads them from their names. `fBleedoutMin`, `fBleedoutRate`, and
-`fBleedoutRecover` are not read. Sources for the events: the Creation Kit wiki pages
+two settings; OpenSky reads them from their names. An actor stands earlier once it has knelt
+`fBleedoutMin` seconds and its health share is `fBleedoutRecover` above its ratio. While it kneels,
+it gets back `fBleedoutRate` percent of its health each second. These three rules are OpenSky's
+reading of the setting names; no source describes them. Sources for the events: the Creation Kit
+wiki pages
 [OnEnterBleedout](https://ck.uesp.net/wiki/OnEnterBleedout_-_Actor) and
 [StartDeferredKill](https://ck.uesp.net/wiki/StartDeferredKill_-_Actor).
 
@@ -180,8 +183,18 @@ To see it in the running game, set an essential actor's health near zero with
 `openskycli game debug av Health --value 1 --ref <id>`, then read its `bleedingOut` flag with
 `openskycli game state scripts <id>`.
 
-The player does not bleed out yet, and a quest alias that makes an actor essential or protected
-is not read.
+A quest alias that makes an actor essential or protected is not read. When a teammate kneels,
+the HUD shows its name and `sEssentialCharacterDown`.
+
+## Player death
+
+At zero health an essential player kneels in bleedout with the rules above, and the HUD shows
+`sBleedingOutMessage`. Hits on the kneeling player are multiplied by
+`fCombatPlayerBleedoutHealthDamageMult`. Any other player dies: every control locks, the HUD shows
+`sMiscPlayerDeadMessage`, and `fPlayerDeathReloadTime` seconds later the newest save loads. With
+no save, a message box offers `sMiscPlayerDeadLoadOption` and `sMiscPlayerDeadMenuOption`. The
+order of the message and the load is OpenSky's reading. `openskycli game state player` shows the
+phase under `death`. The player's body does not fall as a ragdoll yet.
 
 ## Not done yet
 

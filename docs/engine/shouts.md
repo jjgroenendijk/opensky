@@ -60,6 +60,14 @@ and three after that, but never more than are unlocked.
 [WARNING] No source says how the game uses `fShoutTime1` and `fShoutTime2`. OpenSky reads them
 as the holds that reach the second and third word. The values fit the UESP text above.
 
+## Rumble
+
+A shout rumbles every controller with haptics, when the Gameplay page's Vibration switch is on.
+Each word count has its own `fShoutRumble{Big,Small}Motor{Duration,Frequency}V1` to `V3`. The big
+motor plays on the left handle and the small one on the right; a pad with one actuator plays the
+stronger of the two. The frequency setting is used as the strength, which is OpenSky's reading.
+`openskycli game state player` shows the last rumble under `lastRumble`.
+
 ## Where OpenSky differs from the game
 
 - The cooldown is not saved. A load starts with no cooldown.

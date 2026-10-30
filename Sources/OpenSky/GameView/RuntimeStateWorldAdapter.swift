@@ -57,6 +57,8 @@ protocol RuntimeStateWorldHost: AnyObject {
     var menuMode: MenuModeController { get }
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
+    var questNotices: QuestNoticeCoordinator { get }
+    var ragdoll: RagdollCoordinator { get }
     var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
@@ -354,8 +356,22 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     /// A missing install skips fingerprint verification instead of blocking the
     /// load; the file's own contents are still checked.
     func loadSession(slot: String) async throws {
-        let current = try? await pluginFingerprint()
-        let file = try await store().read(slot: slot, verifyingAgainst: current)
+        try await loadSession(slot: slot, checksLoadOrder: true)
+    }
+
+    /// A changed load order throws `SaveFailure.contentMissing`, or `.noMasterFiles` when
+    /// no plugin of the save is loaded; `checksLoadOrder: false` loads it anyway.
+    func loadSession(slot: String, checksLoadOrder: Bool) async throws {
+        let current = checksLoadOrder ? try? await pluginFingerprint() : nil
+        let file: OpenSkySaveFile
+        do {
+            file = try await store().read(slot: slot, verifyingAgainst: current)
+        } catch OpenSkySaveError.fingerprintMismatch {
+            let saved = try await store().read(slot: slot, verifyingAgainst: nil)
+            let loaded = Set((current ?? []).map { $0.name.lowercased() })
+            let shared = saved.fingerprint.contains { loaded.contains($0.name.lowercased()) }
+            throw shared ? SaveFailure.contentMissing : SaveFailure.noMasterFiles
+        }
         game.worldState.restore(from: file.snapshot)
         // No plugin holds a brewed potion, so the save's own list goes in the item index.
         game.inventory.registerCreatedPotions()
@@ -368,6 +384,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.scripts.bridge?.publishFactionReactions()
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
+        game.questNotices.reset()
+        game.ragdoll.playerDeath.reset()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
         // them: the player now, every other actor when its cell streams back in.
         game.magic.noteEffectsRestored()

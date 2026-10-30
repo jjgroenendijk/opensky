@@ -49,6 +49,10 @@ public struct NPCKnockbackSlide {
         elapsed = 0
     }
 
+    public mutating func takeLanding() -> WalkLanding? {
+        controller.takeLanding()
+    }
+
     /// Slides one frame. Returns true once the push has faded on the ground.
     public mutating func advance(by frameTime: Float, world: NPCMovementWorld) -> Bool {
         controller.update(

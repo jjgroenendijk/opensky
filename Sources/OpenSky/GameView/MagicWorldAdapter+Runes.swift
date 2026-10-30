@@ -10,6 +10,7 @@ import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkyWorld
 
 extension MagicWorldAdapter {
     func keyword(editorID: String) -> ReferenceKey? {
@@ -31,6 +32,10 @@ extension MagicWorldAdapter {
 
     func spellHitCandidates() -> [MeleeTarget] {
         game.combat.projectileTargets() + [playerTarget]
+    }
+
+    var isOutdoors: Bool {
+        game.streamer.map { !$0.isInterior } ?? false
     }
 
     func projectileProximity(of payload: SpellPayload) -> Float {

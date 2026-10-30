@@ -32,7 +32,7 @@ public final class HUDCoordinator {
         self.world = world
     }
 
-    private var renderer: Renderer? {
+    var renderer: Renderer? {
         world?.renderer
     }
 
@@ -192,13 +192,16 @@ public final class HUDCoordinator {
         callMovie { HUDMovieBridge.showNotification(text, runtime: $0) }
     }
 
+    /// Big notices the movie showed, newest last, for the readout.
+    public internal(set) var shownBigNotices: [HUDBigNotice] = []
+
     public private(set) var shownSubtitle: String?
 
     public func setHelpMessage(_ text: String?) {
         callMovie { HUDMovieBridge.setHelpMessage(text, runtime: $0) }
     }
 
-    private func callMovie(_ body: (SWFMovieRuntime) -> Void) {
+    func callMovie(_ body: (SWFMovieRuntime) -> Void) {
         guard isLoaded, let renderer else { return }
         do {
             try renderer.updateSWFRuntime(body)

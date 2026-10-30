@@ -110,6 +110,7 @@ nonisolated public struct PlayerSettingDefinition: Equatable, Sendable {
 nonisolated extension PlayerSettingID {
     public static let invertLook = Self("gameplay.invertY")
     public static let lookSensitivity = Self("gameplay.lookSensitivity")
+    public static let vibration = Self("gameplay.vibration")
     public static let difficulty = Self("gameplay.difficulty")
     /// The answer to the Survival Mode prompt, and the in-game toggle.
     public static let survivalMode = Self("gameplay.survivalMode")

@@ -56,7 +56,9 @@ extension MagicWorldAdapter {
         case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
         case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
         case let .detonateRune(payload, position): detonateRune(payload, at: position)
-        case .playerShouted: game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
+        case let .playerShouted(words):
+            game.storyWorld.commentOnPlayer(.playerAction("PCSH"))
+            game.controllerRumble.shout(words: words)
         default: break
         }
     }

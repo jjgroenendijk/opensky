@@ -15,6 +15,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import simd
 
@@ -208,7 +209,8 @@ extension GameViewController {
             self?.session?.messages.noteInputEvent(event)
         }
         gameView.onCommand = { [weak self] action in self?.session?.runCommand(action) }
-        gameView.isBeastForm = { [weak self] in self?.session?.playerBeastForm.isBeast ?? false }
+        gameView.controlLocks = { [weak self] in self?.session?.playerControlLocks ?? .none }
+        gameView.onControlRefused = { [weak self] in self?.session?.showControlRefusal($0) }
         gameView.onCapturedKey = { [weak self] code in
             self?.session?.systemMenu.captureKey(scanCode: code) ?? false
         }

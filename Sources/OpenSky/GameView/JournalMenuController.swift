@@ -4,6 +4,7 @@
 // change is a `JournalCoordinator` call. See docs/engine/journal.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
@@ -23,6 +24,8 @@ protocol JournalMenuHost: MenuInputConsumer {
     var journal: JournalCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var mapMenu: MapMenuCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
+    var menuWorld: MenuWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
     var scripts: ScriptCoordinator { get }
@@ -101,22 +104,43 @@ final class JournalMenuController {
     /// cell. Otherwise the page shows the tag as written.
     func aliasNaming(runtime: QuestRuntime) -> QuestAliasNaming {
         let aliases = runtime.aliasResolution()
-        return QuestAliasNaming { [weak self] quest, aliasID in
-            // Only the page build calls this, on the main actor beside the
-            // streamer. The assert traps if a caller moves it off.
-            MainActor.assumeIsolated {
-                guard
-                    let streamer = self?.game.streamer,
-                    let key = aliases.reference(alias: aliasID, in: quest),
-                    let entry = streamer.referenceEntry(key: key),
-                    let name = streamer.interactionName(reference: entry.formID),
-                    !name.isEmpty
-                else {
-                    return nil
+        let playerName = game.menuWorld.playerNameAndRace.name
+        var naming = QuestAliasNaming(
+            name: { [weak self] quest, aliasID in
+                // Only the page build calls this, on the main actor beside the
+                // streamer. The assert traps if a caller moves it off.
+                MainActor.assumeIsolated {
+                    guard
+                        let streamer = self?.game.streamer,
+                        let key = aliases.reference(alias: aliasID, in: quest)
+                    else {
+                        return nil
+                    }
+                    guard
+                        key != .player,
+                        let entry = streamer.referenceEntry(key: key),
+                        let name = streamer.interactionName(reference: entry.formID),
+                        !name.isEmpty
+                    else {
+                        return key == .player ? playerName : nil
+                    }
+                    return name
                 }
-                return name
+            },
+            isFemale: { [weak self] quest, aliasID in
+                MainActor.assumeIsolated {
+                    guard let self, let key = aliases.reference(alias: aliasID, in: quest)
+                    else { return nil }
+                    let base = key == .player ? MenuRecordData.playerBase
+                        : self.game.streamer?.referenceEntry(key: key)?.placedActor?.base
+                    return base.flatMap { self.game.menuWorld.sex(ofBase: $0) }.map { $0 == 1 }
+                }
             }
-        }
+        )
+        let player = game.menuWorld.playerIdentity
+        naming.player = AliasFill(name: playerName, isFemale: player?.isFemale)
+        naming.pronouns = game.mapWorld.settingTexts(PronounText.self)
+        return naming
     }
 
     // MARK: - Input

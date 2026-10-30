@@ -207,7 +207,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         for key in RaceMenuLabels.english.keys {
             texts[key] = game.mapWorld.text(records?.menuTexts[key])
         }
-        return RaceMenuLabels(texts: texts)
+        return RaceMenuLabels(texts: texts, genders: game.mapWorld.settingTexts(GenderText.self))
     }
 
     func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {

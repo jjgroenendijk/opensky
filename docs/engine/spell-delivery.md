@@ -51,6 +51,10 @@ entry's area take theirs, and the `PROJ`'s explosion goes off at the rune, as a 
 projectile's impact does. The player keeps at most `iMaxPlayerRunes` runes (1 in the install); a
 new one removes the oldest. UESP names no limit for NPCs, so OpenSky sets none.
 
+A rune arms `fMinesDelayMin` seconds after it lands. Outdoors its trigger radius is multiplied by
+`fMineExteriorRadiusMult`. When `iProjectileMineShooterCanTrigger` is not 0, the caster can set
+off their own rune. These readings follow the setting names.
+
 Differences from the game:
 
 - A ray that reaches no surface places the rune at the end of the ray, in the air.

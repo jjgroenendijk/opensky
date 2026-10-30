@@ -61,7 +61,11 @@ extension CombatLoopRuntime {
                 parkBehavior(of: actor.key)
                 targets.removeValue(forKey: actor.key)
             }
-            let distance = combatAI.followDistance(leaderIsPlayer: commander == player.key)
+            // A spell's ally is a summon, so the summon distances narrow the leash.
+            let distance = min(
+                combatAI.followDistance(leaderIsPlayer: commander == player.key),
+                combatAI.summonFollowFar
+            )
             follow(actor, to: home, within: distance, world: world)
         }
     }
@@ -73,7 +77,8 @@ extension CombatLoopRuntime {
     ) {
         guard
             let point = CombatAllyRule.followPoint(
-                ally: actor.feet, commander: home, followDistance: distance
+                ally: actor.feet, commander: home, followDistance: distance,
+                keep: combatAI.summonFollowNear
             )
         else {
             if following.removeValue(forKey: actor.key) != nil {

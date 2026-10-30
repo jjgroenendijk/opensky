@@ -15,6 +15,7 @@ nonisolated extension PerkEntryPoint {
     public static let modSpellDuration = PerkEntryPoint(rawValue: 30)
     public static let modIncomingSpellMagnitude = PerkEntryPoint(rawValue: 41)
     public static let modBashingDamage = PerkEntryPoint(rawValue: 26)
+    public static let modFallingDamage = PerkEntryPoint(rawValue: 58)
     public static let modPowerAttackStamina = PerkEntryPoint(rawValue: 27)
     public static let modPowerAttackDamage = PerkEntryPoint(rawValue: 28)
     public static let modIncomingStagger = PerkEntryPoint(rawValue: 33)
@@ -78,7 +79,8 @@ nonisolated extension PerkEntryPoint {
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
         calculateWeaponDamage, calculateCriticalChance, calculateCriticalDamage,
-        modSneakAttackMult, modBashingDamage, modPowerAttackStamina, modPowerAttackDamage,
+        modSneakAttackMult, modBashingDamage, modFallingDamage, modPowerAttackStamina,
+        modPowerAttackDamage,
         modIncomingStagger, modTargetStagger, modIncomingDamage, modTargetDamageResistance,
         modShieldDeflectArrowChance, setSweepAttack, applyCombatHitSpell, applyBashingSpell,
         applyWeaponSwingSpell, modArmorRating,

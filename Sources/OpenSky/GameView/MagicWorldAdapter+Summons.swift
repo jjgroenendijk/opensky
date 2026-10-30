@@ -53,9 +53,8 @@ extension MagicWorldAdapter {
     func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool {
         guard
             game.actorWorld.combatActors().contains(where: { $0.key == corpse && $0.isDead }),
-            let bridge = game.scripts.bridge
-        else { return false }
-        guard bridge.resurrectActor(corpse) else { return false }
+            let bridge = game.scripts.bridge,
+            bridge.resurrectActor(corpse) else { return false }
         enlist(corpse, for: caster)
         return true
     }
@@ -70,6 +69,10 @@ extension MagicWorldAdapter {
     }
 
     /// Summons "fade out and leave no corpse" (CK wiki "Magic Effect").
+    func stopCommandedActor(_ key: ReferenceKey) {
+        game.combat.loop?.dismiss(key)
+    }
+
     func releaseCommandedActor(_ actor: CommandedActor) {
         game.combat.loop?.dismiss(actor.actor)
         switch actor.kind {

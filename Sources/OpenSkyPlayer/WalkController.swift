@@ -54,6 +54,10 @@ nonisolated public struct WalkController: Sendable {
     /// The feet one fixed step before `feetPosition`; drawing blends from here.
     private var previousFeetPosition: SIMD3<Float>
     public var activeStepSupport: CapsuleStepSupport?
+    /// The highest feet height of the current fall; nil on the ground and in water.
+    var fallPeakZ: Float?
+    /// The last fall that ended on the ground and nobody took yet.
+    public internal(set) var landing: WalkLanding?
 
     public struct HorizontalMove: Sendable {
         public let result: CapsuleMoveResult
@@ -71,10 +75,6 @@ nonisolated public struct WalkController: Sendable {
         previousFeetPosition = feetPosition
     }
 
-    public var cameraPosition: SIMD3<Float> {
-        feetPosition + SIMD3<Float>(0, 0, capsule.eyeHeight)
-    }
-
     public mutating func reset(cameraPosition: SIMD3<Float>) {
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
         previousFeetPosition = feetPosition
@@ -86,6 +86,8 @@ nonisolated public struct WalkController: Sendable {
         accumulatedTime = 0
         activeStepSupport = nil
         knockback = SIMD2<Float>()
+        fallPeakZ = nil
+        landing = nil
     }
 
     /// Integrates look once per frame, then translation through fixed 120 Hz
@@ -111,7 +113,7 @@ nonisolated public struct WalkController: Sendable {
                 )
                 while accumulatedTime + Float.ulpOfOne >= Self.fixedTimeStep {
                     previousFeetPosition = feetPosition
-                    step(yaw: camera.yaw, input: input, dt: Self.fixedTimeStep, world: world)
+                    stepTrackingFall(yaw: camera.yaw, input: input, world: world)
                     accumulatedTime -= Self.fixedTimeStep
                 }
             }
@@ -119,7 +121,7 @@ nonisolated public struct WalkController: Sendable {
         camera.position = cameraPosition
     }
 
-    private mutating func step(
+    mutating func step(
         yaw: Float,
         input: CameraInput,
         dt: Float,
@@ -313,6 +315,10 @@ nonisolated extension WalkController {
     public var drawnFeetPosition: SIMD3<Float> {
         let blend = min(max(accumulatedTime / Self.fixedTimeStep, 0), 1)
         return simd_mix(previousFeetPosition, feetPosition, SIMD3(repeating: blend))
+    }
+
+    public var cameraPosition: SIMD3<Float> {
+        feetPosition + SIMD3<Float>(0, 0, capsule.eyeHeight)
     }
 
     public var drawnCameraPosition: SIMD3<Float> {

@@ -19,6 +19,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var journalMenu: JournalMenuController { get }
     var lockpickingMenu: LockpickingMenuController { get }
     var mapMenu: MapMenuCoordinator { get }
+    var mapWorld: MapWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var menuTextLoader: (() -> LocalizedLabels)? { get }
     var menuScreens: MenuScreens { get }
@@ -81,6 +82,13 @@ final class MenuRouter {
             .register(.playerSettings) { [weak game] _ in game?.playerSettings.applyAll() }
         if let labels = game.menuTextLoader?() {
             renderer.swfTextTranslator = { labels.label(for: $0) }
+        }
+        gamepads.onDisconnect = { [weak game] in
+            guard let game else { return }
+            let texts = game.mapWorld.settingTexts(GamepadNoticeText.self)
+            game.messages.presentChoices(
+                title: texts[.title], text: texts[.message], buttons: [texts[.confirm]]
+            ) { _ in }
         }
         let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }

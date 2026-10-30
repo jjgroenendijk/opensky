@@ -95,6 +95,7 @@ final class CombatWorldAdapter {
         data.staggers = StaggerSettings.resolve(store: settings)
         data.combatAI = CombatAISettings.resolve(store: settings)
         data.arrows = ArrowSettings.resolve(store: settings, text: text)
+        data.falls = FallDamageSettings.resolve(store: settings)
         return data
     }
 
@@ -107,6 +108,9 @@ final class CombatWorldAdapter {
             let locomotion = gameSession.locomotion
             if gameSession.movementMode.isPlayerControlled, let self {
                 combat.notePlayerSneaking(game.player.isSneaking)
+            }
+            if let landing = gameSession.walkController.takeLanding() {
+                combat.applyFall(height: landing.height, speed: landing.speed, to: .player)
             }
             for (name, value) in combat.perkGraphFlagChanges() {
                 locomotion.write(.bool(value), to: name)

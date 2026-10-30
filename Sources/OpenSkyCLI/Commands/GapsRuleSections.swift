@@ -104,7 +104,9 @@ extension GapsGatherer {
         _ = FaceAnimationSettings.resolve(store: store)
         _ = FaceMorphCounts.resolve(store: store)
         _ = ShoutSettings.resolve(store: store)
+        _ = ShoutRumbleSettings.resolve(store: store)
         _ = RuneSettings.resolve(store: store)
+        _ = SummonSettings.resolve(store: store)
         _ = MagicHoldSettings.resolve(store: store)
         _ = SpellCostSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
@@ -156,6 +158,7 @@ extension GapsGatherer {
         _ = BumpReactionSettings.resolve(store: store)
         _ = FollowSettings.resolve(store: store)
         _ = DeathSettings.resolve(store: store)
+        _ = FallDamageSettings.resolve(store: store)
         _ = BloodEffectSettings.resolve(store: store)
     }
 
@@ -165,5 +168,11 @@ extension GapsGatherer {
         _ = GameSettingTexts<ActivationText>.resolve(store: store)
         _ = GameSettingTexts<SaveNoticeText>.resolve(store: store)
         _ = GameSettingTexts<CastNoticeText>.resolve(store: store)
+        _ = GameSettingTexts<ControlRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<QuestNoticeText>.resolve(store: store)
+        _ = GameSettingTexts<PronounText>.resolve(store: store)
+        _ = GameSettingTexts<GenderText>.resolve(store: store)
+        _ = GameSettingTexts<PlayerDeathText>.resolve(store: store)
+        _ = GameSettingTexts<GamepadNoticeText>.resolve(store: store)
     }
 }

@@ -44,6 +44,10 @@ public final class CombatCoordinator {
     public let stamina: StaminaSettings
     /// Stagger and disarm chances.
     public let staggers: StaggerSettings
+    /// How much a fall hurts.
+    public let falls: FallDamageSettings
+    /// The last fall that ended on the ground, for `state` reads.
+    public internal(set) var lastFall: FallOutcome?
     /// The game's combat AI settings.
     public let combatAI: CombatAISettings
     /// Whether fights that start from now on use the game's advance, range, healing,
@@ -76,6 +80,7 @@ public final class CombatCoordinator {
         stamina = data?.stamina ?? .vanilla
         staggers = data?.staggers ?? .vanilla
         combatAI = data?.combatAI ?? .vanilla
+        falls = data?.falls ?? .vanilla
         guard let data else { return }
         buildMelee(data)
         buildArchery(data)
