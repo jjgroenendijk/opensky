@@ -33,7 +33,11 @@ moves the cart as a trailer instead:
 - Each frame the cart moves along the line from where it was toward the horse, until it is that
   distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
   that turns on the spot does not swing the cart sideways.
-- The cart turns by the change of its heading toward the horse.
+- The cart's +Y axis, the way its shafts point, turns to face the horse. The game's harness pulls
+  the shafts into line, and plugins do not place every cart exactly on its horse's line.
+  `MQ101Cart1Ref` and `MQ101Cart1HorseREF` share the yaw 6.062, but the horse stands about
+  36 units left of the cart's axis. A cart that kept that 10 degree angle would ride skewed, with
+  its shafts beside the horse.
 - The cart rests on the ground under its wheels. A wheel is a mesh node whose name starts with
   `Wheel`. In `meshes\furniture\prisonercarriage\prisonercarriage01.nif` (read on the install)
   `WheelFrontLeft` and `WheelFrontRight` sit at y 0, under the `FrontBar` node, and

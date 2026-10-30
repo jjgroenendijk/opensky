@@ -147,6 +147,25 @@ struct VehicleCoreTests {
         #expect(abs(cart.rotation.z - .pi / 2) < 0.01)
     }
 
+    @Test func aCartPlacedOffItsHorsesLineTurnsToFaceIt() throws {
+        var core = VehicleCore()
+        core.tow(
+            Self.cart, by: Self.horse,
+            followerPose: ReferenceTransformOverride(position: [0, -200, 0]),
+            carrierPose: ReferenceTransformOverride(position: [-36, 0, 0]),
+            ground: { _ in 0 }
+        )
+        let ahead = ReferenceTransformOverride(position: [0, 100, 0])
+        let cart = try #require(core.advance(base: { _ in ahead }, ground: { _ in 0 })[Self.cart])
+        let toHorse = ahead.position - cart.position
+        #expect(abs(Self.yaw(cart.rotation.z) - atan2(toHorse.x, toHorse.y)) < 0.01)
+    }
+
+    /// A yaw in -pi...pi, so two headings compare.
+    private static func yaw(_ angle: Float) -> Float {
+        atan2(sin(angle), cos(angle))
+    }
+
     @Test func aTowedCartSitsOnTheGroundAndTilts() throws {
         var core = Self.towedCart()
         let ahead = ReferenceTransformOverride(position: [0, 100, 50])

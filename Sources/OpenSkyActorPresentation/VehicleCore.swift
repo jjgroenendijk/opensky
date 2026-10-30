@@ -22,7 +22,9 @@ nonisolated public enum VehicleSeat: Equatable, Sendable {
 nonisolated public struct VehicleTow: Equatable, Sendable {
     /// Horizontal distance from the follower's origin to the carrier's origin.
     public let length: Float
-    /// The follower's orientation at the link, and the heading it had then.
+    /// The follower's orientation at the link, and the heading of its own +Y axis then.
+    /// Each frame it turns from that heading to face the carrier, so a cart placed a
+    /// little off its horse's line lines up with it, as the harness pulls it in the game.
     public let orientation: float3x3
     public let linkHeading: Float
     public let linkSlope: Float
@@ -116,6 +118,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         let heading = atan2(flat.x, flat.y)
         let cartGround = ground(cart + SIMD3(0, 0, Self.groundSearchHeight))
         let matrix = Self.matrix(followerPose)
+        let forward = matrix.columns.1
         let tow = VehicleTow(
             length: length,
             orientation: float3x3(
@@ -123,7 +126,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
                 SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z),
                 SIMD3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z)
             ),
-            linkHeading: heading,
+            linkHeading: atan2(forward.x, forward.y),
             linkSlope: Self.slope(
                 from: cartGround, to: ground(hitch + SIMD3(0, 0, Self.groundSearchHeight)), length
             ),
