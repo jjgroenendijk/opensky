@@ -40,7 +40,7 @@ extension AgentWorldAdapter {
             return try done(setQuestStage(quest, stage: stage))
         case .kill, .resurrect, .flight, .drunk, .beastForm:
             return try done(actorDebug(command))
-        case .overlay, .channel, .shadows, .fade, .cartMode:
+        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink:
             return try done(renderDebug(command))
         case .raceMenu, .skillsMenu, .gamepad:
             return try done(menuDebug(command))
@@ -107,6 +107,9 @@ extension AgentWorldAdapter {
         case let .shadows(name): try setShadowQuality(name)
         case let .fade(request): try fade(request)
         case let .cartMode(enabled): try setCartMode(enabled)
+        case let .playBink(file, interruptible):
+            try playBink(MovieRequest(fileName: file, interruptible: interruptible))
+        case .skipBink: ["skipped": .bool(game.movies.skip(force: true)), "bink": binkState]
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -327,6 +330,13 @@ extension AgentWorldAdapter {
             secondsBeforeFade: request.delay, duration: request.duration
         ))
         return ["screenFade": screenFadeState()]
+    }
+
+    private func playBink(_ request: MovieRequest) throws(AgentFailure) -> AgentJSON {
+        guard game.movies.play(request, onEnd: { _ in }) else {
+            throw AgentFailure(.invalidArgument, "a movie plays already, or no game files")
+        }
+        return ["bink": binkState]
     }
 
     /// Goes through the script hook, as `fade` does.

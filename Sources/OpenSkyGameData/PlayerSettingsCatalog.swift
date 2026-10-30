@@ -149,6 +149,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row(
+            "opensky.startupLogo", .opensky, .toggle, "Play the startup logo", 1,
+            applied: true
+        ),
+        row(
             "opensky.survivalModeAsk", .opensky, .toggle, "Ask about Survival Mode", 0,
             applied: true
         ),

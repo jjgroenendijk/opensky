@@ -498,6 +498,7 @@ extension Renderer {
         // at the frame size, also when the scene was upscaled.
         encodeScreenBlood(descriptor: target, state: &state)
         encodeSWF(descriptor: target, state: &state)
+        encodeMovie(descriptor: target, state: &state)
         encodeUI(descriptor: target, state: &state)
         lastDrawStats = state.stats
         state.encoder.endEncoding()

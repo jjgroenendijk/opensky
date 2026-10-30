@@ -68,6 +68,7 @@ protocol ScriptWorldHost: AnyObject {
     var combatWorld: CombatWorldAdapter { get }
     var effects: EffectsCoordinator { get }
     var menuWorld: MenuWorldAdapter { get }
+    var movieWorld: MovieWorldAdapter { get }
     var saveGames: SaveGameWorldAdapter { get }
     func quitToMainMenu()
     func quitApplication()

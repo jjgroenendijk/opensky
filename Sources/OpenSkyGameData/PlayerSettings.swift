@@ -128,6 +128,7 @@ nonisolated extension PlayerSettingID {
     public static let masterVolume = Self("audio.master")
     public static let audioEnabled = Self("opensky.sound")
     public static let startAtTitleScreen = Self("opensky.startAtTitleScreen")
+    public static let startupLogo = Self("opensky.startupLogo")
 
     /// One volume per menu-flagged `SNCT`, keyed by its editor ID.
     public static func categoryVolume(_ editorID: String) -> Self {

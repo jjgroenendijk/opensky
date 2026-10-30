@@ -11,7 +11,9 @@ tags: [engine, ui, menu, save]
 The title menu shows Continue, New, Load, and Quit. Continue shows only
 when a save exists and loads the newest one. Quit to Main Menu in the System menu returns
 here. The launcher's Play button opens the game on this menu, as the original game does.
-Developer mode opens in the world.
+Developer mode opens in the world. Before the menu opens, the game plays the Bethesda logo
+movie, `BGS_Logo.bik` ([movies](/engine/movies.md)). The launcher's "Play the startup logo"
+setting turns it off.
 
 ## The vanilla movie
 

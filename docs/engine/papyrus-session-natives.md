@@ -79,6 +79,8 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
   impact plays where the line first meets a static or the ground, with that surface's material.
   A line that meets nothing plays no impact.
 - `PathToReference` walks the actor to the target over the navmesh and waits until it stops.
+- `Game.PlayBink` plays a movie from `Data\Video` and waits until it ends or is skipped
+  ([movies](/engine/movies.md)).
   It answers true when the actor arrived, and false when no path starts, the walk gives up or is
   stopped, or `afWalkRunPercent` is outside 0 to 1.
 - `Faction.GetStolenItemValueCrime` and `GetStolenItemValueNoCrime` sum what the player stole
@@ -118,7 +120,6 @@ built. The vanilla scripts that call each one show what it is for:
 | --- | --- | --- |
 | `Actor.SetEyeTexture` | `DLC1VampireTurnScript`, `DLC1SeranaCureQuestScript` | Changing a live actor's model |
 | `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
-| `Game.PlayBink` | `E3DemoDragonFinaleScript` only, which no game path runs | A Bink movie player |
 | `Game.StartTitleSequence` | `MQ101QuestScript` | The title sequence movie |
 
 The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).

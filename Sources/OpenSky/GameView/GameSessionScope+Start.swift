@@ -70,10 +70,19 @@ extension GameSessionScope {
         } else if launch.launchStart != .normal {
             menuWorld.startPlayer(at: launch.launchStart)
         } else if launch.startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
-            titleMenu.open()
+            openTitleScreen()
         } else {
             loadingWorld.coverSessionStart()
         }
+    }
+
+    /// The game plays its logo movie before the title menu.
+    private func openTitleScreen() {
+        guard playerSettings.store.bool(.startupLogo) else {
+            titleMenu.open()
+            return
+        }
+        movieWorld.playStartupLogo { [weak self] in self?.titleMenu.open() }
     }
 
     /// Menu mode drives the renderer's world-sim pause and clears held world
@@ -107,6 +116,10 @@ extension GameSessionScope {
 // MARK: - The app scope's services
 
 extension GameSessionScope {
+    var renderer: Renderer? {
+        gameSession?.renderer
+    }
+
     var hostView: NSView {
         services.hostView
     }

@@ -110,6 +110,7 @@ extension Renderer {
         var overlay = ScenePassState(encoder: encoder, slot: state.slot, frustum: state.frustum)
         encodeScreenBlood(descriptor: target, state: &overlay)
         encodeSWF(descriptor: target, state: &overlay)
+        encodeMovie(descriptor: target, state: &overlay)
         encodeUI(descriptor: target, state: &overlay)
         encoder.endEncoding()
         upscale.interpolation.interpolatedFrames += 1

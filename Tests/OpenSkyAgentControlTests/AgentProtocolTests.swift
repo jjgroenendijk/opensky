@@ -215,6 +215,16 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("cartmode", args(["on": true])) == .cartMode(true))
     }
 
+    @Test func playBinkNamesTheFileAndTheSkipFlag() throws {
+        let request = try AgentCommandLine.request([
+            "debug", "playbink", "BGS_Logo.bik", "--interruptible"
+        ])
+        #expect(request.args == ["file": "BGS_Logo.bik", "interruptible": true])
+        #expect(try AgentDebugCommand.parse("playbink", args(request.args))
+            == .playBink(file: "BGS_Logo.bik", interruptible: true))
+        #expect(try AgentDebugCommand.parse("skipbink", args([:])) == .skipBink)
+    }
+
     @Test func formNamesTheBeastFormInLowercase() throws {
         let request = try AgentCommandLine.request(["debug", "form", "VampireLord"])
         #expect(request.args == ["form": "VampireLord"])

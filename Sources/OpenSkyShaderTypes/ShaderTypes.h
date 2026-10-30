@@ -127,6 +127,10 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Screen blood: the splatter colour and its alpha mask, or the flare alone.
     TextureIndexScreenBloodColor = 0,
     TextureIndexScreenBloodAlpha = 1,
+    /// A movie picture's three planes: luma, then the blue and red chroma.
+    TextureIndexMovieLuma = 0,
+    TextureIndexMovieChromaBlue = 1,
+    TextureIndexMovieChromaRed = 2,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
