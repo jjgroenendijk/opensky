@@ -272,8 +272,9 @@ Who speaks:
   time than one NPC. The distance is OpenSky's; no setting names it. No hello and no idle line
   plays while the player is in a conversation.
 - A taunt comes from any fighting NPC that is free, with no head turn.
-- A comment on the player comes from the nearest free NPC within 1000 units that detects the
-  player. The acts that start one: a shout (`PCSH`), a melee swing out of combat (`SWMW`), a bow
+- A comment on the player comes from the nearest free NPC within
+  `fAIInDialogueModeWithPlayerDistance` (500 units) that detects the player. The CK wiki calls it
+  the "Maximum Distance from which NPCs will talk to the player". The acts that start one: a shout (`PCSH`), a melee swing out of combat (`SWMW`), a bow
   shot out of combat (`FIWE`), and pushing a loose object (`KNOO`).
 
 The ambient pass runs every 15 frames. A line chosen while the delay of `fSpeechDelay` runs is
