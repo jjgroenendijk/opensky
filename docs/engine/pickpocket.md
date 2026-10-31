@@ -70,7 +70,13 @@ A failed roll moves nothing. The target noticed, so the pockets close, the HUD s
 [crime](/engine/crime.md) system charges a pickpocket crime. The target is the witness. It
 costs the faction's flat `CRVA` pickpocket price (25 in vanilla), not a share of the item's value.
 
+The target then refuses another try for two game days. Activating it while sneaking shows its
+name and `sNoPickPocketAgain` (" has already caught you.") instead of opening the pockets.
+
 ## Where OpenSky differs
+
+- UESP says Harmony, or talking a guard out of the arrest, clears the two-day refusal. OpenSky
+  does not clear it early. A save does not keep it either.
 
 - The CK settings list `fPickpocketSkillUsesCurve` (0.8). No source explains it, so OpenSky does not
   apply it.

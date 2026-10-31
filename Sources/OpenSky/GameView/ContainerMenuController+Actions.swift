@@ -83,9 +83,15 @@ extension ContainerMenuController {
     }
 
     /// Opens `actor`'s pockets, as activating a living actor while sneaking does
-    /// (UESP "Skyrim:Pickpocket"). False when the actor has no inventory to show.
+    /// (UESP "Skyrim:Pickpocket"). False when the actor has no inventory to show. A target
+    /// that caught the player lately refuses with a notice, which also counts as handled.
     @discardableResult
     func openPickpocket(of actor: ReferenceKey) -> Bool {
+        if game.inventory.pickpocketRefused(by: actor) {
+            let text = game.mapWorld.settingTexts(PickpocketText.self)[.caughtBefore]
+            game.hud.showNotification(game.dialogueWorld.speakerLabel(for: actor) + text)
+            return true
+        }
         openInventory(of: actor)
         guard isOpen, container?.key == actor else { return false }
         pickpocketTarget = actor

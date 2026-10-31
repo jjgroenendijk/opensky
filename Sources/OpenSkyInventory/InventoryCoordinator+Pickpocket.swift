@@ -12,9 +12,25 @@ import OpenSkyProgressionInterface
 nonisolated public enum PickpocketText: String, GameSettingTextKey {
     /// The HUD notice when the target notices.
     case caught = "sPickpocketFail"
+    /// Follows the target's name, so it starts with a space.
+    case caughtBefore = "sNoPickPocketAgain"
 
     public var fallback: String {
-        "You've been caught pickpocketing."
+        switch self {
+        case .caught: "You've been caught pickpocketing."
+        case .caughtBefore: " has already caught you."
+        }
+    }
+}
+
+/// A target that caught the player refuses another try for two game days
+/// (UESP "Skyrim:Pickpocket").
+nonisolated public enum PickpocketCooldown {
+    public static let days: Float = 2
+
+    public static func refuses(caughtOn day: Float?, today: Float?) -> Bool {
+        guard let day, let today else { return false }
+        return today - day < days
     }
 }
 
@@ -53,6 +69,19 @@ nonisolated public enum PickpocketOutcome: Equatable, Sendable {
 }
 
 extension InventoryCoordinator {
+    /// Whether `target` refuses a pickpocket now, because it caught the player lately.
+    public func pickpocketRefused(by target: ReferenceKey) -> Bool {
+        PickpocketCooldown.refuses(caughtOn: pickpocketCatches[target], today: world.gameDaysPassed)
+    }
+
+    private func caught(
+        by target: InventoryHolder, item: String, chance: Float, runtime: WorldItemRuntime
+    ) -> PickpocketOutcome {
+        pickpocketCatches[target.key] = world.gameDaysPassed
+        let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
+        return .caught(item: item, chance: Int(chance), bounty: bounty)
+    }
+
     /// The chance in percent of taking `count` of `item` from `target` now.
     public func pickpocketChance(of item: FormID, count: Int32, from target: InventoryHolder)
         -> Float
@@ -107,8 +136,7 @@ extension InventoryCoordinator {
         guard let runtime else { return .unavailable }
         let chance = pickpocketChance(of: item, count: count, from: target)
         guard roll < chance else {
-            let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
-            return .caught(item: name, chance: Int(chance), bounty: bounty)
+            return caught(by: target, item: name, chance: chance, runtime: runtime)
         }
         do {
             if
@@ -150,8 +178,7 @@ extension InventoryCoordinator {
         }
         let chance = pickpocketChance(of: item, count: count, from: target)
         guard roll < chance else {
-            let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
-            return .caught(item: name, chance: Int(chance), bounty: bounty)
+            return caught(by: target, item: name, chance: chance, runtime: runtime)
         }
         do {
             try runtime.inventory.transfer(
