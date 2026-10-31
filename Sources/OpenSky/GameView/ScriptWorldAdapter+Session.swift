@@ -164,8 +164,7 @@ extension ScriptWorldAdapter {
     }
 
     /// Where `PlayImpactEffect`'s pick meets a surface. A node not readable now picks
-    /// from the reference. "Local" rotation is read as the node's turn inside the
-    /// reference, not inside its parent node.
+    /// from the reference. "Local" rotation is the node's turn inside its parent node.
     private func impactHit(of pick: PapyrusImpactPick) -> ImpactPickHit? {
         guard
             let streamer = game.streamer,

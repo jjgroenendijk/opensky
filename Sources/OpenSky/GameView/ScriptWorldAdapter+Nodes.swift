@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyCells
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
@@ -34,7 +35,7 @@ struct ModelNodeWait {
 extension ScriptWorldAdapter {
     func wireModelNodes(provider: WorldDataStores, gameSession: GameSession) {
         guard let files = provider.scriptFileSystem else { return }
-        let nodes = AssetLoader<String, [String: simd_float4x4]> { path in
+        let nodes = AssetLoader<String, [String: PosedBone]> { path in
             try Self.nodeTransforms(in: NIFFile(data: files.contents(forPath: path)))
         }
         modelNodes = nodes
@@ -46,7 +47,7 @@ extension ScriptWorldAdapter {
 
     func nodeTransform(
         of key: ReferenceKey, named name: String,
-        nodes: AssetLoader<String, [String: simd_float4x4]>,
+        nodes: AssetLoader<String, [String: PosedBone]>,
         then: @escaping (simd_float4x4?) -> PapyrusValue
     ) -> PapyrusNodeAnswer {
         guard let state = game.scripts.bridge?.referenceState(for: key) else { return .missing }
@@ -55,14 +56,14 @@ extension ScriptWorldAdapter {
             scale: state.transform.scale
         )
         if let posed = posedNode(of: key, named: name) {
-            return .found(toWorld * posed)
+            return .found(toWorld * posed.model)
         }
         guard let path = game.streamer?.placedRecords?.baseModelPath(for: key) else {
             return .missing
         }
         switch nodes.state(of: path) {
         case let .ready(transforms):
-            return transforms[name.lowercased()].map { .found(toWorld * $0) } ?? .missing
+            return transforms[name.lowercased()].map { .found(toWorld * $0.model) } ?? .missing
         case .failed:
             return .missing
         case .loading:
@@ -75,7 +76,7 @@ extension ScriptWorldAdapter {
         }
     }
 
-    /// A node in the reference's own space and in the world, if it can be read now.
+    /// A node inside its parent node and in the world, if it can be read now.
     func readyNode(
         of key: ReferenceKey, named name: String
     ) -> (local: simd_float4x4, world: simd_float4x4)? {
@@ -85,28 +86,33 @@ extension ScriptWorldAdapter {
             scale: state.transform.scale
         )
         if let posed = posedNode(of: key, named: name) {
-            return (posed, toWorld * posed)
+            return (posed.local, toWorld * posed.model)
         }
         guard
             let path = game.streamer?.placedRecords?.baseModelPath(for: key),
             case let .ready(transforms)? = modelNodes?.state(of: path),
-            let local = transforms[name.lowercased()]
+            let rest = transforms[name.lowercased()]
         else { return nil }
-        return (local, toWorld * local)
+        return (rest.local, toWorld * rest.model)
     }
 
     /// A node that moves now, in the reference's own space: a bone of the actor's
     /// skeleton, or of the object graph it runs.
-    private func posedNode(of key: ReferenceKey, named name: String) -> simd_float4x4? {
+    private func posedNode(of key: ReferenceKey, named name: String) -> PosedBone? {
         if
-            let renderer = game.renderer,
-            let pose = game.actorPlayback(for: key)?.skeletonPose(at: renderer.animationTime),
-            let index = pose.bones.index(of: name), pose.matrices.indices.contains(index)
+            let renderer = game.renderer, let playback = game.actorPlayback(for: key),
+            let pose = playback.skeletonPose(at: renderer.animationTime),
+            let index = pose.bones.index(of: name),
+            let bone = PosedBone(
+                index: index,
+                matrices: pose.matrices,
+                parents: playback.clip.skeleton.parentIndices
+            )
         {
-            return pose.matrices[index]
+            return bone
         }
         guard let formID = game.streamer?.referenceEntry(key: key)?.formID else { return nil }
-        return game.objectAnimationWorld.objects.boneMatrix(of: formID.rawValue, named: name)
+        return game.objectAnimationWorld.objects.bone(of: formID.rawValue, named: name)
     }
 
     /// Runs each waiting lookup whose model is in, then hands its answer to the
@@ -117,7 +123,9 @@ extension ScriptWorldAdapter {
             let wait = nodeWaits[index]
             switch nodes.state(of: wait.path) {
             case let .ready(transforms):
-                nodeWaits[index].answer = wait.then(transforms[wait.node].map { wait.toWorld * $0 })
+                nodeWaits[index].answer = wait.then(
+                    transforms[wait.node].map { wait.toWorld * $0.model }
+                )
             case .failed:
                 nodeWaits[index].answer = wait.then(nil)
             case .loading:
@@ -133,12 +141,15 @@ extension ScriptWorldAdapter {
 
     nonisolated private static func nodeTransforms(
         in file: NIFFile
-    ) throws -> [String: simd_float4x4] {
+    ) throws -> [String: PosedBone] {
         let scene = try NIFEffectScene(file: file)
-        var transforms: [String: simd_float4x4] = [:]
+        var transforms: [String: PosedBone] = [:]
         for (index, node) in scene.nodes.enumerated() {
             guard let name = node.name?.lowercased(), transforms[name] == nil else { continue }
-            transforms[name] = scene.modelTransform(of: index) { scene.restTransform(of: $0) }
+            transforms[name] = PosedBone(
+                model: scene.modelTransform(of: index) { scene.restTransform(of: $0) },
+                local: scene.restTransform(of: index)
+            )
         }
         return transforms
     }

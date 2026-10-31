@@ -75,9 +75,10 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
 - `KnockAreaEffect` pushes the actors in the radius away from the caster.
 - `ForceAddRagdollToWorld` starts a ragdoll at once.
 - `PlayImpactEffect` casts a line from the reference, or from the named node, along the given
-  direction and length. The direction turns with the node when `abApplyNodeRotation` is set. The
-  impact plays where the line first meets a static or the ground, with that surface's material.
-  A line that meets nothing plays no impact.
+  direction and length. The direction turns with the node when `abApplyNodeRotation` is set:
+  with the node's world rotation, or with its rotation inside its parent node when
+  `abUseNodeLocalRotation` is set. The impact plays where the line first meets a static or the
+  ground, with that surface's material. A line that meets nothing plays no impact.
 - `PathToReference` walks the actor to the target over the navmesh and waits until it stops.
   The speed is `afWalkRunPercent` of the way from the walk speed to the run speed, so 0.5 is
   half way between them (<https://ck.uesp.net/wiki/PathToReference_-_Actor>). It answers true
@@ -150,5 +151,3 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 - `PathToReference` blends the speed. An actor that runs its behaviour graph blends its walk
   and run clips by that speed too. An actor without a running graph plays one clip, walk below
   half of `afWalkRunPercent` and run from half up, so its feet can slide.
-- `PlayImpactEffect` reads "local rotation" as the node's turn inside the reference, not inside
-  its parent node.

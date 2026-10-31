@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import simd
 
 extension ObjectBehaviorCoordinator {
@@ -23,14 +24,14 @@ extension ObjectBehaviorCoordinator {
     }
 
     /// One named bone in the object's own space, from the pose last published.
-    public func boneMatrix(of reference: UInt32, named name: String) -> simd_float4x4? {
+    public func bone(of reference: UInt32, named name: String) -> PosedBone? {
         guard
-            let entry = running[reference],
-            let index = entry.object.asset.skeleton.bones
+            let skeleton = running[reference]?.object.asset.skeleton,
+            let index = skeleton.bones
                 .firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }),
-            let matrices = boneMatrices(of: reference), matrices.indices.contains(index)
+            let matrices = boneMatrices(of: reference)
         else { return nil }
-        return matrices[index]
+        return PosedBone(index: index, matrices: matrices, parents: skeleton.parentIndices)
     }
 
     /// The references that run a graph now.
