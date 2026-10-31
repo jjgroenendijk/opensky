@@ -218,9 +218,8 @@ public final class RagdollRuntime: DeathReporting {
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
     public func activate(_ key: ReferenceKey, instant: Bool) -> Bool {
-        guard let seam, !world.isRagdolling(key) else { return false }
-        guard let actor = seam.ragdollActor(for: key) else { return false }
         guard
+            let seam, !world.isRagdolling(key), let actor = seam.ragdollActor(for: key),
             var instance = RagdollInstance(
                 definition: actor.definition,
                 animatedBoneMatrices: actor.animatedBoneMatrices,

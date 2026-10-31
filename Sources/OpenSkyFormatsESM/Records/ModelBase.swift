@@ -153,8 +153,10 @@ nonisolated public struct ModelBase: Sendable {
         mutating func decode(
             field: ESMField, recordType: FourCC, localized: Bool
         ) throws -> Bool {
-            guard try !scriptData.decode(field: field) else { return true }
-            guard try !world.decode(field: field, recordType: recordType) else { return true }
+            guard try !scriptData.decode(field: field), try !world.decode(
+                field: field,
+                recordType: recordType
+            ) else { return true }
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":

@@ -238,8 +238,8 @@ nonisolated public struct RagdollWorld: Sendable {
                 wasSettled.remove(entry.key)
                 continue
             }
-            guard wasSettled.insert(entry.key).inserted else { continue }
             guard
+                wasSettled.insert(entry.key).inserted,
                 let position = entry.instance.restingRootPosition,
                 let orientation = entry.instance.restingRootOrientation
             else { continue }

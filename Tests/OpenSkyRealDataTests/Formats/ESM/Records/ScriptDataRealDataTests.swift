@@ -188,11 +188,10 @@ struct ScriptDataRealDataTests {
                 return
             }
             directObjects += 1
-            guard let key = object.directReferenceKey(using: resolver) else {
-                danglingObjects += 1
-                return
-            }
-            guard recordIDs.contains(object.formID.objectID) else {
+            guard
+                let key = object.directReferenceKey(using: resolver),
+                recordIDs.contains(object.formID.objectID)
+            else {
                 danglingObjects += 1
                 return
             }
@@ -325,8 +324,9 @@ private struct PexBackingProbe {
         var visited: Set<String> = []
         while !currentName.isEmpty {
             let key = currentName.lowercased()
-            guard visited.insert(key).inserted else { return nil }
-            guard let object = object(named: currentName) else { return nil }
+            guard
+                visited.insert(key).inserted,
+                let object = object(named: currentName) else { return nil }
             if
                 let property = object.properties.first(where: {
                     PapyrusRuntime.matches($0.name, name)

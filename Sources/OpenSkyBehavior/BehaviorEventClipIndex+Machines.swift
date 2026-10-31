@@ -133,8 +133,8 @@ nonisolated extension BehaviorEventClipIndex {
         of triggers: [BehaviorClipTriggerEvent], at position: BehaviorStatePosition
     ) -> BehaviorEventClip? {
         let names = Set(triggers.map { $0.name.lowercased() })
-        guard !names.isEmpty else { return nil }
         guard
+            !names.isEmpty,
             let transition = transition(on: { names.contains($0) }, at: position),
             var found = entryClip(
                 from: transition.generator, file: position.file, event: "", depth: 0

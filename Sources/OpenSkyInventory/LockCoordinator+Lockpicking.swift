@@ -91,8 +91,8 @@ extension LockCoordinator {
     /// player was not noticed. UESP "Skyrim:Lockpicking": opening the window is no
     /// crime, a success or a broken pick is.
     private func reportCrime() -> Int32? {
-        guard let target = sessionLock, target.perks.crimeChance > 0 else { return nil }
         guard
+            let target = sessionLock, target.perks.crimeChance > 0,
             target.perks.crimeChance >= 1 || random.uniform(in: 0 ... 1) < target.perks
                 .crimeChance
         else { return nil }

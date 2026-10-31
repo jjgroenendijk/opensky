@@ -212,8 +212,9 @@ public final class IdleCoordinator {
                 ?? false
             let ending = session.playing.map { $0.end.isFinite && $0.end > now } ?? false
             let stillPlaying = ending && actor != nil
-            guard session.marker != nil, !keepsMarker || !usesIdleMarkers else { continue }
-            guard !stillPlaying else { continue }
+            guard
+                session.marker != nil, !keepsMarker || !usesIdleMarkers,
+                !stillPlaying else { continue }
             endIdle(of: key)
             sessions[key] = nil
         }

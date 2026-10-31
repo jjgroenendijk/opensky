@@ -378,8 +378,9 @@ extension CombatLoopRuntime {
     ///   aggressor, an untracked actor, or a target other than the player.
     @discardableResult
     public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
-        guard let world, actor != .player, target == .player else { return false }
-        guard world.combatActor(key: actor)?.isDead == false else { return false }
+        guard
+            let world, actor != .player, target == .player,
+            world.combatActor(key: actor)?.isDead == false else { return false }
         forcedTargets[actor] = target
         setHostility(.hostile, on: actor)
         record(.scriptStarted(actor))

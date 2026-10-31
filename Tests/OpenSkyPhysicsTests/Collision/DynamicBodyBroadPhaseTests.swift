@@ -15,8 +15,9 @@ struct DynamicBodyBroadPhaseTests {
         var pairs: [[Int]] = []
         for first in bodies.indices {
             for second in bodies.indices where second > first {
-                guard admits(first, second) else { continue }
-                guard !bodies[first].isSleeping || !bodies[second].isSleeping else { continue }
+                guard
+                    admits(first, second),
+                    !bodies[first].isSleeping || !bodies[second].isSleeping else { continue }
                 let reach = bodies[first].definition.boundingRadius
                     + bodies[second].definition.boundingRadius
                 guard

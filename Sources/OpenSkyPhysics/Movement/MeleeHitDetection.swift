@@ -38,8 +38,8 @@ nonisolated public enum MeleeHitDetector: Sendable {
         let step = swing.maximumDistance / Float(sampleCount)
         var found: [MeleeHit] = []
         for target in targets {
-            guard target.key != attacker, !alreadyHit.contains(target.key) else { continue }
             guard
+                target.key != attacker, !alreadyHit.contains(target.key),
                 let hit = firstTouch(
                     swing: swing, direction: direction, step: step, target: target
                 ) else { continue }

@@ -77,8 +77,10 @@ extension CellStreamer {
         let resident = residentNavigationScenes()
         navigationState.graph.retainCells(Set(resident.keys))
         for location in resident.keys.sorted(by: CellSceneLocation.isOrderedBefore) {
-            guard let scene = resident[location] else { continue }
-            guard navigationState.graph.installedCells[location] != scene.stateSequence else {
+            guard
+                let scene = resident[location],
+                navigationState.graph.installedCells[location] != scene.stateSequence
+            else {
                 continue
             }
             navigationState.graph.setCell(location, scene: scene)

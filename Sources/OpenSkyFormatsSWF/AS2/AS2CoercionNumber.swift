@@ -56,10 +56,10 @@ nonisolated extension AS2Coercion {
             return nil
         }
         let digits = text.dropFirst(2)
-        guard !digits.isEmpty, digits.allSatisfy(\.isHexDigit) else {
-            return Double.nan
-        }
-        guard let value = UInt64(digits, radix: 16) else {
+        guard
+            !digits.isEmpty, digits.allSatisfy(\.isHexDigit),
+            let value = UInt64(digits, radix: 16)
+        else {
             return Double.nan
         }
         return Double(value)

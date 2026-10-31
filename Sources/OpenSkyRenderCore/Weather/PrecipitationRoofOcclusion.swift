@@ -67,10 +67,9 @@ nonisolated extension StaticCollisionShape {
             let raw = [indices[offset], indices[offset + 1], indices[offset + 2]]
             guard raw.allSatisfy({ Int($0) < vertices.count }) else { continue }
             let triangle = raw.map { worldPoint(vertices[Int($0)]) }
-            guard let distance = upwardTriangleHit(origin: origin, triangle: triangle) else {
-                continue
-            }
-            guard distance <= maximumDistance else { continue }
+            guard
+                let distance = upwardTriangleHit(origin: origin, triangle: triangle),
+                distance <= maximumDistance else { continue }
             closest = min(closest ?? distance, distance)
         }
         return closest

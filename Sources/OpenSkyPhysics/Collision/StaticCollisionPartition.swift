@@ -56,10 +56,10 @@ nonisolated extension StaticCollisionShape {
     public static func partitions(
         for geometry: NIFCollisionGeometry
     ) -> StaticCollisionPartitionResult {
-        guard case let .triangleSoup(vertices, indices) = geometry else {
-            return singlePartition(geometry)
-        }
-        guard indices.count / 3 > maximumTrianglesPerLeaf else {
+        guard
+            case let .triangleSoup(vertices, indices) = geometry,
+            indices.count / 3 > maximumTrianglesPerLeaf
+        else {
             return singlePartition(geometry)
         }
         var partitions: [StaticCollisionPartition] = []

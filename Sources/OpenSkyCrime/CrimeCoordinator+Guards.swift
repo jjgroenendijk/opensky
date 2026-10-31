@@ -122,8 +122,10 @@ extension CrimeCoordinator {
     }
 
     private func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {
-        guard let player = world.playerFeet else { return }
-        guard CrimeCore.needsRepath(lastTarget: pursuitTargets[guardKey], player: player) else {
+        guard let player = world.playerFeet, CrimeCore.needsRepath(
+            lastTarget: pursuitTargets[guardKey],
+            player: player
+        ) else {
             return
         }
         world.suspendPackage(for: guardKey)

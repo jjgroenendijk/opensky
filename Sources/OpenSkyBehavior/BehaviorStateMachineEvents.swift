@@ -50,8 +50,9 @@ nonisolated extension BehaviorGraphInstance {
     /// "no condition" and is checked first. An unparsable condition or unknown variable
     /// blocks and is tallied.
     public func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
-        guard info.flags & BehaviorTransitionFlag.disableCondition == 0 else { return true }
-        guard let target = info.condition else { return true }
+        guard
+            info.flags & BehaviorTransitionFlag.disableCondition == 0,
+            let target = info.condition else { return true }
         guard let expression = condition(at: target) else {
             tally.note(.transitionConditionUnparsed)
             return false

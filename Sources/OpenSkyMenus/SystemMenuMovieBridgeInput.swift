@@ -5,12 +5,12 @@
 import Foundation
 import OpenSkyRendering
 
-nonisolated extension SystemMenuMovieBridge {
+@MainActor
+extension SystemMenuMovieBridge {
     /// Delivers one menu event to a live movie and synchronizes any display-list
     /// mutation to the renderer before returning.
     ///
     /// - Returns: whether the movie consumed the event.
-    @MainActor
     @discardableResult
     public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         var consumed = false

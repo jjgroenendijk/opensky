@@ -162,11 +162,11 @@ extension SWFDialogueMenuCommand {
 
 // MARK: - Reporting
 
+@MainActor
 extension SWFDialogueMenuCommand {
     /// What the movie itself declares, before anything is published: the class
     /// constants the engine's state vocabulary is asserted against, the entry
     /// points this bridge drives, and the ones it knowingly does not.
-    @MainActor
     private static func printContract(_ runtime: SWFMovieRuntime) {
         let constants = DialogueMenuMovieBridge.stateConstantNames.map { name in
             "\(name)=" + (DialogueMenuMovieBridge.stateConstant(name, runtime: runtime)
@@ -186,7 +186,6 @@ extension SWFDialogueMenuCommand {
         )
     }
 
-    @MainActor
     private static func printState(
         _ runtime: SWFMovieRuntime,
         model: DialogueMenuModel,
@@ -218,7 +217,6 @@ extension SWFDialogueMenuCommand {
     /// Publishes rows with no fields at all and reports which missing-name
     /// counts moved. Every property the movie reads off a row it was handed
     /// lands in that tally, so the delta *is* the row's field list.
-    @MainActor
     private static func printRowProbe(_ runtime: SWFMovieRuntime, rows: Int) {
         let before = runtime.tally.missingNames
         DialogueMenuMovieBridge.publish(
@@ -247,7 +245,6 @@ extension SWFDialogueMenuCommand {
         }
     }
 
-    @MainActor
     private static func printDiagnostics(_ runtime: SWFMovieRuntime) {
         let diagnostics = DialogueMenuMovieBridge.diagnostics(runtime: runtime)
         let nodes = runtime.nodeCount

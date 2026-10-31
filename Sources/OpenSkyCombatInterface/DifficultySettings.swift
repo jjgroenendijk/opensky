@@ -99,10 +99,8 @@ nonisolated public struct DifficultySettings: Equatable, Sendable {
     private static func setting(_ editorID: String, _ store: GameSettingStore, _ fallback: Float)
         -> MovementSetting
     {
-        guard let resolved = store.setting(editorID: editorID) else {
-            return MovementSetting(value: fallback, source: "UESP Skyrim:Damage")
-        }
         guard
+            let resolved = store.setting(editorID: editorID),
             case let GameSetting.Value.float(value) = resolved.setting.value,
             value.isFinite, value >= 0
         else {

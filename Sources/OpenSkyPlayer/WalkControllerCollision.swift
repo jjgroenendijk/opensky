@@ -23,10 +23,8 @@ nonisolated extension WalkController {
         if let maintained {
             return HorizontalMove(result: direct, support: maintained)
         }
-        guard isGrounded, isHorizontallyBlocked(direct, start: start, desired: displacement) else {
-            return HorizontalMove(result: direct, support: nil)
-        }
         guard
+            isGrounded, isHorizontallyBlocked(direct, start: start, desired: displacement),
             let support = stepSupport(
                 from: start,
                 displacement: displacement,

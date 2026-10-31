@@ -49,8 +49,7 @@ extension CellStreamer {
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
         // loading 100+ distant assets cannot starve the near grid.
-        guard nearGridResolved else { return }
-        guard requestedLODCenter != grid.center else { return }
+        guard nearGridResolved, requestedLODCenter != grid.center else { return }
         if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
             requestedLODCenter = grid.center
         }

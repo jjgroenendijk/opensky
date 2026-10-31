@@ -89,7 +89,7 @@ enum PlayerBodyFixture {
     ) throws -> Value {
         switch result {
         case let .success(value):
-            return value
+            value
         case let .failure(error):
             Issue.record("\(what) did not assemble: \(error.localizedDescription)")
             throw error

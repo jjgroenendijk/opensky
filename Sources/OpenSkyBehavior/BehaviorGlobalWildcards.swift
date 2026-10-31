@@ -45,9 +45,12 @@ nonisolated extension BehaviorGraphInstance {
 
     private func isEligible(_ route: BehaviorGlobalWildcardRoute) -> Bool {
         let info = route.info
-        guard info.flags & BehaviorTransitionFlag.disabled == 0 else { return false }
-        guard events.isActive(id: info.eventId) else { return false }
-        guard stateInfo(of: route.owner, id: info.toStateId) != nil else { return false }
+        guard
+            info.flags & BehaviorTransitionFlag.disabled == 0, events.isActive(id: info.eventId),
+            stateInfo(
+                of: route.owner,
+                id: info.toStateId
+            ) != nil else { return false }
         return isIntervalOpen(info) && isConditionMet(info)
     }
 

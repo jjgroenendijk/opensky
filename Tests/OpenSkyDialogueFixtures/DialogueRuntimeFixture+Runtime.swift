@@ -6,10 +6,10 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 
+@MainActor
 extension DialogueRuntimeFixture {
     /// A runtime over a fresh store, with the speaker placed and the two
     /// quests reading from plugin data.
-    @MainActor
     public static func runtime(
         store: WorldStateStore = WorldStateStore(),
         fragments: (any DialogueFragmentDispatching)? = nil

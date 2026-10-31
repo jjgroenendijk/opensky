@@ -246,8 +246,8 @@ extension CrimeRealDataTests {
     static func locateShop(in file: ESMFile) -> FormID? {
         var found: FormID?
         ESMWalk.forEachRecord(in: file) { record in
-            guard record.type == "CELL" else { return true }
             guard
+                record.type == "CELL",
                 let cell = try? Cell(record: record, localized: false),
                 cell.editorID?
                     .caseInsensitiveCompare(CrimeRealDataTests.shopEditorID) == .orderedSame

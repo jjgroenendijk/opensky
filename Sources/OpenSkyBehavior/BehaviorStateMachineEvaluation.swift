@@ -224,13 +224,14 @@ nonisolated extension BehaviorGraphInstance {
         state: BehaviorMachineState
     ) -> Bool {
         let info = candidate.info
-        guard info.flags & BehaviorTransitionFlag.disabled == 0 else { return false }
-        guard events.isActive(id: info.eventId) else { return false }
+        guard
+            info.flags & BehaviorTransitionFlag.disabled == 0,
+            events.isActive(id: info.eventId) else { return false }
         let isSelf = info.toStateId == state.currentStateId
         let allowsSelf = info.flags & BehaviorTransitionFlag.allowSelfTransition != 0
-        guard !isSelf || allowsSelf else { return false }
-        guard stateInfo(of: machine, id: info.toStateId) != nil else { return false }
-        guard isIntervalOpen(info) else { return false }
+        guard
+            !isSelf || allowsSelf, stateInfo(of: machine, id: info.toStateId) != nil,
+            isIntervalOpen(info) else { return false }
         return isConditionMet(info)
     }
 

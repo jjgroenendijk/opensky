@@ -58,10 +58,8 @@ nonisolated extension SWFMovieRuntime {
     /// `keyUp`, or `keyHold`.
     @discardableResult
     public func routeToFocusHandler(code: Int, value: String) -> Bool {
-        guard let handler = focusHandler else {
-            return false
-        }
         guard
+            let handler = focusHandler,
             let function = handler.lookup("handleInput")?.property.value.functionValue,
             let details = makeInputDetails(code: code, value: value)
         else {

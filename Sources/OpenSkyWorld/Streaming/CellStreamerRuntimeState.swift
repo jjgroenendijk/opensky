@@ -111,8 +111,9 @@ extension CellStreamer {
     /// cell that is not accounted for at all is skipped: it is neither drawn
     /// nor being built, so a return visit rebuilds it from the store anyway.
     private func requestRebuild(_ coordinate: CellCoordinate) {
-        guard core.accountedCells.contains(coordinate) else { return }
-        guard !rebuildRequests.contains(coordinate) else { return }
+        guard
+            core.accountedCells.contains(coordinate),
+            !rebuildRequests.contains(coordinate) else { return }
         rebuildRequests.append(coordinate)
     }
 
@@ -130,10 +131,9 @@ extension CellStreamer {
     /// it: a mutation that arrived while the first build ran, and a mutation
     /// that arrived while an earlier rebuild ran.
     public func requeueRebuildIfStateMoved(_ coordinate: CellCoordinate, scene: CellScene) {
-        guard let wanted = cellMutationSequence[coordinate], scene.stateSequence < wanted else {
-            return
-        }
-        guard !rebuildRequests.contains(coordinate) else { return }
+        guard
+            let wanted = cellMutationSequence[coordinate], scene.stateSequence < wanted,
+            !rebuildRequests.contains(coordinate) else { return }
         rebuildRequests.append(coordinate)
     }
 
@@ -155,9 +155,9 @@ extension CellStreamer {
     /// against a fresh snapshot. A rebuild passes no camera, so the player stays
     /// where they stand.
     public func dispatchInteriorRebuildIfNeeded() {
-        guard transitionInFlight == nil, let scene = interiorScene, let door = interiorSourceDoor
-        else { return }
-        guard scene.stateSequence < interiorMutationSequence else { return }
+        guard
+            transitionInFlight == nil, let scene = interiorScene, let door = interiorSourceDoor,
+            scene.stateSequence < interiorMutationSequence else { return }
         transitionInFlight = door
         interiorRebuildInFlight = true
         runner.enqueueDoorTransition(from: door, state: stateSource())

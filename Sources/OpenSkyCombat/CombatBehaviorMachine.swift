@@ -143,8 +143,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     private mutating func advanceWaiting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         let isAfraid = inputs.influence.flees
             || (inputs.temperament != nil && inputs.shouldFlee(settings: settings))
-        guard isAfraid || !inputs.shouldFlee(settings: settings) else { return unchanged() }
-        guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
+        guard
+            isAfraid || !inputs.shouldFlee(settings: settings),
+            inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
         fightCount += 1
         flight.reset()
         if isAfraid {
@@ -360,8 +361,14 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         step.command = command(.hold)
         return step
     }
+}
 
-    // MARK: - Bookkeeping
+// MARK: - Bookkeeping
+
+nonisolated extension CombatBehaviorMachine {
+    func unchanged() -> CombatBehaviorStep {
+        CombatBehaviorStep(phase: phase)
+    }
 
     mutating func enter(_ next: CombatBehaviorPhase) {
         if next != phase {
@@ -376,12 +383,6 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     mutating func command(_ issued: CombatMovementCommand) -> CombatMovementCommand {
         secondsSinceCommand = 0
         return issued
-    }
-}
-
-nonisolated extension CombatBehaviorMachine {
-    func unchanged() -> CombatBehaviorStep {
-        CombatBehaviorStep(phase: phase)
     }
 }
 

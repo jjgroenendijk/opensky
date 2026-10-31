@@ -264,8 +264,9 @@ extension PapyrusNativeFunctions {
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> PapyrusObjectHandle? {
-        guard call.arguments.indices.contains(index) else { return nil }
-        guard case let .object(handle) = call.arguments[index] else { return nil }
+        guard
+            call.arguments.indices.contains(index),
+            case let .object(handle) = call.arguments[index] else { return nil }
         return handle
     }
 }

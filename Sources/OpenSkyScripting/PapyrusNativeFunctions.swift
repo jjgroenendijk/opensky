@@ -92,8 +92,9 @@ public enum PapyrusNativeFunctions {
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> Int32? {
-        guard call.arguments.indices.contains(index) else { return nil }
-        guard case let .integer(value) = call.arguments[index] else { return nil }
+        guard
+            call.arguments.indices.contains(index),
+            case let .integer(value) = call.arguments[index] else { return nil }
         return value
     }
 
@@ -117,8 +118,9 @@ public enum PapyrusNativeFunctions {
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> String? {
-        guard call.arguments.indices.contains(index) else { return nil }
-        guard case let .string(value) = call.arguments[index] else { return nil }
+        guard
+            call.arguments.indices.contains(index),
+            case let .string(value) = call.arguments[index] else { return nil }
         return value
     }
 }

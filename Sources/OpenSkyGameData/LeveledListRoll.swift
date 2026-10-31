@@ -132,8 +132,10 @@ nonisolated public enum LeveledListRoll {
         )
         let hardTop = candidates(in: list, level: hardLevel, allLevels: false).first?.level
         let top = choices.map(\.level).max()
-        guard let hardTop, top == hardTop else { return choices }
-        guard let next = list.entries.map(\.level).filter({ $0 > hardTop }).min() else {
+        guard
+            let hardTop, top == hardTop,
+            let next = list.entries.map(\.level).filter({ $0 > hardTop }).min()
+        else {
             return choices
         }
         return list.entries.filter { $0.level == next }

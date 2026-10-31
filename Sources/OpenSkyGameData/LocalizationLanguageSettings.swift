@@ -73,8 +73,9 @@ nonisolated public enum LocalizationLanguageSettings: Sendable {
 
     public static func resolve(_ ini: INISettings) -> LocalizationLanguageSnapshot {
         for source in ini.sources.reversed() {
-            guard let raw = source.file.string(section: section, key: iniKey) else { continue }
-            guard let language = normalized(raw) else { continue }
+            guard
+                let raw = source.file.string(section: section, key: iniKey),
+                let language = normalized(raw) else { continue }
             return LocalizationLanguageSnapshot(language: language, source: source.name)
         }
         return LocalizationLanguageSnapshot(language: fallback, source: "English fallback")

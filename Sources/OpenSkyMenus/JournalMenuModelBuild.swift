@@ -56,8 +56,9 @@ extension JournalMenuModel {
         var completed: [JournalQuestEntry] = []
         var misc: [JournalQuestEntry] = []
         for quest in runtime.quests.journalQuests() {
-            guard let state = try? runtime.state(of: quest.formID) else { continue }
-            guard state.isRunning || state.isCompleted || state.isFailed else { continue }
+            guard
+                let state = try? runtime.state(of: quest.formID),
+                state.isRunning || state.isCompleted || state.isFailed else { continue }
             // A DLC quest's text IDs point into its own plugin's tables.
             var entry = makeEntry(
                 quest: quest,
@@ -156,10 +157,9 @@ extension JournalMenuModel {
         var seen: Set<UInt16> = []
         return quest.objectives.compactMap { objective in
             let display = state.objective(objective.index)
-            guard display.isDisplayed || display.isCompleted || display.isFailed else {
-                return nil
-            }
-            guard seen.insert(objective.index).inserted else { return nil }
+            guard
+                display.isDisplayed || display.isCompleted || display.isFailed,
+                seen.insert(objective.index).inserted else { return nil }
             let text = JournalMenuModel
                 .text(objective.displayText, kind: .strings, strings: strings)
                 .flatMap { $0.isEmpty ? nil : substitute($0) }

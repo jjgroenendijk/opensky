@@ -205,9 +205,9 @@ nonisolated public struct SpellStore: Sendable {
     private static func decode(_ indexed: IndexedRecord) throws -> MagicCastingRecord {
         switch indexed.record.type {
         case "SPEL":
-            return try .spell(Spell(record: indexed.record, localized: indexed.localized))
+            try .spell(Spell(record: indexed.record, localized: indexed.localized))
         case "SCRL":
-            return try .scroll(Scroll(record: indexed.record, localized: indexed.localized))
+            try .scroll(Scroll(record: indexed.record, localized: indexed.localized))
         default:
             throw ESMError.malformed("expected SPEL or SCRL, got \(indexed.record.type)")
         }

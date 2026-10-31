@@ -94,8 +94,9 @@ nonisolated extension NIFFile {
                     NIFNode.traversedTypes.contains(block.typeName)
                     || block.typeName == NIFSwitchNode.typeName
                 {
-                    guard let node = try drawableNode(block) else { continue }
-                    guard !node.object.isHidden else { continue }
+                    guard
+                        let node = try drawableNode(block),
+                        !node.object.isHidden else { continue }
                     guard !Self.isEditorMarker(node.object.name) else {
                         editorMarkerShapeCount += 1
                         continue

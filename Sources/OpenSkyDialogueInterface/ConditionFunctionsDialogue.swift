@@ -44,10 +44,10 @@ nonisolated extension ConditionFunctions {
             name: "GetIsAliasRef",
             parameter1: .integer
         ) { call in
-            guard let parameter = call.parameter1 else {
-                return .failure(.unresolvedParameter(566))
-            }
-            guard let filled = call.aliasReference(parameter) else {
+            guard
+                let parameter = call.parameter1,
+                let filled = call.aliasReference(parameter)
+            else {
                 return .failure(.unresolvedParameter(566))
             }
             return call.referenceKey().map { Self.isTrue($0 == filled) }
