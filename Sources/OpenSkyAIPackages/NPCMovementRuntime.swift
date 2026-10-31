@@ -76,6 +76,8 @@ public struct NPCMoveStart {
     public var gait: LocomotionGait?
     /// A follower's walk slows as it arrives, by these settings; nil keeps full speed.
     public var runSlowdown: FollowSettings?
+    /// Where the speed sits from walk (0) to run (1); nil uses the gait's own speed.
+    public var walkRunBlend: Float?
 
     public init(
         actor: ReferenceKey,

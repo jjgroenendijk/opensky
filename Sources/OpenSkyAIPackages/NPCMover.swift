@@ -32,6 +32,7 @@ public struct NPCMover {
     public let ignoresStatics: Bool
     public let preferredGait: LocomotionGait?
     let runSlowdown: FollowSettings?
+    let walkRunBlend: Float?
     /// The other actors near this one for the step in progress.
     private var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
@@ -53,6 +54,7 @@ public struct NPCMover {
         ignoresStatics = start.ignoresStatics
         preferredGait = start.gait
         runSlowdown = start.runSlowdown
+        walkRunBlend = start.walkRunBlend
         legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(

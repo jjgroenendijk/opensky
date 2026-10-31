@@ -1,5 +1,5 @@
 // A walking actor jumps across a navmesh ledge link, swims in deep water, and keeps
-// the gait its package prefers.
+// the gait its package prefers, at a script's speed between walk and run.
 
 @testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
@@ -15,12 +15,16 @@ import Testing
 struct NPCMoverTraversalTests {
     private static let actor = ReferenceKey.plugin(name: "movement.esm", objectID: 1)
 
-    private static func mover(path: NavigationPath, gait: LocomotionGait? = nil) -> NPCMover {
-        NPCMover(start: NPCMoveStart(
+    private static func mover(
+        path: NavigationPath, gait: LocomotionGait? = nil, walkRunBlend: Float? = nil
+    ) -> NPCMover {
+        var start = NPCMoveStart(
             actor: actor, formID: FormID(1),
             placement: PlacedReference.Placement(position: .zero, rotation: .zero),
             scale: 1, capsule: .standard, configuration: .synthetic, path: path, gait: gait
-        ))
+        )
+        start.walkRunBlend = walkRunBlend
+        return NPCMover(start: start)
     }
 
     @Test func aPreferredGaitWinsOverTheLegLength() {
@@ -33,6 +37,20 @@ struct NPCMoverTraversalTests {
             waypoints: [SIMD3(2000, 0, 0)], target: SIMD3(2000, 0, 0)
         )
         #expect(Self.mover(path: long, gait: .walk).stepPlan(frameTime: 0.05).gait == .walk)
+    }
+
+    /// `PathToReference(target, 0.25)` moves a quarter of the way from walk to run speed.
+    @Test func aWalkRunBlendSetsASpeedBetweenWalkAndRun() {
+        let path = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(100, 0, 0)], target: SIMD3(100, 0, 0)
+        )
+        let walk = PlayerMovementConfiguration.synthetic.walkSpeed.value
+        let run = PlayerMovementConfiguration.synthetic.runSpeed.value
+        let plan = Self.mover(path: path, gait: .walk, walkRunBlend: 0.25).stepPlan(frameTime: 0.05)
+        #expect(abs(plan.speed - (walk + (run - walk) * 0.25)) < 1e-4)
+        #expect(plan.gait == .walk)
+        let full = Self.mover(path: path, gait: .run, walkRunBlend: 1).stepPlan(frameTime: 0.05)
+        #expect(abs(full.speed - run) < 1e-4)
     }
 
     @Test func arcPeaksAboveTheHigherEndAndLands() {

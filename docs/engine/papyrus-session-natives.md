@@ -79,10 +79,12 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
   impact plays where the line first meets a static or the ground, with that surface's material.
   A line that meets nothing plays no impact.
 - `PathToReference` walks the actor to the target over the navmesh and waits until it stops.
+  The speed is `afWalkRunPercent` of the way from the walk speed to the run speed, so 0.5 is
+  half way between them (<https://ck.uesp.net/wiki/PathToReference_-_Actor>). It answers true
+  when the actor arrived, and false when no path starts, the walk gives up or is stopped, or
+  `afWalkRunPercent` is outside 0 to 1.
 - `Game.PlayBink` plays a movie from `Data\Video` and waits until it ends or is skipped
   ([movies](/engine/movies.md)).
-  It answers true when the actor arrived, and false when no path starts, the walk gives up or is
-  stopped, or `afWalkRunPercent` is outside 0 to 1.
 - `Faction.GetStolenItemValueCrime` and `GetStolenItemValueNoCrime` sum what the player stole
   from the faction, seen and unseen.
 
@@ -145,8 +147,9 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 - The screenshot goes to `~/Pictures/OpenSky/`, because OpenSky never writes into the install.
 - No source says whether the game sends `OnUnequipped` for an item a scripted equip pushes out
   of its slot. OpenSky sends nothing.
-- `PathToReference` has two speeds only: below half of `afWalkRunPercent` the actor walks, from
-  half up it runs. The game blends between the two.
+- `PathToReference` blends the speed. An actor that runs its behaviour graph blends its walk
+  and run clips by that speed too. An actor without a running graph plays one clip, walk below
+  half of `afWalkRunPercent` and run from half up, so its feet can slide.
 - `PlayImpactEffect` reads "local rotation" as the node's turn inside the reference, not inside
   its parent node.
 - `Cell.Reset` cannot flag an exterior cell that is not loaded, because exterior cells are found
