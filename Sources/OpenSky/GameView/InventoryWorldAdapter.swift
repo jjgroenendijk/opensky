@@ -260,8 +260,16 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     func pickpocketSkill(of key: ReferenceKey) -> Float? {
+        guard let index = ActorValueIdentity.index(named: "Pickpocket") else { return nil }
+        return actorValue(index, of: key)
+    }
+
+    func carryWeight(of key: ReferenceKey) -> Float? {
+        actorValue(ActorValueIdentity.carryWeightIndex, of: key)
+    }
+
+    private func actorValue(_ index: Int32, of key: ReferenceKey) -> Float? {
         guard
-            let index = ActorValueIdentity.index(named: "Pickpocket"),
             let runtime = game.actorValues.runtime,
             let holder = key == .player ? .player : game.actorWorld.actorValueHolder(for: key)
         else { return nil }

@@ -179,6 +179,7 @@ extension GapsGatherer {
         _ = GameSettingTexts<WorldNoticeText>.resolve(store: store)
         _ = GameSettingTexts<PoisonText>.resolve(store: store)
         _ = GameSettingTexts<PickpocketText>.resolve(store: store)
+        _ = GameSettingTexts<TeammateTradeText>.resolve(store: store)
         _ = GameSettingTexts<CraftingRefusalText>.resolve(store: store)
         _ = GameSettingTexts<SkillsMenuText>.resolve(store: store)
         _ = GameSettingTexts<MessageBoxText>.resolve(store: store)

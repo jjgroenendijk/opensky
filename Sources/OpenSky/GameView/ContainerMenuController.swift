@@ -52,6 +52,8 @@ final class ContainerMenuController {
     private(set) var merchant: ReferenceKey?
     /// The living actor whose pockets are open. Each take then rolls the chance.
     var pickpocketTarget: ReferenceKey?
+    /// The follower whose own items are open, which keeps its outfit and carry weight.
+    var teammateTarget: ReferenceKey?
     /// Whether a take from the open pockets succeeded, so "Pockets Picked" counts once.
     var pickedOpenPockets = false
     /// The count slider a stack of more than five opens before it moves.
@@ -124,6 +126,7 @@ final class ContainerMenuController {
     ) {
         container = holder
         pickpocketTarget = nil
+        teammateTarget = nil
         pickedOpenPockets = false
         containerName = name
         self.vendor = vendor
@@ -164,6 +167,10 @@ final class ContainerMenuController {
             categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
         )
         refreshed.player.carriedWeight = game.inventory.playerCarriedWeight
+        if teammateTarget != nil {
+            refreshed.container = refreshed.container
+                .hiding(game.inventory.teammateOutfit(of: container))
+        }
         refreshed.restore(from: model)
         model = refreshed
         publishModel()

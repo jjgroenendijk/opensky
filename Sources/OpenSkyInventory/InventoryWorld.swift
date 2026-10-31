@@ -39,6 +39,8 @@ public protocol InventoryWorld: AnyObject {
     func playerSpeechSkill() -> Float?
     /// `key`'s current Pickpocket skill. Nil without actor values.
     func pickpocketSkill(of key: ReferenceKey) -> Float?
+    /// `key`'s current `CarryWeight`. Nil without actor values.
+    func carryWeight(of key: ReferenceKey) -> Float?
     /// Whether `observer` has detected the player right now.
     func detectsPlayer(_ observer: ReferenceKey) -> Bool
     /// Lands the poison `poison` on `target`, from the player. False when nothing landed.
@@ -64,6 +66,10 @@ public protocol InventoryWorld: AnyObject {
 
 extension InventoryWorld {
     public func pickpocketSkill(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func carryWeight(of _: ReferenceKey) -> Float? {
         nil
     }
 

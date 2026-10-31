@@ -22,6 +22,21 @@ The row list is the [inventory menu](/engine/inventory-menu.md)'s. Container tra
 follower's trade does. The actor uses the same holder as a corpse search. Without
 `abForceOpen`, only an actor a script made a teammate with `SetPlayerTeammate` opens.
 
+## A follower's trade
+
+UESP "Skyrim:Followers" (<https://en.uesp.net/wiki/Skyrim:Followers>) gives two limits on a
+follower's own items:
+
+- Its default apparel stays with it. A take that would leave fewer copies than its default
+  outfit gives shows `sTeammateCantTakeOutfit`. An extra copy may go, as UESP's note on
+  identical armour shows. Take All leaves the outfit's copies.
+- A gift past its `CarryWeight` actor value shows its name and `sTeammateOverencumbered`
+  ("can't carry any more.").
+
+The trade list hides the outfit's copies, as the game does; an extra copy shows.
+`sTeammateCantGiveOutfit` ("Your teammate already owns that armor.") is not used, because no
+source says when it shows.
+
 ## The price formula
 
 From UESP "Skyrim:Speech", section "Prices" (<https://en.uesp.net/wiki/Skyrim:Speech#Prices>):
