@@ -49,7 +49,10 @@ The stay begins in the first cell the player stands in after the arrest. That is
 ## Serving the sentence
 
 UESP: "To serve your sentence, sleep in a cell bed. You'll awaken when your time has been served."
-Activating any bed during a stay serves it; `Game.ServeTime` does the same. Serving:
+Activating any bed during a stay asks `sServeSentenceQuestion`, "Do you want to serve your time in
+jail?", with the buttons `sYesText` and `sNoText`. UESP "Skyrim:Blindsighted" quotes the question as
+"Serve your time in jail?". Yes serves the sentence; `Game.ServeTime` serves it without asking.
+Serving:
 
 - moves the game clock forward by the sentence;
 - clears skill progress (below);
