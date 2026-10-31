@@ -153,3 +153,9 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 - `PathToReference` blends the speed. An actor that runs its behaviour graph blends its walk
   and run clips by that speed too. An actor without a running graph plays one clip, walk below
   half of `afWalkRunPercent` and run from half up, so its feet can slide.
+- `OnPlayerBowShot` and `Game.IsPlayerSungazing` count the player as looking at the sun within
+  5 degrees of it. No open source or game setting gives the game's angle.
+- `KnockAreaEffect` pushes at 1000 units a second for a magnitude of 1. No open source or game
+  setting gives the game's scale.
+- `Debug.SetFootIK` lasts until the session ends and is not kept in a save. No source says
+  whether the game keeps it.
