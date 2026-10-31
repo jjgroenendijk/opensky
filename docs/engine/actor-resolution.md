@@ -99,12 +99,38 @@ empty set means an undressed actor, so the skin shows again.
 
 Each equipped FormID becomes one of three things:
 
-- an ARMO: a worn part, with the same ARMA choice and slot masking as an outfit;
+- an ARMO: a worn part, with the same ARMA choice and slot masking as an outfit. A shield
+  becomes an attachment (below);
 - a WEAP with a `MODL`: an attachment (below);
+- an AMMO: the quiver, an attachment on `Quiver` (below);
 - anything else: a skipped part with the reason `unrenderableEquipment`.
 
 An equipped set never throws. A script can equip a token item, and that is normal. A cell
 rebuild picks up equipment changes ([runtime state](/engine/runtime-state.md)).
+
+## Carried items
+
+An NPC also equips items it carries in its `CNTO` list, beside its outfit. The game picks the
+best item of each kind it carries
+([UESP Skyrim:Followers](https://en.uesp.net/wiki/Skyrim:Followers#Follower_Equipment)).
+OpenSky reads "best" as the highest WEAP base damage or ARMO armour rating:
+
+1. One weapon that fits the hands the outfit leaves free. A shield in the outfit leaves room
+   for a one-handed weapon only. The weapon with the highest damage times its combat style
+   multiplier wins: the `CSGD` Equipment Score Mults for melee, ranged, and staff
+   ([CK wiki Combat Style](https://ck.uesp.net/wiki/Combat_Style)). Faendal's
+   `csHumanMissile` has melee 0.83 and ranged 3.2, so he holds his hunting bow, not his dagger.
+   An NPC with no combat style takes a melee weapon before a bow, crossbow, or staff.
+   Hand-to-hand is never picked.
+2. A bow brings its best carried arrows, and a crossbow its best bolts (`AMMO` damage). Arrows
+   without a bow stay carried.
+3. Then each armour piece, best first, whose slots and hands are still free. A shield comes
+   with a one-handed weapon, not with a two-handed one or a bow.
+
+The inventory baseline equips the same picks, so combat and the inventory menu see the
+weapon that is drawn. Lydia (`HousecarlWhiterun`) carries a `SteelSword`, so she wears it at
+the hip. In the game the combat AI scores weapons again during a fight and may switch; OpenSky picks
+once.
 
 ## Weapon attachment
 
@@ -132,7 +158,17 @@ on the sheath node, so a draw or a sheathe needs no rebuild:
 | bow, crossbow | `Weapon` | `WeaponBow` |
 | second one-handed weapon (dual wield) | `Shield` | its type's sheath node |
 | worn shield (slot 39) | `Shield` | `Shield` |
+| arrows, bolts | `Quiver` | `Quiver` |
 | hand-to-hand, unknown type | `Weapon` | `Weapon` |
+
+A shield model is rigid: it has no skin. Its `Prn` extra data names `SHIELD`, as a sword names
+`WeaponSword` ([NIF](/formats/nif.md#nistringextradata)). So an ARMO whose `ETYP` takes a hand
+becomes an attachment on `Shield`, not a part skinned to the body. A rigid model drawn as a
+body part sits at the actor's origin, which put the shield at the feet.
+
+An `AMMO` model holds the quiver with its arrows under the node `ArrowQuiver`, and the arrow on
+the string (`Arrow:0`) beside it. Its `Prn` names `QUIVER`. The quiver draws only the
+`ArrowQuiver` branch, so no loose arrow hangs at the back.
 
 The sheath node comes from the WEAP `DNAM` animation type. A weapon whose equip slot is the left
 hand, or a second one-handed weapon, rides `Shield`. The player draws on the
@@ -159,8 +195,14 @@ world = actorTransform · meshLocal · meshLocal⁻¹ · boneWorld · meshLocal 
 ```
 
 The bind matrix uses the node's rest transform, so a weapon that is not animated still sits
-in the hand. An attachment has no bounds and is never culled, because the model's bounds are
-at the weapon origin, not in the hand.
+in the hand.
+
+A bow is skinned to its own `Bow_*` bones, which bend the string. The actor's skeleton has none
+of them, so the bow is first baked into its bind shape, then bound to the node like a rigid
+weapon. The string therefore does not bend while the bow is drawn; in the game it does.
+
+An attachment has no bounds and is never culled, because the model's bounds are at the weapon
+origin, not in the hand.
 
 An equipment change mid-animation continues the clip; it does not restart it. The animation
 clock does not reset on a cell rebuild, and actors are posed before each draw.

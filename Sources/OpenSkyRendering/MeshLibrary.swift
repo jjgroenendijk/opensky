@@ -119,6 +119,7 @@ nonisolated public final class MeshLibrary {
         actorSkeleton: ActorSkeletonAsset? = nil,
         explicitActorSkeleton: Bool = false,
         attachmentBone: String? = nil,
+        attachmentSubtree: String? = nil,
         surface: ModelSurfaceOverride? = nil,
         bodyWeight: Float? = nil
     ) throws -> RenderModel {
@@ -128,6 +129,7 @@ nonisolated public final class MeshLibrary {
             terrainLODClipMask: terrainLODClipMask,
             actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil,
             attachmentBone: attachmentBone,
+            attachmentSubtree: attachmentSubtree,
             surface: surface,
             bodyWeight: bodyWeight
         )
@@ -147,7 +149,8 @@ nonisolated public final class MeshLibrary {
                 pathKey: pathKey,
                 actorSkeleton: actorSkeleton,
                 explicitActorSkeleton: explicitActorSkeleton,
-                keepingRoot: attachmentBone != nil
+                keepingRoot: attachmentBone != nil,
+                subtree: attachmentSubtree
             )
             let decodedParticles = decoded.particles
             var model = terrainLODClipMask
@@ -162,12 +165,7 @@ nonisolated public final class MeshLibrary {
                 model = surface.applied(to: model)
             }
             if let attachmentBone {
-                model = RigidAttachment.skinned(
-                    model,
-                    to: attachmentBone,
-                    restTransform: actorSkeleton?.skeleton
-                        .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
-                )
+                model = Self.riding(model, bone: attachmentBone, skeleton: actorSkeleton)
             }
             // A fire effect can hold only particles beside its editor marker.
             guard !model.meshes.isEmpty || !decodedParticles.isEmpty else {
@@ -184,6 +182,18 @@ nonisolated public final class MeshLibrary {
             loadedCount += 1
             return render
         }
+    }
+
+    private static func riding(
+        _ model: Model, bone: String, skeleton: ActorSkeletonAsset?
+    ) -> Model {
+        RigidAttachment.skinned(
+            model,
+            to: bone,
+            restTransform: skeleton?.skeleton.transform(forBoneNamed: bone)
+                ?? matrix_identity_float4x4,
+            actorHasBone: { skeleton?.skeleton.transform(forBoneNamed: $0) != nil }
+        )
     }
 
     /// A cached model whose mesh bytes the fast loader reads straight into GPU buffers.
@@ -353,6 +363,7 @@ nonisolated extension MeshLibrary {
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeletonKey: String? = nil,
         attachmentBone: String? = nil,
+        attachmentSubtree: String? = nil,
         surface: ModelSurfaceOverride? = nil,
         bodyWeight: Float? = nil
     ) -> String {
@@ -365,6 +376,9 @@ nonisolated extension MeshLibrary {
         }
         if let attachmentBone {
             key += "|attach:" + attachmentBone
+        }
+        if let attachmentSubtree {
+            key += "|subtree:" + attachmentSubtree
         }
         if let surface, !surface.isEmpty {
             key += "|" + surface.cacheKey
@@ -405,7 +419,8 @@ nonisolated extension MeshLibrary {
         pathKey: String,
         actorSkeleton: ActorSkeletonAsset?,
         explicitActorSkeleton: Bool,
-        keepingRoot: Bool = false
+        keepingRoot: Bool = false,
+        subtree: String? = nil
     ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
         if !explicitActorSkeleton, let ready = takePredecoded(pathKey: pathKey) {
             return try ready.get()
@@ -425,8 +440,17 @@ nonisolated extension MeshLibrary {
         }
         do {
             let file = try NIFFile(data: data)
+            // An attachment (kept root) may be skinned to its own bones, as a bow is;
+            // `RigidAttachment` bakes those, so they are not checked against the actor.
+            let skeleton = keepingRoot ? nil : actorSkeleton?.skeleton
+            if let subtree {
+                return try (
+                    file.model(skeleton: skeleton, keepingRoot: keepingRoot, below: subtree),
+                    []
+                )
+            }
             return try (
-                file.model(skeleton: actorSkeleton?.skeleton, keepingRoot: keepingRoot),
+                file.model(skeleton: skeleton, keepingRoot: keepingRoot),
                 file.particleSystems(keepingRoot: keepingRoot)
             )
         } catch {

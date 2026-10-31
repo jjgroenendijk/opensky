@@ -110,17 +110,22 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
 /// `bone` is a Havok rig name from `ActorAttachmentBone`, such as `Weapon` under
 /// `NPC R Hand [RHnd]` (docs/engine/actor-resolution.md).
 nonisolated public struct ResolvedAttachment: Equatable, Sendable {
-    /// WEAP MODL path, relative to Data/.
+    /// WEAP, AMMO, or shield ARMA model path, relative to Data/.
     public let modelPath: String
     /// Havok rig bone the model rides while drawn.
     public let bone: String
     /// The node the pose moves `bone` onto while sheathed; nil stays in the hand.
     public let sheathBone: String?
+    /// The model node whose shapes are drawn; nil draws the whole model.
+    public let subtree: String?
 
-    public init(modelPath: String, bone: String, sheathBone: String? = nil) {
+    public init(
+        modelPath: String, bone: String, sheathBone: String? = nil, subtree: String? = nil
+    ) {
         self.modelPath = modelPath
         self.bone = bone
         self.sheathBone = sheathBone
+        self.subtree = subtree
     }
 }
 
@@ -134,8 +139,7 @@ nonisolated public struct ResolvedActorVisual: Equatable, Sendable {
     /// Union of equipped outfit ARMO body slots — the skin mask.
     public let equippedSlots: BodySlots
     public let parts: [ResolvedBodyPart]
-    /// Rigid bone attachments — drawn weapons. Empty unless a runtime equipped
-    /// set supplied one.
+    /// Rigid bone attachments: weapons and a worn shield.
     public let attachments: [ResolvedAttachment]
     /// True when a runtime equipped set replaced the plugin `defaultOutfit`.
     public let usesRuntimeEquipment: Bool
@@ -208,6 +212,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public private(set) var skippedRecords = SkippedRecords()
     /// The roll outfit lists go through, shared with the template resolver.
     public var leveling = LeveledListRoller()
+    /// CSTY records, whose Equipment Score Mults pick a carried weapon.
+    public var combatStyles: [UInt32: CombatStyle] = [:]
 
     public init(
         races: [UInt32: Race],
@@ -280,21 +286,22 @@ nonisolated public struct ActorVisualResolver: Sendable {
                 try ColorForm(record: $0, localized: $1)
             }
         )
+        resolver.combatStyles = loadOrder.indexRecords(of: "CSTY", skipped: &skipped) {
+            try CombatStyle(record: $0)
+        }
         resolver.skippedRecords = skipped
         resolver.leveling = leveling
         return resolver
     }
 
-    /// One actor's renderable inputs.
-    /// - Parameters:
-    ///   - appearance: the template-resolved actor.
-    ///   - equipped: a runtime equipped set that replaces the `defaultOutfit` chain;
-    ///     nil resolves through DOFT.
-    ///   - roll: the placed actor's leveled roll for the outfit; nil rolls for the base.
+    /// One actor's renderable inputs. A runtime `equipped` set replaces the DOFT
+    /// outfit; without one, the outfit plus the picks from the `carried` items is worn.
+    /// `roll` is the placed actor's leveled roll; nil rolls for the base.
     public func resolve(
         appearance: ResolvedActorAppearance,
         equipped: [FormID]? = nil,
-        roll: LeveledRoll? = nil
+        roll: LeveledRoll? = nil,
+        carried: CarriedItems = .none
     ) throws -> ResolvedActorVisual {
         guard
             let raceID = appearance.race.value,
@@ -312,13 +319,14 @@ nonisolated public struct ActorVisualResolver: Sendable {
         let worn: WornEquipment = if let equipped {
             wornEquipment(equipped: equipped, skips: &skips)
         } else {
-            try WornEquipment(armors: outfitPieces(of: appearance, roll: roll))
+            try defaultEquipment(of: appearance, roll: roll, carried: carried, skips: &skips)
         }
         let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []
-        var parts = wornParts(
+        let wornSplit = heldArmour(wornParts(
             worn.armors, race: raceID, female: female, seen: &seenArmatures, skips: &skips
-        )
+        ))
+        var parts = wornSplit.parts
 
         let skinID = appearance.wornArmor.value ?? race.defaultSkin
         guard let skinID, let skin = armors[skinID.rawValue] else {
@@ -349,7 +357,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
             skin: skinID,
             equippedSlots: equippedSlots,
             parts: parts,
-            attachments: worn.attachments,
+            attachments: worn.attachments + wornSplit.attachments,
             usesRuntimeEquipment: equipped != nil,
             faceGenMeshPath: face.map(FaceGenPaths.mesh(for:)),
             faceGenTintPath: face.map(FaceGenPaths.tint(for:)),

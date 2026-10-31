@@ -75,11 +75,20 @@ nonisolated extension MeshLibrary {
         }
     }
 
+    public func loadActorAttachment(
+        path: String,
+        bone: String,
+        skeleton: ActorSkeletonAsset?
+    ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        loadActorAttachment(path: path, bone: bone, subtree: nil, skeleton: skeleton)
+    }
+
     /// A rigid model rewritten to ride `bone`, cached apart from the static version:
     /// a sword in a hand is a different mesh from one on a table.
     public func loadActorAttachment(
         path: String,
         bone: String,
+        subtree: String?,
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
         do {
@@ -88,13 +97,15 @@ nonisolated extension MeshLibrary {
                 terrainLODClipMask: nil,
                 actorSkeleton: skeleton,
                 explicitActorSkeleton: true,
-                attachmentBone: bone
+                attachmentBone: bone,
+                attachmentSubtree: subtree
             )
             let key = try cacheKey(
                 path: meshKey(for: path),
                 terrainLODClipMask: nil,
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
-                attachmentBone: bone
+                attachmentBone: bone,
+                attachmentSubtree: subtree
             )
             return .success(ActorRenderAsset(
                 model: model.posableCopy(device: device), bounds: modelBounds[key]

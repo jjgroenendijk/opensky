@@ -27,24 +27,29 @@ nonisolated public struct HandSlots: OptionSet, Equatable, Sendable {
     }
 }
 
-/// Everything one equipped item takes up, across both kinds of slot.
+/// Everything one equipped item takes up, across the three kinds of slot.
 nonisolated public struct EquipmentOccupancy: Equatable, Sendable {
     public let slots: BodySlots
     public let hands: HandSlots
+    /// The one ammunition slot: arrows or bolts, worn in the quiver.
+    public let ammunition: Bool
 
     /// Takes nothing — the reading for an item that is carryable but not
     /// wearable, such as a potion.
     public static let none = EquipmentOccupancy(slots: BodySlots(), hands: HandSlots())
 
-    public init(slots: BodySlots = BodySlots(), hands: HandSlots = HandSlots()) {
+    public init(
+        slots: BodySlots = BodySlots(), hands: HandSlots = HandSlots(), ammunition: Bool = false
+    ) {
         self.slots = slots
         self.hands = hands
+        self.ammunition = ammunition
     }
 
     /// True when the item occupies nothing at all, which is what makes it
     /// unequippable.
     public var isEmpty: Bool {
-        slots.isEmpty && hands.isEmpty
+        slots.isEmpty && hands.isEmpty && !ammunition
     }
 
     /// True when the two items cannot be worn at the same time.
@@ -54,26 +59,38 @@ nonisolated public struct EquipmentOccupancy: Equatable, Sendable {
     /// refuses such an item outright instead of relying on this.
     public func conflicts(with other: Self) -> Bool {
         slots.overlaps(other.slots) || hands.overlaps(other.hands)
+            || (ammunition && other.ammunition)
     }
 }
 
 /// One equippable base record reduced to what equipping needs from it.
 nonisolated public struct EquippableItem: Equatable, Sendable {
     public let occupancy: EquipmentOccupancy
-    /// WEAP MODL — the world model a hand attachment loads. Nil for armour,
+    /// WEAP or AMMO MODL — the world model an attachment loads. Nil for armour,
     /// whose geometry comes from its ARMA armatures instead.
     public let modelPath: String?
-    /// WEAP DNAM animation type, which picks the sheath node. Nil for armour.
+    /// WEAP DNAM animation type, which picks the sheath node. For AMMO, the
+    /// weapon type that fires it: `.bow` or `.crossbow`. Nil for armour.
     public let animationType: Weapon.AnimationType?
+    /// How good the item is when an NPC picks what to wear: the WEAP or AMMO
+    /// base damage, or the ARMO armour rating.
+    public let rating: Float
 
     public init(
         occupancy: EquipmentOccupancy,
         modelPath: String?,
-        animationType: Weapon.AnimationType? = nil
+        animationType: Weapon.AnimationType? = nil,
+        rating: Float = 0
     ) {
         self.occupancy = occupancy
         self.modelPath = modelPath
         self.animationType = animationType
+        self.rating = rating
+    }
+
+    /// A WEAP: held in a hand, with a world model of its own.
+    public var isWeapon: Bool {
+        !occupancy.hands.isEmpty && modelPath != nil
     }
 }
 
@@ -89,7 +106,7 @@ nonisolated public struct EquipmentCatalog: Sendable {
     public static let defaultWeaponHands = HandSlots.rightHand
 
     /// Equippable items by raw FormID: every ARMO with a body template, plus
-    /// every WEAP.
+    /// every WEAP and AMMO.
     public let items: [UInt32: EquippableItem]
     /// The EQUP graph the ETYP links were resolved through, kept so an
     /// inspector can show which slot an item resolved to.
@@ -116,7 +133,7 @@ nonisolated public struct EquipmentCatalog: Sendable {
         build(from: LoadOrderPlugins(file: file))
     }
 
-    /// Indexes every plugin's ARMO and WEAP records against the EQUP records.
+    /// Indexes every plugin's ARMO, WEAP and AMMO records against the EQUP records.
     /// Records that fail to decode drop out and later read as not equippable.
     public static func build(from loadOrder: LoadOrderPlugins) -> EquipmentCatalog {
         let equipSlots = EquipSlotTable(loadOrder: loadOrder)
@@ -131,7 +148,8 @@ nonisolated public struct EquipmentCatalog: Sendable {
                     slots: armor.bodyTemplate?.slots ?? BodySlots(),
                     hands: equipSlots.hands(of: armor.details.equipType) ?? HandSlots()
                 ),
-                modelPath: nil
+                modelPath: nil,
+                rating: Float(armor.armorRating & 0xFFFF) / 100
             )
         }
         let weapons = loadOrder.indexRecords(of: "WEAP", skipped: &skipped) {
@@ -145,7 +163,19 @@ nonisolated public struct EquipmentCatalog: Sendable {
             items[id] = EquippableItem(
                 occupancy: EquipmentOccupancy(hands: resolved ?? defaultWeaponHands),
                 modelPath: weapon.fields.modelPath,
-                animationType: weapon.animationType
+                animationType: weapon.animationType,
+                rating: Float(weapon.damage)
+            )
+        }
+        let ammunition = loadOrder.indexRecords(of: "AMMO", skipped: &skipped) {
+            try Ammunition(record: $0, localized: $1)
+        }
+        for (id, ammo) in ammunition {
+            items[id] = EquippableItem(
+                occupancy: EquipmentOccupancy(ammunition: true),
+                modelPath: ammo.fields.modelPath,
+                animationType: ammo.flags.contains(.nonBolt) ? .bow : .crossbow,
+                rating: ammo.damage
             )
         }
         return EquipmentCatalog(

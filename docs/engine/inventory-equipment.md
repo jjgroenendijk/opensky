@@ -118,6 +118,9 @@ A shield is the one armour piece with an `ETYP`: it names `Shield`, so it fills 
 That makes a shield and a two-handed weapon conflict, and equipping one unequips the other, as in
 the game. Other vanilla armour has no `ETYP` and fills no hand.
 
+Ammunition (`AMMO`) fills neither a hand nor a body slot. It has a slot of its own, so equipping
+one kind of arrow unequips the other, and it never conflicts with a weapon or armour.
+
 A weapon whose `ETYP` resolves to nothing takes the right hand and is counted as unresolved. So
 a load order with many misses is visible, not quietly plausible. In vanilla, 5 weapons have no
 `ETYP` at all, and every other one resolves.

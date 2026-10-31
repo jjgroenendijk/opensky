@@ -36,6 +36,8 @@ public enum InventoryBaselineFixture {
     public static let outfitlessActor = FormID(0x0000_3020)
     /// Carries five gold and a leveled pick, and drops the same pick when it dies.
     public static let lootedActor = FormID(0x0000_3030)
+    /// Wears the guard outfit and carries the sword and the greatsword.
+    public static let armedActor = FormID(0x0000_3040)
 
     public static let chest = FormID(0x0000_4000)
     public static let leveledChest = FormID(0x0000_4010)
@@ -248,7 +250,13 @@ public enum InventoryBaselineFixture {
             )
             + InventoryFixture.formIDField("INAM", singlePickList.rawValue)
         looted = actor(formID: lootedActor.rawValue, defaultOutfit: nil, extra: looted)
-        return records + looted
+        let weapons = [sword, greatsword].map {
+            ESMFixture.field("CNTO", InventoryFixture.cntoData(item: $0.rawValue, count: 1))
+        }.reduce(Data(), +)
+        let armed = actor(
+            formID: armedActor.rawValue, defaultOutfit: guardOutfit.rawValue, extra: weapons
+        )
+        return records + looted + armed
     }
 
     private static func actor(
