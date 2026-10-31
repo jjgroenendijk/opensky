@@ -127,6 +127,10 @@ final class GameSessionScope {
     /// Bink movies: the startup logo and `Game.PlayBink`.
     lazy var movies = MoviePlayerCoordinator(menuMode: menuMode, world: movieWorld)
     lazy var movieWorld = MovieWorldAdapter(game: self)
+    /// The opening titles of a new game, over the world.
+    lazy var titleSequence = TitleSequenceCoordinator(movies: swfMovies) { [weak self] in
+        self?.renderer
+    }
 
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)

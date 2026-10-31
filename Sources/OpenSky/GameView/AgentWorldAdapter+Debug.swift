@@ -40,7 +40,7 @@ extension AgentWorldAdapter {
             return try done(setQuestStage(quest, stage: stage))
         case .kill, .resurrect, .flight, .drunk, .beastForm:
             return try done(actorDebug(command))
-        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink:
+        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles:
             return try done(renderDebug(command))
         case .raceMenu, .skillsMenu, .gamepad:
             return try done(menuDebug(command))
@@ -110,6 +110,7 @@ extension AgentWorldAdapter {
         case let .playBink(file, interruptible):
             try playBink(MovieRequest(fileName: file, interruptible: interruptible))
         case .skipBink: ["skipped": .bool(game.movies.skip(force: true)), "bink": binkState]
+        case let .titles(step): try driveTitles(step)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -337,6 +338,21 @@ extension AgentWorldAdapter {
             throw AgentFailure(.invalidArgument, "a movie plays already, or no game files")
         }
         return ["bink": binkState]
+    }
+
+    /// Goes through the script hooks, as `fade` does.
+    private func driveTitles(_ step: String) throws(AgentFailure) -> AgentJSON {
+        guard let natives = game.scripts.bridge?.gameNatives else { throw notReady() }
+        switch step.lowercased() {
+        case "show": natives.showTitleSequenceMenu?(true)
+        case "hide": natives.showTitleSequenceMenu?(false)
+        default:
+            guard TitleSequenceMovieBridge.clipPath(for: step) != nil else {
+                throw AgentFailure(.invalidArgument, "step must be show, hide, or Sequence1 to 4")
+            }
+            natives.startTitleSequence?(step)
+        }
+        return ["titles": titlesState]
     }
 
     /// Goes through the script hook, as `fade` does.

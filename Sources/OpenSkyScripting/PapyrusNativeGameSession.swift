@@ -65,6 +65,11 @@ extension PapyrusNativeFunctions {
                 }
             }
         }
+        gameHook("Game", "StartTitleSequence", into: &registry) { call, hooks in
+            guard let start = hooks.startTitleSequence else { return nil }
+            start(string(call, at: 0) ?? "")
+            return .returned(.none)
+        }
         gameHook("Game", "ShowFirstPersonGeometry", into: &registry) { call, hooks in
             guard let show = hooks.showFirstPersonGeometry else { return nil }
             show(boolean(call, at: 0, default: true))

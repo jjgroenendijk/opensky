@@ -225,6 +225,12 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("skipbink", args([:])) == .skipBink)
     }
 
+    @Test func titlesTakesTheStep() throws {
+        let request = try AgentCommandLine.request(["debug", "titles", "Sequence2"])
+        #expect(request.args == ["step": "Sequence2"])
+        #expect(try AgentDebugCommand.parse("titles", args(request.args)) == .titles("Sequence2"))
+    }
+
     @Test func formNamesTheBeastFormInLowercase() throws {
         let request = try AgentCommandLine.request(["debug", "form", "VampireLord"])
         #expect(request.args == ["form": "VampireLord"])

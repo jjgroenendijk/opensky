@@ -138,6 +138,15 @@ struct PapyrusNativeSessionRulesTests {
         #expect(call(fixture, "Actor", "SetEyeTexture", [.none]) == .deviated(.none, .stubbed))
     }
 
+    @Test func startTitleSequencePassesTheClipName() throws {
+        let fixture = try Fixture.make()
+        var started: [String] = []
+        fixture.session.bridge.gameNatives.startTitleSequence = { started.append($0) }
+        #expect(call(fixture, "Game", "StartTitleSequence", [.string("Sequence2")]) ==
+            .returned(.none))
+        #expect(started == ["Sequence2"])
+    }
+
     @Test func gazingNeedsTheLookWithinTheCone() {
         #expect(PapyrusSunGaze.isGazing(forward: [1, 0, 0], towardSun: [1, 0.05, 0]))
         #expect(!PapyrusSunGaze.isGazing(forward: [1, 0, 0], towardSun: [1, 0.2, 0]))

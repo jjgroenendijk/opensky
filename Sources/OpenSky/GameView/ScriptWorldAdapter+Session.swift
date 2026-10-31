@@ -15,6 +15,7 @@ import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -54,9 +55,8 @@ extension ScriptWorldAdapter {
                 delay: fade.secondsBeforeFade, duration: fade.duration
             )
         }
-        // The title sequence draws its titles over the world. That movie is not built,
-        // so the calls change nothing rather than hide the world behind the menu logo.
-        hooks.showTitleSequenceMenu = { _ in }
+        hooks.showTitleSequenceMenu = { [weak game] shown in game?.titleSequence.show(shown) }
+        hooks.startTitleSequence = { [weak game] name in _ = game?.titleSequence.start(name) }
         hooks.screenBlood = { [weak game] count in game?.effects.splatterScreen(count: count) }
         hooks.clearTempEffects = { [weak game] in game?.effects.clearTemporaryBlood() }
         hooks.takeScreenshot = { [weak game] name in

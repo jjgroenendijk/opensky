@@ -47,6 +47,12 @@ public final class MenuMovieOverlay {
         record { try $0.advanceSWFOverlay() }
     }
 
+    /// Applies one engine change to the running movie.
+    public func update(_ body: (SWFMovieRuntime) -> Void) {
+        guard isLoaded else { return }
+        record { try $0.updateSWFOverlay(body) }
+    }
+
     private func show(
         _ result: Result<SWFMovieScene, AssetLoadFailure>,
         prepare: ((SWFMovieRuntime) -> Void)?,

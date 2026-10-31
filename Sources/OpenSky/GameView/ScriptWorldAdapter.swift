@@ -62,6 +62,7 @@ protocol ScriptWorldHost: AnyObject {
     var progression: ProgressionCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
+    var titleSequence: TitleSequenceCoordinator { get }
     var hostView: NSView { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var gameSession: GameSession? { get }

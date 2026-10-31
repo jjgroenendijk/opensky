@@ -79,8 +79,10 @@ public struct PapyrusGameNatives {
     public var quitToMainMenu: (() -> Void)?
     public var quitGame: (() -> Void)?
     public var fade: ((PapyrusFade) -> Void)?
-    /// Shows or hides the title menu's backdrop.
+    /// Shows or hides the opening titles movie over the world.
     public var showTitleSequenceMenu: ((Bool) -> Void)?
+    /// Plays one clip of the titles movie, such as "Sequence1".
+    public var startTitleSequence: ((String) -> Void)?
     public var screenBlood: ((Int) -> Void)?
     /// Removes blood and other short-lived decals.
     public var clearTempEffects: (() -> Void)?

@@ -28,7 +28,8 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | `Game.QuitToMainMenu`, `Debug.QuitGame` | Ends the session, or quits the app |
 | `Game.FadeOutGame` | Waits, then fades the frame to black or white, or back, on the game clock ([fades](#fades)) |
 | `Game.TriggerScreenBlood`, `Game.ClearTempEffects` | Adds screen blood splatters, or clears them |
-| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Nothing yet. The game draws the titles of `interface\titles.swf` over the world; OpenSky does not build that movie, and does not hide the world |
+| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Shows or removes `interface\titles.swf` over the world ([new game](/engine/main-menu.md#new-game)) |
+| `Game.StartTitleSequence` | Plays the named clip of the titles movie, such as `Sequence1` |
 | `Game.ShowFirstPersonGeometry` | Shows or hides the first-person arms |
 | `Debug.TakeScreenshot` | Writes a PNG of the view, at its size, to `~/Pictures/OpenSky/` |
 | `Debug.ToggleCollisions` | Switches the player between flying and walking |
@@ -125,7 +126,6 @@ built. The vanilla scripts that call each one show what it is for:
 | --- | --- | --- |
 | `Actor.SetEyeTexture` | `DLC1VampireTurnScript`, `DLC1SeranaCureQuestScript` | Changing a live actor's model |
 | `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
-| `Game.StartTitleSequence` | `MQ101QuestScript` | The title sequence movie |
 
 The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 

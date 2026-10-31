@@ -230,6 +230,10 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("file", "The movie file, such as BGS_Logo.bik.")],
             options: [flag("interruptible", "Let a key skip the movie.")]
         ),
-        command("debug.skipbink", "End the playing movie, even one a key cannot skip.")
+        command("debug.skipbink", "End the playing movie, even one a key cannot skip."),
+        command(
+            "debug.titles", "Show or hide the opening titles, or play one, as MQ101 does.",
+            positionals: [required("step", "Either show, hide, or a clip such as Sequence1.")]
+        )
     ]
 }
