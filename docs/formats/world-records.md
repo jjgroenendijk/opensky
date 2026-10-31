@@ -85,6 +85,9 @@ that one when a cell has none.
 `DATA` flags: `0x01` interior, `0x02` has water, `0x08` no LOD water, `0x80` show sky; UESP
 lists more. UESP notes that some records store one byte only.
 
+Record-header flags: `0x20000` Off Limits and `0x80000` Can't Wait. WRLD has the same Can't Wait
+bit. With it the player cannot wait or sleep there ([sleep and wait](/engine/sleep-wait.md)).
+
 `XCLC`: one cell is 4096 units wide. Some form-version-43 records have an 8-byte `XCLC`
 without the flags word. The high bits of the flags hold Creation Kit noise.
 

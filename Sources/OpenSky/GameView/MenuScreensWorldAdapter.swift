@@ -95,6 +95,8 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
         context.waitingDisabled = game.scripts.bridge?.playerControlLocks.waitingDisabled ?? false
+        context.cellForbidsWaiting = game.streamer?.currentCellLocation
+            .flatMap { game.streamer?.residentScene(at: $0) }?.forbidsWaiting ?? false
         guard let refusal = RestRule.refusal(context) else { return nil }
         return game.mapWorld.settingTexts(RestText.self)[refusal.text(sleeping: sleeping)]
     }

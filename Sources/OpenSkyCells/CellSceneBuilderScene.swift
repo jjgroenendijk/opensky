@@ -218,7 +218,7 @@ nonisolated extension CellSceneBuilder {
         return bounds
     }
 
-    /// The CELL's own identity, trespass flags, and encounter zone.
+    /// The CELL's own identity, trespass and wait flags, and encounter zone.
     nonisolated static func applyCellRecord(
         _ found: FoundCell, geometry: CellGeometryBuild, to scene: inout CellScene
     ) {
@@ -227,6 +227,8 @@ nonisolated extension CellSceneBuilder {
             isPublicArea: found.cell.flags.contains(.publicArea),
             isOffLimits: found.cell.isOffLimits
         )
+        scene.forbidsWaiting = found.cell.isNoWait
+            || geometry.world?.worldspace?.isNoWait == true
         scene.encounterZone = encounterZone(of: found, in: geometry)
     }
 

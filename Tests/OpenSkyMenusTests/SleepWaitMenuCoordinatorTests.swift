@@ -121,6 +121,16 @@ struct SleepWaitMenuCoordinatorTests {
         #expect(RestRefusal.disabled.settingEditorID(sleeping: false) == "sNoWaitDefault")
         #expect(RestRefusal.disabled.settingEditorID(sleeping: true) == "sNoSleepDefault")
     }
+
+    /// The Can't Wait flag refuses both menus with their own texts.
+    @Test func aCantWaitCellRefusesBeforeEnemies() {
+        var context = RestContext()
+        context.hostilesNear = true
+        context.cellForbidsWaiting = true
+        #expect(RestRule.refusal(context) == .cell)
+        #expect(RestRefusal.cell.settingEditorID(sleeping: false) == "sNoWaitInCell")
+        #expect(RestRefusal.cell.settingEditorID(sleeping: true) == "sNoSleepInCell")
+    }
 }
 
 struct RestStepTests {
