@@ -1,5 +1,5 @@
 // Loading-screen timing: a fast build still shows the minimum time, a slow
-// build holds the screen until ready, and the object turns inside its range.
+// build holds the screen until ready, and the player turns the object inside its range.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -46,19 +46,24 @@ struct LoadingScreenSessionTests {
         #expect(session.phase(at: 30.5) == .finished)
     }
 
-    @Test func objectSweepsItsRotationRange() throws {
-        let session = try LoadingScreenSession(
+    @Test func playerTurnStopsAtTheRangeEnds() throws {
+        var session = try LoadingScreenSession(
             screen: Self.screen(range: (0xFFF6, 10)),
             startedAt: 0
         )
-        let speed = Double(LoadingScreenSession.turnDegreesPerSecond)
-        #expect(session.objectRotationDegrees(at: 0) == [0, 0, 80])
-        #expect(session.objectRotationDegrees(at: 20 / speed) == [0, 0, 100])
-        #expect(abs(session.objectRotationDegrees(at: 30 / speed).z - 90) < 0.001)
+        #expect(session.objectRotationDegrees == [0, 0, 90])
+        session.turn(byDegrees: 4)
+        #expect(session.objectRotationDegrees == [0, 0, 94])
+        session.turn(byDegrees: 30)
+        #expect(session.objectRotationDegrees == [0, 0, 100])
+        session.turn(byDegrees: -100)
+        #expect(session.objectRotationDegrees == [0, 0, 80])
     }
 
     @Test func noRangeMeansNoTurn() throws {
-        let session = try LoadingScreenSession(screen: Self.screen(range: nil), startedAt: 0)
-        #expect(session.objectRotationDegrees(at: 50) == [0, 0, 90])
+        var session = try LoadingScreenSession(screen: Self.screen(range: nil), startedAt: 0)
+        session.turn(byDegrees: 45)
+        #expect(session.objectRotationDegrees == [0, 0, 90])
+        #expect(session.elapsedSeconds(at: 50) == 50)
     }
 }

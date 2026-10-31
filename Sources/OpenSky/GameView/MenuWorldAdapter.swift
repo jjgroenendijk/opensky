@@ -389,6 +389,10 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
             game.hud.showNotification("MoveTo: \(target) is not in Skyrim.esm")
             return
         }
+        // A move out of the loaded cells loads a new area, so the game shows a screen.
+        if game.streamer?.referenceEntry(key: target) == nil {
+            coverNextTeleport = true
+        }
         teleportPlayer(.reference(String(format: "0x%06X", objectID)), openingRaceMenu: false)
     }
 

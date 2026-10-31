@@ -1,6 +1,7 @@
 // A door transition covers the view at once, shows the picked screen for the
 // minimum time after the destination is ready, then fades and resumes the
-// world. A forced screen holds until released.
+// world. A fast travel picks once the destination is known and holds until the
+// area is in. A forced screen holds until released.
 
 import Foundation
 import OpenSkyConditions
@@ -8,6 +9,7 @@ import OpenSkyConditions
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyLoading
+import OpenSkyRenderCore
 import simd
 import Testing
 
@@ -87,6 +89,31 @@ struct LoadingScreenCoordinatorTests {
         #expect(world.paused.last == false)
     }
 
+    @Test func aTravelPicksWhenTheDestinationIsKnownAndHoldsForTheArea() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator(world: world)
+
+        loading.begin(at: 0)
+        #expect(loading.isWaitingForDestination)
+        loading.destinationKnown(location: nil, at: 2)
+        #expect(!loading.isWaitingForDestination)
+        #expect(world.frames.last??.text == "LoadScreenDragon")
+        loading.tick(time: 20)
+        #expect(world.frames.last??.drawsObject == true, "no fade before the area is in")
+
+        loading.loadFinished(at: 20)
+        loading.tick(time: 20 + LoadingScreenSession.fadeSeconds + 0.01)
+        #expect(!loading.isCovering)
+    }
+
+    @Test func framesCarryTheCameraPathClock() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator(world: world)
+        loading.beginLoad(at: 5)
+        loading.tick(time: 7.5)
+        #expect(world.frames.last??.elapsedSeconds == 2.5)
+    }
+
     @Test func disabledLoadingScreensLeaveTheViewAlone() throws {
         let world = try Self.world()
         let loading = LoadingScreenCoordinator(world: world)
@@ -117,6 +144,32 @@ struct LoadingScreenCoordinatorTests {
         let transform = frame.objectTransform(eye: .zero, yaw: 0, pitch: 0, radius: 40)
         #expect(transform.columns.3.x == 100)
         #expect(transform.columns.3.y == 0)
+    }
+
+    @Test func cameraPathSetsTheDistanceWhenFartherThanTheFit() {
+        let frame = LoadingCoverFrame(
+            model: "a.nif", scale: 1, rotationDegrees: .zero, translation: [5, 0, -40],
+            text: nil, opacity: 1, drawsObject: true
+        )
+        let transform = frame.objectTransform(
+            eye: .zero, yaw: 0, pitch: 0, radius: 40, cameraOffset: [0, -300, 16]
+        )
+        // Yaw 0 looks down +X, so right is -Y and up is +Z.
+        #expect(transform.columns.3.x == 300)
+        #expect(transform.columns.3.y == -5)
+        #expect(transform.columns.3.z == -56)
+        let near = frame.objectTransform(
+            eye: .zero, yaw: 0, pitch: 0, radius: 40, cameraOffset: [0, -25, 35]
+        )
+        #expect(near.columns.3.x == 100, "the fit wins over a near path")
+    }
+
+    @Test func coverLightComesFromAboveAndBehindTheEye() {
+        let lighting = LoadingCoverFrame.lighting(yaw: 0, pitch: 0)
+        #expect(lighting.directionalDirection.x > 0, "travels away from the eye")
+        #expect(lighting.directionalDirection.z < 0, "travels down")
+        #expect(lighting.fog == nil)
+        #expect(lighting.ambientColor.x == lighting.ambientColor.z, "grey, not tinted")
     }
 
     @Test func objectStaysOnTheViewAxisWhenLookingDown() {

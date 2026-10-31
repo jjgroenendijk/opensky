@@ -12,8 +12,6 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     /// one-frame flash.
     public static let minimumSeconds = 1.5
     public static let fadeSeconds = 0.4
-    /// How fast the object turns inside its ONAM range, degrees per second.
-    public static let turnDegreesPerSecond: Float = 6
 
     nonisolated public enum Phase: Equatable, Sendable {
         case showing
@@ -24,6 +22,8 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     public let screen: ResolvedRecord<LoadScreen>?
     public let startedAt: Double
     public private(set) var readyAt: Double?
+    /// The player's turn so far, inside the ONAM range.
+    public private(set) var turnDegrees: Float = 0
 
     public init(screen: ResolvedRecord<LoadScreen>?, startedAt: Double) {
         self.screen = screen
@@ -32,7 +32,7 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.screen?.id == rhs.screen?.id && lhs.startedAt == rhs.startedAt
-            && lhs.readyAt == rhs.readyAt
+            && lhs.readyAt == rhs.readyAt && lhs.turnDegrees == rhs.turnDegrees
     }
 
     /// The destination finished building. Only the first call counts.
@@ -57,18 +57,22 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
         return Float(max(0, 1 - (time - fadeStart) / Self.fadeSeconds))
     }
 
-    /// The object's rotation in degrees: RNAM, plus a Z turn that moves back
-    /// and forth across the ONAM range. No range means no turn.
-    public func objectRotationDegrees(at time: Double) -> SIMD3<Float> {
+    /// The object's rotation in degrees: RNAM plus the player's turn about Z.
+    public var objectRotationDegrees: SIMD3<Float> {
         let initial = SIMD3<Float>(screen?.record.initialRotation.map(SIMD3<Float>.init) ?? .zero)
-        guard let range = screen?.record.rotationOffsetRange else { return initial }
+        return initial + SIMD3(0, 0, turnDegrees)
+    }
+
+    /// Seconds the screen has shown, for the camera path.
+    public func elapsedSeconds(at time: Double) -> Double {
+        max(0, time - startedAt)
+    }
+
+    /// The player turns the object; ONAM limits how far. No range means no turn.
+    public mutating func turn(byDegrees degrees: Float) {
+        guard degrees.isFinite, let range = screen?.record.rotationOffsetRange else { return }
         let low = Float(min(range.x, range.y))
         let high = Float(max(range.x, range.y))
-        let span = high - low
-        guard span > 0 else { return initial + SIMD3(0, 0, low) }
-        let travel = Float(time - startedAt) * Self.turnDegreesPerSecond
-        let cycle = travel.truncatingRemainder(dividingBy: 2 * span)
-        let offset = cycle <= span ? cycle : 2 * span - cycle
-        return initial + SIMD3(0, 0, low + offset)
+        turnDegrees = min(max(turnDegrees + degrees, low), high)
     }
 }
