@@ -197,9 +197,8 @@ extension Renderer {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the menu-scene uniforms.
         descriptor.maxBufferBindCount = BufferIndex.menuSceneUniforms.rawValue + 1
-        // The last terrain layer normal is the highest slot.
-        descriptor.maxTextureBindCount = TextureIndex.terrainLayerNormal0.rawValue
-            + TerrainConstant.maxLayers.rawValue
+        // The effect source volume is the highest slot.
+        descriptor.maxTextureBindCount = TextureIndex.effectSourceVolume.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4
         return try device.makeArgumentTable(descriptor: descriptor)

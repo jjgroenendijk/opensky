@@ -308,6 +308,9 @@ open-source NifSkope effect shader (`sk_effectshader.frag`):
 - Palette alpha: the alpha at (texture alpha, vertex alpha x falloff x base alpha squared).
 - Falloff: `smoothstep(stop, start, |N . V|)` mixes the stop opacity into the start opacity.
 
+A source texture that is a volume samples its middle slice; see
+[volume textures](/formats/dds.md#volume-textures).
+
 Vanilla palettes are 2D, for example `textures\effects\gradients\GradWhiteWater.dds` is
 512 x 128, so the second coordinate matters.
 

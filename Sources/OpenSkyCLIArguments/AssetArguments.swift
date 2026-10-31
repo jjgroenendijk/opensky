@@ -83,8 +83,26 @@ public struct DDSArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var asset: AssetPathArgument
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "Upload the texture as an effect shape does and write the level to this folder: "
+                + "one PNG per volume slice, else one PNG.",
+            valueName: "folder"
+        )
+    )
+    public var out: String?
+    @Option(
+        parsing: .unconditional,
+        help: "The mip level --out writes. Default: 0, the largest."
+    )
+    public var level = 0
 
     public init() {}
+
+    public func validate() throws {
+        try OptionCheck.atLeast(level, 0, "--level")
+    }
 }
 
 public struct HKXArguments: CLICommandArguments {

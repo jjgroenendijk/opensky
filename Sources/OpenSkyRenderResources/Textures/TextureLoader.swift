@@ -17,6 +17,11 @@ nonisolated public enum TextureUsage: Sendable {
     case data
     /// An environment cubemap: six sRGB faces, black placeholder cube.
     case cube
+    /// A volume (3D) texture, sampled sRGB like a colour map. Mid-grey 1x1x1 placeholder.
+    case volume
+    /// An effect shape's source. `TextureLibrary` resolves it to `.color`, or to
+    /// `.volume` when the file is a volume; anywhere else it acts as `.color`.
+    case effectSource
 
     /// Sampled through the sRGB view.
     var isColor: Bool {
@@ -43,6 +48,7 @@ nonisolated public final class TextureLoader {
     private let colorPlaceholder: MTLTexture
     private let dataPlaceholder: MTLTexture
     private let cubePlaceholder: MTLTexture
+    private let volumePlaceholder: MTLTexture
 
     /// Throws when the 1x1 placeholders cannot be allocated, because then no
     /// failed load has a fallback.
@@ -51,12 +57,15 @@ nonisolated public final class TextureLoader {
         colorPlaceholder = try Self.makePlaceholder(device: device, usage: .color)
         dataPlaceholder = try Self.makePlaceholder(device: device, usage: .data)
         cubePlaceholder = try Self.makePlaceholder(device: device, usage: .cube)
+        volumePlaceholder = try Self.makePlaceholder(device: device, usage: .volume)
     }
 
     /// Never fails: a parse or upload error logs and yields the usage's placeholder.
     public func texture(dds data: Data, usage: TextureUsage, label: String) -> MTLTexture {
         do {
-            let dds = try DDSFile(data: data, allowsCubemap: usage == .cube)
+            let dds = try DDSFile(
+                data: data, allowsCubemap: usage == .cube, allowsVolume: usage == .volume
+            )
             guard (dds.faceCount == 6) == (usage == .cube) else {
                 throw DDSError.unsupported("\(dds.faceCount) faces for \(usage) use")
             }
@@ -84,10 +93,11 @@ nonisolated public final class TextureLoader {
             throw TextureLoaderError.bcTextureCompressionUnsupported
         }
         let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = dds.faceCount == 6 ? .typeCube : .type2D
+        descriptor.textureType = Self.textureType(dds: dds, usage: usage)
         descriptor.pixelFormat = Self.pixelFormat(for: dds.format, usage: usage)
         descriptor.width = dds.width
         descriptor.height = dds.height
+        descriptor.depth = usage == .volume ? dds.depth : 1
         descriptor.mipmapLevelCount = dds.mipCount
         descriptor.usage = .shaderRead
         descriptor.storageMode = .shared // unified memory, no blit staging
@@ -105,8 +115,18 @@ nonisolated public final class TextureLoader {
         return texture
     }
 
+    private static func textureType(dds: DDSFile, usage: TextureUsage) -> MTLTextureType {
+        if dds.faceCount == 6 {
+            return .typeCube
+        }
+        return usage == .volume ? .type3D : .type2D
+    }
+
     private func upload(dds: DDSFile, level: Int, face: Int, into texture: MTLTexture) {
-        let region = MTLRegionMake2D(0, 0, dds.width(level: level), dds.height(level: level))
+        let depth = texture.textureType == .type3D ? dds.depth(level: level) : 1
+        let region = MTLRegionMake3D(
+            0, 0, 0, dds.width(level: level), dds.height(level: level), depth
+        )
         let source = dds.mipData(level: level, face: face)
         let uploadData = dds.format == .xrgb8888 ? Self.withOpaqueAlpha(source) : source
         let bytesPerRow = dds.bytesPerRow(level: level)
@@ -118,7 +138,7 @@ nonisolated public final class TextureLoader {
                 slice: face,
                 withBytes: base,
                 bytesPerRow: bytesPerRow,
-                bytesPerImage: 0
+                bytesPerImage: depth > 1 ? dds.bytesPerImage(level: level) : 0
             )
         }
     }
@@ -242,20 +262,25 @@ nonisolated public final class TextureLoader {
 
     private func placeholder(usage: TextureUsage) -> MTLTexture {
         switch usage {
-        case .color: colorPlaceholder
+        case .color, .effectSource: colorPlaceholder
         case .data: dataPlaceholder
         case .cube: cubePlaceholder
+        case .volume: volumePlaceholder
         }
     }
 
-    /// 1x1 RGBA8: mid-gray for color (lighting still shades it), flat normal for data,
-    /// and black for a cube, so a missing cubemap reflects nothing.
+    /// 1x1 RGBA8: mid-gray for color and volume (lighting still shades it), flat normal
+    /// for data, and black for a cube, so a missing cubemap reflects nothing.
     public static func makePlaceholder(
         device: MTLDevice,
         usage: TextureUsage
     ) throws -> MTLTexture {
         let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = usage == .cube ? .typeCube : .type2D
+        descriptor.textureType = switch usage {
+        case .cube: .typeCube
+        case .volume: .type3D
+        case .color, .data, .effectSource: .type2D
+        }
         descriptor.pixelFormat = usage.isColor ? .rgba8Unorm_srgb : .rgba8Unorm
         descriptor.width = 1
         descriptor.height = 1
@@ -266,7 +291,7 @@ nonisolated public final class TextureLoader {
         }
         texture.label = "placeholder-\(usage)"
         var pixel: [UInt8] = switch usage {
-        case .color: [128, 128, 128, 255]
+        case .color, .volume, .effectSource: [128, 128, 128, 255]
         case .data: [128, 128, 255, 255]
         case .cube: [0, 0, 0, 255]
         }

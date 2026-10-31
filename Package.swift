@@ -401,7 +401,7 @@ targets += foundation(
     ],
     tests: [
         "OpenSkyAssetCache", "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyFormatsTesting",
-        "OpenSkyGameData", "OpenSkyEngineTesting"
+        "OpenSkyGameData", "OpenSkyShaderTypes", "OpenSkyEngineTesting"
     ]
 )
 targets += foundation(

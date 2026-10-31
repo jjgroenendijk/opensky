@@ -43,7 +43,9 @@ nonisolated public struct RenderMaterial: Sendable {
         alphaBlend = material.alphaBlend
         additiveBlend = material.additiveBlend
         effect = material.effect.map {
-            RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
+            RenderEffectMaterial(
+                shading: $0, source: material.diffuseTexture, textureProvider: textureProvider
+            )
         }
         waterSurface = material.waterSurface
         normal = material.normalTexture.map { textureProvider($0, .data) }
@@ -54,6 +56,7 @@ nonisolated public struct RenderMaterial: Sendable {
 
     /// Every texture a draw of this material binds, for the residency set.
     public var textures: [MTLTexture] {
-        [diffuse] + [normal, faceTint, effect?.palette].compactMap(\.self) + surface.textures
+        [diffuse] + [normal, faceTint, effect?.palette, effect?.sourceVolume].compactMap(\.self)
+            + surface.textures
     }
 }
