@@ -77,9 +77,7 @@ final class VehicleWorldAdapter {
         if actor != .player {
             game.gameSession?.animationEvents?.handle(name, from: actor)
         }
-        if name == VehicleCore.exitEvent {
-            detach(actor)
-        }
+        run(vehicles.animationEvent(name, from: actor))
         if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
             game.scripts.bridge?.killActor(actor, killer: nil)
         }
@@ -253,11 +251,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     }
 
     func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) {
-        guard let vehicle else {
-            detach(rider)
-            return
-        }
-        vehicles.board(rider, on: vehicle)
+        run(vehicles.setVehicle(rider, vehicle: vehicle))
     }
 
     func tether(_ vehicle: ReferenceKey, to horse: ReferenceKey) {

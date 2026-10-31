@@ -12,7 +12,13 @@ struct CartExitNotifyRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theCartExitStatesSendExitCartEnd() throws {
         let index = try Self.masterIndex()
-        for event in ["IdleCartDriverExit", "IdleCartPrisonerAExit", "IdleCartPrisonerCExit"] {
+        // The carriage quest fills its player and passenger exits with the prisoner
+        // idles, then waits for `ExitCartEnd`; it never calls `SetVehicle(None)` on them.
+        let events = [
+            "IdleCartDriverExit", "IdleCartPrisonerAExit", "IdleCartPrisonerBExit",
+            "IdleCartPrisonerCExit", "IdleCartPrisonerDExit"
+        ]
+        for event in events {
             let clip = try #require(
                 index.clip(forEvent: event, behaviorFile: "0_master.hkx"),
                 "\(event)"

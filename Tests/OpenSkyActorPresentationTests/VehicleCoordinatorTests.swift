@@ -1,5 +1,7 @@
 // The vehicle shell returns the poses it solved as commands: a rider placed on its
 // carrier each frame, a rest pose when it leaves, and one clear after the last link.
+// Each way a link ends has a test: `SetVehicle(None)`, `SetVehicle(self)`, `ExitCartEnd`,
+// and a horse rider's package ending.
 
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
@@ -68,5 +70,57 @@ struct VehicleCoordinatorTests {
             .publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([])
         ])
         #expect(vehicles.advance().isEmpty)
+    }
+
+    private let rider = ReferenceKey.plugin(name: "test.esp", objectID: 0x21)
+
+    /// A rider seated on the cart, with the pose it had in its last frame there.
+    private func seatedRider() throws -> (VehicleCoordinator, ReferenceTransformOverride) {
+        let world = FakeVehicleWorld()
+        world.poses[cart] = ReferenceTransformOverride(position: SIMD3(10, 0, 0))
+        let vehicles = VehicleCoordinator(world: world)
+        #expect(vehicles.setVehicle(rider, vehicle: cart).isEmpty)
+        _ = vehicles.advance()
+        return try (vehicles, #require(vehicles.lastPoses[rider]))
+    }
+
+    @Test func setVehicleNoneTakesTheRiderOff() throws {
+        let (vehicles, seat) = try seatedRider()
+        #expect(vehicles.setVehicle(rider, vehicle: nil) == [.followerRests(rider, at: seat)])
+        #expect(vehicles.core.links[rider] == nil)
+    }
+
+    @Test func setVehicleOnItselfTakesTheRiderOff() throws {
+        let (vehicles, seat) = try seatedRider()
+        #expect(vehicles.setVehicle(rider, vehicle: rider) == [.followerRests(rider, at: seat)])
+        #expect(vehicles.core.links[rider] == nil)
+    }
+
+    @Test func theCartExitEndTakesTheRiderOff() throws {
+        let (vehicles, seat) = try seatedRider()
+        #expect(vehicles.animationEvent("ExitCartBegin", from: rider).isEmpty)
+        #expect(vehicles.core.links[rider]?.carrier == cart)
+        #expect(vehicles.animationEvent("exitcartend", from: rider) == [.followerRests(
+            rider,
+            at: seat
+        )])
+        #expect(vehicles.core.links[rider] == nil)
+    }
+
+    @Test func theCartExitEndOfAnActorOnNoVehicleDoesNothing() {
+        let vehicles = VehicleCoordinator(world: FakeVehicleWorld())
+        #expect(vehicles.animationEvent("ExitCartEnd", from: rider).isEmpty)
+    }
+
+    /// The AI drops a horse rider when its package ends, through `detach`.
+    @Test func aPackageEndTakesTheHorseRiderOff() throws {
+        let world = FakeVehicleWorld()
+        world.poses[cart] = ReferenceTransformOverride(position: SIMD3(0, 5, 0))
+        let vehicles = VehicleCoordinator(world: world)
+        #expect(vehicles.seat(rider, on: cart, bone: "SaddleBone"))
+        _ = vehicles.advance()
+        let saddle = try #require(vehicles.lastPoses[rider])
+        #expect(vehicles.detach(rider) == [.followerRests(rider, at: saddle)])
+        #expect(vehicles.core.mounts.isEmpty)
     }
 }

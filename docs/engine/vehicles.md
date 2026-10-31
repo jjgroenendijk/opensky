@@ -141,12 +141,36 @@ frames until the rebuild lands, the old cell still draws it, from its old placem
 
 ## Leaving a vehicle
 
-The cart exit idles, such as `IdleCartPassengerAExit`, lead to a state of the `Cart` machine in
-`0_master.hkx`. The state sends `ExitCartBegin` when it starts and `ExitCartEnd` when it ends, and
-it ends with its clip, which plays once (`m_mode` 0). OpenSky takes the rider off the vehicle on
-`ExitCartEnd`, for any actor that plays such a state. [WARNING] The game's rule is not documented.
-`MQ101` never calls `SetVehicle(None)` for its riders, so the game must end the link on its own,
-and this event is the one the graph sends at that moment.
+A rider leaves its vehicle in one of four ways:
+
+- `SetVehicle(None)`, or `SetVehicle` with the rider itself, as the
+  [Creation Kit wiki](https://ck.uesp.net/wiki/SetVehicle_-_Actor) says.
+- The rider's graph sends `ExitCartEnd`. This is the rule for cart passengers.
+- A horse rider's package ends ([package schedules](/engine/package-schedules.md)).
+- The player dismounts a horse ([riding](/engine/riding.md)).
+
+The cart exit idles lead to a state of the `Cart` machine in `0_master.hkx`. The state sends
+`ExitCartBegin` when it starts and `ExitCartEnd` when it ends, and it ends with its clip, which
+plays once (`m_mode` 0). This holds for `IdleCartPrisonerAExit` to `IdleCartPrisonerDExit` and
+`IdleCartDriverExit` (read on the install).
+
+The `ExitCartEnd` rule comes from the vanilla scripts. Three scripts on the install
+call `SetVehicle` (read with `openskycli pex`):
+
+- `QF_MQ101_0003372B` seats ten riders on the two cart rides of the opening and never takes them
+  off. It waits for each rider's `ExitCartEnd`.
+- `CarriageSystemScript`, the paid carriage ride on quest `DialogueCarriageSystem`, seats the
+  player and up to three passengers. To let them off it plays an exit idle and waits for
+  `ExitCartEnd`. It never calls `SetVehicle(None)`. Its properties give the player seat
+  `IdleCartPrisonerCExit`, the passengers `IdleCartPrisonerAExit`, `IdleCartPrisonerBExit`, and
+  `IdleCartPrisonerDExit`. A quick exit plays `IdleCartExitInstant` instead, but only while the
+  global `CartQuickExit` is 1, and its default is 0. `0_master.hkx` declares no such event, so
+  the graph ignores it and no `ExitCartEnd` follows.
+- `CartDriverScript` is the only caller of `SetVehicle(None)`: the carriage driver leaves its seat
+  with it, then plays `IdleCartDriverExit`.
+
+So the game ends a link on its own when the exit state ends, and `ExitCartEnd` is the event that
+marks that moment. OpenSky takes any actor off its vehicle on that event.
 
 ## Saving
 
