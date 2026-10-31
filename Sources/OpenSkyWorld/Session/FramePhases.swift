@@ -42,6 +42,7 @@ public enum AssetDrain: Int, FramePhase {
     case vehicleWheels
     case modelNodes
     case cinematicTracks
+    case loadingCameraPaths
 }
 
 /// The world simulation, after the game clock advances. The delta is zero

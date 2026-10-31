@@ -157,6 +157,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug shadows <off\|low\|high>` | The sun shadow tier; it lasts until the renderer is rebuilt |
 | `debug fade <out\|in> [--white] [--delay <s>] [--duration <s>]` | Fades the screen as `Game.FadeOutGame` does; `state frame` shows the `screenFade` |
 | `debug cartmode on\|off` | Puts the HUD into or out of cart mode, as `Game.SetHudCartMode` does; `state menu` shows `hud.cartMode` and `hud.modes` |
+| `debug loadscreen [<id>]` | Holds the `LSCR` screen with this editor ID on screen; no ID releases it and starts its fade. `state menu` shows `loading` |
+| `debug fasttravel <marker>` | Fast travels to the map marker with this name, as the map does, without its refusals; the loading screen covers the trip |
 | `debug playbink <file> [--interruptible]` | Plays a Bink movie from `Data\Video`, as `Game.PlayBink` does; `state menu` shows `bink.frame` and `bink.lastOutcome` |
 | `debug skipbink` | Ends the playing movie, even one a key cannot skip |
 | `debug titles <step>` | `show` or `hide` the opening titles of `interface\titles.swf`, or play one clip such as `Sequence1`, through the `MQ101` script hooks; `state menu` shows `titles` |

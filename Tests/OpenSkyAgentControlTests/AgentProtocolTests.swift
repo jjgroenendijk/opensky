@@ -221,6 +221,22 @@ struct AgentCommandParsingTests {
         #expect(try AgentDebugCommand.parse("cartmode", args(["on": true])) == .cartMode(true))
     }
 
+    @Test func loadScreenTakesAnEditorIDOrNone() throws {
+        let request = try AgentCommandLine.request(["debug", "loadscreen", "LoadScreenSmith01"])
+        #expect(request.args == ["id": "LoadScreenSmith01"])
+        #expect(try AgentDebugCommand.parse("loadscreen", args(request.args))
+            == .loadScreen("LoadScreenSmith01"))
+        let release = try AgentCommandLine.request(["debug", "loadscreen"])
+        #expect(try AgentDebugCommand.parse("loadscreen", args(release.args)) == .loadScreen(nil))
+    }
+
+    @Test func fastTravelNamesTheMarker() throws {
+        let request = try AgentCommandLine.request(["debug", "fasttravel", "Riverwood"])
+        #expect(request.args == ["marker": "Riverwood"])
+        #expect(try AgentDebugCommand.parse("fasttravel", args(request.args))
+            == .fastTravel(marker: "Riverwood"))
+    }
+
     @Test func playBinkNamesTheFileAndTheSkipFlag() throws {
         let request = try AgentCommandLine.request([
             "debug", "playbink", "BGS_Logo.bik", "--interruptible"

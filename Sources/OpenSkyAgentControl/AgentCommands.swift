@@ -142,6 +142,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case fade(AgentFadeRequest)
     /// Puts the HUD into or out of cart mode, as Papyrus `Game.SetHudCartMode` does.
     case cartMode(Bool)
+    /// Holds the loading screen with this `LSCR` editor ID on screen; nil releases it.
+    case loadScreen(String?)
+    /// Fast travels to the map marker with this name, as the map does, without its refusals.
+    case fastTravel(marker: String)
     /// Plays a Bink movie from `Data\Video`, as Papyrus `Game.PlayBink` does.
     case playBink(file: String, interruptible: Bool)
     /// Ends the playing movie, even one a key cannot skip.
@@ -220,6 +224,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             guard (1 ... 24).contains(hours) else { throw args.invalid("hours", "1 to 24") }
             return try .passTime(hours: hours, sleeping: args.bool("sleep", default: false))
         case "subgraph": return try parseSubGraph(args)
+        case "loadscreen": return try .loadScreen(args.optionalString("id"))
+        case "fasttravel": return try .fastTravel(marker: args.string("marker"))
         default: return try parseRender(name, args)
         }
     }

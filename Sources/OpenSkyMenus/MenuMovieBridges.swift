@@ -20,6 +20,7 @@ nonisolated public enum MenuMovieBridges: Sendable {
         ItemListMenuMovieBridge.giftMoviePath,
         ItemListMenuMovieBridge.magicMoviePath,
         LevelUpMenuMovieBridge.moviePath,
+        LoadingMenuMovieBridge.moviePath,
         LockpickingMenuMovieBridge.moviePath,
         MapMenuMovieBridge.moviePath,
         MessageBoxMovieBridge.moviePath,

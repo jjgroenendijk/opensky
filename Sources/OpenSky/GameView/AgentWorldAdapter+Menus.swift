@@ -3,7 +3,10 @@
 
 import AppKit
 import OpenSkyAgentControl
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+import OpenSkyGameData
+import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyRendering
 
@@ -98,6 +101,7 @@ extension AgentWorldAdapter {
             "top": .init(game.menuMode.topMenu?.name),
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
             "hud": hudState,
+            "loading": loadingState,
             "movie": movieFocusState,
             "bink": binkState,
             "titles": titlesState
@@ -185,6 +189,21 @@ extension AgentWorldAdapter {
         "a": .a, "b": .b, "x": .x, "y": .y,
         "up": .dpadUp, "down": .dpadDown, "left": .dpadLeft, "right": .dpadRight
     ]
+
+    /// The loading screen: whether it covers, which screen, and its movie.
+    var loadingState: AgentJSON {
+        let loading = game.loadingScreens
+        let session = loading.session
+        return [
+            "covering": .bool(loading.isCovering),
+            "waiting": .bool(loading.isWaitingForDestination),
+            "screen": .init(session?.screen?.record.editorID),
+            "cameraPath": .init(session?.screen?.record.cameraPath),
+            "turn": .number(Double(session?.turnDegrees ?? 0)),
+            "movieLoaded": .bool(game.loadingWorld.isMovieLoaded),
+            "shown": .init(loading.shownCount)
+        ]
+    }
 
     var hudState: AgentJSON {
         [

@@ -18,6 +18,13 @@ extension Renderer {
         set { swf.enabled = newValue }
     }
 
+    /// Hides the main movie and keeps the overlay movie, as a loading screen
+    /// hides the HUD under its own movie.
+    public var swfMainMovieHidden: Bool {
+        get { swf.mainMovieHidden }
+        set { swf.mainMovieHidden = newValue }
+    }
+
     /// Centered SWF presentation scale. The HUD acceptance readout uses this for
     /// live A/B checks without mutating the movie's display list.
     public var swfScale: Float {
@@ -118,7 +125,8 @@ extension Renderer {
             Float(colorTexture?.width ?? 0), Float(colorTexture?.height ?? 0)
         )
         guard viewport.x > 0, viewport.y > 0 else { return }
-        for movie in [swf.movie, swf.overlay?.movie].compactMap(\.self) {
+        let main = swf.mainMovieHidden ? nil : swf.movie
+        for movie in [main, swf.overlay?.movie].compactMap(\.self) {
             encodeSWFMovie(movie, viewport: viewport, state: &state, stats: &stats)
         }
     }

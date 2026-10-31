@@ -17,6 +17,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var dialogueMenu: DialogueMenuController { get }
     var inventoryMenu: InventoryMenuController { get }
     var journalMenu: JournalMenuController { get }
+    var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockpickingMenu: LockpickingMenuController { get }
     var mapMenu: MapMenuCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
@@ -135,7 +136,9 @@ final class MenuRouter {
             game.lockpickingMenu.route($0)
         }
         table.register(MessageCoordinator.identifier) { [unowned game] in game.messages.route($0) }
-        table.register(LoadingScreenWorldAdapter.identifier) { _ in }
+        table.register(LoadingScreenWorldAdapter.identifier) { [unowned game] in
+            game.loadingWorld.route($0)
+        }
         table.register(MoviePlayerCoordinator.identifier) { [unowned game] in
             game.movies.route($0)
         }

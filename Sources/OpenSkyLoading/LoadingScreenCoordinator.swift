@@ -1,7 +1,7 @@
 // Shows a loading screen over a transition: covers the view at once, picks
 // the screen when the destination is known, holds it for the minimum time,
-// then fades back. Doors call it now; fast travel and save loading can call
-// the same entry points. See docs/engine/loading-screens.md.
+// then fades back. Doors, fast travel, and loads call it.
+// See docs/engine/loading-screens.md.
 
 import Foundation
 import OpenSkyConditions
@@ -17,11 +17,30 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
     public let scale: Float
     public let rotationDegrees: SIMD3<Float>
     public let translation: SIMD3<Float>
+    /// The MOD2 camera path mesh, played from `elapsedSeconds`.
+    public let cameraPath: String?
+    public let elapsedSeconds: Double
     public let text: String?
     /// 1 hides the world; below 1 the world shows through during the fade.
     public let opacity: Float
     /// False during the fade, when the world draws again under a dimming readout.
     public let drawsObject: Bool
+
+    public init(
+        model: String?, scale: Float, rotationDegrees: SIMD3<Float>, translation: SIMD3<Float>,
+        cameraPath: String? = nil, elapsedSeconds: Double = 0,
+        text: String?, opacity: Float, drawsObject: Bool
+    ) {
+        self.model = model
+        self.scale = scale
+        self.rotationDegrees = rotationDegrees
+        self.translation = translation
+        self.cameraPath = cameraPath
+        self.elapsedSeconds = elapsedSeconds
+        self.text = text
+        self.opacity = opacity
+        self.drawsObject = drawsObject
+    }
 }
 
 /// What the loading screen needs from the app.
@@ -75,6 +94,19 @@ public final class LoadingScreenCoordinator {
         start(next)
     }
 
+    /// The destination's location is known but its area still loads, as in a fast
+    /// travel. The screen shows until `loadFinished(at:)`.
+    public func destinationKnown(location: ResolvedFormID?, at time: Double) {
+        guard waitingSince != nil else { return }
+        waitingSince = nil
+        loadInFlight = true
+        start(LoadingScreenSession(screen: pick(location: location), startedAt: time))
+    }
+
+    public var isWaitingForDestination: Bool {
+        waitingSince != nil
+    }
+
     /// A load that can show its screen at once, such as the session start. The
     /// screen stays until `loadFinished(at:)`.
     public func beginLoad(at time: Double) {
@@ -94,6 +126,13 @@ public final class LoadingScreenCoordinator {
         guard waitingSince != nil else { return }
         waitingSince = nil
         finish()
+    }
+
+    /// The player turns the object, as the game allows inside the ONAM range.
+    public func turn(byDegrees degrees: Float, at time: Double) {
+        guard session != nil else { return }
+        session?.turn(byDegrees: degrees)
+        tick(time: time)
     }
 
     // MARK: - Debug
@@ -136,8 +175,10 @@ public final class LoadingScreenCoordinator {
         return LoadingCoverFrame(
             model: session.screen.flatMap { world?.presentationRecords?.model(of: $0) },
             scale: record?.initialScale ?? 1,
-            rotationDegrees: session.objectRotationDegrees(at: time),
+            rotationDegrees: session.objectRotationDegrees,
             translation: record?.initialTranslation ?? .zero,
+            cameraPath: record?.cameraPath,
+            elapsedSeconds: session.elapsedSeconds(at: time),
             text: text,
             opacity: session.opacity(at: time),
             drawsObject: phase == .showing

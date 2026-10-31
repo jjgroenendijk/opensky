@@ -37,6 +37,7 @@ protocol MapWorldHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var journal: JournalCoordinator { get }
+    var loadingWorld: LoadingScreenWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var messages: MessageCoordinator { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
@@ -247,6 +248,8 @@ extension MapWorldAdapter: MapMenuWorld {
         gameSession
             .gameClock = GameClock(totalGameSeconds: gameSession.gameClock
                 .totalGameSeconds + seconds)
+        // The game shows a loading screen for every fast travel.
+        game.loadingWorld.coverMove(to: marker.position)
         let rotation = SIMD3<Float>(0, 0, gameSession.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(
             position: marker.position,

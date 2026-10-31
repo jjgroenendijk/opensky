@@ -66,6 +66,8 @@ protocol AgentWorldHost: AnyObject {
     var inventoryWorld: InventoryWorldAdapter { get }
     var journalMenu: JournalMenuController { get }
     var loadingScreens: LoadingScreenCoordinator { get }
+    var loadingWorld: LoadingScreenWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
     var menuRouter: MenuRouter { get }
