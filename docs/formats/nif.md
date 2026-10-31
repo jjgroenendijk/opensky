@@ -169,6 +169,10 @@ masters: each one carries `Prn`. Each value is a bone of the character `skeleton
 except `NPC L Hand` and `NPC R Hand`, which leave out the bone's `[LHnd]` or `[RHnd]` tag.
 OpenSky matches such a value to the bone whose name starts with it.
 
+Weapons and shields carry `Prn` too. On the install, `armor\steel\shield.nif` names `SHIELD`,
+`weapons\steel\steelsword.nif` names `WeaponSword`, and `weapons\steel\steelbattleaxe.nif`
+names `WeaponBack`. The case differs from the Havok rig, which spells the node `Shield`.
+
 ## BSBehaviorGraphExtraData
 
 Names the Havok behaviour project that animates an object mesh. After the `NiExtraData`
