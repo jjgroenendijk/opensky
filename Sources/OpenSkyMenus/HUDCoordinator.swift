@@ -37,10 +37,10 @@ public final class HUDCoordinator {
     }
 
     /// Hides the HUD while a loading screen is up, and shows it again after.
+    /// The loading movie draws on the overlay layer, so only the main movie hides.
     public func setCovered(_ covered: Bool) {
         isCovered = covered
-        guard isLoaded, let renderer else { return }
-        renderer.swfEnabled = layerVisible
+        renderer?.swfMainMovieHidden = covered
     }
 
     /// `Game.SetHudCartMode` sets `cart`; the frame sets the rest from the player.
@@ -105,7 +105,7 @@ public final class HUDCoordinator {
     }
 
     private var layerVisible: Bool {
-        settings.layerEnabled && !isCovered
+        settings.layerEnabled
     }
 
     /// Takes the HUD off the SWF layer, so a menu that owns the layer next can

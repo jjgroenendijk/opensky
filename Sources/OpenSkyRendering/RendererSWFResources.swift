@@ -58,6 +58,8 @@ nonisolated public final class SWFPassResources {
 
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
     public var enabled = true
+    /// Mirrored by `Renderer.swfMainMovieHidden`.
+    public var mainMovieHidden = false
     /// Centered scale multiplier over the fit-to-viewport mapping.
     public var scale: Float = 1
     public var opacity: Float = 1

@@ -53,7 +53,8 @@ public final class SWFMovieSource {
     public static let menuMoviePaths = [
         HUDMovieBridge.moviePath, TitleMenuMovieBridge.moviePath, SystemMenuMovieBridge.moviePath,
         InventoryMenuMovieBridge.moviePath, ContainerMenuMovieBridge.containerMoviePath,
-        ContainerMenuMovieBridge.barterMoviePath, DialogueMenuMovieBridge.moviePath
+        ContainerMenuMovieBridge.barterMoviePath, DialogueMenuMovieBridge.moviePath,
+        LoadingMenuMovieBridge.moviePath
     ]
 
     /// Calls `use` now when the movie is decoded, else after the drain that brings it.
