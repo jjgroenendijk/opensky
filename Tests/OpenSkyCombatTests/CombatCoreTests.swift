@@ -74,6 +74,17 @@ struct CombatCoreTests {
         #expect(CombatCore.arrow(carried: [FormID(0xF)]) { _ in nil } == nil)
     }
 
+    @Test func theEquippedArrowWinsOverTheFirstCarriedOne() {
+        let profile = ProjectileProfile(speed: 3600, gravityFactor: 0.35, range: 60000)
+        let iron = ArcheryAmmunition(item: FormID(0x1397D), damage: 8, profile: profile)
+        let steel = ArcheryAmmunition(item: FormID(0x1397F), damage: 10, profile: profile)
+        let arrows = [iron.item: iron, steel.item: steel]
+        let chosen = CombatCore.arrow(equipped: [steel.item], carried: [iron.item, steel.item]) {
+            arrows[$0]
+        }
+        #expect(chosen == steel)
+    }
+
     @Test func healthFractionIsClampedAndFullWithoutAMaximum() {
         #expect(CombatCore.healthFraction(current: 25, maximum: 100) == 0.25)
         #expect(CombatCore.healthFraction(current: -5, maximum: 100) == 0)
