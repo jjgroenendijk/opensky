@@ -111,8 +111,10 @@ ID, also when the sound file is still loading. The volume is clamped to 0 to 1, 
 
 `Game.GetSunPositionX`, `Y`, and `Z` give the point 100,000 units from the player's eye toward
 the sun. They return 0 in an interior and at night, when the wiki says the sun is not up.
-`OnPlayerBowShot` reports sun gazing when the player's view is within 5 degrees of the sun. No
-open source gives the game's angle, so this cone is OpenSky's own.
+`Game.IsPlayerSungazing` is true, and `OnPlayerBowShot` reports sun gazing, when the player's
+view is within 5 degrees of the sun. No open source gives the game's angle, so this cone is
+OpenSky's own. `Game.SetSunGazeImageSpaceModifier` plays its modifier when the view enters the
+cone.
 
 ## Traced stubs
 
