@@ -9,9 +9,11 @@ import Testing
 @MainActor
 struct WorldAudioEngineNodePoolTests {
     @discardableResult
-    private func play(_ engine: WorldAudioEngine, name: String) throws -> Int {
+    private func play(_ engine: WorldAudioEngine, name: String, seconds: Double = 0.25) throws
+        -> Int
+    {
         try engine.playPositional(
-            buffer: OfflineAudioFixture.makeToneBuffer(seconds: 0.25),
+            buffer: OfflineAudioFixture.makeToneBuffer(seconds: seconds),
             request: AudioPlayRequest(
                 name: name, category: .effects, worldPosition: SIMD3(64, 0, 0)
             )
@@ -36,13 +38,16 @@ struct WorldAudioEngineNodePoolTests {
         #expect(engine.engine.attachedNodes.count == attached)
     }
 
+    /// The first tone outlasts every render here, so the stop always lands mid-sound. The
+    /// block after the stop is skipped, because the node's volume reaches zero over it.
     @Test
     func aReusedNodeIsAudible() throws {
         let engine = try OfflineAudioFixture.makeRunningEngine()
         engine.updateListener(worldPosition: .zero, yaw: 0, pitch: 0)
-        let first = try play(engine, name: "first")
+        let first = try play(engine, name: "first", seconds: 2)
         _ = try OfflineAudioFixture.channelRMS(engine)
         #expect(engine.stopSource(id: first))
+        _ = try OfflineAudioFixture.channelRMS(engine)
         #expect(try OfflineAudioFixture.channelRMS(engine).reduce(0, +) < 0.001)
 
         try play(engine, name: "again")
