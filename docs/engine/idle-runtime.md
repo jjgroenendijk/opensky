@@ -172,7 +172,9 @@ A prop is a held object, such as a broom or a tankard. It is an `ANIO` record.
 
 - The behavior graph sends an `AnimObjDraw` event with a string payload while the idle
   plays. The payload is the editor ID of the `ANIO`. OpenSky collects the payloads of the
-  `HKBStringEventPayload` objects below the target state.
+  `HKBStringEventPayload` objects below the target state, and of the events the state
+  sends as it is entered. The headsman's `Executioner_State` in `MT_Behavior.hkx` is the
+  second kind: it sends `AnimObjDraw` with `AnimObjectExecutionerAxe` on enter.
 - The `ANIO` mesh holds a `NiStringExtraData` named `Prn`. Its value is the bone the prop
   rides on, such as `AnimObjectR` or `NPC R Hand [RHnd]`
   ([NIF](/formats/nif.md#nistringextradata)). A value without the bone's tag, such as
