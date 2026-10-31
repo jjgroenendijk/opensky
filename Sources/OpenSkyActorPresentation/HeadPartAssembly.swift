@@ -3,6 +3,7 @@
 // Rules and sources: docs/formats/head-parts.md, "Assembly".
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public enum HeadPartOrigin: Equatable, Sendable {
@@ -193,5 +194,37 @@ nonisolated extension HeadPartSet {
             )
         }
         return HeadPartSet(parts: parts, misses: misses)
+    }
+
+    /// The eyes part drawn with `set`, as `Actor.SetEyeTexture` asks.
+    public func withEyeTextures(_ set: TextureSet) -> HeadPartSet {
+        let parts = parts.map { part -> ResolvedHeadPart in
+            guard part.partType == .eyes else { return part }
+            var eyes = ResolvedHeadPart(
+                formID: part.formID, editorID: part.editorID, partType: part.partType,
+                origin: part.origin, modelPath: part.modelPath,
+                diffuseTexture: set.diffusePath ?? part.diffuseTexture,
+                normalTexture: set.normalPath ?? part.normalTexture, tint: part.tint,
+                detailTexture: part.detailTexture
+            )
+            eyes.faceTintTexture = part.faceTintTexture
+            return eyes
+        }
+        return HeadPartSet(parts: parts, misses: misses)
+    }
+
+    /// The same swap on a baked FaceGen head, whose eyes shape carries the eyes
+    /// part's editor ID as its name (docs/engine/papyrus-session-natives.md).
+    public func eyeSurface(_ set: TextureSet) -> ModelSurfaceOverride? {
+        let shapes = parts.compactMap { part -> ModelSurfaceOverride.ShapeTextures? in
+            guard part.partType == .eyes, let name = part.editorID else { return nil }
+            return ModelSurfaceOverride.ShapeTextures(
+                shapeName: name, diffuseTexture: set.diffusePath, normalTexture: set.normalPath
+            )
+        }
+        guard !shapes.isEmpty else { return nil }
+        return ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: shapes
+        )
     }
 }

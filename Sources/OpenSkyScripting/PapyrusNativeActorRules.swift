@@ -101,6 +101,16 @@ extension PapyrusNativeFunctions {
             _ = clear(key)
             return .returned(.none)
         }
+        scriptState("Actor", "SetEyeTexture", into: &registry) { call, bridge, key in
+            guard let set = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+                return .returned(.none)
+            }
+            guard let retexture = bridge.gameNatives.setEyeTexture else {
+                return failure(call, "SetEyeTexture needs the running game")
+            }
+            _ = retexture(key, set)
+            return .returned(.none)
+        }
         installAshPile(into: &registry)
     }
 

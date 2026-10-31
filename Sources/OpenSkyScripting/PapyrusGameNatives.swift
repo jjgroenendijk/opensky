@@ -107,6 +107,8 @@ public struct PapyrusGameNatives {
     public var playImpact: ((_ impacts: ReferenceKey, PapyrusImpactPick) -> Bool)?
     /// Turns a dead actor into a ragdoll now. False when it has none.
     public var forceRagdoll: ((ReferenceKey) -> Bool)?
+    /// Draws an actor's eyes with a TXST until its 3D reloads. False when it has no 3D.
+    public var setEyeTexture: ((_ actor: ReferenceKey, _ textureSet: ReferenceKey) -> Bool)?
     /// A named node of a reference's 3D, as a world transform. A model still loading
     /// answers later: the app runs `then` with the transform and answers the token.
     public var nodeTransform: (

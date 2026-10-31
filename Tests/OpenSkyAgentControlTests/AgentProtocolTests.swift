@@ -199,6 +199,12 @@ struct AgentCommandParsingTests {
         #expect(try AgentStateQuery.parse("mount", args([:])) == .mount)
     }
 
+    @Test func eyesNamesTheActorAndTheTextureSet() throws {
+        let request = try AgentCommandLine.request(["debug", "eyes", "1A2B", "0x2B6C"])
+        #expect(try AgentDebugCommand.parse("eyes", args(request.args))
+            == .eyes(reference: "1A2B", textureSet: "0x2B6C"))
+    }
+
     @Test func drunkNamesTheActorAndTheSwitch() throws {
         let request = try AgentCommandLine.request(["debug", "drunk", "1A2B", "off"])
         #expect(request.args == ["ref": "1A2B", "on": false])

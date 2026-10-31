@@ -286,9 +286,12 @@ nonisolated extension CellSceneBuilder {
                         entry: indexed[actor.formID], deltas: deltas
                     ),
                     roll: roll
-                ).presenting(indexed[actor.formID].flatMap {
-                    deltas[$0.key]?.component(ActorPresentationState.self)
-                })
+                ).presenting(
+                    indexed[actor.formID].flatMap {
+                        deltas[$0.key]?.component(ActorPresentationState.self)
+                    },
+                    textureSets: resolvers.visual.textureSets
+                )
                 let placed = actorApplyingRuntimeTransform(
                     actor,
                     entry: indexed[actor.formID],

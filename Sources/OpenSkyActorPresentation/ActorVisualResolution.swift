@@ -147,14 +147,22 @@ nonisolated public struct ResolvedActorVisual: Equatable, Sendable {
     /// The parts an assembled head would show. Empty for a race without FaceGen.
     public var headParts = HeadPartSet(parts: [], misses: [])
     public var headSource = ActorHeadSource.baked
+    /// Laid over the baked FaceGen head, such as a script's eye texture.
+    public var faceGenSurface: ModelSurfaceOverride?
 }
 
 nonisolated extension ResolvedActorVisual {
-    /// The visual with a runtime presentation applied: the head source.
-    public func presenting(_ state: ActorPresentationState?) -> ResolvedActorVisual {
+    /// The visual with a runtime presentation applied: the head source and the eyes.
+    public func presenting(
+        _ state: ActorPresentationState?, textureSets: [UInt32: TextureSet] = [:]
+    ) -> ResolvedActorVisual {
         guard let state else { return self }
         var copy = self
         copy.headSource = state.headSource
+        if let set = state.eyeTextureSet.flatMap({ textureSets[$0.rawValue] }) {
+            copy.headParts = headParts.withEyeTextures(set)
+            copy.faceGenSurface = headParts.eyeSurface(set)
+        }
         return copy
     }
 }

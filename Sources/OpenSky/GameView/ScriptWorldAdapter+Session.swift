@@ -21,6 +21,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -91,6 +92,14 @@ extension ScriptWorldAdapter {
         hooks.packageLocation = { [weak game] actor in game?.packages.packageLocation(of: actor) }
         hooks.forceRagdoll = { [weak game] key in
             game?.ragdoll.runtime?.activate(key, instant: true) ?? false
+        }
+        hooks.setEyeTexture = { [weak game] actor, textureSet in
+            guard
+                let game, let cell = game.streamer?.cellLocation(of: actor),
+                let set = game.scripts.bridge?.localFormID(of: textureSet)
+            else { return false }
+            game.worldState.setEyeTexture(set, for: actor, in: cell)
+            return true
         }
     }
 

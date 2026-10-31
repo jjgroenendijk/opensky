@@ -172,6 +172,12 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.form", "Put the player in a beast form, or end it.",
             positionals: [required("form", "One of werewolf, vampirelord, or none.")]
+        ),
+        command(
+            "debug.eyes", "Draw an actor's eyes with a texture set, as SetEyeTexture does.",
+            positionals: [
+                required("ref", refHelp), required("set", "The TXST, as a hex FormID.")
+            ]
         )
     ]
 

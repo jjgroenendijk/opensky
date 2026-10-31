@@ -1,5 +1,5 @@
 // The natives the app answers through hooks: sound instances, shader particles,
-// scripted pathing, and the ash pile, over a synthetic lever.
+// scripted pathing, the ash pile, and eye textures, over a synthetic lever.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -123,5 +123,20 @@ struct PapyrusNativeLatentHooksTests {
         fixture.session.bridge.activate(pile, by: .player, togglesOpen: false)
         let activation = fixture.session.bridge.referenceState(for: fixture.key)?.activation
         #expect(activation?.activationCount == 1)
+    }
+
+    @Test func setEyeTextureHandsTheActorAndTheSetToTheGame() throws {
+        let fixture = try Fixture.make()
+        var retextured: [(ReferenceKey, ReferenceKey)] = []
+        fixture.session.bridge.gameNatives.setEyeTexture = { actor, set in
+            retextured.append((actor, set))
+            return true
+        }
+        let set = door(fixture)
+        #expect(call(fixture, "Actor", "SetEyeTexture", [set.value]) == .returned(.none))
+        #expect(call(fixture, "Actor", "SetEyeTexture", [.none]) == .returned(.none))
+        #expect(retextured.count == 1)
+        #expect(retextured.first?.0 == fixture.key)
+        #expect(retextured.first?.1 == set.key)
     }
 }

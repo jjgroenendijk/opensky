@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OpenSkyActorPresentation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import Testing
@@ -124,5 +125,21 @@ struct HeadPartResolverTests {
         #expect(set.parts.first?.normalTexture == "hair_n.dds")
         #expect(set.parts.last?.tint == SIMD3(1, 0, 0))
         #expect(set.parts.last?.diffuseTexture == nil)
+    }
+
+    @Test func anEyeTextureRetexturesOnlyTheEyesInBothHeads() throws {
+        let resolver = try Self.resolver([Self.part(0x10, type: 1), Self.part(0x12, type: 2)])
+        let set = resolver.resolve(
+            raceDefaults: [FormID(0x10), FormID(0x12)], npcParts: [],
+            race: Self.nord, hairColor: nil
+        )
+        let eyes = TextureSet(formID: FormID(0x61), diffusePath: "eyevampire.dds", decal: nil)
+        let assembled = set.withEyeTextures(eyes)
+        #expect(assembled.parts.map(\.diffuseTexture) == [nil, "eyevampire.dds"])
+        #expect(set.eyeSurface(eyes)?.shapes == [ModelSurfaceOverride.ShapeTextures(
+            shapeName: "Part18", diffuseTexture: "eyevampire.dds", normalTexture: nil
+        )])
+        let faceOnly = HeadPartSet(parts: Array(set.parts.prefix(1)), misses: [])
+        #expect(faceOnly.eyeSurface(eyes) == nil)
     }
 }

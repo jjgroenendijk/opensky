@@ -169,6 +169,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case drunk(reference: String, drunk: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
     case beastForm(String)
+    /// Draws an actor's eyes with a TXST, as `Actor.SetEyeTexture` does.
+    case eyes(reference: String, textureSet: String)
     /// Reports `count` gamepads when fewer are real, and presses gamepad buttons for a frame.
     case gamepad(count: Int?, press: [String])
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
@@ -243,6 +245,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
+        case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
         case "gamepad": try parseGamepad(args)
         default: try parseScreen(name, args)
         }

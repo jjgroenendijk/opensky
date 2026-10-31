@@ -2,8 +2,8 @@
 type: Subsystem
 title: Papyrus session natives and engine events
 description: The Papyrus natives that reach the running session - saves, quitting, fades, screen
-  blood, god mode, crime switches, model nodes, sounds, scripted walks, the sun - the natives that
-  stay traced stubs, and the engine events for wards, books, grabs, equips, and bow shots, with
+  blood, god mode, crime switches, model nodes, sounds, scripted walks, the sun, eye textures - the
+  natives that stay traced stubs, and the engine events for wards, books, grabs, equips, and bow shots, with
   where OpenSky differs.
 tags: [engine, papyrus, session, events]
 ---
@@ -117,6 +117,16 @@ view is within 5 degrees of the sun. No open source gives the game's angle, so t
 OpenSky's own. `Game.SetSunGazeImageSpaceModifier` plays its modifier when the view enters the
 cone.
 
+## Eye textures
+
+`Actor.SetEyeTexture` draws the actor's eyes head part with the given texture set. An
+assembled head retextures that part. A baked FaceGen head names its eyes shape after the eyes
+head part's editor ID, so OpenSky retextures the shape of that name. For example, Serana's
+`dawnguard.esm\00002b6c.nif` has the shape `FemaleEyesHumanVampire01Nord`. The CK wiki says the
+texture lasts until the actor's 3D reloads, and the vampire scripts set it again in `OnLoad`. So
+OpenSky clears it when the actor's cell unloads, and keeps it in no save. An actor without 3D
+ignores the call. The player's head ignores it too; no vanilla script calls it on the player.
+
 ## Traced stubs
 
 These natives return a fixed value and write a trace line, because the subsystem they need is not
@@ -124,7 +134,6 @@ built. The vanilla scripts that call each one show what it is for:
 
 | Native | Vanilla callers | Needs |
 | --- | --- | --- |
-| `Actor.SetEyeTexture` | `DLC1VampireTurnScript`, `DLC1SeranaCureQuestScript` | Changing a live actor's model |
 | `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
 
 The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
