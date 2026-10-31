@@ -46,6 +46,8 @@ nonisolated public struct Cell: Sendable {
     public let flags: Flags
     /// Record-header flag `0x20000`: trespass here costs a bounty at once.
     public let isOffLimits: Bool
+    /// Record-header flag `0x80000`: the player cannot wait or sleep here.
+    public let isNoWait: Bool
     /// Present on exterior cells, nil on interiors.
     public let grid: Grid?
     /// XCLW. nil = inherit WRLD DNAM default water height, also for FLT_MAX.
@@ -104,6 +106,7 @@ nonisolated public struct Cell: Sendable {
         name = fields.name
         flags = fields.flags
         isOffLimits = record.flags.rawValue & 0x0002_0000 != 0
+        isNoWait = record.flags.rawValue & 0x0008_0000 != 0
         grid = fields.grid
         waterHeight = fields.waterHeight
         waterType = fields.waterType

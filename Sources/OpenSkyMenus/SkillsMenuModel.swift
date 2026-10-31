@@ -12,6 +12,8 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case skills
         case perks
         case legendary(ConfirmationModel)
+        /// The question before a perk is bought.
+        case perkConfirm(ConfirmationModel)
     }
 
     public enum Action: Equatable, Sendable {
@@ -41,11 +43,20 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     public private(set) var attributePosition = 1
     /// The last spend's answer, or why a key did nothing.
     public var message: String?
+    public var texts = GameSettingTexts<SkillsMenuText>.vanilla
 
     public init(player: SkillsMenuPlayer, skills: [SkillsMenuSkill]) {
         self.player = player
         self.skills = Self.ringOrdered(skills)
         page = player.pendingAttributePicks > 0 ? .levelUp : .skills
+    }
+
+    /// The perk tree stays in view while its question is open.
+    public var isInTree: Bool {
+        if case .perkConfirm = page {
+            return true
+        }
+        return page == .perks
     }
 
     public var selectedSkill: SkillsMenuSkill? {
@@ -90,6 +101,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case .skills: handleSkills(event)
         case .perks: handlePerks(event)
         case let .legendary(confirmation): handleLegendary(event, confirmation)
+        case let .perkConfirm(confirmation): handlePerkConfirm(event, confirmation)
         }
     }
 
@@ -141,12 +153,12 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
                 page = .skills
             }
         case .button(.accept):
-            guard let perk = selectedPerk, let skill = selectedSkill else { return nil }
+            guard let perk = selectedPerk, selectedSkill != nil else { return nil }
             if let refusal = perk.refusal {
                 message = refusal
                 return nil
             }
-            return .buyPerk(node: perk.node, skill: skill.index)
+            page = .perkConfirm(ConfirmationModel(question: texts[.perkConfirm]))
         case .button(.cancel):
             page = .skills
         case .button(.yButton):
@@ -174,6 +186,24 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         }
     }
 
+    private mutating func handlePerkConfirm(
+        _ event: MenuInputEvent, _ confirmation: ConfirmationModel
+    ) -> Action? {
+        var confirmation = confirmation
+        switch confirmation.handle(event) {
+        case nil:
+            page = .perkConfirm(confirmation)
+            return nil
+        case .chose(0):
+            page = .perks
+            guard let perk = selectedPerk, let skill = selectedSkill else { return nil }
+            return .buyPerk(node: perk.node, skill: skill.index)
+        case .chose, .cancelled:
+            page = .perks
+            return nil
+        }
+    }
+
     // MARK: - Helpers
 
     private mutating func askLegendary() {
@@ -182,10 +212,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             message = "\(skill.name) must reach 100 to become legendary."
             return
         }
-        page = .legendary(ConfirmationModel(
-            question: "Make \(skill.name) legendary? It drops back to its starting level, "
-                + "and every perk point spent in it is returned."
-        ))
+        page = .legendary(ConfirmationModel(question: texts[.legendaryConfirm]))
     }
 
     /// The closest box that way, with sideways distance counted twice, so up follows a

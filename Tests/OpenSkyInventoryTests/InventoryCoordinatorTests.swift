@@ -337,6 +337,22 @@ extension InventoryCoordinatorTests {
         #expect(recorder.uses.first?.amount == Float(value))
     }
 
+    /// A target that caught the player refuses for two game days (UESP "Skyrim:Pickpocket").
+    @Test func aCatchRefusesTheTargetForTwoDays() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        let chest = try #require(coordinator.containerHolder(for: Self.chest))
+        try #require(coordinator.runtime?.inventory).add(Fixture.sword, count: 1, to: chest)
+        harness.world.gameDaysPassed = 10
+        #expect(!coordinator.pickpocketRefused(by: chest.key))
+
+        _ = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 99)
+        harness.world.gameDaysPassed = 11.9
+        #expect(coordinator.pickpocketRefused(by: chest.key))
+        harness.world.gameDaysPassed = 12
+        #expect(!coordinator.pickpocketRefused(by: chest.key))
+    }
+
     /// Worn items stay put without a Can Pickpocket Equipped Item perk.
     @Test func anEquippedItemNeedsThePerk() throws {
         let harness = try Self.harness()
@@ -355,6 +371,15 @@ extension InventoryCoordinatorTests {
         var placement: DropPlacement?
         var bounty: Int32 = 0
         var gameDaysPassed: Float?
+        var caughtDays: [ReferenceKey: Float] = [:]
+
+        func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
+            caughtDays[key]
+        }
+
+        func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+            caughtDays[key] = day
+        }
 
         func perkActivateLabel(for _: FormID) -> String? {
             activateLabel

@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyCells
+import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface
@@ -18,6 +19,7 @@ import OpenSkyWorldInterface
 /// What `LockpickingMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
+    var crime: CrimeCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
     var progression: ProgressionCoordinator { get }
@@ -104,7 +106,7 @@ final class LockpickingMenuController {
     /// Opens the menu for a lock the gate refused, if the lock can be picked.
     func handle(_ refusal: ActivationRefusalEvent) {
         guard case let .locked(level, _) = refusal.refusal else { return }
-        if let notice = locks.refusalNotice(level: level) {
+        if let notice = locks.refusalNotice(level: level, pursued: game.crime.isPlayerPursued) {
             locks.record(.notice(notice))
             game.hud.showNotification(locks.texts.text(for: notice))
             return

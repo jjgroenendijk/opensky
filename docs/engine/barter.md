@@ -22,6 +22,21 @@ The row list is the [inventory menu](/engine/inventory-menu.md)'s. Container tra
 follower's trade does. The actor uses the same holder as a corpse search. Without
 `abForceOpen`, only an actor a script made a teammate with `SetPlayerTeammate` opens.
 
+## A follower's trade
+
+UESP "Skyrim:Followers" (<https://en.uesp.net/wiki/Skyrim:Followers>) gives two limits on a
+follower's own items:
+
+- Its default apparel stays with it. A take that would leave fewer copies than its default
+  outfit gives shows `sTeammateCantTakeOutfit`. An extra copy may go, as UESP's note on
+  identical armour shows. Take All leaves the outfit's copies.
+- A gift past its `CarryWeight` actor value shows its name and `sTeammateOverencumbered`
+  ("can't carry any more.").
+
+The trade list hides the outfit's copies, as the game does; an extra copy shows.
+`sTeammateCantGiveOutfit` ("Your teammate already owns that armor.") is not used, because no
+source says when it shows.
+
 ## The price formula
 
 From UESP "Skyrim:Speech", section "Prices" (<https://en.uesp.net/wiki/Skyrim:Speech#Prices>):
@@ -33,7 +48,8 @@ sell price   = round(value of item * sell price modifier / base price factor)
 ```
 
 `fBarterMax` defaults to 3.3 and `fBarterMin` to 2.0. A skill above 100 has no effect. Two caps
-apply: the sell price is at most `value * 1.00`, and the buy price is at least `value * 1.05`.
+apply: the sell price is at most `value * 1.00`, and the buy price is at least `value *
+fMinBuyMult`, 1.05 in `Skyrim.esm`.
 The same page lists results the code is tested against: a factor of 3.3 at Speech 0, 3.10 at 15,
 and 2 at 100, and a sell factor of 0.322 at 15.
 

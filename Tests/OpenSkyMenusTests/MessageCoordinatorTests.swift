@@ -3,6 +3,7 @@
 // in order, and help counts persist through the world port.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -37,6 +38,10 @@ final class FakeMessageWorld: MessageWorld, MenuInputConsumer {
 
     func showHUDNotification(_ text: String) {
         hudLines.append(text)
+    }
+
+    var worldNoticeTexts: GameSettingTexts<WorldNoticeText> {
+        .vanilla
     }
 
     func setHUDHelpMessage(_ text: String?) {

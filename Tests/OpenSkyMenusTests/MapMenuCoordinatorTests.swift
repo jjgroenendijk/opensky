@@ -5,6 +5,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import Testing
 
@@ -23,6 +24,7 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var questTargets: [QuestTargetMarker] = []
     var view: (eye: SIMD3<Float>, lookAt: SIMD3<Float>)?
     var notifications: [String] = []
+    var notices: [WorldNotice] = []
     var stats: [String] = []
     var shownMarkers: [SIMD3<Float>] = []
     var travelled: [String] = []
@@ -70,6 +72,10 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
         notifications.append(text)
     }
 
+    func showWorldNotice(_ notice: WorldNotice) {
+        notices.append(notice)
+    }
+
     func incrementStat(_ name: String) {
         stats.append(name)
     }
@@ -111,13 +117,13 @@ struct MapMenuCoordinatorTests {
         ])
         let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.tick()
-        #expect(world.notifications == ["Discovered Riverwood"])
+        #expect(world.notices == [.locationDiscovered(name: "Riverwood")])
         #expect(world.stats == ["Locations Discovered"])
         #expect(world.sites[0].state.canTravelTo)
         #expect(!world.sites[1].state.isVisible)
         #expect(world.localMapFog.exploredCount(.exterior(CellCoordinate(x: 0, y: 0))) > 0)
         menu.tick()
-        #expect(world.notifications.count == 1, "no repeat before the player moves")
+        #expect(world.notices.count == 1, "no repeat before the player moves")
     }
 
     @Test @MainActor
@@ -264,7 +270,7 @@ struct MapMenuCoordinatorTests {
         #expect(FastTravelRule.refusal(context) == .overencumbered)
         context.takingHealthDamage = true
         #expect(FastTravelRule.refusal(context) == .takingHealthDamage)
-        #expect(FastTravelRefusal.takingHealthDamage.rawValue == "sNoFastTravelDefault")
+        #expect(FastTravelRefusal.takingHealthDamage.rawValue == "sFastTravelNoTravelHealthDamage")
         context.alarmed = true
         #expect(FastTravelRule.refusal(context) == .alarm)
     }

@@ -174,5 +174,14 @@ extension GapsGatherer {
         _ = GameSettingTexts<GenderText>.resolve(store: store)
         _ = GameSettingTexts<PlayerDeathText>.resolve(store: store)
         _ = GameSettingTexts<GamepadNoticeText>.resolve(store: store)
+        _ = GameSettingTexts<ActivationRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<ItemRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<WorldNoticeText>.resolve(store: store)
+        _ = GameSettingTexts<PoisonText>.resolve(store: store)
+        _ = GameSettingTexts<PickpocketText>.resolve(store: store)
+        _ = GameSettingTexts<TeammateTradeText>.resolve(store: store)
+        _ = GameSettingTexts<CraftingRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<SkillsMenuText>.resolve(store: store)
+        _ = GameSettingTexts<MessageBoxText>.resolve(store: store)
     }
 }

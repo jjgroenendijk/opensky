@@ -237,6 +237,20 @@ struct CellRecordTests {
         SIMD3(Float(red) / 255, Float(green) / 255, Float(blue) / 255)
     }
 
+    @Test func readsTheCantWaitHeaderFlag() throws {
+        let fields = ESMFixture.field("DATA", Data([0x01, 0x00]))
+        let flagged = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
+            "CELL", formID: 0x12, flags: 0x0008_0000, data: fields
+        )), localized: false)
+        let plain = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
+            "CELL", formID: 0x13, flags: 0x0002_0000, data: fields
+        )), localized: false)
+
+        #expect(flagged.isNoWait)
+        #expect(!plain.isNoWait)
+        #expect(plain.isOffLimits)
+    }
+
     /// The CELL DATA bits docs/formats/world-records.md lists.
     @Test func flagBitsMatchTheDocumentedList() {
         let documented: [(Cell.Flags, UInt16)] = [

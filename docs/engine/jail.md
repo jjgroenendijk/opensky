@@ -49,7 +49,10 @@ The stay begins in the first cell the player stands in after the arrest. That is
 ## Serving the sentence
 
 UESP: "To serve your sentence, sleep in a cell bed. You'll awaken when your time has been served."
-Activating any bed during a stay serves it; `Game.ServeTime` does the same. Serving:
+Activating any bed during a stay asks `sServeSentenceQuestion`, "Do you want to serve your time in
+jail?", with the buttons `sYesText` and `sNoText`. UESP "Skyrim:Blindsighted" quotes the question as
+"Serve your time in jail?". Yes serves the sentence; `Game.ServeTime` serves it without asking.
+Serving:
 
 - moves the game clock forward by the sentence;
 - clears skill progress (below);
@@ -77,7 +80,9 @@ OpenSky does not read it.
 
 Leaving the jail cell by any way but serving is an escape. UESP: "If you do escape, your bounty
 will remain." So the bounty cleared at the arrest is owed again, in its violent and non-violent
-halves, plus the faction's escape price (`CRVA` escape, or `iCrimeGoldEscape` 100). The escape
+halves. The escape is a crime of its own: it adds the faction's escape price (`CRVA` escape, or
+`iCrimeGoldEscape` 100) to the violent half, because the Creation Kit's Crime page lists escape
+under "Major Crimes", and the ledger counts it. The escape
 fires `ESJA` with the player as `R1` and the faction as `F1`, and counts "Jail Escapes". The
 belongings stay in the `PLCN` chest for the player to find.
 

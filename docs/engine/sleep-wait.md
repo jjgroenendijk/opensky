@@ -23,6 +23,8 @@ menu `sNoWait...`. OpenSky checks them in this order:
 
 | Reason | Setting suffix |
 | --- | --- |
+| A script turned waiting off (`SetInChargen`) | `Default` |
+| The cell or its worldspace has the Can't Wait flag | `InCell` |
 | In combat, or a hostile actor nearby | `HostileActorsNear` |
 | Guards are pursuing the player | `WhileAlarm` |
 | A guard has told the trespassing player to leave | `WarnToLeave` |
@@ -42,10 +44,9 @@ time, and timed effects do not run out.
 A bed's owner comes from the same ownership rule as theft ([crime](/engine/crime.md)). A bed
 the player owns, or that the player's faction owns at a rank they hold, is allowed.
 
-The settings `sNoSleepInCell`, `sNoWaitInCell`, `sNoSleepDefault`, and `sNoWaitDefault`
-also exist in `Skyrim.esm`. OpenSky does not use them, because no observed rule says when they
-apply. Sleeping
-sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).
+The Can't Wait flag is record-header flag `0x80000` on CELL and on WRLD (UESP
+"Skyrim Mod:Mod File Format/CELL" and ".../WRLD"). The order of the first two rows is
+OpenSky's reading. Sleeping sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).
 The Well Rested and Lover's
 Comfort bonuses are not given.
 

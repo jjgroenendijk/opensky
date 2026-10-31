@@ -109,7 +109,7 @@ the number. A summary line goes to stderr.
 | `record show <id>` | One record by FormID or editor ID: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
 | `record find --type <TYPE> [--where <filter>]... [--fields a,b] [--limit n] [--count] [--json]` | Every winning record of one type that matches the filters ([searching records](#searching-records)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
-| `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
+| `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin, and the text of a string setting from that plugin's string table. How a documented fallback is checked against the shipped number |
 | `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](/engine/ess-import.md)) |
 | `ess list <folder>` | Each save's header in a folder |
 | `gaps [--only a,b] [--limit n] [--summary-out path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table ([gap report](/tools/gaps.md)) |

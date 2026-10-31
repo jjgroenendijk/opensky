@@ -1,7 +1,7 @@
-// What a crime is, and what one is worth. Five kinds: theft, assault, murder,
-// trespass, and a seen werewolf or vampire lord transformation. Prices come from each crime
-// faction's `CRVA`, or from the `iCrimeGold*` settings when the faction sets
-// "Use Defaults"; both match UESP's bounty table
+// What a crime is, and what one is worth. Seven kinds: theft, pickpocketing, assault,
+// murder, trespass, a jail escape, and a seen werewolf or vampire lord transformation.
+// Prices come from each crime faction's `CRVA`, or from the `iCrimeGold*` settings when
+// the faction sets "Use Defaults"; both match UESP's bounty table
 // (<https://en.uesp.net/wiki/Skyrim:Crime>). See docs/engine/crime.md.
 
 import Foundation
@@ -13,19 +13,25 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
     /// Taking a reference somebody else owns, whether off the ground or out of
     /// their container.
     case theft
+    /// A pickpocket attempt the target noticed. It costs the flat `CRVA` pickpocket price.
+    case pickpocket
     /// The first blow against an actor that was not already hostile.
     case assault
     /// That actor dying of it.
     case murder
     /// Being somewhere an owner has not let this actor be.
     case trespass
+    /// Leaving jail before the sentence ends. It costs the `CRVA` escape price.
+    case escape
     /// Being seen changing into or out of a werewolf or a vampire lord
     /// (`Game.SendWereWolfTransformation`).
     case werewolf
 
     /// The kinds the ledger counts, in the order the save writes them. A werewolf
     /// change adds gold only; its script counts the "Werewolf Transformations" stat.
-    public static let counted: [CrimeKind] = [.theft, .assault, .murder, .trespass]
+    public static let counted: [CrimeKind] = [
+        .theft, .pickpocket, .assault, .murder, .trespass, .escape
+    ]
 
     /// Report ordering, which is also the order the save writes counts in.
     public static func < (lhs: Self, rhs: Self) -> Bool {
@@ -36,13 +42,14 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
         return left < right
     }
 
-    /// The FACT flag that makes this faction ignore the crime entirely.
-    ///
-    /// Bit names and values are xEdit's `wbFACT` DATA flags, which UESP's FACT
-    /// page spells identically; `Faction.Flags` carries them.
-    public var ignoreFlag: Faction.Flags {
+    /// The FACT flag that makes this faction ignore the crime entirely; nil when no
+    /// flag can. Bit names and values are xEdit's `wbFACT` DATA flags, which UESP's
+    /// FACT page spells identically; `Faction.Flags` carries them.
+    public var ignoreFlag: Faction.Flags? {
         switch self {
         case .theft: .ignoreStealing
+        case .pickpocket: .ignorePickpocket
+        case .escape: nil
         case .assault: .ignoreAssault
         case .murder: .ignoreMurder
         case .trespass: .ignoreTrespass
@@ -51,12 +58,12 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
     }
 
     /// Whether the bounty lands in the violent half of the ledger: the "Major
-    /// Crimes" of <https://ck.uesp.net/wiki/Crime> (assault, murder). [WARNING] The
-    /// werewolf change is a "Special Crime" there; violent is our reading.
+    /// Crimes" of <https://ck.uesp.net/wiki/Crime> (assault, murder, escape). [WARNING]
+    /// The werewolf change is a "Special Crime" there; violent is our reading.
     public var isViolent: Bool {
         switch self {
-        case .assault, .murder, .werewolf: true
-        case .theft, .trespass: false
+        case .assault, .murder, .escape, .werewolf: true
+        case .theft, .pickpocket, .trespass: false
         }
     }
 }
@@ -87,9 +94,6 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     /// Total gold value of what was taken, before the steal multiplier. Zero
     /// for every kind but theft.
     public let stolenValue: Int64
-    /// A theft caught in the act of pickpocketing, which costs the faction's flat
-    /// `CRVA` pickpocket price instead of the stolen value.
-    public var isPickpocket = false
     /// How many items a theft took, for the "Items Stolen" stat.
     public var stolenCount: Int32 = 0
 
@@ -140,12 +144,13 @@ nonisolated public struct CrimeGoldTable: Equatable, Sendable {
     }
 
     /// What `event` costs, in gold. Theft is the item value times the steal
-    /// multiplier, rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>). The other
-    /// three are flat amounts.
+    /// multiplier, rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>). The others
+    /// are flat amounts.
     public func bounty(for event: CrimeEvent) -> Int32 {
         guard let prices else { return 0 }
         return switch event.kind {
-        case .theft where event.isPickpocket: prices.pickpocket
+        case .pickpocket: prices.pickpocket
+        case .escape: prices.escape
         case .theft: Self.stealBounty(of: event.stolenValue, multiplier: prices.stealMultiplier)
         case .assault: prices.assault
         case .murder: prices.murder

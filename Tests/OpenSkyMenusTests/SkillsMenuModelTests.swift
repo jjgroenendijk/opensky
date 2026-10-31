@@ -63,7 +63,12 @@ struct SkillsMenuModelTests {
         #expect(model.selectedPerk?.node == 2)
         _ = model.handle(.move(.right))
         #expect(model.selectedPerk?.node == 3)
+        #expect(model.handle(.button(.accept)) == nil)
+        #expect(model.page == .perkConfirm(ConfirmationModel(question: model.texts[.perkConfirm])))
+        #expect(model.isInTree)
+        _ = model.handle(.move(.up))
         #expect(model.handle(.button(.accept)) == .buyPerk(node: 3, skill: 21))
+        #expect(model.page == .perks)
         _ = model.handle(.move(.down))
         _ = model.handle(.move(.down))
         #expect(model.page == .skills)
@@ -82,10 +87,11 @@ struct SkillsMenuModelTests {
         skills[15] = Self.skill(21, level: 100)
         var model = SkillsMenuModel(player: Self.player(), skills: skills)
         _ = model.handle(.button(.yButton))
-        guard case .legendary = model.page else {
+        guard case let .legendary(question) = model.page else {
             Issue.record("expected the legendary question")
             return
         }
+        #expect(question.question == SkillsMenuText.legendaryConfirm.fallback)
         #expect(model.handle(.button(.accept)) == nil)
         #expect(model.page == .skills)
         _ = model.handle(.button(.yButton))

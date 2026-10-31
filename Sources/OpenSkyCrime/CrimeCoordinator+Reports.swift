@@ -46,6 +46,7 @@ extension CrimeCoordinator {
                 )
                 reporter.modifyCrimeGold(by: -removed, violent: report.violent, of: report.faction)
                 lastCrime = .reportLost(gold: removed, faction: factionName(report.faction))
+                pendingCommands.append(.showNotice(crimeTexts.witnessKilled))
                 showBountyNotice(gold: removed, added: false, faction: report.faction)
                 return false
             }
@@ -89,7 +90,7 @@ extension CrimeCoordinator {
     func count(_ event: CrimeEvent, outcome: CrimeOutcome) {
         guard event.perpetrator == .player else { return }
         switch event.kind {
-        case .theft where !event.isPickpocket && event.stolenCount > 0:
+        case .theft where event.stolenCount > 0:
             pendingCommands.append(.incrementStat("Items Stolen", by: event.stolenCount))
             if let faction = event.crimeFaction, event.stolenValue > 0 {
                 pendingCommands.append(.stoleFromFaction(

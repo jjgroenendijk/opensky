@@ -50,6 +50,8 @@ nonisolated public struct Worldspace: Sendable {
     /// PNAM — categories inherited from `parent`.
     public let parentFlags: ParentFlags
     public let flags: Flags
+    /// Record-header flag `0x80000`: the player cannot wait or sleep anywhere in it.
+    public let isNoWait: Bool
     /// DNAM first float — default land height for cells without a LAND record
     /// (Tamriel reads -27000). Nil when the record carries no DNAM.
     public let defaultLandHeight: Float?
@@ -88,6 +90,7 @@ nonisolated public struct Worldspace: Sendable {
         parent = fields.parent
         parentFlags = fields.parentFlags
         flags = fields.flags
+        isNoWait = record.flags.rawValue & 0x0008_0000 != 0
         defaultLandHeight = fields.defaultLandHeight
         defaultWaterHeight = fields.defaultWaterHeight
         waterType = fields.waterType

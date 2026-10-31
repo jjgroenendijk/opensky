@@ -30,7 +30,7 @@ struct StreamerEventPhaseTests {
     }
 
     @Test func theRefusalStepsAndTheTriggerStepsKeepTheirOrder() {
-        #expect(ActivationRefusalStep.allCases == [.lockpicking, .mount, .agentEvents])
+        #expect(ActivationRefusalStep.allCases == [.lockpicking, .mount, .notice, .agentEvents])
         #expect(TriggerTransitionStep.allCases == [.readout, .scripts])
     }
 

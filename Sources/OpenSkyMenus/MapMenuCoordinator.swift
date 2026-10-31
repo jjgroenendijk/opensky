@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import simd
 
@@ -25,6 +26,7 @@ public protocol MapMenuWorld: AnyObject {
     func clearMapView()
     var localMapFog: LocalMapFogState { get set }
     func showNotification(_ text: String)
+    func showWorldNotice(_ notice: WorldNotice)
     /// Counts one misc stat for the journal's Stats page.
     func incrementStat(_ name: String)
     var fastTravelContext: FastTravelContext { get }
@@ -97,7 +99,7 @@ public final class MapMenuCoordinator {
                 let site = sites.first(where: { $0.key == key })
             else { continue }
             world.storeMarkerState(site.state, for: key)
-            world.showNotification("Discovered \(name)")
+            world.showWorldNotice(.locationDiscovered(name: name))
             world.incrementStat("Locations Discovered")
             discoveredCount += 1
         }

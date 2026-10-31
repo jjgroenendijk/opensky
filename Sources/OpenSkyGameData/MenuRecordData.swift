@@ -53,7 +53,8 @@ nonisolated public struct MenuRecordData: Sendable {
     /// A string setting the fast-travel, race, or alchemy menus or the HUD show.
     public static func isMenuText(_ editorID: String) -> Bool {
         editorID.hasPrefix("sNoFastTravel") || editorID.hasPrefix("sRSM")
-            || editorID == "sFastTravelConfirm" || editorID == "sOverEncumbered"
+            || editorID == "sFastTravelConfirm" || editorID == "sFastTravelNoTravelHealthDamage"
+            || editorID == "sOverEncumbered"
             || alchemyTexts.contains(editorID)
     }
 

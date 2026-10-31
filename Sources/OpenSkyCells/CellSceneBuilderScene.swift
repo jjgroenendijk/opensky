@@ -108,8 +108,6 @@ nonisolated extension CellSceneBuilder {
             guard
                 let base = modelBaseIndex[ref.base.rawValue],
                 base.allowsManualInteraction || base.isAutomaticDoor,
-                // XAPD: only an activate parent or a script may activate the reference.
-                ref.details.parentActivateOnly != true,
                 let action = interactionAction(for: base.recordType)
             else { continue }
             let override = resolvedText(base.activateTextOverride)
@@ -136,8 +134,12 @@ nonisolated extension CellSceneBuilder {
             )
             interaction.seats = seats
             interaction.hasLabelOverride = override != nil
+            // XAPD: only an activate parent or a script may activate the reference.
+            interaction.parentActivateOnly = ref.details.parentActivateOnly == true
             if base.isAutomaticDoor {
-                guard let area = Self.automaticArea(of: base, at: ref) else { continue }
+                let area = interaction.parentActivateOnly
+                    ? nil : Self.automaticArea(of: base, at: ref)
+                guard let area else { continue }
                 interaction.automaticArea = area
             }
             interactions[ref.formID] = interaction
@@ -216,7 +218,7 @@ nonisolated extension CellSceneBuilder {
         return bounds
     }
 
-    /// The CELL's own identity, trespass flags, and encounter zone.
+    /// The CELL's own identity, trespass and wait flags, and encounter zone.
     nonisolated static func applyCellRecord(
         _ found: FoundCell, geometry: CellGeometryBuild, to scene: inout CellScene
     ) {
@@ -225,6 +227,8 @@ nonisolated extension CellSceneBuilder {
             isPublicArea: found.cell.flags.contains(.publicArea),
             isOffLimits: found.cell.isOffLimits
         )
+        scene.forbidsWaiting = found.cell.isNoWait
+            || geometry.world?.worldspace?.isNoWait == true
         scene.encounterZone = encounterZone(of: found, in: geometry)
     }
 

@@ -124,6 +124,12 @@ extension InventoryCoordinator {
                 count: outcome.created.count, item: name(of: outcome.created.item)
             ))
         } catch {
+            if
+                let error = error as? CraftingError,
+                let refusal = CraftingRefusal.text(for: error, improving: crafting.station.improves)
+            {
+                return noteCraft(.refused(refusal))
+            }
             return noteCraft(.craftFailed(reason: String(describing: error)))
         }
     }

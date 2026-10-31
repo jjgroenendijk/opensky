@@ -23,6 +23,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldState
@@ -243,6 +244,10 @@ extension MagicWorldAdapter: MagicWorld {
 
     func postNotification(_ text: String) {
         _ = game.messages.postNotification(text)
+    }
+
+    func announceSpellLearned(_ name: String) {
+        game.messages.postWorldNotice(.spellLearned(name: name))
     }
 
     func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {

@@ -80,7 +80,7 @@ extension DialogueCoordinator {
         guard speechClock.isSharedReady(line, now: now) else { return nil }
         let candidates = witnesses
             .filter { $0.isFree && !$0.isFighting && $0.seesPlayer }
-            .filter { $0.distanceToPlayer <= AmbientSpeechFrame.commentDistance }
+            .filter { $0.distanceToPlayer <= speechTimers.playerCommentDistance }
             .sorted { $0.distanceToPlayer < $1.distanceToPlayer }
         for witness in candidates {
             if let info = npcLine(line, speaker: witness.key, now: now) {
@@ -153,8 +153,6 @@ nonisolated public struct AmbientSpeaker: Equatable, Sendable {
 nonisolated public struct AmbientSpeechFrame: Equatable, Sendable {
     /// OpenSky's: no setting names how near an idle comment must be to be said.
     public static let idleChatterDistance: Float = 1000
-    /// OpenSky's: how near a witness must be to comment on the player.
-    public static let commentDistance: Float = 1000
 
     public let speakers: [AmbientSpeaker]
     public let now: Double

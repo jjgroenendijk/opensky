@@ -238,6 +238,19 @@ When a quest starts, completes, or fails, the HUD shows its title over `sHUDStar
 `UIObjectiveNew`. A load shows nothing for the quests the save already had. Which change shows
 which text is OpenSky's reading. `openskycli game state hud` lists the shown notices.
 
+Other world changes use the same big notice, from `WorldNoticeText`:
+
+| Change | Top line | Bottom line |
+| --- | --- | --- |
+| The player finds a map marker | Location name | `sDiscoveredText` |
+| A script clears a location (`Location.SetCleared`) | Location name | `sCleared` |
+| A spell tome teaches a spell | Spell name | `sSpellAdded` |
+| `Game.TeachWord` teaches a new word | `sShoutAdded` | The word, in the shout layout |
+| `ModActorValue` raises the player's `Dragon Souls` | `sDragonSoulAcquired` | `sSingleDragonSoulCount` or `sMultipleDragonSoulCount` |
+
+`ObjectReference.AddToMap` on a hidden marker shows the line `sMapMarkerAdded`. Which change
+shows which text is OpenSky's reading.
+
 Journal text fills `<Alias=Name>` tags and the pronoun subtags of the Creation Kit wiki
 [Text Replacement](https://ck.uesp.net/wiki/Text_Replacement): `Pronoun`, `PronounObj`,
 `PronounPos`, `PronounPosObj`, `PronounRef`, and `PronounInt`, each from its `sPronoun` setting.

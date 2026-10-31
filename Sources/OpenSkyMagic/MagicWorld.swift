@@ -70,6 +70,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool
     /// Shows `text` in the HUD's notification line.
     func postNotification(_ text: String)
+    /// Announces a spell a tome taught, in the HUD's big notice.
+    func announceSpellLearned(_ name: String)
     /// Whether `base`'s worn restriction list names one of `item`'s keywords.
     func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool
     /// The player's shouts and words, from the script state the natives write.
@@ -138,6 +140,8 @@ extension MagicWorld {
     public func noteSpellCast(_: ReferenceKey, by _: ReferenceKey) {}
 
     public func postNotification(_: String) {}
+
+    public func announceSpellLearned(_: String) {}
 
     /// A session with no keyword index finds none.
     public func itemHasKeyword(_: String, on _: FormID) -> Bool {

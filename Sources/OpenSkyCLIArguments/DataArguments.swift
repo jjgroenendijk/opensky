@@ -178,7 +178,11 @@ public struct GMSTArguments: ParsableCommand, Sendable {
     public struct List: CLICommandArguments {
         public static let configuration = CommandConfiguration(
             commandName: "list",
-            abstract: "Print every setting whose editor ID starts with a prefix."
+            abstract: "Print every setting whose editor ID starts with a prefix.",
+            discussion: """
+            A string setting also prints its text, read through the string table of \
+            the plugin that set it.
+            """
         )
         @OptionGroup public var global: GlobalOptions
         @Argument(help: ArgumentHelp(

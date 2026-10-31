@@ -62,7 +62,9 @@ menu refuses a soul gem too small for "at least one charge"
 zero cost is unmetered: it fires forever and writes no charge, so it does not mark its owner changed
 on every swing.
 
-The charge is spent before the effects apply, and once. A hit that cannot pay applies nothing. A hit
+The charge is spent before the effects apply, and once. A hit that cannot pay applies nothing, and
+for the player it shows `sMagicCastInsufficientItemCharge` ("Your item has insufficient charge").
+UESP "Skyrim:Bound Weapon" names this notice for an empty enchanted weapon. A hit
 that can pay has paid, even if every entry is an archetype OpenSky does not run. The meter moves on
 the swing, not on the effect, and a weapon with an unsupported enchantment cannot fire forever.
 

@@ -14,11 +14,15 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
         let owner = world.actorValueHolder(for: hit.attacker)
         let holders = residentHolders(of: hit.targets)
         let inventory = world.inventory
-        return withEffects { runtime in
+        let report = withEffects { runtime in
             WeaponEnchantmentApplication.apply(
                 hit, owner: owner, holders: holders, using: &runtime, inventory: inventory
             )
         }.flatMap(\.self)
+        if let notice = CastNoticeText.notice(after: report, by: hit.attacker) {
+            pendingCommands.append(.notice(castNotices[notice]))
+        }
+        return report
     }
 
     /// Spends one dose of the poison on the striking weapon and applies the poison's

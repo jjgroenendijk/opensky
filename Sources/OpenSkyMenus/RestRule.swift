@@ -17,6 +17,8 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
     case takingHealthDamage = "TakingHealthDamage"
     /// `SetInChargen` turned waiting off.
     case disabled = "Default"
+    /// The cell or its worldspace has the Can't Wait flag.
+    case cell = "InCell"
 
     /// The game setting that holds the text, such as `sNoWaitInAir`.
     public func settingEditorID(sleeping: Bool) -> String {
@@ -33,6 +35,7 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
         case .inAir: sleeping ? .sleepInAir : .waitInAir
         case .takingHealthDamage: sleeping ? .sleepTakingHealthDamage : .waitTakingHealthDamage
         case .disabled: sleeping ? .sleepDefault : .waitDefault
+        case .cell: sleeping ? .sleepInCell : .waitInCell
         }
     }
 }
@@ -54,6 +57,8 @@ nonisolated public enum RestText: String, GameSettingTextKey {
     case waitTakingHealthDamage = "sNoWaitTakingHealthDamage"
     case sleepDefault = "sNoSleepDefault"
     case waitDefault = "sNoWaitDefault"
+    case sleepInCell = "sNoSleepInCell"
+    case waitInCell = "sNoWaitInCell"
 
     public var fallback: String {
         let verb = rawValue.hasPrefix("sNoSleep") ? "rest" : "wait"
@@ -68,6 +73,7 @@ nonisolated public enum RestText: String, GameSettingTextKey {
         case .sleepTakingHealthDamage, .waitTakingHealthDamage:
             "You are losing health; you cannot \(verb)."
         case .sleepDefault, .waitDefault: "You cannot \(verb) at this time."
+        case .sleepInCell, .waitInCell: "You cannot \(verb) in this location."
         }
     }
 }
@@ -85,6 +91,8 @@ nonisolated public struct RestContext: Equatable, Sendable {
     public var takingHealthDamage = false
     /// `SetInChargen` turned waiting off.
     public var waitingDisabled = false
+    /// The cell or its worldspace has the Can't Wait flag.
+    public var cellForbidsWaiting = false
 
     public init() {}
 }
@@ -105,6 +113,9 @@ nonisolated public enum RestRule {
     public static func refusal(_ context: RestContext) -> RestRefusal? {
         if context.waitingDisabled {
             return .disabled
+        }
+        if context.cellForbidsWaiting {
+            return .cell
         }
         if context.inCombat || context.hostilesNear {
             return .hostileActorsNear

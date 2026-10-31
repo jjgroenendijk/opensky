@@ -19,6 +19,7 @@ struct CameraShake {
 
 final class FakePresenter: PapyrusPresenting {
     var notifications: [String] = []
+    var worldNotices: [WorldNotice] = []
     var boxes: [String] = []
     var shown: [(ReferenceKey, [Float])] = []
     var help: [PapyrusHelpMessageRequest] = []
@@ -29,6 +30,11 @@ final class FakePresenter: PapyrusPresenting {
 
     func postNotification(_ text: String) -> Bool {
         notifications.append(text)
+        return true
+    }
+
+    func postWorldNotice(_ notice: WorldNotice) -> Bool {
+        worldNotices.append(notice)
         return true
     }
 

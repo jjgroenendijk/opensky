@@ -58,6 +58,8 @@ nonisolated public struct CellScene: Sendable {
     public var cellFormID: FormID?
     /// The CELL's Public Area and Off Limits flags, which trespass reads.
     public var trespass = CellTrespassFlags()
+    /// The CELL or its WRLD has the Can't Wait flag.
+    public var forbidsWaiting = false
 
     /// Where a reference in this scene stands, for `GetInCell` and `GetInWorldspace`.
     public var referenceCell: ReferenceCell? {

@@ -28,4 +28,16 @@ extension PapyrusWorldStateBridge {
         else { return }
         postItemNotice(local, to: holder, word: word)
     }
+
+    /// The shown name of a form, such as a location or a word of power. Nil when it has none.
+    func formName(of form: ReferenceKey) -> String? {
+        guard
+            case let .plugin(plugin, objectID) = form,
+            let local = formIDResolver?.localFormID(
+                of: ResolvedFormID(plugin: plugin, objectID: objectID)
+            ),
+            let name = menus?.name(of: local), !name.isEmpty
+        else { return nil }
+        return name
+    }
 }

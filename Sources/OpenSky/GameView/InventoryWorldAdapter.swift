@@ -8,6 +8,7 @@ import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
@@ -44,12 +45,14 @@ protocol InventoryWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
+    var messages: MessageCoordinator { get }
     var perception: PerceptionCoordinator { get }
     var perkActivation: PerkActivationCoordinator { get }
     var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
     var worldData: WorldDataStores? { get }
@@ -73,8 +76,9 @@ final class InventoryWorldAdapter {
                 return
             }
             if event.target.interaction.isBed {
-                // An inmate's bed serves the sentence (UESP "Skyrim:Crime").
-                if game.crime.serveSentence() {
+                // An inmate's bed asks to serve the sentence (UESP "Skyrim:Crime").
+                if game.crime.jailStay != nil {
+                    askToServeSentence()
                     return
                 }
                 game.menuScreens.sleepWait.open(
@@ -89,6 +93,17 @@ final class InventoryWorldAdapter {
             if action == .use, game.inventory.crafting != nil {
                 game.menuScreens.crafting.open()
             }
+        }
+    }
+
+    private func askToServeSentence() {
+        let words = game.mapWorld.settingTexts(MessageBoxText.self)
+        game.messages.presentChoices(
+            title: nil, text: game.crime.crimeTexts.serveSentenceQuestion,
+            buttons: [words[.yes], words[.no]]
+        ) { [weak self] answer in
+            guard answer == 0, let self else { return }
+            game.crime.serveSentence()
         }
     }
 
@@ -246,8 +261,26 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     func pickpocketSkill(of key: ReferenceKey) -> Float? {
+        guard let index = ActorValueIdentity.index(named: "Pickpocket") else { return nil }
+        return actorValue(index, of: key)
+    }
+
+    func carryWeight(of key: ReferenceKey) -> Float? {
+        actorValue(ActorValueIdentity.carryWeightIndex, of: key)
+    }
+
+    func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
+        game.scripts.bridge?.scriptedState(of: key).value(ScriptedStateName.pickpocketCaughtDay)
+    }
+
+    func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+        game.scripts.bridge?.updateScriptedState(of: key) {
+            $0.setValue(ScriptedStateName.pickpocketCaughtDay, day)
+        }
+    }
+
+    private func actorValue(_ index: Int32, of key: ReferenceKey) -> Float? {
         guard
-            let index = ActorValueIdentity.index(named: "Pickpocket"),
             let runtime = game.actorValues.runtime,
             let holder = key == .player ? .player : game.actorWorld.actorValueHolder(for: key)
         else { return nil }

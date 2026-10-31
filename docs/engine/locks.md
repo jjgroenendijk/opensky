@@ -80,7 +80,8 @@ Every press of the use key goes through one gate before any listener hears it
 A refused pickable lock opens the lockpicking menu when the player has at least one lockpick
 (the `LKPK` default object). When the lock opens, the original press runs again, so the door
 opens or the container menu appears. Otherwise the HUD shows a notice: `sImpossibleLock` for a
-lock that needs a key, and `sOutOfLockpicks` without lockpicks. `sOutOfLockpicks` also shows
+lock that needs a key, `sNoLockPickIfCrimeAlert` while guards chase the player, and
+`sOutOfLockpicks` without lockpicks. `sOutOfLockpicks` also shows
 when the last pick breaks in the menu.
 
 A carried key that opens a lock shows a notice too: `sOpenWithKey`, "Unlocked with %s.", with the

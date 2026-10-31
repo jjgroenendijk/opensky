@@ -78,16 +78,24 @@ extension ContainerMenuController {
             ),
             name: game.dialogueWorld.speakerLabel(for: actor)
         )
+        teammateTarget = actor
         setMode(.container)
         open()
     }
 
     /// Opens `actor`'s pockets, as activating a living actor while sneaking does
-    /// (UESP "Skyrim:Pickpocket"). False when the actor has no inventory to show.
+    /// (UESP "Skyrim:Pickpocket"). False when the actor has no inventory to show. A target
+    /// that caught the player lately refuses with a notice, which also counts as handled.
     @discardableResult
     func openPickpocket(of actor: ReferenceKey) -> Bool {
+        if game.inventory.pickpocketRefused(by: actor) {
+            let text = game.mapWorld.settingTexts(PickpocketText.self)[.caughtBefore]
+            game.hud.showNotification(game.dialogueWorld.speakerLabel(for: actor) + text)
+            return true
+        }
         openInventory(of: actor)
         guard isOpen, container?.key == actor else { return false }
+        teammateTarget = nil
         pickpocketTarget = actor
         note("Pickpocketing \(containerName ?? actor.description).")
         return true
@@ -118,7 +126,25 @@ extension ContainerMenuController {
         }
         if outcome.wasCaught {
             close()
+            game.hud.showNotification(game.mapWorld.settingTexts(PickpocketText.self)[.caught])
         }
+    }
+
+    /// Shows the follower's refusal on the HUD. True when the move is refused.
+    private func refusesTeammateTrade(
+        _ transfer: ContainerTransfer, _ entry: InventoryMenuEntry, count: Int32,
+        of teammate: InventoryHolder
+    ) -> Bool {
+        guard
+            let refusal = game.inventory.teammateRefusal(
+                transfer, item: entry.item, count: count, teammate: teammate
+            )
+        else { return false }
+        let text = game.mapWorld.settingTexts(TeammateTradeText.self)[refusal]
+        let notice = refusal == .overencumbered ? "\(containerName ?? "") \(text)" : text
+        game.hud.showNotification(notice)
+        note(notice)
+        return true
     }
 
     // MARK: - Transactions
@@ -161,6 +187,10 @@ extension ContainerMenuController {
         case (.barter, .container): .buy
         case (.barter, .player): .sell
         }
+        let isTeammateTrade = teammateTarget != nil
+        if isTeammateTrade, refusesTeammateTrade(transfer, entry, count: count, of: container) {
+            return
+        }
         do {
             let outcome = try game.inventory.transfer(
                 transfer, item: entry.item, count: count, named: entry.name,
@@ -189,7 +219,10 @@ extension ContainerMenuController {
             note("Take all is a container action, not a barter or pickpocket one.")
             return
         }
-        note(game.inventory.takeAll(from: container).text)
+        let outcome = teammateTarget != nil
+            ? game.inventory.takeAllFromTeammate(container) : game.inventory
+            .takeAll(from: container)
+        note(outcome.text)
         refreshModel()
     }
 

@@ -137,13 +137,11 @@ public final class CrimeReporter: CrimeReporting {
         of victim: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        let base = event(.theft, victim: victim, by: actor)
-        var caught = CrimeEvent(
-            kind: .theft, perpetrator: actor, victim: victim,
+        let base = event(.pickpocket, victim: victim, by: actor)
+        return recordAsIs(CrimeEvent(
+            kind: .pickpocket, perpetrator: actor, victim: victim,
             crimeFaction: base.crimeFaction, cell: base.cell, witnessed: true
-        )
-        caught.isPickpocket = true
-        return recordAsIs(caught)
+        ))
     }
 
     /// Reports being somewhere an owner has not let this actor be.
@@ -180,6 +178,17 @@ public final class CrimeReporter: CrimeReporting {
         ))
     }
 
+    /// Leaving jail early, charged to the hold that jailed the player at its `CRVA`
+    /// escape price. The guards know at once, so it needs no witness.
+    @discardableResult
+    public func reportEscape(from faction: ReferenceKey, by actor: ReferenceKey = .player)
+        -> CrimeOutcome
+    {
+        recordAsIs(CrimeEvent(
+            kind: .escape, perpetrator: actor, crimeFaction: faction, witnessed: true
+        ))
+    }
+
     // MARK: - Private
 
     /// `ASSU` for every assault, `ADCR` when the crime cost gold.
@@ -199,16 +208,18 @@ public final class CrimeReporter: CrimeReporting {
             if event.perpetrator == .player {
                 onPlayerBounty?(faction, outcome.gold)
             }
-            let witnesses = event.isPickpocket
-                ? event.victim.map { [$0] } ?? []
-                : runtime.witnesses.witnesses(of: event.perpetrator)
+            let witnesses: [ReferenceKey] = switch event.kind {
+            case .pickpocket: event.victim.map { [$0] } ?? []
+            case .escape: []
+            default: runtime.witnesses.witnesses(of: event.perpetrator)
+            }
             onCrimeCharged?(event, outcome, witnesses)
             storyEvents?.reportStoryEvent(.crimeGold(
                 criminal: event.perpetrator,
                 victim: event.victim,
                 crimeFaction: faction,
                 gold: outcome.gold,
-                crime: event.isPickpocket ? .pickpocket : event.kind.storyCrimeType
+                crime: event.kind.storyCrimeType
             ))
         }
         return outcome
@@ -281,6 +292,8 @@ extension CrimeKind {
     var storyCrimeType: StoryCrimeType {
         switch self {
         case .theft: .steal
+        case .pickpocket: .pickpocket
+        case .escape: .escapeJail
         case .assault: .assault
         case .murder: .murder
         case .trespass: .trespass

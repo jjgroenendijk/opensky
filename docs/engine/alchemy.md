@@ -94,8 +94,13 @@ say which effect the game reads.
 
 ## Poison on a weapon
 
-Using a poison puts it on the weapon in the right hand, or the first held weapon. A new poison
-replaces the old one. Mod Poison Dose Count (entry point 83, the Concentrated Poison perk) sets
+Using a poison puts it on the weapon in the right hand, or the first held weapon. The HUD
+refuses with a string setting when no weapon is held (`sPoisonNoWeaponMessage`), when the weapon
+is a staff (`sPoisonUnableToPoison`), or when it still carries a poison
+(`sPoisonAlreadyPoisonedMessage`). The text of that last setting is the source; that a staff is
+the weapon it refuses is OpenSky's reading. The game also asks to confirm first
+(`sPoisonConfirmMessage`, `sPoisonBowConfirmMessage`); OpenSky does not ask yet. Mod Poison Dose
+Count (entry point 83, the Concentrated Poison perk) sets
 how many hits it lasts, with the poison bound as the item. Each landed melee hit or arrow from
 that weapon spends one dose and applies the poison's effects to the target. The state is saved in
 `WPSN`.

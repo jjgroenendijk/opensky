@@ -27,6 +27,7 @@ protocol MessageWorldHost: MenuInputConsumer {
     var hud: HUDCoordinator { get }
     var journal: JournalCoordinator { get }
     var journalMenu: JournalMenuController { get }
+    var mapWorld: MapWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -121,6 +122,10 @@ extension MessageWorldAdapter: MessageWorld {
 
     func showHUDNotification(_ text: String) {
         game.hud.showNotification(text)
+    }
+
+    var worldNoticeTexts: GameSettingTexts<WorldNoticeText> {
+        game.mapWorld.settingTexts()
     }
 
     func setHUDHelpMessage(_ text: String?) {

@@ -123,6 +123,22 @@ Differences from the game:
   game uses them, so OpenSky does not read them.
 - The matching material perk, which doubles the skill above the offset, is not read.
 
+## Refused crafts
+
+A craft that fails shows a string setting on the HUD:
+
+| case | setting |
+| --- | --- |
+| a forge recipe without its components | `sLackRequiredToCreate` |
+| a temper whose `EPTemperingItemIsEnchanted` condition fails | `sLackRequiredPerkToImproveMagical` |
+| a temper whose other condition fails, such as a material perk | `sLackRequiredPerksToImprove` |
+| a temper without its components | `sLackRequiredToImprove` |
+| a copy already at the best quality the skill reaches | `sLackRequiredSkillToImprove` |
+
+A tempering bench lists every held item that has a recipe, even when its conditions fail, so the
+player can see why it cannot be improved. A forge still hides a recipe whose conditions fail.
+Which condition the game checks first is OpenSky's reading.
+
 ## Crafting menu
 
 Using a station opens `Interface\craftingmenu.swf` over the session. The engine calls

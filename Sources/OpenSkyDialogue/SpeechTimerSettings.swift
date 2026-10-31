@@ -20,6 +20,9 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// `fAIMinGreetingDistance`: a hello needs the player this close. Not in `Skyrim.esm`;
     /// the CK wiki table value.
     public var greetingDistance: Float = 150
+    /// `fAIInDialogueModeWithPlayerDistance`: "Maximum Distance from which NPCs will talk to the
+    /// player". A witness comments on the player's actions only this close.
+    public var playerCommentDistance: Float = 500
     /// `fCombatDialogueAttackMinElapsedTime` and `...Max...`: the attack and hit line window.
     public var attackLineMinSeconds: Float = 5
     public var attackLineMaxSeconds: Float = 10
@@ -65,6 +68,7 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
             ("fAIGreetingTimer", \.greetingSeconds),
             ("fAIExclusiveGreetingTimer", \.exclusiveGreetingSeconds),
             ("fAIMinGreetingDistance", \.greetingDistance),
+            ("fAIInDialogueModeWithPlayerDistance", \.playerCommentDistance),
             ("fCombatDialogueAttackMinElapsedTime", \.attackLineMinSeconds),
             ("fCombatDialogueAttackMaxElapsedTime", \.attackLineMaxSeconds),
             ("fCombatDialogueTauntMinElapsedTime", \.tauntMinSeconds),

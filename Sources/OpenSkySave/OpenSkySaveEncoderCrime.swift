@@ -22,8 +22,8 @@ nonisolated extension OpenSkySaveEncoder {
         let stacks: [InventoryStack]
     }
 
-    /// The `CRIM` chunk, in key order: per row the faction, the gold, then the four
-    /// counts in `CrimeKind.counted` order. Counts travel because an unwitnessed crime
+    /// The `CRIM` chunk, in key order: per row the faction, the gold, then one count per
+    /// kind in `CrimeKind.counted` order. Counts travel because an unwitnessed crime
     /// moves a count and not the gold.
     public static func writeCrimeLedgers(
         _ entries: [WorldStateSnapshotEntry],

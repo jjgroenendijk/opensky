@@ -339,6 +339,7 @@ final class GameSessionScope {
     )
     /// The werewolf and vampire lord forms.
     lazy var beastForms = BeastFormWorldAdapter(game: self)
+    lazy var activationRefusals = ActivationRefusalWorldAdapter(game: self)
 
     /// Dragons nobody rides: take-off, flight, and landing.
     lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: self)

@@ -215,9 +215,9 @@ public final class LockCoordinator {
     }
 
     /// Why a refused press opens no minigame, or nil.
-    public func refusalNotice(level: UInt8) -> LockNotice? {
+    public func refusalNotice(level: UInt8, pursued: Bool = false) -> LockNotice? {
         let band = LockDifficulty(level: level, noviceMaximum: settings.noviceMaximum)
-        return LockCore.refusalNotice(for: band, lockpicks: lockpickCount)
+        return LockCore.refusalNotice(for: band, lockpicks: lockpickCount, pursued: pursued)
     }
 
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {

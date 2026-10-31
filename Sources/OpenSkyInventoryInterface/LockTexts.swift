@@ -12,6 +12,8 @@ nonisolated public struct LockTexts: Equatable, Sendable {
     public var requiresKey = "sImpossibleLock"
     /// `sOutOfLockpicks`: a press with no lockpicks, or the last pick broken.
     public var outOfLockpicks = "sOutOfLockpicks"
+    /// `sNoLockPickIfCrimeAlert`: a press on a pickable lock while guards chase the player.
+    public var pursued = "You can't pick a lock while being pursued by guards."
     /// `sOpenWithKey`: a door a carried key opened; `%s` is the key.
     public var openedWithKey = "Unlocked with %s."
     /// `sOpenedContainer`: a container a carried key opened.
@@ -46,6 +48,7 @@ nonisolated public struct LockTexts: Equatable, Sendable {
         settings.unlock = word("sUnlock") ?? settings.unlock
         settings.requiresKey = word("sImpossibleLock") ?? settings.requiresKey
         settings.outOfLockpicks = word("sOutOfLockpicks") ?? settings.outOfLockpicks
+        store.read("sNoLockPickIfCrimeAlert", into: &settings, \.pursued, text: text)
         store.read("sOpenWithKey", into: &settings, \.openedWithKey, text: text)
         store.read("sOpenedContainer", into: &settings, \.openedContainer, text: text)
         return settings
