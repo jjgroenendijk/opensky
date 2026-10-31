@@ -34,6 +34,7 @@ protocol MagicWorldHost: AnyObject {
     var controllerRumble: ControllerRumble { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var combat: CombatCoordinator { get }
     var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
@@ -185,6 +186,10 @@ final class MagicWorldAdapter {
     /// Only the player rides.
     func isOnFlyingMount(_ key: ReferenceKey) -> Bool {
         key == .player && !game.mountWorld.flyingMounts.isEmpty
+    }
+
+    func forgetPickpocketCatch(of key: ReferenceKey) {
+        game.inventoryWorld.forgetPickpocketCatch(of: key)
     }
 }
 

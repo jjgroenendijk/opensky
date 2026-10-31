@@ -61,6 +61,12 @@ extension MagicCoordinator {
         for action in takeWorldActions() {
             perform(action)
         }
+        // UESP "Skyrim:Pickpocket": Harmony makes its targets "forget" a catch, but
+        // "this does not work with other Pacify spells". Harmony is the vanilla calm
+        // cast from self over an area; Pacify and Calm are aimed.
+        for key in takeCalmedAround() {
+            world.forgetPickpocketCatch(of: key)
+        }
     }
 
     private func perform(_ action: MagicWorldAction) {

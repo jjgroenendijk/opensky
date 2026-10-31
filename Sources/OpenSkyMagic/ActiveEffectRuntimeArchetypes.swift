@@ -163,6 +163,8 @@ extension ActiveEffectRuntime {
             action.duration = application.duration
             action.area = application.area
             worldActions.append(action)
+        case .influence(.calm) where application.spreadsFromCaster && target.key != caster:
+            calmedAround.append(target.key)
         case .world, .carrier, .influence, .heldFlag, .accumulate:
             break
         }

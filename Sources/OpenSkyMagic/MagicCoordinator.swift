@@ -163,6 +163,15 @@ public final class MagicCoordinator {
         return actions
     }
 
+    /// Takes the actors a calm from around its caster reached, leaving none.
+    func takeCalmedAround() -> [ReferenceKey] {
+        guard var runtime = effects, !runtime.calmedAround.isEmpty else { return [] }
+        let calmed = runtime.calmedAround
+        runtime.calmedAround = []
+        effects = runtime
+        return calmed
+    }
+
     /// Whole effect steps for the delta this frame simulated, over the player
     /// and the resident actors. A menu-paused frame delivers delta 0.
     public func advanceEffects(delta: Float) -> [MagicCommand] {

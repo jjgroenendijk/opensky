@@ -29,6 +29,8 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     public let stackKeyword: ReferenceKey?
     /// The EFIT area, feet. Detect Life reads its range here.
     public var area: UInt32 = 0
+    /// Self delivery with an area: it reached the actors around its caster.
+    public var spreadsFromCaster = false
     /// MGEF No Recast: "Once the magic effect is applied to a target, it cannot
     /// be cast again on the same target until it has worn off or been
     /// dispelled."
@@ -146,6 +148,7 @@ nonisolated public enum MagicEffectPlanner: Sendable {
             refusesRecast: data.flags.contains(.noRecast)
         )
         application.area = entry.area
+        application.spreadsFromCaster = data.delivery == .selfTarget && entry.area > 0
         return .apply(application)
     }
 

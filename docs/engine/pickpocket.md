@@ -75,16 +75,20 @@ name and `sNoPickPocketAgain` (" has already caught you.") instead of opening th
 The day of the catch is a script-state value on the target, so a save keeps it. Beside it the
 target keeps the crime faction the catch was charged to.
 
-UESP gives two ways to end the refusal early. The first:
+UESP gives two ways to end the refusal early:
 
 - A guard comes for the crime and the player makes it "go away quietly": a bribe, a Thane's status,
   or paying as "part of the Guild". This forgets every catch charged to that guard's faction (see
   [guard response](/engine/guard-response.md)). A paid fine or a jail sentence only unlinks the
   catches, so a later bribe for another crime does not forget them.
+- "Casting Harmony will cause all affected targets to 'forget' if they have been pickpocketed
+  recently. This does not work with other Pacify spells." No field marks Harmony. In the data,
+  Harmony is the vanilla calm effect delivered from self over an area, and Pacify and Calm are
+  aimed. So OpenSky forgets the catch for a calm effect delivered from self with an area, on any
+  actor but the caster.
 
 ## Where OpenSky differs
 
-- UESP says casting Harmony also ends the refusal. OpenSky does not.
 - The CK settings list `fPickpocketSkillUsesCurve` (0.8). No source explains it, so OpenSky does not
   apply it.
 - The target does not turn hostile or start a dialogue after a failure. The crime is charged, and

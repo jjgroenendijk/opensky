@@ -42,6 +42,7 @@ final class FakeMagicWorld: MagicWorld {
     var holders: [ReferenceKey: ActorValueHolder] = [:]
     private(set) var notifications: [String] = []
     private(set) var cloakRadii: [Float] = []
+    private(set) var forgottenCatches: [ReferenceKey] = []
 
     @discardableResult
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
@@ -215,6 +216,10 @@ final class FakeMagicWorld: MagicWorld {
     func placeHazard(_: ReferenceKey, at point: SIMD3<Float>) -> Bool {
         placedHazards.append(point)
         return true
+    }
+
+    func forgetPickpocketCatch(of key: ReferenceKey) {
+        forgottenCatches.append(key)
     }
 
     func noteSpellCast(_ spell: ReferenceKey, by _: ReferenceKey) {
