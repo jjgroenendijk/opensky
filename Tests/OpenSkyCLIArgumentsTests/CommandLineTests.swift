@@ -48,6 +48,15 @@ struct CommandLineTests {
             == OpenSkyCommandLine.usageExitCode)
     }
 
+    @Test func pexTakesAScriptAndAFunction() throws {
+        let pex = try command(
+            ["pex", "MQ101QuestScript", "--function", "OnUpdate"], as: PexArguments.self
+        )
+        #expect(pex.script == "MQ101QuestScript")
+        #expect(pex.function == "OnUpdate")
+        #expect(exitCode(["pex"]) == OpenSkyCommandLine.usageExitCode)
+    }
+
     @Test func installChecksTheGivenFolder() throws {
         let install = try command(["install", "--data-root", "/game"], as: InstallArguments.self)
         #expect(install.global.dataRoot == "/game")

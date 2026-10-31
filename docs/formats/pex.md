@@ -146,6 +146,9 @@ more, is an error.
 - Separators and case follow the [VFS](/formats/vfs.md) rules.
 - A name with a `:` is rejected.
 
+`openskycli pex <script>` prints one script from the install by these rules, with each
+function's instructions and their operands.
+
 ## Vanilla scripts
 
 | Measure | Value |

@@ -45,6 +45,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
                 ArcheryArguments.self, FootstepArguments.self, EffectsArguments.self
             ]),
             CommandGroup(name: "Assets", subcommands: [
+                PexArguments.self,
                 VFSArguments.self, NIFArguments.self, DDSArguments.self, HKXArguments.self,
                 HKTArguments.self, SkeletonArguments.self, AnimationArguments.self,
                 AudioArguments.self, SWFArguments.self, MenuArguments.self
