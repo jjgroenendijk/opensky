@@ -130,6 +130,18 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         return position.map { .exterior(CellGridManager.cellCoordinate(for: $0)) }
     }
 
+    /// Where the CELL `formID` sits, loaded or not: its grid square or its interior.
+    public func location(ofCell formID: FormID) -> CellSceneLocation? {
+        guard
+            let found = index.record(withFormID: formID), found.record.type == "CELL",
+            let cell = try? Cell(record: found.record, localized: found.localized)
+        else { return nil }
+        if cell.isInterior {
+            return .interior(formID)
+        }
+        return cell.grid.map { .exterior(CellCoordinate(x: $0.x, y: $0.y)) }
+    }
+
     /// The interior CELL whose children hold `formID`; nil for an exterior one.
     public func interiorCell(holding formID: FormID) -> FormID? {
         guard

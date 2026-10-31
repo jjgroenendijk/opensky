@@ -75,14 +75,17 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
 - `KnockAreaEffect` pushes the actors in the radius away from the caster.
 - `ForceAddRagdollToWorld` starts a ragdoll at once.
 - `PlayImpactEffect` casts a line from the reference, or from the named node, along the given
-  direction and length. The direction turns with the node when `abApplyNodeRotation` is set. The
-  impact plays where the line first meets a static or the ground, with that surface's material.
-  A line that meets nothing plays no impact.
+  direction and length. The direction turns with the node when `abApplyNodeRotation` is set:
+  with the node's world rotation, or with its rotation inside its parent node when
+  `abUseNodeLocalRotation` is set. The impact plays where the line first meets a static or the
+  ground, with that surface's material. A line that meets nothing plays no impact.
 - `PathToReference` walks the actor to the target over the navmesh and waits until it stops.
+  The speed is `afWalkRunPercent` of the way from the walk speed to the run speed, so 0.5 is
+  half way between them (<https://ck.uesp.net/wiki/PathToReference_-_Actor>). It answers true
+  when the actor arrived, and false when no path starts, the walk gives up or is stopped, or
+  `afWalkRunPercent` is outside 0 to 1.
 - `Game.PlayBink` plays a movie from `Data\Video` and waits until it ends or is skipped
   ([movies](/engine/movies.md)).
-  It answers true when the actor arrived, and false when no path starts, the walk gives up or is
-  stopped, or `afWalkRunPercent` is outside 0 to 1.
 - `Faction.GetStolenItemValueCrime` and `GetStolenItemValueNoCrime` sum what the player stole
   from the faction, seen and unseen.
 
@@ -108,8 +111,10 @@ ID, also when the sound file is still loading. The volume is clamped to 0 to 1, 
 
 `Game.GetSunPositionX`, `Y`, and `Z` give the point 100,000 units from the player's eye toward
 the sun. They return 0 in an interior and at night, when the wiki says the sun is not up.
-`OnPlayerBowShot` reports sun gazing when the player's view is within 5 degrees of the sun. No
-open source gives the game's angle, so this cone is OpenSky's own.
+`Game.IsPlayerSungazing` is true, and `OnPlayerBowShot` reports sun gazing, when the player's
+view is within 5 degrees of the sun. No open source gives the game's angle, so this cone is
+OpenSky's own. `Game.SetSunGazeImageSpaceModifier` plays its modifier when the view enters the
+cone.
 
 ## Traced stubs
 
@@ -145,9 +150,12 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 - The screenshot goes to `~/Pictures/OpenSky/`, because OpenSky never writes into the install.
 - No source says whether the game sends `OnUnequipped` for an item a scripted equip pushes out
   of its slot. OpenSky sends nothing.
-- `PathToReference` has two speeds only: below half of `afWalkRunPercent` the actor walks, from
-  half up it runs. The game blends between the two.
-- `PlayImpactEffect` reads "local rotation" as the node's turn inside the reference, not inside
-  its parent node.
-- `Cell.Reset` cannot flag an exterior cell that is not loaded, because exterior cells are found
-  by their loaded position.
+- `PathToReference` blends the speed. An actor that runs its behaviour graph blends its walk
+  and run clips by that speed too. An actor without a running graph plays one clip, walk below
+  half of `afWalkRunPercent` and run from half up, so its feet can slide.
+- `OnPlayerBowShot` and `Game.IsPlayerSungazing` count the player as looking at the sun within
+  5 degrees of it. No open source or game setting gives the game's angle.
+- `KnockAreaEffect` pushes at 1000 units a second for a magnitude of 1. No open source or game
+  setting gives the game's scale.
+- `Debug.SetFootIK` lasts until the session ends and is not kept in a save. No source says
+  whether the game keeps it.

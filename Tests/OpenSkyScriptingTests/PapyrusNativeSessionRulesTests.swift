@@ -155,4 +155,16 @@ struct PapyrusNativeSessionRulesTests {
         #expect(call(fixture, "Game", "GetSunPositionZ", returnType: .float) ==
             .returned(.float(100 + PapyrusNativeFunctions.sunDistance)))
     }
+
+    @Test func thePlayerSungazesWhileLookingAtTheSun() throws {
+        let fixture = try Fixture.make()
+        #expect(call(fixture, "Game", "IsPlayerSungazing", returnType: .boolean) ==
+            .returned(.boolean(false)))
+        fixture.session.bridge.sessionNatives.towardSun = { [0, 0, 1] }
+        fixture.session.bridge.sessionNatives.playerView = {
+            PapyrusPlayerView(eye: .zero, forward: [0, 0.01, 1])
+        }
+        #expect(call(fixture, "Game", "IsPlayerSungazing", returnType: .boolean) ==
+            .returned(.boolean(true)))
+    }
 }

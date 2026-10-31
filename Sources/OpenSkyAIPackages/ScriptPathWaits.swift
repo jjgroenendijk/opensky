@@ -10,8 +10,8 @@ nonisolated public struct ScriptPathWaits: Equatable, Sendable {
 
     public init() {}
 
-    /// The gait for `afWalkRunPercent`. OpenSky has walk and run speeds only, so the
-    /// half way point picks one.
+    /// The gait for `afWalkRunPercent`, a speed between walk and run. An actor without a
+    /// behaviour graph plays this gait's clip, so the half way point picks one.
     public static func gait(forSpeed speed: Float) -> LocomotionGait {
         speed < 0.5 ? .walk : .run
     }

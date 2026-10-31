@@ -85,7 +85,7 @@ protocol ScriptWorldHost: AnyObject {
 final class ScriptWorldAdapter {
     unowned let game: any ScriptWorldHost
     /// Each model's node origins in model space, keyed by lowercased node name.
-    var modelNodes: AssetLoader<String, [String: simd_float4x4]>?
+    var modelNodes: AssetLoader<String, [String: PosedBone]>?
     /// Node lookups that wait for their model to load.
     var nodeWaits: [ModelNodeWait] = []
     var nextNodeToken = ModelNodeWait.firstToken

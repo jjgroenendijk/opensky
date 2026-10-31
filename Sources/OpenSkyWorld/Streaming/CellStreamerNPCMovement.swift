@@ -94,11 +94,12 @@ extension CellStreamer {
     }
 
     /// A `direct` move walks the straight line to `point` on the terrain, without a
-    /// navmesh path or static collision.
+    /// navmesh path or static collision. `walkRunBlend` sets a speed from walk to run.
     @discardableResult
     public func moveActor(
         _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false,
-        gait: LocomotionGait? = nil, runSlowdown: FollowSettings? = nil
+        gait: LocomotionGait? = nil, runSlowdown: FollowSettings? = nil,
+        walkRunBlend: Float? = nil
     ) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
@@ -125,6 +126,7 @@ extension CellStreamer {
             gait: gait
         )
         start.runSlowdown = runSlowdown
+        start.walkRunBlend = walkRunBlend
         let started = npcMovement.start(start)
         return started ? .started : .moverCapReached
     }

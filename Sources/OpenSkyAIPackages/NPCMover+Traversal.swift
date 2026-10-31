@@ -64,6 +64,10 @@ extension NPCMover {
         let byLeg: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
         let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
         var speed = speed(of: nextGait)
+        if let walkRunBlend, !isSwimming {
+            let walk = configuration.walkSpeed.value
+            speed = walk + (configuration.runSpeed.value - walk) * walkRunBlend
+        }
         if
             let runSlowdown, nextGait == .run || nextGait == .sprint,
             waypointIndex == path.waypoints.count - 1

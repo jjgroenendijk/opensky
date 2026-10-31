@@ -55,9 +55,11 @@ Quest-alias protection is not modelled: a quest item in a chest that resets is l
 
 ## A script reset
 
-Papyrus `Cell.Reset` flags an interior cell. The cell resets on its next load, whatever the
-clock and the encounter zone say (<https://ck.uesp.net/wiki/Reset_-_Cell>). Leaving the cell
-again keeps the flag. An exterior cell is not reset by a script yet.
+Papyrus `Cell.Reset` flags a cell, interior or exterior, loaded or not. The cell resets on
+its next load, whatever the clock and the encounter zone say
+(<https://ck.uesp.net/wiki/Reset_-_Cell>). Leaving the cell again keeps the flag. OpenSky
+finds an exterior cell's grid square in its `CELL` record (`XCLC`), so the cell need not be
+loaded.
 
 ## Scripts
 

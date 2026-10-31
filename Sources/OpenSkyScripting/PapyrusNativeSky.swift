@@ -1,6 +1,6 @@
 // The sun and sky natives: `Game.GetSunPositionX`, `Y`, and `Z`, `Weather.GetSkyMode`,
-// and `Game.SetSunGazeImageSpaceModifier`, whose modifier plays when the player starts to
-// look at the sun. See docs/engine/papyrus-world-reads.md#the-sun.
+// `Game.IsPlayerSungazing`, and `Game.SetSunGazeImageSpaceModifier`, whose modifier plays
+// when the player starts to look at the sun. See docs/engine/papyrus-world-reads.md#the-sun.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -28,6 +28,10 @@ extension PapyrusNativeFunctions {
             else { return failure(call, "GetSkyMode needs the sky") }
             return .returned(.integer(mode()))
         })
+        // "Checks to the see if the player is looking directly at the sun."
+        scriptState("Game", "IsPlayerSungazing", into: &registry) { _, bridge, _ in
+            .returned(.boolean(bridge.isPlayerSunGazing))
+        }
         scriptState("Game", "SetSunGazeImageSpaceModifier", into: &registry) { call, bridge, _ in
             bridge.sunGazeModifier = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             return .returned(.none)
