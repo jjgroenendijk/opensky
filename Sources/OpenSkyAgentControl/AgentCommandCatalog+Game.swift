@@ -174,6 +174,16 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("form", "One of werewolf, vampirelord, or none.")]
         ),
         command(
+            "debug.link",
+            "Hold two ragdolls' bones together, as AddHavokBallAndSocketConstraint does.",
+            positionals: [
+                required("ref", refHelp), required("node", "The bone of the first ragdoll."),
+                required("other", "The second actor, as ref takes it."),
+                required("othernode", "The bone of the second ragdoll."),
+                optional("on", "Either on to link or off to unlink; on by default.")
+            ]
+        ),
+        command(
             "debug.eyes", "Draw an actor's eyes with a texture set, as SetEyeTexture does.",
             positionals: [
                 required("ref", refHelp), required("set", "The TXST, as a hex FormID.")

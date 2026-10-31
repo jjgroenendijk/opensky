@@ -63,7 +63,7 @@ public enum PapyrusNativeFunctions {
         installGameSession(into: &registry)
         installActorRules(into: &registry)
         installReferenceRules(into: &registry)
-        installEngineStubs(into: &registry)
+        installHavokConstraints(into: &registry)
     }
 
     public static func failure(

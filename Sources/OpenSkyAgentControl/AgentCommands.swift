@@ -169,6 +169,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case drunk(reference: String, drunk: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
     case beastForm(String)
+    /// Links two ragdolls' bones, or unlinks them, as the Havok constraint natives do.
+    case link(AgentRagdollLink, linked: Bool)
     /// Draws an actor's eyes with a TXST, as `Actor.SetEyeTexture` does.
     case eyes(reference: String, textureSet: String)
     /// Reports `count` gamepads when fewer are real, and presses gamepad buttons for a frame.
@@ -246,6 +248,14 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
         case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
+        case "link":
+            try .link(
+                AgentRagdollLink(
+                    reference: args.string("ref"), node: args.string("node"),
+                    other: args.string("other"), otherNode: args.string("othernode")
+                ),
+                linked: args.bool("on", default: true)
+            )
         case "gamepad": try parseGamepad(args)
         default: try parseScreen(name, args)
         }
@@ -396,5 +406,20 @@ nonisolated public struct AgentScreenshotRequest: Equatable, Sendable {
             worldOnly: args.bool("worldOnly", default: false),
             offscreen: args.bool("offscreen", default: false)
         )
+    }
+}
+
+/// The two bone bodies a `debug link` joins.
+nonisolated public struct AgentRagdollLink: Equatable, Sendable {
+    public let reference: String
+    public let node: String
+    public let other: String
+    public let otherNode: String
+
+    public init(reference: String, node: String, other: String, otherNode: String) {
+        self.reference = reference
+        self.node = node
+        self.other = other
+        self.otherNode = otherNode
     }
 }

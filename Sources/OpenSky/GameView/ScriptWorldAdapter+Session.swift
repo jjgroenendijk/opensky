@@ -93,6 +93,13 @@ extension ScriptWorldAdapter {
         hooks.forceRagdoll = { [weak game] key in
             game?.ragdoll.runtime?.activate(key, instant: true) ?? false
         }
+        hooks.addBallAndSocket = { [weak self] first, second in
+            self?.addBallAndSocket(Self.linkEnd(first), Self.linkEnd(second))
+                ?? .returned(.boolean(false))
+        }
+        hooks.removeConstraints = { [weak self] first, second in
+            self?.removeConstraints(Self.linkEnd(first), Self.linkEnd(second)) ?? false
+        }
         hooks.setEyeTexture = { [weak game] actor, textureSet in
             guard
                 let game, let cell = game.streamer?.cellLocation(of: actor),
@@ -223,5 +230,9 @@ extension ScriptWorldAdapter {
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true
         )
         return (try? FrameScreenshot.write(texture: texture, to: url)) != nil
+    }
+
+    private static func linkEnd(_ end: PapyrusConstraintEnd) -> PhysicsLinkEnd {
+        PhysicsLinkEnd(reference: end.reference, node: end.node, offset: end.offset)
     }
 }

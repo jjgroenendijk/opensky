@@ -4,9 +4,13 @@
 
 import OpenSkyActorPresentation
 import OpenSkyAgentControl
+import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRuntimeState
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -59,5 +63,51 @@ extension AgentWorldAdapter {
     func eyeTexture(of key: ReferenceKey) -> AgentJSON {
         game.worldState.component(ActorPresentationState.self, for: key)?.eyeTextureSet
             .map { .formID($0.rawValue) } ?? .null
+    }
+}
+
+extension AgentWorldAdapter {
+    /// `debug link`: what `Game.AddHavokBallAndSocketConstraint` does, through its hook.
+    func setRagdollLink(_ link: AgentRagdollLink, linked: Bool) throws(AgentFailure) -> AgentJSON {
+        guard let hooks = game.scripts.bridge?.gameNatives else { throw notReady() }
+        let first = try PapyrusConstraintEnd(
+            reference: resolveReference(link.reference).key, node: link.node
+        )
+        let second = try PapyrusConstraintEnd(
+            reference: resolveReference(link.other).key, node: link.otherNode
+        )
+        guard linked else {
+            let removed = hooks.removeConstraints?(first, second) ?? false
+            return [
+                "changed": .bool(removed),
+                "constraints": physicsConstraints(of: first.reference)
+            ]
+        }
+        let answer = Self.linkAnswer(hooks.addBallAndSocket?(first, second))
+        return ["changed": answer, "constraints": physicsConstraints(of: first.reference)]
+    }
+
+    private static func linkAnswer(_ result: PapyrusNativeResult?) -> AgentJSON {
+        switch result {
+        case let .returned(.boolean(added)): .bool(added)
+        case .suspended: .string("waiting for the model")
+        default: .bool(false)
+        }
+    }
+
+    /// The script links and pins that hold `key`'s bodies.
+    func physicsConstraints(of key: ReferenceKey) -> AgentJSON {
+        let world = game.ragdoll.runtime?.world
+        let links = (world?.links ?? []).filter {
+            $0.first.reference == key || $0.second.reference == key
+        }.map { "\(line($0.first)) <-> \(line($0.second))" }
+        let pins = ((world?.pins ?? []) + (game.streamer?.dynamicBodies.pins ?? []))
+            .filter { $0.end.reference == key || $0.partner.reference == key }
+            .map { "\(line($0.end)) pinned to \(line($0.partner)) at \($0.point)" }
+        return .array((links + pins).map(AgentJSON.string))
+    }
+
+    private func line(_ end: PhysicsLinkEnd) -> String {
+        "\(end.reference) \(end.node)"
     }
 }

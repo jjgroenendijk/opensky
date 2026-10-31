@@ -2,8 +2,8 @@
 type: Subsystem
 title: Papyrus session natives and engine events
 description: The Papyrus natives that reach the running session - saves, quitting, fades, screen
-  blood, god mode, crime switches, model nodes, sounds, scripted walks, the sun, eye textures - the
-  natives that stay traced stubs, and the engine events for wards, books, grabs, equips, and bow shots, with
+  blood, god mode, crime switches, model nodes, sounds, scripted walks, the sun, eye textures,
+  Havok constraints - and the engine events for wards, books, grabs, equips, and bow shots, with
   where OpenSky differs.
 tags: [engine, papyrus, session, events]
 ---
@@ -127,14 +127,21 @@ texture lasts until the actor's 3D reloads, and the vampire scripts set it again
 OpenSky clears it when the actor's cell unloads, and keeps it in no save. An actor without 3D
 ignores the call. The player's head ignores it too; no vanilla script calls it on the player.
 
-## Traced stubs
+## Havok constraints
 
-These natives return a fixed value and write a trace line, because the subsystem they need is not
-built. The vanilla scripts that call each one show what it is for:
+`Game.AddHavokBallAndSocketConstraint` and `Game.RemoveHavokConstraints` take two references
+and a node name on each. Each end is one of three kinds:
 
-| Native | Vanilla callers | Needs |
+| End | Example | What OpenSky does |
 | --- | --- | --- |
-| `Game.AddHavokBallAndSocketConstraint` (false), `RemoveHavokConstraints` (false) | `HangedManScript`, `HangingKeyAttachOnLoad`, the ragdoll attach-point scripts | Physics joints between two bodies |
+| A dead or ragdolling actor's bone | the corpse's `NPC Neck [Neck]` in `HangedManScript` | A dead actor that lies still starts its ragdoll first |
+| A loose body | the key in `HangingKeyAttachOnLoad` | The whole body is held; the node name is not checked |
+| Any other reference's node | the rope's `JointHelper01`, the peg's `AttachDummy` | A fixed point, read from the model |
+
+Two ragdoll ends make a link. A ragdoll or loose end with a fixed end makes a pin. Any other
+pair, and a living actor that is not ragdolling, answers false, as the CK wiki says the game
+does. The add waits while the fixed end's model loads, because the wiki lists both natives as
+latent. [Ragdoll solver](/engine/ragdoll-solver.md#script-links) has the solve.
 
 The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 
@@ -168,3 +175,5 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
   setting gives the game's scale.
 - `Debug.SetFootIK` lasts until the session ends and is not kept in a save. No source says
   whether the game keeps it.
+- A loose body and a ragdoll do not link to each other, and neither do two loose bodies. No
+  vanilla script makes such a pair.
