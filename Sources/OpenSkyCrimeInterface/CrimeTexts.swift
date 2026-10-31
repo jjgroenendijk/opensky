@@ -1,7 +1,5 @@
 // The names of crime kinds, from the `sCrimeType*` string settings, and the bounty
-// notices from `sAddCrimeGold` and `sRemoveCrimeGold`. The game also
-// names pickpocketing and escaping jail, which OpenSky does not count yet. See
-// docs/engine/crime.md.
+// notices from `sAddCrimeGold` and `sRemoveCrimeGold`. See docs/engine/crime.md.
 
 import OpenSkyGameData
 
@@ -32,6 +30,8 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
     static func setting(for kind: CrimeKind) -> String {
         switch kind {
         case .theft: "sCrimeTypeSteal"
+        case .pickpocket: "sCrimeTypePickpocket"
+        case .escape: "sCrimeTypeEscape"
         case .assault: "sCrimeTypeAttack"
         case .murder: "sCrimeTypeMurder"
         case .trespass: "sCrimeTypeTrespass"

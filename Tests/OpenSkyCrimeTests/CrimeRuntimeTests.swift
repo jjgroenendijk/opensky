@@ -41,7 +41,7 @@ struct CrimeRuntimeTests {
         #expect(runtime.crimeGold(of: hold, violent: true) == 1040)
         #expect(runtime.crimeGold(of: hold, violent: false) == 55)
         #expect(runtime.crimeGold(of: hold) == 1095)
-        #expect(CrimeKind.allCases.filter(\.isViolent) == [.assault, .murder, .werewolf])
+        #expect(CrimeKind.allCases.filter(\.isViolent) == [.assault, .murder, .escape, .werewolf])
     }
 
     /// `modifyCrimeGold` and `setCrimeGold` move one half; `clearCrimeGold`
@@ -107,9 +107,9 @@ struct CrimeRuntimeTests {
             arrest: true, attackOnSight: false, murder: 1000, assault: 40, trespass: 5,
             pickpocket: 25, unknown: 0, stealMultiplier: 0.5, escape: nil, werewolf: nil
         )
-        var caught = CrimeFixture.event(.theft, stolenValue: 400)
-        caught.isPickpocket = true
-        #expect(CrimeGoldTable(values: values).bounty(for: caught) == 25)
+        let table = CrimeGoldTable(values: values)
+        #expect(table.bounty(for: CrimeFixture.event(.pickpocket, stolenValue: 400)) == 25)
+        #expect(table.bounty(for: CrimeFixture.event(.escape)) == 100)
     }
 
     /// A faction with no `CRVA` prices nothing, and the crime is still counted.

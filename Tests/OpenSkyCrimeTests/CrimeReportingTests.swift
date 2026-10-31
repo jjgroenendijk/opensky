@@ -204,6 +204,8 @@ struct CrimeReportingTests {
         let escape = runtime.prices(of: Self.hold)?.escape ?? runtime.settings.defaultPrices.escape
         #expect(coordinator.jailStay == nil)
         #expect(coordinator.crimeGold(of: Self.hold) == 300 + escape)
+        #expect(coordinator.reporter?.crimeGold(of: Self.hold, violent: true) == escape)
+        #expect(runtime.crimeCounts(of: Self.hold).escape == 1)
         #expect(recorder.events("ESJA").count == 1)
         #expect(!coordinator.serveSentence())
     }

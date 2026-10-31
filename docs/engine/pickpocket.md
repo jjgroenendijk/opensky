@@ -67,7 +67,7 @@ A roll from 0 to 100 below the chance succeeds:
 
 A failed roll moves nothing. The target noticed, so the pockets close, the HUD shows
 `sPickpocketFail` ("You've been caught pickpocketing."), and the
-[crime](/engine/crime.md) system charges a theft. The target is the witness. A pickpocket theft
+[crime](/engine/crime.md) system charges a pickpocket crime. The target is the witness. It
 costs the faction's flat `CRVA` pickpocket price (25 in vanilla), not a share of the item's value.
 
 ## Where OpenSky differs

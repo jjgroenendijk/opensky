@@ -70,20 +70,21 @@ to no one, which is why killing a bandit on the road costs nothing. No default i
 
 ## The crimes
 
-The crimes are theft, assault, murder, trespass, and a seen werewolf or vampire lord change.
-The `FACT` `CRVA` field prices each one.
+The crimes are theft, pickpocketing, assault, murder, trespass, a jail escape, and a seen werewolf
+or vampire lord change. The `FACT` `CRVA` field prices each one.
 
-Bounty text names them with the string settings `sCrimeTypeSteal`, `sCrimeTypeAttack`,
-`sCrimeTypeMurder`, `sCrimeTypeTrespass`, and `sCrimeTypeWerewolf`. The game also names
-`sCrimeTypePickpocket` and `sCrimeTypeEscape`; OpenSky reads those when it counts those crimes.
+Bounty text names them with the string settings `sCrimeTypeSteal`, `sCrimeTypePickpocket`,
+`sCrimeTypeAttack`, `sCrimeTypeMurder`, `sCrimeTypeTrespass`, `sCrimeTypeEscape`, and
+`sCrimeTypeWerewolf`. A faction's "ignore pickpocket" flag skips a pickpocket; no flag skips an
+escape. The ledger counts each kind but the werewolf change.
 
 The change is a crime only when somebody sees it. `Game.SendWereWolfTransformation` "has an
 actor in high who can detect the player call a werewolf crime against the player"
 (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>). OpenSky takes the first actor
 that detects the player as that witness. The Creation Kit's Crime page calls it a "Special
 Crime"; OpenSky puts its gold in the violent half, beside murder, which costs the same. It adds
-no crime count, because the save keeps four counts per faction and the change script counts the
-"Werewolf Transformations" stat itself. See [beast forms](/engine/beast-forms.md).
+no crime count, because the change script counts the "Werewolf Transformations" stat itself.
+See [beast forms](/engine/beast-forms.md).
 
 A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
 "bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared
@@ -207,8 +208,8 @@ Lifetime Bounty", "Largest Bounty", "Locks Picked", and the jail stats
 ([jail](/engine/jail.md)). The names are the Creation Kit's `QueryStat` list. A crime counts
 whether or not it was seen; the bounty stats count only gold that was charged.
 
-A caught [pickpocket](/engine/pickpocket.md) is a theft with the target as witness. It costs the
-`CRVA` pickpocket price, 25 in vanilla, instead of the steal multiplier times the value.
+A caught [pickpocket](/engine/pickpocket.md) is a pickpocket crime with the target as witness. It
+costs the `CRVA` pickpocket price, 25 in vanilla, instead of the steal multiplier times the value.
 
 Melee, archery, and combat all report hits through one function, so a sword and an arrow cannot
 disagree about what is a first strike.

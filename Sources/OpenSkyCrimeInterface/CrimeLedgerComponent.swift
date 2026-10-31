@@ -14,20 +14,27 @@ import OpenSkyWorldState
 /// twice for the same state, which is the rule every component here follows.
 nonisolated public struct CrimeCounts: Equatable, Sendable {
     public private(set) var theft: Int32
+    public private(set) var pickpocket: Int32
     public private(set) var assault: Int32
     public private(set) var murder: Int32
     public private(set) var trespass: Int32
+    public private(set) var escape: Int32
 
     public static let none = CrimeCounts()
 
     /// Clamped on the way in, which is what makes this the save decoder's entry
     /// point: a negative count from a corrupt file becomes zero rather than a
     /// number that reads as "minus three murders".
-    public init(theft: Int32 = 0, assault: Int32 = 0, murder: Int32 = 0, trespass: Int32 = 0) {
+    public init(
+        theft: Int32 = 0, pickpocket: Int32 = 0, assault: Int32 = 0, murder: Int32 = 0,
+        trespass: Int32 = 0, escape: Int32 = 0
+    ) {
         self.theft = max(0, theft)
+        self.pickpocket = max(0, pickpocket)
         self.assault = max(0, assault)
         self.murder = max(0, murder)
         self.trespass = max(0, trespass)
+        self.escape = max(0, escape)
     }
 
     public var isEmpty: Bool {
@@ -36,15 +43,17 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
 
     /// Every crime of every kind.
     public var total: Int64 {
-        Int64(theft) + Int64(assault) + Int64(murder) + Int64(trespass)
+        CrimeKind.counted.reduce(0) { $0 + Int64(self[$1]) }
     }
 
     public subscript(kind: CrimeKind) -> Int32 {
         switch kind {
         case .theft: theft
+        case .pickpocket: pickpocket
         case .assault: assault
         case .murder: murder
         case .trespass: trespass
+        case .escape: escape
         case .werewolf: 0
         }
     }
@@ -58,9 +67,11 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         var result = self
         switch kind {
         case .theft: result.theft = raised
+        case .pickpocket: result.pickpocket = raised
         case .assault: result.assault = raised
         case .murder: result.murder = raised
         case .trespass: result.trespass = raised
+        case .escape: result.escape = raised
         case .werewolf: break
         }
         return result

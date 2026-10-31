@@ -84,14 +84,16 @@ extension CrimeCoordinator {
     func escape(_ stay: JailStay) {
         jailStay = nil
         guard let reporter else { return }
-        let price = reporter.runtime.prices(of: stay.faction)?.escape
-            ?? reporter.runtime.settings.defaultPrices.escape
         reporter.modifyCrimeGold(by: stay.violentGold, violent: true, of: stay.faction)
-        reporter.modifyCrimeGold(by: stay.nonViolentGold + price, violent: false, of: stay.faction)
+        reporter.modifyCrimeGold(by: stay.nonViolentGold, violent: false, of: stay.faction)
+        let price = reporter.reportEscape(from: stay.faction).gold
         let gold = stay.violentGold + stay.nonViolentGold + price
         storyEvents?.reportStoryEvent(.escapeJail(location: nil, crimeFaction: stay.faction))
         pendingCommands.append(.incrementStat("Jail Escapes", by: 1))
-        showBountyNotice(gold: gold, added: true, faction: stay.faction)
+        // The escape price shows its own notice as it is charged.
+        showBountyNotice(
+            gold: stay.violentGold + stay.nonViolentGold, added: true, faction: stay.faction
+        )
         lastGuard = .escaped(gold: gold, faction: factionName(stay.faction))
         refreshGuardHostility()
     }

@@ -43,7 +43,9 @@ struct CrimeSaveTests {
             CrimeLedgerEntry(
                 faction: hold,
                 nonViolentGold: 1045,
-                counts: CrimeCounts(theft: 3, assault: 1, murder: 1, trespass: 2)
+                counts: CrimeCounts(
+                    theft: 3, pickpocket: 1, assault: 1, murder: 1, trespass: 2, escape: 1
+                )
             ),
             CrimeLedgerEntry(faction: companions, counts: CrimeCounts(assault: 4)),
             CrimeLedgerEntry(faction: generated, nonViolentGold: 25)

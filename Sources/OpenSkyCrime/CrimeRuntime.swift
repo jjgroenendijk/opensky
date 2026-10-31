@@ -212,7 +212,9 @@ public struct CrimeRuntime {
             return .playerCrimesNotReported
         }
         guard faction.tracksCrime else { return .factionIgnoresCrime }
-        guard !faction.flags.contains(event.kind.ignoreFlag) else { return .factionIgnoresKind }
+        if let flag = event.kind.ignoreFlag, faction.flags.contains(flag) {
+            return .factionIgnoresKind
+        }
         if
             faction.flags.contains(.doNotReportCrimesAgainstMembers),
             let victim = event.victim,
@@ -279,7 +281,6 @@ extension CrimeEvent {
             witnessed: source.isWitnessed(perpetrator),
             stolenValue: stolenValue
         )
-        seen.isPickpocket = isPickpocket
         seen.stolenCount = stolenCount
         return seen
     }
