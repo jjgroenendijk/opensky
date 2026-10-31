@@ -32,7 +32,7 @@ nonisolated extension MeshLibrary {
                 definition: definition,
                 placementTransform: placementTransform,
                 texture: texture,
-                effect: RenderEffectMaterial(shading: shader.shading) {
+                effect: RenderEffectMaterial(shading: shader.shading, source: nil) {
                     textures.texture(key: $0, usage: $1)
                 },
                 emittance: emittance,

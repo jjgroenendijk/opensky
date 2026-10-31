@@ -328,6 +328,10 @@ extension Renderer {
             index: TextureIndex.surfaceEnvironment.rawValue
         )
         argumentTable.setTexture(
+            (material.effect?.sourceVolume ?? greyVolume).gpuResourceID,
+            index: TextureIndex.effectSourceVolume.rawValue
+        )
+        argumentTable.setTexture(
             refraction.copy?.gpuResourceID ?? diffuse,
             index: TextureIndex.sceneColor.rawValue
         )

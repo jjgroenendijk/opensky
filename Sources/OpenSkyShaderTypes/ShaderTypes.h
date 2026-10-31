@@ -114,6 +114,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Terrain normal maps (LTEX TXST TX01): the base, then one slot per layer slot.
     TextureIndexTerrainBaseNormal = 16,
     TextureIndexTerrainLayerNormal0 = 17,
+    /// An effect shape's source when the file is a volume, after the terrain normal slots.
+    TextureIndexEffectSourceVolume = 25,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -196,6 +198,8 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagLit = 1 << 7,
     /// The reference's emittance tints the colour: SLSF1 External_Emittance.
     EffectFlagExternalEmittance = 1 << 8,
+    /// The source is a volume, bound at TextureIndexEffectSourceVolume.
+    EffectFlagSourceVolume = 1 << 9,
 };
 
 /// Lit-mesh shading terms: DrawUniforms.materialFlags says which a material has,

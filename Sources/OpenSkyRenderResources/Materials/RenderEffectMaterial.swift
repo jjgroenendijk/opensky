@@ -9,6 +9,8 @@ import simd
 nonisolated public struct RenderEffectMaterial: Sendable {
     /// Nil when the shape names no palette; the diffuse is bound in its place.
     public let palette: MTLTexture?
+    /// The source texture when its file is a volume; the diffuse then holds a placeholder.
+    public let sourceVolume: MTLTexture?
     /// `EffectFlag` bits.
     public private(set) var flags: UInt32
     public let baseColor: SIMD4<Float>
@@ -19,21 +21,28 @@ nonisolated public struct RenderEffectMaterial: Sendable {
     /// Drawn only on a bloody weapon (`Renderer.encodeWeaponBlood`).
     public let weaponBlood: Bool
 
-    public init(shading: EffectShading, textureProvider: TextureProvider) {
+    /// `source` is the shape's source texture key, which may name a volume.
+    public init(shading: EffectShading, source: String?, textureProvider: TextureProvider) {
         // A palette flag with no palette path would sample the placeholder, so
         // such a shape keeps its texture colors instead.
         let hasPalette = shading.paletteTexture != nil
+        let resolved = source.map { textureProvider($0, .effectSource) }
         self.init(
             shading: shading,
             palette: hasPalette && (shading.paletteColor || shading.paletteAlpha)
-                ? textureProvider(shading.paletteTexture, .color) : nil
+                ? textureProvider(shading.paletteTexture, .color) : nil,
+            sourceVolume: resolved?.textureType == .type3D ? resolved : nil
         )
     }
 
     /// `palette` is the resolved palette texture, nil when the shading uses none.
-    public init(shading: EffectShading, palette: MTLTexture?) {
+    public init(shading: EffectShading, palette: MTLTexture?, sourceVolume: MTLTexture? = nil) {
         self.palette = palette
+        self.sourceVolume = sourceVolume
         flags = Self.flags(shading, hasPalette: palette != nil)
+        if sourceVolume != nil {
+            flags |= UInt32(EffectFlag.sourceVolume.rawValue)
+        }
         baseColor = shading.baseColor
         baseColorScale = shading.baseColorScale
         falloff = shading.falloff ?? .zero

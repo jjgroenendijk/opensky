@@ -323,6 +323,12 @@ awk '/^--- nif controllers/{f=1;next} /^--- /{f=0} f' "$log" \
 dds_key="$("$cli" --data-root "$data_root" vfs ls 'textures\*.dds' 2>/dev/null \
   | head -1 | cut -f1)"
 run "dds inspect ($dds_key)" dds "$dds_key"
+# The effect noise volume uploads as a 3D texture with its 8 levels, never a placeholder.
+run "dds volume upload" dds 'textures\effects\noisevolume.dds' --out "$log_dir/dds-volume" \
+  --level 4
+awk '/^--- dds volume upload/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q 'uploaded: 3D 128x128x128, 8 levels, .*placeholder: no' \
+  || fail "dds --out did not upload the noise volume as a 3D texture"
 
 # M6.1 HKX container gate: dump the packfile inventory for a skeleton and a
 # human idle animation. Both are hk_2010.2.0-r1 64-bit packfiles with the

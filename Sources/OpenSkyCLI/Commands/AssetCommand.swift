@@ -121,5 +121,8 @@ enum AssetCommand {
             throw CLIError.failure("cannot parse \(key): \(String(describing: error))")
         }
         print("[INFO] " + AssetInfoText.dds(file: file, byteCount: data.count))
+        if let out = arguments.out {
+            try writeUploadedDDS(context: context, arguments: arguments, file: file, out: out)
+        }
     }
 }

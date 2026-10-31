@@ -39,6 +39,18 @@ struct DDSVolumeTests {
         #expect(Array(file.mipData(level: 1).prefix(4)) == [2, 2, 2, 255])
     }
 
+    @Test func declaresVolumeReadsOnlyTheHeaders() {
+        #expect(DDSFile.declaresVolume(Self.luminanceVolume(size: 4, mipCount: 3, cut: 1)))
+        let dx10 = DDSFixture.file(
+            width: 4, height: 4, depth: 2, fourCC: "DX10",
+            dx10: .init(dxgiFormat: 98, resourceDimension: 4), payload: Data()
+        )
+        #expect(DDSFile.declaresVolume(dx10))
+        let flat = DDSFixture.file(width: 4, height: 4, fourCC: "DXT1", payload: Data(count: 8))
+        #expect(!DDSFile.declaresVolume(flat))
+        #expect(!DDSFile.declaresVolume(Data("DDS ".utf8)))
+    }
+
     @Test func rejectsAVolumeUnlessTheCallerAllowsIt() {
         #expect(throws: DDSError.unsupported("volume texture")) {
             try DDSFile(data: Self.luminanceVolume(size: 4, mipCount: 1))

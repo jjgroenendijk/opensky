@@ -323,6 +323,7 @@ fragment float4 staticMeshFragment(
     const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
     texture2d<float> effectPalette [[texture(TextureIndexEffectPalette)]],
+    texture3d<float> effectSourceVolume [[texture(TextureIndexEffectSourceVolume)]],
     texture2d<float> normalMap [[texture(TextureIndexSurfaceNormal)]],
     texture2d<float> glowMap [[texture(TextureIndexSurfaceGlow)]],
     texture2d<float> detailMap [[texture(TextureIndexSurfaceDetail)]],
@@ -351,6 +352,9 @@ fragment float4 staticMeshFragment(
         uv += toEyeTangent.xy * (height * 0.08 - 0.04);
     }
     float4 diffuse = diffuseMap.sample(trilinear, uv);
+    if ((draw.effectFlags & EffectFlagSourceVolume) != 0) {
+        diffuse = effectSourceVolume.sample(trilinear, float3(uv, effectVolumeDepth));
+    }
     bool isEffect = (draw.effectFlags & EffectFlagEnabled) != 0;
     float4 effect = 0.0;
     float alpha = diffuse.a * in.color.a * draw.materialAlpha;

@@ -131,8 +131,7 @@ A sweep of every `.dds` in the vanilla archives (about 33,000 files) found:
 - 1 volume texture, `textures\effects\noisevolume.dds`: L8, 128 x 128 x 128, 8 mip levels, no DX10
   header, and `DDSD_DEPTH` (`0x800000`) set in dwFlags. The file is 2,396,873 bytes: the 128-byte
   header plus the sum of `n * n * n` for n = 128, 64, ..., 1. This exact match confirms the
-  slices-per-level layout. The renderer has no volume use yet, so it still loads only 2D and
-  cube textures; `openskycli dds` shows the volume's levels.
+  slices-per-level layout. Its only use is described in [Volume textures](#volume-textures).
 - Every vanilla texture parses (census of 32,918 files).
 
 ## Cubemaps
@@ -175,3 +174,49 @@ to within 5 percent.
 A BC1 block with `color0 <= color1` uses the three-color mode with transparent black. A BC3
 color block always uses four colors. The painted result is written back as an RGBA8888
 file with a box-filtered mip chain, so the normal texture path uploads it.
+
+## Volume textures
+
+### Where the game uses the noise volume
+
+A byte search of every vanilla archive (meshes decompressed), every plugin, and
+`SkyrimSE.exe` for `noisevolume` found one consumer. On 2026-10-31:
+
+- Two Dragonborn meshes, `meshes\dlc02\effects\mq03skaalvilliagebarrier02.nif` and
+  `...03.nif`, name `textures\effects\NoiseVolume.dds` as the `BSEffectShaderProperty`
+  source texture of one shape, `CloudsReversed01:0` (clamp mode 3, wrap). The shape is one
+  layer of the storm barrier around the Skaal village.
+- No vanilla record places either mesh. The one placed barrier, the `STAT`
+  `MQ03SkaalVillageBarrier01` (`Dragonborn.esm:029D26`), uses
+  `mq03skaalvilliagebarrier.nif`, which does not use the volume.
+- No other mesh, plugin record, or the game program names the file.
+
+So the real game never shows the noise volume, and the reference game cannot show how a
+volume in a 2D effect slot looks. Direct3D 11 does not define the result of sampling a 3D
+resource through a 2D shader slot.
+
+### How OpenSky draws it
+
+- The loader uploads a volume as a Metal 3D texture with its full mip chain, one slice
+  after another per level. A volume that fails to load gets a mid-grey 1 x 1 x 1 volume, so
+  the frame goes on.
+- A colour load of a volume file gets the 2D colour placeholder, because a 2D slot cannot
+  sample it. The texture library remembers that the file is a volume.
+- An effect shape on a static mesh asks for its source as an effect source. For a volume
+  file it gets the 3D texture, which binds to its own shader slot, and the shader samples it
+  at the shape's UV and depth 0.5, the middle slice.
+  [UNCONFIRMED] The depth 0.5 is OpenSky's choice. The game may sample another depth, show
+  nothing, or show something else. Particles and every other 2D consumer keep the
+  placeholder.
+
+The noise does not change OpenSky's frame of the barrier mesh. The shape's flags turn on
+vertex colours and vertex alpha. Its vertex colours are black over almost all of the shape,
+and its base colour is (0.196, 0.196, 0.216), so its effect colour is near zero whatever
+the source holds. An L8 texel has alpha 1, the same as the placeholder. So the shape is a
+dark, semi-transparent layer, and a capture with the volume matches one with the placeholder
+byte for byte. A temporary shader edit that coloured the volume-path pixels confirmed that
+every pixel of the shape samples the volume, and that the sample varies across it.
+
+`openskycli dds <path> --out <folder>` uploads a texture the way an effect shape does,
+prints the uploaded type, size, and levels, and writes each slice of `--level` as a PNG.
+`openskycli preview --mesh` of the barrier mesh draws the shape.

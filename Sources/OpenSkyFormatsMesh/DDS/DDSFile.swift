@@ -229,6 +229,19 @@ nonisolated public struct DDSFile: Sendable {
         faceMipRanges = faces
     }
 
+    /// The header marks a volume. Reads only the headers, so a volume with a broken
+    /// mip chain still answers true.
+    public static func declaresVolume(_ data: Data) -> Bool {
+        var reader = BinaryReader(data)
+        guard let header = try? readHeader(reader: &reader) else { return false }
+        if header.isVolume {
+            return true
+        }
+        guard header.pixelFormat.flags & Layout.flagFourCC != 0 else { return false }
+        let resolved = try? resolveFormat(fourCC: header.pixelFormat.fourCC, reader: &reader)
+        return resolved?.isVolume ?? false
+    }
+
     private static func readHeader(reader: inout BinaryReader) throws -> Header {
         guard try reader.readFourCC() == Layout.magic else {
             throw DDSError.malformed("bad magic (expected \"DDS \")")

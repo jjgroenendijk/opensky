@@ -6,6 +6,7 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 nonisolated public final class TextureLibrary {
@@ -48,6 +49,9 @@ nonisolated public final class TextureLibrary {
     public private(set) var missingCount = 0
     /// The paths behind `missingCount`, for reports that name each miss.
     public private(set) var missingPaths: Set<String> = []
+    /// Paths whose file is a volume, found by a colour load. An effect source among
+    /// them binds as a 3D texture.
+    public private(set) var volumePaths: Set<String> = []
     /// Books each upload to `LoadPhase.texture` when a benchmark attaches one.
     public var loadPhases: LoadPhaseRecorder?
     /// Converted textures, read before the archive when current.
@@ -80,6 +84,11 @@ nonisolated public final class TextureLibrary {
         // Fall back to the raw key if normalize rejects it; contents(forPath:)
         // then throws and the miss branch logs + placeholders it once.
         let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
+        if usage == .effectSource {
+            let colour = texture(key: normalized, usage: .color)
+            return volumePaths
+                .contains(normalized) ? texture(key: normalized, usage: .volume) : colour
+        }
         let cacheKey = CacheKey(path: normalized, usage: usage)
         recordTouch(Self.keyString(cacheKey))
         if let hit = cache[cacheKey] {
@@ -122,7 +131,7 @@ nonisolated public final class TextureLibrary {
     }
 
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
-        if usage == .cube {
+        if usage == .cube || usage == .volume {
             return loadDirect(path: path, usage: usage)
         }
         if let streamed = streamedTexture(path: path, usage: usage) {
@@ -150,7 +159,8 @@ nonisolated public final class TextureLibrary {
         return loadDirect(path: path, usage: usage)
     }
 
-    /// The archive bytes, with no cache or streaming. Cubemaps always load this way.
+    /// The archive bytes, with no cache or streaming. Cubemaps and volumes always load
+    /// this way, and so does a volume asked for as a colour map, because no cache holds it.
     private func loadDirect(path: String, usage: TextureUsage) -> MTLTexture {
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1
@@ -158,6 +168,9 @@ nonisolated public final class TextureLibrary {
             return loader.missingTexture(usage: usage, label: path)
         }
         loadedCount += 1
+        if usage == .color, DDSFile.declaresVolume(data) {
+            volumePaths.insert(path)
+        }
         return loader.texture(dds: data, usage: usage, label: path)
     }
 

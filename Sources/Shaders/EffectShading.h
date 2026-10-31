@@ -5,6 +5,10 @@
 
 #include "ShaderCommon.h"
 
+// A volume in an effect's 2D source slot is sampled at its middle slice. The game's
+// behaviour is unconfirmed: no vanilla reference shows such a shape (docs/formats/dds.md).
+constant float effectVolumeDepth = 0.5;
+
 struct EffectTerms
 {
     uint flags;
