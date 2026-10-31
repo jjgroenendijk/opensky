@@ -71,10 +71,6 @@ nonisolated public struct BinkMovie: Sendable {
         Double(frameRateNumerator) / Double(frameRateDenominator)
     }
 
-    public var duration: Double {
-        Double(frames.count) / framesPerSecond
-    }
-
     public init(data: Data) throws {
         var reader = BinaryReader(data)
         do {

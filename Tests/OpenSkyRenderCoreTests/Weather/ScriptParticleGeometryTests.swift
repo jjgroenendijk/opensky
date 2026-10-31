@@ -2,7 +2,6 @@
 
 import Foundation
 @testable import OpenSkyFormatsESM
-import OpenSkyFormatsTesting
 @testable import OpenSkyRenderCore
 import Testing
 

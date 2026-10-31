@@ -50,9 +50,4 @@ extension WorldAudioSoundDirector {
         failedScriptSounds = []
         return scriptSounds.retire(playing: Set(engine.sources.map(\.id)), failed: failed)
     }
-
-    /// How many script sounds play or wait for their file, for the readout.
-    public var scriptSoundCount: Int {
-        scriptSounds.count
-    }
 }

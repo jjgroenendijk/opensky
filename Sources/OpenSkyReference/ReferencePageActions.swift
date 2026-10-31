@@ -25,10 +25,6 @@ nonisolated public enum ReferencePageActions {
     public static let followedMessage = "OpenSky moves to the Windows game's view."
     public static let noPlayerMessage = "The Windows game has no player in a cell yet."
 
-    public static func loadingMessage(save: String) -> String {
-        "Started the Windows game; it loads \(save) from its main menu."
-    }
-
     /// The reference window size when the game starts alone, as `make reference-game` uses.
     public static let defaultWindowSize = (1280, 720)
     /// Seconds a newly started Steam gets to log in before the game starts.

@@ -74,12 +74,10 @@ nonisolated public final class BinkVideoDecoder {
 }
 
 nonisolated public final class BinkAudioDecoder {
-    public let track: BinkAudioTrack
     private let session: FFmpegCodecSession
     private var resampler: FFmpegResampler?
 
     public init(track: BinkAudioTrack, movie: BinkMovie) throws {
-        self.track = track
         let codec = track.usesDCT ? AV_CODEC_ID_BINKAUDIO_DCT : AV_CODEC_ID_BINKAUDIO_RDFT
         session = try FFmpegCodecSession(codec: codec) { context in
             context.pointee.sample_rate = Int32(track.sampleRate)

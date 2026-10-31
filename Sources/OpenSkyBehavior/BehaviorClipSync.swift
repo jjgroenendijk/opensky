@@ -96,11 +96,4 @@ nonisolated extension BehaviorGraphInstance {
         pairedClips[key] = paired
         return paired
     }
-
-    /// The phase a sync master imposes on its siblings, applied every update.
-    public func continuousClipPhase(of target: HKXPointerTarget?)
-        -> (value: Float, seedOnly: Bool)?
-    {
-        clipPhase(under: target).map { ($0, false) }
-    }
 }

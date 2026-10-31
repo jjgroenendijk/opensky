@@ -31,13 +31,6 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     /// The playing scenes, while the player stands in the world.
     public var scenes: [ReferenceScene]?
 
-    public init(version: Int = 1, batch: String = "", mainMenu: Bool, loading: Bool = false) {
-        self.version = version
-        self.batch = batch
-        self.mainMenu = mainMenu
-        self.loading = loading
-    }
-
     /// True once the player stands in a loaded cell, outside the main menu and loading.
     public var inWorld: Bool {
         !mainMenu && !loading && view != nil

@@ -316,7 +316,7 @@ extension ActorWorldAdapter: ActorValueWorld {
 }
 
 /// The inputs of `ActorWorldAdapter`'s per-reference names.
-private struct ReferenceNamesKey: Equatable {
+private struct ReferenceNamesKey: Hashable {
     let rolls: UInt64
     let namesResolve: Bool
 }
