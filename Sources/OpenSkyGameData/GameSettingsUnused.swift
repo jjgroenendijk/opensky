@@ -267,6 +267,7 @@ nonisolated private let falloutSystemsSettings = [
     "sRepairCost",
     "sAddedNote",
     "sFullHealth",
+    "sLockpickInsufficientPerks",
     "sRepairItem",
     "sRepairServicesTitle",
     "sRepairSkill",
