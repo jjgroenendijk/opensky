@@ -100,6 +100,9 @@ nonisolated extension BehaviorEventClipIndex {
         else { return nil }
         found.behaviorFiles = [position.file] + found.behaviorFiles
         found.stateName = transition.state.name ?? found.stateName
+        if let graph = graphEvents(position.file)?.graph {
+            found.payloads = Self.enterPayloads(of: transition.state, in: graph) + found.payloads
+        }
         if found.position == nil {
             found.position = BehaviorStatePosition(
                 file: position.file, machine: position.machine, state: transition.state.stateId

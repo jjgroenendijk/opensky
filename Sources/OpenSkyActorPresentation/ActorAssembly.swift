@@ -37,6 +37,13 @@ nonisolated public protocol ActorAssetProvider {
         bone: String,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
+    /// The same, drawing only the shapes below the model node `subtree`.
+    func loadActorAttachment(
+        path: String,
+        bone: String,
+        subtree: String?,
+        skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure>
     /// A head part with its texture set and tint applied.
     func loadActorHeadPart(
         path: String,
@@ -47,6 +54,16 @@ nonisolated public protocol ActorAssetProvider {
 }
 
 nonisolated extension ActorAssetProvider {
+    /// A provider that cannot cut a model draws all of it.
+    public func loadActorAttachment(
+        path: String,
+        bone: String,
+        subtree _: String?,
+        skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure> {
+        loadActorAttachment(path: path, bone: bone, skeleton: skeleton)
+    }
+
     /// A provider that cannot retexture loads the plain mesh.
     public func loadActorHeadPart(
         path: String,
@@ -275,7 +292,10 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     ) {
         let role = ActorModelRole.attachment(attachment)
         switch provider.loadActorAttachment(
-            path: attachment.modelPath, bone: attachment.bone, skeleton: skeleton
+            path: attachment.modelPath,
+            bone: attachment.bone,
+            subtree: attachment.subtree,
+            skeleton: skeleton
         ) {
         case let .success(asset):
             models.append(

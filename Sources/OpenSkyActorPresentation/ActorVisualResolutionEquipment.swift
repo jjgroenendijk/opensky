@@ -17,6 +17,11 @@ nonisolated public enum ActorAttachmentBone: Sendable {
     public static let drawnWeapon = "Weapon"
     /// The drawn left-hand node, under `NPC L Hand [LHnd]`.
     public static let drawnOffHand = "Shield"
+    /// The node equipped arrows or bolts hang from, on the spine.
+    public static let quiver = "Quiver"
+    /// The node of an AMMO model that holds the quiver and its arrows. The model's
+    /// other shape is the single arrow on the string, which the quiver does not show.
+    public static let quiverSubtree = "ArrowQuiver"
 
     /// The node a sheathed weapon of `type` hangs from. Nil for hand-to-hand and
     /// unknown types, which stay in the hand.
@@ -120,7 +125,7 @@ nonisolated extension ActorVisualResolver {
         }
     }
 
-    /// Splits a runtime equipped set into worn armour and hand attachments.
+    /// Splits a runtime equipped set into worn armour, hand attachments, and the quiver.
     ///
     /// Order follows the equipped set, which `ReferenceInventoryState` keeps
     /// sorted by FormID — so two stores that reached the same equipped set
@@ -136,6 +141,17 @@ nonisolated extension ActorVisualResolver {
         for item in equipped {
             if let armor = self.armors[item.rawValue] {
                 armors.append(armor)
+                continue
+            }
+            if
+                let entry = equipment.item(item), entry.occupancy.ammunition,
+                let path = entry.modelPath
+            {
+                attachments.append(ResolvedAttachment(
+                    modelPath: path,
+                    bone: ActorAttachmentBone.quiver,
+                    subtree: ActorAttachmentBone.quiverSubtree
+                ))
                 continue
             }
             guard

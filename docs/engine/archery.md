@@ -149,10 +149,9 @@ outside cannot leave a bow drawn forever.
 Which one acts depends on what is equipped: a `WEAP` with `DNAM` animation type bow. The animation
 type decides which attack set a weapon runs, so it is the right question. Crossbows are not done.
 
-The arrow a shot uses is the first ammunition the player carries that resolves to a flyable `PROJ`.
-"First carried", not "equipped", because ammunition has its own `EQUP` slot that is not modelled.
-The inventory lists stacks in a fixed order, so the rule is predictable. An empty quiver stops the
-shot.
+The arrow a shot uses is the equipped ammunition when it resolves to a flyable `PROJ`. With none
+equipped, it is the first carried ammunition that does, in the inventory's fixed stack order. An
+empty quiver stops the shot.
 
 ## Bow zoom
 

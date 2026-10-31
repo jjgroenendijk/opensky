@@ -128,13 +128,13 @@ nonisolated public enum CombatCore {
         return masked
     }
 
-    /// The first carried arrow that flies. Ammunition has its own equip slot
-    /// that OpenSky does not model, so the stable stack order picks it.
+    /// The equipped arrow, else the first carried arrow that flies in stable stack order.
     public static func arrow(
+        equipped: [FormID] = [],
         carried: [FormID],
         resolve: (FormID) -> ArcheryAmmunition?
     ) -> ArcheryAmmunition? {
-        for item in carried {
+        for item in equipped + carried {
             if let arrow = resolve(item) {
                 return arrow
             }

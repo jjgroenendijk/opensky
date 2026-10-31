@@ -119,7 +119,7 @@ struct RigidAttachmentTests {
         #expect(simd_distance(result, SIMD3(0, 60, 12)) < 1e-4)
     }
 
-    /// Already-rigged geometry belongs to some other rig; overwriting its
+    /// Geometry rigged to the actor's own bones follows them; overwriting its
     /// palette would corrupt it rather than attach it.
     @Test func alreadySkinnedMeshIsLeftAlone() {
         let skinned = Mesh(
@@ -145,6 +145,40 @@ struct RigidAttachmentTests {
         )
 
         #expect(attached.meshes[0].skinning?.boneNames == ["NPC Spine [Spn0]"])
+    }
+
+    /// A bow is skinned to its own string bones, which the actor lacks. It is
+    /// baked into its bind shape and then rides the attachment bone.
+    @Test func meshSkinnedToBonesTheActorLacksIsBakedAndAttached() throws {
+        let lift = MatrixMath.translation(SIMD3(0, 0, 10))
+        let bow = Mesh(
+            name: "BowMesh:0",
+            transform: matrix_identity_float4x4,
+            positions: [SIMD3(1, 0, 0)],
+            normals: [SIMD3(0, 0, 1)],
+            tangents: [],
+            bitangents: [],
+            uvs: [],
+            colors: [],
+            indices: [0, 0, 0],
+            materialSlot: 0,
+            skinning: MeshSkinning(
+                weights: [SIMD4(1, 0, 0, 0)],
+                boneIndices: [SIMD4(0, 0, 0, 0)],
+                bindPoseMatrices: [lift],
+                boneNames: ["Bow_MidBone"]
+            )
+        )
+        let attached = RigidAttachment.skinned(
+            model([bow]), to: "Weapon", restTransform: matrix_identity_float4x4,
+            actorHasBone: { $0 == "Weapon" }
+        )
+        let mesh = attached.meshes[0]
+        let skinning = try #require(mesh.skinning)
+
+        #expect(skinning.boneNames == ["Weapon"])
+        #expect(mesh.positions == [SIMD3(1, 0, 10)])
+        #expect(mesh.normals == [SIMD3(0, 0, 1)])
     }
 
     @Test func materialsAndSkippedShapeCountSurvive() {

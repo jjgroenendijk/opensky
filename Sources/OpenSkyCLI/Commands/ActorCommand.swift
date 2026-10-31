@@ -78,13 +78,14 @@ enum ActorCommand {
         print("NPC_ \(base) \"\(editorID)\"")
         do {
             let appearance = try resolver.resolve(base: base)
+            let carried = resolver.carriedItems(base: base)
             print("  chain: \(chainDescription(appearance.chain))")
             print("  female \(describe(appearance.isFemale))"
                 + "; race \(describe(appearance.race))"
                 + "; skin \(describe(appearance.wornArmor))"
                 + "; head parts \(describeParts(appearance.headParts))"
                 + "; outfit \(describe(appearance.defaultOutfit))")
-            let visual = try visualResolver.resolve(appearance: appearance)
+            let visual = try visualResolver.resolve(appearance: appearance, carried: carried)
             printVisual(visual)
         } catch let error as ActorResolveError {
             throw CLIError.failure("unresolved: \(describe(error))")
@@ -113,13 +114,14 @@ extension ActorCommand {
             + " at (\(position.x), \(position.y), \(position.z)) scale \(actor.scale)")
         do {
             let appearance = try resolver.resolve(base: actor.base)
+            let carried = resolver.carriedItems(base: actor.base)
             print("  chain: \(chainDescription(appearance.chain))")
             print("  female \(describe(appearance.isFemale))"
                 + "; race \(describe(appearance.race))"
                 + "; skin \(describe(appearance.wornArmor))"
                 + "; head parts \(describeParts(appearance.headParts))"
                 + "; outfit \(describe(appearance.defaultOutfit))")
-            let visual = try visualResolver.resolve(appearance: appearance)
+            let visual = try visualResolver.resolve(appearance: appearance, carried: carried)
             printVisual(visual)
             return true
         } catch let error as ActorResolveError {
@@ -139,6 +141,10 @@ extension ActorCommand {
         for part in visual.parts {
             print("  part \(describe(part.origin)) arma \(part.armature) "
                 + "slots 0x\(String(format: "%08X", part.slots.rawValue)) \(part.modelPath)")
+        }
+        for attachment in visual.attachments {
+            print("  attachment \(attachment.bone) sheathed \(attachment.sheathBone ?? "-") "
+                + attachment.modelPath)
         }
         print("  facegen \(visual.faceGenMeshPath ?? "-")")
         if !visual.skips.isEmpty {

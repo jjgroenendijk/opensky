@@ -251,6 +251,7 @@ public final class CombatCoordinator {
     func selectedArrow() -> ArcheryAmmunition? {
         guard let items else { return nil }
         return CombatCore.arrow(
+            equipped: world.equipment?.equipped(on: .player) ?? [],
             carried: world.playerCarriedItems(),
             resolve: items.archeryAmmunition
         )

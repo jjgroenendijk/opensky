@@ -32,7 +32,11 @@ nonisolated public struct InventoryBaselineResolver {
     public let outfits: [UInt32: Outfit]
     /// Template-chain resolution, which supplies `defaultOutfit`.
     public let actors: ActorTemplateResolver
-    /// LVLI and OTFT records that failed to decode.
+    /// What each item occupies, which picks the carried items an NPC equips.
+    public var equipment = EquipmentCatalog(items: [:])
+    /// CSTY records, whose Equipment Score Mults pick a carried weapon.
+    public var combatStyles: [UInt32: CombatStyle] = [:]
+    /// LVLI, OTFT, and CSTY records that failed to decode.
     public private(set) var skippedRecords = SkippedRecords()
 
     public static func build(
@@ -67,7 +71,11 @@ nonisolated public struct InventoryBaselineResolver {
             },
             actors: ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
         )
+        resolver.combatStyles = loadOrder.indexRecords(of: "CSTY", skipped: &skipped) {
+            try CombatStyle(record: $0)
+        }
         resolver.skippedRecords = skipped
+        resolver.equipment = EquipmentCatalog.build(from: loadOrder)
         return resolver
     }
 
@@ -165,21 +173,30 @@ nonisolated public struct InventoryBaselineResolver {
         return ReferenceInventoryState(stacks: stacks)
     }
 
-    /// An actor's carried `CNTO` items plus its default outfit. The outfit is also
-    /// its baseline equipped set, so an NPC does not start naked. A broken template
-    /// chain yields an empty baseline; the appearance path already reports it.
+    /// An actor's carried `CNTO` items plus its default outfit. The baseline equipped
+    /// set is the outfit plus the carried items `carriedPicks` chooses, so an NPC does
+    /// not start naked or empty-handed. A broken template chain yields an empty
+    /// baseline; the appearance path already reports it.
     private func actorBaseline(
         _ base: FormID, templates: ActorTemplateResolver
     ) -> ReferenceInventoryState {
         guard let resolved = try? templates.resolve(base: base) else { return .empty }
         let roll = templates.roll(for: base)
         let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, roll: roll) } ?? []
-        var stacks = worn
+        var carriedStacks: [InventoryStack] = []
         let carried = (try? templates.resolveCarriedItems(base: base).value) ?? []
         for entry in carried {
-            expand(entry.item, count: entry.count, roll: Roll(roll), into: &stacks)
+            expand(entry.item, count: entry.count, roll: Roll(roll), into: &carriedStacks)
         }
-        return ReferenceInventoryState(stacks: stacks, equipped: worn.map(\.item))
+        let outfit = worn.map(\.item)
+        let style = (try? templates.resolveCombatStyle(base: base))?.value
+        let picks = equipment.carriedPicks(
+            worn: outfit,
+            carried: carriedStacks.filter { $0.count >= 1 }.map(\.item),
+            preference: style.flatMap { combatStyles[$0.rawValue] }
+                .map(WeaponPreference.init(style:))
+        )
+        return ReferenceInventoryState(stacks: worn + carriedStacks, equipped: outfit + picks)
     }
 
     /// One of each `OTFT` item, leveled entries rolled by `roll`, as

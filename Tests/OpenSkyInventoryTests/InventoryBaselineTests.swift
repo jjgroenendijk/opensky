@@ -52,13 +52,24 @@ struct InventoryBaselineTests {
         #expect(try Fixture.resolver().skippedRecords.isEmpty)
     }
 
-    /// An actor carries its `CNTO` items unworn, leveled entries rolled at its level.
-    @Test func anActorCarriesItsOwnItemsUnworn() throws {
+    /// An actor carries its `CNTO` items, leveled entries rolled at its level. With
+    /// no outfit, the carried cuirass fills the free body slot; the gold is never worn.
+    @Test func anActorWearsCarriedArmourInAFreeSlot() throws {
         let resolver = try Fixture.resolver()
         let baseline = resolver.baseline(for: .actor(base: Fixture.lootedActor))
         #expect(baseline.count(of: Fixture.gold) == 5)
         #expect(baseline.count(of: Fixture.cuirass) == 1)
-        #expect(baseline.equipped.isEmpty)
+        #expect(baseline.equipped == [Fixture.cuirass])
+    }
+
+    /// The outfit stays worn and the NPC holds the carried weapon with the higher
+    /// damage, as the game picks the best weapon it carries.
+    @Test func anActorHoldsItsBestCarriedWeapon() throws {
+        let resolver = try Fixture.resolver()
+        let baseline = resolver.baseline(for: .actor(base: Fixture.armedActor))
+        #expect(baseline.equipped.contains(Fixture.greatsword))
+        #expect(!baseline.equipped.contains(Fixture.sword))
+        #expect(baseline.equipped.contains(Fixture.cuirass))
     }
 
     /// The death item rolls at the actor's own level, not the player's.

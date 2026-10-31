@@ -1,12 +1,13 @@
 // The chopping block's machines in `mt_behavior.hkx`: a furniture idle enters each
 // role's machine at its start state and follows the enter clip's `ExecutionNextClip`
-// to the idle loop. From there one chop event leads each role to its own clip.
-// Names only.
+// to the idle loop. From there one chop event leads each role to its own clip, and the
+// executioner's clips draw the axe prop.
 
 import Foundation
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
+import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 
@@ -52,6 +53,30 @@ struct ExecutionClipChainRealDataTests {
         let names = prisoner.triggers.map(\.name)
         #expect(names.contains("Decapitate"))
         #expect(names.contains("KillActor"))
+    }
+
+    /// The headsman's axe is no item: the executioner's clips draw the
+    /// `AnimObjectExecutionerAxe` prop, which rides the bone its mesh names.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func theExecutionerIdleDrawsTheAxeProp() throws {
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let store = IdleStore(plugins: ActivePluginFiles.load(root: root))
+        let resolver = IdlePlaybackResolver(
+            files: VirtualFileSystem(root: root), animatedObjects: store.animatedObjects
+        )
+        let names: Set = ["IdleExecutionerEnterInstant", "IdleExecutionerIdle"]
+        let plans = store.idles.records
+            .filter { names.contains($0.record.editorID ?? "") }
+            .map { resolver.plan(for: store.inheritingBehaviorFile($0)) }
+        try #require(plans.count == names.count)
+        let props = plans.flatMap { $0.animationObjects.map(\.prop) + [$0.prop] }
+        let axe = props.first {
+            if case let .attached(editorID, _, _) = $0 {
+                return editorID == "AnimObjectExecutionerAxe"
+            }
+            return false
+        }
+        #expect(axe != nil, "\(plans)")
     }
 
     private static func index() throws -> BehaviorEventClipIndex {

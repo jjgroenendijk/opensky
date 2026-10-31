@@ -279,13 +279,15 @@ nonisolated extension CellSceneBuilder {
                 let roll = indexed[actor.formID].map {
                     leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
                 }
-                let appearance = try resolvers.template.rolling(roll).resolve(base: actor.base)
+                let templates = resolvers.template.rolling(roll)
+                let appearance = try templates.resolve(base: actor.base)
                 let visual = try resolvers.visual.resolve(
                     appearance: appearance,
                     equipped: runtimeEquipment(
                         entry: indexed[actor.formID], deltas: deltas
                     ),
-                    roll: roll
+                    roll: roll,
+                    carried: templates.carriedItems(base: actor.base)
                 ).presenting(
                     indexed[actor.formID].flatMap {
                         deltas[$0.key]?.component(ActorPresentationState.self)

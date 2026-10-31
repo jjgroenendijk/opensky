@@ -95,6 +95,7 @@ nonisolated public final class BehaviorEventClipIndex {
         let targets: [String: [HKXPointerTarget]]
         /// The notify events of the state each target generator belongs to.
         let notify: [HKXPointerTarget: BehaviorStateNotify]
+        let enterPayloads: [HKXPointerTarget: [String]]
         let stateNames: [HKXPointerTarget: String]
         /// Behavior files the graph references, in walk order.
         let references: [String]
@@ -131,7 +132,8 @@ nonisolated public final class BehaviorEventClipIndex {
                 var found = entryClip(from: target, file: file, event: event, depth: depth)
             {
                 found.behaviorFiles = [file] + found.behaviorFiles
-                found.payloads = Self.payloads(below: target, in: events.graph) + found.payloads
+                found.payloads = (events.enterPayloads[target] ?? [])
+                    + Self.payloads(below: target, in: events.graph) + found.payloads
                 found.notify = events.notify[target] ?? found.notify
                 found.stateName = events.stateNames[target] ?? found.stateName
                 return found
@@ -170,6 +172,7 @@ nonisolated public final class BehaviorEventClipIndex {
         let names = behavior.data?.stringData?.eventNames ?? []
         var found: [String: [(depth: Int, target: HKXPointerTarget)]] = [:]
         var notify: [HKXPointerTarget: BehaviorStateNotify] = [:]
+        var enterPayloads: [HKXPointerTarget: [String]] = [:]
         var stateNames: [HKXPointerTarget: String] = [:]
         var references: [String] = []
         if let root = behavior.rootGenerator {
@@ -194,6 +197,7 @@ nonisolated public final class BehaviorEventClipIndex {
                         enter: eventNames(state.enterNotifyEvents, names: names, in: graph),
                         exit: eventNames(state.exitNotifyEvents, names: names, in: graph)
                     )
+                    enterPayloads[transition.generator] = Self.enterPayloads(of: state, in: graph)
                     stateNames[transition.generator] = state.name
                 }
             }
@@ -205,7 +209,7 @@ nonisolated public final class BehaviorEventClipIndex {
         }
         return GraphEvents(
             graph: graph, names: names, root: behavior.rootGenerator, targets: targets,
-            notify: notify,
+            notify: notify, enterPayloads: enterPayloads,
             stateNames: stateNames, references: references
         )
     }
@@ -216,6 +220,20 @@ nonisolated public final class BehaviorEventClipIndex {
         guard let array, let events = HKBStateMachineEventPropertyArray.decode(at: array, in: graph)
         else { return [] }
         return events.events.compactMap { names.indices.contains($0.id) ? names[$0.id] : nil }
+    }
+
+    /// String payloads of the events a state sends as it is entered. The headsman's
+    /// state sends `AnimObjDraw` with the axe's ANIO editor ID.
+    static func enterPayloads(
+        of state: HKBStateMachineStateInfo, in graph: HKXObjectGraph
+    ) -> [String] {
+        guard
+            let array = state.enterNotifyEvents,
+            let events = HKBStateMachineEventPropertyArray.decode(at: array, in: graph)
+        else { return [] }
+        return events.events.compactMap { event in
+            event.payload.flatMap { HKBStringEventPayload.decode(at: $0, in: graph)?.data }
+        }
     }
 
     /// `FLAG_TO_NESTED_STATE_ID_IS_VALID` (docs/engine/behavior-state-machines.md).
