@@ -140,6 +140,29 @@ struct CasterDeliveryTests {
         #expect(harness.runtime.tally.deliveryCounts["aimed"] == 1)
     }
 
+    // MARK: - Self with an area
+
+    /// CK wiki "Spell": a self cast's area entry reaches the actors around the caster
+    /// and never the caster. Its point entry stays on the caster.
+    @Test func aSelfCastWithAnAreaReachesTheActorsAroundItsCaster() throws {
+        let harness = try harness()
+        let far = ReferenceKey.plugin(name: "base.esm", objectID: 0x0901)
+        harness.world.candidates = [
+            MeleeTarget(key: .player, feet: .zero),
+            MeleeTarget(key: Self.victim, feet: SIMD3(100, 0, 0)),
+            MeleeTarget(key: far, feet: SIMD3(5000, 0, 0))
+        ]
+
+        try cast(SpellbookFixture.Spell.fireStorm, harness)
+
+        #expect(harness.world.applications.map(\.target) == [.player])
+        #expect(harness.world.appliedEntries.first?.map(\.area) == [0])
+        let hit = try #require(harness.world.spellHits.first)
+        #expect(hit.targets.map(\.key) == [Self.victim])
+        #expect(hit.targets.first?.isDirect == false)
+        #expect(hit.impact == SIMD3(0, 0, 64))
+    }
+
     // MARK: - Target actor
 
     /// Target-actor delivery applies straight to whatever the aim ray reaches,

@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
@@ -364,6 +365,10 @@ extension MagicCoordinator: CasterWorld {
             location: nil,
             spell: StoryEventData.form(of: spell)
         ))
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        world.spellHitCandidates()
     }
 
     /// A projectile hit and a direct cast take this one path, so the effects

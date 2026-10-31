@@ -25,7 +25,7 @@ Magic Overview describes the shapes:
 
 | Delivery | Fire and forget | Concentration |
 | --- | --- | --- |
-| Self | Applies to the caster | Applies to the caster once a second |
+| Self | Applies to the caster; an entry with an area reaches the actors around the caster instead | Applies to the caster once a second |
 | Aimed | Fires the `MGEF`'s `PROJ` | Applies to whatever the aim ray reaches, once a second |
 | Target Actor | Applies to the aimed actor, within `SPIT` range | Refused |
 | Touch | Applies to the aimed actor within touch reach | Applies to the aimed actor within touch reach, once a second |
@@ -33,6 +33,13 @@ Magic Overview describes the shapes:
 
 A refusal is the `deliveryUnsupported` failure, with a sentence and a count. Holding a beam on a
 named actor, or on a point, needs targeting OpenSky does not do.
+
+A self cast with an area is a cloud around the caster. The CK wiki "Spell" page says "effects with a
+non-zero Area are AoEs centered at the caster, affecting every actor in range *except* the caster",
+and "if a spell has an Area, then it will never affect the caster"
+(<https://ck.uesp.net/wiki/Spell>). OpenSky reads this per entry: an entry with no area still
+applies to the caster. The area entries land like a blast at the middle of the caster's capsule, by
+the rules below. Vanilla `Harmony` and `FireStorm` have this shape.
 
 ## Target location and runes
 

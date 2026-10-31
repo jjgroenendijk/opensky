@@ -49,6 +49,9 @@ public enum SpellbookFixture {
         public static let sparkAtTarget: UInt32 = 0x02A0
         /// Fire and forget, touch.
         public static let touchOfDeath: UInt32 = 0x02B0
+        /// Fire and forget, self, one area entry and one point entry: the shape of a
+        /// cloud around the caster, such as vanilla `Harmony` or `FireStorm`.
+        public static let fireStorm: UInt32 = 0x02C0
     }
 
     public enum Book {

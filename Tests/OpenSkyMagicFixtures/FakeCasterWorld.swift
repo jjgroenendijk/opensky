@@ -6,6 +6,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 import simd
 
@@ -35,6 +36,8 @@ public final class FakeCasterWorld: CasterWorld {
     public var canFireProjectile = true
     /// What the caster's aim ray finds. `.none` reaches nobody.
     public var aim = SpellAim.none
+    /// The actors a self cast with an area can reach, the caster among them.
+    public var candidates: [MeleeTarget] = []
     /// How many timed effects each landed spell reports storing, per target.
     public var storedPerHitTarget = 1
 
@@ -72,6 +75,10 @@ public final class FakeCasterWorld: CasterWorld {
             target: target.key
         ))
         return storedPerApplication
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        candidates
     }
 
     @discardableResult

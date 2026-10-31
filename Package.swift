@@ -995,8 +995,8 @@ targets += fixtures(
     "OpenSkyMagic",
     dependencies: [
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagic",
-        "OpenSkyMagicInterface", "OpenSkyFeaturesTesting", "OpenSkyProgressionInterface",
-        "OpenSkyWorldState"
+        "OpenSkyMagicInterface", "OpenSkyFeaturesTesting", "OpenSkyPhysics",
+        "OpenSkyProgressionInterface", "OpenSkyWorldState"
     ]
 )
 targets += fixtures(
