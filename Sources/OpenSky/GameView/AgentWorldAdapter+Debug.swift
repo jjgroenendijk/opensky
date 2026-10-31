@@ -1,6 +1,7 @@
 // `openskycli game debug ...`: console-style changes to the running game. Each
 // answers with the value as stored afterwards, so a script can check it.
 
+import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
@@ -8,6 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyObjectAnimation
 import OpenSkyProgression
@@ -40,9 +42,10 @@ extension AgentWorldAdapter {
             return try done(setQuestStage(quest, stage: stage))
         case .kill, .resurrect, .flight, .drunk, .beastForm, .eyes, .link:
             return try done(actorDebug(command))
-        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles:
+        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
+             .loadScreen:
             return try done(renderDebug(command))
-        case .raceMenu, .skillsMenu, .gamepad:
+        case .raceMenu, .skillsMenu, .gamepad, .fastTravel:
             return try done(menuDebug(command))
         case let .benchmark(request):
             return try benchmark(request)
@@ -66,6 +69,7 @@ extension AgentWorldAdapter {
         case let .raceMenu(limited): try openRaceMenu(limited: limited)
         case let .skillsMenu(sky, levels): try openSkillsMenu(sky: sky, levels: levels)
         case let .gamepad(count, press): try driveGamepad(count: count, press: press)
+        case let .fastTravel(marker): try fastTravel(to: marker)
         default: throw AgentFailure(.invalidArgument, "not a menu debug command")
         }
     }
@@ -113,6 +117,7 @@ extension AgentWorldAdapter {
             try playBink(MovieRequest(fileName: file, interruptible: interruptible))
         case .skipBink: ["skipped": .bool(game.movies.skip(force: true)), "bink": binkState]
         case let .titles(step): try driveTitles(step)
+        case let .loadScreen(editorID): try forceLoadScreen(editorID)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -355,6 +360,31 @@ extension AgentWorldAdapter {
             natives.startTitleSequence?(step)
         }
         return ["titles": titlesState]
+    }
+
+    /// The screen holds until a call with no ID, which starts its fade.
+    private func forceLoadScreen(_ editorID: String?) throws(AgentFailure) -> AgentJSON {
+        let now = Date().timeIntervalSinceReferenceDate
+        guard let editorID else {
+            game.loadingScreens.releaseForced(at: now)
+            return ["loading": loadingState]
+        }
+        guard game.loadingScreens.force(editorID: editorID, at: now) else {
+            throw AgentFailure(.notFound, "no loading screen \(editorID)")
+        }
+        return ["loading": loadingState]
+    }
+
+    /// The marker is found by its map name; the map's refusals do not apply.
+    private func fastTravel(to name: String) throws(AgentFailure) -> AgentJSON {
+        let wanted = name.lowercased()
+        guard let site = game.mapWorld.mapMarkerSites().first(where: {
+            $0.name.lowercased() == wanted
+        }) else {
+            throw AgentFailure(.notFound, "no map marker named \(name)")
+        }
+        guard game.mapWorld.travel(to: site) else { throw notReady() }
+        return ["marker": .string(site.name), "loading": loadingState]
     }
 
     /// Goes through the script hook, as `fade` does.

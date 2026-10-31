@@ -242,6 +242,15 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("on", "Either on or off.")]
         ),
         command(
+            "debug.loadscreen", "Hold a loading screen on screen until it is released.",
+            positionals: [optional("id", "The LSCR editor ID; none releases the held screen.")]
+        ),
+        command(
+            "debug.fasttravel",
+            "Fast travel to a map marker, as the map does, without its refusals.",
+            positionals: [required("marker", "The map marker's name, such as Riverwood.")]
+        ),
+        command(
             "debug.playbink", "Play a Bink movie from Data/Video, as Game.PlayBink does.",
             positionals: [required("file", "The movie file, such as BGS_Logo.bik.")],
             options: [flag("interruptible", "Let a key skip the movie.")]
