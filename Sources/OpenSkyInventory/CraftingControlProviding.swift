@@ -69,7 +69,7 @@ extension InventoryCoordinator {
             id: recipe.id,
             name: "\(itemName) (\(copies))",
             isEligible: status.isReady,
-            isOffered: status.eligibility.isOffered
+            isOffered: true
         )
     }
 

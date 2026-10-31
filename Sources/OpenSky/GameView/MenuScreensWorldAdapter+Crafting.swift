@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
 
@@ -17,7 +18,7 @@ extension MenuScreensWorldAdapter: CraftingMenuWorld {
     }
 
     func craft(_ recipe: ResolvedFormID) -> String {
-        game.inventory.craft(recipe).text
+        game.inventory.craft(recipe).text(game.mapWorld.settingTexts())
     }
 
     func closeCraftingStation() {

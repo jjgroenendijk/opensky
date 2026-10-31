@@ -87,6 +87,7 @@ nonisolated public enum CraftingActionOutcome: Equatable, Sendable {
     case improved(item: String, from: String, to: String)
     case crafted(count: Int32, item: String)
     case craftFailed(reason: String)
+    case refused(CraftingRefusalText)
     case closed
 
     public var text: String {
@@ -103,6 +104,7 @@ nonisolated public enum CraftingActionOutcome: Equatable, Sendable {
         case let .improved(item, from, to): "Improved \(item): \(from) -> \(to)."
         case let .crafted(count, item): "Crafted \(count) × \(item)."
         case let .craftFailed(reason): "Craft failed: \(reason)"
+        case let .refused(refusal): refusal.fallback
         case .closed: "Closed the crafting station."
         }
     }
