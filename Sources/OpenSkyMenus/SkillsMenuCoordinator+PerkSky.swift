@@ -134,7 +134,7 @@ extension SkillsMenuCoordinator {
         motion.introAlpha = min(1, max(0, sky.movieAlpha ?? clock))
         motion.update(
             now: now, slot: model.skillPosition, slotCount: model.skills.count,
-            inTree: model.page == .perks, settings: settings
+            inTree: model.isInTree, settings: settings
         )
         sky.motion = motion
         guard let pose = domePose(models.dome, elapsed: elapsed, now: now, motion: motion) else {
@@ -203,7 +203,7 @@ extension SkillsMenuCoordinator {
         var starKeys = Set<PerkStarKey>()
         var lineKeys = Set<PerkLineKey>()
         for (slot, skill) in model.skills.enumerated() where sky.anchors.indices.contains(slot) {
-            let isOpenTree = slot == model.skillPosition && model.page == .perks
+            let isOpenTree = slot == model.skillPosition && model.isInTree
             let perks = isOpenTree ? model.perks : sky.trees[skill.index] ?? []
             let stars = PerkSkyLayout.stars(
                 perks, slot: slot, anchor: sky.anchors[slot],
@@ -295,7 +295,7 @@ extension SkillsMenuCoordinator {
         }
         guard moved else { return }
         sky.namePoints = points
-        guard movieLoaded, model.page == .perks else { return }
+        guard movieLoaded, model.isInTree else { return }
         try? renderer.updateSWFRuntime { runtime in
             StatsMenuMovieBridge.publishPerkNames(model, points: points, runtime: runtime)
         }

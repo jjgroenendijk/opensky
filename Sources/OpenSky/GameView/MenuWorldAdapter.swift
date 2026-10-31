@@ -159,6 +159,10 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game
     }
 
+    var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
+        game.mapWorld.settingTexts()
+    }
+
     var perkSkySource: PerkSkySource? {
         if perkSky == nil, let files = game.worldData?.scriptFileSystem {
             perkSky = PerkSkySource(fileSystem: files)

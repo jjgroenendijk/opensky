@@ -13,6 +13,13 @@ public protocol SkillsMenuWorld: SWFLayerWorld {
     /// The perk sky's meshes; nil without game data.
     var perkSkySource: PerkSkySource? { get }
     var perkSkySettings: PerkSkySettings { get }
+    var skillsMenuTexts: GameSettingTexts<SkillsMenuText> { get }
+}
+
+extension SkillsMenuWorld {
+    public var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
+        .vanilla
+    }
 }
 
 nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
@@ -99,6 +106,7 @@ public final class SkillsMenuCoordinator {
         guard model == nil, let world, let source = world.skillsMenuSource else { return false }
         source.skillsMenuWillOpen()
         model = SkillsMenuModel(player: source.skillsMenuPlayer, skills: source.skillsMenuSkills)
+        model?.texts = world.skillsMenuTexts
         loadTrees(source)
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
@@ -202,7 +210,7 @@ public final class SkillsMenuCoordinator {
             page = "\(model.selectedSkill?.name ?? "") perks"
             rows = model.perks.map(Self.perkRow)
             selected = model.perkPosition
-        case let .legendary(confirmation):
+        case let .legendary(confirmation), let .perkConfirm(confirmation):
             page = confirmation.question
             rows = confirmation.options
             selected = confirmation.selectedIndex

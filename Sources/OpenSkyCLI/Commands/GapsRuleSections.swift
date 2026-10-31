@@ -180,5 +180,6 @@ extension GapsGatherer {
         _ = GameSettingTexts<PoisonText>.resolve(store: store)
         _ = GameSettingTexts<PickpocketText>.resolve(store: store)
         _ = GameSettingTexts<CraftingRefusalText>.resolve(store: store)
+        _ = GameSettingTexts<SkillsMenuText>.resolve(store: store)
     }
 }
