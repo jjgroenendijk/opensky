@@ -72,7 +72,9 @@ nonisolated public struct SettledDynamicBodyTransform: Sendable {
 
 nonisolated public struct DynamicBodyWorld: Sendable {
     /// Bodies in ascending `ReferenceKey` order — the solver's iteration order.
-    public private(set) var bodies: [DynamicBody] = []
+    public internal(set) var bodies: [DynamicBody] = []
+    /// Bodies held at a fixed point, as scripts add them.
+    public internal(set) var pins: [PhysicsPin] = []
     /// Pose each body was placed at, for the readout's reset action.
     private var placedPoses: [ReferenceKey: (position: SIMD3<Float>, orientation: simd_quatf)] = [:]
     /// Resting poses observed since the last drain, for persistence.
@@ -179,6 +181,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     /// Drops one body, so the next build of its cell places the reference afresh.
     public mutating func remove(_ key: ReferenceKey) {
         bodies.removeAll { $0.key == key }
+        pins.removeAll { $0.end.reference == key }
         placedPoses.removeValue(forKey: key)
         settled.removeValue(forKey: key)
         wasSleeping.remove(key)
@@ -241,6 +244,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
             stats = DynamicBodySolver.step(
                 bodies: &bodies, world: world, dt: PhysicsStep.fixedTimeStep
             )
+            holdPins(dt: PhysicsStep.fixedTimeStep)
             rebinExteriorBodies()
             accumulatedTime -= PhysicsStep.fixedTimeStep
         }

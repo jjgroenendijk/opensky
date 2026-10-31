@@ -1,5 +1,5 @@
 // The game-rule and session natives over a synthetic lever: deferred kills, feeding,
-// stolen values, flying, the app hooks, model nodes, the sun gaze, and traced stubs.
+// stolen values, flying, the app hooks, model nodes, and the sun gaze.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -133,9 +133,13 @@ struct PapyrusNativeSessionRulesTests {
             == .suspended(.external(42)))
     }
 
-    @Test func aMissingSubsystemIsATracedStub() throws {
+    @Test func startTitleSequencePassesTheClipName() throws {
         let fixture = try Fixture.make()
-        #expect(call(fixture, "Actor", "SetEyeTexture", [.none]) == .deviated(.none, .stubbed))
+        var started: [String] = []
+        fixture.session.bridge.gameNatives.startTitleSequence = { started.append($0) }
+        #expect(call(fixture, "Game", "StartTitleSequence", [.string("Sequence2")]) ==
+            .returned(.none))
+        #expect(started == ["Sequence2"])
     }
 
     @Test func gazingNeedsTheLookWithinTheCone() {

@@ -15,11 +15,13 @@ import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -54,9 +56,8 @@ extension ScriptWorldAdapter {
                 delay: fade.secondsBeforeFade, duration: fade.duration
             )
         }
-        // The title sequence draws its titles over the world. That movie is not built,
-        // so the calls change nothing rather than hide the world behind the menu logo.
-        hooks.showTitleSequenceMenu = { _ in }
+        hooks.showTitleSequenceMenu = { [weak game] shown in game?.titleSequence.show(shown) }
+        hooks.startTitleSequence = { [weak game] name in _ = game?.titleSequence.start(name) }
         hooks.screenBlood = { [weak game] count in game?.effects.splatterScreen(count: count) }
         hooks.clearTempEffects = { [weak game] in game?.effects.clearTemporaryBlood() }
         hooks.takeScreenshot = { [weak game] name in
@@ -91,6 +92,21 @@ extension ScriptWorldAdapter {
         hooks.packageLocation = { [weak game] actor in game?.packages.packageLocation(of: actor) }
         hooks.forceRagdoll = { [weak game] key in
             game?.ragdoll.runtime?.activate(key, instant: true) ?? false
+        }
+        hooks.addBallAndSocket = { [weak self] first, second in
+            self?.addBallAndSocket(Self.linkEnd(first), Self.linkEnd(second))
+                ?? .returned(.boolean(false))
+        }
+        hooks.removeConstraints = { [weak self] first, second in
+            self?.removeConstraints(Self.linkEnd(first), Self.linkEnd(second)) ?? false
+        }
+        hooks.setEyeTexture = { [weak game] actor, textureSet in
+            guard
+                let game, let cell = game.streamer?.cellLocation(of: actor),
+                let set = game.scripts.bridge?.localFormID(of: textureSet)
+            else { return false }
+            game.worldState.setEyeTexture(set, for: actor, in: cell)
+            return true
         }
     }
 
@@ -214,5 +230,9 @@ extension ScriptWorldAdapter {
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true
         )
         return (try? FrameScreenshot.write(texture: texture, to: url)) != nil
+    }
+
+    private static func linkEnd(_ end: PapyrusConstraintEnd) -> PhysicsLinkEnd {
+        PhysicsLinkEnd(reference: end.reference, node: end.node, offset: end.offset)
     }
 }

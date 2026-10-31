@@ -172,6 +172,22 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.form", "Put the player in a beast form, or end it.",
             positionals: [required("form", "One of werewolf, vampirelord, or none.")]
+        ),
+        command(
+            "debug.link",
+            "Hold two ragdolls' bones together, as AddHavokBallAndSocketConstraint does.",
+            positionals: [
+                required("ref", refHelp), required("node", "The bone of the first ragdoll."),
+                required("other", "The second actor, as ref takes it."),
+                required("othernode", "The bone of the second ragdoll."),
+                optional("on", "Either on to link or off to unlink; on by default.")
+            ]
+        ),
+        command(
+            "debug.eyes", "Draw an actor's eyes with a texture set, as SetEyeTexture does.",
+            positionals: [
+                required("ref", refHelp), required("set", "The TXST, as a hex FormID.")
+            ]
         )
     ]
 
@@ -230,6 +246,10 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("file", "The movie file, such as BGS_Logo.bik.")],
             options: [flag("interruptible", "Let a key skip the movie.")]
         ),
-        command("debug.skipbink", "End the playing movie, even one a key cannot skip.")
+        command("debug.skipbink", "End the playing movie, even one a key cannot skip."),
+        command(
+            "debug.titles", "Show or hide the opening titles, or play one, as MQ101 does.",
+            positionals: [required("step", "Either show, hide, or a clip such as Sequence1.")]
+        )
     ]
 }

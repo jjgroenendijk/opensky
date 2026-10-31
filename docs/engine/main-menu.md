@@ -95,9 +95,16 @@ where the player stands.
 The same fragment then calls `Game.FadeOutGame` and `Game.ShowTitleSequenceMenu`, and
 `MQ101QuestScript` plays `Sequence1` to `Sequence4` with `Game.StartTitleSequence` before
 `Game.HideTitleSequenceMenu`. The CK wiki says a sequence is "a given animation in the title
-menu". In the game, `interface\titles.swf` draws these titles over the cart ride. OpenSky does
-not build that movie yet, so the calls change nothing: after the loading screen the cart shows
-at once, with no titles.
+menu". `interface\titles.swf` draws these titles over the cart ride. Its first frame stops the
+clips `sequence1` to `sequence4` on their own first frame, and the movie has no background, so
+the world stays visible. `ShowTitleSequenceMenu` loads the movie on the renderer's overlay layer,
+because the HUD holds the main layer. `StartTitleSequence` plays the clip it names, matched
+without case, and `HideTitleSequenceMenu` removes the movie. A clip asked for while the movie
+still loads plays once it is up. A book or level-up menu that opens meanwhile takes the overlay
+layer, and the titles do not come back. The movie's contract was read with
+`openskycli swf action-list --movie titles.swf` and checked with `openskycli swf movie-probe`.
+`openskycli game debug titles show`, then `debug titles Sequence1`, drives the same hooks, and
+`state menu` shows `titles`.
 
 The `MQ101` aliases that name unique actors fill from the location records ([quest
 state](/engine/quest-state.md), "What does not fill yet").

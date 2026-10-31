@@ -1,5 +1,6 @@
 // The natives the app answers through hooks: sound instances, shader particles,
-// scripted pathing, and the ash pile, over a synthetic lever.
+// scripted pathing, the ash pile, eye textures, and Havok constraints, over a
+// synthetic lever.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -123,5 +124,56 @@ struct PapyrusNativeLatentHooksTests {
         fixture.session.bridge.activate(pile, by: .player, togglesOpen: false)
         let activation = fixture.session.bridge.referenceState(for: fixture.key)?.activation
         #expect(activation?.activationCount == 1)
+    }
+
+    @Test func setEyeTextureHandsTheActorAndTheSetToTheGame() throws {
+        let fixture = try Fixture.make()
+        var retextured: [(ReferenceKey, ReferenceKey)] = []
+        fixture.session.bridge.gameNatives.setEyeTexture = { actor, set in
+            retextured.append((actor, set))
+            return true
+        }
+        let set = door(fixture)
+        #expect(call(fixture, "Actor", "SetEyeTexture", [set.value]) == .returned(.none))
+        #expect(call(fixture, "Actor", "SetEyeTexture", [.none]) == .returned(.none))
+        #expect(retextured.count == 1)
+        #expect(retextured.first?.0 == fixture.key)
+        #expect(retextured.first?.1 == set.key)
+    }
+
+    @Test func aBallAndSocketCarriesBothNodesAndOffsets() throws {
+        let fixture = try Fixture.make()
+        var added: [(PapyrusConstraintEnd, PapyrusConstraintEnd)] = []
+        var removed = 0
+        fixture.session.bridge.gameNatives.addBallAndSocket = { first, second in
+            added.append((first, second))
+            return .returned(.boolean(true))
+        }
+        fixture.session.bridge.gameNatives.removeConstraints = { _, _ in
+            removed += 1
+            return false
+        }
+        let other = door(fixture)
+        let arguments: [PapyrusValue] = [
+            .object(fixture.handle(Fixture.leverID)), .string("Hand"), other.value, .string("Rope")
+        ]
+        let offsets = (1 ... 6).map { PapyrusValue.float(Float($0)) }
+        #expect(call(
+            fixture, "Game", "AddHavokBallAndSocketConstraint", arguments + offsets,
+            returnType: .boolean
+        ) == .returned(.boolean(true)))
+        #expect(added.first?.0 == PapyrusConstraintEnd(
+            reference: fixture.key, node: "Hand", offset: SIMD3(1, 2, 3)
+        ))
+        #expect(added.first?.1.offset == SIMD3(4, 5, 6))
+        #expect(added.first?.1.reference == other.key)
+        #expect(call(fixture, "Game", "RemoveHavokConstraints", arguments, returnType: .boolean)
+            == .returned(.boolean(false)))
+        #expect(removed == 1)
+        #expect(call(
+            fixture, "Game", "RemoveHavokConstraints", [.none, .string(""), .none, .string("")],
+            returnType: .boolean
+        ) == .returned(.boolean(false)))
+        #expect(removed == 1)
     }
 }

@@ -62,7 +62,7 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
 
 nonisolated public struct RagdollWorld: Sendable {
     /// Ragdolls in ascending `ReferenceKey` order.
-    public private(set) var ragdolls: [(key: ReferenceKey, instance: RagdollInstance)] = []
+    public internal(set) var ragdolls: [(key: ReferenceKey, instance: RagdollInstance)] = []
     /// Which cell each ragdoll's actor belongs to, so streaming can drop a
     /// cell's corpses wholesale.
     private var cells: [ReferenceKey: CellSceneLocation] = [:]
@@ -78,6 +78,10 @@ nonisolated public struct RagdollWorld: Sendable {
     /// to since the last drain.
     private var touching: Set<ReferenceKey> = []
     private var contactStarts: [ReferenceKey] = []
+    /// Ball-and-socket links between two ragdolls' bones, as scripts add them.
+    public internal(set) var links: [RagdollLink] = []
+    /// Bones held at a fixed point, as scripts add them.
+    public internal(set) var pins: [PhysicsPin] = []
     private var accumulatedTime: Float = 0
     public var isFrozen = false
     /// Whether a ragdoll's bones may touch each other at all: one switch over every
@@ -146,6 +150,7 @@ nonisolated public struct RagdollWorld: Sendable {
         spawnOrder.removeAll { $0 == key }
         touching.remove(key)
         contactStarts.removeAll { $0 == key }
+        dropConstraints(of: key)
     }
 
     /// Stops simulating the oldest corpses until at most `limit` remain. A trimmed
@@ -181,6 +186,8 @@ nonisolated public struct RagdollWorld: Sendable {
         settled.removeAll()
         touching.removeAll()
         contactStarts.removeAll()
+        links.removeAll()
+        pins.removeAll()
         accumulatedTime = 0
     }
 
@@ -208,6 +215,7 @@ nonisolated public struct RagdollWorld: Sendable {
                 )
                 noteContact(of: ragdolls[index])
             }
+            solveLinks(dt: PhysicsStep.fixedTimeStep)
             accumulatedTime -= PhysicsStep.fixedTimeStep
         }
         recordSettled()

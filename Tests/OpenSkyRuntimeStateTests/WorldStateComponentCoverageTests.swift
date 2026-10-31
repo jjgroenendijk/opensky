@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkyRuntimeState
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -256,5 +257,20 @@ struct WorldStateComponentCoverageTests {
         // One journal entry per cleared component, in kind order.
         let resets = store.journalEntries.filter(\.isReset)
         #expect(resets.map(\.kind) == Self.allKinds)
+    }
+
+    @Test func anEyeTextureLastsUntilItsCellDetaches() {
+        let store = WorldStateStore()
+        let serana = key(0x300)
+        let assembled = key(0x301)
+        store.set(ActorPresentationState(headSource: .assembled), for: assembled, in: whiterun)
+        store.setEyeTexture(FormID(0x61), for: serana, in: whiterun)
+        store.setEyeTexture(FormID(0x61), for: assembled, in: whiterun)
+        #expect(store.component(ActorPresentationState.self, for: serana)?.eyeTextureSet
+            == FormID(0x61))
+        store.dropEyeTextures(in: whiterun)
+        #expect(store.component(ActorPresentationState.self, for: serana) == nil)
+        #expect(store.component(ActorPresentationState.self, for: assembled)
+            == ActorPresentationState(headSource: .assembled))
     }
 }

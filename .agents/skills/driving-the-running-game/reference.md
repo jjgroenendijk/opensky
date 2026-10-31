@@ -149,6 +149,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
 | `debug form werewolf\|vampirelord\|none` | puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it; answers `form` |
+| `debug link <ref> <node> <other> <othernode> [on\|off]` | adds or removes the constraint `Game.AddHavokBallAndSocketConstraint` makes, through its script hook; answers `changed` and `constraints`, which `state actors` also shows |
+| `debug eyes <ref> <txst>` | draws an NPC's eyes with a texture set, as `Actor.SetEyeTexture` does, until its cell unloads; `state actors` shows `eyeTexture` |
 | `debug rest <hours> [--sleep]` | passes 1 to 24 hours as the wait menu does, or the rest menu with `--sleep`, without the refusals |
 | `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 | `debug channel <mode>` | The scene pass's debug channel: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
@@ -157,6 +159,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug cartmode on\|off` | Puts the HUD into or out of cart mode, as `Game.SetHudCartMode` does; `state menu` shows `hud.cartMode` and `hud.modes` |
 | `debug playbink <file> [--interruptible]` | Plays a Bink movie from `Data\Video`, as `Game.PlayBink` does; `state menu` shows `bink.frame` and `bink.lastOutcome` |
 | `debug skipbink` | Ends the playing movie, even one a key cannot skip |
+| `debug titles <step>` | `show` or `hide` the opening titles of `interface\titles.swf`, or play one clip such as `Sequence1`, through the `MQ101` script hooks; `state menu` shows `titles` |
 | `debug gamepad [--count n] [--press down,a]` | Reports `n` gamepads to the menu movies when fewer are connected (0 to 3), and presses gamepad buttons (`a`, `b`, `x`, `y`, `up`, `down`, `left`, `right`) on the next frame; `state menu` shows `movie.focus`, `movie.focusLabel`, `movie.controllers`, and `movie.platform` |
 
 ## Benchmark

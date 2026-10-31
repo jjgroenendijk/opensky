@@ -172,6 +172,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             append(
                 path: facePath,
                 role: .faceGenHead(tintPath: visual.faceGenTintPath),
+                surface: visual.faceGenSurface,
                 skeleton: skeleton,
                 models: &models,
                 skips: &skips

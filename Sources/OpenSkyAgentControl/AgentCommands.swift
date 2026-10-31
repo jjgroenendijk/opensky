@@ -146,6 +146,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case playBink(file: String, interruptible: Bool)
     /// Ends the playing movie, even one a key cannot skip.
     case skipBink
+    /// Shows or hides the opening titles, or plays one clip, as the `MQ101` scripts do.
+    case titles(String)
     /// Opens the race menu, as the console's `ShowRaceMenu` does; `limited` is
     /// `Game.ShowLimitedRaceMenu`.
     case raceMenu(limited: Bool)
@@ -167,6 +169,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case drunk(reference: String, drunk: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
     case beastForm(String)
+    /// Links two ragdolls' bones, or unlinks them, as the Havok constraint natives do.
+    case link(AgentRagdollLink, linked: Bool)
+    /// Draws an actor's eyes with a TXST, as `Actor.SetEyeTexture` does.
+    case eyes(reference: String, textureSet: String)
     /// Reports `count` gamepads when fewer are real, and presses gamepad buttons for a frame.
     case gamepad(count: Int?, press: [String])
     /// Sends an event to the actor's sub-graphs, as `Actor.PlaySubGraphAnimation` does.
@@ -237,6 +243,29 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             try .overlay(name: args.string("name"), enabled: args.bool("on", default: true))
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
+        case "flight": try parseFlight(args)
+        case "drunk":
+            try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
+        case "form": try .beastForm(args.string("form").lowercased())
+        case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
+        case "link":
+            try .link(
+                AgentRagdollLink(
+                    reference: args.string("ref"), node: args.string("node"),
+                    other: args.string("other"), otherNode: args.string("othernode")
+                ),
+                linked: args.bool("on", default: true)
+            )
+        case "gamepad": try parseGamepad(args)
+        default: try parseScreen(name, args)
+        }
+    }
+
+    /// The commands that cover the screen: fades, the cart HUD, movies, and titles.
+    private static func parseScreen(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self {
+        switch name {
         case "fade": try parseFade(args)
         case "cartmode": try .cartMode(args.bool("on", default: true))
         case "playbink":
@@ -244,11 +273,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
                 file: args.string("file"), interruptible: args.bool("interruptible", default: false)
             )
         case "skipbink": .skipBink
-        case "flight": try parseFlight(args)
-        case "drunk":
-            try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
-        case "form": try .beastForm(args.string("form").lowercased())
-        case "gamepad": try parseGamepad(args)
+        case "titles": try .titles(args.string("step"))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }
@@ -381,5 +406,20 @@ nonisolated public struct AgentScreenshotRequest: Equatable, Sendable {
             worldOnly: args.bool("worldOnly", default: false),
             offscreen: args.bool("offscreen", default: false)
         )
+    }
+}
+
+/// The two bone bodies a `debug link` joins.
+nonisolated public struct AgentRagdollLink: Equatable, Sendable {
+    public let reference: String
+    public let node: String
+    public let other: String
+    public let otherNode: String
+
+    public init(reference: String, node: String, other: String, otherNode: String) {
+        self.reference = reference
+        self.node = node
+        self.other = other
+        self.otherNode = otherNode
     }
 }

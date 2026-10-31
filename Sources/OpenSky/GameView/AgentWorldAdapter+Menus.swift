@@ -99,7 +99,8 @@ extension AgentWorldAdapter {
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
             "hud": hudState,
             "movie": movieFocusState,
-            "bink": binkState
+            "bink": binkState,
+            "titles": titlesState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -122,6 +123,15 @@ extension AgentWorldAdapter {
             result["credits"] = .bool(game.titleMenu.creditsShown)
         }
         return .object(result)
+    }
+
+    /// The opening titles: shown, loaded, and the clip asked for last.
+    var titlesState: AgentJSON {
+        let titles = game.titleSequence
+        return [
+            "shown": .bool(titles.isShown), "loaded": .bool(titles.isLoaded),
+            "sequence": .init(titles.lastSequence)
+        ]
     }
 
     /// The Bink movie on screen, and how the last one ended.

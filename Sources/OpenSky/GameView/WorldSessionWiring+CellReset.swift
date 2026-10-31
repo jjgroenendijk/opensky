@@ -5,6 +5,7 @@ import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -55,8 +56,9 @@ extension WorldSessionWiring {
             scripts?.runtime?.enqueueReset(of: resetKeys)
             resetKeys = []
         }
-        streamer.onCellDetached.register(.reset) { [weak reset] location in
+        streamer.onCellDetached.register(.reset) { [weak reset, weak store] location in
             reset?.cellDetached(location)
+            store?.dropEyeTextures(in: location)
         }
     }
 

@@ -26,6 +26,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var menuWorld: MenuWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var movies: MoviePlayerCoordinator { get }
+    var titleSequence: TitleSequenceCoordinator { get }
     var mounts: MountCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }
@@ -99,6 +100,7 @@ final class MenuRouter {
                 gamepads.poll(now: now, renderer: renderer, menuMode: game.menuMode)
             }
             game?.movies.tick(now: now)
+            game?.titleSequence.tick()
             game?.titleMenu.tick(now: now)
             game?.raceMenu.tick(now: now)
             game?.skillsMenu.tick(now: now)

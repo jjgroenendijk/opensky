@@ -3,7 +3,7 @@ type: Subsystem
 title: Ragdoll joint solver
 description: How a skeleton NIF becomes a ragdoll, what the Havok constraint angles are read
   as, why the joint solver uses sequential impulses, which bones collide with each other, and
-  how a ragdoll comes to rest.
+  how a ragdoll comes to rest, and how script constraints hold ragdolls and loose bodies.
 tags: [engine, physics, havok, ragdoll, nif]
 ---
 
@@ -187,3 +187,19 @@ vanilla humanoid this closed a left elbow from three units and six degrees open 
 
 A sleeping ragdoll is not solved at all. So a settled corpse costs nothing and keeps its pose. An
 impulse wakes it like any other dynamic body.
+
+## Script links
+
+`Game.AddHavokBallAndSocketConstraint` holds a pivot on one body to a pivot on another, with
+rotation free. OpenSky solves each one as a point joint, with the same solver as the joints
+inside a ragdoll, once each physics step after the bodies move.
+
+- A link joins two bone bodies of two ragdolls, or of one.
+- A pin holds a ragdoll bone, or a loose body such as a hanging key, at a fixed world point.
+  The point is the other reference's node and offset when the constraint is made, such as the
+  rope's `JointHelper01` in `HangedManScript`. In the solve, the point is a body too heavy to
+  move.
+
+Each offset is in its body's own space, in engine units. The CK wiki does not give the unit.
+A ragdoll that stops simulating drops its links and pins, as the wiki says a constraint breaks
+when the actor gets up. A sleeping loose body is not held, so it stays where it rests.

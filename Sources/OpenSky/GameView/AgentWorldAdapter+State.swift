@@ -277,6 +277,8 @@ extension AgentWorldAdapter {
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null,
+            "eyeTexture": eyeTexture(of: actor.key),
+            "constraints": physicsConstraints(of: actor.key),
             "graph": graph
         ])
     }

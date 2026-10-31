@@ -212,6 +212,25 @@ public final class RagdollRuntime: DeathReporting {
         return handed
     }
 
+    /// A script's ball-and-socket link between two ragdolls' bones.
+    public func addLink(_ link: RagdollLink) -> Bool {
+        world.addLink(link)
+    }
+
+    public func addPin(_ pin: PhysicsPin) -> Bool {
+        world.addPin(pin)
+    }
+
+    public func removeConstraints(_ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd) -> Bool {
+        world.removeLinks(first, second)
+    }
+
+    /// True when `key` simulates as a ragdoll, after starting one for a dead actor
+    /// that lies still. A living actor only takes a constraint while it ragdolls.
+    public func ragdollsForConstraint(_ key: ReferenceKey) -> Bool {
+        world.isRagdolling(key) || (isDead(key) && activate(key, instant: true))
+    }
+
     /// Spawns the bodies for one actor, whatever asked for it: the graph's
     /// hand-off, the fallback, or the readout's dev trigger.
     ///

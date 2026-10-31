@@ -511,4 +511,8 @@ run "graphics status" graphics status
 run "benchmark scene list" benchmark --list
 awk '/^--- benchmark scene list/{f=1;next} /^--- /{f=0} f' "$log" | grep -q 'quick' \
   || fail "benchmark --list showed no quick scene"
+run "pex MQ101QuestScript" pex MQ101QuestScript --function OnUpdate
+awk '/^--- pex MQ101QuestScript/{f=1;next} /^--- /{f=0} f' "$log" | grep -q 'StartTitleSequence' \
+  || fail "pex did not show MQ101's StartTitleSequence call"
+
 echo "[INFO] probe passed — full output in $log"

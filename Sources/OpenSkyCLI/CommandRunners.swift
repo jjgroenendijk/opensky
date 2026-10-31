@@ -343,3 +343,9 @@ extension ReferenceArguments.Answer: CLIRunnable {
         try await ReferenceBridgeCommand.answer(arguments: self)
     }
 }
+
+extension PexArguments: CLIRunnable {
+    func execute() throws {
+        try PexCommand.run(context: context(), arguments: self)
+    }
+}

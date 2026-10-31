@@ -71,6 +71,7 @@ protocol AgentWorldHost: AnyObject {
     var menuRouter: MenuRouter { get }
     var messages: MessageCoordinator { get }
     var movies: MoviePlayerCoordinator { get }
+    var titleSequence: TitleSequenceCoordinator { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
