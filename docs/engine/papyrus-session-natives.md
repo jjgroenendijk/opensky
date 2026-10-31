@@ -152,5 +152,3 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
   half of `afWalkRunPercent` and run from half up, so its feet can slide.
 - `PlayImpactEffect` reads "local rotation" as the node's turn inside the reference, not inside
   its parent node.
-- `Cell.Reset` cannot flag an exterior cell that is not loaded, because exterior cells are found
-  by their loaded position.

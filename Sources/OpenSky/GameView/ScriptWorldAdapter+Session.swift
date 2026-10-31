@@ -111,15 +111,13 @@ extension ScriptWorldAdapter {
             game.combatWorld.playImpact(impact, at: hit.position)
             return true
         }
-        // A script names a cell it is in or next to, so an exterior one is loaded.
         hooks.resetCell = { [weak game] cell in
             guard
                 let game, let reset = game.gameSession?.cellReset,
-                let id = game.scripts.bridge?.localFormID(of: cell)
+                let id = game.scripts.bridge?.localFormID(of: cell),
+                let location = game.streamer?.placedRecords?.location(ofCell: id)
             else { return false }
-            let exterior = game.streamer?.composition.cells.values
-                .first { !$0.isInterior && $0.cellFormID == id }.flatMap(\.location)
-            reset.flagForReset(exterior ?? .interior(id))
+            reset.flagForReset(location)
             return true
         }
     }
