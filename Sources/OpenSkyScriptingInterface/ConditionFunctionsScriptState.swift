@@ -61,6 +61,8 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let destroyed = "destroyed"
     public static let destructionStage = "destructionStage"
     public static let destructionDamage = "destructionDamage"
+    /// The game day this actor last caught the player pickpocketing.
+    public static let pickpocketCaughtDay = "pickpocketCaughtDay"
     /// How often the player hit an actor that was not hostile to them.
     public static let friendHits = "friendHits"
     /// On the player: the last actor that attacked them.

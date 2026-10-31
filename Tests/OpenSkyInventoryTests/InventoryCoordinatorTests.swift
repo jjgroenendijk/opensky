@@ -371,6 +371,15 @@ extension InventoryCoordinatorTests {
         var placement: DropPlacement?
         var bounty: Int32 = 0
         var gameDaysPassed: Float?
+        var caughtDays: [ReferenceKey: Float] = [:]
+
+        func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
+            caughtDays[key]
+        }
+
+        func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+            caughtDays[key] = day
+        }
 
         func perkActivateLabel(for _: FormID) -> String? {
             activateLabel

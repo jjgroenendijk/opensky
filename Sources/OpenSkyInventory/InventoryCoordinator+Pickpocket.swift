@@ -71,13 +71,15 @@ nonisolated public enum PickpocketOutcome: Equatable, Sendable {
 extension InventoryCoordinator {
     /// Whether `target` refuses a pickpocket now, because it caught the player lately.
     public func pickpocketRefused(by target: ReferenceKey) -> Bool {
-        PickpocketCooldown.refuses(caughtOn: pickpocketCatches[target], today: world.gameDaysPassed)
+        PickpocketCooldown.refuses(
+            caughtOn: world.pickpocketCaughtDay(of: target), today: world.gameDaysPassed
+        )
     }
 
     private func caught(
         by target: InventoryHolder, item: String, chance: Float, runtime: WorldItemRuntime
     ) -> PickpocketOutcome {
-        pickpocketCatches[target.key] = world.gameDaysPassed
+        world.setPickpocketCaughtDay(world.gameDaysPassed, of: target.key)
         let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
         return .caught(item: item, chance: Int(chance), bounty: bounty)
     }

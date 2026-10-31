@@ -72,11 +72,12 @@ costs the faction's flat `CRVA` pickpocket price (25 in vanilla), not a share of
 
 The target then refuses another try for two game days. Activating it while sneaking shows its
 name and `sNoPickPocketAgain` (" has already caught you.") instead of opening the pockets.
+The day of the catch is a script-state value on the target, so a save keeps it.
 
 ## Where OpenSky differs
 
 - UESP says Harmony, or talking a guard out of the arrest, clears the two-day refusal. OpenSky
-  does not clear it early. A save does not keep it either.
+  does not clear it early.
 
 - The CK settings list `fPickpocketSkillUsesCurve` (0.8). No source explains it, so OpenSky does not
   apply it.

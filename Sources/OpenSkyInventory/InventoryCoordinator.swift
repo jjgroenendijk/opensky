@@ -47,8 +47,6 @@ public final class InventoryCoordinator {
     public let activationTexts: GameSettingTexts<ActivationText>
     public let tradeTexts: TradeTexts
     public let pickpocketSettings: PickpocketSettings
-    /// The game day each target last caught the player pickpocketing.
-    public internal(set) var pickpocketCatches: [ReferenceKey: Float] = [:]
     public let soulTexts: SoulTexts
     /// The quality names of an improved item.
     public let temperingTexts: TemperingTexts

@@ -52,6 +52,7 @@ protocol InventoryWorldHost: AnyObject {
     var player: PlayerCoordinator { get }
     var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
+    var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
     var worldData: WorldDataStores? { get }
@@ -266,6 +267,16 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     func carryWeight(of key: ReferenceKey) -> Float? {
         actorValue(ActorValueIdentity.carryWeightIndex, of: key)
+    }
+
+    func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
+        game.scripts.bridge?.scriptedState(of: key).value(ScriptedStateName.pickpocketCaughtDay)
+    }
+
+    func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+        game.scripts.bridge?.updateScriptedState(of: key) {
+            $0.setValue(ScriptedStateName.pickpocketCaughtDay, day)
+        }
     }
 
     private func actorValue(_ index: Int32, of key: ReferenceKey) -> Float? {
