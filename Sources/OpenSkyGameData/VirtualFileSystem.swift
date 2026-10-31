@@ -194,8 +194,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         let components = path.lowercased()
             .replacingOccurrences(of: "/", with: "\\")
             .split(separator: "\\")
-        guard !components.isEmpty else { throw VFSError.invalidPath(path) }
-        guard !components.contains(where: { $0 == "." || $0 == ".." }) else {
+        guard !components.isEmpty, !components.contains(where: { $0 == "." || $0 == ".." }) else {
             throw VFSError.invalidPath(path)
         }
         return components.joined(separator: "\\")

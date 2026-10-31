@@ -150,8 +150,8 @@ extension AgentWorldAdapter {
         for (quest, state) in quests.runtimeQuests() {
             guard
                 let editorID = quest.editorID,
-                let stage = state.stagesReached.last else { continue }
-            guard tap.questStages[editorID] != stage else { continue }
+                let stage = state.stagesReached.last,
+                tap.questStages[editorID] != stage else { continue }
             tap.questStages[editorID] = stage
             guard tap.seeded else { continue }
             tap.append(

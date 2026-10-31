@@ -63,6 +63,8 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let destructionDamage = "destructionDamage"
     /// The game day this actor last caught the player pickpocketing.
     public static let pickpocketCaughtDay = "pickpocketCaughtDay"
+    /// The crime faction that catch was charged to, until a guard settles it.
+    public static let pickpocketCaughtFaction = "pickpocketCaughtFaction"
     /// How often the player hit an actor that was not hostile to them.
     public static let friendHits = "friendHits"
     /// On the player: the last actor that attacked them.

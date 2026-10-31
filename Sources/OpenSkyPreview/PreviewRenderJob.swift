@@ -112,8 +112,8 @@ public enum PreviewRenderJob {
             renderer.offscreenBackground = PreviewStudio.background
             renderer.sunShadowsEnabled = false
         }
-        guard let worldspace = scene.weatherWorldspace else { return }
         guard
+            let worldspace = scene.weatherWorldspace,
             let weather = WeatherSystem(
                 loadOrder: sources.loadOrder, worldspaceEditorID: worldspace
             )

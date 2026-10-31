@@ -218,6 +218,14 @@ extension SpellbookFixture {
                 effects: [EffectSpec(fireDamage, 30, 0)]
             ),
             spell(
+                formID: Spell.fireStorm, editorID: "FireStorm", equipType: Slot.eitherHand,
+                spit: spit(type: 0, chargeTime: 0, casting: 1, delivery: 0),
+                effects: [
+                    EffectSpec(fireDamage, 40, 0, area: 15),
+                    EffectSpec(restoreHealth, 5, 0)
+                ]
+            ),
+            spell(
                 formID: Spell.dragonskin, editorID: "Dragonskin", equipType: Slot.voice,
                 spit: spit(type: 2, chargeTime: 0, casting: 1, delivery: 0),
                 effects: [EffectSpec(restoreHealth, 5, 0)]

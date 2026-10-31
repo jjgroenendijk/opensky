@@ -142,23 +142,24 @@ nonisolated extension CellSceneBuilder {
         coordinate: CellCoordinate,
         quadFlags: UInt32
     ) -> (patches: [TerrainMeshBuilder.Patch], heightField: TerrainHeightField)? {
-        if let land = landRecord(in: found, worldspace: worldspace) {
-            if let heights = land.heightField?.heights {
-                let field = TerrainHeightField(
-                    coordinate: coordinate,
-                    heights: heights,
-                    hiddenQuadrants: quadFlags,
-                    surfaceMaterials: TerrainSurfaceMaterials.build(
-                        land: land,
-                        materialTypes: materialTypeIndexBuildingIfNeeded()
-                    )
+        if
+            let land = landRecord(in: found, worldspace: worldspace),
+            let heights = land.heightField?.heights
+        {
+            let field = TerrainHeightField(
+                coordinate: coordinate,
+                heights: heights,
+                hiddenQuadrants: quadFlags,
+                surfaceMaterials: TerrainSurfaceMaterials.build(
+                    land: land,
+                    materialTypes: materialTypeIndexBuildingIfNeeded()
                 )
-                if let field {
-                    return (
-                        TerrainMeshBuilder.patches(land: land, hiddenQuadrants: quadFlags),
-                        field
-                    )
-                }
+            )
+            if let field {
+                return (
+                    TerrainMeshBuilder.patches(land: land, hiddenQuadrants: quadFlags),
+                    field
+                )
             }
         }
         let worlds = worldspaceIndexBuildingIfNeeded()

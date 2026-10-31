@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
@@ -160,6 +161,15 @@ public final class MagicCoordinator {
         runtime.worldActions = []
         effects = runtime
         return actions
+    }
+
+    /// Takes the actors a calm from around its caster reached, leaving none.
+    func takeCalmedAround() -> [ReferenceKey] {
+        guard var runtime = effects, !runtime.calmedAround.isEmpty else { return [] }
+        let calmed = runtime.calmedAround
+        runtime.calmedAround = []
+        effects = runtime
+        return calmed
     }
 
     /// Whole effect steps for the delta this frame simulated, over the player
@@ -364,6 +374,10 @@ extension MagicCoordinator: CasterWorld {
             location: nil,
             spell: StoryEventData.form(of: spell)
         ))
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        world.spellHitCandidates()
     }
 
     /// A projectile hit and a direct cast take this one path, so the effects

@@ -114,10 +114,10 @@ nonisolated public final class SoundRecordStore {
     /// Normalizes an SNDR ANAM filename into a `sound\...` VFS key. A leading
     /// separator is stripped; a `:` names a drive and is rejected.
     private static func canonicalSoundPath(_ track: String) -> String? {
-        guard let normalized = try? VirtualFileSystem.normalize(track) else {
-            return nil
-        }
-        guard !normalized.contains(":") else {
+        guard
+            let normalized = try? VirtualFileSystem.normalize(track),
+            !normalized.contains(":")
+        else {
             return nil
         }
         // VFS keys are relative to Data, so a `data\` prefix goes.

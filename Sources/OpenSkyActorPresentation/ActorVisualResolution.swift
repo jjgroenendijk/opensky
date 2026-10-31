@@ -499,8 +499,10 @@ nonisolated extension ActorVisualResolver {
             ? race.femaleHeadParts : race.maleHeadParts
         var seen = Set<UInt32>()
         return (defaults + appearance.headParts.value).compactMap { id in
-            guard seen.insert(id.rawValue).inserted else { return nil }
-            guard let part = headParts[id.rawValue], part.expressionMorphPath != nil else {
+            guard
+                seen.insert(id.rawValue).inserted, let part = headParts[id.rawValue],
+                part.expressionMorphPath != nil
+            else {
                 return nil
             }
             return part

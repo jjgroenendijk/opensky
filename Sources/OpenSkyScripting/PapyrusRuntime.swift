@@ -218,10 +218,10 @@ public final class PapyrusRuntime {
     }
 
     public func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
-        guard let instance = instance(for: handle) else {
-            return false
-        }
-        guard let chain = try? scriptChain(from: instance.rootScriptName) else {
+        guard
+            let instance = instance(for: handle),
+            let chain = try? scriptChain(from: instance.rootScriptName)
+        else {
             return false
         }
         return chain.contains { Self.matches($0.name, typeName) }

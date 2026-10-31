@@ -169,7 +169,8 @@ struct PlacedReferenceXPRMRealDataTests {
         guard
             payload.count == 32, let floats = try? (0 ..< 7).map({ _ in
                 try Float(bitPattern: reader.readUInt32())
-            }), let rawType = try? reader.readUInt32() else { return }
+            }),
+            let rawType = try? reader.readUInt32() else { return }
         for extent in floats.prefix(3) {
             if !extent.isFinite {
                 tally.nonFiniteExtents += 1

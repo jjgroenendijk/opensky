@@ -173,8 +173,8 @@ nonisolated public enum NavigationPathfinder: Sendable {
         target: NavigationTriangleID,
         in graph: RuntimeNavigationGraph
     ) -> Float {
-        guard !graph.hasTeleportDoors else { return 0 }
         guard
+            !graph.hasTeleportDoors,
             let start = graph.triangle(node)?.centroid,
             let finish = graph.triangle(target)?.centroid
         else { return 0 }
@@ -307,8 +307,8 @@ nonisolated extension RuntimeNavigationGraph {
                 let targetDoor = door(destination)
             else { continue }
             for target in triangles(atDoor: destination) {
-                guard target != node, let targetTriangle = triangle(target) else { continue }
                 guard
+                    target != node, let targetTriangle = triangle(target),
                     !targetTriangle.isDegenerate,
                     !targetTriangle.flags.contains(.deleted)
                 else { continue }

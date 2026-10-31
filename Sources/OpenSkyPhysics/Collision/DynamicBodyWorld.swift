@@ -318,8 +318,8 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     public var instanceDeltas: [UInt32: float4x4] {
         var deltas: [UInt32: float4x4] = [:]
         for body in bodies {
-            guard let placed = placedPoses[body.key] else { continue }
             guard
+                let placed = placedPoses[body.key],
                 let delta = body.instanceDelta(
                     fromPlacedPosition: placed.position, orientation: placed.orientation
                 ) else { continue }

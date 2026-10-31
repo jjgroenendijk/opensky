@@ -88,8 +88,8 @@ nonisolated public struct RagdollJointLimitPass: Sendable {
         guard maxAngle.isFinite else { return satisfied }
         let angle = RagdollMath.angle(between: frames.a.primaryAxis, and: frames.b.primaryAxis)
         let error = angle - max(0, maxAngle)
-        guard error > 0 else { return satisfied }
         guard
+            error > 0,
             let axis = RagdollMath.unit(
                 simd_cross(frames.a.primaryAxis, frames.b.primaryAxis)
             ) ?? RagdollMath.anyPerpendicular(frames.a.primaryAxis)
@@ -113,8 +113,8 @@ nonisolated public struct RagdollJointLimitPass: Sendable {
         }
         let normal = frames.a.secondaryAxis
         let angle = asin(min(max(simd_dot(frames.b.primaryAxis, normal), -1), 1))
-        guard angle.isFinite else { return satisfied }
         guard
+            angle.isFinite,
             let axis = RagdollMath.unit(simd_cross(frames.b.primaryAxis, normal))
         else { return satisfied }
         if angle > maxAngle {

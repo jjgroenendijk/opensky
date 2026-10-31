@@ -61,8 +61,9 @@ nonisolated public struct INISettings: Equatable, Sendable {
     /// Returns highest-priority finite float. Malformed values fall through.
     public func float(section: String, key: String) -> (value: Float, source: String)? {
         for source in sources.reversed() {
-            guard let raw = source.file.string(section: section, key: key) else { continue }
-            guard let value = Float(raw), value.isFinite else { continue }
+            guard
+                let raw = source.file.string(section: section, key: key), let value = Float(raw),
+                value.isFinite else { continue }
             return (value, source.name)
         }
         return nil
@@ -74,8 +75,9 @@ nonisolated public struct INISettings: Equatable, Sendable {
         fileManager: FileManager = .default
     ) -> INISettings {
         let sources = candidates.compactMap { candidate -> INISettingsSource? in
-            guard fileManager.fileExists(atPath: candidate.url.path) else { return nil }
-            guard let data = try? Data(contentsOf: candidate.url) else { return nil }
+            guard
+                fileManager.fileExists(atPath: candidate.url.path),
+                let data = try? Data(contentsOf: candidate.url) else { return nil }
             return INISettingsSource(name: candidate.name, file: INIFile(data: data))
         }
         return INISettings(sources: sources)

@@ -12,10 +12,9 @@ nonisolated public enum BehaviorExpressionStatement: Equatable, Sendable {
 
     /// Parses `source`, or nil when it fits neither statement form.
     public static func parse(_ source: String) -> BehaviorExpressionStatement? {
-        guard let tokens = BehaviorExpressionLexer.tokens(of: source), tokens.count >= 3 else {
-            return nil
-        }
-        guard case let .name(target) = tokens[0] else { return nil }
+        guard
+            let tokens = BehaviorExpressionLexer.tokens(of: source), tokens.count >= 3,
+            case let .name(target) = tokens[0] else { return nil }
         let rest = Array(tokens.dropFirst(2))
         switch tokens[1] {
         case .assign:

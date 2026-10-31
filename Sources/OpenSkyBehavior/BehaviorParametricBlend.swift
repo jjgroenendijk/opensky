@@ -8,10 +8,8 @@ import Foundation
 nonisolated public enum BehaviorBlenderFlag {
     public static let sync = 0x1
     public static let smoothGeneratorWeights = 0x4
-    public static let dontDeactivateChildrenWithZeroWeights = 0x8
     public static let parametricBlend = 0x10
     public static let isParametricBlendCyclic = 0x20
-    public static let forceDensePose = 0x40
 }
 
 nonisolated public enum BehaviorParametricBlend {

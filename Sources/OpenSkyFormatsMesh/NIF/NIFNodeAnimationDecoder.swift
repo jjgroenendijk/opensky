@@ -31,7 +31,6 @@ nonisolated struct NIFNodeAnimationDecoder {
         let parents = file.nodeParents()
         nodes = objects.map { entry in
             NIFNodeAnimation.Node(
-                block: entry.block,
                 name: entry.object.name,
                 parent: parents[entry.block].flatMap { nodeOfBlock[$0] },
                 rest: NIFNodeTransform(

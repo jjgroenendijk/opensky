@@ -55,6 +55,9 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// How far a touch spell reaches from the caster, world units.
     var touchReach: Float { get }
 
+    /// Every actor a spell can reach, the caster among them.
+    func spellHitCandidates() -> [MeleeTarget]
+
     /// Lands a target-location cast where the caster aims, or places it as a rune.
     /// - Returns: how many timed effects were stored.
     func deliverToLocation(
@@ -68,6 +71,11 @@ extension CasterWorld {
     /// A world with no mounts has no rider in the air.
     public func castsFromFlyingMount(key _: ReferenceKey) -> Bool {
         false
+    }
+
+    /// A world with no actors has nobody around a caster.
+    public func spellHitCandidates() -> [MeleeTarget] {
+        []
     }
 
     /// A world with no ground lands nothing at a location.
@@ -404,16 +412,10 @@ public final class CasterRuntime {
         let entries = dual ? dualCastEntries(of: spell) : spell.record.effects
         isApplyingDualCast = dual
         defer { isApplyingDualCast = false }
-        guard delivery != .selfTarget else {
-            return world.applyCastEffects(
-                entries,
-                fromPlugin: spell.sourcePlugin,
-                source: ActiveEffectSource(kind: .spell, record: spell.key),
-                caster: caster.key,
-                on: caster
-            )
-        }
         let payload = spell.payload(caster: caster.key).dualCast(dual ? entries : nil)
+        guard delivery != .selfTarget else {
+            return applyFromSelf(payload, spell: spell, caster: caster, world: world)
+        }
         return deliverAway(payload, spell: spell, delivery: delivery, caster: caster, world: world)
     }
 

@@ -201,8 +201,9 @@ public final class ProgressionCoordinator {
     /// player a point short. The grant applies the perk's abilities.
     @discardableResult
     public func spendPerkPoint(on perk: ReferenceKey) -> PlayerProgressResult {
-        guard let leveling, perks.runtime != nil else { return .failure(.noPerkPoints) }
-        guard leveling.perkPoints > 0 else { return .failure(.noPerkPoints) }
+        guard
+            let leveling, perks.runtime != nil,
+            leveling.perkPoints > 0 else { return .failure(.noPerkPoints) }
         if let refusal = spendRefusal(for: perk, on: leveling.holder) {
             return .failure(.perkRefused(refusal))
         }

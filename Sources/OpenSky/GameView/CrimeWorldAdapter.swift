@@ -99,6 +99,11 @@ final class CrimeWorldAdapter {
                 )
             case let .stoleFromFaction(faction, value, witnessed):
                 game.scripts.bridge?.noteStolenValue(value, from: faction, witnessed: witnessed)
+            case let .settlePickpocketCatches(faction, forgotten):
+                game.inventoryWorld.settlePickpocketCatches(
+                    chargedTo: faction,
+                    forgotten: forgotten
+                )
             case let .speakTrespassWarning(witness):
                 game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
             case let .raiseStat(name, value):

@@ -180,10 +180,10 @@ nonisolated public final class RenderMesh: Sendable {
     public let uvPerUnit: Float
 
     public init(device: MTLDevice, mesh: Mesh) throws {
-        guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else {
-            throw RenderMeshError.emptyMesh
-        }
-        guard let localBounds = ModelBounds.containing(mesh.positions) else {
+        guard
+            !mesh.positions.isEmpty, !mesh.indices.isEmpty,
+            let localBounds = ModelBounds.containing(mesh.positions)
+        else {
             throw RenderMeshError.emptyMesh
         }
         if let bad = mesh.indices.first(where: { Int($0) >= mesh.positions.count }) {

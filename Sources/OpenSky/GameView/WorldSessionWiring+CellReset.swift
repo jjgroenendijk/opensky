@@ -103,8 +103,9 @@ extension WorldSessionWiring {
                 return baselines?.actors.actors[actor.base.rawValue]?.flags
                     .contains(.respawns) ?? false
             }
-            guard let base = entry.placedReference?.base else { return true }
-            guard let container = baselines?.items.container(base) else { return true }
+            guard
+                let base = entry.placedReference?.base,
+                let container = baselines?.items.container(base) else { return true }
             return container.flags.contains(.respawns)
         }
     }

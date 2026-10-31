@@ -163,6 +163,8 @@ extension ActiveEffectRuntime {
             action.duration = application.duration
             action.area = application.area
             worldActions.append(action)
+        case .influence(.calm) where application.spreadsFromCaster && target.key != caster:
+            calmedAround.append(target.key)
         case .world, .carrier, .influence, .heldFlag, .accumulate:
             break
         }
@@ -267,8 +269,12 @@ extension ActiveEffectRuntime {
         for value in effect.values {
             let wanted = value.magnitude * share
             let change = wanted - value.applied
-            guard change != 0 else { continue }
-            guard values.addModifier(change, to: .temporary, at: value.index, on: holder)
+            guard change != 0, values.addModifier(
+                change,
+                to: .temporary,
+                at: value.index,
+                on: holder
+            )
             else { continue }
             owned[value.index] = wanted
         }

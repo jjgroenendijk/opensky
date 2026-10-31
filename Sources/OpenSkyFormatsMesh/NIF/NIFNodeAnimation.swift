@@ -4,12 +4,10 @@
 // Layout: docs/formats/nif-controllers.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFNodeAnimation: Sendable {
     public struct Node: Equatable, Sendable {
-        public let block: Int
         public let name: String?
         /// Index into `nodes`; nil for a root.
         public let parent: Int?
@@ -72,11 +70,6 @@ nonisolated public struct NIFNodeAnimation: Sendable {
         nodes = decoder.nodes
         controllers = decoder.controllers
         boneLOD = decoder.boneLOD()
-    }
-
-    /// The first node with this name, compared without case.
-    public func node(named name: String) -> Int? {
-        nodes.firstIndex { $0.name?.caseInsensitiveCompare(name) == .orderedSame }
     }
 
     /// Controllers that move a node when they play: active, with more than one key.

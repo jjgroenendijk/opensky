@@ -147,6 +147,28 @@ struct MagicArchetypeTests {
         #expect(coordinator.influence(of: .player).refusesCombat)
     }
 
+    /// UESP "Skyrim:Pickpocket": Harmony, a calm cast from self over an area, makes its
+    /// targets forget a catch. A calm without an area, or on its own caster, does not.
+    @Test func aCalmFromAroundItsCasterForgetsAPickpocketCatch() throws {
+        let coordinator = try makeCoordinator()
+        let npc = ReferenceKey.plugin(name: "base.esm", objectID: 0x700)
+        for (area, caster) in [(UInt32(0), npc), (20, .player), (20, npc)] {
+            _ = coordinator.withEffects { runtime in
+                runtime.apply(
+                    [MagicItemEffect(
+                        effect: FormID(Archetype.calm), magnitude: 9, area: area, duration: 30,
+                        conditions: ConditionList()
+                    )],
+                    fromPlugin: ActiveEffectFixture.pluginName,
+                    source: ActiveEffectSource(kind: .spell, record: npc),
+                    caster: caster,
+                    on: .player
+                )
+            }
+        }
+        #expect(world.forgottenCatches == [.player])
+    }
+
     /// "up to level <MAG>": a level-1 target resists a magnitude below 1.
     @Test func calmAboveItsLevelCapIsRefused() throws {
         let coordinator = try makeCoordinator()

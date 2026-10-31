@@ -108,9 +108,14 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey)
     /// The actor rides a dragon in the air (`IsOnFlyingMount`).
     func isOnFlyingMount(_ key: ReferenceKey) -> Bool
+    /// The actor no longer refuses a pickpocket for having caught the player.
+    func forgetPickpocketCatch(of key: ReferenceKey)
 }
 
 extension MagicWorld {
+    /// A session with no pickpocketing has no catch to forget.
+    public func forgetPickpocketCatch(of _: ReferenceKey) {}
+
     /// A session with no mounts has no rider in the air.
     public func isOnFlyingMount(_: ReferenceKey) -> Bool {
         false

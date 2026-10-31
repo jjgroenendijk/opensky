@@ -357,8 +357,9 @@ extension CellStreamer {
         {
             talk.activations(event)
         }
-        guard target.interaction.action == .open else { return }
-        guard requestDoorTransition(activeDoor(reference: target.interaction.reference))
+        guard
+            target.interaction.action == .open,
+            requestDoorTransition(activeDoor(reference: target.interaction.reference))
         else { return }
         doorTransitionHold = max(0, doors.teleportDelay)
         doorMotionInteraction = target.interaction

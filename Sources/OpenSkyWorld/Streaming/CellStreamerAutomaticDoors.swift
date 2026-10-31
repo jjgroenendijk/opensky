@@ -23,8 +23,8 @@ extension CellStreamer {
         }
         let previous = automaticDoorOccupancy
         automaticDoorOccupancy = Set(inside.map(\.reference))
-        guard let previous else { return }
         guard
+            let previous,
             let entered = inside.sorted(by: { $0.reference.rawValue < $1.reference.rawValue })
                 .first(where: { !previous.contains($0.reference) })
         else { return }

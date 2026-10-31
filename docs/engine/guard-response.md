@@ -67,6 +67,10 @@ the dialogue when guards attempt to arrest you, they will attack you", and "Resi
 cause all guards in the area to attack you". So every guard of that faction turns hostile until
 the bounty is gone. A conversation that could not open holds that guard back for one game hour.
 
+A conversation that closes with the bounty cleared, but not through `PlayerPayCrimeGold` or
+`SendPlayerToJail`, sent the guard away quietly: a bribe, a Thane's status, or the Thieves Guild.
+It ends the [pickpocket](/engine/pickpocket.md) refusals charged to that faction.
+
 This state lives in the session, not in a saved component, like the set of assaulted actors. A
 loaded save starts every encounter again from the ledger.
 

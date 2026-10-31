@@ -113,10 +113,10 @@ extension MagicCoordinator {
     public func preview(
         _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
     ) -> Result<MadeEnchantment, EnchantingRefusal> {
-        guard let store = enchantmentStore, let inventory = world.inventory else {
-            return .failure(.notCarried)
-        }
-        guard inventory.count(of: item, in: .player) > 0 else { return .failure(.notCarried) }
+        guard let store = enchantmentStore, let inventory = world.inventory, inventory.count(
+            of: item,
+            in: .player
+        ) > 0 else { return .failure(.notCarried) }
         guard let isWeapon = enchantableKind(of: item) else { return .failure(.notEnchantable) }
         guard
             enchantmentProfile(of: item) == nil,
@@ -176,9 +176,12 @@ extension MagicCoordinator {
 
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.
     private func enchantableKind(of item: FormID) -> Bool? {
-        guard let items = world.inventory?.baselines.items, let definition = items.definition(item)
-        else { return nil }
-        guard !world.itemHasKeyword("MagicDisallowEnchanting", on: item) else { return nil }
+        guard
+            let items = world.inventory?.baselines.items, let definition = items.definition(item),
+            !world.itemHasKeyword(
+                "MagicDisallowEnchanting",
+                on: item
+            ) else { return nil }
         switch definition.family {
         case .weapon:
             let animation = items.weapon(item)?.animationType

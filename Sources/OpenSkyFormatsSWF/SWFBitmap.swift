@@ -62,9 +62,9 @@ nonisolated public enum SWFBitmapDecoder: Sendable {
     public static func decode(tag: SWFTag, jpegTables: Data? = nil) throws -> SWFBitmap {
         switch tag.code {
         case 20, 36:
-            return try decodeLossless(tag)
+            try decodeLossless(tag)
         case 6, 21, 35, 90:
-            return try decodeJPEGFamily(tag, jpegTables: jpegTables)
+            try decodeJPEGFamily(tag, jpegTables: jpegTables)
         default:
             throw SWFBitmapError.unsupportedTag(tag.code)
         }

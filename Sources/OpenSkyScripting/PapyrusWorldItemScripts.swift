@@ -32,9 +32,12 @@ extension PapyrusWorldRuntime {
         var queued = 0
         for script in live {
             let key = PapyrusInstanceKey(reference: base, scriptName: script.name)
-            guard instancesByKey[key] != nil || makeItemInstance(key, script, formIDResolver)
-            else { continue }
-            guard handlesEvent(name, key: key) else { continue }
+            guard
+                instancesByKey[key] != nil || makeItemInstance(key, script, formIDResolver),
+                handlesEvent(
+                    name,
+                    key: key
+                ) else { continue }
             enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: arguments))
             queued += 1
         }

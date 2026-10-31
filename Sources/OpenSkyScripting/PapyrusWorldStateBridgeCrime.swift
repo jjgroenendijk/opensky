@@ -43,6 +43,9 @@ extension PapyrusWorldStateBridge {
         alarm(.trespass, witness: witness, criminal: criminal)
     }
 
+    /// The first actor that detects the player calls the werewolf crime
+    /// (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>).
+    /// - Returns: the bounty accrued, zero when nobody saw, or nil without a crime runtime.
     @discardableResult
     public func sendWerewolfTransformation() -> Int? {
         guard let reporter = crimeNatives.crimeReporter?() else { return nil }

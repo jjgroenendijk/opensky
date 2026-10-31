@@ -44,8 +44,7 @@ nonisolated public final class PexScriptLoader {
     /// separator-led forms all become `scripts\name.pex`. A colon is rejected
     /// before normalization so a Windows drive or URL cannot become a VFS key.
     public static func canonicalScriptPath(_ name: String) -> String? {
-        guard !name.contains(":") else { return nil }
-        guard var normalized = try? VirtualFileSystem.normalize(name) else {
+        guard !name.contains(":"), var normalized = try? VirtualFileSystem.normalize(name) else {
             return nil
         }
         if normalized.hasPrefix("data\\") {

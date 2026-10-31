@@ -5,10 +5,10 @@ import OpenSkyEngineTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 
+@MainActor
 extension OffscreenRendererFixture {
     /// A `GameSession` and the renderer it drives, over a paused view.
     /// `shaderLibrary` nil loads the app bundle's shaders.
-    @MainActor
     public static func makeSession(
         device: MTLDevice,
         width: Int,
@@ -24,8 +24,8 @@ extension OffscreenRendererFixture {
     }
 }
 
+@MainActor
 extension OffscreenCanvas {
-    @MainActor
     public func makeSession() throws -> GameSession {
         let (device, library) = try resources()
         return try OffscreenRendererFixture.makeSession(

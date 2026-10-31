@@ -79,9 +79,11 @@ extension InventoryCoordinator {
     private func caught(
         by target: InventoryHolder, item: String, chance: Float, runtime: WorldItemRuntime
     ) -> PickpocketOutcome {
-        world.setPickpocketCaughtDay(world.gameDaysPassed, of: target.key)
-        let bounty = runtime.crime?.reportPickpocket(of: target.key, by: .player).gold ?? 0
-        return .caught(item: item, chance: Int(chance), bounty: bounty)
+        let crime = runtime.crime?.reportPickpocket(of: target.key, by: .player)
+        world.notePickpocketCatch(
+            on: world.gameDaysPassed, chargedTo: crime?.faction, by: target.key
+        )
+        return .caught(item: item, chance: Int(chance), bounty: crime?.gold ?? 0)
     }
 
     /// The chance in percent of taking `count` of `item` from `target` now.

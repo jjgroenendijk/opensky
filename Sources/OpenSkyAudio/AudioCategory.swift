@@ -24,8 +24,8 @@ nonisolated public enum AudioCategory: String, CaseIterable, Sendable {
     }
 
     public init?(soundCategoryEditorID: String?) {
-        guard let wanted = soundCategoryEditorID?.lowercased() else { return nil }
         guard
+            let wanted = soundCategoryEditorID?.lowercased(),
             let category = Self.allCases.first(where: {
                 $0.soundCategoryEditorID.lowercased() == wanted
             }) else { return nil }

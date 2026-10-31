@@ -87,9 +87,10 @@ nonisolated public struct KeywordStore: Sendable {
     /// distinguishes a dangling form or keyword from a real non-membership.
     public func hasKeyword(_ keyword: ResolvedFormID, on form: ResolvedFormID) -> Bool? {
         // The table's id spells the plugin name as the load order does.
-        guard let keyword = self.keyword(keyword)?.id else { return nil }
-        guard case let .record(indexed) = index.lookup(form) else { return nil }
-        guard let fields = try? indexed.record.fields() else { return nil }
+        guard
+            let keyword = self.keyword(keyword)?.id,
+            case let .record(indexed) = index.lookup(form),
+            let fields = try? indexed.record.fields() else { return nil }
         var list = KeywordList()
         for field in fields {
             guard (try? list.decode(field: field)) != nil else { return nil }

@@ -160,8 +160,9 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         _ action: GameInputAction,
         to scanCode: UInt32
     ) -> InputRebindResult {
-        guard let slot = Self.slot(for: action) else { return .notRemappable }
-        guard slot.remappable, !fixedKeys.contains(slot.key) else { return .notRemappable }
+        guard
+            let slot = Self.slot(for: action), slot.remappable,
+            !fixedKeys.contains(slot.key) else { return .notRemappable }
         guard DirectInputKeyCodes.macKeyCode(scanCode) != nil else { return .unknownKey }
         let old = self.scanCode(for: action)
         let holder = Self.slots.first {

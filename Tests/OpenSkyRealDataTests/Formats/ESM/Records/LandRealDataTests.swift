@@ -213,8 +213,9 @@ struct LandRealDataTests {
             guard group.kind == .cellChildren, group.parentFormID == cellFormID else { continue }
             guard let inner = try? group.children() else { return nil }
             for case let .group(temporary) in inner {
-                guard temporary.kind == .cellTemporaryChildren else { continue }
-                guard let records = try? temporary.children() else { continue }
+                guard
+                    temporary.kind == .cellTemporaryChildren,
+                    let records = try? temporary.children() else { continue }
                 for case let .record(record) in records where record.type == "LAND" {
                     if let land = try? Land(record: record) {
                         return land.heightField?.heights

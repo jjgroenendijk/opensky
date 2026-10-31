@@ -88,7 +88,7 @@ Settings:
   synthesized `encode(to:)` reads every field, and the index does not show that.
 - `retain_assign_only_property_types`. A property of one of these types only keeps an
   object alive. Nothing reads it, on purpose.
-  - `FFmpegDecodeResources` holds ffmpeg objects until `deinit` frees them.
+  - `FFmpegCodecResources` holds ffmpeg objects until `deinit` frees them.
   - `NSWindowController` is the app delegate's only strong reference to the main window's
     controller.
   - `AcceptanceWorld`, `SceneCrimeWorld`, `SceneReferences`, `FakeWorldReferences`,

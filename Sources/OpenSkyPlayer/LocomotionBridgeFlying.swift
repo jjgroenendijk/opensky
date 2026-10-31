@@ -1,7 +1,6 @@
 // A flying mount's step: the flight rules move the dragon, so its graph only hears how
 // it moves. See docs/engine/dragon-flight.md.
 
-import OpenSkyActorPresentation
 import OpenSkyBehavior
 import simd
 

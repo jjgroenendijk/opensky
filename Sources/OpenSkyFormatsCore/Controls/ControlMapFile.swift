@@ -110,8 +110,8 @@ nonisolated public struct ControlMapFile: Equatable, Sendable {
         }
         func flag(_ index: Int) throws(ControlMapError) -> Bool {
             switch fields[index] {
-            case "0": return false
-            case "1": return true
+            case "0": false
+            case "1": true
             default: throw .malformedLine(line: number, reason: "remap flag \(fields[index])")
             }
         }

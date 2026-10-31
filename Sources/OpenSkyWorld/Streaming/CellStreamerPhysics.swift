@@ -57,8 +57,9 @@ extension CellStreamer {
         // session install bodies in the same order, which the solver's
         // determinism rests on.
         for location in resident.keys.sorted(by: CellSceneLocation.isOrderedBefore) {
-            guard let scene = resident[location] else { continue }
-            guard dynamicBodies.installedCells[location] != scene.stateSequence else { continue }
+            guard
+                let scene = resident[location],
+                dynamicBodies.installedCells[location] != scene.stateSequence else { continue }
             dynamicBodies.setCell(
                 location, placements: scene.dynamicBodies, sequence: scene.stateSequence
             )

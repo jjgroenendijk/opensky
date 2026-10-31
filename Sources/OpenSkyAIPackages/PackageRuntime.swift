@@ -292,8 +292,9 @@ nonisolated public struct ActorPackageRuntime {
         ranToday: Set<FormID>
     ) -> ResolvedPackage? {
         for id in stack where !ranToday.contains(id) {
-            guard let package = try? store.resolve(id) else { continue }
-            guard package.package.schedule.matches(clock) else { continue }
+            guard
+                let package = try? store.resolve(id),
+                package.package.schedule.matches(clock) else { continue }
             var evaluator = ConditionEvaluator(context: context)
             evaluator.context.formIDTranslation = store.translation(of: id)
             let outcome = evaluator.evaluate(package.package.conditions)

@@ -194,8 +194,9 @@ nonisolated public struct RagdollInstance: Sendable {
         guard settleElapsed >= Self.settleWindow else { return }
         settleElapsed = 0
         settleReference = root
-        guard simd_distance(root, reference) < Self.settleDistance else { return }
-        guard constraintsAreSettled else { return }
+        guard
+            simd_distance(root, reference) < Self.settleDistance,
+            constraintsAreSettled else { return }
         projectAtRest()
     }
 

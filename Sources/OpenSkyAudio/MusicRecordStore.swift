@@ -66,10 +66,10 @@ nonisolated public final class MusicRecordStore {
     /// Normalizes a MUST ANAM/BNAM filename into a `music\...` VFS key. A leading
     /// `\Data\` is stripped (209 of 242 vanilla tracks use it); a `:` is rejected.
     public static func canonicalMusicPath(_ track: String) -> String? {
-        guard let normalized = try? VirtualFileSystem.normalize(track) else {
-            return nil
-        }
-        guard !normalized.contains(":") else {
+        guard
+            let normalized = try? VirtualFileSystem.normalize(track),
+            !normalized.contains(":")
+        else {
             return nil
         }
         if normalized.hasPrefix("data\\music\\") {
@@ -89,8 +89,9 @@ nonisolated public final class MusicRecordStore {
     public static func shippedAudioSibling(of path: String) -> String? {
         guard let dot = path.lastIndex(of: ".") else { return nil }
         let ext = path[path.index(after: dot)...]
-        guard !ext.isEmpty, !ext.contains("\\") else { return nil }
-        guard ext.lowercased() != shippedMusicExtension else { return nil }
+        guard
+            !ext.isEmpty, !ext.contains("\\"),
+            ext.lowercased() != shippedMusicExtension else { return nil }
         return path[..<dot] + ".\(shippedMusicExtension)"
     }
 

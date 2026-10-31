@@ -1,7 +1,6 @@
 // App side of a ridden dragon's orders: the lock and switch targets in view, where the
 // target stands, and the breath at it (docs/engine/dragon-flight.md#riding).
 
-import OpenSkyActorPresentation
 import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData

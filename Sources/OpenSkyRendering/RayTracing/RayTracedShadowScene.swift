@@ -66,8 +66,9 @@ final class RayTracedShadowScene {
             MemoryLayout<MTLIndirectAccelerationStructureInstanceDescriptor>.stride
         top.instanceCount = instances.count
         top.instanceDescriptorType = .indirect
-        guard let instanceStructure = builder.add(instance: top) else { return nil }
-        guard builder.encode(into: encoder) else { return nil }
+        guard
+            let instanceStructure = builder.add(instance: top),
+            builder.encode(into: encoder) else { return nil }
         let structures = Array(meshStructures.values) + [instanceStructure]
         var stats = RayTracedShadowStats()
         stats.meshes = meshStructures.count

@@ -273,8 +273,9 @@ public final class CrimeCoordinator {
     }
 
     public func reportTrespass(in location: CellSceneLocation?) {
-        guard let reporter, let owner = cellOwner(at: location) else { return }
-        guard !crimeActor(.player).mayUse(owner) else { return }
+        guard
+            let reporter, let owner = cellOwner(at: location),
+            !crimeActor(.player).mayUse(owner) else { return }
         note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
     }
 

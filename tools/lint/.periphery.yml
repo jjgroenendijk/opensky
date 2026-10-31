@@ -13,7 +13,7 @@ disable_redundant_public_analysis: true
 retain_hashable_properties: true
 retain_encodable_properties: true
 retain_assign_only_property_types:
-  - FFmpegDecodeResources
+  - FFmpegCodecResources
   - NSWindowController
   - AcceptanceWorld
   - SceneCrimeWorld

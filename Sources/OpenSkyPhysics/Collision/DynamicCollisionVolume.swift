@@ -93,9 +93,9 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
                 triangle.0 < points.count, triangle.1 < points.count, triangle.2 < points.count,
                 let plane = face(
                     points[triangle.0], points[triangle.1], points[triangle.2], center: center
-                )
-            else { continue }
-            guard !planes.contains(where: { $0.isNear(plane, epsilon: planeEpsilon) }) else {
+                ),
+                !planes.contains(where: { $0.isNear(plane, epsilon: planeEpsilon) })
+            else {
                 continue
             }
             planes.append(plane)

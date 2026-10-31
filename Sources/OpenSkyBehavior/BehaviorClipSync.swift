@@ -44,10 +44,9 @@ nonisolated extension BehaviorGraphInstance {
         var visited: Set<HKXPointerTarget> = []
         var stack: [(target: HKXPointerTarget, depth: Int)] = [(target, 0)]
         while let (current, depth) = stack.popLast() {
-            guard depth < Self.maximumDepth, visited.insert(current).inserted else {
-                continue
-            }
-            guard let node = compiledNode(at: current) else { continue }
+            guard
+                depth < Self.maximumDepth, visited.insert(current).inserted,
+                let node = compiledNode(at: current) else { continue }
             if
                 let generator = node.object as? HKBClipGenerator,
                 let found = answer(current, generator)
@@ -95,12 +94,5 @@ nonisolated extension BehaviorGraphInstance {
         ))
         pairedClips[key] = paired
         return paired
-    }
-
-    /// The phase a sync master imposes on its siblings, applied every update.
-    public func continuousClipPhase(of target: HKXPointerTarget?)
-        -> (value: Float, seedOnly: Bool)?
-    {
-        clipPhase(under: target).map { ($0, false) }
     }
 }

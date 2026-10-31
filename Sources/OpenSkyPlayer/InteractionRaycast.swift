@@ -112,10 +112,8 @@ nonisolated public enum InteractionRaycaster: Sendable {
             let first = Int(indices[offset])
             let second = Int(indices[offset + 1])
             let third = Int(indices[offset + 2])
-            guard first < vertices.count, second < vertices.count, third < vertices.count else {
-                continue
-            }
             guard
+                first < vertices.count, second < vertices.count, third < vertices.count,
                 let distance = triangleDistance(
                     origin: origin,
                     direction: direction,

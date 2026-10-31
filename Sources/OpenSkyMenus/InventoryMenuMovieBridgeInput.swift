@@ -7,12 +7,12 @@ import Foundation
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 
-nonisolated extension InventoryMenuMovieBridge {
+@MainActor
+extension InventoryMenuMovieBridge {
     /// Delivers one menu event to a live movie through the renderer, which
     /// synchronizes the drawn command stream with whatever the movie changed.
     ///
     /// - Returns: whether the movie consumed the event.
-    @MainActor
     @discardableResult
     public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         guard let key = key(for: event) else {

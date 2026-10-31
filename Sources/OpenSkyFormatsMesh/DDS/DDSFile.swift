@@ -427,11 +427,11 @@ nonisolated extension DDSFile {
 
     private static func resolveLegacyFormat(_ fourCC: FourCC) throws -> DDSPixelFormat {
         switch fourCC {
-        case "DXT1": return .bc1
-        case "DXT3": return .bc2
-        case "DXT5": return .bc3
-        case "ATI1", "BC4U": return .bc4
-        case "ATI2", "BC5U": return .bc5
+        case "DXT1": .bc1
+        case "DXT3": .bc2
+        case "DXT5": .bc3
+        case "ATI1", "BC4U": .bc4
+        case "ATI2", "BC5U": .bc5
         default:
             throw DDSError.unsupported("FourCC \(fourCC)")
         }
@@ -441,17 +441,17 @@ nonisolated extension DDSFile {
         _ dxgiFormat: UInt32
     ) throws -> (DDSPixelFormat, sRGB: Bool) {
         switch dxgiFormat {
-        case DDSPixelFormat.bc1.rawValue: return (.bc1, false)
-        case DDSPixelFormat.bc2.rawValue: return (.bc2, false)
-        case DDSPixelFormat.bc3.rawValue: return (.bc3, false)
-        case DDSPixelFormat.bc4.rawValue: return (.bc4, false)
-        case DDSPixelFormat.bc5.rawValue: return (.bc5, false)
-        case DDSPixelFormat.bc7.rawValue: return (.bc7, false)
+        case DDSPixelFormat.bc1.rawValue: (.bc1, false)
+        case DDSPixelFormat.bc2.rawValue: (.bc2, false)
+        case DDSPixelFormat.bc3.rawValue: (.bc3, false)
+        case DDSPixelFormat.bc4.rawValue: (.bc4, false)
+        case DDSPixelFormat.bc5.rawValue: (.bc5, false)
+        case DDSPixelFormat.bc7.rawValue: (.bc7, false)
         // BC1/2/3/7 _SRGB codes are UNORM + 1; 81/84 are BC4/BC5 _SNORM.
-        case DDSPixelFormat.bc1.rawValue + 1: return (.bc1, true)
-        case DDSPixelFormat.bc2.rawValue + 1: return (.bc2, true)
-        case DDSPixelFormat.bc3.rawValue + 1: return (.bc3, true)
-        case DDSPixelFormat.bc7.rawValue + 1: return (.bc7, true)
+        case DDSPixelFormat.bc1.rawValue + 1: (.bc1, true)
+        case DDSPixelFormat.bc2.rawValue + 1: (.bc2, true)
+        case DDSPixelFormat.bc3.rawValue + 1: (.bc3, true)
+        case DDSPixelFormat.bc7.rawValue + 1: (.bc7, true)
         default: throw DDSError.unsupported("DXGI format \(dxgiFormat)")
         }
     }

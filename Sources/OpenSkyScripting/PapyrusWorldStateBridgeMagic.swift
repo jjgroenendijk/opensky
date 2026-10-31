@@ -114,8 +114,9 @@ extension PapyrusWorldStateBridge {
     /// (<https://ck.uesp.net/wiki/DispelAllSpells_-_Actor>). An unresolved source
     /// record is left alone.
     public static func isDispellable(_ effect: ActiveEffect, spells: SpellStore?) -> Bool {
-        guard effect.source.kind == .spell, !effect.isConstant else { return false }
-        guard let record = spells?.spell(key: effect.source.record) else { return false }
+        guard
+            effect.source.kind == .spell, !effect.isConstant,
+            let record = spells?.spell(key: effect.source.record) else { return false }
         switch record.spellType {
         case .ability, .disease, .addiction: return false
         default: return true

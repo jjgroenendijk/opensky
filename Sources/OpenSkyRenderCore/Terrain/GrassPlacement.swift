@@ -220,10 +220,8 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
             return nil
         }
         let slope = slopeDegrees(normal: ground.normal)
-        guard slope >= context.minimumSlope, slope <= context.maximumSlope else {
-            return nil
-        }
         guard
+            slope >= context.minimumSlope, slope <= context.maximumSlope,
             passesWaterRule(
                 height: ground.height,
                 waterHeight: context.waterHeight,

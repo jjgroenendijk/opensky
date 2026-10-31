@@ -18,8 +18,9 @@ extension CasterRuntime {
     public func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
         guard let world, amount.isFinite, amount > 0 else { return }
         for entry in spell.effects {
-            guard let data = entry.effect?.effect.data else { continue }
-            guard ActorValueIdentity.isSkill(index: data.magicSkill) else { continue }
+            guard
+                let data = entry.effect?.effect.data,
+                ActorValueIdentity.isSkill(index: data.magicSkill) else { continue }
             let multiplier = data.skillUsageMultiplier.isFinite
                 ? max(0, data.skillUsageMultiplier) : 0
             guard multiplier > 0 else { continue }

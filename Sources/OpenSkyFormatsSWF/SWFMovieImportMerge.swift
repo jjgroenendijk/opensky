@@ -123,11 +123,10 @@ nonisolated public struct SWFMovieImportMerger {
     ) {
         let displayed = Self.displayIds(of: importer)
         for tag in importer.imports {
-            guard let resolved = Self.resolvedPath(for: tag.url, relativeTo: path) else {
-                diagnostics.skippedImports += 1
-                continue
-            }
-            guard tag.assets.contains(where: { displayed.contains($0.characterId) }) else {
+            guard
+                let resolved = Self.resolvedPath(for: tag.url, relativeTo: path),
+                tag.assets.contains(where: { displayed.contains($0.characterId) })
+            else {
                 diagnostics.skippedImports += 1
                 continue
             }
