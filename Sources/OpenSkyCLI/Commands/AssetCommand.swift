@@ -37,6 +37,9 @@ enum AssetCommand {
             }
         }
         printModelSummary(file: file)
+        for extra in NIFStringExtraData.all(in: file) {
+            print("string extra data: \(extra.name ?? "-") = \(extra.value ?? "-")")
+        }
         for (index, marker) in NIFFurnitureMarker.markers(in: file).enumerated() {
             let offset = marker.offset
             print("furniture marker \(index): at (\(offset.x), \(offset.y), \(offset.z)) "
