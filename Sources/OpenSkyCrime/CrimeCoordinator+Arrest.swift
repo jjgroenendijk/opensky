@@ -81,6 +81,8 @@ extension CrimeCoordinator: CrimeArrestSession {
         let moved = jailed
             || settlement.releaseMarker.map { world.movePlayer(toMarker: $0) } ?? false
         guards.forgive(settlement.faction)
+        // A fine or a sentence does not end the victims' two-day refusal.
+        pendingCommands.append(.settlePickpocketCatches(settlement.faction, forgotten: false))
         if case let .confront(guardKey, faction, _) = guards.active, faction == settlement.faction {
             guards.end(settled: true, now: now)
             world.resumePackage(for: guardKey)

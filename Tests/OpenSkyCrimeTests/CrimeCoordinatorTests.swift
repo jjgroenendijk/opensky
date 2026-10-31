@@ -138,6 +138,34 @@ struct CrimeCoordinatorTests {
         #expect(Self.hostility(commands)?.bounties.mapValues(\.gold) == [Self.hold: 100])
     }
 
+    /// UESP "Skyrim:Pickpocket": a guard sent away quietly ends the catch's refusal.
+    /// A conversation left with the bounty owed is resisting arrest instead.
+    @Test(arguments: [true, false])
+    func aGuardSentAwayQuietlySettlesThePickpocketCatches(bribed: Bool) throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        coordinator.reporter?.runtime.setCrimeGold(100, of: Self.hold)
+        world.gameSeconds = 0
+        world.playerFeet = .zero
+        world.dialogueOpens = true
+        world.observers = [CrimeObserver(key: Self.guardKey, feet: [10, 0, 0])]
+        world.profiles[Self.guardKey] = ActorSocialProfile(
+            key: Self.guardKey,
+            memberships: CrimeFixture.state([(CrimeFixture.Factions.guards, 0)]),
+            crimeFaction: Self.hold
+        )
+        _ = coordinator.advanceGuardResponse()
+        #expect(world.spokenTo == [Self.guardKey])
+
+        if bribed {
+            coordinator.reporter?.runtime.setCrimeGold(0, of: Self.hold)
+        }
+        world.isDialogueOpen = false
+        let settled = coordinator.advanceGuardResponse()
+            .contains(.settlePickpocketCatches(Self.hold, forgotten: true))
+        #expect(settled == bribed)
+    }
+
     @Test func aFarGuardPursuesAndRepathsOnlyWhenThePlayerMoves() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)

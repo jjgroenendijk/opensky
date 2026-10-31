@@ -372,13 +372,17 @@ extension InventoryCoordinatorTests {
         var bounty: Int32 = 0
         var gameDaysPassed: Float?
         var caughtDays: [ReferenceKey: Float] = [:]
+        var caughtFactions: [ReferenceKey: ReferenceKey] = [:]
 
         func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
             caughtDays[key]
         }
 
-        func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+        func notePickpocketCatch(
+            on day: Float?, chargedTo faction: ReferenceKey?, by key: ReferenceKey
+        ) {
             caughtDays[key] = day
+            caughtFactions[key] = faction
         }
 
         func perkActivateLabel(for _: FormID) -> String? {

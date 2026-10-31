@@ -43,7 +43,8 @@ public protocol InventoryWorld: AnyObject {
     func carryWeight(of key: ReferenceKey) -> Float?
     /// The game day `key` last caught the player pickpocketing, kept in the save.
     func pickpocketCaughtDay(of key: ReferenceKey) -> Float?
-    func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey)
+    /// Records a catch on `day`, with the crime faction it was charged to.
+    func notePickpocketCatch(on day: Float?, chargedTo faction: ReferenceKey?, by key: ReferenceKey)
     /// Whether `observer` has detected the player right now.
     func detectsPlayer(_ observer: ReferenceKey) -> Bool
     /// Lands the poison `poison` on `target`, from the player. False when nothing landed.
@@ -80,7 +81,7 @@ extension InventoryWorld {
         nil
     }
 
-    public func setPickpocketCaughtDay(_: Float?, of _: ReferenceKey) {}
+    public func notePickpocketCatch(on _: Float?, chargedTo _: ReferenceKey?, by _: ReferenceKey) {}
 
     public func detectsPlayer(_: ReferenceKey) -> Bool {
         false

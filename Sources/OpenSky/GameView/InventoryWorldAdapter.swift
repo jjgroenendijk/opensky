@@ -273,9 +273,37 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.scripts.bridge?.scriptedState(of: key).value(ScriptedStateName.pickpocketCaughtDay)
     }
 
-    func setPickpocketCaughtDay(_ day: Float?, of key: ReferenceKey) {
+    func notePickpocketCatch(
+        on day: Float?,
+        chargedTo faction: ReferenceKey?,
+        by key: ReferenceKey
+    ) {
         game.scripts.bridge?.updateScriptedState(of: key) {
             $0.setValue(ScriptedStateName.pickpocketCaughtDay, day)
+            $0.setForm(ScriptedStateName.pickpocketCaughtFaction, faction)
+        }
+    }
+
+    func forgetPickpocketCatch(of key: ReferenceKey) {
+        game.scripts.bridge?.updateScriptedState(of: key) {
+            $0.setValue(ScriptedStateName.pickpocketCaughtDay, nil)
+            $0.setForm(ScriptedStateName.pickpocketCaughtFaction, nil)
+        }
+    }
+
+    /// Unlinks every catch charged to `faction`; `forgotten` also ends its refusal.
+    func settlePickpocketCatches(chargedTo faction: ReferenceKey, forgotten: Bool) {
+        let name = ScriptedStateName.pickpocketCaughtFaction
+        for key in game.worldState.sortedDirtyKeys() {
+            guard
+                game.worldState.component(ScriptedReferenceState.self, for: key)?.form(name)
+                == faction
+            else { continue }
+            if forgotten {
+                forgetPickpocketCatch(of: key)
+            } else {
+                game.scripts.bridge?.updateScriptedState(of: key) { $0.setForm(name, nil) }
+            }
         }
     }
 

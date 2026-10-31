@@ -142,7 +142,8 @@ extension CrimeCoordinator {
     }
 
     /// A conversation that closes with the bounty still owed is resisting
-    /// arrest (<https://en.uesp.net/wiki/Skyrim:Crime>).
+    /// arrest (<https://en.uesp.net/wiki/Skyrim:Crime>). One that closes with it
+    /// cleared, without a fine or jail, sent the guard away quietly.
     private func finishConversationIfClosed(runtime: CrimeRuntime, now: Double) {
         guard
             world.isDialogueOpen == false,
@@ -153,6 +154,9 @@ extension CrimeCoordinator {
         } else {
             guards.end(settled: true, now: now)
             world.resumePackage(for: guardKey)
+            // A bribe, a Thane's status, or the Thieves Guild sent the guard away
+            // quietly, so the victims forget the catch (UESP "Skyrim:Pickpocket").
+            pendingCommands.append(.settlePickpocketCatches(faction, forgotten: true))
         }
     }
 }
