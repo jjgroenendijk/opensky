@@ -2,6 +2,7 @@
 // the ground from the session each frame and returns the followers' live poses.
 // The player rider is placed, not drawn. See docs/engine/vehicles.md.
 
+import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 import simd
@@ -41,6 +42,19 @@ public final class VehicleCoordinator {
     public func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool {
         lastPoses[rider] = nil
         return core.board(rider, on: vehicle)
+    }
+
+    /// `SetVehicle`: `None`, or the rider itself, takes the rider off its vehicle.
+    public func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) -> [VehicleCommand] {
+        guard let vehicle, vehicle != rider else { return detach(rider) }
+        board(rider, on: vehicle)
+        return []
+    }
+
+    /// The cart exit state's `ExitCartEnd` takes the rider off its vehicle.
+    public func animationEvent(_ name: String, from actor: ReferenceKey) -> [VehicleCommand] {
+        guard name.caseInsensitiveCompare(VehicleCore.exitEvent) == .orderedSame else { return [] }
+        return detach(actor)
     }
 
     /// Seats `rider` on the horse's saddle bone, facing the way the horse faces.

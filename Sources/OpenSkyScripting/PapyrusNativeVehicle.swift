@@ -11,7 +11,7 @@ import OpenSkyWorldInterface
 @MainActor
 public protocol PapyrusActorAIBridge: AnyObject {
     func evaluatePackage(_ actor: ReferenceKey)
-    /// Nil `vehicle` takes the rider off its vehicle.
+    /// Nil `vehicle`, or the rider itself, takes the rider off its vehicle.
     func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?)
     func tether(_ vehicle: ReferenceKey, to horse: ReferenceKey)
     /// False when the actor cannot play the idle.
