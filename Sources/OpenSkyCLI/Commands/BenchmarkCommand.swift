@@ -55,9 +55,11 @@ enum BenchmarkCommand {
         request.captureScene = arguments.capture
         request.loadPasses = !arguments.noLoadPasses
         request.screenshots = arguments.screenshots
-        request.fullScreen = !arguments.windowed
+        request.muted = !arguments.sound
         request.quitWhenDone = !arguments.keepOpen
         do throws(BenchmarkRequestError) {
+            request.display = try display(arguments)
+            request.frameSize = try arguments.size.map(BenchmarkFrameSize.parse)
             for pair in arguments.settings?.items ?? [] {
                 let (id, value) = try BenchmarkRequest.parseSetting(pair)
                 request.settings[id] = value
@@ -76,17 +78,31 @@ enum BenchmarkCommand {
         return request
     }
 
-    /// `open -W` waits until the app quits after the tour.
+    private static func display(
+        _ arguments: BenchmarkArguments
+    ) throws(BenchmarkRequestError) -> BenchmarkDisplay {
+        switch (arguments.windowed, arguments.fullScreen) {
+        case (true, true): throw .malformed("pick one of --windowed and --full-screen")
+        case (true, false): .windowed
+        case (false, true): .fullScreen
+        case (false, false): .hidden
+        }
+    }
+
+    /// `open -W` waits until the app quits after the tour. `-g` keeps a hidden
+    /// run in the background, so the app in front keeps the focus.
     private static func openApp(_ app: URL, request: BenchmarkRequest, context: CLIContext) throws {
-        var arguments = [
-            "-W", "-n", app.path(percentEncoded: false),
+        var arguments = request.display == .hidden ? ["-W", "-n", "-g"] : ["-W", "-n"]
+        arguments += [
+            app.path(percentEncoded: false),
             "--env", "OPENSKY_DATA_ROOT=\(context.root.installURL.path(percentEncoded: false))"
         ]
         if request.captureScene != nil {
             arguments += ["--env", "MTL_CAPTURE_ENABLED=1"]
         }
         arguments += ["--args", BenchmarkRequest.appRequestArgument, request.encodedJSON]
-        print("[INFO] opening \(app.lastPathComponent); the tour runs in its window")
+        let place = request.display == .hidden ? "hidden, off the screen" : "in its window"
+        print("[INFO] opening \(app.lastPathComponent); the tour runs \(place)")
         let process = Process()
         process.executableURL = URL(filePath: "/usr/bin/open")
         process.arguments = arguments

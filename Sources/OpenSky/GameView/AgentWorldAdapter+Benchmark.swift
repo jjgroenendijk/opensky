@@ -48,8 +48,10 @@ extension AgentWorldAdapter {
         request.captureScene = agent.capture
         request.loadPasses = agent.loadPasses
         request.screenshots = agent.screenshots
-        request.fullScreen = agent.fullScreen
+        request.display = agent.fullScreen ? .fullScreen : agent.windowed ? .windowed : .hidden
+        request.muted = !agent.sound
         do {
+            request.frameSize = try agent.size.map(BenchmarkFrameSize.parse)
             for pair in agent.settings {
                 let (id, value) = try BenchmarkRequest.parseSetting(pair)
                 request.settings[id] = value

@@ -18,6 +18,8 @@ struct AgentCommandCatalogTests {
     @Test func switchesTakeNoValue() throws {
         #expect(try AgentCommandLine.request(["benchmark", "--no-overlay", "--windowed"]).args
             == ["overlay": false, "windowed": true])
+        #expect(try AgentCommandLine.request(["benchmark", "--full-screen", "--sound"]).args
+            == ["fullScreen": true, "sound": true])
         #expect(try AgentCommandLine.request(["debug", "skillsmenu", "--sky"])
             .args == ["sky": true])
         #expect(throws: AgentFailure.self) {

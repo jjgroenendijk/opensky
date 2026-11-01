@@ -41,6 +41,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if benchmarkHost.readLaunchArguments() {
             begin(atTitleScreen: false, showingLauncher: false)
+            if benchmarkHost.hidesNextWindow {
+                // No Dock icon, no menu bar, and no focus: the person keeps working.
+                NSApplication.shared.setActivationPolicy(.accessory)
+                return
+            }
         } else if LaunchPreferences.skipsLauncher() {
             begin(atTitleScreen: LaunchPreferences.forcedTitleScreen(), showingLauncher: false)
         } else {
@@ -241,15 +246,21 @@ extension AppDelegate: LauncherActions {
         window.delegate = self
         gameWindow = window
         isPlaying = true
+        let hidden = benchmarkHost.hidesNextWindow
+        let tourOwnsWindow = benchmarkHost.ownsNextWindow
         if let game = window.contentViewController as? GameViewController {
             benchmarkHost.attach(game: game, window: window)
         }
-        window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
+        guard !hidden else { return }
+        window.makeKeyAndOrderFront(nil)
         if let rect = pendingContentRect {
             pendingContentRect = nil
             window.setFrame(window.frameRect(forContentRect: rect), display: true)
-        } else if Self.savedSettings().bool(.fullScreen), !window.styleMask.contains(.fullScreen) {
+        } else if
+            !tourOwnsWindow, Self.savedSettings().bool(.fullScreen),
+            !window.styleMask.contains(.fullScreen)
+        {
             window.toggleFullScreen(nil)
         }
     }

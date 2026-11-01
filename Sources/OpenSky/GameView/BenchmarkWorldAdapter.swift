@@ -27,6 +27,7 @@ import simd
 @MainActor
 protocol BenchmarkWorldHost: AnyObject {
     var agentWorld: AgentWorldAdapter { get }
+    var audio: AudioCoordinator { get }
     var benchmarkLoadPhases: LoadPhaseRecorder? { get }
     var benchmarkTour: BenchmarkTourCoordinator { get }
     var effects: EffectsCoordinator { get }
@@ -81,8 +82,7 @@ final class BenchmarkWorldAdapter {
     private var screenshots: [URL] = []
     /// A finished run waits for its last PNGs, so a quit right after it keeps them.
     private var finishing: (result: BenchmarkTourResult, framesLeft: Int)?
-    /// The run put the window in full screen, so its end takes it back out.
-    private var enteredFullScreen = false
+    private let windowMode = BenchmarkWindowMode()
 
     private struct SavedState {
         let movementMode: CameraMovementMode
@@ -90,6 +90,7 @@ final class BenchmarkWorldAdapter {
         let hudEnabled: Bool
         let camera: FreeFlyCamera
         let forcedWeather: FormID?
+        let outputMuted: Bool
     }
 
     init(game: any BenchmarkWorldHost) {
@@ -148,7 +149,7 @@ final class BenchmarkWorldAdapter {
         do {
             try tour.start(request, machine: machine, appStart: takeAppStart())
             onRunningChange?(true)
-            setFullScreen(request.fullScreen)
+            windowMode.apply(request, window: game.hostView.window, view: game.hostView)
         } catch {
             overlay.detach()
         }
@@ -187,23 +188,9 @@ final class BenchmarkWorldAdapter {
         finish(result)
     }
 
-    private func setFullScreen(_ on: Bool) {
-        guard let window = game.hostView.window else { return }
-        let isFull = window.styleMask.contains(.fullScreen)
-        if on, !isFull {
-            enteredFullScreen = true
-            window.toggleFullScreen(nil)
-        } else if !on, enteredFullScreen, isFull {
-            window.toggleFullScreen(nil)
-        }
-        if !on {
-            enteredFullScreen = false
-        }
-    }
-
     private func finish(_ result: BenchmarkTourResult) {
         overlay.detach()
-        setFullScreen(false)
+        windowMode.restore()
         let folder = request.outDirectory.map { URL(filePath: $0) }
             ?? BenchmarkReport.defaultFolder(startedAt: result.startedAt)
         var writeError: String?
@@ -254,8 +241,9 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         saved = SavedState(
             movementMode: session.movementMode, wasFrozen: game.simulationClock.isFrozen,
             hudEnabled: renderer.swfEnabled, camera: session.freeFlyCamera,
-            forcedWeather: session.weather?.forced
+            forcedWeather: session.weather?.forced, outputMuted: game.audio.outputMuted
         )
+        game.audio.outputMuted = request.muted
         tourOverrides = overrides
         if !overrides.isEmpty {
             apply(PlayerSettingsStore(copying: game.playerSettingsStore, overrides: overrides))
@@ -281,6 +269,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
             apply(game.playerSettingsStore)
         }
         tourOverrides = [:]
+        game.audio.outputMuted = saved.outputMuted
         session.weather?.forceWeather(saved.forcedWeather, transition: .instant)
         session.freeFlyCamera = saved.camera
         session.setMovementMode(saved.movementMode)

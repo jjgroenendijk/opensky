@@ -109,6 +109,10 @@ nonisolated public struct BenchmarkTourResult: Codable, Equatable, Sendable {
     public var preset: BenchmarkPreset
     public var frameWidth = 0
     public var frameHeight = 0
+    /// Nil in a result from before hidden runs existed.
+    public var display: BenchmarkDisplay?
+    /// The audio update is a measured CPU phase, so a muted run says so.
+    public var audioMuted: Bool?
     /// Every setting that differs from its default during the run, overrides included.
     public var settings: [String: Double] = [:]
     public var overrides: [String: Double] = [:]

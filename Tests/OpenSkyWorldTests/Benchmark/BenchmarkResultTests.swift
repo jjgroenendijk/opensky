@@ -67,7 +67,10 @@ struct BenchmarkResultTests {
             BenchmarkSceneResult(scene: vale, status: .skipped, note: "needs Dawnguard.esm")
         ]
         result.frameTime = measured.frameTime
+        result.display = .hidden
+        result.audioMuted = true
         let lines = BenchmarkReport.lines(for: result)
+        #expect(lines.contains("Display: hidden, muted"))
         #expect(lines.first?.hasPrefix("OpenSky benchmark: Full") == true)
         #expect(lines.contains { $0.hasPrefix("All scenes: ") })
         #expect(lines.contains { $0.contains("Whiterun") && $0.contains("arrival 4.2 s") })

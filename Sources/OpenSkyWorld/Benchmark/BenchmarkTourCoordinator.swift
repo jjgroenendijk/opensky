@@ -113,6 +113,8 @@ public final class BenchmarkTourCoordinator {
         result.overrides = request.settings
         result.passTiming = true
         result.screenshots = request.screenshots
+        result.display = request.display
+        result.audioMuted = request.muted
         world.beginTour(overrides: overrides, passTiming: true)
         result.settings = world.activeSettings
         self.result = result

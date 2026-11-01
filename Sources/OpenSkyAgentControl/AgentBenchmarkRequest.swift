@@ -14,7 +14,12 @@ nonisolated public struct AgentBenchmarkRequest: Equatable, Sendable {
     public var settings: [String] = []
     public var loadPasses = true
     public var screenshots = false
-    public var fullScreen = true
+    /// Both false: hidden, off the screen.
+    public var windowed = false
+    public var fullScreen = false
+    /// `WIDTHxHEIGHT` in pixels; the game checks it.
+    public var size: String?
+    public var sound = false
     /// Ends the running tour instead of starting one.
     public var stop = false
 
@@ -33,7 +38,13 @@ nonisolated public struct AgentBenchmarkRequest: Equatable, Sendable {
         request.settings = try list(args.optionalString("set"))
         request.loadPasses = try args.bool("loadPasses", default: true)
         request.screenshots = try args.bool("screenshots", default: false)
-        request.fullScreen = try !args.bool("windowed", default: false)
+        request.windowed = try args.bool("windowed", default: false)
+        request.fullScreen = try args.bool("fullScreen", default: false)
+        if request.windowed, request.fullScreen {
+            throw args.invalid("fullScreen", "not together with windowed")
+        }
+        request.size = try args.optionalString("size")
+        request.sound = try args.bool("sound", default: false)
         request.stop = try args.bool("stop", default: false)
         return request
     }

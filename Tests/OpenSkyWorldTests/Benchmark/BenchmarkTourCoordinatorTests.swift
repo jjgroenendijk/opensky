@@ -154,6 +154,7 @@ struct BenchmarkTourCoordinatorTests {
         #expect(result.settings == ["rendering.renderScale": 2])
         #expect(result.overrides == ["rendering.gpuCulling": 0])
         #expect(result.isComparable)
+        #expect(result.display == .hidden && result.audioMuted == true)
         #expect(tour.lastResult == result)
         // The exterior origin stands on the sampled ground, not on the arrival feet.
         let origin = SIMD3<Float>(19855, -7422, 100)
