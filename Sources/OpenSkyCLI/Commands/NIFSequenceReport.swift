@@ -35,9 +35,12 @@ enum NIFSequenceReport {
             let low = shape.positions.reduce(SIMD3(repeating: Float.infinity)) { simd_min($0, $1) }
             let high = shape.positions
                 .reduce(SIMD3(repeating: -Float.infinity)) { simd_max($0, $1) }
+            let sum = shape.normals.reduce(SIMD3<Float>.zero, +)
+            let normal = simd_length(sum) > 0 ? simd_normalize(sum) : sum
             Swift.print(
                 "shape node \(shape.node) shader \(shape.shaderBlock.map(String.init) ?? "-") "
-                    + "\(shape.positions.count) vertices, box \(format(low)) to \(format(high)); "
+                    + "\(shape.positions.count) vertices, box \(format(low)) to \(format(high)), "
+                    + "mean normal \(format(normal)); "
                     + "texture \(material.sourceTexture ?? "-") palette "
                     + "\(material.shading.paletteTexture ?? "-") colour "
                     + "\(format(material.shading.baseColor)) x "
