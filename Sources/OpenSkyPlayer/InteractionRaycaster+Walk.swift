@@ -59,3 +59,30 @@ nonisolated private struct OrderedHit {
     let element: Int
     let hit: InteractionRayHit
 }
+
+nonisolated extension InteractionRaycaster {
+    /// Above every surface a worldspace places; heights in Skyrim stay well inside it.
+    public static let surfaceCeiling: Float = 65536
+
+    /// The first collision a ray straight down from `surfaceCeiling` meets at `position`:
+    /// the top surface there, such as a city street where the terrain is hidden.
+    public static func topSurface(
+        at position: SIMD2<Float>,
+        sets: [StaticCollisionSet],
+        shapes: [StaticCollisionShape]
+    ) -> SIMD3<Float>? {
+        func castDown(from top: Float, distance: Float) -> SIMD3<Float>? {
+            let ray = InteractionRay(
+                origin: SIMD3(position, top), direction: SIMD3(0, 0, -1), maximumDistance: distance
+            )
+            return ray.flatMap { nearestHit(ray: $0, sets: sets, shapes: shapes)?.position }
+        }
+        guard let rough = castDown(from: surfaceCeiling, distance: surfaceCeiling * 2) else {
+            return nil
+        }
+        // A hit far down a long ray is off by units, so a short cast from just above refines it.
+        return castDown(from: rough.z + refineLift, distance: refineLift * 2) ?? rough
+    }
+
+    private static let refineLift: Float = 64
+}

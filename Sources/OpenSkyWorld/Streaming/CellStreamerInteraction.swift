@@ -69,6 +69,20 @@ extension CellStreamer {
         )
     }
 
+    /// Where a straight-down ray first meets fixed or door collision, for ground the
+    /// terrain does not cover, such as a city cell that hides its terrain quadrants.
+    public func topCollisionSurface(at position: SIMD2<Float>) -> SIMD3<Float>? {
+        let column = ModelBounds(
+            min: SIMD3(position - 0.01, -InteractionRaycaster.surfaceCeiling),
+            max: SIMD3(position + 0.01, InteractionRaycaster.surfaceCeiling)
+        )
+        return InteractionRaycaster.topSurface(
+            at: position,
+            sets: fixedCollisionSets,
+            shapes: doorCollisionCandidates(overlapping: column)
+        )
+    }
+
     /// Whether the static half, as `staticCollisionCandidates` holds it, blocks the ray.
     public func staticCollisionBlocks(ray: InteractionRay) -> Bool {
         InteractionRaycaster.hasHit(

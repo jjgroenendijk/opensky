@@ -100,4 +100,21 @@ struct InteractionRayWalkTests {
         #expect(InteractionRaycaster.nearestHit(ray: ray, sets: [scene], shapes: []) == nil)
         #expect(!InteractionRaycaster.hasHit(ray: ray, sets: [scene], shapes: []))
     }
+
+    @Test func topSurfaceIsTheHighestCollisionBelowTheColumn() throws {
+        let street = Self.set([
+            Self.sphere(1, at: SIMD3(0, 0, -12300), radius: 30),
+            Self.sphere(2, at: SIMD3(0, 0, -12600), radius: 30)
+        ])
+        let top = try #require(
+            InteractionRaycaster.topSurface(at: .zero, sets: [street], shapes: [])
+        )
+        #expect(abs(top.z - -12270) < 0.01, "z \(top.z)")
+        #expect(SIMD2(top.x, top.y) == .zero)
+    }
+
+    @Test func topSurfaceIsNilOverEmptyGround() {
+        let aside = Self.set([Self.sphere(1, at: SIMD3(500, 0, -12300), radius: 30)])
+        #expect(InteractionRaycaster.topSurface(at: .zero, sets: [aside], shapes: []) == nil)
+    }
 }
