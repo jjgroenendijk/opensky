@@ -18,9 +18,10 @@ A worldspace without the "no sky" flag gets a sky. When scenes are merged, one s
 of them has one. The sky is a full-screen triangle drawn first, before any depth-tested geometry.
 
 With weather active, the sky uses the colors blended from the current weathers (see
-[weather](/engine/weather.md)). With no weather, the shader uses built-in night, day, and
-twilight colors and a soft sun disc, from the time of day (default 13:00). The CLI screenshot
-takes `--time-of-day 0...24`. 24 is the same as 0.
+[weather](/engine/weather.md)). The sun, the moons, the stars, and the aurora draw over it
+([celestial sky](/engine/celestial-sky.md)). With no weather, the shader uses built-in night,
+day, and twilight colors and a soft sun disc, from the time of day (default 13:00). The CLI
+screenshot takes `--time-of-day 0...24`. 24 is the same as 0.
 
 ## Water plane
 
@@ -59,8 +60,8 @@ fallback look otherwise.
 
 ## Draw order
 
-Sky, cloud layers, opaque objects, terrain, alpha-tested objects, grass, water, then particles,
-rain and snow, and overlays.
+Sky, sky objects (stars, aurora, sun glare, sun, moons), cloud layers, opaque objects, terrain,
+alpha-tested objects, grass, water, then particles, rain and snow, and overlays.
 
 Water has its own pipeline: straight alpha blending, depth test "less", no depth writes, no
 culling. The shader mixes the shallow and deep water colors by distance, adds the reflection

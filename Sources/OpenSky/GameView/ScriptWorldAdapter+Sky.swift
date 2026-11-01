@@ -24,7 +24,7 @@ extension ScriptWorldAdapter {
                 let weather = session.weather,
                 weather.timeOfDayWeights(hour: session.gameClock.hourOfDay).night < 1
             else { return nil }
-            return -renderer.camera.sunDirection
+            return renderer.frameInput.celestial?.sunDirection ?? -renderer.camera.sunDirection
         }
         bridge.sessionNatives.playerView = { [weak game] in
             guard let camera = game?.gameSession?.freeFlyCamera else { return nil }

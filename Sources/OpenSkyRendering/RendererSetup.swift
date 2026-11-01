@@ -25,7 +25,8 @@ nonisolated public struct AdditivePipelines: Sendable {
 /// The scene pass's pipeline states, built together from one library.
 nonisolated public struct RenderPipelines: Sendable {
     public let sky: MTLRenderPipelineState
-    public let clouds: MTLRenderPipelineState
+    /// The cloud layers and the sky objects drawn over the gradient.
+    public let skyLayers: SkyLayerPipelines
     public let opaque: MTLRenderPipelineState
     public let alphaTest: MTLRenderPipelineState
     /// Shapes with a blending alpha property, drawn after water.
@@ -247,7 +248,10 @@ extension Renderer {
         }
         return try RenderPipelines(
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
-            clouds: makeCloudPipeline(library: library, compiler: compiler, view: view),
+            skyLayers: SkyLayerPipelines(
+                clouds: makeCloudPipeline(library: library, compiler: compiler, view: view),
+                objects: makeSkyObjectPipelines(library: library, compiler: compiler, view: view)
+            ),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
             blended: makeMeshPipeline(

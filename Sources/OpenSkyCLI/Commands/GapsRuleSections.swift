@@ -19,6 +19,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -135,6 +136,7 @@ extension GapsGatherer {
         _ = KillCamSettings.resolve(store: store)
         _ = EnchantedValueSettings.resolve(store: store)
         _ = LeveledListSettings.resolve(store: store)
+        _ = SkySettings.resolve(store: store)
         settingTextsRead(store: store)
         return log.editorIDs
     }

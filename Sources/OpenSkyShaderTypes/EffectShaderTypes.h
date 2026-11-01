@@ -1,5 +1,5 @@
-// Effect types shared between Metal shaders and Swift: particles, decals, and
-// cloud layers. ShaderTypes.h includes this file.
+// Effect types shared between Metal shaders and Swift: particles, decals, cloud
+// layers, and sky objects. ShaderTypes.h includes this file.
 
 #ifndef EffectShaderTypes_h
 #define EffectShaderTypes_h
@@ -51,13 +51,15 @@ typedef struct
     vector_float4 uvRect;
 } DecalInstance;
 
-/// One vertex of the cloud dome, in model space around the camera.
+/// One vertex of the cloud dome or a sky mesh, in model space around the camera.
 typedef struct
 {
     vector_float4 position;
     vector_float4 color;
     vector_float2 texcoord;
     vector_float2 padding;
+    /// xyz unit normal; the effect falloff of a sky mesh reads it.
+    vector_float4 normal;
 } CloudVertex;
 
 /// One weather cloud layer drawn on its dome shape.
@@ -68,5 +70,35 @@ typedef struct
     vector_float2 uvOffset;
     vector_float2 padding;
 } CloudLayerUniforms;
+
+typedef NS_ENUM(EnumBackingType, SkyObjectFlag)
+{
+    /// Adds to the sky instead of covering it.
+    SkyObjectFlagAdditive = 1 << 0,
+    /// Only the texture's alpha is used; the colour is the tint alone.
+    SkyObjectFlagAlphaOnly = 1 << 1,
+};
+
+/// A sun, glare, or moon card, or a star or aurora mesh, drawn behind everything.
+typedef struct
+{
+    /// Mesh only: model space to world directions around the camera.
+    matrix_float4x4 rotation;
+    /// rgb tint, a opacity.
+    vector_float4 color;
+    /// Card only: xyz unit direction to its middle, w half its width over distance.
+    vector_float4 center;
+    vector_float4 right;
+    vector_float4 up;
+    /// Mesh only: the shape's effect shading, as in DrawUniforms.
+    vector_float4 falloff;
+    vector_float4 baseColor;
+    float baseColorScale;
+    /// SkyObjectFlag bits.
+    unsigned int flags;
+    /// EffectFlag bits; 0 for a card.
+    unsigned int effectFlags;
+    unsigned int padding;
+} SkyObjectUniforms;
 
 #endif /* EffectShaderTypes_h */

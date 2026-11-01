@@ -114,8 +114,8 @@ extension RenderCommand {
             options.weather, to: gameSession, loadOrder: scene.builder.pluginLoadOrder,
             worldspace: scene.worldspace
         )
-        renderer.skyClouds = try SkyClouds(
-            fileSystem: scene.context.makeFileSystem(), device: renderer.device, immediate: true
+        try gameSession.attachOffscreenSky(
+            loadOrder: scene.builder.pluginLoadOrder, fileSystem: scene.context.makeFileSystem()
         )
         if let name = options.imageSpace {
             guard let space = records.imageSpaces.record(editorID: name) else {
@@ -196,5 +196,17 @@ extension RenderCommand {
                 + "snow live \(precipitation.snowLiveCount), "
                 + "spgd \(renderer.precipitation.tuning.source ?? "fallback")"
         )
+        if let sky = gameSession.celestialSky {
+            let moons = sky.moons
+                .map { "\($0.moon.rawValue) \($0.phase.textureSuffix) \($0.alpha)" }
+            let auroras = sky.auroras.map { "\($0.model) \($0.alpha)" }
+            print(
+                "[INFO] sky: sun \(sky.sunDirection) alpha \(sky.sunAlpha), "
+                    + "light \(sky.lightDirection), moons [\(moons.joined(separator: ", "))], "
+                    + "auroras [\(auroras.joined(separator: ", "))], "
+                    + "drawn \(renderer.skyCelestial?.drawnObjectCount ?? 0), "
+                    + "failed \(renderer.skyCelestial?.failedPaths ?? [])"
+            )
+        }
     }
 }

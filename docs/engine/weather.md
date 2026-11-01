@@ -155,9 +155,10 @@ The weather applies only to exteriors. Interiors keep their `CELL` and `LGTM` li
 
 - The weather sky colors drive the sky shader.
 - Weather fog, ambient, sun tint, and directional ambient replace the camera fallback values.
-- The sun direction still comes from the time of day. The weather sets only its color.
-- The sky shader keeps its procedural sun disc and glow, tinted by the sun and sun glare colors.
-  With no weather, it takes the original procedural path.
+- The sun direction and the light direction follow the sun path of the
+  [celestial sky](/engine/celestial-sky.md). The weather sets only their colors.
+- The textured sun and its glare replace the shader's drawn sun disc and glow once their
+  textures load. With no weather, the sky takes the original procedural path, with a fixed sun.
 
 ## Clouds
 
@@ -188,4 +189,6 @@ The `Weather` natives reach the weather system through the script world adapter
   classification: 0 pleasant, 1 cloudy, 2 rainy, 3 snow. `GetClassification()` reads the same
   codes from the `DATA` flags, and -1 for none.
 
-`abAccelerate` is not used: the transition takes its normal time.
+`abAccelerate` makes the transition `fWeatherTransAccel` times faster (16 in `Skyrim.esm`).
+OpenSky reads the setting as a divisor of the fade's length. The CK settings list gives only
+the value, so the meaning is a guess from its name.

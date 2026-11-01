@@ -17,9 +17,13 @@ nonisolated public final class WeatherSystem {
         case instant
         /// Cross-fade over the target weather's derived transition duration.
         case timed
+        /// A timed fade that runs `transitionAcceleration` times faster.
+        case accelerated
     }
 
     public let store: WeatherStore
+    /// `fWeatherTransAccel`: how many times faster an accelerated change fades.
+    public var transitionAcceleration = SkySettings.vanilla.weatherTransAccel
     public private(set) var worldspaceFormID: UInt32?
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
@@ -251,10 +255,13 @@ nonisolated public final class WeatherSystem {
             fromWeather = weather
             toWeather = weather
             transitionProgress = 1
-        case .timed:
+        case .timed, .accelerated:
             guard weather != toWeather || transitionProgress < 1 else { return }
             toWeather = weather
             transitionGameHours = store.weather(weather)?.data?.transDelta ?? 0
+            if transition == .accelerated, transitionAcceleration > 0 {
+                transitionGameHours /= transitionAcceleration
+            }
             // Trans Delta is the fade's length in game hours, so 0 switches at once.
             let fades = source != nil && transitionGameHours > 0
             fromWeather = fades ? source : weather
@@ -295,10 +302,15 @@ nonisolated public final class WeatherSystem {
     }
 
     private func climateTiming() -> Climate.Timing? {
+        climate?.timing
+    }
+
+    /// The current worldspace's `CLMT`; nil when it names none.
+    public var climate: Climate? {
         guard
             let worldspaceFormID,
             let climateID = store.worldspaceClimate[worldspaceFormID]
         else { return nil }
-        return store.climate(climateID)?.timing
+        return store.climate(climateID)
     }
 }

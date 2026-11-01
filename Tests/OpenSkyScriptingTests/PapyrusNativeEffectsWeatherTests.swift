@@ -46,12 +46,16 @@ private final class FakeSky: PapyrusWeatherControlling {
     var outgoingWeather: ReferenceKey?
     var transitionFraction: Float = 1
     var held = false
+    var accelerated = false
     var codes: [ReferenceKey: Int32] = [:]
 
-    func setWeather(_ weather: ReferenceKey, held: Bool, instant _: Bool) -> Bool {
+    func setWeather(
+        _ weather: ReferenceKey, held: Bool, instant _: Bool, accelerated: Bool
+    ) -> Bool {
         guard codes[weather] != nil else { return false }
         currentWeather = weather
         self.held = held
+        self.accelerated = accelerated
         return true
     }
 
@@ -129,6 +133,11 @@ struct PapyrusNativeEffectsWeatherTests {
         #expect(call(fixture, "Weather", "SetActive", on: rain, [.boolean(true)])
             == .returned(.none))
         #expect(sky.held)
+        #expect(!sky.accelerated)
+        _ = call(fixture, "Weather", "SetActive", on: rain, [.boolean(false), .boolean(true)])
+        #expect(sky.accelerated)
+        _ = call(fixture, "Weather", "ForceActive", on: rain, [.boolean(true)])
+        #expect(!sky.accelerated)
         #expect(call(
             fixture,
             "Weather",

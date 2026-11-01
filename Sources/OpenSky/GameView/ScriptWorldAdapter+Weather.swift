@@ -32,12 +32,16 @@ extension ScriptWorldAdapter: PapyrusWeatherControlling {
         weatherSystem?.transitionFraction ?? 1
     }
 
-    func setWeather(_ weather: ReferenceKey, held: Bool, instant: Bool) -> Bool {
+    func setWeather(
+        _ weather: ReferenceKey, held: Bool, instant: Bool, accelerated: Bool
+    ) -> Bool {
         guard let system = weatherSystem, let id = weatherFormID(weather) else { return false }
+        let transition: WeatherSystem.Transition =
+            instant ? .instant : accelerated ? .accelerated : .timed
         if held {
-            system.forceWeather(id, transition: instant ? .instant : .timed)
+            system.forceWeather(id, transition: transition)
         } else {
-            system.startWeather(id, transition: instant ? .instant : .timed)
+            system.startWeather(id, transition: transition)
         }
         return true
     }
