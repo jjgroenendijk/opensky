@@ -137,9 +137,10 @@ nonisolated public enum ActorValueIdentity: Sendable {
     }
 
     /// UESP "Skyrim:Fortify Shouts": Fortify Shouts lowers `ShoutRecoveryMult` "from its
-    /// base value of 1.0".
+    /// base value of 1.0". UESP "Actor Value Indices": `AttackDamageMult` "1 = default".
     private static let multiplierDefaults: [Int32: Float] = [
-        index(named: "Shout Recovery Mult") ?? noneIndex: 1
+        index(named: "Shout Recovery Mult") ?? noneIndex: 1,
+        index(named: "Attack Damage Mult") ?? noneIndex: 1
     ]
 
     /// Vanilla name of `index`, or nil when no vanilla actor value carries it.

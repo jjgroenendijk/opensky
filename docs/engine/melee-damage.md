@@ -81,8 +81,12 @@ order does not matter.
 
 ```text
 applied = ((base + weaponBonus) * attackBonus * skill * sneak * (1 - armour) * perks
-           + critical) * (1 - blocked)
+           * attackDamageMult + critical) * (1 - blocked)
 ```
+
+`attackDamageMult` is the attacker's `AttackDamageMult` actor value (154). UESP "Skyrim Mod:Actor
+Value Indices" says it scales "all physical damage from weapons, fists, and bashing", with 1 as the
+default. It applies to the player and to NPCs.
 
 The perk terms are the attacker's and the target's perk entry points
 ([perk entry points](/engine/perk-entry-points.md)).
@@ -164,3 +168,12 @@ pairs are `fShieldBashPCMin`/`fShieldBashPCMax` and `fWeaponBashPCMin`/`fWeaponB
 player, and the same names without `PC` for an NPC. `Skyrim.esm` carries only `fShieldBashMin`,
 `fShieldBashMax`, `fShieldBashPCMax`, and `fWeaponBashMax`. The others keep the values UESP lists.
 A bash is not scaled by fortify effects, which UESP states.
+
+## Reflect Damage
+
+The defender's `ReflectDamage` actor value (163) is a percent chance to send a melee hit back to
+the attacker (UESP "Skyrim Mod:Actor Value Indices"). The Reflect Blows perk and the Ebony Mail
+raise it. The defender still takes the full hit. The attacker takes the same damage the defender
+took, after armour and block, as UESP "Skyrim:Heavy Armor" describes. Difficulty then scales the
+reflected hit as a blow from the defender: a player's reflected hit on Master is halved. Arrows,
+spells, and a reflected hit do not reflect.

@@ -162,6 +162,9 @@ extension CombatCoordinator: MeleeCombatWorld {
             if kind != .other {
                 pendingCommands.append(.drewBlood(hit, target: target))
             }
+            if kind == .melee, let attacker {
+                reflectMeleeDamage(amount, from: target, to: attacker)
+            }
         }
         return landed
     }
