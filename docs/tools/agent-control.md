@@ -147,6 +147,9 @@ one core busy the whole time.
 - `debug teleport --pos` stays in the current cell, because interior positions are local to
   their cell. `--x --y` and `--cell` change cells. `--worldspace <editorID>` with `--x --y` or
   `--pos` goes to that worldspace first, such as `--worldspace DLC2SolstheimWorld --x 7 --y 8`.
+- `debug teleport --x --y` stands the player on the terrain at the cell centre. Where the
+  cell hides its terrain, as city worlds such as `WindhelmWorld` do, the player stands on the
+  top collision surface there instead, which can be a roof.
 - `debug teleport --ref` with a loaded reference stays in the current cell. A form ID that is
   not loaded is looked up in the exterior worldspaces of the load order, and its worldspace
   and cell load first.
