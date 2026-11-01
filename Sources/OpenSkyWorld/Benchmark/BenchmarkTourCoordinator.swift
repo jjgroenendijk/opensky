@@ -13,9 +13,6 @@ public final class BenchmarkTourCoordinator {
     static let warmupSteps = 120
     static let arrivalTimeoutSeconds = 150.0
     static let settleTimeoutSeconds = 45.0
-    /// GPU memory is sampled every this many measured frames, because a sample walks the residency
-    /// set.
-    static let memoryInterval = 30
 
     public enum Phase {
         case idle
@@ -260,6 +257,7 @@ extension BenchmarkTourCoordinator {
         if request.captureScene == scene.id {
             requestCapture(scene: scene, world: world)
         }
+        sampleMemory(world: world)
         signposts.mark("measure")
         phase = .measuring(origin: settling.origin, step: 0)
     }
@@ -275,18 +273,22 @@ extension BenchmarkTourCoordinator {
         if request.screenshots, let label = Self.screenshotLabel(step: step, shot: scene.shot) {
             saveScreenshot(label, scene: scene, world: world)
         }
-        if step % Self.memoryInterval == 0 {
-            let usage = world.gpuMemory()
-            recorder.add(memory: usage)
-            memory.add(usage)
-        }
         let elapsed = Double(step) * Self.stepSeconds
         guard elapsed <= scene.shot.seconds else {
+            sampleMemory(world: world)
             finishScene()
             return
         }
         world.setCamera(pose(of: scene, at: elapsed, origin: origin, world: world))
         phase = .measuring(origin: origin, step: step + 1)
+    }
+
+    /// A sample walks every resident allocation, which can take over 100 ms, so it
+    /// runs only in the frames before and after a shot, whose times are not recorded.
+    private func sampleMemory(world: any BenchmarkTourWorld) {
+        let usage = world.gpuMemory()
+        recorder.add(memory: usage)
+        memory.add(usage)
     }
 
     private func pose(
