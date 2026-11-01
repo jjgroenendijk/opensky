@@ -10,7 +10,8 @@ tags: [tool, cli, agent, testing]
 
 Agent control lets a script or an agent play the running app from a terminal. The app runs a
 small server, and `openskycli game ...` sends it one command per call. The workflow for agents
-is in the `driving-the-running-game` skill; this page explains how the parts fit.
+is in the `driving-the-running-game` skill, and [game commands](/tools/game-commands.md) lists
+every command. This page explains how the parts fit.
 
 ## The server
 

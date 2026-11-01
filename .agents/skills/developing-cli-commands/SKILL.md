@@ -13,6 +13,11 @@ description: Adds or changes an openskycli command or option - where the declara
 engine code as the app, so a CLI failure reproduces the app's behaviour. One command is
 spread over three places; this skill holds the rules for all of them.
 
+Ask the tool before you read its source: `openskycli --help` lists every command,
+`openskycli help <command>` (or `openskycli <command> --help`) shows one with its options, and
+`openskycli game help` lists the app's `game` commands. The help comes from the declarations,
+so it is always current.
+
 ## Where each part goes
 
 | Part | Place |
@@ -47,9 +52,9 @@ A new subcommand copies a sibling, such as `ReferenceArguments+Bridge.swift`.
 
 ## The same commit also changes
 
-1. The row in `docs/tools/cli.md` for the command, with every option. The skill
-   `driving-the-running-game` and `docs/tools/reference-game.md` list `game` and
-   `reference` commands too; update them when you change one.
+1. The row in `docs/tools/cli.md` for the command, with every option. A `game` command
+   or option changes its row in `docs/tools/game-commands.md`; a `reference` command also
+   changes `docs/tools/reference-game.md`.
 2. A run in `tools/probe.sh`, or one line in `tools/lint/cli-probe-exceptions.txt` saying
    why the probe cannot run it, such as "it needs a running reference game".
 3. A parse test in `Tests/OpenSkyCLIArgumentsTests/` when the change adds a name scripts use.

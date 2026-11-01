@@ -81,7 +81,7 @@
     "query": "Make the player rest for 8 hours as sleep, not wait, in the running game.",
     "files": [],
     "expected_behavior": [
-      "Checks the spelling with openskycli game debug rest --help or reference.md before running",
+      "Checks the spelling with openskycli game debug rest --help before running",
       "Uses debug rest 8 --sleep with no on/off value after the flag"
     ]
   },
