@@ -42,6 +42,7 @@ final class FakeMagicWorld: MagicWorld {
     var holders: [ReferenceKey: ActorValueHolder] = [:]
     private(set) var notifications: [String] = []
     private(set) var cloakRadii: [Float] = []
+    private(set) var knocks: [(targets: [ReferenceKey], source: ReferenceKey)] = []
     private(set) var forgottenCatches: [ReferenceKey] = []
 
     @discardableResult
@@ -97,6 +98,10 @@ final class FakeMagicWorld: MagicWorld {
     func cloakTargets(around _: ReferenceKey, radius: Float) -> [ReferenceKey] {
         cloakRadii.append(radius)
         return nearbyHostiles
+    }
+
+    func knock(_ targets: [ReferenceKey], awayFrom source: ReferenceKey, by _: SpellPayload) {
+        knocks.append((targets, source))
     }
 
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {

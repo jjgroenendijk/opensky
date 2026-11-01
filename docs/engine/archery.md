@@ -15,10 +15,16 @@ the attack button, the graph event queue, and the impact chain with
 
 ## The graph decides
 
-The engine raises `bowDrawStart` when the attack button goes down and `attackRelease` when it comes
-up. It does not decide that a draw began, how long it takes to reach full, or which frame the arrow
-leaves the string. The graph decides all three and fires events back. This matters even more than
-in melee: `arrowRelease` is the one frame an arrow comes into existence. A release from a clock
+The engine raises `bowAttackStart` when the attack button goes down and `attackRelease` when it
+comes up. `1hm_behavior.hkx` leaves `Bow_Ready_State` for `Bow_AttackState` only on
+`bowAttackStart`. `bowDrawStart` is an event the draw clip fires back; the Creation Kit list of
+animation events shows it among the events of a shot (<https://ck.uesp.net/wiki/Animation_Events>).
+`openskycli hkx meshes\actors\character\behaviors\0_master.hkx --set iRightHandType=7
+--raise weapEquip --raise idle --raise bowAttackStart` shows the draw.
+
+The engine does not decide that a draw began, how long it takes to reach full, or which frame the
+arrow leaves the string. The graph decides all three and fires events back. This matters even more
+than in melee: `arrowRelease` is the one frame an arrow comes into existence. A release from a clock
 would create an arrow when the bow is not there.
 
 One thing is timed: how long the button was held. UESP's draw damage curve depends on exactly that.
@@ -33,7 +39,7 @@ Every name comes from the behavior census over the install. Each is declared by 
 
 | Raised by the engine | Meaning |
 | --- | --- |
-| `bowDrawStart` | Start drawing. With a melee weapon, the same press raises `attackStart` |
+| `bowAttackStart` | Start drawing. With a melee weapon, the same press raises `attackStart` |
 | `attackRelease` | Loose. Shared with melee's held power attack: the same button coming up |
 | `bowReset` | Give up the draw without loosing |
 
@@ -46,10 +52,10 @@ Every name comes from the behavior census over the install. Each is declared by 
 | `arrowDetach` | The arrow leaves the hand |
 | `BowRelease` | The release animation's mark |
 | `bowReset` | The draw collapsed on its own |
+| `bowDrawStart` | The draw clip's own mark, fired back after `bowAttackStart` |
 
-The only variable written is `bBowDrawn`. `iState_NPCBow`, `iState_NPCBowDrawn`, and
-`iState_NPCBowDrawnQuickShot` are not written. The census gives their names and their `int32` type,
-but nothing gives their encoding, and a guessed number would silently pick an animation set.
+The only variable written is `bBowDrawn`. Archery writes no `iState_NPCBow*` value; the
+[actor state graph](/engine/actor-state-graph.md) page says how `iState` reports a drawn bow.
 `bowZoom`, `bowZoomAmt`, and `bAimActive` are not written either: no graph on the install reads
 them.
 

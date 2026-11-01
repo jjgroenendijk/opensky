@@ -78,6 +78,11 @@ code itself.
 - A problem found in an area the task does not touch becomes a new issue
   (`gh issue create`, with the `bug` label for a bug). Do not fix it in this PR unless it
   blocks the task, so the PR stays about one issue and the problem is not lost.
+- An acceptance gate can depend on a whole subsystem that does not exist yet, such as a
+  ragdoll on a living actor for a knockdown, while no open issue tracks it. Search the
+  open issues first. If none matches, file one for the missing subsystem (`gap` label,
+  `Refs` to the item that needs it), then ask the user whether to build it in this PR or
+  leave it for later. An untracked prerequisite is lost once this item closes.
 - A performance idea becomes a new issue too, one issue per idea. The title states the
   win; the body states why it can be faster. No measurement is needed to file it. Do not
   make the change in this PR.

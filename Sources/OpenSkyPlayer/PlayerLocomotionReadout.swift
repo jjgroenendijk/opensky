@@ -33,7 +33,8 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         var header = "Behavior graph: attached"
         header += "  Updates: \(status.graphUpdates)"
         header += "  First person: " + firstPerson
-        return ([header] + bodyLines
+        let actorState = "Actor state: iState " + (snapshot.actorState ?? "not written")
+        return ([header, actorState] + bodyLines
             + statePathLines(snapshot.activeStates, label: "State path")
             + statePathLines(snapshot.firstPersonActiveStates, label: "First-person path")
             + variableLines(snapshot.variables)

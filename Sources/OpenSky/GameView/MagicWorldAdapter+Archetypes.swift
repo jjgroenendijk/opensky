@@ -12,6 +12,7 @@ import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
@@ -100,6 +101,23 @@ extension MagicWorldAdapter {
             simd_distance(caster.feet, playerFeet) <= radius
         else { return [] }
         return [.player]
+    }
+
+    /// Pushes along the ground, as `PushActorAway` does: OpenSky has no knockdown ragdoll.
+    func knock(_ targets: [ReferenceKey], awayFrom source: ReferenceKey, by payload: SpellPayload) {
+        guard
+            let link = payload.projectile,
+            let projectile = game.combat.items?.projectiles[link.rawValue]
+        else { return }
+        let speed = CloakKnock.speed(
+            impactForce: projectile.impactForce,
+            bipedMultiplier: game.worldData?.gameSettings.number("fProjectileKnockMultBiped") ?? 0,
+            havokScale: NIFCollisionModel.havokToEngineScale
+        )
+        guard speed > 0 else { return }
+        for target in targets {
+            _ = game.effectsWorld.pushActor(target, awayFrom: source, along: nil, speed: speed)
+        }
     }
 
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {

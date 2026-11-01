@@ -168,7 +168,7 @@ public final class ArcheryRuntime {
         guard let world, drawing != wasDrawing else { return }
         if drawing {
             drawRequestCount += 1
-            world.raiseArcheryEvent(ArcheryGraphNames.bowDrawStart)
+            world.raiseArcheryEvent(ArcheryGraphNames.bowAttackStart)
         } else {
             world.raiseArcheryEvent(ArcheryGraphNames.attackRelease)
         }

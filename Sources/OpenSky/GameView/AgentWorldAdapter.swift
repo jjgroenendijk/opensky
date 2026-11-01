@@ -77,6 +77,7 @@ protocol AgentWorldHost: AnyObject {
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
+    var perks: PerkCoordinator { get }
     var player: PlayerCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var raceMenu: RaceMenuCoordinator { get }

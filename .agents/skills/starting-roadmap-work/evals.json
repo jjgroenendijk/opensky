@@ -116,5 +116,17 @@
       "Ranks candidate work by the uses column instead of guessing from memory",
       "Drafts any new issue in chat before creating it on GitHub"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Work on the issue where Shield Charge knocks enemies down with a ragdoll and a get-up. OpenSky only ragdolls dead actors.",
+    "files": [],
+    "expected_behavior": [
+      "Searches the open issues for one that tracks a ragdoll on a living actor",
+      "Files a gap issue for the missing knockdown subsystem when none exists, with Refs to the item",
+      "Asks the user whether to build the subsystem in this PR or leave it for later"
+    ]
   }
 ]

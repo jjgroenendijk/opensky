@@ -137,7 +137,9 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   the `<MAG>` of the Cloak effect is not the damage ... but the radius". UESP: cloaks hit only
   actors "hostile to you", and "casting a second will cancel the first". OpenSky casts the
   associated spell once a second on every hostile living actor inside the radius. The rate is
-  an OpenSky choice; the wiki names none.
+  an OpenSky choice; the wiki names none. The radius is in feet, and 128 units are 6 feet
+  (<https://ck.uesp.net/wiki/Unit>). A cloak whose conditions fail is suspended and casts
+  nothing, so Shield Charge only acts during a charge.
 - Slow Time: "Slows time for all but the player by the indicated amount (a multiplier, with 1
   being normal time)." Only the player's own Slow Time effects count. UESP: the player is
   "only slowed down to 70% of normal speed". Perk entry point 70 (Mod Player Magic Slowdown)
@@ -168,6 +170,25 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   `fSummonedCreatureMinFollowDist` from them. A summon whose effect ends stays
   `fSummonedCreatureFadeOutSeconds` before it goes; it does not fade visually yet.
 - A second Telekinesis cast while one object is held shows `sMagicTelekinesisNoRecast`.
+
+## Cloak knock
+
+Shield Charge knocks enemies down through its cloak. The cloak's spell `shieldChargeSpellDMG`
+(`10CAAC`) holds one effect, `shieldChargeKnockbackConcAimed`: 4 points of Health over 1 second,
+with the projectile `VoicePushProjectile01` (impact force 50) and the explosion
+`PerkShieldChargeExplosion`. The explosion has force 0 and no knock-down flag, and no effect flag
+asks for a knock-down, so the push can only come from the projectile. Dawnguard's
+`DLC1VampireBatsKnockdown` cloak uses the same spell.
+
+When a cloak's spell lands, OpenSky pushes each target away from the cloak's holder at
+`impactForce * fProjectileKnockMultBiped` (0.25), read as a Havok speed and scaled to units: about
+875 units a second for Shield Charge. The push slides the actor on its capsule, the path
+`PushActorAway` uses. The flame, frost, and shock cloaks name projectiles with an impact force of 5
+or 10, so they push a little too.
+
+[WARNING] The speed scale is OpenSky's reading; no source gives it. The game ragdolls a
+knocked-down actor and plays a get-up. OpenSky has no knockdown ragdoll, so the actor slides and
+stays on its feet.
 
 ## Summons, races, and feeding
 

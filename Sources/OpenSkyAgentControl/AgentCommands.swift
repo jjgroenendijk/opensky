@@ -171,6 +171,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
     /// `IdleDrunkStop` do.
     case drunk(reference: String, drunk: Bool)
+    /// Gives the player a perk by editor ID, or takes it away, as `Actor.AddPerk` does.
+    case perk(editorID: String, owned: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
     case beastForm(String)
     /// Links two ragdolls' bones, or unlinks them, as the Havok constraint natives do.
@@ -252,6 +254,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
+        case "perk": try .perk(editorID: args.string("perk"), owned: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
         case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
         case "link":

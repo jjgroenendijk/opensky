@@ -186,7 +186,7 @@ struct ProjectileRealDataTests {
 
     /// The vanilla third-person player graph on a bridge, exactly as item 14.6
     /// attaches it and exactly as `MeleeCombatRealDataTests` builds it. The
-    /// reference source matters: `bowDrawStart` and its siblings live in
+    /// reference source matters: `bowAttackStart` and its siblings live in
     /// `1hm_behavior.hkx`, and a graph built without one reaches none of them.
     private static func bridge(root: GameDataRoot) throws -> LocomotionBridge {
         let graph = try PlayerBehaviorGraph.load(

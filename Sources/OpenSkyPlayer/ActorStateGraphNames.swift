@@ -99,6 +99,13 @@ nonisolated public enum ActorGraphState: String, CaseIterable, Equatable, Sendab
         rawValue
     }
 
+    /// The states only the graph enters, from a perk's graph flag
+    /// (docs/engine/actor-state-graph.md).
+    public static let perkStates: [ActorGraphState] = [
+        .npcBowDrawnQuickShot,
+        .npcBlockingShieldCharge
+    ]
+
     /// The readout name: the constant without its `iState_` prefix.
     public var displayName: String {
         String(rawValue.dropFirst("iState_".count))

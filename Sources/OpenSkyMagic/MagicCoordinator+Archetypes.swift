@@ -11,6 +11,9 @@ extension MagicCoordinator {
     /// How often a cloak casts its spell on the actors around it. An OpenSky
     /// number: the wiki names no rate, and a per-second effect pays on whole seconds.
     public static let cloakPulseSeconds: Float = 1
+    /// A cloak's magnitude is a radius in feet (<https://ck.uesp.net/wiki/Magic_Effect>),
+    /// and 128 units are 6 feet (<https://ck.uesp.net/wiki/Unit>).
+    public static let unitsPerFoot: Float = 128.0 / 6.0
 
     /// The keyword Turn Undead requires on its target.
     public static let undeadKeyword = "ActorTypeUndead"
@@ -167,8 +170,8 @@ extension MagicCoordinator {
 
     // MARK: - Cloaks
 
-    /// Casts each running cloak's spell on the hostile actors inside its radius,
-    /// once per `cloakPulseSeconds`. A cloak's magnitude is its radius, in units.
+    /// Once per `cloakPulseSeconds`, casts each cloak's spell on the hostile actors inside
+    /// its radius in feet. A cloak its conditions suspend casts nothing.
     func pulseCloaks(delta: Float) {
         guard delta.isFinite, delta > 0 else { return }
         cloakClock += delta
@@ -176,11 +179,26 @@ extension MagicCoordinator {
         cloakClock = min(cloakClock - Self.cloakPulseSeconds, Self.cloakPulseSeconds)
         guard let runtime = effects else { return }
         for holder in world.regeneratingHolders() {
-            for effect in runtime.active(on: holder)
-                where runtime.rule(of: effect) == .world(.cloak)
-            {
+            for effect in runningCloaks(on: holder, runtime: runtime) {
                 pulse(effect, from: holder, world: world)
             }
+        }
+    }
+
+    /// True while `holder` runs a cloak, false while its conditions suspend every cloak it
+    /// holds, as Shield Charge's do outside a charge, and nil without a cloak.
+    public func cloakIsRunning(on holder: ActorValueHolder) -> Bool? {
+        guard let runtime = effects else { return nil }
+        let cloaks = runtime.active(on: holder).filter { runtime.rule(of: $0) == .world(.cloak) }
+        guard !cloaks.isEmpty else { return nil }
+        return cloaks.contains { !$0.isSuspended }
+    }
+
+    private func runningCloaks(on holder: ActorValueHolder, runtime: ActiveEffectRuntime)
+        -> [ActiveEffect]
+    {
+        runtime.active(on: holder).filter {
+            !$0.isSuspended && runtime.rule(of: $0) == .world(.cloak)
         }
     }
 
@@ -193,13 +211,13 @@ extension MagicCoordinator {
             let item = associatedItem(of: cloak.effect),
             let spell = caster?.spellbook.spells.spell(item)
         else { return }
-        let targets = world.cloakTargets(around: holder.key, radius: cloak.peakMagnitude)
+        let radius = cloak.peakMagnitude * Self.unitsPerFoot
+        let targets = world.cloakTargets(around: holder.key, radius: radius)
             .filter { $0 != holder.key }
         guard !targets.isEmpty else { return }
-        applySpellHit(SpellHit(
-            payload: spell.payload(caster: holder.key),
-            targets: targets.map { SpellHitTarget(key: $0) }
-        ))
+        let payload = spell.payload(caster: holder.key)
+        applySpellHit(SpellHit(payload: payload, targets: targets.map { SpellHitTarget(key: $0) }))
+        world.knock(targets, awayFrom: holder.key, by: payload)
     }
 
     // MARK: - Source categories
