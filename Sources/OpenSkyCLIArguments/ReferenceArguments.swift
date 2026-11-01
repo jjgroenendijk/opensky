@@ -73,9 +73,9 @@ public struct ReferenceArguments: ParsableCommand, Sendable {
         @OptionGroup public var window: ReferenceWindowOptions
         @Option(
             parsing: .unconditional,
-            help: "Seconds to wait for a Steam this command started. Default: 30."
+            help: "Most seconds a Steam this command started gets to log in. Default: 120."
         )
-        public var steamWait = 30
+        public var steamWait = 120
         @Option(
             parsing: .unconditional,
             help: "The game's own graphics preset. Low leaves the GPU to OpenSky too."
