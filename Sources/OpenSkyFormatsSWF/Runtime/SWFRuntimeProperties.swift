@@ -103,13 +103,18 @@ nonisolated extension SWFMovieRuntime {
         return true
     }
 
-    /// `_width = n` rescales the matrix so the transformed bounding box becomes
-    /// `n` pixels wide, which is what Flash does — it does not touch the
-    /// artwork.
+    /// `_width = n` on a clip rescales its matrix so the transformed box is `n` pixels
+    /// wide. On a text field it sets the unscaled box, as CLIK's `Constraints` expects:
+    /// it converts a size to local units for every element but a `TextField`.
     private func setExtent(of node: SWFDisplayObject, to pixels: Float, horizontal: Bool) {
+        let target = pixels * Self.twipsPerPixel
+        if let field = textField(of: node) {
+            guard target.isFinite, target >= 0 else { return }
+            node.textBounds = Self.resized(field.bounds, to: target, horizontal: horizontal)
+            return
+        }
         let box = parentBounds(of: node)
         let current = horizontal ? box.width : box.height
-        let target = pixels * Self.twipsPerPixel
         guard current > 0, target.isFinite, target >= 0 else {
             return
         }
@@ -121,6 +126,14 @@ nonisolated extension SWFMovieRuntime {
             node.matrix.rotateSkew1 *= factor
             node.matrix.scaleY *= factor
         }
+    }
+
+    /// The box with its right or bottom side moved so it is `twips` wide or tall.
+    private static func resized(_ box: SWFRect, to twips: Float, horizontal: Bool) -> SWFRect {
+        let end = Int32(clamping: Int64(min(twips.rounded(), Float(Int32.max / 2))))
+        return horizontal
+            ? SWFRect(xMin: box.xMin, xMax: box.xMin &+ end, yMin: box.yMin, yMax: box.yMax)
+            : SWFRect(xMin: box.xMin, xMax: box.xMax, yMin: box.yMin, yMax: box.yMin &+ end)
     }
 
     // MARK: - Matrix decomposition

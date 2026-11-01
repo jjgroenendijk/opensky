@@ -28,6 +28,9 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     public var textFirstLine: Int?
     /// The nine-slice grid of the sprite this shape sits in directly, if any.
     public var scalingGrid: SWFSceneScalingGrid?
+    /// An `editText` item's box when a script resized the field; nil keeps the
+    /// character's bounds.
+    public var textBounds: SWFRect?
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the

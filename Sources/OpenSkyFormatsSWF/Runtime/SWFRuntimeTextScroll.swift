@@ -9,7 +9,7 @@ nonisolated extension SWFMovieRuntime {
     /// to fit instead, so a field with it set draws every line.
     public func windowsLines(_ node: SWFDisplayObject) -> Bool {
         guard
-            let field = editTextField(of: node), field.flags.multiline, field.flags.wordWrap,
+            let field = textField(of: node), field.flags.multiline, field.flags.wordWrap,
             !field.flags.autoSize
         else {
             return false
@@ -27,7 +27,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     func scrollMember(_ name: String, of node: SWFDisplayObject) -> AS2Value? {
-        guard editTextField(of: node) != nil else { return nil }
+        guard textField(of: node) != nil else { return nil }
         let scroll = textScroll(of: node)
         switch name {
         case "scroll":
@@ -42,7 +42,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     func setTextScroll(_ value: AS2Value, of node: SWFDisplayObject) -> Bool {
-        guard editTextField(of: node) != nil else { return false }
+        guard textField(of: node) != nil else { return false }
         let number = runtime.coercion.toNumber(value)
         guard number.isFinite else { return true }
         let shown = textScroll(of: node)
@@ -62,17 +62,12 @@ nonisolated extension SWFMovieRuntime {
 
     private func textLines(of node: SWFDisplayObject) -> (count: Int, visible: Int)? {
         guard
-            windowsLines(node), let field = editTextField(of: node),
+            windowsLines(node), let field = textField(of: node),
             let font = movieScene.resolvedFont(for: field)
         else { return nil }
         let layout = SWFTextLayout.editText(
             field, font: font, content: text(of: node) ?? "", firstLine: 0
         )
         return (layout.lineCount, layout.visibleLineCount)
-    }
-
-    private func editTextField(of node: SWFDisplayObject) -> SWFEditText? {
-        guard case let .editText(id) = node.content else { return nil }
-        return editText(id)
     }
 }

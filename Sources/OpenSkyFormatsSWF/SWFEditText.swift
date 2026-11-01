@@ -55,6 +55,15 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
     /// `flags.html` is set), or nil when the field carries no initial text.
     public let initialText: String?
 
+    /// The same field with another box, for a field a script resized.
+    public func withBounds(_ box: SWFRect) -> SWFEditText {
+        SWFEditText(
+            characterId: characterId, bounds: box, flags: flags, fontID: fontID,
+            fontClass: fontClass, fontHeight: fontHeight, color: color, maxLength: maxLength,
+            layout: layout, variableName: variableName, initialText: initialText
+        )
+    }
+
     /// Plain-text view of `initialText`: markup stripped when the field is HTML,
     /// otherwise the stored string. Full HTML text layout is deferred to 8.3.x.
     public var plainText: String? {

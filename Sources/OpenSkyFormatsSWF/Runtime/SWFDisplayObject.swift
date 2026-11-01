@@ -56,6 +56,9 @@ nonisolated public final class SWFDisplayObject {
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?
+    /// A text field's own box after a script set `_width` or `_height`; nil keeps the
+    /// character's bounds.
+    public var textBounds: SWFRect?
     /// `TextField.scroll`: the one-based first line shown.
     public var textScroll = 1
     /// CLIPACTIONS handlers the placement attached, if any.
