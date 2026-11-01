@@ -30,6 +30,7 @@ nonisolated extension OpenSkySaveEncoder {
         writePerks(entries, into: &writer)
         writeFactionMemberships(entries, into: &writer)
         writeRelationshipRanks(entries, into: &writer)
+        writeRelationshipFavour(entries, into: &writer)
         writeProgressChunks(entries, into: &writer)
         writeCrimeLedgers(entries, into: &writer)
         writeStolenGoods(entries, into: &writer)

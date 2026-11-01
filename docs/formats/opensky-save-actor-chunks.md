@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
+  RELF, CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -132,6 +132,13 @@ Key, cell, uint32 override count, then overrides: the other actor's key and an i
 down to -4. The rank is the signed `GetRelationshipRank` number, not the `RELA` `DATA` word
 ([relationships](/formats/relationships.md)). A rank outside -4 to 4 is kept. Both actors of
 a pair store the row. Sizes: 12 bytes minimum per entry, 8 per override.
+
+## RELF: relationship favour
+
+Key, uint32 row count, then rows: the other actor's key and an int8 rank. The rank is the one
+the pair held when it first reached Friend (1) or higher, which fixes the item allowance
+([crime](/engine/crime.md)). A sibling of `RELS`, because `RELS` overrides have a fixed layout.
+A row with no `RELS` override is dropped on load. Sizes: 11 bytes minimum per entry, 8 per row.
 
 ## CRIM: crime
 

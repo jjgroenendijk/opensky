@@ -141,12 +141,14 @@ extension InventoryCoordinator {
     /// `AIPL` per stack taken. A container that is an actor is a dead body here,
     /// because pickpocketing does not use this path.
     func reportTaken(_ stacks: [InventoryStack], from session: ContainerSession) {
-        let how: StoryAcquireType = switch (session.ownership.isTheft, session.container.owner) {
-        case (true, _): .steal
-        case (false, .actor): .deadBody
-        default: .container
-        }
         for stack in stacks {
+            let how: StoryAcquireType = switch (
+                session.ownership(of: stack.item).isTheft, session.container.owner
+            ) {
+            case (true, _): .steal
+            case (false, .actor): .deadBody
+            default: .container
+            }
             storyEvents?.reportStoryEvent(.addItem(
                 stack.item, from: session.container.key, owner: nil, how: how
             ))

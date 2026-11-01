@@ -113,6 +113,7 @@ chunk cannot read into the next.
 | `ECHG` | enchantment charge and worn effects | actors |
 | `FCTN` | faction memberships | actors |
 | `RELS` | scripted relationship ranks | actors |
+| `RELF` | the rank each pair first reached as friends | actors |
 | `CRIM` | crime gold and crime counts | actors |
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |

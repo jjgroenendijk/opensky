@@ -172,6 +172,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case favor(reference: String, target: String?, exit: Bool)
     /// Sets or clears the player-teammate flag, as `SetPlayerTeammate` does.
     case teammate(reference: String, on: Bool)
+    /// Sets an actor's relationship rank toward the player, as `SetRelationshipRank` does.
+    case relationship(reference: String, rank: Int)
     /// Passes the hours as the wait menu does; `sleeping` as the rest menu does.
     case passTime(hours: Int, sleeping: Bool)
     /// Forces an actor that flies to take off or to land.
@@ -238,6 +240,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             return try .teammate(
                 reference: args.string("ref"), on: !args.bool("off", default: false)
             )
+        case "relationship":
+            let rank = try args.int("rank")
+            guard (-4 ... 4).contains(rank) else { throw args.invalid("rank", "-4 to 4") }
+            return try .relationship(reference: args.string("ref"), rank: rank)
         case "rest":
             let hours = try args.int("hours")
             guard (1 ... 24).contains(hours) else { throw args.invalid("hours", "1 to 24") }

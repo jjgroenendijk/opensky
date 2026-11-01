@@ -23,10 +23,10 @@ extension InventoryCoordinator {
         } else {
             false
         }
-        let verdict: OwnershipVerdict = isBody
-            ? .unowned : runtime.crime?.verdict(on: key) ?? .unowned
         var moved = false
         for stack in runtime.inventory.inventory(of: source).stacks {
+            let verdict: OwnershipVerdict = isBody
+                ? .unowned : runtime.crime?.verdict(on: key, item: stack.item) ?? .unowned
             do {
                 try runtime.inventory.transfer(
                     stack.item, count: stack.count, from: source, to: destination,
@@ -53,7 +53,7 @@ extension InventoryCoordinator {
             let reference = entry.placedReference
         else { return false }
         let count = max(1, reference.itemCount ?? 1)
-        let verdict = runtime.crime?.verdict(on: item) ?? .unowned
+        let verdict = runtime.crime?.verdict(on: item, item: reference.base) ?? .unowned
         do {
             try runtime.inventory.add(
                 reference.base, count: count, to: destination, stolen: verdict.isTheft

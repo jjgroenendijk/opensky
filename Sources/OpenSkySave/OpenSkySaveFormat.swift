@@ -141,6 +141,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Violent crime gold: per faction, the violent part of the `CRIM` row. A sibling,
         /// because `CRIM` rows have a fixed layout; `CRIM` keeps the total.
         public static let violentCrimeGold = "CRVG"
+        /// Relationship favour: per pair, the rank it held when it first reached Friend.
+        /// A sibling, because `RELS` overrides have a fixed layout.
+        public static let relationshipFavour = "RELF"
 
         /// Harvested flora and trees. Presence means harvested.
         public static let harvests = "HRVS"

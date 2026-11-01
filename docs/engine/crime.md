@@ -48,6 +48,26 @@ Who may use it:
 
 The answer is one of: no owner, permitted, forbidden. Only forbidden is theft.
 
+### Friends let the player take cheap things
+
+A friend lets the player take an item from their faction's property without theft, up to a gold
+value. UESP [Skyrim:Disposition](https://en.uesp.net/wiki/Skyrim:Disposition): "item value only
+works on items that belong to that person's faction, not items that are owned by that person".
+The value comes from the friend's relationship rank toward the player:
+
+| Rank | Setting | Vanilla gold |
+| --- | --- | --- |
+| 1 Friend | `iFavorFriendValue` | 25 |
+| 2 Confidant | `iFavorConfidantValue` | 50 |
+| 3 Ally | `iFavorAllyValue` | 100 |
+| 4 Lover | `iFavorLoverValue` | 500 |
+
+The rank is the one the pair held when it first reached Friend, because "the item value is only
+evaluated once; meaning if you first become a friend, then later become an ally, the item value
+will remain at 25". Each relationship row keeps that first rank, and a save stores it in `RELF`.
+The friend must still rank the player Friend or higher and still belong to the owning faction.
+With several such friends, the highest allowance counts. An item worth more is theft as before.
+
 ## Which crime faction answers for a place
 
 A cell names its location with `XLCN`. A location names its crime faction with `FNAM`. Almost no

@@ -9,8 +9,11 @@ public protocol CrimeReporting: AnyObject {
     /// The session the reporter asks about owners, cells, and actors.
     var world: (any CrimeWorld)? { get }
 
-    /// Whether `actor` taking `reference` would be theft, and from whom.
-    func verdict(on reference: ReferenceKey, by actor: ReferenceKey) -> OwnershipVerdict
+    /// Whether `actor` taking `reference` would be theft, and from whom. `item` is the
+    /// thing taken, when known: a friend's faction lets the player take a cheap one.
+    func verdict(
+        on reference: ReferenceKey, item: FormID?, by actor: ReferenceKey
+    ) -> OwnershipVerdict
 
     /// Reports a theft, run past the witnesses.
     @discardableResult
@@ -52,7 +55,17 @@ public protocol CrimeReporting: AnyObject {
 extension CrimeReporting {
     /// Whether the player taking `reference` would be theft.
     public func verdict(on reference: ReferenceKey) -> OwnershipVerdict {
-        verdict(on: reference, by: .player)
+        verdict(on: reference, item: nil, by: .player)
+    }
+
+    /// Whether the player taking `item` out of `reference` would be theft.
+    public func verdict(on reference: ReferenceKey, item: FormID) -> OwnershipVerdict {
+        verdict(on: reference, item: item, by: .player)
+    }
+
+    /// Whether `actor` taking `reference` would be theft.
+    public func verdict(on reference: ReferenceKey, by actor: ReferenceKey) -> OwnershipVerdict {
+        verdict(on: reference, item: nil, by: actor)
     }
 
     /// Reports a theft by the player.

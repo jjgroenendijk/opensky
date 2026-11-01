@@ -128,7 +128,7 @@ public final class WorldItemRuntime {
         guard let entry = references?.referenceEntry(formID: interaction.reference) else {
             return false
         }
-        return crime?.verdict(on: entry.key).isTheft ?? false
+        return crime?.verdict(on: entry.key, item: interaction.base).isTheft ?? false
     }
 
     /// Moves the item behind `interaction` into the player's inventory and removes
@@ -146,7 +146,7 @@ public final class WorldItemRuntime {
         let count = Self.stackCount(of: entry)
         // Asked before the item moves, because once it is in the inventory the
         // reference is gone and there is nothing left to ask about.
-        let verdict = crime?.verdict(on: entry.key) ?? .unowned
+        let verdict = crime?.verdict(on: entry.key, item: interaction.base) ?? .unowned
         let copies = store.component(ItemCopyState.self, for: entry.key)?
             .copies(of: interaction.base, held: count) ?? []
         try inventory.add(

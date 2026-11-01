@@ -122,6 +122,16 @@ public protocol CrimeWorld: AnyObject {
 
     /// Who is acting, with the memberships an ownership check needs.
     func crimeActor(_ key: ReferenceKey) -> CrimeActor
+
+    /// The most one item may be worth for the player to take it from `faction`
+    /// without theft, or nil when no friend of the player belongs to it.
+    func favourAllowance(in faction: ReferenceKey) -> Int32?
+}
+
+extension CrimeWorld {
+    public func favourAllowance(in _: ReferenceKey) -> Int32? {
+        nil
+    }
 }
 
 /// Who polices what.

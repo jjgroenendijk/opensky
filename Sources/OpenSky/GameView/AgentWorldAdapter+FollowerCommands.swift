@@ -3,6 +3,8 @@
 
 import OpenSkyAgentControl
 import OpenSkyAIPackages
+import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScripting
@@ -55,6 +57,8 @@ extension AgentWorldAdapter {
             try commandFollower(reference, target: target, exit: exit)
         case let .teammate(reference, on):
             try setTeammate(reference, on: on)
+        case let .relationship(reference, rank):
+            try setRelationship(reference, rank: Int8(rank))
         default:
             throw AgentFailure(.invalidArgument, "not a follower command")
         }
@@ -68,6 +72,23 @@ extension AgentWorldAdapter {
         }
         let flag = bridge.scriptedState(of: resolved.key).flag(ScriptedStateName.playerTeammate)
         return ["ref": .string(reference), "teammate": .bool(flag == true)]
+    }
+
+    /// The reply shows `firstFriendRank`, which fixes the item allowance of a friend.
+    private func setRelationship(
+        _ reference: String,
+        rank: Int8
+    ) throws(AgentFailure) -> AgentJSON {
+        let resolved = try resolveReference(reference)
+        guard let relationships = game.factions.relationships else { throw notReady() }
+        relationships.setRank(rank, of: resolved.key, toward: .player)
+        let state = relationships.state(of: .player)
+        return [
+            "ref": .string(reference),
+            "rank": state.rank(toward: resolved.key).map { .init(Int($0)) } ?? .null,
+            "firstFriendRank": state.firstFriendRank(toward: resolved.key)
+                .map { .init(Int($0)) } ?? .null
+        ]
     }
 
     /// A reference, or `x,y,z` for a spot on the ground.

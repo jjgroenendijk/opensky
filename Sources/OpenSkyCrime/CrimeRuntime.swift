@@ -61,6 +61,11 @@ public struct CrimeRuntime {
         worldState.component(CrimeLedgerState.self, for: key) ?? .empty
     }
 
+    /// The relationship ranks scripts set for `key`, the player's friends among them.
+    public func relationships(of key: ReferenceKey = .player) -> ActorRelationshipState {
+        worldState.component(ActorRelationshipState.self, for: key) ?? ActorRelationshipState()
+    }
+
     /// Crime gold `key` owes `faction`.
     public func crimeGold(of faction: ReferenceKey, on key: ReferenceKey = .player) -> Int32 {
         ledger(of: key).gold(for: faction)

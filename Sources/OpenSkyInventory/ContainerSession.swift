@@ -59,12 +59,17 @@ public final class ContainerSession {
         runtime.crime?.verdict(on: container.key) ?? .unowned
     }
 
+    /// Whether taking `item` is theft. A friend's allowance can cover a cheap item.
+    public func ownership(of item: FormID) -> OwnershipVerdict {
+        runtime.crime?.verdict(on: container.key, item: item) ?? .unowned
+    }
+
     /// Moves `count` of `item` to the player. Taking from an owned container marks
     /// the goods stolen and reports the crime (<https://en.uesp.net/wiki/Skyrim:Crime>).
     /// Returns the bounty; throws `InventoryError.insufficientCount`, writing nothing.
     @discardableResult
     public func take(_ item: FormID, count: Int32 = 1) throws -> Int32 {
-        let verdict = ownership
+        let verdict = ownership(of: item)
         try inventory.transfer(
             item, count: count, from: container, to: player, markingStolen: verdict.isTheft
         )

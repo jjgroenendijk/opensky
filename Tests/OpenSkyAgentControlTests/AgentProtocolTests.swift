@@ -141,6 +141,16 @@ struct AgentCommandParsingTests {
         }
     }
 
+    @Test func aRelationshipTakesARankFromArchnemesisToLover() throws {
+        #expect(try AgentCommandLine.request(["debug", "relationship", "target", "2"]).args
+            == ["ref": "target", "rank": 2])
+        #expect(try AgentDebugCommand.parse("relationship", args(["ref": "target", "rank": -4]))
+            == .relationship(reference: "target", rank: -4))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("relationship", args(["ref": "target", "rank": 5]))
+        }
+    }
+
     @Test func furnitureCommandsDefaultToThePlayer() throws {
         #expect(try AgentDebugCommand.parse("sit", args([:]))
             == .sit(reference: "player", furniture: nil))

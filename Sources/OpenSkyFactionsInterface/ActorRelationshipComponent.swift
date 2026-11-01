@@ -15,14 +15,18 @@ import OpenSkyWorldState
 nonisolated public struct ActorRelationshipOverride: Equatable, Sendable, Comparable {
     public let other: ReferenceKey
     public let rank: Int8
+    /// The rank the pair held when it first reached Friend (1) or higher, nil before
+    /// that. UESP "Skyrim:Disposition": the item allowance "is only evaluated once".
+    public let firstFriendRank: Int8?
 
     public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.other == rhs.other ? lhs.rank < rhs.rank : lhs.other < rhs.other
     }
 
-    public init(other: ReferenceKey, rank: Int8) {
+    public init(other: ReferenceKey, rank: Int8, firstFriendRank: Int8? = nil) {
         self.other = other
         self.rank = rank
+        self.firstFriendRank = firstFriendRank
     }
 }
 
@@ -48,14 +52,11 @@ nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable 
     /// component. An actor this session no longer resolves is kept, so a plugin
     /// coming and going does not destroy a scripted relationship.
     public init(overrides: [ActorRelationshipOverride] = []) {
-        var ranks: [ReferenceKey: Int8] = [:]
+        var latest: [ReferenceKey: ActorRelationshipOverride] = [:]
         for override in overrides {
-            ranks[override.other] = override.rank
+            latest[override.other] = override
         }
-        self.overrides = ranks.keys.sorted().compactMap { other in
-            guard let rank = ranks[other] else { return nil }
-            return ActorRelationshipOverride(other: other, rank: rank)
-        }
+        self.overrides = latest.keys.sorted().compactMap { latest[$0] }
     }
 
     /// The rank toward `other`, or nil when no script has set one — which is not
@@ -64,12 +65,17 @@ nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable 
         overrides.first { $0.other == other }?.rank
     }
 
+    /// The rank the pair held when it first reached Friend, nil before that.
+    public func firstFriendRank(toward other: ReferenceKey) -> Int8? {
+        overrides.first { $0.other == other }?.firstFriendRank
+    }
+
     /// The state after setting the rank toward `other`, replacing any earlier
-    /// one.
+    /// one. The first rank of Friend or higher is kept for good.
     public func setting(_ rank: Int8, toward other: ReferenceKey) -> ActorRelationshipState {
-        ActorRelationshipState(
-            overrides: overrides + [ActorRelationshipOverride(other: other, rank: rank)]
-        )
+        let first = firstFriendRank(toward: other) ?? (rank >= 1 ? rank : nil)
+        let override = ActorRelationshipOverride(other: other, rank: rank, firstFriendRank: first)
+        return ActorRelationshipState(overrides: overrides + [override])
     }
 }
 

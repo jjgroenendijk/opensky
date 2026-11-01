@@ -42,6 +42,9 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// The developer assert box ("Continue Running Executable?"), which a release build never
     /// opens.
     case debugDialog
+    /// Favour points. Skyrim keeps favour as a relationship rank from -4 to 4 that quests
+    /// and scripts set, so there are no points to restore.
+    case favourPoints
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -82,7 +85,8 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "sDefaultMessage",
             "sIgnoreText",
             "sRetryText"
-        ]
+        ],
+        .favourPoints: ["iFavorPointsRestore"]
     ]
 }
 
