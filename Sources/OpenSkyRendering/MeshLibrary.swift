@@ -323,6 +323,10 @@ nonisolated public final class MeshLibrary {
     /// Returns and clears the mesh keys touched since the last drain -- one
     /// cell's mesh working set, recorded onto its CellScene so unload can
     /// compute which models are still needed. Build-queue confined.
+    public var cachedCount: Int {
+        cache.count
+    }
+
     public func drainTouchedKeys() -> Set<String> {
         let out = touchedKeys
         touchedKeys.removeAll(keepingCapacity: true)

@@ -56,6 +56,9 @@ nonisolated public enum BenchmarkReport {
             if let arrival = scene.arrivalMS {
                 parts.append("arrival \(format(arrival / 1000)) s")
             }
+            if let memory = scene.gpuMemory?.last {
+                parts.append("GPU memory \(format(memory.totalMB / 1024)) GB")
+            }
             if let note = scene.note {
                 parts.append("[WARNING] \(note)")
             }

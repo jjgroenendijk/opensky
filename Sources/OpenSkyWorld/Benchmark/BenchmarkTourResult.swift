@@ -38,6 +38,8 @@ nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
     public var averageDrawCalls: Int?
     public var averageDrawnInstances: Int?
     public var gpuMemory: BenchmarkGPUMemory?
+    /// Nil when every frame was encoded and every command buffer finished without error.
+    public var gpuFaults: BenchmarkGPUFaults?
     public var capturePath: String?
     /// The PNGs of the start, middle, and end of the shot, when the run saved them.
     public var screenshots: [String]?

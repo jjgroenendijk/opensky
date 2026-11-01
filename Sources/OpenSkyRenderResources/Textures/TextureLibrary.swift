@@ -62,6 +62,10 @@ nonisolated public final class TextureLibrary {
     public var streaming: TextureStreamMailbox?
     private var batchDepth = 0
 
+    public var cachedCount: Int {
+        cache.count
+    }
+
     public init(fileSystem: any GameFileSource, loader: TextureLoader) {
         self.fileSystem = fileSystem
         self.loader = loader

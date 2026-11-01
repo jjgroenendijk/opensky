@@ -11,6 +11,7 @@ nonisolated struct BenchmarkSceneRecorder {
     private var drawCalls = 0
     private var drawnInstances = 0
     private var memory = GPUMemoryTracker()
+    private var faults = BenchmarkGPUFaults()
 
     mutating func add(frameMS interval: Double, sample: BenchmarkFrameSample) {
         frameMS.append(interval)
@@ -21,8 +22,9 @@ nonisolated struct BenchmarkSceneRecorder {
         drawnInstances += sample.drawnInstances
     }
 
-    mutating func add(gpuMS spans: [Double], passes: [[GPUPass: Double]]) {
-        gpuMS += spans
+    mutating func add(gpu report: GPUFrameReport, passes: [[GPUPass: Double]]) {
+        gpuMS += report.spansMS
+        faults.add(report)
         for frame in passes {
             for (pass, value) in frame {
                 passMS[pass, default: []].append(value)
@@ -48,5 +50,12 @@ nonisolated struct BenchmarkSceneRecorder {
             result.averageDrawnInstances = drawnInstances / frameMS.count
         }
         result.gpuMemory = memory.result
+        guard faults.failedCommits > 0 || faults.skippedFrames > 0 else { return }
+        result.gpuFaults = faults
+        if result.gpuTime == nil, !frameMS.isEmpty {
+            let reason = "no GPU time: \(faults.failedCommits) failed commits, "
+                + "\(faults.skippedFrames) skipped frames"
+            result.note = [result.note, reason].compactMap(\.self).joined(separator: "; ")
+        }
     }
 }

@@ -85,8 +85,10 @@ private final class FakeTourWorld: BenchmarkTourWorld {
         )
     }
 
-    func takeGPUFrameTimes() -> [Double] {
-        [8]
+    var gpuReport = GPUFrameReport(spansMS: [8])
+
+    func takeGPUFrameTimes() -> GPUFrameReport {
+        gpuReport
     }
 
     func takePassTimes() -> [[GPUPass: Double]] {
@@ -183,6 +185,24 @@ struct BenchmarkTourCoordinatorTests {
         #expect(scene.status == .failed)
         #expect(scene.note == "no such cell")
         #expect(tour.lastResult?.isComparable == false)
+    }
+
+    @Test func aSceneWithoutGPUTimeSaysWhy() throws {
+        let world = FakeTourWorld()
+        world.gpuReport = GPUFrameReport(
+            failedCommits: 1, lastFailure: "GPU fault", skippedFrames: 2
+        )
+        let tour = BenchmarkTourCoordinator(world: world)
+        try tour.start(
+            BenchmarkRequest(sceneIDs: ["whiterun"], loadPasses: false),
+            machine: Self.machine
+        )
+        runToEnd(tour)
+        let scene = try #require(tour.lastResult?.scenes.first)
+        #expect(scene.gpuTime == nil)
+        #expect(scene.gpuFaults?.lastFailure == "GPU fault")
+        #expect((scene.gpuFaults?.skippedFrames ?? 0) > 2)
+        #expect(scene.note?.hasPrefix("no GPU time:") == true)
     }
 
     @Test func settlingWaitsForStreamingBeforeTheWarmUp() throws {

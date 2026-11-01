@@ -73,8 +73,8 @@ public protocol BenchmarkTourWorld: AnyObject {
     func stepFixedFrame(seconds: Double)
 
     func frameSample() -> BenchmarkFrameSample
-    /// GPU spans and pass times that arrived since the last call.
-    func takeGPUFrameTimes() -> [Double]
+    /// GPU spans, failed commits, and skipped frames since the last call.
+    func takeGPUFrameTimes() -> GPUFrameReport
     func takePassTimes() -> [[GPUPass: Double]]
     func gpuMemory() -> GPUMemoryUsage
     /// Starts counting asset phases of the streamer's builds; nil when no recorder is attached.

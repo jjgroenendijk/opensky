@@ -52,6 +52,9 @@ extension Renderer {
         let spans = frameStats.gpuSpans
         let log = gpuFrameLog
         options.addFeedbackHandler { feedback in
+            if let error = feedback.error {
+                log?.recordFailure(error)
+            }
             guard let busy = parts.add(start: feedback.gpuStartTime, end: feedback.gpuEndTime)
             else { return }
             spans.record(start: 0, end: busy)

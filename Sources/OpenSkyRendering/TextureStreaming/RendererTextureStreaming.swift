@@ -31,7 +31,10 @@ final class StreamedTextureEntry {
     var residentLevel: Int
     /// Mapped tiles by level; the tail sits under `layout.firstLevelInTail`.
     var tiles: [Int: [SparseTile]] = [:]
+    /// A view keeps its parent texture alive, so an unbound view is dropped
+    /// (`releaseUnboundViews`); else the texture, and its tiles, would never die.
     var view: MTLTexture?
+    var lastBoundFrame = 0
     /// The first level of a read in flight.
     var requestedLevel: Int?
     /// Set while lowered levels wait for frames in flight before they unmap.
@@ -46,7 +49,8 @@ final class StreamedTextureEntry {
     }
 
     /// The texture a draw binds: a view of the resident levels.
-    func binding(for texture: MTLTexture) -> MTLTexture {
+    func binding(for texture: MTLTexture, frame: Int) -> MTLTexture {
+        lastBoundFrame = frame
         if let view {
             return view
         }
@@ -99,7 +103,7 @@ extension Renderer {
             !textureStreaming.entries.isEmpty,
             let entry = textureStreaming.entries[ObjectIdentifier(texture)]
         else { return texture.gpuResourceID }
-        return entry.binding(for: texture).gpuResourceID
+        return entry.binding(for: texture, frame: frameIndex).gpuResourceID
     }
 
     /// Runs once per frame after `beginCommandBuffer`, before any pass.
@@ -109,6 +113,9 @@ extension Renderer {
         }
         releaseFinishedStaging()
         unmapLoweredLevels()
+        if frameIndex % Self.textureStreamingInterval == 0 {
+            releaseUnboundViews()
+        }
         dropDeadEntries()
         var uploads: [StreamedTextureUpload] = []
         for seed in textureStreaming.mailbox.drainSeeds() {
@@ -241,6 +248,18 @@ extension Renderer {
                 }
             }
             freeTiles(levels.flatMap { entry.tiles.removeValue(forKey: $0) ?? [] })
+        }
+    }
+
+    /// Drops the views whose last frame the GPU finished. Runs before this frame binds
+    /// any, so no work in flight reads them. A texture only its view held then dies,
+    /// and `dropDeadEntries` frees its tiles.
+    private func releaseUnboundViews() {
+        let drained = Int(endFrameEvent.signaledValue)
+        for entry in textureStreaming.entries.values
+            where entry.view != nil && entry.lastBoundFrame <= drained
+        {
+            entry.view = nil
         }
     }
 

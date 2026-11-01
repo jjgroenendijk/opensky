@@ -49,6 +49,8 @@ nonisolated public protocol CellSceneProvider {
 
     /// Loads an idle prop bound to its bone of the rig at `request.skeletonPath`.
     func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel
+    /// The keys loaded since the last build, so a prop's assets can be evicted later.
+    func drainTouchedAssets() -> CellAssets
 
     /// Assembles one of the player's rigs from the same libraries the cells use.
     func assemblePlayerRig(_ request: PlayerRigRequest)
@@ -58,6 +60,8 @@ nonisolated public protocol CellSceneProvider {
     func attachTextureStreaming(_ mailbox: TextureStreamMailbox)
     /// Reads a streamed texture's levels again.
     func readTextureLevels(_ request: TextureLevelRequest) -> TextureLevelBytes?
+    /// Entries in the builder's texture and mesh caches.
+    var cachedAssetCounts: CachedAssetCounts { get }
 }
 
 nonisolated extension CellSceneProvider {
@@ -83,6 +87,10 @@ nonisolated extension CellSceneProvider {
 
     public func loadActorProp(_: ActorPropRequest) throws -> RenderModel {
         throw ActorAssetFailure.missing
+    }
+
+    public func drainTouchedAssets() -> CellAssets {
+        CellAssets()
     }
 
     public func assemblePlayerRig(
@@ -181,6 +189,17 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         builder.textures.readLevels(request)
     }
 
+    public var cachedAssetCounts: CachedAssetCounts {
+        CachedAssetCounts(
+            textures: builder.textures.cachedCount,
+            models: builder.meshes.cachedCount
+        )
+    }
+
+    public func drainTouchedAssets() -> CellAssets {
+        builder.drainTouchedAssets()
+    }
+
     public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {
         let skeleton = try builder.meshes.loadActorSkeleton(path: request.skeletonPath).get()
         return try builder.meshes.loadActorAttachment(
@@ -261,24 +280,6 @@ nonisolated public struct DoorTransitionBuildResult: Sendable {
     public let result: Result<DoorTransition, any Error>
 }
 
-/// One idle prop to load for one actor, on the actor's own rig.
-nonisolated public struct ActorPropRequest: Equatable, Sendable {
-    public let actor: FormID
-    public let prop: ActorPropAttachment
-    public let skeletonPath: String
-
-    public init(actor: FormID, prop: ActorPropAttachment, skeletonPath: String) {
-        self.actor = actor
-        self.prop = prop
-        self.skeletonPath = skeletonPath
-    }
-}
-
-nonisolated public struct ActorPropLoadResult: Sendable {
-    public let request: ActorPropRequest
-    public let result: Result<RenderModel, any Error>
-}
-
 /// Runs cell builds off the main thread and buffers the results for a
 /// main-thread poll. The streamer enqueues coordinates and drains completions
 /// once per frame; ordering of completions is the executor's business.
@@ -355,6 +356,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         /// The newest rig generation per kind (first person or not). Older queued
         /// requests are skipped, because their result would be dropped anyway.
         var newestRigGeneration: [Bool: Int] = [:]
+        var cachedAssets = CachedAssetCounts()
     }
 
     nonisolated private struct Results {
@@ -386,12 +388,13 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         guard isNew else { return }
         queue.async { [self] in
             bookkeeping.withLock { $0.buildCounts[coordinate, default: 0] += 1 }
-            let (result, worldspace) = provider.withLock { provider in
+            let (result, worldspace, cached) = provider.withLock { provider in
                 (
                     Result { try provider.buildCell(at: coordinate, state: state) },
-                    provider.worldspaceEditorID
+                    provider.worldspaceEditorID, provider.cachedAssetCounts
                 )
             }
+            bookkeeping.withLock { $0.cachedAssets = cached }
             if let metric = try? result.map(Self.metric(for:)).get() {
                 bookkeeping.withLock { $0.buildMetrics[coordinate] = metric }
             }
@@ -434,9 +437,11 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     ) {
         guard !meshKeys.isEmpty || !textureKeys.isEmpty else { return }
         queue.async { [self] in
-            provider.withLock {
+            let cached = provider.withLock {
                 $0.evict(droppingMeshKeys: meshKeys, droppingTextureKeys: textureKeys)
+                return $0.cachedAssetCounts
             }
+            bookkeeping.withLock { $0.cachedAssets = cached }
         }
     }
 
@@ -522,10 +527,10 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     /// Queued behind any cell build, so a prop never waits on more than one.
     public func enqueueActorProp(_ request: ActorPropRequest) {
         queue.async { [self] in
-            let result = provider.withLock { provider in
-                Result { try provider.loadActorProp(request) }
+            let (result, assets) = provider.withLock { provider in
+                (Result { try provider.loadActorProp(request) }, provider.drainTouchedAssets())
             }
-            let entry = ActorPropLoadResult(request: request, result: result)
+            let entry = ActorPropLoadResult(request: request, result: result, assets: assets)
             results.withLock { $0.actorProps.append(entry) }
         }
     }
@@ -560,6 +565,11 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     }
 
     /// Thread-safe snapshot for tests and scripted streaming checks.
+    /// The cache sizes after the newest build or eviction.
+    public var cachedAssetCounts: CachedAssetCounts {
+        bookkeeping.withLock { $0.cachedAssets }
+    }
+
     public func buildCountsSnapshot() -> [CellCoordinate: Int] {
         bookkeeping.withLock { $0.buildCounts }
     }

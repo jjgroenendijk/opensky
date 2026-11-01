@@ -129,7 +129,14 @@ extension CellStreamer {
     /// Drops `candidates` keys nothing resident needs. An interior scene and staged cells
     /// count as resident, because they are drawing outside the composition.
     public func evictUnused(_ candidates: CellAssets) {
+        var candidates = candidates
+        let departedProps = takeDepartedActorProps()
+        candidates.meshKeys.formUnion(departedProps.meshKeys)
+        candidates.textureKeys.formUnion(departedProps.textureKeys)
         var resident = composition.residentAssets()
+        let props = actorPropAssets
+        resident.meshKeys.formUnion(props.meshKeys)
+        resident.textureKeys.formUnion(props.textureKeys)
         if let interiorScene {
             resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
             resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
