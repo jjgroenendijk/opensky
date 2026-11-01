@@ -117,4 +117,6 @@ nonisolated public enum ActorValueIndex: Sendable {
     public static let resistMagic: Int32 = 44
     public static let resistDisease: Int32 = 45
     public static let bowSpeedBonus: Int32 = 78
+    public static let attackDamageMult: Int32 = 154
+    public static let reflectDamage: Int32 = 163
 }

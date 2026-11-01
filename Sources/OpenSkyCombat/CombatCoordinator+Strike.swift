@@ -32,6 +32,9 @@ extension CombatCoordinator {
             )
         }
         strike.armorFraction = armorFraction(of: target, against: blow)
+        if let mult = world.actorValues(of: blow.attacker)?(ActorValueIndex.attackDamageMult) {
+            strike.attackDamageMultiplier = mult
+        }
         applyPerkTerms(to: &strike, blow: blow, on: target)
         return strike
     }

@@ -18,6 +18,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public var powerMultiplier: Float = 1
     /// `Mod Attack Damage` of the attacker times `Mod Incoming Damage` of the target.
     public var perkMultiplier: Float = 1
+    /// The attacker's `Attack Damage Mult` actor value, which scales weapons, fists, and bashes.
+    public var attackDamageMultiplier: Float = 1
     /// What `Calculate Weapon Damage` adds to the base damage.
     public var weaponDamageBonus: Float = 0
     /// The critical damage, added after every factor. Tempering does not raise it.
@@ -47,7 +49,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     /// Every term as one factor on the damage.
     public var factor: Float {
         let terms = [
-            skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier, perkMultiplier
+            skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier, perkMultiplier,
+            attackDamageMultiplier
         ]
         return terms.reduce(1) { $0 * ($1.isFinite ? max(0, $1) : 1) }
     }
