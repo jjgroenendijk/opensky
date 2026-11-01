@@ -159,6 +159,7 @@ final class AgentTeleportJob {
                 streamer.transitionInFlight == nil,
                 streamer.interiorScene?.location == .interior(cell)
             else { return .wait }
+            useCOCMarker(in: streamer.interiorScene?.references, grid: nil)
             if let exactFeet, let gameSession = game.gameSession {
                 place(
                     at: exactFeet,
@@ -254,6 +255,7 @@ final class AgentTeleportJob {
 
     private func snapToGround(in grid: CellCoordinate) {
         guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
+        useCOCMarker(in: streamer.composition.cells[grid]?.references, grid: grid)
         if let exactFeet {
             place(at: exactFeet, gameSession: gameSession, streamer: streamer)
             return
@@ -264,6 +266,18 @@ final class AgentTeleportJob {
             ?? streamer.topCollisionSurface(at: center)
         guard let feet else { return }
         place(at: feet, gameSession: gameSession, streamer: streamer)
+    }
+
+    /// Stands the player where `coc` would, unless the request named an exact spot.
+    /// An exterior cell's index also holds persistent references from other cells.
+    private func useCOCMarker(in references: RuntimeReferenceIndex?, grid: CellCoordinate?) {
+        guard exactFeet == nil, let references else { return }
+        let placed = references.sortedEntries().compactMap(\.placedReference).filter { ref in
+            grid.map { CellCoordinate(containing: ref.placement.position) == $0 } ?? true
+        }
+        guard let marker = CenterOnCellMarker.placement(in: placed) else { return }
+        exactFeet = marker.position
+        exactYaw = marker.rotation.z
     }
 
     /// A position or a reference stays in the current cell, because interior
