@@ -168,9 +168,18 @@ Per scene the result holds:
   and `audio`. Each is read from the frame before.
 - the average draw calls and drawn instances. Two runs with different counts drew different
   views.
-- `gpuMemory`: the GPU memory allocated, read just before and just after the shot. A read
-  walks every resident allocation and can take over 100 ms late in a long tour, so it never
-  runs inside a measured frame.
+- `gpuMemory`: memory read just before and just after the shot. `totalMB` is everything
+  the Metal device allocated. `renderTargetMB`, `textureMB`, and `bufferMB` split the
+  allocations in the residency set, and `residentCount` counts them. `processMB` is the
+  app's physical footprint, CPU memory included. A read walks every resident allocation and
+  can take over 100 ms in a large world, so it never runs inside a measured frame. The
+  summary line shows `totalMB` at the end of the shot, so a tour that never frees memory
+  shows a rising number.
+- `gpuFaults`: only when a frame left no GPU time. `failedCommits` counts command buffers
+  whose commit feedback held an error, with the newest one in `lastFailure`.
+  `skippedFrames` counts frames the renderer did not encode, because the GPU had not
+  finished the slot's frame from three frames before. A scene with frames but no GPU time
+  gets a note with both counts.
 
 The whole tour also gets a `frameTime` and `gpuTime` over every measured frame.
 

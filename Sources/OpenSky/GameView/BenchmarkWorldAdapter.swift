@@ -6,6 +6,8 @@ import AppKit
 import Metal
 import MetalKit
 import OpenSkyAgentControl
+import OpenSkyCells
+import OpenSkyDiagnostics
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -398,8 +400,8 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         )
     }
 
-    func takeGPUFrameTimes() -> [Double] {
-        game.gameSession?.renderer.gpuFrameLog?.take() ?? []
+    func takeGPUFrameTimes() -> GPUFrameReport {
+        game.gameSession?.renderer.gpuFrameLog?.take() ?? GPUFrameReport()
     }
 
     func takePassTimes() -> [[GPUPass: Double]] {
@@ -407,7 +409,13 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     func gpuMemory() -> GPUMemoryUsage {
-        game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
+        var usage = game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
+        usage.processBytes = MemoryFootprint.physFootprintBytes().map { Int($0) } ?? 0
+        if let cached = (game.streamer?.runner as? SerialCellBuildRunner)?.cachedAssetCounts {
+            usage.cachedTextures = cached.textures
+            usage.cachedModels = cached.models
+        }
+        return usage
     }
 
     func resetArrivalPhases() {

@@ -61,6 +61,8 @@ struct BenchmarkResultTests {
         var measured = BenchmarkSceneResult(scene: whiterun, status: .measured)
         measured.frameTime = BenchmarkDistribution(milliseconds: [16, 16, 20])
         measured.arrivalMS = 4200
+        let memory = BenchmarkGPUMemorySample(totalMB: 3072, renderTargetMB: 64, textureMB: 512)
+        measured.gpuMemory = BenchmarkGPUMemory(peak: memory, last: memory)
         var result = BenchmarkTourResult(startedAt: Date(), machine: Self.machine, preset: .full)
         result.scenes = [
             measured,
@@ -74,6 +76,7 @@ struct BenchmarkResultTests {
         #expect(lines.first?.hasPrefix("OpenSky benchmark: Full") == true)
         #expect(lines.contains { $0.hasPrefix("All scenes: ") })
         #expect(lines.contains { $0.contains("Whiterun") && $0.contains("arrival 4.2 s") })
+        #expect(lines.contains { $0.contains("GPU memory 3.0 GB") })
         #expect(lines.contains { $0.contains("skipped: needs Dawnguard.esm") })
     }
 

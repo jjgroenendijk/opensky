@@ -263,6 +263,8 @@ public final class Renderer: NSObject {
     public let frameStats = FrameStats()
 
     public var frameIndex: Int
+    /// Live frames not encoded because the GPU had not finished the slot's last frame.
+    public internal(set) var skippedFrames = 0
     public var projectionMatrix = matrix_identity_float4x4
     /// The drawable's aspect ratio, kept so the projection can be rebuilt when the camera
     /// mode or the first-person FOV changes.

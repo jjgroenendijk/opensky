@@ -38,15 +38,13 @@ extension Renderer: MTKViewDelegate {
         let drawableWait = CACurrentMediaTime()
         let drawable = view.currentDrawable
         upscale.interpolation.drawableWait += CACurrentMediaTime() - drawableWait
-        guard let drawable, let passDescriptor = view.currentMTL4RenderPassDescriptor else {
+        guard
+            let drawable, let passDescriptor = view.currentMTL4RenderPassDescriptor,
+            frameSlotIsFree()
+        else {
             frameStats.endFrame(cpuStartNS: cpuStart)
             return
         }
-
-        endFrameEvent.wait(
-            untilSignaledValue: UInt64(frameIndex - GPUFactory.maxFramesInFlight),
-            timeoutMS: 10
-        )
 
         let slot = frameIndex % GPUFactory.maxFramesInFlight
         beginFrameCapture()
@@ -91,6 +89,21 @@ extension Renderer: MTKViewDelegate {
         endFrameCapture()
         present(drawable, interpolated: interpolated, view: view, frameStart: frameStart)
         frameStats.endFrame(cpuStartNS: cpuStart)
+    }
+
+    /// The slot's allocator and ring slices are free only once its last frame finished.
+    /// Encoding into them earlier makes the GPU read memory the CPU rewrites, so a frame
+    /// whose slot is still busy is skipped.
+    private func frameSlotIsFree() -> Bool {
+        let free = endFrameEvent.wait(
+            untilSignaledValue: UInt64(frameIndex - GPUFactory.maxFramesInFlight),
+            timeoutMS: 10
+        )
+        if !free {
+            skippedFrames += 1
+            gpuFrameLog?.recordSkippedFrame()
+        }
+        return free
     }
 
     private func commitLiveFrame(_ drawable: CAMetalDrawable, interpolated: InterpolatedDrawable?) {

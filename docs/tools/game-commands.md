@@ -118,7 +118,7 @@ To look at one record, reference, mesh, or cell without the game window, use
 | `state favor` | Follower command mode: `phase` (idle, choosing, walking, waiting), `follower`, the walking `task`, `waitLeft` seconds at a spot, `lastDecision` (its `line`, and its `task`, `refusal`, or `crime`), `lastOutcome`, and `pickDistance` |
 | `state changes [--limit <n>]` | The newest world-state writes, 20 by default (`ref`, `kind`, `reset`), and whether a door transition or an interior rebuild is in flight. A cell that never settles shows the reference that keeps writing |
 | `state time` | The game clock |
-| `state frame` | The frame counter and the timeline, and the `screenFade` |
+| `state frame` | The frame counter and the timeline, the `screenFade`, `skippedFrames` (frames not encoded because the GPU was three frames behind), and `gpuMemory`: the device total, the resident render targets, textures, and buffers, the resident count, the retire list, and the streamed textures with their heap memory |
 | `state view` | What the reference game's console takes: the player's `feet`, the angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` ([reference game](/tools/reference-game.md)) |
 
 ## Debug

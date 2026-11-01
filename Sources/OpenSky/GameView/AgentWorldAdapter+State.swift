@@ -435,11 +435,34 @@ extension AgentWorldAdapter {
             "timeline": agentTimeline.json,
             "fps": .number(stats.fps), "frameMS": .number(stats.frameMS),
             "maxFrameMS": .number(stats.maxFrameMS),
+            "skippedFrames": .init(game.gameSession?.renderer.skippedFrames ?? 0),
             "gpuMS": stats.gpuMS.map(AgentJSON.number) ?? .null,
             "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
-            "screenFade": screenFadeState()
+            "screenFade": screenFadeState(),
+            "gpuMemory": gpuMemoryState()
+        ]
+    }
+
+    /// Walks the residency set, so a read can take 100 ms in a large world.
+    private func gpuMemoryState() -> AgentJSON {
+        guard let renderer = game.gameSession?.renderer else { return .null }
+        let usage = renderer.gpuMemoryUsage()
+        let cached = (game.streamer?.runner as? SerialCellBuildRunner)?.cachedAssetCounts
+        let mebibyte = Double(1 << 20)
+        return [
+            "totalMB": .number(Double(usage.totalBytes) / mebibyte),
+            "renderTargetMB": .number(Double(usage.renderTargetBytes) / mebibyte),
+            "textureMB": .number(Double(usage.textureBytes) / mebibyte),
+            "bufferMB": .number(Double(usage.bufferBytes) / mebibyte),
+            "residentCount": .init(usage.residentCount),
+            "retiredEntries": .init(renderer.retired.count),
+            "streamedTextures": .init(usage.streamedTextures),
+            "streamedReservedMB": .number(Double(usage.streamedReservedBytes) / mebibyte),
+            "streamedUsedMB": .number(Double(usage.streamedUsedBytes) / mebibyte),
+            "cachedTextures": cached.map { .init($0.textures) } ?? .null,
+            "cachedModels": cached.map { .init($0.models) } ?? .null
         ]
     }
 

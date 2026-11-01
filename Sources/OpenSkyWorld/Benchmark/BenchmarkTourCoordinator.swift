@@ -269,7 +269,7 @@ extension BenchmarkTourCoordinator {
         if step > 0, let interval {
             recorder.add(frameMS: interval, sample: world.frameSample())
         }
-        recorder.add(gpuMS: world.takeGPUFrameTimes(), passes: world.takePassTimes())
+        recorder.add(gpu: world.takeGPUFrameTimes(), passes: world.takePassTimes())
         if request.screenshots, let label = Self.screenshotLabel(step: step, shot: scene.shot) {
             saveScreenshot(label, scene: scene, world: world)
         }
