@@ -118,7 +118,7 @@ struct ArcheryStateTests {
     /// rename has to be deliberate — a merely plausible name resolves to
     /// nothing at all in a graph declaring 1,217 events.
     @Test func theCensusNamesArePinnedExactly() {
-        #expect(ArcheryGraphNames.bowDrawStart == "bowDrawStart")
+        #expect(ArcheryGraphNames.bowAttackStart == "bowAttackStart")
         #expect(ArcheryGraphNames.bowReset == "bowReset")
         #expect(ArcheryGraphNames.arrowAttach == "arrowAttach")
         #expect(ArcheryGraphNames.bowDrawn == "bowDrawn")

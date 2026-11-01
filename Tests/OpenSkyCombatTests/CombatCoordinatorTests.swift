@@ -177,8 +177,8 @@ struct CombatCoordinatorTests {
         let coordinator = Self.coordinator(world)
         #expect(!coordinator.raiseCombatEvent("staggerStart", on: Self.guardKey))
         #expect(coordinator.raiseCombatEvent("staggerStart", on: .player))
-        #expect(coordinator.raiseArcheryEvent("bowDrawStart"))
-        #expect(world.raisedEvents == ["staggerStart", "bowDrawStart"])
+        #expect(coordinator.raiseArcheryEvent("bowAttackStart"))
+        #expect(world.raisedEvents == ["staggerStart", "bowAttackStart"])
     }
 
     @Test func healthFractionReadsTheWorldAndIsFullWithoutValues() {

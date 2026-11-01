@@ -44,7 +44,7 @@ struct ArcheryRuntimeTests {
 
         runtime.acceptFrame(Self.held(true))
 
-        #expect(world.raised == [ArcheryGraphNames.bowDrawStart])
+        #expect(world.raised == [ArcheryGraphNames.bowAttackStart])
         #expect(runtime.drawRequestCount == 1)
     }
 
@@ -58,7 +58,7 @@ struct ArcheryRuntimeTests {
         runtime.acceptFrame(Self.held(false))
 
         #expect(world.raised == [
-            ArcheryGraphNames.bowDrawStart, ArcheryGraphNames.attackRelease
+            ArcheryGraphNames.bowAttackStart, ArcheryGraphNames.attackRelease
         ])
     }
 

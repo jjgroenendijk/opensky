@@ -9,10 +9,10 @@ import Foundation
 nonisolated public enum ArcheryGraphNames: Sendable {
     // MARK: - Events raised into the graph
 
-    /// Begin drawing. Raised when the attack button goes down with a bow in
-    /// hand, where the same press with a melee weapon raises
-    /// `CombatGraphNames.attackStart`.
-    public static let bowDrawStart = "bowDrawStart"
+    /// Begin drawing. Raised when the attack button goes down with a bow in hand;
+    /// `1hm_behavior.hkx` enters `Bow_AttackState` on it. The graph fires `bowDrawStart`
+    /// back from the draw clip, so that name is not an input.
+    public static let bowAttackStart = "bowAttackStart"
     /// Loose. Shared with melee's held power attack, which is the same button
     /// coming back up.
     public static let attackRelease = CombatGraphNames.attackRelease
@@ -21,7 +21,7 @@ nonisolated public enum ArcheryGraphNames: Sendable {
 
     /// Every event the archery runtime raises, in the order the runtime raises
     /// edges in.
-    public static let raisedEvents = [bowDrawStart, attackRelease, bowReset]
+    public static let raisedEvents = [bowAttackStart, attackRelease, bowReset]
 
     // MARK: - Events observed coming back out
 

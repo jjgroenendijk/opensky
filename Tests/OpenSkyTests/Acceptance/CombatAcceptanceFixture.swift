@@ -175,7 +175,7 @@ nonisolated enum CombatAcceptanceFixture {
         (CombatGraphNames.attackStop, .idle),
         (CombatGraphNames.blockStart, .block),
         (CombatGraphNames.blockStop, .blockExit),
-        (ArcheryGraphNames.bowDrawStart, .bowDraw),
+        (ArcheryGraphNames.bowAttackStart, .bowDraw),
         (ArcheryGraphNames.attackRelease, .bowRelease),
         (ArcheryGraphNames.arrowDetach, .idle),
         (CombatGraphNames.staggerStart, .stagger),
