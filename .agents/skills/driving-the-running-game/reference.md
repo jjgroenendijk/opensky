@@ -54,8 +54,8 @@ arrow keys.
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
 `state scenes`, `state scripts [<ref or quest editorID>]`, `state packages <ref>`,
 `state furniture [<ref>]`, `state objects [<ref>]`, `state effects [<ref>]`,
-`state nodes [<ref>]`, `state flight [<ref>]`, `state mount`, `state changes [--limit <n>]`,
-`state time`, `state frame`, `state view`.
+`state nodes [<ref>]`, `state flight [<ref>]`, `state mount`, `state favor`,
+`state changes [--limit <n>]`, `state time`, `state frame`, `state view`.
 
 - `state player` gives the exterior `worldspace` and the current `weather` editor ID.
 - `state player` gives the beast `form` (`none`, `werewolf`, `vampireLord`, or `otherBeast`)
@@ -111,6 +111,9 @@ arrow keys.
   `getIsFlying` included. `state mount` gives the player's mount: `kind`, `phase`, `speed`, a
   dragon's `flight`, and the rider's `orders` (`landingRequested`, `lockedTarget`,
   `switchedTarget`, `attacking`, `breath`).
+- `state favor` gives follower command mode: `phase` (idle, choosing, walking, waiting),
+  `follower`, the walking `task`, `waitLeft` seconds at a spot, `lastDecision` (its `line`,
+  and its `task`, `refusal`, or `crime`), `lastOutcome`, and `pickDistance`.
 - `state objects` lists each running object behaviour graph, such as a trap's or a door's,
   with its project, innermost active `state`, every active state in `states`,
   `waitingForClip` while a clip it reached still loads, and events. With a ref it also gives
@@ -149,6 +152,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
+| `debug favor <ref> [--target <ref>] [--exit]` | puts a follower in command mode; `--target` commands it to use that reference, or to go to an `x,y,z` spot; `--exit` leaves command mode |
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
 | `debug perk <editorID> [on\|off]` | gives the player the perk, or takes it with `off`, as `Actor.AddPerk` does, abilities included; answers `changed` and `owned` |

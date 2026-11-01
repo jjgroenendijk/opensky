@@ -49,6 +49,8 @@ extension AgentWorldAdapter {
             return try done(menuDebug(command))
         case let .benchmark(request):
             return try benchmark(request)
+        case let .favor(reference, target, exit):
+            return try done(commandFollower(reference, target: target, exit: exit))
         case .sit, .stand, .passTime:
             return try done(performFurniture(command))
         case .subGraphEvent, .subGraphVariable:

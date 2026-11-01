@@ -42,6 +42,8 @@ protocol AgentWorldHost: AnyObject {
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var mounts: MountCoordinator { get }
     var mountWorld: MountWorldAdapter { get }
+    var followerCommands: FollowerCommandCoordinator { get }
+    var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }

@@ -169,9 +169,9 @@ specific Follower Command events" (<https://ck.uesp.net/wiki/Favors_Tab>). The f
 themselves (`DialogueFollowerFollowTopic`, `DialogueFollowerWaitTopic`, the favour-state topic
 "I need you to do something") are ordinary player topics of `DialogueFollower` in `Skyrim.esm`.
 Their result scripts call `SetDoingFavor`. When that call changes an actor's favour state, the
-actor says its `SHOW` line on entry and its `FEXT` line on exit. Command mode, where the player
-points at a target and the follower agrees or refuses, does not exist yet, so `AGRE`, `REFU`, and
-`MREF` are not said.
+actor says its `SHOW` line on entry and its `FEXT` line on exit. Entry starts command mode, where
+the follower says `AGRE`, `REFU`, or `MREF` for the target the player picks
+([Follower commands](/engine/follower-commands.md)).
 
 ## Result scripts
 

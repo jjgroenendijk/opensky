@@ -37,6 +37,7 @@ import simd
 /// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AIWorldHost: AnyObject {
+    var followerCommands: FollowerCommandCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorGraphWorld: ActorGraphWorldAdapter { get }
@@ -114,9 +115,11 @@ final class AIWorldAdapter {
         streamer.npcMovementConfiguration = gameSession.locomotion.configuration
         let worldState = game.worldState
         let packages = game.packages
-        streamer.onNPCMovementPersist = { [weak packages] persistence in
+        let commands = game.followerCommands
+        streamer.onNPCMovementPersist = { [weak packages, weak commands] persistence in
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
             packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
+            commands?.movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
         gameSession.onPlayerWalkArrived = { [weak packages] in
             packages?.movementSettled(actor: .player, reason: .arrival)

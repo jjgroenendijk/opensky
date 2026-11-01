@@ -248,6 +248,8 @@ public final class PackageCoordinator {
     public internal(set) var bumps = BumpReactions()
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
+    /// Actors a follower command drives; none of their packages runs meanwhile.
+    public internal(set) var commandedActors: Set<ReferenceKey> = []
 
     weak let world: (any PackageWorld)?
     let store: PackageStore?
@@ -442,7 +444,8 @@ public final class PackageCoordinator {
         default: return
         }
         let rider = mounts.first { $0.value == actor }?.key ?? actor
-        guard let mover = executions[rider]?.runner.mover else { return }
+        guard !commandedActors.contains(rider), let mover = executions[rider]?.runner.mover
+        else { return }
         let atMarker = event == .arrived && arrivesAtIdleMarker(rider, leaf: mover)
         step(rider, with: atMarker ? .arrivedAtIdleMarker : event, leaf: mover)
     }

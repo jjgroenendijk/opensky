@@ -47,6 +47,7 @@ protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var inventory: InventoryCoordinator { get set }
     var inventoryWorld: InventoryWorldAdapter { get }
     var mountWorld: MountWorldAdapter { get }
+    var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var lockWorld: LockWorldAdapter { get }
@@ -197,14 +198,21 @@ final class WorldSessionWiring {
         let input = game.cameraInput
         let frameSteps = gameSession.frameSteps
         let mounts = game.mountWorld
-        let mountTakesPress = { [weak mounts] in mounts?.takeActivation() == true }
+        let commands = game.followerCommandWorld
+        let takesPress = { [weak mounts, weak commands] in
+            mounts?.takeActivation() == true || commands?.takeActivation() == true
+        }
+        let pickReach = { [weak commands] in commands?.pickReach }
         frameSteps.register(.streaming) { [weak streamer, weak gameSession, weak input] position in
-            // A rider's use key dismounts instead of activating the world.
+            // A rider's use key dismounts, and in command mode it picks the follower's
+            // target, instead of activating the world.
             let pressed = input?.consumeActivation() ?? false
-            let activate = pressed && !mountTakesPress()
+            let activate = pressed && !takesPress()
             streamer?.update(
                 cameraPosition: position,
-                interactionRay: gameSession.flatMap(Self.interactionRay(of:)),
+                interactionRay: gameSession.flatMap {
+                    Self.interactionRay(of: $0, reach: pickReach())
+                },
                 activate: activate,
                 playerCapsule: gameSession.flatMap(Self.playerCapsule(of:)),
                 frameTime: gameSession?.lastCameraDelta ?? 0
@@ -251,6 +259,7 @@ final class WorldSessionWiring {
         game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)
         // Scenes speak through the dialogue index, so they come after it.
         game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
+        game.followerCommandWorld.wire(gameSession: gameSession)
         game.cinematicWorld.wire(gameSession: gameSession)
         game.loadingWorld.wire(streamer: streamer, gameSession: gameSession)
         // It wraps the scripts' cell attach, so it comes after `buildScripts`.
@@ -259,11 +268,14 @@ final class WorldSessionWiring {
 
     /// Player-controlled modes only: the fly camera never picks up a target.
     /// Third person aims along the view direction from the orbit position.
-    private static func interactionRay(of gameSession: GameSession) -> InteractionRay? {
+    private static func interactionRay(
+        of gameSession: GameSession, reach: Float?
+    ) -> InteractionRay? {
         guard gameSession.movementMode.isPlayerControlled else { return nil }
         return InteractionRay(
             origin: gameSession.freeFlyCamera.position,
-            direction: gameSession.freeFlyCamera.forward
+            direction: gameSession.freeFlyCamera.forward,
+            maximumDistance: reach ?? InteractionRay.defaultMaximumDistance
         )
     }
 
