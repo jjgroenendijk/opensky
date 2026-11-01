@@ -18,6 +18,7 @@ import OpenSkyMagic
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
+import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -145,6 +146,12 @@ extension AgentWorldAdapter {
         result["spells"] = .array(game.magic.playerKnownSpells().map { spell in
             .string(spell.editorID ?? "\(spell.id)")
         })
+        result["perks"] = .array((game.perks.runtime.flatMap { runtime in
+            game.actorWorld.actorValueHolder(for: .player).map { runtime.ownedPerks(of: $0) }
+        } ?? []).map { .string($0.editorID ?? "\($0.id)") })
+        let cloak = game.actorWorld.actorValueHolder(for: .player)
+            .flatMap(game.magic.cloakIsRunning)
+        result["cloak"] = .string(cloak.map { $0 ? "running" : "suspended" } ?? "none")
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
         result["melee"] = meleeState()
         result.merge(playerStatusState()) { _, new in new }
@@ -164,6 +171,8 @@ extension AgentWorldAdapter {
                 .string("\($0.machineName ?? "?") / \($0.stateName ?? "?")")
             }),
             "drunk": .bool(gameSession.locomotion.actorState.isDrunk),
+            "perkState": gameSession.locomotion.actorState.taggedPerkState
+                .map { .string($0.displayName) } ?? .null,
             "iState": gameSession.locomotion.graph?.variable(named: ActorGraphNames.state)
                 .map { .init($0.intValue) } ?? .null
         ]

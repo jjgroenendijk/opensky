@@ -1,13 +1,16 @@
 // `openskycli game debug drunk`: raise the drunk idle's event on an actor's graph
 // (docs/engine/actor-state-graph.md). `debug form`: put the player in a beast form or end
 // it (docs/engine/beast-forms.md). `debug eyes`: the eye texture `Actor.SetEyeTexture` draws.
+// `debug perk`: a perk grant, as `Actor.AddPerk` makes it.
 
 import OpenSkyActorPresentation
 import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyProgression
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
@@ -30,6 +33,25 @@ extension AgentWorldAdapter {
         }
         return [
             "ref": .formID(actor.formID.rawValue), "event": .string(event), "taken": .bool(taken)
+        ]
+    }
+
+    /// `debug perk`: the grant `Actor.AddPerk` makes, which also gives the perk's abilities.
+    func setPlayerPerk(_ editorID: String, owned: Bool) throws(AgentFailure) -> AgentJSON {
+        guard
+            let runtime = game.perks.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: .player)
+        else { throw notReady() }
+        guard let perk = runtime.perks.perks.first(where: {
+            $0.editorID?.lowercased() == editorID.lowercased()
+        }) else {
+            throw AgentFailure(.notFound, "no perk '\(editorID)'")
+        }
+        let key = ReferenceKey(resolved: perk.id)
+        let changed = owned ? game.perks.add(key, to: holder) : game.perks.remove(key, from: holder)
+        return [
+            "perk": .string(perk.editorID ?? editorID), "changed": .bool(changed),
+            "owned": .bool(game.perks.ownership(of: .player)?.contains(key) ?? false)
         ]
     }
 

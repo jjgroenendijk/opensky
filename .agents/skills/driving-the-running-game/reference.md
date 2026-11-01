@@ -74,7 +74,10 @@ arrow keys.
   `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, `clipsMissed`,
   `drunk`, `iState`, `iStateTag` (the value the graph's state tagging generators publish), and
   `bodyWeight` (`weapAdj` and the body-weight layer weights the graph derives from it).
-  `state player` gives the same `drunk` and `iState` under `graph`.
+  `state player` gives the same `drunk` and `iState` under `graph`, with `perkState`: the perk
+  state the graph tags (`NPCBowDrawnQuickShot` or `NPCBlockingShieldCharge`), or null.
+- `state player` also gives the owned `perks` by editor ID, and `cloak`: `running`, `suspended`
+  while its conditions fail (Shield Charge outside a charge), or `none`.
   A rider or cart passenger has no graph until it gets off.
 - `state menu` gives `hud`: whether the HUD movie is `loaded`, `cartMode`, and the `modes` stack
   the movie holds, bottom first, such as `["StealthMode", "CartMode"]`.
@@ -148,6 +151,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug stand [<ref>]` | gets the actor up from its seat |
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |
+| `debug perk <editorID> [on\|off]` | gives the player the perk, or takes it with `off`, as `Actor.AddPerk` does, abilities included; answers `changed` and `owned` |
 | `debug form werewolf\|vampirelord\|none` | puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it; answers `form` |
 | `debug link <ref> <node> <other> <othernode> [on\|off]` | adds or removes the constraint `Game.AddHavokBallAndSocketConstraint` makes, through its script hook; answers `changed` and `constraints`, which `state actors` also shows |
 | `debug eyes <ref> <txst>` | draws an NPC's eyes with a texture set, as `Actor.SetEyeTexture` does, until its cell unloads; `state actors` shows `eyeTexture` |

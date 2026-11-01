@@ -214,6 +214,15 @@ struct AgentCommandParsingTests {
             == .drunk(reference: "player", drunk: true))
     }
 
+    @Test func perkNamesThePerkAndTheSwitch() throws {
+        let request = try AgentCommandLine.request(["debug", "perk", "ShieldCharge", "off"])
+        #expect(request.args == ["perk": "ShieldCharge", "on": false])
+        #expect(try AgentDebugCommand.parse("perk", args(request.args))
+            == .perk(editorID: "ShieldCharge", owned: false))
+        #expect(try AgentDebugCommand.parse("perk", args(["perk": "BlockRunner"]))
+            == .perk(editorID: "BlockRunner", owned: true))
+    }
+
     @Test func cartModeTakesTheSwitch() throws {
         let request = try AgentCommandLine.request(["debug", "cartmode", "off"])
         #expect(request.args == ["on": false])

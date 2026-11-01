@@ -170,6 +170,13 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
         ),
         command(
+            "debug.perk", "Give the player a perk or take it away, as Actor.AddPerk does.",
+            positionals: [
+                required("perk", "The perk's editor ID, such as ShieldCharge."),
+                optional("on", "Either on to give it or off to take it; on by default.")
+            ]
+        ),
+        command(
             "debug.form", "Put the player in a beast form, or end it.",
             positionals: [required("form", "One of werewolf, vampirelord, or none.")]
         ),
