@@ -10,6 +10,13 @@ nonisolated extension SWFMovieRuntime {
         movie.editText(id) ?? scriptEditTexts[id]
     }
 
+    /// A text node's field with the node's own box: `_width` resizes one field, not
+    /// the character every instance shares.
+    public func textField(of node: SWFDisplayObject) -> SWFEditText? {
+        guard case let .editText(id) = node.content, let field = editText(id) else { return nil }
+        return node.textBounds.map(field.withBounds) ?? field
+    }
+
     /// `createTextField(name, depth, x, y, width, height)`, with `frame` in parent twips. Flash
     /// gives the field a
     /// device font, and OpenSky has none, so the field holds text but draws nothing.

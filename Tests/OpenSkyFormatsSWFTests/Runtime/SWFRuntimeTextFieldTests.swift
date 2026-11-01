@@ -56,6 +56,23 @@ struct SWFRuntimeTextFieldTests {
         #expect(try runtime.member("_width", of: #require(second)) == .number(50))
     }
 
+    /// `_width` on a field sets its unscaled box; only `_xscale` scales it. CLIK's
+    /// `Constraints` counts on this when it lays out a scaled button's label.
+    @Test func settingTheWidthResizesTheUnscaledBox() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: SWFRuntimeFixture.classMovieTags())
+        let field = try createdField(runtime)
+        #expect(runtime.setMember("_xscale", of: field, to: .number(50)))
+        #expect(runtime.member("_width", of: field) == .number(100))
+        #expect(runtime.setMember("_width", of: field, to: .number(300)))
+        #expect(runtime.setMember("_height", of: field, to: .number(60)))
+        #expect(runtime.member("_xscale", of: field) == .number(50))
+        #expect(runtime.member("_width", of: field) == .number(150))
+        #expect(runtime.member("_height", of: field) == .number(60))
+        #expect(runtime.textField(of: field)?.bounds.xMax == Int32(6000))
+        #expect(runtime.hitTest(stageTwips: SIMD2(150 * 20, 50 * 20)).topmost === field)
+        #expect(runtime.hitTest(stageTwips: SIMD2(170 * 20, 50 * 20)).topmost !== field)
+    }
+
     /// DefineEditText `NoSelect` clear means selectable, as Flash reports it.
     @Test func aFieldIsSelectableUnlessItsCharacterSaysNot() throws {
         let runtime = try SWFRuntimeFixture.started(tags: SWFRuntimeFixture.classMovieTags())

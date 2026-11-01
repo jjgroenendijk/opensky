@@ -51,7 +51,8 @@ enum ReferenceCommand {
         let run = try RunDirectory.create("reference-game")
         if !ReferenceLauncher.isSteamRunning() {
             print(
-                "[INFO] Starting Windows Steam; waiting \(arguments.steamWait) s for it to log in."
+                "[INFO] Starting Windows Steam; waiting up to \(arguments.steamWait) s "
+                    + "for it to log in."
             )
         }
         let frame = ReferenceWindowFrame(

@@ -27,12 +27,12 @@ nonisolated public enum ReferencePageActions {
 
     /// The reference window size when the game starts alone, as `make reference-game` uses.
     public static let defaultWindowSize = (1280, 720)
-    /// Seconds a newly started Steam gets to log in before the game starts.
-    public static let steamWait = 30
+    /// The most seconds a newly started Steam gets to log in before the launch fails.
+    public static let steamWait = 120
 
     public static func startingMessage(waitsForSteam: Bool) -> String {
         waitsForSteam
-            ? "Starting Windows Steam; the game follows in \(steamWait) seconds."
+            ? "Starting Windows Steam; the game follows once Steam has logged in."
             : "Starting the Windows game."
     }
 

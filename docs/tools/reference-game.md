@@ -145,8 +145,13 @@ four things:
    with it. The game ignores the key in `SkyrimPrefs.ini` (observed 2026-10-29).
 2. Unless a `steam.exe` already runs, it deletes the browser lock files and swaps in the
    web helper wrapper.
-3. It starts Windows Steam with the flags above, and waits `--steam-wait` seconds for the
-   login.
+3. It starts Windows Steam with the flags above, and waits until Steam's own logs show it
+   is ready: `logs/console_log.txt` gets `System startup time:` and
+   `logs/connection_log.txt` gets the logon response. Then it waits 10 s more.
+   `--steam-wait` (default 120 s) is the most it waits; then the launch fails. A game that
+   starts too early fails the Steam API check and restarts through Steam, and Steam opens
+   the game's launcher window instead. Observed 2026-11-01: Steam took 23 s to start, and a
+   game 2 s later got the launcher; a game 13 s after start-up ran.
 4. It starts `SkyrimSE.exe` from its own folder with the Steam app IDs and the GStreamer
    paths set, so Steam does not open the game's launcher window.
 

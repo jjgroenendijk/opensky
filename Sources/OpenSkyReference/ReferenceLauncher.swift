@@ -11,6 +11,7 @@ nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, Loca
     case noWineUser
     case noWrapper
     case outsidePrefix(String)
+    case steamNotReady(Int)
 
     public var errorDescription: String? {
         switch self {
@@ -20,6 +21,9 @@ nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, Loca
         case .noWrapper: "The prefix has no Steam web helper wrapper; run make reference-setup."
         case let .outsidePrefix(path):
             "Wine links this folder outside the prefix; run make reference-setup: \(path)"
+        case let .steamNotReady(seconds):
+            "Windows Steam did not log in within \(seconds) s; start the game again, "
+                + "or give Steam more time with --steam-wait."
         }
     }
 }
@@ -113,7 +117,7 @@ nonisolated public enum ReferenceLauncher {
         try child.run()
     }
 
-    /// Starts Steam unless it runs, waits `steamWait` seconds for it, then the game.
+    /// Starts Steam unless it runs, waits until it has logged in, then starts the game.
     public static func launch(
         prefix: ReferencePrefix, options: ReferenceLaunchOptions, logs: URL
     ) async throws {
@@ -135,18 +139,33 @@ nonisolated public enum ReferenceLauncher {
         if !isSteamRunning() {
             ReferenceSteamRepair.removeBrowserLocks(prefix: prefix)
             try ReferenceSteamRepair.deployWrapper(prefix: prefix)
+            let readiness = ReferenceSteamReadiness.mark(prefix)
             try start(
                 plan.steam,
                 environment: plan.environment,
                 log: logs.appending(path: "steam.log")
             )
-            try await Task.sleep(for: .seconds(options.steamWait))
+            try await waitForSteam(readiness, prefix: prefix, seconds: options.steamWait)
         }
         try start(
             plan.game,
             environment: plan.gameEnvironment,
             log: logs.appending(path: "game.log")
         )
+    }
+
+    /// Polls Steam's logs once a second, then gives the client time to settle.
+    private static func waitForSteam(
+        _ readiness: ReferenceSteamReadiness, prefix: ReferencePrefix, seconds: Int
+    ) async throws {
+        for _ in 0 ..< seconds {
+            if readiness.isReady(prefix) {
+                try await Task.sleep(for: .seconds(ReferenceSteamReadiness.settleSeconds))
+                return
+            }
+            try await Task.sleep(for: .seconds(1))
+        }
+        throw ReferenceLauncherError.steamNotReady(seconds)
     }
 
     /// The newest `.ess` the reference game wrote, for an import into OpenSky.
@@ -171,7 +190,7 @@ nonisolated public enum ReferenceLauncher {
 
 nonisolated public struct ReferenceLaunchOptions: Equatable, Sendable {
     public var frame: ReferenceWindowFrame
-    /// Seconds to wait for a newly started Steam to log in before the game starts.
+    /// The most seconds a newly started Steam gets to log in before the launch fails.
     public var steamWait: Int
     /// The game's own preset to apply first; `nil` keeps the current graphics settings.
     public var preset: GraphicsPreset?

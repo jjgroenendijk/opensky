@@ -35,7 +35,8 @@ nonisolated public final class SWFTextPlanner {
                 guard let text = scene.movie.staticText(id) else { continue }
                 plans[index] = planStaticText(text)
             case let .editText(id):
-                guard let text = scene.movie.editText(id) else { continue }
+                guard let field = scene.movie.editText(id) else { continue }
+                let text = item.textBounds.map(field.withBounds) ?? field
                 plans[index] = planEditText(
                     text, content: item.textOverride, firstLine: item.textFirstLine
                 )

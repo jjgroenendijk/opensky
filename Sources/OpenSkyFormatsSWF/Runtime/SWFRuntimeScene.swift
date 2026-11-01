@@ -132,7 +132,8 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                     colorTransform: color,
                     textOverride: runtime.text(of: node),
                     textFirstLine: runtime.windowsLines(node) ? runtime
-                        .textScroll(of: node) - 1 : nil
+                        .textScroll(of: node) - 1 : nil,
+                    textBounds: node.textBounds
                 ),
                 clipCount: clipCount
             )

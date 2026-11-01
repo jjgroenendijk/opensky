@@ -86,32 +86,33 @@ nonisolated extension SWFRuntimeNatives {
             for: "visibleRect", flags: .dontEnumerate
         )
         stage.define(
-            .object(stageRectangle(runtime, width: widthTwips, height: heightTwips)),
+            .object(stageRectangle(
+                runtime, width: widthTwips, height: heightTwips, inset: safeInsetPixels
+            )),
             for: "safeRect", flags: .dontEnumerate
         )
         installListenerList(runtime, on: stage)
         runtime.globalObject.define(.object(stage), for: "Stage", flags: .dontEnumerate)
     }
 
-    /// Scaleform GFx exposes both rectangles in stage pixels. OpenSky has no
-    /// overscan crop or safe-area inset, so each covers the movie FrameSize.
-    /// They remain separate objects because menu bytecode may mutate one.
+    /// The game's safe area, in stage pixels on every side. The vanilla `MovieClip.Lock`
+    /// adds it inside `visibleRect` (docs/engine/as2-display-runtime.md).
+    public static let safeInsetPixels: Float = 15
+
+    /// Both rectangles are in stage pixels. They stay separate objects because menu
+    /// bytecode may change one.
     private static func stageRectangle(
         _ runtime: AS2Runtime,
         width: Float,
-        height: Float
+        height: Float,
+        inset: Float = 0
     ) -> AS2Object {
         let rectangle = runtime.makeObject()
-        rectangle.define(.number(0), for: "x")
-        rectangle.define(.number(0), for: "y")
-        rectangle.define(
-            .number(Double(width / SWFMovieRuntime.twipsPerPixel)),
-            for: "width"
-        )
-        rectangle.define(
-            .number(Double(height / SWFMovieRuntime.twipsPerPixel)),
-            for: "height"
-        )
+        let pixels = SIMD2(width, height) / SWFMovieRuntime.twipsPerPixel
+        rectangle.define(.number(Double(inset)), for: "x")
+        rectangle.define(.number(Double(inset)), for: "y")
+        rectangle.define(.number(Double(max(0, pixels.x - 2 * inset))), for: "width")
+        rectangle.define(.number(Double(max(0, pixels.y - 2 * inset))), for: "height")
         return rectangle
     }
 
