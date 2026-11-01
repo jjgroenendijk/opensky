@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
@@ -92,6 +93,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var enchanting: [SaveStoryEntry<EnchantingState>] = []
         /// Absent `CRVG`: every `CRIM` row is non-violent gold.
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
+        public var relationshipFavour: [SaveRelationshipFavourEntry] = []
+        public var stolenOrigins: [SaveStoryEntry<StolenOriginsState>] = []
         /// Absent `HRVS`: every plant is unharvested.
         public var harvests: [SaveHarvestEntry] = []
         /// Absent `HRVD`: no harvest has a known day, so none grows back.

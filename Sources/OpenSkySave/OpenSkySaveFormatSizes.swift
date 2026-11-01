@@ -245,6 +245,16 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `CRVG` row can occupy: a plugin key with an
     /// empty name (7) and the violent gold (4).
     public static let minimumViolentCrimeGoldRowSize = 11
+    /// Smallest number of bytes a single `RELF` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4) and a zero row count (4).
+    public static let minimumRelationshipFavourEntrySize = 11
+    /// Smallest number of bytes one `RELF` row can occupy: a plugin key with an
+    /// empty name (7) and the rank byte.
+    public static let minimumRelationshipFavourRowSize = 8
+    /// Smallest `STOF` entry: the smallest key and cell (8) and a zero row count (4).
+    public static let minimumStolenOriginsEntrySize = 12
+    /// Smallest `STOF` row: a plugin key with an empty name (7), the item, and the count.
+    public static let minimumStolenOriginRowSize = 15
     /// Smallest `TMPR` entry: a plugin key with an empty name (7), the "no cell"
     /// tag (1), and a zero item count (4).
     public static let minimumTemperedEntrySize = 12

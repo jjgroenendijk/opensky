@@ -49,7 +49,7 @@ extension AgentWorldAdapter {
             return try done(menuDebug(command))
         case let .benchmark(request):
             return try benchmark(request)
-        case .favor, .teammate:
+        case .favor, .teammate, .relationship:
             return try done(followerDebug(command))
         case .sit, .stand, .passTime:
             return try done(performFurniture(command))

@@ -176,6 +176,14 @@ nonisolated extension AgentCommandCatalog {
             options: [flag("off", "Clear the teammate flag instead.")]
         ),
         command(
+            "debug.relationship",
+            "Set an actor's relationship rank toward the player, as SetRelationshipRank does.",
+            positionals: [
+                required("ref", refHelp),
+                required("rank", "The rank, from -4 (Archnemesis) to 4 (Lover).")
+            ]
+        ),
+        command(
             "debug.flight", "Force an actor that flies to take off, land, or perch.",
             positionals: [
                 required("ref", refHelp),

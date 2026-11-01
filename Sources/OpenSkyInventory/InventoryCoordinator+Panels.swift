@@ -72,7 +72,11 @@ extension InventoryCoordinator {
         guard let interaction = world.crosshairInteraction else { return nil }
         let entry = runtime?.references?.referenceEntry(formID: interaction.reference)
         let placed = entry?.placedReference
-        let verdict = entry.flatMap { runtime?.crime?.verdict(on: $0.key) } ?? .unowned
+        // A loose item asks with its value, which a friend's allowance may cover.
+        let item = interaction.action == .take ? interaction.base : nil
+        let verdict = entry.flatMap {
+            runtime?.crime?.verdict(on: $0.key, item: item, by: .player)
+        } ?? .unowned
         return ReferenceOwnershipReadout(
             name: interaction.name,
             reference: interaction.reference,

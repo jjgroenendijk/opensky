@@ -82,6 +82,10 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
     /// `iCrimeGoldStealHorse`: the stolen value of riding a horse somebody else owns.
     /// The theft multiplier applies to it, so 100 at 0.5 is UESP's bounty of 50.
     public var stolenHorseValue: Int32 = 100
+    /// `iFavorFriendValue`, `iFavorConfidantValue`, `iFavorAllyValue`, and
+    /// `iFavorLoverValue`: the most an item may be worth for a friend of that
+    /// relationship rank (1 to 4) to let the player take it.
+    public var favourAllowances: [Int32] = [25, 50, 100, 500]
 
     public static let vanilla = Self()
 
@@ -100,6 +104,13 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
     public func attacksOnSight(nonViolent: Int32, violent: Int32) -> Bool {
         violent > attackOnSightViolent
             || (attackOnSightNonViolent > 0 && nonViolent > attackOnSightNonViolent)
+    }
+
+    /// The allowance of a friend of `rank`, or nil below Friend (1). A rank a script
+    /// set above Lover counts as Lover.
+    public func favourAllowance(forRank rank: Int8) -> Int32? {
+        guard rank >= 1, !favourAllowances.isEmpty else { return nil }
+        return favourAllowances[min(Int(rank), favourAllowances.count) - 1]
     }
 
     /// Days served for `bounty`: one per `goldPerJailDay`, at least one, at most
@@ -130,6 +141,10 @@ nonisolated public struct CrimeSettings: Equatable, Sendable {
             "iAttackOnSightNonViolent", settings.attackOnSightNonViolent
         )
         settings.stolenHorseValue = gold("iCrimeGoldStealHorse", settings.stolenHorseValue)
+        settings.favourAllowances = zip(
+            ["iFavorFriendValue", "iFavorConfidantValue", "iFavorAllyValue", "iFavorLoverValue"],
+            settings.favourAllowances
+        ).map { gold($0, $1) }
         store.read("iCrimeDaysInPrisonMod", into: &settings, \.goldPerJailDay)
         store.read("iCrimeMaxNumberofDaysinJail", into: &settings, \.maximumJailDays)
         store.read("iTrespassWarnings", into: &settings, \.trespassWarnings)

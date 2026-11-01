@@ -69,7 +69,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.relationships, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(relationships(of: body), into: entries)
         // `PLGD` and `PTRN` lay onto `PLVL`, the way `AVOV` lays onto `AVAL`.
         entries = OpenSkySaveDeltaMerge.merge(
             OpenSkySaveProgressDecoder.progress(of: body), into: entries
@@ -285,9 +285,9 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.factions:
             body.factions = try OpenSkySaveFactionDecoder
                 .decodeFactionMemberships(payload)
-        case OpenSkySaveFormat.ChunkTag.relationships:
-            body.relationships = try OpenSkySaveRelationshipDecoder
-                .decodeRelationshipRanks(payload)
+        case OpenSkySaveFormat.ChunkTag.relationships,
+             OpenSkySaveFormat.ChunkTag.relationshipFavour:
+            try applyRelationships(tag: tag, payload: payload, to: &body)
         case OpenSkySaveFormat.ChunkTag.playerProgress:
             body.playerProgress = try OpenSkySaveProgressDecoder
                 .decodePlayerProgress(payload)

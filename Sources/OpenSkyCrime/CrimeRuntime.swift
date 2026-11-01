@@ -61,6 +61,39 @@ public struct CrimeRuntime {
         worldState.component(CrimeLedgerState.self, for: key) ?? .empty
     }
 
+    /// The relationship ranks scripts set for `key`, the player's friends among them.
+    public func relationships(of key: ReferenceKey = .player) -> ActorRelationshipState {
+        worldState.component(ActorRelationshipState.self, for: key) ?? ActorRelationshipState()
+    }
+
+    /// What `key` stole from each owning faction and has not been forgiven.
+    public func stolenOrigins(of key: ReferenceKey = .player) -> StolenOriginsState {
+        worldState.component(StolenOriginsState.self, for: key) ?? StolenOriginsState()
+    }
+
+    public func recordStolen(
+        _ item: FormID, count: Int32, from owner: ReferenceKey, by key: ReferenceKey = .player
+    ) {
+        worldState.set(
+            stolenOrigins(of: key).adding(item, count: count, from: owner),
+            for: key,
+            in: nil
+        )
+    }
+
+    public func forgetStolen(
+        _ item: FormID,
+        from owner: ReferenceKey,
+        by key: ReferenceKey = .player
+    ) {
+        let remaining = stolenOrigins(of: key).removing(item, from: owner)
+        if remaining.isEmpty {
+            worldState.reset(.stolenOrigins, for: key)
+        } else {
+            worldState.set(remaining, for: key, in: nil)
+        }
+    }
+
     /// Crime gold `key` owes `faction`.
     public func crimeGold(of faction: ReferenceKey, on key: ReferenceKey = .player) -> Int32 {
         ledger(of: key).gold(for: faction)

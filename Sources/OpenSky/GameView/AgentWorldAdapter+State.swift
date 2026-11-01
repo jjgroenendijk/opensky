@@ -9,11 +9,13 @@ import OpenSkyAgentControl
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCrimeInterface
 import OpenSkyDiagnostics
 import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
@@ -254,7 +256,8 @@ extension AgentWorldAdapter {
             "name": .string(interaction.name),
             "action": .string(interaction.actionLabel),
             "distance": .init(target.distance),
-            "position": .init(interaction.position)
+            "position": .init(interaction.position),
+            "theft": .bool(game.inventory.targetOwnership()?.isTheft == true)
         ]
     }
 

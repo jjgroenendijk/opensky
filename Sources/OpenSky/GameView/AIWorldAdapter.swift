@@ -181,6 +181,7 @@ final class AIWorldAdapter {
             run(game.perception.advance(by: delta))
             // After the pass, so a trespass is judged against this frame's detection.
             game.crime.advanceTrespass(by: Double(delta))
+            game.crime.advanceFavour()
             game.crime.advanceReports()
             game.crime.advanceJail()
             // After the trespass, so the guards see a bounty charged this frame.

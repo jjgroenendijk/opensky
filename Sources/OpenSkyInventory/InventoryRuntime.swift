@@ -271,6 +271,15 @@ public struct InventoryRuntime: InventoryAccess {
         )
     }
 
+    @discardableResult
+    public func clearStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Int32 {
+        let before = inventory(of: holder)
+        let after = before.clearingStolen(item, count: count)
+        guard after != before else { return 0 }
+        store.set(after, for: holder.key, in: holder.cell)
+        return before.stolenCount(of: item) - after.stolenCount(of: item)
+    }
+
     /// Moves every stolen copy `source` holds into `destination`, still stolen, as
     /// an arrest does. All or nothing.
     /// - Returns: the stacks that moved, empty when nothing was stolen.

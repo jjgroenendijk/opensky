@@ -189,4 +189,16 @@ struct InventoryComponentTests {
         #expect(inventory.equipped == [lockpick, gold])
         #expect(inventory.count(of: gold) == 1)
     }
+
+    @Test func clearingStolenMovesCopiesToTheCleanStackUpToWhatIsStolen() {
+        let inventory = ReferenceInventoryState(stacks: [
+            InventoryStack(item: sword, count: 1),
+            InventoryStack(item: sword, count: 2, stolen: true)
+        ])
+        let cleared = inventory.clearingStolen(sword, count: 5)
+        #expect(cleared.count(of: sword, stolen: false) == 3)
+        #expect(cleared.stolenCount(of: sword) == 0)
+        #expect(inventory.clearingStolen(sword, count: 1).stolenCount(of: sword) == 1)
+        #expect(inventory.clearingStolen(gold, count: 1) == inventory)
+    }
 }

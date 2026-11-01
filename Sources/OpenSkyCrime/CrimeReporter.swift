@@ -49,10 +49,19 @@ public final class CrimeReporter: CrimeReporting {
     /// is the pre-crime behaviour rather than a new wrong answer.
     public func verdict(
         on reference: ReferenceKey,
-        by actor: ReferenceKey = .player
+        item: FormID?,
+        by actor: ReferenceKey
     ) -> OwnershipVerdict {
         guard let world else { return .unowned }
-        return world.crimeActor(actor).verdict(on: world.crimeOwner(of: reference))
+        let verdict = world.crimeActor(actor).verdict(on: world.crimeOwner(of: reference))
+        guard
+            actor == .player, let item,
+            case let .forbidden(owner) = verdict,
+            case let .faction(faction, _) = owner,
+            let allowance = world.favourAllowance(in: faction),
+            world.crimeItemValue(of: item) <= Int64(allowance)
+        else { return verdict }
+        return .permitted(owner)
     }
 
     /// What taking `count` of `item` out of `reference` would cost if somebody
@@ -67,7 +76,7 @@ public final class CrimeReporter: CrimeReporting {
         from reference: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> Int32 {
-        let verdict = verdict(on: reference, by: actor)
+        let verdict = verdict(on: reference, item: item, by: actor)
         guard verdict.isTheft else { return 0 }
         return runtime.quote(
             theftEvent(item, count: count, from: reference, by: actor, owner: verdict.owner)
@@ -90,7 +99,10 @@ public final class CrimeReporter: CrimeReporting {
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        record(
+        if actor == .player, case let .faction(faction, _) = owner {
+            runtime.recordStolen(item, count: count, from: faction)
+        }
+        return record(
             theftEvent(item, count: count, from: reference, by: actor, owner: owner)
         )
     }

@@ -90,6 +90,7 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Speech globals | `iSpeechChallengeDifficultyEasy` | UESP [Skyrim:Speech](https://en.uesp.net/wiki/Skyrim:Speech) gives the persuasion thresholds 10, 25, 50, 75, 100. A line tests the globals `SpeechVeryEasy` and so on ([CK tutorial](https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks)) |
 | Replaced notices | `sQuestAddedText`, `sDungeonCleared`, `sSneakAttack` | The HUD shows these notices with `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`. See [journal](/engine/journal.md) and [melee damage](/engine/melee-damage.md) |
 | Debug dialog | `sContinueText`, `sAbortText` | The developer assert box ("Continue Running Executable?", Abort, Retry, Ignore). A release build never opens it |
+| Favour points | `iFavorPointsRestore` | The wiki gives it no description, and its vanilla value is 0. UESP [Skyrim:Disposition](https://en.uesp.net/wiki/Skyrim:Disposition) says disposition "is no longer visible" and changes by relationship rank, -4 to 4, which quests set. No points exist to restore |
 
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.
