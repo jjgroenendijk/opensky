@@ -319,6 +319,13 @@ are static.
 - A shape or node with the `NiAVObject` hidden flag (flags bit 0) is dropped with its
   subtree, because the game does not draw it. Particle emitter source meshes set it, for
   example `SPLASHeMIT:0` in `Effects\FXCreekFlatLong01.nif` (flags `0xF`).
+- A shape with no shader property is dropped, because the game does not draw it. Source:
+  observed data. `DLC01\Effects\FXDLC1SCWallMist.nif` holds `Col:0`, a 5,200 by 1,800 unit
+  slab with no shader. Drawn, it stands as a solid untextured wall inside the Soul Cairn's
+  mist effect. On the install, `openskycli gaps --only meshes` counts 7,916 such shapes.
+  6,001 are unnamed water planes under the `WATER` node of terrain LOD, which the water
+  pipeline draws. The named ones are helpers, such as water `CurrentPlane:0`, particle
+  emitter sources (`emitFireBall:0`), and `OrderedAlphaBound`.
 - A ref out of range, a loop, or depth above 64 is an error. A subtree used under two
   parents is allowed; only a loop on the current path is an error.
 - Every scene walk (bind pose, meshes, particles, collision targets) uses one explicit work

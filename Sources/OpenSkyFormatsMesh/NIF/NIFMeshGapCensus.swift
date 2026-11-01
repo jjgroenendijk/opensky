@@ -16,6 +16,8 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
     public private(set) var effectFlags = GapCounts()
     /// Failure kind -> files that hit it.
     public private(set) var failures = GapCounts()
+    /// Shape name -> shapes with no shader property, which the game does not draw.
+    public private(set) var shaderlessShapes = GapCounts()
 
     public init() {}
 
@@ -42,6 +44,7 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
         for block in file.blocks {
             blockTypes.add(block.typeName)
             recordShader(block, header: file.header, failures: &kinds)
+            recordShaderless(block, in: file)
             do {
                 _ = try NIFBlockDecoders.decode(block, header: file.header)
             } catch {
@@ -75,6 +78,15 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
         } catch {
             kinds.insert(Self.kind("\(block.typeName) does not decode", error))
         }
+    }
+
+    private mutating func recordShaderless(_ block: NIFFile.Block, in file: NIFFile) {
+        guard
+            NIFFile.Flattener.shapeTypes.contains(block.typeName),
+            let shape = try? NIFTriShape.decode(block, in: file),
+            shape.shaderPropertyRef < 0
+        else { return }
+        shaderlessShapes.add(shape.object.name ?? "(unnamed)")
     }
 
     private func recordDecoders(_ file: NIFFile, failures kinds: inout Set<String>) {

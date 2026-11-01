@@ -93,6 +93,23 @@ struct PrecipitationTests {
 
     @Test(.enabled(if: Self.device != nil))
     @MainActor
+    func teleportDropsTheFlakesOfTheOldPlace() throws {
+        let device = try #require(Self.device)
+        let volume = try PrecipitationVolume(device: device)
+        for _ in 0 ..< 10 {
+            volume.update(update(camera: .zero, state: .init(.snow)))
+        }
+        #expect(volume.snapshot.snowLiveCount > 0)
+
+        volume.update(update(camera: SIMD3(500, 0, 0), state: .none))
+        #expect(volume.snapshot.snowLiveCount > 0)
+
+        volume.update(update(camera: SIMD3(60000, 0, 0), state: .none))
+        #expect(volume.snapshot.snowLiveCount == 0)
+    }
+
+    @Test(.enabled(if: Self.device != nil))
+    @MainActor
     func rainVolumeChangesPixelsThroughSharedParticlePass() throws {
         let device = try #require(Self.device)
         let baseline = try ShadowSceneFixture.makeRenderer(device: device)

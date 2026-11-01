@@ -179,7 +179,7 @@ struct SkinningPaletteBindPoseTests {
             )))
         }
         blocks.append(.init("BSTriShape", NIFFixture.bsTriShape(
-            skinRef: 5, attributes: 0x43, strideDwords: 8
+            skinRef: 5, shaderPropertyRef: Int32(bones.count + 5), attributes: 0x43, strideDwords: 8
         )))
         blocks.append(.init("BSDismemberSkinInstance", NIFFixture.skinInstance(
             dataRef: 6,
@@ -206,6 +206,7 @@ struct SkinningPaletteBindPoseTests {
             weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
             boneIndices: [SIMD4(0, 0, 0, 0), SIMD4(1, 0, 0, 0), SIMD4(2, 0, 0, 0)]
         )))
+        blocks.append(.init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty()))
         let file = try NIFFile(data: NIFFixture.file(
             blocks: blocks, strings: ["Root"] + bones.map(\.name)
         ))

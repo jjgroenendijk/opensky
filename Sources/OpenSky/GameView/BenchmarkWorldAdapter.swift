@@ -367,7 +367,12 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     func setWeather(_ editorID: String?) -> Bool {
-        guard let editorID, let weather = game.gameSession?.weather else { return false }
+        guard let weather = game.gameSession?.weather else { return false }
+        // A scene without a weather shows its own place's, not the last scene's.
+        guard let editorID else {
+            weather.resumeAutomatic()
+            return true
+        }
         let match = weather.store.selectableWeathers().first {
             $0.editorID?.caseInsensitiveCompare(editorID) == .orderedSame
         }

@@ -30,6 +30,21 @@ struct NIFMeshGapCensusTests {
         #expect(census.lightingFlags.uses.keys.sorted()
             == ["SLSF1 0 Specular", "SLSF1 13 Non_Projective_Shadows"])
         #expect(census.lightingFlags.done(where: NIFMeshGapCensus.readLightingFlags.contains) == 1)
+        #expect(census.shaderlessShapes.total == 0)
+    }
+
+    @Test func countsShapesWithoutAShaderPropertyByName() {
+        var census = NIFMeshGapCensus()
+        census.record(data: NIFFixture.file(
+            blocks: [
+                .init("BSTriShape", NIFFixture.staticTriangleShape(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0)
+                )),
+                .init("BSTriShape", NIFFixture.staticTriangleShape())
+            ],
+            strings: ["Col:0"]
+        ))
+        #expect(census.shaderlessShapes.uses == ["Col:0": 1, "(unnamed)": 1])
     }
 
     @Test func everyFlagTheVanillaMeshesSetCountsAsDone() {

@@ -213,6 +213,7 @@ struct InventoryAcceptanceRenderTests {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", NIFFixture.bsTriShape(
+                shaderPropertyRef: 2,
                 attributes: CellSceneFixture.staticAttributes,
                 strideDwords: CellSceneFixture.staticStrideDwords,
                 vertexRecords: [
@@ -221,7 +222,8 @@ struct InventoryAcceptanceRenderTests {
                     SIMD3<Float>(0, 0, height)
                 ].map(cells.vertexRecord(position:)),
                 triangles: [0, 1, 2]
-            ))
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])
     }
 

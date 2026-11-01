@@ -25,11 +25,12 @@ struct NIFSubtreeModelTests {
                     children: [2]
                 )),
                 .init("BSTriShape", NIFFixture.staticTriangleShape(
-                    prefix: NIFFixture.avObjectPrefix(nameIndex: 2)
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 2), shaderPropertyRef: 4
                 )),
                 .init("BSTriShape", NIFFixture.staticTriangleShape(
-                    prefix: NIFFixture.avObjectPrefix(nameIndex: 3)
-                ))
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 3), shaderPropertyRef: 4
+                )),
+                .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
             ],
             strings: ["Arrow", "ArrowQuiver", "ArrowQuiver:0", "Arrow:0"]
         ))

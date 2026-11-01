@@ -47,8 +47,9 @@ struct NIFModelTests {
                 children: [3]
             )),
             .init("BSTriShape", shape(
-                prefix: NIFFixture.avObjectPrefix(scale: 2)
-            ))
+                prefix: NIFFixture.avObjectPrefix(scale: 2), shaderPropertyRef: 4
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let model = try file.model()
         #expect(model.meshes.count == 1)
@@ -68,12 +69,15 @@ struct NIFModelTests {
         let file = try NIFFile(data: NIFFixture.file(
             blocks: [
                 .init("BSFadeNode", NIFFixture.niNode(children: [1, 2, 3])),
-                .init("BSTriShape", shape(prefix: NIFFixture.avObjectPrefix(nameIndex: 0))),
+                .init("BSTriShape", shape(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0), shaderPropertyRef: 5
+                )),
                 .init("BSTriShape", shape(prefix: NIFFixture.avObjectPrefix(nameIndex: 1))),
                 .init("NiNode", NIFFixture.niNode(
                     prefix: NIFFixture.avObjectPrefix(nameIndex: 2), children: [4]
                 )),
-                .init("BSTriShape", shape())
+                .init("BSTriShape", shape()),
+                .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
             ],
             strings: ["CounterTop", "EditorMarker", "editormarker"]
         ))
@@ -183,15 +187,6 @@ struct NIFModelTests {
         #expect(model.materials == [.fallback])
     }
 
-    @Test func shapeWithoutPropertiesGetsFallbackMaterial() throws {
-        let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("BSTriShape", shape())
-        ]))
-        let model = try file.model()
-        #expect(model.materials == [.fallback])
-        #expect(model.meshes[0].materialSlot == 0)
-    }
-
     @Test func outOfRangeShaderRefIsMalformed() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape(shaderPropertyRef: 9))
@@ -204,7 +199,7 @@ struct NIFModelTests {
     @Test func rejectsSkinnedShapeWithMissingInstance() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2])),
-            .init("BSTriShape", shape(skinRef: 3)),
+            .init("BSTriShape", shape(skinRef: 3, shaderPropertyRef: 2)),
             .init("BSTriShape", shape())
         ]))
         #expect(throws: NIFError.malformed("block ref 3 out of range (3 blocks)")) {
@@ -219,7 +214,8 @@ struct NIFModelTests {
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
             .init("bhkCollisionObject", Data(count: 12)),
             .init("NiLODNode", NIFFixture.niNode(children: [3])),
-            .init("BSTriShape", shape())
+            .init("BSTriShape", shape(shaderPropertyRef: 4)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let model = try file.model()
         #expect(model.meshes.count == 1)
@@ -318,4 +314,19 @@ nonisolated private func onSmallStack<T: Sendable>(
 /// before the single read; the compiler cannot see that, hence `@unchecked`.
 nonisolated private final class SmallStackResult<T: Sendable>: @unchecked Sendable {
     var value: T?
+}
+
+extension NIFModelTests {
+    @Test func shapeWithoutShaderPropertyIsNotDrawn() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
+            .init("BSTriShape", shape(alphaPropertyRef: 3)),
+            .init("BSTriShape", shape(shaderPropertyRef: 4)),
+            .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 4844, threshold: 128)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.skippedShapeCount == 1)
+    }
 }

@@ -122,10 +122,19 @@ nonisolated public final class PrecipitationVolume {
     private func recenter(around cameraPosition: SIMD3<Float>) {
         let next = cameraPosition + SIMD3<Float>(0, 0, 600)
         let delta = next - (anchor ?? .zero)
+        let jumped = anchor != nil && simd_length(delta) > Self.teleportDistance
         anchor = next
         rain.translate(by: delta)
         snow.translate(by: delta)
+        // Flakes from before a teleport belong to the old place and its weather.
+        if jumped {
+            rain.reset()
+            snow.reset()
+        }
     }
+
+    /// Half the smallest volume width: no walk or flight covers it in one frame.
+    static let teleportDistance: Float = 1100
 
     private func clear() {
         rain.reset()

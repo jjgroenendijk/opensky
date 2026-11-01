@@ -107,11 +107,13 @@ extension CellSceneBuilderFixture {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", NIFFixture.bsTriShape(
+                shaderPropertyRef: 2,
                 attributes: Self.staticAttributes,
                 strideDwords: Self.staticStrideDwords,
                 vertexRecords: positions.map(vertexRecord(position:)),
                 triangles: [0, 1, 2]
-            ))
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])
     }
 
@@ -423,6 +425,7 @@ extension CellSceneBuilderFixture {
                 children: [1]
             )),
             .init("BSTriShape", NIFFixture.bsTriShape(
+                shaderPropertyRef: 5,
                 attributes: Self.staticAttributes,
                 strideDwords: Self.staticStrideDwords,
                 vertexRecords: [
@@ -434,7 +437,8 @@ extension CellSceneBuilderFixture {
             )),
             .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 3)),
             .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 4)),
-            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1))
+            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])
     }
 }
