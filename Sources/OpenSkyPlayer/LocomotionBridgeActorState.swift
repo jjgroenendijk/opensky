@@ -11,6 +11,9 @@ nonisolated extension LocomotionBridge {
         guard isPlayerGraph else { return }
         actorState.swimming = gait == .swim
         actorState.isDrunk = graph?.isTaggingState(ActorGraphState.npcDrunk.variableName) ?? false
+        actorState.taggedPerkState = ActorGraphState.perkStates.first {
+            graph?.isTaggingState($0.variableName) ?? false
+        }
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,

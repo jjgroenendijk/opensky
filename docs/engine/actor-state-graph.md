@@ -58,8 +58,9 @@ the graph declares no constant for the state, `iState` is not written.
 The state is picked in a fixed order. The first match wins:
 
 1. An attack: a power attack, a two-handed attack, or a plain attack.
-2. A guard (`iState_NPCBlocking`).
-3. A fully drawn bow (`iState_NPCBowDrawn`).
+2. A guard (`iState_NPCBlocking`), or `iState_NPCBlockingShieldCharge` while the graph tags it.
+3. A fully drawn bow (`iState_NPCBowDrawn`), or `iState_NPCBowDrawnQuickShot` while the graph
+   tags it.
 4. A cast in either hand (`iState_NPCMagicCasting`).
 5. Riding: `iState_HorseSprint` while the mount sprints, else `iState_NPCHorse`. `bIsRiding` is
    true while the player sits on a mount ([riding](/engine/riding.md)).
@@ -69,8 +70,40 @@ The state is picked in a fixed order. The first match wins:
    spell. The type uses the `iRightHandType` encoding ([combat graph names](/engine/combat-graph-names.md)).
 9. Otherwise `iState_NPCDefault`.
 
-[INFO] This order is OpenSky's own. No source states the game's order. Bleedout,
-quick shot, and shield charge have no OpenSky system yet, so no step picks them.
+[INFO] This order is OpenSky's own. No source states the game's order. Bleedout has no
+OpenSky system yet, so no step picks it.
+
+## Perk states
+
+Two states are reached only inside the graph, from a perk's graph flag. The perk entry point
+Set Boolean Graph Variable sets the flag, and the combat runtime writes it while the perk applies.
+The names mislead: neither flag comes from the perk it is named after.
+
+| Flag | Set by the perk | Graph state | Tag |
+| --- | --- | --- | --- |
+| `bPerkQuickShot` | Ranger (`058F63`) | `BowAttackPerkQuickShot` | `iState_NPCBowDrawnQuickShot` |
+| `bPerkShieldCharge` | Block Runner (`106253`) | `BlockShieldChargeState` | `iState_NPCBlockingShieldCharge` |
+
+The Quick Shot perk (`105F19`) sets `bPerkQuickdraw`, which no graph of the install declares. Its
+faster draw comes from its ability `PerkAbQuickShot`. `1hm_behavior.hkx` picks the start state of
+`Bow_AttackRootBehavior` and `BlockBehavior` by the flag, so `bowAttackStart` or `blockStart` enters
+the perk state directly. A sprint does not change the guard state. Each perk state runs a
+`BSiStateTaggingGenerator` that tags its constant (16 and 17 in `0_master.hkx`), and OpenSky reports
+that tag through `iState`, as it does for drunk. This shows it:
+
+```sh
+openskycli hkx meshes\actors\character\behaviors\0_master.hkx --set iLeftHandType=10 \
+  --set iRightHandType=1 --set bPerkShieldCharge=1 --raise weapEquip --raise blockStart
+```
+
+The Shield Charge perk (`058F6A`) itself is no graph state. It gives the ability
+`shieldChargeSpell`: a cloak of 6 feet and a 10 point Damage Stamina, both only while the player
+sprints, blocks, and does not ride (`IsSprinting`, `IsBlocking`, `IsRidingMount`). See [magic
+archetypes](/engine/magic-archetypes.md#cloak-knock) for the knock it gives.
+
+`openskycli game debug perk <editorID> [on|off]` gives or takes a perk. `state player` gives
+`perks`, `cloak`, and `graph.perkState`. The Player & Locomotion panel shows `iState` by its
+constant's name.
 
 ## Drunk actors
 
@@ -148,5 +181,5 @@ These still need a value from the engine, and no OpenSky system can give it yet:
 - `PitchOffset`, `TweenPosition`, and `TweenRotation`: dragon flight.
 - `IsInCastStateDamped`: a damped copy of `IsInCastState`. No source gives the damping rate.
 
-Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable; the
-combat runtime writes them while the perk applies.
+Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable
+([perk states](#perk-states)).

@@ -12,7 +12,7 @@ import simd
 extension PlayerCoordinator {
     public var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         guard let world, let bridge = world.playerLocomotion else { return .unavailable }
-        return PlayerLocomotionSnapshot(
+        var snapshot = PlayerLocomotionSnapshot(
             rendererAvailable: true,
             status: bridge.status,
             bindings: PlayerCore.bindings(
@@ -28,6 +28,12 @@ extension PlayerCoordinator {
             tally: bridge.graph?.tally,
             bodyFailureReason: failureReason
         )
+        snapshot.actorState = bridge.graph?.variable(named: ActorStateGraphNames.state).map {
+            ActorStateGraphCore.stateName(
+                of: Int32(truncatingIfNeeded: $0.intValue), constants: bridge.actorStateConstants
+            )
+        }
+        return snapshot
     }
 
     public var isSneaking: Bool {

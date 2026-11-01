@@ -59,6 +59,8 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     public let tally: BehaviorTally?
     /// Why the player has no third-person body, or nil when one is attached.
     public let bodyFailureReason: String?
+    /// `iState` as its constant's name, such as `17 (NPCBlockingShieldCharge)`.
+    public var actorState: String?
 
     public static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,

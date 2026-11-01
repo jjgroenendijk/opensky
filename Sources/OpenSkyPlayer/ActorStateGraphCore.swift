@@ -39,6 +39,9 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     public var riding: RiderGait?
     /// The graph tags the drunk state: `DrunkStart` reached `MT_Drunk`.
     public var isDrunk = false
+    /// The perk state the graph tags: the Ranger bow draw or the Block Runner guard,
+    /// which `bPerkQuickShot` and `bPerkShieldCharge` choose. Nil otherwise.
+    public var taggedPerkState: ActorGraphState?
 
     public init() {}
 
@@ -62,7 +65,8 @@ nonisolated public enum RiderGait: Equatable, Sendable {
 nonisolated public enum ActorStateGraphCore: Sendable {
     /// The state `iState` reports. The order is ours: riding wins over everything, an
     /// attack over a guard, a guard over a drawn bow, a cast over drunk, and drunk over
-    /// movement. Bleedout, quick shot, and shield charge have no step yet.
+    /// movement. A guard or a drawn bow takes the perk state the graph tags. Bleedout
+    /// has no step yet.
     public static func state(
         for inputs: ActorStateGraphInputs, gait: LocomotionGait
     ) -> ActorGraphState {
@@ -77,10 +81,12 @@ nonisolated public enum ActorStateGraphCore: Sendable {
             return twoHanded ? .npcAttacking2H : .npcAttacking
         }
         if inputs.isBlocking {
-            return .npcBlocking
+            return inputs.taggedPerkState == .npcBlockingShieldCharge
+                ? .npcBlockingShieldCharge : .npcBlocking
         }
         if inputs.isBowDrawn {
-            return .npcBowDrawn
+            return inputs.taggedPerkState == .npcBowDrawnQuickShot
+                ? .npcBowDrawnQuickShot : .npcBowDrawn
         }
         if inputs.castingLeft || inputs.castingRight {
             return .npcMagicCasting

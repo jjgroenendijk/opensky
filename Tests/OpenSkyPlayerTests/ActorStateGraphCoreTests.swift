@@ -84,6 +84,56 @@ struct ActorStateGraphCoreTests {
         #expect(graph.variable(named: ActorStateGraphNames.state) == .int(22))
     }
 
+    @Test func aGuardOrADrawnBowTakesThePerkStateTheGraphTags() {
+        var inputs = ActorStateGraphInputs()
+        inputs.isBowDrawn = true
+        inputs.taggedPerkState = .npcBlockingShieldCharge
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .walk) == .npcBowDrawn)
+        inputs.taggedPerkState = .npcBowDrawnQuickShot
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .walk) == .npcBowDrawnQuickShot)
+        inputs.isBlocking = true
+        #expect(ActorStateGraphCore.state(for: inputs, gait: .sprint) == .npcBlocking)
+        inputs.taggedPerkState = .npcBlockingShieldCharge
+        #expect(
+            ActorStateGraphCore.state(for: inputs, gait: .sprint) == .npcBlockingShieldCharge
+        )
+    }
+
+    @Test func theBridgeReportsTheGraphsShieldChargeTagThroughIState() {
+        var table = BehaviorObjectTable()
+        let binding = table.add(
+            BehaviorFixture.bindingSet([BehaviorBindingSpec("iStateToSetAs", 2)]), at: 0x08
+        )
+        let root = table.add(
+            BSiStateTaggingGenerator(
+                node: BehaviorFixture.nodeHeader(
+                    "BlockShieldCharge_iStateGen",
+                    bindingSet: binding
+                ),
+                defaultGenerator: nil, stateToSetAs: 0, priority: 0, unresolved: []
+            ),
+            at: 0x10
+        )
+        let graph = BehaviorFixture.instance(
+            root: root, table: table,
+            data: BehaviorFixture.graphData(variables: [
+                BehaviorVariableSpec(ActorStateGraphNames.state, .int32, 0),
+                BehaviorVariableSpec(ActorGraphState.npcBlocking.variableName, .int32, 4),
+                BehaviorVariableSpec(
+                    ActorGraphState.npcBlockingShieldCharge.variableName,
+                    .int32,
+                    17
+                )
+            ])
+        )
+        let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
+        bridge.actorState.isBlocking = true
+        _ = bridge.plan(LocomotionBridgeTests.state())
+        _ = bridge.plan(LocomotionBridgeTests.state())
+        #expect(bridge.actorState.taggedPerkState == .npcBlockingShieldCharge)
+        #expect(graph.variable(named: ActorStateGraphNames.state) == .int(17))
+    }
+
     @Test func writesCarryTheCameraTheKeysAndTheState() {
         var inputs = ActorStateGraphInputs()
         inputs.setCamera(position: SIMD3(1, 2, 3), forward: SIMD3(0, 1, 0), pitch: 0.25)
