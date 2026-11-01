@@ -69,6 +69,8 @@ public final class EffectModelPoser: EffectModelPosing {
     private let files: () -> (any GameFileSource)?
     private let meshes: () -> MeshLibrary?
     private let graphs: EffectGraphCoordinator
+    /// The camera billboards turn to; nil leaves them at rest.
+    private let viewer: () -> NIFBillboard.Viewer?
     private var loader: SerialAssetLoadWorker<String, LoadedEffectNodes>?
     private var nodeRigs: [String: RigState] = [:]
     /// The merged rig of each model; nil inside records a model that does not move.
@@ -82,11 +84,13 @@ public final class EffectModelPoser: EffectModelPosing {
     public init(
         files: @escaping () -> (any GameFileSource)?,
         meshes: @escaping () -> MeshLibrary?,
-        graphs: EffectGraphCoordinator
+        graphs: EffectGraphCoordinator,
+        viewer: @escaping () -> NIFBillboard.Viewer? = { nil }
     ) {
         self.files = files
         self.meshes = meshes
         self.graphs = graphs
+        self.viewer = viewer
     }
 
     public func pose(_ models: [VisualEffectModel], deltaTime: Float) -> [Int: PosedEffectModel] {
@@ -97,6 +101,7 @@ public final class EffectModelPoser: EffectModelPosing {
         }
         var posed: [Int: PosedEffectModel] = [:]
         var seen = Set<Int>()
+        let camera = viewer()
         for model in models {
             guard
                 let id = model.instanceID, seen.insert(id).inserted,
@@ -108,6 +113,9 @@ public final class EffectModelPoser: EffectModelPosing {
                 deltaTime: deltaTime,
                 placement: NodeControllerCoordinator.transform(model.transform)
             )
+            if let camera {
+                entry.animator?.face(camera.local(to: model.transform))
+            }
             let bones = entry.rig.bonePoses(
                 graph: graphs.pose(ofEffect: id),
                 animator: entry.animator

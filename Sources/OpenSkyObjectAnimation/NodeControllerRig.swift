@@ -1,6 +1,7 @@
 // A placed mesh whose node controllers play on their own clock, such as a forge's
-// bellows or a moth on a path. Each moved node is a root bone at its model-frame
-// transform, as a sequence door's leaf is. See docs/engine/object-animation.md#node-controllers.
+// bellows or a moth on a path, or whose billboard nodes turn to the camera. Each moved
+// node is a root bone at its model-frame transform, as a sequence door's leaf is.
+// See docs/engine/object-animation.md#node-controllers.
 
 import Foundation
 import OpenSkyActorPresentation
@@ -16,8 +17,9 @@ nonisolated public struct NodeControllerRig: Sendable {
     /// The node each bone poses, in bone order.
     public let boneNodes: [Int]
 
-    /// Nil for a mesh without an active controller on a named node. `lagOnly` keeps only
-    /// the lag bones, for a mesh whose behaviour graph replaces its keyed controllers.
+    /// Nil for a mesh without an active controller or a billboard on a named node.
+    /// `lagOnly` keeps only the lag bones and billboards, for a mesh whose behaviour
+    /// graph replaces its keyed controllers.
     public init?(file: NIFFile, lagOnly: Bool = false) throws {
         try self.init(animation: NIFNodeAnimation(file: file), lagOnly: lagOnly)
     }
@@ -29,12 +31,13 @@ nonisolated public struct NodeControllerRig: Sendable {
         ) : full
         var names = Set<String>()
         var boneNodes: [Int] = []
-        for controller in animation.playingControllers {
+        let moved = animation.playingControllers.map(\.node) + animation.billboardNodes
+        for node in moved {
             guard
-                let name = animation.nodes[controller.node].name?.lowercased(),
+                let name = animation.nodes[node].name?.lowercased(),
                 names.insert(name).inserted
             else { continue }
-            boneNodes.append(controller.node)
+            boneNodes.append(node)
         }
         guard !boneNodes.isEmpty else { return nil }
         self.animation = animation

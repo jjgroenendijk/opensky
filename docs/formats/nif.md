@@ -133,6 +133,7 @@ node.
 | `BSValueNode` | uint32 value, uint8 flags. An add-on node ([NIF extra data](/formats/nif-extra-data.md#add-on-nodes)) |
 | `BSBlastNode`, `BSDamageStage` | uint8 minimum, maximum, and current stage (`nif.xml` `BSRangeNode`) |
 | `BSMasterParticleSystem` | uint16 maximum emitter objects, then a Ref list of particle systems |
+| `NiBillboardNode` | uint16 billboard mode. Turns to the camera ([billboard nodes](/formats/nif-sequences.md#billboard-nodes)) |
 
 A destructible mesh holds one `BSDamageStage` per stage. The walk draws every stage that is
 not hidden; picking the stage by the object's damage is not done yet.

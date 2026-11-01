@@ -147,6 +147,15 @@ Like a sequence door, such a mesh draws its own node-skinned copy, with one root
 node at its model-frame rest. The cell build reads each mesh once, and parses it only when its
 bytes name `NiTransformController` or `BSLagBoneController`.
 
+A mesh with an `NiBillboardNode` takes the same path, with one root bone per named
+billboard node, even when no controller plays. After the controllers, each billboard node
+turns to the free-fly camera by its mode
+([billboard nodes](/formats/nif-sequences.md#billboard-nodes)), and the nodes below it
+follow. The cell build also parses a mesh whose bytes name `NiBillboardNode`. A static
+draw keeps a billboard at its authored rest. So does a reference that an object graph or
+a door sequence animates, and so does every billboard while the "Animated objects" setting
+is off. Effect models turn their billboard bones the same way.
+
 `NodeControllerCoordinator` steps each such mesh on the main actor, in reference order, after the
 sequence doors. Each mesh has its own clock, which starts when the mesh first loads and keeps
 running through a cell rebuild. Lag bones trail the reference's placement, and bone LOD measures
@@ -155,4 +164,5 @@ with the object graphs.
 
 `openskycli game state nodes` lists the references that play node controllers. With a
 reference, it lists each driven node: its position and forward axis in the mesh, its controllers,
-whether one is active, and whether bone LOD froze it.
+whether one is active, and whether bone LOD froze it. A billboard node lists
+`NiBillboardNode mode <n>` as its controller.

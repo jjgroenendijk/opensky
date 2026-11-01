@@ -8,11 +8,13 @@ import OpenSkyFormatsCore
 nonisolated public struct NIFNode: Sendable {
     /// Block types traversed as plain grouping nodes: NiNode layout prefix,
     /// draw-all-children semantics. Selector nodes (NiSwitchNode, NiLODNode)
-    /// are absent: drawing every child would stack their alternatives.
+    /// are absent: drawing every child would stack their alternatives. A billboard
+    /// draws at rest unless a node rig turns it to the camera.
     public static let traversedTypes: Set = [
         "NiNode", "BSFadeNode", "BSLeafAnimNode", "BSTreeNode",
         "BSOrderedNode", "BSMultiBoundNode", NIFValueNode.typeName,
-        NIFRangeNode.blastType, NIFRangeNode.damageStageType, NIFMasterParticleSystem.typeName
+        NIFRangeNode.blastType, NIFRangeNode.damageStageType, NIFMasterParticleSystem.typeName,
+        NIFBillboard.typeName
     ]
 
     public let object: NIFObjectPrefix

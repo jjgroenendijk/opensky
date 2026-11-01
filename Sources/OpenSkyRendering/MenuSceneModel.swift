@@ -44,7 +44,7 @@ public final class MenuSceneModel {
     }
 
     /// The visible shapes posed by `playing`, placed by `placement`. A billboard node
-    /// turns its local +Z to the eye, with +Y kept as its up axis (Gamebryo's convention).
+    /// turns to the eye by its mode (`NIFBillboard`).
     public func draws(
         playing: [NIFEffectPose.Playing], placement: float4x4, eye: SIMD3<Float>,
         up: SIMD3<Float>
@@ -75,27 +75,26 @@ public final class MenuSceneModel {
         }
     }
 
-    /// nif.xml `BillboardMode`: 1, 5, and 9 turn only about the node's own +Y.
-    static let aboutUpModes: Set<UInt16> = [1, 5, 9]
-
-    /// Keeps the position and each axis's length, and turns local +Z to the eye.
+    /// Keeps the position and each axis's length, and turns the node by its billboard mode.
     static func facing(
         _ transform: float4x4, mode: UInt16, eye: SIMD3<Float>, up: SIMD3<Float>
     ) -> float4x4 {
         let columns = [transform.columns.0, transform.columns.1, transform.columns.2]
             .map { SIMD3($0.x, $0.y, $0.z) }
         let lengths = columns.map(simd_length)
+        guard lengths.allSatisfy({ $0 > 0 }) else { return transform }
         let origin = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
-        let toEye = simd_normalize(eye - origin)
-        let axis = aboutUpModes.contains(mode) ? simd_normalize(columns[1]) : up
-        let front = aboutUpModes.contains(mode)
-            ? simd_normalize(toEye - simd_dot(toEye, axis) * axis) : toEye
-        let top = simd_normalize(axis - simd_dot(axis, front) * front)
-        let right = simd_cross(top, front)
-        guard right.x.isFinite, top.x.isFinite, front.x.isFinite else { return transform }
+        let authored = simd_quatf(simd_float3x3(
+            columns[0] / lengths[0], columns[1] / lengths[1], columns[2] / lengths[2]
+        ))
+        guard let turned = NIFBillboard.rotation(
+            mode: mode, rotation: authored.normalized, origin: origin,
+            viewer: NIFBillboard.Viewer(eye: eye, forward: nil, up: up)
+        ) else { return transform }
+        let basis = simd_float3x3(turned)
         return float4x4(columns: (
-            SIMD4(right * lengths[0], 0), SIMD4(top * lengths[1], 0),
-            SIMD4(front * lengths[2], 0), SIMD4(origin, 1)
+            SIMD4(basis.columns.0 * lengths[0], 0), SIMD4(basis.columns.1 * lengths[1], 0),
+            SIMD4(basis.columns.2 * lengths[2], 0), SIMD4(origin, 1)
         ))
     }
 }

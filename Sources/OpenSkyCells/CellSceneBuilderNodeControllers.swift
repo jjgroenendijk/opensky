@@ -1,6 +1,6 @@
-// Placed meshes with free-running node controllers in a cell build: a reference that no
-// object graph or door sequence animates, whose mesh has an active controller on a named
-// node, draws its own node-skinned copy.
+// Placed meshes with free-running node controllers or billboards in a cell build: a
+// reference that no object graph or door sequence animates, whose mesh has an active
+// controller or a billboard on a named node, draws its own node-skinned copy.
 // See docs/engine/object-animation.md#node-controllers.
 
 import Foundation
@@ -13,9 +13,10 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {
-    /// Block types that can move a node on its own clock. A mesh without one is not parsed.
+    /// Block types that can move a node on its own clock or turn it to the camera. A mesh
+    /// without one is not parsed.
     static let nodeControllerMarkers = [
-        "NiTransformController", "BSLagBoneController"
+        "NiTransformController", "BSLagBoneController", NIFBillboard.typeName
     ].map { Data($0.utf8) }
 
     /// The rig of a mesh, read once per mesh. Nil for a mesh without a playing controller.

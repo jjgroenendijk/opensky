@@ -10,8 +10,9 @@ import simd
 @MainActor
 public protocol NodeControllerWorld: AnyObject {
     func residentNodeAnimations() -> [CellNodeAnimation]
-    /// Where bone LOD distances are measured from. Nil plays every bone.
-    var nodeControllerViewer: SIMD3<Float>? { get }
+    /// Billboards turn to it and bone LOD distances are measured from it. Nil plays every
+    /// bone and leaves billboards at rest.
+    var nodeControllerViewer: NIFBillboard.Viewer? { get }
 }
 
 /// One node of a running mesh, for `game state nodes`.
@@ -72,8 +73,11 @@ public final class NodeControllerCoordinator {
             let placement = Self.transform(entry.mesh.placement)
             entry.animator.step(
                 deltaTime: deltaTime, placement: placement,
-                cameraDistance: viewer.map { simd_distance($0, placement.translation) }
+                cameraDistance: viewer.map { simd_distance($0.eye, placement.translation) }
             )
+            if let viewer {
+                entry.animator.face(viewer.local(to: entry.mesh.placement))
+            }
             entry.mesh.pose.publish(entry.mesh.rig.bonePoses(entry.animator))
         }
     }
@@ -83,19 +87,24 @@ public final class NodeControllerCoordinator {
         running.keys.sorted()
     }
 
-    /// Each node a controller of the mesh drives, or nil when the reference plays none.
+    /// Each node a controller of the mesh drives or a billboard turns, or nil when the
+    /// reference plays none. A billboard lists its block type and mode as a controller.
     public func nodes(of reference: UInt32) -> [NodeControllerNodeRow]? {
         guard let entry = running[reference] else { return nil }
         let animation = entry.mesh.rig.animation
         let driven = Dictionary(grouping: animation.controllers, by: \.node)
-        return driven.keys.sorted().map { node in
+        let billboards = Set(animation.billboardNodes)
+        return Set(driven.keys).union(billboards).sorted().map { node in
             let transform = entry.animator.modelTransform(of: node)
             let controllers = driven[node] ?? []
+            let billboard = animation.nodes[node].billboardMode.map {
+                ["\(NIFBillboard.typeName) mode \($0)"]
+            } ?? []
             return NodeControllerNodeRow(
                 name: animation.nodes[node].name ?? "",
                 translation: transform.translation, rotation: transform.rotation,
-                controllers: controllers.map(\.typeName),
-                isActive: controllers.contains(where: \.isActive),
+                controllers: controllers.map(\.typeName) + billboard,
+                isActive: controllers.contains(where: \.isActive) || billboards.contains(node),
                 isFrozen: entry.animator.frozen.contains(node)
             )
         }

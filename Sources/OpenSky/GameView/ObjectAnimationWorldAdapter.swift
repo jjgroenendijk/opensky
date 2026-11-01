@@ -6,6 +6,7 @@
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyRendering
@@ -201,7 +202,7 @@ extension ObjectAnimationWorldAdapter: NodeControllerWorld {
         game.streamer?.residentNodeAnimations() ?? []
     }
 
-    var nodeControllerViewer: SIMD3<Float>? {
-        game.gameSession?.freeFlyCamera.position
+    var nodeControllerViewer: NIFBillboard.Viewer? {
+        game.gameSession.map { NIFBillboard.Viewer(camera: $0.freeFlyCamera) }
     }
 }

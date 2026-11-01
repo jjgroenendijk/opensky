@@ -12,6 +12,17 @@ nonisolated public struct NIFNodeAnimation: Sendable {
         /// Index into `nodes`; nil for a root.
         public let parent: Int?
         public let rest: NIFNodeTransform
+        /// nif.xml `BillboardMode` of an `NiBillboardNode`.
+        public let billboardMode: UInt16?
+
+        public init(
+            name: String?, parent: Int?, rest: NIFNodeTransform, billboardMode: UInt16? = nil
+        ) {
+            self.name = name
+            self.parent = parent
+            self.rest = rest
+            self.billboardMode = billboardMode
+        }
     }
 
     public enum Motion: Equatable, Sendable {
@@ -54,7 +65,7 @@ nonisolated public struct NIFNodeAnimation: Sendable {
 
     /// Node blocks that carry a transform and controllers.
     static let nodeTypes = NIFNode.traversedTypes.union([
-        NIFSwitchNode.typeName, "NiBillboardNode", NIFCameraTrack.cameraTypeName
+        NIFSwitchNode.typeName, NIFCameraTrack.cameraTypeName
     ])
 
     public init(nodes: [Node], controllers: [Controller], boneLOD: NIFBoneLODLevels? = nil) {
@@ -70,6 +81,21 @@ nonisolated public struct NIFNodeAnimation: Sendable {
         nodes = decoder.nodes
         controllers = decoder.controllers
         boneLOD = decoder.boneLOD()
+    }
+
+    /// Nodes that turn to the camera, parents before children.
+    public var billboardNodes: [Int] {
+        func depth(_ node: Int) -> Int {
+            var parent = nodes[node].parent
+            var count = 0
+            while let current = parent, count < 64 {
+                parent = nodes[current].parent
+                count += 1
+            }
+            return count
+        }
+        return nodes.indices.filter { nodes[$0].billboardMode != nil }
+            .sorted { (depth($0), $0) < (depth($1), $1) }
     }
 
     /// Controllers that move a node when they play: active, with more than one key.

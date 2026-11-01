@@ -368,7 +368,8 @@ final class GameSessionScope {
         let poser = EffectModelPoser(
             files: { [unowned self] in audioFileSystem },
             meshes: { [unowned self] in effects.meshes },
-            graphs: effectGraphs
+            graphs: effectGraphs,
+            viewer: { [unowned self] in billboardViewer }
         )
         poser.isEnabled = objectBehaviors.isEnabled
         return poser
