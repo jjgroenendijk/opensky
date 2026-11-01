@@ -136,14 +136,14 @@ struct SWFRuntimeNativesTests {
         #expect(stage.lookup("width")?.property.value == .number(400))
         #expect(stage.lookup("height")?.property.value == .number(300))
         #expect(stage.lookup("scaleMode")?.property.value == .string("noScale"))
-        for name in ["visibleRect", "safeRect"] {
+        for (name, inset) in [("visibleRect", 0.0), ("safeRect", 15.0)] {
             let rectangle = try #require(
                 stage.lookup(name)?.property.value.objectValue
             )
-            #expect(rectangle.lookup("x")?.property.value == .number(0))
-            #expect(rectangle.lookup("y")?.property.value == .number(0))
-            #expect(rectangle.lookup("width")?.property.value == .number(400))
-            #expect(rectangle.lookup("height")?.property.value == .number(300))
+            #expect(rectangle.lookup("x")?.property.value == .number(inset))
+            #expect(rectangle.lookup("y")?.property.value == .number(inset))
+            #expect(rectangle.lookup("width")?.property.value == .number(400 - 2 * inset))
+            #expect(rectangle.lookup("height")?.property.value == .number(300 - 2 * inset))
         }
         let visible = stage.lookup("visibleRect")?.property.value.objectValue
         let safe = stage.lookup("safeRect")?.property.value.objectValue

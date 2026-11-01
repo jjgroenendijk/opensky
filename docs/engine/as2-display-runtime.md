@@ -163,10 +163,13 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
   CLIK's `ScrollBar` uses. `selectable` answers the inverse of the DefineEditText `NoSelect` flag until
   a script sets it.
 - `Stage`: a plain object. `width` and `height` come from the movie's `FrameSize`: OpenSky letterboxes
-  instead of reflowing, so the stage never resizes. `visibleRect` and `safeRect` are separate objects
-  covering the full frame, because OpenSky has no overscan crop or safe area. The vanilla
-  `MovieClip.Lock` helper reads both to place menus. Without them every edge read zero, and the start
-  menu's holder moved from `(1280, 720)` to `(0, 0)`.
+  instead of reflowing, so the stage never resizes. `visibleRect` covers the full frame. `safeRect`
+  is the frame minus 15 stage pixels on every side. The vanilla `MovieClip.Lock` helper places a
+  clip at `visibleRect.x + safeRect.x` from the left edge, and the same on the other edges, so the
+  `x` and `y` of `safeRect` act as an inset. Measured in the Windows game under Wine (2026-11-01,
+  1280x720 window): in its race menu the category bar's top line, the bottom bar's line, and the
+  Done key each sit 15 stage pixels further in than in OpenSky without an inset. The game's ini
+  files hold no safe-zone key, so 15 is the game's built-in default.
 - `Selection`: `setFocus` and `getFocus` round-trip a focus target. Range queries answer -1.
 - `Object`, `Function` (`call`, `apply`), `Array`, `String`, `Number`, `Boolean`, `Math`,
   `ASSetPropFlags`, `isNaN`, `parseInt`, `parseFloat`, `NaN`, `Infinity`, the global `random(n)`, and
