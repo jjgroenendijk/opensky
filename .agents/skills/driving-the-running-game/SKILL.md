@@ -14,10 +14,13 @@ description: Drives the live OpenSky app from the terminal with openskycli game 
 
 `openskycli game ...` talks to the running app over a local Unix socket. Each call prints
 one JSON object, and the reply carries `ok`, `frame`, `paused`, and `result` or `error`.
-The command list and every argument are in [reference.md](reference.md). The protocol is
-in `docs/tools/agent-control.md`. `openskycli game help` and `openskycli game <command> --help`
-print the same list from the app's own catalog without starting the app, so check a spelling
-there before a run: an unknown option exits 2 instead of being ignored.
+Ask the CLI first: `openskycli game help` lists every command, and
+`openskycli game <command> --help` shows one with its options and values. Both read the
+app's own catalog, work without the app, and match the build you drive, so check a command
+there before you run it: an unknown option exits 2 instead of being ignored. The same list,
+with what each `state` read returns, is in `docs/tools/game-commands.md`. The protocol is in
+`docs/tools/agent-control.md`. `openskycli reference --help` lists the reference game
+commands.
 
 To inspect or drive the game without changing the app's code, build nothing: use the CLI
 installed inside the app, `/Applications/OpenSky.app/Contents/MacOS/openskycli game ...`
