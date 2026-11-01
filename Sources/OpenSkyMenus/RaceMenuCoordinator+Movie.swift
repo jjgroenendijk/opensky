@@ -108,7 +108,7 @@ extension RaceMenuCoordinator {
         self.model = model
         try? renderer?.updateSWFRuntime { runtime in
             if republish {
-                RaceMenuMovieBridge.publish(model, runtime: runtime)
+                RaceMenuMovieBridge.publishSliders(model, runtime: runtime)
             }
             RaceMenuMovieBridge.finishChange(runtime: runtime)
         }

@@ -89,6 +89,21 @@ extension RaceMenuMovieBridgeTests {
         #expect(hidden == 1)
     }
 
+    /// `SetCategoriesList` and `SetRaceList` move the movie to a category, so a
+    /// change made in Body or Head sends only the sliders.
+    @Test func aChangeSendsOnlyTheSliders() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        var sent: [String] = []
+        for name in ["SetCategoriesList", "SetRaceList", "SetOptionSliders", "SetNameText"] {
+            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { _ in
+                sent.append(name)
+                return .undefined
+            }
+        }
+        RaceMenuMovieBridge.publishSliders(Self.model, runtime: runtime)
+        #expect(sent == ["SetOptionSliders"])
+    }
+
     @Test func aMovieWithoutItsPanelListsLeavesTheEngineRowsInCharge() throws {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         #expect(!RaceMenuMovieBridge.listsBuilt(runtime: runtime))

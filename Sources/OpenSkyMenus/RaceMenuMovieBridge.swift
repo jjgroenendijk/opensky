@@ -110,11 +110,17 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
                 .integer(race.formID == model.identity.race ? 1 : 0)
             ]
         })
+        publishSliders(model, runtime: runtime)
+        runtime.callMovie("SetNameText", arguments: [.string(model.identity.name)])
+    }
+
+    /// Sends only the sliders. `SetCategoriesList` and `SetRaceList` select a category,
+    /// so a change made in Body or Head must not send them, or the menu jumps to Race.
+    public static func publishSliders(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
         let sliders = model.rows.enumerated().flatMap { item in
             slider(id: item.offset, row: item.element, model: model)
         }
         runtime.callMovie("SetOptionSliders", arguments: sliders)
-        runtime.callMovie("SetNameText", arguments: [.string(model.identity.name)])
     }
 
     /// The movie shows its loading icon before each change it sends and hides it only
