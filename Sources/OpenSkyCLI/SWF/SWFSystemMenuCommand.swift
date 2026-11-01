@@ -224,8 +224,27 @@ enum SWFSystemMenuCommand {
                 )
             }
         }
+        printPlacement(node, runtime: runtime)
         for child in node.children {
             print("[INFO]   child \(child.depth) \(child.name ?? "-") \(child.content)")
         }
+    }
+
+    /// The node's matrix and its bounds on the stage, in pixels.
+    static func printPlacement(_ node: SWFDisplayObject, runtime: SWFMovieRuntime) {
+        let matrix = node.matrix
+        print(
+            "[INFO]   matrix scale \(matrix.scaleX) \(matrix.scaleY) rotate "
+                + "\(matrix.rotateSkew0) \(matrix.rotateSkew1) translate "
+                + "\(Float(matrix.translateX) / SWFMovieRuntime.twipsPerPixel) "
+                + "\(Float(matrix.translateY) / SWFMovieRuntime.twipsPerPixel)"
+        )
+        guard let transform = runtime.transform(of: node) else {
+            return
+        }
+        let box = runtime.localBounds(of: node).transformed(by: transform)
+        let pixels = [box.minX, box.minY, box.maxX, box.maxY]
+            .map { String(format: "%.1f", $0 / SWFMovieRuntime.twipsPerPixel) }
+        print("[INFO]   stage bounds px \(pixels.joined(separator: " "))")
     }
 }
