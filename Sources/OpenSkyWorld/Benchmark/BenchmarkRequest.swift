@@ -1,5 +1,6 @@
 // What one benchmark run asks for. The launcher, the app's `--benchmark` flag,
-// and the agent control command all build this one value.
+// and the agent control command all build this one value. A run starts hidden
+// and muted unless it asks otherwise, so it does not take over the machine.
 
 import Foundation
 import OpenSkyGameData
@@ -25,6 +26,44 @@ nonisolated public enum BenchmarkRequestError: Error, Equatable, CustomStringCon
     }
 }
 
+/// Where the tour draws. `hidden` keeps the window off the screen, yet the
+/// view's own frame loop runs at the same rate as on the screen.
+nonisolated public enum BenchmarkDisplay: String, Codable, CaseIterable, Sendable {
+    case hidden
+    case windowed
+    case fullScreen
+
+    public var title: String {
+        switch self {
+        case .hidden: "Hidden"
+        case .windowed: "Window"
+        case .fullScreen: "Full screen"
+        }
+    }
+}
+
+/// The drawable size in pixels, so a hidden run and a run on the screen compare.
+nonisolated public struct BenchmarkFrameSize: Codable, Equatable, Sendable {
+    public var width: Int
+    public var height: Int
+
+    public static let hiddenDefault = Self(width: 1920, height: 1080)
+
+    public init(width: Int, height: Int) {
+        self.width = width
+        self.height = height
+    }
+
+    /// `1920x1080`; both sides between 64 and 16384.
+    public static func parse(_ text: String) throws(BenchmarkRequestError) -> Self {
+        let parts = text.lowercased().split(separator: "x").compactMap { Int($0) }
+        guard parts.count == 2, parts.allSatisfy({ (64 ... 16384).contains($0) }) else {
+            throw .malformed("size must be WIDTHxHEIGHT in pixels, got '\(text)'")
+        }
+        return Self(width: parts[0], height: parts[1])
+    }
+}
+
 nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
     public var preset: BenchmarkPreset
     /// Scene ids to run instead of the preset's list.
@@ -41,14 +80,18 @@ nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
     public var loadPasses: Bool
     /// Saves the window at the start, middle, and end of each shot.
     public var screenshots: Bool
-    /// The game window fills the screen for the run and comes back after it.
-    public var fullScreen: Bool
+    public var display: BenchmarkDisplay
+    /// The drawable size of a hidden or windowed run; nil keeps the window's size.
+    public var frameSize: BenchmarkFrameSize?
+    /// Silences the output only; the audio update still runs and is measured.
+    public var muted: Bool
 
     public init(
         preset: BenchmarkPreset = .standard, sceneIDs: [String]? = nil, overlay: Bool = true,
         outDirectory: String? = nil, captureScene: String? = nil,
         settings: [String: Double] = [:], quitWhenDone: Bool = false, loadPasses: Bool = true,
-        screenshots: Bool = false, fullScreen: Bool = true
+        screenshots: Bool = false, display: BenchmarkDisplay = .hidden,
+        frameSize: BenchmarkFrameSize? = nil, muted: Bool = true
     ) {
         self.preset = preset
         self.sceneIDs = sceneIDs
@@ -59,11 +102,25 @@ nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
         self.quitWhenDone = quitWhenDone
         self.loadPasses = loadPasses
         self.screenshots = screenshots
-        self.fullScreen = fullScreen
+        self.display = display
+        self.frameSize = frameSize
+        self.muted = muted
+    }
+
+    /// The size the window takes for the run; nil leaves it as it is.
+    public var effectiveFrameSize: BenchmarkFrameSize? {
+        switch display {
+        case .hidden: frameSize ?? .hiddenDefault
+        case .windowed: frameSize
+        case .fullScreen: nil
+        }
     }
 
     /// The scenes in tour order. An unknown id is an error, not a silent skip.
     public func scenes() throws(BenchmarkRequestError) -> [BenchmarkScene] {
+        if display == .fullScreen, frameSize != nil {
+            throw .malformed("a full-screen run takes the display's size; drop the frame size")
+        }
         if let captureScene, BenchmarkTour.scene(id: captureScene) == nil {
             throw .unknownScene(captureScene)
         }

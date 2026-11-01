@@ -102,7 +102,8 @@ struct CommandLineTests {
                 "benchmark", "--preset", "quick", "--scenes", "whiterun,dragonsreach",
                 "--set", "rendering.renderScale=1,rendering.gpuCulling=off",
                 "--no-overlay", "--capture", "whiterun", "--no-load-passes", "--keep-open",
-                "--evict", "--screenshots", "--windowed", "--out", "/tmp/run"
+                "--evict", "--screenshots", "--windowed", "--size", "1280x720", "--sound",
+                "--out", "/tmp/run"
             ],
             as: BenchmarkArguments.self
         )
@@ -116,7 +117,7 @@ struct CommandLineTests {
             .evict)
         #expect(benchmark.capture == "whiterun")
         #expect(benchmark.screenshots)
-        #expect(benchmark.windowed)
+        #expect(benchmark.windowed && benchmark.sound && benchmark.size == "1280x720")
         #expect(benchmark.out == "/tmp/run")
         #expect(try command(["benchmark", "--list"], as: BenchmarkArguments.self).list)
         #expect(exitCode(["benchmark", "--preset", "huge"]) == OpenSkyCommandLine.usageExitCode)

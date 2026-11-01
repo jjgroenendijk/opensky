@@ -62,11 +62,14 @@ struct BenchmarkRequestTests {
             "quick"
         ]))
         #expect(flag.preset == .quick && flag.quitWhenDone)
+        #expect(flag.display == .hidden && flag.muted)
         let bare = try #require(try BenchmarkRequest.fromAppArguments(["OpenSky", "--benchmark"]))
         #expect(bare.preset == .standard)
         let sent = BenchmarkRequest(
             preset: .full, sceneIDs: ["riften"], overlay: false, outDirectory: "/tmp/run",
-            settings: ["rendering.renderScale": 1], quitWhenDone: true, loadPasses: false
+            settings: ["rendering.renderScale": 1], quitWhenDone: true, loadPasses: false,
+            display: .windowed, frameSize: BenchmarkFrameSize(width: 1280, height: 720),
+            muted: false
         )
         let read = try BenchmarkRequest.fromAppArguments([
             "OpenSky",
@@ -79,6 +82,22 @@ struct BenchmarkRequestTests {
         }
         #expect(throws: BenchmarkRequestError.self) {
             try BenchmarkRequest.fromAppArguments(["OpenSky", "--benchmark-request", "{"])
+        }
+    }
+
+    @Test func aHiddenRunHasAFixedFrameSizeAndFullScreenTakesNone() throws {
+        #expect(BenchmarkRequest().effectiveFrameSize == .hiddenDefault)
+        #expect(BenchmarkRequest(display: .windowed).effectiveFrameSize == nil)
+        #expect(try BenchmarkFrameSize.parse("2560X1440") == BenchmarkFrameSize(
+            width: 2560,
+            height: 1440
+        ))
+        for bad in ["1920", "0x1080", "axb", "1920x1080x2"] {
+            #expect(throws: BenchmarkRequestError.self) { try BenchmarkFrameSize.parse(bad) }
+        }
+        let size = BenchmarkFrameSize(width: 1280, height: 720)
+        #expect(throws: BenchmarkRequestError.self) {
+            try BenchmarkRequest(display: .fullScreen, frameSize: size).scenes()
         }
     }
 }

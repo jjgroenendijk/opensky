@@ -1,4 +1,4 @@
-// The launcher's Benchmark page: pick a tour length, run it in the Play window,
+// The launcher's Benchmark page: pick a tour length and where it shows, run it,
 // and read the newest result. The same tour runs from `openskycli benchmark`.
 
 import AppKit
@@ -14,7 +14,9 @@ final class BenchmarkPageViewController: NSViewController {
     let screenshotsControl = NSButton(
         checkboxWithTitle: "Save screenshots", target: nil, action: nil
     )
-    let fullScreenControl = NSButton(checkboxWithTitle: "Full screen", target: nil, action: nil)
+    let displayControl = NSPopUpButton()
+    let resolutionControl = NSPopUpButton()
+    let soundControl = NSButton(checkboxWithTitle: "Play sound", target: nil, action: nil)
     let runButton = LauncherButton(title: "Run Benchmark", target: nil, action: nil)
     let folderButton = LauncherButton(title: "Open Run Folder", target: nil, action: nil)
     lazy var presetLabel = layout.line("BenchmarkPresetStatsLabel")
@@ -38,8 +40,10 @@ final class BenchmarkPageViewController: NSViewController {
         view = layout.makeView(title: "Benchmark", groups: [
             layout.group("Run", [
                 layout.row("Length", presetControl), presetLabel,
+                layout.row("Display", displayControl),
+                layout.row("Resolution", resolutionControl),
                 layout.toggle(overlayControl), layout.toggle(loadPassesControl),
-                layout.toggle(screenshotsControl), layout.toggle(fullScreenControl),
+                layout.toggle(screenshotsControl), layout.toggle(soundControl),
                 layout.buttons([runButton])
             ]),
             layout.group("Newest result", [chart, resultLabel, layout.buttons([folderButton])])
@@ -67,9 +71,18 @@ final class BenchmarkPageViewController: NSViewController {
         loadPassesControl.toolTip = "Build the first scene twice off screen before the tour"
         screenshotsControl.setAccessibilityIdentifier("BenchmarkScreenshotsControl")
         screenshotsControl.toolTip = "Save the start, middle, and end of each scene as PNGs"
-        fullScreenControl.setAccessibilityIdentifier("BenchmarkFullScreenControl")
-        fullScreenControl.state = .on
-        fullScreenControl.toolTip = "Fill the screen for the tour, then go back to the window"
+        displayControl.addItems(withTitles: Self.displays.map(\.title))
+        displayControl.toolTip = "Hidden draws off the screen, so you can keep working"
+        resolutionControl.addItems(withTitles: Self.resolutions.map(Self.resolutionTitle))
+        resolutionControl.setAccessibilityIdentifier("BenchmarkResolutionControl")
+        resolutionControl.toolTip = "The frame size in pixels; full screen takes the display's"
+        PanelComponents.configurePopUp(
+            displayControl, target: self, action: #selector(displayChanged),
+            identifier: "BenchmarkDisplayControl"
+        )
+        displayChanged()
+        soundControl.setAccessibilityIdentifier("BenchmarkSoundControl")
+        soundControl.toolTip = "Off keeps the tour silent; the audio update is measured either way"
         PanelComponents.configureButton(
             runButton, target: self, action: #selector(run), identifier: "BenchmarkRunControl"
         )
@@ -83,6 +96,31 @@ final class BenchmarkPageViewController: NSViewController {
         resultLabel.isSelectable = true
         chart.setAccessibilityIdentifier("BenchmarkChart")
         presetChanged()
+    }
+
+    private static let displays: [BenchmarkDisplay] = [.fullScreen, .windowed, .hidden]
+
+    var selectedDisplay: BenchmarkDisplay {
+        let index = displayControl.indexOfSelectedItem
+        return Self.displays.indices.contains(index) ? Self.displays[index] : .fullScreen
+    }
+
+    /// Nil keeps the window's size, or 1920x1080 for a hidden run.
+    private static let resolutions: [BenchmarkFrameSize?] = [nil] + [
+        (1280, 720), (1920, 1080), (2560, 1440), (3840, 2160)
+    ].map { BenchmarkFrameSize(width: $0.0, height: $0.1) }
+
+    private static func resolutionTitle(_ size: BenchmarkFrameSize?) -> String {
+        size.map { "\($0.width) x \($0.height)" } ?? "Default"
+    }
+
+    var selectedResolution: BenchmarkFrameSize? {
+        let index = resolutionControl.indexOfSelectedItem
+        return Self.resolutions.indices.contains(index) ? Self.resolutions[index] : nil
+    }
+
+    @objc private func displayChanged() {
+        resolutionControl.isEnabled = selectedDisplay != .fullScreen
     }
 
     private var selectedPreset: BenchmarkPreset {
@@ -103,7 +141,9 @@ final class BenchmarkPageViewController: NSViewController {
         request.overlay = overlayControl.state == .on
         request.loadPasses = loadPassesControl.state == .on
         request.screenshots = screenshotsControl.state == .on
-        request.fullScreen = fullScreenControl.state == .on
+        request.display = selectedDisplay
+        request.frameSize = selectedDisplay == .fullScreen ? nil : selectedResolution
+        request.muted = soundControl.state != .on
         context.actions?.runBenchmark(request)
     }
 

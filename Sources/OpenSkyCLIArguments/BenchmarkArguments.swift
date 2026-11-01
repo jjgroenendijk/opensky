@@ -9,7 +9,9 @@ public struct BenchmarkArguments: CLICommandArguments {
         discussion: "Opens OpenSky.app, which flies a camera through cities, wilderness, "
             + "interiors, and DLC worldspaces, then quits. result.json and summary.txt go to "
             + "--out. --set changes player settings for this run only, e.g. "
-            + "--set rendering.renderScale=1,rendering.gpuCulling=off. Exits 1 when a scene "
+            + "--set rendering.renderScale=1,rendering.gpuCulling=off. The tour runs hidden and "
+            + "muted unless --windowed, --full-screen, or --sound asks otherwise, and the app "
+            + "does not take focus. Exits 1 when a scene "
             + "fails. 'game benchmark' runs the same tour in an app that is already open."
     )
     @OptionGroup public var global: GlobalOptions
@@ -41,8 +43,20 @@ public struct BenchmarkArguments: CLICommandArguments {
     public var settings: CommaList?
     @Flag(help: "Save PNGs of the start, middle, and end of each scene into the run folder.")
     public var screenshots = false
-    @Flag(help: "Run in a window instead of full screen.")
+    @Flag(help: "Show the tour in a window. Default: hidden, off the screen.")
     public var windowed = false
+    @Flag(help: "Show the tour full screen, at the display's size.")
+    public var fullScreen = false
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "The frame size in pixels of a hidden or windowed run. Default hidden: 1920x1080.",
+            valueName: "WxH"
+        )
+    )
+    public var size: String?
+    @Flag(help: "Play the game's sound. Default: muted.")
+    public var sound = false
     @Flag(help: "Skip the cold and warm load of the first scene.")
     public var noLoadPasses = false
     @Flag(help: "Drop the game data from the page cache first, so the loads read the disk.")

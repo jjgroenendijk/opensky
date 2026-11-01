@@ -9,10 +9,13 @@ nonisolated public enum BenchmarkReport {
     public static func lines(for result: BenchmarkTourResult) -> [String] {
         var lines = [
             "OpenSky benchmark: \(result.preset.title), "
-                +
-                "\(result.frameWidth)x\(result.frameHeight), \(format(result.durationSeconds)) s" +
-                (result.stopped ? " (stopped)" : "")
+                + "\(result.frameWidth)x\(result.frameHeight), \(format(result.durationSeconds)) s"
+                + (result.stopped ? " (stopped)" : "")
         ]
+        if let display = result.display {
+            let sound = result.audioMuted == false ? "sound on" : "muted"
+            lines.append("Display: \(display.title.lowercased()), \(sound)")
+        }
         if !result.overrides.isEmpty {
             let pairs = result.overrides.sorted { $0.key < $1.key }
                 .map { "\($0.key)=\(format($0.value))" }

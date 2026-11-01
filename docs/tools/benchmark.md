@@ -19,7 +19,7 @@ every performance change measures its win with this one.
 | From | How |
 | --- | --- |
 | Launcher | The Benchmark page: pick a length, then Run Benchmark. The page shows the newest result |
-| CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app and waits for it to quit |
+| CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app hidden and muted, and waits for it to quit |
 | Make | `make benchmark PRESET=quick` builds Release and keeps the output in `.logs/benchmark/` |
 | Running app | `openskycli game benchmark quick` starts the tour in the open game window |
 | App flag | `OpenSky.app --benchmark-request '<json>'`; this is what `openskycli benchmark` passes |
@@ -38,7 +38,10 @@ CLI options:
 | `--no-overlay` | Starts with the readout hidden |
 | `--capture <id>` | Writes a GPU trace (`.gputrace`) of that scene's first measured frame |
 | `--screenshots` | Saves the window at the start, middle, and end of each shot as PNGs in the run folder |
-| `--windowed` | Runs in the window. By default the window fills the screen for the tour and comes back after it; a window that was already full screen stays so |
+| `--windowed` | Shows the tour in the window. By default the tour runs hidden: no window comes on the screen |
+| `--full-screen` | Fills the screen for the tour; the window comes back after it |
+| `--size WxH` | The frame size in pixels of a hidden or windowed run. A hidden run takes 1920x1080 by default; a windowed run keeps the window's size. A full-screen run takes the display's size and does not take this option |
+| `--sound` | Plays the game's sound. By default the tour is muted |
 | `--no-load-passes` | Skips the cold and warm load passes |
 | `--evict` | Drops the game data from the page cache first, so the loads read from disk |
 | `--keep-open` | Leaves the app open after the tour |
@@ -56,10 +59,33 @@ lives only in the app's memory and is never saved.
 
 ## While it runs
 
-Every way to start a run fills the screen with the game window for the tour, so the
-measured frame is the display's size. The window comes back when the run ends. "Full
-screen" on the launcher page and `--windowed` on `openskycli benchmark` or `game benchmark`
-keep the window instead.
+A run from the CLI, from `make benchmark`, from `make profile`, or from `game benchmark` is
+hidden and muted unless it asks otherwise, so a person can keep working at the machine.
+The launcher page shows the tour full screen by default, because a person pressed the
+button there; its Display menu picks Full screen, Window, or Hidden, its Resolution menu picks the frame
+size of a hidden or windowed run, and "Play sound" turns the sound on.
+
+| Display | What happens |
+| --- | --- |
+| Hidden | The game window never comes on the screen. An open window leaves the screen and comes back after the tour. `openskycli benchmark` opens the app with `open -g`, and the app runs without a Dock icon, so the app in front keeps the focus |
+| Window | The tour draws in the game window. `--size` sets its size for the run |
+| Full screen | The window fills the screen for the tour and comes back after it. A window that was already full screen stays so |
+
+A hidden run keeps the frame loop of the game view running at the same rate as on the
+screen. `MTKView` keeps drawing in a window that is not on the screen, and its drawables
+come back without a wait. A test program on this machine drew 59.9 frames per second
+hidden and 59.7 on the screen. A screen display link would not do: it rounds 60 Hz to 50
+on a 100 Hz display. The app holds a `ProcessInfo` activity for the whole tour, so App Nap
+does not slow a run in the background. With frame interpolation on, the renderer paces to
+half the display's refresh rate. A hidden window has no display, so it takes 60 Hz there,
+and such a run compares only with another hidden run.
+
+The frame size is written in the result as `frameWidth` and `frameHeight`. A hidden run and
+a windowed run with the same `--size` therefore compare.
+
+Muting silences only the output mixer. Every sound still starts and mixes, so the `audio`
+CPU phase costs the same with and without sound. The result writes `display` and
+`audioMuted`, and the summary prints them on its `Display:` line.
 
 The Play window gets a toolbar with two buttons for the length of the run. The overlay
 button shows or hides the readout: the scene, its number, its progress, and the frame rate.

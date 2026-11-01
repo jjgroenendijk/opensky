@@ -123,6 +123,11 @@ public final class AudioCoordinator {
         return reason
     }
 
+    /// Holds across the engine's lazy start, so a run muted early stays silent.
+    public var outputMuted = false {
+        didSet { engine?.isOutputMuted = outputMuted }
+    }
+
     /// The frame's drain point: loaded sound files start the plays that waited.
     public func drainLoads() {
         assets?.drain()
@@ -137,6 +142,7 @@ public final class AudioCoordinator {
 
     private func buildEngine() {
         let engine = WorldAudioEngine()
+        engine.isOutputMuted = outputMuted
         self.engine = engine
         let audioData = world?.audioWorldData
         let weatherStore = audioData?.weatherSystem?.store

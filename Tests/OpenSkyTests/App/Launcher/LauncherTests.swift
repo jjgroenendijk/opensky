@@ -88,8 +88,14 @@ struct LauncherTests {
         page.overlayControl.state = .off
         page.loadPassesControl.state = .off
         page.screenshotsControl.state = .on
-        #expect(page.fullScreenControl.state == .on)
-        page.fullScreenControl.state = .off
+        #expect(page.selectedDisplay == .fullScreen)
+        #expect(page.soundControl.state == .off)
+        #expect(!page.resolutionControl.isEnabled)
+        page.displayControl.selectItem(withTitle: BenchmarkDisplay.hidden.title)
+        page.displayControl.sendAction(page.displayControl.action, to: page.displayControl.target)
+        #expect(page.resolutionControl.isEnabled)
+        page.resolutionControl.selectItem(withTitle: "2560 x 1440")
+        page.soundControl.state = .on
         let run = try #require(button("BenchmarkRunControl", in: page.view))
         run.performClick(nil)
         let request = try #require(actions.benchmarks.first)
@@ -97,8 +103,10 @@ struct LauncherTests {
         #expect(!request.overlay)
         #expect(!request.loadPasses)
         #expect(request.screenshots)
-        #expect(!request.fullScreen)
-        #expect(page.fullScreenControl.accessibilityIdentifier() == "BenchmarkFullScreenControl")
+        #expect(request.display == .hidden)
+        #expect(!request.muted)
+        #expect(request.frameSize == BenchmarkFrameSize(width: 2560, height: 1440))
+        #expect(page.displayControl.accessibilityIdentifier() == "BenchmarkDisplayControl")
         #expect(page.presetControl.accessibilityIdentifier() == "BenchmarkPresetControl")
         #expect(page.overlayControl.accessibilityIdentifier() == "BenchmarkOverlayControl")
         #expect(page.resultLabel.accessibilityIdentifier() == "BenchmarkResultStatsLabel")

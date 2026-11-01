@@ -90,6 +90,19 @@ struct WorldAudioEngineTests {
         #expect(rms < 1e-4, "master 0 must silence the mix, got \(rms)")
     }
 
+    @Test
+    func outputMuteSilencesAndKeepsTheMasterVolume() throws {
+        let engine = try OfflineAudioFixture.makeRunningEngine()
+        engine.updateListener(worldPosition: .zero, yaw: 0, pitch: 0)
+        engine.masterVolume = 0.8
+        engine.isOutputMuted = true
+        try play(engine, at: SIMD3(2 * Self.oneMeterUnits, 0, 0))
+        let rms = try OfflineAudioFixture.channelRMS(engine).reduce(0, +)
+        #expect(rms < 1e-4, "a muted output must be silent, got \(rms)")
+        #expect(engine.masterVolume == 0.8)
+        #expect(!engine.sources.isEmpty)
+    }
+
     /// Budget rule: at the cap, starting another source evicts the oldest
     /// (FIFO by start order).
     @Test

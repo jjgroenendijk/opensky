@@ -202,7 +202,7 @@ Debug commands change the game state directly. `state` reads show the result
 
 | Command | Does |
 | --- | --- |
-| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--no-overlay] [--no-load-passes] [--screenshots] [--windowed] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour in the open window and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
+| `benchmark [quick\|standard\|full] [--scenes a,b] [--set id=v,id=v] [--no-overlay] [--no-load-passes] [--screenshots] [--windowed\|--full-screen] [--size WxH] [--sound] [--capture <id>] [--out <absolute dir>]` | Flies the benchmark tour, hidden and muted by default, and replies when it ends, with the result folder, `comparable`, `stopped`, the failed scenes, and the summary |
 | `benchmark --stop` | Stops a running tour. The scenes measured so far are kept |
 
 The tour takes over the camera, the clock, and the HUD until it ends

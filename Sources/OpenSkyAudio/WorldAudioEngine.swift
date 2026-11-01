@@ -113,9 +113,19 @@ public final class WorldAudioEngine {
     public var masterVolume: Float = 1 {
         didSet {
             masterVolume = simd_clamp(masterVolume, 0, 1)
-            engine.mainMixerNode.outputVolume = masterVolume
+            applyOutputVolume()
             applyVolumesToSources()
         }
+    }
+
+    /// Silences the speakers only: every source still plays and mixes, so the
+    /// audio update costs the same as with sound.
+    public var isOutputMuted = false {
+        didSet { applyOutputVolume() }
+    }
+
+    private func applyOutputVolume() {
+        engine.mainMixerNode.outputVolume = isOutputMuted ? 0 : masterVolume
     }
 
     private var categoryVolumes: [AudioCategory: Float] =
@@ -267,7 +277,7 @@ public final class WorldAudioEngine {
         for (category, mixer) in categoryMixers {
             mixer.outputVolume = audibleVolume(for: category)
         }
-        engine.mainMixerNode.outputVolume = masterVolume
+        applyOutputVolume()
     }
 
     private func startEngine() {

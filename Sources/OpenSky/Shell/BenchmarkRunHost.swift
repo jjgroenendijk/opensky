@@ -45,6 +45,16 @@ final class BenchmarkRunHost {
         fromLaunchArguments = false
     }
 
+    /// A hidden run's window never comes on the screen.
+    var hidesNextWindow: Bool {
+        pending?.display == .hidden
+    }
+
+    /// A tour sets its own display mode, so the saved full-screen choice waits.
+    var ownsNextWindow: Bool {
+        pending != nil
+    }
+
     /// The recorder the world load attaches when a tour will run.
     func loadPhasesForNextLoad() -> LoadPhaseRecorder? {
         pending == nil ? nil : LoadPhaseRecorder()
@@ -53,6 +63,10 @@ final class BenchmarkRunHost {
     /// Wires a new game window; it starts the pending tour once its session starts.
     func attach(game: GameViewController, window: NSWindow) {
         game.onSessionStart = { [weak self, weak window] session in
+            // Muted before the first frame, so the world's first sounds stay silent too.
+            if self?.pending?.muted == true {
+                session.audio.outputMuted = true
+            }
             guard let window else { return }
             self?.attach(tour: session.benchmarkWorld, window: window)
         }

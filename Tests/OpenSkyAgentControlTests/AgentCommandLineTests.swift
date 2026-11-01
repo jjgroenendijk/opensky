@@ -26,6 +26,13 @@ struct AgentCommandLineTests {
         #expect(!parsed.overlay)
         #expect(parsed.settings == ["a=1", "b=on"])
         #expect(parsed.loadPasses && !parsed.stop)
+        #expect(!parsed.windowed && !parsed.fullScreen && !parsed.sound && parsed.size == nil)
+        #expect(throws: AgentFailure.self) {
+            try AgentBenchmarkRequest.parse(AgentArguments(
+                command: "benchmark",
+                values: ["windowed": true, "fullScreen": true]
+            ))
+        }
         #expect(throws: AgentFailure.self) {
             try AgentBenchmarkRequest.parse(AgentArguments(
                 command: "benchmark",

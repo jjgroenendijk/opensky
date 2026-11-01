@@ -100,7 +100,10 @@ nonisolated public enum AgentCommandCatalog {
                 negatedFlag("overlay", "Hide the benchmark overlay."),
                 negatedFlag("loadPasses", "Skip the cold and warm load of the first scene."),
                 flag("screenshots", "Save PNGs of the start, middle, and end of each scene."),
-                flag("windowed", "Run in a window instead of full screen."),
+                flag("windowed", "Show the tour in the window. Default: hidden."),
+                flag("fullScreen", "Show the tour full screen."),
+                value("size", "WxH", "Frame size in pixels when hidden or windowed."),
+                flag("sound", "Play the game's sound. Default: muted."),
                 value("capture", "scene", "Write a GPU trace of this scene."),
                 value("out", "dir", "An absolute folder for the result."),
                 flag("stop", "Stop the running tour and keep the scenes measured so far.")
