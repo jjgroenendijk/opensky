@@ -87,8 +87,31 @@ descriptor: the star's `Unlock` and `Own` sequences play `UISkillsPerkSelectA` a
 ## Billboard nodes
 
 `NiBillboardNode` is an `NiNode` with a 2-byte billboard mode at its end. Gamebryo turns
-the node so its local +Z points at the camera and keeps +Y as up. Modes 1, 5, and 9 turn
-only about the node's own +Y. The perk star's `FacingRoot` uses mode 2 (face the camera);
-the perk line's `Plane05` uses mode 1, so the beam turns about its own length. The star's
-glow quads sit 0.85 and 1.6 units along +Z, in front of the star quad, which is how the
-+Z facing was confirmed.
+the node so a local axis points at the camera. The mode names come from NifTools
+`nif.xml` (`BillboardMode`); the axes were checked against vanilla meshes:
+
+| Mode | nif.xml name | What OpenSky turns |
+| --- | --- | --- |
+| 0, 2 | `ALWAYS_FACE_CAMERA`, `RIGID_FACE_CAMERA` | +Z against the view direction, +Y toward camera up |
+| 3, 4 | `ALWAYS_FACE_CENTER`, `RIGID_FACE_CENTER` | +Z at the eye, +Y toward camera up |
+| 1, 9 | `ROTATE_ABOUT_UP`, `ROTATE_ABOUT_UP2` | about the node's own +Y; +Z toward the eye |
+| 5 | `BSROTATE_ABOUT_UP` | about the node's own +Z; -Y toward the eye |
+
+Other values turn like mode 4. The menu scene has no view direction, so there modes 0
+and 2 also turn +Z at the eye. OpenSky does not tell the minimised turn (0, 3) from the
+rigid one (2, 4).
+
+How the axes were confirmed:
+
+- The perk star's `FacingRoot` uses mode 2. Its glow quads sit 0.85 and 1.6 units along
+  +Z, in front of the star quad.
+- The perk line's `Plane05` and the light beams of `dlc1wayshrinelightbeam01.nif` use
+  mode 1. Their nodes are turned 90 degrees about X, so own +Y is the beam's length.
+- The window glow `effects\ambient\fxglowfillrndlitbrt.nif` uses mode 4. Its card lies
+  flat in the node's XY plane, 2.2 units along +Z.
+- The torch flames of `clutter\common\torchsconce01.nif` use mode 5. Each card lies in
+  the node's XZ plane with its length along +Z, so the card turns about +Z. The glow
+  card's normals point along -Y, so -Y is the face that turns to the eye.
+
+On the install, the glow, light, candle, torch, and flame meshes use modes 0 to 5. None
+of them uses 9.

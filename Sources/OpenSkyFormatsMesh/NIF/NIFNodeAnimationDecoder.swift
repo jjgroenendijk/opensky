@@ -37,7 +37,8 @@ nonisolated struct NIFNodeAnimationDecoder {
                     translation: entry.object.translation,
                     rotation: simd_quatf(entry.object.rotation).normalized,
                     scale: entry.object.scale
-                )
+                ),
+                billboardMode: NIFBillboard.mode(of: file.blocks[entry.block])
             )
         }
         controllerRefs = objects.map(\.object.controllerRef)

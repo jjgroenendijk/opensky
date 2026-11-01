@@ -14,10 +14,32 @@ nonisolated public struct NIFNodeAnimator: Sendable {
     public private(set) var frozen: Set<Int> = []
     /// Each lag bone's world transform, by controller index.
     private var lagged: [Int: NIFNodeTransform] = [:]
+    /// Each billboard node's local transform once turned to the camera. `locals` keeps the
+    /// authored one, because modes that turn about an own axis read it.
+    public private(set) var faced: [Int: NIFNodeTransform] = [:]
+    /// Billboard nodes, parents before children.
+    private let billboards: [Int]
 
     public init(animation: NIFNodeAnimation) {
         self.animation = animation
         locals = animation.nodes.map(\.rest)
+        billboards = animation.billboardNodes
+    }
+
+    /// Turns each billboard node to `viewer`, given in the mesh's space.
+    public mutating func face(_ viewer: NIFBillboard.Viewer) {
+        for node in billboards {
+            guard let mode = animation.nodes[node].billboardMode else { continue }
+            let parent = parentTransform(of: node)
+            let authored = locals[node]
+            let placed = parent.composed(with: authored)
+            guard let turned = NIFBillboard.rotation(
+                mode: mode, rotation: placed.rotation, origin: placed.translation, viewer: viewer
+            ) else { continue }
+            var local = authored
+            local.rotation = (parent.rotation.inverse * turned).normalized
+            faced[node] = local
+        }
     }
 
     /// Advances the clock and poses every node. `placement` is the mesh in the world;
@@ -58,11 +80,11 @@ nonisolated public struct NIFNodeAnimator: Sendable {
 
     /// The node's transform in the mesh.
     public func modelTransform(of node: Int) -> NIFNodeTransform {
-        var transform = locals[node]
+        var transform = faced[node] ?? locals[node]
         var parent = animation.nodes[node].parent
         var depth = 0
         while let current = parent, depth < 64 {
-            transform = locals[current].composed(with: transform)
+            transform = (faced[current] ?? locals[current]).composed(with: transform)
             parent = animation.nodes[current].parent
             depth += 1
         }

@@ -72,7 +72,6 @@ nonisolated public struct NIFEffectScene: Sendable {
     }
 
     static let maxDepth = 64
-    static let billboardType = "NiBillboardNode"
 
     public init(file: NIFFile) throws {
         var builder = NIFEffectSceneBuilder(file: file)

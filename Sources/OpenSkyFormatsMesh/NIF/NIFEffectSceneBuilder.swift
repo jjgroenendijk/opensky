@@ -30,7 +30,11 @@ nonisolated struct NIFEffectSceneBuilder {
             let block = file.blocks[Int(visit.ref)]
             if Self.isNode(block.typeName) {
                 let node = try NIFNode(data: block.data, header: file.header)
-                let index = append(node.object, parent: visit.parent, billboard: billboard(block))
+                let index = append(
+                    node.object,
+                    parent: visit.parent,
+                    billboard: NIFBillboard.mode(of: block)
+                )
                 // Reversed, so the stack pops children in file order.
                 stack += node.children.reversed().map {
                     Visit(ref: $0, parent: index, depth: visit.depth + 1)
@@ -42,16 +46,7 @@ nonisolated struct NIFEffectSceneBuilder {
     }
 
     static func isNode(_ type: String) -> Bool {
-        NIFNode.traversedTypes.contains(type) || type == NIFEffectScene.billboardType
-    }
-
-    /// `NiBillboardNode` ends with its mode, after the `NiNode` fields.
-    private func billboard(_ block: NIFFile.Block) -> UInt16? {
-        guard block.typeName == NIFEffectScene.billboardType, block.data.count >= 2 else {
-            return nil
-        }
-        let end = block.data.endIndex
-        return UInt16(block.data[end - 2]) | UInt16(block.data[end - 1]) << 8
+        NIFNode.traversedTypes.contains(type)
     }
 
     private mutating func append(

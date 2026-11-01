@@ -3,6 +3,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 @testable import OpenSkyObjectAnimation
@@ -12,7 +13,7 @@ import Testing
 @MainActor
 private final class FakeNodeWorld: NodeControllerWorld {
     var meshes: [CellNodeAnimation] = []
-    var nodeControllerViewer: SIMD3<Float>?
+    var nodeControllerViewer: NIFBillboard.Viewer?
 
     func residentNodeAnimations() -> [CellNodeAnimation] {
         meshes
@@ -56,6 +57,39 @@ struct NodeControllerCoordinatorTests {
         let bone = try #require(pose.snapshot.bones.first)
         #expect(abs(bone.translation.x - 5) < 1e-4)
         #expect(nodes.nodes(of: 0x10)?.first?.name == "Wheel")
+    }
+
+    @Test func aBillboardIsABoneThatTurnsToTheCamera() throws {
+        var glow = NIFFixture.niNode(
+            prefix: NIFFixture.avObjectPrefix(nameIndex: 1, translation: [0, 0, 50]),
+            children: []
+        )
+        glow.appendUInt16(4)
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(nameIndex: 0), children: [1]
+            )),
+            .init("NiBillboardNode", glow)
+        ], strings: ["Root", "Glow"]))
+        let rig = try #require(try NodeControllerRig(file: file))
+        #expect(rig.skeleton.boneNames == ["Glow"])
+        let world = FakeNodeWorld()
+        world.nodeControllerViewer = NIFBillboard.Viewer(
+            eye: [100, 0, 50], forward: [-1, 0, 0], up: [0, 0, 1]
+        )
+        let pose = PlayerPoseBuffer()
+        world.meshes = [CellNodeAnimation(
+            reference: 0x10, rig: rig, pose: pose,
+            placement: MatrixMath.translation([0, 100, 0])
+        )]
+        let nodes = NodeControllerCoordinator(world: world)
+        nodes.sync()
+        nodes.tick(deltaTime: 0.1)
+        // The camera sits at mesh x 100, y -100, so +Z turns that way.
+        let bone = try #require(pose.snapshot.bones.first)
+        let facing = bone.rotation.act([0, 0, 1])
+        #expect(simd_length(facing - simd_normalize(SIMD3(1, -1, 0))) < 1e-4)
+        #expect(nodes.nodes(of: 0x10)?.first?.controllers == ["NiBillboardNode mode 4"])
     }
 
     @Test func aMeshWithOnlyInactiveControllersGetsNoRig() throws {
