@@ -53,7 +53,7 @@ extension Renderer {
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: frameInput.view.position,
-            sunDirection: interiorLighting?.directionalDirection ?? camera.sunDirection,
+            sunDirection: interiorLighting?.directionalDirection ?? exteriorSunTravelDirection,
             sunColor: weatherLight?.sunlightColor
                 ?? interiorLighting?.directionalColor ?? camera.sunColor,
             ambientColor: weatherLight?.ambientColor
@@ -78,7 +78,8 @@ extension Renderer {
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
             shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
             shadowSampleRadius: shadowSampleRadius,
-            weatherSkyEnabled: weatherSky == nil ? 0 : 1,
+            weatherSkyEnabled: weatherSky == nil ? 0 : skyCelestial != nil
+                && frameCelestial != nil ? 2 : 1,
             weatherSkyUpperColor: weatherSky?.skyUpper ?? .zero,
             weatherSkyLowerColor: weatherSky?.skyLower ?? .zero,
             weatherHorizonColor: weatherSky?.horizon ?? .zero,
@@ -521,6 +522,7 @@ extension Renderer {
             encoder.setRenderPipelineState(skyPipeline)
             encoder.setCullMode(.none)
             encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
+            encodeCelestial(state: &state)
             encodeClouds(state: &state)
         }
         encoder.setDepthStencilState(depthState)

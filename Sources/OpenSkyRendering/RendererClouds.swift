@@ -25,7 +25,7 @@ extension Renderer {
         guard let skyClouds, let dome = skyClouds.dome else { return }
         let layers = frameCloudLayers.filter { $0.alpha > 0.001 }
         var drawn = 0
-        state.encoder.setRenderPipelineState(cloudPipeline)
+        state.encoder.setRenderPipelineState(skyLayerPipelines.clouds)
         argumentTable.setAddress(dome.vertices.gpuAddress, index: BufferIndex.vertices.rawValue)
         for layer in layers where drawn < SkyClouds.maximumDraws {
             guard

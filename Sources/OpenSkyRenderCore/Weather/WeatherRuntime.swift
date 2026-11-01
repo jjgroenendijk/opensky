@@ -84,6 +84,15 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
         sunrise * sunriseValue + day * dayValue + sunset * sunsetValue + night * nightValue
     }
 
+    /// The hours the sun crosses the horizon: the middle of the sunrise and sunset windows.
+    public static func horizonHours(timing: Climate.Timing?) -> (rise: Float, set: Float) {
+        let windows = windows(timing: timing)
+        return (
+            (windows.sunriseBegin + windows.sunriseEnd) / 2,
+            (windows.sunsetBegin + windows.sunsetEnd) / 2
+        )
+    }
+
     /// Sunrise/sunset window bounds in hours.
     private struct Windows {
         let sunriseBegin: Float

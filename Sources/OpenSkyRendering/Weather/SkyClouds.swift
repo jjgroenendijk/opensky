@@ -16,6 +16,7 @@ nonisolated public struct CloudDomeGeometry: Sendable {
     public var positions: [SIMD3<Float>] = []
     public var colors: [SIMD4<Float>] = []
     public var texcoords: [SIMD2<Float>] = []
+    public var normals: [SIMD3<Float>] = []
     public var indices: [UInt32] = []
     /// Ranges into `indices`, one per shape.
     public var shapes: [Range<Int>] = []
@@ -31,11 +32,40 @@ nonisolated public struct CloudDomeGeometry: Sendable {
                 positions.append(SIMD3(placed.x, placed.y, placed.z))
                 colors.append(index < mesh.colors.count ? mesh.colors[index] : SIMD4(1, 1, 1, 1))
                 texcoords.append(index < mesh.uvs.count ? mesh.uvs[index] : .zero)
+                let normal = index < mesh.normals.count ? mesh.normals[index] : SIMD3(0, 0, 1)
+                let turned = mesh.transform * SIMD4(normal, 0)
+                normals.append(simd_normalize(SIMD3(turned.x, turned.y, turned.z)))
             }
             let start = indices.count
             indices.append(contentsOf: mesh.indices.map { base + UInt32($0) })
             shapes.append(start ..< indices.count)
         }
+    }
+
+    /// The GPU vertex and index buffers; nil when empty or not allocated.
+    func makeBuffers(device: MTLDevice) -> (vertices: MTLBuffer, indices: MTLBuffer)? {
+        let vertices = positions.indices.map { index in
+            CloudVertex(
+                position: SIMD4(positions[index], 1),
+                color: colors[index],
+                texcoord: texcoords[index],
+                padding: .zero,
+                normal: SIMD4(normals[index], 0)
+            )
+        }
+        guard
+            !vertices.isEmpty, !indices.isEmpty,
+            let vertexBuffer = device.makeBuffer(
+                bytes: vertices, length: vertices.count * MemoryLayout<CloudVertex>.stride,
+                options: .storageModeShared
+            ),
+            let indexBuffer = device.makeBuffer(
+                bytes: indices,
+                length: indices.count * MemoryLayout<UInt32>.stride,
+                options: .storageModeShared
+            )
+        else { return nil }
+        return (vertexBuffer, indexBuffer)
     }
 }
 
@@ -133,26 +163,7 @@ public final class SkyClouds {
     }
 
     private func makeDome(_ geometry: CloudDomeGeometry) -> Dome? {
-        let vertices = geometry.positions.indices.map { index in
-            CloudVertex(
-                position: SIMD4(geometry.positions[index], 1),
-                color: geometry.colors[index],
-                texcoord: geometry.texcoords[index],
-                padding: .zero
-            )
-        }
-        guard
-            !vertices.isEmpty, !geometry.indices.isEmpty,
-            let vertexBuffer = device.makeBuffer(
-                bytes: vertices, length: vertices.count * MemoryLayout<CloudVertex>.stride,
-                options: .storageModeShared
-            ),
-            let indexBuffer = device.makeBuffer(
-                bytes: geometry.indices,
-                length: geometry.indices.count * MemoryLayout<UInt32>.stride,
-                options: .storageModeShared
-            )
-        else {
+        guard let (vertexBuffer, indexBuffer) = geometry.makeBuffers(device: device) else {
             failedPaths.append("\(Self.domePath): empty or not allocated")
             return nil
         }

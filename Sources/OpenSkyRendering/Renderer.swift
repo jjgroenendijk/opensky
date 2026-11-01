@@ -38,7 +38,7 @@ public final class Renderer: NSObject {
     public let commandAllocators: [MTL4CommandAllocator]
     public let argumentTable: MTL4ArgumentTable
     public let skyPipeline: MTLRenderPipelineState
-    public let cloudPipeline: MTLRenderPipelineState
+    public let skyLayerPipelines: SkyLayerPipelines
     public let opaquePipeline: MTLRenderPipelineState
     public let alphaTestPipeline: MTLRenderPipelineState
     public let blendedPipeline: MTLRenderPipelineState
@@ -171,6 +171,8 @@ public final class Renderer: NSObject {
     /// The weather's cloud layers; nil keeps the plain sky gradient.
     public var skyClouds: SkyClouds?
     public var cloudsEnabled = true
+    /// The sun, moons, stars, and aurora models and textures; nil draws none of them.
+    public var skyCelestial: SkyCelestial?
     /// The exposure the eye has adapted to, fed back from the GPU each frame.
     public var eyeAdaptation = EyeAdaptation()
     public let precipitation: PrecipitationVolume
@@ -350,7 +352,7 @@ public final class Renderer: NSObject {
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)
         self.pipelineCache = compiler
         let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
-        (skyPipeline, cloudPipeline) = (pipelines.sky, pipelines.clouds)
+        (skyPipeline, skyLayerPipelines) = (pipelines.sky, pipelines.skyLayers)
         (opaquePipeline, skinnedBlendedPipelines) = (pipelines.opaque, pipelines.skinnedBlended)
         (alphaTestPipeline, blendedPipeline) = (pipelines.alphaTest, pipelines.blended)
         (skinnedOpaquePipeline, additivePipelines) = (pipelines.skinnedOpaque, pipelines.additive)

@@ -36,6 +36,10 @@ public final class GameSession: RenderFrameDriver {
     public var interiorFogOverride: InteriorFogOverride?
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public internal(set) var currentResolvedWeather: ResolvedWeather?
+    /// This frame's sun, moons, stars, and aurora; nil whenever the weather is.
+    public internal(set) var celestialSky: CelestialSky?
+    /// The GMSTs the celestial sky reads; vanilla values until weather is attached.
+    public var skySettings = SkySettings.vanilla
     /// The weather's rain or snow particles; nil until the weather links are wired.
     public internal(set) var precipitationTuning: PrecipitationTuning?
     /// The precipitation a script applied with `ShaderParticleGeometry.Apply`.
@@ -275,6 +279,7 @@ public final class GameSession: RenderFrameDriver {
         input.timeOfDay = timeOfDay
         input.wind = wind
         input.weather = currentResolvedWeather
+        input.celestial = celestialSky
         input.precipitationTuning = precipitationTuning
         input.interiorFog = interiorFogOverride
         input.imageSpace = imageSpace

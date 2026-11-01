@@ -35,7 +35,8 @@ static float2 skySunDiscAndGlow(SkyVertexOut in, constant FrameUniforms &frame)
 }
 
 // Weather sky: horizon -> sky-lower -> sky-upper vertical gradient, with the
-// sun disc and glow tinted by the weather sun and sun-glare colours.
+// sun disc and glow tinted by the weather sun and sun-glare colours, unless the
+// textured sun draws them (weatherSkyEnabled 2).
 static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame)
 {
     float3 lower =
@@ -43,6 +44,9 @@ static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame)
     float3 upper =
         mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, in.uv.y));
     float3 color = in.uv.y < 0.5 ? lower : upper;
+    if (frame.weatherSkyEnabled == 2) {
+        return float4(color, 1.0);
+    }
 
     float2 sun = skySunDiscAndGlow(in, frame);
     float3 tint =

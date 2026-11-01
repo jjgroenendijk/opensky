@@ -106,8 +106,21 @@ enum AssetCommand {
             print("material \(index): diffuse \(material.diffuseTexture ?? "-"), "
                 + "normal \(material.normalTexture ?? "-")"
                 + (material.alphaTestThreshold != nil ? ", alpha-test" : "")
-                + (material.doubleSided ? ", double-sided" : ""))
+                + (material.doubleSided ? ", double-sided" : "")
+                + (material.additiveBlend != nil ? ", additive" : "")
+                + (material.effect.map(effectDescription) ?? ""))
         }
+    }
+
+    /// The effect shading a shape draws with, so an effect mesh's look can be checked.
+    private static func effectDescription(_ effect: EffectShading) -> String {
+        let color = effect.baseColor
+        return ", effect colour (\(color.x), \(color.y), \(color.z), \(color.w)) "
+            + "x \(effect.baseColorScale), palette \(effect.paletteTexture ?? "-")"
+            + (effect.paletteColor ? " colour" : "") + (effect.paletteAlpha ? " alpha" : "")
+            + (effect.vertexColors ? ", vertex colours" : "")
+            + (effect.vertexAlpha ? ", vertex alpha" : "")
+            + (effect.falloff != nil ? ", falloff" : "")
     }
 
     static func runDDS(context: CLIContext, arguments: DDSArguments) throws {

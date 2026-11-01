@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWeather
+import OpenSkyWorldState
 
 /// Where the session finds effect records (`IMGS`, `SPGD`), and the cell link an
 /// interior names.
@@ -15,9 +16,29 @@ extension GameSession {
     /// keeps its procedural sky.
     public func attachWeather(from provider: WorldDataStores?) throws {
         weather = provider?.weatherSystem
+        if let provider {
+            skySettings = SkySettings.resolve(store: provider.gameSettings)
+        }
+        weather?.transitionAcceleration = skySettings.weatherTransAccel
         if let files = provider?.scriptFileSystem {
             renderer.skyClouds = try SkyClouds(fileSystem: files, device: renderer.device)
+            renderer.skyCelestial = try SkyCelestial(fileSystem: files, device: renderer.device)
         }
+    }
+
+    /// The clouds and sky objects of an offscreen frame, loaded at once, with the
+    /// sky settings of `loadOrder`.
+    public func attachOffscreenSky(
+        loadOrder: LoadOrderPlugins, fileSystem: any GameFileSource
+    ) throws {
+        skySettings = SkySettings.resolve(store: GameSettingStore(
+            plugins: loadOrder.plugins.map { ($0.name, $0.file) }
+        ))
+        let device = renderer.device
+        renderer.skyClouds = try SkyClouds(fileSystem: fileSystem, device: device, immediate: true)
+        renderer.skyCelestial = try SkyCelestial(
+            fileSystem: fileSystem, device: device, immediate: true
+        )
     }
 }
 
@@ -57,6 +78,7 @@ extension GameSession {
         defer { updateImageSpace(deltaTime: deltaTime) }
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
+            celestialSky = nil
             renderer.regionEmittance = [:]
             return
         }
@@ -65,6 +87,9 @@ extension GameSession {
             for: renderer.emittanceRegions, hour: timeOfDay
         )
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
+        celestialSky = currentResolvedWeather == nil ? nil : weather.celestialSky(
+            hour: timeOfDay, daysPassed: gameTime.clock.daysPassed, settings: skySettings
+        )
         if let links = imageSpaceLinks {
             precipitationTuning = PrecipitationTuning(record: weather.precipitationParticles(
                 in: links.records, plugin: links.weatherPlugin

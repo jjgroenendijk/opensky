@@ -13,7 +13,10 @@ extension PapyrusNativeFunctions {
             weather(name, into: &registry) { call, sky, key, _ in
                 guard let key else { return failure(call, "\(name) needs a weather") }
                 let held = boolean(call, at: 0, default: false)
-                guard sky.setWeather(key, held: held, instant: instant) else {
+                let accelerated = !instant && boolean(call, at: 1, default: false)
+                guard sky.setWeather(
+                    key, held: held, instant: instant, accelerated: accelerated
+                ) else {
                     return failure(call, "\(name) needs a WTHR form")
                 }
                 return .returned(.none)

@@ -125,9 +125,7 @@ public enum PreviewRenderJob {
             weather.forceWeather(found.formID, transition: .instant)
         }
         if let fileSystem = sources.fileSystem {
-            renderer.skyClouds = try SkyClouds(
-                fileSystem: fileSystem, device: sources.device, immediate: true
-            )
+            try gameSession.attachOffscreenSky(loadOrder: sources.loadOrder, fileSystem: fileSystem)
         }
     }
 

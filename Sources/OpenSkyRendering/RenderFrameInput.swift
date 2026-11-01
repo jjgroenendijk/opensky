@@ -20,6 +20,8 @@ public struct RenderFrameInput {
     public var wind = WindState.calm
     /// This frame's resolved weather (exterior only); nil keeps the procedural sky.
     public var weather: ResolvedWeather?
+    /// The sun path, moons, stars, and aurora; nil keeps the fixed camera sun.
+    public var celestial: CelestialSky?
     /// How the weather's rain or snow falls; nil keeps the current tuning.
     public var precipitationTuning: PrecipitationTuning?
     /// A script's fog for the loaded interior; ignored once the scene's lighting changes.

@@ -16,9 +16,9 @@ public protocol PapyrusWeatherControlling: AnyObject {
     var transitionFraction: Float { get }
 
     /// Moves to `weather`. A held weather stays until released; `instant` skips the
-    /// blend. False when the form is no `WTHR`.
+    /// blend, and `accelerated` runs it faster. False when the form is no `WTHR`.
     @discardableResult
-    func setWeather(_ weather: ReferenceKey, held: Bool, instant: Bool) -> Bool
+    func setWeather(_ weather: ReferenceKey, held: Bool, instant: Bool, accelerated: Bool) -> Bool
 
     /// Ends a held weather, so the regions pick again.
     func releaseWeather()

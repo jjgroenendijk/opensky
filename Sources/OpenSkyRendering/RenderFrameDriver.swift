@@ -53,5 +53,6 @@ extension Renderer {
             precipitation.tuning = tuning
         }
         prepareClouds()
+        prepareCelestial()
     }
 }

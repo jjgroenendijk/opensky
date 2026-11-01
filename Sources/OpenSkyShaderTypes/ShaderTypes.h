@@ -328,7 +328,8 @@ typedef struct
     /// (2r+1)^2 tap box (1 gives 3x3). Read only when shadowsEnabled != 0.
     unsigned int shadowSampleRadius;
     /// 0 -> skyFragment uses its procedural time-of-day palette;
-    /// 1 -> it uses the blended weather sky palette below.
+    /// 1 -> it uses the blended weather sky palette below; 2 -> the same, and the
+    /// textured sun and glare stand in for the drawn disc and glow.
     unsigned int weatherSkyEnabled;
     /// Weather sky palette, already time-of-day + transition blended on the
     /// CPU (WTHR NAM0 sky-upper/lower/horizon and sun/sun-glare tints).

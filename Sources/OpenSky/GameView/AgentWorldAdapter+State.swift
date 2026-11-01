@@ -400,7 +400,29 @@ extension AgentWorldAdapter {
             "hour": .init(clock.hourOfDay), "day": .init(clock.day),
             "month": .string(clock.monthName),
             "year": .init(clock.year), "daysPassed": .init(clock.daysPassed),
-            "timescale": .init(clock.timescale), "simulation": agentTimeline.json
+            "timescale": .init(clock.timescale), "simulation": agentTimeline.json,
+            "sky": skyState()
+        ]
+    }
+
+    /// The sun path, the moons, and the aurora this frame draws; null without weather.
+    private func skyState() -> AgentJSON {
+        guard let sky = game.gameSession?.celestialSky else { return .null }
+        let drawn = game.renderer?.skyCelestial?.drawnObjectCount
+        return [
+            "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
+            "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
+            "starsAngleDegrees": .init(sky.starsAngle * 180 / .pi),
+            "moons": .array(sky.moons.map { moon in
+                [
+                    "moon": .string(moon.moon.rawValue), "phase": .string(moon.phase.textureSuffix),
+                    "direction": .init(moon.direction), "alpha": .init(moon.alpha)
+                ]
+            }),
+            "auroras": .array(sky.auroras.map { aurora in
+                ["model": .string(aurora.model), "alpha": .init(aurora.alpha)]
+            }),
+            "drawnObjects": drawn.map { .init($0) } ?? .null
         ]
     }
 

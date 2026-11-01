@@ -113,7 +113,7 @@ extension Renderer {
     /// Direction the sun travels (sun -> scene), matching the scene pass's
     /// FrameUniforms.sunDirection source.
     private var sunTravelDirection: SIMD3<Float> {
-        scene.lighting?.directionalDirection ?? camera.sunDirection
+        scene.lighting?.directionalDirection ?? exteriorSunTravelDirection
     }
 
     /// This frame's cascade `index` world->light-clip matrix for FrameUniforms;
