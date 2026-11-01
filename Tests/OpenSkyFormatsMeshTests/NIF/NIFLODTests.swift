@@ -15,10 +15,11 @@ struct NIFLODTests {
         return try NIFHeader(reader: &reader)
     }
 
-    private func shape(nameIndex: UInt32 = .max) -> Data {
+    private func shape(nameIndex: UInt32 = .max, shaderPropertyRef: Int32 = -1) -> Data {
         let vertex = Data(count: 20)
         return NIFFixture.bsTriShape(
             prefix: NIFFixture.avObjectPrefix(nameIndex: nameIndex),
+            shaderPropertyRef: shaderPropertyRef,
             attributes: Self.attributes,
             strideDwords: 5,
             vertexRecords: [vertex, vertex, vertex],
@@ -66,13 +67,14 @@ struct NIFLODTests {
     }
 
     @Test func decodesSubIndexSegmentsAndFlattensShape() throws {
-        var payload = shape()
+        var payload = shape(shaderPropertyRef: 1)
         payload.appendUInt32(1)
         payload.append(0xA5)
         payload.appendUInt32(0)
         payload.appendUInt32(1)
         let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("BSSubIndexTriShape", payload)
+            .init("BSSubIndexTriShape", payload),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let parsed = try NIFSubIndexTriShape(data: payload, header: file.header)
         #expect(parsed.segments.map(\.flags) == [0xA5])
@@ -96,9 +98,10 @@ struct NIFLODTests {
         let file = try NIFFile(data: NIFFixture.file(
             blocks: [
                 .init("BSMultiBoundNode", multiBoundNode(nameIndex: 0, children: [1, 2])),
-                .init("BSTriShape", shape(nameIndex: 1)),
+                .init("BSTriShape", shape(nameIndex: 1, shaderPropertyRef: 4)),
                 .init("BSMultiBoundNode", multiBoundNode(nameIndex: 2, children: [3])),
-                .init("BSTriShape", shape(nameIndex: 3))
+                .init("BSTriShape", shape(nameIndex: 3, shaderPropertyRef: 4)),
+                .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
             ],
             strings: ["chunk", "land", "WATER", "water shape"]
         ))

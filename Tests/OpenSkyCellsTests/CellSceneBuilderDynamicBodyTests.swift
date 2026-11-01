@@ -209,6 +209,7 @@ extension CellSceneBuilderTests {
                 children: [1]
             )),
             .init("BSTriShape", NIFFixture.bsTriShape(
+                shaderPropertyRef: 5,
                 attributes: Self.staticAttributes,
                 strideDwords: Self.staticStrideDwords,
                 vertexRecords: [
@@ -222,7 +223,8 @@ extension CellSceneBuilderTests {
             .init("bhkRigidBody", NIFCollisionFixture.rigidBody(
                 shape: 4, motionSystem: 4, dynamics: dynamics
             )),
-            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1))
+            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])
     }
 

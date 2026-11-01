@@ -24,6 +24,7 @@ struct NIFSkinIndexSpaceTests {
         let records = Self.positions.map { NIFFixture.skinnedVertex(position: $0) }
         let inherited = NIFFixture.bsTriShape(
             skinRef: 3,
+            shaderPropertyRef: 6,
             attributes: Self.attributes,
             strideDwords: 8,
             vertexCountOverride: Self.positions.count
@@ -150,7 +151,7 @@ struct NIFSkinIndexSpaceTests {
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3, 4]))
         ] + bones.map { NIFFixture.Block("NiNode", $0) } + [
             .init("BSTriShape", NIFFixture.bsTriShape(
-                skinRef: 5, attributes: attributes, strideDwords: 8
+                skinRef: 5, shaderPropertyRef: 8, attributes: attributes, strideDwords: 8
             )),
             .init("NiSkinInstance", NIFFixture.skinInstance(
                 dataRef: 6, partitionRef: 7, skeletonRootRef: 0, boneRefs: [1, 2, 3]
@@ -166,7 +167,8 @@ struct NIFSkinIndexSpaceTests {
                 weights: weights,
                 boneIndices: boneIndices,
                 globalVertexBuffer: true
-            ))
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])).model()
     }
 

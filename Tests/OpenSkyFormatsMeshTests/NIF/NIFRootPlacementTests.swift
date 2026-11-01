@@ -23,8 +23,10 @@ struct NIFRootPlacementTests {
                 children: [1]
             )),
             .init("BSTriShape", NIFFixture.staticTriangleShape(
-                prefix: NIFFixture.avObjectPrefix(translation: SIMD3(0, 10, 0))
-            ))
+                prefix: NIFFixture.avObjectPrefix(translation: SIMD3(0, 10, 0)),
+                shaderPropertyRef: 2
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let placed = try file.model().meshes[0].transform
         let shapeOnly = MatrixMath.translation(SIMD3(0, 10, 0))

@@ -22,10 +22,16 @@ extension GapsGatherer {
         var census = NIFMeshGapCensus()
         let unread = forEachFile(suffixes: [".nif", ".btr", ".bto"]) { census.record(data: $1) }
         let note = "\(census.fileCount) meshes (.nif, .btr, .bto), \(unread) did not read"
+        let shaderless = census.shaderlessShapes
+        let shaderlessNames = GapCounts.ranked(shaderless.uses).prefix(8)
+            .map { "\($0.name) \($0.count)" }.joined(separator: ", ")
+        let shaderlessNote = "\(shaderless.total) shapes have no shader property and are "
+            + "not drawn; most common names: \(shaderlessNames)"
         return [
             GapSection(
                 title: "NIF block types", unit: "block types", counts: census.blockTypes,
-                handled: NIFBlockTypes.handled.contains, usesUnit: "blocks", notes: [note]
+                handled: NIFBlockTypes.handled.contains, usesUnit: "blocks",
+                notes: [note, shaderlessNote]
             ),
             GapSection(
                 title: "Lighting shader types", unit: "shader types", counts: census.lightingTypes,

@@ -18,11 +18,12 @@ struct NIFLegacyTriShapeTests {
         let lod: [UInt32] = type == "BSLODTriShape" ? [1, 0, 0] : []
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
-            .init(type, NIFBlockFixture.legacyTriShape(dataRef: 2, lodSizes: lod)),
+            .init(type, NIFBlockFixture.legacyTriShape(dataRef: 2, shaderRef: 3, lodSizes: lod)),
             .init("NiTriShapeData", NIFBlockFixture.triShapeData(
                 positions: Self.positions, uvs: [SIMD2(0, 0), SIMD2(1, 0), SIMD2(0, 1)],
                 triangles: [0, 1, 2]
-            ))
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let mesh = try #require(file.model().meshes.first)
         #expect(mesh.positions == Self.positions)

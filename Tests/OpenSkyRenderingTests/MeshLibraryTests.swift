@@ -48,7 +48,7 @@ struct MeshLibraryTests {
     }
 
     /// One static one-triangle BSTriShape payload (SSE interleaved record).
-    private func shape(skinRef: Int32 = -1) -> Data {
+    private func shape(skinRef: Int32 = -1, shaderPropertyRef: Int32 = -1) -> Data {
         var record = Data()
         record.appendFloat32(1)
         record.appendFloat32(2)
@@ -60,6 +60,7 @@ struct MeshLibraryTests {
         record.append(contentsOf: [255, 128, 128, 128]) // tangent + bitangent Z
         return NIFFixture.bsTriShape(
             skinRef: skinRef,
+            shaderPropertyRef: shaderPropertyRef,
             attributes: Self.staticAttributes,
             strideDwords: Self.staticStrideDwords,
             vertexRecords: Array(repeating: record, count: 3),
@@ -71,7 +72,8 @@ struct MeshLibraryTests {
     private func staticNIF() -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
-            .init("BSTriShape", shape())
+            .init("BSTriShape", shape(shaderPropertyRef: 2)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ])
     }
 
@@ -93,7 +95,11 @@ struct MeshLibraryTests {
             .init("NiPSysBoxEmitter", emitter),
             .init("BSEffectShaderProperty", shader)
         ]
-        return NIFFixture.file(blocks: blocks + (withShape ? [.init("BSTriShape", shape())] : []))
+        let drawn: [NIFFixture.Block] = [
+            .init("BSTriShape", shape(shaderPropertyRef: 6)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+        ]
+        return NIFFixture.file(blocks: blocks + (withShape ? drawn : []))
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aRetexturedModelKeepsItsParticles() throws {
@@ -234,7 +240,8 @@ struct MeshLibraryTests {
                 attributes: Self.staticAttributes,
                 strideDwords: Self.staticStrideDwords
             )),
-            .init("BSTriShape", shape())
+            .init("BSTriShape", shape(shaderPropertyRef: 3)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let library = try library(device: device)
         _ = try library.model(path: "mixed.nif")

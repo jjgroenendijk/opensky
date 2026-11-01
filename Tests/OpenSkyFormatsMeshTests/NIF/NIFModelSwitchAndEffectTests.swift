@@ -21,10 +21,11 @@ struct NIFModelSwitchAndEffectTests {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("NiSwitchNode", NIFFixture.niSwitchNode(children: [2, 3], activeIndex: 1)),
-            .init("BSTriShape", shape()),
+            .init("BSTriShape", shape(shaderPropertyRef: 6)),
             .init("NiNode", NIFFixture.niNode(children: [4, 5])),
-            .init("BSTriShape", shape()),
-            .init("BSTriShape", shape())
+            .init("BSTriShape", shape(shaderPropertyRef: 6)),
+            .init("BSTriShape", shape(shaderPropertyRef: 6)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         #expect(try file.model().meshes.count == 2)
     }
@@ -81,10 +82,14 @@ struct NIFModelSwitchAndEffectTests {
         let hidden = NIFFixture.avObjectPrefix(flags: 0xF)
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
-            .init("BSTriShape", shape()),
-            .init("BSTriShape", NIFFixture.staticTriangleShape(prefix: hidden)),
+            .init("BSTriShape", shape(shaderPropertyRef: 5)),
+            .init(
+                "BSTriShape",
+                NIFFixture.staticTriangleShape(prefix: hidden, shaderPropertyRef: 5)
+            ),
             .init("NiNode", NIFFixture.niNode(prefix: hidden, children: [4])),
-            .init("BSTriShape", shape())
+            .init("BSTriShape", shape(shaderPropertyRef: 5)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         let model = try file.model()
         #expect(model.meshes.count == 1)

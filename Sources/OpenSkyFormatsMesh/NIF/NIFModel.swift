@@ -309,10 +309,10 @@ nonisolated extension NIFFile.Flattener {
         }
     }
 
-    /// The static path has no texture-less effect look, so such effect shapes are
-    /// skipped. Drawn anyway, they show as flat cards.
+    /// The game draws no shape without a shader property (docs/formats/nif.md). The
+    /// static path has no texture-less effect look, so such effect shapes are skipped too.
     func isUndrawableShape(_ shape: NIFTriShape) throws -> Bool {
-        guard shape.shaderPropertyRef >= 0 else { return false }
+        guard shape.shaderPropertyRef >= 0 else { return true }
         let block = try block(at: Int(shape.shaderPropertyRef))
         guard
             block.typeName == NIFFile.effectShaderType,

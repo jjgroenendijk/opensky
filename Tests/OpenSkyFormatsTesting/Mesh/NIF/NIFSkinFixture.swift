@@ -25,7 +25,8 @@ extension NIFFixture {
                 dataRef: 4, partitionRef: 5, skeletonRootRef: 0, boneRefs: [1]
             )),
             .init("NiSkinData", skinData(boneTransforms: [niTransform()], vertexWeights: [[]])),
-            .init("NiSkinPartition", partition)
+            .init("NiSkinPartition", partition),
+            .init("BSLightingShaderProperty", bsLightingShaderProperty())
         ]
     }
 }

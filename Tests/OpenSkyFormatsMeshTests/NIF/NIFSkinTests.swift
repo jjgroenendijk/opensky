@@ -24,6 +24,7 @@ struct NIFSkinTests {
             ))),
             .init("BSTriShape", NIFFixture.bsTriShape(
                 skinRef: 3,
+                shaderPropertyRef: 6,
                 attributes: Self.attributes,
                 strideDwords: 8
             )),
@@ -51,7 +52,8 @@ struct NIFSkinTests {
                 bonePalette: [0],
                 weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
                 boneIndices: Array(repeating: .zero, count: 3)
-            ))
+            )),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]
         return try NIFFile(data: NIFFixture.file(blocks: blocks))
     }
@@ -156,6 +158,7 @@ struct NIFSkinTests {
         let records = Self.positions.map { NIFFixture.skinnedVertex(position: $0) }
         let inherited = NIFFixture.bsTriShape(
             skinRef: 3,
+            shaderPropertyRef: 6,
             attributes: Self.attributes,
             strideDwords: 8,
             vertexCountOverride: Self.positions.count
@@ -202,6 +205,7 @@ struct NIFSkinTests {
         let records = uvs.map { NIFFixture.dynamicSkinAttributesVertex(uv: $0) }
         let inherited = NIFFixture.bsTriShape(
             skinRef: 3,
+            shaderPropertyRef: 6,
             attributes: attributes,
             strideDwords: 5,
             vertexCountOverride: Self.positions.count
@@ -250,6 +254,7 @@ struct NIFSkinTests {
         }
         blocks[2] = .init("BSTriShape", NIFFixture.bsTriShape(
             skinRef: 3,
+            shaderPropertyRef: 6,
             attributes: Self.attributes,
             strideDwords: 8
         ))

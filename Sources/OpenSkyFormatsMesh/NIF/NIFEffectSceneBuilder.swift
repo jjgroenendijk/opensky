@@ -63,8 +63,12 @@ nonisolated struct NIFEffectSceneBuilder {
     private mutating func appendShape(_ block: NIFFile.Block, parent: Int?) throws {
         guard let shape = try NIFTriShape.decode(block, in: file) else { return }
         let node = append(shape.object, parent: parent, billboard: nil)
-        guard shape.skinRef < 0, !shape.positions.isEmpty, !shape.indices.isEmpty else { return }
-        let shaderBlock = shape.shaderPropertyRef >= 0 ? Int(shape.shaderPropertyRef) : nil
+        // The game draws no shape without a shader property (docs/formats/nif.md).
+        guard
+            shape.skinRef < 0, shape.shaderPropertyRef >= 0,
+            !shape.positions.isEmpty, !shape.indices.isEmpty
+        else { return }
+        let shaderBlock = Int(shape.shaderPropertyRef)
         try shapes.append(NIFEffectScene.Shape(
             node: node, positions: shape.positions,
             normals: shape.normals.count == shape.positions.count

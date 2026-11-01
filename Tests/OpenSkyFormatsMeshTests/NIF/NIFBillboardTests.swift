@@ -80,7 +80,8 @@ struct NIFBillboardTests {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSFadeNode", NIFFixture.niNode(children: [1])),
             .init("NiBillboardNode", billboard),
-            .init("BSTriShape", NIFFixture.staticTriangleShape())
+            .init("BSTriShape", NIFFixture.staticTriangleShape(shaderPropertyRef: 3)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]))
         #expect(try file.model().meshes.count == 1)
     }
