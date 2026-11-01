@@ -26,6 +26,7 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     var captures: [URL] = []
     var screenshots: [URL] = []
     var finished: BenchmarkTourResult?
+    var memoryReads = 0
 
     func beginTour(overrides: [PlayerSettingID: Double], passTiming _: Bool) {
         began = overrides
@@ -93,7 +94,12 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     }
 
     func gpuMemory() -> GPUMemoryUsage {
-        GPUMemoryUsage(totalBytes: 1 << 30, renderTargetBytes: 1 << 26, textureBytes: 1 << 28)
+        memoryReads += 1
+        return GPUMemoryUsage(
+            totalBytes: 1 << 30,
+            renderTargetBytes: 1 << 26,
+            textureBytes: 1 << 28
+        )
     }
 
     func resetArrivalPhases() {}
@@ -150,6 +156,8 @@ struct BenchmarkTourCoordinatorTests {
         #expect(whiterun.passes["scene"]?.averageMS == 3)
         #expect(whiterun.averageDrawCalls == 300)
         #expect(whiterun.gpuMemory != nil)
+        // Once before and once after the one measured shot, never inside it.
+        #expect(world.memoryReads == 2)
         #expect(whiterun.arrivalMS != nil)
         #expect(result.settings == ["rendering.renderScale": 2])
         #expect(result.overrides == ["rendering.gpuCulling": 0])

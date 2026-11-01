@@ -168,7 +168,9 @@ Per scene the result holds:
   and `audio`. Each is read from the frame before.
 - the average draw calls and drawn instances. Two runs with different counts drew different
   views.
-- `gpuMemory`: the GPU memory allocated, sampled every 30 frames.
+- `gpuMemory`: the GPU memory allocated, read just before and just after the shot. A read
+  walks every resident allocation and can take over 100 ms late in a long tour, so it never
+  runs inside a measured frame.
 
 The whole tour also gets a `frameTime` and `gpuTime` over every measured frame.
 
