@@ -176,6 +176,19 @@ struct WeatherRuntimeTests {
         #expect(system.transitionFraction == 1)
     }
 
+    @Test func resumeAutomaticSnapsFromTheForcedWeatherToThePlacesPick() throws {
+        let fresh = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+        fresh.update(hour: 12)
+        let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+        system.forceWeather(FormID(0x200), transition: .instant)
+        system.forceWeather(FormID(0x100), transition: .timed)
+        system.resumeAutomatic()
+        system.update(hour: 12)
+        #expect(system.forced == nil)
+        #expect(system.transitionFraction == 1)
+        #expect(system.currentWeatherID == fresh.currentWeatherID)
+    }
+
     @Test func forceTimedBlendsFromCurrentToTarget() throws {
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         system.forceWeather(FormID(0x100), transition: .instant)

@@ -72,8 +72,10 @@ gives back the movement mode, the clock, the HUD, the camera, and the weather.
 
 ## The scenes
 
-Each scene has a place, a time of day, a weather, and a camera shot. Each shot runs 16 s, so
-every scene weighs the same in the tour total. Four shot kinds give different loads:
+Each scene has a place, a time of day, a weather, and a camera shot. A scene with no weather
+of its own drops the weather the scene before it forced, and shows the weather its place
+picks. Each shot runs 16 s, so every scene weighs the same in the tour total. Four shot kinds
+give different loads:
 
 - `dolly`: the eye follows a spline and looks along a second spline, as through a street.
 - `orbit`: a circle around a point, so the view sweeps the whole area.

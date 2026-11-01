@@ -173,6 +173,15 @@ nonisolated public final class WeatherSystem {
         beginTransition(to: weather, transition: transition)
     }
 
+    /// Drops a forced weather and snaps to a pick for the current place, as arriving in
+    /// a worldspace does.
+    public func resumeAutomatic() {
+        forced = nil
+        gameHoursSinceRoll = 0
+        guard let weather = pickAutomatic() else { return }
+        beginTransition(to: weather, transition: .instant)
+    }
+
     /// Starts `weather` without holding it, so the next reroll may replace it. A forced
     /// weather wins, as an override does in the game.
     public func startWeather(_ weather: FormID, transition: Transition) {

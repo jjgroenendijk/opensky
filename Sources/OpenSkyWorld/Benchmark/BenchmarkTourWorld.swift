@@ -65,7 +65,8 @@ public protocol BenchmarkTourWorld: AnyObject {
     func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool
 
     func setHour(_ hour: Float)
-    /// False when the weather cannot be selected here.
+    /// Nil releases a forced weather to the place's own. False when the weather cannot
+    /// be selected here.
     func setWeather(_ editorID: String?) -> Bool
     func setCamera(_ pose: BenchmarkCameraPose)
     /// Lets the clock advance one fixed step on the next frame.
