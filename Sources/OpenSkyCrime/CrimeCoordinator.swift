@@ -104,6 +104,8 @@ public final class CrimeCoordinator {
         didSet { conditionRevision &+= 1 }
     }
 
+    /// The store revision `advanceFavour` last acted on.
+    var favourRevision: UInt64?
     /// Rises on every change of the in-memory state the crime condition seam reads.
     private(set) var conditionRevision: UInt64 = 0
     let conditionCache = RevisionCache<CrimeConditionKey, CrimeConditionResolution>()

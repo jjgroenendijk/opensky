@@ -68,6 +68,12 @@ will remain at 25". Each relationship row keeps that first rank, and a save stor
 The friend must still rank the player Friend or higher and still belong to the owning faction.
 With several such friends, the highest allowance counts. An item worth more is theft as before.
 
+Becoming friends also forgives earlier thefts. UESP [Skyrim:Crime](https://en.uesp.net/wiki/Skyrim:Crime):
+"When your disposition raises with someone, they will often let you take things from their home. If
+you had previously stolen any of these items, they will also have their stolen status removed from
+your inventory." So each theft from a faction owner records the item and count. Once a friend of
+that faction covers the item's value, those copies lose the stolen flag, and the record goes.
+
 ## Which crime faction answers for a place
 
 A cell names its location with `XLCN`. A location names its crime faction with `FNAM`. Almost no

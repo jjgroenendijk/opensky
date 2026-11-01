@@ -7,6 +7,7 @@
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 /// The favour rule: values in, gold out.
 public enum FavourAllowance {
@@ -37,5 +38,23 @@ extension CrimeCoordinator {
             memberships: { [world] in world.factionMemberships(of: $0) },
             settings: runtime.settings
         )
+    }
+
+    /// Clears the stolen flag on what the player stole from a friend's faction, when
+    /// the friend's allowance covers it. Runs every tick, and acts only when a
+    /// relationship, a membership, or the record of stolen items changed.
+    public func advanceFavour() {
+        guard let runtime = reporter?.runtime, let inventory = world.inventory else { return }
+        let revision = runtime.revision(of: [.relationships, .factions, .stolenOrigins])
+        guard revision != favourRevision else { return }
+        favourRevision = revision
+        for origin in runtime.stolenOrigins().origins {
+            guard
+                let allowance = favourAllowance(in: origin.owner),
+                world.itemValue(of: origin.item) <= Int64(allowance)
+            else { continue }
+            inventory.clearStolen(origin.item, count: origin.count, in: .player)
+            runtime.forgetStolen(origin.item, from: origin.owner)
+        }
     }
 }

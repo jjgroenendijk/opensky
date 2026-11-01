@@ -176,13 +176,16 @@ nonisolated extension OpenSkySaveDecoder {
             body.favourites = try OpenSkySaveStoryDecoder.decodeFavourites(payload)
         case OpenSkySaveFormat.ChunkTag.enchanting:
             body.enchanting = try OpenSkySaveStoryDecoder.decodeEnchanting(payload)
+        case OpenSkySaveFormat.ChunkTag.stolenOrigins:
+            body.stolenOrigins = try OpenSkySaveStoryDecoder.decodeStolenOrigins(payload)
         default:
             return false
         }
         return true
     }
 
-    /// `CPOT`, `INGK`, `WPSN`, `FAVS`, `PRUL`, and `ENCK`: state of the player and its items.
+    /// `CPOT`, `INGK`, `WPSN`, `FAVS`, `PRUL`, `ENCK`, and `STOF`: state of the player and
+    /// its items.
     static func mergePlayerState(
         _ body: Body,
         into entries: [WorldStateSnapshotEntry]
@@ -192,6 +195,7 @@ nonisolated extension OpenSkySaveDecoder {
         entries = OpenSkySaveDeltaMerge.merge(body.weaponPoisons, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.favourites, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.playerRules, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.stolenOrigins, into: entries)
         return OpenSkySaveDeltaMerge.merge(body.enchanting, into: entries)
     }
 }

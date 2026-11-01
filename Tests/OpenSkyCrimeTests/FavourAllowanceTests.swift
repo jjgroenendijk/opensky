@@ -8,6 +8,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 import Testing
 
@@ -109,5 +110,47 @@ struct FavourAllowanceTests {
         world.allowance = 500
         let reporter = try CrimeReporter(runtime: CrimeFixture.runtime(), world: world)
         #expect(reporter.verdict(on: CrimeFixture.key(0x700), item: Self.cheap).isTheft)
+    }
+
+    @Test func stolenOriginsMergeByOwnerAndItem() {
+        let state = StolenOriginsState()
+            .adding(Self.cheap, count: 2, from: Self.family)
+            .adding(Self.cheap, count: 1, from: Self.family)
+            .adding(Self.dear, count: 0, from: Self.family)
+        #expect(state.origins == [StolenOrigin(owner: Self.family, item: Self.cheap, count: 3)])
+        #expect(state.removing(Self.cheap, from: Self.family).isEmpty)
+    }
+
+    @Test func becomingFriendsClearsTheStolenFlagOnTheirFactionsGoods() throws {
+        let store = WorldStateStore()
+        let world = FakeCrimeSessionWorld()
+        let inventory = try FakeCrimeInventory()
+        world.inventory = inventory
+        world.memberships[Self.friend] = CrimeFixture.state([(
+            CrimeFixture.Factions.shopkeepers,
+            0
+        )])
+        let coordinator = try CrimeCoordinator(
+            world: world,
+            data: CrimeSessionData(
+                runtime: CrimeFixture.runtime(store: store), locations: nil,
+                pluginName: CrimeFixture.pluginName
+            ),
+            witnesses: nil, storyEvents: nil
+        )
+        let reporter = try #require(coordinator.reporter)
+        reporter.reportTheft(
+            of: Self.cheap, count: 2, from: CrimeFixture.key(0x700),
+            owner: .faction(Self.family, requiredRank: 0)
+        )
+        coordinator.advanceFavour()
+        #expect(inventory.cleared.isEmpty)
+        #expect(reporter.runtime.stolenOrigins().origins.count == 1)
+
+        store.set(ActorRelationshipState().setting(1, toward: Self.friend), for: .player, in: nil)
+        coordinator.advanceFavour()
+
+        #expect(inventory.cleared == [InventoryStack(item: Self.cheap, count: 2, stolen: true)])
+        #expect(reporter.runtime.stolenOrigins().isEmpty)
     }
 }

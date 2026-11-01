@@ -144,6 +144,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Relationship favour: per pair, the rank it held when it first reached Friend.
         /// A sibling, because `RELS` overrides have a fixed layout.
         public static let relationshipFavour = "RELF"
+        /// Stolen origins: per owning faction, the items the player stole from it.
+        public static let stolenOrigins = "STOF"
 
         /// Harvested flora and trees. Presence means harvested.
         public static let harvests = "HRVS"

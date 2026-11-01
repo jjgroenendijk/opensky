@@ -116,6 +116,7 @@ chunk cannot read into the next.
 | `RELF` | the rank each pair first reached as friends | actors |
 | `CRIM` | crime gold and crime counts | actors |
 | `STOL` | stolen item counts | actors |
+| `STOF` | what the player stole from each owning faction | actors |
 | `CRVG` | violent part of crime gold | actors |
 | `TMPR` | tempered quality of each copy | actors |
 | `ICPY` | every distinct item copy | actors |

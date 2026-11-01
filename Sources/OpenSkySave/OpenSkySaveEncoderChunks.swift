@@ -41,6 +41,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeWeaponPoisons(entries, into: &writer)
         writeFavourites(entries, into: &writer)
         writeEnchanting(entries, into: &writer)
+        writeStolenOrigins(entries, into: &writer)
         writeViolentCrimeGold(entries, into: &writer)
         writeHarvests(entries, into: &writer)
         writeLocks(entries, into: &writer)

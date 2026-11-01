@@ -64,6 +64,14 @@ final class FakeCrimeInventory: InventoryAccess {
         false
     }
 
+    /// Each clear asked for, since stolen flags are not modelled.
+    var cleared: [InventoryStack] = []
+
+    func clearStolen(_ item: FormID, count: Int32, in _: InventoryHolder) -> Int32 {
+        cleared.append(InventoryStack(item: item, count: count, stolen: true))
+        return count
+    }
+
     func confiscateStolen(
         from _: InventoryHolder,
         to _: InventoryHolder

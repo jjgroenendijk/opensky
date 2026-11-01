@@ -264,6 +264,14 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
             .replacing(item, stolen: true, with: self.count(of: item, stolen: true) + moved)
     }
 
+    /// This inventory with up to `count` stolen copies of `item` no longer stolen.
+    public func clearingStolen(_ item: FormID, count: Int32) -> Self {
+        let moved = min(max(0, count), stolenCount(of: item))
+        guard moved > 0 else { return self }
+        return replacing(item, stolen: true, with: stolenCount(of: item) - moved)
+            .replacing(item, stolen: false, with: self.count(of: item, stolen: false) + moved)
+    }
+
     /// This inventory without stolen copies, plus the stolen stacks removed, as an
     /// arrest seizes them. An item equipped only in stolen copies is unequipped.
     public func removingStolen() -> (remaining: Self, taken: [InventoryStack]) {

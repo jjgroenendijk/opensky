@@ -51,6 +51,10 @@ public protocol InventoryAccess {
         _ edit: (inout ItemCopy) -> Void
     ) -> Bool
 
+    /// Clears the stolen flag on up to `count` copies of `item`. Returns how many changed.
+    @discardableResult
+    func clearStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Int32
+
     /// Moves every stolen stack from `source` to `destination`.
     func confiscateStolen(
         from source: InventoryHolder,

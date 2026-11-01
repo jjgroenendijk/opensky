@@ -99,7 +99,10 @@ public final class CrimeReporter: CrimeReporting {
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        record(
+        if actor == .player, case let .faction(faction, _) = owner {
+            runtime.recordStolen(item, count: count, from: faction)
+        }
+        return record(
             theftEvent(item, count: count, from: reference, by: actor, owner: owner)
         )
     }

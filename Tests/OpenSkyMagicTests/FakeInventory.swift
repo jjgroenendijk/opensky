@@ -66,6 +66,10 @@ final class FakeInventory: InventoryAccess {
         return true
     }
 
+    func clearStolen(_: FormID, count _: Int32, in _: InventoryHolder) -> Int32 {
+        0
+    }
+
     func confiscateStolen(
         from _: InventoryHolder,
         to _: InventoryHolder

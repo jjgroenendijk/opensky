@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  RELF, CRIM, STOL, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
+  RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -139,6 +139,13 @@ Key, uint32 row count, then rows: the other actor's key and an int8 rank. The ra
 the pair held when it first reached Friend (1) or higher, which fixes the item allowance
 ([crime](/engine/crime.md)). A sibling of `RELS`, because `RELS` overrides have a fixed layout.
 A row with no `RELS` override is dropped on load. Sizes: 11 bytes minimum per entry, 8 per row.
+
+## STOF: stolen origins
+
+Key, cell, uint32 row count, then rows: the owning faction's key, the item FormID (uint32), and
+the count (int32). Each row is what the player stole from that faction and still holds a record
+of. A friend's favour clears the stolen flag on those items and drops the row
+([crime](/engine/crime.md)). Sizes: 12 bytes minimum per entry, 15 per row.
 
 ## CRIM: crime
 
