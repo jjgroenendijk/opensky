@@ -267,4 +267,22 @@ struct FollowerCommandCoordinatorTests {
         #expect(commands.phase == .idle)
         #expect(world.held.isEmpty)
     }
+
+    @Test func aShortPressOnAFollowerIsATap() {
+        let (commands, _) = setUp()
+        commands.useKeyDown(on: follower)
+        #expect(commands.advanceUseKey(by: 0.1, isDown: true) == nil)
+        #expect(commands.advanceUseKey(by: 0.1, isDown: false) == .tap(follower))
+        #expect(commands.pressedFollower == nil)
+    }
+
+    @Test func aLongPressOnAFollowerIsAHold() {
+        let (commands, _) = setUp()
+        commands.useKeyDown(on: follower)
+        for _ in 0 ..< 3 {
+            #expect(commands.advanceUseKey(by: 0.125, isDown: true) == nil)
+        }
+        #expect(commands.advanceUseKey(by: 0.125, isDown: true) == .hold(follower))
+        #expect(commands.advanceUseKey(by: 0.1, isDown: false) == nil)
+    }
 }

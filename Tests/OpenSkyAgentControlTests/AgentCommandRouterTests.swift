@@ -88,7 +88,7 @@ struct AgentCommandRouterTests {
         let step = try #require(finish(run("input.hold", ["action": "forward", "frames": 60])))
         #expect(try step.finish?.get()["released"] == true)
         #expect(world.stepRequests == [60])
-        #expect(world.inputLog == ["press forward", "release forward"])
+        #expect(world.inputLog == ["hold forward", "release forward"])
     }
 
     @Test func textTypesIntoTheOpenMenu() throws {

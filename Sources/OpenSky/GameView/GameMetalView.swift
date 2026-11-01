@@ -154,10 +154,10 @@ final class GameMetalView: MTKView {
 
     override func keyUp(with event: NSEvent) {
         // Menus act on key-down; a held direction's key-up reaches a menu that
-        // reads held keys. One-shot actions have no key-up.
+        // reads held keys. Other one-shot actions have no key-up.
         guard
             let action = bindings.action(forMacKey: event.keyCode, inMenu: inMenu),
-            action.isHeld || inMenu
+            action.sendsRelease || inMenu
         else {
             if !inMenu {
                 super.keyUp(with: event)

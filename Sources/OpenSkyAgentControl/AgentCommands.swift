@@ -170,6 +170,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts follower command mode, as `SetDoingFavor` does; with `target`, also
     /// commands the follower to use it; `exit` leaves command mode.
     case favor(reference: String, target: String?, exit: Bool)
+    /// Sets or clears the player-teammate flag, as `SetPlayerTeammate` does.
+    case teammate(reference: String, on: Bool)
     /// Passes the hours as the wait menu does; `sleeping` as the rest menu does.
     case passTime(hours: Int, sleeping: Bool)
     /// Forces an actor that flies to take off or to land.
@@ -231,6 +233,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             return try .favor(
                 reference: args.string("ref"), target: args.optionalString("target"),
                 exit: args.bool("exit", default: false)
+            )
+        case "teammate":
+            return try .teammate(
+                reference: args.string("ref"), on: !args.bool("off", default: false)
             )
         case "rest":
             let hours = try args.int("hours")
@@ -385,8 +391,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
 
 /// How an input action is applied.
 nonisolated public enum AgentInputPhase: String, Sendable {
-    /// Held actions go down and stay down; one-shot actions fire once.
+    /// Held actions go down and stay down; one-shot actions fire once, as a tap.
     case press
+    /// Goes down and stays down until `release`, even for activate.
+    case hold
     case release
 }
 

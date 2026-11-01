@@ -203,11 +203,17 @@ final class WorldSessionWiring {
             mounts?.takeActivation() == true || commands?.takeActivation() == true
         }
         let pickReach = { [weak commands] in commands?.pickReach }
+        let advanceUseKey = { [weak commands, weak gameSession, weak input] in
+            commands?.advanceUseKey(
+                by: gameSession?.lastCameraDelta ?? 0, isDown: input?.isActivationHeld == true
+            )
+        }
         frameSteps.register(.streaming) { [weak streamer, weak gameSession, weak input] position in
             // A rider's use key dismounts, and in command mode it picks the follower's
             // target, instead of activating the world.
             let pressed = input?.consumeActivation() ?? false
             let activate = pressed && !takesPress()
+            advanceUseKey()
             streamer?.update(
                 cameraPosition: position,
                 interactionRay: gameSession.flatMap {

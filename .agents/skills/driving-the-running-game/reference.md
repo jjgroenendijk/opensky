@@ -38,7 +38,9 @@ System menu after an autosave. In a menu, `forward` and `back` move the selectio
 arrow keys.
 
 - `input press <action>`, `input release <action>`
-- `input hold <action> --frames <n>` or `--seconds <s>`; held actions only
+- `input hold <action> --frames <n>` or `--seconds <s>`; held actions and `activate` only.
+  `input press activate` is a tap: down and up in one frame. Hold it on a follower for command
+  mode.
 - `input look --dx <deg> --dy <deg>`; positive dx turns right, dy looks up
 - `input select <label>`: moves the open menu's selection to the row with that label; a
   message box's buttons count as rows, so `input select No` then `input press menuAccept`
@@ -152,6 +154,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug skillsmenu [--sky\|--no-sky] [--levelup <n>]` | opens the skills menu as the Quick Stats key does; `--sky` or `--no-sky` turns the perk sky on or off; `--levelup` first earns 1 to 10 character levels, so the level-up pick shows |
 | `debug sit [<ref>] [--furniture <ref>]` | seats the actor (default `player`) in that furniture, or the nearest loaded one with a free seat |
 | `debug stand [<ref>]` | gets the actor up from its seat |
+| `debug teammate <ref> [--off]` | sets the player-teammate flag, as `SetPlayerTeammate` does, so a hold of `activate` on the actor opens command mode |
 | `debug favor <ref> [--target <ref>] [--exit]` | puts a follower in command mode; `--target` commands it to use that reference, or to go to an `x,y,z` spot; `--exit` leaves command mode |
 | `debug flight <ref> takeoff\|land\|perch\|hasty\|crash` | forces an actor whose race flies to take off, land, land on the nearest perch, or make a hasty or crash landing; on the ridden dragon it gives the rider's land order or calls it off |
 | `debug drunk <ref> on\|off` | raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do; answers `taken` |

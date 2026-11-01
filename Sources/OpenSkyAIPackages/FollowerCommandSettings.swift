@@ -14,6 +14,8 @@ nonisolated public struct FollowerCommandSettings: Equatable, Sendable {
     public var waitSeconds: Float = 40
     /// How close the follower walks to its target before it acts.
     public var reach: Float = 128
+    /// How long the use key stays down on a follower before it opens command mode.
+    public var holdSeconds: Float = 0.5
 
     public static let vanilla = Self()
 

@@ -38,7 +38,8 @@ Each step plays a Favors tab topic of the follower's dialogue:
 
 1. The follower's "I need you to do something" topic runs a result script that calls
    `SetDoingFavor`. The favour flag turns on, the follower says `SHOW`, and command mode starts
-   ([Dialogue](/engine/dialogue.md#favour-lines)).
+   ([Dialogue](/engine/dialogue.md#favour-lines)). Holding the use key on the follower does the
+   same, without the conversation ([Holding the use key](#holding-the-use-key)).
 2. In command mode the use key does not activate the world. It gives the target under the
    crosshair to the follower instead. The crosshair reaches `fFavorRequestPickDistance` units.
    With nothing under the crosshair, the target is the first ground the view ray meets: static
@@ -54,6 +55,18 @@ Each step plays a Favors tab topic of the follower's dialogue:
 A follower's follow package comes from a quest alias. Alias packages run even while a
 conversation holds the actor, so a command uses its own hold: no package of the follower runs
 until the task ends.
+
+## Holding the use key
+
+UESP "Skyrim:Followers", section Commands: pointing at a follower and holding the use key
+starts command mode. A press on a living player teammate waits:
+
+- Released before 0.5 seconds, it is a tap. The follower is activated as by any press, so the
+  conversation opens.
+- Held for 0.5 seconds, command mode starts, as the topic starts it.
+
+The page gives neither the time nor the distance. The 0.5 seconds are OpenSky's choice, and
+the press reaches as far as any use-key press. A press on any other target acts at once.
 
 ## What the follower does
 
@@ -114,6 +127,9 @@ The follower acts when it is 128 units from the target, which is OpenSky's choic
 ## Checking it
 
 `openskycli game debug favor <follower>` starts command mode as the topic does.
+`openskycli game input hold activate --frames 40` on a follower starts it as a player
+would; `input press activate` is a tap. `openskycli game debug teammate <ref>` makes any actor
+a follower for this check.
 `--target <ref>` then gives a target, or `--target x,y,z` a spot on the ground. `--exit` leaves
 command mode. `openskycli game state
 favor` shows the phase, the last decision, and how the last task ended.

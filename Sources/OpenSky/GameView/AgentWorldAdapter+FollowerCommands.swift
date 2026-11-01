@@ -1,10 +1,12 @@
-// `state.favor` and `debug.favor`: follower command mode from the terminal
+// `state.favor`, `debug.favor`, and `debug.teammate`: follower command mode from the terminal
 // (docs/engine/follower-commands.md).
 
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 extension AgentWorldAdapter {
     func favorState() -> AgentJSON {
@@ -27,7 +29,7 @@ extension AgentWorldAdapter {
         return .object(json)
     }
 
-    func commandFollower(
+    private func commandFollower(
         _ reference: String, target: String?, exit: Bool
     ) throws(AgentFailure) -> AgentJSON {
         let follower = try resolveReference(reference).key
@@ -45,6 +47,27 @@ extension AgentWorldAdapter {
             try commands.command(commandTarget(target))
         }
         return favorState()
+    }
+
+    func followerDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .favor(reference, target, exit):
+            try commandFollower(reference, target: target, exit: exit)
+        case let .teammate(reference, on):
+            try setTeammate(reference, on: on)
+        default:
+            throw AgentFailure(.invalidArgument, "not a follower command")
+        }
+    }
+
+    private func setTeammate(_ reference: String, on: Bool) throws(AgentFailure) -> AgentJSON {
+        let resolved = try resolveReference(reference)
+        guard let bridge = game.scripts.bridge else { throw notReady() }
+        bridge.updateScriptedState(of: resolved.key) {
+            $0.setFlag(ScriptedStateName.playerTeammate, on)
+        }
+        let flag = bridge.scriptedState(of: resolved.key).flag(ScriptedStateName.playerTeammate)
+        return ["ref": .string(reference), "teammate": .bool(flag == true)]
     }
 
     /// A reference, or `x,y,z` for a spot on the ground.

@@ -171,6 +171,11 @@ nonisolated extension AgentCommandCatalog {
             ]
         ),
         command(
+            "debug.teammate", "Make an actor a player teammate, as SetPlayerTeammate does.",
+            positionals: [required("ref", refHelp)],
+            options: [flag("off", "Clear the teammate flag instead.")]
+        ),
+        command(
             "debug.flight", "Force an actor that flies to take off, land, or perch.",
             positionals: [
                 required("ref", refHelp),

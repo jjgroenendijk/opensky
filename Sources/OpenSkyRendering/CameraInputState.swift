@@ -26,6 +26,7 @@ public final class CameraInputState {
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
     private var activationRequested = false
+    public private(set) var isActivationHeld = false
     private var cameraModeCycleRequested = false
 
     public func press(_ key: MoveKey) {
@@ -113,6 +114,12 @@ public final class CameraInputState {
     /// Latches one interaction key-down until world controller consumes it.
     public func requestActivation() {
         activationRequested = true
+        isActivationHeld = true
+    }
+
+    /// The use key went up, which tells a tap from a hold on a follower.
+    public func releaseActivation() {
+        isActivationHeld = false
     }
 
     public func consumeActivation() -> Bool {
@@ -142,6 +149,7 @@ public final class CameraInputState {
         pendingLookRight = 0
         pendingLookUp = 0
         activationRequested = false
+        isActivationHeld = false
         cameraModeCycleRequested = false
     }
 

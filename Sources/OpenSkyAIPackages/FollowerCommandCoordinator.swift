@@ -44,6 +44,14 @@ nonisolated public enum FollowerCommandPhase: Equatable, Sendable {
     }
 }
 
+/// What a use-key press on a follower turned out to be.
+nonisolated public enum FollowerUseKey: Equatable, Sendable {
+    /// Released early: the press activates the follower, which opens the conversation.
+    case tap(ReferenceKey)
+    /// Held: command mode opens.
+    case hold(ReferenceKey)
+}
+
 /// How the last command mode or task ended.
 nonisolated public enum FollowerCommandOutcome: String, Equatable, Sendable {
     case done, failed, unreachable, cancelled, tooFar, lost
@@ -55,6 +63,8 @@ public final class FollowerCommandCoordinator {
     public private(set) var phase = FollowerCommandPhase.idle
     public private(set) var lastDecision: FollowerCommandDecision?
     public private(set) var lastOutcome: FollowerCommandOutcome?
+    /// A use-key press on a follower that is not yet a tap or a hold.
+    public private(set) var pressedFollower: (follower: ReferenceKey, held: Float)?
 
     public init(world: any FollowerCommandWorld) {
         self.world = world
@@ -90,6 +100,27 @@ public final class FollowerCommandCoordinator {
         release(follower)
         phase = .idle
         lastOutcome = .cancelled
+    }
+
+    /// The use key went down on a follower. A tap or a hold decides what it does.
+    public func useKeyDown(on follower: ReferenceKey) {
+        pressedFollower = (follower, 0)
+    }
+
+    /// Advances the pending press. Nil while it is undecided, or with no press.
+    public func advanceUseKey(by delta: Float, isDown: Bool) -> FollowerUseKey? {
+        guard let pressed = pressedFollower else { return nil }
+        let held = pressed.held + max(delta, 0)
+        if held >= settings.holdSeconds {
+            pressedFollower = nil
+            return .hold(pressed.follower)
+        }
+        guard isDown else {
+            pressedFollower = nil
+            return .tap(pressed.follower)
+        }
+        pressedFollower = (pressed.follower, held)
+        return nil
     }
 
     /// The player leaves command mode. True when command mode was on.

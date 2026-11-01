@@ -45,6 +45,7 @@ protocol FollowerCommandWorldHost: AnyObject {
 
 final class FollowerCommandWorldAdapter {
     unowned let game: any FollowerCommandWorldHost
+    private var pressedTarget: InteractionTarget?
 
     init(game: any FollowerCommandWorldHost) {
         self.game = game
@@ -86,12 +87,44 @@ final class FollowerCommandWorldAdapter {
     /// The use key in command mode commands the target under the crosshair, or the
     /// ground there. True when the press was taken, so nothing in the world activates.
     func takeActivation() -> Bool {
-        guard game.followerCommands.isChoosing else { return false }
+        guard game.followerCommands.isChoosing else { return takeFollowerPress() }
         let picked = game.streamer?.interactionTarget
             .flatMap { game.streamer?.referenceEntry(formID: $0.interaction.reference)?.key }
         let target = picked.flatMap(commandTarget) ?? (picked == nil ? groundTarget() : nil)
         game.followerCommands.command(target)
         return true
+    }
+
+    /// A press on a living follower waits: a tap talks, a hold opens command mode.
+    private func takeFollowerPress() -> Bool {
+        guard
+            let target = game.streamer?.interactionTarget,
+            let key = game.streamer?.referenceEntry(formID: target.interaction.reference)?.key,
+            game.streamer?.referenceEntry(key: key)?.placedActor != nil,
+            game.aiWorld.packageActorActivity(key) != .dead,
+            game.scripts.bridge?.scriptedState(of: key)
+                .flag(ScriptedStateName.playerTeammate) == true
+        else { return false }
+        pressedTarget = target
+        game.followerCommands.useKeyDown(on: key)
+        return true
+    }
+
+    /// Each frame while the use key waits on a follower: a release activates the
+    /// follower as a normal press would, and a long enough hold opens command mode.
+    func advanceUseKey(by delta: Float, isDown: Bool) {
+        switch game.followerCommands.advanceUseKey(by: delta, isDown: isDown) {
+        case .tap:
+            if let pressedTarget {
+                game.streamer?.activate(pressedTarget)
+            }
+            pressedTarget = nil
+        case let .hold(follower):
+            pressedTarget = nil
+            enterCommandMode(follower)
+        case nil:
+            break
+        }
     }
 
     /// The first ground the view ray meets within the pick distance: collision or terrain.
