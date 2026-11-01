@@ -38,7 +38,9 @@ before.
 
 The emitter sits 600 units above the camera. When the camera moves, the emitters and every live
 particle move by the same amount. So the density near the camera stays the same, and no trail is
-left behind while flying or walking.
+left behind while flying or walking. A move of more than 1,100 units in one frame, half the
+narrowest box, is a teleport: it drops every live particle, because those flakes belong to the
+old place and its weather. The new weather's particles then build up from the emitter.
 
 The renderer owns the playbacks outside the render scene, so rebuilding cells does not reset a storm.
 An interior, a world space with no sky, or turning precipitation off clears the particles and skips
