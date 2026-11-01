@@ -27,6 +27,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case flight(reference: String?)
     /// The player's mount: its kind, phase, motion, and a dragon's flight and orders.
     case mount
+    /// Follower command mode: its phase, the follower, and the last decision and outcome.
+    case favor
     /// The newest world-state writes, and whether the streamer is loading or rebuilding.
     case changes(limit: Int)
     case actorValue(reference: String, name: String)
@@ -74,6 +76,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         case "flight": try .flight(reference: args.optionalString("ref"))
         case "mount": .mount
+        case "favor": .favor
         default: nil
         }
     }
@@ -164,6 +167,11 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case sit(reference: String, furniture: String?)
     /// Gets the actor up from its seat.
     case stand(String)
+    /// Starts follower command mode, as `SetDoingFavor` does; with `target`, also
+    /// commands the follower to use it; `exit` leaves command mode.
+    case favor(reference: String, target: String?, exit: Bool)
+    /// Sets or clears the player-teammate flag, as `SetPlayerTeammate` does.
+    case teammate(reference: String, on: Bool)
     /// Passes the hours as the wait menu does; `sleeping` as the rest menu does.
     case passTime(hours: Int, sleeping: Bool)
     /// Forces an actor that flies to take off or to land.
@@ -221,6 +229,15 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
                 furniture: args.optionalString("furniture")
             )
         case "stand": return try .stand(args.optionalString("ref") ?? "player")
+        case "favor":
+            return try .favor(
+                reference: args.string("ref"), target: args.optionalString("target"),
+                exit: args.bool("exit", default: false)
+            )
+        case "teammate":
+            return try .teammate(
+                reference: args.string("ref"), on: !args.bool("off", default: false)
+            )
         case "rest":
             let hours = try args.int("hours")
             guard (1 ... 24).contains(hours) else { throw args.invalid("hours", "1 to 24") }
@@ -374,8 +391,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
 
 /// How an input action is applied.
 nonisolated public enum AgentInputPhase: String, Sendable {
-    /// Held actions go down and stay down; one-shot actions fire once.
+    /// Held actions go down and stay down; one-shot actions fire once, as a tap.
     case press
+    /// Goes down and stays down until `release`, even for activate.
+    case hold
     case release
 }
 

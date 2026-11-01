@@ -23,6 +23,11 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
         }
     }
 
+    /// Activate also sends its release, so holding it on a follower opens command mode.
+    public var sendsRelease: Bool {
+        isHeld || self == .activate
+    }
+
     /// A beast form cannot open the character menus or the map, switch the camera, or
     /// use favourites (UESP "Skyrim:Lycanthropy", "Skyrim:Vampire Lord").
     public var isBlockedInBeastForm: Bool {
@@ -175,7 +180,10 @@ public struct GameInputDispatcher {
             applyHeld(action, pressed: pressed)
             return
         }
-        guard pressed else { return }
+        guard pressed else {
+            applyRelease(action)
+            return
+        }
         switch action {
         case .sneak: input?.toggleSneak()
         case .jump: input?.requestJump()
@@ -194,6 +202,12 @@ public struct GameInputDispatcher {
     private func refusal(of action: GameInputAction) -> PlayerControlRefusal? {
         guard let group = action.controlGroup else { return nil }
         return locks.refusal(for: group, beastLocked: action.isBlockedInBeastForm)
+    }
+
+    private func applyRelease(_ action: GameInputAction) {
+        if action == .activate {
+            input?.releaseActivation()
+        }
     }
 
     private func applyHeld(_ action: GameInputAction, pressed: Bool) {

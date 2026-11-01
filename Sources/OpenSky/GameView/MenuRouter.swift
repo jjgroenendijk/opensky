@@ -2,6 +2,7 @@
 // the settings, menu text, sounds, and frame tick that every menu movie shares.
 
 import AppKit
+import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
@@ -15,6 +16,7 @@ protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
     var containerMenu: ContainerMenuController { get }
     var controlMapLoader: (() throws -> ControlMapFile)? { get }
     var dialogueMenu: DialogueMenuController { get }
+    var followerCommands: FollowerCommandCoordinator { get }
     var inventoryMenu: InventoryMenuController { get }
     var journalMenu: JournalMenuController { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
@@ -62,6 +64,8 @@ final class MenuRouter {
         case .quickload:
             game.saveGames.quickload()
         case .pause:
+            // In command mode the key only leaves it, as Tab does in the game.
+            guard !game.followerCommands.cancel() else { return }
             game.saveGames.autosave(.pause)
             game.systemMenu.open()
         default:

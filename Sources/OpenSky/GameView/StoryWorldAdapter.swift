@@ -43,6 +43,7 @@ protocol StoryWorldHost: AnyObject {
     var dialogue: DialogueCoordinator { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var faceMorphs: FaceMorphCoordinator { get }
+    var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var headTracking: HeadTrackingCoordinator { get }
     var hud: HUDCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
@@ -108,12 +109,9 @@ final class StoryWorldAdapter {
         game.scripts.bridge?.storyNatives.questFailed = { [weak self] quest in
             self?.questFailed(quest)
         }
-        game.scripts.bridge?.storyNatives.favorStateChanged = { [weak self] actor, isDoingFavor in
-            guard let self else { return }
-            let event: FourCC = isDoingFavor ? "SHOW" : "FEXT"
-            if let line = game.dialogue.favorLine(event, speaker: actor) {
-                say(line, speaker: actor)
-            }
+        let commands = game.followerCommandWorld
+        game.scripts.bridge?.storyNatives.favorStateChanged = { [weak commands] actor, isSet in
+            commands?.favorStateChanged(actor, isDoingFavor: isSet)
         }
         game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
             ConditionEvaluator(

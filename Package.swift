@@ -801,8 +801,8 @@ targets += domain(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldInterface",
-        "OpenSkyPerceptionInterface", "OpenSkyWorldConditions", "OpenSkyNavigation",
-        "OpenSkyActorPresentation", "OpenSkyPlayer", "OpenSkyRenderCore"
+        "OpenSkyPerceptionInterface", "OpenSkyInventoryInterface", "OpenSkyWorldConditions",
+        "OpenSkyNavigation", "OpenSkyActorPresentation", "OpenSkyPlayer", "OpenSkyRenderCore"
     ],
     tests: worldTestBase
 )

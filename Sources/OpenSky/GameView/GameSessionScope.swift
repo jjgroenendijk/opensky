@@ -194,9 +194,7 @@ final class GameSessionScope {
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data;
     /// session start replaces it with one built over the loaded world.
     lazy var inventory = InventoryCoordinator(
-        world: inventoryWorld,
-        lockWorld: lockWorld,
-        data: nil
+        world: inventoryWorld, lockWorld: lockWorld, data: nil
     )
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     lazy var lockWorld = LockWorldAdapter(game: self)
@@ -344,6 +342,9 @@ final class GameSessionScope {
     /// The werewolf and vampire lord forms.
     lazy var beastForms = BeastFormWorldAdapter(game: self)
     lazy var activationRefusals = ActivationRefusalWorldAdapter(game: self)
+    /// Follower command mode: the follower uses the target the player picks.
+    lazy var followerCommandWorld = FollowerCommandWorldAdapter(game: self)
+    lazy var followerCommands = FollowerCommandCoordinator(world: followerCommandWorld)
 
     /// Dragons nobody rides: take-off, flight, and landing.
     lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: self)

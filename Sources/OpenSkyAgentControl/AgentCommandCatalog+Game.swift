@@ -40,6 +40,10 @@ nonisolated extension AgentCommandCatalog {
             "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
         ),
         command(
+            "state.favor",
+            "Follower command mode: the phase, follower, last decision, and last outcome."
+        ),
+        command(
             "state.objects", "Each running object graph; with a reference, also its bones.",
             positionals: [optional("ref", refHelp)]
         ),
@@ -157,6 +161,19 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.stand", "Get an actor up from its seat.",
             positionals: [optional("ref", "The actor. Default: player.")]
+        ),
+        command(
+            "debug.favor", "Put a follower in command mode, as its do-something topic does.",
+            positionals: [required("ref", refHelp)],
+            options: [
+                value("target", "ref", "Then command it to use this reference, or go to x,y,z."),
+                flag("exit", "Leave command mode instead, as the pause key does.")
+            ]
+        ),
+        command(
+            "debug.teammate", "Make an actor a player teammate, as SetPlayerTeammate does.",
+            positionals: [required("ref", refHelp)],
+            options: [flag("off", "Clear the teammate flag instead.")]
         ),
         command(
             "debug.flight", "Force an actor that flies to take off, land, or perch.",

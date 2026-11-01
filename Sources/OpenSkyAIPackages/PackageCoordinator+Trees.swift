@@ -63,10 +63,11 @@ extension PackageCoordinator {
         apply(commands, actor: actor, endsBefore: 0)
     }
 
-    /// A scene or alias package always runs. The actor's own package waits while a
-    /// conversation or arrest holds the actor, and while it fights or is dead.
+    /// A scene or alias package runs unless a follower command holds the actor. The
+    /// actor's own package also waits while a conversation or arrest holds the actor, and
+    /// while it fights or is dead.
     private func runsTree(_ actor: ReferenceKey, package: Package) -> Bool {
-        guard let runtime, let world else { return false }
+        guard let runtime, let world, !commandedActors.contains(actor) else { return false }
         if runtime.hold(for: actor) != nil {
             return true
         }

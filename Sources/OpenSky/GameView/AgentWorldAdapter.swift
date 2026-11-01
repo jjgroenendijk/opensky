@@ -42,6 +42,8 @@ protocol AgentWorldHost: AnyObject {
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var mounts: MountCoordinator { get }
     var mountWorld: MountWorldAdapter { get }
+    var followerCommands: FollowerCommandCoordinator { get }
+    var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
@@ -193,16 +195,20 @@ extension AgentWorldAdapter: AgentControlWorld {
         }
         // As from the keyboard, so a help message waiting for the action ends.
         if
-            phase == .press, !game.menuMode.isMenuMode,
+            phase != .release, !game.menuMode.isMenuMode,
             let event = GameMetalView.helpEvents[action]
         {
             game.messages.noteInputEvent(event)
         }
-        let outcome = dispatcher.apply(action, phase == .press ? .press : .release)
+        let outcome = dispatcher.apply(action, phase == .release ? .release : .press)
         if outcome == .noMenu {
             throw AgentFailure(.invalidArgument, "'\(name)' needs an open menu")
         }
-        return action.isHeld
+        // A press of activate is a tap; only `input hold` keeps it down.
+        if phase == .press, action == .activate, !game.menuMode.isMenuMode {
+            _ = dispatcher.apply(action, .release)
+        }
+        return phase == .hold ? action.sendsRelease : action.isHeld
     }
 
     func look(yawDegrees: Float, pitchDegrees: Float) throws(AgentFailure) {

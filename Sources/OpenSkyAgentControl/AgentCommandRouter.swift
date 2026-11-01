@@ -266,7 +266,7 @@ public final class AgentCommandRouter {
         if let seconds, !(seconds > 0 && seconds <= 600) {
             throw args.invalid("seconds", "in (0, 600]")
         }
-        guard try world.applyInput(action, phase: .press) else {
+        guard try world.applyInput(action, phase: .hold) else {
             throw AgentFailure(.invalidArgument, "input.hold: \(action) is not a held action")
         }
         let release: @MainActor () throws(AgentFailure)

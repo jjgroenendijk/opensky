@@ -62,6 +62,8 @@ public enum WorldTickStep: Int, FramePhase {
     case combatLoop
     /// Package conditions read quest, actor, and reference state.
     case packages
+    /// After the packages, so a commanded follower's walk reads this frame's moves.
+    case followerCommands
     case perception
     case idles
     /// Before the actor graphs, so a flight's events and inputs reach them in the same frame.

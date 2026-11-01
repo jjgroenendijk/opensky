@@ -187,7 +187,7 @@ public final class WorldItemRuntime {
     /// Takes an object out of the world. A plugin placement gets a
     /// `ReferenceDeletionState`; a spawned object has its whole delta reset, so it
     /// leaves nothing in the next save.
-    private func removeFromWorld(_ key: ReferenceKey, cell: CellSceneLocation?) {
+    func removeFromWorld(_ key: ReferenceKey, cell: CellSceneLocation?) {
         if store.component(ReferenceSpawnState.self, for: key) != nil {
             store.reset(key)
             return
