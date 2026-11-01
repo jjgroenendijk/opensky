@@ -150,7 +150,7 @@ sample in which the main thread sits in one call for the whole second is a hang.
 - Profile a Release build. A Debug build makes tight math code many times slower, so it points at
   the wrong loops.
 - Start the process first, then run `xctrace record --attach <pid>`
-  ([why not `--launch`](/tools/environment.md#xctrace---launch-never-starts-the-process)). Attach
+  ([why not `--launch`](/tools/environment.md#tests)). Attach
   to the right PID: `$!` after a subshell is the shell, not the program.
 - The CLI benches run the renderer, animation, streaming, and physics. Combat, factions, actor
   values, perception, and AI packages run only in the app. To profile those, launch the Release app
