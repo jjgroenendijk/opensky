@@ -41,6 +41,9 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim
     /// Living actors hostile to `key` within `radius` world units of it.
     func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey]
+    /// Pushes `targets` away from `source` by the impact force of `payload`'s `PROJ`,
+    /// as a cloak's spell lands on them. Shield Charge knocks enemies down this way.
+    func knock(_ targets: [ReferenceKey], awayFrom source: ReferenceKey, by payload: SpellPayload)
     /// Whether `holder`'s base record or race carries the keyword `editorID`.
     func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool
     /// Whether `item`'s base record carries the keyword named `editorID`.
@@ -186,6 +189,9 @@ extension MagicWorld {
     public func projectileProximity(of _: SpellPayload) -> Float {
         0
     }
+
+    /// A session with no physics pushes nobody.
+    public func knock(_: [ReferenceKey], awayFrom _: ReferenceKey, by _: SpellPayload) {}
 
     public var isOutdoors: Bool {
         false
