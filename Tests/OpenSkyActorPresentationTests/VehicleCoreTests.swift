@@ -203,4 +203,27 @@ struct VehicleCoreTests {
         let poses = core.advance(base: { $0 == Self.horse ? ahead : nil }, ground: { _ in 0 })
         #expect(try Self.near(#require(poses[.player]).position, [0, -100, 0]))
     }
+
+    /// A cart rider that got off stands where its exit clip left its body, on the ground.
+    @Test func anExitedRiderStandsWhereItsBodyEnded() {
+        let seat = ReferenceTransformOverride(position: [100, 0, 50])
+        let standing = VehicleCore.standingPose(seat: seat, body: [30, 60, 90]) { _ in 10 }
+        #expect(Self.near(standing.position, [130, 60, 10]))
+
+        let turned = ReferenceTransformOverride(position: [100, 0, 50], rotation: [0, 0, .pi])
+        let behind = VehicleCore.standingPose(seat: turned, body: [30, 60, 90]) { _ in nil }
+        #expect(Self.near(behind.position, [70, -60, 50]))
+        #expect(behind.rotation == turned.rotation)
+    }
+
+    /// The cart's horse and riders walk through the cart; a mounted escort does not.
+    @Test func onlyACartsOwnGroupIgnoresVehicleCollision() {
+        var core = Self.towedCart()
+        let driver = ReferenceKey.plugin(name: "test.esm", objectID: 3)
+        let escortHorse = ReferenceKey.plugin(name: "test.esm", objectID: 4)
+        let escort = ReferenceKey.plugin(name: "test.esm", objectID: 5)
+        core.board(driver, on: Self.cart)
+        core.seat(escort, on: escortHorse, bone: "SaddleBone")
+        #expect(core.cartGroups == [Self.cart, Self.horse, driver, escort])
+    }
 }

@@ -77,11 +77,17 @@ final class VehicleWorldAdapter {
         if actor != .player {
             game.gameSession?.animationEvents?.handle(name, from: actor)
         }
+        handleBodyEvent(name, from: actor)
+        game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
+    }
+
+    /// The events that move or kill the actor, from an idle clip or the actor's own
+    /// graph: the executionee's chop state raises `KillActor` in the graph.
+    func handleBodyEvent(_ name: String, from actor: ReferenceKey) {
         run(vehicles.animationEvent(name, from: actor))
         if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
             game.scripts.bridge?.killActor(actor, killer: nil)
         }
-        game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
     }
 
     private func wireWheels(gameSession: GameSession) {

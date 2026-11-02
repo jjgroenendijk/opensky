@@ -102,6 +102,7 @@ final class ActorGraphWorldAdapter {
     func actorGraphFired(_ name: String, from actor: ReferenceKey) {
         game.gameSession?.animationEvents?.handle(name, from: actor)
         game.dragonFlight.handle(name, from: actor)
+        game.vehicleWorld.handleBodyEvent(name, from: actor)
         game.scripts.runtime?.queueAnimationEvent(sender: actor, name: name)
         guard
             let feet = game.actorWorld.combatActor(key: actor)?.feet,

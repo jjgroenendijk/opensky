@@ -30,6 +30,9 @@ public final class VehicleCoordinator {
     public private(set) var lastPoses: [ReferenceKey: ReferenceTransformOverride] = [:]
     /// The horse the player sat on last, kept after they dismount.
     public private(set) var playersLastMount: ReferenceKey?
+    /// Each seated rider's body bone in its root frame, read last frame. The exit clip
+    /// moves it from the seat to the ground beside the cart.
+    private var riderBodies: [ReferenceKey: SIMD3<Float>] = [:]
     weak let world: (any VehicleWorld)?
     private var hasDeltas = false
 
@@ -54,7 +57,7 @@ public final class VehicleCoordinator {
     /// The cart exit state's `ExitCartEnd` takes the rider off its vehicle.
     public func animationEvent(_ name: String, from actor: ReferenceKey) -> [VehicleCommand] {
         guard name.caseInsensitiveCompare(VehicleCore.exitEvent) == .orderedSame else { return [] }
-        return detach(actor)
+        return detach(actor, standing: true)
     }
 
     /// Seats `rider` on the horse's saddle bone, facing the way the horse faces.
@@ -83,12 +86,20 @@ public final class VehicleCoordinator {
         )
     }
 
-    public func detach(_ follower: ReferenceKey) -> [VehicleCommand] {
+    /// `standing` rests the rider where its exit idle left its body, not on its seat.
+    public func detach(_ follower: ReferenceKey, standing: Bool = false) -> [VehicleCommand] {
         guard core.links[follower] != nil else { return [] }
-        let commands = lastPoses[follower].map { [VehicleCommand.followerRests(follower, at: $0)] }
+        let linked = linkedReferences
+        let rest = lastPoses[follower].map { seat in
+            guard standing, let body = riderBodies[follower], let world else { return seat }
+            return VehicleCore.standingPose(seat: seat, body: body) {
+                world.vehicleGround(at: $0, excluding: linked)
+            }
+        }
         core.detach(follower)
         lastPoses[follower] = nil
-        return commands ?? []
+        riderBodies[follower] = nil
+        return rest.map { [VehicleCommand.followerRests(follower, at: $0)] } ?? []
     }
 
     /// Every follower and carrier, read before `core` changes so the ground port
@@ -105,6 +116,7 @@ public final class VehicleCoordinator {
             return [.publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([])]
         }
         loadWheels(world: world)
+        readRiderBodies(world: world)
         let linked = linkedReferences
         lastPoses = core.advance(
             base: { world.vehiclePose(of: $0) },
@@ -129,7 +141,7 @@ public final class VehicleCoordinator {
         commands += [
             .publishVehiclePoses(placements),
             .publishCarriedPoses(lastPoses.filter { $0.key != .player }),
-            .publishLinks(linked)
+            .publishLinks(core.cartGroups)
         ]
         hasDeltas = true
         return commands
@@ -144,6 +156,16 @@ public final class VehicleCoordinator {
             else { continue }
             core.setWheels(wheels, for: key)
         }
+    }
+
+    /// Riders on a fixed seat: cart passengers, whose exit idles walk them off the cart.
+    private func readRiderBodies(world: any VehicleWorld) {
+        var bodies: [ReferenceKey: SIMD3<Float>] = [:]
+        for (key, link) in core.links {
+            guard case .fixed = link.seat else { continue }
+            bodies[key] = world.vehicleBone(of: key, named: VehicleCore.bodyBone)
+        }
+        riderBodies = bodies
     }
 
     private func currentPose(of key: ReferenceKey) -> ReferenceTransformOverride? {

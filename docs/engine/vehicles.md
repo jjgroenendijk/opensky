@@ -79,10 +79,12 @@ bodies joined by hinge constraints, so the dynamic world does not simulate it. I
 build takes the collision of every vehicle follower out of the static set. Each collision query
 places those shapes at the follower's live pose, moved from the pose the build placed them at.
 
-A horse is not blocked by the cart it pulls, and a rider by the cart it sits on: an actor that is
-a carrier or a follower of any link walks with a collision query that leaves out the vehicles'
-moving collision. The cart's own ground search also leaves it out. A seated player does not walk,
-so the cart cannot push the player out of the seat.
+A horse is not blocked by the cart it pulls, and a rider by the cart it sits on. Every rider,
+and every actor linked by any chain of links to a towed cart, walks with a collision query that
+leaves out the vehicles' moving collision. A rider moves with its seat, so it cannot drift into
+a cart. A mounted escort's horse is neither, so a cart blocks it. The cart's own ground search
+also leaves it out. A seated player does not walk, so the cart cannot push
+the player out of the seat.
 
 When a follower leaves its carrier, it rests at its last pose. Until its cell is rebuilt, its
 collision stays at that pose; after the rebuild it is static again.
@@ -172,6 +174,11 @@ call `SetVehicle` (read with `openskycli pex`):
 So the game ends a link on its own when the exit state ends, and `ExitCartEnd` is the event that
 marks that moment. OpenSky takes any actor off its vehicle on that event.
 
+The rider's root is still on the cart's root at that moment, but the exit clip has carried the
+body off the cart. So the rider stands where the clip left its `NPC COM [COM ]` bone, read on the
+last frame before the event, at the ground height there. Without that, every passenger would
+stand in the middle of the cart. The rider keeps the heading of its seat.
+
 ## Saving
 
 The link is the world state component `vehicleLink`. It is not written to a save. The game allows
@@ -183,5 +190,7 @@ before it got on no longer counts as where it is.
 
 - `Game.SetSittingRotation` turns only a player who sits in furniture
   ([furniture](/engine/furniture.md#papyrus)); on a cart seat the player keeps the view it had.
+- A rider leaving a cart keeps its seat's heading. The exit clip also turns the body, but OpenSky
+  reads only where the body bone is, not which way it faces.
 - The front axle does not swivel under the cart, and the wheels do not turn at different speeds
   in a curve.
