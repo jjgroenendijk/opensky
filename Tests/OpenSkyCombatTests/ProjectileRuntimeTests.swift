@@ -184,6 +184,23 @@ struct ProjectileRuntimeTests {
         #expect(traces.first?.material == wood)
     }
 
+    /// A cone meets the world only through its look ahead, which finds the wall before
+    /// the spray reaches it, so the spray stops on the wall and no step jumps past it.
+    @Test func aConeStopsAtTheWallItsLookAheadFinds() {
+        let world = FakeProjectileWorld()
+        world.wall = FakeProjectileWorld.Wall(x: 500, reference: FormID(0x0002_0000))
+        let runtime = Self.runtime(world: world)
+        var profile = Self.flatProfile()
+        profile.isCone = true
+        runtime.fire(Self.shot(profile: profile))
+
+        let traces = Self.advance(runtime, seconds: 2)
+
+        #expect(traces.first?.outcome == .hitStatic)
+        let end = traces.first?.endPosition ?? SIMD3()
+        #expect(abs(end.x - 500) < 0.01)
+    }
+
     /// An actor standing behind a wall is not hit: the nearer touch wins.
     @Test func theNearerOfAWallAndAnActorWins() {
         let world = FakeProjectileWorld()

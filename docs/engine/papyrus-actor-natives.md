@@ -82,7 +82,8 @@ applied, so a handler that reads the target's health sees the blow.
 `akAggressor` is an ordinary handle. `akSource` and `akProjectile` name base records, not placed
 references. Their handles name the record and resolve to no instance, so a handler can compare and
 log them but cannot call a method on them. `abPowerAttack`, `abSneakAttack`, and `abBashAttack` are
-always false, because those attacks do not exist yet.
+set by the player's power attacks, sneak attacks, and bashes; an NPC's plain swing sets none
+([combat](/engine/combat.md#script-events)).
 
 ## OnDying and OnDeath
 

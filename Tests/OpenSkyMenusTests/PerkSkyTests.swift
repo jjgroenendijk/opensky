@@ -86,8 +86,8 @@ struct PerkSkyTests {
 
     @Test func theCameraTurnsTheShortWayAndRampsUp() {
         var settings = PerkSkySettings()
-        settings.rotationSpeedMax = 100
-        settings.rotationRampTime = 1
+        settings.rotationSpeedMax = 100.0 / 360
+        settings.rotationRampTime = 1000
         var motion = PerkSkyMotion(slot: 0)
         motion.update(now: 0, slot: 17, slotCount: 18, inTree: false, settings: settings)
         motion.update(now: 0.1, slot: 17, slotCount: 18, inTree: false, settings: settings)

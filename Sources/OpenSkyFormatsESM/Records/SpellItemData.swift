@@ -112,6 +112,19 @@ nonisolated public struct SpellItemData: Equatable, Sendable {
         return count
     }
 
+    /// A staff enchantment's `ENIT` read as a spell header, so a staff casts like a spell.
+    public init(staff data: EnchantmentItemData) {
+        baseCost = UInt32(clamping: max(0, data.cost))
+        flags = data.flags.contains(.manualCostCalc) ? .manualCostCalc : []
+        type = .spell
+        chargeTime = data.chargeTime
+        castingType = data.castingType
+        delivery = data.delivery
+        castDuration = 0
+        range = 0
+        halfCostPerk = nil
+    }
+
     public init(field: ESMField) throws {
         guard field.data.count >= 36 else {
             throw ESMError.malformed(

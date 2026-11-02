@@ -186,8 +186,9 @@ The Disarm perk spells only fire on a second roll: `iPerkAttackDisarmChance` (50
 `iPerkBlockDisarmChance` (50) for a bash. UESP "Skyrim:Block" gives the 50% chance for Disarming
 Bash (<https://en.uesp.net/wiki/Skyrim:Block>). A disarmed player sees `sPlayerDisarmedMessage`.
 
-Only the player has a behavior graph. A stagger raised on an NPC answers false, and the trace
-records the hit as not staggered.
+A stagger on an NPC writes `staggerMagnitude` and raises `staggerStart` on that NPC's behaviour
+graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose graph lacks the
+event, answers false, and the trace records the hit as not staggered.
 
 ## Impact sound
 

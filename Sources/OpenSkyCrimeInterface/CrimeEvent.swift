@@ -27,10 +27,10 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
     /// (`Game.SendWereWolfTransformation`).
     case werewolf
 
-    /// The kinds the ledger counts, in the order the save writes them. A werewolf
-    /// change adds gold only; its script counts the "Werewolf Transformations" stat.
+    /// The kinds the ledger counts, in the order the save writes them. The werewolf
+    /// count only decides whether a change still costs gold.
     public static let counted: [CrimeKind] = [
-        .theft, .pickpocket, .assault, .murder, .trespass, .escape
+        .theft, .pickpocket, .assault, .murder, .trespass, .escape, .werewolf
     ]
 
     /// Report ordering, which is also the order the save writes counts in.

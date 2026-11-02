@@ -56,6 +56,8 @@ public protocol InventoryWorld: AnyObject {
     func perkActivateLabel(for reference: FormID) -> String?
     /// Whether `base` is a `BOOK`, which the crosshair offers to read.
     func isBook(_ base: FormID) -> Bool
+    /// Bases of the items a running quest holds in a Quest Object alias.
+    func questItemBases() -> Set<FormID>
     var isPlayerSneaking: Bool { get }
     /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
     /// the live conditions.
@@ -110,6 +112,10 @@ extension InventoryWorld {
 
     public func isBook(_: FormID) -> Bool {
         false
+    }
+
+    public func questItemBases() -> Set<FormID> {
+        []
     }
 
     public var isPlayerSneaking: Bool {

@@ -16,6 +16,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -110,6 +111,7 @@ extension GapsGatherer {
         _ = SummonSettings.resolve(store: store)
         _ = MagicHoldSettings.resolve(store: store)
         _ = SpellCostSettings.resolve(store: store)
+        _ = MagicWorldSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)

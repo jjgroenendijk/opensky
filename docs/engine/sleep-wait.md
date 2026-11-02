@@ -36,10 +36,14 @@ menu `sNoWait...`. OpenSky checks them in this order:
 ## Passing time
 
 The clock moves in steps of 15 game minutes. Each step ages the [weather](/engine/weather.md)
-and runs the scripts' game-time timers, so `OnUpdateGameTime` and a weather change can happen
-during a rest. After the last step, OpenSky refills health, magicka, and stamina, and makes an
-autosave (`rest` or `wait`). Actors do not move on with their packages during the skipped
-time, and timed effects do not run out.
+and runs one script step with the new clock, so `OnUpdateGameTime`, `WaitGameTime`, and a weather
+change can happen during a rest. Each step also ages active effects. UESP says "any advanced passage
+of time (sleeping or waiting) will count against any timed magical effects"
+([Time](https://en.uesp.net/wiki/Skyrim:Time)). Effect durations are real seconds, so a step of
+game time counts as that time over the timescale: one hour at timescale 20 is 180 seconds. So a
+60-second effect is gone after a one-hour wait. After the last step, OpenSky refills health,
+magicka, and stamina, and makes an autosave (`rest` or `wait`). Actors do not move on with their
+packages during the skipped time.
 
 A bed's owner comes from the same ownership rule as theft ([crime](/engine/crime.md)). A bed
 the player owns, or that the player's faction owns at a rank they hold, is allowed.
@@ -47,8 +51,12 @@ the player owns, or that the player's faction owns at a rank they hold, is allow
 The Can't Wait flag is record-header flag `0x80000` on CELL and on WRLD (UESP
 "Skyrim Mod:Mod File Format/CELL" and ".../WRLD"). The order of the first two rows is
 OpenSky's reading. Sleeping sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).
-The Well Rested and Lover's
-Comfort bonuses are not given.
+The rest bonuses come from the vanilla `PlayerSleepQuestScript`, which
+listens for `OnSleepStop`. Read from its compiled `OnSleepStop`: the marriage quest and a spouse
+in the same location give `MarriageRested` (Lover's Comfort). Otherwise a location with the
+`LocTypeInn` or `LocTypePlayerHouse` keyword gives `WellRested`, and any other bed gives `Rested`.
+Beast blood gives none. The bonus values are in
+[skill advancement](/engine/skill-advancement.md#experience-multipliers).
 
 ## The movie
 

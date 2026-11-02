@@ -148,6 +148,7 @@ extension CombatLoopRuntime {
         )
         inputs.facingError = facingError(of: actor, toward: target.feet)
         inputs.flies = world.combatFlies(actor.key)
+        inputs.canChain = [.sword, .dagger, .axe, .mace].contains(weapon.handType)
         let step = stepBehavior(of: actor.key, inputs: inputs)
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
@@ -237,6 +238,7 @@ extension CombatLoopRuntime {
             weapon: weapon,
             block: world.combatBlock(of: target),
             settings: settings,
+            blockSkill: world.combatBlockSkill(of: target),
             bonusMultiplier: world.combatBlockMultiplier(of: target),
             strike: world.combatStrike(blow, on: target)
         )

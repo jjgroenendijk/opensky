@@ -37,6 +37,13 @@ extension Renderer {
         return instance.moved(by: delta)
     }
 
+    /// How far `instance`'s reference has faded out this frame.
+    func fadeOut(of instance: DrawInstance) -> Float {
+        let fades = frameInput.instancePoses.fades
+        guard !fades.isEmpty, instance.referenceFormID != 0 else { return 0 }
+        return min(max(fades[instance.referenceFormID] ?? 0, 0), 1)
+    }
+
     /// A vehicle follower wins over a walking pose, because a rider does not walk. A
     /// scripted move wins over both, because a script placed it on purpose.
     func mergeInstanceDeltas() {

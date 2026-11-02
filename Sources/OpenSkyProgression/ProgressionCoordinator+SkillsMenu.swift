@@ -27,7 +27,8 @@ extension ProgressionCoordinator: SkillsMenuSource {
             health: meter(.health, leveling.values),
             magicka: meter(.magicka, leveling.values),
             stamina: meter(.stamina, leveling.values),
-            perkPoints: state.perkPoints,
+            perkPoints: beastTree.map { Int(world.globalValue(editorID: $0.perkPointsGlobal) ?? 0) }
+                ?? state.perkPoints,
             pendingAttributePicks: state.pendingAttributePicks
         )
     }
@@ -94,6 +95,9 @@ extension ProgressionCoordinator: SkillsMenuSource {
     }
 
     public func skillsMenuBuyPerk(node: UInt32, forSkill index: Int32) -> SkillsMenuOutcome {
+        if let tree = BeastPerkTree(actorValueIndex: index) {
+            return buyBeastPerk(node: node, in: tree)
+        }
         guard let head = perkKey(node: node, forSkill: index), let next = nextRank(of: head) else {
             return .refused("Every rank is owned.")
         }

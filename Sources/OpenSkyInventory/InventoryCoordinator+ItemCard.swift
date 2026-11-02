@@ -15,7 +15,7 @@ extension InventoryCoordinator {
         }
         let items = runtime.inventory.baselines.items
         let favourites = playerFavourites
-        return InventoryItemCard(
+        var card = InventoryItemCard(
             layout: Self.layout(of: definition, items: items),
             name: name(of: item),
             kind: Self.kind(of: definition, items: items),
@@ -30,6 +30,8 @@ extension InventoryCoordinator {
             hotkey: favourites.hotkey(of: item),
             isFavourite: favourites.contains(item)
         )
+        card.isQuestItem = isQuestItem(item)
+        return card
     }
 
     private func effectLines(of item: FormID, items: ItemDefinitionStore) -> [String] {

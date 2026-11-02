@@ -18,9 +18,21 @@ nonisolated public struct PerkSkySettings: Equatable, Sendable {
     /// The factor on the up and depth steps, measured on vanilla screenshots; no
     /// setting names it.
     public var rowScale: Float = 0.43
-    /// `fStatsRotationSpeedMax` (degrees per second) and `fStatsRotationRampTime`.
-    public var rotationSpeedMax: Float = 180
-    public var rotationRampTime: Float = 0.25
+    /// `fStatsRotationSpeedMax` in turns per second: the binary's 0.5 is the 180 degrees a
+    /// second seen on footage. `fStatsRotationRampTime` in milliseconds; 250 is ours, as
+    /// the binary's 2000 would turn one slot in 0.67 s, not the 0.2 s seen.
+    public var rotationSpeedMax: Float = 0.5
+    public var rotationRampTime: Float = 250
+
+    /// The turn speed in degrees per second, and the ramp in seconds.
+    public var rotationDegreesPerSecond: Float {
+        rotationSpeedMax * 360
+    }
+
+    public var rotationRampSeconds: Float {
+        rotationRampTime / 1000
+    }
+
     /// `fStatsSkillsLookAt`: where the ring camera looks. Vectors here are in the frame
     /// of the skill ahead: +X right, +Y out to its star, +Z up.
     public var skillsLookAt: SIMD3<Float> = [0, 100, 10]

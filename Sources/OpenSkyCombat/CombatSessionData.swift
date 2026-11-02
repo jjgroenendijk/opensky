@@ -3,6 +3,7 @@
 
 import OpenSkyCombatInterface
 import OpenSkyGameData
+import OpenSkyMagicInterface
 
 /// What the combat runtimes are built from. The game settings default to the
 /// vanilla values, so a test sets only the ones it checks.
@@ -20,6 +21,8 @@ public struct CombatSessionData {
     public var staggers = StaggerSettings.vanilla
     public var combatAI = CombatAISettings.vanilla
     public var arrows = ArrowSettings.vanilla
+    /// The cone look ahead, read from the magic settings.
+    public var magicWorld = MagicWorldSettings.vanilla
     public var falls = FallDamageSettings.vanilla
 
     public init(

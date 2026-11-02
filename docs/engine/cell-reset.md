@@ -50,8 +50,9 @@ These are kept, as the wiki lists:
 - An actor whose base has no ACBS "Respawn" flag (bit 0x08).
 - A container whose base has no CONT "Respawns" flag (`DATA` flags bit 0x02). A plain chest
   keeps what the player put in it.
-
-Quest-alias protection is not modelled: a quest item in a chest that resets is lost.
+- The inventory of a reference that holds a [quest item](/engine/inventory-menu.md#quest-items).
+  The rest of its state still resets. The wiki does not list this case; OpenSky keeps the
+  inventory so a quest cannot lose its item.
 
 ## A script reset
 

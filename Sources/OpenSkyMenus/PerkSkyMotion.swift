@@ -39,8 +39,9 @@ nonisolated public struct PerkSkyMotion: Equatable, Sendable {
         } else {
             let started = turnStarted ?? now
             turnStarted = started
-            let ramp = max(0.001, settings.rotationRampTime)
-            let speed = settings.rotationSpeedMax * min(1, max(0.1, Float(now - started) / ramp))
+            let ramp = max(0.001, settings.rotationRampSeconds)
+            let speed = settings.rotationDegreesPerSecond
+                * min(1, max(0.1, Float(now - started) / ramp))
             let turn = min(abs(remaining), speed * seconds)
             yawDegrees += remaining < 0 ? -turn : turn
         }

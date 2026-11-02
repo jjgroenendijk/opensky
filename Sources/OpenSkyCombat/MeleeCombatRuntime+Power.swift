@@ -72,6 +72,7 @@ extension MeleeCombatRuntime {
             weapon: swing,
             block: world.meleeBlock(of: target),
             settings: settings,
+            blockSkill: world.meleeBlockSkill(of: target),
             isPowerAttack: strikeKind.isPowerAttack,
             bonusMultiplier: world.meleeBlockMultiplier(of: target),
             attackMultiplier: strikeKind.isBash

@@ -1,6 +1,7 @@
 // The app's answers to `CombatWorld`: each one a plain read of, or a write to,
 // a session system the view controller owns.
 
+import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -243,6 +244,13 @@ extension CombatWorldAdapter: CombatWorld {
         runtime.damage(.stamina, by: amount, on: holder)
     }
 
+    func pauseBowZoomStamina() {
+        guard let runtime = game.actorValues.runtime else { return }
+        runtime.pauseRegeneration(
+            .stamina, on: .player, for: runtime.regeneration.bowZoomStaminaDelay
+        )
+    }
+
     var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }
@@ -344,6 +352,17 @@ extension CombatWorldAdapter: CombatWorld {
 
     func writePlayerGraphVariable(_ value: BehaviorVariableValue, named name: String) {
         game.gameSession?.locomotion.write(value, to: name)
+    }
+
+    @discardableResult
+    func raiseActorGraphEvent(_ name: String, on key: ReferenceKey) -> Bool {
+        game.actorGraphs.raise(name, on: key)
+    }
+
+    func writeActorGraphVariable(
+        _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
+    ) {
+        game.actorGraphs.setVariable(value, named: name, on: key)
     }
 
     func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey) {

@@ -42,7 +42,8 @@ The recipe store keeps the winning definition of each COBJ in load order. It ans
 questions from two indexes: which recipes a station offers (by workbench keyword), and which
 recipes make an item (by created object). Each list is in load order. A plugin that overrides
 a recipe moves it to its new keyword and drops it from the old one. Component targets stay as
-resolved FormIDs; the crafting session expands a `FLST` through the form-list store.
+resolved FormIDs. A `FLST` component expands through the form-list store into its items, and any
+mix of them counts toward the component's count. A craft takes the items in the list's order.
 
 ## Confirmed on the real install
 

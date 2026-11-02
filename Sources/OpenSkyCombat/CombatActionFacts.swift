@@ -83,6 +83,17 @@ nonisolated extension CombatBehaviorPhase {
     }
 }
 
+nonisolated extension CombatBehaviorMachine {
+    /// The phase's facts, with `GetAttackState` 4 while a chained swing waits.
+    public var actionFacts: ActorActionFacts {
+        var facts = phase.actionFacts
+        if phase == .recovery, chainsNextAttack {
+            facts.attackState = .nextAttack
+        }
+        return facts
+    }
+}
+
 nonisolated extension ArcheryShotPhase {
     /// The wiki has no nock code, so nocking counts as drawing.
     public var attackState: ActorAttackState {

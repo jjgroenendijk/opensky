@@ -16,10 +16,11 @@ extension CasterRuntime {
     ///     base cost for a fire-and-forget cast, the magicka drained for one
     ///     step of a maintained one.
     public func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
-        guard let world, amount.isFinite, amount > 0 else { return }
+        guard let world, amount.isFinite, amount > 0, !spell.isStaff else { return }
         for entry in spell.effects {
+            // A healing effect reports the health it restores instead (`MagicHealingUse`).
             guard
-                let data = entry.effect?.effect.data,
+                let data = entry.effect?.effect.data, !data.isHealing,
                 ActorValueIdentity.isSkill(index: data.magicSkill) else { continue }
             let multiplier = data.skillUsageMultiplier.isFinite
                 ? max(0, data.skillUsageMultiplier) : 0

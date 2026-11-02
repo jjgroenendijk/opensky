@@ -121,6 +121,7 @@ final class MagicWorldAdapter {
         data.rules.shouts = ShoutSettings.resolve(store: settings)
         data.rules.runes = RuneSettings.resolve(store: settings)
         data.rules.summons = SummonSettings.resolve(store: settings)
+        data.rules.world = MagicWorldSettings.resolve(store: settings)
         data.texts.magic = MagicTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         data.texts.castNotices = game.mapWorld.settingTexts()
         data.texts.souls = SoulTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
@@ -133,6 +134,7 @@ final class MagicWorldAdapter {
         worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
             self?.publishMagicLights()
+            self?.publishSummonFades()
             gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
                 .isParalysed ?? false
             let scales = coordinator?.timeScales ?? .normal

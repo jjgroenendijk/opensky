@@ -180,3 +180,21 @@ struct CraftingSessionTests {
         #expect(harness.skills.uses.isEmpty)
     }
 }
+
+extension CraftingSessionTests {
+    /// A form-list component takes from its items in list order until the count is met.
+    @Test func aFormListComponentSpendsItsItemsInListOrder() {
+        let iron = FormID(0x0005_ACE4)
+        let steel = FormID(0x0005_ACE5)
+        let recipe = CraftingRecipe(
+            id: ResolvedFormID(plugin: "Mod.esp", objectID: 0x801),
+            editorID: "RecipeModSword", sourcePlugin: "Mod.esp", conditions: ConditionList(),
+            created: FormID(0x0001_2EB7), createdCount: 1,
+            components: [.init(item: FormID(0x0100_0802), count: 3, choices: [iron, steel])]
+        )
+        let consumed = CraftingSession.consumed(by: recipe) { $0 == iron ? 1 : 5 }
+        #expect(consumed == [
+            InventoryStack(item: iron, count: 1), InventoryStack(item: steel, count: 2)
+        ])
+    }
+}

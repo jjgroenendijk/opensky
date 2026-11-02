@@ -127,7 +127,12 @@ public struct CrimeRuntime {
             record(event, gold: 0, against: faction)
             return .refused(refusal, faction: faction)
         }
-        let gold = CrimeGoldTable(faction: resolved.faction, settings: settings).bounty(for: event)
+        // UESP "Skyrim:Crime": "The bounty is only incurred for the first witnessed
+        // transformation"; OpenSky counts the first per crime faction.
+        let repeatsChange = event.kind == .werewolf
+            && ledger(of: event.perpetrator).counts(for: faction)[.werewolf] > 0
+        let gold = repeatsChange
+            ? 0 : CrimeGoldTable(faction: resolved.faction, settings: settings).bounty(for: event)
         record(event, gold: gold, against: faction)
         return CrimeOutcome(gold: gold, faction: faction, recorded: true, refusal: nil)
     }

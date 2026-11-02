@@ -23,6 +23,7 @@ import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
@@ -42,6 +43,7 @@ protocol InventoryWorldHost: AnyObject {
     var furniture: FurnitureCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get set }
+    var journal: JournalCoordinator { get }
     var magic: MagicCoordinator { get }
     var menuScreens: MenuScreens { get }
     var mapWorld: MapWorldAdapter { get }
@@ -210,6 +212,18 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     func isBook(_ base: FormID) -> Bool {
         game.menuScreens.book.isBook(base)
+    }
+
+    /// A created alias reference has a spawn base; a placed one has its record's.
+    func questItemBases() -> Set<FormID> {
+        guard let references = game.journal.runtime?.questObjectReferences() else { return [] }
+        return Set(references.compactMap { key in
+            if let spawn = game.worldState.component(ReferenceSpawnState.self, for: key) {
+                return spawn.base
+            }
+            let entry = game.streamer?.referenceEntry(key: key)
+            return entry?.placedReference?.base
+        })
     }
 
     var isPlayerSneaking: Bool {
@@ -475,8 +489,12 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
         run(game.inventory.scriptDropObject(item, count: count, from: holder))
     }
 
-    func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool {
-        run(game.inventory.scriptRemoveAllItems(from: holder, to: other))
+    func removeAllItems(
+        from holder: ReferenceKey, to other: ReferenceKey?, removeQuestItems: Bool
+    ) -> Bool {
+        run(game.inventory.scriptRemoveAllItems(
+            from: holder, to: other, removeQuestItems: removeQuestItems
+        ))
     }
 
     func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {

@@ -1,8 +1,8 @@
 // Vanilla barter pricing, from UESP "Skyrim:Speech#Prices":
 //   price factor = fBarterMax - (fBarterMax - fBarterMin) * min(skill, 100) / 100
 //   buy = round(value * buy modifier * factor); sell = round(value * sell modifier / factor)
-// Caps: sell at most value * 1.00, buy at least value * 1.05. Both settings come
-// from the load order's GMSTs, with vanilla defaults (3.3, 2.0) only when missing.
+// Caps: sell at most value * fBarterSellMax, buy at least value * fMinBuyMult. Every
+// setting comes from the load order's GMSTs, with the engine defaults only when missing.
 // See docs/engine/barter.md.
 
 import Foundation
@@ -29,14 +29,13 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// 0.322 for selling"), so there is a published value to check.
     public static let defaultSpeechSkill: Double = 15
 
-    /// Trade price caps, from the same section: a merchant never pays more than
-    /// the item's value, and never sells below 1.05 times it. Both are dead
-    /// weight at vanilla settings — the factor never leaves 2.0...3.3 — and both
-    /// become live the moment a plugin retunes `fBarterMin` or a perk lands.
-    public static let maximumSellFraction = 1.0
+    /// Trade price caps. Neither binds at vanilla settings, where the factor stays in
+    /// 2.0...3.3; a retuned `fBarterMin` or a large perk stack makes them bind. The sell
+    /// cap's 0.95 is the Creation Kit settings list's default; no plugin sets it.
+    public static let maximumSellFraction = 0.95
     public static let minimumBuyFraction = 1.05
-    /// `fMinBuyMult`, which holds the 1.05.
     public static let minimumBuySettingName = "fMinBuyMult"
+    public static let maximumSellSettingName = "fBarterSellMax"
 
     public let barterMin: Double
     public let barterMax: Double
@@ -47,6 +46,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     public let sellModifier: Double
     /// The buy price floor as a fraction of the value, from `fMinBuyMult`.
     public var minimumBuy = BarterPricing.minimumBuyFraction
+    /// The sell price ceiling as a fraction of the value, from `fBarterSellMax`.
+    public var maximumSell = BarterPricing.maximumSellFraction
 
     /// Where `barterMin` and `barterMax` came from, for the verification
     /// readout: the plugin that authored the winning GMST, or the fallback.
@@ -89,6 +90,7 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
             source: source
         )
         priced.minimumBuy = minimumBuy
+        priced.maximumSell = maximumSell
         return priced
     }
 
@@ -121,7 +123,7 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
         guard value > 0, basePriceFactor > 0 else { return 0 }
         let base = Double(value)
         let priced = base * sellModifier / basePriceFactor
-        return whole(min(priced, base * Self.maximumSellFraction))
+        return whole(min(priced, base * maximumSell))
     }
 
     /// The price of `count` of an item, priced per unit and then multiplied.
@@ -175,6 +177,9 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
         )
         pricing.minimumBuy = float(
             editorID: minimumBuySettingName, store: store, fallback: minimumBuyFraction
+        ).value
+        pricing.maximumSell = float(
+            editorID: maximumSellSettingName, store: store, fallback: maximumSellFraction
         ).value
         return pricing
     }

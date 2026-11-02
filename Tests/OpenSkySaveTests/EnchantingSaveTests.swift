@@ -17,12 +17,13 @@ struct EnchantingSaveTests {
     @Test func knownAndMadeEnchantmentsSurvive() throws {
         let (once, sword) = EnchantingState(known: [Self.health, Self.fire]).making(
             MadeEnchantment(
-                bases: [Self.fire], powers: [1.25], capacity: 3000, costPerUse: 23.7,
+                bases: [Self.fire], powers: [1.25], capacity: 3000, unskilledCostPerUse: 23.7,
                 name: "Fire Damage"
             )
         )
         let (state, ring) = once.making(MadeEnchantment(
-            bases: [Self.health, Self.fire], powers: [0.5, 0.25], capacity: 0, costPerUse: 0,
+            bases: [Self.health, Self.fire], powers: [0.5, 0.25],
+            capacity: 0, unskilledCostPerUse: 0,
             name: "Fortify Health + Fire"
         ))
         let snapshot = OpenSkySaveFixture.snapshot(

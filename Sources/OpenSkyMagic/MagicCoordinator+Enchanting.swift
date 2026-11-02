@@ -102,7 +102,10 @@ extension MagicCoordinator {
             spendGem(gem, in: inventory)
             reportEnchantingUse(EnchantingRules.enchantExperience)
             refreshWornEnchantments(on: .player)
-            let charge = EnchantmentCharge(capacity: made.capacity, costPerUse: made.costPerUse)
+            let charge = EnchantmentCharge(
+                capacity: made.capacity,
+                costPerUse: made.costPerUse(atSkill: enchantingSkill(of: .player))
+            )
             return noteEnchanting(.enchanted(
                 item: world.itemName(item), name: made.name, charge: charge
             ))
@@ -148,7 +151,7 @@ extension MagicCoordinator {
         let scale = isWeapon ? EnchantingRules.weapon(input) : EnchantingRules.apparel(input)
         return .success(MadeEnchantment(
             bases: bases, powers: scale.powers, capacity: scale.capacity,
-            costPerUse: scale.costPerUse,
+            unskilledCostPerUse: scale.unskilledCostPerUse,
             name: name ?? records.map(\.displayName).joined(separator: " + ")
         ))
     }
@@ -161,7 +164,10 @@ extension MagicCoordinator {
             EnchantingState.isMade(id),
             let made = enchantingState.made[id]
         else { return nil }
-        return ItemEnchantmentProfile.made(made, item: item, using: store)
+        let wielder = world.actorValueHolder(for: holder.key)
+        return ItemEnchantmentProfile.made(
+            made, item: item, using: store, skill: wielder.map(enchantingSkill(of:)) ?? 0
+        )
     }
 
     /// The last link of `profile`'s base chain, which disenchanting teaches.

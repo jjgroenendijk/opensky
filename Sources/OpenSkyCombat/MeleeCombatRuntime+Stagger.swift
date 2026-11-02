@@ -24,7 +24,7 @@ extension MeleeCombatRuntime {
         guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
         else { return false }
         world.writeCombatVariable(
-            .real(magnitude), named: CombatGraphNames.staggerMagnitude
+            .real(magnitude), named: CombatGraphNames.staggerMagnitude, on: target
         )
         return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: target)
     }

@@ -24,6 +24,12 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// starts.
     public var recoverySeconds: Float = 0.35
 
+    /// The chance, 0 through 1, that a one-handed swing chains into the next one inside
+    /// its follow-through, with no gap. Ours: no record names a combo field.
+    public var comboChance: Float = 0.3
+    /// The most swings one chain holds: the vanilla one-handed set has three.
+    public var maximumComboSwings = 3
+
     /// How long a stagger holds the attack away.
     public var staggerSeconds: Float = 0.7
 

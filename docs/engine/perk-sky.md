@@ -139,8 +139,8 @@ OpenSky's frame is known, and its own value where it is not:
 | `fStatsLineScale` | 0.1175 | 0.1175 | the binary's default |
 | `fStatsStarZInitialOffset` | 5 | 5 | the binary's default; the screenshot fit is better with it |
 | `fStatsCameraNearDistance` | 1 | 1 | the menu scene's near plane |
-| `fStatsRotationSpeedMax` | 0.5 | 180 degrees per second | the unit of 0.5 is not known; one slot turns in about 0.2 s |
-| `fStatsRotationRampTime` | 2000 | 0.25 s | 2000 is most likely milliseconds, but the speed it ramps to is not known |
+| `fStatsRotationSpeedMax` | 0.5 | 0.5 turns per second | the binary's default: 0.5 turns is the 180 degrees a second seen on footage |
+| `fStatsRotationRampTime` | 2000 | 250 ms | read as milliseconds; 2000 would turn one slot in 0.67 s, against the 0.2 s seen |
 | `fStatsSkillsLookAt` | (0, 0, 5) | (0, 100, 10) | the binary's vectors are relative to a point that is not known |
 | `fStatsStarCameraOffset` | (0, -8, 0) | (0, 45, 12) | a full tree fills the screen height |
 | `fStatsStarLookAt` | (0, 0, 1) | (0, 95, 15) | |
@@ -150,5 +150,6 @@ specification.
 
 ## Where OpenSky differs
 
-- The ring camera, the tree camera, and the turn speed use OpenSky's values, as the table
-  above says.
+- The ring camera and the tree camera use OpenSky's vectors, and the turn ramps over 250 ms
+  instead of 2000, as the table above says. The binary's camera vectors need the point
+  they are relative to, which no source names.

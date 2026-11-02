@@ -211,11 +211,14 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         else {
             return fallback.atLevel(playerLevel.level)
         }
+        // The `Player` record's ACBS offsets add to the race's values: +50 each in
+        // vanilla, so a vanilla race's 50 becomes the 100 the game starts with.
+        let offsets = resolver.templates.actors[Self.playerRecord.rawValue]?.stats
         var baseline = ActorValueBaseline(
             maximums: ActorValues(
-                health: max(0, race.stats.startingHealth),
-                magicka: max(0, race.stats.startingMagicka),
-                stamina: max(0, race.stats.startingStamina)
+                health: max(0, race.stats.startingHealth + Float(offsets?.healthOffset ?? 0)),
+                magicka: max(0, race.stats.startingMagicka + Float(offsets?.magickaOffset ?? 0)),
+                stamina: max(0, race.stats.startingStamina + Float(offsets?.staminaOffset ?? 0))
             ),
             regenPercentPerSecond: ActorValues(
                 health: race.stats.healthRegenPercent,

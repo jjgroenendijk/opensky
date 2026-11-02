@@ -231,7 +231,7 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `CRIM` row can occupy: a plugin key with an
     /// empty name (7), the gold (4) and one count per `CrimeKind` (4 each). A
     /// generated key is longer, so this is a lower bound.
-    public static let minimumCrimeLedgerRowSize = 27
+    public static let minimumCrimeLedgerRowSize = 39
     /// Smallest number of bytes a single `STOL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) and a zero row count (4). There is no
     /// cell tag — the stolen split belongs to the goods, not to a placement.

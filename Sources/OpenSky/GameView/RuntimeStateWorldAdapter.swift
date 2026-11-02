@@ -182,8 +182,8 @@ final class RuntimeStateWorldAdapter {
             return game.combat.playerActionFacts
         }
         guard let loop = game.combat.loop else { return nil }
-        guard !isDead, let phase = loop.phase(of: key) else { return .still }
-        return phase.actionFacts
+        guard !isDead, let facts = loop.actionFacts(of: key) else { return .still }
+        return facts
     }
 
     private func store() async throws -> OpenSkySaveStore {

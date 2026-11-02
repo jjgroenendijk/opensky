@@ -101,6 +101,7 @@ public final class CombatCoordinator {
         projectiles.impacts = data.impacts
         projectiles.explosions = explosions
         projectiles.arrows = data.arrows
+        projectiles.magicWorld = data.magicWorld
         archery = ArcheryRuntime(settings: data.archery, projectiles: projectiles, world: self)
     }
 
@@ -125,7 +126,9 @@ public final class CombatCoordinator {
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
         let swing = melee.state.swingID
-        melee.acceptFrame(CombatCore.meleeIntent(intent, readied: readied))
+        melee.acceptFrame(CombatCore.meleeIntent(
+            intent, readied: readied, staffInRight: hands.weapon.handType == .staff
+        ))
         noteHits(melee.handleGraphEvents(events))
         noteWeaponUse(.swing, changed: melee.state.swingID != swing)
         return pendingCommands

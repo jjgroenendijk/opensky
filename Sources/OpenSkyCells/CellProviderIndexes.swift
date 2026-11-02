@@ -193,7 +193,7 @@ nonisolated public struct CellProviderIndexes {
             archerySettings: tuning.archery,
             detectionSettings: tuning.detection
         )
-        stores.craftingCatalog = craftingCatalog
+        stores.craftingCatalog = craftingCatalog.with(formLists: records.world.formLists)
         stores.shoutStore = magic.shouts
         stores.placedRecords = placedRecords
         stores.lockTrapData = records.scripted.lockTrap

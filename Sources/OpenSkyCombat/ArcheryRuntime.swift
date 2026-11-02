@@ -131,6 +131,8 @@ public final class ArcheryRuntime {
                 bowDamage: bow.damage,
                 arrowDamage: arrow.damage,
                 drawFraction: lastDrawFraction,
+                // The hit's strike applies the live Archery term, so the shot adds none.
+                skill: 0,
                 bonusMultiplier: attackMultiplier
             ),
             weapon: bow.weapon,

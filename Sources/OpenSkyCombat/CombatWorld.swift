@@ -82,6 +82,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
     func damageStamina(by amount: Float, of key: ReferenceKey)
+    /// Holds the player's stamina regeneration for `fBowZoomStaminaRegenDelay`.
+    func pauseBowZoomStamina()
     /// A landed health hit, kept for the death effects of the actor it may kill.
     func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
@@ -129,6 +131,12 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     func raisePlayerGraphEvent(_ name: String) -> Bool
     func writePlayerGraphVariable(_ value: BehaviorVariableValue, named name: String)
+    /// Raises `name` on an NPC's running graph. False when it runs none or lacks the event.
+    @discardableResult
+    func raiseActorGraphEvent(_ name: String, on key: ReferenceKey) -> Bool
+    func writeActorGraphVariable(
+        _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
+    )
     @discardableResult
     func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool
     /// The MATT an actor's body counts as when struck: its race's `NAM4`.
@@ -157,6 +165,15 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 }
 
 extension CombatWorld {
+    @discardableResult
+    public func raiseActorGraphEvent(_: String, on _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func writeActorGraphVariable(
+        _: BehaviorVariableValue, named _: String, on _: ReferenceKey
+    ) {}
+
     @discardableResult
     public func moveActor(
         _ key: ReferenceKey, to point: SIMD3<Float>, gait _: LocomotionGait?
@@ -205,6 +222,8 @@ extension CombatWorld {
 
     /// A session with no stamina pays nothing to block.
     public func damageStamina(by _: Float, of _: ReferenceKey) {}
+
+    public func pauseBowZoomStamina() {}
 
     public func recordHealthHit(_: CombatHitRecord, on _: ReferenceKey) {}
 

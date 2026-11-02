@@ -53,7 +53,7 @@ nonisolated public enum ItemRequest: Equatable, Sendable {
 
 nonisolated public struct ItemRequestFacts: Equatable, Sendable {
     public var isKey = false
-    /// `Quest Object` alias items. OpenSky does not mark them yet (#1472).
+    /// An item a running quest holds in a `Quest Object` alias.
     public var isQuestItem = false
     public var isEquipped = false
     /// Weapons, armour, spells, potions, food, ingredients, poisons, and scrolls.

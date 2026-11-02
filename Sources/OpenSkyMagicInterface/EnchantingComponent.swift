@@ -14,14 +14,19 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
     public let powers: [Float]
     /// A weapon's full charge; zero on apparel.
     public let capacity: Float
-    /// What one hit spends; zero on apparel.
-    public let costPerUse: Float
+    /// What one hit spends at Enchanting 0; zero on apparel. The skill term applies
+    /// at each use, because UESP says the charge is "calculated at the moment of the usage".
+    public let unskilledCostPerUse: Float
     /// What the readouts call it, from the first base.
     public let name: String
 
     /// A base without a power gets zero, so a short list cannot misalign.
     public init(
-        bases: [ReferenceKey], powers: [Float], capacity: Float, costPerUse: Float, name: String
+        bases: [ReferenceKey],
+        powers: [Float],
+        capacity: Float,
+        unskilledCostPerUse: Float,
+        name: String
     ) {
         self.bases = bases
         self.powers = bases.indices.map { index in
@@ -29,8 +34,22 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
             return power.isFinite ? max(0, power) : 0
         }
         self.capacity = capacity.isFinite ? max(0, capacity) : 0
-        self.costPerUse = costPerUse.isFinite ? max(0, costPerUse) : 0
+        self.unskilledCostPerUse = unskilledCostPerUse.isFinite ? max(0, unskilledCostPerUse) : 0
         self.name = name
+    }
+
+    /// The skill must stay below 200, where a use would cost nothing.
+    public static let skillCap: Float = 199
+
+    /// `1 - sqrt(skill / 200)`, the skill term of a weapon enchantment's cost per use.
+    public static func skillCostFactor(_ skill: Float) -> Float {
+        let clamped = skill.isFinite ? min(max(0, skill), skillCap) : 0
+        return 1 - (clamped / 200).squareRoot()
+    }
+
+    /// What one hit spends for a wielder whose Enchanting is `skill` now.
+    public func costPerUse(atSkill skill: Float) -> Float {
+        unskilledCostPerUse * Self.skillCostFactor(skill)
     }
 }
 

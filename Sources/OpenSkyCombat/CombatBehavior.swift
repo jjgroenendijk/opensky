@@ -198,6 +198,8 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     public var facingError: Float = 0
     /// The actor's race flies (`RACE` flag 0x80).
     public var flies = false
+    /// The actor swings a one-handed weapon, whose attacks can chain.
+    public var canChain = false
 
     public init(
         actorPosition: SIMD3<Float>,

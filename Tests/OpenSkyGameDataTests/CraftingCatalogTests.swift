@@ -115,3 +115,40 @@ extension CraftingCatalogTests {
         #expect(try !Self.forgeStation().improves)
     }
 }
+
+extension CraftingCatalogTests {
+    static let anyIngot: UInt32 = 0x20
+    static let steel: UInt32 = 0x0005_ACE5
+
+    /// A `CNTO` that names a `FLST` takes any item of the list (`docs/formats/recipes.md`).
+    @Test func aFormListComponentTakesAnyItemOfTheList() throws {
+        let file = try ESMFixture.plugin(records: [
+            FormListFixture.recordBytes(formID: Self.anyIngot, entries: [Self.ingot, Self.steel]),
+            RecipeFixture.recordBytes(
+                formID: 0x12, editorID: "RecipeModSword",
+                components: [(Self.anyIngot, 2)],
+                createdObject: Self.sword, workbenchKeyword: Self.forge
+            )
+        ])
+        let plugins = [("Base.esm", file)]
+        let catalog = CraftingCatalog(
+            recipes: RecipeStore(plugins: plugins),
+            itemPlugin: FormIDResolver(pluginName: "Base.esm", masters: []),
+            stations: []
+        ).with(formLists: FormListStore(plugins: plugins))
+        let station = catalog.station(workbench: Self.forgeBench, keywords: [FormID(Self.forge)])
+        let recipe = try #require(catalog.recipes(at: station).first)
+        #expect(recipe.components.first?.choices == [FormID(Self.ingot), FormID(Self.steel)])
+        let pair: Set<FormID> = [FormID(Self.steel), FormID(Self.ingot)]
+        let held: (FormID) -> Int32 = { pair.contains($0) ? 1 : 0 }
+        let verdict = CraftingCatalog.eligibility(
+            of: recipe, held: held, isKnownItem: { _ in true }, failingFunction: nil
+        )
+        #expect(verdict.isEligible)
+        let short = CraftingCatalog.eligibility(
+            of: recipe, held: { $0 == FormID(Self.steel) ? 1 : 0 },
+            isKnownItem: { _ in true }, failingFunction: nil
+        )
+        #expect(short.shortfalls.map(\.held) == [1])
+    }
+}

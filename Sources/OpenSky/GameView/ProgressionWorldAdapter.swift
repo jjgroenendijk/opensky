@@ -13,6 +13,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuests
@@ -42,6 +43,7 @@ protocol ProgressionWorldHost: AnyObject {
     var worldState: WorldStateStore { get }
     var journalMenu: JournalMenuController { get }
     var scripts: ScriptCoordinator { get }
+    var playerBeastForm: PlayerBeastForm { get }
 }
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
@@ -139,6 +141,22 @@ extension ProgressionWorldAdapter: PerkWorld {
 }
 
 extension ProgressionWorldAdapter: ProgressionWorld {
+    func playerBeastTree() -> BeastPerkTree? {
+        switch game.playerBeastForm {
+        case .werewolf: .werewolf
+        case .vampireLord: .vampireLord
+        case .none, .otherBeast: nil
+        }
+    }
+
+    func globalValue(editorID: String) -> Float? {
+        game.runtimeState.runtimeStateGlobal(editorID: editorID)?.currentValue
+    }
+
+    func setGlobalValue(_ value: Float, editorID: String) {
+        game.runtimeState.setGlobalValue(value, editorID: editorID)
+    }
+
     /// Only equipped armor counts; clothing trains neither armor skill. The
     /// item index is the melee runtime's, to avoid a second decode.
     func wornArmor(of key: ReferenceKey) -> WornArmorProfile {

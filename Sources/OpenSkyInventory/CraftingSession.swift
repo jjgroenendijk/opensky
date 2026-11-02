@@ -143,7 +143,7 @@ public final class CraftingSession {
         guard verdict.isEligible, let item = recipe.created else {
             throw CraftingError.notEligible(id, verdict)
         }
-        let consumed = Self.consumed(by: recipe)
+        let consumed = consumed(by: recipe)
         let created = InventoryStack(item: item, count: recipe.createdCount)
         try inventory.apply(removing: consumed, adding: [created], on: player, usingUp: true)
         let value = inventory.baselines.items.definition(item)?.value ?? 0
@@ -157,9 +157,27 @@ public final class CraftingSession {
         )
     }
 
-    static func consumed(by recipe: CraftingRecipe) -> [InventoryStack] {
-        CraftingCatalog.required(recipe).compactMap { component in
-            component.item.map { InventoryStack(item: $0, count: component.count) }
+    func consumed(by recipe: CraftingRecipe) -> [InventoryStack] {
+        let held = inventory.inventory(of: player)
+        return Self.consumed(by: recipe, held: { held.count(of: $0) })
+    }
+
+    /// What `recipe` takes. A form-list component takes from its items in list order.
+    static func consumed(by recipe: CraftingRecipe, held: (FormID) -> Int32) -> [InventoryStack] {
+        CraftingCatalog.required(recipe).flatMap { component -> [InventoryStack] in
+            guard let item = component.item else { return [] }
+            guard !component.choices.isEmpty else {
+                return [InventoryStack(item: item, count: component.count)]
+            }
+            var left = component.count
+            var taken: [InventoryStack] = []
+            for choice in component.choices where left > 0 {
+                let count = min(left, held(choice))
+                guard count > 0 else { continue }
+                taken.append(InventoryStack(item: choice, count: count))
+                left -= count
+            }
+            return taken
         }
     }
 

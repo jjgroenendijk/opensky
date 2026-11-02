@@ -22,9 +22,9 @@ extension CasterRuntime {
     /// Without a perk runtime, the skill-lowered cost is all a caster pays.
     public func cost(of spell: ResolvedSpell, caster: ActorValueHolder) -> Float {
         let skill = spell.magicSkill.flatMap { values.value(at: $0, on: caster) } ?? 0
-        let authored = Float(spell.cost.cost)
+        let authored = costSettings.baseCost(of: spell)
             * costSettings.skillMultiplier(skill: skill, isPlayer: caster.key == .player)
-        guard var perks else { return authored }
+        guard var perks, !spell.isStaff else { return authored }
         var cost = authored
         if
             let link = spell.data?.halfCostPerk,

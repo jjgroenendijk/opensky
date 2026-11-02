@@ -44,11 +44,21 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     /// The last spend's answer, or why a key did nothing.
     public var message: String?
     public var texts = GameSettingTexts<SkillsMenuText>.vanilla
+    /// A beast form's tree, shown alone: leaving it closes the menu.
+    public private(set) var isBeastTree = false
 
     public init(player: SkillsMenuPlayer, skills: [SkillsMenuSkill]) {
         self.player = player
         self.skills = Self.ringOrdered(skills)
         page = player.pendingAttributePicks > 0 ? .levelUp : .skills
+    }
+
+    /// The menu a beast form opens: its one tree, with no ring and no level-up pick.
+    public static func beast(player: SkillsMenuPlayer, tree: SkillsMenuSkill) -> Self {
+        var model = Self(player: player, skills: [tree])
+        model.page = .perks
+        model.isBeastTree = true
+        return model
     }
 
     /// The perk tree stays in view while its question is open.
@@ -79,7 +89,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         if let skill, let position = self.skills.firstIndex(where: { $0.index == skill }) {
             skillPosition = position
         }
-        if page == .levelUp, player.pendingAttributePicks == 0 {
+        if page == .levelUp, player.pendingAttributePicks == 0 || isBeastTree {
             page = .skills
         }
     }
@@ -150,6 +160,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             if let next = nearestPerk(toward: direction) {
                 perkPosition = next
             } else if direction == .down {
+                guard !isBeastTree else { return .close }
                 page = .skills
             }
         case .button(.accept):
@@ -160,8 +171,10 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             }
             page = .perkConfirm(ConfirmationModel(question: texts[.perkConfirm]))
         case .button(.cancel):
+            guard !isBeastTree else { return .close }
             page = .skills
         case .button(.yButton):
+            guard !isBeastTree else { return nil }
             askLegendary()
         default:
             break

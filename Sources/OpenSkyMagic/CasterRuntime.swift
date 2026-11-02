@@ -166,6 +166,10 @@ public final class CasterRuntime {
     public private(set) var isApplyingDualCast = false
     /// Casts a release completed since the coordinator last took them, newest last.
     public private(set) var completedCasts: [CompletedCast] = []
+    /// The staffs held in hands and their charge. Nil casts no staff.
+    public weak var staffs: (any StaffCharging)?
+    /// Every staff spell a hand began, by key, so a later frame finds it again.
+    public var staffSpells: [ReferenceKey: ResolvedSpell] = [:]
 
     public init(
         spellbook: SpellbookRuntime,
@@ -187,43 +191,25 @@ public final class CasterRuntime {
         heldButtons[CastSlot(caster: caster, hand: hand)] = held
     }
 
-    // MARK: - Reading
-
-    public func state(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastState {
-        casts[CastSlot(caster: caster, hand: hand)] ?? SpellCastState()
-    }
-
-    public func phase(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastPhase {
-        state(of: hand, on: caster).phase
-    }
-
-    /// Whether either of `caster`'s hands is mid-cast, which is what magicka
-    /// regeneration stands down for.
-    public func isCasting(_ caster: ReferenceKey = .player) -> Bool {
-        SpellHand.allCases.contains { phase(of: $0, on: caster).isCasting }
-    }
-
-    /// Every actor with a cast in flight, in key order. What the combat readout
-    /// counts so an NPC mid-charge is visible rather than assumed.
-    public var castingActors: [ReferenceKey] {
-        Set(casts.filter(\.value.phase.isCasting).keys.map(\.caster)).sorted()
-    }
-
     // MARK: - Casting
 
     /// Starts a cast in `hand`.
     @discardableResult
     public func begin(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
-        guard let key = spellbook.state(of: caster).spell(in: hand) else {
+        let staff = staffs?.staffSpell(in: hand, of: caster)
+        if let staff {
+            staffSpells[staff.key] = staff
+        }
+        guard let key = staff?.key ?? spellbook.state(of: caster).spell(in: hand) else {
             return record(hand, on: caster, .failed(.noSpellReadied(hand)))
         }
-        guard let spell = spellbook.record(key) else {
+        guard let spell = castable(key) else {
             return record(hand, on: caster, .failed(.unknownSpell(key)))
         }
         if let refusal = refusal(for: spell, key: key, caster: caster) {
             return record(hand, on: caster, .failed(refusal))
         }
-        if joinDualCast(hand, spell: spell, caster: caster) {
+        if !spell.isStaff, joinDualCast(hand, spell: spell, caster: caster) {
             let lead = state(of: hand.other, on: caster.key)
             return record(hand, on: caster, .charging(
                 spell: key, chargeTime: max(0, chargeTime(of: spell, dual: true) - lead.charged)
@@ -244,7 +230,7 @@ public final class CasterRuntime {
     public func release(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
         let hand = leadHand(of: hand, on: caster.key)
         var state = state(of: hand, on: caster.key)
-        guard let key = state.spell, let spell = spellbook.record(key) else {
+        guard let key = state.spell, let spell = castable(key) else {
             casts[slot(hand, caster)] = SpellCastState()
             return record(hand, on: caster, .ignored)
         }
@@ -315,16 +301,18 @@ public final class CasterRuntime {
             }
         }
         let cost = cost(of: spell, caster: caster)
-        let available = values.current(of: caster).magicka
+        let available = pool(for: spell, caster: caster)
         guard cost <= available else {
-            return .insufficientMagicka(cost: cost, available: available)
+            return spell.isStaff
+                ? .staffOutOfCharge(cost: cost, available: available)
+                : .insufficientMagicka(cost: cost, available: available)
         }
         return nil
     }
 
     private func advance(_ hand: SpellHand, delta: Float, on caster: ActorValueHolder) {
         var state = state(of: hand, on: caster.key)
-        guard let key = state.spell, let spell = spellbook.record(key) else { return }
+        guard let key = state.spell, let spell = castable(key) else { return }
         state.addAge(delta)
         casts[slot(hand, caster)] = state
         guard state.dualRole != .partner else { return }
@@ -374,13 +362,15 @@ public final class CasterRuntime {
     ) -> SpellCastOutcome {
         let state = state(of: hand, on: caster.key)
         let cost = castCost(of: spell, dual: state.isDualCast, caster: caster)
-        let available = values.current(of: caster).magicka
+        let available = pool(for: spell, caster: caster)
         casts[slot(hand, caster)] = SpellCastState()
         endDualPartner(of: hand, lead: state, caster: caster)
         guard cost <= available else {
-            return .failed(.insufficientMagicka(cost: cost, available: available))
+            return .failed(spell.isStaff
+                ? .staffOutOfCharge(cost: cost, available: available)
+                : .insufficientMagicka(cost: cost, available: available))
         }
-        values.damage(.magicka, by: cost, on: caster)
+        pay(cost, for: spell, caster: caster)
         // UESP: "Dual-casting a spell gives the same experience per cast as one-handed cast."
         noteSkillUse(of: spell, amount: baseSkillUseAmount(of: spell), caster: caster)
         world?.spellWasCast(spell.key, by: caster.key)
@@ -463,5 +453,29 @@ extension CasterRuntime {
     public func takeCompletedCasts() -> [CompletedCast] {
         defer { completedCasts = [] }
         return completedCasts
+    }
+}
+
+// MARK: - Reading
+
+extension CasterRuntime {
+    public func state(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastState {
+        casts[CastSlot(caster: caster, hand: hand)] ?? SpellCastState()
+    }
+
+    public func phase(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastPhase {
+        state(of: hand, on: caster).phase
+    }
+
+    /// Whether either of `caster`'s hands is mid-cast, which is what magicka
+    /// regeneration stands down for.
+    public func isCasting(_ caster: ReferenceKey = .player) -> Bool {
+        SpellHand.allCases.contains { phase(of: $0, on: caster).isCasting }
+    }
+
+    /// Every actor with a cast in flight, in key order. What the combat readout
+    /// counts so an NPC mid-charge is visible rather than assumed.
+    public var castingActors: [ReferenceKey] {
+        Set(casts.filter(\.value.phase.isCasting).keys.map(\.caster)).sorted()
     }
 }

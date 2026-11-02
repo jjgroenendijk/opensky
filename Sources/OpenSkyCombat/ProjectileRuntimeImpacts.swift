@@ -13,13 +13,13 @@ import simd
 extension ProjectileRuntime {
     /// One landed arrow's health damage, or zero for anything else.
     public func applyArrow(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Float {
-        guard
-            let arrow = projectile.payload.arrow,
-            let target = impact.target, let world,
-            world.applyProjectileDamage(
-                arrow.damage.applied, to: target, from: projectile.shooter
-            )
+        guard let arrow = projectile.payload.arrow, let target = impact.target, let world
         else { return 0 }
+        // Read before the damage: the hit itself makes the target aware.
+        let sneak = world.projectileIsSneakAttack(by: projectile.shooter, on: target)
+        guard world.applyProjectileDamage(
+            arrow.damage.applied, to: target, from: projectile.shooter
+        ) else { return 0 }
         // After the damage, as the melee path does. `akProjectile` is filled in; vanilla
         // leaves it `None` for an actor target, which handlers already tolerate.
         world.reportScriptHit(ScriptHitEvent(
@@ -27,6 +27,7 @@ extension ProjectileRuntime {
             aggressor: projectile.shooter,
             source: arrow.weapon,
             projectile: projectile.profile.projectile,
+            isSneakAttack: sneak,
             damage: arrow.damage.applied
         ))
         // Archery levels on the bow's base WEAP damage

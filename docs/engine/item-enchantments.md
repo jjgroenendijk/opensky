@@ -186,7 +186,7 @@ example (four 40% items give +160%) adds. Where each one lands is on the
 [melee damage](/engine/melee-damage.md) and [projectiles](/engine/projectiles.md) pages.
 
 Not read here: `Melee Damage` (34) and `Unarmed Damage` (35) are flat point adds, not
-percentages, and `Attack Damage Mult` (159) is the value vanilla perks write. Adding a flat value
+percentages, and `Attack Damage Mult` (154) is the value vanilla perks write. Adding a flat value
 into a multiplier would be a different formula.
 
 ## Saving

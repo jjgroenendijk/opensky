@@ -65,6 +65,13 @@ nonisolated public struct LiveProjectile: Equatable, Sendable {
     /// The cell it was fired in, which is where a stick lands.
     public let location: CellSceneLocation?
     public var state: ProjectileFlightState
+    /// A cone's travel at which the last look ahead found the world; nil while clear.
+    public var coneStop: Float?
+    /// The reference and material that look ahead found.
+    public var coneWall: FormID?
+    public var coneWallMaterial: FormID?
+    /// The flight age of a cone's next look ahead.
+    public var nextConeLook: Float = 0
 
     /// Where the shot is now, which is what a readout draws.
     public var position: SIMD3<Float> {
@@ -212,6 +219,8 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool
     func showArcheryNotice(_ text: String)
     func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float
+    /// Whether a shot from `shooter` would land on `target` unseen, read before the damage.
+    func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool
 }
 
 extension ProjectileWorld {
@@ -229,5 +238,9 @@ extension ProjectileWorld {
     /// The shooter's `Mod Recover Arrow Chance` perks, as a factor on the chance.
     public func arrowRecoveryMultiplier(of _: ReferenceKey) -> Float {
         1
+    }
+
+    public func projectileIsSneakAttack(by _: ReferenceKey, on _: ReferenceKey) -> Bool {
+        false
     }
 }

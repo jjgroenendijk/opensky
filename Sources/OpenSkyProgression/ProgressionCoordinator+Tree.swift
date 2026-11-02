@@ -10,7 +10,10 @@ import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator {
     public func skillInformation(_ index: Int32) -> ResolvedActorValueInformation? {
-        information?.information(actorValueIndex: index)
+        if let tree = BeastPerkTree(actorValueIndex: index) {
+            return information?.information(editorID: tree.informationEditorID)
+        }
+        return information?.information(actorValueIndex: index)
     }
 
     /// Falls back to the vanilla table, so a line always names something.

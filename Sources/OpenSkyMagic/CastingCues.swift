@@ -123,7 +123,10 @@ nonisolated public enum SpellFireGraphNames: Sendable {
     public static let left = "MLh_SpellFire_Event"
     public static let right = "MRh_SpellFire_Event"
 
-    public static let observedEvents = [left, right]
+    /// The staff release clips' spelling, with no hand: it releases the hand a staff holds.
+    public static let staff = "Spellfire"
+
+    public static let observedEvents = [left, right, staff]
 
     public static func event(of hand: SpellHand) -> String {
         hand == .left ? left : right

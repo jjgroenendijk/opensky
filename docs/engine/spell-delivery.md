@@ -99,6 +99,14 @@ whatever the ray reaches, once at the start and once per second held. The ray is
 every application, so moving the beam off a target stops applying to it while the cast keeps running
 and costing.
 
+A `PROJ` of type flame or cone, such as the one of `Flames`, `FrostSpray`, or the Unrelenting Force
+shout, meets the world in another way. It hits actors on every step, as any projectile does. It
+does not test the world on every step. Every `fConeProjectileEnvironmentTimer` seconds (0.125) it
+looks `fConeProjectileEnvironmentDistance` units (192) ahead along its flight, and notes the first
+surface there. It stops at that surface when it reaches it. So a cone passes through a thin object
+that appears in front of it between two looks. The settings' names give the look ahead; how the game
+uses the result is OpenSky's reading. An actor in the way is still hit first.
+
 A spell projectile is not drawn yet: no model, no muzzle flash, and no impact art. There is no aim
 assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the camera points, as
 it does for arrows.
@@ -127,8 +135,9 @@ foot, from its own 128-unit capsule height for an adult human. It is a setting, 
 can be corrected without changing the rule. Settling it needs the running game: cast `Fireball`
 between two actors a known distance apart, and find where the second stops taking damage.
 
-Vanilla detonates the `PROJ`'s explosion. OpenSky decodes the explosion link but does not run it, so
-an area spell reaches actors through its `EFIT` area.
+The `PROJ`'s explosion detonates where a projectile, an area spell, or a rune goes off: its damage,
+sounds, model, image-space modifier, and placed object ([explosions](/formats/explosions.md#runtime)).
+The spell's own effects still reach actors through its `EFIT` area.
 
 ## Resistances on a hit
 

@@ -23,6 +23,8 @@ public struct CellResetQueries {
     public var isCleared: (CellScene) -> Bool = { _ in false }
     /// The cell's encounter zone has its "never resets" flag.
     public var neverResets: (CellScene) -> Bool = { _ in false }
+    /// The reference holds a quest item, so its inventory stays through a reset.
+    public var holdsQuestItem: (ReferenceKey) -> Bool = { _ in false }
 
     public init() {}
 }
@@ -128,9 +130,11 @@ public final class CellResetCoordinator {
             entry.placedReference?.isNoRespawn != true, entry.placedActor?.isNoRespawn != true,
             queries.respawns(entry)
         else { return false }
+        let kept: Set<WorldStateComponentKind> = queries.holdsQuestItem(entry.key)
+            ? [.inventory, .itemCopies] : []
         var changed = false
-        for kind in Self.resetKinds where store.reset(kind, for: entry.key) {
-            changed = true
+        for kind in Self.resetKinds where !kept.contains(kind) {
+            changed = store.reset(kind, for: entry.key) || changed
         }
         return changed
     }

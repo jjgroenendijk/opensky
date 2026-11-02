@@ -10,9 +10,9 @@ nonisolated extension ItemEnchantmentProfile {
     /// `made` on `item`, or nil when a base left the load order. A base's magnitude
     /// grows with its power where its MGEF lets power change magnitude, and its
     /// duration where it lets power change duration; both round down (UESP
-    /// "Skyrim:Enchanting_Effects").
+    /// "Skyrim:Enchanting_Effects"). `skill` is the wielder's Enchanting now.
     public static func made(
-        _ made: MadeEnchantment, item: FormID, using store: EnchantmentStore
+        _ made: MadeEnchantment, item: FormID, using store: EnchantmentStore, skill: Float = 0
     ) -> ItemEnchantmentProfile? {
         let bases = made.bases.compactMap { store.enchantment(key: $0) }
         guard let first = bases.first, bases.count == made.bases.count else { return nil }
@@ -38,7 +38,7 @@ nonisolated extension ItemEnchantmentProfile {
             delivery: first.data?.delivery ?? .selfTarget,
             type: first.data?.type ?? .enchantment,
             capacity: made.capacity,
-            costPerUse: made.costPerUse,
+            costPerUse: made.costPerUse(atSkill: skill),
             wornRestriction: nil
         )
     }

@@ -54,12 +54,22 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// answers false.
     @discardableResult
     public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
-        guard target == nil || target == .player else { return false }
-        return world.raisePlayerGraphEvent(name)
+        guard let target, target != .player else { return world.raisePlayerGraphEvent(name) }
+        return world.raiseActorGraphEvent(name, on: target)
     }
 
     public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         world.writePlayerGraphVariable(value, named: name)
+    }
+
+    public func writeCombatVariable(
+        _ value: BehaviorVariableValue, named name: String, on target: ReferenceKey?
+    ) {
+        guard let target, target != .player else {
+            world.writePlayerGraphVariable(value, named: name)
+            return
+        }
+        world.writeActorGraphVariable(value, named: name, on: target)
     }
 }
 
@@ -83,8 +93,18 @@ extension CombatCoordinator: MeleeCombatWorld {
             of: target,
             playerIsBlocking: isBlocking,
             playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
-            machineBlock: target == .player ? nil : loop?.blockKind(of: target)
+            machineBlock: target == .player ? nil : npcBlock(of: target)
         )
+    }
+
+    /// An NPC with a shield blocks with it, so the shield formula applies (UESP "Skyrim:Block").
+    func npcBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+        guard let kind = loop?.blockKind(of: target) else { return nil }
+        return shieldRating(of: target).map { MeleeBlockKind.shield(baseArmorRating: $0) } ?? kind
+    }
+
+    public func meleeBlockSkill(of target: ReferenceKey) -> Float {
+        combatBlockSkill(of: target)
     }
 
     /// The blocker's fortify term times `Mod Percent Blocked`.
@@ -241,6 +261,10 @@ extension CombatCoordinator: ProjectileWorld {
             applyPerkHitSpell(blow, on: target)
         }
         return landed
+    }
+
+    public func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool {
+        isSneakAttack(by: shooter, on: target)
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

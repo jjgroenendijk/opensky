@@ -47,6 +47,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     public internal(set) var flight = CombatFlightCycle()
     /// Seconds until the actor may shout again.
     public internal(set) var shoutCooldown: Float = 0
+    /// True through a recovery whose next swing follows at once: `GetAttackState` 4.
+    public private(set) var chainsNextAttack = false
+    /// Swings so far in the current chain.
+    public private(set) var comboSwings = 0
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -58,12 +62,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         phase.isEngaged
     }
 
-    /// What this actor is blocking with, or nil when its guard is down.
-    ///
-    /// Always `.weapon`: an actor blocking with a shield needs the equipment
-    /// resolution that would tell it apart from a raised sword, and reporting
-    /// `.shield` without one would move the damage reduction to a different
-    /// pinned constant on a guess. Stated in docs/engine/combat-behavior.md.
+    /// What this actor is blocking with, or nil when its guard is down. The
+    /// machine knows no equipment, so the coordinator swaps in `.shield` for a worn shield.
     public var blockKind: MeleeBlockKind? {
         phase == .blocking ? .weapon : nil
     }
@@ -179,9 +179,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         case .windup: return advanceWindup()
         case .contact:
             enter(.recovery)
+            chainsNextAttack = rollsChain(inputs)
             return unchanged()
         case .recovery:
-            return phaseSeconds >= settings.recoverySeconds ? enterSpacing() : unchanged()
+            return advanceRecovery(inputs)
         default: return unchanged()
         }
     }
@@ -374,6 +375,12 @@ nonisolated extension CombatBehaviorMachine {
         if next != phase {
             approachCasts = nil
         }
+        if next != .recovery {
+            chainsNextAttack = false
+        }
+        if ![.windup, .contact, .recovery].contains(next) {
+            comboSwings = 0
+        }
         phase = next
         phaseSeconds = 0
     }
@@ -419,5 +426,30 @@ nonisolated extension CombatBehaviorMachine {
         let casts = Float(random.percent()) / 100 < settings.rangedCastChance
         approachCasts = casts
         return casts
+    }
+}
+
+/// Combos: a one-handed swing may chain into the next.
+nonisolated extension CombatBehaviorMachine {
+    /// A chained swing starts halfway through the follow-through, inside its window;
+    /// otherwise the actor waits the gap. A target that stepped out of reach ends the chain.
+    private mutating func advanceRecovery(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
+        if chainsNextAttack, phaseSeconds >= settings.recoverySeconds / 2 {
+            chainsNextAttack = false
+            guard inputs.distance <= inputs.strikingDistance(settings: settings) else {
+                comboSwings = 0
+                return enterSpacing()
+            }
+            comboSwings += 1
+            return startAttack()
+        }
+        guard phaseSeconds >= settings.recoverySeconds else { return unchanged() }
+        comboSwings = 0
+        return enterSpacing()
+    }
+
+    private mutating func rollsChain(_ inputs: CombatBehaviorInputs) -> Bool {
+        guard inputs.canChain, comboSwings + 1 < settings.maximumComboSwings else { return false }
+        return Float(random.percent()) / 100 < settings.comboChance
     }
 }

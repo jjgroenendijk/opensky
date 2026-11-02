@@ -227,6 +227,19 @@ struct InventoryCoordinatorTests {
         #expect(coordinator.scriptItemCount(Fixture.sword, in: chest.key) == before + 2)
     }
 
+    @Test func removeAllItemsKeepsQuestItemsUnlessAsked() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        harness.world.questItems = [Fixture.sword]
+        #expect(coordinator.scriptAddItem(Fixture.sword, count: 1, to: .player))
+        #expect(coordinator.scriptAddItem(Fixture.cuirass, count: 1, to: .player))
+        _ = coordinator.scriptRemoveAllItems(from: .player, to: nil)
+        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 1)
+        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 0)
+        _ = coordinator.scriptRemoveAllItems(from: .player, to: nil, removeQuestItems: true)
+        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
+    }
+
     @Test func setOutfitGivesAndWearsTheOutfit() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
@@ -373,6 +386,11 @@ extension InventoryCoordinatorTests {
         var gameDaysPassed: Float?
         var caughtDays: [ReferenceKey: Float] = [:]
         var caughtFactions: [ReferenceKey: ReferenceKey] = [:]
+        var questItems: Set<FormID> = []
+
+        func questItemBases() -> Set<FormID> {
+            questItems
+        }
 
         func pickpocketCaughtDay(of key: ReferenceKey) -> Float? {
             caughtDays[key]

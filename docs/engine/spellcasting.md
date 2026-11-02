@@ -139,6 +139,25 @@ seems to be: 2.2x spell effectiveness for 2.8x spell cost".
 
 The values are read from the install with `openskycli gmst list fMagicDualCasting`.
 
+## Staffs
+
+A staff casts its enchantment like a spell. UESP [Staves](https://en.uesp.net/wiki/Skyrim:Staves):
+"using a staff does not use any of the caster's own Magicka; instead, it depletes the staff's
+charge". So a staff cast:
+
+- casts the staff's `ENCH` as a spell, with the enchantment's casting type, delivery, charge time,
+  and cost. For example `StaffEnchParalyze` is fire-and-forget, aimed, 0.5 s to charge, cost 300.
+- pays from the staff's charge, not magicka. A staff with too little charge fails with
+  `sMagicCastInsufficientItemCharge`, as an enchanted weapon does. An unmetered staff never runs dry.
+- costs less with a higher skill in the enchantment's school. UESP says a higher skill lowers the
+  charge cost, to about 1.7 times the uses at 100; that is the spell skill multiplier below, so
+  OpenSky uses it. Perks do not change it.
+- gives no skill experience, and cannot be dual cast.
+
+OpenSky equips every one-handed weapon in the right hand, so only the right hand holds a staff. The
+attack button casts with it instead of swinging. `openskycli game state player` shows the held staff
+under `staff`: the item, its enchantment, its charge, and its capacity.
+
 ## What refuses a cast
 
 Nothing fails silently.
@@ -197,8 +216,10 @@ while that hand casts, and `IsInCastState` is 1 while either does.
 A released fire-and-forget hand waits for its spell-fire event before the spell leaves:
 `MRh_SpellFire_Event` for the right hand and `MLh_SpellFire_Event` for the left. The release clips
 raise them. While it waits, the hand's `bWantCast` is false, so the graph plays the throw. A graph
-that raises nothing lets the spell go after 0.4 seconds, an OpenSky value. [WARNING] The hand each
-event names is read from its prefix (`MRh`, `MLh`); the third spelling, `Spellfire`, is not acted on.
+that raises nothing lets the spell go after 0.4 seconds, an OpenSky value. The hand each event names
+is read from its prefix (`MRh`, `MLh`). The third spelling, `Spellfire`, has no hand; it releases the
+right hand when that hand holds a staff. [WARNING] Whether a staff's graph raises it is not
+confirmed; without it, the 0.4-second fallback releases the staff.
 
 The spell's costliest effect gives the hand its sounds and art. CK wiki "Magic Effect":
 
@@ -230,9 +251,12 @@ used-power entry for a forgotten spell are all cleaned up by the component's ini
 
 Eight condition functions read a magic snapshot per actor ([conditions](/formats/conditions.md)).
 
-`HasMagicEffect` and its keyword forms are documented as testing whether an actor carries an effect
-a spell could apply, active or not. The OpenSky component holds only what was applied, so all four
-answer whether the effect is acting.
+`HasMagicEffect` and its keyword forms test whether an actor carries an effect a spell could apply,
+active or not. All four count every effect of the spells acting on the actor, so a carried ability,
+disease, or addiction counts even while its conditions keep it inactive.
+
+Twelve Papyrus natives reach the spellbook and casting, `RemoteCast` among them
+([spell natives](/engine/papyrus-spell-natives.md)).
 
 ## Spell names
 
@@ -259,3 +283,10 @@ For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCast
 (skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
 `fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
 NPC formula; this is OpenSky's reading of the setting names.
+
+Two more settings change the base cost before the skill term. `fMagicAreaBaseCostMult` (0 in
+`Skyrim.esm`) adds cost per foot of area, with the area clamped between `fMagicAreaScaleMin` (2.5)
+and `fMagicAreaScaleMax` (100): each effect's cost is multiplied by `1 + mult × area`.
+`fMagicRangeTargetCostMult` (1) multiplies the cost of an aimed or target spell. No source gives
+either form; it is OpenSky's reading of the names. At the vanilla values neither changes a cost, so
+a stored cost stays as it is. A manual cost is never changed.

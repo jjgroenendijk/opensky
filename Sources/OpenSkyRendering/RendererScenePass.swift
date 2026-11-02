@@ -182,7 +182,7 @@ extension Renderer {
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
                 instanceColor: instance.instanceColor(regions: regionEmittance),
-                grassParameters: .zero
+                grassParameters: SIMD4(0, 0, 0, fadeOut(of: instance))
             )
             instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)

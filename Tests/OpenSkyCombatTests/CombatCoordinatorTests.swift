@@ -2,6 +2,7 @@
 // state it keeps. The rules are tested in `CombatCoreTests`.
 
 @testable import OpenSkyActorsInterface
+import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
@@ -30,6 +31,18 @@ struct CombatCoordinatorTests {
         store.set(.combatTemperament, to: 0)
         coordinator.load(settings: store)
         #expect(!coordinator.usesCombatTemperament)
+    }
+
+    @Test func aCombatEventOnAnNPCReachesThatNPCsGraph() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = CombatCoordinator(world: world, data: nil)
+        let npc = ReferenceKey.generated(9)
+        let magnitude = CombatGraphNames.staggerMagnitude
+        coordinator.writeCombatVariable(.real(0.5), named: magnitude, on: npc)
+        #expect(coordinator.raiseCombatEvent(CombatGraphNames.staggerStart, on: npc))
+        #expect(world.actorGraphEvents[npc] == [CombatGraphNames.staggerStart])
+        #expect(world.actorGraphVariables[npc]?[magnitude] == .real(0.5))
+        #expect(world.raisedEvents.isEmpty)
     }
 
     @Test func aCoordinatorWithoutGameDataReportsItselfUnavailable() {
@@ -172,10 +185,9 @@ struct CombatCoordinatorTests {
         #expect(world.damage.map(\.amount) == [5])
     }
 
-    @Test func onlyThePlayerGraphTakesAnEvent() {
+    @Test func thePlayersEventsGoToThePlayerGraph() {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
-        #expect(!coordinator.raiseCombatEvent("staggerStart", on: Self.guardKey))
         #expect(coordinator.raiseCombatEvent("staggerStart", on: .player))
         #expect(coordinator.raiseArcheryEvent("bowAttackStart"))
         #expect(world.raisedEvents == ["staggerStart", "bowAttackStart"])

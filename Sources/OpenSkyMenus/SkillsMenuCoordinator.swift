@@ -14,11 +14,17 @@ public protocol SkillsMenuWorld: SWFLayerWorld {
     var perkSkySource: PerkSkySource? { get }
     var perkSkySettings: PerkSkySettings { get }
     var skillsMenuTexts: GameSettingTexts<SkillsMenuText> { get }
+    /// A beast form opens only its own tree, and nothing without one.
+    var isPlayerInBeastForm: Bool { get }
 }
 
 extension SkillsMenuWorld {
     public var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
         .vanilla
+    }
+
+    public var isPlayerInBeastForm: Bool {
+        false
     }
 }
 
@@ -103,9 +109,21 @@ public final class SkillsMenuCoordinator {
     /// False before a world with progression loads.
     @discardableResult
     public func open() -> Bool {
-        guard model == nil, let world, let source = world.skillsMenuSource else { return false }
+        guard
+            model == nil, let world, let source = world.skillsMenuSource,
+            !world.isPlayerInBeastForm || source.skillsMenuBeastTree != nil
+        else {
+            return false
+        }
         source.skillsMenuWillOpen()
-        model = SkillsMenuModel(player: source.skillsMenuPlayer, skills: source.skillsMenuSkills)
+        if let tree = source.skillsMenuBeastTree {
+            model = .beast(player: source.skillsMenuPlayer, tree: tree)
+            model?.setPerks(source.skillsMenuPerks(forSkill: tree.index))
+        } else {
+            model = SkillsMenuModel(
+                player: source.skillsMenuPlayer, skills: source.skillsMenuSkills
+            )
+        }
         model?.texts = world.skillsMenuTexts
         loadTrees(source)
         menuMode.inputConsumer = world.menuInputConsumer
@@ -172,7 +190,9 @@ public final class SkillsMenuCoordinator {
     /// Reads every value again after a spend, keeping the selection.
     func refresh(_ source: any SkillsMenuSource) {
         guard var model else { return }
-        model.refresh(player: source.skillsMenuPlayer, skills: source.skillsMenuSkills)
+        let skills = model.isBeastTree
+            ? source.skillsMenuBeastTree.map { [$0] } ?? model.skills : source.skillsMenuSkills
+        model.refresh(player: source.skillsMenuPlayer, skills: skills)
         if model.page == .perks, let skill = model.selectedSkill {
             model.setPerks(source.skillsMenuPerks(forSkill: skill.index), keepSelection: true)
         }
@@ -207,7 +227,10 @@ public final class SkillsMenuCoordinator {
             rows = model.skills.map(Self.skillRow)
             selected = model.skillPosition
         case .perks:
-            page = "\(model.selectedSkill?.name ?? "") perks"
+            let tree = model.selectedSkill?.name ?? ""
+            page = model.isBeastTree
+                ? "\(tree) beast tree (\(model.player.perkPoints) points)"
+                : "\(tree) perks"
             rows = model.perks.map(Self.perkRow)
             selected = model.perkPosition
         case let .legendary(confirmation), let .perkConfirm(confirmation):

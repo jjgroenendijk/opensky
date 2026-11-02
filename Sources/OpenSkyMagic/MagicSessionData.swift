@@ -74,6 +74,7 @@ nonisolated public struct MagicRules: Equatable, Sendable {
     public var shouts = ShoutSettings.vanilla
     public var runes = RuneSettings.vanilla
     public var summons = SummonSettings.vanilla
+    public var world = MagicWorldSettings.vanilla
 
     public init() {}
 }

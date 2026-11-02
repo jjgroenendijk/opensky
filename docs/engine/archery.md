@@ -96,8 +96,9 @@ So a shot's base damage is the `WEAP` damage plus the `AMMO` damage. The multipl
 the normal weapon formula, from UESP "Skyrim:Weapons", Overview:
 `(1 + skill/200) * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`.
 
-The Archery skill is fixed at 15, the value UESP gives for a starting skill without a race bonus.
-The item and potion terms come from the Marksman Modifier and Marksman Power Modifier actor values,
+The skill term is applied once, when the arrow hits, with the shooter's Archery at that moment.
+The shot itself carries no skill term. The item and potion terms come from the Marksman Modifier
+and Marksman Power Modifier actor values,
 which Fortify Archery enchantments and Fortify Marksman potions move. The perk term comes from
 `Mod Attack Damage` ([perks](/engine/perks.md)). Smithing improvement is not applied. The shot
 keeps the multiplier and the bow's enchantment from the moment it was loosed, so an arrow in the air
@@ -176,15 +177,20 @@ records give the numbers:
 shot is nocked or drawn, `Mod Bow Zoom` gives less than 1, and the player has stamina. It ends
 when one of these stops. It also ends on `bowZoomStop`, and then waits until block comes up.
 
-`openskycli game state player` shows it under `bowZoom`: `zoomed`, `viewShare`, `timeScale`, and
-`fovYDegrees`.
+While zoomed, stamina regeneration stays paused, and the pause lasts `fBowZoomStaminaRegenDelay`
+after the zoom ends. Skyrim.esm does not set this setting; the Creation Kit default is 3 seconds
+(<https://ck.uesp.net/wiki/Category:Settings>). The drain itself is stamina damage, whose own pause
+(`fDamagedStaminaRegenDelay`, 0.5 s) is shorter and so never decides.
+
+`openskycli game state player` shows it under `bowZoom`: `zoomed`, `viewShare`, `timeScale`,
+`fovYDegrees`, and `staminaPauseSeconds`.
 
 Where OpenSky differs:
 
 - No source says what the `Mod Bow Zoom` number scales. OpenSky reads it as the share of the
-  half-angle tangent, which is how a camera zoom scales the image.
-- The drain is stamina damage, so regeneration pauses for `fDamagedStaminaRegenDelay` after the
-  last drain. `fBowZoomStaminaRegenDelay` (3) is not used.
+  half-angle tangent, which is how a camera zoom scales the image. A reference game capture of
+  the same scene has not checked it yet.
+- The pause after a zoom comes from the setting's name and its default, not from an observation.
 
 ## Not done yet
 

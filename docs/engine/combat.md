@@ -119,8 +119,9 @@ separate calls.
 
 The melee, projectile, and combat loop paths all report hits the same way. A hit event carries
 exactly the seven `OnHit` parameters the Creation Kit documents. Each path reports after the damage
-is applied, so a handler that reads the target's health sees the blow. Three of the seven are always
-false, because power attacks, sneak attacks, and bashing do not exist yet. The `akSource` and
+is applied, so a handler that reads the target's health sees the blow. The player's swing sets
+`abPowerAttack`, `abSneakAttack`, and `abBashAttack` for a power attack, a sneak attack, and a bash,
+and an arrow sets `abSneakAttack`. An NPC's blow is a plain swing, so it sets none. The `akSource` and
 `akProjectile` handles name base records with no script instance: a handler can compare and log
 them, but cannot call a method on them.
 
@@ -140,11 +141,13 @@ room ends with a thousand of each.
 | Group | Limit | Trim order | What a trim costs |
 | --- | --- | --- | --- |
 | Arrows in flight | 12 | Oldest first | Recorded as `.cancelled` in the trace |
-| Arrows stuck in the world | 32 | Oldest first | Pulled back out |
+| Arrows stuck in the world | 15 | Oldest first | Pulled back out |
 | Corpses simulating | 8 | Oldest first | Stops stepping, keeps its resting pose |
 | Dynamic bodies awake | 64 | Ascending `ReferenceKey` | Sleeps where it is |
 
-The numbers are OpenSky's. Vanilla's caps are in its code, and no open source states them. Each was
+The stuck-arrow limit is UESP's: "Only 15 missed arrows or bolts can be present at once"
+([Archery](https://en.uesp.net/wiki/Skyrim:Archery)). The other numbers are OpenSky's. Vanilla's
+caps are in its code, and no open source states them. Each was
 picked from what the engine can carry at frame rate. Dynamic bodies are placed by the cell build and
 have no spawn time, so they sleep in key order. Nothing is deleted from view: the cap costs motion,
 not position.
@@ -186,7 +189,7 @@ shows the last fall under `lastFall`.
 
 ## Limits
 
-- No power attacks, bashing, or dodging.
+- NPCs do not power attack, bash, or dodge. The player power attacks, sneak attacks, and bashes.
 - Actors cast only spells, and only the deliveries [magic](/engine/magic.md) carries out. Powers,
   lesser powers, and shouts are skipped.
 - No group tactics or morale. Assistance is decoded and unread.
@@ -195,8 +198,9 @@ shows the last fall under `lastFall`.
 - No ranged weapon AI. An actor closes to melee reach whatever it holds.
 - Every actor swings unarmed. An NPC's equipment is resolved for drawing only, and turning a sword
   mesh into a damage number would be invented.
-- An NPC's block is always `.weapon`, never `.shield`, for the same reason.
-- NPCs have no behavior graph. A graph event raised on one returns false, and the trace says it did
-  not play. Reactions are single clips ([actor animation](/engine/actor-animation.md)).
+- A combat event aimed at an NPC, such as a stagger from the player's swing, goes to that NPC's
+  behaviour graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose
+  graph lacks the event, answers false, and the trace says it did not play. The combat loop's own
+  reactions are single clips ([actor animation](/engine/actor-animation.md)).
 - Detection tracks observers against the player only, so an actor cannot lose a target that is not
   the player.

@@ -21,6 +21,8 @@ nonisolated public struct SpellHitEffectLinks: Equatable, Sendable {
     public let area: UInt32
     /// The spell entry's duration, seconds. Zero means the hit is instant.
     public let duration: UInt32
+    /// An Absorb effect, whose instant hit visual lasts `fMagicAbsorbVisualTimer`.
+    public var isAbsorb = false
 
     public init(
         plugin: String,
@@ -72,6 +74,7 @@ nonisolated extension MagicEffectStore {
                 area: entry.area,
                 duration: entry.duration
             )
+            links.isAbsorb = effect.archetype == .absorb
             links.hitSound = resolved.effect.sounds.first { $0.kind == Self.onHitSoundKind }
                 .flatMap(\.descriptor)
                 .flatMap { resolvedID($0, fromPlugin: resolved.sourcePlugin) }

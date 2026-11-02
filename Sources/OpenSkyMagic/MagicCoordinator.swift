@@ -80,6 +80,7 @@ public final class MagicCoordinator {
     public internal(set) var runes: [PlacedRune] = []
     public let runeSettings: RuneSettings
     public let summonSettings: SummonSettings
+    public let worldSettings: MagicWorldSettings
     /// Dismissed summons and the seconds before each goes.
     var fadingSummons: [(actor: CommandedActor, seconds: Float)] = []
     public internal(set) var detonatedRunes = 0
@@ -130,12 +131,14 @@ public final class MagicCoordinator {
         shoutSettings = data.rules.shouts
         runeSettings = data.rules.runes
         summonSettings = data.rules.summons
+        worldSettings = data.rules.world
         if let casting = data.casting {
             let runtime = CasterRuntime(
                 spellbook: casting.spellbook, values: casting.values, world: self
             )
             runtime.costSettings = spellCostSettings
             caster = runtime
+            runtime.staffs = self
         }
         prepareArchetypeLookups()
     }
@@ -164,6 +167,14 @@ public final class MagicCoordinator {
     }
 
     /// Takes the actors a calm from around its caster reached, leaving none.
+    func takeHealing() -> [MagicHealingUse] {
+        guard var runtime = effects, !runtime.healing.isEmpty else { return [] }
+        let healing = runtime.healing
+        runtime.healing = []
+        effects = runtime
+        return healing
+    }
+
     func takeCalmedAround() -> [ReferenceKey] {
         guard var runtime = effects, !runtime.calmedAround.isEmpty else { return [] }
         let calmed = runtime.calmedAround
@@ -198,6 +209,15 @@ public final class MagicCoordinator {
         advanceHolds(delta: delta)
         advanceLights(delta: delta)
         return takeCommands()
+    }
+
+    /// Runs the effects through `seconds` of real time a rest skipped. The commands
+    /// they raise leave with the next frame.
+    public func elapseRestTime(seconds: Double) {
+        guard var runtime = effects else { return }
+        runtime.elapse(seconds: seconds, over: world.regeneratingHolders())
+        effects = runtime
+        performWorldActions()
     }
 
     /// Returns and empties what the effects asked of the app. A command raised

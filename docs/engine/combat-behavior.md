@@ -74,6 +74,19 @@ A charge is dropped in exactly one place: the step that left the casting phase w
 So fleeing, losing the target, giving up, a stagger, and death all clean up a cast none of them
 started.
 
+## Combos
+
+A one-handed swing can chain into the next, as the player's combo does
+([melee combat](/engine/melee-combat.md#combos)). At the contact step of a sword, dagger, axe, or
+mace swing, the actor rolls `comboChance` with its seeded generator. On a hit, the next swing starts
+halfway through the recovery, inside the combo window, instead of after the attack interval. While
+it waits, `GetAttackState` reads 4 (next attack). A chain holds at most `maximumComboSwings` swings.
+A target that stepped out of striking distance ends the chain, and the actor goes to spacing. A
+two-handed weapon, a bow, or bare hands never chains.
+
+The game decides a chain in its combat AI code; no record states it. Both values are OpenSky's.
+The combat style's Offensive Mult does not change the chance.
+
 ## Settings
 
 Every value here is OpenSky's. No record states an attack rhythm, a block chance, a flee threshold,
@@ -98,6 +111,8 @@ So they are chosen in the open, with a reason each. An actor's
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
 | Ranged cast chance | 1 | Out of weapon reach a caster with a spell to throw throws it |
 | Held spell time | 1.5 s | Two applications of a once-a-second effect: long enough to see a beam, short enough to decide again |
+| Combo chance | 0.3 | A chain about one swing in three: often enough to see, rare enough that a block still answers most swings |
+| Most swings in a combo | 3 | The vanilla one-handed attack chain has three swings |
 
 ## Combat style
 
@@ -269,8 +284,8 @@ moved on during the fight, and the package the schedule names now is the right o
 
 - The target staggers. A landed player hit interrupts that actor's machine and plays the stagger
   clip. An actor that was not fighting joins the fight: being struck tells it where someone is. The
-  hit also raises `staggerStart` on the target's graph, which returns false because NPCs have none.
-  The trace records that.
+  hit also raises `staggerStart` on the target's behaviour graph. An NPC with no running graph
+  answers false, and the trace records that.
 - The player recoils. A landed opponent blow writes `recoilMagnitude` and then raises `recoilStart`
   on the player's graph, in that order, so the recoil reads this blow's number. The melee runtime
   uses the same write-then-raise order for a stagger.

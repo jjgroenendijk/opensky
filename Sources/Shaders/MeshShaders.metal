@@ -46,6 +46,7 @@ vertex StaticVertexOut staticMeshVertex(
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     out.instanceColor = instance.instanceColor;
+    out.fadeOut = instance.grassParameters.w;
     setBasis(out, upper3x3(instance.normalMatrix));
     return out;
 }
@@ -80,6 +81,7 @@ vertex StaticVertexOut skinnedMeshVertex(
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     out.instanceColor = instance.instanceColor;
+    out.fadeOut = instance.grassParameters.w;
     setBasis(out, upper3x3(instance.normalMatrix) * skinBasis);
     return out;
 }
@@ -113,6 +115,7 @@ vertex StaticVertexOut morphedSkinnedMeshVertex(
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     out.instanceColor = instance.instanceColor;
+    out.fadeOut = instance.grassParameters.w;
     setBasis(out, upper3x3(instance.normalMatrix) * skinBasis);
     return out;
 }
@@ -379,6 +382,10 @@ fragment float4 staticMeshFragment(
             discard_fragment();
         }
         alpha = 1.0;
+    }
+    // A reference fading out, such as a dismissed summon, drops whole pixels.
+    if (in.fadeOut > 0.0 && 1.0 - in.fadeOut < screenDoorThreshold(in.position.xy)) {
+        discard_fragment();
     }
     if (debugViewActive) {
         DebugSurface surface = {

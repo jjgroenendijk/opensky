@@ -43,8 +43,8 @@ on the player's.
 
 | Entry point | Index | Vanilla perk | Effect |
 | --- | --- | --- | --- |
-| Mod Pickpocket Chance | 61 | `Pickpocket00` to `Pickpocket80`, `Cutpurse`, `ExtraPockets` | Scales the chance, with the item bound as the condition subject |
-| Can Pickpocket Equipped Item | 56 | `Misdirection`, `PerfectTouch` | Allows taking an equipped item, under item conditions |
+| Mod Pickpocket Chance | 56 | `Pickpocket00` to `Pickpocket80`, `Cutpurse`, `ExtraPockets` | Scales the chance, with the item bound as the condition subject |
+| Can Pickpocket Equipped Item | 61 | `Misdirection`, `PerfectTouch` | Allows taking an equipped item, under item conditions |
 | Should Apply Placed Item | 84 | `Poisoned` | A poison placed in the target's pockets is applied to them instead of left there |
 
 ## Placing items

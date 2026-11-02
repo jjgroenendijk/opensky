@@ -29,6 +29,14 @@ nonisolated public struct ResolvedEnchantment: Sendable {
         case nil: record.editorID ?? id.description
         }
     }
+
+    /// This enchantment as a spell a staff casts. Its key is the `ENCH` identity.
+    public var staffSpell: ResolvedSpell {
+        ResolvedSpell(
+            id: id, record: .staff(record), sourcePlugin: sourcePlugin, effects: effects,
+            cost: cost
+        )
+    }
 }
 
 nonisolated public struct EnchantmentStore: Sendable {

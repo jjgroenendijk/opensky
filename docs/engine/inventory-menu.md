@@ -121,12 +121,28 @@ bytecode. No measured run has called either, so they are not confirmed. Only `Cl
 | Unequip | A non-playable item | `sCantUnequipGeneric` |
 | Favourite | Not a weapon, armour, ammunition, potion, food, ingredient, or scroll | `sCantHotkeyItem` |
 
-Which actions refuse when is OpenSky's reading of the settings' words. OpenSky does not mark
-quest items yet, so their refusals do not happen
-([#1472](https://github.com/jjgroenendijk/opensky/issues/1472)). The rule also holds the texts
+Which actions refuse when is OpenSky's reading of the settings' words. The rule also holds the texts
 `sCantEquipGeneric`, `sCanNotEquipWornEnchantment`, and `sCantRemoveWornItem`, for gear the
 player's race cannot wear, an enchantment that cannot apply, and a worn quest item moved to a
 container.
+
+## Quest items
+
+An item is a quest item while a running quest holds it in a reference alias with the Quest Object
+flag ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). A stopped quest clears its
+aliases, so the item is free again. A quest item:
+
+- cannot be dropped, eaten, stored in a container, or sold. Each refusal shows
+  `sDropQuestItemWarning`, or `sNoEatQuestItem` for eating.
+- stays when a script calls `RemoveAllItems` with `abRemoveQuestItems` false
+  ([RemoveAllItems](https://ck.uesp.net/wiki/RemoveAllItems_-_ObjectReference)).
+- keeps the inventory of the container that holds it through a [cell reset](/engine/cell-reset.md).
+- reads `[quest]` on its row and "quest item" on its item card in `openskycli game state`. The
+  vanilla `inventorylists.swf`, `itemcard.swf`, and `inventorymenu.swf` read no quest field, so
+  the movie shows no marker.
+
+The game marks one reference as the quest item. OpenSky's inventory counts items by base form,
+so every copy of the alias reference's base is a quest item while the alias holds it.
 
 ## Quantity
 

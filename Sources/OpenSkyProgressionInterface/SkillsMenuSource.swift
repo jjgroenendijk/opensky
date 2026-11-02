@@ -134,4 +134,12 @@ public protocol SkillsMenuSource: AnyObject {
     /// Buys the next rank of the box.
     func skillsMenuBuyPerk(node: UInt32, forSkill index: Int32) -> SkillsMenuOutcome
     func skillsMenuMakeLegendary(_ index: Int32) -> SkillsMenuOutcome
+    /// In a beast form with Dawnguard, the form's tree, which the menu shows alone.
+    var skillsMenuBeastTree: SkillsMenuSkill? { get }
+}
+
+extension SkillsMenuSource {
+    public var skillsMenuBeastTree: SkillsMenuSkill? {
+        nil
+    }
 }

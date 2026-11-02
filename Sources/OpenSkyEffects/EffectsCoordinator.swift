@@ -27,6 +27,8 @@ public protocol EffectsWorld: AnyObject {
 public final class EffectsCoordinator {
     /// Seconds a hit-effect art model stays when its spell is instant.
     public static let instantArtDuration: Float = 2
+    /// `fMagicAbsorbVisualTimer`: seconds an instant Absorb hit keeps its visual.
+    public var absorbVisualSeconds: Float = 2.5
 
     public weak let world: (any EffectsWorld)?
     public let records: EffectRecordStore
@@ -222,9 +224,10 @@ public final class EffectsCoordinator {
                 let key = records.resolve(effect, fromPlugin: link.plugin),
                 let spec = records.visualEffectSpec(key)
             else { continue }
-            let duration = link.duration > 0
-                ? Float(link.duration)
+            let instant = link.isAbsorb && absorbVisualSeconds > 0
+                ? absorbVisualSeconds
                 : spec.membrane?.hitDuration ?? Self.instantArtDuration
+            let duration = link.duration > 0 ? Float(link.duration) : instant
             for target in targets
                 where visualEffects.attach(
                     spec,

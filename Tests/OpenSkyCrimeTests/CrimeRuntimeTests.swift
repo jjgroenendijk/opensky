@@ -363,3 +363,23 @@ struct CrimeRuntimeTests {
         #expect(counts.murder == Int32.max)
     }
 }
+
+@MainActor
+struct CrimeWerewolfBountyTests {
+    private let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+
+    /// UESP "Skyrim:Crime": "The bounty is only incurred for the first witnessed
+    /// transformation". The later change is still counted.
+    @Test
+    func onlyTheFirstSeenBeastChangeCostsGold() throws {
+        let runtime = try CrimeFixture.runtime()
+
+        let first = runtime.report(CrimeFixture.event(.werewolf))
+        let second = runtime.report(CrimeFixture.event(.werewolf))
+
+        #expect(first.gold > 0)
+        #expect(second.gold == 0)
+        #expect(runtime.crimeGold(of: hold) == first.gold)
+        #expect(runtime.ledger(of: .player).counts(for: hold)[.werewolf] == 2)
+    }
+}

@@ -7,6 +7,7 @@ import OpenSkyEffects
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyScripting
 import OpenSkyWorld
 
@@ -76,6 +77,9 @@ extension WorldSessionWiring {
                 world: world
             )
         }
+        game.effects.absorbVisualSeconds = max(
+            0, MagicWorldSettings.resolve(store: provider.gameSettings).absorbVisualSeconds
+        )
         game.effects.posing = game.effectModelPoser
         world.wireEffects(provider: provider, streamer: streamer, gameSession: gameSession)
     }

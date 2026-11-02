@@ -29,10 +29,11 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     }
 
     /// A beast form cannot open the character menus or the map, switch the camera, or
-    /// use favourites (UESP "Skyrim:Lycanthropy", "Skyrim:Vampire Lord").
+    /// use favourites (UESP "Skyrim:Lycanthropy", "Skyrim:Vampire Lord"). The skills key
+    /// stays: it opens the form's perk tree.
     public var isBlockedInBeastForm: Bool {
         switch self {
-        case .inventory, .magic, .map, .skills, .cameraMode: true
+        case .inventory, .magic, .map, .cameraMode: true
         default: hotkeySlot != nil
         }
     }

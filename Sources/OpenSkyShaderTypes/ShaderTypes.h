@@ -463,7 +463,7 @@ typedef struct
     matrix_float4x4 normalMatrix;
     /// rgb LAND/GRAS tint. On a static: rgb its reference's emittance, a 1 when set.
     vector_float4 instanceColor;
-    /// x=wave period, y=motion phase, z/w reserved.
+    /// Grass: x=wave period, y=motion phase. Mesh: w=fade-out, 0 whole to 1 gone.
     vector_float4 grassParameters;
 } InstanceTransform;
 

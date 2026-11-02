@@ -26,6 +26,7 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     public let isStolen: Bool
     public let hotkey: Int?
     public let isFavourite: Bool
+    public var isQuestItem = false
 
     public init(
         layout: Layout = .misc,
@@ -74,6 +75,9 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
         }
         if isStolen {
             marks.append("stolen")
+        }
+        if isQuestItem {
+            marks.append("quest item")
         }
         if !marks.isEmpty {
             lines.append(marks.joined(separator: ", "))

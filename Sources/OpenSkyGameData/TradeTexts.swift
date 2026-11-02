@@ -1,10 +1,12 @@
 // The refusals of a barter the player or the merchant cannot pay for, from the
-// `sItemTooExpensive` and `sNotEnoughVendorGold` string settings. See docs/engine/barter.md.
+// `sItemTooExpensive` and `sNotEnoughVendorGold` string settings, and of giving away a
+// quest item (`sDropQuestItemWarning`). See docs/engine/barter.md.
 
 nonisolated public struct TradeTexts: Equatable, Sendable {
     public var tooExpensive = "You do not have enough gold."
     /// `%d` is the price, then the merchant's gold.
     public var merchantShort = "The price is %d gold; the merchant has %d gold."
+    public var questItem = "Quest Items cannot be removed from your Inventory."
 
     public static let vanilla = Self()
 
@@ -20,6 +22,7 @@ nonisolated public struct TradeTexts: Equatable, Sendable {
         var texts = vanilla
         store.read("sItemTooExpensive", into: &texts, \.tooExpensive, text: text)
         store.read("sNotEnoughVendorGold", into: &texts, \.merchantShort, text: text)
+        store.read("sDropQuestItemWarning", into: &texts, \.questItem, text: text)
         return texts
     }
 }

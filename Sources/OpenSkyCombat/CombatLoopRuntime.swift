@@ -153,6 +153,11 @@ public final class CombatLoopRuntime: CombatControlling {
         behaviors[key]?.phase
     }
 
+    /// What `key`'s combat mind is doing, as the condition functions read it.
+    public func actionFacts(of key: ReferenceKey) -> ActorActionFacts? {
+        behaviors[key]?.actionFacts
+    }
+
     /// What `key` is blocking with, or nil when its guard is down. The answer
     /// `combatBlock(of:)` gives for every actor that is not the player.
     public func blockKind(of key: ReferenceKey) -> MeleeBlockKind? {

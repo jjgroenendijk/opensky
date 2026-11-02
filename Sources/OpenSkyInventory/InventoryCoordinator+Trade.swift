@@ -41,6 +41,9 @@ extension InventoryCoordinator {
         acceptingLess: Bool = false
     ) throws -> TradeOutcome {
         guard let runtime else { return .unavailable }
+        if transfer == .store || transfer == .sell, isQuestItem(item) {
+            return .questItem
+        }
         switch transfer {
         case .take:
             // Through the session, so a single take marks theft the same way

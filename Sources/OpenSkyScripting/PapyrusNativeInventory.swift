@@ -17,7 +17,9 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func removeItem(
         _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
     ) -> Bool
-    func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool
+    func removeAllItems(
+        from holder: ReferenceKey, to other: ReferenceKey?, removeQuestItems: Bool
+    ) -> Bool
     /// Drops up to `count` in front of the holder. Nil when nothing was dropped.
     func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey?
     func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32?
@@ -198,7 +200,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// `RemoveAllItems(ObjectReference akTransferTo, bool abKeepOwnership,
-    /// bool abRemoveQuestItems)`. Quest items are not tracked, so all leave.
+    /// bool abRemoveQuestItems)`. Quest items stay unless the third argument is true.
     private static func installRemoveAllItems(
         on script: String, into registry: inout PapyrusNativeRegistry
     ) {
@@ -211,7 +213,10 @@ extension PapyrusNativeFunctions {
                 let receiver = call.receiver, let holder = world.referenceKey(for: receiver)
             else { return failure(call, "RemoveAllItems needs the inventory bridge") }
             let other = objectArgument(call, at: 0).flatMap { world.referenceKey(for: $0) }
-            _ = bridge.removeAllItems(from: holder, to: other)
+            let removeQuestItems = boolean(call, at: 2, default: false)
+            _ = bridge.removeAllItems(
+                from: holder, to: other, removeQuestItems: removeQuestItems
+            )
             return .returned(.none)
         })
     }

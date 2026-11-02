@@ -88,6 +88,12 @@ nonisolated public struct AlchemyBrew: Equatable, Sendable {
     /// What brewing teaches: each ingredient and the indices of its shared effects.
     public let learned: [FormID: [Int]]
 
+    /// UESP "Skyrim:Leveling": "1 base XP per gold value created" plus "1 additional
+    /// base XP for each successfully created potion".
+    public var skillUse: Float {
+        skillValue + 1
+    }
+
     public var primary: AlchemyBrewedEffect? {
         effects.first
     }

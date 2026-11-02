@@ -155,12 +155,12 @@ Key, cell, uint32 row count, then rows:
 | --- | --- | --- |
 | key | faction | the crime faction |
 | int32 | gold | bounty; never negative |
-| uint32 x 4 | counts | theft, assault, murder, trespass |
+| uint32 x 7 | counts | theft, pickpocket, assault, murder, trespass, escape, werewolf |
 
 The counts are read by position, so a build that adds a crime kind reads it as 0 from an
 older file. Counts are stored beside the gold because a crime nobody saw adds a count but no
 gold ([crime](/engine/crime.md)). A negative value becomes 0. A faction the load order no
-longer has is kept. Sizes: 12 bytes minimum per entry, 27 minimum per row.
+longer has is kept. Sizes: 12 bytes minimum per entry, 39 minimum per row.
 
 ## STOL: stolen goods
 

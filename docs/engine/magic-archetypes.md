@@ -63,11 +63,17 @@ An effect that acts on no actor value still stores one value at index -1 (none) 
   attribute by the amount of damage done. If not 'detrimental', will instead drain the caster
   to replenish the target." The caster gets what was taken, not the magnitude: a target with
   10 health left gives 10. A timed absorb pays each second, whatever the Recover flag says,
-  because a held modifier cannot move health between two actors.
+  because a held modifier cannot move health between two actors. An instant absorb's hit shader
+  and art stay for `fMagicAbsorbVisualTimer` seconds (2.5 in `Skyrim.esm`), not the shader's own
+  settle time ([visual effects](/rendering/visual-effects.md)).
 - Accumulate Magnitude: "Grants up to `<MAG>` of a chosen actor value, but starts at 0 and
   increases over time." UESP's Ward page says a ward charges up over "a period of time of
   about one second". OpenSky grows the value in a straight line over one second. The shape and
   the exact time are estimates.
+- Ward power is capped. `fMagicWardPowerMaxBase` (1.3) and `fMagicWardPowerMaxMult` (0) name a
+  maximum with a base and a multiplier. OpenSky reads them as
+  `cap = strongest ward magnitude * (base + mult * Restoration)`, so two stacked wards hold at most
+  1.3 times the stronger one. No source gives the form; it is OpenSky's reading of the names.
 - Invisibility holds the `Invisibility` actor value at 1, which detection reads. "This effect
   is automatically dispelled when the invisibility is broken". Casting a spell breaks it.
   Attacking and activating do not break it yet.
@@ -168,7 +174,9 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
 - A summon walks back to its caster once it is `fSummonedCreatureMaxFollowDist` away and stops
   `fSummonedCreatureMinFollowDist` from them. A summon whose effect ends stays
-  `fSummonedCreatureFadeOutSeconds` before it goes; it does not fade visually yet.
+  `fSummonedCreatureFadeOutSeconds` before it goes. Over that time it fades out: the renderer drops
+  a growing share of its pixels in a fixed screen pattern, so it is gone when the time ends. The
+  game's own fade shader is not reproduced. The magic readout shows each fading summon's share.
 - A second Telekinesis cast while one object is held shows `sMagicTelekinesisNoRecast`.
 
 ## Cloak knock

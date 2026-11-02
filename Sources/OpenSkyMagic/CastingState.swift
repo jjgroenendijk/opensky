@@ -45,6 +45,9 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
     /// spell the same rule ends a cast already running, because the cost keeps
     /// being charged for as long as it is maintained.
     case insufficientMagicka(cost: Float, available: Float)
+    /// A staff's charge is below one use. UESP "Skyrim:Staves": a staff "depletes the
+    /// staff's charge" and an empty one is "unusable".
+    case staffOutOfCharge(cost: Float, available: Float)
     /// The spell's delivery is not self. This hand path counts
     /// other deliveries rather than pretending they landed.
     case deliveryUnsupported(MagicEffectDelivery)
@@ -67,6 +70,8 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
             String(format: "released %.2fs before the charge finished", remaining)
         case let .insufficientMagicka(cost, available):
             String(format: "not enough magicka: %.0f needed, %.0f available", cost, available)
+        case let .staffOutOfCharge(cost, available):
+            String(format: "not enough staff charge: %.0f needed, %.0f left", cost, available)
         case let .deliveryUnsupported(delivery):
             "\(delivery) delivery is not implemented yet"
         case .abilityNotCastable: "an ability is carried, not cast"

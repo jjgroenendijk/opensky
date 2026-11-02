@@ -33,6 +33,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     /// An `ALCH` with the food flag, which the Food tab takes instead of Potions.
     public let isFood: Bool
     public let isFavourite: Bool
+    /// A running quest holds the item in a Quest Object alias.
+    public var isQuestItem = false
 
     public init(
         item: FormID,
@@ -139,7 +141,7 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
 /// selected one, and the two totals the vanilla menu keeps on screen.
 nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     /// Every row the owner carries, before category filtering, sorted by name.
-    public let allEntries: [InventoryMenuEntry]
+    public private(set) var allEntries: [InventoryMenuEntry]
     public let categories: [InventoryMenuCategory]
     public private(set) var selectedCategoryIndex: Int
     public private(set) var selectedIndex: Int
@@ -169,6 +171,14 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
         selectedCategoryIndex = categories.firstIndex { $0.families.isEmpty && !$0.favourites }
             ?? 0
         selectedIndex = 0
+    }
+
+    /// Marks the rows of `items` as quest items.
+    public mutating func markQuestItems(_ items: Set<FormID>) {
+        guard !items.isEmpty else { return }
+        for index in allEntries.indices where items.contains(allEntries[index].item) {
+            allEntries[index].isQuestItem = true
+        }
     }
 
     // MARK: - Reading
@@ -287,7 +297,9 @@ nonisolated extension InventoryMenuEntry {
         case count: " [stolen]"
         default: " [\(stolenCount) stolen]"
         }
+        let quest = isQuestItem ? " [quest]" : ""
         let weightText = String(format: "%.1f", weight)
-        return "\(name)\(countText)\(equipped)\(stolen) · \(weightText) wt · \(value) gold"
+        let flags = equipped + stolen + quest
+        return "\(name)\(countText)\(flags) · \(weightText) wt · \(value) gold"
     }
 }

@@ -52,6 +52,15 @@ nonisolated public struct ResolvedSpell: Sendable {
         data?.type ?? .spell
     }
 
+    /// A staff's enchantment, which spends the staff's charge rather than magicka.
+    public var isStaff: Bool {
+        if case .staff = record {
+            true
+        } else {
+            false
+        }
+    }
+
     /// True when the record carries the SPIT "PC Start Spell" flag.
     public var isPlayerStartSpell: Bool {
         data?.flags.contains(.pcStartSpell) ?? false

@@ -142,7 +142,7 @@ extension ActiveEffectRuntime {
         switch application.rule {
         case nil, .actorValues, .valueAndParts:
             guard application.isInstant else { return }
-            moveValues(application, on: target)
+            moveValues(application, caster: caster, on: target)
         case .absorb:
             guard application.isInstant else { return }
             for value in application.values {
@@ -179,13 +179,17 @@ extension ActiveEffectRuntime {
     /// Moves `application`'s values once: a detrimental effect damages them.
     private mutating func moveValues(
         _ application: MagicEffectApplication,
+        caster: ReferenceKey?,
         on target: ActorValueHolder
     ) {
         for value in application.values where ActorValueIdentity.isVanilla(index: value.index) {
             if application.isDetrimental {
                 values.damage(at: value.index, by: value.magnitude, on: target)
             } else {
-                values.restore(at: value.index, by: value.magnitude, on: target)
+                restore(
+                    value.magnitude, at: value.index, on: target,
+                    effect: application.effect, caster: caster
+                )
             }
         }
     }

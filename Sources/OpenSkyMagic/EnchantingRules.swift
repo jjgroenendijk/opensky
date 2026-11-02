@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
 /// One base enchantment as the rules see it.
 nonisolated public struct EnchantingBase: Equatable, Sendable {
@@ -39,19 +40,24 @@ nonisolated public struct EnchantingScale: Equatable, Sendable {
     public let powers: [Float]
     /// A weapon's full charge; zero on apparel.
     public let capacity: Float
-    /// What one hit spends; zero on apparel.
+    /// What one hit spends at the skill it was made with; zero on apparel.
     public let costPerUse: Float
+    /// `costPerUse` without the skill term, which each use applies again.
+    public let unskilledCostPerUse: Float
 
-    public init(powers: [Float], capacity: Float, costPerUse: Float) {
+    public init(
+        powers: [Float], capacity: Float, costPerUse: Float, unskilledCostPerUse: Float = 0
+    ) {
         self.powers = powers
         self.capacity = capacity
         self.costPerUse = costPerUse
+        self.unskilledCostPerUse = unskilledCostPerUse
     }
 }
 
 nonisolated public enum EnchantingRules {
     /// The skill term must stay below 200, where a use would cost nothing.
-    public static let skillCap: Float = 199
+    public static let skillCap = MadeEnchantment.skillCap
 
     /// `1 + (skill/100) * (skill/100 - 0.14) / 3.4`: about 1.25 at skill 100.
     public static func skillMultiplier(_ skill: Float) -> Float {
@@ -85,16 +91,20 @@ nonisolated public enum EnchantingRules {
     /// A soul too small for one whole use lowers every power until it buys one.
     public static func weapon(_ input: EnchantingInput) -> EnchantingScale {
         let capacity = SoulTrap.charge(of: input.soul)
-        let skillFactor = 1 - (min(max(0, input.skill), skillCap) / 200).squareRoot()
+        let skillFactor = MadeEnchantment.skillCostFactor(input.skill)
         let fullCost = input.bases.reduce(0) { $0 + useCost($1.cost, skillFactor: skillFactor) }
         let powers = input.bases.map { strength($0, skill: input.skill) }
         guard fullCost > capacity, capacity > 0 else {
-            return EnchantingScale(powers: powers, capacity: capacity, costPerUse: fullCost)
+            return EnchantingScale(
+                powers: powers, capacity: capacity, costPerUse: fullCost,
+                unskilledCostPerUse: fullCost / skillFactor
+            )
         }
         // A use costs `share^1.1` of the full cost, so this share costs the whole soul.
         let share = pow(capacity / fullCost, 1 / 1.1)
         return EnchantingScale(
-            powers: powers.map { $0 * share }, capacity: capacity, costPerUse: capacity
+            powers: powers.map { $0 * share }, capacity: capacity, costPerUse: capacity,
+            unskilledCostPerUse: capacity / skillFactor
         )
     }
 
