@@ -54,6 +54,21 @@ extension QuestRuntime {
         }
     }
 
+    /// References in a filled alias with the Quest Object flag. Only a running
+    /// quest has an alias table, so a stopped quest frees its items.
+    public func questObjectReferences() -> Set<ReferenceKey> {
+        var references: Set<ReferenceKey> = []
+        for (key, table) in aliasTables() {
+            guard let quest = quests.quest(key: key) else { continue }
+            for fill in table.fills
+                where quest.alias(id: fill.aliasID)?.flags.contains(.questObject) == true
+            {
+                references.insert(fill.reference)
+            }
+        }
+        return references
+    }
+
     func aliasTables() -> [ReferenceKey: QuestAliasState] {
         var tables: [ReferenceKey: QuestAliasState] = [:]
         for key in quests.sortedKeys {

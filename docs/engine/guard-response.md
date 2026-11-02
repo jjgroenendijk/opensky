@@ -47,7 +47,14 @@ wiki's values apply.
 
 Guard hostility is refreshed from the ledger every tick. A guard is hostile to the player when its
 faction attacks on sight at the current bounty, or when the player resisted arrest by that
-faction. Other actors get nothing from crime, and the record terms decide. Guard hostility ranks
+faction.
+
+Guards also turn hostile to an actor other than the player who strikes first at someone their crime
+faction protects: the player, a member of the faction, or a person whose home crime faction it is.
+The faction is the crime faction of the target's cell. A blow back is self-defense and changes
+nothing: "Self-defense against an unprovoked assault is legal" (UESP
+[Crime](https://en.uesp.net/wiki/Skyrim:Crime)). An aggressor in a policed faction, such as a guard,
+is not charged. Other actors get nothing from crime, and the record terms decide. Guard hostility ranks
 above relationships and factions, so a guard who is the player's friend still arrests them
 ([combat](/engine/combat.md)).
 

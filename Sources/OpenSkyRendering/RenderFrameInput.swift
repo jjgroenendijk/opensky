@@ -88,6 +88,9 @@ public struct RenderInstancePoses {
         didSet { revision = Self.nextRevision() }
     }
 
+    /// How far each reference has faded out, 0 to 1. Read every frame, so it takes no revision.
+    public var fades: [UInt32: Float] = [:]
+
     public private(set) var revision = 0
 
     private static var lastRevision = 0

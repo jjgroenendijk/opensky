@@ -2,6 +2,7 @@
 // is in `CombatLoopRuntimeTests`; fleeing and giving up are in
 // `CombatBehaviorRetreatTests`.
 
+import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyPerceptionInterface
@@ -97,6 +98,36 @@ struct CombatBehaviorMachineTests {
 
         Fixture.run(&machine, until: { $0.phase != .recovery }, inputs: Fixture.inputs())
         #expect(machine.phase == .spacing || machine.phase == .blocking)
+    }
+
+    /// A one-handed chain: the next swing starts inside the follow-through, the attack
+    /// state reads 4 while it waits, and a chain stops at three swings.
+    @Test func aOneHandedSwingChainsIntoTheNextUpToThree() {
+        var settings = Fixture.neverCasting
+        settings.comboChance = 1
+        var machine = Fixture.machine(settings: settings)
+        var inputs = Fixture.inputs()
+        inputs.canChain = true
+        var sawNextAttack = false
+        var starts = 0
+        var elapsed: Float = 0
+        while elapsed < 4.5 {
+            let step = machine.step(seconds: Fixture.step, inputs: inputs)
+            starts += step.startedAttack ? 1 : 0
+            sawNextAttack = sawNextAttack || machine.actionFacts.attackState == .nextAttack
+            elapsed += Fixture.step
+        }
+        #expect(sawNextAttack)
+        #expect(starts == 3)
+        #expect(machine.phase == .spacing)
+    }
+
+    @Test func aTwoHandedSwingNeverChains() {
+        var settings = Fixture.neverCasting
+        settings.comboChance = 1
+        var machine = Fixture.machine(settings: settings)
+        let steps = Fixture.run(&machine, seconds: 3.5, inputs: Fixture.inputs())
+        #expect(steps.filter(\.startedAttack).count == 1)
     }
 
     @Test func exactlyOneContactStepIsReportedPerAttack() {

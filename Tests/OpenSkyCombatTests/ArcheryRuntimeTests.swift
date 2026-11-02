@@ -135,7 +135,8 @@ struct ArcheryRuntimeTests {
         #expect(damage?.bowDamage == 7)
         #expect(damage?.arrowDamage == 8)
         #expect(damage?.drawFraction == 1)
-        #expect(abs((damage?.applied ?? 0) - 16.125) < 0.001)
+        // The hit applies the Archery term, so the shot carries none: (7 + 8) x 1.
+        #expect(abs((damage?.applied ?? 0) - 15) < 0.001)
     }
 
     @Test func aSnapShotCarriesTheMinimumDrawFraction() {

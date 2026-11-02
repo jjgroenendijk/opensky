@@ -71,6 +71,19 @@ struct SummonTests {
         #expect(world.releasedActors.map(\.actor) == [.generated(1)])
     }
 
+    /// `fSummonedCreatureFadeOutSeconds` (1.5): halfway through, the summon is half faded.
+    @Test func aDismissedSummonFadesOverTheSettingsTime() throws {
+        let coordinator = try makeCoordinator()
+        Self.cast(Archetype.summon, on: .player, coordinator)
+        world.dead = [.generated(1)]
+        coordinator.advanceCommanded(delta: 0)
+        #expect(coordinator.summonFades == [.generated(1): 0])
+        coordinator.advanceCommanded(delta: 0.75)
+        #expect(abs((coordinator.summonFades[.generated(1)] ?? 0) - 0.5) < 0.001)
+        coordinator.advanceCommanded(delta: 0.75)
+        #expect(coordinator.summonFades.isEmpty)
+    }
+
     @Test func aSummonThatDiesFadesAndItsEffectEnds() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.summon, on: .player, coordinator)

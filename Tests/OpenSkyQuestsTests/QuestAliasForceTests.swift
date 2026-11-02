@@ -21,9 +21,11 @@ struct QuestAliasForceTests {
     }
 
     private func runtime(_ store: WorldStateStore) throws -> QuestRuntime {
-        let aliases = [(0, "Arniel", 0x0500), (1, "Book", 0x0501)].map { id, name, form in
+        // Flag bit 2 makes the book a Quest Object.
+        let rows = [(0, "Arniel", 0x0500, 0), (1, "Book", 0x0501, 4)]
+        let aliases = rows.map { id, name, form, flags in
             QuestFixture.alias(
-                id: UInt32(id), name: name, flags: 0,
+                id: UInt32(id), name: name, flags: UInt32(flags),
                 fill: QuestFixture.word("ALFR", UInt32(form)), extras: Data()
             )
         }.reduce(Data(), +)
@@ -48,6 +50,14 @@ struct QuestAliasForceTests {
         try quests.forceAlias(1, to: nil, on: quest)
         #expect(try quests.aliasState(of: quest).isEmpty)
         #expect(store.component(QuestAliasState.self, for: key(0x0100)) == nil)
+    }
+
+    @Test func onlyARunningQuestObjectAliasMakesAQuestItem() throws {
+        let quests = try runtime(WorldStateStore())
+        try quests.startQuest(quest)
+        #expect(quests.questObjectReferences() == [key(0x0501)])
+        try quests.stopQuest(quest)
+        #expect(quests.questObjectReferences().isEmpty)
     }
 
     @Test func aLocationAliasIsForcedAndCleared() throws {

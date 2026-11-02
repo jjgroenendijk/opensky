@@ -126,6 +126,18 @@ public struct ActorValueRuntime: ActorValueAccess {
         return write(state(of: holder).damaging(kind, by: amount), for: holder)
     }
 
+    /// Holds `kind`'s regeneration on `holder` for at least `seconds`.
+    public func pauseRegeneration(
+        _ kind: ActorValueKind, on holder: ActorValueHolder, for seconds: Float
+    ) {
+        delays.pause(kind, of: holder.key, for: seconds)
+    }
+
+    /// Seconds before `kind` regenerates again on `holder`.
+    public func regenerationPause(_ kind: ActorValueKind, of holder: ActorValueHolder) -> Float {
+        delays.seconds(kind, of: holder.key)
+    }
+
     /// Adds `amount` to one of `holder`'s values, capped at its maximum.
     ///
     /// - Returns: the state as stored afterwards.

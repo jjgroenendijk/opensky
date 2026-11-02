@@ -52,13 +52,24 @@ extension MagicCoordinator {
         fadingSummons.append((actor, summonSettings.fadeOutSeconds))
     }
 
-    /// The readout line: who the player commands, against the limit.
+    /// How far each dismissed summon has faded, 0 to 1, over `fSummonedCreatureFadeOutSeconds`.
+    public var summonFades: [ReferenceKey: Float] {
+        let total = summonSettings.fadeOutSeconds
+        guard total > 0 else { return [:] }
+        return fadingSummons.reduce(into: [:]) { fades, entry in
+            fades[entry.actor.actor] = min(max(1 - entry.seconds / total, 0), 1)
+        }
+    }
+
+    /// The readout line: who the player commands, against the limit, and who is fading.
     var commandedText: String {
         let mine = commanded.filter { $0.caster == .player }
         let names = mine.compactMap { world.actorValueHolder(for: $0.actor) }
             .map(world.actorName)
         let list = names.isEmpty ? "" : ": " + names.joined(separator: ", ")
-        return "Commanded: \(mine.count) of \(commandLimit(of: .player))\(list)"
+        let fading = summonFades.values.map { "\(Int(($0 * 100).rounded()))%" }.sorted()
+        let fades = fading.isEmpty ? "" : "; fading \(fading.joined(separator: ", "))"
+        return "Commanded: \(mine.count) of \(commandLimit(of: .player))\(list)\(fades)"
     }
 
     private func summon(_ action: MagicWorldAction) {

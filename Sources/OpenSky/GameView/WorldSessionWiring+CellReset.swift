@@ -4,6 +4,7 @@
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRuntimeState
 import OpenSkyScripting
@@ -38,6 +39,13 @@ extension WorldSessionWiring {
                 for: ReferenceKey(resolved: location)
             )?
                 .flag(ScriptedStateName.cleared) == true
+        }
+        queries.holdsQuestItem = { [weak game, weak store] key in
+            guard
+                let items = game?.inventory.questItems, !items.isEmpty,
+                let inventory = store?.component(ReferenceInventoryState.self, for: key)
+            else { return false }
+            return items.contains { inventory.count(of: $0) > 0 }
         }
         let reset = CellResetCoordinator(
             store: store, settings: provider.cellResetSettings, queries: queries

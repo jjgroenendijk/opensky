@@ -50,9 +50,24 @@ public protocol ProgressionWorld: AnyObject {
     func playerGold() -> Int
     /// Moves `gold` from the player to `trainer`. False when the player has too little.
     func payTrainer(_ gold: Int, to trainer: ReferenceKey) -> Bool
+    /// The beast tree of the form the player is in, or nil outside one.
+    func playerBeastTree() -> BeastPerkTree?
+    /// A `GLOB` value by editor ID. Nil when the load order has no such global.
+    func globalValue(editorID: String) -> Float?
+    func setGlobalValue(_ value: Float, editorID: String)
 }
 
 extension ProgressionWorld {
+    public func playerBeastTree() -> BeastPerkTree? {
+        nil
+    }
+
+    public func globalValue(editorID _: String) -> Float? {
+        nil
+    }
+
+    public func setGlobalValue(_: Float, editorID _: String) {}
+
     public func nearestTrainer() -> TrainerOffer? {
         nil
     }

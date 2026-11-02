@@ -33,6 +33,7 @@ extension InventoryMenuController {
         var facts = ItemRequestFacts()
         let family = definition(of: item)?.family
         facts.isKey = family == .key
+        facts.isQuestItem = game.inventory.isQuestItem(item)
         facts.canBeFavourite = family.map(Self.favouriteFamilies.contains) ?? true
         facts.isEquipped = game.inventory.use(of: item) == .unequip
         facts.playerIsAttacking = game.combat.playerActionFacts?.attackState.isAttacking == true

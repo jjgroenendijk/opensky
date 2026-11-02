@@ -16,6 +16,9 @@ nonisolated public struct RegenerationSettings: Equatable, Sendable {
     public var staminaDelay: Float = 0.5
     /// `fDamagedAVRegenDelay`: the pause for a value whose own setting is missing.
     public var defaultDelay: Float = 1
+    /// `fBowZoomStaminaRegenDelay`: the stamina pause a bow zoom holds while it runs and
+    /// after it ends. Not in Skyrim.esm; 3 is the Creation Kit's default.
+    public var bowZoomStaminaDelay: Float = 3
     /// `bRegenNPCMagickaDuringCast`: false stops an NPC's magicka while it casts.
     public var npcMagickaDuringCast = false
 
@@ -41,6 +44,7 @@ nonisolated public struct RegenerationSettings: Equatable, Sendable {
         store.read("fCombatMagickaRegenRateMult", into: &settings, \.combatMagickaMult)
         store.read("fCombatStaminaRegenRateMult", into: &settings, \.combatStaminaMult)
         store.read("fDamagedAVRegenDelay", into: &settings, \.defaultDelay)
+        store.read("fBowZoomStaminaRegenDelay", into: &settings, \.bowZoomStaminaDelay)
         let fallback = store.number("fDamagedAVRegenDelay")
         settings.healthDelay = store.number("fDamagedHealthRegenDelay")
             ?? fallback ?? settings.healthDelay

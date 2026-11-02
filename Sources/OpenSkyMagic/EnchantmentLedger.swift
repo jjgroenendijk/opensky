@@ -58,6 +58,18 @@ public struct EnchantmentLedger {
         return after
     }
 
+    /// Takes `amount` of charge from `profile`'s item, floored at zero: a staff's cast.
+    @discardableResult
+    public func drain(
+        _ profile: ItemEnchantmentProfile, by amount: Float, on holder: ActorValueHolder
+    ) -> EnchantmentCharge {
+        let before = charge(of: profile, on: holder)
+        guard before.isMetered, amount.isFinite, amount > 0 else { return before }
+        let remaining = max(0, before.remaining - amount)
+        setCharge(remaining, of: profile.item, on: holder)
+        return before.restoring(to: remaining)
+    }
+
     /// Puts `amount` of charge back into `profile`'s item, capped at its capacity.
     /// A full item stops being recorded.
     @discardableResult

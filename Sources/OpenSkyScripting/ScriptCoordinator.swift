@@ -133,6 +133,13 @@ public final class ScriptCoordinator {
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 
+    /// One script step after a rest moved the clock, so game-time timers and
+    /// `WaitGameTime` see the new hour. A zero delta alone runs no step.
+    public func advanceRestStep() {
+        advance(delta: 0)
+        _ = runtime?.stepFixed(gameClock: world?.gameClock)
+    }
+
     /// Time a menu pauses the world for. Only `WaitMenuMode` counts it.
     public func advanceMenuTime(delta: Float) {
         runtime?.advanceMenuTime(delta: delta)

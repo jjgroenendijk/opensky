@@ -102,15 +102,19 @@ or vampire lord change. The `FACT` `CRVA` field prices each one.
 Bounty text names them with the string settings `sCrimeTypeSteal`, `sCrimeTypePickpocket`,
 `sCrimeTypeAttack`, `sCrimeTypeMurder`, `sCrimeTypeTrespass`, `sCrimeTypeEscape`, and
 `sCrimeTypeWerewolf`. A faction's "ignore pickpocket" flag skips a pickpocket; no flag skips an
-escape. The ledger counts each kind but the werewolf change.
+escape. The ledger counts each kind, the werewolf change too.
 
 The change is a crime only when somebody sees it. `Game.SendWereWolfTransformation` "has an
 actor in high who can detect the player call a werewolf crime against the player"
 (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>). OpenSky takes the first actor
 that detects the player as that witness. The Creation Kit's Crime page calls it a "Special
-Crime"; OpenSky puts its gold in the violent half, beside murder, which costs the same. It adds
-no crime count, because the change script counts the "Werewolf Transformations" stat itself.
-See [beast forms](/engine/beast-forms.md).
+Crime"; OpenSky puts its gold in the violent half, beside murder, which costs the same. Only the
+first seen change costs gold: "The bounty is only incurred for the first witnessed
+transformation" (UESP [Crime](https://en.uesp.net/wiki/Skyrim:Crime)). The ledger keeps a
+werewolf count per crime faction, and a change seen when that count is above 0 is recorded with no
+gold. UESP does not say whether "first" is per hold or for the whole game; per crime faction is
+OpenSky's reading. The "Werewolf Transformations" stat is the change script's own count. See
+[beast forms](/engine/beast-forms.md).
 
 A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
 "bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared
@@ -162,6 +166,9 @@ marks the item.
 The count moves either way. UESP: "Regardless of whether a crime is witnessed, the Statistics tab
 on the menu keeps track of all your criminal activities". An unseen crime adds a count, no gold,
 and a stolen mark.
+
+Crafting uses up stolen components before honest ones. UESP says an item fully used up in crafting
+loses its stolen mark; spending the stolen copies first keeps the honest ones.
 
 The gold owed, the counts, and the stolen mark on goods are on the
 [bounty ledger](/engine/bounty-ledger.md) page.
@@ -253,5 +260,3 @@ disagree about what is a first strike.
   faction-owned reference works, because a faction counts as its own member.
 - A cell owner set by `Cell.SetActorOwner` or `Cell.SetFactionOwner` is kept in the script state,
   but the crime check does not read it. It reads a script owner on the reference only.
-- Crafting does not clear the stolen mark. UESP says an item fully used up in crafting loses it.
-  There is no crafting yet.

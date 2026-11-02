@@ -133,7 +133,7 @@ public struct ESSArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
         commandName: "ess",
         abstract: "Inspect a Skyrim save read-only, or list the saves in a folder.",
-        subcommands: [Show.self, List.self]
+        subcommands: [Show.self, List.self, Locks.self]
     )
 
     public init() {}
@@ -148,6 +148,22 @@ public struct ESSArguments: ParsableCommand, Sendable {
         public var save: String
         @Flag(help: "Skip the load order and the import.")
         public var offline = false
+
+        public init() {}
+    }
+
+    public struct Locks: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "locks",
+            abstract: "Print a save's lock change forms beside each plugin's XLOC lock.",
+            discussion: """
+            Each row is the reference, the stored level, flags, and key, then the \
+            authored level and flags. The end counts leveled locks by authored and stored level.
+            """
+        )
+        @OptionGroup public var global: GlobalOptions
+        @Argument(help: ArgumentHelp("The .ess file.", valueName: "save.ess"))
+        public var save: String
 
         public init() {}
     }

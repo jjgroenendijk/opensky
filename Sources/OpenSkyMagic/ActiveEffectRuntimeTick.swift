@@ -40,6 +40,21 @@ extension ActiveEffectRuntime {
         return steps
     }
 
+    /// Passes `seconds` at once in one-second ticks, for the time a rest skips. UESP
+    /// "Skyrim:Time": waiting or sleeping "will count against any timed magical effects".
+    @discardableResult
+    public mutating func elapse(seconds: Double, over holders: [ActorValueHolder]) -> Int {
+        guard seconds.isFinite, seconds > 0 else { return 0 }
+        var left = seconds
+        var expired = 0
+        while left > 0 {
+            let chunk = min(left, 1)
+            expired += tick(over: holders, seconds: Float(chunk))
+            left -= chunk
+        }
+        return expired
+    }
+
     // MARK: - Private
 
     /// One tick of `seconds` over every holder, in `ReferenceKey` order.
@@ -85,7 +100,10 @@ extension ActiveEffectRuntime {
             } else if effect.isDetrimental {
                 values.damage(at: value.index, by: amount, on: holder)
             } else {
-                values.restore(at: value.index, by: amount, on: holder)
+                restore(
+                    amount, at: value.index, on: holder,
+                    effect: effect.effect, caster: effect.caster
+                )
             }
         }
         tally.noteSecondsPaid(Int(owed))

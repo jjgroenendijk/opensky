@@ -110,6 +110,18 @@ struct ActorValueRealDataTests {
         }
     }
 
+    /// The loaded player starts at 100/100/100: the race's 50 plus the `Player`
+    /// record's +50 ACBS offsets, the full bars the HUD shows on a new game.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func thePlayerBaselineAddsThePlayerRecordOffsets() throws {
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let baselines = try ActorValueBaselineResolver(resolver: resolver(root: root))
+        let nord = FormID(0x0001_3746)
+        let baseline = baselines.playerBaseline(race: nord)
+        #expect(baseline.maximums == ActorValues(repeating: 100))
+        #expect(baselines.playerBaseline(race: nil).maximums == ActorValues(repeating: 100))
+    }
+
     /// `EncBandit04TemplateMelee` (`0001E60D`): race health 50 plus its +125
     /// offset is 175, but DNAM says 170. The Creation Kit only refreshes DNAM
     /// when the Stats tab is reopened (<https://ck.uesp.net/wiki/Stats_Tab>).

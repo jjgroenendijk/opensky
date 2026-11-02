@@ -42,6 +42,8 @@ public struct ActiveEffectRuntime {
     /// World changes the effects asked for, oldest first. The coordinator drains
     /// them after each change.
     public var worldActions: [MagicWorldAction] = []
+    /// Health healing effects gave back since the coordinator last drained it.
+    public var healing: [MagicHealingUse] = []
     /// Actors a Harmony-shaped calm reached, which forget a pickpocket catch.
     public var calmedAround: [ReferenceKey] = []
     /// The actor-value holder of a caster, for Absorb. Only the player without a world.

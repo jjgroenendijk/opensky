@@ -19,17 +19,19 @@ extension CasterRuntime {
     ) -> SpellCastOutcome {
         var running = state(of: hand, on: caster.key)
         let perSecond = castCost(of: spell, dual: running.isDualCast, caster: caster)
-        let available = values.current(of: caster).magicka
+        let available = pool(for: spell, caster: caster)
         let drain = perSecond * delta
         guard drain <= available else {
             // Take what is left rather than nothing: the caster paid for the
             // fraction of a second they got before the pool ran dry.
-            values.damage(.magicka, by: available, on: caster)
+            pay(available, for: spell, caster: caster)
             casts[slot(hand, caster)] = SpellCastState()
             endDualPartner(of: hand, lead: running, caster: caster)
-            return .failed(.insufficientMagicka(cost: drain, available: available))
+            return .failed(spell.isStaff
+                ? .staffOutOfCharge(cost: drain, available: available)
+                : .insufficientMagicka(cost: drain, available: available))
         }
-        values.damage(.magicka, by: drain, on: caster)
+        pay(drain, for: spell, caster: caster)
         noteSkillUse(of: spell, amount: drain, caster: caster)
         running.spend(drain)
         running.addHeld(delta)

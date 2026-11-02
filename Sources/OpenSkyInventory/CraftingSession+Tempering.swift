@@ -72,7 +72,7 @@ extension CraftingSession {
         }
         let verdict = eligibility(of: recipe, temperingEnchanted: isEnchanted(target.item))
         guard verdict.isEligible else { throw CraftingError.notEligible(recipe.id, verdict) }
-        let consumed = Self.consumed(by: recipe)
+        let consumed = consumed(by: recipe)
         try inventory.apply(removing: consumed, adding: [], on: player, usingUp: true)
         let held = inventory.count(of: target.item, in: player)
         if

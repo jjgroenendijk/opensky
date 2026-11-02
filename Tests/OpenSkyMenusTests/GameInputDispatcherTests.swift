@@ -68,8 +68,8 @@ struct GameInputDispatcherTests {
         #expect(opened == ["inventory", "journal"])
     }
 
-    /// A beast form keeps the journal, the wait key, and jumping, and loses the
-    /// inventory, the map, the camera switch, and the favourites.
+    /// A beast form keeps the journal, the wait key, the skills key (its perk tree), and
+    /// jumping, and loses the inventory, the map, the camera switch, and the favourites.
     @Test func aBeastFormBlocksTheCharacterMenusAndFavourites() {
         var opened: [String] = []
         let dispatcher = GameInputDispatcher(
@@ -81,12 +81,12 @@ struct GameInputDispatcherTests {
             locks: PlayerControlLocks(isBeastForm: true),
             onRefused: { opened.append("\($0)") }
         )
-        for action: GameInputAction in [.inventory, .cameraMode, .hotkey1, .wait] {
+        for action: GameInputAction in [.inventory, .cameraMode, .hotkey1, .wait, .skills] {
             dispatcher.apply(action, .press)
         }
         dispatcher.apply(.journal, .press)
         dispatcher.apply(.jump, .press)
-        #expect(opened == ["menusDisabled", "silent", "menusDisabled", "wait", "journal"])
+        #expect(opened == ["menusDisabled", "silent", "menusDisabled", "wait", "skills", "journal"])
         #expect(input.makeInput(dt: 0.1).jump)
     }
 

@@ -26,7 +26,8 @@ nonisolated public struct CombatTransientLimits: Equatable, Sendable {
     /// What a session runs with.
     public static let standard = CombatTransientLimits(
         liveProjectiles: 12,
-        stuckProjectiles: 32,
+        // UESP "Skyrim:Archery": "Only 15 missed arrows or bolts can be present at once".
+        stuckProjectiles: 15,
         activeRagdolls: 8,
         awakeBodies: 64
     )

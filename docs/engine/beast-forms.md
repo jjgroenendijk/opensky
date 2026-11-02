@@ -78,6 +78,29 @@ attacks of those races. The werewolf and vampire lord races do not carry it, so 
 beast form. `GetIsRace` and `GetPCIsRace` read the player's current race, so they answer the
 beast race during a form.
 
+## The perk tree
+
+In a beast form, the skills key opens the form's own perk tree (UESP
+[Lycanthropy](https://en.uesp.net/wiki/Skyrim:Lycanthropy) and
+[Vampire Lord](https://en.uesp.net/wiki/Skyrim:Vampire_Lord)). `Dawnguard.esm` puts the trees on
+two `AVIF` records that `Skyrim.esm` leaves without a tree: the Werewolf tree on
+`AVHealRatePowerMod` and the Vampire Lord tree on `AVMagickaRateMod`. The menu names them by the
+`Werewolf Perks` and `Vampire Perks` actor values. Without `Dawnguard.esm` there is no tree, and the
+skills key does nothing in a beast form.
+
+The tree opens alone, with no skill list around it. Its points are not the level's perk points. They
+are the change script's globals, observed in `Dawnguard.esm`:
+
+| Tree | Points to spend | Progress | Needed for the next point |
+| --- | --- | --- | --- |
+| Werewolf | `DLC1WerewolfPerkPoints` | `DLC1WerewolfFeedPoints` | `DLC1WerewolfNextPerk` |
+| Vampire Lord | `DLC1VampirePerkPoints` | `DLC1VampireBloodPoints` | `DLC1VampireNextPerk` |
+
+The menu shows the progress as the skill bar. Buying a perk takes one point from the global and
+runs the same refusal checks a skill perk has ([skills menu](/engine/skills-menu.md)).
+Back, or moving down from a perk with nothing below it, closes the menu. A beast tree has no
+legendary step. `openskycli game state` reads the open page as "... beast tree (N points)".
+
 ## Checking it in the game
 
 `openskycli game debug form werewolf`, `vampirelord`, or `none` sets the race and the
@@ -86,7 +109,5 @@ beast race during a form.
 
 ## Where OpenSky differs
 
-- In the game, the skills key opens the form's perk tree. In OpenSky it does nothing in a beast
-  form (issue #1612).
-- The game charges the change only for the first witnessed change. OpenSky charges each one
-  (issue #1613).
+- The game charges only the first witnessed change. OpenSky counts "first" per crime faction
+  ([crime](/engine/crime.md)); UESP does not say whether it is per hold or for the whole game.

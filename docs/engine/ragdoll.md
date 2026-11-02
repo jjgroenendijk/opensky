@@ -38,8 +38,9 @@ One frame runs in this order:
 A death whose graph never hands off costs one death component and no bodies. That is wrong in a
 visible way: the actor is dead and still standing, not dead in a pose the engine made up.
 
-Only the player has a behavior graph. So an NPC declares none of these names. When no graph takes
-the death event, the hand-off happens at once. The two routes are counted separately, so a
+The death events go to the player's graph only, though NPCs run graphs too
+([actor graphs](/engine/actor-graphs.md)). So no NPC graph takes them, and an NPC's hand-off happens
+at once. The two routes are counted separately, so a
 session can tell "the graph drove this" from "the engine had to".
 
 ## Writing the pose back

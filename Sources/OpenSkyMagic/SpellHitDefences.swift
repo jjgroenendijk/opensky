@@ -25,6 +25,8 @@ public struct SpellHitDefences {
     public var reaches: (_ target: ReferenceKey, _ impact: SIMD3<Float>) -> Bool = { _, _ in true }
     /// The `Mod Ward Magicka Absorption Pct` share a ward holder gets back.
     public var wardMagickaShare: (_ holder: ReferenceKey) -> Float = { _ in 0 }
+    /// The most ward power `holder` may hold (`MagicWorldSettings.wardPowerCap`).
+    public var wardPowerCap: (_ holder: ActorValueHolder) -> Float = { _ in .infinity }
 
     public static let none = SpellHitDefences()
 
@@ -47,7 +49,8 @@ public struct SpellHitDefences {
             return .blockedByWall
         }
         let values = runtime.values
-        let ward = values.value(at: SpellHitApplication.wardPowerActorValue, on: holder) ?? 0
+        let held = values.value(at: SpellHitApplication.wardPowerActorValue, on: holder) ?? 0
+        let ward = min(held, wardPowerCap(holder))
         // UESP: "self-applying spells ... will not be absorbed".
         guard payload.isHostile, payload.caster != target.key else {
             return ward > 0 && payload.caster != target.key ? .landsThroughWard : .lands
@@ -57,7 +60,9 @@ public struct SpellHitDefences {
                 of: entries, fromPlugin: payload.sourcePlugin, runtime
             )
             let taken = min(ward, damage)
-            values.damage(at: SpellHitApplication.wardPowerActorValue, by: taken, on: holder)
+            // Power above the cap never blocks, so a capped ward breaks with it gone.
+            let spent = damage > ward ? held : taken
+            values.damage(at: SpellHitApplication.wardPowerActorValue, by: spent, on: holder)
             let magicka = taken * max(0, wardMagickaShare(target.key))
             if magicka > 0 {
                 values.restore(at: SpellHitApplication.magickaActorValue, by: magicka, on: holder)

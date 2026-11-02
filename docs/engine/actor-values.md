@@ -112,6 +112,8 @@ An untouched value reads a baseline from records, where records give one:
 | `Unarmed Damage` (35) | `RACE` `DATA` 0x60 "Unarmed Damage" |
 | `Mass` (36) | `RACE` `DATA` 0x34 "Base Mass" |
 | `Bow Speed Bonus` (78) | GMST `fDefaultBowSpeedBonus`, 1 in `Skyrim.esm` |
+| `Shout Recovery Mult` (86) | 1: Fortify Shouts lowers it "from its base value of 1.0" (UESP "Skyrim:Fortify Shouts") |
+| `Attack Damage Mult` (154) | 1: "1 = default" (UESP "Actor Value Indices") |
 | Everything else | 0 |
 
 The skill formula is quoted: "Skill = 15 + [Racial bonus] + 8\*(Level-1)/(Sum of class' skill

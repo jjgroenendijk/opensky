@@ -54,10 +54,14 @@ nonisolated public struct CraftingRecipe: Equatable, Sendable {
     public struct Component: Equatable, Sendable {
         public let item: FormID?
         public var count: Int32
+        /// The items of a `FLST` component, any of which counts toward it
+        /// (`docs/formats/recipes.md`). Empty for a plain item.
+        public var choices: [FormID]
 
-        public init(item: FormID?, count: Int32) {
+        public init(item: FormID?, count: Int32, choices: [FormID] = []) {
             self.item = item
             self.count = count
+            self.choices = choices
         }
     }
 
@@ -130,30 +134,45 @@ nonisolated public struct CraftingCatalog: Sendable {
     public let itemPlugin: FormIDResolver
     /// Every workbench base in the item plugin that offers a recipe, by editor ID.
     public let stations: [CraftingStationChoice]
+    /// The form lists a component may name. Nil treats every component as one item.
+    public let formLists: FormListStore?
 
     public init(
         recipes: RecipeStore,
         itemPlugin: FormIDResolver,
-        stations: [CraftingStationChoice]
+        stations: [CraftingStationChoice],
+        formLists: FormListStore? = nil
     ) {
         self.recipes = recipes
         self.itemPlugin = itemPlugin
         self.stations = stations
+        self.formLists = formLists
     }
 
-    public init(recipes: RecipeStore, itemPlugin: FormIDResolver, file: ESMFile) {
-        self.init(recipes: recipes, itemPlugin: itemPlugin, loadOrder: LoadOrderPlugins(file: file))
+    public init(
+        recipes: RecipeStore, itemPlugin: FormIDResolver, file: ESMFile,
+        formLists: FormListStore? = nil
+    ) {
+        self.init(
+            recipes: recipes, itemPlugin: itemPlugin, loadOrder: LoadOrderPlugins(file: file),
+            formLists: formLists
+        )
     }
 
     /// Builds the catalog with every recipe-offering FURN base and every alchemy lab.
     /// `itemPlugin` must be the space `loadOrder` reads in.
-    public init(recipes: RecipeStore, itemPlugin: FormIDResolver, loadOrder: LoadOrderPlugins) {
+    public init(
+        recipes: RecipeStore, itemPlugin: FormIDResolver, loadOrder: LoadOrderPlugins,
+        formLists: FormListStore? = nil
+    ) {
         let probe = CraftingCatalog(recipes: recipes, itemPlugin: itemPlugin, stations: [])
         let offering = Self.stations(in: loadOrder).filter {
             let station = probe.station(workbench: $0.workbench, keywords: $0.keywords)
             return station.brews || !station.keywords.isEmpty
         }
-        self.init(recipes: recipes, itemPlugin: itemPlugin, stations: offering)
+        self.init(
+            recipes: recipes, itemPlugin: itemPlugin, stations: offering, formLists: formLists
+        )
     }
 
     /// The station query. A bench whose keywords name no recipe gets empty `keywords`.
@@ -199,10 +218,25 @@ nonisolated public struct CraftingCatalog: Sendable {
             createdCount: Int32(resolved.recipe.effectiveCreatedCount),
             components: resolved.components.map {
                 CraftingRecipe.Component(
-                    item: $0.item.flatMap(itemPlugin.localFormID), count: $0.count
+                    item: $0.item.flatMap(itemPlugin.localFormID),
+                    count: $0.count,
+                    choices: $0.item.map(choices(of:)) ?? []
                 )
             }
         )
+    }
+
+    /// This catalog, reading form-list components through `formLists`.
+    public func with(formLists: FormListStore) -> CraftingCatalog {
+        CraftingCatalog(
+            recipes: recipes, itemPlugin: itemPlugin, stations: stations, formLists: formLists
+        )
+    }
+
+    /// The leaf items of `id` when it is a form list, in list order.
+    private func choices(of id: ResolvedFormID) -> [FormID] {
+        guard let flattened = formLists?.flattened(id) else { return [] }
+        return flattened.entries.compactMap { $0.flatMap(itemPlugin.localFormID) }
     }
 
     /// The verdict for `recipe`, given held counts and the condition answer.
@@ -219,7 +253,9 @@ nonisolated public struct CraftingCatalog: Sendable {
                 unresolved = true
                 continue
             }
-            let count = held(item)
+            let count = component.choices.isEmpty
+                ? held(item)
+                : Int32(clamping: component.choices.reduce(Int64(0)) { $0 + Int64(held($1)) })
             if count < component.count {
                 shortfalls.append(
                     ComponentShortfall(item: item, required: component.count, held: count)

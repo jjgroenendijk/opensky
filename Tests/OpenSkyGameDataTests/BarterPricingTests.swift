@@ -63,14 +63,13 @@ struct BarterPricingTests {
         #expect(master.sellPrice(value: 200) > novice.sellPrice(value: 200))
     }
 
-    /// "Trade price cap: (max sell price = value * 1.00), (min buy price =
-    /// value * 1.05)." Unreachable at vanilla settings, reachable the moment a
-    /// plugin retunes the two GMSTs, which is what this drives.
+    /// The caps are `fMinBuyMult` (1.05) and `fBarterSellMax` (0.95). Unreachable at vanilla
+    /// settings, reachable once a plugin retunes the factor GMSTs, which is what this drives.
     @Test
     func tradePriceCapsBind() {
         let generous = pricing(minimum: 0.5, maximum: 0.5)
         #expect(generous.buyPrice(value: 100) == 105, "the minimum buy price is value * 1.05")
-        #expect(generous.sellPrice(value: 100) == 100, "the maximum sell price is value")
+        #expect(generous.sellPrice(value: 100) == 95, "the maximum sell price is value * 0.95")
     }
 
     /// A stack is priced per unit and multiplied, so the row price the player

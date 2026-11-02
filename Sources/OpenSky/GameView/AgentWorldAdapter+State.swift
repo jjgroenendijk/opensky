@@ -17,6 +17,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -159,12 +160,7 @@ extension AgentWorldAdapter {
         result["firstPerson"] = firstPersonState(gameSession: gameSession)
         result["melee"] = meleeState()
         result.merge(playerStatusState()) { _, new in new }
-        result["bowZoom"] = [
-            "zoomed": .bool(gameSession.bowZoomViewShare < 1),
-            "viewShare": .init(gameSession.bowZoomViewShare),
-            "timeScale": .init(gameSession.bowZoomTimeScale),
-            "fovYDegrees": .init(gameSession.viewFOVYRadians * 180 / .pi)
-        ]
+        result.merge(playerWeaponState(gameSession: gameSession)) { _, new in new }
         let status = gameSession.locomotion.status
         result["graph"] = [
             "attached": .bool(status.graphAvailable),
@@ -181,6 +177,29 @@ extension AgentWorldAdapter {
                 .map { .init($0.intValue) } ?? .null
         ]
         return .object(result)
+    }
+
+    /// The held staff and the bow zoom.
+    private func playerWeaponState(gameSession: GameSession) -> [String: AgentJSON] {
+        var result: [String: AgentJSON] = [:]
+        result["staff"] = game.magic.playerStaff().map { held in
+            [
+                "item": .string("\(held.staff.profile.item)"),
+                "enchantment": .string(held.staff.spell.editorID ?? held.staff.profile.name),
+                "charge": .init(held.charge.remaining),
+                "capacity": .init(held.charge.capacity)
+            ]
+        } ?? .null
+        result["bowZoom"] = [
+            "zoomed": .bool(gameSession.bowZoomViewShare < 1),
+            "viewShare": .init(gameSession.bowZoomViewShare),
+            "timeScale": .init(gameSession.bowZoomTimeScale),
+            "fovYDegrees": .init(gameSession.viewFOVYRadians * 180 / .pi),
+            "staminaPauseSeconds": .init(
+                game.actorValues.runtime?.regenerationPause(.stamina, of: .player) ?? 0
+            )
+        ]
+        return result
     }
 
     /// The last fall and rumble, the death phase, and the locked controls.

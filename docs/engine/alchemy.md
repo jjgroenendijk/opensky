@@ -64,9 +64,10 @@ cost = floor(BaseCost * (magnitude * duration / 10) ^ 1.1)
 ```
 
 A magnitude of 0 counts as 1, and a duration of 0 counts as 10 seconds. The value of the brew is
-the sum of its effect costs. The skill use is the same sum at the skill alone, without perks.
-UESP says the skill use is the value; whether the game counts the value before or after perks
-is not confirmed.
+the sum of its effect costs. The skill use is the same sum at the skill alone, without perks, plus
+1: UESP gives "1 base XP per gold value created" and "1 additional base XP for each successfully
+created potion" ([Leveling](https://en.uesp.net/wiki/Skyrim:Leveling)). Whether the game counts the
+value before or after perks is not confirmed.
 
 ## The made item
 
@@ -107,5 +108,6 @@ that weapon spends one dose and applies the poison's effects to the target. The 
 
 ## Where OpenSky differs
 
-- The game has an alchemy menu.
+- The alchemy lab opens `craftingmenu.swf`, the movie the game uses for its crafting stations. It
+  lists the carried ingredients.
 - Stolen copies of an ingredient are used up first, so the stolen mark leaves with them.

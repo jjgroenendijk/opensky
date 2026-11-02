@@ -32,6 +32,8 @@ nonisolated public struct ESSPluginIndex: Sendable {
         let flags: UInt32
         /// Its interior cell, or its exterior worldspace.
         let space: ResolvedFormID?
+        /// Its XLOC, for the lock survey.
+        var lock: LockData?
     }
 
     public let loadOrder: [String]
@@ -87,6 +89,11 @@ nonisolated public struct ESSPluginRecords: ESSImportRecords {
     public func signature(of form: ResolvedFormID) -> String? {
         (index.form(form)?.signature ?? index.placedReferences[ESSPluginIndex.Key(form)]?.signature)
             .map { String(describing: $0) }
+    }
+
+    /// The plugin's XLOC on a placed reference the save changed.
+    public func authoredLock(of reference: ResolvedFormID) -> LockData? {
+        index.placedReferences[ESSPluginIndex.Key(reference)]?.lock
     }
 
     public func editorID(of form: ResolvedFormID) -> String? {

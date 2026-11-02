@@ -85,6 +85,21 @@ struct EnchantingTests {
         #expect(abs(scale.powers[0] - pow(250 / (3 * pow(100, 1.1)), 1 / 1.1)) < 0.000_1)
     }
 
+    /// UESP: the charge per use is "calculated at the moment of the usage", so a weapon
+    /// made at skill 15 costs less once Enchanting reaches 100.
+    @Test func aMadeWeaponsCostFollowsTheSkillAtEachUse() {
+        let input = EnchantingInput(skill: 15, soul: .grand, bases: [EnchantingBase(cost: 100)])
+        let scale = EnchantingRules.weapon(input)
+        let made = MadeEnchantment(
+            bases: [.player], powers: scale.powers, capacity: scale.capacity,
+            unskilledCostPerUse: scale.unskilledCostPerUse, name: "Fire"
+        )
+        #expect(abs(made.costPerUse(atSkill: 15) - scale.costPerUse) < 0.01)
+        let atMaster = 3 * pow(Float(100), 1.1) * (1 - Float(0.5).squareRoot())
+        #expect(abs(made.costPerUse(atSkill: 100) - atMaster) < 0.01)
+        #expect(made.costPerUse(atSkill: 100) < made.costPerUse(atSkill: 15))
+    }
+
     @Test func disenchantingTeachesTheRootBaseAndDestroysTheItem() throws {
         let trial = try session(carrying: [Records.fireSword])
         let outcome = trial.coordinator.disenchant(Records.fireSword)

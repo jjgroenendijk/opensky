@@ -13,12 +13,16 @@ extension MagicCoordinator {
         guard let caster else { return intent }
         var latched = intent
         for hand in SpellHand.allCases {
-            let event = SpellFireGraphNames.event(of: hand)
+            let names = heldStaff(of: .player, in: hand) == nil
+                ? [SpellFireGraphNames.event(of: hand)]
+                : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
             let held = releaseLatch.hold(
                 hand,
                 pressed: intent.isHeld(hand),
                 phase: caster.phase(of: hand),
-                fired: events.contains { $0.caseInsensitiveCompare(event) == .orderedSame },
+                fired: events.contains { event in
+                    names.contains { $0.caseInsensitiveCompare(event) == .orderedSame }
+                },
                 delta: intent.deltaTime
             )
             switch hand {

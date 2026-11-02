@@ -99,6 +99,7 @@ final class InventoryMenuController {
             favourites: game.inventory.playerFavourites
         )
         refreshed.carriedWeight = game.inventory.playerCarriedWeight
+        refreshed.markQuestItems(game.inventory.questItems)
         if !model.categories.isEmpty {
             refreshed.selectCategory(model.selectedCategoryIndex)
             refreshed.select(model.selectedIndex)

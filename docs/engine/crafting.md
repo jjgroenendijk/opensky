@@ -46,7 +46,7 @@ A verdict has three parts, checked every time the session is read:
 Repeated components of one item add up before the check. The conditions run with the player
 as subject. `GetItemCount` reads the player's inventory, and the rest read the live condition
 context of the session. A function the evaluator does not know makes its group false, so the
-verdict names it, for example `function 4725` for `GetVMQuestVariable`.
+verdict names it by its index. `GetVMQuestVariable` is known: it reads a quest script's variable.
 
 The conditions decide whether the recipe is listed at all. The CK wiki calls them "Match
 Conditions", the "pre-requisites for the recipe to appear in the crafting menu" ([Constructible
@@ -121,7 +121,8 @@ Differences from the game:
   talk:Smithing"). It is uncertain: the settings `fTemperingSkillUseItemValConst`,
   `...ItemValMult`, and `...ItemValExp` (25, 8, 0.6) do not fit it, and no source says how the
   game uses them, so OpenSky does not read them.
-- The matching material perk, which doubles the skill above the offset, is not read.
+- The matching material perk doubles the skill above the offset. It is read through the
+  Mod Tempering Health entry point, as the effective skill row above shows.
 
 ## Refused crafts
 
@@ -157,5 +158,5 @@ enchanted item and set its charge; OpenSky answers those calls and does nothing.
 
 ## Not modeled yet
 
-- Perk entry points that change crafting, such as Arcane Blacksmith and the material perks.
-- `GetVMQuestVariable`, which the evaluator does not know.
+- Perk entry points that change crafting other than Mod Tempering Health, such as Arcane
+  Blacksmith.

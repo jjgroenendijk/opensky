@@ -116,9 +116,12 @@ nonisolated public enum CombatCore {
     }
 
     /// A hand holding a readied spell gives its button to the cast loop.
-    public static func meleeIntent(_ intent: MeleeIntent, readied: ReadiedHands) -> MeleeIntent {
+    /// A staff in the right hand casts instead of swinging, so its attack goes to the caster.
+    public static func meleeIntent(
+        _ intent: MeleeIntent, readied: ReadiedHands, staffInRight: Bool = false
+    ) -> MeleeIntent {
         var masked = intent
-        if readied.right {
+        if readied.right || staffInRight {
             masked.attack = false
             masked.attackHeld = false
         }

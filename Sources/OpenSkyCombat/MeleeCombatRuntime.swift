@@ -302,6 +302,9 @@ public final class MeleeCombatRuntime {
             target: hit.target,
             aggressor: world.meleeAttacker.key,
             source: weapon.weapon,
+            isPowerAttack: strikeKind.isPowerAttack,
+            isSneakAttack: damage.strike.isSneakAttack,
+            isBashAttack: strikeKind.isBash,
             isBlocked: damage.wasBlocked,
             damage: landed ? damage.applied : 0
         ))

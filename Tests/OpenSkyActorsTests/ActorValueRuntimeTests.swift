@@ -158,6 +158,26 @@ struct ActorValueRuntimeTests {
         #expect(abs(runtime.current(of: holder).stamina - 31.5) < 0.001)
     }
 
+    /// A bow zoom's pause outlasts the short pause after damage: no stamina returns until
+    /// `fBowZoomStaminaRegenDelay` (3 s) has passed.
+    @Test func aBowZoomPauseHoldsStaminaForItsSetting() {
+        let (runtime, _) = self.runtime(regen: ActorValues(health: 0, magicka: 0, stamina: 5))
+        let holder = holder()
+        runtime.damage(.stamina, by: 30, on: holder)
+        runtime.pauseRegeneration(
+            .stamina, on: holder, for: RegenerationSettings.vanilla.bowZoomStaminaDelay
+        )
+        for _ in 0 ..< 170 {
+            runtime.stepRegeneration(over: [holder])
+        }
+        #expect(runtime.current(of: holder).stamina == 30)
+        #expect(runtime.regenerationPause(.stamina, of: holder) > 0)
+        for _ in 0 ..< 20 {
+            runtime.stepRegeneration(over: [holder])
+        }
+        #expect(runtime.current(of: holder).stamina > 30)
+    }
+
     @Test func combatMultipliesEachRate() {
         var settings = RegenerationSettings.vanilla
         settings.staminaDelay = 0

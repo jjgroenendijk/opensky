@@ -281,6 +281,8 @@ typedef struct
     float3 basisZ;
     /// InstanceTransform.instanceColor: a static's emittance, alpha 1 when set.
     float4 instanceColor [[flat]];
+    /// InstanceTransform.grassParameters.w on a mesh: 0 drawn whole, 1 faded out.
+    float fadeOut [[flat]];
 } StaticVertexOut;
 
 typedef struct

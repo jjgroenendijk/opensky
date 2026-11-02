@@ -55,6 +55,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var hostView: NSView { get }
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
+    var playerBeastForm: PlayerBeastForm { get }
 }
 
 final class MenuWorldAdapter {
@@ -157,6 +158,10 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
 
     var menuInputConsumer: (any MenuInputConsumer)? {
         game
+    }
+
+    var isPlayerInBeastForm: Bool {
+        game.playerBeastForm.isBeast
     }
 
     var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {

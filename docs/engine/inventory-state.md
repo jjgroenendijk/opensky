@@ -25,10 +25,11 @@ whose `CNTO` list points at an `LVLI` has no stable "minus one iron sword": the 
 from is itself a resolution. It does have a stable resolved list, and once the player opened the
 chest, that list is the truth.
 
-The initializer enforces two rules, both for determinism: stacks are sorted by form ID, with one
-entry per item and every count above zero, and the equipped set is sorted with no duplicates. So two
-stores that reached the same inventory in different orders give equal snapshots and identical save
-bytes. Stacking is by base form ID alone ([inventory and equipment](/engine/inventory-equipment.md)).
+The initializer enforces two rules, both for determinism: stacks are sorted by form ID, then honest
+before stolen, with one entry per (item, stolen) pair and every count above zero. The equipped set
+is sorted with no duplicates. So two stores that reached the same inventory in different orders give
+equal snapshots and identical save bytes. How copies of one item can differ is on the
+[inventory and equipment](/engine/inventory-equipment.md#stacking) page.
 
 Inventory travels in its own `INVN` chunk, not inside `RDLT`, so an older build skips it by length
 instead of refusing the file ([save chunks](/formats/opensky-save-world-chunks.md)).
@@ -142,11 +143,11 @@ that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
 - `EquipItem` gives the actor one copy first when it holds none. This is the one place an item is
   equipped "from nowhere". The wiki page says the game does the same, and the opening relies on
   it: stage 10 of `MQ101` removes all the player's items, then equips the prisoner clothes.
-- OpenSky does not track quest items, so `RemoveAllItems` removes them too.
+- `RemoveAllItems` keeps [quest items](/engine/inventory-menu.md#quest-items) unless
+  `abRemoveQuestItems` is true.
 - `DropObject(akObject, aiCount = 1)` drops at most what the player carries, as one stack in front
   of the player, and returns the new reference. Only the player drops, because OpenSky places a
   drop only in front of the player's camera. A drop from another holder fails with that reason.
-- The `abSilent` flags do nothing, because OpenSky shows no item messages yet.
 
 `SetOutfit` replaces an actor's outfit. The pieces of the actor's default outfit (`DOFT`) leave its
 inventory, then one of each new piece is given and worn. A leveled entry rolls for the actor's base,

@@ -70,6 +70,22 @@ struct CellResetCoordinatorTests {
         #expect(reset.cellAttached(scene) == [Self.key(0x10)])
     }
 
+    @Test func aContainerHoldingAQuestItemKeepsItsInventory() throws {
+        var now = 1000.0
+        var queries = CellResetQueries()
+        queries.holdsQuestItem = { $0 == Self.key(0x10) }
+        let reset = coordinator(queries: queries) { now }
+        let scene = try Self.scene([Self.reference(0x10)])
+        let held = ReferenceInventoryState(stacks: [InventoryStack(item: FormID(0x0A), count: 1)])
+        store.set(held, for: Self.key(0x10), in: Self.cell)
+        store.set(ReferenceDeletionState.deleted, for: Self.key(0x10), in: Self.cell)
+        reset.cellDetached(Self.cell)
+        now += 240
+        #expect(reset.cellAttached(scene) == [Self.key(0x10)])
+        #expect(store.component(ReferenceInventoryState.self, for: Self.key(0x10)) == held)
+        #expect(store.component(ReferenceDeletionState.self, for: Self.key(0x10)) == nil)
+    }
+
     /// `Cell.Reset` resets on the next load even in a never-resets zone, and leaving the
     /// cell before that load keeps the flag.
     @Test func aScriptedResetWinsOverTheZoneAndTheClock() throws {

@@ -14,7 +14,7 @@ goods.
 ## The bounty ledger
 
 The crime ledger is a world state component per criminal, with one row per crime faction: the
-gold owed and the four crime counts. It has its own slot, because a bounty changes rarely, while
+gold owed and the seven crime counts. It has its own slot, because a bounty changes rarely, while
 actor values change sixty times a second.
 
 It is kept per crime faction, not per hold, because this engine has crime factions and not holds.
@@ -73,7 +73,7 @@ gold that comes back is honest ([vendor factions](/engine/vendor-factions.md)).
 
 Three chunks in the [OpenSky save](/formats/opensky-save-actor-chunks.md):
 
-- `CRIM`: one entry per actor with a ledger, one row per faction, with the gold and the four
+- `CRIM`: one entry per actor with a ledger, one row per faction, with the gold and the seven
   counts.
 - `CRVG`: the violent part of each `CRIM` row's gold. `CRIM` still writes the total, so an older
   build loads the right bounty and treats it all as non-violent.

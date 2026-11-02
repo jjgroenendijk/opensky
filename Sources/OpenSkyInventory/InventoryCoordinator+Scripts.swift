@@ -54,19 +54,31 @@ extension InventoryCoordinator {
     }
 
     /// `ObjectReference.RemoveAllItems`: empties the holder, worn items too,
-    /// into `other` when one is named.
+    /// into `other` when one is named. Quest items stay unless `removeQuestItems`.
     public func scriptRemoveAllItems(
-        from key: ReferenceKey, to other: ReferenceKey?
+        from key: ReferenceKey, to other: ReferenceKey?, removeQuestItems: Bool = false
     ) -> InventoryResult<Bool> {
         guard let runtime, let holder = scriptHolder(key) else { return InventoryResult(false) }
         let destination = other.flatMap(scriptHolder)
+        let kept = removeQuestItems ? [] : world.questItemBases()
         var changed = false
-        for stack in runtime.inventory.inventory(of: holder).stacks {
+        for stack in runtime.inventory.inventory(of: holder).stacks
+            where !kept.contains(stack.item)
+        {
             changed = move(stack.item, count: stack.count, from: holder, to: destination)
                 || changed
         }
         scriptNote("Script emptied \(holderName(holder)).")
         return InventoryResult(changed, commands: [.equipmentChanged(holder)])
+    }
+
+    /// Whether a running quest holds `item` in a Quest Object alias.
+    public func isQuestItem(_ item: FormID) -> Bool {
+        questItems.contains(item)
+    }
+
+    public var questItems: Set<FormID> {
+        world.questItemBases()
     }
 
     /// `ObjectReference.GetItemCount`. Nil without a holder.

@@ -109,7 +109,8 @@ A `vsval` count, then entries. Each entry is a `uint8` type and its data.
 Other types with a fixed size, a repeated fixed size, or a short variable layout in UESP
 are skipped by size. The size tables live beside the reader. A type with no documented size
 stops the list, and the change form becomes partial. Lock flags are kept but not mapped:
-UESP does not say which bit is "locked".
+UESP does not say which bit is "locked". Real saves keep `XLOC` flag 0x04 (leveled) in the
+byte, and the level is the authored one ([locks](/engine/locks.md#leveled-locks)).
 
 ## Actor base (`NPC_`)
 

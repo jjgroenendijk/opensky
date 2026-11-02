@@ -83,11 +83,14 @@ nonisolated public struct MagicItemFields: Sendable {
 nonisolated public enum MagicCastingRecord: Sendable {
     case spell(Spell)
     case scroll(Scroll)
+    /// A staff enchantment, which a staff casts like a spell.
+    case staff(Enchantment)
 
     public var recordType: FourCC {
         switch self {
         case .spell: "SPEL"
         case .scroll: "SCRL"
+        case .staff: "ENCH"
         }
     }
 
@@ -95,6 +98,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.editorID
         case let .scroll(scroll): scroll.editorID
+        case let .staff(enchantment): enchantment.editorID
         }
     }
 
@@ -102,6 +106,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.name
         case let .scroll(scroll): scroll.name
+        case let .staff(enchantment): enchantment.name
         }
     }
 
@@ -109,6 +114,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.data
         case let .scroll(scroll): scroll.data
+        case let .staff(enchantment): enchantment.data.map(SpellItemData.init(staff:))
         }
     }
 
@@ -118,6 +124,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.header.equipType
         case let .scroll(scroll): scroll.header.equipType
+        case .staff: nil
         }
     }
 
@@ -125,6 +132,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.effects
         case let .scroll(scroll): scroll.effects
+        case let .staff(enchantment): enchantment.effects
         }
     }
 
@@ -132,6 +140,7 @@ nonisolated public enum MagicCastingRecord: Sendable {
         switch self {
         case let .spell(spell): spell.skipped
         case let .scroll(scroll): scroll.skipped
+        case let .staff(enchantment): enchantment.skipped
         }
     }
 }

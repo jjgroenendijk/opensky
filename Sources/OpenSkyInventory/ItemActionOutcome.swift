@@ -143,6 +143,8 @@ nonisolated public enum TradeOutcome: Equatable, Sendable {
     case bought(item: String, gold: Int32)
     case merchantShort(price: Int64, gold: Int32)
     case sold(item: String, gold: Int32)
+    /// A quest item the player may not store or sell.
+    case questItem
 
     public func text(texts: TradeTexts) -> String {
         switch self {
@@ -153,6 +155,7 @@ nonisolated public enum TradeOutcome: Equatable, Sendable {
         case let .bought(item, gold): "Bought \(item) for \(gold) gold."
         case let .merchantShort(price, gold): texts.merchantShortText(price: price, gold: gold)
         case let .sold(item, gold): "Sold \(item) for \(gold) gold."
+        case .questItem: texts.questItem
         }
     }
 }

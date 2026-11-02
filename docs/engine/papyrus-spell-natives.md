@@ -2,7 +2,7 @@
 type: Subsystem
 title: Papyrus spell natives
 description: The Actor and Spell natives over the spellbook, casting, and active effects -
-  how they were chosen, why none is latent, the casting source numbers, and the stated gaps.
+  how they were chosen, which are latent, the casting source numbers, and the stated gaps.
 tags: [engine, papyrus, magic]
 ---
 
@@ -30,11 +30,14 @@ registered. The counts are the References column.
 | `DispelAllSpells()` | 16 | Removes every effect that can be dispelled | [DispelAllSpells - Actor](https://ck.uesp.net/wiki/DispelAllSpells_-_Actor) |
 | `bool HasMagicEffectWithKeyword(Keyword)` | 8 | Whether such an effect has that keyword | [HasMagicEffectWithKeyword - Actor](https://ck.uesp.net/wiki/HasMagicEffectWithKeyword_-_Actor) |
 
-## None is latent
+## Latent casts
 
-Each wiki page declares a plain `native` with no latent marker, and the cast page says "This
-function casts the spell instantaneously." So each returns on the same call, and a script that casts
-and then reads `HasMagicEffect` sees the effect.
+`Spell.Cast` and `Spell.RemoteCast` are on the wiki's
+[Latent Functions](https://ck.uesp.net/wiki/Category:Latent_Functions) list, so the script that
+calls them waits until the call returns. The cast itself still applies at once, as the cast page
+says: "This function casts the spell instantaneously." So a script that casts and then reads
+`HasMagicEffect` sees the effect. The other natives here are delayed: they return on the next
+frame ([native timing](/engine/papyrus-vm.md#native-timing)).
 
 ## Where each goes
 
@@ -59,5 +62,4 @@ so sources 2 and 3 are a tallied failure, not a silent no-op.
 | `Spell.Cast` with `akTarget` | Applies to that actor, with no area sweep | A script that names a target is not aiming. Nothing knows where an impact was, and an invented spot could catch bystanders |
 | `Actor.DoCombatSpellApply` | Not installed | It asks the combat controller to fit a spell into what it is doing. The caster AI picks its own spells, so an instant cast would bypass its decisions |
 | `Spell.Preload`, `Spell.Unload` | Return at once | OpenSky loads spell art when it is first drawn, so there is nothing to start early |
-| The `ActiveMagicEffect` script | Not installed | No script archetype `MGEF` runs yet, so there is no receiver |
-| `HasMagicEffect`, `HasMagicEffectWithKeyword` | Answer "is it acting", not "is it carried" | The same narrowing the condition functions use, cited on [condition evaluation](/engine/conditions.md) |
+| `HasMagicEffect`, `HasMagicEffectWithKeyword` | Answer "is it carried" | Every effect a spell acting on the actor can apply counts, active or not. That includes carried abilities, diseases, and addictions |

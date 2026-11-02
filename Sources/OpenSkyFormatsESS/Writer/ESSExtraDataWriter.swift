@@ -33,9 +33,9 @@ nonisolated extension ESSExtraData {
             writer.uint16(count)
         case let .health(value), let .charge(value):
             writer.float32(value)
-        case let .lock(level, key):
+        case let .lock(level, flags, key):
             writer.uint8(level)
-            writer.uint8(0)
+            writer.uint8(flags)
             writer.refID(key)
             writer.bytes(Data(count: 8))
         case let .enchantment(enchantment):

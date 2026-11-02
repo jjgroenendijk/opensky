@@ -192,3 +192,16 @@ extension MagicWorldAdapter {
         game.gameSession?.walkController.feetPosition.z ?? 0
     }
 }
+
+extension MagicWorldAdapter {
+    /// Hands the renderer how far each dismissed summon has faded, by its reference.
+    func publishSummonFades() {
+        guard let gameSession = game.gameSession else { return }
+        let fades = game.magic.summonFades
+        guard !fades.isEmpty || !gameSession.instancePoses.fades.isEmpty else { return }
+        gameSession.instancePoses.fades = fades.reduce(into: [:]) { byFormID, entry in
+            guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID else { return }
+            byFormID[formID.rawValue] = entry.value
+        }
+    }
+}

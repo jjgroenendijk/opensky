@@ -136,9 +136,31 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
 
     /// Writes one census-named variable on the player's graph.
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String)
+
+    /// Writes one census-named variable on `target`'s graph, or the player's when nil.
+    func writeCombatVariable(
+        _ value: BehaviorVariableValue, named name: String, on target: ReferenceKey?
+    )
+
+    /// The Block skill of the blocker, which scales the blocked fraction.
+    func meleeBlockSkill(of target: ReferenceKey) -> Float
+}
+
+extension MeleeCombatWorld {
+    /// A world with no actor graphs writes only the player's.
+    public func writeCombatVariable(
+        _ value: BehaviorVariableValue, named name: String, on target: ReferenceKey?
+    ) {
+        guard target == nil || target == .player else { return }
+        writeCombatVariable(value, named: name)
+    }
 }
 
 nonisolated extension MeleeCombatWorld {
+    public func meleeBlockSkill(of _: ReferenceKey) -> Float {
+        MeleeDamage.defaultBlockSkill
+    }
+
     /// A session with no fortify and no perk surface blocks by the base
     /// formula, which is the value the term had before either existed.
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {

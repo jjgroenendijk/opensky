@@ -178,7 +178,8 @@ active, its holder owns that perk. The perk changes the experience of each use t
 
 | Spell | Perk | Function | Value |
 | --- | --- | --- | --- |
-| `Rested`, `WellRested` | `RestedPerk` | multiply value | 1.05 |
+| `Rested` | `RestedPerk` | multiply value | 1.05 |
+| `WellRested` | `RestedWellPerk` | multiply value | 1.10 |
 | `MarriageRested` | `RestedMarriagePerk` | multiply value | 1.15 |
 | `doomWarriorAbility` | `doomWarriorPerk` | multiply value | 1.2 |
 
@@ -193,13 +194,15 @@ names its weapon as the object; a bash names none.
 An effect whose archetype OpenSky does not implement still becomes active when it carries a
 perk, because the perk is the whole point of the effect.
 
-The Rested spells come from sleeping in vanilla (`PlayerSleepQuestScript`).
+The Rested spells come from sleeping in vanilla (`PlayerSleepQuestScript`). `Update.esm` points
+`WellRested` at `RestedWellSkillEffect`, whose perk is `RestedWellPerk`; `Skyrim.esm` alone
+gives it `RestedPerk`. The Survival Mode plugin adds a second effect, chosen by its own global.
 
 ## Character experience
 
-Each point banks `level * fXPPerSkillRank` toward the character level. Character leveling spends it
-in the same call. So a skill point that crosses the character threshold raises the level, adds a
-perk point, and asks for an attribute choice before the call returns. See
+Each point banks `level * fXPPerSkillRank` toward the character level. A skill point that crosses
+the character threshold does not raise the level in the same call. The level waits until the
+player opens the skills menu, which applies every earned level at once. See
 [character leveling](/engine/character-leveling.md).
 
 Without character leveling (as in tests of skills alone), the experience is still computed and
@@ -227,11 +230,13 @@ base XP per gold used in transactions", "75 * Speech level base XP for passing S
 paid. The CK settings list a `fPickpocketSkillUsesCurve` of 0.8 that UESP does not explain; OpenSky
 does not apply it.
 
-## Not reported yet
+## Restoration
 
-These actions have a skill and a known base experience, but the engine does not perform them yet.
-Each needs one reporting call when its system arrives:
+Restoration gains "1 base XP [per point of] damage healed by healing spells" (UESP
+[Leveling](https://en.uesp.net/wiki/Skyrim:Leveling)). A healing effect is a beneficial value
+modifier on Health whose magic skill is a skill. It reports the health it actually restored, times
+the effect's skill usage factor, to its caster. Health past the maximum earns nothing. A healing
+spell gives no experience for its magicka cost. Every other Restoration spell, such as a ward or
+Turn Undead, earns experience by its magicka cost.
 
-- Smithing, Alchemy, and Enchanting, which need crafting menus.
-- Sneak: `fSkillUsageSneakPerSecond` (0.625) while hidden, and sneak attacks.
-- Restoration by healing done, and Destruction's difficulty change, which needs a difficulty setting.
+Crafting, Sneak, and Destruction's difficulty change report their skill use too.

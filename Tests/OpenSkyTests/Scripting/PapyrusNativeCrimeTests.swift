@@ -355,7 +355,8 @@ extension PapyrusNativeCrimeTests {
         fixture.reporter.witnesses = FixedCrimeWitnesses(watching: .player, by: [witness])
         #expect(!isFailure(fixture.registry.invoke(global)))
         #expect(fixture.reporter.runtime.crimeGold(of: hold, violent: true) == 1000)
-        #expect(fixture.reporter.runtime.crimeCounts(of: hold).isEmpty)
+        // Only the seen change reaches the ledger, and it counts there.
+        #expect(fixture.reporter.runtime.crimeCounts(of: hold).werewolf == 1)
     }
 
     /// Without a crime runtime the werewolf crime refuses, like the alarms.

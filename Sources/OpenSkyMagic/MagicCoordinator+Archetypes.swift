@@ -6,6 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyProgressionInterface
 
 extension MagicCoordinator {
     /// How often a cloak casts its spell on the actors around it. An OpenSky
@@ -69,6 +70,11 @@ extension MagicCoordinator {
         // cast from self over an area; Pacify and Calm are aimed.
         for key in takeCalmedAround() {
             world.forgetPickpocketCatch(of: key)
+        }
+        for use in takeHealing() {
+            world.reportSkillUse(SkillUseEvent(
+                actor: use.caster, action: .spellEffect(skill: use.skill), amount: use.amount
+            ))
         }
     }
 

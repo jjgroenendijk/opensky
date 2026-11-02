@@ -49,6 +49,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     public static func notice(for failure: SpellCastFailure) -> Self? {
         switch failure {
         case .insufficientMagicka: .insufficientMagicka
+        case .staffOutOfCharge: .itemOutOfCharge
         case .powerAlreadyUsedToday: .powerUsed
         case .notFromFlyingMount: .flyingMountNoCast
         case .noSpellReadied, .unknownSpell, .notCharged, .deliveryUnsupported,

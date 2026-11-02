@@ -31,6 +31,10 @@ final class RegenerationDelays {
         remaining[key] = values
     }
 
+    func seconds(_ kind: ActorValueKind, of key: ReferenceKey) -> Float {
+        remaining[key]?[kind] ?? 0
+    }
+
     func isPaused(_ kind: ActorValueKind, of key: ReferenceKey) -> Bool {
         (remaining[key]?[kind] ?? 0) > 0
     }

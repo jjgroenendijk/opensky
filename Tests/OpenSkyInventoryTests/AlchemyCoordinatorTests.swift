@@ -76,7 +76,8 @@ struct AlchemyCoordinatorTests {
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 1)
         #expect(harness.inventory.baselines.items.ingestibles[potion.id.rawValue] != nil)
         #expect(lab.ingredientKnowledge.knows(0, of: Fixture.flower))
-        #expect(harness.skills.uses.map(\.amount) == [5])
+        // Value 5 plus 1 for the created potion (UESP "Skyrim:Leveling").
+        #expect(harness.skills.uses.map(\.amount) == [6])
         let alchemy = InventoryCoordinator.alchemySkill
         #expect(harness.skills.uses.first?.action == .craft(skill: alchemy))
         // Both are still carried, so they stay chosen for the next brew.

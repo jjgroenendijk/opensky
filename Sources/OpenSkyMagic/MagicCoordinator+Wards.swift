@@ -34,6 +34,9 @@ extension MagicCoordinator {
         defences.absorptionRoll = spellDefenceRoll
         defences.wardFaces = { [world] target, caster in world.actor(target, faces: caster) }
         defences.reaches = { [world] target, impact in world.point(impact, canSee: target) }
+        defences.wardPowerCap = { [weak self] holder in
+            self?.wardPowerCap(of: holder) ?? .infinity
+        }
         defences.wardMagickaShare = { [world] holder in
             world.perkModified(
                 0, at: .modWardMagickaAbsorptionPct, on: holder,
@@ -68,6 +71,21 @@ extension MagicCoordinator {
         brokenWardSeconds = brokenWardSeconds
             .mapValues { $0 - delta }
             .filter { $0.value > 0 }
+    }
+
+    /// The most ward power `holder` may use: a share of its strongest running ward.
+    public func wardPowerCap(of holder: ActorValueHolder) -> Float {
+        guard let effects else { return .infinity }
+        let strongest = effects.active(on: holder)
+            .filter { effects.rule(of: $0) == .accumulate }
+            .flatMap(\.values)
+            .filter { $0.index == SpellHitApplication.wardPowerActorValue }
+            .map(\.magnitude)
+            .max()
+        guard let strongest else { return .infinity }
+        let skill = ActorValueIdentity.index(named: "Restoration")
+            .flatMap { effects.values.value(at: $0, on: holder) } ?? 0
+        return worldSettings.wardPowerCap(strongest: strongest, skill: skill)
     }
 
     /// The ward state of `key` as `IsWardState` reads it.

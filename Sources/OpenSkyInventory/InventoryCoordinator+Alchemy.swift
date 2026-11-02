@@ -189,7 +189,7 @@ extension InventoryCoordinator {
         }
         runtime.store.set(state, for: .player)
         learn(brew.learned)
-        reportAlchemySkillUse(brew.skillValue)
+        reportAlchemySkillUse(brew.skillUse)
         keepCarried(chosen)
         return noteAlchemy(.brewed(count: count, item: potion.name, value: potion.value))
     }

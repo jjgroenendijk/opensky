@@ -130,6 +130,22 @@ struct ActiveEffectRuntimeTests {
         #expect(runtime.tally.secondsPaid == 3)
     }
 
+    /// UESP "Skyrim:Time": a one-hour wait at timescale 20 is 180 real seconds, so a
+    /// 60-second effect is gone by its end.
+    @Test func aRestElapsesTimedEffects() throws {
+        var (runtime, _) = try runtime()
+        ActiveEffectFixture.apply(&runtime, [
+            ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyResistFire, magnitude: 20, duration: 60
+            )
+        ])
+        #expect(runtime.active(on: .player).count == 1)
+        let expired = runtime.elapse(seconds: 3600.0 / 20, over: [.player])
+        #expect(expired == 1)
+        #expect(runtime.active(on: .player).isEmpty)
+        #expect(runtime.values.entry(at: ActorValueIndex.resistFire, on: .player)?.temporary == 0)
+    }
+
     /// A partial step pays nothing: the documented rule is per second, and a
     /// sixtieth of a second is not one.
     @Test func partialStepPaysNothing() throws {

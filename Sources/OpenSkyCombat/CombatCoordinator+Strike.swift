@@ -77,15 +77,18 @@ extension CombatCoordinator {
 
     /// UESP "Skyrim:Block": a shield bash uses the shield's base rating, without tempering.
     public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
-        let skill = combatBlockSkill(of: .player)
-        let shield = world.equippedItems(of: .player).lazy.compactMap { worn -> Float? in
+        (combatBlockSkill(of: .player), shieldRating(of: .player))
+    }
+
+    /// The base armour rating of the shield `key` wears, or nil without one.
+    public func shieldRating(of key: ReferenceKey) -> Float? {
+        world.equippedItems(of: key).lazy.compactMap { worn -> Float? in
             guard
                 let armor = self.items?.armor[worn.item.rawValue],
                 armor.bodyTemplate?.slots.contains(.shield) ?? false
             else { return nil }
             return Float(armor.armorRating & 0xFFFF) / 100
         }.first
-        return (skill, shield)
     }
 
     /// Only the player sneak attacks: the player has no detection state toward an

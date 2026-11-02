@@ -24,9 +24,11 @@ extension CombatCoordinator {
     }
 
     /// Eagle Eye sets the bow's power attack stamina, and UESP gives the zoom drain as
-    /// that much per second.
+    /// that much per second. Regeneration stays held while zoomed and for
+    /// `fBowZoomStaminaRegenDelay` after.
     func drainBowZoomStamina(bow: FormID?, delta: Float) {
         guard archery?.zoom.isZoomed == true, delta > 0 else { return }
+        world.pauseBowZoomStamina()
         let perSecond = meleePowerAttackStamina(0, weapon: bow)
         guard perSecond > 0, perSecond.isFinite else { return }
         world.damageStamina(by: perSecond * delta, of: .player)

@@ -127,7 +127,8 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
             counts: CrimeCounts(
                 theft: counts[.theft] ?? 0, pickpocket: counts[.pickpocket] ?? 0,
                 assault: counts[.assault] ?? 0, murder: counts[.murder] ?? 0,
-                trespass: counts[.trespass] ?? 0, escape: counts[.escape] ?? 0
+                trespass: counts[.trespass] ?? 0, escape: counts[.escape] ?? 0,
+                werewolf: counts[.werewolf] ?? 0
             )
         )
     }

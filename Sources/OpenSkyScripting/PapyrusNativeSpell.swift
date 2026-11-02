@@ -1,6 +1,6 @@
 // The spell natives: the `Actor` spell family and `Spell.Cast`, chosen by call
-// counts over the vanilla scripts. None is latent. A missing world or spellbook
-// is a failure with a reason.
+// counts over the vanilla scripts. `PapyrusNativeTimingTable` says which are latent.
+// A missing world or spellbook is a failure with a reason.
 //
 // Documented in docs/engine/papyrus-spell-natives.md, with the natives left out on purpose.
 

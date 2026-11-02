@@ -11,7 +11,8 @@ nonisolated public enum ESSExtraData: Equatable, Sendable {
     case count(UInt16)
     case health(Float)
     case charge(Float)
-    case lock(level: UInt8, key: ESSRefID)
+    /// The flag byte keeps 0x04, leveled, as the plugin's XLOC does.
+    case lock(level: UInt8, flags: UInt8, key: ESSRefID)
     case enchantment(ESSRefID)
     case aliasInstances([ESSAliasInstance])
     case other(type: UInt8)
@@ -112,10 +113,10 @@ nonisolated enum ESSExtraDataLayout {
         case 40: return try .charge(reader.float32("extra charge"))
         case 42:
             let level = try reader.uint8("lock level")
-            _ = try reader.uint8("lock flags")
+            let flags = try reader.uint8("lock flags")
             let key = try reader.refID("lock key")
             try reader.skip(8, "lock")
-            return .lock(level: level, key: key)
+            return .lock(level: level, flags: flags, key: key)
         case 155:
             let enchantment = try reader.refID("enchantment")
             _ = try reader.uint16("enchantment charge")

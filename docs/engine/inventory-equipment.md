@@ -42,8 +42,10 @@ does not change.
 
 ## Stacking
 
-Every item stacks by its base FormID. Two copies of one item are the same. Tempering,
-enchanting, charge, or health would make copies differ. Those need a larger stack key first.
+A stack is keyed by the base FormID and the stolen flag, so stolen and honest copies of one item
+are two stacks. The menu shows them as one row. A copy can also differ by its temper level, its
+trapped soul, its enchantment charge, or an enchantment made at a table. Those live in a separate
+list per item ([item copies](/engine/item-copies.md)); copies not in the list are plain.
 
 ## Grants
 

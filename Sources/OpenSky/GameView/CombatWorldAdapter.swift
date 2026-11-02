@@ -20,6 +20,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPlayer
@@ -33,6 +34,7 @@ import OpenSkyWorldState
 /// What `CombatWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol CombatWorldHost: AnyObject {
+    var actorGraphs: ActorGraphCoordinator { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
@@ -96,6 +98,7 @@ final class CombatWorldAdapter {
         data.combatAI = CombatAISettings.resolve(store: settings)
         data.arrows = ArrowSettings.resolve(store: settings, text: text)
         data.falls = FallDamageSettings.resolve(store: settings)
+        data.magicWorld = MagicWorldSettings.resolve(store: settings)
         return data
     }
 

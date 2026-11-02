@@ -19,6 +19,8 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
     public private(set) var murder: Int32
     public private(set) var trespass: Int32
     public private(set) var escape: Int32
+    /// Witnessed beast form changes: only the first one costs gold.
+    public private(set) var werewolf: Int32
 
     public static let none = CrimeCounts()
 
@@ -27,7 +29,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
     /// number that reads as "minus three murders".
     public init(
         theft: Int32 = 0, pickpocket: Int32 = 0, assault: Int32 = 0, murder: Int32 = 0,
-        trespass: Int32 = 0, escape: Int32 = 0
+        trespass: Int32 = 0, escape: Int32 = 0, werewolf: Int32 = 0
     ) {
         self.theft = max(0, theft)
         self.pickpocket = max(0, pickpocket)
@@ -35,6 +37,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         self.murder = max(0, murder)
         self.trespass = max(0, trespass)
         self.escape = max(0, escape)
+        self.werewolf = max(0, werewolf)
     }
 
     public var isEmpty: Bool {
@@ -54,7 +57,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         case .murder: murder
         case .trespass: trespass
         case .escape: escape
-        case .werewolf: 0
+        case .werewolf: werewolf
         }
     }
 
@@ -72,7 +75,7 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         case .murder: result.murder = raised
         case .trespass: result.trespass = raised
         case .escape: result.escape = raised
-        case .werewolf: break
+        case .werewolf: result.werewolf = raised
         }
         return result
     }

@@ -184,6 +184,20 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func writePlayerGraphVariable(_: BehaviorVariableValue, named _: String) {}
 
+    private(set) var actorGraphEvents: [ReferenceKey: [String]] = [:]
+    private(set) var actorGraphVariables: [ReferenceKey: [String: BehaviorVariableValue]] = [:]
+
+    func raiseActorGraphEvent(_ name: String, on key: ReferenceKey) -> Bool {
+        actorGraphEvents[key, default: []].append(name)
+        return true
+    }
+
+    func writeActorGraphVariable(
+        _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
+    ) {
+        actorGraphVariables[key, default: [:]][name] = value
+    }
+
     func playReaction(_: CombatActorClip, on _: ReferenceKey) -> Bool {
         false
     }

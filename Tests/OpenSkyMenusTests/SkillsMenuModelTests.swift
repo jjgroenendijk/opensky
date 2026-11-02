@@ -110,4 +110,16 @@ struct SkillsMenuModelTests {
         #expect(model.page == .skills)
         #expect(model.handle(.button(.cancel)) == .close)
     }
+
+    /// A beast form's tree opens alone, offers no legendary question, and closes on back.
+    @Test func aBeastTreeOpensAloneAndClosesOnBack() {
+        var model = SkillsMenuModel.beast(player: Self.player(), tree: Self.skill(157))
+        model.setPerks([Self.perk(1, x: 0, y: 0), Self.perk(2, x: 0, y: 1)])
+        #expect(model.page == .perks)
+        #expect(model.isBeastTree)
+        #expect(model.skills.map(\.index) == [157])
+        #expect(model.handle(.button(.yButton)) == nil)
+        #expect(model.page == .perks)
+        #expect(model.handle(.button(.cancel)) == .close)
+    }
 }

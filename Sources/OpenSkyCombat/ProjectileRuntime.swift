@@ -17,10 +17,9 @@ public final class ProjectileRuntime {
     /// How many finished shots the trace keeps. A handful, because the readout
     /// shows the newest and a reader is looking at the last thing they did.
     public static let traceLimit = 16
-    /// How many arrows may stay stuck in the world at once. UESP "Skyrim:Archery":
-    /// "Only 15 missed arrows or bolts can be present at once"; the oldest despawns.
-    /// It applies to every stuck arrow, because arrow retrieval is not modeled.
-    public static let stuckLimit = 15
+    /// How many arrows may stay stuck in the world at once; the oldest despawns. It
+    /// applies to every stuck arrow, because arrow retrieval is not modeled.
+    public static let stuckLimit = CombatTransientLimits.standard.stuckProjectiles
     /// Ceiling on fixed steps run for one frame, so a long stall costs bounded
     /// time. The same bound `PhysicsStep.maximumFrameTime` puts on the
     /// capsule.
@@ -32,6 +31,8 @@ public final class ProjectileRuntime {
     public var areaSettings = MagicAreaSettings.documentedDefaults
     /// Stick depth, time in an actor, and recovery; the coordinator sets them.
     public var arrows = ArrowSettings.vanilla
+    /// The cone look-ahead distance and timer; the coordinator sets them.
+    public var magicWorld = MagicWorldSettings.vanilla
     public internal(set) var attached = AttachedArrows()
     /// Projectiles in the air, in id order.
     public private(set) var live: [LiveProjectile] = []
@@ -169,6 +170,9 @@ public final class ProjectileRuntime {
             projectile.state = ProjectileFlight.step(
                 projectile.state, profile: projectile.profile, dt: dt
             )
+            if projectile.profile.isCone {
+                lookAhead(&projectile)
+            }
             if let impact = impact(of: projectile, from: previous) {
                 finished.append(resolve(projectile, impact: impact))
                 continue
@@ -195,6 +199,9 @@ public final class ProjectileRuntime {
         from previous: SIMD3<Float>
     ) -> ProjectileImpact? {
         guard let world else { return nil }
+        if projectile.profile.isCone {
+            return coneImpact(of: projectile, from: previous, targets: world.projectileTargets())
+        }
         return ProjectileImpactQuery.first(
             step: ProjectileStep(
                 from: previous,

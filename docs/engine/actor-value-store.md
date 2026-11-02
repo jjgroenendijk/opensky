@@ -32,10 +32,11 @@ that cannot be hit because a write threw is worse than one that takes a clamped 
 writes nothing at all. Otherwise a zero-damage call would write the baseline back and mark a clean
 reference as changed.
 
-The player has no record here, so its baseline comes from a configured race, with 100/100/100 as the
-fallback until character creation exists. That fallback was read from the install: every playable
-vanilla race gives 50/50/50, and the vanilla `Player` record (`00000007`) adds +50 to each through
-its `ACBS` offsets.
+The player's baseline comes from the race chosen in the race menu, else a configured race, else the
+`Player` record's (`00000007`) race. The race gives the starting health, magicka, and stamina, and
+the `Player` record's `ACBS` offsets add to them. Read from the install: every playable vanilla race
+gives 50/50/50 and the offsets are +50 each, so the player starts at 100/100/100. With no resolved
+race, the fallback is also 100/100/100.
 
 ## The override table
 

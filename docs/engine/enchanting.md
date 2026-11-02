@@ -79,6 +79,9 @@ charges per use = 3 * (base enchantment cost)^1.1 * (1 - sqrt(skill/200))
 ```
 
 The costs of two bases add up. The skill term is capped below 200, where a use would cost nothing.
+UESP says the charge per use is "calculated at the moment of the usage". So a made enchantment keeps
+its cost without the skill term, and each hit applies the wielder's Enchanting at that moment. Raising
+Enchanting after making a weapon lowers its cost per hit.
 "If the soul is so small that the Number of Uses cannot reach 1", the power drops until one use
 costs the whole soul: a use at power share `s` costs `s^1.1` of the full cost, so
 `s = (soul / full cost)^(1/1.1)`. The game also has a slider to choose a lower magnitude. OpenSky
@@ -101,7 +104,8 @@ The enchantment value is the item's game value minus its record value: what the
 ## Where a made enchantment lives
 
 No plugin holds a made enchantment, so the player's enchanting component does: the known bases and
-every made enchantment, with its bases, a power per base, its charge, and its cost per use. A made
+every made enchantment, with its bases, a power per base, its charge, and its cost per use at
+Enchanting 0. A made
 enchantment takes a FormID in mod index `0xFF` from `0xFF600000` up, below the brewed potions. The
 enchanted [item copy](/engine/item-copies.md) names it. Its effects are rebuilt from the base
 records whenever they are needed, so they stay right if a base record changes in a mod update.
