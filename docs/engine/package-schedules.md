@@ -203,8 +203,11 @@ as an Acquire, takes that list as its targets. A package with no branch list run
 procedure, with its first location and its first target as inputs.
 
 Several procedures can run at once, but only one walks: the last one that asked for a move.
-A seated Sit counts as success only when it has `FNAM`, so the vanilla `SitTarget` tree is
-done once the actor sits.
+A seated Sit counts as success when it has `FNAM`, so the vanilla `SitTarget` tree is
+done once the actor sits. It also counts when a later step of its Sequence waits on it:
+`dunCGAlduinPerchShoutTemplate` is Sequence[Sit, Shout], and the dragon shouts from the
+perch. Otherwise a Sit never ends, as the
+[Creation Kit wiki](https://ck.uesp.net/wiki/Sit_(Procedure)) says.
 
 ## Furniture
 

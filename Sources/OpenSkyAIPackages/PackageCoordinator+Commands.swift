@@ -62,10 +62,11 @@ extension PackageCoordinator {
                     requestMove(actor, to: point)
                 }
             case .sit:
-                let running = executions[actor]?.runner.running[tagged.leaf]
-                guard let seat = running?.machine.sandbox.seat ?? running?.setup.seat else {
-                    continue
-                }
+                let runner = executions[actor]?.runner
+                let running = runner?.running[tagged.leaf]
+                let seat = running.map { $0.machine.sandbox.seat ?? $0.setup.seat }
+                    ?? runner?.finishedSeats[tagged.leaf]
+                guard let seat else { continue }
                 executions[actor]?.seat = seat
                 world?.seatPackageActor(actor, in: seat)
             case let .act(action):

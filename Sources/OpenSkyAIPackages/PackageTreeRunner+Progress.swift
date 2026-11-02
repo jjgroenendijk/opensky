@@ -6,15 +6,24 @@ import OpenSkyWorldInterface
 
 nonisolated extension PackageTreeRunner {
     /// True when the procedure succeeded, false when it failed, nil while it runs. A
-    /// seated sit counts as success when it completes the package (`FNAM`).
+    /// seated sit counts as success when it completes the package (`FNAM`) or a later
+    /// sequence step waits on it, as the dragon perch-then-shout template needs.
     func finished(_ node: Int) -> Bool? {
         guard let leaf = running[node] else { return nil }
         switch leaf.machine.state {
         case .complete: return true
         case .failed: return false
-        case .seated where leaf.leaf.completesPackage: return true
+        case .seated where leaf.leaf.completesPackage || hasLaterSequenceStep(node): return true
         default: return nil
         }
+    }
+
+    private func hasLaterSequenceStep(_ node: Int) -> Bool {
+        guard
+            let parent = tree.nodes[node].parent,
+            case .branch(.sequence) = tree.nodes[parent].content
+        else { return false }
+        return tree.nodes[parent].children.last != node
     }
 
     @MainActor
@@ -32,6 +41,7 @@ nonisolated extension PackageTreeRunner {
     mutating func retire(_ node: Int) {
         guard let leaf = running.removeValue(forKey: node) else { return }
         lastFinished = leaf.machine
+        finishedSeats[node] = leaf.machine.sandbox.seat ?? leaf.setup.seat
         if mover == node {
             mover = nil
         }

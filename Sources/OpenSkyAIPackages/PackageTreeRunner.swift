@@ -52,6 +52,9 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     public internal(set) var outcome: Outcome?
     /// The last procedure that ended, for the readout once nothing runs.
     public internal(set) var lastFinished: PackageProcedureMachine?
+    /// The seats of ended procedures, by node. A sit that completes its package ends
+    /// in the same step that asks to sit, so the sit reads its seat here.
+    public internal(set) var finishedSeats: [Int: PackageSeat] = [:]
     var cursors: [Int: Int] = [:]
     var live: [Int: Set<Int>] = [:]
     var random: ConditionRandom
