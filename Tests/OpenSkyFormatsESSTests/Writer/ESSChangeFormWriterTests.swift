@@ -20,7 +20,7 @@ struct ESSChangeFormWriterTests {
             ),
             formFlags: 0x800, baseObject: Self.sword, scale: 1.25,
             extraData: ESSExtraDataList(entries: [
-                .ownership(Self.cell), .count(3), .lock(level: 50, key: Self.sword),
+                .ownership(Self.cell), .count(3), .lock(level: 50, flags: 0x04, key: Self.sword),
                 .aliasInstances([ESSAliasInstance(quest: Self.quest, aliasID: 4)])
             ]),
             inventory: [

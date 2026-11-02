@@ -66,6 +66,21 @@ What the install and UESP show:
 - No UESP page gives the band of one leveled lock at several player levels, which would fix
   the step. That observation needs the game itself.
 
+What the saves show. `openskycli ess locks <save.ess>` lists each `ExtraLock` change form
+beside the plugin's `XLOC`. Run over 13 saves on the development machine
+(`.logs/ess-locks/20261102T210713Z`), every leveled lock stores its authored level:
+
+| Player level | Saves | Leveled locks, authored -> stored |
+| --- | --- | --- |
+| 1 | 1 | 0 -> 0 (4), Adept 50 -> 50 (5) |
+| 9 | 1 | 0 -> 0 (6), Adept 50 -> 50 (9) |
+| 17 | 11 | 0 -> 0 (6), Apprentice 25 -> 25 (1), Adept 50 -> 50 (10) |
+
+So a save holds the authored level, not the band the game shows, and saves cannot fix the
+step. This agrees with the rule above that the stored level stays the authored one. The
+stored flag byte keeps 0x04 on every leveled lock. Bit 0x01 is set on some locks of each
+kind; its meaning is not confirmed.
+
 ## The use-key gate
 
 Every press of the use key goes through one gate before any listener hears it
@@ -197,7 +212,7 @@ engine calls `InitExtensions` and `SetPlatform(0, false)` once, then:
 | `UpdateLockAngle` | the lock turn times 90 |
 | `UpdatePickHealth` | the pick health times 100 |
 
-The level name is the `sLockLevel` text of the load order, such as "Adept".
+The level name is the `sLockLevelName<suffix>` text of the load order, such as "Adept".
 
 ## Saves
 

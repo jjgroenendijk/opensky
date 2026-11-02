@@ -25,11 +25,13 @@ Edition/`. The game has never run on this Mac, so:
 - There is no `plugins.txt` and no `~/Library/Application Support/Skyrim Special Edition/`.
   Every [load order](/formats/plugins-txt.md) takes the vanilla fallback. A probe of a modded
   load order needs a hand-made file named by `OPENSKY_PLUGINS_TXT`.
-- There is no `.ess` save. The [ESS](/formats/ess.md) layouts are checked only against
-  synthetic saves, and `ESSRealDataTests` skips. Set `OPENSKY_SKYRIM_SAVES` to a folder of
-  saves and run `make test-real` to run it.
+- There is no `.ess` save in the macOS documents folder. Checked 2026-11-02: 13 saves of
+  the reference game, at player levels 1, 9, and 17, are in the Wine prefix under
+  `/Volumes/data/opensky-reference-game/drive_c/users/<user>/Documents/My Games/Skyrim
+  Special Edition/Saves/`. Set `OPENSKY_SKYRIM_SAVES` to that folder and run
+  `make test-real` to run `ESSRealDataTests`.
 
-Retires when a `plugins.txt` appears in a searched location, or a real save has been read.
+Retires when a `plugins.txt` appears in a searched location.
 
 ### Permission grants
 

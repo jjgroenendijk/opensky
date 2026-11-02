@@ -29,7 +29,7 @@ nonisolated extension ESSPluginIndex {
         for file: ESSFile, plugins: [(name: String, file: ESMFile)], scripts: PexScriptLoader? = nil
     ) -> ESSPluginIndex {
         var records = ESSPluginIndex(loadOrder: plugins.map(\.name), light: lightNames(plugins))
-        records.walk(plugins, wanted: changedInventories(in: file, records: records))
+        records.walk(plugins, wanted: changedReferences(in: file, records: records))
         if let scripts, let papyrus = try? file.papyrus() {
             for script in papyrus.scripts {
                 records.loadScript(script.name, from: scripts)
@@ -57,14 +57,16 @@ nonisolated extension ESSPluginIndex {
         }
     }
 
-    private static func changedInventories(in file: ESSFile, records: ESSPluginIndex) -> Set<Key> {
+    /// The placed references whose inventory or lock the save changed.
+    private static func changedReferences(in file: ESSFile, records: ESSPluginIndex) -> Set<Key> {
         let mapping = ESSLoadOrderMapping(
             file: file, currentPlugins: records.loadOrder, currentLightPlugins: records.lightPlugins
         )
         var wanted: Set<Key> = []
         for change in file.changeForms where change.type?.isReference == true {
             guard
-                change.has(ESSChangeFlag.Reference.inventory),
+                change.has(ESSChangeFlag.Reference.inventory)
+                || change.has(ESSChangeFlag.Object.extraLock),
                 case let .form(form) = mapping.resolve(change.form)
             else { continue }
             wanted.insert(Key(form))
@@ -147,7 +149,8 @@ nonisolated private struct Walk {
             wanted.contains(ESSPluginIndex.Key(id))
         else { return }
         placed[ESSPluginIndex.Key(id)] = ESSPluginIndex.Placed(
-            signature: record.type, flags: record.flags.rawValue, space: space
+            signature: record.type, flags: record.flags.rawValue, space: space,
+            lock: (try? PlacedReference(record: record))?.lock
         )
         guard
             let fields = try? record.fields(),

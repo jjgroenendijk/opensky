@@ -66,7 +66,7 @@ struct ESSChangeFormTests {
             ESSBytes.vsval(1, into: &writer)
             writer.writeUInt8(42)
             writer.writeUInt8(50)
-            writer.writeUInt8(0)
+            writer.writeUInt8(0x04)
             ESSBytes.refID(kind: 1, value: 0x0002_0000, into: &writer)
             writer.write(Data(count: 8))
         }
@@ -82,7 +82,7 @@ struct ESSChangeFormTests {
         #expect(change.isDeleted == false)
         #expect(change.scale == 2)
         #expect(change.extraData?.entries == [
-            .lock(level: 50, key: ESSRefID(kind: .default, value: 0x0002_0000))
+            .lock(level: 50, flags: 0x04, key: ESSRefID(kind: .default, value: 0x0002_0000))
         ])
     }
 

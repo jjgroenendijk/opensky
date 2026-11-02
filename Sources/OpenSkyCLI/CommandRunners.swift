@@ -68,6 +68,12 @@ extension ESSArguments.Show: CLIRunnable {
     }
 }
 
+extension ESSArguments.Locks: CLIRunnable {
+    func execute() async throws {
+        try await ESSCommand.locks(arguments: self)
+    }
+}
+
 extension ESSArguments.List: CLIRunnable {
     func execute() throws {
         try ESSCommand.list(arguments: self)
