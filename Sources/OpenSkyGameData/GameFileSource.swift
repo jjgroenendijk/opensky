@@ -14,6 +14,9 @@ nonisolated public protocol GameFileSource: Sendable {
     func fileNames(inDirectory directory: String) -> [String]
     /// Which file provides `path` and its state, so a cache can tell when it changed.
     func provenance(forPath path: String) -> GameFileProvenance?
+    /// The same files without load phase timing, for reads on decode workers. The phase
+    /// recorder keeps one stack of open phases, so only the build thread may time a read.
+    var untimed: any GameFileSource { get }
 }
 
 /// The file that provides one resource: an archive, or `loose` for a file under `Data/`.
@@ -36,5 +39,9 @@ nonisolated public struct GameFileProvenance: Equatable, Sendable {
 nonisolated extension GameFileSource {
     public func provenance(forPath _: String) -> GameFileProvenance? {
         nil
+    }
+
+    public var untimed: any GameFileSource {
+        self
     }
 }

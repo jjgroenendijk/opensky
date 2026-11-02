@@ -78,6 +78,12 @@ final class BenchmarkWorldAdapter {
     private var saved: SavedState?
     private var request = BenchmarkRequest()
     private var ticks = 0
+    private var frameSteps = 0
+    /// Frames the GPU drew; a frame whose slot the GPU still held is not one.
+    var framesDrawn: Int {
+        frameSteps - (game.gameSession?.renderer.skippedFrames ?? 0)
+    }
+
     private var tourOverrides: [PlayerSettingID: Double] = [:]
     private var plugins: Set<String> = []
     /// PNGs the tour asked for; the first one waits for its window copy.
@@ -123,6 +129,7 @@ final class BenchmarkWorldAdapter {
     }
 
     private func frame() {
+        frameSteps += 1
         if let request = pendingRequest, game.agentWorld.isWorldReady {
             pendingRequest = nil
             begin(request)
@@ -473,7 +480,8 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         return BenchmarkLoadInputs(
             root: root,
             device: device,
-            terrainLOD: game.terrainLODConfigurationStore
+            terrainLOD: game.terrainLODConfigurationStore,
+            decodesInParallel: game.playerSettingsStore.bool(.parallelDecode)
         )
     }
 }

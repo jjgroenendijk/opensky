@@ -23,6 +23,11 @@ final class BenchmarkRunHost {
     private let playToolbar = BenchmarkToolbarItems()
     /// Called after a launcher run ends, so the launcher can show the result.
     var onLauncherRunFinished: (() -> Void)?
+    private weak var tour: BenchmarkWorldAdapter?
+    private var watchdogTimer: Timer?
+    private var watchdog: BenchmarkWatchdog?
+    /// Keeps the Mac and its display awake: a sleeping display stops the frame loop.
+    private var awake: (any NSObjectProtocol)?
 
     /// Reads `--benchmark` or `--benchmark-request`; a malformed request logs and quits.
     func readLaunchArguments(_ arguments: [String] = CommandLine.arguments) -> Bool {
@@ -32,6 +37,7 @@ final class BenchmarkRunHost {
             try PlayerSettingsOverrides.set(request.settingOverrides())
             pending = request
             fromLaunchArguments = true
+            armWatchdog()
             return true
         } catch {
             Self.logger.error("[ERROR] benchmark request: \(error.description, privacy: .public)")
@@ -73,6 +79,7 @@ final class BenchmarkRunHost {
     }
 
     private func attach(tour: BenchmarkWorldAdapter, window: NSWindow) {
+        self.tour = tour
         playToolbar.benchmark = tour
         tour.onRunningChange = { [weak window, playToolbar] running in
             playToolbar.refresh()
@@ -105,6 +112,7 @@ final class BenchmarkRunHost {
         guard let request = started else { return }
         started = nil
         if fromLaunchArguments {
+            disarmWatchdog()
             if request.quitWhenDone {
                 NSApplication.shared.terminate(nil)
             }
@@ -112,5 +120,40 @@ final class BenchmarkRunHost {
         }
         window?.close()
         onLauncherRunFinished?()
+    }
+
+    private func armWatchdog() {
+        awake = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .idleSystemSleepDisabled, .idleDisplaySleepDisabled],
+            reason: "OpenSky benchmark run"
+        )
+        watchdog = BenchmarkWatchdog(now: ProcessInfo.processInfo.systemUptime)
+        watchdogTimer = Timer.scheduledTimer(
+            withTimeInterval: BenchmarkWatchdog.checkIntervalSeconds, repeats: true
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkWatchdog() }
+        }
+    }
+
+    private func checkWatchdog() {
+        let frames = tour?.framesDrawn ?? 0
+        let now = ProcessInfo.processInfo.systemUptime
+        guard let reason = watchdog?.check(frameCount: frames, now: now) else { return }
+        abandon(reason)
+    }
+
+    private func disarmWatchdog() {
+        watchdogTimer?.invalidate()
+        watchdogTimer = nil
+        watchdog = nil
+        awake.map(ProcessInfo.processInfo.endActivity)
+        awake = nil
+    }
+
+    /// The CLI then reports that the app wrote no result.
+    private func abandon(_ reason: String) {
+        disarmWatchdog()
+        Self.logger.error("[ERROR] benchmark ended: \(reason, privacy: .public)")
+        NSApplication.shared.terminate(nil)
     }
 }

@@ -55,6 +55,7 @@ struct GraphicsPageTests {
     @Test func everyFeatureStartsOn() {
         let page = makePage()
         #expect(page.pipelineCacheControl.state == .on)
+        #expect(page.parallelDecodeControl.state == .on)
         #expect(page.gpuCullingControl.state == .on)
         #expect(page.textureStreamingControl.state == .on)
         #expect(page.textureBudgetControl.titleOfSelectedItem == "Automatic")
@@ -70,6 +71,9 @@ struct GraphicsPageTests {
         page.pipelineCacheControl.state = .off
         page.pipelineCacheControl.sendAction(page.pipelineCacheControl.action, to: page)
         #expect(!store.bool(.pipelineCacheEnabled))
+        page.parallelDecodeControl.state = .off
+        page.parallelDecodeControl.sendAction(page.parallelDecodeControl.action, to: page)
+        #expect(!store.bool(.parallelDecode))
         page.textureStreamingControl.state = .off
         page.textureStreamingControl.sendAction(page.textureStreamingControl.action, to: page)
         #expect(!store.bool(.textureStreaming))

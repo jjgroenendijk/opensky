@@ -21,6 +21,7 @@ every performance change measures its win with this one.
 | Launcher | The Benchmark page: pick a length, then Run Benchmark. The page shows the newest result |
 | CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app hidden and muted, and waits for it to quit |
 | Make | `make benchmark PRESET=quick` builds Release and keeps the output in `.logs/benchmark/` |
+| Make, no build | `make benchmark-again PRESET=quick` runs the Release app that is already built |
 | Running app | `openskycli game benchmark quick` starts the tour in the open game window |
 | App flag | `OpenSky.app --benchmark-request '<json>'`; this is what `openskycli benchmark` passes |
 
@@ -43,7 +44,7 @@ CLI options:
 | `--size WxH` | The frame size in pixels of a hidden or windowed run. A hidden run takes 1920x1080 by default; a windowed run keeps the window's size. A full-screen run takes the display's size and does not take this option |
 | `--sound` | Plays the game's sound. By default the tour is muted |
 | `--no-load-passes` | Skips the cold and warm load passes |
-| `--evict` | Drops the game data from the page cache first, so the loads read from disk |
+| `--evict` | Drops the game data and the asset cache from the page cache first, so the loads read from disk |
 | `--keep-open` | Leaves the app open after the tour |
 | `--app <path>` | Which `OpenSky.app` to open; the default is the installed one |
 
@@ -53,7 +54,9 @@ The CLI exits 1 when a scene fails, and such a result does not compare with a cl
 takes its option text, and a number takes a number. For example:
 `--set rendering.gpuCulling=off`, `--set rendering.renderScale=67%`,
 `--set rendering.meshShaderGrass=on`, `--set assetOptimisation.directLoad=off`. The override
-lives only in the app's memory and is never saved.
+lives only in the app's memory and is never saved. A setting therefore compares on and off
+with one build: `make benchmark ARGS='--set loading.parallelDecode=on'`, then
+`make benchmark-again ARGS='--set loading.parallelDecode=off'`.
 
 `--evict` uses `msync` with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
 
@@ -79,6 +82,12 @@ on a 100 Hz display. The app holds a `ProcessInfo` activity for the whole tour, 
 does not slow a run in the background. With frame interpolation on, the renderer paces to
 half the display's refresh rate. A hidden window has no display, so it takes 60 Hz there,
 and such a run compares only with another hidden run.
+
+A run from the CLI also keeps the Mac and its display awake until the tour ends, because a
+sleeping display stops the frame loop. A watchdog ends the app when the tour has not started
+10 minutes after launch, or when the GPU drew no frame for 4 minutes, such as when its queue
+is stuck. The CLI then reports that the app wrote no result, and the `Benchmark` log
+category of the app says why.
 
 The frame size is written in the result as `frameWidth` and `frameHeight`. A hidden run and
 a windowed run with the same `--size` therefore compare.
@@ -198,12 +207,19 @@ Before the first scene, unless `--no-load-passes` is given, a new cell builder w
 caches builds the first scene's cells twice off screen: once cold, then again warm with its
 caches full. An exterior builds the 3 by 3 block around its origin and its distant LOD. The
 live streamer is not touched. A cold load here means cold OpenSky caches. The operating
-system may still hold the archive bytes from an earlier run; `--evict` drops them.
+system may still hold the archive bytes from an earlier run; `--evict` drops them. This
+builder reads no asset cache, only the archives, so its cold pass is the load before the
+cache is built. An arrival reads the asset cache, which is often on another disk than the
+game; `--evict` drops both. The passes run while the game streams in its own first cells,
+so both share the cores and the disks. `openskycli load-pass` runs the same passes without the
+app, for a measurement of the builds alone.
 
 ### Load phases
 
 Each load pass, and each arrival, splits its time into phases. A phase counts only its own
 time. A mesh load that reads an archive gives the read to `archive`, and the rest to `mesh`.
+A read inside a parallel decode stays in that decode's phase, because several workers read at
+once ([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
 
 | Phase | What it holds |
 | --- | --- |
@@ -211,6 +227,7 @@ time. A mesh load that reads an archive gives the read to `archive`, and the res
 | `texture` | DDS parsing and the GPU texture upload |
 | `mesh` | NIF parsing, flattening, and GPU buffer building, terrain included |
 | `collision` | Static collision, trigger volumes, and dynamic bodies |
+| `gpuRead` | Waiting at the end of a build for its direct GPU reads ([asset cache](/engine/asset-cache.md#direct-gpu-loading)). A result from before this phase has no `gpuReadMS` |
 | `other` | Everything else: record lookups, actors, lighting, setup |
 
 A cell builder reports phases when a `LoadPhaseRecorder` is attached to it and its file

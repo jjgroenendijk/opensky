@@ -189,6 +189,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Direct GPU loading: all disks", 0, applied: true
         ),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
+        row(
+            "loading.parallelDecode", .opensky, .toggle, "Decode assets on every core", 1,
+            applied: true
+        ),
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
         row("rendering.roomCulling", .opensky, .toggle, "Cull hidden rooms", 1, applied: true),
         row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
@@ -328,6 +332,7 @@ nonisolated extension PlayerSettingID {
     public static let directGPULoadingAllDisks = Self("assetOptimisation.directLoad.allDisks")
     /// Pipelines load from the archive an earlier launch saved.
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
+    public static let parallelDecode = Self("loading.parallelDecode")
     /// The static scene culls in a compute pass; off culls it on the CPU.
     public static let gpuCulling = Self("rendering.gpuCulling")
     /// An interior draws only the rooms the camera sees through portals.

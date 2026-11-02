@@ -14,6 +14,8 @@ nonisolated public enum LoadPhase: String, CaseIterable, Codable, Sendable {
     case mesh
     /// Static collision, trigger volumes, and dynamic bodies.
     case collision
+    /// Waiting at the end of a build for the direct GPU reads of its cached files.
+    case gpuRead
 }
 
 /// Milliseconds spent in each phase, plus the time no phase claimed.
@@ -22,6 +24,8 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
     public var textureMS: Double
     public var meshMS: Double
     public var collisionMS: Double
+    /// Optional, so a result written before this phase existed still decodes.
+    public var gpuReadMS: Double?
     public var otherMS: Double
 
     public init(
@@ -29,12 +33,14 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
         textureMS: Double = 0,
         meshMS: Double = 0,
         collisionMS: Double = 0,
+        gpuReadMS: Double? = nil,
         otherMS: Double = 0
     ) {
         self.archiveMS = archiveMS
         self.textureMS = textureMS
         self.meshMS = meshMS
         self.collisionMS = collisionMS
+        self.gpuReadMS = gpuReadMS
         self.otherMS = otherMS
     }
 
@@ -45,6 +51,7 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
             case .texture: textureMS
             case .mesh: meshMS
             case .collision: collisionMS
+            case .gpuRead: gpuReadMS ?? 0
             }
         }
         set {
@@ -53,6 +60,7 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
             case .texture: textureMS = newValue
             case .mesh: meshMS = newValue
             case .collision: collisionMS = newValue
+            case .gpuRead: gpuReadMS = newValue
             }
         }
     }

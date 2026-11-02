@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRendering
 import OpenSkyWorldState
 import simd
 
@@ -185,6 +186,15 @@ nonisolated public enum CellCollisionGridProbe: Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
+    /// Off runs every mesh, texture, and collision decode serially on the build thread.
+    public var decodesInParallel: Bool {
+        get { meshes.decodesInParallel }
+        set {
+            meshes.decodesInParallel = newValue
+            collisionModels?.decodesInParallel = newValue
+        }
+    }
+
     /// Resolves model-bearing placements independently of render load.
     /// Collision-only NIFs stay physical when no drawable mesh uploads.
     nonisolated public func resolveCollisionPlacements(
@@ -305,6 +315,10 @@ nonisolated extension CellSceneBuilder {
         }
         let started = DispatchTime.now().uptimeNanoseconds
         let materialTypes = materialTypeIndexBuildingIfNeeded()
+        loadPhases.measure(.collision) {
+            collisionModels.predecode(paths: placements.map(\.modelPath))
+        }
+        defer { collisionModels.dropPredecoded() }
         var accumulator = CellCollisionAccumulator()
         accumulator.stats.modelReferenceCount = placements.count
         for placement in placements {

@@ -5,16 +5,14 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
-import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 nonisolated extension TextureLibrary {
     /// Nil when streaming is off or the texture does not stream.
-    func streamedTexture(path: String, usage: TextureUsage) -> MTLTexture? {
+    func streamedTexture(ready: ReadyTexture, path: String, usage: TextureUsage) -> MTLTexture? {
         guard let streaming, streaming.loadSettings.enabled else { return nil }
         let settings = streaming.loadSettings
         guard
-            let ready = readyTexture(path: path),
             let sparse = loader.sparseTexture(
                 ready: ready, usage: usage, label: path, settings: settings
             )
@@ -29,22 +27,16 @@ nonisolated extension TextureLibrary {
         return sparse.texture
     }
 
-    /// Reads the levels of `request` again. Runs on the build worker.
-    public func readLevels(_ request: TextureLevelRequest) -> TextureLevelBytes? {
-        readyTexture(path: request.source.path).map {
-            TextureLevelBytes.levels(of: $0, from: request.firstLevel)
-        }
+    /// The levels a streamed texture starts from, when streaming is on.
+    func streamingReady(_ source: TextureSource) -> ReadyTexture? {
+        guard let streaming, streaming.loadSettings.enabled else { return nil }
+        return source.ready
     }
 
-    /// The levels from the asset cache when it holds them, else from the archives.
-    private func readyTexture(path: String) -> ReadyTexture? {
-        if let ready = assetCache?.value(forPath: path, decoder: .readyTexture) {
-            return ready
+    /// Reads the levels of `request` again. Runs on the build worker.
+    public func readLevels(_ request: TextureLevelRequest) -> TextureLevelBytes? {
+        source(forPath: request.source.path).ready.map {
+            TextureLevelBytes.levels(of: $0, from: request.firstLevel)
         }
-        guard
-            let data = try? fileSystem.contents(forPath: path),
-            let dds = try? DDSFile(data: data)
-        else { return nil }
-        return ReadyTexture(dds: dds)
     }
 }

@@ -77,6 +77,10 @@ extension GraphicsPageViewController {
             "Load compiled GPU pipelines saved by an earlier launch; starts faster"
         )
         checkbox(
+            parallelDecodeControl, "ParallelDecode",
+            "Cells load their meshes and textures on all CPU cores; applies at the next world load"
+        )
+        checkbox(
             textureStreamingControl, "TextureStreaming",
             "Large textures keep only the levels the camera needs; saves GPU memory"
         )
@@ -203,7 +207,7 @@ extension GraphicsPageViewController {
             (actorGraphsControl, .actorGraphs),
             (combatTemperamentControl, .combatTemperament),
             (combatGameSettingsControl, .combatGameSettings),
-            (pipelineCacheControl, .pipelineCacheEnabled),
+            (pipelineCacheControl, .pipelineCacheEnabled), (parallelDecodeControl, .parallelDecode),
             (textureStreamingControl, .textureStreaming)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
     }

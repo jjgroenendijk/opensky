@@ -71,4 +71,23 @@ struct LoadPhaseRecorderTests {
         #expect(source.exists("meshes\\cup.nif"))
         #expect(recorder.snapshot().archiveMS == 4)
     }
+
+    @Test
+    func untimedReadsBookNothing() throws {
+        let recorder = LoadPhaseRecorder(now: Self.clock([0, 3_000_000]))
+        let source = PhaseTimedFileSource(
+            base: InMemoryFileSource(files: ["meshes\\cup.nif": Data([1])]), recorder: recorder
+        )
+        #expect(try source.untimed.contents(forPath: "meshes\\cup.nif") == Data([1]))
+        #expect(recorder.snapshot().archiveMS == 0)
+    }
+
+    @Test
+    func timesWrittenBeforeTheGPUReadPhaseStillDecode() throws {
+        let json = #"{"archiveMS":1,"collisionMS":2,"meshMS":3,"otherMS":4,"textureMS":5}"#
+        let times = try JSONDecoder().decode(LoadPhaseTimes.self, from: Data(json.utf8))
+        #expect(times.gpuReadMS == nil)
+        #expect(times[.gpuRead] == 0)
+        #expect(times.measuredMS == 11)
+    }
 }

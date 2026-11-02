@@ -13,7 +13,7 @@ enum BenchmarkCommand {
         guard let out = request.outDirectory else { return }
         let folder = URL(filePath: out, directoryHint: .isDirectory)
         if arguments.evict {
-            let evicted = PageCacheEviction.evict(folders: [context.root.dataURL])
+            let evicted = PageCacheEviction.evict(folders: evictFolders(context: context))
             print("[INFO] evicted \(evicted >> 20) MiB from the page cache")
         }
         let started = Date()
@@ -25,7 +25,8 @@ enum BenchmarkCommand {
             result.startedAt >= started.addingTimeInterval(-1)
         else {
             throw CLIError
-                .failure("the app wrote no result to \(resultURL.path(percentEncoded: false))")
+                .failure("the app wrote no result to \(resultURL.path(percentEncoded: false)); "
+                    + "the Benchmark log category says why")
         }
         BenchmarkReport.lines(for: result).forEach { print($0) }
         print("[INFO] result: \(folder.path(percentEncoded: false))")
@@ -37,6 +38,15 @@ enum BenchmarkCommand {
         }
         print(result
             .stopped ? "[WARNING] the tour was stopped early" : "[ OK ] benchmark tour finished")
+    }
+
+    /// The game data and the asset cache: the app reads both, often from two disks.
+    static func evictFolders(context: CLIContext) -> [URL] {
+        let settings = AssetCacheSettings(
+            store: PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+        )
+        let cache = try? settings.effectiveFolder()
+        return [context.root.dataURL] + (cache.map { [$0] } ?? [])
     }
 
     /// Checks every option here, so a typo fails before the app opens.

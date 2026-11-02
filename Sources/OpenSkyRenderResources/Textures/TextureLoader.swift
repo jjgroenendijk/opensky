@@ -89,6 +89,13 @@ nonisolated public final class TextureLoader {
 
     /// Throwing core — exercised directly by unit tests.
     public func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> MTLTexture {
+        try Self.upload(dds: dds, usage: usage, label: label, device: device)
+    }
+
+    /// The upload alone, so a decode worker can run it off the build thread.
+    static func upload(
+        dds: DDSFile, usage: TextureUsage, label: String, device: any MTLDevice
+    ) throws -> MTLTexture {
         guard !dds.format.isBlockCompressed || device.supportsBCTextureCompression else {
             throw TextureLoaderError.bcTextureCompressionUnsupported
         }
@@ -109,7 +116,7 @@ nonisolated public final class TextureLoader {
 
         for face in 0 ..< dds.faceCount {
             for level in 0 ..< dds.mipCount {
-                upload(dds: dds, level: level, face: face, into: texture)
+                Self.upload(dds: dds, level: level, face: face, into: texture)
             }
         }
         return texture
@@ -122,13 +129,13 @@ nonisolated public final class TextureLoader {
         return usage == .volume ? .type3D : .type2D
     }
 
-    private func upload(dds: DDSFile, level: Int, face: Int, into texture: MTLTexture) {
+    private static func upload(dds: DDSFile, level: Int, face: Int, into texture: MTLTexture) {
         let depth = texture.textureType == .type3D ? dds.depth(level: level) : 1
         let region = MTLRegionMake3D(
             0, 0, 0, dds.width(level: level), dds.height(level: level), depth
         )
         let source = dds.mipData(level: level, face: face)
-        let uploadData = dds.format == .xrgb8888 ? Self.withOpaqueAlpha(source) : source
+        let uploadData = dds.format == .xrgb8888 ? withOpaqueAlpha(source) : source
         let bytesPerRow = dds.bytesPerRow(level: level)
         uploadData.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return } // levels never empty
@@ -161,8 +168,14 @@ nonisolated public final class TextureLoader {
         usage: TextureUsage,
         label: String
     ) throws -> MTLTexture {
-        let texture = try Self.makeTexture(device: device, ready: ready, usage: usage, label: label)
-        Self.replaceLevels(of: texture, with: ready)
+        try Self.upload(ready: ready, usage: usage, label: label, device: device)
+    }
+
+    static func upload(
+        ready: ReadyTexture, usage: TextureUsage, label: String, device: any MTLDevice
+    ) throws -> MTLTexture {
+        let texture = try makeTexture(device: device, ready: ready, usage: usage, label: label)
+        replaceLevels(of: texture, with: ready)
         return texture
     }
 
@@ -260,7 +273,7 @@ nonisolated public final class TextureLoader {
 
     // MARK: - Placeholders
 
-    private func placeholder(usage: TextureUsage) -> MTLTexture {
+    func placeholder(usage: TextureUsage) -> MTLTexture {
         switch usage {
         case .color, .effectSource: colorPlaceholder
         case .data: dataPlaceholder

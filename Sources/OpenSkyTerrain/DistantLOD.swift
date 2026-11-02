@@ -348,6 +348,11 @@ nonisolated public final class DistantLODBuilder {
             center: center,
             hiddenCells: hiddenCells
         )
+        // The NIF decode fans out; the clip to the visible cells stays in the serial load.
+        meshes.predecode(paths: selected.lazy.filter {
+            self.meshes.bounds(forPath: $0.path, terrainLODClipMask: $0.clipMask) == nil
+        }.map(\.path))
+        defer { meshes.dropPredecoded() }
         var placements: [RenderPlacement] = []
         var missing = 0
         for block in selected {

@@ -18,6 +18,10 @@ nonisolated public final class NIFCollisionLibrary {
     private var touchedKeys: Set<String> = []
     /// Converted collision models, read before the NIF when current.
     public var assetCache: AssetCacheReader?
+    /// Off reads and parses every model serially on the build thread.
+    public var decodesInParallel = true
+    /// Models `predecode(paths:)` made for the current build; a load takes its entry.
+    private var predecoded: [String: NIFCollisionModel] = [:]
 
     public init(fileSystem: any GameFileSource) {
         self.fileSystem = fileSystem
@@ -28,6 +32,10 @@ nonisolated public final class NIFCollisionLibrary {
         touchedKeys.insert(key)
         if let cached = cache[key] {
             return cached
+        }
+        if let ready = predecoded.removeValue(forKey: key) {
+            cache[key] = ready
+            return ready
         }
         if let converted = assetCache?.value(forPath: key, decoder: .collision) {
             cache[key] = converted
@@ -49,6 +57,28 @@ nonisolated public final class NIFCollisionLibrary {
                 reason: String(describing: error)
             )
         }
+    }
+
+    /// Reads and parses the models of `paths` that are not loaded yet on every core
+    /// (docs/decisions/concurrency.md). A failure is left to the serial load, which throws it.
+    public func predecode(paths: some Sequence<String>) {
+        guard decodesInParallel else { return }
+        let keys = Set(paths.compactMap { try? meshKey(for: $0) })
+            .filter { cache[$0] == nil && predecoded[$0] == nil }
+        guard keys.count >= ParallelDecode.minimumParallelItems else { return }
+        let (cacheReader, files) = (assetCache, fileSystem.untimed)
+        predecoded = ParallelDecode.map(keys) { key -> NIFCollisionModel? in
+            if let converted = cacheReader?.value(forPath: key, decoder: .collision) {
+                return converted
+            }
+            return (try? files.contents(forPath: key))
+                .flatMap { try? NIFFile(data: $0).collisionModel() }
+        }
+    }
+
+    /// Frees decodes no load asked for.
+    public func dropPredecoded() {
+        predecoded.removeAll()
     }
 
     public func drainTouchedKeys() -> Set<String> {
