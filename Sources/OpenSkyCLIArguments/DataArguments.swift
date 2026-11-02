@@ -43,7 +43,11 @@ public struct RecordArguments: ParsableCommand, Sendable {
     public struct Show: CLICommandArguments {
         public static let configuration = CommandConfiguration(
             commandName: "show",
-            abstract: "Print the winning record: header, decoded view, and fields."
+            abstract: "Write the winning record to a file: header, decoded view, and fields.",
+            discussion: """
+            The dump is complete, never cut short. It goes to \
+            .logs/record-show/<UTC time>/<id>.txt unless --out or --print says otherwise.
+            """
         )
         @OptionGroup public var global: GlobalOptions
         @Argument(help: ArgumentHelp(
@@ -51,8 +55,21 @@ public struct RecordArguments: ParsableCommand, Sendable {
             valueName: "id"
         ))
         public var id: String
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("Write the dump to this file instead.", valueName: "file")
+        )
+        public var out: String?
+        @Flag(help: "Print the dump to standard output instead of a file.")
+        public var print = false
 
         public init() {}
+
+        public func validate() throws {
+            if out != nil, print {
+                throw ValidationError("--out and --print cannot be used together")
+            }
+        }
     }
 
     public struct Find: CLICommandArguments {

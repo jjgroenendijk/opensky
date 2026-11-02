@@ -10,9 +10,17 @@ nonisolated public enum DecodedValueDump {
     public typealias Resolve = (FormID) -> String
 
     /// Elements printed per collection before the rest is summarized.
-    public static let collectionCap = 24
-    public static let lineCap = 400
-    private static let depthCap = 8
+    public static var collectionCap: Int {
+        DumpLimits.current.collection
+    }
+
+    public static var lineCap: Int {
+        DumpLimits.current.lines
+    }
+
+    private static var depthCap: Int {
+        DumpLimits.current.depth
+    }
 
     public static func lines(_ value: Any, resolve: Resolve) -> [String] {
         var lines: [String] = []

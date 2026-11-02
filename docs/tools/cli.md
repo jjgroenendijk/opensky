@@ -106,7 +106,7 @@ the number. A summary line goes to stderr.
 | --- | --- |
 | `install` | The game folder check the launcher shows: game version, official DLC, Creation Club plugin count, archive, plugin, and record counts, and each install problem with its fix. Exits 1 on a problem |
 | `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
-| `record show <id>` | One record by FormID or editor ID: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
+| `record show <id> [--out <file> \| --print]` | One record by FormID or editor ID: header, decoded view, and fields, complete and never cut short. It writes `.logs/record-show/<UTC time>/<id>.txt` and prints the header line and the path; `--out` names the file, and `--print` writes to standard output. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
 | `record find --type <TYPE> [--where <filter>]... [--fields a,b] [--limit n] [--count] [--json]` | Every winning record of one type that matches the filters ([searching records](#searching-records)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
 | `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin, and the text of a string setting from that plugin's string table. How a documented fallback is checked against the shipped number |

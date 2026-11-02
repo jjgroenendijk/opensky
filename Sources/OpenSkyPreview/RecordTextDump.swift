@@ -9,9 +9,11 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public enum RecordTextDump: Sendable {
-    /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped so
-    /// the dump stays readable; the tail is summarized per field type.
-    public static let fieldPrintCap = 64
+    /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped in the preview
+    /// pane so it stays readable; the tail is summarized per field type.
+    public static var fieldPrintCap: Int {
+        DumpLimits.current.fields
+    }
 
     public static func dump(record: ESMRecord, localized: Bool) -> String {
         dump(

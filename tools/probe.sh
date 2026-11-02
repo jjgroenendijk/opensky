@@ -115,7 +115,7 @@ run "vfs cat (book.swf)" vfs cat 'interface\book.swf' --out "$vfs_copy"
 [ -s "$vfs_copy" ] || fail "vfs cat wrote no file"
 
 # Record probe: Tamriel WRLD is FormID 0x3C (UESP "Skyrim Mod:FormIDs").
-"$cli" --data-root "$data_root" record show 0x3C 2>>"$log" | grep -q Tamriel \
+"$cli" --data-root "$data_root" record show 0x3C --print 2>>"$log" | grep -q Tamriel \
   || fail "record show 0x3C did not decode as Tamriel"
 echo "[ OK ] record show 0x3C (Tamriel)"
 
