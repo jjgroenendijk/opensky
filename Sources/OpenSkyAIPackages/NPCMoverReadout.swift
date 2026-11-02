@@ -9,8 +9,18 @@ import simd
 
 extension NPCMover {
     public var transform: ReferenceTransformOverride {
+        transform(at: controller.feetPosition)
+    }
+
+    /// Between the last two fixed steps, as the player is drawn. The last step alone
+    /// jumps when a frame holds one step and the next holds three.
+    public var drawnTransform: ReferenceTransformOverride {
+        transform(at: controller.drawnFeetPosition)
+    }
+
+    private func transform(at feet: SIMD3<Float>) -> ReferenceTransformOverride {
         ReferenceTransformOverride(
-            position: controller.feetPosition,
+            position: feet,
             rotation: SIMD3(
                 authoredPlacement.rotation.x, authoredPlacement.rotation.y,
                 NPCYawMath.heading(fromYaw: yaw)
@@ -20,7 +30,7 @@ extension NPCMover {
     }
 
     public var instanceDelta: float4x4 {
-        NPCDrawDelta.from(drawn: authoredPlacement, to: transform, scale: scale)
+        NPCDrawDelta.from(drawn: authoredPlacement, to: drawnTransform, scale: scale)
     }
 
     /// Moving along its heading at its gait's speed, toward the next waypoint.
