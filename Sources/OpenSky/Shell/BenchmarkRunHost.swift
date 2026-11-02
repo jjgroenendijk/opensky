@@ -136,7 +136,7 @@ final class BenchmarkRunHost {
     }
 
     private func checkWatchdog() {
-        let frames = tour?.framesSeen ?? 0
+        let frames = tour?.framesDrawn ?? 0
         let now = ProcessInfo.processInfo.systemUptime
         guard let reason = watchdog?.check(frameCount: frames, now: now) else { return }
         abandon(reason)

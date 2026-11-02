@@ -115,7 +115,7 @@ than Release, so the numbers are an upper bound.
 | --- | --- | --- |
 | Cell streaming (grid, scheduling, scene swap) | Main actor | Simulation. It decides what to build and swaps finished scenes into the renderer |
 | Cell builds | Serial worker, `Mutex` mailbox | Collision: average 81 ms, maximum 949 ms per cell. Actors: average 336 ms, 95th percentile 1532 ms. Many frames each |
-| Asset decode for cells (NIF, DDS, meshes, textures, collision) | Inside the cell build worker, fanned out on every core | Loading. It fills the same caches as the cell build, so the workers only turn values into values. See [parallel decode](#parallel-decode-inside-a-cell-build) |
+| Asset decode for cells (NIF, DDS, meshes, textures, collision) | Inside the cell build worker, fanned out on all cores but two | Loading. It fills the same caches as the cell build, so the workers only turn values into values. See [parallel decode](#parallel-decode-inside-a-cell-build) |
 | Distant LOD and door transitions | Inside the cell build worker | Loading. Same caches and same queue as cell builds |
 | Animation clips, behavior graphs, camera tracks | Serial worker, `Mutex` mailbox | Loading during play |
 | Player behavior graph clips | Serial worker, `Mutex` mailbox | Loading during play. The clips the start states reach are prefetched when the graph is built. While a clip loads, the graph keeps its last full pose |
@@ -152,7 +152,7 @@ leave the main actor.
 ## Parallel decode inside a cell build
 
 A cell build is one task on one serial queue. Before a build loads its assets, it decodes the
-new ones on every core with `ParallelDecode.map`, a wrapper around
+new ones on all cores but two with `ParallelDecode.map`, a wrapper around
 `DispatchQueue.concurrentPerform`. Then the serial loads find the work done. Four steps fan out:
 
 | Step | What the workers do |
@@ -186,8 +186,11 @@ Archive reads are safe on several threads: the file system keeps its archive lis
 started it. It is a fork and join, not a pipeline: the build thread waits at each join. A
 `TaskGroup` would need `await` inside the build, and the build is synchronous. The workers
 inherit the `.utility` priority of the build queue, so the main thread wins a core when both
-want one. Fewer than four items run serially, because the fan-out then costs more than it
-saves.
+want one. Priority alone did not keep the frames smooth: with a worker on every core, the
+95th percentile frame time of the benchmark tour rose by about 1 ms in two on/off pairs on
+an M1. So the fan-out runs on two threads fewer than the machine has cores, and each worker
+takes the next item until none is left. Fewer than four items run serially, because the
+fan-out then costs more than it saves.
 
 The result does not depend on the fan-out: the serial loads make the same decisions in the
 same order, and only the values they read come from a worker. The setting

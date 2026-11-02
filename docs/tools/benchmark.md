@@ -85,8 +85,9 @@ and such a run compares only with another hidden run.
 
 A run from the CLI also keeps the Mac and its display awake until the tour ends, because a
 sleeping display stops the frame loop. A watchdog ends the app when the tour has not started
-10 minutes after launch, or when no frame came for 4 minutes. The CLI then reports that the
-app wrote no result, and the `Benchmark` log category of the app says why.
+10 minutes after launch, or when the GPU drew no frame for 4 minutes, such as when its queue
+is stuck. The CLI then reports that the app wrote no result, and the `Benchmark` log
+category of the app says why.
 
 The frame size is written in the result as `frameWidth` and `frameHeight`. A hidden run and
 a windowed run with the same `--size` therefore compare.

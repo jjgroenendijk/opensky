@@ -33,6 +33,6 @@ nonisolated public struct BenchmarkWatchdog: Sendable {
             return now - launched > limit ? "the tour did not start in \(Int(limit)) s" : nil
         }
         let limit = Self.stallLimitSeconds
-        return now - lastProgress > limit ? "no frame for \(Int(limit)) s" : nil
+        return now - lastProgress > limit ? "the GPU drew no frame for \(Int(limit)) s" : nil
     }
 }

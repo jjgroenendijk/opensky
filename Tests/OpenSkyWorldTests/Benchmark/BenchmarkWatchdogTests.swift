@@ -31,7 +31,7 @@ struct BenchmarkWatchdogTests {
             now += Self.step
             reason = watchdog.check(frameCount: 100, now: now)
         }
-        #expect(reason == "no frame for 240 s")
+        #expect(reason == "the GPU drew no frame for 240 s")
         #expect(now - stalledAt > BenchmarkWatchdog.stallLimitSeconds)
     }
 
