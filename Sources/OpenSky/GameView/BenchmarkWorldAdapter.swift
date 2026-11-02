@@ -78,6 +78,8 @@ final class BenchmarkWorldAdapter {
     private var saved: SavedState?
     private var request = BenchmarkRequest()
     private var ticks = 0
+    /// Every frame step, before or during a tour; the run watchdog reads it.
+    private(set) var framesSeen = 0
     private var tourOverrides: [PlayerSettingID: Double] = [:]
     private var plugins: Set<String> = []
     /// PNGs the tour asked for; the first one waits for its window copy.
@@ -123,6 +125,7 @@ final class BenchmarkWorldAdapter {
     }
 
     private func frame() {
+        framesSeen += 1
         if let request = pendingRequest, game.agentWorld.isWorldReady {
             pendingRequest = nil
             begin(request)

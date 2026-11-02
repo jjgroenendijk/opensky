@@ -25,7 +25,8 @@ enum BenchmarkCommand {
             result.startedAt >= started.addingTimeInterval(-1)
         else {
             throw CLIError
-                .failure("the app wrote no result to \(resultURL.path(percentEncoded: false))")
+                .failure("the app wrote no result to \(resultURL.path(percentEncoded: false)); "
+                    + "the Benchmark log category says why")
         }
         BenchmarkReport.lines(for: result).forEach { print($0) }
         print("[INFO] result: \(folder.path(percentEncoded: false))")

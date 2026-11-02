@@ -444,7 +444,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # and a run fails when an entry matched no test (tools/test-selectors.sh).
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki uesp-wiki
+        coverage-floor sanitizer-shaders profile benchmark benchmark-again gaps launch-sample ck-wiki uesp-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -563,6 +563,9 @@ profile: link-shared ## Record a Time Profiler trace of the Release app's benchm
 benchmark: link-shared ## Fly the benchmark tour in the Release app [PRESET=quick|standard|full] [ARGS=...]
 	@$(MAKE) --no-print-directory build-app CONFIG=Release
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
+	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release" --preset $(or $(PRESET),standard) $(ARGS)
+
+benchmark-again: link-shared ## Fly the tour again in the Release app already built, such as with another --set [PRESET=...] [ARGS=...]
 	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release" --preset $(or $(PRESET),standard) $(ARGS)
 
 gaps: link-shared ## Rank what the install uses and the engine does not do yet [ONLY=papyrus,perks,...] [LIMIT=n]

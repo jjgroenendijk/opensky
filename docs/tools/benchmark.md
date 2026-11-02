@@ -21,6 +21,7 @@ every performance change measures its win with this one.
 | Launcher | The Benchmark page: pick a length, then Run Benchmark. The page shows the newest result |
 | CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app hidden and muted, and waits for it to quit |
 | Make | `make benchmark PRESET=quick` builds Release and keeps the output in `.logs/benchmark/` |
+| Make, no build | `make benchmark-again PRESET=quick` runs the Release app that is already built |
 | Running app | `openskycli game benchmark quick` starts the tour in the open game window |
 | App flag | `OpenSky.app --benchmark-request '<json>'`; this is what `openskycli benchmark` passes |
 
@@ -53,7 +54,9 @@ The CLI exits 1 when a scene fails, and such a result does not compare with a cl
 takes its option text, and a number takes a number. For example:
 `--set rendering.gpuCulling=off`, `--set rendering.renderScale=67%`,
 `--set rendering.meshShaderGrass=on`, `--set assetOptimisation.directLoad=off`. The override
-lives only in the app's memory and is never saved.
+lives only in the app's memory and is never saved. A setting therefore compares on and off
+with one build: `make benchmark ARGS='--set loading.parallelDecode=on'`, then
+`make benchmark-again ARGS='--set loading.parallelDecode=off'`.
 
 `--evict` uses `msync` with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
 
@@ -79,6 +82,11 @@ on a 100 Hz display. The app holds a `ProcessInfo` activity for the whole tour, 
 does not slow a run in the background. With frame interpolation on, the renderer paces to
 half the display's refresh rate. A hidden window has no display, so it takes 60 Hz there,
 and such a run compares only with another hidden run.
+
+A run from the CLI also keeps the Mac and its display awake until the tour ends, because a
+sleeping display stops the frame loop. A watchdog ends the app when the tour has not started
+10 minutes after launch, or when no frame came for 4 minutes. The CLI then reports that the
+app wrote no result, and the `Benchmark` log category of the app says why.
 
 The frame size is written in the result as `frameWidth` and `frameHeight`. A hidden run and
 a windowed run with the same `--size` therefore compare.
