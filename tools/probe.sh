@@ -521,4 +521,7 @@ run "pex MQ101QuestScript" pex MQ101QuestScript --function OnUpdate
 awk '/^--- pex MQ101QuestScript/{f=1;next} /^--- /{f=0} f' "$log" | grep -q 'StartTitleSequence' \
   || fail "pex did not show MQ101's StartTitleSequence call"
 
+run "load-pass whiterun" load-pass --scene whiterun
+grep -Eq '^1[[:space:]]cold[[:space:]]' "$log" || fail "load-pass printed no cold pass"
+
 echo "[INFO] probe passed — full output in $log"

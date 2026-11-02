@@ -280,7 +280,7 @@ private enum CommandLineTestError: Error {
 }
 
 extension CommandLineTests {
-    private func command<T>(_ arguments: [String], as _: T.Type) throws -> T {
+    func command<T>(_ arguments: [String], as _: T.Type) throws -> T {
         guard case let .run(command) = OpenSkyCommandLine.outcome(arguments) else {
             Issue.record("\(arguments) did not parse to a command")
             throw CommandLineTestError.notACommand
@@ -288,7 +288,7 @@ extension CommandLineTests {
         return try #require(command as? T)
     }
 
-    private func exitCode(_ arguments: [String]) -> Int32? {
+    func exitCode(_ arguments: [String]) -> Int32? {
         guard case let .exit(code, _) = OpenSkyCommandLine.outcome(arguments) else { return nil }
         return code
     }

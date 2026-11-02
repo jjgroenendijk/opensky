@@ -44,7 +44,7 @@ CLI options:
 | `--size WxH` | The frame size in pixels of a hidden or windowed run. A hidden run takes 1920x1080 by default; a windowed run keeps the window's size. A full-screen run takes the display's size and does not take this option |
 | `--sound` | Plays the game's sound. By default the tour is muted |
 | `--no-load-passes` | Skips the cold and warm load passes |
-| `--evict` | Drops the game data from the page cache first, so the loads read from disk |
+| `--evict` | Drops the game data and the asset cache from the page cache first, so the loads read from disk |
 | `--keep-open` | Leaves the app open after the tour |
 | `--app <path>` | Which `OpenSky.app` to open; the default is the installed one |
 
@@ -207,7 +207,12 @@ Before the first scene, unless `--no-load-passes` is given, a new cell builder w
 caches builds the first scene's cells twice off screen: once cold, then again warm with its
 caches full. An exterior builds the 3 by 3 block around its origin and its distant LOD. The
 live streamer is not touched. A cold load here means cold OpenSky caches. The operating
-system may still hold the archive bytes from an earlier run; `--evict` drops them.
+system may still hold the archive bytes from an earlier run; `--evict` drops them. This
+builder reads no asset cache, only the archives, so its cold pass is the load before the
+cache is built. An arrival reads the asset cache, which is often on another disk than the
+game; `--evict` drops both. The passes run while the game streams in its own first cells,
+so both share the cores and the disks. `openskycli load-pass` runs the same passes without the
+app, for a measurement of the builds alone.
 
 ### Load phases
 

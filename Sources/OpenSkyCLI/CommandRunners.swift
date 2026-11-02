@@ -349,3 +349,9 @@ extension PexArguments: CLIRunnable {
         try PexCommand.run(context: context(), arguments: self)
     }
 }
+
+extension LoadPassArguments: CLIRunnable {
+    func execute() async throws {
+        try await LoadPassCommand.run(context: context(), arguments: self)
+    }
+}

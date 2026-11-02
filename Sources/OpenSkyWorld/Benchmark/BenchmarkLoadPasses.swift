@@ -4,10 +4,13 @@
 
 import Foundation
 import Metal
+import OpenSkyAssetCache
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
+import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyTerrain
 
@@ -16,17 +19,21 @@ nonisolated public struct BenchmarkLoadInputs: Sendable {
     public let device: any MTLDevice
     public let terrainLOD: TerrainLODConfigurationStore
     public let decodesInParallel: Bool
+    /// Nil reads only the archives, the load before the cache is built.
+    public let assetCache: AssetCacheReader?
 
     public init(
         root: GameDataRoot,
         device: any MTLDevice,
         terrainLOD: TerrainLODConfigurationStore,
-        decodesInParallel: Bool = true
+        decodesInParallel: Bool = true,
+        assetCache: AssetCacheReader? = nil
     ) {
         self.root = root
         self.device = device
         self.terrainLOD = terrainLOD
         self.decodesInParallel = decodesInParallel
+        self.assetCache = assetCache
     }
 }
 
@@ -46,6 +53,11 @@ nonisolated public enum BenchmarkLoadPasses {
             recorder: recorder, terrainLOD: inputs.terrainLOD
         )
         builder.decodesInParallel = inputs.decodesInParallel
+        if let cache = inputs.assetCache {
+            builder.textures.assetCache = cache
+            builder.meshes.assetCache = cache
+            builder.collisionModels?.assetCache = cache
+        }
         let setupMS = milliseconds(since: started)
         let coldCells = pass(place: place, builder: builder, plugins: loadOrder.plugins)
         let coldMS = milliseconds(since: started)
