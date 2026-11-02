@@ -46,6 +46,11 @@ not read the GPU blocks or the model.
 - If the IO command buffer fails, every buffer of the batch is filled on the CPU from the
   same entry.
 
+With parallel decode on, a cell build reads the layout blocks of its new meshes on every core
+first. A model with a ready layout skips the CPU decode, and only its read commands queue on
+the build thread. The other models decode on the workers
+([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
+
 The setting `assetOptimisation.directLoad.meshes` is off by default. `make benchmark ARGS='--set
 assetOptimisation.directLoad.meshes=on'` measures it.
 

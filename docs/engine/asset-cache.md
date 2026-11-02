@@ -214,6 +214,11 @@ The fast loader runs only during a cell build:
    the cell handed to the renderer, so a frame never shows a texture that is still loading.
 4. If the buffer fails, every texture of the batch is filled on the CPU from the same entry.
 
+With parallel decode on, workers look up the cache entries of a build's new textures first.
+A texture the fast loader reads gets no CPU work there; its read still queues on the build
+thread. A texture with no entry, or one on an external disk, is filled on a worker
+([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
+
 A texture loaded outside a cell build, or a texture with no current entry, takes the CPU path. The
 page calls this "Direct GPU loading", with one switch for textures, one for meshes, and one for "All
 disks". `make benchmark` measures it, and `ARGS='--set assetOptimisation.directLoad=off'` the path

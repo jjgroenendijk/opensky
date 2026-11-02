@@ -204,6 +204,8 @@ system may still hold the archive bytes from an earlier run; `--evict` drops the
 
 Each load pass, and each arrival, splits its time into phases. A phase counts only its own
 time. A mesh load that reads an archive gives the read to `archive`, and the rest to `mesh`.
+A read inside a parallel decode stays in that decode's phase, because several workers read at
+once ([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
 
 | Phase | What it holds |
 | --- | --- |
@@ -211,6 +213,7 @@ time. A mesh load that reads an archive gives the read to `archive`, and the res
 | `texture` | DDS parsing and the GPU texture upload |
 | `mesh` | NIF parsing, flattening, and GPU buffer building, terrain included |
 | `collision` | Static collision, trigger volumes, and dynamic bodies |
+| `gpuRead` | Waiting at the end of a build for its direct GPU reads ([asset cache](/engine/asset-cache.md#direct-gpu-loading)). A result from before this phase has no `gpuReadMS` |
 | `other` | Everything else: record lookups, actors, lighting, setup |
 
 A cell builder reports phases when a `LoadPhaseRecorder` is attached to it and its file

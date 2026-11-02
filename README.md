@@ -124,6 +124,10 @@ Building takes some time once.
 The launcher also has pages for graphics settings and for the asset cache. The asset cache
 stores game files in a form your Mac can load faster.
 
+OpenSky loads the world on every CPU core. When a part of the world comes into view, it reads
+and unpacks the models, textures, and collision shapes of that part at the same time, one on each
+core, instead of one after another.
+
 ## Problems and ideas
 
 Found a bug, or have an idea? Open an issue on
