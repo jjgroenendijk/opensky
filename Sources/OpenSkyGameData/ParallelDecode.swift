@@ -24,9 +24,13 @@ nonisolated public enum ParallelDecode {
             return results
         }
         let results = Mutex<[Key: Value]>([:])
+        // Shared worker threads do not drain an autorelease pool per item, so the Metal
+        // objects a texture fill makes would stay alive until the thread retires.
         DispatchQueue.concurrentPerform(iterations: keys.count) { index in
-            guard let value = work(keys[index]) else { return }
-            results.withLock { $0[keys[index]] = value }
+            autoreleasepool {
+                guard let value = work(keys[index]) else { return }
+                results.withLock { $0[keys[index]] = value }
+            }
         }
         return results.withLock { $0 }
     }
