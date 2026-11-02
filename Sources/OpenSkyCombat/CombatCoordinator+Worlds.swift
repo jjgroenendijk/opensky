@@ -150,7 +150,11 @@ extension CombatCoordinator: MeleeCombatWorld {
             amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
             multipliers: difficultyMultipliers
         )
+        let health = world.health(of: target)
         let landed = world.damageHealth(by: scaled, of: target)
+        if landed, let health, let attacker {
+            knockBack(target, damage: scaled, health: health, attacker: attacker, kind: kind)
+        }
         if landed, attacker == .player, target != .player {
             playerStruckTarget = target
         }

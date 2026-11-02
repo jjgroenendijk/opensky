@@ -28,6 +28,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var explosionProximity: Float = 0
     /// With the alternate trigger: seconds of flight that detonate it. Zero is off.
     public var explosionTimer: Float = 0
+    /// PROJ DATA impact force, in Havok units: how hard a hit pushes a loose body.
+    public var impactForce: Float = 0
 
     public init(
         projectile: FormID? = nil,
@@ -55,6 +57,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
             lifetime: record.lifetime,
             collisionRadius: record.collisionRadius
         )
+        impactForce = Self.clean(record.impactForce)
         // A trap dart names `FireBallExp01` but leaves the explosion flag off.
         explosion = record.flags.contains(.explosion) ? record.explosion : nil
         if record.flags.contains(.alternateTrigger) {

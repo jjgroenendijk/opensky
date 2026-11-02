@@ -224,6 +224,16 @@ struct AgentCommandParsingTests {
             == .drunk(reference: "player", drunk: true))
     }
 
+    @Test func knockNamesTheActorAndTheDamage() throws {
+        let request = try AgentCommandLine.request(["debug", "knock", "1A2B", "30"])
+        #expect(try AgentDebugCommand.parse("knock", args(request.args))
+            == .knock(reference: "1A2B", damage: 30))
+        #expect(throws: AgentFailure.self) {
+            try AgentDebugCommand.parse("knock", args(["ref": "player", "damage": -1]))
+        }
+        #expect(try AgentStateQuery.parse("impulses", args([:])) == .impulses)
+    }
+
     @Test func perkNamesThePerkAndTheSwitch() throws {
         let request = try AgentCommandLine.request(["debug", "perk", "ShieldCharge", "off"])
         #expect(request.args == ["perk": "ShieldCharge", "on": false])

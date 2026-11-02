@@ -32,14 +32,31 @@ extension ProjectileRuntime {
     @discardableResult
     func detonateExplosion(
         of projectile: LiveProjectile,
-        at position: SIMD3<Float>
+        at position: SIMD3<Float>,
+        source: FormID? = nil
     ) -> ExplosionReport? {
         guard
             let explosions,
             let spec = explosions.spec(itemLink: projectile.profile.explosion)
         else { return nil }
         return explosions.detonate(
-            spec, at: position, cause: projectile.payload.spell == nil ? .projectile : .spell
+            spec, at: position, cause: projectile.payload.spell == nil ? .projectile : .spell,
+            source: source
         )
+    }
+
+    /// Pushes the loose body a projectile struck by its `PROJ` impact force, along its flight.
+    func pushStruckBody(_ projectile: LiveProjectile, impact: ProjectileImpact) {
+        guard
+            !impact.isActor, let reference = impact.reference,
+            let impulses = explosions?.impulses, let world = impulses.world,
+            let body = world.impulseBodies().first(where: { $0.reference == reference }),
+            let push = GameplayImpulse.projectile(
+                impactForce: projectile.profile.impactForce, flight: projectile.state.velocity,
+                at: impact.position, body: body, settings: impulses.settings
+            )
+        else { return }
+        world.applyBodyImpulse(push)
+        impulses.record(.push(body.key, impulse: simd_length(push.linear), cause: .projectile))
     }
 }

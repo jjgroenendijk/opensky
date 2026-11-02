@@ -27,6 +27,12 @@ extension CellStreamer {
         return composition.sampleWaterHeight(at: position)
     }
 
+    /// The water's flow, units per second, where `sampleWaterHeight` finds water.
+    public func sampleWaterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
+        guard interiorScene == nil else { return nil }
+        return composition.sampleWaterFlow(at: position)
+    }
+
     /// Every collision candidate overlapping `bounds`: the per-cell static geometry
     /// plus the simulated bodies at their current pose, as ordinary placed shapes.
     /// Static shapes come first, for deterministic tie-breaks.

@@ -592,8 +592,8 @@ targets += feature(
 targets += feature(
     "OpenSkyCombat",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAnimation", "OpenSkyGameData",
-        "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyAudio", "OpenSkyWorldState",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAnimation", "OpenSkyFormatsMesh",
+        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyAudio", "OpenSkyWorldState",
         "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
         "OpenSkyWorldInterface"

@@ -233,7 +233,8 @@ public final class ProjectileRuntime {
         let applied = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
         playImpact(of: impact)
-        detonateExplosion(of: projectile, at: impact.position)
+        pushStruckBody(projectile, impact: impact)
+        detonateExplosion(of: projectile, at: impact.position, source: impact.reference)
         let didStick = !detonated && stick(projectile, at: impact)
         return record(
             projectile,

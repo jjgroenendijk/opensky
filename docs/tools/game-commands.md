@@ -116,6 +116,7 @@ To look at one record, reference, mesh, or cell without the game window, use
 | `state flight [<ref>]` | Each actor in the air: `phase`, `state` (the `GetFlyingState` value), `feet`, `speed`, `approaching`, `landingPoint`, `landingRequest` (none, hasty, crash), `landingEvent`, `perched`, `perch`, and the forced `order`. The ridden flight adds `rider` (`lockedTarget`, `switchedTarget`, `attacking`). With a reference, that actor only, `getIsFlying` included |
 | `state mount` | The player's mount: `kind`, `phase`, `speed`, a dragon's `flight`, and the rider's `orders` (`landingRequested`, `lockedTarget`, `switchedTarget`, `attacking`, `breath`) |
 | `state favor` | Follower command mode: `phase` (idle, choosing, walking, waiting), `follower`, the walking `task`, `waitLeft` seconds at a spot, `lastDecision` (its `line`, and its `task`, `refusal`, or `crime`), `lastOutcome`, and `pickDistance` |
+| `state impulses` | The knockback, explosion push, and splash settings in use, `splashCount`, and the newest `events`: each `knock` (`ref`, `speed`, `knockdown`, `cause`), `push` (`ref`, `impulse`, `cause`), `splash` (`ref`, `weight`, `model`, `position`), or `physicsDamage` (`body`, `ref`, `damage`) ([impulses](/engine/impulses.md)) |
 | `state changes [--limit <n>]` | The newest world-state writes, 20 by default (`ref`, `kind`, `reset`), and whether a door transition or an interior rebuild is in flight. A cell that never settles shows the reference that keeps writing |
 | `state time` | The game clock |
 | `state frame` | The frame counter and the timeline, the `screenFade`, `skippedFrames` (frames not encoded because the GPU was three frames behind), and `gpuMemory`: the device total, the resident render targets, textures, and buffers, the resident count, the retire list, and the streamed textures with their heap memory |
@@ -151,6 +152,7 @@ Debug commands change the game state directly. `state` reads show the result
 | `debug kill <ref>`, `debug resurrect <ref>` | Kills or brings back an actor, not the player |
 | `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | Sends an event or sets a variable, as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable` does. Answers `taken` and the actor's sub-graphs |
 | `debug drunk <ref> on\|off` | Raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do. Answers `taken` |
+| `debug knock <ref> <damage>` | Knocks an actor back as a melee hit of `damage` from the player would, without the damage. Answers `knocked`, `speed`, and `knockdown`; a hit below half the current health does not knock |
 | `debug eyes <ref> <txst>` | Draws an NPC's eyes with a texture set, as `Actor.SetEyeTexture` does, until its cell unloads |
 | `debug link <ref> <node> <other> <othernode> [on\|off]` | Adds or removes the constraint `Game.AddHavokBallAndSocketConstraint` makes, through its script hook. Answers `changed` and `constraints` |
 | `debug sit [<ref>] [--furniture <ref>]` | Seats the actor (default `player`) in that furniture, or in the nearest loaded one with a free seat |
