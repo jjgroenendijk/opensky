@@ -140,8 +140,9 @@ public final class EffectsCoordinator {
         imageSpace.modifiers.stop(key: key)
     }
 
-    /// One landed spell: the modifier when the player was hit, the hit shader and art
-    /// on each target, and the explosion of an area effect at the struck actor.
+    /// One landed spell: the modifier when the player was hit, and the hit shader and art
+    /// on each target. `detonateAreaExplosions(of:)` runs after, because an explosion
+    /// starts its own modifier on the same image-space state.
     public func handleSpellHit(_ event: SpellHitEvent, imageSpace: inout ImageSpaceState) {
         spellHitCount += 1
         let targets = event.hit.targets.map(\.key)
@@ -156,7 +157,6 @@ public final class EffectsCoordinator {
                 started += 1
             }
             attached += attachHitEffects(link, to: targets)
-            detonateAreaExplosion(link, hit: event.hit)
         }
         lastSpellHit = "\(event.hit.payload.name): \(targets.count) target(s), "
             + "\(attached) effect(s), \(started) image-space modifier(s)"
@@ -238,6 +238,13 @@ public final class EffectsCoordinator {
             }
         }
         return attached
+    }
+
+    /// The explosion of each area effect at the struck actor.
+    public func detonateAreaExplosions(of event: SpellHitEvent) {
+        for link in event.links {
+            detonateAreaExplosion(link, hit: event.hit)
+        }
     }
 
     private func detonateAreaExplosion(_ link: SpellHitEffectLinks, hit: SpellHit) {
