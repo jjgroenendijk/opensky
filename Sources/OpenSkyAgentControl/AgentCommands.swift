@@ -29,6 +29,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case mount
     /// Follower command mode: its phase, the follower, and the last decision and outcome.
     case favor
+    /// The push and splash settings, and the newest knocks, pushes, and splashes.
+    case impulses
     /// The newest world-state writes, and whether the streamer is loading or rebuilding.
     case changes(limit: Int)
     case actorValue(reference: String, name: String)
@@ -75,8 +77,16 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "nodes": try .nodes(reference: args.optionalString("ref"))
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         case "flight": try .flight(reference: args.optionalString("ref"))
+        default: session(name)
+        }
+    }
+
+    /// The reads that take no arguments: the ride, follower commands, and pushes.
+    private static func session(_ name: String) -> Self? {
+        switch name {
         case "mount": .mount
         case "favor": .favor
+        case "impulses": .impulses
         default: nil
         }
     }
@@ -181,6 +191,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
     /// `IdleDrunkStop` do.
     case drunk(reference: String, drunk: Bool)
+    /// Knocks an actor back as a melee hit of `damage` from the player would.
+    case knock(reference: String, damage: Float)
     /// Gives the player a perk by editor ID, or takes it away, as `Actor.AddPerk` does.
     case perk(editorID: String, owned: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
@@ -277,6 +289,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "flight": try parseFlight(args)
         case "drunk":
             try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
+        case "knock": try parseKnock(args)
         case "perk": try .perk(editorID: args.string("perk"), owned: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
         case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
@@ -308,6 +321,12 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "titles": try .titles(args.string("step"))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
+    }
+
+    private static func parseKnock(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let damage = try args.float("damage")
+        guard damage.isFinite, damage > 0 else { throw args.invalid("damage", "above 0") }
+        return try .knock(reference: args.string("ref"), damage: damage)
     }
 
     private static func parseGamepad(_ args: AgentArguments) throws(AgentFailure) -> Self {

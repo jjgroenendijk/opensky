@@ -15,6 +15,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScripting
@@ -35,6 +36,7 @@ protocol EffectsWorldHost: AnyObject {
     var hazards: HazardCoordinator { get }
     var magic: MagicCoordinator { get }
     var magicWorld: MagicWorldAdapter { get }
+    var mapWorld: MapWorldAdapter { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -79,6 +81,9 @@ final class EffectsWorldAdapter {
             guard let self, let gameSession else { return }
             cameraPosition = position
             tick(gameSession: gameSession, streamer: streamer)
+            if gameSession.movementMode.isPlayerControlled {
+                game.combat.impulses?.advance()
+            }
         }
     }
 
@@ -94,7 +99,13 @@ final class EffectsWorldAdapter {
     /// has no world, and nothing detonates.
     func makeExplosions() -> ExplosionRuntime {
         guard let records = game.worldData?.effectRecords else { return ExplosionRuntime() }
-        return ExplosionRuntime(records: records, itemPlugin: Self.basePlugin, world: self)
+        let explosions = ExplosionRuntime(
+            records: records,
+            itemPlugin: Self.basePlugin,
+            world: self
+        )
+        explosions.impulses = makeImpulses()
+        return explosions
     }
 
     /// A hostile spell's push on a body it kills: the sum of its magnitudes as the

@@ -40,6 +40,10 @@ nonisolated extension AgentCommandCatalog {
             "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
         ),
         command(
+            "state.impulses",
+            "Hit knockback, explosion push, and splash settings, with the newest events."
+        ),
+        command(
             "state.favor",
             "Follower command mode: the phase, follower, last decision, and last outcome."
         ),
@@ -193,6 +197,13 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
+        ),
+        command(
+            "debug.knock", "Knock an actor back as a melee hit from the player would.",
+            positionals: [
+                required("ref", refHelp),
+                required("damage", "The hit's damage. It must reach half the current health.")
+            ]
         ),
         command(
             "debug.perk", "Give the player a perk or take it away, as Actor.AddPerk does.",

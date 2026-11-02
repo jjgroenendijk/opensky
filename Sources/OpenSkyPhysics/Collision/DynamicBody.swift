@@ -58,6 +58,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     public let maximumAngularSpeed: Float
     /// Farthest surface point from the centre of mass, over every volume.
     public let boundingRadius: Float
+    /// The heaviest body's SkyrimLayer, which sets how hard a push moves it.
+    public let collisionLayer: UInt8
 
     /// Vanilla clutter leaves the velocity ceilings at Havok's defaults, which
     /// are large enough that a body accelerating unchecked between two walls
@@ -66,6 +68,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     /// or a shove produces.
     public static let defaultMaximumLinearSpeed: Float = 8000
     public static let defaultMaximumAngularSpeed: Float = 40
+    /// SkyrimLayer 4, `L_CLUTTER`.
+    public static let clutterLayer: UInt8 = 4
 
     /// One body per placed reference, at its XSCL scale, because a reference has one key,
     /// one placement and one `.transform`. Several `bhkRigidBody` blocks are welded: masses
@@ -134,6 +138,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
             fallback: Self.defaultMaximumAngularSpeed
         )
         boundingRadius = placed.reduce(0) { max($0, $1.boundingRadius) }
+        let heaviest = simulated.max { $0.dynamics.mass < $1.dynamics.mass } ?? simulated[0]
+        collisionLayer = heaviest.rigidBodyFilter.layer
     }
 
     /// Every simulated body's shapes as convex volumes and as placed geometry,
@@ -176,8 +182,10 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
         colliderShapes: [DynamicBodyColliderShape] = [],
         friction: Float = 0.5,
         restitution: Float = 0.2,
-        damping: (linear: Float, angular: Float) = (0.1, 0.05)
+        damping: (linear: Float, angular: Float) = (0.1, 0.05),
+        collisionLayer: UInt8 = Self.clutterLayer
     ) {
+        self.collisionLayer = collisionLayer
         self.volumes = volumes
         self.colliderShapes = colliderShapes
         self.mass = max(mass, .leastNormalMagnitude)
@@ -363,13 +371,17 @@ nonisolated public struct DynamicBody: Sendable {
 
     /// Applies an impulse at a world point, waking the body. Kilogram engine
     /// units per second, the same units `linearVelocity` is in times the mass.
-    public mutating func applyImpulse(_ impulse: SIMD3<Float>, at worldPoint: SIMD3<Float>) {
+    /// `angularScale` scales only the turn, as `fExplosionForceMultAngular` does.
+    public mutating func applyImpulse(
+        _ impulse: SIMD3<Float>, at worldPoint: SIMD3<Float>, angularScale: Float = 1
+    ) {
         guard impulse.isFiniteVector, simd_length_squared(impulse) > Float.ulpOfOne else {
             return
         }
         wake()
         linearVelocity += impulse * definition.inverseMass
         angularVelocity += worldInverseInertia * simd_cross(worldPoint - position, impulse)
+            * angularScale
     }
 
     public mutating func wake() {

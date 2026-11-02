@@ -279,6 +279,14 @@ nonisolated public struct CellSceneComposition {
         return cells[coordinate]?.waterHeight
     }
 
+    /// The `WATR` linear velocity of the owner cell's water, by the same rule.
+    public func sampleWaterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
+        let coordinate = CellGridManager.cellCoordinate(
+            for: SIMD3<Float>(position.x, position.y, 0)
+        )
+        return cells[coordinate]?.renderScene.water.first?.look.shading.flowVelocity
+    }
+
     /// Broadphase over resident per-cell BVHs. Cross-cell capsule queries can
     /// touch both sides of a seam; each cell remains independently evictable.
     public func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {

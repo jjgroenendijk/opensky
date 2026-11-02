@@ -48,7 +48,7 @@ extension AgentWorldAdapter {
         case let .quest(editorID): try questState(editorID)
         case .scenes: scenesState()
         case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
-             .mount, .favor:
+             .mount, .favor, .impulses:
             try inspection(query)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
@@ -71,6 +71,7 @@ extension AgentWorldAdapter {
         case let .flight(reference): try flightState(reference: reference)
         case .mount: mountState()
         case .favor: favorState()
+        case .impulses: impulsesState()
         default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
     }

@@ -24,6 +24,8 @@ public final class ExplosionRuntime {
     /// Placed objects that were neither a hazard nor debris.
     public private(set) var skippedPlacements = 0
     private var seed: UInt64 = 0x0E5D_1A57
+    /// The push settings and the readout log. Nil pushes nothing.
+    public var impulses: ImpulseRuntime?
 
     public init(
         records: EffectRecordStore = .empty,
@@ -45,19 +47,22 @@ public final class ExplosionRuntime {
         return Self.spec(resolved, key: key, records: records)
     }
 
-    /// Detonates `spec` at `position` and returns what it did.
+    /// Detonates `spec` at `position` and returns what it did. `source` is the
+    /// reference a projectile struck, which takes `fExplosionSourceRefMult` more push.
     @discardableResult
     public func detonate(
         _ spec: ExplosionSpec,
         at position: SIMD3<Float>,
-        cause: ExplosionCause
+        cause: ExplosionCause,
+        source: FormID? = nil
     ) -> ExplosionReport {
         detonationTotal += 1
+        let radius = reach(of: spec, at: position)
         var damaged: [ReferenceKey: Float] = [:]
         if spec.damage > 0, let world {
             for target in world.explosionTargets() {
                 let amount = ExplosionFalloff.damage(
-                    spec.damage, radius: spec.radius, distance: Self.distance(position, target)
+                    spec.damage, radius: radius, distance: Self.distance(position, target)
                 )
                 if amount > 0, world.applyExplosionDamage(amount, to: target.key) {
                     damaged[target.key] = amount
@@ -70,6 +75,7 @@ public final class ExplosionRuntime {
         if let model = spec.model {
             world?.showExplosionModel(model, at: position)
         }
+        push(spec, radius: radius, at: position, source: source)
         let strength = startImageSpace(spec, at: position)
         let (hazard, thrown) = place(spec, at: position)
         let report = ExplosionReport(
@@ -126,7 +132,7 @@ public final class ExplosionRuntime {
     }
 
     /// From the blast center to the nearest point of the target's capsule axis.
-    private static func distance(_ center: SIMD3<Float>, _ target: MeleeTarget) -> Float {
+    static func distance(_ center: SIMD3<Float>, _ target: MeleeTarget) -> Float {
         let (first, second) = target.segment
         let axis = second - first
         let length = simd_length_squared(axis)

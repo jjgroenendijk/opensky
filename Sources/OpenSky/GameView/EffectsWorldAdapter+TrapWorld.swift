@@ -56,12 +56,7 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
         let away = direction ?? trapPosition(of: source).map { feet - $0 } ?? .zero
         let flat = SIMD3(away.x, away.y, 0)
         guard simd_length(flat) > 0 else { return false }
-        let velocity = simd_normalize(flat) * speed
-        guard actor == .player else {
-            return game.streamer?.knockActor(actor, velocity: velocity) ?? false
-        }
-        game.gameSession?.walkController.knock(velocity)
-        return true
+        return knockActor(actor, velocity: simd_normalize(flat) * speed, knockdown: false)
     }
 
     func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool {
