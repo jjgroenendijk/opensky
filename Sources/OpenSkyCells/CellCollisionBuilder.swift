@@ -315,7 +315,9 @@ nonisolated extension CellSceneBuilder {
         }
         let started = DispatchTime.now().uptimeNanoseconds
         let materialTypes = materialTypeIndexBuildingIfNeeded()
-        collisionModels.predecode(paths: placements.map(\.modelPath))
+        loadPhases.measure(.collision) {
+            collisionModels.predecode(paths: placements.map(\.modelPath))
+        }
         defer { collisionModels.dropPredecoded() }
         var accumulator = CellCollisionAccumulator()
         accumulator.stats.modelReferenceCount = placements.count
