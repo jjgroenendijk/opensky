@@ -473,7 +473,8 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         return BenchmarkLoadInputs(
             root: root,
             device: device,
-            terrainLOD: game.terrainLODConfigurationStore
+            terrainLOD: game.terrainLODConfigurationStore,
+            decodesInParallel: game.playerSettingsStore.bool(.parallelDecode)
         )
     }
 }

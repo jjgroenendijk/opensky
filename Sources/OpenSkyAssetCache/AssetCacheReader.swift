@@ -43,6 +43,8 @@ nonisolated public struct AssetCacheEntryRead<Value> {
     public let payloadOffset: Int
 }
 
+nonisolated extension AssetCacheEntryRead: Sendable where Value: Sendable {}
+
 nonisolated public struct AssetCacheRebuildItem: Hashable, Sendable {
     public let kind: AssetCacheKind
     public let path: String

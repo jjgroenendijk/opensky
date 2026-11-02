@@ -67,6 +67,16 @@ nonisolated public final class MeshLibrary {
     public var assetCache: AssetCacheReader?
     /// Decodes `predecode(paths:)` made for the current build; a load takes its entry.
     var predecoded: [String: PredecodedMesh] = [:]
+    /// NIF files `preparse(paths:)` read for loads whose skeleton is known only at load time.
+    var preparsed: [String: NIFFile] = [:]
+    /// Paths an actor load decoded and the cache still holds, so `preparse` skips them.
+    var actorDecodedPaths: Set<String> = []
+    /// Ready layouts `predecode(paths:)` read for the fast mesh loader.
+    var prelaid: [String: AssetCacheEntryRead<ReadyModelLayout>] = [:]
+    /// Off runs every mesh and texture load serially on the build thread.
+    public var decodesInParallel = true {
+        didSet { textures.decodesInParallel = decodesInParallel }
+    }
 
     public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
@@ -201,7 +211,7 @@ nonisolated public final class MeshLibrary {
     private func readyModel(key: String, pathKey: String) -> RenderModel? {
         guard
             let loader = textures.fastMeshLoader,
-            let entry = assetCache?.modelLayout(forPath: pathKey), entry.value.isReady,
+            let entry = readyLayout(pathKey: pathKey),
             let meshes = try? loader.enqueue(entry, label: pathKey)
         else { return nil }
         let layout = entry.value
@@ -218,36 +228,13 @@ nonisolated public final class MeshLibrary {
         return render
     }
 
-    /// Uploads a LAND terrain patch: the quadrant mesh and its splat-weight stream (two
-    /// float4 per vertex, `TerrainVertexLayout`). Not cached: each patch is unique.
-    public func terrainMesh(
-        _ mesh: Mesh,
-        weights: [SIMD4<Float>]
-    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
-        try loadPhases.measure(.mesh) { try uploadTerrain(mesh, weights: weights) }
-    }
-
-    private func uploadTerrain(
-        _ mesh: Mesh,
-        weights: [SIMD4<Float>]
-    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
-        let render = try RenderMesh(device: device, mesh: mesh)
-        // Weight stream must cover every vertex the descriptor will fetch.
-        guard
-            weights.count == mesh.positions.count * 2,
-            let buffer = device.makeBuffer(
-                bytes: weights,
-                length: weights.count * MemoryLayout<SIMD4<Float>>.stride,
-                options: .storageModeShared
-            ) else { throw RenderMeshError.bufferAllocationFailed }
-        buffer.label = "\(mesh.name ?? "terrain").weights"
-        return (render, buffer)
-    }
-
-    /// Uploads small engine-built geometry that needs only the shared static
-    /// vertex stream. Callers cache reusable meshes at their semantic level.
-    public func renderMesh(_ mesh: Mesh) throws -> RenderMesh {
-        try RenderMesh(device: device, mesh: mesh)
+    /// A predecoded path whose layout was not ready skips the second lookup.
+    private func readyLayout(pathKey: String) -> AssetCacheEntryRead<ReadyModelLayout>? {
+        if let entry = prelaid.removeValue(forKey: pathKey) {
+            return entry
+        }
+        guard predecoded[pathKey] == nil else { return nil }
+        return assetCache?.modelLayout(forPath: pathKey).flatMap { $0.value.isReady ? $0 : nil }
     }
 
     /// Uploads + caches engine-generated model geometry under a semantic key.
@@ -343,6 +330,7 @@ nonisolated public final class MeshLibrary {
             if cache.removeValue(forKey: key) != nil {
                 freed += 1
             }
+            actorDecodedPaths.remove(String(key.prefix { $0 != "|" }))
             skippedShapes.removeValue(forKey: key)
             modelBounds.removeValue(forKey: key)
             modelTextureKeys.removeValue(forKey: key)
@@ -358,6 +346,40 @@ nonisolated public final class MeshLibrary {
             throw MeshLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
+    }
+}
+
+nonisolated extension MeshLibrary {
+    /// Uploads a LAND terrain patch: the quadrant mesh and its splat-weight stream (two
+    /// float4 per vertex, `TerrainVertexLayout`). Not cached: each patch is unique.
+    public func terrainMesh(
+        _ mesh: Mesh,
+        weights: [SIMD4<Float>]
+    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+        try loadPhases.measure(.mesh) { try uploadTerrain(mesh, weights: weights) }
+    }
+
+    private func uploadTerrain(
+        _ mesh: Mesh,
+        weights: [SIMD4<Float>]
+    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+        let render = try RenderMesh(device: device, mesh: mesh)
+        // Weight stream must cover every vertex the descriptor will fetch.
+        guard
+            weights.count == mesh.positions.count * 2,
+            let buffer = device.makeBuffer(
+                bytes: weights,
+                length: weights.count * MemoryLayout<SIMD4<Float>>.stride,
+                options: .storageModeShared
+            ) else { throw RenderMeshError.bufferAllocationFailed }
+        buffer.label = "\(mesh.name ?? "terrain").weights"
+        return (render, buffer)
+    }
+
+    /// Uploads small engine-built geometry that needs only the shared static
+    /// vertex stream. Callers cache reusable meshes at their semantic level.
+    public func renderMesh(_ mesh: Mesh) throws -> RenderMesh {
+        try RenderMesh(device: device, mesh: mesh)
     }
 }
 
@@ -435,15 +457,16 @@ nonisolated extension MeshLibrary {
         {
             return (model, [])
         }
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
-            throw MeshLibraryError.fileNotFound(path: pathKey)
-        }
         guard explicitActorSkeleton else {
+            guard let data = try? fileSystem.contents(forPath: pathKey) else {
+                throw MeshLibraryError.fileNotFound(path: pathKey)
+            }
             let skeleton = pathKey.hasPrefix(Self.characterMeshPrefix) ? characterSkeleton() : nil
             return try Self.parse(data, pathKey: pathKey, characterSkeleton: skeleton).get()
         }
+        let file = try preparsed[pathKey] ?? actorFile(pathKey: pathKey)
+        actorDecodedPaths.insert(pathKey)
         do {
-            let file = try NIFFile(data: data)
             // An attachment (kept root) may be skinned to its own bones, as a bow is;
             // `RigidAttachment` bakes those, so they are not checked against the actor.
             let skeleton = keepingRoot ? nil : actorSkeleton?.skeleton
@@ -464,6 +487,18 @@ nonisolated extension MeshLibrary {
 }
 
 nonisolated extension MeshLibrary {
+    /// The NIF behind an actor part, read on the build thread.
+    private func actorFile(pathKey: String) throws -> NIFFile {
+        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            throw MeshLibraryError.fileNotFound(path: pathKey)
+        }
+        do {
+            return try NIFFile(data: data)
+        } catch {
+            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
+        }
+    }
+
     /// Whether the plain model of a normalized path is already uploaded.
     func isLoaded(pathKey: String) -> Bool {
         cache[cacheKey(path: pathKey, terrainLODClipMask: nil)] != nil

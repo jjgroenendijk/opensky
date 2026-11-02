@@ -15,15 +15,18 @@ nonisolated public struct BenchmarkLoadInputs: Sendable {
     public let root: GameDataRoot
     public let device: any MTLDevice
     public let terrainLOD: TerrainLODConfigurationStore
+    public let decodesInParallel: Bool
 
     public init(
         root: GameDataRoot,
         device: any MTLDevice,
-        terrainLOD: TerrainLODConfigurationStore
+        terrainLOD: TerrainLODConfigurationStore,
+        decodesInParallel: Bool = true
     ) {
         self.root = root
         self.device = device
         self.terrainLOD = terrainLOD
+        self.decodesInParallel = decodesInParallel
     }
 }
 
@@ -42,6 +45,7 @@ nonisolated public enum BenchmarkLoadPasses {
             device: inputs.device,
             recorder: recorder, terrainLOD: inputs.terrainLOD
         )
+        builder.decodesInParallel = inputs.decodesInParallel
         let setupMS = milliseconds(since: started)
         let coldCells = pass(place: place, builder: builder, plugins: loadOrder.plugins)
         let coldMS = milliseconds(since: started)

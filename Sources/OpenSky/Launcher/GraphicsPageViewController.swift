@@ -89,6 +89,9 @@ final class GraphicsPageViewController: NSViewController {
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
+    let parallelDecodeControl = NSButton(
+        checkboxWithTitle: "Decode assets on every core", target: nil, action: nil
+    )
     let clearPipelineCacheControl = LauncherButton(
         title: "Clear Saved Pipelines",
         target: nil,
@@ -175,7 +178,8 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(toneMappingControl),
                 layout.toggle(lightAnimationControl), layout.toggle(particleSortingControl),
                 layout.toggle(pipelineCacheControl),
-                layout.buttons([clearPipelineCacheControl])
+                layout.buttons([clearPipelineCacheControl]),
+                layout.toggle(parallelDecodeControl)
             ]),
             layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [

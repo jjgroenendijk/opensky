@@ -13,7 +13,7 @@ nonisolated public final class TextureLibrary {
     /// Cache identity: same path + usage -> same MTLTexture. A path may be
     /// sampled sRGB (color) and linear (data) by different materials, so
     /// usage is part of the key — two distinct GPU textures, one file.
-    private struct CacheKey: Hashable {
+    struct CacheKey: Hashable {
         let path: String
         let usage: TextureUsage
     }
@@ -34,7 +34,7 @@ nonisolated public final class TextureLibrary {
 
     let fileSystem: any GameFileSource
     let loader: TextureLoader
-    private var cache: [CacheKey: MTLTexture] = [:]
+    private(set) var cache: [CacheKey: MTLTexture] = [:]
 
     /// Keys resolved since the last drain, so a cell build can record exactly
     /// which textures it uses (for eviction keep-sets). Confined to the build
@@ -60,7 +60,11 @@ nonisolated public final class TextureLibrary {
     public var fastLoader: FastTextureLoader?
     /// Large textures become streamed textures while its settings say so.
     public var streaming: TextureStreamMailbox?
-    private var batchDepth = 0
+    private(set) var batchDepth = 0
+    /// Textures `prefetch(materials:)` prepared for the current build; a load takes its entry.
+    var prefetched: [CacheKey: PreparedTexture] = [:]
+    /// Off runs every texture load serially on the build thread.
+    public var decodesInParallel = true
 
     public var cachedCount: Int {
         cache.count
@@ -127,8 +131,8 @@ nonisolated public final class TextureLibrary {
         batchDepth += 1
         defer {
             batchDepth -= 1
-            if batchDepth == 0 {
-                fastLoader?.flush()
+            if batchDepth == 0, let fastLoader {
+                loadPhases.measure(.gpuRead) { fastLoader.flush() }
             }
         }
         return try body()
@@ -138,29 +142,81 @@ nonisolated public final class TextureLibrary {
         if usage == .cube || usage == .volume {
             return loadDirect(path: path, usage: usage)
         }
-        if let streamed = streamedTexture(path: path, usage: usage) {
+        let prepared = prefetched.removeValue(forKey: CacheKey(path: path, usage: usage))
+            ?? PreparedTexture(source: source(forPath: path))
+        return finish(prepared, path: path, usage: usage)
+    }
+
+    /// The cache entry when current, else the archive bytes.
+    func source(forPath path: String) -> TextureSource {
+        if let entry = assetCache?.entry(forPath: path, decoder: .readyTexture) {
+            return .cached(entry)
+        }
+        guard let data = try? fileSystem.contents(forPath: path) else { return .missing }
+        return .archive(data)
+    }
+
+    /// The fast loader, when it reads textures and a batch is open.
+    private var fastTextureLoader: FastTextureLoader? {
+        guard batchDepth > 0, let fastLoader, fastLoader.control.isEnabled else { return nil }
+        return fastLoader
+    }
+
+    /// Whether the fast loader reads this cached texture, so no CPU upload is needed.
+    func readsFast(_ entry: AssetCacheEntryRead<ReadyTexture>) -> Bool {
+        fastTextureLoader?.reads(from: entry.file) ?? false
+    }
+
+    /// The fast loader is on, but skips this entry because it is on an external disk.
+    private func readsExternalDisk(_ entry: AssetCacheEntryRead<ReadyTexture>) -> Bool {
+        fastTextureLoader.map { !$0.reads(from: entry.file) } ?? false
+    }
+
+    /// Streaming first, then the fast loader, then the CPU upload. A prefetch that
+    /// already uploaded the texture skips the rest.
+    private func finish(
+        _ prepared: PreparedTexture,
+        path: String,
+        usage: TextureUsage
+    ) -> MTLTexture {
+        if usage == .color, prepared.source.declaresVolume {
+            volumePaths.insert(path)
+        }
+        if let uploaded = prepared.uploaded {
+            loadedCount += 1
+            if case let .cached(entry) = prepared.source, readsExternalDisk(entry) {
+                fastLoader?.recordExternalSkip()
+            }
+            return uploaded
+        }
+        if
+            let ready = prepared.streamReady ?? streamingReady(prepared.source),
+            let streamed = streamedTexture(ready: ready, path: path, usage: usage)
+        {
             loadedCount += 1
             return streamed
         }
-        if
-            batchDepth > 0, let fastLoader, fastLoader.control.isEnabled,
-            let entry = assetCache?.entry(forPath: path, decoder: .readyTexture)
-        {
+        switch prepared.source {
+        case let .cached(entry):
             loadedCount += 1
-            guard fastLoader.reads(from: entry.file) else {
-                fastLoader.recordExternalSkip()
-                return loader.texture(ready: entry.value, usage: usage, label: path)
-            }
-            if let texture = try? fastLoader.enqueue(entry, usage: usage, label: path) {
-                return texture
+            if let fastLoader = fastTextureLoader {
+                guard fastLoader.reads(from: entry.file) else {
+                    fastLoader.recordExternalSkip()
+                    return loader.texture(ready: entry.value, usage: usage, label: path)
+                }
+                if let texture = try? fastLoader.enqueue(entry, usage: usage, label: path) {
+                    return texture
+                }
             }
             return loader.texture(ready: entry.value, usage: usage, label: path)
-        }
-        if let ready = assetCache?.value(forPath: path, decoder: .readyTexture) {
+        case let .archive(data):
             loadedCount += 1
-            return loader.texture(ready: ready, usage: usage, label: path)
+            return loader.texture(dds: data, usage: usage, label: path)
+        case .missing:
+            missingCount += 1
+            missingPaths.insert(path)
+            return loader.missingTexture(usage: usage, label: path)
         }
-        return loadDirect(path: path, usage: usage)
     }
 
     /// The archive bytes, with no cache or streaming. Cubemaps and volumes always load

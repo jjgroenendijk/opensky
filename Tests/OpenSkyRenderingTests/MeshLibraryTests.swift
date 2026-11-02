@@ -16,8 +16,8 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct MeshLibraryTests {
-    private static let device = MTLCreateSystemDefaultDevice()
-    private static var hasDevice: Bool {
+    static let device = MTLCreateSystemDefaultDevice()
+    static var hasDevice: Bool {
         device != nil
     }
 
@@ -32,7 +32,7 @@ struct MeshLibraryTests {
         try FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
     }
 
-    private func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
+    func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
         let url = dataURL.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(),
@@ -41,14 +41,14 @@ struct MeshLibraryTests {
         try contents.write(to: url)
     }
 
-    private func library(device: MTLDevice) throws -> MeshLibrary {
+    func library(device: MTLDevice) throws -> MeshLibrary {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         return MeshLibrary(fileSystem: vfs, device: device, textures: textures)
     }
 
     /// One static one-triangle BSTriShape payload (SSE interleaved record).
-    private func shape(skinRef: Int32 = -1, shaderPropertyRef: Int32 = -1) -> Data {
+    func shape(skinRef: Int32 = -1, shaderPropertyRef: Int32 = -1) -> Data {
         var record = Data()
         record.appendFloat32(1)
         record.appendFloat32(2)
@@ -69,7 +69,7 @@ struct MeshLibraryTests {
     }
 
     /// Well-formed static NIF: one drawable shape under a root node.
-    private func staticNIF() -> Data {
+    func staticNIF() -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", shape(shaderPropertyRef: 2)),

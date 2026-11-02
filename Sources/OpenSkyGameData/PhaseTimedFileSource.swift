@@ -31,4 +31,8 @@ nonisolated public struct PhaseTimedFileSource: GameFileSource {
     public func provenance(forPath path: String) -> GameFileProvenance? {
         base.provenance(forPath: path)
     }
+
+    public var untimed: any GameFileSource {
+        base.untimed
+    }
 }

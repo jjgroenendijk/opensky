@@ -81,13 +81,13 @@ final class GameLaunchContext {
             completion()
             return
         }
+        let settings = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
         let request = WorldLoadRequest(
             root: root,
             language: localizationLanguage.language,
             configurationStore: terrainLODConfigurationStore,
-            cacheSettings: AssetCacheSettings(store: PlayerSettingsStore(
-                persistence: try? PlayerSettingsFile.defaultFile()
-            )),
+            cacheSettings: AssetCacheSettings(store: settings),
+            decodesInParallel: settings.bool(.parallelDecode),
             loadPhases: benchmarkLoadPhases
         )
         loader.start(
@@ -173,6 +173,7 @@ final class GameLaunchContext {
                 progress: progress,
                 assetCache: cache,
                 fastLoad: fastLoad,
+                decodesInParallel: request.decodesInParallel,
                 loadPhases: request.loadPhases
             )
             return LoadedWorld(fileSystem: vfs, session: session)
@@ -211,5 +212,6 @@ nonisolated private struct WorldLoadRequest: Sendable {
     let language: String
     let configurationStore: TerrainLODConfigurationStore
     let cacheSettings: AssetCacheSettings
+    let decodesInParallel: Bool
     let loadPhases: LoadPhaseRecorder?
 }

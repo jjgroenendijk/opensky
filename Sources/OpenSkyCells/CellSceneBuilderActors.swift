@@ -258,55 +258,27 @@ nonisolated extension CellSceneBuilder {
         enable: EnableParentResolver
     ) {
         guard !actors.isEmpty else { return }
-        let resolvers = actorResolversBuildingIfNeeded()
-        let assembler = ActorAssembler(provider: meshes)
         let indexed = entriesByFormID(build.entries)
-        for actor in actors {
+        let steps = actors.map { actor in
+            resolveStep(actor, entry: indexed[actor.formID], deltas: deltas, enable: enable)
+        }
+        // Every look is known before the first assembly, so the part files load on every core.
+        meshes.preparse(paths: steps.flatMap(\.modelPaths))
+        defer { meshes.dropPreparsed() }
+        let assembler = ActorAssembler(provider: meshes)
+        for (actor, step) in zip(actors, steps) {
             let id = actor.formID.description
-            if
-                let skip = actorRuntimeSkip(
-                    actor: actor, entry: indexed[actor.formID], deltas: deltas, enable: enable
-                )
-            {
+            switch step {
+            case let .skipped(skip, key):
                 build.counts.disabledSkips += 1
-                if let key = indexed[actor.formID]?.key {
+                if let key {
                     build.disabledKeys.insert(key)
                 }
                 Self.logger.info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
-                continue
-            }
-            do {
-                let roll = indexed[actor.formID].map {
-                    leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
-                }
-                let templates = resolvers.template.rolling(roll)
-                let appearance = try templates.resolve(base: actor.base)
-                let visual = try resolvers.visual.resolve(
-                    appearance: appearance,
-                    equipped: runtimeEquipment(
-                        entry: indexed[actor.formID], deltas: deltas
-                    ),
-                    roll: roll,
-                    carried: templates.carriedItems(base: actor.base)
-                ).presenting(
-                    indexed[actor.formID].flatMap {
-                        deltas[$0.key]?.component(ActorPresentationState.self)
-                    },
-                    textureSets: resolvers.visual.textureSets
-                )
-                let placed = actorApplyingRuntimeTransform(
-                    actor,
-                    entry: indexed[actor.formID],
-                    deltas: deltas
-                )
-                record(
-                    assembler.assemble(placed: placed, visual: visual),
-                    id: id,
-                    into: &build
-                )
-            } catch {
+            case let .resolved(placed, visual):
+                record(assembler.assemble(placed: placed, visual: visual), id: id, into: &build)
+            case let .failed(reason):
                 build.counts.failures += 1
-                let reason = String(describing: error)
                 build.counts.failureReasons.append("ACHR \(id): unresolved (\(reason))")
                 Self.logger.warning(
                     """
@@ -315,6 +287,37 @@ nonisolated extension CellSceneBuilder {
                     """
                 )
             }
+        }
+    }
+
+    /// The runtime skip, or the resolved look, of one actor. Reads records only.
+    nonisolated private func resolveStep(
+        _ actor: PlacedActor,
+        entry: RuntimeReferenceEntry?,
+        deltas: [ReferenceKey: ReferenceStateDelta],
+        enable: EnableParentResolver
+    ) -> ActorBuildStep {
+        if let skip = actorRuntimeSkip(actor: actor, entry: entry, deltas: deltas, enable: enable) {
+            return .skipped(skip, entry?.key)
+        }
+        let resolvers = actorResolversBuildingIfNeeded()
+        do {
+            let roll = entry.map { leveledRoll(of: $0.key, base: actor.base, deltas: deltas) }
+            let templates = resolvers.template.rolling(roll)
+            let appearance = try templates.resolve(base: actor.base)
+            let visual = try resolvers.visual.resolve(
+                appearance: appearance,
+                equipped: runtimeEquipment(entry: entry, deltas: deltas),
+                roll: roll,
+                carried: templates.carriedItems(base: actor.base)
+            ).presenting(
+                entry.flatMap { deltas[$0.key]?.component(ActorPresentationState.self) },
+                textureSets: resolvers.visual.textureSets
+            )
+            let placed = actorApplyingRuntimeTransform(actor, entry: entry, deltas: deltas)
+            return .resolved(placed, visual)
+        } catch {
+            return .failed(String(describing: error))
         }
     }
 
@@ -453,5 +456,22 @@ nonisolated extension CellSceneBuilder {
         actorTemplateResolver = template
         actorVisualResolver = visual
         return (template, visual)
+    }
+}
+
+/// One actor of a cell build, between its look resolution and its assembly.
+nonisolated private enum ActorBuildStep {
+    case skipped(String, ReferenceKey?)
+    case resolved(PlacedActor, ResolvedActorVisual)
+    case failed(String)
+
+    /// The model files the assembly reads: body parts with their thin siblings,
+    /// attachments, head parts, and the face.
+    var modelPaths: [String] {
+        guard case let .resolved(_, visual) = self else { return [] }
+        let parts = visual.parts.map(\.modelPath)
+        return parts + parts.compactMap(BodyWeightBlend.thinPath(forHeavy:))
+            + visual.attachments.map(\.modelPath) + visual.headParts.parts.map(\.modelPath)
+            + [visual.faceGenMeshPath].compactMap(\.self)
     }
 }

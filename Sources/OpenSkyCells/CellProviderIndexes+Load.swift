@@ -51,6 +51,7 @@ nonisolated extension CellProviderIndexes {
         progress: WorldLoadProgress = .silent,
         assetCache: AssetCacheReader? = nil,
         fastLoad: FastTextureLoadControl? = nil,
+        decodesInParallel: Bool = true,
         loadPhases: LoadPhaseRecorder? = nil
     ) async throws -> sending CellSession {
         let file = try progress.measure(.masterFile) {
@@ -82,7 +83,7 @@ nonisolated extension CellProviderIndexes {
                 plugins: context,
                 assets: RunnerAssets(
                     fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad,
-                    loadPhases: loadPhases
+                    decodesInParallel: decodesInParallel, loadPhases: loadPhases
                 ),
                 localizationLanguage: localizationLanguage,
                 terrainLODConfigurationStore: terrainLODConfigurationStore
@@ -129,6 +130,8 @@ nonisolated extension CellProviderIndexes {
         let cache: AssetCacheReader?
         /// Nil, or no cache, loads every texture on the CPU.
         let fastLoad: FastTextureLoadControl?
+        /// Off decodes every asset serially on the build thread.
+        let decodesInParallel: Bool
         /// Times the streamer's builds by asset phase, for the benchmark's arrivals.
         let loadPhases: LoadPhaseRecorder?
     }
@@ -161,6 +164,7 @@ nonisolated extension CellProviderIndexes {
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
         builder.collisionModels?.assetCache = assets.cache
+        builder.decodesInParallel = assets.decodesInParallel
         builder.leveling = context.leveling
         builder.loadPhases = assets.loadPhases
         let formIDResolver = builder.formIDResolver
