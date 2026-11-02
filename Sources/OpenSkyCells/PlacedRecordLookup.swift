@@ -113,7 +113,9 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             {
                 points.append(position)
             }
-            let link = entry.placedReference?.linkedReferences.first { $0.keyword == nil }
+            let links = entry.placedReference?.linkedReferences
+                ?? entry.placedActor?.details.linkedReferences ?? []
+            let link = links.first { $0.keyword == nil }
             next = link.flatMap { ReferenceKey.resolve($0.ref, using: resolver) }
         }
         return points

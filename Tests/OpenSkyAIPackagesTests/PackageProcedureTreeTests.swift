@@ -28,8 +28,13 @@ private struct FakeTreeHost: PackageTreeHost {
         setup.selector = Package.Target(rawKind: 2, value: 10, countOrDistance: 0)
         let list = leaf.inputIndexes.first.flatMap(\.self)
         setup.targets = list.flatMap { objectLists[$0] } ?? []
-        return PackageLeafSetup(setup: setup)
+        return PackageLeafSetup(setup: setup, seat: leaf.kind == .sit ? Self.seat : nil)
     }
+
+    static let seat = PackageSeat(
+        furniture: .plugin(name: "seat.esm", objectID: 10), index: 1,
+        seat: FurnitureSeat(position: [1, 0, 0], heading: 0, animationType: 1, keyword: nil)
+    )
 }
 
 @MainActor
@@ -165,6 +170,41 @@ struct PackageProcedureTreeTests {
             == [.init(leaf: 1, command: .move(to: SIMD3(1, 0, 0)))])
         #expect(runner.completions == 1)
         #expect(runner.outcome == nil)
+    }
+
+    /// The sit ends the package in the step that asks to sit, so the seat outlives it.
+    @Test func aSitThatCompletesThePackageKeepsItsSeat() throws {
+        var runner = try Self.runner([
+            Self.branch("Sequence", children: 1),
+            Self.procedure("Sit", completes: true)
+        ])
+        var host = FakeTreeHost()
+        _ = runner.start(host: &host)
+        #expect(runner.handle(.arrived, leaf: 1, host: &host) == [.init(leaf: 1, command: .sit)])
+        #expect(runner.outcome == .succeeded)
+        #expect(runner.running[1] == nil)
+        #expect(runner.finishedSeats[1] == FakeTreeHost.seat)
+    }
+
+    /// A sit never completes alone, but a seated sit hands over to the next step of
+    /// its sequence: the perch-then-shout dragon template relies on it.
+    @Test func aSeatedSitHandsOverToTheNextSequenceStep() throws {
+        var runner = try Self.runner([
+            Self.branch("Sequence", children: 2),
+            Self.procedure("Sit"),
+            Self.procedure("Shout", completes: true)
+        ])
+        var host = FakeTreeHost()
+        _ = runner.start(host: &host)
+        _ = runner.handle(.arrived, leaf: 1, host: &host)
+        #expect(runner.running[1] == nil)
+        #expect(runner.running[2] != nil)
+
+        var lone = try Self.runner([Self.branch("Sequence", children: 1), Self.procedure("Sit")])
+        _ = lone.start(host: &host)
+        _ = lone.handle(.arrived, leaf: 1, host: &host)
+        #expect(lone.running[1] != nil)
+        #expect(lone.outcome == nil)
     }
 
     /// Find fills its output list, and the acquire after it picks up what was found.

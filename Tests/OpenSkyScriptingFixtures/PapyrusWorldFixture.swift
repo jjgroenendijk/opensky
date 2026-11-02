@@ -117,33 +117,6 @@ public enum PapyrusWorldFixture {
         )
     }
 
-    /// The same thing as an ACHR rather than a REFR, which is what
-    /// the `Actor` natives need: only a placed actor carries the NPC_ base an
-    /// `ActorValueHolder` derives its baseline from.
-    public static func actorEntry(
-        objectID: UInt32,
-        base: UInt32,
-        scripts: [VMADFixture.Script],
-        isPersistent: Bool = false
-    ) throws -> RuntimeReferenceEntry {
-        var name = Data()
-        name.appendUInt32(base)
-        let fields = ESMFixture.field("NAME", name)
-            + ESMFixture.field("DATA", Data(count: 24))
-            + ESMFixture.field("VMAD", VMADFixture.payload(scripts: scripts))
-        let bytes = ESMFixture.record("ACHR", formID: objectID, data: fields)
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce an ACHR record")
-        }
-        return try RuntimeReferenceEntry(
-            key: .plugin(name: pluginName, objectID: objectID),
-            formID: FormID(objectID),
-            isPersistent: isPersistent,
-            record: .actor(PlacedActor(record: record))
-        )
-    }
-
     public static func index(_ entries: [RuntimeReferenceEntry]) -> RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: entries)
     }
@@ -360,5 +333,37 @@ extension PapyrusWorldFixture {
             payload.appendUInt32(link.delay.bitPattern)
             bytes += ESMFixture.field("XAPR", payload)
         }
+    }
+
+    /// The same thing as an ACHR rather than a REFR, which is what
+    /// the `Actor` natives need: only a placed actor carries the NPC_ base an
+    /// `ActorValueHolder` derives its baseline from.
+    public static func actorEntry(
+        objectID: UInt32,
+        base: UInt32,
+        scripts: [VMADFixture.Script],
+        isPersistent: Bool = false,
+        linkedReferences: [(keyword: UInt32?, ref: UInt32)] = []
+    ) throws -> RuntimeReferenceEntry {
+        var name = Data()
+        name.appendUInt32(base)
+        let links = linkedReferences.reduce(into: Data()) { bytes, link in
+            bytes += linkedReferenceField(keyword: link.keyword, ref: link.ref)
+        }
+        let fields = ESMFixture.field("NAME", name)
+            + ESMFixture.field("DATA", Data(count: 24))
+            + links
+            + ESMFixture.field("VMAD", VMADFixture.payload(scripts: scripts))
+        let bytes = ESMFixture.record("ACHR", formID: objectID, data: fields)
+        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
+        guard case let .record(record)? = children.first else {
+            throw ESMError.malformed("fixture did not produce an ACHR record")
+        }
+        return try RuntimeReferenceEntry(
+            key: .plugin(name: pluginName, objectID: objectID),
+            formID: FormID(objectID),
+            isPersistent: isPersistent,
+            record: .actor(PlacedActor(record: record))
+        )
     }
 }

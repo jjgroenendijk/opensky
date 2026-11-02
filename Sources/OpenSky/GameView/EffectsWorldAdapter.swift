@@ -91,6 +91,7 @@ final class EffectsWorldAdapter {
     func handleSpellHit(_ event: SpellHitEvent) {
         guard let gameSession = game.gameSession else { return }
         effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
+        effects.detonateAreaExplosions(of: event)
         noteSpellHit(event.hit)
         playHitSounds(of: event, director: gameSession.soundDirector)
     }

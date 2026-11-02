@@ -18,6 +18,8 @@ nonisolated public struct NPCRiddenHold: Equatable, Sendable {
     /// Walk yaw, counter-clockwise from +X.
     public private(set) var yaw: Float
     public private(set) var cell: CellSceneLocation?
+    /// The trigger volumes it stood in at the last move.
+    public private(set) var occupiedTriggers: Set<ReferenceKey> = []
 
     public init(
         actor: ReferenceKey, formID: FormID, placement: PlacedReference.Placement,
@@ -40,6 +42,18 @@ nonisolated public struct NPCRiddenHold: Equatable, Sendable {
         let previous = self.cell
         self.cell = cell
         return previous != nil && cell != nil && previous != cell
+    }
+
+    /// The triggers entered and left since the last move, as a walker reports them.
+    public mutating func triggerEdges(now current: Set<ReferenceKey>) -> [TriggerTransitionEvent] {
+        let entered = current.subtracting(occupiedTriggers).sorted().map {
+            TriggerTransitionEvent(reference: $0, phase: .enter, actor: actor)
+        }
+        let left = occupiedTriggers.subtracting(current).sorted().map {
+            TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
+        }
+        occupiedTriggers = current
+        return entered + left
     }
 
     public var transform: ReferenceTransformOverride {

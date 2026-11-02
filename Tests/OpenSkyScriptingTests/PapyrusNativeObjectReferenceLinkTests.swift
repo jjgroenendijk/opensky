@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
@@ -38,6 +39,36 @@ struct PapyrusNativeObjectReferenceLinkTests {
         }
         #expect(fixture.session.world.referenceKey(for: linked)
             == Fixture.key(Fixture.doorID))
+    }
+
+    /// A placed actor keeps its links in the ACHR, not in a REFR.
+    @Test func getLinkedRefReadsAPlacedActorsLinks() throws {
+        let lever = try PapyrusWorldFixture.referenceEntry(
+            objectID: Fixture.leverID, scripts: [VMADFixture.Script("Lever", properties: [])]
+        )
+        let actor = try PapyrusWorldFixture.actorEntry(
+            objectID: Fixture.doorID, base: 0x0000_0EEE,
+            scripts: [VMADFixture.Script("Guard", properties: [])],
+            linkedReferences: [(keyword: nil, ref: Fixture.leverID)]
+        )
+        let session = PapyrusWorldFixture.session(
+            objects: [
+                PapyrusWorldFixture.eventScript("Lever", events: []),
+                PapyrusWorldFixture.eventScript("Guard", events: [])
+            ],
+            entries: [lever, actor]
+        )
+        let registry = PapyrusWorldFixture.registry(for: session)
+        let result = registry.invoke(PapyrusWorldFixture.methodCall(
+            "ObjectReference", "GetLinkedRef",
+            receiver: session.world.objectHandle(for: actor.key),
+            arguments: [], returnType: .object("ObjectReference")
+        ))
+        guard case let .returned(.object(handle)) = result else {
+            Issue.record("GetLinkedRef() on an actor did not return an object: \(result)")
+            return
+        }
+        #expect(session.world.referenceKey(for: handle) == lever.key)
     }
 
     /// Every "no link" case is Papyrus `None`, which is `PapyrusValue.none` —

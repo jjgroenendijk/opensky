@@ -328,7 +328,7 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
             return playerIdentity?.race
         }
         guard
-            let base = game.scripts.bridge?.placedReference(for: actor)?.base,
+            let base = game.scripts.bridge?.baseObject(of: actor),
             let records = identityRecords
         else { return nil }
         let roll = game.worldState.leveledRoll(

@@ -38,6 +38,8 @@ nonisolated public struct DragonFlightCandidate: Equatable, Sendable {
     public var isRended = false
     /// It died in the air and still has to come down.
     public var isDead = false
+    /// Where its package sends it while it does not fight.
+    public var packageFlight: DragonPackageFlight?
 
     public init(key: ReferenceKey, feet: SIMD3<Float>, yaw: Float) {
         self.key = key
@@ -66,6 +68,8 @@ public protocol DragonFlightWorld: AnyObject {
     )
     /// Gives the actor back to its packages and mover where it stands.
     func releaseFromFlight(_ actor: ReferenceKey)
+    /// The dragon got where its package sent it.
+    func flightReachedPackageTarget(_ actor: ReferenceKey)
     func flightGroundHeight(at point: SIMD2<Float>) -> Float?
     func raiseFlightEvent(_ name: String, on actor: ReferenceKey)
     /// The wing dust of a landing approach, on the ground at `point`.
@@ -194,6 +198,9 @@ public final class DragonFlightCoordinator {
             key, state: step.state,
             inputs: DragonFlightGraphNames.inputs(step.state, settings: settings)
         )
+        if let flight = candidate.packageFlight, Self.reached(flight, state: step.state) {
+            world.flightReachedPackageTarget(key)
+        }
         if !step.state.phase.isFlying {
             land(key, world: world)
         }
@@ -211,7 +218,8 @@ public final class DragonFlightCoordinator {
         return name
     }
 
-    /// Death, Dragonrend, the forced order, then the fight. Without any the dragon lands.
+    /// Death, Dragonrend, the forced order, the fight, then the package. Without any the
+    /// dragon lands.
     func goal(
         for candidate: DragonFlightCandidate, perches: [DragonPerch] = []
     ) -> DragonFlightGoal {
@@ -224,8 +232,12 @@ public final class DragonFlightCoordinator {
         if let order = orders[candidate.key] {
             return goal(for: candidate, order: order, perches: perches)
         }
-        guard candidate.isAllowedToFly, candidate.canFlyHere, let target = candidate.target
-        else { return .ground(nil) }
+        guard candidate.isAllowedToFly, candidate.canFlyHere else { return .ground(nil) }
+        guard let target = candidate.target else {
+            return candidate.packageFlight.map {
+                goal(for: candidate, flight: $0, perches: perches)
+            } ?? .ground(nil)
+        }
         let landing = DragonFlightGoal.ground(Self.landingPoint(near: target, from: candidate.feet))
         if candidate.isInjured, candidate.fight != nil {
             return landing

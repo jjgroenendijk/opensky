@@ -43,7 +43,7 @@ extension AgentWorldAdapter {
         case .kill, .resurrect, .flight, .drunk, .knock, .perk, .beastForm, .eyes, .link:
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
-             .loadScreen:
+             .loadScreen, .sound:
             return try done(renderDebug(command))
         case .raceMenu, .skillsMenu, .gamepad, .fastTravel:
             return try done(menuDebug(command))
@@ -110,6 +110,11 @@ extension AgentWorldAdapter {
         }
     }
 
+    private func setSound(_ on: Bool) -> AgentJSON {
+        game.audio.outputMuted = !on
+        return ["muted": .bool(game.audio.outputMuted)]
+    }
+
     private func renderDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
         switch command {
         case let .overlay(name, enabled): try setOverlay(name, enabled: enabled)
@@ -122,6 +127,7 @@ extension AgentWorldAdapter {
         case .skipBink: ["skipped": .bool(game.movies.skip(force: true)), "bink": binkState]
         case let .titles(step): try driveTitles(step)
         case let .loadScreen(editorID): try forceLoadScreen(editorID)
+        case let .sound(on): setSound(on)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }

@@ -178,6 +178,10 @@ extension PackageCoordinator {
     /// A move that finds every mover slot taken waits in the queue. The room check comes
     /// first, because a refused move would still pay for its path search.
     func requestMove(_ actor: ReferenceKey, to point: SIMD3<Float>) {
+        if world?.packageActorFlies(actor) == true {
+            requestFlight(actor, to: point)
+            return
+        }
         let execution = executions[actor]
         let walker = mounts[actor] ?? actor
         let result = world.map { world in

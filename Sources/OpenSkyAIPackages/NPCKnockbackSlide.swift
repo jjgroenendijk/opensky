@@ -68,8 +68,12 @@ public struct NPCKnockbackSlide {
     }
 
     public var transform: ReferenceTransformOverride {
+        transform(at: controller.feetPosition)
+    }
+
+    private func transform(at feet: SIMD3<Float>) -> ReferenceTransformOverride {
         ReferenceTransformOverride(
-            position: controller.feetPosition,
+            position: feet,
             rotation: SIMD3(
                 authoredPlacement.rotation.x, authoredPlacement.rotation.y,
                 NPCYawMath.heading(fromYaw: yaw)
@@ -79,7 +83,10 @@ public struct NPCKnockbackSlide {
     }
 
     public var instanceDelta: float4x4 {
-        NPCDrawDelta.from(drawn: authoredPlacement, to: transform, scale: scale)
+        NPCDrawDelta.from(
+            drawn: authoredPlacement, to: transform(at: controller.drawnFeetPosition),
+            scale: scale
+        )
     }
 
     public var readout: NPCMovementReadout {

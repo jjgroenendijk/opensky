@@ -42,6 +42,16 @@ The goal of each step is chosen in this order:
    perch (or hovers when none fits), and ground lands 600 units from the target, on the side
    the dragon comes from.
 
+6. Out of a fight, the dragon's package. Each walk the package asks for becomes a flight
+   target. A point is circled at 1,024 units, and it counts as reached within 1,536 units,
+   measured flat. A sit procedure's furniture is a perch, which the dragon lands on. The
+   arrival moves the package on, as a walk's arrival does. The last target stays after the
+   package ends, so a perched dragon stays on its perch. A perched dragon whose next walk
+   ends within 1,536 units of its perch, such as the walk before a shout, stays perched.
+   The opening's Alduin patrols toward Helgen this way and then perches on the tower.
+
+[INFO] The circle radius and the arrival distance are OpenSky's numbers.
+
 `SetAllowFlying(false)` and an interior keep a dragon on the ground. A dead dragon on the ground
 does not take off again.
 

@@ -52,7 +52,7 @@ struct VehicleCoordinatorTests {
             .placePlayer(seat),
             .publishVehiclePoses([:]),
             .publishCarriedPoses([:]),
-            .publishLinks([.player, cart])
+            .publishLinks([.player])
         ])
     }
 

@@ -124,13 +124,13 @@ public struct NPCMovementRuntime {
     public var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
 
     private var movers: [ReferenceKey: NPCMover] = [:]
-    private var parked: [ReferenceKey: NPCParkedMovement] = [:]
+    var parked: [ReferenceKey: NPCParkedMovement] = [:]
     /// Actors turning on the spot. Not counted against the mover
     /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
     /// budget the cap protects does not apply to it.
     private var facings: [ReferenceKey: NPCFacingHold] = [:]
     /// Mounts the player rides. Nothing else moves or turns them.
-    private var ridden: [ReferenceKey: NPCRiddenHold] = [:]
+    var ridden: [ReferenceKey: NPCRiddenHold] = [:]
     /// Standing actors a push slides. A walking actor takes the push on its own mover.
     private var slides: [ReferenceKey: NPCKnockbackSlide] = [:]
 
@@ -320,33 +320,6 @@ public struct NPCMovementRuntime {
     }
 
     /// Moves a ridden actor. A cell crossing persists it, as a walk's does.
-    public mutating func steerRidden(
-        _ actor: ReferenceKey, to feet: SIMD3<Float>, yaw: Float, cell: CellSceneLocation?
-    ) {
-        guard var hold = ridden[actor] else { return }
-        let crossed = hold.move(to: feet, yaw: yaw, cell: cell)
-        ridden[actor] = hold
-        if crossed {
-            onPersist?(hold.persistence(reason: .cellHandoff))
-        }
-    }
-
-    /// Parks a ridden actor where the player left it.
-    @discardableResult
-    public mutating func releaseRidden(_ actor: ReferenceKey) -> Bool {
-        guard let hold = ridden.removeValue(forKey: actor) else { return false }
-        parked[actor] = NPCParkedMovement(
-            readout: hold.readout, transform: hold.transform, formID: hold.formID,
-            scale: hold.scale, drawnPlacement: hold.authoredPlacement
-        )
-        onPersist?(hold.persistence(reason: .halt))
-        return true
-    }
-
-    public func isRidden(_ actor: ReferenceKey) -> Bool {
-        ridden[actor] != nil
-    }
-
     /// Where an actor stands: its movement pose, else the pose a cell build draws
     /// from `snapshot`, which is the saved transform when one exists, then the record.
     public func standingTransform(
@@ -476,7 +449,7 @@ extension NPCMovementRuntime {
     }
 }
 
-private struct NPCParkedMovement {
+struct NPCParkedMovement {
     let readout: NPCMovementReadout
     let transform: ReferenceTransformOverride
     let formID: FormID

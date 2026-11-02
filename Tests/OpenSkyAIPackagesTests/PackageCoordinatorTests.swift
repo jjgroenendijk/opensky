@@ -147,6 +147,23 @@ struct PackageCoordinatorTests {
         #expect(world.moves == FakePackageWorld.patrol)
     }
 
+    /// A flying actor's patrol walks nowhere: each point becomes its flight target, and
+    /// the flight's arrival moves the patrol on.
+    @Test func aFlyingPatrolSetsFlightTargets() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.flies = true
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let override = PackageOverride(packages: [FormID(0x103)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .running)
+        #expect(coordinator.flightTarget(of: Self.guardKey) == .point(FakePackageWorld.patrol[0]))
+        coordinator.flightArrived(Self.guardKey)
+        #expect(coordinator.flightTarget(of: Self.guardKey) == .point(FakePackageWorld.patrol[1]))
+        #expect(world.moves.isEmpty)
+    }
+
     /// A package replaced before it ends runs its change fragment and no end fragment.
     @Test func aReplacedPackageRunsItsChangeFragment() throws {
         let (coordinator, world) = try Self.coordinator()

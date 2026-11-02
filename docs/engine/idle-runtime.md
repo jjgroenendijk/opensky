@@ -121,6 +121,9 @@ an annotation (`m_isAnnotation`) is skipped, because the annotation already fire
 install: `AOExecutioneeChop.hkx` is 20 s long and raises `Decapitate` 8.161 s and `KillActor`
 3.394 s before its end.
 
+`KillActor` and `ExitCartEnd` act the same whether the idle runtime or the actor's own behaviour
+graph raises them. A seated executionee plays its chop clip in its graph, so the graph raises it.
+
 [WARNING] `KillActor` kills the actor that plays the clip, at once. No source documents the event;
 this is OpenSky's reading of its name and of where the clips raise it.
 

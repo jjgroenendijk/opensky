@@ -195,6 +195,10 @@ nonisolated extension AgentCommandCatalog {
             ]
         ),
         command(
+            "debug.sound", "Mute or unmute the game's sound.",
+            positionals: [required("on", "Either on or off.")]
+        ),
+        command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
         ),

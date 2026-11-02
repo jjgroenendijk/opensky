@@ -87,4 +87,26 @@ extension NPCMovementRuntimeTests {
         let delta = try #require(runtime.instanceDeltas()[1])
         #expect(abs(delta.columns.3.x - 5000) < 0.01)
     }
+
+    /// A walker draws between its last two fixed steps, so a frame that holds half a
+    /// step moves it half a step instead of not at all.
+    @Test
+    func aWalkerDrawsBetweenItsLastTwoSteps() throws {
+        var runtime = NPCMovementRuntime()
+        let target = SIMD3<Float>(500, 0, 0)
+        let started = runtime.start(Self.start(
+            actor: actor, path: Self.path(waypoints: [target], target: target)
+        ))
+        #expect(started)
+        let world = Self.world()
+        for _ in 0 ..< 12 {
+            runtime.advance(by: 1.0 / 120, world: world)
+        }
+        let before = try #require(runtime.instanceDeltas()[1]).columns.3.x
+        runtime.advance(by: 1.5 / 120, world: world)
+        let halfway = try #require(runtime.instanceDeltas()[1]).columns.3.x
+        let after = try #require(runtime.transform(for: actor)).position.x
+        #expect(halfway > before)
+        #expect(halfway < after)
+    }
 }

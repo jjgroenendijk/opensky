@@ -5,6 +5,7 @@
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import OpenSkyPlayer
 @testable import OpenSkyWorldState
 import simd
@@ -42,5 +43,23 @@ extension NPCMovementRuntimeTests {
         #expect(persistence.last?.reason == .halt)
         #expect(runtime.transform(for: actor)?.position == SIMD3(5000, 0, 0))
         #expect(abs((runtime.readouts().first?.yaw ?? 0) - 1) < 0.0001)
+    }
+
+    /// A steered actor enters and leaves a trigger as a walker does.
+    @Test
+    func aSteeredActorCrossesTriggers() {
+        var runtime = NPCMovementRuntime()
+        var events: [TriggerTransitionEvent] = []
+        runtime.onTriggerTransition = { events.append($0) }
+        _ = runtime.takeRidden(Self.face(actor: actor, target: .zero))
+        let wall = ReferenceKey.plugin(name: "test.esm", objectID: 0x99)
+        let inside: (PlayerCapsuleState) -> Set<ReferenceKey> = {
+            $0.feetPosition.x > 100 && $0.feetPosition.x < 200 ? [wall] : []
+        }
+        for x: Float in [50, 150, 160, 250] {
+            runtime.steerRidden(actor, to: SIMD3(x, 0, 0), yaw: 0, cell: nil, triggersAt: inside)
+        }
+        #expect(events.map(\.phase) == [.enter, .leave])
+        #expect(events.allSatisfy { $0.reference == wall && $0.actor == actor })
     }
 }

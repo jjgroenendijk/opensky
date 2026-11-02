@@ -78,8 +78,9 @@ extension PapyrusNativeFunctions {
         world: any PapyrusWorldBridge
     ) -> PapyrusValue {
         guard
-            let placed = world.placedReference(for: key),
-            let link = linkedReference(in: placed, keyword: keyword, world: world),
+            let link = linkedReference(
+                in: world.linkedReferences(of: key), keyword: keyword, world: world
+            ),
             let linkedKey = world.referenceKey(forFormID: link),
             let handle = world.objectHandle(for: linkedKey)
         else { return .none }
@@ -90,12 +91,12 @@ extension PapyrusNativeFunctions {
     /// as a load-order-relative FormID, so each tag resolves to a `ReferenceKey`
     /// before the compare. A tag that does not resolve never matches.
     private static func linkedReference(
-        in placed: PlacedReference,
+        in links: [PlacedReference.LinkedReference],
         keyword: ReferenceKey?,
         world: any PapyrusWorldBridge
     ) -> FormID? {
-        guard let keyword else { return placed.linkedReference() }
-        return placed.linkedReferences.first { link in
+        guard let keyword else { return links.first { $0.keyword == nil }?.ref }
+        return links.first { link in
             guard let tag = link.keyword else { return false }
             return world.referenceKey(forFormID: tag) == keyword
         }?.ref

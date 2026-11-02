@@ -32,6 +32,12 @@ private final class FakeDragonFlightWorld: DragonFlightWorld {
         treeEvents[perch]
     }
 
+    var reachedPackageTargets: [ReferenceKey] = []
+
+    func flightReachedPackageTarget(_ actor: ReferenceKey) {
+        reachedPackageTargets.append(actor)
+    }
+
     func holdForFlight(_ actor: ReferenceKey) -> (feet: SIMD3<Float>, yaw: Float)? {
         held.append(actor)
         return candidates.first { $0.key == actor }.map { ($0.feet, $0.yaw) }
@@ -181,6 +187,22 @@ struct DragonFlightCoordinatorTests {
         flight.tick(deltaTime: 1.0 / 30)
         #expect(world.raised == ["TakeOff"])
         #expect(flight.phase(of: Self.dragon) == .takingOff)
+    }
+
+    /// Out of a fight, a package point takes it up and round the point, and the package's
+    /// sit lands it on that perch. Each arrival is reported.
+    @Test func aPackageFliesToItsPointThenOntoItsPerch() {
+        let (flight, world) = setUp { $0.packageFlight = .point(SIMD3(3000, 0, 0)) }
+        world.perches = [Self.tower]
+        tick(flight, seconds: 40)
+        #expect(flight.phase(of: Self.dragon) == .cruising)
+        #expect(world.reachedPackageTargets.contains(Self.dragon))
+        world.reachedPackageTargets = []
+        world.candidates[0].packageFlight = .perch(Self.tower.reference)
+        tick(flight, seconds: 60)
+        #expect(flight.phase(of: Self.dragon) == .perched)
+        #expect(world.lastMove?.feet == Self.tower.feet)
+        #expect(world.reachedPackageTargets.contains(Self.dragon))
     }
 
     @Test func aPerchStageWithoutAPerchInReachHovers() {

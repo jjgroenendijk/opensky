@@ -207,6 +207,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case subGraphEvent(reference: String, event: String)
     /// Sets a variable on the actor's sub-graphs, as `Actor.SetSubGraphFloatVariable` does.
     case subGraphVariable(reference: String, name: String, value: Float)
+    /// Mutes or unmutes the game's whole sound output.
+    case sound(on: Bool)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
@@ -306,7 +308,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         }
     }
 
-    /// The commands that cover the screen: fades, the cart HUD, movies, and titles.
+    /// The commands that cover the screen: fades, the cart HUD, movies, and titles, and
+    /// the sound switch.
     private static func parseScreen(
         _ name: String, _ args: AgentArguments
     ) throws(AgentFailure) -> Self {
@@ -319,6 +322,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             )
         case "skipbink": .skipBink
         case "titles": try .titles(args.string("step"))
+        case "sound": try .sound(on: args.bool("on", default: true))
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }

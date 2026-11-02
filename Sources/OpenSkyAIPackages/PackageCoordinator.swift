@@ -76,6 +76,8 @@ public protocol PackageWorld: AnyObject {
     func packageMoverHasRoom(for actor: ReferenceKey) -> Bool
     /// True while the idle runtime holds an idle marker for the actor.
     func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool
+    /// True for an actor that flies where its package sends it, such as a dragon.
+    func packageActorFlies(_ actor: ReferenceKey) -> Bool
     /// A sandbox activity's time ran out, so the actor lets go of its idle marker.
     func packageSandboxActivityEnded(_ activity: SandboxActivity, actor: ReferenceKey)
 }
@@ -168,6 +170,10 @@ extension PackageWorld {
         false
     }
 
+    public func packageActorFlies(_: ReferenceKey) -> Bool {
+        false
+    }
+
     public func packageSandboxActivityEnded(_: SandboxActivity, actor _: ReferenceKey) {}
 }
 
@@ -235,6 +241,8 @@ public final class PackageCoordinator {
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
     /// Walks that found no free mover slot, by actor.
     var waitingMoves: [ReferenceKey: PackagePendingMove] = [:]
+    /// Where each flying actor's package sends it.
+    var flights: [ReferenceKey: PackageFlight] = [:]
     /// A follower's gait, which overrides its package's preferred speed.
     var paces: [ReferenceKey: LocomotionGait] = [:]
     var nextMoveTicket = 0
@@ -302,6 +310,7 @@ public final class PackageCoordinator {
             executions.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
             waitingMoves.removeValue(forKey: actor)
+            flights.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
             let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)

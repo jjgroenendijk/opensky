@@ -120,6 +120,11 @@ swept test was not worth the extra code for an event a script can also poll.
 Leaving walk mode freezes the occupied set. Switching to fly inside a volume is not a leave the
 player made. The leave fires on the first walk-mode frame that finds the capsule outside.
 
+A walking NPC tests its own capsule at each step. An actor that something else steers, such as a
+flying dragon or a horse the player rides, tests the standard capsule at each pose it is moved
+to, with no samples between poses. The opening's Alduin sets a quest stage this way when he
+flies through a trigger on his way to Helgen.
+
 ## Cell unload
 
 A player cannot stay inside a volume whose cell is gone. So an unload fires a leave for every
