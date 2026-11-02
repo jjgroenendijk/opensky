@@ -22,6 +22,7 @@ final class FakePackageWorld: PackageWorld {
     var activity: PackageActorActivity = .free
     var hasRoom = true
     var holdsIdleMarker = false
+    var flies = false
     private(set) var stops: [ReferenceKey] = []
     private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
     private(set) var actions: [PackageAction] = []
@@ -76,6 +77,10 @@ final class FakePackageWorld: PackageWorld {
 
     func packageActorHoldsIdleMarker(_: ReferenceKey) -> Bool {
         holdsIdleMarker
+    }
+
+    func packageActorFlies(_: ReferenceKey) -> Bool {
+        flies
     }
 
     func stopPackageActor(_ actor: ReferenceKey) {

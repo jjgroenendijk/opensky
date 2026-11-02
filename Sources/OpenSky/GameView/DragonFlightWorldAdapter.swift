@@ -32,6 +32,7 @@ protocol DragonFlightWorldHost: AnyObject {
     var gameSession: GameSession? { get }
     var idleWorld: IdleWorldAdapter { get }
     var mounts: MountCoordinator { get }
+    var packages: PackageCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
@@ -87,6 +88,12 @@ final class DragonFlightWorldAdapter {
         candidate.canFlyHere = game.streamer?.interiorScene == nil
         candidate.isRidden = game.mounts.drive?.mount == actor.key
         candidate.isDead = actor.isDead
+        candidate.packageFlight = game.packages.flightTarget(of: actor.key).map {
+            switch $0 {
+            case let .point(point): .point(point)
+            case let .perch(furniture): .perch(furniture)
+            }
+        }
         if
             let holder = game.actorWorld.actorValueHolder(for: actor.key),
             let values = game.actorValues.runtime
@@ -96,6 +103,14 @@ final class DragonFlightWorldAdapter {
             candidate.isRended = (values.value(at: Self.dragonRendIndex, on: holder) ?? 0) > 0
         }
         return candidate
+    }
+
+    /// A flying race that a script allows to fly and the player does not ride.
+    func actorFliesPackages(_ actor: ReferenceKey) -> Bool {
+        let scripted = game.scripts.bridge?.scriptedState(of: actor)
+        return game.combatWorld.actorFlies(actor)
+            && scripted?.flag(ScriptedStateName.allowFlying) ?? true
+            && game.mounts.drive?.mount != actor
     }
 
     static let healthIndex = ActorValueIdentity.index(named: "Health") ?? 24
@@ -148,6 +163,10 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
             game.actorGraphs.setVariable(value, named: name, on: actor)
         }
         game.actorGraphs.setMotion(ActorGraphMotion(isMoving: state.speed > 0.5), for: actor)
+    }
+
+    func flightReachedPackageTarget(_ actor: ReferenceKey) {
+        game.packages.flightArrived(actor)
     }
 
     func releaseFromFlight(_ actor: ReferenceKey) {

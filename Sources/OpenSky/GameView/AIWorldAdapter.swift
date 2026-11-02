@@ -309,6 +309,12 @@ extension AIWorldAdapter {
         game.idleWorld.idles.holdsMarker(actor)
     }
 
+    /// A dragon outdoors flies its package's walks; indoors it walks them.
+    func packageActorFlies(_ actor: ReferenceKey) -> Bool {
+        actor != .player && game.streamer?.interiorScene == nil
+            && game.dragonFlightWorld.actorFliesPackages(actor)
+    }
+
     func packageSandboxActivityEnded(_ activity: SandboxActivity, actor: ReferenceKey) {
         switch activity {
         case .idleMarker: game.idleWorld.idles.leaveMarker(actor)

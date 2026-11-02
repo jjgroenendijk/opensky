@@ -52,8 +52,16 @@ extension AIWorldAdapter {
         game.furniture.sandboxSeat(for: actor, in: request)
     }
 
+    /// A package that seats the AI-driven player activates the furniture for it, as its
+    /// own activation would. The opening's chopping block waits for that `OnActivate`.
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat) {
-        game.furniture.sit(actor, in: seat)
+        // A dragon's sit is its perch, which the dragon flight lands on.
+        guard !packageActorFlies(actor) else { return }
+        let isNewSeat = game.furniture.occupancies[actor]?.seat != seat
+        guard game.furniture.sit(actor, in: seat) != nil, isNewSeat, actor == .player else {
+            return
+        }
+        game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
     }
 
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?) {
