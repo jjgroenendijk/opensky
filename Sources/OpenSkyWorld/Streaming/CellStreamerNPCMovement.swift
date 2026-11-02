@@ -228,7 +228,11 @@ extension CellStreamer {
     public func steerRiddenActor(_ actor: ReferenceKey, to feet: SIMD3<Float>, yaw: Float) {
         bindNPCMovementCallbacks()
         let cell = navigationCell(at: feet)
-        holdingRests { npcMovement.steerRidden(actor, to: feet, yaw: yaw, cell: cell) }
+        holdingRests {
+            npcMovement.steerRidden(actor, to: feet, yaw: yaw, cell: cell) { [weak self] state in
+                Set(self?.triggerVolumes(intersecting: state).map(\.reference) ?? [])
+            }
+        }
         onNPCPosesChanged?(npcMovement.instanceDeltas())
     }
 
