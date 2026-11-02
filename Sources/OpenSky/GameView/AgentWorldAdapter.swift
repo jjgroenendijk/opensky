@@ -47,6 +47,7 @@ protocol AgentWorldHost: AnyObject {
     var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
+    var audio: AudioCoordinator { get }
     var benchmarkWorld: BenchmarkWorldAdapter { get }
     var cameraInput: CameraInputState { get }
     var combat: CombatCoordinator { get }

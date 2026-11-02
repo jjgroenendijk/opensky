@@ -151,6 +151,7 @@ Debug commands change the game state directly. `state` reads show the result
 | `debug form werewolf\|vampirelord\|none` | Puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it. Answers `form` |
 | `debug kill <ref>`, `debug resurrect <ref>` | Kills or brings back an actor, not the player |
 | `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | Sends an event or sets a variable, as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable` does. Answers `taken` and the actor's sub-graphs |
+| `debug sound on\|off` | Mutes or unmutes the game's whole sound output. Answers `muted` |
 | `debug drunk <ref> on\|off` | Raises `DrunkStart` or `DrunkStop` on the actor's graph, as the idles `IdleDrunkStart` and `IdleDrunkStop` do. Answers `taken` |
 | `debug knock <ref> <damage>` | Knocks an actor back as a melee hit of `damage` from the player would, without the damage. Answers `knocked`, `speed`, and `knockdown`; a hit below half the current health does not knock |
 | `debug eyes <ref> <txst>` | Draws an NPC's eyes with a texture set, as `Actor.SetEyeTexture` does, until its cell unloads |
