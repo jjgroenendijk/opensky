@@ -8,9 +8,11 @@ tags: [decision, concurrency, main-actor, streaming, audio, scripting, loading]
 
 # Concurrency
 
-Every package module uses `defaultIsolation(MainActor.self)`. So all code runs on the main actor
-unless it says otherwise. This page splits the work into two kinds and gives each kind its own
-default:
+Every package module except `OpenSkyCLIArguments` uses `defaultIsolation(MainActor.self)`. So all
+code runs on the main actor unless it says otherwise. `OpenSkyCLIArguments` holds the `openskycli`
+command declarations, which the argument parser needs nonisolated ([Swift Argument
+Parser](/decisions/swift-argument-parser.md)). This page splits the work into two kinds and gives
+each kind its own default:
 
 - **Loading** reads a file and decodes it: NIF, HKX, DDS, PEX, SWF, WAV, XWM, FUZ, and save
   files. Loading runs off the main actor by default.
@@ -133,13 +135,15 @@ than Release, so the numbers are an upper bound.
 
 ## The shared play-time worker
 
-Every load during play uses one serial queue, `nl.jjgroenendijk.opensky.assetload`. One queue
-keeps these loads from competing with the cell build worker for cores. Bulk loads that only add
-detail, such as every clip an actor graph can reach, use a second serial queue at a lower
-priority, `nl.jjgroenendijk.opensky.assetload.background`, so they do not delay the loads a
-frame needs. A load that something
-waits for now runs before a prefetch. Each loader keeps its finished values and its failures on
-the main actor, and `GameSession.assetDrains` drains them all at the start of the world update.
+Loads during play use two serial queues. The loads a frame needs, such as meshes and textures,
+share `nl.jjgroenendijk.opensky.assetload`. One queue keeps these loads from competing with the
+cell build worker for cores. Behavior graph projects, their clips, effect graph projects, and
+effect nodes use a second serial queue at a lower priority,
+`nl.jjgroenendijk.opensky.assetload.background`. Hundreds of clip loads would otherwise delay the
+loads a frame needs. Inside one loader, a load that something waits for runs before a prefetch.
+Loads on different queues have no order between them. Each loader keeps its finished values and its
+failures on the main actor, and `GameSession.assetDrains` drains them all at the start of the world
+update.
 
 The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
 `Sendable`. It owns the builder alone: the main actor reads a separate set of record stores

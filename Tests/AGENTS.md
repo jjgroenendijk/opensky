@@ -1,6 +1,7 @@
 # AGENTS.md — Tests
 
-Each folder here builds one target, named like the folder. `docs/tools/modules.md` lists
+Each folder here builds one target, named like the folder, except `HostedTestSupport/`: a
+source folder that `OpenSkyTests` and `OpenSkyRealDataTests` both compile. `docs/tools/modules.md` lists
 them and the rules `Package.swift` enforces.
 
 ## Testing libraries
@@ -69,10 +70,10 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
 | Plan | Bundles |
 | --- | --- |
-| `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests; builds no app |
+| `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests |
 | `Formats` | the `OpenSkyFormats*Tests` targets |
-| `Engine` | game data, behavior, launch, reference game, agent control, physics, rendering, audio, world state |
-| `Features` | every feature's tests, the world domains, save, menus, preview |
+| `Engine` | game data, behavior, launch, reference game, agent control, asset cache, physics, rendering, audio, world state |
+| `Features` | every feature's tests, the world domains, save, menus, preview, CLI arguments |
 | `App` | `OpenSkyTests`, hosted by the app |
 | `GPU` | every unit target, only the `.gpu` tests |
 | `UnitTests` | everything; CI runs it on every push |

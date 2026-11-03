@@ -9,17 +9,17 @@ tags: [tool, ci, lint, github-actions]
 
 # Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request that is ready for review and on every push to
-`main`. Every check
+`.github/workflows/ci.yml` runs on every pull request, draft or ready for review, and on every push
+to `main`. Every check
 runs on an `xcode-27` runner (macOS 27), so CI uses the same platform, Xcode, and tools as a
 developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 
 | Job | Make targets |
 | --- | --- |
-| Format | `swift-format-check`, `metal-format-check`, `md-lint` |
-| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `duplicates`, `no-suppressions`, `file-length`, `module-size` |
+| Format | `swift-format-check`, `metal-format-check`, `cpp-format-check`, `md-lint` |
+| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `cli-conventions`, `gap-registries`, `duplicates`, `no-suppressions`, `file-length`, `module-size`, `py-format-check`, `py-lint` |
 | Changes | None. It decides whether Build & test runs |
-| Build & test | `swift-baseline`, `ffmpeg`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor` |
+| Build & test | `swift-baseline`, `ffmpeg`, `astcenc`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor` |
 | Lint | None. It passes only when the jobs above pass |
 
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a
