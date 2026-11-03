@@ -11,7 +11,7 @@ import Testing
 struct ESMFormIDIndexTests {
     /// WRLD -> exterior block -> CELL 0x2B with a temporary REFR 0x3C, plus a
     /// top-level DOOR 0x50 and a duplicate 0x50 STAT later in the file.
-    private static func plugin() throws -> ESMFile {
+    static func plugin() throws -> ESMFile {
         let refr = ESMFixture.record(
             "REFR",
             formID: 0x3C,
@@ -46,6 +46,20 @@ struct ESMFormIDIndexTests {
             #expect(indexed.dataRange == walked.dataRange)
         }
         #expect(try index.record(withFormID: 0x3C)?.fields().first?.type == "EDID")
+    }
+
+    @Test func aSplitWalkGivesTheSameIndex() throws {
+        let file = try Self.plugin()
+        let whole = ESMFormIDIndex(file: file)
+        let split = ESMFormIDIndex(file: file, splitBytes: 0)
+        #expect(split.count == whole.count)
+        for formID: UInt32 in [0x1A, 0x2B, 0x3C, 0x50] {
+            #expect(split.record(withFormID: formID)?.dataRange
+                == whole.record(withFormID: formID)?.dataRange)
+            #expect(split.worldFormID(containing: formID) == whole.worldFormID(containing: formID))
+            #expect(split.cellFormID(containing: formID) == whole.cellFormID(containing: formID))
+        }
+        #expect(split.record(withFormID: 0x50)?.type == "DOOR")
     }
 
     @Test func namesTheWorldspaceThatHoldsARecord() throws {

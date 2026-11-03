@@ -53,9 +53,13 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
         self.init(LoadOrderPlugins(plugins, space: space))
     }
 
+    /// Each plugin is indexed on its own core.
     public init(_ loadOrder: LoadOrderPlugins) {
         self.loadOrder = loadOrder
-        sources = loadOrder.plugins.map { plugin in
+        let inParallel = LoadOptimisations.isOn(.parallelFormIDIndex)
+        sources = ParallelDecode.mapInOrder(
+            loadOrder.plugins, chunkSize: 1, inParallel: inParallel
+        ) { plugin in
             Source(
                 plugin: plugin,
                 index: ESMFormIDIndex(file: plugin.file),

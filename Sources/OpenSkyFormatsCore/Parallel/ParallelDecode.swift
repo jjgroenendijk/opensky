@@ -48,8 +48,10 @@ nonisolated public enum ParallelDecode {
     public static func mapInOrder<Item: Sendable, Value: Sendable>(
         _ items: [Item],
         chunkSize: Int,
+        inParallel: Bool = true,
         _ work: @Sendable (Item) -> Value
     ) -> [Value] {
+        guard inParallel else { return items.map(work) }
         let starts = Array(stride(from: 0, to: items.count, by: max(chunkSize, 1)))
         let chunks = map(starts.indices) { chunk in
             let start = starts[chunk]
