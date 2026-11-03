@@ -338,12 +338,12 @@ billboards; drawing the rock meshes per particle is not done.
 
 ## From scene graph to particle system
 
-OpenSky walks the scene graph from the footer roots, the same way as for meshes (see
-[NIF](/formats/nif.md)). It adds up the `NiNode` transforms, stops at depth 64, and stops
-on loops. Each `NiParticleSystem`, `BSStripParticleSystem`, or `NiMeshParticleSystem`
-becomes one particle system
-with its world transform, capacity, emitters, modifiers, effect shader, and alpha
-property.
+OpenSky walks the scene graph from the footer roots. It adds up the `NiNode` transforms, stops
+at depth 64, and stops on loops. The walk differs from the mesh walk (see
+[NIF](/formats/nif.md)): it does not enter a `NiSwitchNode`, so a particle system below one is
+not found, and it does not drop hidden or `EditorMarker` subtrees. Each `NiParticleSystem`,
+`BSStripParticleSystem`, or `NiMeshParticleSystem` becomes one particle system with its world
+transform, capacity, emitters, modifiers, effect shader, and alpha property.
 
 All vanilla effect NIFs checked (109 files, 216 systems) decode without errors. In
 Whiterun, every particle system has an effect shader and an alpha property.

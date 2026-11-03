@@ -57,6 +57,6 @@ UTF-16 key `VS_VERSION_INFO` with its terminator, then padding to a 4-byte bound
 
 ## Confirmed on the real install
 
-A probe over the Steam install's `SkyrimSE.exe` found eight sections, `.rsrc` among them,
+A probe over the Steam install's `SkyrimSE.exe` found nine sections, `.rsrc` among them,
 one version resource at type 16, name 1, language 1033, and the signature at the padded
 offset. The file version read `1.6.1170.0`.

@@ -129,8 +129,9 @@ The packages of Ysolda, Belethor, Hulda, and Heimskr, with every template they r
 `ANAM BNAM CIS2 CITC CNAM CTDA EDID FNAM INAM PDTO PKC2 PKCU PKDT PLDT PNAM POBA POCA POEA
 PRCB PSDT PTDA SCHR UNAM VMAD XNAM`.
 
-Their header conditions use `GetDisabled` (function 35) three times,
-`GetKeywordDataForLocation` (606) once, and `GetVMQuestVariable` (629) once. The last two
-belong to the siege of Whiterun. OpenSky does not support them, so they are false, and the
-jail package is not picked before the siege. `GetDisabled` decides whether Heimskr uses the
-home package or the camp package.
+Their header conditions use `GetDisabled` (function 35) three times, `GetKeywordDataForLocation`
+(606) once, and `GetVMQuestVariable` (629) once. The last two belong to the siege of Whiterun.
+OpenSky evaluates both: 629 reads a `Conditional` variable of the quest's script, and 606 reads
+the keyword data a script stored with `SetKeywordData`, 0 until one does. So the siege scripts
+decide when the jail package can be picked. `GetDisabled` decides whether Heimskr uses the home
+package or the camp package.

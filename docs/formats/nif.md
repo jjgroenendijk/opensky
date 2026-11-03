@@ -347,7 +347,7 @@ offset under that node's keys. Reference: `nif.xml` blocks `NiCamera`, `NiTimeCo
 | `NiCamera` | The shared node fields (rest transform and controller ref), then 2 bytes of camera flags and the frustum floats left, right, top, bottom, near; top and bottom are skipped |
 | `NiTransformController` | Next controller ref, flags (uint16), frequency, phase, start time, stop time, target ref, interpolator ref |
 | `NiTransformInterpolator` | A rest translation, rotation, and scale (32 bytes), then the data ref |
-| `NiTransformData` | Rotation and translation keys, as in `.kf` animation files. Scale keys come last and are not read |
+| `NiTransformData` | Rotation, translation, and scale keys, as in `.kf` animation files. The camera ignores the scale keys; [sequence](/formats/nif-sequences.md) playback applies them |
 
 The horizontal field of view is `2 * atan((right - left) / 2 / near)`. A camera with no
 controller, or with a controller that has no interpolator, keeps its rest transform. Between

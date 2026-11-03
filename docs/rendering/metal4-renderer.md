@@ -54,14 +54,16 @@ can stay in that tile memory: it is memoryless, and it costs no GPU memory and n
 
 | Target | Storage | Why |
 | --- | --- | --- |
-| Scene depth and stencil, live view and offscreen | memoryless | only the scene pass reads it |
+| Scene depth and stencil, live view and offscreen | memoryless | only the scene pass reads it, unless the frame splits |
 | Shadow cascades | private | the scene pass samples them |
 | Offscreen color | shared | the CPU reads it back |
-| Grade copy and grade depth | private, made on first use | only a split grade needs them |
+| Grade copy and grade depth | private, made on first use | only a split scene pass needs them |
 
 The [image space pass](/rendering/image-space.md) grades in tile memory, so most frames keep depth
-memoryless. A grade with blur or double vision reads other pixels, so it splits the scene pass in
-two. The first half then stores depth into the grade depth target.
+memoryless. Some frames split the scene pass in two, and the first half then stores depth into the grade
+depth target. A frame splits for a grade with blur or double vision, which reads other pixels, and
+for a refraction shape. It also splits when it copies the scene depth: for visible water while
+the water depth setting is on, and for a soft effect in view.
 
 ## Pipelines and shading
 
@@ -133,8 +135,10 @@ event signaled with the frame index.
 
 GPU time is the span that Metal's commit feedback reports for each frame's commit: from
 `GPUStartTime` to `GPUEndTime`, in host seconds. It covers the shadow and scene passes together.
-Command-buffer timestamps (`writeTimestamp`) are not used. On Apple GPUs they reported about
-0.2 ms for frames that took several milliseconds, because the passes did not run between them.
+The benchmark's pass timer also writes command-buffer timestamps (`writeTimestamp`) into Metal
+counter heaps, for the setup, shadow, and scene passes ([benchmark](/tools/benchmark.md)). The
+marks sit only between encoders. A mark inside one encoder reported about 0.2 ms for frames that
+took several milliseconds, because Apple GPUs run an encoder's draws together per tile.
 
 Frame stats log one line per 120-frame window, and emit a signpost per frame for Instruments. Live
 reads use a separate 30-frame window, so reading it never moves the logged window. The counters

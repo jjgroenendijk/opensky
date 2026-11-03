@@ -12,8 +12,12 @@ A packfile's class name table stores a 32-bit signature beside each class name. 
 signature changes when a class's members change. So when a reference project lists the same
 signature as a vanilla file, its member offsets fit that file.
 
-Every signature below was read from the vanilla Skyrim SE behavior files
-(hk_2010.2.0-r1, 64-bit little-endian). Each one matches ret2end/HKX2Library (MIT), the
+Every signature below except six was read from the class name tables of the vanilla Skyrim
+SE behavior files (hk_2010.2.0-r1, 64-bit little-endian). The six are `hkbNode`,
+`hkbGenerator`, `hkbModifier`, `hkbEventBase`, `hkbClipTrigger`, and
+`BSLookAtModifierBoneData`. The first four are abstract base classes, and the last two are
+structs stored inside another object, so no file lists them in its class name table. Their
+signatures come from HKX2Library only. Each signature matches ret2end/HKX2Library (MIT), the
 main source for the member offsets in
 [HKX behavior node classes](/formats/hkx-behavior-nodes.md) and
 [HKX behavior modifier classes](/formats/hkx-behavior-modifiers.md). The graph-level

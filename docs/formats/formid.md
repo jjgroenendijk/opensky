@@ -27,7 +27,8 @@ References: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_
 | `MAST` | zstring | Master file name. One per master, in order |
 | `DATA` | uint64 | Follows each `MAST`. Always 0 |
 
-OpenSky skips `ONAM`, `INTV`, `INCC`, and fields added by mod tools. Text follows the
+OpenSky reads `ONAM` (the overridden forms), `INTV` (raw bytes), and `INCC` (the interior
+cell count). It skips fields added by mod tools. Text follows the
 [string decoding](/decisions/string-decoding.md) policy.
 
 The `HEDR` version is 1.71 in Skyrim SE. The record count includes groups and is not

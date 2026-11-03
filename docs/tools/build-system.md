@@ -29,8 +29,8 @@ XCB_RELEASE := $(call xcb,$(SCHEME),Release)
 XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
 ```
 
-A target adds only its action and its own flags. `make -n build cli test install` shows the shared
-prefix on every line, which checks that it still holds.
+A target adds only its action and its own flags. `make -n build-app build-cli test-unit install`
+shows the shared prefix on every line, which checks that it still holds.
 
 ### The workspace and the start-up scan
 
@@ -114,7 +114,7 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 
 | Knob | Default | Changes |
 | --- | --- | --- |
-| `CONFIG` | `Debug` | The configuration for `build`, `cli`, `test`, `app-path`, and `cli-path`. `install` is always Release |
+| `CONFIG` | `Debug` | The configuration for `build-app`, `build-cli`, `test-unit`, `app-path`, and `cli-path`. `install` is always Release |
 | `DESTINATION` | `platform=macOS` | The test destination |
 | `CACHE_ROOT` | `<main checkout>/.cache/Build` | Where every checkout's build tree and the build locks live, exported as `OPENSKY_CACHE_ROOT` |
 | `BUILD_CACHE_GB` | `200` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
@@ -156,9 +156,11 @@ differs per configuration inside one target still belongs in the project file.
 The project's files never reach a package target, whose settings come from `Package.swift`.
 `Overrides.xcconfig` is the one place for a setting that has to: the `Makefile` and
 `tools/xcodebuild-lib.sh` export `XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
-file above every target in the build. A build started from the Xcode window does not read it. Today
-it only turns off a missing-dependency check that is wrong for package framework variants
+file above every target in the build. A build started from the Xcode window does not read it. It
+turns off a missing-dependency check that is wrong for package framework variants
 ([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
+It also holds the prefix-mapping settings and `SWIFT_PACKAGE_NAME`, which keep the shared
+compilation cache key the same in every worktree (see below).
 
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
@@ -213,7 +215,7 @@ It is not checked in, because it adds lines to every transcript. Pass it when me
 
 ```sh
 make build-app XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
-grep -c 'Cache hit' .logs/build/latest/build.log
+grep -c 'Cache hit' .logs/build-app/latest/build-app.log
 ```
 
 The store grows to tens of gigabytes. It prunes itself in generations: on 2026-10-18 a new

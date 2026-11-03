@@ -170,8 +170,9 @@ mesh.
 
 - Every count is checked against the bytes left before it sizes an array. A broken count
   is an error, not a huge allocation.
-- Every vertex, triangle, door, cover, and grid index that points inside this navmesh is
-  range-checked. The only unchecked index is the edge link triangle (see above).
+- Every vertex, triangle, and door index that points inside this navmesh is range-checked.
+  The edge link triangle is not (see above). The cover triangle list and the grid are read
+  only for their counts, so their indexes are not checked either.
 - A broken `NVMI` entry is counted and skipped. One bad entry must not lose every other
   navmesh.
 

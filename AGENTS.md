@@ -111,7 +111,7 @@ with an example. When you add code:
   checks this (`docs/decisions/modular-architecture.md`).
 - Parsers and game rules are pure: values in, values out. Files, clocks, Metal, audio, and
   UI stay in a thin shell around them.
-- Reach the outside world through a protocol (a port), such as `CombatDataProviding` or
+- Reach the outside world through a protocol (a port), such as `CombatWorld` or
   `RenderFrameDriver`, so a test can pass a fake.
 - Game logic goes in a coordinator in its feature module, not in `GameViewController`.
 - Change a data layout for speed only after a measurement shows the cost.

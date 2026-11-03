@@ -62,8 +62,8 @@ the order the mesh builder writes vertices, so a sample maps to a vertex one to 
 The blend starts at the base and, in layer order, does `mix(albedo, layerColor, saturate(weight))`.
 A straight blend is the plain reading of the opacities. The exact vanilla blend curve is not
 confirmed. Lighting after the blend is the static path, so terrain matches buildings. Terrain is
-always opaque and has no normal maps. The UV tiling density, 2 quads per repeat, is not confirmed
-either, but looks right at Whiterun.
+always opaque. Its normal maps are on by default ([terrain](/engine/terrain.md)). The UV tiling
+density, 2 quads per repeat, is not confirmed either, but looks right at Whiterun.
 
 ## Frustum culling
 
@@ -83,9 +83,12 @@ and culled instances.
 
 ## Instanced draws
 
-Instances that share a mesh and a material draw as one instanced call. A group's key is the mesh and
-the diffuse texture. A mesh belongs to one model, and the model fixes one material per slot, so the
-mesh already implies the material. The texture is in the key only as a safety check. The first
+Instances that share a mesh and a material draw as one instanced call. A group's key is the mesh, the
+diffuse texture, and the draw state: shadow casting, point-light and shadow reception, the face
+morph, the layer, alpha blending, and whether it is an effect. A mesh belongs to one model, and the
+model fixes one material per slot, so the mesh already implies the material. The texture is in the
+key only as a safety check. Two instances of one mesh with different draw state draw in two
+groups. The first
 appearance fixes group order, so frames are deterministic. Merging cells groups again across them,
 so neighbor cells that place the same model share one draw.
 

@@ -21,7 +21,8 @@ The app opens on the launcher. The launcher holds:
 
 - The Play button. It opens the game in its own window. Play needs a valid game folder and a
   valid start.
-- A page list on the left: Launch, Asset Optimisation, Graphics, Diagnostics, and Settings.
+- A page list on the left: Launch, Asset Optimisation, Graphics, Benchmark, Diagnostics,
+  Reference Game, and Settings.
   Settings is the same view as the Cmd+, window. Under the list, the "Show details" switch
   shows or hides the technical notes and developer settings on every page at once, and in
   the Cmd+, window too.

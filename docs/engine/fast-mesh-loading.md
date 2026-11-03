@@ -17,7 +17,7 @@ Reference: Apple, `MTLIOCommandQueue` and `MTLIOCommandBuffer.load(_:offset:size
 
 ## Mesh entry payload
 
-A mesh entry (converter version 2) puts the GPU bytes first, so the loader can find them
+A mesh entry puts the GPU bytes first, so the loader can find them
 without decoding the whole model. All integers are little-endian.
 
 | Field | Size | Meaning |
@@ -26,7 +26,7 @@ without decoding the whole model. All integers are little-endian.
 | layout | n | Shape counts, materials, the model's byte range, then per mesh: name, transform, material slot, counts, bounds, byte ranges |
 | padding | 0 to 15 | Zeros, to a 16-byte boundary |
 | GPU blocks | n | Per mesh: interleaved vertices (48 bytes each), then `uint16` indices; each block starts on a 16-byte boundary |
-| model | n | The whole decoded model, as in version 1 |
+| model | n | The whole decoded model |
 
 The vertex block uses the same 48-byte interleaved layout as a mesh built on the CPU, so a
 buffer filled either way draws the same. The layout stores each byte range from the start

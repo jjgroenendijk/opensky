@@ -82,11 +82,12 @@ FormIDs are dropped. A broken set costs the actor its footsteps, not the load.
 Vanilla sets have one pair for each material the Creation Kit knows, 64 to 78 pairs per
 set. A pair with a null impact, or a `PNAM` shorter than 8 bytes, is skipped.
 
-If there is no material (for example the player is in the air), or the table has no pair
-for the material, OpenSky uses the set's most common impact. Ties go to record order. For
+If the table has no pair for the material, OpenSky tries the material's parent, then the
+parent's parent, along the `MATT` chain ([material type](/formats/material-type.md)). If
+there is no material (for example the player is in the air), or no material in the chain
+has a pair, OpenSky uses the set's most common impact. Ties go to record order. For
 a set where every entry is the same, which UESP calls "generally the same for all", this is
-exactly that impact. For the vanilla humanoid sets, it is the solid stone impact. The
-`MATT` parent chain could give a closer match, but OpenSky does not follow it yet.
+exactly that impact. For the vanilla humanoid sets, it is the solid stone impact.
 
 ## IPCT
 

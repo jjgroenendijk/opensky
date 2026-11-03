@@ -213,7 +213,11 @@ uses `OpenSkyImageKernels` for its CPU DDS decode.
 `OpenSkyImageKernels` holds pixel loops only. `Package.swift` builds it with `-O` in Debug as
 well, because a Debug build of these loops is about 100 times slower: one 1024 x 1024 BC1 face
 took about 1.2 seconds, and a face with many tint layers held up a save load for minutes. A
-module that needs such a loop moves it here instead of turning on optimization for itself.
+module that needs such a pixel loop moves it here instead of turning on optimization for itself.
+
+`OpenSkyScripting` and `OpenSkyScriptingInterface` are the one other case. They hold the Papyrus
+interpreter, which is too large to move into a kernel module, so `Package.swift` builds them with
+`-O` in Debug as well, for the same slowdown.
 
 The renderer is three modules. `OpenSkyRenderCore` holds what a frame works out on the CPU, and
 it imports no Metal, so its tests need no GPU. `OpenSkyRenderResources` holds the GPU resources a

@@ -30,12 +30,15 @@ Water fields are on [water](/formats/water.md) and lighting fields on
 | `PNAM` | uint16 | what the parent passes down |
 | `DATA` | uint8 | flags |
 | `DNAM` | float32[2] | default land height and water height |
+| `CNAM` | FormID | climate (`CLMT`) |
 | `NAM2` | FormID | default water (`WATR`) |
+| `ZNAM` | FormID | default music type (`MUSC`); null means no worldspace music |
 | `XEZN` | FormID | default encounter zone (`ECZN`) |
 
 `DATA` flags: `0x01` small world, `0x02` no fast travel, `0x08` no LOD water, `0x10` no
-landscape, `0x20` no sky, `0x40` fixed dimensions, `0x80` no grass. Not read: `RNAM`,
-`MNAM`, `NAM0`/`NAM9`, climate, and LOD fields. A world children group with the exterior
+landscape, `0x20` no sky, `0x40` fixed dimensions, `0x80` no grass. The other fields,
+such as `RNAM`, `MNAM`, `NAM0`/`NAM9`, and the LOD fields, are in
+[WRLD extras](#wrld-extras). A world children group with the exterior
 cells follows the record ([ESM](/formats/esm.md)).
 
 `PNAM` flags say which categories a child worldspace takes from its `WNAM` parent instead of

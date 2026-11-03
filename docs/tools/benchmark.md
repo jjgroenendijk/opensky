@@ -241,7 +241,8 @@ so two results diff line by line. It holds the machine, the build configuration,
 the frame size, every setting that differs from its default, the overrides, the app start,
 the cold and warm load, each scene, and the tour totals.
 
-`isComparable` is true when no scene failed, the tour was not stopped, and every load built.
+`isComparable` is true when no scene failed, the tour was not stopped, it wrote no screenshot,
+and every load built.
 Compare only two comparable runs on the same machine, preset, and build configuration. A
 Debug build is much slower, and the result says which build ran it.
 

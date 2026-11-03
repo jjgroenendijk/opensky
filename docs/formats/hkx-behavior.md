@@ -162,8 +162,9 @@ lists, in this order: `m_deformableSkinNames`, `m_rigidSkinNames`, `m_animationN
 `hkStringPtr`: `m_name` 0xA0, `m_rigName` 0xA8, `m_ragdollName` 0xB0, `m_behaviorFilename`
 0xB8.
 
-The vanilla character files name `Behaviors\0_Master.hkx` as their behavior. The first
-person files have a null `m_ragdollName`, because first person has no ragdoll.
+The vanilla character files name `Behaviors\0_Master.hkx` as their behavior. Only
+`characters\defaultmale.hkx` names a ragdoll. `characters female\defaultfemale.hkx` and
+`_1stperson\characters\firstperson.hkx` have a null `m_ragdollName`.
 
 ## File role
 
@@ -189,12 +190,13 @@ All 2,654 `.hkx` files under `meshes\actors\character\` (third and first person)
 files (18 third person, 17 first person). Every behavior graph has a name, and every root
 generator is an `hkbStateMachine`.
 
-The behavior files use 55 object classes. 12 of them are Bethesda's own `BS*` classes, for
-example `BSSynchronizedClipGenerator`, `BSIsActiveModifier`, `BSiStateTaggingGenerator`, and
-`BSBoneSwitchGenerator`. So stock Havok classes alone do not cover the vanilla graphs. The
-most common are `hkbStateMachineStateInfo`, `hkbClipGenerator`, `hkbClipTriggerArray`,
-`hkbVariableBindingSet`, `hkbBlenderGeneratorChild`, and `hkbStateMachine`.
+The behavior files use 55 object classes. 16 of them are Bethesda's own `BS*` classes, for
+example `BSSynchronizedClipGenerator`, `BSIsActiveModifier`, `BSiStateTaggingGenerator`,
+`BSBoneSwitchGenerator`, and `BSLookAtModifier`. So stock Havok classes alone do not cover the
+vanilla graphs. The most common are `hkbStateMachineStateInfo`, `hkbClipGenerator`,
+`hkbClipTriggerArray`, `hkbVariableBindingSet`, `hkbBlenderGeneratorChild`, and
+`hkbStateMachine`.
 
-In all 2,654 files, the only pointer failures are the two first-person `m_ragdollName`
-members, with reason "no fixup". No other reason appears anywhere. This is the evidence
-that the offsets on this page are right.
+In all 2,654 files, the only pointer failures are the two null `m_ragdollName` members of the
+female and first-person character files, with reason "no fixup". No other reason appears
+anywhere. This is the evidence that the offsets on this page are right.
