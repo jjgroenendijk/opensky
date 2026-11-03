@@ -228,7 +228,14 @@ once ([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-buil
 | `mesh` | NIF parsing, flattening, and GPU buffer building, terrain included |
 | `collision` | Static collision, trigger volumes, and dynamic bodies |
 | `gpuRead` | Waiting at the end of a build for its direct GPU reads ([asset cache](/engine/asset-cache.md#direct-gpu-loading)). A result from before this phase has no `gpuReadMS` |
-| `other` | Everything else: record lookups, actors, lighting, setup |
+| `recordIndex` | First-use record indexes: the load order's FormID index, and the index of each record type a build reads (`STAT`, `TXST`, `LIGH`, `WRLD`, and so on) |
+| `actorIndex` | First-use actor indexes: the template and look resolvers over `NPC_`, `RACE`, `ARMO`, and their lists |
+| `cellLookup` | First-use cell lookups: a worldspace's exterior cells by grid, and its persistent references |
+| `lodBrightness` | Fitting a worldspace's terrain LOD brightness curve from sampled cells ([surface shading](/rendering/surface-shading.md#albedo)) |
+| `other` | Everything else: per-cell record decoding, actors, lighting, setup |
+
+The four first-use phases run once per builder, so a warm pass shows them near zero. A result
+from before them has none of their fields.
 
 A cell builder reports phases when a `LoadPhaseRecorder` is attached to it and its file
 source is wrapped in `PhaseTimedFileSource`. Normal play attaches none and pays one nil check

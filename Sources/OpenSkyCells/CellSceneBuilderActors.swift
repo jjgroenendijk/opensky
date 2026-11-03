@@ -481,8 +481,12 @@ nonisolated extension CellSceneBuilder {
             return (template, visual)
         }
         let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        let template = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
-        let visual = ActorVisualResolver.build(from: loadOrder, leveling: leveling)
+        let (template, visual) = loadPhases.measure(.actorIndex) {
+            (
+                ActorTemplateResolver.build(from: loadOrder, leveling: leveling),
+                ActorVisualResolver.build(from: loadOrder, leveling: leveling)
+            )
+        }
         actorTemplateResolver = template
         actorVisualResolver = visual
         return (template, visual)

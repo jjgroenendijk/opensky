@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension CellSceneBuilder {
     /// The exterior cell at the grid as the load order has it. A cell only a
@@ -20,11 +21,12 @@ nonisolated extension CellSceneBuilder {
         if let cached = loadOrderExteriorCells[key] {
             return cached[SIMD2(gridX, gridY)]
         }
-        let base = world.children.map { exteriorCellIndex(of: $0, localized: localized) } ?? [:]
-        let index = mergingLaterCells(
-            base, later: loadOrderIndexBuildingIfNeeded().laterCells(ofWorld: world.formID)
-                .filter { !$0.isPersistent }
-        )
+        let later = loadOrderIndexBuildingIfNeeded().laterCells(ofWorld: world.formID)
+            .filter { !$0.isPersistent }
+        let index = loadPhases.measure(.cellLookup) {
+            let base = world.children.map { exteriorCellIndex(of: $0, localized: localized) }
+            return mergingLaterCells(base ?? [:], later: later)
+        }
         loadOrderExteriorCells[key] = index
         return index[SIMD2(gridX, gridY)]
     }

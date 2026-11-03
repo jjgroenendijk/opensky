@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension CellSceneBuilder {
     /// The cell as the load order has it: the winning CELL values, and the first
@@ -112,8 +113,19 @@ nonisolated extension CellSceneBuilder {
         of type: FourCC,
         decode: (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
+        let plugins = loadOrderIndexBuildingIfNeeded().plugins
+        return loadPhases.measure(.recordIndex) {
+            records(of: type, in: plugins, decode: decode)
+        }
+    }
+
+    nonisolated private func records<Value>(
+        of type: FourCC,
+        in plugins: [LoadOrderPlugin],
+        decode: (ESMRecord, Bool) throws -> Value
+    ) -> [UInt32: Value] {
         var index: [UInt32: Value] = [:]
-        for plugin in loadOrderIndexBuildingIfNeeded().plugins {
+        for plugin in plugins {
             guard let top = plugin.file.topGroup(of: type), let children = childrenOrSkip(top)
             else { continue }
             for case let .record(record) in children
