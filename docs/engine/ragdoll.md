@@ -51,10 +51,12 @@ scene keeps one ragdoll pose per corpse `ACHR`, laid over the clip's pose during
 update. So a corpse reaches skinning through the same call as an idle animation, and the renderer
 knows nothing about physics.
 
-Bones the ragdoll does not simulate (fingers, the skirt chain, weapon nodes) keep the animated
-pose. That is why a corpse still has hands. During the blend, the two poses mix per bone:
-translation by linear interpolation, rotation by spherical interpolation. After it, only the
-simulated pose is used.
+The ragdoll pose names only the simulated bones. A bone the ragdoll does not simulate (a finger,
+a clavicle, the skirt chain, a weapon node) moves with its nearest simulated ancestor in the
+skeleton, and keeps its animated offset to it. So a hand's fingers stay on the hand. If such a bone
+kept its animated matrix, its skin would stretch from the standing pose to the body on the floor.
+During the blend, the two poses mix per simulated bone: translation by linear interpolation,
+rotation by spherical interpolation. After it, only the simulated pose is used.
 
 ## Saving a death
 

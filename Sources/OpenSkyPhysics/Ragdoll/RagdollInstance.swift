@@ -281,17 +281,17 @@ nonisolated public struct RagdollInstance: Sendable {
         return matrices
     }
 
-    /// The pose to draw this frame: simulated bones mixed into animated ones at the
-    /// blend weight. Matrix mixing is fine for a short blend; past it only the
-    /// simulated pose remains.
+    /// The ragdoll's own bones to draw this frame: simulated mixed into animated at the
+    /// blend weight. Matrix mixing is fine for a short blend. Every other bone follows
+    /// its nearest ragdoll ancestor when the pose is drawn (`SkeletonPose.overriding`).
     public func blendedBoneMatrices(
         animated: [String: float4x4],
         worldToActor: float4x4
     ) -> [String: float4x4] {
         let weight = simulationWeight
         let simulated = boneMatrices(worldToActor: worldToActor)
-        guard weight < 1 else { return animated.merging(simulated) { _, new in new } }
-        var blended = animated
+        guard weight < 1 else { return simulated }
+        var blended: [String: float4x4] = [:]
         for (name, matrix) in simulated {
             guard let base = animated[name] else {
                 blended[name] = matrix

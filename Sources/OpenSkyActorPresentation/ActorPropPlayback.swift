@@ -30,6 +30,10 @@ nonisolated public final class ActorPropPlayback: SharedPoseAnimation {
         actor.actorFormID
     }
 
+    public var poseParents: [Int] {
+        actor.poseParents
+    }
+
     public var sharedClipKey: ObjectIdentifier {
         actor.sharedClipKey
     }

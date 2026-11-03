@@ -289,6 +289,14 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         }
     }
 
+    public var poseParents: [Int] {
+        state.withLock { state in
+            let graphDriven = state.overrideEnd == 0 && state.graph != nil
+            return ((graphDriven ? state.graph?.skeleton : nil) ?? state.clip.skeleton)
+                .parentIndices
+        }
+    }
+
     public func sampleSharedPose(at time: Float) -> SkeletonPose? {
         let graphPose = state.withLock { state in
             state.overrideEnd == 0 ? state.graph?.current() : nil
