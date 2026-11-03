@@ -33,7 +33,10 @@ The setting lives in one shared defaults domain, `nl.jjgroenendijk.opensky`. The
 with `UserDefaults(suiteName:)`. The app uses `.standard`, because its own domain is that
 domain and `suiteName` refuses the app's own bundle ID. Both read the same file.
 
-Every other user setting goes through `SettingsStore.shared`, which uses the same domain. A
+The player's settings, such as volume, key bindings, difficulty, and the graphics options, are not
+in this domain. They live in OpenSky's own `Settings.json` file
+([player settings](/engine/settings.md)). The remaining app settings, such as the time of day and
+launch preferences, go through `SettingsStore.shared`, which uses the same domain. A
 `SettingKey` names the setting, its type, and the value a missing entry reads as, such as
 `SettingKey("TimeOfDaySetting", default: 13.0)`. Code does not call `UserDefaults.standard`:
 from the CLI, `.standard` is a different file. Older CLI builds wrote the time of day to the CLI's

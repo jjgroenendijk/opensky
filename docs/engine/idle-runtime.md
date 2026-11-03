@@ -198,8 +198,9 @@ it.
 
 ## Differences from the game
 
-- No behavior graph runs for NPCs. The clip and the prop are found statically through the
-  graph, so a graph that picks a clip at random or by a variable always plays the first
-  clip. A transition that waits for a condition or a variable is taken at once.
+- An actor without a running graph, such as one past the graph distance, gets its clip and prop
+  statically through the graph ([playback](#playback)). So a graph that picks a clip at random
+  or by a variable always plays the first clip, and a transition that waits for a condition or a
+  variable is taken at once. An actor that runs its own graph plays the idle as the game does.
 - The actor does not turn to the marker's facing.
 - Props and idles are not saved. A loaded game starts with no idle playing.

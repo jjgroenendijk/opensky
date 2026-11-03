@@ -78,9 +78,15 @@ over.
 
 ## Fallback plane
 
-An exterior cell with no `LAND` gets a flat 33 x 33 plane at the worldspace's default land height,
-the first float of `WRLD` `DNAM`. Tamriel's is -27000. If `DNAM` is missing, OpenSky draws no
-ground. It does not guess a height. What the game does in that case is not confirmed.
+An exterior cell with no `LAND` in a child worldspace whose `PNAM` sets `0x01` (use land data)
+takes the parent worldspace's `LAND` at the same grid cell first. The city worlds, such as
+Whiterun and Riften, have no `LAND` of their own, so their ground is Tamriel's
+([world records](/formats/world-records.md)).
+
+An exterior cell with no `LAND` and no such parent `LAND` gets a flat 33 x 33 plane at the
+worldspace's default land height, the first float of `WRLD` `DNAM`. Tamriel's is -27000. If `DNAM`
+is missing, OpenSky draws no ground. It does not guess a height. What the game does in that case is
+not confirmed.
 
 ## Cell edges weld exactly
 

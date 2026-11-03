@@ -228,9 +228,10 @@ These are guesses, marked as guesses:
   look-at and direct-at modifiers.
 - `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing: the parameter
   of its parametric blender is not held.
-- A state machine does not write its current state back to `m_syncVariableIndex`. In vanilla data
-  that variable is an engine input, and writing it back would overwrite the input on the next
-  update. No source says whether Havok syncs it both ways.
+- A state machine writes its current state ID to `m_syncVariableIndex` when the index names a
+  variable, so two machines that share it stay in step
+  ([state machines](/engine/behavior-state-machines.md)). No source confirms that Havok writes
+  it back.
 - Transition effect flag bits other than sync are not used. Local decode notes read bit 0 as
   ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as ignore-to-generator. No
   independent source confirms that, and each one changes how root motion crosses a blend.

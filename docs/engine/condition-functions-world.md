@@ -34,6 +34,9 @@ fight. The combat loop fills this for NPCs, and the melee state for the player.
 - `IsPowerAttacking` is 1 during the player's power attack. OpenSky has no knock-down while
   alive, and `IsRecoiling` is 0. `GetKnockedStateEnum` is 0, the standing state.
 - `IsWeaponMagicOut` is 1 when a weapon or a spell is drawn.
+- `IsCombatTarget` (513) is 1 when the run-on fights the parameter actor.
+  `GetCombatTargetHasKeyword` (707) tests the keywords of the actor the run-on fights: its base
+  record's and its race's, as `HasKeyword` does on an actor. With no target it is 0.
 
 ## Reference state
 
@@ -75,6 +78,7 @@ These read what a native or the dialogue stored in the actor's
 - `GetTalkedToPC` (50) is set when the actor says any line to the player, a greeting
   included.
 - `HasBeenEaten` (127) is set on the corpse by the feeding natives.
+- `GetNoBleedoutRecovery` (694) reads `SetNoBleedoutRecovery`.
 - `GetVampireFeed` (226), `GetCannibal` (227), and `GetCurrentShoutVariation` (676) are 0.
   Feeding plays no animation, so no actor is in the middle of it, and OpenSky shouts no
   variations.
@@ -132,6 +136,7 @@ These read what a native or the dialogue stored in the actor's
 - `GetClothingValue` (41) adds the value of every worn apparel item.
 - `WornHasKeyword` (682) and `WornApparelHasKeywordCount` (722) test worn items only.
 - `GetKeywordItemCount` (465) counts every held item with the keyword.
+- `IsWeaponInList` (398) is 1 when the right-hand weapon is in the `FLST`.
 
 ## Motion
 
@@ -144,6 +149,12 @@ letter: 88 X, 89 Y, 90 Z.
   body slower than 1 unit per second stands.
 - `GetPathingTargetAngleOffset` (620) and the current-speed angle read the next waypoint.
   The turn speed about Z is 0 once the actor faces its waypoint. X and Y are always 0.
+- `IsMoving` (25) is 1 when `GetMovementDirection` is not 0.
+- `GetMovementSpeed` (623) and `GetPathingCurrentSpeed` (683) both answer the body's speed in
+  units per second.
+- `IsPathing` (704) is 1 while the actor walks to a waypoint. `GetPathingTargetSpeed` (621) is
+  the speed it walks there at, and 0 with no waypoint.
+- `GetHeadingAngle` (99) is the angle from the run-on's heading to the parameter reference.
 - `GetWithinDistance` (639) takes the distance as a float in parameter 2.
 - `GetRelativeAngle` (584) about Z is the heading angle. About X it is the pitch up to the
   other reference.

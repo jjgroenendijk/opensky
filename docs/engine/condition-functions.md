@@ -39,6 +39,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 59 | `GetStageDone` | `QUST`, stage | 1 when that stage was visited |
 | 60 | `GetFactionRankDifference` | `FACT`, actor | own rank minus the parameter actor's rank |
 | 62 | `IsRaining` | none | 1 when the current weather is rainy |
+| 65 | `GetLockLevel` | none | the reference's lock level ([locks](/engine/locks.md)) |
 | 67 | `GetInCell` | `CELL` | 1 when the reference stands in that cell |
 | 69 | `GetIsRace` | `RACE` | 1 when the actor's race matches |
 | 70 | `GetIsSex` | 0 male, 1 female | 1 when the actor has that sex |
@@ -76,6 +77,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 277 | `GetBaseActorValue` | actor-value index | base value, without modifiers |
 | 286 | `IsSneaking` | none | 1 while the actor sneaks |
 | 289 | `IsInCombat` | none | 1 while fighting or searching |
+| 300 | `IsInInterior` | none | 1 when the reference stands in an interior cell |
 | 310 | `GetInWorldspace` | `WRLD` | 1 in an exterior cell of that worldspace |
 | 313 | `GetPairedAnimation` | none | 1 while the actor plays a paired animation; always 0 |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
@@ -88,6 +90,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
 | 402 | `IsBribedbyPlayer` | none | 1 after a script called `SetBribed` |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
+| 407 | `GetVATSValue` | member, value | member 4: units to the target; other members: 1 when equal to the value; camera paths only |
 | 426 | `GetIsVoiceType` | `VTYP` or `FLST` | 1 when the actor's `VTCK` matches or is in the list |
 | 430 | `GetHealthPercentage` | none | health over its maximum, 0 to 1 |
 | 447 | `GetGraphVariableFloat` | variable name (`CIS1`) | the actor's float graph variable |
@@ -96,14 +99,19 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 453 | `GetPlayerTeammate` | none | 1 after a script called `SetPlayerTeammate` |
 | 459 | `GetCrimeGold` | `FACT` or null | bounty owed to the faction |
 | 476 | `IsProtected` | none | 1 when the base record has the protected flag |
+| 494 | `GetPermanentActorValue` | actor-value index | base plus permanent modifiers, without damage or temporary modifiers |
+| 515 to 518 | `GetVATSRightAreaFree`, `GetVATSLeftAreaFree`, `GetVATSBackAreaFree`, `GetVATSFrontAreaFree` | none | units of free room on that side of the attacker; camera paths only |
+| 522, 523 | `GetVATSRightTargetVisible`, `GetVATSLeftTargetVisible` | none | 1 when that side has room; camera paths only |
 | 543 | `GetQuestCompleted` | `QUST` | 1 when the quest is completed |
 | 550 | `IsSceneActionComplete` | `SCEN`, action | 1 when that action is done in this run |
+| 555 | `HasLoaded3D` | none | 1 when the reference is in a loaded cell |
 | 561 | `HasRefType` | `LCRT` | 1 when the reference has that location ref type |
 | 566 | `GetIsAliasRef` | alias number | 1 when the reference fills that alias |
 | 568 | `IsSprinting` | none | 1 while the actor sprints |
 | 570 | `HasEquippedSpell` | casting source | 1 when that source holds a spell |
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
+| 576 | `GetEventData` | member, form or value | the story event's member ([story manager](/engine/story-manager.md)) |
 | 580 | `IsBleedingOut` | none | 1 while the actor bleeds out; always 0 |
 | 590 | `IsInScene` | none | 1 while a playing scene holds the actor |
 | 594 | `GetIsFlying` | none | 1 while the actor flies ([dragon flight](/engine/dragon-flight.md)) |

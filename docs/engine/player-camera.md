@@ -13,7 +13,7 @@ is, and how the player's body is drawn.
 
 ## Camera modes
 
-There are three modes, and `G` cycles them: fly, walk (first person), and third person.
+There are three modes, and `F` (Toggle POV) cycles them: fly, walk (first person), and third person.
 
 First and third person are the same simulated player: one capsule, one movement bridge, and one
 behavior graph. Only the eye differs. Everything that needs a player (the use-key ray, the trigger
@@ -31,8 +31,10 @@ The dialogue camera is not a fourth mode. It overrides the view on top of the cu
 gives it back ([dialogue camera](/engine/dialogue-camera.md)). Two rules read the override, not the
 mode, because it moves the eye out of the player's head in any mode:
 
-- The body is drawn and the first-person arms are hidden, so a first-person player sees their
-  character in the shot, not a pair of arms in front of a camera that is no longer theirs.
+- The first-person arms are hidden, because the camera is no longer the player's own. In first
+  person the body stays hidden too, as in the game: the eye is just behind the head, so the head
+  and helmet would fill the view. Only a camera that frames the player, such as the
+  [race menu](/engine/race-menu.md) portrait, draws the body in first person.
 - The shared world field of view is used, not the first-person one, so every conversation is framed
   alike.
 

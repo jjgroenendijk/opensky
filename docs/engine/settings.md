@@ -41,7 +41,7 @@ The two subtitle settings choose which lines the HUD shows
 
 ## Autosaves
 
-Autosaves rotate over three slots, `Autosave 1` to `Autosave 3`: an empty slot first,
+Autosaves rotate over three slots, `Autosave1` to `Autosave3`: an empty slot first,
 else the oldest. Quicksave writes the slot `Quicksave`. A pause save waits until the
 chosen number of minutes has passed since the last save of any kind.
 
