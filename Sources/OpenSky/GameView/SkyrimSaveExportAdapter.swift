@@ -59,9 +59,6 @@ enum SkyrimSaveExportAdapter {
 
     /// The date line the game's own menus show, which the load list prints.
     private static func gameDate(_ clock: GameClock, game: any SkyrimSaveExportHost) -> String {
-        game.runtimeState.calendarTexts.dateLine(
-            weekday: clock.weekday, hourOfDay: clock.hourOfDay,
-            day: clock.day, month: clock.month, year: clock.year
-        )
+        game.runtimeState.dateLine(of: clock)
     }
 }

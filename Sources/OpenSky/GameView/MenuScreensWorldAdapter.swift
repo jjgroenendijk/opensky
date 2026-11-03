@@ -17,6 +17,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -38,6 +39,7 @@ protocol MenuScreensWorldHost: MenuInputConsumer {
     var messageWorld: MessageWorldAdapter { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var progression: ProgressionCoordinator { get }
+    var runtimeState: RuntimeStateCoordinator { get }
     var progressionWorld: ProgressionWorldAdapter { get }
     var renderer: Renderer? { get }
     var saveGames: SaveGameWorldAdapter { get }
@@ -77,7 +79,7 @@ final class MenuScreensWorldAdapter {
 
 extension MenuScreensWorldAdapter: SleepWaitWorld {
     var gameDateText: String? {
-        game.gameSession?.gameClock.menuDateText
+        game.gameSession.map { game.runtimeState.dateLine(of: $0.gameClock) }
     }
 
     func restRefusal(sleeping: Bool, bed: FormID?) -> String? {

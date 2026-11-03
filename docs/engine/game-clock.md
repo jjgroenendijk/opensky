@@ -89,6 +89,9 @@ Sundas and 6 is Loredas, as `GetDayOfWeek` returns them.
 | Day | `sFirstOrdSuffix`, `sSecondOrdSuffix`, `sThirdOrdSuffix`, `sDefaultOrdSuffix` |
 | Joiner | `sOf`, which holds its own spaces |
 
+The wait menu, the map menu, and the save export all build the line this way, so a translated
+install shows its own words in each.
+
 The 11th to the 13th take the default suffix, by English rules. No source confirms what the game
 does there. The era, `4E`, is not a setting.
 

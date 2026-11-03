@@ -8,6 +8,14 @@ import OpenSkyGameData
 import OpenSkyWorldState
 
 extension RuntimeStateCoordinator {
+    /// The date line of `clock` in the install's own words, as the menus and the export show it.
+    public func dateLine(of clock: GameClock) -> String {
+        calendarTexts.dateLine(
+            weekday: clock.weekday, hourOfDay: clock.hourOfDay,
+            day: clock.day, month: clock.month, year: clock.year
+        )
+    }
+
     public var runtimeStateClock: RuntimeStateClockSnapshot {
         RuntimeStateClockSnapshot(
             clock: world?.gameClock ?? GameClock(),

@@ -4,6 +4,7 @@
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyGameData
 @testable import OpenSkyRuntimeState
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -179,6 +180,17 @@ struct RuntimeStateCoordinatorTests {
         world.crosshairReference = entry.formID
         _ = coordinator.conditionContext()
         #expect(world.contextCrosshairs == [entry.key])
+    }
+
+    /// A translated install shows its own words, not hardcoded English.
+    @Test func dateLineUsesTheCalendarSettings() {
+        var texts = CalendarTexts.vanilla
+        texts.weekdays[0] = "Sonntag"
+        texts.months[7] = "Letzte Saat"
+        (texts.am, texts.pm, texts.defaultOrdinalSuffix, texts.of) = ("vorm.", "nachm.", ".", " ")
+        let german = RuntimeStateCoordinator(store: store, world: world, calendarTexts: texts)
+        let line = german.dateLine(of: GameClock())
+        #expect(line == "Sonntag, 1:00 nachm., 17. Letzte Saat, 4E 201")
     }
 
     private static let referenceKey = ReferenceKey.plugin(name: "test.esm", objectID: 0x3F)
