@@ -91,6 +91,9 @@ An object has a property table in insertion order, a `__proto__` link, and attri
 - Prototype walks stop after 64 steps, so a `__proto__` cycle in broken bytecode cannot hang a lookup.
 - Host payload: an opaque engine object. The interpreter never looks inside, but its presence sends
   an unresolved member to the host. Display objects attach here.
+- Display properties such as `_x`, `_alpha`, and `_currentframe` match without case, in every SWF
+  version, while every other name is case sensitive. `statsmenu.swf` (SWF 15) reads
+  `_currentFrame` and stops its camera timer if that read fails.
 
 A function is an object with either a Swift closure or a bytecode body. A bytecode function does not
 own its bytes: the `ActionDefineFunction` header gives a `codeSize`, and the body is the next

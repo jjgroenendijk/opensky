@@ -113,6 +113,13 @@ struct SWFRuntimePropertyTests {
         #expect(panel.matrix.translateX == 80)
     }
 
+    @Test func memberNamesMatchWithoutCase() throws {
+        let (runtime, panel) = try startedPanel()
+        #expect(runtime.member("_currentFrame", of: panel) == .integer(1))
+        #expect(runtime.member("_X", of: panel) == .number(20))
+        #expect(AS2DisplayProperty.named("currentFrame") == nil)
+    }
+
     /// CLIK stores `__width` / `__height` as ordinary properties. Declining
     /// them here is what lets the interpreter fall back to the property table.
     @Test func doubleUnderscoreSizeNamesAreNotDisplayProperties() throws {

@@ -56,8 +56,13 @@ nonisolated public enum AS2DisplayProperty: Int, CaseIterable, Sendable {
         AS2DisplayProperty.names[rawValue]
     }
 
+    /// Matches without case in every SWF version: the shipped `statsmenu.swf`
+    /// reads `_currentFrame`.
     public static func named(_ name: String) -> AS2DisplayProperty? {
-        guard let index = names.firstIndex(of: name) else {
+        guard
+            name.hasPrefix("_"),
+            let index = names.firstIndex(of: name.lowercased())
+        else {
             return nil
         }
         return AS2DisplayProperty(rawValue: index)
