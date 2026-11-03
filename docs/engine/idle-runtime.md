@@ -97,7 +97,8 @@ rule. `0_master.hkx` lists these events, but no state machine transition in `0_m
 On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through the graph, and
 213 have no event because they only group other idles. 10 play through the second name rule.
 15 still name an event that neither the walk nor a name finds, such as `idle_A_pull_pants`,
-`TG05_KnockOut`, and the kill moves, so they do not play.
+`TG05_KnockOut`, and the kill moves. The kill moves still play when a target is given, because
+a paired idle goes straight to both actors' graphs ([paired animations](/engine/paired-animations.md)).
 
 The loop count comes from the idle's `DATA`: a random count between the loop minimum and
 maximum. A zero maximum plays the clip once, unless the clip loops.

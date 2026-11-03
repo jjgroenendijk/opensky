@@ -351,6 +351,13 @@ awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q 'hkaSplineCompressedAnimation' \
   || fail "hkx idle missing hkaSplineCompressedAnimation class"
 
+# Paired kill moves: each half takes its own event (docs/engine/paired-animations.md).
+run "hkx transitions (killmovec)" hkx \
+  'meshes\actors\character\behaviors\1hm_behavior.hkx' --transitions killmovec
+awk '/^--- hkx transitions/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q 'pa_killmovec -> Player_KillMoveC' \
+  || fail "hkx transitions did not list pa_KillMoveC entering Player_KillMoveC"
+
 # Havok tagfiles (.hkt): one file and the whole archived set decode.
 hkt_key="$("$cli" --data-root "$data_root" vfs ls '*.hkt' 2>/dev/null | head -1 | cut -f1)"
 run "hkt show ($hkt_key)" hkt show "$hkt_key"
@@ -394,6 +401,12 @@ printf '%s\n' "$behavior_hkx" \
   || fail "hkx behavior node-tree walk differs from verified vanilla graph"
 printf '%s\n' "$behavior_hkx" | grep -q 'hkbStateMachine "MT_RootBehavior"' \
   || fail "hkx behavior did not name the root state machine"
+
+run "animation annotations (mount)" animation \
+  'meshes\actors\sharedkillmoves\human&horse\paired_mount.hkx' --annotations
+awk '/^--- animation annotations/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q 'annotation track .* "NPC Root \[Root\]"' \
+  || fail "mount clip annotations are not on the rider's root track"
 
 # M6.3 idle decode gate: shared hkaSplineCompressedAnimation decoder samples
 # every stored frame over full mt_idle duration. Parser rejects unknown codec

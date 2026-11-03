@@ -154,15 +154,18 @@ where the body faces, until `HeadTrackingOn`.
 - `CameraShake` lasts `CameraShake.defaultDuration`. The payload gives only the strength, and no
   setting gives the length ([kill cam](/engine/kill-cam.md#camera-shake)).
 
+## Paired clips
+
+While an actor plays a half of a paired clip, such as a kill move, its events lose their
+`2_` or `NPC` prefix and act at that actor. So `2_SoundPlay` and `NPCSoundPlay` play the
+sound once, at the actor whose half sent it
+([paired animations](/engine/paired-animations.md#whose-event-is-it)).
+
 ## Not handled yet
 
 These annotations need a system OpenSky does not have. `make gaps` lists them under "Animation
 events" ([gap report](/tools/gaps.md)).
 
-- Paired animations, such as kill moves and the vampire lord feed. `2_SoundPlay` belongs to the
-  second actor of the pair, and playing it at the source would play the sound twice.
-  `NPCSoundPlay` likely plays on the other actor too; no source confirms it. `PlayAnim01` in the
-  werewolf mauling clip is in the same group.
 - An NPC's cast release frame. An NPC's spell is timed by a clock and does not wait for
   `MLh_SpellFire_Event` or `MRh_SpellFire_Event`. The player's release does wait
   ([release events](#release-events)).

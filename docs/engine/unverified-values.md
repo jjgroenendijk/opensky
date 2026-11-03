@@ -96,6 +96,10 @@ the detail and the sources it did find.
 | Additive clip order | OpenSky's order | [behaviour runtime](/engine/behavior-runtime.md) |
 | Two clip rules | Not confirmed | [behaviour clips](/engine/behavior-clips.md) |
 | Animation and skeleton split | A guess from the objects | [HKX behaviour](/formats/hkx-behavior.md) |
+| Paired idle and kill-move test | An `IDLE` event starting `pa_`, `pa_KillMove` | [paired animations](/engine/paired-animations.md) |
+| `NPC` and `2_` event prefixes | Come off a paired half's events | [paired animations](/engine/paired-animations.md) |
+| Paired animation time limit | 30 s without an end event | [paired animations](/engine/paired-animations.md) |
+| NaN in a clip track | Read as the part's identity | [animation](/formats/hka-animation.md) |
 
 ## Items, crime, and progression
 

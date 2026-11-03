@@ -270,6 +270,34 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
         game.idleWorld.idles.fireIdle(idle, on: actor, ignoringConditions: true)?.chosen != nil
     }
 
+    func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey, with target: ReferenceKey)
+        -> Bool
+    {
+        Self.played(game.idleWorld.idles.fireIdle(
+            idle, on: actor, target: target, ignoringConditions: true
+        ))
+    }
+
+    /// The tree's conditions pick the variant, so they are not ignored.
+    func playIdle(editorID: String, on actor: ReferenceKey, with target: ReferenceKey) -> Bool {
+        let idles = game.idleWorld.idles
+        guard let idle = idles.store?.idles.record(editorID: editorID)?.id else { return false }
+        return Self.played(
+            idles.fireIdle(idle, on: actor, target: target, ignoringConditions: false)
+        )
+    }
+
+    /// A paired idle the lead's graph refused plays for no seconds; any other chosen idle
+    /// plays, now or once its clip loads.
+    private static func played(_ report: IdleReport?) -> Bool {
+        guard let report, report.chosen != nil else { return false }
+        return report.source != IdleCoordinator.pairedSource || report.seconds > 0
+    }
+
+    func isInKillMove(_ actor: ReferenceKey) -> Bool {
+        game.idleWorld.idles.pairedAnimation(of: actor)?.isKillMove == true
+    }
+
     func linkDependentAnimation(_ dependent: ReferenceKey, to owner: ReferenceKey, linked: Bool) {
         if linked {
             game.idleWorld.idles.addDependent(dependent, of: owner)

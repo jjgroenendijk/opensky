@@ -225,9 +225,7 @@ nonisolated private enum HKASplineTrackDecoder {
     ) throws -> HKASplineVectorTrack {
         var components = [Float](repeating: descriptor.identity, count: 3)
         for axis in 0 ..< 3 where types[axis] == .constant {
-            components[axis] = try cursor.readFiniteFloat(
-                trackIndex: descriptor.trackIndex, component: descriptor.component
-            )
+            components[axis] = try cursor.readFloat(orIdentity: descriptor.identity)
         }
         return HKASplineVectorTrack(constants: SIMD3(
             components[0], components[1], components[2]
@@ -244,12 +242,13 @@ nonisolated private enum HKASplineTrackDecoder {
         for axis in 0 ..< 3 {
             switch types[axis] {
             case .spline:
-                let minimum = try cursor.readFiniteFloat(
-                    trackIndex: descriptor.trackIndex, component: descriptor.component
-                )
-                let maximum = try cursor.readFiniteFloat(
-                    trackIndex: descriptor.trackIndex, component: descriptor.component
-                )
+                var minimum = try cursor.readFloat()
+                var maximum = try cursor.readFloat()
+                // A non-finite bound leaves the whole axis at its identity, as for a constant.
+                if !minimum.isFinite || !maximum.isFinite {
+                    minimum = descriptor.identity
+                    maximum = descriptor.identity
+                }
                 guard maximum >= minimum else {
                     throw HKASplineAnimationError.invalidSpline(
                         trackIndex: descriptor.trackIndex,
@@ -259,9 +258,7 @@ nonisolated private enum HKASplineTrackDecoder {
                 }
                 bounds[axis] = HKASplineBounds(minimum: minimum, maximum: maximum)
             case .constant:
-                constants[axis] = try cursor.readFiniteFloat(
-                    trackIndex: descriptor.trackIndex, component: descriptor.component
-                )
+                constants[axis] = try cursor.readFloat(orIdentity: descriptor.identity)
             case .identity:
                 break
             }

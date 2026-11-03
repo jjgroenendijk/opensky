@@ -43,8 +43,7 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var race: FormID?
     /// The race's keywords, nil when the race is not known.
     public var raceKeywords: [FormID]?
-    /// OpenSky plays no paired animation (kill moves) and moves no actor in flight
-    /// yet, so both stay false until those systems set them.
+    /// True while the actor plays either half of a paired animation, such as a kill move.
     public var isInPairedAnimation = false
     public var isFlying = false
     /// Nil when the actor's traits did not resolve.

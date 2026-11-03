@@ -79,7 +79,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 289 | `IsInCombat` | none | 1 while fighting or searching |
 | 300 | `IsInInterior` | none | 1 when the reference stands in an interior cell |
 | 310 | `GetInWorldspace` | `WRLD` | 1 in an exterior cell of that worldspace |
-| 313 | `GetPairedAnimation` | none | 1 while the actor plays a paired animation; always 0 |
+| 313 | `GetPairedAnimation` | none | 1 while the actor plays either half of a paired animation |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
 | 353 | `IsActor` | none | 1 when the run-on is an actor |
 | 354 | `IsEssential` | none | 1 when the base record has the essential flag |
@@ -270,8 +270,8 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.
-- `GetPairedAnimation` returns 0. OpenSky plays no paired animation, such as a kill move.
-  The system that adds one sets the actor state.
+- `GetPairedAnimation` is 1 for both actors of a paired animation until it ends
+  ([paired animations](/engine/paired-animations.md#ending-a-pair)).
 - `GetDead` reads the death flag, not health. The Creation Kit says: "This is more accurate
   than checking the actor's health because there are circumstances when the actor can die
   without losing all of their health."

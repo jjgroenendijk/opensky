@@ -135,12 +135,12 @@ number is the index plus 4096:
 | --- | --- | --- | --- | --- |
 | 36 | 4132 | `MenuMode` | `ShowAttacker`, `== 1` | Not supported. The condition context holds no menu state. `ShowAttacker` also needs `GetRandomPercent < 0`, which is never true |
 | 69 | 4165 | `GetIsRace` | Run on the target, `!= 1` for each large race | Evaluated from the target's race |
-| 313 | 4409 | `GetPairedAnimation` | `PairedKillTest`, `== 1` | Evaluated, always 0: OpenSky plays no paired animation |
+| 313 | 4409 | `GetPairedAnimation` | `PairedKillTest`, `== 1` | Evaluated: 1 while the actor plays a paired animation |
 | 391 | 4487 | `IsPC1stPerson` | `1stPRandom`, `1stPFailsafeCam`, `== 1` | Evaluated from the player's camera mode |
 | 594 | 4690 | `GetIsFlying` | `ExitDontShootFlyingDragons`, `== 1` | Evaluated, always 0: no actor flies yet |
 | 675 | 4771 | `GetGraphVariableInt` | `bShortKillMove`, `Is3rdPKillOnly` on the attacker | Not supported. The condition context does not read behavior graph variables. Every use sits under `PairedKillTest` |
 
 So a melee kill still ends at `ExitWeRanOutOfCams`. The melee paths sit under
-`PairedKillTest`, and its `GetPairedAnimation` is 1 only during a paired kill move. Melee kill
-cams play once kill moves exist: that work sets the paired animation flag of the actor state,
-and adds `GetGraphVariableInt` for the kill-move variables.
+`PairedKillTest`, and its `GetPairedAnimation` is 1 only during a paired kill move
+([paired animations](/engine/paired-animations.md)). Combat starts no kill move yet, and
+`GetGraphVariableInt` does not read the kill-move variables.

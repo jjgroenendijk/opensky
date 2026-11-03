@@ -21,6 +21,8 @@ nonisolated public enum BehaviorEventProbe {
         public let stateTag: Int32?
         /// The `iState_*` constants of the graph that hold `stateTag`.
         public let stateTagNames: [String]
+        /// Paired clips this step first sampled, as the track prefix, `|`, and the clip.
+        public var synchronizedClips: [String] = []
     }
 
     nonisolated public enum Failure: Error, Equatable, CustomStringConvertible {
@@ -86,6 +88,7 @@ nonisolated public enum BehaviorEventProbe {
         _ variables: [String: Float]
     ) -> Step {
         var fired: [String] = []
+        let pairedBefore = Set(instance.pairedClipNames)
         for _ in 0 ..< updates {
             for (name, value) in variables.sorted(by: { $0.key < $1.key }) {
                 instance.setVariable(.real(value), named: name)
@@ -100,9 +103,11 @@ nonisolated public enum BehaviorEventProbe {
         let names = instance.variables.names.compactMap(\.self).filter { name in
             name.hasPrefix("iState_") && instance.isTaggingState(name)
         }
-        return Step(
+        var step = Step(
             event: event, accepted: accepted, states: states, fired: fired,
             stateTag: tag, stateTagNames: names.sorted()
         )
+        step.synchronizedClips = instance.pairedClipNames.filter { !pairedBefore.contains($0) }
+        return step
     }
 }

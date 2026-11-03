@@ -7,6 +7,11 @@ import Foundation
 import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
+    /// The paired clips this graph played, as the track prefix, `|`, and the clip.
+    public var pairedClipNames: [String] {
+        pairedClips.keys.sorted()
+    }
+
     /// The playback phase of the first clip generator below `target` that has
     /// run, as a fraction of its own clip window, or nil when the subtree holds
     /// none. Depth first in declared order, so the answer is the same on every
