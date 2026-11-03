@@ -36,6 +36,11 @@ nonisolated public struct GraphicsOption: Equatable, Sendable {
         key.hasPrefix("b")
     }
 
+    /// `applied`, or `unavailable: ` and the reason, for `openskycli graphics status`.
+    public var statusText: String {
+        unavailableReason.map { "unavailable: \($0)" } ?? "applied"
+    }
+
     /// `[TerrainManager] fBlockLevel0Distance`, for the details view.
     public var iniName: String {
         "[\(section)] \(key)"

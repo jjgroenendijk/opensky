@@ -9,9 +9,8 @@ enum GraphicsCommand {
         let (store, presets) = load(context)
         print("preset\t\(presets.current(in: store)?.title ?? "Custom")")
         for option in GraphicsOptions.all {
-            let state = option.unavailableReason == nil ? "applied" : "unavailable"
             let value = store.value(option.id).formatted(.number.grouping(.never))
-            print("\(option.iniName)\t\(value)\t\(state)")
+            print("\(option.iniName)\t\(value)\t\(option.statusText)")
         }
     }
 
