@@ -12,10 +12,17 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
         treeLoadDistance: 75000
     )
 
+    /// The game's default `uGridsToLoad` (CK wiki "UGridsToLoad").
+    public static let defaultGridsToLoad: Float = 5
+    /// An OpenSky limit, so a typo cannot ask for thousands of full-detail cells.
+    public static let maximumLoadedGridRadius: Int32 = 10
+
     public let level0Distance: Float
     public let level1Distance: Float
     public let maximumDistance: Float
     public let treeLoadDistance: Float
+    /// Rings of full-detail cells around the centre cell; distant LOD starts past them.
+    public let loadedGridRadius: Int32
 
     public var isValid: Bool {
         level0Distance.isFinite && level0Distance > 0
@@ -28,12 +35,21 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
         level0Distance: Float,
         level1Distance: Float,
         maximumDistance: Float,
-        treeLoadDistance: Float
+        treeLoadDistance: Float,
+        loadedGridRadius: Int32 = 2
     ) {
         self.level0Distance = level0Distance
         self.level1Distance = level1Distance
         self.maximumDistance = maximumDistance
         self.treeLoadDistance = treeLoadDistance
+        self.loadedGridRadius = loadedGridRadius
+    }
+
+    /// `uGridsToLoad` is the grid's full side, always odd in the game: 5 gives 2 rings.
+    public static func loadedGridRadius(gridsToLoad: Float) -> Int32 {
+        guard gridsToLoad.isFinite, gridsToLoad >= 1 else { return 0 }
+        let side = min(gridsToLoad, Float(maximumLoadedGridRadius * 2 + 1))
+        return Int32((side - 1) / 2)
     }
 }
 
@@ -104,7 +120,10 @@ nonisolated public enum TerrainLODSettings: Sendable {
             level0Distance: distance("fBlockLevel0Distance"),
             level1Distance: distance("fBlockLevel1Distance"),
             maximumDistance: distance("fBlockMaximumDistance"),
-            treeLoadDistance: distance("fTreeLoadDistance")
+            treeLoadDistance: distance("fTreeLoadDistance"),
+            loadedGridRadius: TerrainLODConfiguration.loadedGridRadius(
+                gridsToLoad: distance("uGridsToLoad")
+            )
         )
         guard
             configuration != snapshot.configuration,
@@ -121,11 +140,15 @@ nonisolated public enum TerrainLODSettings: Sendable {
         let level1 = ini.float(section: section, key: "fBlockLevel1Distance")
         let maximum = ini.float(section: section, key: "fBlockMaximumDistance")
         let tree = ini.float(section: section, key: "fTreeLoadDistance")
+        let grids = ini.float(section: "General", key: "uGridsToLoad")
         let configuration = TerrainLODConfiguration(
             level0Distance: level0?.value ?? fallback.level0Distance,
             level1Distance: level1?.value ?? fallback.level1Distance,
             maximumDistance: maximum?.value ?? fallback.maximumDistance,
-            treeLoadDistance: tree?.value ?? fallback.treeLoadDistance
+            treeLoadDistance: tree?.value ?? fallback.treeLoadDistance,
+            loadedGridRadius: TerrainLODConfiguration.loadedGridRadius(
+                gridsToLoad: grids?.value ?? TerrainLODConfiguration.defaultGridsToLoad
+            )
         )
         guard configuration.isValid else {
             return TerrainLODConfigurationSnapshot(
@@ -133,7 +156,7 @@ nonisolated public enum TerrainLODSettings: Sendable {
                 source: "safe defaults"
             )
         }
-        let source = [level0?.source, level1?.source, maximum?.source, tree?.source]
+        let source = [level0?.source, level1?.source, maximum?.source, tree?.source, grids?.source]
             .compactMap(\.self)
             .last ?? "safe defaults"
         return TerrainLODConfigurationSnapshot(configuration: configuration, source: source)

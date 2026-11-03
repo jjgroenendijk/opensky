@@ -32,8 +32,10 @@ runtime and are never copied into the repository or a test fixture.
 ## What OpenSky applies
 
 OpenSky applies the four terrain distances today: `fBlockLevel0Distance`, `fBlockLevel1Distance`,
-`fBlockMaximumDistance`, and `fTreeLoadDistance`. It also applies `bDecals` and `uMaxDecals`
-([impacts and decals](/rendering/decals.md)).
+`fBlockMaximumDistance`, and `fTreeLoadDistance`. It also applies `uGridsToLoad`, the side of the
+full-detail cell grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)). No preset file
+sets it, so OpenSky adds it to the list, and a preset leaves it unchanged. It also applies `bDecals`
+and `uMaxDecals` ([impacts and decals](/rendering/decals.md)).
 
 Every other option is shown, saved, and disabled, with one line that says why it does
 nothing yet, such as "OpenSky draws no decals on actors yet". So a player sees what the game would

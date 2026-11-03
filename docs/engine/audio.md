@@ -117,7 +117,8 @@ flag the tick checks. The main actor never waits for the decode queue.
   and keeps going. It never sets the finished flag. A pass that decoded no audio ends the source
   instead of rewinding, so a file the decoder cannot use cannot spin the decode queue.
 - Each positional source remembers the exterior cell of its position. The tick stops sources more
-  than 3 rings from the listener's cell, one ring past the 5x5 loaded grid.
+  than one ring past the loaded grid around the listener's cell: 3 rings for the default 5 x 5
+  grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)).
 
 ## Gain ramps
 

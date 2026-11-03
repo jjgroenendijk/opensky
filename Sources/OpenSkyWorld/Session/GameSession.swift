@@ -14,6 +14,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorldState
 import simd
@@ -25,6 +26,8 @@ public final class GameSession: RenderFrameDriver {
     public var freeFlyCamera: FreeFlyCamera
     /// Fly is the default dev mode. Toggle POV cycles fly -> first-person walk -> third person.
     public var movementMode = CameraMovementMode.fly
+    /// Rings of full-detail cells the streamer keeps, from `uGridsToLoad`.
+    public var loadedGridRadius = CellGridManager.defaultRadius
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths. Walk mode, the
     /// cameras and precipitation all query it.

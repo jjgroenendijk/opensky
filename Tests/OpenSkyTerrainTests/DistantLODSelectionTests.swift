@@ -75,4 +75,20 @@ struct DistantLODSelectionTests {
             DistantLODBand(level: 32, innerRadius: 16, outerRadius: 32)
         ])
     }
+
+    @Test func aWiderLoadedGridPushesTheFirstBandOut() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 12288,
+            level1Distance: 32768,
+            maximumDistance: 131_072,
+            treeLoadDistance: 65536,
+            loadedGridRadius: 5
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 5, outerRadius: 5))
+        #expect(bands.dropFirst().first == DistantLODBand(level: 8, innerRadius: 5, outerRadius: 8))
+    }
 }

@@ -119,6 +119,8 @@ the detail and the sources it did find.
 | --- | --- | --- |
 | New game start hour | Midnight | [game clock](/engine/game-clock.md) |
 | Time scale ceiling | 10,000 | [game clock](/engine/game-clock.md) |
+| Largest loaded cell grid | 10 rings (`uGridsToLoad` 21) | [cell streaming](/engine/cell-streaming.md) |
+| Sound purge ring | One ring past the loaded grid | [audio](/engine/audio.md) |
 | Global float to integer | Rounding, not truncation | [global variables](/engine/global-variables.md) |
 | Weather global chance | A global that resolves replaces the entry's chance | [weather](/engine/weather.md) |
 | Wind speed unit and one setting's meaning | Guesses from xEdit and the name | [weather](/engine/weather.md) |

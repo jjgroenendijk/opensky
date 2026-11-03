@@ -27,12 +27,17 @@ zero in cell 0, which is wrong for the whole negative quarter of the world.
 
 ## The desired grid
 
-`uGridsToLoad` in the Skyrim INI is the full side length of the grid.
-It is always odd, and 5 by default. The grid manager stores the number of rings around the
-center instead: `(uGridsToLoad - 1) / 2`, which is 2. So the desired grid is the
-`(2 * radius + 1)` squared cells around the center: 25 cells by default. Sources: UESP
-"Skyrim:INI Settings", and community Creation Kit notes that describe the same odd side length.
-A negative radius becomes 0, which is only the center cell.
+`uGridsToLoad` in the `[General]` section of the Skyrim INI is the full side length of the grid.
+It is always odd in the game, and 5 by default (<https://ck.uesp.net/wiki/UGridsToLoad>). The
+grid manager stores the number of rings around the center instead: `(uGridsToLoad - 1) / 2`,
+which is 2. So the desired grid is the `(2 * radius + 1)` squared cells around the center: 25
+cells by default. An even side rounds down, so 6 loads the same grid as 5.
+
+OpenSky reads the setting from the layered INI files, and the player can change it on the
+Graphics page as "Full-detail cell grid" ([graphics options](/engine/graphics-options.md)). The
+value is read when a game starts. OpenSky allows at most 10 rings, a 21 x 21 grid, so a typo cannot
+ask for thousands of cells; this limit is OpenSky's own. The distant LOD starts past the same
+radius, and sound sources are stopped one ring past it ([audio](/engine/audio.md)).
 
 ## Who owns the loaded set
 
@@ -177,7 +182,7 @@ known `CELL` identity is never announced, because subscribers file script instan
 
 ## Distant LOD and coverage
 
-Once the whole 5x5 grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)
+Once the whole near grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)
 scene. It comes last, so its many first-load assets cannot delay near cells.
 
 After that, moving the center starts a coverage change. The old scene stays on screen. New cells

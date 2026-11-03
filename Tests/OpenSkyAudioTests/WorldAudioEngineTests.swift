@@ -123,7 +123,7 @@ struct WorldAudioEngineTests {
         let engine = try OfflineAudioFixture.makeRunningEngine()
         let cellSpan: Float = 4096
         try play(engine, at: .zero, name: "near")
-        let farCells = Float(WorldAudioEngine.cellPurgeRadius + 2)
+        let farCells = Float(WorldAudioEngine.defaultCellPurgeRadius + 2)
         try play(engine, at: SIMD3(farCells * cellSpan, 0, 0), name: "far")
         engine.tick(listenerCell: CellCoordinate(x: 0, y: 0))
         let names = engine.sources.map(\.name)

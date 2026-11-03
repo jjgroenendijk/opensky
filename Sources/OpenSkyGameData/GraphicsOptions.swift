@@ -70,6 +70,7 @@ nonisolated public enum GraphicsOptions {
         option(.viewDistance, "Middle terrain detail", "TerrainManager", "fBlockLevel1Distance"),
         option(.viewDistance, "Far terrain distance", "TerrainManager", "fBlockMaximumDistance"),
         option(.viewDistance, "Tree distance", "TerrainManager", "fTreeLoadDistance"),
+        option(.viewDistance, "Full-detail cell grid", "General", "uGridsToLoad"),
         option(
             .viewDistance, "Terrain split distance", "TerrainManager", "fSplitDistanceMult",
             "OpenSky splits terrain blocks by its own rule"
@@ -194,6 +195,7 @@ nonisolated public enum GraphicsOptions {
         case "fBlockLevel1Distance": Double(fallback.level1Distance)
         case "fBlockMaximumDistance": Double(fallback.maximumDistance)
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
+        case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
         case "bDecals": 1
         case "uMaxDecals": 100
         default: 0
