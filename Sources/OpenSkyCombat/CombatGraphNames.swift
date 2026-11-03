@@ -70,6 +70,11 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// because five vanilla equip clips carry none.
     public static let weapEquipOut = "WeapEquip_Out"
     public static let unequipOut = "Unequip_Out"
+    /// The end of a readied spell's equip clip, the spell hand's `WeapEquip_Out`.
+    public static let magicEquipOut = "Magic_Equip_Out"
+    /// A readied spell's sheathe end. Its `Unequip` goes straight back to
+    /// `MT_Behavior_State`, so no `Unequip_Out` or `BeginWeaponSheathe` follows.
+    public static let magicUnequipOut = "Magic_Unequip_Out"
     /// The swing's audible start, ahead of any contact.
     public static let weaponSwing = "weaponSwing"
     /// The frame before contact, which opens the hit window.
@@ -97,7 +102,7 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// Every event the melee state machine acts on when the graph fires it.
     public static let observedEvents = [
         beginWeaponDraw, beginWeaponSheathe,
-        weapEquipOut, unequipOut,
+        weapEquipOut, unequipOut, magicEquipOut, magicUnequipOut,
         weaponSwing, preHitFrame, hitFrame,
         attackWinStart, attackWinEnd, attackWinStartLeft, attackWinEndLeft,
         attackStart, attackStop, bashStart, bashStop, blockStart, blockStop,

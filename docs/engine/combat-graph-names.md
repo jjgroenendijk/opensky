@@ -34,7 +34,7 @@ split below says which way OpenSky uses each name. It is not a property of the d
 | Fired back by the graph | Meaning |
 | --- | --- |
 | `BeginWeaponDraw`, `BeginWeaponSheathe` | The clip marks where the weapon changes nodes |
-| `WeapEquip_Out`, `Unequip_Out` | The graph's own end-of-equip transitions |
+| `WeapEquip_Out`, `Magic_Equip_Out`, `Unequip_Out`, `Magic_Unequip_Out` | The graph's own end-of-equip transitions |
 | `weaponSwing` | The audible start of the swing, before contact |
 | `preHitFrame` | The frame before contact |
 | `HitFrame` | The contact frame, which runs the sweep |

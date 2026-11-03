@@ -64,6 +64,9 @@ have it at time 0.0. `Dag_Equip.hkx`, `Axe_Equip.hkx`, `Mac_Equip.hkx`, `2HC_Equ
 `2HW_Equip.hkx` have none, and only mark `weaponDraw` in the middle of the clip, which is easy to
 confuse with the engine's own `weaponDraw`. So the graph's `WeapEquip_Out`, the transition
 `0_master.hkx` takes into `Weap_Readied_State`, is a second way in, and `Unequip_Out` its mirror.
+A readied spell's clip ends on `Magic_Equip_Out` instead. Its sheathe ends on
+`Magic_Unequip_Out`: `Unequip` takes the spell hand straight back to `MT_Behavior_State`, with no
+`BeginWeaponSheathe` or `Unequip_Out`.
 The clip mark is earlier and wins when a clip has it. The transition keeps a dagger from being
 stuck mid-draw. Whichever comes first moves the weapon, once.
 

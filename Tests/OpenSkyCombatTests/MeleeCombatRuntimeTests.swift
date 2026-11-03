@@ -140,6 +140,23 @@ struct MeleeCombatRuntimeTests {
         #expect(!world.raised.contains(CombatGraphNames.weapEquip))
     }
 
+    @Test func aDrawnSpellSheathesOnTheNextToggle() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .spell)
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+        runtime.handleGraphEvents([CombatGraphNames.weaponDraw, CombatGraphNames.magicEquipOut])
+        #expect(runtime.state.drawState == .drawn)
+
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+        #expect(world.raised.suffix(2) == [
+            CombatGraphNames.weaponSheathe,
+            CombatGraphNames.unequip
+        ])
+        runtime.handleGraphEvents([CombatGraphNames.magicUnequipOut])
+        #expect(runtime.state.drawState == .sheathed)
+    }
+
     @Test func bothHandTypesArePublishedToTheGraphVariables() {
         let world = FakeMeleeWorld()
         let runtime = Self.runtime(world: world, damage: 10)
