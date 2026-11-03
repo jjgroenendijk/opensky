@@ -103,6 +103,20 @@ node can wait for it, and the graph acts without the engine. Examples on the ins
 ([gap report](/tools/gaps.md)). A graph of another folder does not count. A door graph waits for
 `Open`, but a dragon clip that carries `Open` is not played by a door.
 
+## Release events
+
+The player's cast and shout release wait for their annotation, so the spell leaves on the frame
+the clip throws it:
+
+- `MLh_SpellFire_Event` and `MRh_SpellFire_Event` release a fire-and-forget spell from the left or
+  right hand, and `Spellfire` on the staff release clips releases a staff
+  ([spellcasting](/engine/spellcasting.md#casting-cues)).
+- `Voice_SpellFire_Event` on the exhale clip fires the shout ([shouts](/engine/shouts.md)), and
+  the dragon's breath ([dragon flight](/engine/dragon-flight.md)).
+
+The magic and shout effect graphs, such as `dragonmouthfire.hkx`, hear the same events
+([effect graphs](/engine/effect-graphs.md)).
+
 ## Function events
 
 `Func.<name>` sends `<name>` to the source's scripts as an animation event, the same way
@@ -149,11 +163,9 @@ events" ([gap report](/tools/gaps.md)).
   second actor of the pair, and playing it at the source would play the sound twice.
   `NPCSoundPlay` likely plays on the other actor too; no source confirms it. `PlayAnim01` in the
   werewolf mauling clip is in the same group.
-- The cast and shout release frame: `MLh_SpellFire_Event`, `MRh_SpellFire_Event`,
-  `Voice_SpellFire_Event`, and `Spellfire` on the staff release clips. The cast is timed by a
-  clock ([spellcasting](/engine/spellcasting.md)). The magic and shout effect graphs, such as
-  `dragonmouthfire.hkx`, hear these events ([effect graphs](/engine/effect-graphs.md)), but the
-  release itself does not wait for them.
+- An NPC's cast release frame. An NPC's spell is timed by a clock and does not wait for
+  `MLh_SpellFire_Event` or `MRh_SpellFire_Event`. The player's release does wait
+  ([release events](#release-events)).
 - `StartAnimationDriven`: about 29 creature graphs declare it and none waits for it, so the engine
   reads it. It likely moves the actor by the clip's root motion; no source confirms it.
 - The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and

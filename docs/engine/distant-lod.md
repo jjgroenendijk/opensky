@@ -52,7 +52,7 @@ LOD scenes are built on the same serial queue as cells, except the first ring:
 
 1. At the session start, the first ring is built beside the near grid, in a `@concurrent`
    function with its own mesh and texture libraries, so it never touches the build queue's
-   caches. It hides the whole desired 5 x 5 grid. The loading screen stays up until the near
+   caches. It hides the whole desired near grid. The loading screen stays up until the near
    grid has finished and this ring is in ([loading screens](/engine/loading-screens.md)).
 2. Every later ring waits for the near grid to finish (every cell loaded, empty, or failed),
    so a LOD build cannot hold up near cells.

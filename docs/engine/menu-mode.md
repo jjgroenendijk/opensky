@@ -70,10 +70,11 @@ camera and sends menu events instead:
 Key releases and other keys are swallowed, so no world key sticks. The pointer is left free,
 because a menu wants a visible cursor. Entering menu mode also releases all held camera keys.
 
-The main menu movie hit tests the cursor itself: the row under it highlights, and a click picks
-that row. A click outside every row does nothing. The other menus do not hit test yet, so for
-them a press is the accept button. A menu opened while the cursor is captured gets the same
-accept, because a hidden cursor has no place on screen.
+Some menu movies hit test the cursor themselves: the row under it highlights, and a click picks
+that row. A click outside every row does nothing. These are the main menu, the race menu, the
+message box, and the sleep and wait, training, book, tutorial, magic, gift, crafting, text entry,
+and Creation Club menus. While one of them is on top, the cursor is free and visible. Any other
+menu takes a press as its accept button.
 
 ## World pause
 

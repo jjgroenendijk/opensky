@@ -44,8 +44,10 @@ values.
 - Every write and reset is journaled in its own bounded window, sharing the one sequence counter with
   component changes. Merging the two by sequence gives the real causal order.
 - Global writes fire their own callback, not the reference change callback. The reference callback
-  rebuilds cells, and a global changes a number, not a scene. The clock writes `GameHour` every
-  frame, and routing that through cell rebuilds would rebuild every loaded cell every frame.
+  rebuilds cells, and a global changes a number, not a scene. The time globals are not written
+  as the clock runs: a read computes them from the clock ([game clock](/engine/game-clock.md)).
+  A scrub or a script write to one moves the clock instead, and must not rebuild every loaded
+  cell.
 
 ## The lookup seam
 

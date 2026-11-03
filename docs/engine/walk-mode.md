@@ -9,10 +9,10 @@ tags: [engine, world, terrain, collision, movement, streaming, locomotion]
 
 # Walk mode
 
-Fly mode is the default developer camera. `G` cycles to walk mode (first person) and third person.
-In walk mode a player capsule owns the position and gravity. Mouse look and WASD with Shift work as
-in fly mode. `Q` and `E` move up and down only in fly mode. The camera modes and the player body
-are on the [player camera and body](/engine/player-camera.md) page.
+Fly mode is the default developer camera. `F` (Toggle POV) cycles to walk mode (first person) and
+third person. In walk mode a player capsule owns the position and gravity. Mouse look and WASD with
+Shift work as in fly mode. `X` and `V` move up and down only in fly mode. The camera modes and the
+player body are on the [player camera and body](/engine/player-camera.md) page.
 
 ## Terrain collision
 
@@ -20,8 +20,10 @@ Each exterior cell keeps an immutable height field on the CPU, beside its terrai
 from the same data as rendering ([terrain](/engine/terrain.md)):
 
 - `LAND` `VHGT` gives 33x33 heights, with the `XCLC` hidden quadrant mask.
-- A cell with no `LAND` gets a flat 33x33 field at the `WRLD` `DNAM` default land height, like the
-  drawn fallback plane.
+- A cell with no `LAND` in a child world that uses its parent's land data takes the parent's
+  `LAND` at the same grid cell, as the drawn terrain does.
+- A cell with no `LAND` otherwise gets a flat 33x33 field at the `WRLD` `DNAM` default land height,
+  like the drawn fallback plane.
 - No `LAND` and no `DNAM` gives no terrain draw and no collision.
 
 Each 128-unit quad uses the same triangles as the terrain mesh: a south triangle SW, SE, NE and a
@@ -85,8 +87,8 @@ if either value changes.
 | Option (hold) | Sprint | Alt |
 | C | Sneak, a toggle | Ctrl |
 | Space | Jump | Same |
-| G | Camera mode: fly, first person, third person | OpenSky developer control. Vanilla uses F for first and third |
-| F | Use | E |
+| F | Camera mode: fly, first person, third person | F switches first and third person. Fly is an OpenSky developer mode |
+| E | Use | Same |
 
 macOS uses Control-click as the secondary click, so Control cannot be held during mouse look. That
 is why sneak moved. Sneak is a mode, not a held key, so it stays on when the pointer is released.

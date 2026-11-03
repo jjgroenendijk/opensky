@@ -27,7 +27,7 @@ Starting runs the begin fragment, then enters phase 1.
 An actor plays in one scene at a time. A scene holds its actors from the moment it enters a
 phase until it ends. A second scene that needs a held actor waits before its first phase:
 
-- If the scene that holds the actor has flag 0x04 (interruptible), it is stopped, and the new
+- If the scene that holds the actor has flag 0x10 (interruptible), it is stopped, and the new
   scene takes the actor.
 - Otherwise the new scene waits. It tries again on every tick.
 - An optional actor (actor `LNAM` flag 0x02) never makes a scene wait. Its actions are done at

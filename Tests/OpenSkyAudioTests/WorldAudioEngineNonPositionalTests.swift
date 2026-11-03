@@ -61,7 +61,7 @@ struct WorldAudioEngineNonPositionalTests {
         try MusicAudioFixture.playEffect(
             engine,
             name: "far",
-            at: SIMD3(Float(WorldAudioEngine.cellPurgeRadius + 2) * 4096, 0, 0)
+            at: SIMD3(Float(WorldAudioEngine.defaultCellPurgeRadius + 2) * 4096, 0, 0)
         )
         engine.tick(listenerCell: CellCoordinate(x: 0, y: 0), deltaTime: 1 / 60)
         #expect(engine.sources.map(\.name) == ["music"])

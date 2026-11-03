@@ -14,9 +14,9 @@ selection is on the [dialogue runtime](/engine/dialogue.md) page.
 
 ## An override, not a camera mode
 
-The camera mode is what the player chose to look through, and `G` changes it. A conversation is
-something that happens to the player. So the dialogue camera writes the camera pose on top of
-whatever mode is active, and remembers what was there. The mode itself never changes.
+The camera mode is what the player chose to look through, and `F` (Toggle POV) changes it. A
+conversation is something that happens to the player. So the dialogue camera writes the camera pose
+on top of whatever mode is active, and remembers what was there. The mode itself never changes.
 
 The swap is undone at the start of each input frame, before anything simulates, and applied
 again at the end. That order matters. The walk controller reads the player's facing from this

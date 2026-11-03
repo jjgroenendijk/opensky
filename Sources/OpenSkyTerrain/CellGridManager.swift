@@ -19,10 +19,8 @@ nonisolated public struct CellGridDiff: Equatable, Sendable {
 /// the caller passes the loaded set each frame and gets a fresh diff, so a failed or
 /// in-flight load reappears in `loads` without a retry API.
 nonisolated public struct CellGridManager: Sendable {
-    /// uGridsToLoad default = 5 (full grid side length, always odd) -> 2
-    /// rings around the center cell. Ref: UESP "Skyrim:INI Settings" (Grid
-    /// section, `uGridsToLoad`); community SKSE/CK docs describe the same
-    /// odd-side-length, center-plus-N-rings convention.
+    /// The rings of the default `uGridsToLoad` 5; the app passes the INI's value
+    /// (docs/engine/cell-streaming.md).
     public static let defaultRadius: Int32 = 2
 
     /// How far inside a crossed border the camera must be before the grid re-centers, so

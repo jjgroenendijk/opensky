@@ -18,6 +18,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -28,6 +29,7 @@ import simd
 @MainActor
 protocol WorldSessionWiringHost: AnimationEventWorldHost {
     var actorWorld: ActorWorldAdapter { get }
+    var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
     var aiWorld: AIWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
@@ -101,6 +103,7 @@ final class WorldSessionWiring {
         let provider = session.data
         let streamer = CellStreamer(
             center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
+            radius: game.terrainLODConfigurationStore.snapshot().configuration.loadedGridRadius,
             runner: session.runner,
             sink: { [weak renderer] scene, camera in
                 do {
@@ -113,6 +116,7 @@ final class WorldSessionWiring {
             }
         )
         streamer.placedRecords = provider.placedRecords
+        gameSession.loadedGridRadius = streamer.grid.radius
         streamer.doors = DoorSettings.resolve(store: provider.gameSettings)
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(gameSession: gameSession)

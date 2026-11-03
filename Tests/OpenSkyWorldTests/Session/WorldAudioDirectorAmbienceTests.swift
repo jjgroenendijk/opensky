@@ -46,7 +46,7 @@ struct WorldAudioDirectorAmbienceTests {
             worldPosition: SIMD3<Float>(1_000_000, 1_000_000, 0), yaw: 0, pitch: 0
         )
         engine.purgeSources(
-            fartherThan: WorldAudioEngine.cellPurgeRadius,
+            fartherThan: WorldAudioEngine.defaultCellPurgeRadius,
             fromCell: CellCoordinate(x: 250, y: 250)
         )
 

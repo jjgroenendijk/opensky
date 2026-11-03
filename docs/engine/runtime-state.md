@@ -85,10 +85,9 @@ lays the delta over it. So a reset restores whatever the record says now, and th
 reports which slots the delta supplied, so "disabled by a script" and "disabled by the record" stay
 different.
 
-Two baseline gaps are known. A `REFR` placement does not decode the record header, so it baselines
-as enabled whatever its `initiallyDisabled` flag says. An `ACHR` does carry the flag and respects it.
-Neither carries the header's `deleted` flag, so the deletion baseline is always "not deleted". That
-flag means the plugin removed the record, which is handled when references are collected.
+A `REFR` and an `ACHR` both baseline their enable state from the record header's `initiallyDisabled`
+flag. Neither carries the header's `deleted` flag, so the deletion baseline is always "not deleted".
+That flag means the plugin removed the record, which is handled when references are collected.
 
 ## The change journal
 

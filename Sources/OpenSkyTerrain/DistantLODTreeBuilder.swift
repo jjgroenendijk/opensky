@@ -44,7 +44,7 @@ nonisolated extension DistantLODBuilder {
         let list = try treeList(worldspace: key, path: listPath)
         let atlasPath = "textures\\terrain\\\(key)\\trees\\\(key)treelod.dds"
         let radius = max(
-            CellGridManager.defaultRadius,
+            configuration.loadedGridRadius,
             Int32(ceil(configuration.treeLoadDistance / TerrainMeshBuilder.cellSize))
         )
         let origins = treeBlockOrigins(settings: settings, center: center, radius: radius)

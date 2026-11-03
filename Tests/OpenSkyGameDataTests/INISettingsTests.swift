@@ -68,6 +68,22 @@ struct INISettingsTests {
         #expect(TerrainLODSettings.resolve(invalid).configuration == .fallback)
     }
 
+    @Test func gridsToLoadSetsTheLoadedGridRadius() {
+        func radius(_ text: String) -> Int32 {
+            let ini = INISettings(sources: [INISettingsSource(
+                name: "Skyrim.ini", file: INIFile(data: Data(text.utf8))
+            )])
+            return TerrainLODSettings.resolve(ini).configuration.loadedGridRadius
+        }
+        #expect(radius("") == 2)
+        #expect(radius("[General]\nuGridsToLoad=7") == 3)
+        #expect(radius("[General]\nuGridsToLoad=1") == 0)
+        #expect(radius("[General]\nuGridsToLoad=6") == 2)
+        #expect(radius("[General]\nuGridsToLoad=999") == TerrainLODConfiguration
+            .maximumLoadedGridRadius)
+        #expect(radius("[General]\nuGridsToLoad=0") == 0)
+    }
+
     @Test func localizationLanguageUsesIniAndFallsBackPastInvalidValues() {
         let settings = INISettings(sources: [
             INISettingsSource(

@@ -18,16 +18,16 @@ so the math has no AppKit and can be unit tested:
 
 ## Input
 
-- Move: W and S forward and back along the view, A and D sideways, E up (+Z), Q down. Keys are
+- Move: W and S forward and back along the view, A and D sideways, X up (+Z), V down. Keys are
   read by physical key code, not by character, so WASD stays under the left hand on any keyboard
   layout.
 - Look: mouse movement while the pointer is captured. Pointer right turns right, pointer up looks
   up. AppKit's `deltaY` is positive downward, so it is negated.
 - Boost: hold Shift.
-- Activate: F. In walk mode it uses the [interaction](/engine/interaction.md) target. Fly mode has
+- Activate: E. In walk mode it uses the [interaction](/engine/interaction.md) target. Fly mode has
   no target.
-- Mode: G cycles fly, [walk mode](/engine/walk-mode.md), and third person. Fly is the default. Q, E
-  work only in fly mode.
+- Mode: F (Toggle POV) cycles fly, [walk mode](/engine/walk-mode.md), and third person. Fly is
+  the default. X and V work only in fly mode.
 - Capture: a click in the view hides the pointer and freezes it
   (`CGAssociateMouseAndMouseCursorPosition(0)`), so only raw movement arrives. Esc, or the view
   losing focus, releases it and clears all keys, so no key stays stuck.

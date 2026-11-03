@@ -57,7 +57,7 @@ public final class WorldAudioEngine {
     /// Sources bound to a cell farther than this (Chebyshev rings) from the
     /// listener's cell are stopped on the audio tick — cleanup when the world
     /// streams away. One ring beyond the streamer's default 5x5 residency.
-    public static let cellPurgeRadius: Int32 = 3
+    public static let defaultCellPurgeRadius: Int32 = 3
 
     public let engine = AVAudioEngine()
     public let environment = AVAudioEnvironmentNode()
@@ -230,7 +230,11 @@ public final class WorldAudioEngine {
     /// stop sources the world streamed away from. `deltaTime` is in seconds and
     /// comes from the renderer's paused-aware audio clock, so fades freeze in
     /// menu mode and never jump on resume. Zero advances nothing.
-    public func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
+    public func tick(
+        listenerCell: CellCoordinate,
+        deltaTime: Float = 0,
+        purgeRadius: Int32 = defaultCellPurgeRadius
+    ) {
         liveClockSeconds += Double(max(0, deltaTime))
         for source in sources {
             source.voiceClock?.publish(max(0, playbackClockSeconds - source.startClockSeconds))
@@ -239,7 +243,7 @@ public final class WorldAudioEngine {
         advanceReverb(deltaTime: deltaTime)
         updateDistanceGains()
         retireFinishedSources()
-        purgeSources(fartherThan: Self.cellPurgeRadius, fromCell: listenerCell)
+        purgeSources(fartherThan: purgeRadius, fromCell: listenerCell)
     }
 
     // MARK: - Graph lifecycle

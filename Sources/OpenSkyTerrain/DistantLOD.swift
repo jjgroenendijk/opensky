@@ -99,7 +99,7 @@ nonisolated public enum DistantLODSelection: Sendable {
             min(configuration.maximumDistance, configuration.level1Distance * 2),
             configuration.maximumDistance
         ]
-        var inner = CellGridManager.defaultRadius
+        var inner = configuration.loadedGridRadius
         return zip(settings.levels, worldDistances).map { level, distance in
             let requested = Int32(ceil(distance / TerrainMeshBuilder.cellSize))
             let outer = max(inner, requested)

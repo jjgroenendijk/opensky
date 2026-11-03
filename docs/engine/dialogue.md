@@ -22,6 +22,12 @@ runtime uses no AppKit and also builds into `OpenSkyCLI`.
 
 ## Selection rules
 
+The owning quest's dialogue conditions come first. They are the `QUST` `CTDA` entries before
+`NEXT` ([quest records](/formats/quest-records.md)), and they gate every response of every topic
+the quest owns. They run with the same subject, target, and alias quest as a response's own
+conditions. If they fail, every response of the topic is rejected with `conditionsFailed`, and
+the rules below are not checked. Most of them name the speaker's voice type or faction.
+
 1. The owning quest must be running. A `DIAL` names its quest in `QNAM`. All 15,037 `DIAL`
    records in `Skyrim.esm` name one, so this is the main filter. A topic with no quest is always
    available.
@@ -38,8 +44,8 @@ runtime uses no AppKit and also builds into `OpenSkyCLI`.
    close the stack.
 4. Say-once is checked before the conditions, per speaker: "this Info can only be said once by any
    given Actor ... However, a different actor that qualifies may say it" (Topic Info). The said
-   state records each speaker of a Say Once line. A count saved without speakers, by an older
-   build, counts for every speaker.
+   state records each speaker of a Say Once line. A count with no speakers, such as one
+   imported from a Skyrim save, counts for every speaker.
 5. The reset time is checked next. "Hours Until Reset: After this line is spoken, the speaker
    will not say it again until the specified time has elapsed."
    (<https://ck.uesp.net/wiki/Topic_Info>.) The wait belongs to the speaker, so another actor may
@@ -99,7 +105,7 @@ reasons:
 | `questNotRunning` | The topic's quest is not running, so no response was checked |
 | `alreadySaid` | Say-once, and already used |
 | `waitingForReset` | The speaker said it fewer game hours ago than its reset time |
-| `conditionsFailed` | The conditions were false, or `ANAM` named another speaker |
+| `conditionsFailed` | The conditions were false, the quest's dialogue conditions were false, or `ANAM` named another speaker |
 | `notReached` | An earlier response in file order already won |
 | `lostRandomPick` | It passed and joined a Random stack, and another response was picked |
 
@@ -123,14 +129,14 @@ one voice type.
 ## Said-state
 
 Said-state is a world state component, keyed by the `INFO` record's session-stable
-`ReferenceKey`, the same way quest state is keyed by the `QUST`. It holds a said count and, for
-a response with a reset time, the `GameDaysPassed` day each speaker last said it.
+`ReferenceKey`, the same way quest state is keyed by the `QUST`. It holds a said count and the
+`GameDaysPassed` day each speaker last said the response.
 
-The count is per response, not per speaker. The Dialogue Views page above says a say-once line
-is "never said again". The Topic Info page says instead that another actor may still say it.
-OpenSky follows the first, because a Skyrim save stores one said flag per `INFO` change form,
-not one per actor. Shared responses (`INFO` `DNAM`) can be reached from several speakers, so a
-table per speaker would let each of them say the same "once" line.
+Say-once is counted per speaker, as selection rule 4 says. The Dialogue Views page above says a
+say-once line is "never said again". The Topic Info page says instead that another actor may
+still say it. OpenSky follows the Topic Info page, because it names the flag's scope directly. A
+Skyrim save stores one said flag per `INFO` change form, not one per actor. So a response said
+in an imported save has a count and no speakers, and it counts as said for every speaker.
 
 Where the conversation is inside a branch is not stored. `Skyrim.esm` has zero `INFO` records with a
 `PNAM` previous-info link, and 4,294 with `TCLT` topic links. So the next lines depend only on

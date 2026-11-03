@@ -55,7 +55,8 @@ extension GameSession {
         )
         worldAudio.tick(
             listenerCell: CellGridManager.cellCoordinate(for: freeFlyCamera.position),
-            deltaTime: deltaTime
+            deltaTime: deltaTime,
+            purgeRadius: loadedGridRadius + 1
         )
     }
 
