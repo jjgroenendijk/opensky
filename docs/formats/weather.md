@@ -161,7 +161,9 @@ its own". A wrong size or a null link is skipped, and an earlier value stays. Se
 [music records](/formats/music.md).
 
 `RDWT` or `RDSA` with a size that is not a multiple of 12, or outside its area type, is
-skipped. OpenSky does not read `RPLI`, `RPLD`, `RDOT`, `RDMP`, or `RDGS`. `RDMD` comes from
+skipped. `RPLI` opens an area with its uint32 edge falloff, and each `RPLD` after it adds
+float32 X, Y points to that area. `RDMP` is the map name (lstring), and `RDOT` object data is
+kept raw. OpenSky does not read `RDGS`. `RDMD` comes from
 Oblivion and Skyrim SE does not use it.
 
 ## Vanilla Skyrim.esm

@@ -94,7 +94,8 @@ a `CELL` whose container is a type 1 group `<Persistent Worldspace Cell>`
 (`Core/wbImplementation.pas`, branch `dev-4.1.6`). UESP lists record header flag `0x400` on
 `CELL` as "Persistent Cell?", with a question mark, so OpenSky does not rely on the flag.
 
-Confirmed on `Skyrim.esm`: all 36 worldspaces have exactly one such `CELL`. Each has `XCLC`
+Confirmed on `Skyrim.esm`: 36 of its 37 worldspaces have exactly one such `CELL`.
+`FXLightWorldSpace` (`0x06ED38`) has none. Each has `XCLC`
 (0, 0) and header flag `0x400`. Tamriel also has a separate block cell at (0, 0).
 
 ## Field: 6-byte header, then data

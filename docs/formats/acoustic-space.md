@@ -24,7 +24,7 @@ lines 5401-5407.
 | `OBND` | object bounds | Skipped |
 | `SNAM` | FormID | Ambient sound, points at `SNDR` |
 | `RDAT` | FormID | Region whose sound area is borrowed, points at `REGN` |
-| `BNAM` | FormID | Reverb, points at `REVB`. Read but not used |
+| `BNAM` | FormID | Reverb, points at `REVB`. Drives the room reverb ([reverb](/formats/sound-output-reverb.md)) |
 
 `SNAM`, `RDAT`, and `BNAM` are read only when they are exactly 4 bytes. Other sizes are
 ignored.

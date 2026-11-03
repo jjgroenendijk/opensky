@@ -111,6 +111,11 @@ chunk cannot read into the next.
 | `DLGS` | dialogue said counts | actors |
 | `AEFF` | active magic effects | actors |
 | `ECHG` | enchantment charge and worn effects | actors |
+| `SPLB` | spellbooks: known spells, read books, readied hands, spent powers | actors |
+| `PRKS` | owned perks | actors |
+| `PLVL` | player level, experience, perk points, attribute picks | actors |
+| `PLGD` | legendary counts per skill | actors |
+| `PTRN` | training sessions bought this level | actors |
 | `FCTN` | faction memberships | actors |
 | `RELS` | scripted relationship ranks | actors |
 | `RELF` | the rank each pair first reached as friends | actors |
@@ -165,12 +170,9 @@ as a uint32. A level below 1 is dropped, so that reference rolls at the live lev
 `SUMM` holds the character name (string), the level (uint16), the race name and the
 location name (strings), and the real play time in seconds (float64, finite, not negative).
 `THMB` holds a uint16 width and height, each 1 to 512, then width times height RGBA8
-pixels, top row first. The save list reads only these two chunks and `CLOK`; it skips the
-others by their length ([title menu](/engine/main-menu.md)).
+pixels, top row first. The save list reads only these two chunks and skips the others
+by their length ([title menu](/engine/main-menu.md)). `CLOK` is read only when a save loads.
 
-The code also defines `SPLB`, `PRKS`, `PLVL`, `PLGD`, and `PTRN` (layouts in `Sources/OpenSkySave/`).
-`PLGD` holds legendary skill counts, merged onto the `PLVL` record of the same key. `PTRN` holds
-the training sessions bought since the last level-up: a count, then a key and a `uint32` per entry.
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 
 `GALC` is exactly 8 bytes: a uint64, the next number the generated-reference allocator gives

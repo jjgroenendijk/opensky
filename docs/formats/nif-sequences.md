@@ -33,7 +33,8 @@ confirmed with `openskycli nif <path> --sequences` on the Skyrim SE meshes
 | the rest | | manager ref, accum root name, and more; OpenSky does not read them |
 
 A controlled block is 29 bytes: interpolator ref, controller ref, priority (1 byte), then
-four string indexes: node name, property type, controller type, and controller ID. A
+five string indexes: node name, property type, controller type, controller ID, and
+interpolator ID. A
 controlled block whose interpolator ref is -1 is skipped.
 
 ## Interpolators

@@ -182,7 +182,7 @@ A movement type says how fast an actor moves in each direction. The player's gai
 | `EDID` | zstring | editor ID |
 | `MNAM` | zstring | name used by the Creation Kit and the behavior graph |
 | `SPED` | 11 x float32 | speeds |
-| `INAM` | 3 x float32 | direction-change thresholds (not read) |
+| `INAM` | 3 x float32 | animation change thresholds: directional, movement speed, rotation speed |
 
 `SPED` has no count. xEdit gives the order: left walk, left run, right walk, right run,
 forward walk, forward run, back walk, back run, rotate in place walk, rotate in place run,

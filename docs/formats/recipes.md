@@ -94,7 +94,7 @@ them:
 | `EPTemperingItemIsEnchanted` | 659 | 523 | yes |
 | `GetGlobalValue` | 74 | 67 | yes |
 | `HasSpell` | 264 | 43 | yes |
-| `GetVMQuestVariable` | 629 | 38 | no |
+| `GetVMQuestVariable` | 629 | 38 | yes |
 | `GetStageDone` | 59 | 30 | yes |
 | `GetQuestCompleted` | 543 | 8 | yes |
 | `GetInCurrentLoc` | 359 | 3 | yes |

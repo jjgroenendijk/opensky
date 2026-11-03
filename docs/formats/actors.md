@@ -38,8 +38,9 @@ ACHR that is persistent in a worldspace is stored under the worldspace persisten
 | `VMAD` | struct | scripts; see [VMAD](/formats/vmad.md) |
 
 Record-header flag `0x800` means "initially disabled": a script must enable the actor
-before it appears. Header flag `0x200` means "starts dead". Not read: `XEZN`, patrol data,
-`XRGD`/`XRGB`, `XLCM`, `XESP`, `XOWN`, `XLCN`/`XLRL`, and `XLKR` (4 or 8 bytes).
+before it appears. Header flag `0x200` means "starts dead". The other fields, such as `XEZN`,
+patrol data, `XRGD`/`XRGB`, `XLCM`, `XESP`, `XOWN`, `XLCN`/`XLRL`, and `XLKR` (4 or 8 bytes),
+are read as on a REFR ([placed references](/formats/placed-references.md#other-refr-and-achr-fields)).
 
 ## NPC_
 
@@ -128,7 +129,9 @@ boots, cuirass, gauntlets, and a helmet list. Without it, the game picks one ent
 UESP gives `LVLO` as 12 bytes: uint32 level, FormID, uint32 count. xEdit's
 `wbLeveledListEntry` reads uint16 level, 2 padding bytes, FormID, and also accepts an 8-byte
 form where the count is 1. Both read the same bytes for normal values. OpenSky accepts both.
-A `COED` owner subrecord may follow an `LVLO`. `OBND`, `LLCT`, and `MODL` are not read.
+A `COED` owner subrecord may follow an `LVLO`. OpenSky also reads `OBND`, the `LLCT` entry
+count (advisory; the decoded entries count), `MODL`, and `LVLG`, a `GLOB` that overrides the
+chance none.
 
 ## RACE
 

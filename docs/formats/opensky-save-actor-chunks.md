@@ -1,8 +1,9 @@
 ---
 type: File Format
 title: OpenSky save chunks — actors
-description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
-  RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS, and ENCK chunks in an .osav save.
+description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, SPLB, PRKS,
+  PLVL, PLGD, PTRN, FCTN, RELS, RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS,
+  and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -117,6 +118,54 @@ charge ([magic](/engine/item-enchantments.md)). The worn groups say which `AEFF`
 effects each worn item owns, so taking it off removes them. A charge that is negative or not
 finite becomes 0. A sequence that names no effect removes nothing. Sizes: 16 bytes minimum
 per entry, 8 per charge, 8 minimum per worn group, 8 per sequence.
+
+## SPLB: spellbooks
+
+One entry per actor with a changed spellbook: key, cell, then
+
+| type | field | notes |
+| --- | --- | --- |
+| uint32 + keys | known | the spells the actor knows |
+| uint32 + keys | readBooks | the spell tomes already read |
+| optional key | leftHand | presence byte, then the readied spell |
+| optional key | rightHand | presence byte, then the readied spell |
+| uint32 + pairs | spentPowers | per pair: the power's key and an int32 game day |
+
+A spent power's day says when it can be used again ([spellcasting](/engine/spellcasting.md)). A
+cast in progress is frame state and is not saved. Every list is sorted, so an unchanged
+spellbook writes the same bytes. Sizes: 21 bytes minimum per entry, 7 per key, 11 per spent
+power.
+
+## PRKS: perks
+
+Key, cell, uint32 perk count, then one key per owned perk. Ranks come from the perk's `NNAM`
+chain, and perk abilities are built again on load, so neither is stored
+([perks](/engine/perks.md)). A perk the load order no longer has is kept, so removing a plugin
+keeps progress. Sizes: 12 bytes minimum per entry, 7 per key.
+
+## PLVL: player level progress
+
+One entry per actor past level 1: key, cell, then uint32 level, float32 banked experience,
+uint32 perk points, uint32 owed attribute picks, uint32 skill increases this level, and a
+uint32 count of int32 attribute picks made. A pick is the actor value index of health,
+magicka, or stamina; any other index is dropped. The points a pick gave live in `AVOV`.
+Every field is clamped on load ([character leveling](/engine/character-leveling.md)). Sizes:
+31 bytes minimum per entry, 4 per pick.
+
+`PLVL` entries have no length, so a new field cannot be appended without breaking older
+readers. New progress fields go in sibling chunks instead, merged onto the `PLVL` entry of
+the same key. A key with no `PLVL` entry gets a fresh progress that holds only that value.
+
+## PLGD: legendary skills
+
+Key, uint32 row count, then rows of int32 skill index and uint32 count: how often the skill
+was made legendary ([skills menu](/engine/skills-menu.md)). A row whose index is not a skill
+is dropped. Sizes: 11 bytes minimum per entry, 8 per row.
+
+## PTRN: training sessions
+
+Key, then a uint32: the training sessions bought since the last level-up. Minimum entry
+size: 11 bytes.
 
 ## FCTN: factions
 
