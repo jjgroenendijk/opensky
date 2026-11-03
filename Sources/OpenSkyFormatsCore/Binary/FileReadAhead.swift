@@ -1,6 +1,6 @@
-// Starts reading a whole file into the page cache before a walk needs it. A walk
-// over a mapped file otherwise faults its pages in one at a time, which costs
-// seconds on an external disk.
+// Starts reading a whole file, or a range of a mapped file, into the page cache
+// before a read needs it. A read of a mapped file otherwise faults its pages in
+// one at a time, which costs seconds on an external disk.
 
 import Darwin
 import Foundation
@@ -21,6 +21,19 @@ nonisolated public enum FileReadAhead {
             var advice = radvisory(ra_offset: offset, ra_count: count)
             guard fcntl(descriptor, F_RDADVISE, &advice) != -1 else { return }
             offset += off_t(count)
+        }
+    }
+
+    /// Asks the kernel to read `range` of a mapped file in one go, so a copy out of it
+    /// waits for one large read instead of faulting each page in on its own.
+    public static func advise(_ data: Data, range: Range<Int>) {
+        guard LoadOptimisations.isOn(.archiveReadAhead), !range.isEmpty else { return }
+        data.withUnsafeBytes { buffer in
+            guard let base = buffer.baseAddress, range.upperBound <= buffer.count else { return }
+            let page = Int(getpagesize())
+            let start = UInt(bitPattern: base + range.lowerBound) & ~UInt(page - 1)
+            let end = UInt(bitPattern: base + range.upperBound)
+            _ = madvise(UnsafeMutableRawPointer(bitPattern: start), Int(end - start), MADV_WILLNEED)
         }
     }
 }
