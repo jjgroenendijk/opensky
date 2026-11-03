@@ -10,7 +10,7 @@ import OpenSkyWorldInterface
 import Testing
 
 @MainActor
-private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
+final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var playerPosition: SIMD3<Float>? = SIMD3(0, 0, 0)
     var playerCell: CellSceneLocation? = .exterior(CellCoordinate(x: 0, y: 0))
     var sites: [MapMarkerSite]
@@ -28,6 +28,12 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var stats: [String] = []
     var shownMarkers: [SIMD3<Float>] = []
     var travelled: [String] = []
+    var mapWorldspaceName: String? = "Tamriel"
+    var playerSetMarker: PlayerSetMapMarker?
+    let playerMarkerTexts = GameSettingTexts<PlayerMarkerText>.vanilla
+    /// Each question asked, with the answer it waits for.
+    var questions: [AskedQuestion] = []
+    var compassPlayerMarker: SIMD3<Float>?
 
     init(sites: [MapMarkerSite]) {
         self.sites = sites
@@ -92,6 +98,20 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     func refusalText(_ refusal: FastTravelRefusal) -> String {
         refusal.rawValue
     }
+
+    func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void) {
+        questions.append(AskedQuestion(text: text, buttons: buttons, answer: answer))
+    }
+
+    func showPlayerSetMarker(_ position: SIMD3<Float>?) {
+        compassPlayerMarker = position
+    }
+}
+
+struct AskedQuestion {
+    let text: String
+    let buttons: [String]
+    let answer: (Int) -> Void
 }
 
 struct MapMenuCoordinatorTests {

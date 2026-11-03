@@ -1,5 +1,5 @@
-// PIDN, MRKS, FOGM, SUMM, and THMB: the player's identity, the map markers, the
-// local map fog, and the save list row come back as they were.
+// PIDN, MRKS, FOGM, PMRK, SUMM, and THMB: the player's identity, the map markers, the
+// local map fog, the custom marker, and the save list row come back as they were.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -30,10 +30,15 @@ struct MenuStateSaveTests {
         fog.explore(OpenSkySaveFixture.riverwood, column: 3, row: 4)
         fog.explore(.interior(FormID(0x138C)), column: 0, row: 0)
         let markerState = MapMarkerState(isVisible: true, isDiscovered: false, canTravelTo: true)
+        let custom = PlayerSetMapMarker(worldspace: "Tamriel", position: SIMD3(1024, -2048.5, 0))
         let original = OpenSkySaveFixture.snapshot(
             [
                 OpenSkySaveFixture.entry(
-                    key: .player, cell: nil, components: [Self.identity.erased, fog.erased]
+                    key: .player, cell: nil, components: [
+                        Self.identity.erased,
+                        fog.erased,
+                        custom.erased
+                    ]
                 ),
                 OpenSkySaveFixture.entry(
                     key: Self.marker, cell: nil, components: [markerState.erased]
@@ -42,7 +47,7 @@ struct MenuStateSaveTests {
             bystanderCell: OpenSkySaveFixture.riverwood
         )
         let data = OpenSkySaveFixture.encode(original)
-        for tag in ["PIDN", "PCPX", "MRKS", "FOGM"] {
+        for tag in ["PIDN", "PCPX", "MRKS", "FOGM", "PMRK"] {
             #expect(data.range(of: Data(tag.utf8)) != nil, "\(tag) written")
         }
         let file = try OpenSkySaveDecoder.decode(data)
@@ -51,6 +56,7 @@ struct MenuStateSaveTests {
         store.restore(from: file.snapshot)
         #expect(store.component(PlayerIdentityState.self, for: .player) == Self.identity)
         #expect(store.component(LocalMapFogState.self, for: .player) == fog)
+        #expect(store.component(PlayerSetMapMarker.self, for: .player) == custom)
         #expect(store.component(MapMarkerState.self, for: Self.marker) == markerState)
     }
 

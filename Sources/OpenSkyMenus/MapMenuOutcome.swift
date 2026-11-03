@@ -11,6 +11,11 @@ nonisolated public enum MapMenuOutcome: Equatable, Sendable {
     case showingQuestTarget(String)
     case mapDidNotOpen
     case markerSet(String, MapMarkerAction)
+    /// The `sPlaceMarker` text and where the custom marker went.
+    case playerMarkerPlaced(String, SIMD3<Float>)
+    /// The button the player picked, such as Remove It.
+    case playerMarkerAnswered(String)
+    case playerMarkerNeedsWorldMap
 
     public func text(refusal: (FastTravelRefusal) -> String) -> String {
         switch self {
@@ -23,6 +28,9 @@ nonisolated public enum MapMenuOutcome: Equatable, Sendable {
         case let .showingQuestTarget(text): "Showing \(text)"
         case .mapDidNotOpen: "Map did not open"
         case let .markerSet(name, action): "\(name): \(action.rawValue)"
+        case let .playerMarkerPlaced(text, point): "\(text): \(Int(point.x)), \(Int(point.y))"
+        case let .playerMarkerAnswered(button): button
+        case .playerMarkerNeedsWorldMap: "The custom marker needs the world map"
         }
     }
 }

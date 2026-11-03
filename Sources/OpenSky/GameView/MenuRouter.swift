@@ -48,11 +48,13 @@ final class MenuRouter {
         self.game = game
     }
 
-    /// The bound keys that open a menu or save, outside any menu.
+    /// The bound keys that open a menu or save, outside any menu, and the map's own keys.
     func run(_ action: GameInputAction) {
         switch action {
         case .map:
             game.mapMenu.open()
+        case .placeMarker:
+            game.mapMenu.placePlayerMarker()
         case .skills:
             game.skillsMenu.open()
         case .wait:

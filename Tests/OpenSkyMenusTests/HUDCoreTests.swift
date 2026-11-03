@@ -55,6 +55,15 @@ struct HUDCoreTests {
     }
 
     @Test
+    func thePlayersOwnMarkerComesLast() {
+        let markers = HUDCore.markers(
+            for: nil, questTargets: [[100, 0, 0]], playerSet: [0, -100, 0], cameraPosition: .zero
+        )
+        #expect(markers.map(\.kind) == [.quest, .playerSet])
+        #expect(markers.last?.headingDegrees == 180)
+    }
+
+    @Test
     func markerIsDroppedWhenCameraStandsOnTarget() {
         let target = Self.target(position: [5, 5, 100])
         #expect(HUDCore.markers(for: target, cameraPosition: [5, 5, 0]).isEmpty)

@@ -29,6 +29,22 @@ struct InputBindingsTests {
         #expect(bindings.action(forMacKey: 0, inMenu: true) == .menuLeft, "A")
         #expect(bindings.action(forMacKey: 15, inMenu: true) == .readyWeapon, "R is XButton")
         #expect(bindings.action(forMacKey: 49, inMenu: true) == .jump, "Space")
+        #expect(bindings.action(forMacKey: 35, inMenu: true) == .placeMarker, "P")
+        #expect(bindings.action(forMacKey: 35, inMenu: false) == .magic, "P")
+    }
+
+    @Test func theMapMenusPlaceMarkerKeyComesFromTheFile() throws {
+        let text = """
+        // Main Gameplay
+        Quick Magic\t0x19\t0xff\t0xff\t1\t1\t1
+
+        // Map Menu
+        PlacePlayerMarker\t0x22\t0xff\t0xff\t0\t0\t0\t0x8
+
+        """
+        let bindings = try InputBindings(controlMap: ControlMapFile(data: Data(text.utf8)))
+        #expect(bindings.action(forMacKey: 5, inMenu: true) == .placeMarker, "G")
+        #expect(bindings.action(forMacKey: 35, inMenu: true) == nil, "P")
     }
 
     /// The race menu's Done key is `XButton`, which the file binds in its Item Menus context.

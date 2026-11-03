@@ -55,6 +55,35 @@ most common check in `Skyrim.esm` is `GetDead` on the subject, on 155 targets. A
 with two targets is `MQ105Ustengrav` objective 20: one target needs `GetStage MQ105 < 10`
 and the other `GetStage MQ105 >= 10`, so only one shows at a time.
 
+## Custom marker
+
+The player can place one marker of their own on the world map. The game calls it
+`sPlayerSetMarkerName`, "Custom Destination". It is kept in the `playerSetMapMarker` component
+on the player, with the editor ID of the map worldspace, and saved in the `PMRK` chunk
+([save chunks](/formats/opensky-save-world-chunks.md#pmrk-custom-map-marker)). A marker placed
+in another worldspace, such as Solstheim, stays hidden on the Tamriel map.
+
+The install's `controlmap.txt` binds `PlacePlayerMarker` in its `Map Menu` context to P (scan
+code `0x19`). Outside a menu P is Quick Magic, so OpenSky reads the map's key only while a
+menu is open. The key aims at the map centre, because OpenSky keeps the mouse for panning:
+
+- A location marker within 5% of the camera height from the centre is aimed at, and the
+  custom marker goes on it. Anything else puts it on the ground under the centre.
+- With a marker already placed, the key asks `sMoveMarkerQuestion` with `sMoveMarker`,
+  `sRemoveMarker`, and `sLeaveMarker`. Move It goes on to the next step.
+- On a location the player has not discovered, it asks `sPlaceMarkerUndiscovered` with
+  `sYesText` and `sNoText`. Fast travel to such a location asks the same question instead
+  of refusing, and Yes places the marker there.
+- Otherwise the marker is placed at once. The map's result line starts with `sPlaceMarker`,
+  "Place Marker".
+
+The 5% aim and the order of the two questions are OpenSky's choice
+([unverified values](/engine/unverified-values.md)).
+
+The map movie draws the marker with its `PlayerSetMarker` icon, number 65 in `IconTypes`,
+after the location markers. The HUD compass shows it as `CompassMarkerPlayerSet`, at every
+distance, like a quest target.
+
 ## Local map
 
 An exterior local map shows the 5 by 5 loaded cells around the player from above. An
@@ -115,7 +144,8 @@ and y run from 0 to 1 over the stage. Then it calls `RefreshMarkers()` and
 `SetSelectedMarker(index)`. The icon type is the marker's `TNAM` value: the movie's
 `IconTypes` list has the same 67 names in the same order as the xEdit table.
 
-The movie calls `MarkerClick(index)` when a marker is pressed, which travels there, and
+The movie calls `MarkerClick(index)` when a marker is pressed, which travels there or, on
+the custom marker, asks to move or remove it, and
 `ToggleMapCallback`, `OpenJournalCallback`, and `CurrentLocationCallback` for its buttons.
 OpenSky keeps the mouse for panning, so the cursor does not reach the markers; Enter
 travels to the marker nearest the centre, which the movie shows as selected.

@@ -34,6 +34,9 @@ nonisolated public enum MapMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\map.swf"
     public static let menuName = "WorldMap"
     public static let markersPerCreate = 10
+    /// `PlayerSetMarker` in the movie's `IconTypes`, after the 60 `TNAM` types and the
+    /// door and quest icons.
+    public static let playerSetIconType = 65
     public static let sinkHostFunctions = [
         "PlaySound", "myLog", "ClickCallback", "SetLocalMapExtents"
     ]

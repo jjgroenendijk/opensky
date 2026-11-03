@@ -190,5 +190,6 @@ extension GapsGatherer {
         _ = GameSettingTexts<CraftingRefusalText>.resolve(store: store)
         _ = GameSettingTexts<SkillsMenuText>.resolve(store: store)
         _ = GameSettingTexts<MessageBoxText>.resolve(store: store)
+        _ = GameSettingTexts<PlayerMarkerText>.resolve(store: store)
     }
 }

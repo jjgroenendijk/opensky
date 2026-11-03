@@ -104,7 +104,8 @@ extension AgentWorldAdapter {
             "loading": loadingState,
             "movie": movieFocusState,
             "bink": binkState,
-            "titles": titlesState
+            "titles": titlesState,
+            "map": mapState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -202,6 +203,19 @@ extension AgentWorldAdapter {
             "turn": .number(Double(session?.turnDegrees ?? 0)),
             "movieLoaded": .bool(game.loadingWorld.isMovieLoaded),
             "shown": .init(loading.shownCount)
+        ]
+    }
+
+    /// The map's mode, selection, last result, and the custom marker on the map and compass.
+    var mapState: AgentJSON {
+        let snapshot = game.mapMenu.snapshot
+        let compass = game.hud.playerSetMarker.map { AgentJSON.array([.init($0.x), .init($0.y)]) }
+        return [
+            "mode": .init(game.mapMenu.mode?.rawValue), "selected": .init(snapshot.selected),
+            "lastResult": .init(snapshot.lastResult), "playerMarker": .init(snapshot.playerMarker),
+            "compassPlayerMarker": compass ?? .null,
+            "focus": game.mapMenu.camera.map { .array([.init($0.focus.x), .init($0.focus.y)]) }
+                ?? .null
         ]
     }
 
