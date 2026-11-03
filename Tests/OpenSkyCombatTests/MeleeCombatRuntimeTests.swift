@@ -157,6 +157,60 @@ struct MeleeCombatRuntimeTests {
         #expect(runtime.state.drawState == .sheathed)
     }
 
+    /// The magic state ignores `WeapEquip`, so a sword that replaces a drawn spell
+    /// sheathes the spell, then draws the sword.
+    @Test func aWeaponThatReplacesADrawnSpellSheathesThenDraws() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .spell)
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+        runtime.handleGraphEvents([CombatGraphNames.weaponDraw, CombatGraphNames.magicEquipOut])
+
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .sword)
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.suffix(2) == [
+            CombatGraphNames.weaponSheathe,
+            CombatGraphNames.unequip
+        ])
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.last == CombatGraphNames.unequip)
+        // The spell's sheathe clip is picked from the spell's number.
+        #expect(world.variables[CombatGraphNames.rightHandType] == .int(9))
+
+        runtime.handleGraphEvents([
+            CombatGraphNames.weaponSheathe,
+            CombatGraphNames.magicUnequipOut
+        ])
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.suffix(2) == [CombatGraphNames.weaponDraw, CombatGraphNames.weapEquip])
+        #expect(world.variables[CombatGraphNames.rightHandType] == .int(1))
+    }
+
+    /// The readied machine picks the bow stance only as it enters.
+    @Test func aBowThatReplacesADrawnSwordSheathesThenDraws() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+        runtime.handleGraphEvents(Self.drawEvents)
+
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .bow)
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.suffix(2) == [
+            CombatGraphNames.weaponSheathe,
+            CombatGraphNames.unequip
+        ])
+
+        // The weapon reaches its sheath before the clip ends; a draw now
+        // would cancel the sheathe in the graph.
+        runtime.handleGraphEvents([CombatGraphNames.beginWeaponSheathe])
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.last == CombatGraphNames.unequip)
+
+        runtime.handleGraphEvents([CombatGraphNames.unequipOut])
+        runtime.acceptFrame(MeleeIntent())
+        #expect(world.raised.suffix(2) == [CombatGraphNames.weaponDraw, CombatGraphNames.weapEquip])
+    }
+
     @Test func bothHandTypesArePublishedToTheGraphVariables() {
         let world = FakeMeleeWorld()
         let runtime = Self.runtime(world: world, damage: 10)

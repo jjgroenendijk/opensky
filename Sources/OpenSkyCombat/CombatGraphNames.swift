@@ -75,6 +75,8 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// A readied spell's sheathe end. Its `Unequip` goes straight back to
     /// `MT_Behavior_State`, so no `Unequip_Out` or `BeginWeaponSheathe` follows.
     public static let magicUnequipOut = "Magic_Unequip_Out"
+    /// The events that end a sheathe, weapon or spell.
+    public static let sheatheEnds: Set = [unequipOut, magicUnequipOut]
     /// The swing's audible start, ahead of any contact.
     public static let weaponSwing = "weaponSwing"
     /// The frame before contact, which opens the hit window.

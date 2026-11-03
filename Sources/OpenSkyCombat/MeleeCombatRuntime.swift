@@ -80,6 +80,14 @@ public final class MeleeCombatRuntime {
     private var wasBlocking = false
     var pendingAttack = false
     private var pendingToggle = false
+    /// The right hand the graph drew. A different hand while drawn sheathes first, then
+    /// draws: the graph picks its weapon behaviour only on the equip event, and
+    /// `Magic_Behavior_State` ignores `WeapEquip`.
+    private var drawnHands: DrawnHands?
+    /// The redraw waits for the sheathe's end event: a `WeapEquip` raised while still in
+    /// `Weap_Unequip_State` cancels the sheathe clip and goes back to `Weap_Readied_State`.
+    /// Until then the graph keeps the old hands' numbers, which pick the sheathe clip.
+    private var redraw: RedrawPhase?
 
     public init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
         self.settings = settings
@@ -140,6 +148,9 @@ public final class MeleeCombatRuntime {
     @discardableResult
     public func handleGraphEvents(_ names: [String]) -> [MeleeHitRecord] {
         var landed: [MeleeHitRecord] = []
+        if case .sheathing = redraw, names.contains(where: CombatGraphNames.sheatheEnds.contains) {
+            redraw = .unequipped
+        }
         for change in state.handle(names) where change.openedHitWindow {
             swingCount += 1
             landed += resolveSwing()
@@ -165,6 +176,8 @@ public final class MeleeCombatRuntime {
         wasBlocking = false
         pendingAttack = false
         pendingToggle = false
+        redraw = nil
+        drawnHands = nil
         pendingPower = false
         queuedOutcome = nil
         hold.reset()
@@ -192,7 +205,17 @@ public final class MeleeCombatRuntime {
         guard let world else { return }
         if pendingToggle {
             pendingToggle = false
+            redraw = nil
             raiseEquipEvents(sheathing: state.drawState.isWeaponInHand, world: world)
+        } else if
+            state.drawState == .drawn, let drawnHands,
+            drawnHands.right != weapon.handType
+        {
+            redraw = .sheathing(drawnHands)
+            raiseEquipEvents(sheathing: true, world: world)
+        } else if redraw == .unequipped, state.drawState == .sheathed {
+            redraw = nil
+            raiseEquipEvents(sheathing: false, world: world)
         }
         if blocking != wasBlocking {
             wasBlocking = blocking
@@ -220,6 +243,7 @@ public final class MeleeCombatRuntime {
             sheathing ? CombatGraphNames.weaponSheathe : CombatGraphNames.weaponDraw,
             on: nil
         )
+        drawnHands = sheathing ? nil : DrawnHands(right: weapon.handType, left: offHand)
         if sheathing {
             // One name for both branches: `Weap_Readied_State` and
             // `Magic_Behavior_State` each carry an `Unequip` transition.
@@ -249,12 +273,12 @@ public final class MeleeCombatRuntime {
         world.writeCombatVariable(
             .real(weapon.speed), named: CombatGraphNames.weaponSpeedMult
         )
-        world.writeCombatVariable(
-            weapon.handType.graphValue, named: CombatGraphNames.rightHandType
-        )
-        world.writeCombatVariable(
-            offHand.graphValue, named: CombatGraphNames.leftHandType
-        )
+        var hands = DrawnHands(right: weapon.handType, left: offHand)
+        if case let .sheathing(old) = redraw {
+            hands = old
+        }
+        world.writeCombatVariable(hands.right.graphValue, named: CombatGraphNames.rightHandType)
+        world.writeCombatVariable(hands.left.graphValue, named: CombatGraphNames.leftHandType)
     }
 
     /// Runs the sweep for the swing now at its contact frame and applies every
@@ -331,7 +355,9 @@ public final class MeleeCombatRuntime {
         }
         return record
     }
+}
 
+extension MeleeCombatRuntime {
     /// Reports what this blow taught both characters (`MeleeSkillUses`).
     private func noteSkillUse(
         _ hit: MeleeHit,
@@ -382,4 +408,14 @@ extension MeleeCombatRuntime {
             world.applyWeaponEnhancement(attacker: world.meleeAttacker.key, target: target)
         }
     }
+}
+
+private struct DrawnHands: Equatable {
+    let right: CombatHandType
+    let left: CombatHandType
+}
+
+private enum RedrawPhase: Equatable {
+    case sheathing(DrawnHands)
+    case unequipped
 }

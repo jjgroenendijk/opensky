@@ -51,6 +51,17 @@ graph, decides what that intent equips and raises the matching equip event. Open
 in that order. `Magic_Equip` replaces `WeapEquip` when the right hand holds a readied spell.
 `Unequip` covers both on the way back.
 
+`Magic_Behavior_State` has no transition on `WeapEquip`; only `Unequip` leaves it
+(`openskycli hkx ... --raise` on `0_master.hkx`). Every weapon, the bow included, readies inside
+`1HM_Behavior` from `1hm_behavior.hkx`. Its readied machine picks the stance, such as
+`Bow_Ready_State` or `1HM_H2H_Readied`, from `iLeftHandType` only as it enters. So when the right
+hand changes type while drawn, OpenSky sheathes the old hand first, then draws the new one once
+the sheathe ends. "Ends" means `Unequip_Out` or `Magic_Unequip_Out`, not `BeginWeaponSheathe`: a
+`WeapEquip` raised while the graph is still in `Weap_Unequip_State` cancels the sheathe and goes
+straight back to `Weap_Readied_State`. Until the sheathe ends, `iRightHandType` and
+`iLeftHandType` keep the old hands' numbers. `Magic_Unequip_State` picks its clip from them; with
+the new sword's number it never reaches `Magic_Unequip_Out`.
+
 Variables are written before events are raised. The graph picks the equip clip from
 `iRightHandType` when it acts on `WeapEquip`. So a frame that equips a sword and draws it must
 write the number first.

@@ -76,6 +76,7 @@ the detail and the sources it did find.
 | Combat weapon choice | Picked once, not scored again in a fight | [actor resolution](/engine/actor-resolution.md) |
 | Idle naming and entry side rules | Read from names seen on the install | [idle runtime](/engine/idle-runtime.md) |
 | Furniture rotation | Reset on standing up | [furniture](/engine/furniture.md) |
+| Weapon change while drawn | Sheathe the old hand, then draw the new one | [combat graph names](/engine/combat-graph-names.md) |
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Dragon animation | A guess; its graph does not run | [actor animation](/engine/actor-animation.md) |
 
