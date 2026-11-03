@@ -63,6 +63,13 @@ struct CombatCoreTests {
         #expect(CombatCore.meleeIntent(pressed, readied: .none) == pressed)
     }
 
+    @Test func blockWhileTheBowAimsZoomsInsteadOfGuarding() {
+        let pressed = MeleeIntent(attack: true, block: true)
+        let masked = CombatCore.meleeIntent(pressed, readied: .none, bowAiming: true)
+        #expect(masked == MeleeIntent(attack: true, block: false))
+        #expect(CombatCore.meleeIntent(pressed, readied: .none, bowAiming: false) == pressed)
+    }
+
     @Test func theArrowIsTheFirstCarriedItemThatFlies() {
         let arrow = ArcheryAmmunition(
             item: FormID(0x1397D),

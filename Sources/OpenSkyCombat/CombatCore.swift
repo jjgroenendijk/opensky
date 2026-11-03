@@ -117,10 +117,15 @@ nonisolated public enum CombatCore {
 
     /// A hand holding a readied spell gives its button to the cast loop.
     /// A staff in the right hand casts instead of swinging, so its attack goes to the caster.
+    /// While a shot is nocked or drawn, block zooms the bow and raises no guard.
     public static func meleeIntent(
-        _ intent: MeleeIntent, readied: ReadiedHands, staffInRight: Bool = false
+        _ intent: MeleeIntent, readied: ReadiedHands, staffInRight: Bool = false,
+        bowAiming: Bool = false
     ) -> MeleeIntent {
         var masked = intent
+        if bowAiming {
+            masked.block = false
+        }
         if readied.right || staffInRight {
             masked.attack = false
             masked.attackHeld = false
