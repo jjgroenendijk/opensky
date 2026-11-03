@@ -103,7 +103,7 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    nonisolated private func grassIndexBuildingIfNeeded() -> [UInt32: Grass] {
+    nonisolated func grassIndexBuildingIfNeeded() -> [UInt32: Grass] {
         if let grassIndex {
             return grassIndex
         }

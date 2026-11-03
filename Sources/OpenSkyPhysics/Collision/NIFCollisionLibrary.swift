@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 

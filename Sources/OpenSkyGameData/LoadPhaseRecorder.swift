@@ -16,6 +16,14 @@ nonisolated public enum LoadPhase: String, CaseIterable, Codable, Sendable {
     case collision
     /// Waiting at the end of a build for the direct GPU reads of its cached files.
     case gpuRead
+    /// First-use record indexes: the load order's FormID index and each record type's index.
+    case recordIndex
+    /// First-use actor template and look indexes over the load order.
+    case actorIndex
+    /// Finding a worldspace's cells and its persistent references, on first use.
+    case cellLookup
+    /// Fitting a worldspace's terrain LOD brightness curve from sampled cells.
+    case lodBrightness
 }
 
 /// Milliseconds spent in each phase, plus the time no phase claimed.
@@ -24,8 +32,13 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
     public var textureMS: Double
     public var meshMS: Double
     public var collisionMS: Double
-    /// Optional, so a result written before this phase existed still decodes.
+    /// Optional, like the phases below, so a result written before the phase existed
+    /// still decodes.
     public var gpuReadMS: Double?
+    public var recordIndexMS: Double?
+    public var actorIndexMS: Double?
+    public var cellLookupMS: Double?
+    public var lodBrightnessMS: Double?
     public var otherMS: Double
 
     public init(
@@ -52,6 +65,10 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
             case .mesh: meshMS
             case .collision: collisionMS
             case .gpuRead: gpuReadMS ?? 0
+            case .recordIndex: recordIndexMS ?? 0
+            case .actorIndex: actorIndexMS ?? 0
+            case .cellLookup: cellLookupMS ?? 0
+            case .lodBrightness: lodBrightnessMS ?? 0
             }
         }
         set {
@@ -61,6 +78,10 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
             case .mesh: meshMS = newValue
             case .collision: collisionMS = newValue
             case .gpuRead: gpuReadMS = newValue
+            case .recordIndex: recordIndexMS = newValue
+            case .actorIndex: actorIndexMS = newValue
+            case .cellLookup: cellLookupMS = newValue
+            case .lodBrightness: lodBrightnessMS = newValue
             }
         }
     }

@@ -90,4 +90,27 @@ struct LoadPhaseRecorderTests {
         #expect(times[.gpuRead] == 0)
         #expect(times.measuredMS == 11)
     }
+
+    @Test
+    func everyPhaseReadsBackWhatItWasGiven() {
+        var times = LoadPhaseTimes()
+        for (offset, phase) in LoadPhase.allCases.enumerated() {
+            times[phase] = Double(offset + 1)
+        }
+        for (offset, phase) in LoadPhase.allCases.enumerated() {
+            #expect(times[phase] == Double(offset + 1))
+        }
+        let count = Double(LoadPhase.allCases.count)
+        #expect(times.measuredMS == count * (count + 1) / 2)
+    }
+
+    @Test
+    func timesWrittenBeforeTheRecordPhasesStillDecode() throws {
+        let json = #"{"archiveMS":1,"collisionMS":2,"gpuReadMS":6,"#
+            + #""meshMS":3,"otherMS":4,"textureMS":5}"#
+        let times = try JSONDecoder().decode(LoadPhaseTimes.self, from: Data(json.utf8))
+        #expect(times.recordIndexMS == nil)
+        #expect(times[.lodBrightness] == 0)
+        #expect(times.measuredMS == 17)
+    }
 }

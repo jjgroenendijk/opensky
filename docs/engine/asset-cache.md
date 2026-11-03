@@ -99,6 +99,16 @@ The store can still drop the least recently used entries past a limit, for tools
 one. A hit sets the entry file's modification date to now, but not again within an hour,
 because each write is a disk update and it made up a quarter of a warm lookup.
 
+## Saved FormID indexes
+
+The `records/` folder holds one saved FormID index per plugin
+([format](/formats/esm.md#saved-formid-index)). The file name is a hash of the plugin's file
+name, size, and modification time. A changed plugin, such as a mod update, gets a new file;
+the old one stays until the cache is cleared. A load order change needs nothing, because each
+index covers one plugin and the load order merge runs after it. A write goes to a temporary
+file and is renamed into place, so a crash leaves no half file. A failed write only costs the
+next session a walk. The `loading.recordIndexCache` setting turns the folder off.
+
 ## Texture quality
 
 The texture quality sets how each texture is stored. Meshes and collision are always stored

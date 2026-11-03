@@ -143,26 +143,45 @@ nonisolated public struct LoadOrderPlugins: Sendable {
         return Dictionary(uniqueKeysWithValues: decoded.values.map { ($0.key.rawValue, $0.value) })
     }
 
-    private func decodedRecords<Value>(
+    func decodedRecords<Value>(
         of type: FourCC,
         skipped: inout SkippedRecords,
         using decode: (ESMRecord, LoadOrderPlugin) throws -> Value?
     ) -> (order: [FormID], values: [FormID: Value]) {
+        let records = liveRecordsByPlugin(of: type, skipped: &skipped)
+        let results = zip(plugins, records).map { plugin, list in
+            plugin.decode { list.map { record in Result { try decode(record, plugin) } } }
+        }
+        return merged(records: records, results: results, type: type, skipped: &skipped)
+    }
+
+    /// Each plugin's live `type` records, lowest priority first.
+    func liveRecordsByPlugin(of type: FourCC, skipped: inout SkippedRecords) -> [[ESMRecord]] {
+        plugins.map { $0.file.liveRecords(of: type, skipped: &skipped) }
+    }
+
+    /// Lays the decoded records over each other in load order: a later plugin's
+    /// value replaces an earlier one, and a failed decode keeps the earlier one.
+    func merged<Value>(
+        records: [[ESMRecord]],
+        results: [[Result<Value?, any Error>]],
+        type: FourCC,
+        skipped: inout SkippedRecords
+    ) -> (order: [FormID], values: [FormID: Value]) {
         var order: [FormID] = []
         var values: [FormID: Value] = [:]
-        for plugin in plugins {
-            for record in plugin.file.liveRecords(of: type, skipped: &skipped) {
-                let id = plugin.formID(of: record)
+        for (plugin, (list, decoded)) in zip(plugins, zip(records, results)) {
+            for (record, result) in zip(list, decoded) {
                 let value: Value?
-                do {
-                    value = try plugin.decode { try decode(record, plugin) }
-                } catch {
+                switch result {
+                case let .success(decoded): value = decoded
+                case let .failure(error):
                     skipped.note(type, error: error)
                     continue
                 }
                 guard let value else { continue }
-                if values.updateValue(value, forKey: id) == nil {
-                    order.append(id)
+                if values.updateValue(value, forKey: plugin.formID(of: record)) == nil {
+                    order.append(plugin.formID(of: record))
                 }
             }
         }

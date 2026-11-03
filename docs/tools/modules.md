@@ -135,7 +135,8 @@ OpenSkyGameData           virtual file system, load order, record stores, actor 
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
 OpenSkyLaunch             launch modes, the remembered mode, game folder status
 OpenSkyReference          the Windows reference game: prefix, launch, console batch, version check
-OpenSkyAssetCache         the asset cache folder: entries, staleness, size limit
+OpenSkyAssetCache         the asset cache folder: entries, staleness, size limit, saved
+                          FormID indexes
   ^
 OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls, melee hit sweeps
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes

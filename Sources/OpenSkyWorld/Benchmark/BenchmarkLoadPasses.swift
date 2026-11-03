@@ -57,6 +57,10 @@ nonisolated public enum BenchmarkLoadPasses {
             builder.textures.assetCache = cache
             builder.meshes.assetCache = cache
             builder.collisionModels?.assetCache = cache
+            builder.formIDIndexStore = RecordIndexCacheFolder(cacheRoot: cache.store.root)
+        }
+        if LoadOptimisations.isOn(.prebuildIndexes) {
+            builder.prepareIndexes(worldspace: place.worldspace)
         }
         let setupMS = milliseconds(since: started)
         let coldCells = pass(place: place, builder: builder, plugins: loadOrder.plugins)
@@ -139,6 +143,14 @@ nonisolated public enum BenchmarkLoadPasses {
 
     static func milliseconds(since started: UInt64) -> Double {
         Double(DispatchTime.now().uptimeNanoseconds - started) / 1e6
+    }
+}
+
+nonisolated extension BenchmarkPlace {
+    /// The exterior's worldspace; nil for an interior.
+    var worldspace: String? {
+        guard case let .exterior(worldspace, _, _) = self else { return nil }
+        return worldspace
     }
 }
 

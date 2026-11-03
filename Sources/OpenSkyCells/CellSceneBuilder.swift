@@ -136,6 +136,8 @@ nonisolated public final class CellSceneBuilder {
     public let loadOrderPlugins: [(name: String, file: ESMFile)]
     /// Door transitions, base objects, and cells read the load order through it.
     var loadOrderIndex: LoadOrderRecordIndex?
+    /// Keeps each plugin's FormID index between sessions; nil walks every plugin.
+    public var formIDIndexStore: (any FormIDIndexStore)?
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
@@ -303,6 +305,15 @@ nonisolated public final class CellSceneBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
+    /// Adds the skips of a load-order decode, which counts them itself.
+    func noteSkipped(_ skipped: SkippedRecords) {
+        guard !skipped.isEmpty else { return }
+        skippedRecords.merge(skipped)
+        for line in skipped.lines {
+            Self.logger.warning("malformed records skipped: \(line, privacy: .public)")
+        }
+    }
+
     /// Decodes `record`, or counts it in `skippedRecords` and returns nil.
     /// Cell searches re-read records on every build, so a FormID counts once.
     nonisolated public func decodeOrSkip<Value>(

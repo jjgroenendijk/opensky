@@ -20,7 +20,9 @@ nonisolated extension CellSceneBuilder {
         if let cached = terrainLODBrightnessByWorld[key] {
             return cached
         }
-        let curve = TerrainLODBrightness.fitted(samples: brightnessSamples(lodWorldspace))
+        let curve = loadPhases.measure(.lodBrightness) {
+            TerrainLODBrightness.fitted(samples: brightnessSamples(lodWorldspace))
+        }
         terrainLODBrightnessByWorld[key] = curve
         return curve
     }

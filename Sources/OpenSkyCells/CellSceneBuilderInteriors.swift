@@ -77,12 +77,15 @@ nonisolated extension CellSceneBuilder {
         if let cached = exteriorPersistentPools[key] {
             return cached
         }
-        var pool = EnableParentPool()
-        for ref in persistentReferences(in: world, localized: localized) {
-            pool.references[ref.formID] = ref
-        }
-        for actor in persistentActors(in: world, localized: localized) {
-            pool.actors[actor.formID] = actor
+        let pool = loadPhases.measure(.cellLookup) {
+            var pool = EnableParentPool()
+            for ref in persistentReferences(in: world, localized: localized) {
+                pool.references[ref.formID] = ref
+            }
+            for actor in persistentActors(in: world, localized: localized) {
+                pool.actors[actor.formID] = actor
+            }
+            return pool
         }
         exteriorPersistentPools[key] = pool
         return pool
@@ -338,7 +341,10 @@ nonisolated extension CellSceneBuilder {
         if let loadOrderIndex {
             return loadOrderIndex
         }
-        let index = LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver)
+        let store = LoadOptimisations.isOn(.recordIndexCache) ? formIDIndexStore : nil
+        let index = loadPhases.measure(.recordIndex) {
+            LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver, store: store)
+        }
         loadOrderIndex = index
         return index
     }

@@ -206,7 +206,9 @@ nonisolated public struct BSAArchive: Sendable {
 
     /// Extracts and (if needed) decompresses one file's payload.
     public func contents(of entry: Entry) throws -> Data {
-        var reader = BinaryReader(data, offset: Int(entry.offset))
+        let start = Int(entry.offset)
+        FileReadAhead.advise(data, range: start ..< min(start + Int(entry.packedSize), data.count))
+        var reader = BinaryReader(data, offset: start)
         var remaining = Int(entry.packedSize)
 
         if flags.contains(.embeddedFileNames) {

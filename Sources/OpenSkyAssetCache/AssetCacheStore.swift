@@ -246,8 +246,10 @@ nonisolated public final class AssetCacheStore: Sendable {
     }
 
     public func clear() throws {
-        for kind in AssetCacheKind.allCases {
-            let folder = root.appending(path: kind.folderName, directoryHint: .isDirectory)
+        let folders = AssetCacheKind.allCases.map(\.folderName)
+            + [RecordIndexCacheFolder.folderName]
+        for name in folders {
+            let folder = root.appending(path: name, directoryHint: .isDirectory)
             if FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)) {
                 try FileManager.default.removeItem(at: folder)
             }

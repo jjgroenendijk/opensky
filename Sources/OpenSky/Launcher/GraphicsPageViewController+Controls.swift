@@ -2,6 +2,7 @@
 // base game option.
 
 import AppKit
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyRenderResources
@@ -100,6 +101,9 @@ extension GraphicsPageViewController {
     private func configureShadingCheckboxes() {
         for (button, setting) in surfaceShadingControls {
             checkbox(button, "Shading\(setting.controlName)", setting.toolTip)
+        }
+        for (button, setting) in loadingControls {
+            checkbox(button, "Loading\(setting.controlName)", setting.toolTip)
         }
     }
 
@@ -210,6 +214,7 @@ extension GraphicsPageViewController {
             (pipelineCacheControl, .pipelineCacheEnabled), (parallelDecodeControl, .parallelDecode),
             (textureStreamingControl, .textureStreaming)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
+            + loadingControls.map { ($0.0, $0.1.id) }
     }
 
     private var popUpSettings: [(NSPopUpButton, PlayerSettingID)] {

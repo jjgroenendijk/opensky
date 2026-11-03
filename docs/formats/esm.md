@@ -115,6 +115,29 @@ decompressed only when asked for. Every child must lie inside its parent. A size
 range, a cut header, or a bad `XXXX` field is an error, never a crash. Every header is 24
 bytes and the walk moves at least that far each step, so the walk always ends.
 
+The record indexes still touch nearly every page of the file. So opening a plugin also asks
+the kernel to read the whole file ahead in the background. Without that, the first walk after
+the page cache is cleared reads the pages one by one, about 2 s slower on an external disk.
+The `loading.pluginReadAhead` setting turns the hint off.
+
+## Saved FormID index
+
+The FormID index of a plugin maps each FormID to the offset of its record header, and to the
+`CELL` and `WRLD` that hold it. OpenSky can save it in the asset cache, so a later session
+skips the walk ([asset cache](/engine/asset-cache.md#saved-formid-indexes)). This is an
+OpenSky file, not a game format. All numbers are little-endian `UInt32`:
+
+| Offset | Value |
+| --- | --- |
+| 0 | Magic `OSRI` |
+| 4 | Version, now 1 |
+| 8 | Entry count |
+| 12 | Entries, 16 bytes each: FormID, record offset, cell FormID, world FormID |
+
+Entries are sorted by FormID. A cell or world FormID of 0 means none. A copy is refused, and
+the plugin walked again, when the magic or version differs, the size does not match the
+count, the entries are out of order, or an offset lies past the end of the plugin.
+
 ## Vanilla Skyrim.esm
 
 Form version 44, `TES4` flags `0x81`. 50,494 groups and 869,687 records, with no unknown

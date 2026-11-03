@@ -58,6 +58,8 @@ nonisolated public struct ModelBaseDetails: Equatable, Sendable {
     /// MSTT DATA: 0x01 on local map, 0x02 unknown, 0x04 static.
     public var movableStaticFlags: UInt8?
 
+    private static let markerColourTypes: Set<FourCC> = ["ACTI", "FURN", "FLOR", "TACT"]
+
     /// Reads the details from the fields ModelBase left unused.
     static func decode(_ fields: inout RecordFields) -> Self {
         var details = Self()
@@ -65,7 +67,7 @@ nonisolated public struct ModelBaseDetails: Equatable, Sendable {
         details.model = fields.model()
         details.destructible = fields.destructible()
         let type = fields.recordType
-        if ["ACTI", "FURN", "FLOR", "TACT"].contains(type) {
+        if Self.markerColourTypes.contains(type) {
             details.markerColor = fields.read("PNAM") {
                 try SIMD4($0.readUInt8(), $0.readUInt8(), $0.readUInt8(), $0.readUInt8())
             }

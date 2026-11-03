@@ -3,6 +3,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyPhysics
 
 nonisolated public struct ExteriorBuildSource: Sendable {
@@ -101,7 +102,8 @@ nonisolated extension CellSceneBuilder {
         if let materialTypeIndex {
             return materialTypeIndex
         }
-        let index = MaterialTypeIndex(loadOrder: loadOrderIndexBuildingIfNeeded().loadOrder)
+        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
+        let index = loadPhases.measure(.recordIndex) { MaterialTypeIndex(loadOrder: loadOrder) }
         materialTypeIndex = index
         return index
     }

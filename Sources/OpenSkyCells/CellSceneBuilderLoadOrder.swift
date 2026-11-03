@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension CellSceneBuilder {
     /// The cell as the load order has it: the winning CELL values, and the first
@@ -107,26 +108,17 @@ nonisolated extension CellSceneBuilder {
 
     /// Every plugin's `type` records by load-order FormID; a later plugin wins.
     /// A deleted record or one that does not decode keeps the earlier version.
-    /// `decode` gets the record and its plugin's localized flag.
-    nonisolated func loadOrderRecords<Value>(
+    /// `decode` gets the record and its plugin's localized flag, on any core.
+    nonisolated func loadOrderRecords<Value: Sendable>(
         of type: FourCC,
-        decode: (ESMRecord, Bool) throws -> Value
+        decode: @Sendable (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
-        var index: [UInt32: Value] = [:]
-        for plugin in loadOrderIndexBuildingIfNeeded().plugins {
-            guard let top = plugin.file.topGroup(of: type), let children = childrenOrSkip(top)
-            else { continue }
-            for case let .record(record) in children
-                where record.type == type && !record.isDeleted
-            {
-                guard
-                    let value = decodeOrSkip(record, using: { record in
-                        try plugin.decode { try decode(record, plugin.localized) }
-                    })
-                else { continue }
-                index[plugin.formID(of: record).rawValue] = value
-            }
+        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
+        return loadPhases.measure(.recordIndex) {
+            var skipped = SkippedRecords()
+            let index = loadOrder.indexRecordsInParallel(of: type, skipped: &skipped, using: decode)
+            noteSkipped(skipped)
+            return index
         }
-        return index
     }
 }

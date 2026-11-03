@@ -191,7 +191,7 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    nonisolated private func waterTypeIndexBuildingIfNeeded() -> [UInt32: WaterType] {
+    nonisolated func waterTypeIndexBuildingIfNeeded() -> [UInt32: WaterType] {
         if let waterTypeIndex {
             return waterTypeIndex
         }

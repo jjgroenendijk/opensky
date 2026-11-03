@@ -1,6 +1,6 @@
-// The fan-out a cell build uses to decode assets on every core before its serial loads
-// ask for them (docs/decisions/concurrency.md). Work only turns values into values; the
-// caller writes the results into its caches on the build thread.
+// The fan-out a cell build uses to decode assets and records on every core before its
+// serial code asks for them (docs/decisions/concurrency.md). Work only turns values into
+// values; the caller writes the results into its caches on the build thread.
 
 import Foundation
 import Synchronization
@@ -41,5 +41,22 @@ nonisolated public enum ParallelDecode {
             }
         }
         return results.withLock { $0 }
+    }
+
+    /// `work` over every item, in chunks on the shared threads; the result keeps the
+    /// input order, so it does not depend on which thread finished first.
+    public static func mapInOrder<Item: Sendable, Value: Sendable>(
+        _ items: [Item],
+        chunkSize: Int,
+        inParallel: Bool = true,
+        _ work: @Sendable (Item) -> Value
+    ) -> [Value] {
+        guard inParallel else { return items.map(work) }
+        let starts = Array(stride(from: 0, to: items.count, by: max(chunkSize, 1)))
+        let chunks = map(starts.indices) { chunk in
+            let start = starts[chunk]
+            return items[start ..< min(start + max(chunkSize, 1), items.count)].map(work)
+        }
+        return starts.indices.flatMap { chunks[$0] ?? [] }
     }
 }

@@ -26,6 +26,13 @@ public struct LoadPassArguments: CLICommandArguments {
     public var assetCache = false
     @Flag(help: "Drop the game data and the asset cache from the page cache before each cold pass.")
     public var evict = false
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "Turn load optimisations off: comma-separated names, or all.", valueName: "names"
+        )
+    )
+    public var off: CommaList?
 
     public init() {}
 
