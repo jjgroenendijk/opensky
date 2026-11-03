@@ -5,11 +5,15 @@ import Foundation
 import OpenSkyGameData
 
 enum GraphicsCommand {
+    /// A decimal point on every locale, as in the game's INI files.
+    private static let iniNumber = FloatingPointFormatStyle<Double>.number
+        .grouping(.never).locale(Locale(identifier: "en_US_POSIX"))
+
     static func status(context: CLIContext) {
         let (store, presets) = load(context)
         print("preset\t\(presets.current(in: store)?.title ?? "Custom")")
         for option in GraphicsOptions.all {
-            let value = store.value(option.id).formatted(.number.grouping(.never))
+            let value = store.value(option.id).formatted(iniNumber)
             print("\(option.iniName)\t\(value)\t\(option.statusText)")
         }
     }
