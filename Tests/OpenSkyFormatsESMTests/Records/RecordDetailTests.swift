@@ -77,6 +77,9 @@ struct RecordDetailTests {
         #expect(details.headData.female.tintMasks.first?.presets.first?.defaultValue == 0.5)
         #expect(details.headData.male.presets == [FormID(0x71)])
         #expect(details.armorRace == FormID(0x72))
+        #expect(details.attackRace == FormID(0x74))
+        #expect(details.voices == GenderPair(male: FormID(0x75), female: nil))
+        #expect(details.hairs == [FormID(0x76), FormID(0x77)])
         #expect(race.skipped.isEmpty, "\(race.skipped.ranked)")
     }
 
@@ -182,7 +185,8 @@ struct RecordDetailTests {
             ("TINI", Fixture.u16(1)), ("TINT", Fixture.zstring("mask.dds")),
             ("TINP", Fixture.u16(6)),
             ("TINC", Fixture.u32(0x73)), ("TINV", Fixture.f32(0.5)), ("TIRS", Fixture.u16(2)),
-            ("RNAM", Fixture.u32(0x72))
+            ("RNAM", Fixture.u32(0x72)), ("ATKR", Fixture.u32(0x74)),
+            ("VTCK", Fixture.u32(0x75, 0)), ("HNAM", Fixture.u32(0x76, 0x77))
         ]
     }()
 }

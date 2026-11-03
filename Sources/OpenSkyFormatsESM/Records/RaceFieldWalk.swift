@@ -53,7 +53,7 @@ nonisolated struct RaceFieldWalk {
         case "FNAM": sex = .female
         default: return false
         }
-        if ["NAM1", "NAM3", "NAM0"].contains(fields.fields[index].type) {
+        if Self.sectionMarkers.contains(fields.fields[index].type) {
             sex = nil
         }
         fields.markUsed(at: index)
@@ -62,23 +62,45 @@ nonisolated struct RaceFieldWalk {
 
     private mutating func linkField(at index: Int) -> Bool {
         let type = fields.fields[index].type
-        if let path = Self.links[type] {
-            details[keyPath: path] = link(index)
-        } else if let path = Self.pairs[type] {
-            details[keyPath: path] = fields.read(at: index) { reader in
-                try GenderPair(
-                    male: reader.readFormID().nonNull,
-                    female: reader.readFormID().nonNull
-                )
-            }
-        } else if let path = Self.arrays[type] {
-            details[keyPath: path] = fields.read(at: index) { try Self.formIDs(&$0) } ?? []
-        } else if Self.baseMovementTypes.contains(type) {
+        if singleLink(at: index) || linkList(at: index) {
+            return true
+        }
+        if Self.baseMovementTypes.contains(type) {
             details.baseMovement[type] = link(index)
         } else if Self.decodedByRace.contains(type) {
             fields.markUsed(at: index)
         } else {
             return false
+        }
+        return true
+    }
+
+    private mutating func singleLink(at index: Int) -> Bool {
+        switch fields.fields[index].type {
+        case "ATKR": details.attackRace = link(index)
+        case "GNAM": details.bodyPartData = link(index)
+        case "NAM4": details.materialType = link(index)
+        case "NAM5": details.impactDataSet = link(index)
+        case "NAM7": details.decapitationEffect = link(index)
+        case "ONAM": details.openLootSound = link(index)
+        case "LNAM": details.closeLootSound = link(index)
+        case "UNES": details.unarmedEquipSlot = link(index)
+        case "NAM8": details.morphRace = link(index)
+        case "RNAM": details.armorRace = link(index)
+        default: return false
+        }
+        return true
+    }
+
+    private mutating func linkList(at index: Int) -> Bool {
+        switch fields.fields[index].type {
+        case "VTCK": details.voices = linkPair(index)
+        case "DNAM": details.decapitateArmors = linkPair(index)
+        case "HCLF": details.defaultHairColors = linkPair(index)
+        case "KWDA": details.keywords = links(index)
+        case "HNAM": details.hairs = links(index)
+        case "ENAM": details.eyes = links(index)
+        default: return false
         }
         return true
     }
@@ -127,27 +149,36 @@ nonisolated struct RaceFieldWalk {
 
     // MARK: - Sectioned fields
 
+    /// Each sex's value is moved out and back, so an edit does not copy its arrays.
     private mutating func sectionField(at index: Int) {
         guard let sex else { return }
         let type = fields.fields[index].type
         switch (section, type) {
         case (.skeleton, "ANAM"):
-            details.skeletons[keyPath: Self.side(sex)] = fields.model(at: index)
-        case (.body, "INDX"):
-            let part = fields.read(at: index) { try $0.readUInt32() } ?? 0
-            details.bodyParts[keyPath: Self.side(sex)].append(RaceBodyPart(index: part))
-        case (.body, "MODL") where !details.bodyParts[keyPath: Self.side(sex)].isEmpty:
             let model = fields.model(at: index)
-            let count = details.bodyParts[keyPath: Self.side(sex)].count
-            details.bodyParts[keyPath: Self.side(sex)][count - 1].model = model
+            Self.put(model, into: &details.skeletons, sex)
+        case (.body, "INDX"), (.body, "MODL"):
+            var parts = Self.take(&details.bodyParts, sex, leaving: [])
+            bodyPartField(at: index, into: &parts)
+            Self.put(parts, into: &details.bodyParts, sex)
         case (.behavior, "MODL"):
-            details.behaviorGraphs[keyPath: Self.side(sex)] = fields.model(at: index)
+            let model = fields.model(at: index)
+            Self.put(model, into: &details.behaviorGraphs, sex)
         case (.head, _):
-            var head = details.headData[keyPath: Self.side(sex)]
+            var head = Self.take(&details.headData, sex, leaving: RaceHeadData())
             headField(at: index, into: &head)
-            details.headData[keyPath: Self.side(sex)] = head
+            Self.put(head, into: &details.headData, sex)
         default:
             return
+        }
+    }
+
+    private mutating func bodyPartField(at index: Int, into parts: inout [RaceBodyPart]) {
+        if fields.fields[index].type == "INDX" {
+            let part = fields.read(at: index) { try $0.readUInt32() } ?? 0
+            parts.append(RaceBodyPart(index: part))
+        } else if !parts.isEmpty {
+            parts[parts.count - 1].model = fields.model(at: index)
         }
     }
 
@@ -173,15 +204,11 @@ nonisolated struct RaceFieldWalk {
     }
 
     private mutating func headListField(at index: Int, into head: inout RaceHeadData) {
-        let type = fields.fields[index].type
-        if ["RPRM", "RPRF"].contains(type) {
-            head.presets += one(index) { try $0.readFormID() }
-        } else if ["AHCM", "AHCF"].contains(type) {
-            head.hairColors += one(index) { try $0.readFormID() }
-        } else if ["FTSM", "FTSF"].contains(type) {
-            head.faceDetailTextures += one(index) { try $0.readFormID() }
-        } else {
-            tintField(at: index, into: &head.tintMasks)
+        switch fields.fields[index].type {
+        case "RPRM", "RPRF": head.presets += one(index) { try $0.readFormID() }
+        case "AHCM", "AHCF": head.hairColors += one(index) { try $0.readFormID() }
+        case "FTSM", "FTSF": head.faceDetailTextures += one(index) { try $0.readFormID() }
+        default: tintField(at: index, into: &head.tintMasks)
         }
     }
 
@@ -212,7 +239,7 @@ nonisolated struct RaceFieldWalk {
         }
     }
 
-    // MARK: - Tables and readers
+    // MARK: - Field readers
 
     private mutating func one<Value>(
         _ index: Int,
@@ -225,31 +252,40 @@ nonisolated struct RaceFieldWalk {
         fields.read(at: index) { try $0.readFormID() }?.nonNull
     }
 
-    private static func side<Value>(_ sex: Sex) -> WritableKeyPath<GenderPair<Value>, Value> {
-        sex == .male ? \.male : \.female
+    private mutating func linkPair(_ index: Int) -> GenderPair<FormID?>? {
+        fields.read(at: index) { reader in
+            try GenderPair(male: reader.readFormID().nonNull, female: reader.readFormID().nonNull)
+        }
     }
 
-    /// Key paths are not Sendable, so these tables are built on each use.
-    private static var links: [FourCC: WritableKeyPath<RaceDetails, FormID?>] {
-        [
-            "ATKR": \.attackRace, "GNAM": \.bodyPartData, "NAM4": \.materialType,
-            "NAM5": \.impactDataSet, "NAM7": \.decapitationEffect, "ONAM": \.openLootSound,
-            "LNAM": \.closeLootSound, "UNES": \.unarmedEquipSlot, "NAM8": \.morphRace,
-            "RNAM": \.armorRace
-        ]
+    private mutating func links(_ index: Int) -> [FormID] {
+        fields.read(at: index) { try Self.formIDs(&$0) } ?? []
+    }
+}
+
+// MARK: - Static tables and readers
+
+nonisolated extension RaceFieldWalk {
+    /// Swaps the value out, so the caller holds the only reference to its storage.
+    private static func take<Value>(
+        _ pair: inout GenderPair<Value>, _ sex: Sex, leaving empty: Value
+    ) -> Value {
+        var value = empty
+        switch sex {
+        case .male: swap(&value, &pair.male)
+        case .female: swap(&value, &pair.female)
+        }
+        return value
     }
 
-    private static var pairs: [FourCC: WritableKeyPath<RaceDetails, GenderPair<FormID?>?>] {
-        [
-            "VTCK": \.voices, "DNAM": \.decapitateArmors, "HCLF": \.defaultHairColors
-        ]
+    private static func put<Value>(_ value: Value, into pair: inout GenderPair<Value>, _ sex: Sex) {
+        switch sex {
+        case .male: pair.male = value
+        case .female: pair.female = value
+        }
     }
 
-    private static var arrays: [FourCC: WritableKeyPath<RaceDetails, [FormID]>] {
-        [
-            "KWDA": \.keywords, "HNAM": \.hairs, "ENAM": \.eyes
-        ]
-    }
+    private static let sectionMarkers: Set<FourCC> = ["NAM1", "NAM3", "NAM0"]
 
     private static let baseMovementTypes: Set<FourCC> = [
         "WKMV", "RNMV", "SWMV", "FLMV", "SNMV", "SPMV"
