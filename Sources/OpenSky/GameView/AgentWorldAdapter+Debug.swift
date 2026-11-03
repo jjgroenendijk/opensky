@@ -135,9 +135,13 @@ extension AgentWorldAdapter {
     private func changeActor(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
         switch command {
         case let .setActorValue(reference, name, value):
-            try writeActorValue(reference, name: name) { _ in value }
+            try writeActorValue(reference, name: name) { values, index, holder, _ in
+                values.setBase(at: index, to: value, on: holder)
+            }
         case let .modActorValue(reference, name, delta):
-            try writeActorValue(reference, name: name) { $0 + delta }
+            try writeActorValue(reference, name: name) { values, index, holder, before in
+                values.setValue(at: index, to: before + delta, on: holder)
+            }
         case let .addItem(reference, item, count, equip):
             try changeItem(reference, item: item, by: count, equip: equip)
         case let .removeItem(reference, item, count):
@@ -198,7 +202,7 @@ extension AgentWorldAdapter {
     private func writeActorValue(
         _ text: String,
         name: String,
-        _ update: (Float) -> Float
+        _ write: (ActorValueRuntime, Int32, ActorValueHolder, Float) -> Bool
     ) throws(AgentFailure) -> AgentJSON {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
@@ -207,10 +211,11 @@ extension AgentWorldAdapter {
         let holder = try actorValueHolder(for: reference)
         let index = try actorValueIndex(name)
         let before = values.value(at: index, on: holder) ?? 0
-        values.setValue(at: index, to: update(before), on: holder)
+        _ = write(values, index, holder, before)
         return [
             "ref": .formID(reference.formID.rawValue), "name": .string(name),
-            "before": .init(before), "value": .init(values.value(at: index, on: holder) ?? 0)
+            "before": .init(before), "value": .init(values.value(at: index, on: holder) ?? 0),
+            "base": .init(values.baseValue(at: index, on: holder) ?? 0)
         ]
     }
 

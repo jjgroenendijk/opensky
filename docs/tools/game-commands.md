@@ -145,7 +145,7 @@ Debug commands change the game state directly. `state` reads show the result
 
 | Command | Does |
 | --- | --- |
-| `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | Sets the base value, or adds to the current value, of an actor (default `player`), such as `debug av Health --value 50` |
+| `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | Sets the base value, as `SetActorValue` does, or adds to the current value, of an actor (default `player`), such as `debug av Health --value 50`. A primary's current value moves with its maximum. Replies `before`, `value`, and `base` |
 | `debug item <editorID> [--count <n>] [--ref <ref>] [--equip]` | Adds an item to a container (default `player`), 1 by default. A negative count removes it. `--equip` then equips it on the player |
 | `debug perk <editorID> [on\|off]` | Gives the player the perk, or takes it with `off`, as `Actor.AddPerk` does, abilities included. Answers `changed` and `owned` |
 | `debug form werewolf\|vampirelord\|none` | Puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it. Answers `form` |

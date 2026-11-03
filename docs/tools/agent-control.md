@@ -176,6 +176,7 @@ $ openskycli game time pause
 $ openskycli game input hold forward --frames 60
 {"eventSeq":3,"frame":481,"id":1,"ok":true,"paused":true,"result":{"action":"forward","released":true}}
 $ openskycli game debug av Health --value 50 --text
+base: 50
 before: 100
 name: Health
 ref: 00000014
