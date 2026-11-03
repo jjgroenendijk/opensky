@@ -171,9 +171,11 @@ records give the numbers:
 | --- | --- | --- | --- |
 | Eagle Eye | `Mod Bow Zoom` (20) | set 0.6 | The view's half-angle tangent is this share of normal |
 | Eagle Eye | `Mod Power Attack Stamina` (27), bow only | set 10 | Stamina drained per second while zoomed |
-| Steady Hand | `Bow Speed Bonus` actor value (78) | 0.75, 0.5 | The world and the player run at this speed while zoomed |
+| Steady Hand | `Bow Speed Bonus` actor value (78) | -0.5, then -0.25 more | The world and the player run at this speed while zoomed: 0.5 at rank 1, 0.25 at rank 2 |
 
-`Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, 1. The zoom starts when block is held, a
+`Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, 1. The perk text says time slows by 25% and
+50%, but UESP notes that the real slowdown is 50% and 75%, which is what the records give
+(<https://en.uesp.net/wiki/Skyrim:Archery>, Bugs). The zoom starts when block is held, a
 shot is nocked or drawn, `Mod Bow Zoom` gives less than 1, and the player has stamina. It ends
 when one of these stops. It also ends on `bowZoomStop`, and then waits until block comes up.
 

@@ -238,6 +238,9 @@ better name instead.
   first and add to a matching one. A note in `docs/` or a code
   comment does not replace the issue, because open work lives only in issues. A
   difference the same PR closes needs no issue.
+- A value or rule chosen without a source, such as a timing, a radius, or a formula read
+  from a setting's name, gets a row in `docs/engine/unverified-values.md` as well as its
+  mark on its own page. One list lets the values be checked against the game later.
 - An issue body states intent, not code locations: no file paths, line numbers, or pasted
   code. Code moves faster than issues are worked. `starting-roadmap-work` has the rules.
 - Do the whole task in the main session. Do not split work across sub-agents: parallel

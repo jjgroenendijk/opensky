@@ -30,14 +30,36 @@ struct WalkControllerGroundMaterialTests {
         #expect(controller.groundMaterial == Self.wood)
     }
 
-    @Test func aResetNearTheFloorStandsOnItRatherThanUnderIt() {
-        var controller = WalkController(cameraPosition: SIMD3(0, 0, 30))
+    @Test func aPlacementStandsOnTheFloorFromAnyHeight() {
         let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(z: 10)])
-        controller.standOnFloorBelowEye(query: query)
-        #expect(controller.feetPosition.z == 10)
-        var high = WalkController(cameraPosition: SIMD3(0, 0, 400))
-        high.standOnFloorBelowEye(query: query)
-        #expect(high.feetPosition.z == 400 - high.capsule.eyeHeight)
+        var low = WalkController(cameraPosition: SIMD3(0, 0, 30))
+        let placed1 = low.standOnGround(sampleGround: { _ in nil }, query: query)
+        #expect(placed1)
+        #expect(low.feetPosition.z == 10)
+        var high = WalkController(cameraPosition: SIMD3(0, 0, 4000))
+        let placed2 = high.standOnGround(sampleGround: { _ in nil }, query: query)
+        #expect(placed2)
+        #expect(high.feetPosition.z == 10)
+    }
+
+    @Test func aPlacementPrefersAFloorAboveTheTerrainButBelowTheEye() {
+        let terrain: WalkController.GroundSampler = { _ in
+            TerrainGroundSample(height: -500, normal: SIMD3(0, 0, 1))
+        }
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(z: 10)])
+        var onBridge = WalkController(cameraPosition: SIMD3(0, 0, 3000))
+        onBridge.standOnGround(sampleGround: terrain, query: query)
+        #expect(onBridge.feetPosition.z == 10)
+        var underBridge = WalkController(cameraPosition: SIMD3(0, 0, -400))
+        underBridge.standOnGround(sampleGround: terrain, query: query)
+        #expect(underBridge.feetPosition.z == -500)
+        var underground = WalkController(cameraPosition: SIMD3(0, 0, -900))
+        underground.standOnGround(sampleGround: terrain, query: { _ in [] })
+        #expect(underground.feetPosition.z == -500)
+        var nothingLoaded = WalkController(cameraPosition: SIMD3(0, 0, 700))
+        let placed3 = nothingLoaded.standOnGround(sampleGround: { _ in nil }, query: { _ in [] })
+        #expect(!placed3)
+        #expect(nothingLoaded.feetPosition.z == 700 - nothingLoaded.capsule.eyeHeight)
     }
 
     @Test func fallingReportsNoMaterialAtAll() {

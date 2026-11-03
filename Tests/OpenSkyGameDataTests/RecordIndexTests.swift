@@ -187,6 +187,23 @@ struct RecordIndexTests {
         return entry
     }
 
+    @Test
+    func interiorCellsInBlockGroupsAreIndexedButTheirReferencesAreNot() throws {
+        let reference = record("REFR", formID: 0x31, editorID: "Placed")
+        let children = ESMFixture.childGroup(parent: 0x30, groupType: 6, contents: reference)
+        let cell = record("CELL", formID: 0x30, editorID: "SomeInn") + children
+        let subBlock = ESMFixture.group(label: Data(count: 4), groupType: 3, contents: cell)
+        let block = ESMFixture.group(label: Data(count: 4), groupType: 2, contents: subBlock)
+        let file = try ESMFile(
+            data: ESMFixture.tes4(masters: []) + ESMFixture.topGroup("CELL", contents: block)
+        )
+        let index = RecordIndex(plugins: [("Base.esm", file)], recordTypes: ["CELL", "REFR"])
+
+        let cellID = ResolvedFormID(plugin: "Base.esm", objectID: 0x30)
+        #expect(index.orderedRecordIDs(of: ["CELL"]) == [cellID])
+        #expect(index.orderedRecordIDs(of: ["REFR"]).isEmpty)
+    }
+
     private func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
         try ESMFile(data: pluginData(masters: masters, records: records))
     }

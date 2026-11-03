@@ -1,5 +1,5 @@
-// Cast input: held buttons become begin and release edges. A spell in the right hand
-// takes the attack button, one in the left the block button, like `ArcheryIntent`; an
+// Cast input: held buttons become begin and release edges. A spell or staff in the right
+// hand takes the attack button, one in the left the block button, like `ArcheryIntent`; an
 // empty hand leaves its button to melee. Held levels, because casting is a hold
 // (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>). See docs/engine/spellcasting.md.
 
@@ -43,7 +43,8 @@ extension CasterRuntime {
     public func acceptFrame(_ intent: CastingIntent, on caster: ActorValueHolder) {
         let readied = spellbook.state(of: caster)
         for hand in SpellHand.allCases {
-            guard readied.spell(in: hand) != nil else {
+            let staff = staffs?.staffSpell(in: hand, of: caster)
+            guard readied.spell(in: hand) != nil || staff != nil else {
                 releaseIfHeld(hand, on: caster)
                 continue
             }

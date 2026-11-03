@@ -82,9 +82,12 @@ float32. When `DALC` exists, it replaces the directional ambient block of `DATA`
 | 28 | 4 | Flicker period, float32 |
 | 32 | 4 | Flicker intensity amplitude, float32 |
 | 36 | 4 | Flicker movement amplitude, float32 |
-| 40 | 8 | Value (uint32) and weight (float32). Skipped |
+| 40 | 8 | Value (uint32) and weight (float32), used by a light that can be carried |
 
 `FNAM` is the fade, a float32. Without it the fade is 1.
+
+Flag `0x002` marks a light that can be carried, such as a torch. OpenSky lists it as an
+inventory item with its `FULL` name, value, and weight.
 
 OpenSky draws omni lights, including shadow omni lights. It does not draw a light with any
 of these: flag `0x004` (negative), `0x200` (spot), `0x400` (shadow spot), `0x020` (off by

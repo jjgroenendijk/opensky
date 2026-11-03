@@ -15,6 +15,8 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
     public static let skillAngle = 20.0
     /// Values per skill in `SkillStatsA`: level, name, meter, colour, legendary count.
     public static let skillStride = 5
+    /// The root rests on `FadedOut`; this label plays its fade to the `SetFadedIn` frame.
+    public static let fadeInLabel = "FadeIn"
 
     /// `onCamera` gets `MoveCamera`'s 0 to 1 progress through the opening move.
     public static func prepare(
@@ -37,7 +39,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         )
         runtime.callMovie("InitExtensions")
         runtime.callMovie("ShowLegendaryButtonHint")
-        runtime.callMovie("StartCameraAnimation")
+        runtime.callMovie("gotoAndPlay", arguments: [.string(fadeInLabel)])
     }
 
     /// The `StatsMenu` class, or nil when the movie did not define it.

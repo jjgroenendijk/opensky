@@ -245,6 +245,9 @@ The two instances are joined only by names:
   the reference.
 - A reference reached twice in one parent update runs once. Otherwise its clock would advance twice
   and run fast.
+- A reference that is no longer reached deactivates its child, as any Havok node does. The next
+  reach enters every machine of the child at its start state. `1hm_behavior.hkx` needs this: its
+  readied machine picks the bow or the sword stance from `iLeftHandType` only as it enters.
 - A child that references one of its own parents is refused by name. Mod data can contain cycles.
   Refusing by name, not by depth, keeps a legal deep nesting working.
 

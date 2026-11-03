@@ -53,6 +53,16 @@ nonisolated extension BehaviorGraphInstance {
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
     }
 
+    /// Deactivates the child when its reference stops being reached, so the next
+    /// activation enters every machine at its start state again. Skipped while
+    /// another reference to the same file ran this update.
+    func noteReferenceDeactivation(_ generator: HKBBehaviorReferenceGenerator) {
+        guard let name = generator.behaviorName, referencedResults[name] == nil else { return }
+        let key = Self.referenceKey(name)
+        pulledEventNames[key] = nil
+        referencedGraphs[key]??.deactivate()
+    }
+
     /// The child instance for `name`, loaded once. A miss is remembered as a
     /// miss so a graph naming an absent file does not retry the load every
     /// frame.

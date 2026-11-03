@@ -55,6 +55,8 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
         case ingestible = "ALCH"
         case ingredient = "INGR"
         case key = "KEYM"
+        /// Only a `LIGH` flagged as carried, such as a torch.
+        case light = "LIGH"
         case miscellaneous = "MISC"
         case soulGem = "SLGM"
         case scroll = "SCRL"
@@ -72,6 +74,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
             case .ingestible: "ALCH"
             case .ingredient: "INGR"
             case .key: "KEYM"
+            case .light: "LIGH"
             case .miscellaneous: "MISC"
             case .soulGem: "SLGM"
             case .scroll: "SCRL"
@@ -197,7 +200,7 @@ nonisolated public final class ItemDefinitionStore {
                     localized: $1,
                     enchantments: enchantments
                 )
-            }
+            }.compactMapValues(\.self)
             definitions.merge(decoded) { _, later in later }
         }
         self.definitions = strings.map { strings in
@@ -348,7 +351,7 @@ nonisolated public final class ItemDefinitionStore {
         family: ItemDefinition.Family,
         localized: Bool,
         enchantments: ItemEnchantmentResolver?
-    ) throws -> ItemDefinition {
+    ) throws -> ItemDefinition? {
         switch family {
         case .armor:
             try view(Armor(record: record, localized: localized), enchantments)
@@ -364,6 +367,8 @@ nonisolated public final class ItemDefinitionStore {
             try view(Ingredient(record: record, localized: localized))
         case .key:
             try view(KeyItem(record: record, localized: localized))
+        case .light:
+            try view(LightRecord(record: record, localized: localized))
         case .miscellaneous:
             try view(MiscItem(record: record, localized: localized))
         case .soulGem:
@@ -439,6 +444,17 @@ nonisolated extension ItemDefinitionStore {
 
     fileprivate static func view(_ item: MiscItem) -> ItemDefinition {
         view(item.formID, .miscellaneous, item.fields, item.itemValue)
+    }
+
+    /// A fixed light that cannot be carried is not an item.
+    fileprivate static func view(_ light: LightRecord) -> ItemDefinition? {
+        guard light.flags.contains(.canBeCarried) else { return nil }
+        return ItemDefinition(
+            formID: light.formID, family: .light, editorID: light.editorID,
+            name: light.details.name, value: light.itemValue.value,
+            weight: light.itemValue.weight, keywords: [], enchantment: nil,
+            modelPath: light.details.model?.path
+        )
     }
 
     fileprivate static func view(_ key: KeyItem) -> ItemDefinition {

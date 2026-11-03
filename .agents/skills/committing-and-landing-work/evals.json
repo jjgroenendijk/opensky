@@ -56,5 +56,16 @@
       "Runs gh pr ready so CI starts",
       "Waits for the Lint check with gh pr checks --watch before merging"
     ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "I fixed issues #10, #11, and #12 on one branch. Merge it all with a single PR.",
+    "files": [],
+    "expected_behavior": [
+      "Makes one commit per issue, each with its own Fixes #n footer",
+      "Opens one PR that holds the three commits"
+    ]
   }
 ]

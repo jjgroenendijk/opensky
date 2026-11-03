@@ -221,6 +221,8 @@ extension AgentWorldAdapter {
         [
             "page": .string(snapshot.page),
             "movie": .init(snapshot.movie.state),
+            "movieLoaded": .bool(snapshot.movie.isLoaded),
+            "movieError": .init(snapshot.movie.error),
             "levelUpMovie": .bool(snapshot.isLevelUpMovieLoaded),
             "skyEnabled": .bool(snapshot.isSkyEnabled),
             "sky": .init(snapshot.sky)

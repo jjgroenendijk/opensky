@@ -54,6 +54,10 @@ or `Model:`. Allowed trailers:
    type, for example `feat/716-test-plans-and-tags` or `docs/707-rework-skills`.
 3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
    local, and rebase or squash them before you push.
+   A PR that closes several issues has one commit per issue, each with its own
+   `Fixes #n`, even when the user asks for a single PR: `git log` and a revert then work
+   per issue. Commit each issue when it is done, before the next one mixes into the same
+   files.
 4. Open the PR as a draft after the first push: `gh pr create --draft`. Describe what and
    why, and cite the format specs used. Push each later atomic commit to it. CI runs the
    whole unit plan on every push, draft included, so push early and keep working while

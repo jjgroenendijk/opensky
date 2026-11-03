@@ -127,7 +127,8 @@ public final class CombatCoordinator {
         melee.offHand = hands.offHand
         let swing = melee.state.swingID
         melee.acceptFrame(CombatCore.meleeIntent(
-            intent, readied: readied, staffInRight: hands.weapon.handType == .staff
+            intent, readied: readied, staffInRight: hands.weapon.handType == .staff,
+            bowAiming: archery?.state.phase.isDrawing == true
         ))
         noteHits(melee.handleGraphEvents(events))
         noteWeaponUse(.swing, changed: melee.state.swingID != swing)

@@ -99,7 +99,7 @@ To look at one record, reference, mesh, or cell without the game window, use
 
 | Command | Gives |
 | --- | --- |
-| `state player` | The position, cell, exterior `worldspace`, the current `weather` editor ID, and the player `level`. The beast `form` (`none`, `werewolf`, `vampireLord`, or `otherBeast`) and the race `behaviorProject` the body runs, null for the character graphs, with `behaviorProjectFailure` when that project did not load. `melee`: the swing's `attackPhase`, `attackState` (the `GetAttackState` code, 4 inside a combo window after contact), `chainWindowOpen`, and `swingID`. Under `graph`: `drunk`, `iState`, and `perkState`, the perk state the graph tags (`NPCBowDrawnQuickShot` or `NPCBlockingShieldCharge`) or null. The owned `perks` and known `spells` by editor ID, abilities such as `Rested` included. `cloak`: `running`, `suspended` while its conditions fail (Shield Charge outside a charge), or `none`. `firstPerson`: whether the arms graph and rig are attached and drawn, the failure reason, the arm model count, and the bones the last pose reached |
+| `state player` | The position, cell, exterior `worldspace`, the current `weather` editor ID, and the player `level`. The beast `form` (`none`, `werewolf`, `vampireLord`, or `otherBeast`) and the race `behaviorProject` the body runs, null for the character graphs, with `behaviorProjectFailure` when that project did not load. `melee`: the swing's `attackPhase`, `attackState` (the `GetAttackState` code, 4 inside a combo window after contact), `chainWindowOpen`, and `swingID`. Under `graph`: `drunk`, `iState`, and `perkState`, the perk state the graph tags (`NPCBowDrawnQuickShot` or `NPCBlockingShieldCharge`) or null. The owned `perks` and known `spells` by editor ID, abilities such as `Rested` included. `cloak`: `running`, `suspended` while its conditions fail (Shield Charge outside a charge), or `none`. `firstPerson`: whether the arms graph and rig are attached and drawn, the failure reason, the arm model count, and the bones the last pose reached. `staff`: the right-hand staff's `item`, `enchantment`, `charge`, and `capacity`, or null. `bowZoom`: `zoomed`, the `viewShare` of the normal view, the `timeScale` while zoomed, `fovYDegrees`, and `staminaPauseSeconds` left on the stamina regeneration pause |
 | `state target` | The reference under the crosshair. `theft`: whether taking it now is theft |
 | `state actors [--radius <units>]` | Each loaded actor near the player, within 4096 units by default. Its `leveled` roll: the `LVLN` `hops` (list and chosen entry), the `playerLevel` it rolls at, whether that level is `frozen`, the `encounterLevel`, and the `difficulty`. Its behaviour `graph`: `status` (`running`, `loading`, `failed: <reason>`, or `waiting for playback`), `project`, `activeStates`, `waitingForClip`, `hasPose`, `steps`, `rate`, `recentEvents`, `unresolvedClips`, `clipsLoaded`, `clipsMissed`, `drunk`, `iState`, `iStateTag` (the value the graph's state tagging generators publish), and `bodyWeight` (`weapAdj` and the body-weight layer weights the graph derives from it). Also `constraints` and `eyeTexture`. A rider or cart passenger has no graph until it gets off |
 | `state menu` | The open menus and the selected rows. `hud`: whether the HUD movie is `loaded`, `cartMode`, and the `modes` stack the movie holds, bottom first, such as `["StealthMode", "CartMode"]`. On the skills menu, `skills`: the `page` (`Closing` while `CameraOutro` plays), the stats `movie`, `levelUpMovie`, `skyEnabled`, and the `sky` line with its draw count, turn, and view (`ring`, `moving`, `tree view`, or `closing`). On the system menu, `systemPage` (`main`, `help`, `installedContent`, and more) and `topic`, the title of the open Help or Installed Content topic. On the title menu, `credits`. Also `loading`, `bink`, `titles`, and `movie` (see the `debug` commands that set them) |
@@ -129,12 +129,14 @@ Debug commands change the game state directly. `state` reads show the result
 
 ### World and time
 
+Every teleport ends with the player standing on the ground below the placed spot.
+
 | Command | Does |
 | --- | --- |
 | `debug teleport --cell <editorID>` | Goes to any cell in the load order, such as `--cell WhiterunBanneredMare` |
 | `debug teleport --x <n> --y <n> [--worldspace <editorID>]` | Goes to an exterior cell grid. `--worldspace DLC2SolstheimWorld` goes to another worldspace first |
 | `debug teleport --pos x,y,z` | Moves to a position in the current cell or worldspace. Interior positions are local |
-| `debug teleport --ref <ref>` | Moves next to a placed reference |
+| `debug teleport --ref <ref>` | Moves next to a placed object or actor. One outside the loaded cells is found by FormID in any exterior or interior cell |
 | `debug view --pos x,y,z --yaw <deg> [--pitch <deg>] [--worldspace <editorID> \| --interior <formID>] [--hour <h>] [--weather <formID>]` | Sets a whole view at once, as `reference follow` sends it. `--pos` is the feet. A `--yaw` of 0 looks east (+X) and turns towards north. A positive `--pitch` looks up. `--hour` is 0 to 24 |
 | `debug time <hour>` | Sets the hour, 0 to 24, such as `debug time 13.5` |
 | `debug weather [<editorID>]` | Forces a weather. No ID clears the forced weather |
@@ -145,7 +147,7 @@ Debug commands change the game state directly. `state` reads show the result
 
 | Command | Does |
 | --- | --- |
-| `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | Sets the base value, or adds to the current value, of an actor (default `player`), such as `debug av Health --value 50` |
+| `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | Sets the base value, as `SetActorValue` does, or adds to the current value, of an actor (default `player`), such as `debug av Health --value 50`. A primary's current value moves with its maximum. Replies `before`, `value`, and `base` |
 | `debug item <editorID> [--count <n>] [--ref <ref>] [--equip]` | Adds an item to a container (default `player`), 1 by default. A negative count removes it. `--equip` then equips it on the player |
 | `debug perk <editorID> [on\|off]` | Gives the player the perk, or takes it with `off`, as `Actor.AddPerk` does, abilities included. Answers `changed` and `owned` |
 | `debug form werewolf\|vampirelord\|none` | Puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it. Answers `form` |

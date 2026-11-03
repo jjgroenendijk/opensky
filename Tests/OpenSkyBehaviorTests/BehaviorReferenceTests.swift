@@ -55,6 +55,25 @@ struct BehaviorReferenceTests {
         #expect(parent.tally.featureGaps["unresolvedBehaviorReference"] ?? 0 > 0)
     }
 
+    /// `1hm_behavior.hkx` picks the bow or the sword state as its machine enters.
+    /// A child that kept running from the last draw would keep the old weapon.
+    @Test func aReferenceThatStopsBeingReachedRestartsItsGraph() {
+        let child = Self.child()
+        let parent = Self.parent(references: BehaviorReferenceTable(
+            graphs: ["child.hkx": child]
+        ))
+        parent.raiseEvent(named: "poke")
+        for _ in 0 ..< 3 {
+            parent.update(deltaTime: 1 / 30)
+        }
+        #expect(child.activeStates.contains { $0.stateName == "Answered" })
+
+        parent.deactivateNodes(Set([parent.root].compactMap(\.self)))
+        #expect(!child.isActive)
+        parent.update(deltaTime: 1 / 30)
+        #expect(child.activeStates.contains { $0.stateName == "Waiting" })
+    }
+
     // MARK: - Graphs
 
     private static let events = ["poke", "pong"]

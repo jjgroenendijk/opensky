@@ -78,7 +78,8 @@ struct LightingRecordDecoderTests {
         for value: Float in [0.75, 0.3, 4] {
             data.appendFloat32(value)
         }
-        data.append(Data(count: 8)) // value, weight
+        data.appendUInt32(4) // value
+        data.appendFloat32(1.5) // weight
         var fnam = Data()
         fnam.appendFloat32(0.5)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("WarmLight"))
@@ -101,6 +102,7 @@ struct LightingRecordDecoderTests {
         #expect(animation.period == 0.75)
         #expect(light.falloffExponent == 2)
         #expect(light.fade == 0.5)
+        #expect(light.itemValue == ItemValue(value: 4, weight: 1.5))
         #expect(light.isSupportedPointLight)
     }
 

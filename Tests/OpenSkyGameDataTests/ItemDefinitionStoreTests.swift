@@ -27,6 +27,33 @@ struct ItemDefinitionStoreTests {
         #expect(store.definition(FormID(0x999)) == nil)
     }
 
+    /// A torch is a `LIGH` with the carried flag; a fixed light is not an item.
+    @Test func aCarriedLightIsAnItemAndAFixedLightIsNot() throws {
+        func light(_ formID: UInt32, flags: UInt32, name: String) -> Data {
+            var data = Data(count: 12)
+            data.appendUInt32(flags)
+            data.append(Data(count: 24))
+            data.appendUInt32(4) // value
+            data.appendFloat32(2) // weight
+            return ESMFixture.record(
+                "LIGH", formID: formID,
+                data: ESMFixture.field("FULL", ESMFixture.zstring(name))
+                    + ESMFixture.field("DATA", data)
+            )
+        }
+        let file = try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
+            "LIGH", contents: light(0xC00, flags: 0x2, name: "Torch")
+                + light(0xC01, flags: 0, name: "Candle glow")
+        ))
+        let store = ItemDefinitionStore(file: file)
+        let torch = try #require(store.definition(FormID(0xC00)))
+        #expect(torch.family == .light)
+        #expect(torch.name == .inline("Torch"))
+        #expect(torch.value == 4)
+        #expect(torch.weight == 2)
+        #expect(store.definition(FormID(0xC01)) == nil)
+    }
+
     @Test func unifiedViewCarriesNameValueWeightAndKeywords() throws {
         let store = try makeStore()
         let weapon = try #require(store.definition(FormID(0x500)))
