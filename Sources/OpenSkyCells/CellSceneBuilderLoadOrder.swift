@@ -128,15 +128,17 @@ nonisolated extension CellSceneBuilder {
         for plugin in plugins {
             guard let top = plugin.file.topGroup(of: type), let children = childrenOrSkip(top)
             else { continue }
-            for case let .record(record) in children
-                where record.type == type && !record.isDeleted
-            {
-                guard
-                    let value = decodeOrSkip(record, using: { record in
-                        try plugin.decode { try decode(record, plugin.localized) }
-                    })
-                else { continue }
-                index[plugin.formID(of: record).rawValue] = value
+            plugin.decode {
+                for case let .record(record) in children
+                    where record.type == type && !record.isDeleted
+                {
+                    guard
+                        let value = decodeOrSkip(record, using: { record in
+                            try decode(record, plugin.localized)
+                        })
+                    else { continue }
+                    index[plugin.formID(of: record).rawValue] = value
+                }
             }
         }
         return index
