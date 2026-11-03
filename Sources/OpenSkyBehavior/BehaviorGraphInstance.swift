@@ -314,6 +314,9 @@ nonisolated public final class BehaviorGraphInstance {
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
+        // The memo names the references this update ran; stale, it would keep a
+        // later deactivation from stopping a child.
+        referencedResults = [:]
 
         var bones = pose.bones
         if

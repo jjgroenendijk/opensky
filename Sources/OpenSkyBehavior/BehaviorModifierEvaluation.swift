@@ -179,10 +179,14 @@ nonisolated extension BehaviorGraphInstance {
     // MARK: - Deactivation
 
     /// Runs a node's deactivation: `BSEventOnDeactivateModifier` raises its event, and
-    /// `hkbStateMachine` leaves its state.
+    /// `hkbStateMachine` leaves its state, and a behavior reference stops its graph.
     public func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
         if let machine = object as? HKBStateMachine {
             noteMachineDeactivation(of: machine, at: target)
+            return
+        }
+        if let reference = object as? HKBBehaviorReferenceGenerator {
+            noteReferenceDeactivation(reference)
             return
         }
         if noteModifierDeactivation(of: object, at: target) {
