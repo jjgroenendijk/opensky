@@ -35,15 +35,22 @@ nonisolated public enum ReferencePrefsIni {
     /// reads it from `Skyrim.ini`; in `SkyrimPrefs.ini` it does nothing (observed 2026-10-29).
     public static let alwaysActive = ReferenceIniValue("bAlwaysActive", "1")
 
+    /// After two idle minutes the game turns to a third-person camera that circles the
+    /// player, so two captures of one view stop matching. A day's delay keeps it away;
+    /// `bDisableAutoVanityMode` does not (both observed 2026-11-03).
+    public static let noIdleCamera = ReferenceIniValue("fAutoVanityModeDelay", "86400")
+
     public static func apply(to text: String, frame: ReferenceWindowFrame) -> String {
         let display = ReferenceIni.set(displayValues(frame), in: section, of: text)
         let removed = ReferenceIniValue(alwaysActive.key, nil)
         return ReferenceIni.set([removed], in: "General", of: display)
     }
 
-    /// The `Skyrim.ini` values: the game keeps running behind OpenSky.
+    /// The `Skyrim.ini` values: the game keeps running behind OpenSky, and its camera stays
+    /// where the commands put it.
     public static func applyGameIni(to text: String) -> String {
-        ReferenceIni.set([alwaysActive], in: "General", of: text)
+        let general = ReferenceIni.set([alwaysActive], in: "General", of: text)
+        return ReferenceIni.set([noIdleCamera], in: "Camera", of: general)
     }
 
     /// Sets every key a preset file such as `Low.ini` names, and keeps the rest.

@@ -142,7 +142,11 @@ four things:
    `ARGS='--preset high'` picks another. They also
    set `bAlwaysActive=1` in `[General]` of `Skyrim.ini`, so the game keeps running while
    another app is in front. Without it the game pauses on alt-tab, and the bridge pauses
-   with it. The game ignores the key in `SkyrimPrefs.ini` (observed 2026-10-29).
+   with it. The game ignores the key in `SkyrimPrefs.ini` (observed 2026-10-29). They set
+   `fAutoVanityModeDelay=86400` in `[Camera]` of `Skyrim.ini` too. After two idle minutes
+   the game otherwise turns to a third-person camera that circles the player, so two
+   captures of one view stop matching. `bDisableAutoVanityMode=1` does not stop it, in
+   either file (observed 2026-11-03).
 2. Unless a `steam.exe` already runs, it deletes the browser lock files and swaps in the
    web helper wrapper.
 3. It starts Windows Steam with the flags above, and waits until Steam's own logs show it
@@ -238,6 +242,22 @@ Mode question after loading an old save, `state.json` holds its text and buttons
 because the game's main task queue stops while a message box pauses the game.
 `state.json` reports the console's angles: positive `pitchDegrees` looks down, and
 `headingDegrees` is 0 at north and turns clockwise.
+
+Each line runs alone, so the plugin keeps the reference a `prid <FormID>` line picks, and
+runs every later line against it, as the console does. `state.json` names it under
+`selected`, with `loaded` and `disabled`, so a batch can check that the pick worked:
+
+```sh
+openskycli reference send 'prid 0009C8D4' 'disable'
+```
+
+`prid 0` clears the pick.
+
+Some console commands are toggles that the state does not report. `tgm` turns god mode off
+when the save has it on, and the next long fall kills the player and reloads the save.
+`tcl` flips collision, so read the player's height in `state.json` after a move. `cow` and
+`coc` can leave the game in third person; `cgf "Game.ForceFirstPerson"` turns it back, and
+`firstPerson` in the state shows the result.
 
 ## Same view, two games
 
