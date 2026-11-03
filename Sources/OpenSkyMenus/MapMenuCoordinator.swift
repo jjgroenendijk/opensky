@@ -40,6 +40,14 @@ public protocol MapMenuWorld: AnyObject {
     /// Every worldspace with markers, for the inspector.
     var mapMarkerWorldspaces: [MapWorldspaceChoice] { get }
     func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite]
+    /// The editor ID of the worldspace the map shows; nil without one.
+    var mapWorldspaceName: String? { get }
+    var playerSetMarker: PlayerSetMapMarker? { get set }
+    var playerMarkerTexts: GameSettingTexts<PlayerMarkerText> { get }
+    /// Asks in a message box; `answer` gets the picked button's index.
+    func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void)
+    /// Puts the custom marker on the HUD compass; nil takes it off.
+    func showPlayerSetMarker(_ position: SIMD3<Float>?)
 }
 
 public enum MapMenuMode: String, Sendable {
@@ -79,6 +87,11 @@ public final class MapMenuCoordinator {
 
     public var isOpen: Bool {
         mode != nil
+    }
+
+    /// Open under another menu, such as a question box, which then holds the movie layer.
+    public var isCovered: Bool {
+        mode != nil && menuMode.topMenu != Self.identifier
     }
 
     // MARK: - Walking
@@ -250,6 +263,10 @@ public final class MapMenuCoordinator {
         context.enabledByScripts = fastTravelEnabled && context.enabledByScripts
         context.destinationCanTravelTo = target.state.canTravelTo
         if let refusal = FastTravelRule.refusal(context) {
+            if refusal == .undiscovered {
+                offerMarker(on: target)
+                return
+            }
             lastOutcome = .travelRefused(refusal)
             world.showNotification(lastResult ?? "")
             return
@@ -274,7 +291,8 @@ public final class MapMenuCoordinator {
             cameraHeight: camera?.height,
             questTargets: questMarkerLines,
             lastResult: lastResult,
-            inspectedMarker: inspectedMarkerLine
+            inspectedMarker: inspectedMarkerLine,
+            playerMarker: playerMarkerLine
         )
     }
 }

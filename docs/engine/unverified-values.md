@@ -131,6 +131,7 @@ the detail and the sources it did find.
 | Loading screen timing | 1.5 s; 0.4 s fade | [loading screens](/engine/loading-screens.md) |
 | Notification timing | Limit of 3 at once | [messages](/engine/messages.md) |
 | Movie track, colour matrix, skip keys | First track; BT.601; not confirmed | [movies](/engine/movies.md) |
+| Custom marker aim and questions | 5% of the map camera height; the question order | [world map](/engine/world-map.md#custom-marker) |
 
 ## Rendering
 

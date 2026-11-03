@@ -137,6 +137,7 @@ chunk cannot read into the next.
 | `PCPX` | the player's complexion | world |
 | `MRKS` | changed map markers | world |
 | `FOGM` | local map fog | world |
+| `PMRK` | the player's custom map marker | world |
 
 `HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
 means harvested, so it has no other field. `HRVD` is a uint32 entry count, then one key and a

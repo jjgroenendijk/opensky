@@ -53,10 +53,12 @@ nonisolated public enum HUDCore {
         HUDMovieBridge.normalizedDegrees(90 - yawRadians * 180 / .pi)
     }
 
-    /// The interaction target as a location marker, then each quest target.
+    /// The interaction target as a location marker, each quest target, then the
+    /// player's own map marker.
     public static func markers(
         for target: InteractionTarget?,
         questTargets: [SIMD3<Float>] = [],
+        playerSet: SIMD3<Float>? = nil,
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
         let location = target.flatMap { target in
@@ -67,7 +69,11 @@ nonisolated public enum HUDCore {
             heading(to: position, from: cameraPosition)
                 .map { HUDCompassMarker(headingDegrees: $0, kind: .quest) }
         }
-        return (location.map { [$0] } ?? []) + quests
+        let custom = playerSet.flatMap { position in
+            heading(to: position, from: cameraPosition)
+                .map { HUDCompassMarker(headingDegrees: $0, kind: .playerSet) }
+        }
+        return (location.map { [$0] } ?? []) + quests + (custom.map { [$0] } ?? [])
     }
 
     /// Nil when the point is straight above or below.
@@ -90,10 +96,14 @@ nonisolated public enum HUDCore {
         _ settings: HUDSettings,
         target: InteractionTarget?,
         questTargets: [SIMD3<Float>] = [],
+        playerSet: SIMD3<Float>? = nil,
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
         guard settings.markersEnabled else { return [] }
-        return markers(for: target, questTargets: questTargets, cameraPosition: cameraPosition)
+        return markers(
+            for: target, questTargets: questTargets, playerSet: playerSet,
+            cameraPosition: cameraPosition
+        )
     }
 
     /// A marker follows the camera, so it moves whenever the camera does while a

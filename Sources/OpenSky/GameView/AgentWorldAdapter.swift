@@ -71,6 +71,7 @@ protocol AgentWorldHost: AnyObject {
     var loadingScreens: LoadingScreenCoordinator { get }
     var loadingWorld: LoadingScreenWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
+    var mapMenu: MapMenuCoordinator { get }
     var magic: MagicCoordinator { get }
     var menuMode: MenuModeController { get }
     var menuRouter: MenuRouter { get }

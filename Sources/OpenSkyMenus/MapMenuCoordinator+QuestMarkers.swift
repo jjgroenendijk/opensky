@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 
 extension MapMenuCoordinator {
@@ -20,6 +21,7 @@ extension MapMenuCoordinator {
         guard let world else { return }
         questMarkers = world.questTargets
         world.showQuestMarkers(questMarkers.map(\.position))
+        world.showPlayerSetMarker(playerMarker?.position)
     }
 
     /// Opens the map on the first target of `objective`, or of the first tracked

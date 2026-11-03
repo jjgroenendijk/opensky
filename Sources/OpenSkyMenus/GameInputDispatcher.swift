@@ -11,6 +11,8 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case run, sprint, sneak, jump, activate, attack, block, shout
     case readyWeapon, cameraMode, journal, inventory, skills
     case map, magic, wait, quicksave, quickload, pause
+    /// The map's `PlacePlayerMarker` key; it does nothing outside the map.
+    case placeMarker
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
     case hotkey1, hotkey2, hotkey3, hotkey4, hotkey5, hotkey6, hotkey7, hotkey8
 
@@ -157,6 +159,12 @@ public struct GameInputDispatcher {
     private func applyToMenu(_ action: GameInputAction, _ phase: GameInputPhase) -> Outcome {
         if phase == .press, action == .quicksave || action == .quickload {
             onRefused?(action == .quicksave ? .quickSaveWhilePaused : .quickLoadWhilePaused)
+            return .swallowed
+        }
+        if action == .placeMarker {
+            if phase == .press {
+                onCommand?(action)
+            }
             return .swallowed
         }
         let event: MenuInputEvent? = switch (action, phase) {

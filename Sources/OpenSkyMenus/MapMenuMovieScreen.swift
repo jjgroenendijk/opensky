@@ -20,7 +20,10 @@ public final class MapMenuMovieScreen {
     private weak var world: (any MapMovieWorld)?
     private let movie: MenuMovieDriver<MapMovieEvent>
     private var isShown = false
+    private var wasCovered = false
     private var sites: [MapMarkerSite] = []
+    /// The custom marker the movie holds after the sites, so a change rebuilds the list.
+    private var shownPlayerMarker: SIMD3<Float>?
 
     public init(
         map: MapMenuCoordinator,
@@ -44,6 +47,16 @@ public final class MapMenuMovieScreen {
             }
         }
         guard isShown else { return }
+        // A box over the map draws its own movie; the map movie starts again after it.
+        if map.isCovered {
+            wasCovered = true
+            return
+        }
+        if wasCovered {
+            wasCovered = false
+            hide()
+            show()
+        }
         for event in movie.tick(now: now) where isShown {
             handle(event)
         }
@@ -53,11 +66,8 @@ public final class MapMenuMovieScreen {
     private func show() {
         isShown = true
         sites = MapMarkerRules.shown(map.world?.mapMarkerSites() ?? [], around: .zero)
-        let markers = sites.map {
-            MapMovieMarker(
-                name: $0.name, iconType: Int($0.iconType), isUndiscovered: !$0.state.isDiscovered
-            )
-        }
+        shownPlayerMarker = map.playerMarker?.position
+        let markers = movieMarkers()
         let date = world?.gameDateText ?? ""
         movie.start(MenuMovie(
             path: MapMenuMovieBridge.moviePath,
@@ -73,12 +83,33 @@ public final class MapMenuMovieScreen {
 
     private func hide() {
         isShown = false
+        wasCovered = false
         sites = []
+        shownPlayerMarker = nil
         movie.stop()
     }
 
+    private func movieMarkers() -> [MapMovieMarker] {
+        let markers = sites.map {
+            MapMovieMarker(
+                name: $0.name, iconType: Int($0.iconType), isUndiscovered: !$0.state.isDiscovered
+            )
+        }
+        guard shownPlayerMarker != nil else { return markers }
+        return markers + [MapMovieMarker(
+            name: map.playerMarkerName, iconType: MapMenuMovieBridge.playerSetIconType,
+            isUndiscovered: false
+        )]
+    }
+
     private func refresh(_ runtime: SWFMovieRuntime) {
-        let points = sites.map { world?.mapScreenPoint($0.position) }
+        let placed = map.playerMarker?.position
+        if placed != shownPlayerMarker {
+            shownPlayerMarker = placed
+            MapMenuMovieBridge.create(movieMarkers(), runtime: runtime)
+        }
+        let points = (sites.map(\.position) + (placed.map { [$0] } ?? []))
+            .map { world?.mapScreenPoint($0) }
         let selected = sites.firstIndex { $0.key == map.selected?.key }
         MapMenuMovieBridge.refresh(points, selected: selected, runtime: runtime)
     }
@@ -86,6 +117,10 @@ public final class MapMenuMovieScreen {
     func handle(_ event: MapMovieEvent) {
         switch event {
         case let .marker(index):
+            if index == sites.count, shownPlayerMarker != nil {
+                map.placePlayerMarker()
+                return
+            }
             guard sites.indices.contains(index), map.select(key: sites[index].key) else { return }
             map.travelToSelected()
         case .toggleLocalMap:

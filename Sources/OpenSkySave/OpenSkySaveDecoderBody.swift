@@ -134,5 +134,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var markers: [SaveStoryEntry<MapMarkerState>] = []
         /// Absent `FOGM`: the local map is fogged everywhere.
         public var fog: [SaveStoryEntry<LocalMapFogState>] = []
+        /// Absent `PMRK`: the player placed no marker.
+        public var playerMarkers: [SaveStoryEntry<PlayerSetMapMarker>] = []
     }
 }

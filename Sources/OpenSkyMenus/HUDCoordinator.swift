@@ -15,6 +15,8 @@ public final class HUDCoordinator {
     public private(set) var interactionTarget: InteractionTarget?
     /// Where the tracked quests' targets stand, for the compass.
     public private(set) var questTargets: [SIMD3<Float>] = []
+    /// The player's own map marker, for the compass.
+    public private(set) var playerSetMarker: SIMD3<Float>?
     /// Kept apart from the target's change, which `updateTarget` sets every frame.
     private var questTargetsChanged = false
     public private(set) var sync = HUDSyncState()
@@ -156,7 +158,8 @@ public final class HUDCoordinator {
         let heading = HUDCore.headingDegrees(camera.yaw)
         let update = HUDCore.frameUpdate(
             sync: sync,
-            hasTarget: interactionTarget != nil || !questTargets.isEmpty,
+            hasTarget: interactionTarget != nil || !questTargets.isEmpty
+                || playerSetMarker != nil,
             cameraPosition: camera.position,
             heading: heading
         )
@@ -226,6 +229,13 @@ public final class HUDCoordinator {
         sync.markersNeedUpdate = true
     }
 
+    public func updatePlayerSetMarker(_ position: SIMD3<Float>?) {
+        guard position != playerSetMarker else { return }
+        playerSetMarker = position
+        questTargetsChanged = true
+        sync.markersNeedUpdate = true
+    }
+
     public var effectivePrompt: String? {
         HUDCore.effectivePrompt(settings, target: interactionTarget)
     }
@@ -233,15 +243,7 @@ public final class HUDCoordinator {
     public func effectiveMarkers(cameraPosition: SIMD3<Float>) -> [HUDCompassMarker] {
         HUDCore.effectiveMarkers(
             settings, target: interactionTarget, questTargets: questTargets,
-            cameraPosition: cameraPosition
-        )
-    }
-
-    public var controlSnapshot: HUDControlSnapshot {
-        HUDControlSnapshot(
-            prompt: effectivePrompt,
-            cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },
-            scale: settings.scale
+            playerSet: playerSetMarker, cameraPosition: cameraPosition
         )
     }
 
@@ -316,5 +318,15 @@ extension HUDCoordinator: SubtitlePresenting {
     public func presentSubtitle(_ text: String?) {
         shownSubtitle = text
         callMovie { HUDMovieBridge.setSubtitleText(text, runtime: $0) }
+    }
+}
+
+extension HUDCoordinator {
+    public var controlSnapshot: HUDControlSnapshot {
+        HUDControlSnapshot(
+            prompt: effectivePrompt,
+            cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },
+            scale: settings.scale
+        )
     }
 }

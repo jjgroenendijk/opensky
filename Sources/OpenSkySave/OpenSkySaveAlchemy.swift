@@ -196,6 +196,7 @@ nonisolated extension OpenSkySaveDecoder {
         entries = OpenSkySaveDeltaMerge.merge(body.favourites, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.playerRules, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.stolenOrigins, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.playerMarkers, into: entries)
         return OpenSkySaveDeltaMerge.merge(body.enchanting, into: entries)
     }
 }

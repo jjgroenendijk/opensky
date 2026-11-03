@@ -213,6 +213,33 @@ extension MapWorldAdapter: MapMenuWorld {
         game.hud.updateQuestTargets(positions)
     }
 
+    var mapWorldspaceName: String? {
+        mapWorldspace?.editorID
+    }
+
+    var playerSetMarker: PlayerSetMapMarker? {
+        get { game.worldState.component(PlayerSetMapMarker.self, for: .player) }
+        set {
+            if let newValue {
+                game.worldState.set(newValue, for: .player)
+            } else {
+                game.worldState.reset(.playerSetMapMarker, for: .player)
+            }
+        }
+    }
+
+    var playerMarkerTexts: GameSettingTexts<PlayerMarkerText> {
+        settingTexts()
+    }
+
+    func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void) {
+        game.messages.presentChoices(title: nil, text: text, buttons: buttons, answer: answer)
+    }
+
+    func showPlayerSetMarker(_ position: SIMD3<Float>?) {
+        game.hud.updatePlayerSetMarker(position)
+    }
+
     var fastTravelContext: FastTravelContext {
         var context = FastTravelContext()
         let combat = game.combat.combatLoopSnapshot

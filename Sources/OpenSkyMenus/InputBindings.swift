@@ -95,6 +95,12 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     public private(set) var menuReferences: [GameInputAction: [String]]
     /// Slots the file marks as not remappable on the keyboard.
     public private(set) var fixedKeys: Set<String> = []
+    /// Keys only the map reads, by scan code, from the file's `Map Menu` context.
+    public private(set) var mapMenuKeys: [UInt32: GameInputAction] = Self.vanillaMapMenuKeys
+
+    /// P places the custom marker, as the vanilla file's `PlacePlayerMarker` says.
+    static let vanillaMapMenuKeys: [UInt32: GameInputAction] = [0x19: .placeMarker]
+    static let mapMenuContext = "Map Menu"
 
     public init(controlMap: ControlMapFile? = nil) {
         var defaults = Self.builtInDefaults
@@ -115,6 +121,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
                 }
             }
             references = Self.menuReferences(in: controlMap) ?? references
+            mapMenuKeys = Self.mapMenuKeys(in: controlMap) ?? mapMenuKeys
         }
         defaults.merge(Self.macOverrides) { _, mac in mac }
         self.defaults = defaults
@@ -149,6 +156,9 @@ nonisolated public struct InputBindings: Equatable, Sendable {
             })?.key
         {
             return menu
+        }
+        if let map = mapMenuKeys[code] {
+            return map
         }
         return world == .pause ? .menuCancel : nil
     }
@@ -226,6 +236,14 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         result[.readyWeapon] = file.context(named: itemMenusContext)
             .map { references($0.event(named: "XButton")) } ?? ["Ready Weapon"]
         return result
+    }
+
+    private static func mapMenuKeys(in file: ControlMapFile) -> [UInt32: GameInputAction]? {
+        guard let map = file.contexts.firstIndex(where: { $0.name == mapMenuContext }) else {
+            return nil
+        }
+        let codes = file.codes(of: "PlacePlayerMarker", in: map, device: .keyboard)
+        return Dictionary(codes.map { ($0, GameInputAction.placeMarker) }) { first, _ in first }
     }
 
     private static func references(_ event: ControlMapEvent?) -> [String] {

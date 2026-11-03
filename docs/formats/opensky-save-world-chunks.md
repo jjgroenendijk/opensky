@@ -295,5 +295,11 @@ the cell and a uint64 mask, one bit per square of an 8 by 8 grid. Rows are in sa
 exteriors before interiors, then by coordinate or FormID. Minimum size: 9 bytes per entry
 and per row.
 
-`PIDN`, `PCPX`, `MRKS`, and `FOGM` merge into the `RDLT` deltas by key, like the other component
-chunks.
+## PMRK: custom map marker
+
+One entry for the player: the key, the cell, the map worldspace's editor ID as a string, then
+the marker's x, y, and z as float32. A value that is not finite is rejected. See
+[world map](/engine/world-map.md#custom-marker). Minimum size: 21 bytes per entry.
+
+`PIDN`, `PCPX`, `MRKS`, `FOGM`, and `PMRK` merge into the `RDLT` deltas by key, like the other
+component chunks.

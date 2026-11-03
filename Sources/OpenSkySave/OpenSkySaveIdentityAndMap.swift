@@ -1,5 +1,5 @@
-// PIDN, MRKS, and FOGM chunks: the player's identity, map marker state, and the
-// local map fog. Layout: docs/formats/opensky-save-world-chunks.md.
+// PIDN, MRKS, FOGM, and PMRK chunks: the player's identity, map marker state, the
+// local map fog, and the custom marker. Layout: docs/formats/opensky-save-world-chunks.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -16,6 +16,8 @@ nonisolated extension OpenSkySaveFormat.ChunkTag {
     public static let mapMarkers = "MRKS"
     /// The local map's explored squares per cell.
     public static let localMapFog = "FOGM"
+    /// The marker the player placed on the world map.
+    public static let playerSetMarker = "PMRK"
 }
 
 nonisolated extension OpenSkySaveFormat {
@@ -25,6 +27,8 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumFogEntrySize = 9
     /// Cell tag plus an interior FormID and the mask, the smallest fog row.
     static let minimumFogRowSize = 9
+    /// Key, an empty worldspace name, and three floats.
+    static let minimumPlayerMarkerEntrySize = 21
 }
 
 nonisolated extension OpenSkySaveEncoder {
@@ -55,6 +59,18 @@ nonisolated extension OpenSkySaveEncoder {
             for (cell, mask) in rows {
                 writeCell(cell, into: &payload)
                 payload.writeUInt64(mask)
+            }
+        }
+        let playerMarkerTag = OpenSkySaveFormat.ChunkTag.playerSetMarker
+        writeStory(
+            PlayerSetMapMarker.self,
+            tag: playerMarkerTag,
+            entries,
+            &writer
+        ) { state, payload in
+            writeString(state.worldspace, into: &payload)
+            for value in [state.position.x, state.position.y, state.position.z] {
+                payload.writeFloat32(value)
             }
         }
     }
@@ -140,6 +156,24 @@ nonisolated extension OpenSkySaveStoryDecoder {
                 explored[cell] = try reader.uint64("FOGM mask")
             }
             return LocalMapFogState(explored: explored)
+        }
+    }
+
+    public static func decodePlayerMarkers(_ payload: Data) throws
+        -> [SaveStoryEntry<PlayerSetMapMarker>]
+    {
+        let tag = OpenSkySaveFormat.ChunkTag.playerSetMarker
+        return try decode(
+            payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumPlayerMarkerEntrySize
+        ) { reader in
+            let worldspace = try reader.string("PMRK worldspace")
+            let position = try SIMD3(
+                reader.float32("PMRK x"), reader.float32("PMRK y"), reader.float32("PMRK z")
+            )
+            guard position.x.isFinite, position.y.isFinite, position.z.isFinite else {
+                throw OpenSkySaveError.invalidValue(context: "PMRK position is not finite")
+            }
+            return PlayerSetMapMarker(worldspace: worldspace, position: position)
         }
     }
 
