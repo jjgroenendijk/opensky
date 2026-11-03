@@ -21,8 +21,8 @@ nonisolated extension ESSExtraDataList {
 }
 
 nonisolated extension ESSExtraData {
-    /// Fields the reader drops are written as zero: lock flags, the lock tail, and an
-    /// enchantment's charge.
+    /// Fields the reader drops are written as zero: the lock tail and an enchantment's
+    /// charge.
     func write(into writer: inout ESSWriter) throws(ESSError) {
         switch self {
         case .worn, .wornLeft:

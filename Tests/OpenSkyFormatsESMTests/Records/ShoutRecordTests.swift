@@ -68,6 +68,28 @@ struct ShoutRecordTests {
         #expect(shout.skipped.counts[.malformedField("SNAM")] == 1)
     }
 
+    /// No vanilla master writes ETYP on SHOU, but a mod may.
+    @Test
+    func aShoutKeepsItsEquipSlot() throws {
+        var slot = Data()
+        slot.appendUInt32(0x0D01)
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("ModShout"))
+            + ESMFixture.field("ETYP", slot)
+        let record = try ShoutFixture.record(type: "SHOU", fields: fields)
+
+        let shout = try Shout(record: record, localized: false)
+
+        #expect(shout.equipType == FormID(0x0D01))
+        #expect(shout.skipped.total == 0)
+    }
+
+    @Test
+    func aShoutWithoutAnEquipSlotHasNone() throws {
+        let record = try ShoutFixture.shout(editorID: "FireBreath", words: [])
+
+        #expect(try Shout(record: record, localized: false).equipType == nil)
+    }
+
     @Test
     func aShoutDecoderRejectsAnotherRecordType() throws {
         let record = try ShoutFixture.record(type: "WOOP", fields: Data())
