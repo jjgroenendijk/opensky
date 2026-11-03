@@ -220,6 +220,12 @@ nonisolated public enum ModelCacheCodec {
         out.strings(skinning.boneNames)
         out.value(skinning.rootParentToSkin)
         out.array(skinning.skinToBoneMatrices)
+        out.int(skinning.bodyParts.count)
+        for part in skinning.bodyParts {
+            out.int(Int(part.bodyPart))
+            out.int(part.indices.lowerBound)
+            out.int(part.indices.count)
+        }
     }
 
     private static func mesh(_ input: inout CachePayloadReader) throws -> Mesh {
@@ -248,9 +254,10 @@ nonisolated public enum ModelCacheCodec {
         let names = try input.strings()
         let root = try input.value(float4x4.self)
         let skinToBone = try input.array(float4x4.self)
-        return MeshSkinning(
+        return try MeshSkinning(
             weights: weights, boneIndices: boneIndices, bindPoseMatrices: bindPose,
-            boneNames: names, rootParentToSkin: root, skinToBoneMatrices: skinToBone
+            boneNames: names, rootParentToSkin: root, skinToBoneMatrices: skinToBone,
+            bodyParts: bodyParts(&input)
         )
     }
 }

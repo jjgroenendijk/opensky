@@ -1,9 +1,11 @@
 // `openskycli game debug drunk`: raise the drunk idle's event on an actor's graph
 // (docs/engine/actor-state-graph.md). `debug form`: put the player in a beast form or end
 // it (docs/engine/beast-forms.md). `debug eyes`: the eye texture `Actor.SetEyeTexture` draws.
-// `debug perk`: a perk grant, as `Actor.AddPerk` makes it.
+// `debug perk`: a perk grant, as `Actor.AddPerk` makes it. `debug decapitate`: a dead
+// actor's head cut off, as a severing killing blow does (docs/engine/ragdoll.md).
 
 import OpenSkyActorPresentation
+import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyFormatsESM
@@ -11,6 +13,7 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
@@ -80,6 +83,34 @@ extension AgentWorldAdapter {
         }
         game.worldState.setEyeTexture(FormID(raw), for: actor.key, in: cell)
         return ["ref": .formID(actor.formID.rawValue), "eyeTexture": eyeTexture(of: actor.key)]
+    }
+
+    func decapitate(_ reference: String) throws(AgentFailure) -> AgentJSON {
+        let actor = try resolveReference(reference)
+        guard game.worldState.component(ActorDeathState.self, for: actor.key)?.isDead == true
+        else {
+            throw AgentFailure(.unsupported, "\(reference) is alive; kill it first")
+        }
+        guard game.ragdoll.dismember(actor.key) else {
+            throw AgentFailure(.failed, "\(reference) has no head to cut, or it is cut already")
+        }
+        return ["ref": .formID(actor.formID.rawValue), "severed": severedState(of: actor.key)]
+    }
+
+    /// The cut of a decapitated actor: the node, and where its head is. Null while whole.
+    func severedState(of key: ReferenceKey) -> AgentJSON {
+        guard
+            let node = game.worldState.component(ActorDeathState.self, for: key)?.severedNode
+        else { return .null }
+        let head = game.ragdoll.severedHeads[key]
+        let formID = game.streamer?.referenceEntry(key: key)?.formID
+        let drawn = formID.flatMap { game.renderer?.scene.severedHeadPlayback(for: $0) } != nil
+        return [
+            "node": .string(node),
+            "headPosition": head.map { .init($0.body.position) } ?? .null,
+            "headResting": .bool(head?.body.isSleeping ?? false),
+            "headDrawn": .bool(drawn)
+        ]
     }
 
     func eyeTexture(of key: ReferenceKey) -> AgentJSON {

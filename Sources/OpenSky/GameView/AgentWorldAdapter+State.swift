@@ -311,6 +311,7 @@ extension AgentWorldAdapter {
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null,
             "eyeTexture": eyeTexture(of: actor.key),
+            "severed": severedState(of: actor.key),
             "constraints": physicsConstraints(of: actor.key),
             "graph": graph
         ])

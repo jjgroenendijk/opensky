@@ -65,6 +65,8 @@ nonisolated public struct MeshSkinning: Sendable {
     /// Gamebryo palette composition: rootParentToSkin * currentBone * skinToBone.
     public let rootParentToSkin: float4x4
     public let skinToBoneMatrices: [float4x4]
+    /// The dismember partitions over `Mesh.indices`; empty for a plain skin instance.
+    public let bodyParts: [MeshBodyPart]
 
     public init(
         weights: [SIMD4<Float>],
@@ -72,14 +74,28 @@ nonisolated public struct MeshSkinning: Sendable {
         bindPoseMatrices: [float4x4],
         boneNames: [String] = [],
         rootParentToSkin: float4x4 = matrix_identity_float4x4,
-        skinToBoneMatrices: [float4x4] = []
+        skinToBoneMatrices: [float4x4] = [],
+        bodyParts: [MeshBodyPart] = []
     ) {
+        self.bodyParts = bodyParts
         self.weights = weights
         self.boneIndices = boneIndices
         self.bindPoseMatrices = bindPoseMatrices
         self.boneNames = boneNames
         self.rootParentToSkin = rootParentToSkin
         self.skinToBoneMatrices = skinToBoneMatrices
+    }
+}
+
+/// One dismember partition: a body part ID (nif.xml `BSDismemberBodyPartType`, such as
+/// 32 for the body) over a range of `Mesh.indices`, in index units.
+nonisolated public struct MeshBodyPart: Equatable, Sendable {
+    public let bodyPart: UInt16
+    public let indices: Range<Int>
+
+    public init(bodyPart: UInt16, indices: Range<Int>) {
+        self.bodyPart = bodyPart
+        self.indices = indices
     }
 }
 

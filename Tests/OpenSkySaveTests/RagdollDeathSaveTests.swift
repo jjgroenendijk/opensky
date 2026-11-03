@@ -91,6 +91,22 @@ struct RagdollDeathSaveTests {
         #expect(store.snapshot() == file.snapshot)
     }
 
+    /// A cut body keeps its cut and the head's resting place across a save.
+    @Test func aCutHeadSurvivesAnEncodeAndDecode() throws {
+        var cut = settled()
+        cut.severedNode = "NPC Head [Head]"
+        cut.severedHeadRest = ReferenceTransformOverride(
+            position: SIMD3(1210, -330, 60), rotation: SIMD3(0, 0.5, 1)
+        )
+        let snapshot = OpenSkySaveFixture.snapshot([
+            OpenSkySaveFixture.entry(
+                key: corpse, cell: OpenSkySaveFixture.whiterun, components: [cut.erased]
+            )
+        ], bystanderCell: nil)
+        let file = try OpenSkySaveDecoder.decode(encode(snapshot))
+        #expect(file.snapshot[corpse]?.component(ActorDeathState.self) == cut)
+    }
+
     @Test func decodedEntriesStayInReferenceKeyOrder() throws {
         let file = try OpenSkySaveDecoder.decode(encode(snapshot()))
         #expect(file.snapshot.keys == file.snapshot.keys.sorted())

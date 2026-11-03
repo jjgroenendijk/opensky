@@ -45,13 +45,47 @@ nonisolated public struct SkeletonPose: Sendable {
     }
 
     /// The pose with some bones replaced by name, such as a ragdoll's simulated bones.
-    /// A name this skeleton does not pose is ignored.
-    public func overriding(_ replacements: [String: float4x4]) -> SkeletonPose {
+    /// Every other bone moves with its nearest replaced ancestor in `parents`, so a
+    /// finger follows its ragdoll hand. A name this skeleton does not pose is ignored.
+    public func overriding(_ replacements: [String: float4x4], parents: [Int]) -> SkeletonPose {
         var pose = self
+        var moved = [Bool](repeating: false, count: matrices.count)
         for (name, matrix) in replacements {
             guard let index = bones.index(of: name), index < matrices.count else { continue }
             pose.matrices[index] = matrix
+            moved[index] = true
         }
+        guard parents.count == matrices.count else { return pose }
+        pose.carryChildren(of: moved, from: matrices, parents: parents)
         return pose
+    }
+
+    /// Moves each bone that was not replaced by its parent's move, parents first.
+    /// Repeats over the bones until none changes, so any bone order works.
+    private mutating func carryChildren(
+        of replaced: [Bool], from original: [float4x4], parents: [Int]
+    ) {
+        var settled = replaced
+        var moved = replaced
+        var progress = true
+        while progress {
+            progress = false
+            for index in matrices.indices where !settled[index] {
+                let parent = parents[index]
+                guard matrices.indices.contains(parent) else {
+                    settled[index] = true
+                    progress = true
+                    continue
+                }
+                guard settled[parent] else { continue }
+                if moved[parent] {
+                    matrices[index] = matrices[parent] * original[parent].inverse
+                        * original[index]
+                    moved[index] = true
+                }
+                settled[index] = true
+                progress = true
+            }
+        }
     }
 }

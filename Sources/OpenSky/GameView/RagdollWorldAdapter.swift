@@ -104,6 +104,8 @@ final class RagdollWorldAdapter {
                 game.cinematicWorld.actorDied(key)
             case let .publishPoses(poses):
                 game.renderer?.scene.ragdollPoses = poses
+            case let .publishSeveredHeads(poses):
+                game.renderer?.scene.severedHeadPoses = poses
             case let .enterBleedout(key):
                 enterBleedout(key)
             case let .leaveBleedout(key):

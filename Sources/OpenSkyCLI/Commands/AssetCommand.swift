@@ -110,6 +110,12 @@ enum AssetCommand {
                 + (material.additiveBlend != nil ? ", additive" : "")
                 + (material.effect.map(effectDescription) ?? ""))
         }
+        for mesh in model.meshes {
+            guard let parts = mesh.skinning?.bodyParts, !parts.isEmpty else { continue }
+            print("body parts \(mesh.name ?? "-"): " + parts.map {
+                "\($0.bodyPart) (\($0.indices.count / 3) triangles)"
+            }.joined(separator: ", "))
+        }
     }
 
     /// The effect shading a shape draws with, so an effect mesh's look can be checked.

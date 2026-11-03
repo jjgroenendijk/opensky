@@ -21,7 +21,8 @@ struct AssetPayloadCodecTests {
             bindPoseMatrices: [matrix_identity_float4x4, MatrixMath.translation(SIMD3(1, 2, 3))],
             boneNames: ["NPC Root [Root]", "NPC Spine"],
             rootParentToSkin: MatrixMath.translation(SIMD3(0, 0, 9)),
-            skinToBoneMatrices: [matrix_identity_float4x4]
+            skinToBoneMatrices: [matrix_identity_float4x4],
+            bodyParts: [MeshBodyPart(bodyPart: 32, indices: 0 ..< 3)]
         )
         let mesh = Mesh(
             name: "Body", transform: MatrixMath.translation(SIMD3(4, 5, 6)),
@@ -100,6 +101,7 @@ struct AssetPayloadCodecTests {
             #expect(left.skinning?.boneNames == right.skinning?.boneNames)
             #expect(left.skinning?.rootParentToSkin == right.skinning?.rootParentToSkin)
             #expect(left.skinning?.skinToBoneMatrices == right.skinning?.skinToBoneMatrices)
+            #expect(left.skinning?.bodyParts == right.skinning?.bodyParts)
         }
     }
 

@@ -38,22 +38,33 @@ nonisolated extension ActorVisualResolver {
             guard
                 let armature = armorAddons[id.rawValue],
                 armature.primaryRace == race || armature.additionalRaces.contains(race),
-                let setID = female
-                ? armature.femaleSkinTexture ?? armature.maleSkinTexture
-                : armature.maleSkinTexture ?? armature.femaleSkinTexture,
-                let set = textureSets[setID.rawValue]
+                let textures = ownSkinTextures(of: id, female: female)
             else { return nil }
-            let key = { (slot: Int) in
-                set.paths.indices.contains(slot)
-                    ? set.paths[slot].flatMap(NIFShaderTextureSet.vfsKey(for:)) : nil
-            }
             return SkinArmature(
                 armature: id,
                 slots: armature.bodyTemplate?.slots ?? skin.bodyTemplate?.slots ?? BodySlots(),
-                textures: ModelSurfaceOverride.SkinTextures(
-                    diffuse: key(0), normal: key(1), lightMask: key(3), specular: key(7)
-                )
+                textures: textures
             )
         }
+    }
+
+    /// The armature's own skin texture set (`NAM0`/`NAM1`), or nil when it names none.
+    func ownSkinTextures(
+        of armatureID: FormID, female: Bool
+    ) -> ModelSurfaceOverride.SkinTextures? {
+        guard
+            let armature = armorAddons[armatureID.rawValue],
+            let setID = female
+            ? armature.femaleSkinTexture ?? armature.maleSkinTexture
+            : armature.maleSkinTexture ?? armature.femaleSkinTexture,
+            let set = textureSets[setID.rawValue]
+        else { return nil }
+        let key = { (slot: Int) in
+            set.paths.indices.contains(slot)
+                ? set.paths[slot].flatMap(NIFShaderTextureSet.vfsKey(for:)) : nil
+        }
+        return ModelSurfaceOverride.SkinTextures(
+            diffuse: key(0), normal: key(1), lightMask: key(3), specular: key(7)
+        )
     }
 }

@@ -37,14 +37,17 @@ nonisolated extension MeshLibrary {
         path: String,
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
-        loadActorModel(path: path, skeleton: skeleton, surface: nil, bodyWeight: nil)
+        loadActorModel(
+            path: path, skeleton: skeleton, surface: nil, bodyWeight: nil, keeping: nil
+        )
     }
 
     public func loadActorModel(
         path: String,
         skeleton: ActorSkeletonAsset?,
         surface: ModelSurfaceOverride?,
-        bodyWeight: Float?
+        bodyWeight: Float?,
+        keeping cut: DismemberCut?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
         let weight = bodyWeight
             .flatMap { BodyWeightBlend.thinPath(forHeavy: path) != nil ? $0 : nil }
@@ -55,7 +58,8 @@ nonisolated extension MeshLibrary {
                 actorSkeleton: skeleton,
                 explicitActorSkeleton: true,
                 surface: surface,
-                bodyWeight: weight
+                bodyWeight: weight,
+                keeping: cut
             )
             let pathKey = try meshKey(for: path)
             let key = cacheKey(
@@ -63,7 +67,8 @@ nonisolated extension MeshLibrary {
                 terrainLODClipMask: nil,
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
                 surface: surface,
-                bodyWeight: weight
+                bodyWeight: weight,
+                cut: cut
             )
             return .success(ActorRenderAsset(
                 model: model.posableCopy(device: device), bounds: modelBounds[key]
@@ -123,7 +128,8 @@ nonisolated extension MeshLibrary {
         path: String,
         textures: HeadPartTextures,
         tint: SIMD3<Float>?,
-        skeleton: ActorSkeletonAsset?
+        skeleton: ActorSkeletonAsset?,
+        keeping cut: DismemberCut?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
         let surface = ModelSurfaceOverride(
             diffuseTexture: textures.diffuse.flatMap(NIFShaderTextureSet.vfsKey(for:)),
@@ -138,13 +144,15 @@ nonisolated extension MeshLibrary {
                 terrainLODClipMask: nil,
                 actorSkeleton: skeleton,
                 explicitActorSkeleton: true,
-                surface: surface
+                surface: surface,
+                keeping: cut
             )
             let key = try cacheKey(
                 path: meshKey(for: path),
                 terrainLODClipMask: nil,
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
-                surface: surface
+                surface: surface,
+                cut: cut
             )
             return .success(ActorRenderAsset(
                 model: model.posableCopy(device: device), bounds: modelBounds[key]

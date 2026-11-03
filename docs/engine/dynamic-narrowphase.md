@@ -65,7 +65,9 @@ convert back exactly.
 
 - Contact margin, 1.5 units, is added to every sample's skin. A hull corner has no skin of its own.
   Without a margin, a resting box would make contacts only while already inside the floor, and
-  would jitter between touching and free.
+  would jitter between touching and free. The box that picks a body's static shapes grows by the
+  margin too. A sphere's bounding radius ends at its surface, so without it a sphere resting in
+  its margin would lose the floor every other step and never sleep.
 - Recovery depth, 48 units, is how far behind a surface a contact still counts. Past it, the sample
   belongs to other geometry, so a body above one floor is not pulled by a triangle in the room
   below. It is capped per body at the body's own size: a sample cannot be deeper inside a surface

@@ -82,10 +82,10 @@ nonisolated extension OpenSkySaveFormat {
     public static let actorValueOverrideRecordSize = 16
     /// Smallest number of bytes a single `DETH` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), the dead and
-    /// looted flags (2) and the "no resting transform" tag (1). A generated
-    /// key, a named cell or a recorded transform is longer, so this is a lower
-    /// bound.
-    public static let minimumDeathEntrySize = 11
+    /// looted flags (2), the "no resting transform" tag (1), the "no severed node" tag
+    /// (1) and the "no head rest" tag (1). A generated key, a named cell or a
+    /// recorded transform is longer, so this is a lower bound.
+    public static let minimumDeathEntrySize = 13
     /// Smallest `HRVS` entry: a plugin key with an empty name (1 + 2 + 4) and the
     /// "no cell" tag (1).
     public static let minimumHarvestEntrySize = 8

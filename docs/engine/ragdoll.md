@@ -51,10 +51,12 @@ scene keeps one ragdoll pose per corpse `ACHR`, laid over the clip's pose during
 update. So a corpse reaches skinning through the same call as an idle animation, and the renderer
 knows nothing about physics.
 
-Bones the ragdoll does not simulate (fingers, the skirt chain, weapon nodes) keep the animated
-pose. That is why a corpse still has hands. During the blend, the two poses mix per bone:
-translation by linear interpolation, rotation by spherical interpolation. After it, only the
-simulated pose is used.
+The ragdoll pose names only the simulated bones. A bone the ragdoll does not simulate (a finger,
+a clavicle, the skirt chain, a weapon node) moves with its nearest simulated ancestor in the
+skeleton, and keeps its animated offset to it. So a hand's fingers stay on the hand. If such a bone
+kept its animated matrix, its skin would stretch from the standing pose to the body on the floor.
+During the blend, the two poses mix per simulated bone: translation by linear interpolation,
+rotation by spherical interpolation. After it, only the simulated pose is used.
 
 ## Saving a death
 
@@ -139,9 +141,10 @@ The push:
 - The push is a Havok impulse on the heaviest bone body. It points away from the attacker and
   leans up by a quarter, so the body lifts a little as it falls back.
 
-The weapon drop puts the right-hand weapon on the ground under the hand. The visuals of an NPC
-are built once, so the weapon's node and its sheath node are shrunk to a point in the published
-pose instead of the mesh being rebuilt.
+The weapon drop puts the right-hand weapon on the ground under the hand. The drop changes the
+actor's inventory, so its cell rebuilds and the body is drawn without the weapon.
+
+## Decapitation
 
 Decapitation is the only dismemberment in Skyrim. The head is body part type 1
 (<https://ck.uesp.net/wiki/Skyrim_bodyparts_number>). In the game, a standing power attack can
@@ -149,12 +152,42 @@ decapitate when the attacker has the Savage Strike (one-handed) or Devastating B
 perk (<https://en.uesp.net/wiki/Skyrim:One-handed>, <https://en.uesp.net/wiki/Skyrim:Two-handed>).
 OpenSky rolls `iCombatDismemberPartChance` on such a kill, with any blade, axe, or mace. The cut:
 
-- The node of the race's `BPTD` head part, with every bone under it, is shrunk to a point. The
-  node is kept in the death state, so a loaded save shows the body without its head.
+- The node of the race's `BPTD` head part is kept in the death state. The write rebuilds the
+  cell, and the build draws the actor as two pieces. A loaded save shows them the same way.
 - The part's severable explosion plays unless the race has the no-blood-spray flag.
 - The race's `NAM7` decapitation art is attached. Without it, `sDismemberParticleDefault` plays,
   which `Skyrim.esm` leaves empty.
 - The default blood decal goes on the ground unless the race has the no-blood-decal flag.
+
+The two pieces come from one look. The race's `DNAM` armour gives the gore. In `Skyrim.esm`,
+`NordRace` names `DecapitatedHead`, whose armatures cover slot 51 (`DecapitatedNeckAA`, the
+neck stump) and slot 50 (`DecapitatedHeadAA`, the cap on the cut head).
+
+- The body keeps every worn piece that covers more than the head, the neck stump, and the
+  weapons. It loses the pieces that cover only head slots (30, 31, 41, 42, 43, and 50).
+- The head keeps the head-only pieces and the cap.
+- The face, the head parts, and a piece on both sides, such as a hood, are drawn on both. Each
+  side hides the triangles of the other side's partitions in `BSDismemberSkinInstance`
+  ([NIF skinning](/formats/nif-skinning.md)). The head side is body parts 30, 31, 41 to 44, 50,
+  55, 130 to 132, 141 to 143, and 150, from nif.xml `BSDismemberBodyPartType` and the CK wiki
+  page above. The neck, 230, stays with the body. A mesh without partitions goes with the head
+  when it is part of the face, and with the body when it is a worn piece.
+
+Probed in the install: a FaceGen head (`facegeom\skyrim.esm\0001327c.nif`) has partitions 230
+(154 triangles), 130 (1,466), and 143 (74). `DecapitatedNeck_1.nif` is all 51, and
+`DecapitatedHeadGoreHumanoidMale_1.nif` is all 150.
+
+The head falls as one sphere body, 10 units in radius and 5 kg, against the static collision the
+ragdolls use. It starts at the head bone as the body is drawn, ragdoll included, so a head cut
+from a fallen body starts at its neck on the floor. It keeps the pose it was cut in. It flies 120
+units per second away from the blow and 160 units per second up, and turns at 6 radians per
+second about the axis across the blow. These numbers are OpenSky's choice; the game's throw is not measured.
+Once the head body sleeps, its resting place goes into the death state, and a save keeps it
+with the cut node. A cut body that loads with no resting place, such as one saved while the head
+still fell, drops its head from the neck. The head lasts as long as the body.
+
+To see it, kill an NPC with `openskycli game debug kill <ref>`, then cut it with
+`openskycli game debug decapitate <ref>`. `openskycli game state actors` shows `severed`.
 
 A body is kept from removal while any quest alias holds it. Removal deletes the reference.
 
@@ -200,6 +233,3 @@ phase under `death`. The player's body does not fall as a ragdoll yet.
 ## Not done yet
 
 - Ragdolls without death, such as paralysis or a knockdown.
-- The neck stump armour of the race (`DNAM`) and the flying head. The NPC visuals do not rebuild
-  when equipment changes.
-- The skin partitions of `BSDismemberSkinInstance` are not used; the cut hides bones instead.

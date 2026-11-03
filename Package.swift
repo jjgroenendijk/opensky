@@ -809,6 +809,7 @@ targets += domain(
 targets += domain(
     "OpenSkyCells",
     dependencies: [
+        "OpenSkyActorsInterface",
         "OpenSkyFormatsCore",
         "OpenSkyFormatsESM",
         "OpenSkyFormatsMesh",

@@ -8,7 +8,14 @@ nonisolated extension RenderScene {
     public func actorPlayback(for actor: FormID) -> ActorAnimationPlayback? {
         animations.lazy
             .compactMap { $0 as? ActorAnimationPlayback }
-            .first { $0.actor == actor }
+            .first { $0.actor == actor && !$0.posesSeveredHead }
+    }
+
+    /// The playback of `actor`'s cut head, or nil while the head is on.
+    public func severedHeadPlayback(for actor: FormID) -> ActorAnimationPlayback? {
+        animations.lazy
+            .compactMap { $0 as? ActorAnimationPlayback }
+            .first { $0.actor == actor && $0.posesSeveredHead }
     }
 
     public func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {

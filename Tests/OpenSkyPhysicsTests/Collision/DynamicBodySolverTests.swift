@@ -1,10 +1,11 @@
-// The dynamic solver: a dropped box settles and sleeps, an impulse wakes it,
+// The dynamic solver: a dropped box or sphere settles and sleeps, an impulse wakes it,
 // and a crowded scene stays finite, above the floor, and repeatable.
 
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+import OpenSkyGameData
 @testable import OpenSkyPhysics
 import OpenSkyTagsTesting
 import simd
@@ -28,6 +29,28 @@ struct DynamicBodySolverTests {
         #expect(body.position.z > 9)
         #expect(body.position.z < 13)
         #expect(simd_length(body.linearVelocity) == 0)
+    }
+
+    @Test
+    func droppedSphereKeepsItsFloorAndSleeps() {
+        let world = DynamicStepWorld(
+            staticCandidates: DynamicBodyScene.query([DynamicBodyScene.floor()])
+        )
+        let sphere = DynamicBodyDefinition(
+            volumes: [.radial(first: .zero, second: .zero, radius: 10)], mass: 5
+        )
+        var bodies = [DynamicBody(
+            key: .generated(1), reference: FormID(0x100), cell: .interior(FormID(0x10)),
+            definition: sphere, originPosition: SIMD3(0, 0, 120),
+            orientation: simd_quatf(angle: 0, axis: SIMD3(0, 0, 1))
+        )]
+
+        DynamicBodyScene.run(bodies: &bodies, world: world, steps: 400)
+
+        // A sphere's bounding radius ends at its surface, so only the contact
+        // margin in the query box keeps the floor while it rests in that margin.
+        #expect(bodies[0].isSleeping)
+        #expect(abs(bodies[0].position.z - 10) < 2)
     }
 
     @Test

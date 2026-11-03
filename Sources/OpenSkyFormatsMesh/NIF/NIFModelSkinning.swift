@@ -56,15 +56,18 @@ nonisolated extension NIFFile.Flattener {
             boneIndices: shape.boneIndices.isEmpty
                 ? stored.boneIndices : shape.boneIndices
         )
-        let triangles = shape.indices.isEmpty
-            ? partition.partitions.flatMap(\.triangleIndices) : shape.indices
+        let parted = Self.bodyPartTriangles(
+            instance: instance, partition: partition, shapeIndexCount: shape.indices.count
+        )
+        let triangles = parted?.triangles ?? (shape.indices.isEmpty
+            ? partition.partitions.flatMap(\.triangleIndices) : shape.indices)
         let skinning = try resolveSkinning(
             geometry: (arrays, triangles),
             partition: partition,
             instance: instance,
             data: skinData,
             usesNodeReferencePose: usesNodeReferencePose
-        )
+        ).withBodyParts(parted?.parts ?? [])
         return ShapeGeometry(
             positions: arrays.positions,
             normals: arrays.normals,
@@ -118,6 +121,29 @@ nonisolated extension NIFFile.Flattener {
             rootParentToSkin: data.rootParentToSkin.matrix,
             skinToBoneMatrices: data.bones.map(\.skinToBone.matrix)
         )
+    }
+
+    /// The triangles in partition order with each partition's body part, when every
+    /// partition names one and together they hold every triangle of the shape.
+    static func bodyPartTriangles(
+        instance: NIFSkinInstance, partition: NIFSkinPartition, shapeIndexCount: Int
+    ) -> (triangles: [UInt16], parts: [MeshBodyPart])? {
+        let submeshes = partition.partitions
+        guard
+            !instance.bodyPartitions.isEmpty,
+            instance.bodyPartitions.count == submeshes.count
+        else { return nil }
+        let total = submeshes.reduce(0) { $0 + $1.triangleIndices.count }
+        guard total > 0, shapeIndexCount == 0 || total == shapeIndexCount else { return nil }
+        var triangles: [UInt16] = []
+        triangles.reserveCapacity(total)
+        var parts: [MeshBodyPart] = []
+        for (submesh, body) in zip(submeshes, instance.bodyPartitions) {
+            let start = triangles.count
+            triangles.append(contentsOf: submesh.triangleIndices)
+            parts.append(MeshBodyPart(bodyPart: body.bodyPart, indices: start ..< triangles.count))
+        }
+        return (triangles, parts)
     }
 
     private func boneNames(instance: NIFSkinInstance) -> [String] {

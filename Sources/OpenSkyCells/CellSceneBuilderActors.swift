@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -275,8 +276,13 @@ nonisolated extension CellSceneBuilder {
                     build.disabledKeys.insert(key)
                 }
                 Self.logger.info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
-            case let .resolved(placed, visual):
+            case let .resolved(placed, visual, head):
                 record(assembler.assemble(placed: placed, visual: visual), id: id, into: &build)
+                if let head {
+                    recordSeveredHead(
+                        assembler.assemble(placed: placed, visual: head), into: &build
+                    )
+                }
             case let .failed(reason):
                 build.counts.failures += 1
                 build.counts.failureReasons.append("ACHR \(id): unresolved (\(reason))")
@@ -315,7 +321,10 @@ nonisolated extension CellSceneBuilder {
                 textureSets: resolvers.visual.textureSets
             )
             let placed = actorApplyingRuntimeTransform(actor, entry: entry, deltas: deltas)
-            return .resolved(placed, visual)
+            let death = entry.flatMap { deltas[$0.key]?.component(ActorDeathState.self) }
+            guard death?.severedNode != nil else { return .resolved(placed, visual, head: nil) }
+            let cut = visual.decapitated(gore: resolvers.visual.decapitationGore(for: visual))
+            return .resolved(placed, cut.body, head: cut.head)
         } catch {
             return .failed(String(describing: error))
         }
@@ -387,6 +396,27 @@ nonisolated extension CellSceneBuilder {
         if let skeleton {
             build.animations.append(skeleton)
         }
+    }
+
+    /// A cut head: drawn at its actor, posed by its own playback so it can fall apart from
+    /// the body. Its outcome is not counted, because the actor is already counted.
+    nonisolated private func recordSeveredHead(
+        _ assembly: ActorAssembly<ActorRenderAsset>,
+        into build: inout CellActorBuild
+    ) {
+        guard
+            assembly.isRenderable,
+            case let .success(playback) = makeAnimationPlayback(
+                assembly: assembly, severedHead: true
+            )
+        else { return }
+        build.placements.append(contentsOf: assembly.renderPlacements(
+            at: assembly.transform,
+            owner: assembly.actor.rawValue,
+            reference: assembly.actor.rawValue,
+            isCulled: false
+        ))
+        build.animations.append(playback)
     }
 
     /// The assembly's `AppearanceSkip` entries as readable lines, one per skip.
@@ -462,16 +492,19 @@ nonisolated extension CellSceneBuilder {
 /// One actor of a cell build, between its look resolution and its assembly.
 nonisolated private enum ActorBuildStep {
     case skipped(String, ReferenceKey?)
-    case resolved(PlacedActor, ResolvedActorVisual)
+    /// `head` is the cut head of a decapitated actor, drawn as its own piece.
+    case resolved(PlacedActor, ResolvedActorVisual, head: ResolvedActorVisual?)
     case failed(String)
 
     /// The model files the assembly reads: body parts with their thin siblings,
     /// attachments, head parts, and the face.
     var modelPaths: [String] {
-        guard case let .resolved(_, visual) = self else { return [] }
-        let parts = visual.parts.map(\.modelPath)
-        return parts + parts.compactMap(BodyWeightBlend.thinPath(forHeavy:))
-            + visual.attachments.map(\.modelPath) + visual.headParts.parts.map(\.modelPath)
-            + [visual.faceGenMeshPath].compactMap(\.self)
+        guard case let .resolved(_, visual, head) = self else { return [] }
+        return ([visual] + [head].compactMap(\.self)).flatMap { visual in
+            let parts = visual.parts.map(\.modelPath)
+            return parts + parts.compactMap(BodyWeightBlend.thinPath(forHeavy:))
+                + visual.attachments.map(\.modelPath) + visual.headParts.parts.map(\.modelPath)
+                + [visual.faceGenMeshPath].compactMap(\.self)
+        }
     }
 }

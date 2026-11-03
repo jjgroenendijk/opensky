@@ -55,8 +55,13 @@ bytes minimum per entry, 16 per record.
 | uint8 | wasLooted | non-zero once the corpse was searched |
 | uint8 | present | non-zero when a resting transform follows |
 | bytes | resting | position, rotation, scale as in an `RDLT` transform |
+| uint8 | present | non-zero when a severed node follows |
+| string | severed node | the node a decapitation cut, such as `NPC Head [Head]` |
+| uint8 | present | non-zero when the cut head's resting transform follows |
+| bytes | head resting | position, rotation, scale as in an `RDLT` transform |
 
 A corpse that was still falling has no resting transform, so it does not reload in the air.
+The same holds for a cut head. Minimum entry size: 13 bytes.
 Only the root transform is stored, not the bone pose. A reloaded corpse lies in the rest pose
 ([ragdoll](/engine/ragdoll.md)).
 

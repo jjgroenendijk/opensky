@@ -31,7 +31,11 @@ Links a shape to its bind data and partitions.
 | int32 x count | Bones | `NiNode` pointers. The index is the global bone ID |
 
 `BSDismemberSkinInstance` adds a uint32 partition count, then per partition a uint16 flags
-and a uint16 body part ID. OpenSky keeps them but does not hide body parts yet.
+and a uint16 body part ID (nif.xml `BodyPartList`, `BSDismemberBodyPartType`). Partition N
+names the body part of `NiSkinPartition` partition N. When the counts match and the partitions
+hold every triangle of the shape, OpenSky draws the triangles in partition order and keeps each
+partition's range, so a cut can hide one body part (see [ragdoll](/engine/ragdoll.md#decapitation)).
+`openskycli nif <path>` prints the ranges as `body parts`.
 
 ## NiSkinData
 

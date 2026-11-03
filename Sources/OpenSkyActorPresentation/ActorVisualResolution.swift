@@ -81,6 +81,8 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
     public let textureSwaps: [ModelSurfaceOverride.ShapeTextures]
     /// The wearer's skin texture set, for the skin this part shows.
     public var skinTextures: ModelSurfaceOverride.SkinTextures?
+    /// The side of a decapitation this part draws; nil draws every partition.
+    public var cut: DismemberCut?
 
     public init(
         origin: Origin, armature: FormID, modelPath: String, firstPersonModelPath: String?,
@@ -153,6 +155,8 @@ nonisolated public struct ResolvedActorVisual: Equatable, Sendable {
     public var headSource = ActorHeadSource.baked
     /// Laid over the baked FaceGen head, such as a script's eye texture.
     public var faceGenSurface: ModelSurfaceOverride?
+    /// The side of a decapitation the face and head parts draw; nil draws all of them.
+    public var headCut: DismemberCut?
 }
 
 nonisolated extension ResolvedActorVisual {

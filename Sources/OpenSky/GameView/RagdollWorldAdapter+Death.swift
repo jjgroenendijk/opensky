@@ -25,14 +25,14 @@ extension RagdollWorldAdapter {
     static let severableFlag: UInt8 = 0x01
 
     /// Only a drawn weapon falls; a sheathed one stays on the belt.
-    func dropWeapon(of key: ReferenceKey) -> [String] {
+    func dropWeapon(of key: ReferenceKey) -> Bool {
         guard
             game.actorPlayback(for: key)?.weaponsDrawn == true,
             let streamer = game.streamer,
             let holder = streamer.inventoryHolder(of: key),
             let actor = streamer.referenceEntry(key: key)?.placedActor,
             let cell = streamer.cellLocation(of: key)
-        else { return [] }
+        else { return false }
         let feet = actor.placement.position
         var position = feet
         if
@@ -43,15 +43,10 @@ extension RagdollWorldAdapter {
             position = SIMD3(world.x, world.y, feet.z)
         }
         position.z += Self.droppedWeaponLift
-        guard
-            let weapon = game.inventory.dropWeapon(
-                of: holder,
-                at: DropPlacement(location: cell, position: position, rotation: .zero)
-            )
-        else { return [] }
-        let type = game.inventory.equipment?.catalog.item(weapon)?.animationType
-        return [ActorAttachmentBone.drawnWeapon] + [ActorAttachmentBone.sheathNode(for: type)]
-            .compactMap(\.self)
+        return game.inventory.dropWeapon(
+            of: holder,
+            at: DropPlacement(location: cell, position: position, rotation: .zero)
+        ) != nil
     }
 
     /// The head part of the race's `BPTD`: part type 1, or a part marked severable.

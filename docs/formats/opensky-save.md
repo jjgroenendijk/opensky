@@ -106,7 +106,7 @@ chunk cannot read into the next.
 | `QLOC` | filled location aliases | world |
 | `AVAL` | current health, magicka, stamina | actors |
 | `AVOV` | actor-value offsets and modifiers | actors |
-| `DETH` | deaths and corpse positions | actors |
+| `DETH` | deaths, corpse positions, and cut heads with where they rest | actors |
 | `CBTS` | hostility | actors |
 | `DLGS` | dialogue said counts | actors |
 | `AEFF` | active magic effects | actors |

@@ -327,9 +327,10 @@ nonisolated public struct RenderScene: Sendable {
     /// Cell-owned actor playback objects; references disappear on cell eviction.
     public let animations: [any RenderAnimation]
     /// Simulated bone poses, keyed by the ACHR each ragdoll stands for. Laid over the
-    /// clip's pose in the same `[String: float4x4]` shape, so unsimulated bones keep
-    /// the animation.
+    /// clip's pose; an unsimulated bone moves with its nearest simulated ancestor.
     public var ragdollPoses: [UInt32: [String: float4x4]] = [:]
+    /// The pose of each falling or resting cut head, keyed by the actor it came from.
+    public var severedHeadPoses: [UInt32: [String: float4x4]] = [:]
     /// The interior's rooms and portals; nil turns room culling off.
     public let rooms: RoomPortalGraph?
     /// The placement each moving reference was built with, so a live pose becomes a
@@ -502,7 +503,10 @@ nonisolated public struct RenderScene: Sendable {
                 failedClips.insert(key)
                 continue
             }
-            let posed = ragdollPoses[actor.actorFormID].map(pose.overriding) ?? pose
+            let overrides = actor.posesSeveredHead ? severedHeadPoses : ragdollPoses
+            let posed = overrides[actor.actorFormID].map {
+                pose.overriding($0, parents: actor.poseParents)
+            } ?? pose
             updated += actor.apply(posed, updating: &updatedMeshes)
         }
         return updated

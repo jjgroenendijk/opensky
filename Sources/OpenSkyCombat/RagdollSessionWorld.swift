@@ -74,9 +74,10 @@ public protocol RagdollSessionWorld: AnyObject {
     func searchCorpse(_ key: ReferenceKey) -> Bool
     /// The plugin cell of an actor that no loaded cell holds, or nil.
     func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation?
-    /// Moves the dead actor's weapon from its hand to the ground.
-    /// - Returns: the skeleton nodes the weapon hung from, to hide; empty when none dropped.
-    func dropWeapon(of key: ReferenceKey) -> [String]
+    /// Moves the dead actor's weapon from its hand to the ground. The inventory change
+    /// rebuilds the body without it.
+    /// - Returns: false when no weapon dropped.
+    func dropWeapon(of key: ReferenceKey) -> Bool
     /// The node a decapitation cuts off, from the race's body part data; nil when
     /// the actor has no head part.
     func severableNode(of key: ReferenceKey) -> String?
@@ -103,8 +104,8 @@ extension RagdollSessionWorld {
         nil
     }
 
-    public func dropWeapon(of _: ReferenceKey) -> [String] {
-        []
+    public func dropWeapon(of _: ReferenceKey) -> Bool {
+        false
     }
 
     public func severableNode(of _: ReferenceKey) -> String? {
