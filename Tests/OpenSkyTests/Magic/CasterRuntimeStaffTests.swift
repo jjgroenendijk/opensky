@@ -47,7 +47,14 @@ struct CasterRuntimeStaffTests {
         )
     }
 
-    @Test func aStaffCastSpendsChargeNotMagicka() throws {
+    private struct StaffRig {
+        let runtime: CasterRuntime
+        let staffs: FakeStaffs
+        let values: ActorValueRuntime
+    }
+
+    /// A runtime with no readied spell and a charged staff in the right hand.
+    private static func staffRuntime() throws -> StaffRig {
         let store = WorldStateStore()
         let (spellbook, _) = try SpellbookFixture.runtime(store: store)
         let values = SpellbookFixture.values(store: store)
@@ -59,6 +66,20 @@ struct CasterRuntimeStaffTests {
         staffs.spell = try Self.staffSpell(from: healing)
         staffs.charge = 1000
         runtime.staffs = staffs
+        return StaffRig(runtime: runtime, staffs: staffs, values: values)
+    }
+
+    @Test func theAttackButtonCastsAStaffWithNoReadiedSpell() throws {
+        let rig = try Self.staffRuntime()
+        let (runtime, staffs) = (rig.runtime, rig.staffs)
+        runtime.acceptFrame(CastingIntent(rightHeld: true, deltaTime: 0.5), on: .player)
+        runtime.acceptFrame(CastingIntent(rightHeld: false, deltaTime: 1 / 60), on: .player)
+        #expect(staffs.charge < 1000)
+    }
+
+    @Test func aStaffCastSpendsChargeNotMagicka() throws {
+        let rig = try Self.staffRuntime()
+        let (runtime, staffs, values) = (rig.runtime, rig.staffs, rig.values)
 
         #expect(runtime.begin(.right, on: .player).failure == nil)
         runtime.advance(delta: 0.5, on: .player)
