@@ -36,6 +36,7 @@ nonisolated extension RecordTextDump {
             + "name \(displayText(shout.name)), "
             + "description \(displayText(shout.description)), "
             + "menu display object \(shout.menuDisplayObject?.description ?? "NULL"), "
+            + "equip type \(shout.equipType?.description ?? "NULL"), "
             + "\(shout.words.count) words, skipped \(shout.skipped.total)"
         let rows: [String] = if let context {
             context.shouts

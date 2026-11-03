@@ -28,6 +28,8 @@ nonisolated public struct Shout: Equatable, Sendable {
     /// The SNAM run in record order; the order is the unlock order in the
     /// original engine, so it is preserved rather than sorted.
     public let words: [Word]
+    /// ETYP — EQUP equip slot. No vanilla master writes it; a mod may.
+    public let equipType: FormID?
     public let skipped: ReferenceRecordTally
 
     public init(record: ESMRecord, localized: Bool) throws {
@@ -41,6 +43,7 @@ nonisolated public struct Shout: Equatable, Sendable {
         var menuDisplayObject: FormID?
         var description: LString?
         var words: [Word] = []
+        var equipType: FormID?
         var tally = ReferenceRecordTally()
         for field in try record.fields() {
             do {
@@ -51,6 +54,7 @@ nonisolated public struct Shout: Equatable, Sendable {
                 case "MDOB": menuDisplayObject = try InventoryItemFields.optionalFormID(field)
                 case "DESC": description = try LString(field: field, localized: localized)
                 case "SNAM": try words.append(Self.word(&reader, size: field.data.count))
+                case "ETYP": equipType = try InventoryItemFields.optionalFormID(field)
                 default: tally.note(.unknownField(field.type))
                 }
             } catch {
@@ -62,6 +66,7 @@ nonisolated public struct Shout: Equatable, Sendable {
         self.menuDisplayObject = menuDisplayObject
         self.description = description
         self.words = words
+        self.equipType = equipType
         skipped = tally
     }
 
