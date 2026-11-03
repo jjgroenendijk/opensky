@@ -4,6 +4,7 @@
 import Metal
 import OpenSkyAIPackages
 import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -167,6 +168,10 @@ nonisolated extension CellProviderIndexes {
         builder.decodesInParallel = assets.decodesInParallel
         builder.leveling = context.leveling
         builder.loadPhases = assets.loadPhases
+        // The record stores build in parallel meanwhile, so this overlaps them.
+        if LoadOptimisations.isOn(.prebuildIndexes) {
+            builder.prepareIndexes(worldspace: FirstRenderCell.worldspaceEditorID)
+        }
         let formIDResolver = builder.formIDResolver
         let placedRecords = builder.placedRecords
         let lodPrebuild = builder.distantLODBuilder?.prebuild(
