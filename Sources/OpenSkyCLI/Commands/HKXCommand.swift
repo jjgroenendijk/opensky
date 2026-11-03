@@ -34,6 +34,10 @@ enum HKXCommand {
             try HKXBlenderDump.print(file: file)
             return
         }
+        if let text = arguments.transitions {
+            try printTransitions(file, containing: text)
+            return
+        }
         printHeader(file)
         printSections(file)
         printClassNames(file)
@@ -70,8 +74,22 @@ enum HKXCommand {
                 let names = step.stateTagNames.joined(separator: ", ")
                 print("  iState tag: \(tag)\(names.isEmpty ? "" : " (\(names))")")
             }
+            for clip in step.synchronizedClips {
+                print("  paired clip \(clip)")
+            }
             let fired = Array(Set(step.fired)).sorted()
             print("  fired: \(fired.isEmpty ? "none" : fired.joined(separator: ", "))")
+        }
+    }
+
+    /// The graph's own transitions only; a referenced behaviour file is its own file.
+    private static func printTransitions(_ file: HKXFile, containing text: String) throws {
+        let graph = try HKXObjectGraph(file: file)
+        let wanted = text.lowercased()
+        for (event, states) in BehaviorEventClipIndex.transitionEvents(in: graph)
+            where wanted.isEmpty || event.contains(wanted)
+        {
+            print("\(event) -> \(states.joined(separator: ", "))")
         }
     }
 

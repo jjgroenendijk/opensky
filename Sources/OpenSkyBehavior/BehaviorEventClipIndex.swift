@@ -167,6 +167,15 @@ nonisolated public final class BehaviorEventClipIndex {
         return events
     }
 
+    /// Each event a transition of this graph fires on, with the states it enters, in
+    /// name order. `openskycli hkx --transitions` prints it.
+    public static func transitionEvents(in graph: HKXObjectGraph) -> [(String, [String])] {
+        guard let events = events(in: graph) else { return [] }
+        return events.targets.keys.sorted().map { event in
+            (event, (events.targets[event] ?? []).map { events.stateNames[$0] ?? "?" })
+        }
+    }
+
     private static func events(in graph: HKXObjectGraph) -> GraphEvents? {
         guard let behavior = HKBBehaviorGraph.graphs(in: graph).first else { return nil }
         let names = behavior.data?.stringData?.eventNames ?? []

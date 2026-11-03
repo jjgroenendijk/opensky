@@ -35,6 +35,38 @@ enum AnimationCommand {
                 throw CLIError.failure("animation \(index) has no hkaAnimationBinding")
             }
             try validate(index: index, animation: animation, binding: binding)
+            if arguments.annotations {
+                printAnnotations(of: animation)
+            }
+        }
+    }
+
+    /// A paired clip names its tracks after the bones of both actors, so the track
+    /// tells whose events an annotation carries.
+    private static func printAnnotations(of animation: HKASplineCompressedAnimation) {
+        let names = animation.annotationTracks.map { $0.name ?? "" }
+        var groups: [TrackGroup] = []
+        for (index, name) in names.enumerated() {
+            let digits = name.prefix { $0.isASCII && $0.isNumber }
+            let prefix = name.dropFirst(digits.count).first == "_" ? digits + "_" : ""
+            if let last = groups.last, last.prefix == prefix {
+                groups[groups.count - 1].count += 1
+            } else {
+                groups.append(TrackGroup(prefix: String(prefix), first: index, count: 1))
+            }
+        }
+        for group in groups {
+            let shown = group.prefix.isEmpty ? "no prefix" : "prefix \(group.prefix)"
+            print("  tracks \(group.first)...\(group.first + group.count - 1): \(shown), "
+                + "first \"\(names[group.first])\"")
+        }
+        for (index, track) in animation.annotationTracks.enumerated()
+            where !track.annotations.isEmpty
+        {
+            print("  annotation track \(index) \"\(track.name ?? "")\"")
+            for annotation in track.annotations {
+                print("    \(String(format: "%.3f", annotation.time)) \(annotation.text)")
+            }
         }
     }
 
@@ -83,4 +115,11 @@ enum AnimationCommand {
     private static func maxAbs(_ value: SIMD3<Float>) -> Float {
         max(abs(value.x), abs(value.y), abs(value.z))
     }
+}
+
+/// A run of tracks that share one bone-name prefix.
+private struct TrackGroup {
+    let prefix: String
+    let first: Int
+    var count: Int
 }

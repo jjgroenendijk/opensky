@@ -112,6 +112,14 @@ public struct HKXArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var asset: AssetPathArgument
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "List each transition event that contains this text, with the states it enters.",
+            valueName: "text"
+        )
+    )
+    public var transitions: String?
     @Flag(help: "List every blender: flags, bound blend parameter, and each child.")
     public var blenders = false
     @Option(
@@ -195,6 +203,8 @@ public struct AnimationArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @OptionGroup public var asset: AssetPathArgument
+    @Flag(help: "Also list each annotation track that holds annotations: its name and marks.")
+    public var annotations = false
 
     public init() {}
 }
