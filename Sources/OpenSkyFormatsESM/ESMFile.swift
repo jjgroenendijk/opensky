@@ -13,10 +13,12 @@ nonisolated public struct ESMFile: Sendable {
     /// The whole plugin, so an index can reparse a record at a stored offset.
     public let data: Data
 
-    /// Memory-maps the plugin; nothing beyond top-level headers is read.
+    /// Memory-maps the plugin and starts reading it ahead, because the record
+    /// indexes walk all of it; nothing beyond top-level headers is parsed here.
     public init(url: URL) throws {
         // `mappedIfSafe` may copy external-volume files into anonymous RAM.
         // Game installs are commonly on USB volumes, so mapping is mandatory.
+        FileReadAhead.start(url)
         try self.init(data: Data(contentsOf: url, options: .alwaysMapped))
     }
 
