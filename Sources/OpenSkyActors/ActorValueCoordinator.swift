@@ -67,6 +67,7 @@ public final class ActorValueCoordinator {
             runtime.damage(.stamina, by: stamina.sprintDrain(wornWeight: worn) * delta, on: .player)
         }
         world.setPlayerSprintAllowed(runtime.current(of: .player).stamina > 0)
+        drainHorseSprint(delta: delta, runtime: runtime, world: world)
         let overencumbered = Self.isOverencumbered(
             carried: world.playerCarriedWeight(),
             capacity: runtime.value(at: ActorValueIdentity.carryWeightIndex, on: .player)
@@ -75,6 +76,18 @@ public final class ActorValueCoordinator {
             isPlayerOverencumbered = overencumbered
             world.setPlayerOverencumbered(overencumbered)
         }
+    }
+
+    /// A ridden horse sprints on its own stamina (UESP "Skyrim:Horses"). It pays the
+    /// player's rule at no worn weight; an empty bar stops the sprint.
+    private func drainHorseSprint(
+        delta: Float, runtime: ActorValueRuntime, world: any ActorValueWorld
+    ) {
+        guard let horse = world.riddenHorse() else { return }
+        if world.isRiddenHorseSprinting() {
+            runtime.damage(.stamina, by: stamina.sprintDrain(wornWeight: 0) * delta, on: horse)
+        }
+        world.setRiddenHorseSprintAllowed(runtime.current(of: horse).stamina > 0)
     }
 
     /// UESP "Skyrim:Carry Weight": past the `CarryWeight` actor value the player

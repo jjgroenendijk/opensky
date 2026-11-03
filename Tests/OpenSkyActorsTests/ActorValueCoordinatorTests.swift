@@ -16,6 +16,9 @@ final class FakeActorValueWorld: ActorValueWorld {
     var fighting: Set<ReferenceKey> = []
     var sprintLoad: Float?
     private(set) var sprintAllowed = true
+    var horse: ActorValueHolder?
+    var horseSprinting = false
+    private(set) var horseSprintAllowed = true
 
     func regeneratingHolders() -> [ActorValueHolder] {
         [.player] + residents
@@ -39,6 +42,18 @@ final class FakeActorValueWorld: ActorValueWorld {
 
     func setPlayerSprintAllowed(_ allowed: Bool) {
         sprintAllowed = allowed
+    }
+
+    func riddenHorse() -> ActorValueHolder? {
+        horse
+    }
+
+    func isRiddenHorseSprinting() -> Bool {
+        horseSprinting
+    }
+
+    func setRiddenHorseSprintAllowed(_ allowed: Bool) {
+        horseSprintAllowed = allowed
     }
 }
 
@@ -121,6 +136,44 @@ struct ActorValueCoordinatorTests {
         }
         #expect(runtime.current(of: .player).stamina == 0)
         #expect(!world.sprintAllowed)
+    }
+
+    /// The horse pays 7 a second from its own stamina, more than it regenerates, so
+    /// the sprint ends. The player's stamina stays full.
+    @Test func aRiddenHorseSprintsOnItsOwnStaminaAndRestsToSprintAgain() throws {
+        let world = FakeActorValueWorld()
+        world.horse = actor
+        world.residents = [actor]
+        world.horseSprinting = true
+        let coordinator = ActorValueCoordinator(
+            store: WorldStateStore(),
+            world: world,
+            baselines: ActorValueBaselineResolver(
+                fallback: ActorValueBaseline(
+                    maximums: ActorValues(health: 100, magicka: 80, stamina: 60),
+                    regenPercentPerSecond: ActorValues(health: 0, magicka: 0, stamina: 5)
+                )
+            )
+        )
+        let runtime = try #require(coordinator.runtime)
+
+        coordinator.advance(delta: 0.25)
+        #expect(runtime.current(of: actor).stamina < 60)
+        #expect(runtime.current(of: .player).stamina == 60)
+        var seconds: Float = 0.25
+        while world.horseSprintAllowed, seconds < 60 {
+            coordinator.advance(delta: 0.25)
+            seconds += 0.25
+        }
+        #expect(!world.horseSprintAllowed)
+        #expect(seconds > 8 && seconds < 60)
+
+        world.horseSprinting = false
+        for _ in 0 ..< 8 {
+            coordinator.advance(delta: 0.25)
+        }
+        #expect(runtime.current(of: actor).stamina > 0)
+        #expect(world.horseSprintAllowed)
     }
 
     @Test func damageReportsTheSelectedValueAfterwards() {

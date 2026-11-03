@@ -62,6 +62,8 @@ public final class PlayerMountDrive {
     /// Walk yaw, counter-clockwise from +X.
     public private(set) var heading: Float
     public private(set) var motion = MountMotion.still
+    /// The turn rate a held turn has built up.
+    public private(set) var turnRamp = MountTurnRamp()
     /// False during the mount and dismount clips, and for a dragon, which the rider
     /// does not steer: it flies (`fly(toward:deltaTime:world:)`).
     public var isSteerable = false
@@ -100,10 +102,19 @@ public final class PlayerMountDrive {
     ) -> [String] {
         let deltaTime = min(max(input.dt, 0), WalkController.maximumFrameTime)
         let steerable = isSteerable && kind == .horse
+        let wanted = steerable
+            ? MountRules.wantedTurn(
+                heading: heading, forward: input.moveForward, right: input.moveRight,
+                cameraYaw: cameraYaw
+            )
+            : nil
+        let turnRate = turnRamp.advance(
+            wantedTurn: wanted, deltaTime: deltaTime, settings: settings
+        )
         let steer = steerable
             ? MountRules.steer(
                 heading: heading, forward: input.moveForward, right: input.moveRight,
-                cameraYaw: cameraYaw, deltaTime: deltaTime, turnRate: settings.turnRate
+                cameraYaw: cameraYaw, deltaTime: deltaTime, turnRate: turnRate
             )
             : MountSteer(heading: heading, throttle: 0)
         let start = walk.feetPosition

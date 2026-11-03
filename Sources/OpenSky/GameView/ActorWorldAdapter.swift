@@ -39,6 +39,7 @@ protocol ActorWorldHost: AnyObject {
     var worldData: WorldDataStores? { get }
     var worldState: WorldStateStore { get }
     var mapWorld: MapWorldAdapter { get }
+    var mounts: MountCoordinator { get }
 }
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
@@ -205,7 +206,11 @@ final class ActorWorldAdapter {
         guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
             return
         }
-        let meters = meters.publishing(runtime.hudMeters(for: .player))
+        var sample = runtime.hudMeters(for: .player)
+        if let horse = riddenHorse() {
+            sample.stamina = runtime.hudMeters(for: horse).stamina
+        }
+        let meters = meters.publishing(sample)
         let enemy = game.hud.shows(.enemyHealth)
             ? engagedEnemyHealth(runtime: runtime, gameSession: gameSession) : nil
         let enemyChanged = enemy != publishedEnemy
@@ -283,9 +288,10 @@ extension ActorWorldAdapter: ActorValueWorld {
         return key == .player ? loop.isPlayerInCombat : loop.activity(of: key) != .notFighting
     }
 
-    /// Standing still with the sprint key held costs nothing.
+    /// Standing still with the sprint key held costs nothing. A rider's horse sprints.
     func playerSprintLoad() -> Float? {
         guard
+            !game.mounts.isActive,
             let status = game.gameSession?.locomotion.status,
             status.gait == .sprint,
             simd_length(status.horizontalVelocity) > 1
@@ -299,6 +305,20 @@ extension ActorWorldAdapter: ActorValueWorld {
 
     func setPlayerSprintAllowed(_ allowed: Bool) {
         game.gameSession?.locomotion.isSprintAllowed = allowed
+    }
+
+    func riddenHorse() -> ActorValueHolder? {
+        guard let drive = game.mounts.drive, drive.kind == .horse else { return nil }
+        return actorValueHolder(for: drive.mount)
+    }
+
+    func isRiddenHorseSprinting() -> Bool {
+        guard let drive = game.mounts.drive, drive.kind == .horse else { return false }
+        return drive.motion.isSprinting && drive.motion.isMoving
+    }
+
+    func setRiddenHorseSprintAllowed(_ allowed: Bool) {
+        game.mounts.drive?.bridge.isSprintAllowed = allowed
     }
 
     func playerCarriedWeight() -> Float? {

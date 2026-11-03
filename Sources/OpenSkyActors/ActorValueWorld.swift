@@ -20,6 +20,12 @@ public protocol ActorValueWorld: AnyObject {
     func playerSprintLoad() -> Float?
     /// An empty stamina bar turns the player's sprint into a run.
     func setPlayerSprintAllowed(_ allowed: Bool)
+    /// The horse the player rides, or nil. Its own stamina pays for its sprint.
+    func riddenHorse() -> ActorValueHolder?
+    /// True while the ridden horse sprints and moves.
+    func isRiddenHorseSprinting() -> Bool
+    /// An empty stamina bar turns the horse's sprint into a run.
+    func setRiddenHorseSprintAllowed(_ allowed: Bool)
     /// What the player carries, with worn armour at its perk weight. Nil without items.
     func playerCarriedWeight() -> Float?
     /// An over-encumbered player can only walk; true shows `sOverEncumbered` on the HUD.
@@ -33,6 +39,17 @@ extension ActorValueWorld {
     }
 
     public func setPlayerSprintAllowed(_: Bool) {}
+
+    /// A session with no mounts has no horse.
+    public func riddenHorse() -> ActorValueHolder? {
+        nil
+    }
+
+    public func isRiddenHorseSprinting() -> Bool {
+        false
+    }
+
+    public func setRiddenHorseSprintAllowed(_: Bool) {}
 
     public func playerCarriedWeight() -> Float? {
         nil
