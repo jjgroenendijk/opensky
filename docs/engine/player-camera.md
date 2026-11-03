@@ -22,7 +22,10 @@ person keeps all of it.
 
 Switching between the two player modes does not move the capsule. Only entering from fly places it
 under the current eye. Placing it on every key press would move the player by the orbit distance
-each time.
+each time. The placement stands the feet on the highest ground below the eye: a collision floor or
+the terrain, searched up to 16,384 units down. A fly camera far above the ground therefore lands
+on it instead of falling. A spot under the terrain stands on top of the terrain. A teleport ends
+with the same placement.
 
 The dialogue camera is not a fourth mode. It overrides the view on top of the current mode and
 gives it back ([dialogue camera](/engine/dialogue-camera.md)). Two rules read the override, not the

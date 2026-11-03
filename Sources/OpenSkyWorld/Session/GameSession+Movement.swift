@@ -138,10 +138,25 @@ extension GameSession {
         // distance every time the camera key is pressed.
         guard !wasPlayerControlled else { return }
         walkController.reset(cameraPosition: freeFlyCamera.position)
-        if let collisionQuery {
-            walkController.standOnFloorBelowEye(query: collisionQuery)
-        }
+        settlePlayerOnGround()
         locomotion.reset()
+    }
+
+    /// Stands the player's feet on the ground under them, as `coc` does, so a placement
+    /// from any height does not end in a fall. False while nothing under the spot is loaded.
+    @discardableResult
+    public func settlePlayerOnGround() -> Bool {
+        guard
+            movementMode.isPlayerControlled, playerSeat == nil,
+            playerMount?.isMountActive != true
+        else { return false }
+        var probe = walkController
+        guard probe.standOnGround(
+            sampleGround: terrainSampler ?? { _ in nil },
+            query: collisionQuery ?? { _ in [] }
+        ) else { return false }
+        placePlayerFeet(at: probe.feetPosition)
+        return true
     }
 
     private var walkCollisionQuery: CapsuleWorldCollider.CandidateQuery {

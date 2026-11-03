@@ -173,6 +173,8 @@ final class AgentTeleportJob {
             guard
                 adapter.isWorldLoaded,
                 game.simulationClock.frame >= untilFrame else { return .wait }
+            // Boots on the ground: a placed height above the floor must not end in a fall.
+            game.gameSession?.settlePlayerOnGround()
             return try .done(.success(adapter.query(.player)))
         }
         return .wait

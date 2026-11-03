@@ -129,6 +129,8 @@ Debug commands change the game state directly. `state` reads show the result
 
 ### World and time
 
+Every teleport ends with the player standing on the ground below the placed spot.
+
 | Command | Does |
 | --- | --- |
 | `debug teleport --cell <editorID>` | Goes to any cell in the load order, such as `--cell WhiterunBanneredMare` |
