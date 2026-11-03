@@ -303,6 +303,15 @@ nonisolated public final class CellSceneBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
+    /// Adds the skips of a load-order decode, which counts them itself.
+    func noteSkipped(_ skipped: SkippedRecords) {
+        guard !skipped.isEmpty else { return }
+        skippedRecords.merge(skipped)
+        for line in skipped.lines {
+            Self.logger.warning("malformed records skipped: \(line, privacy: .public)")
+        }
+    }
+
     /// Decodes `record`, or counts it in `skippedRecords` and returns nil.
     /// Cell searches re-read records on every build, so a FormID counts once.
     nonisolated public func decodeOrSkip<Value>(

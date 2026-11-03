@@ -2,6 +2,7 @@
 // base game option.
 
 import AppKit
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyRenderResources

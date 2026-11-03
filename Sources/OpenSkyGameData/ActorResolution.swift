@@ -191,13 +191,13 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     ) -> ActorTemplateResolver {
         var skipped = SkippedRecords()
         return ActorTemplateResolver(
-            actors: loadOrder.indexRecords(of: "NPC_", skipped: &skipped) {
+            actors: loadOrder.indexRecordsInParallel(of: "NPC_", skipped: &skipped) {
                 try ActorBase(record: $0, localized: $1)
             },
-            leveledActors: loadOrder.indexRecords(of: "LVLN", skipped: &skipped) {
+            leveledActors: loadOrder.indexRecordsInParallel(of: "LVLN", skipped: &skipped) {
                 try LeveledList(record: $0)
             },
-            leveledSpells: loadOrder.indexRecords(of: "LVSP", skipped: &skipped) {
+            leveledSpells: loadOrder.indexRecordsInParallel(of: "LVSP", skipped: &skipped) {
                 try LeveledList(record: $0)
             },
             skippedRecords: skipped,

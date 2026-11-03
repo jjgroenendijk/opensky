@@ -157,7 +157,7 @@ leave the main actor.
 
 A cell build is one task on one serial queue. Before a build loads its assets, it decodes the
 new ones on all cores but two with `ParallelDecode.map`, a wrapper around
-`DispatchQueue.concurrentPerform`. Then the serial loads find the work done. Four steps fan out:
+`DispatchQueue.concurrentPerform`. Then the serial loads find the work done. Five steps fan out:
 
 | Step | What the workers do |
 | --- | --- |
@@ -165,6 +165,11 @@ new ones on all cores but two with `ParallelDecode.map`, a wrapper around
 | Textures of those meshes | Read the cache entry or the archive file, parse the DDS, and fill a new texture on the CPU |
 | Collision | Read the converted collision model, or read and parse the NIF |
 | Actor parts | Read and parse the NIF of each body part, attachment, head part, and face |
+| Record indexes | Decode runs of 64 records of one type from one plugin, in that plugin's FormID scope |
+
+The record decode merges the runs in load order on the build thread, so a later plugin wins
+as in the serial decode, whatever run finished first. `ParallelDecode` lives in
+`OpenSkyFormatsCore`, so the plugin readers can use it.
 
 An actor part decodes against the actor's skeleton, so only the file read and parse run
 ahead. The build first resolves the look of every actor in the cell, then reads all their

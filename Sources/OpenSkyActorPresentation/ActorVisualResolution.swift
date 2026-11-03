@@ -261,36 +261,36 @@ nonisolated public struct ActorVisualResolver: Sendable {
     ) -> ActorVisualResolver {
         var skipped = SkippedRecords()
         var resolver = ActorVisualResolver(
-            races: loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
+            races: loadOrder.indexRecordsInParallel(of: "RACE", skipped: &skipped) {
                 try Race(record: $0, localized: $1)
             },
-            armors: loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
+            armors: loadOrder.indexRecordsInParallel(of: "ARMO", skipped: &skipped) {
                 try Armor(record: $0, localized: $1)
             },
-            armorAddons: loadOrder.indexRecords(of: "ARMA", skipped: &skipped) {
+            armorAddons: loadOrder.indexRecordsInParallel(of: "ARMA", skipped: &skipped) {
                 try ArmorAddon(record: $0)
             },
             outfits: loadOrder
-                .indexRecords(of: "OTFT", skipped: &skipped) { try Outfit(record: $0) },
-            leveledItems: loadOrder.indexRecords(of: "LVLI", skipped: &skipped) {
+                .indexRecordsInParallel(of: "OTFT", skipped: &skipped) { try Outfit(record: $0) },
+            leveledItems: loadOrder.indexRecordsInParallel(of: "LVLI", skipped: &skipped) {
                 try LeveledList(record: $0)
             },
             formIDResolver: loadOrder.space,
             equipment: EquipmentCatalog.build(from: loadOrder),
-            headParts: loadOrder.indexRecords(of: "HDPT", skipped: &skipped) {
+            headParts: loadOrder.indexRecordsInParallel(of: "HDPT", skipped: &skipped) {
                 try HeadPart(record: $0, localized: $1)
             },
-            formLists: loadOrder.indexRecords(of: "FLST", skipped: &skipped) {
+            formLists: loadOrder.indexRecordsInParallel(of: "FLST", skipped: &skipped) {
                 try FormList(record: $0)
             },
-            textureSets: loadOrder.indexRecords(of: "TXST", skipped: &skipped) {
+            textureSets: loadOrder.indexRecordsInParallel(of: "TXST", skipped: &skipped) {
                 try TextureSet(record: $0)
             },
-            colors: loadOrder.indexRecords(of: "CLFM", skipped: &skipped) {
+            colors: loadOrder.indexRecordsInParallel(of: "CLFM", skipped: &skipped) {
                 try ColorForm(record: $0, localized: $1)
             }
         )
-        resolver.combatStyles = loadOrder.indexRecords(of: "CSTY", skipped: &skipped) {
+        resolver.combatStyles = loadOrder.indexRecordsInParallel(of: "CSTY", skipped: &skipped) {
             try CombatStyle(record: $0)
         }
         resolver.skippedRecords = skipped
