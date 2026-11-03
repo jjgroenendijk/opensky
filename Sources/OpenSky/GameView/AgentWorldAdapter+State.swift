@@ -49,7 +49,7 @@ extension AgentWorldAdapter {
         case let .quest(editorID): try questState(editorID)
         case .scenes: scenesState()
         case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
-             .mount, .favor, .impulses:
+             .mount, .paired, .favor, .impulses:
             try inspection(query)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
@@ -70,7 +70,15 @@ extension AgentWorldAdapter {
         case let .nodes(reference): try nodesState(reference: reference)
         case let .changes(limit): changesState(limit: limit)
         case let .flight(reference): try flightState(reference: reference)
+        default: try riderInspection(query)
+        }
+    }
+
+    /// The reads of what a rider, a pair, or the player's favours hold.
+    private func riderInspection(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
+        switch query {
         case .mount: mountState()
+        case .paired: pairedState()
         case .favor: favorState()
         case .impulses: impulsesState()
         default: throw AgentFailure(.invalidArgument, "not an inspection query")

@@ -161,6 +161,7 @@ final class RuntimeStateWorldAdapter {
         )
         state.isFemale = baseline.isFemale
         state.isFlying = game.dragonFlightWorld.isFlying(holder.key)
+        state.isInPairedAnimation = game.idleWorld.idles.pairedAnimation(of: holder.key) != nil
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
         state.injuredHealthPercent = baseline.injuredHealthPercent
         if holder.key != .player {

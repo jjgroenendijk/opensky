@@ -3,6 +3,7 @@
 // <https://ck.uesp.net/wiki/Actor_Script>. See docs/engine/papyrus-world.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
@@ -35,24 +36,30 @@ extension PapyrusNativeFunctions {
                 return .returned(.none)
             }
         }
-        // OpenSky plays no kill moves.
-        scriptState("Actor", "IsInKillMove", into: &registry) { _, _, _ in
-            .returned(.boolean(false))
+        scriptState("Actor", "IsInKillMove", into: &registry) { _, bridge, key in
+            .returned(.boolean(bridge.actorAI?.isInKillMove(key) ?? false))
         }
     }
 
+    /// The idle trees the feeding natives play. Their children pick the bed, bedroll, or
+    /// standing feed, and the standing or crouching cannibal, by the target.
+    static let vampireFeedIdle = "IdleVampireFeed"
+    static let cannibalFeedIdle = "IdleCannibalFeed"
+
     private static func installFeeding(into registry: inout PapyrusNativeRegistry) {
-        // The feeding animation is not played; the event and its effects are.
+        // The event fires whether or not the animation plays (CK wiki, StartVampireFeed).
         scriptState("Actor", "StartVampireFeed", into: &registry) { call, bridge, key in
             guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartVampireFeed needs a target") }
             bridge.world?.queueVampireFeed(feeder: key, target: target)
+            _ = bridge.actorAI?.playIdle(editorID: vampireFeedIdle, on: key, with: target)
             return .returned(.none)
         }
-        scriptState("Actor", "StartCannibal", into: &registry) { call, bridge, _ in
+        scriptState("Actor", "StartCannibal", into: &registry) { call, bridge, key in
             guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartCannibal needs a target") }
             bridge.updateScriptedState(of: target) { $0.setFlag(ScriptedStateName.eaten, true) }
+            _ = bridge.actorAI?.playIdle(editorID: cannibalFeedIdle, on: key, with: target)
             return .returned(.none)
         }
     }
@@ -70,7 +77,8 @@ extension PapyrusNativeFunctions {
             }
             return .returned(.none)
         }
-        // The idle plays; OpenSky has no paired animations, so the target is not moved.
+        // A paired idle plays the target's half too. With no target the idle uses the
+        // actor's combat target, and with neither it plays alone.
         scriptState("Actor", "PlayIdleWithTarget", into: &registry) { call, bridge, key in
             guard
                 let ai = bridge.actorAI,
@@ -78,7 +86,11 @@ extension PapyrusNativeFunctions {
                     .flatMap(bridge.referenceKey(for:))
             else { return failure(call, "PlayIdleWithTarget needs an idle and the actor AI") }
             let idle = ResolvedFormID(plugin: plugin, objectID: objectID)
-            return .returned(.boolean(ai.playIdle(idle, on: key)))
+            guard
+                let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
+                ?? bridge.actorNatives.combatRuntime?()?.combatTarget(of: key)
+            else { return .returned(.boolean(ai.playIdle(idle, on: key))) }
+            return .returned(.boolean(ai.playIdle(idle, on: key, with: target)))
         }
         scriptState("Actor", "ClearArrested", into: &registry) { _, bridge, key in
             bridge.updateScriptedState(of: key) {

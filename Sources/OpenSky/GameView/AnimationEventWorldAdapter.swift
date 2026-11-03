@@ -20,6 +20,7 @@ protocol AnimationEventWorldHost: AnyObject {
     var headTracking: HeadTrackingCoordinator { get }
     var effectGraphs: EffectGraphCoordinator { get }
     var gameSession: GameSession? { get }
+    var idleWorld: IdleWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
 }
@@ -34,11 +35,13 @@ final class AnimationEventWorldAdapter {
     /// The player graph's events, read once per frame. The idle and object graph
     /// callbacks send theirs to the coordinator directly.
     func wire(gameSession: GameSession) {
-        let events = gameSession.animationEvents
-        gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak events] _ in
+        let idles = game.idleWorld.idles
+        gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak idles] _ in
             guard let gameSession else { return }
+            let events = gameSession.animationEvents
             let locomotion = gameSession.locomotion
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
+                .map { idles?.ownGraphEvent($0, from: .player) ?? $0 }
             guard gameSession.movementMode.isPlayerControlled else { return }
             for name in names {
                 events?.handle(name, from: .player)

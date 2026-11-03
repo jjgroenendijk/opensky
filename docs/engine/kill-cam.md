@@ -30,8 +30,8 @@ Differences from the game:
   projectile anchor yet, so a shot placed on the projectile uses the target instead.
 - The game starts a bow kill cam before the arrow lands. OpenSky starts every kill cam after
   the death.
-- Paired kill-move animations are not played, so a melee kill finds no kill-cam path and
-  ends on an `Exit` path: no kill cam plays.
+- Combat starts no paired kill move, so a melee kill finds no kill-cam path and ends on an
+  `Exit` path: no kill cam plays ([paired animations](/engine/paired-animations.md)).
 
 ## Playing a shot
 

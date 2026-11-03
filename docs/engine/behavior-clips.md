@@ -108,7 +108,9 @@ there, so the difference between its samples is not travel.
 because the wrapped generator is a plain `hkbClipGenerator`. A paired clip holds the tracks of
 both characters. `m_SyncAnimPrefix` names the partner's half: the horse's mount clip reads the
 tracks named `2_` plus a bone name, and the rider's graph reads the plain names. Each character
-maps the tracks to its own bones by name ([riding](/engine/riding.md)). `m_fGetToMarkTime`, how
+maps the tracks to its own bones by name ([riding](/engine/riding.md)). Each half of a pair
+enters its own state, with its own generator and prefix
+([paired animations](/engine/paired-animations.md)). `m_fGetToMarkTime`, how
 long this character has to reach the shared marker, is not used: the player is linked to the
 mount's root for the whole clip, so both start at the same marker. Each evaluation counts one
 `synchronizedClipMarkerIgnored`.

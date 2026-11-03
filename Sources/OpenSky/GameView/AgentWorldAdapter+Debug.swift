@@ -41,7 +41,7 @@ extension AgentWorldAdapter {
         case let .setQuestStage(quest, stage):
             return try done(setQuestStage(quest, stage: stage))
         case .kill, .resurrect, .decapitate, .flight, .drunk, .knock, .perk, .beastForm, .eyes,
-             .link:
+             .link, .paired:
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
              .loadScreen, .sound:
@@ -103,6 +103,8 @@ extension AgentWorldAdapter {
         case let .decapitate(reference): try decapitate(reference)
         case let .flight(reference, order): try orderFlight(reference, order: order)
         case let .drunk(reference, drunk): try setDrunk(reference, drunk: drunk)
+        case let .paired(reference, target, idle):
+            try playPaired(reference, target: target, idle: idle)
         case let .knock(reference, damage): try knock(reference, damage: damage)
         case let .perk(editorID, owned): try setPlayerPerk(editorID, owned: owned)
         case let .beastForm(name): try forceBeastForm(name)

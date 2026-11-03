@@ -75,13 +75,17 @@ extension GapsGatherer {
                 + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
                 + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
                 + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
-                + DragonFlightGraphNames.observedEvents)
+                + DragonFlightGraphNames.observedEvents + PairedAnimationCore.endEvents)
                 .map { $0.lowercased() }
         )
         let footsteps = footstepTags()
         let scripts = scriptAnimationCensus()
-        let handled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
+        let ownHandled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
             .union(scripts.registeredEvents).union(effectGraphEvents(census.hearing))
+        // A paired half's `2_` and `NPC` events act without the prefix.
+        let handled = ownHandled.union(ownHandled.flatMap { name in
+            PairedAnimationCore.eventPrefixes.map { $0.lowercased() + name }
+        })
         let boundVariables = Set(
             (CombatGraphNames.variables + CombatGraphNames.loopVariables
                 + ArcheryGraphNames.variables

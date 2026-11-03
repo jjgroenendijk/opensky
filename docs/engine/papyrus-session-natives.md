@@ -62,10 +62,14 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
 ## Actor and reference rules
 
 - `StartDeferredKill` and `EndDeferredKill` hold and release a death
-  ([bleedout](/engine/ragdoll.md#bleedout)). `IsInKillMove` is false: there are no kill moves.
-- `StartVampireFeed` sends the feed to the vampire scripts. `StartCannibal` marks the target as
-  eaten. Neither plays its animation.
-- `DoCombatSpellApply` casts the spell. `PlayIdleWithTarget` plays the idle on the actor alone.
+  ([bleedout](/engine/ragdoll.md#bleedout)). `IsInKillMove` is true while the actor plays
+  either half of a paired kill move.
+- `StartVampireFeed` sends the feed to the vampire scripts and plays the `IdleVampireFeed`
+  tree with the target. `StartCannibal` marks the target as eaten and plays the
+  `IdleCannibalFeed` tree ([paired animations](/engine/paired-animations.md#starting-a-pair)).
+- `DoCombatSpellApply` casts the spell. `PlayIdleWithTarget` plays a paired idle on both the
+  actor and the target. With no target it takes the actor's combat target, and with neither it
+  plays the idle on the actor alone.
 - `MoveToPackageLocation` moves the actor to the place its running package uses.
 - `ClearExtraArrows` removes the arrows stuck in the actor. `ClearArrested` clears the arrest.
 - `AttachAshPile` places the given pile at the actor and links each to the other. With no pile

@@ -43,19 +43,31 @@ extension IdleCoordinator {
             .record.animationEvent
     }
 
+    /// Plays `idle` on `actor`. With a `target`, the idle tree tests it as the Target, and
+    /// a paired idle plays the target's half too (`firePaired`).
     @discardableResult
     public func fireIdle(
         _ idle: ResolvedFormID,
         on actor: ReferenceKey,
+        target: ReferenceKey? = nil,
         ignoringConditions: Bool
     ) -> IdleReport? {
         guard let store, let record = store.idles.record(idle) else { return nil }
         guard let now = world?.idleAnimationTime else {
             return failed(actor, source: "fired", "no renderer")
         }
-        var selection = selector(for: actor).select(roots: [record])
+        var selection = selector(for: actor, target: target).select(roots: [record])
         if ignoringConditions, selection.chosen == nil {
             selection = IdleSelection(chosen: record, trace: selection.trace, chosenEntry: nil)
+        }
+        if
+            let target, target != actor, let chosen = selection.chosen,
+            let event = chosen.record.animationEvent, PairedAnimationCore.isPaired(event: event)
+        {
+            return firePaired(PairedAnimationPlay(
+                lead: actor, partner: target, idle: chosen.record.editorID ?? chosen.id.description,
+                event: event, start: now
+            ), trace: selection.trace)
         }
         let report = play(selection, on: actor, source: "fired", now: now)
         // A dependent takes the same event from wherever its own graph is.

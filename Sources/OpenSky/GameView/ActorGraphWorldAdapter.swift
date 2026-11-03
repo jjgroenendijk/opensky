@@ -28,6 +28,7 @@ protocol ActorGraphWorldHost: AnyObject {
     var audioFileSystem: (any GameFileSource)? { get }
     var dragonFlight: DragonFlightCoordinator { get }
     var gameSession: GameSession? { get }
+    var idleWorld: IdleWorldAdapter { get }
     var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
     var playerSettingsStore: PlayerSettingsStore { get }
     var scripts: ScriptCoordinator { get }
@@ -99,7 +100,8 @@ final class ActorGraphWorldAdapter {
         graphs.variableResolution(player: game.gameSession?.locomotion.graph?.variables)
     }
 
-    func actorGraphFired(_ name: String, from actor: ReferenceKey) {
+    func actorGraphFired(_ fired: String, from actor: ReferenceKey) {
+        let name = game.idleWorld.idles.ownGraphEvent(fired, from: actor)
         game.gameSession?.animationEvents?.handle(name, from: actor)
         game.dragonFlight.handle(name, from: actor)
         game.vehicleWorld.handleBodyEvent(name, from: actor)

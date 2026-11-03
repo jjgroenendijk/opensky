@@ -40,6 +40,10 @@ nonisolated extension AgentCommandCatalog {
             "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
         ),
         command(
+            "state.paired",
+            "Each paired animation playing: its idle, and each actor's role and paired clips."
+        ),
+        command(
             "state.impulses",
             "Hit knockback, explosion push, and splash settings, with the newest events."
         ),
@@ -205,6 +209,14 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
+        ),
+        command(
+            "debug.paired", "Play an idle with a target, as PlayIdleWithTarget does.",
+            positionals: [
+                required("ref", refHelp),
+                required("target", "The actor that plays the other half of a paired idle."),
+                required("idle", "The IDLE editor ID, such as 1HMKillMoveC.")
+            ]
         ),
         command(
             "debug.knock", "Knock an actor back as a melee hit from the player would.",

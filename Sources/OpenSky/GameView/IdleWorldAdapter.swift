@@ -147,6 +147,26 @@ extension IdleWorldAdapter: IdleWorld {
         streamer.setActorProp(prop, on: placed.formID)
     }
 
+    /// A paired clip poses both actors from one root, so the partner takes the lead's
+    /// feet and heading. The player's heading is the camera's yaw turned a quarter.
+    func alignPairedActor(_ partner: ReferenceKey, with lead: ReferenceKey) {
+        guard let gameSession = game.gameSession else { return }
+        let leadPose: (feet: SIMD3<Float>, heading: Float)? = if lead == .player {
+            (gameSession.walkController.feetPosition, Float.pi / 2 - gameSession.freeFlyCamera.yaw)
+        } else {
+            game.actorWorld.combatActor(key: lead).map { ($0.feet, $0.facing) }
+        }
+        guard let leadPose else { return }
+        if partner == .player {
+            gameSession.placePlayerFeet(at: leadPose.feet)
+            gameSession.freeFlyCamera.yaw = Float.pi / 2 - leadPose.heading
+        } else {
+            game.streamer?.restActor(partner, at: ReferenceTransformOverride(
+                position: leadPose.feet, rotation: SIMD3(0, 0, leadPose.heading)
+            ))
+        }
+    }
+
     func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {
         guard actor == .player else {
             return game.actorGraphWorld.graphs.raise(name, on: actor)

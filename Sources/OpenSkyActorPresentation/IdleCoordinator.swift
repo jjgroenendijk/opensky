@@ -33,6 +33,8 @@ public protocol IdleWorld: AnyObject {
     func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool
     /// Each clip annotation an idle passes, in the order the clip passes them.
     func idleAnimationEvent(_ name: String, on actor: ReferenceKey)
+    /// Stands `partner` on `lead`'s root, facing its way, so the halves of the clip meet.
+    func alignPairedActor(_ partner: ReferenceKey, with lead: ReferenceKey)
 }
 
 /// What the idle coordinator is built from.
@@ -123,6 +125,8 @@ public final class IdleCoordinator {
     var standingUntil: [ReferenceKey: ClosedRange<Float>] = [:]
     /// Actors that take each owner's idle events too, in the order they were added.
     var dependents: [ReferenceKey: [ReferenceKey]] = [:]
+    /// The paired animations playing now, oldest first.
+    public internal(set) var pairs: [PairedAnimationPlay] = []
     var reports: [ReferenceKey: IdleReport] = [:]
     /// Markers an actor could not path to, so it does not retry every frame.
     private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
@@ -181,6 +185,7 @@ public final class IdleCoordinator {
         )
         releaseDeparted(actors: actors, now: now)
         advanceSitStates(now: now)
+        expirePairs(now: now)
         claimMarkers(actors: actors)
         for key in sessions.keys.sorted() {
             guard let actor = actors[key] else { continue }

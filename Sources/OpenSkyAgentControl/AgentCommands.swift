@@ -27,6 +27,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case flight(reference: String?)
     /// The player's mount: its kind, phase, motion, and a dragon's flight and orders.
     case mount
+    /// Each paired animation playing, with both actors' graph roles and paired clips.
+    case paired
     /// Follower command mode: its phase, the follower, and the last decision and outcome.
     case favor
     /// The push and splash settings, and the newest knocks, pushes, and splashes.
@@ -85,6 +87,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     private static func session(_ name: String) -> Self? {
         switch name {
         case "mount": .mount
+        case "paired": .paired
         case "favor": .favor
         case "impulses": .impulses
         default: nil
@@ -193,6 +196,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Starts or stops an actor's drunk state, as the idles `IdleDrunkStart` and
     /// `IdleDrunkStop` do.
     case drunk(reference: String, drunk: Bool)
+    /// Plays an `IDLE` with a target, as `PlayIdleWithTarget` does: a paired idle plays
+    /// on both actors.
+    case paired(reference: String, target: String, idle: String)
     /// Knocks an actor back as a melee hit of `damage` from the player would.
     case knock(reference: String, damage: Float)
     /// Gives the player a perk by editor ID, or takes it away, as `Actor.AddPerk` does.
@@ -301,12 +307,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "channel": try .channel(args.string("mode"))
         case "shadows": try .shadows(args.string("quality"))
         case "flight": try parseFlight(args)
-        case "drunk":
-            try .drunk(reference: args.string("ref"), drunk: args.bool("on", default: true))
         case "knock": try parseKnock(args)
         case "perk": try .perk(editorID: args.string("perk"), owned: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
-        case "eyes": try .eyes(reference: args.string("ref"), textureSet: args.string("set"))
         case "link":
             try .link(
                 AgentRagdollLink(
@@ -316,54 +319,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
                 linked: args.bool("on", default: true)
             )
         case "gamepad": try parseGamepad(args)
-        default: try parseScreen(name, args)
+        default: try parseActorLook(name, args)
         }
-    }
-
-    /// The commands that cover the screen: fades, the cart HUD, movies, and titles, and
-    /// the sound switch.
-    private static func parseScreen(
-        _ name: String, _ args: AgentArguments
-    ) throws(AgentFailure) -> Self {
-        switch name {
-        case "fade": try parseFade(args)
-        case "cartmode": try .cartMode(args.bool("on", default: true))
-        case "playbink":
-            try .playBink(
-                file: args.string("file"), interruptible: args.bool("interruptible", default: false)
-            )
-        case "skipbink": .skipBink
-        case "titles": try .titles(args.string("step"))
-        case "sound": try .sound(on: args.bool("on", default: true))
-        default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
-        }
-    }
-
-    private static func parseKnock(_ args: AgentArguments) throws(AgentFailure) -> Self {
-        let damage = try args.float("damage")
-        guard damage.isFinite, damage > 0 else { throw args.invalid("damage", "above 0") }
-        return try .knock(reference: args.string("ref"), damage: damage)
-    }
-
-    private static func parseGamepad(_ args: AgentArguments) throws(AgentFailure) -> Self {
-        let count = try args.optionalInt("count")
-        if let count, !(0 ... 3).contains(count) {
-            throw args.invalid("count", "0 to 3")
-        }
-        let press = try args.optionalString("press")?.lowercased()
-            .split(separator: ",").map(String.init) ?? []
-        return .gamepad(count: count, press: press)
-    }
-
-    private static func parseFade(_ args: AgentArguments) throws(AgentFailure) -> Self {
-        let direction = try args.string("direction").lowercased()
-        guard direction == "out" || direction == "in" else {
-            throw args.invalid("direction", "out or in")
-        }
-        return try .fade(AgentFadeRequest(
-            fadingOut: direction == "out", black: !args.bool("white", default: false),
-            delay: args.optionalFloat("delay") ?? 0, duration: args.optionalFloat("duration") ?? 0
-        ))
     }
 
     private static func parseFlight(_ args: AgentArguments) throws(AgentFailure) -> Self {
