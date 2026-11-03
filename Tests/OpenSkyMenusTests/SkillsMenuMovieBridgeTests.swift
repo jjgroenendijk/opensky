@@ -73,6 +73,18 @@ struct SkillsMenuMovieBridgeTests {
         #expect(log.sent["SetStatsMode"] == [.boolean(false), .integer(1)])
     }
 
+    /// The movie's own timeline holds the fade; the engine only starts it.
+    @Test func activatePlaysTheRootFadeIn() throws {
+        let log = try Self.statsMovie()
+        let root = log.runtime.root.object
+        AS2Natives.method(log.runtime.runtime, on: root, name: "gotoAndPlay") { context in
+            log.sent["gotoAndPlay"] = context.arguments
+            return .undefined
+        }
+        StatsMenuMovieBridge.activate(runtime: log.runtime)
+        #expect(log.sent["gotoAndPlay"] == [.string(StatsMenuMovieBridge.fadeInLabel)])
+    }
+
     private static func statsMovie() throws -> StatsMovieLog {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         let menuClass = runtime.runtime.makeObject()

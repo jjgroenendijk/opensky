@@ -112,10 +112,13 @@ Every tree is drawn on the ring, not only the open one, as in the game.
   `fStatsRotationRampTime` and takes the short way round.
 - In a tree it moves, over 0.5 s, to `fStatsStarCameraOffset` and looks at
   `fStatsStarLookAt`.
-- On open, the engine calls the movie's `StartCameraAnimation`. The movie then calls
-  `MoveCamera` with 0 to 1 as its own timeline plays. OpenSky samples `CameraIntro` at that
-  fraction and lifts the camera by `CameraPosition`. Without the movie, a clock gives the
-  fraction.
+- On open, a clock gives the fraction through `CameraIntro`. OpenSky samples `CameraIntro` at
+  that fraction and lifts the camera by `CameraPosition`. The movie also has a
+  `StartCameraAnimation` that would drive the fraction through `MoveCamera`, but no movie code
+  calls it and `SkyrimSE.exe` holds no string that names it, so OpenSky does not call it.
+- The movie's root rests on its `FadedOut` frame. On open, OpenSky plays the root's `FadeIn`
+  label; the fade ends on the frame that calls `SetFadedIn`. The time the game starts the fade
+  is not known ([unverified values](/engine/unverified-values.md)).
 - On close, the movie's text goes at once. The sky then plays `CameraOutro` (0.633 s),
   which drops `CameraPosition` back to z = -3000, and the menu leaves when it ends. Keys
   do nothing during the move.
