@@ -63,6 +63,10 @@ final class GraphicsPageViewController: NSViewController {
         (NSButton(checkboxWithTitle: $0.title, target: nil, action: nil), $0)
     }
 
+    let loadingControls = LoadingOptimisationSetting.allCases.map {
+        (NSButton(checkboxWithTitle: $0.title, target: nil, action: nil), $0)
+    }
+
     let blinkingControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
     let eyeMovementControl = NSButton(checkboxWithTitle: "Eye movement", target: nil, action: nil)
     let expressionsControl = NSButton(
@@ -181,6 +185,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.buttons([clearPipelineCacheControl]),
                 layout.toggle(parallelDecodeControl)
             ]),
+            layout.group("Loading", loadingControls.map { layout.toggle($0.0) }),
             layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [
                 layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),

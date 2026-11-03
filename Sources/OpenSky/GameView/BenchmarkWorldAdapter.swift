@@ -477,6 +477,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         else {
             return nil
         }
+        LoadOptimisations.activate(LoadOptimisations(settings: game.playerSettingsStore))
         return BenchmarkLoadInputs(
             root: root,
             device: device,

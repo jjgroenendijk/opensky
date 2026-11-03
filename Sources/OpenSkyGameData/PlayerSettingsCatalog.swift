@@ -45,6 +45,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
 
     public static let vanilla = PlayerSettingsCatalog(
         definitions: gameplay + display + audio + opensky + SurfaceShadingSetting.definitions
+            + LoadingOptimisationSetting.definitions
             + GraphicsOptions.definitions
     )
 

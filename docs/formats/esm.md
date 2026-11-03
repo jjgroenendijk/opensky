@@ -118,6 +118,7 @@ bytes and the walk moves at least that far each step, so the walk always ends.
 The record indexes still touch nearly every page of the file. So opening a plugin also asks
 the kernel to read the whole file ahead in the background. Without that, the first walk after
 the page cache is cleared reads the pages one by one, about 2 s slower on an external disk.
+The `loading.pluginReadAhead` setting turns the hint off.
 
 ## Vanilla Skyrim.esm
 

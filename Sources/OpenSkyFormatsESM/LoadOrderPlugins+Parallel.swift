@@ -40,6 +40,9 @@ nonisolated extension LoadOrderPlugins {
         skipped: inout SkippedRecords,
         using decode: @Sendable (ESMRecord, LoadOrderPlugin) throws -> Value?
     ) -> (order: [FormID], values: [FormID: Value]) {
+        guard LoadOptimisations.isOn(.parallelRecords) else {
+            return decodedRecords(of: type, skipped: &skipped, using: decode)
+        }
         let records = liveRecordsByPlugin(of: type, skipped: &skipped)
         let batches = records.indices.flatMap { plugin in
             stride(from: 0, to: records[plugin].count, by: Self.parallelBatchSize).map { start in

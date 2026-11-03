@@ -9,6 +9,7 @@ nonisolated public enum FileReadAhead {
     /// Asks the kernel to read the file in the background and returns at once.
     /// A failure only loses the hint, so it is not reported.
     public static func start(_ url: URL) {
+        guard LoadOptimisations.isOn(.pluginReadAhead) else { return }
         let descriptor = open(url.path, O_RDONLY)
         guard descriptor >= 0 else { return }
         defer { close(descriptor) }

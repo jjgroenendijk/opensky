@@ -82,6 +82,7 @@ final class GameLaunchContext {
             return
         }
         let settings = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+        LoadOptimisations.activate(LoadOptimisations(settings: settings))
         let request = WorldLoadRequest(
             root: root,
             language: localizationLanguage.language,

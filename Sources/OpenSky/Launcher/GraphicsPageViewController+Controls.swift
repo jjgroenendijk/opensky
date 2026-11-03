@@ -102,6 +102,9 @@ extension GraphicsPageViewController {
         for (button, setting) in surfaceShadingControls {
             checkbox(button, "Shading\(setting.controlName)", setting.toolTip)
         }
+        for (button, setting) in loadingControls {
+            checkbox(button, "Loading\(setting.controlName)", setting.toolTip)
+        }
     }
 
     private func configureCharacterCheckboxes() {
@@ -211,6 +214,7 @@ extension GraphicsPageViewController {
             (pipelineCacheControl, .pipelineCacheEnabled), (parallelDecodeControl, .parallelDecode),
             (textureStreamingControl, .textureStreaming)
         ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
+            + loadingControls.map { ($0.0, $0.1.id) }
     }
 
     private var popUpSettings: [(NSPopUpButton, PlayerSettingID)] {
