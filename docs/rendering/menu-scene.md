@@ -21,10 +21,15 @@ for it: a list of unlit effect meshes, each with a transform and a material, and
 3. The scene pass draws the menu scene after the world's particles and before the
    first-person arms, with the SWF layer on top.
 
-The menu scene has no depth test and writes no depth. Draw order alone decides what
-covers what. This matches the perk dome, whose shapes sit under a `BSOrderedNode`: that node
+By default the menu scene has no depth test and writes no depth. Draw order alone decides
+what covers what. This matches the perk dome, whose shapes sit under a `BSOrderedNode`: that node
 tells the game to draw its children in their stored order. The stars and lines are drawn
 after the dome, so they always show in front of it.
+
+A scene can instead set a front depth slice. It then draws over the world into the front of the
+depth range, from 0 to the slice, and tests and writes depth among its own shapes. The inventory
+item preview uses a slice of 0.005, so the parts of a turning item cover each other in the right
+order.
 
 ## Materials
 

@@ -19,7 +19,8 @@ renderer starts. No game texture is used.
 A `WTHR` `DATA` field gives a classification, not a precipitation density. So Rainy means rain 1,
 Snow means snow 1, and Pleasant, Cloudy, or no weather means zero. Rain and snow values blend across
 the timed [weather](/engine/weather.md) transition. The transition progress is the intensity, so
-rain can fade into snow without a jump.
+rain can fade into snow without a jump. The active weather's `SPGD` record then scales rain
+and snow speed, size, and density ([SPGD](/formats/environment-shading.md#precipitation-mapping)).
 
 The settled intensity drives emission. The shared fallback rate caps the base at 60 births per
 second. Rain multiplies it by 6 and snow by 4 before the capacity clamp. These factors are OpenSky's
@@ -57,5 +58,4 @@ ray is open again. This is a single-point roof test on purpose.
 ## Not done
 
 - Roof masks from several rays, precipitation collision, splashes, and snow building up.
-- Density tuned per weather beyond the classification and the transition.
 - Streak shapes separate from the square billboards.

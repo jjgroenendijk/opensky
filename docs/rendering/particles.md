@@ -38,7 +38,16 @@ The simulation is deterministic for a seed and a sequence of fixed steps.
   times the NIF strength. Scale follows the decoded size curve. Modifiers that are not supported do
   nothing and show up in the parser's diagnostics.
 - Radius and alpha fade in at birth and out at death, so particles do not pop.
-- Subtexture offsets pick each particle's rectangle in the texture atlas.
+- Subtexture offsets pick each particle's rectangle in the texture atlas. A sub-texture
+  modifier sets the start frame, the loop start, and the frame count, so a particle plays its
+  atlas frames.
+- A rotation modifier sets each particle's start angle and spin speed, with their variations.
+- An inherit velocity modifier adds a share of the emitter's velocity to a new particle in a
+  world-space system.
+- Drag slows a particle. A particle collider makes it bounce or die where its path crosses the
+  collider.
+- An age death modifier with a spawn modifier spawns children when a particle dies, up to the
+  spawn's generation count.
 
 An emitter with an `NiPSysEmitterCtlr` births at the keyed rate, sampled linearly at the
 controller's time. The time loops, reverses, or clamps between the start and stop times. While
@@ -61,8 +70,9 @@ repeat.
 
 The CPU uploads the center, radius, color, and texture rectangle of each live particle. The vertex
 shader builds six corners around each center from the camera's right and up vectors, so there is no
-vertex or index buffer. Particles test depth against opaque geometry, never write depth, and are
-not culled.
+vertex or index buffer. Particles test depth against opaque geometry and never write depth. A
+system whose live particles lie outside the view is not drawn. Its simulation still runs, so it
+looks the same when it comes back into view.
 
 The fragment shader shades a particle like an effect shape that faces the eye
 ([effect shapes](/formats/nif-materials.md#effect-shapes)): the system's base color, palette,
@@ -95,5 +105,5 @@ The renderer publishes the blended weather wind, and every live frame passes it 
 ## Not done
 
 - Switching sequences on animation events.
-- Rotation, drag, spawn and death chains, collision, and strip particles.
+- Strip particles.
 - Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).

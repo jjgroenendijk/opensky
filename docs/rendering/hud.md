@@ -23,7 +23,7 @@ observed by probing the installed movie. It starts with 203 display nodes and no
 | Function | What the engine sends |
 | --- | --- |
 | `SetCrosshairEnabled` | Keeps the vanilla crosshair visible |
-| `SetHealthMeterPercent`, `SetMagickaMeterPercent`, `SetStaminaMeterPercent` | A value clamped to 0 to 1. The movie keeps a value such as 0.75 |
+| `SetHealthMeterPercent`, `SetMagickaMeterPercent`, `SetStaminaMeterPercent` | A percent, 0 to 100. The engine clamps the fraction to 0 to 1 and multiplies it by 100, so 0.75 reaches the movie as 75 |
 | `SetCrosshairTarget` | The interaction prompt, such as `Open <door name>`, or an empty hidden target |
 | `CompassTargetDataA` | Four numbers per marker: heading, Flash `_alpha`, the movie's own marker type value, and Flash scale |
 | `SetCompassMarkers` | Applies that array |
@@ -34,9 +34,9 @@ use Flash's 0 to 100 property units. The meters are fed from the
 [actor value store](/engine/actor-value-store.md#hud-bars), and the prompt and marker from
 [interaction](/engine/interaction.md).
 
-OpenSky maps world +X to heading zero and keeps headings in 0 up to 360. The player and compass angles
-get the same camera yaw. A local visual check confirmed that heading zero centers the movie's north
-marker, and that publishing a prompt does not move the compass.
+Heading zero is north (world +Y), and east (+X) is 90. OpenSky keeps headings in 0 up to 360. The
+player and compass angles get the same camera yaw. A local visual check confirmed that heading zero
+centers the movie's north marker, and that publishing a prompt does not move the compass.
 
 ## Authored placeholder clips
 

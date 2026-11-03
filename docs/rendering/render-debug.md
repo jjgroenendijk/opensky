@@ -15,7 +15,7 @@ pass's output channel, and turn layers off one at a time.
 ## Debug channels
 
 A function constant gates the debug code, and a frame uniform picks the channel. Every shipping
-pipeline defines the constant as false, and the five debug pipelines as true. So in a shipping
+pipeline defines the constant as false, and the six debug pipelines as true. So in a shipping
 pipeline the whole debug block folds away at compile time. Changing the channel builds no new
 pipeline.
 
@@ -35,7 +35,8 @@ the constant without its definition.
 | Shadow cascade | One color per sun shadow cascade, grey past the last |
 | Layer category | One color per layer |
 
-Five debug pipelines cover every mode: static mesh, skinned, terrain, grass, and water. No separate
+Six debug pipelines cover every mode: static mesh, skinned, morphed skinned, terrain, grass, and
+water. No separate
 cutout variant is needed: an alpha threshold of zero discards nothing, so the alpha-test variant
 also serves opaque groups. The water debug pipeline has no blending, because a debug channel answers
 "what is here", and blending it with the terrain below would hide the water in exactly the modes

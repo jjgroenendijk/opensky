@@ -132,8 +132,8 @@ nonisolated public struct DrawInstance: Sendable {
     }
 }
 
-/// One instanced draw call. Grouped by mesh and diffuse identity: a mesh belongs to one
-/// model with one material per slot, so equal meshes mean equal material scalars.
+/// One instanced draw call. Grouped by mesh, diffuse, and draw state: a mesh belongs to
+/// one model with one material per slot, so equal meshes mean equal material scalars.
 nonisolated public struct DrawGroup: Sendable {
     public let mesh: RenderMesh
     public let material: RenderMaterial
