@@ -14,11 +14,20 @@ nonisolated public struct FourCC: Hashable, Sendable {
 }
 
 nonisolated extension FourCC: ExpressibleByStringLiteral {
-    /// Programmer-supplied literals only (`"WRLD"`); traps on wrong length.
+    /// Programmer-supplied literals only (`"WRLD"`); traps on wrong length. Each
+    /// `case "WRLD":` of a field switch runs this, so it must not allocate.
+    @inlinable
     public init(stringLiteral value: StringLiteralType) {
-        let bytes = Array(value.utf8)
-        precondition(bytes.count == 4, "FourCC literal must be exactly 4 bytes")
-        self.init(rawValue: Self.packed(bytes))
+        var packed: UInt32 = 0
+        var count = 0
+        for byte in value.utf8 {
+            if count < 4 {
+                packed |= UInt32(byte) << (8 * count)
+            }
+            count += 1
+        }
+        precondition(count == 4, "FourCC literal must be exactly 4 bytes")
+        self.init(rawValue: packed)
     }
 
     fileprivate static func packed(_ bytes: [UInt8]) -> UInt32 {
