@@ -311,9 +311,12 @@ nonisolated public struct DynamicBody: Sendable {
     }
 
     /// World AABB of every volume at the current pose, inflated by the
-    /// bounding-sphere radius so it stays valid through one step's rotation.
+    /// bounding-sphere radius so it stays valid through one step's rotation, and by
+    /// the contact margin, so a sphere resting in its margin keeps its floor.
     public var worldBounds: ModelBounds {
-        let extent = SIMD3<Float>(repeating: definition.boundingRadius)
+        let extent = SIMD3<Float>(
+            repeating: definition.boundingRadius + DynamicBodyContacts.contactMargin
+        )
         return ModelBounds(min: position - extent, max: position + extent)
     }
 
