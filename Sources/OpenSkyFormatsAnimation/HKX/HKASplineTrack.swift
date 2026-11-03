@@ -176,14 +176,11 @@ nonisolated public struct HKASplineCursor: Sendable {
         try Float(bitPattern: readUInt32())
     }
 
-    public mutating func readFiniteFloat(trackIndex: Int, component: String) throws -> Float {
+    /// Some vanilla paired kill-move clips store a NaN on one track. The axis then
+    /// keeps its identity, so the rest of the clip still plays (docs/formats/hka-animation.md).
+    public mutating func readFloat(orIdentity identity: Float) throws -> Float {
         let value = try readFloat()
-        guard value.isFinite else {
-            throw HKASplineAnimationError.invalidSpline(
-                trackIndex: trackIndex, component: component, reason: "non-finite float"
-            )
-        }
-        return value
+        return value.isFinite ? value : identity
     }
 
     public mutating func readSplineHeader(

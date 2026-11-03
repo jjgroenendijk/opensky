@@ -101,6 +101,16 @@ struct HKASplineAnimationTests {
         #expect(abs(end.translation.x - 30) < 0.001)
     }
 
+    @Test func aNonFiniteStoredValueLeavesItsAxisAtIdentity() throws {
+        var fixture = HKASplineAnimationFixture()
+        fixture.nonFiniteStaticY = true
+        fixture.nonFiniteSplineBound = true
+        let animation = try firstAnimation(fixture)
+        let end = try #require(animation.localTransforms(at: 1).first)
+        #expect(end.translation == SIMD3<Float>(0, 0, 0))
+        #expect(end.scale == SIMD3<Float>(2, 3, 4))
+    }
+
     @Test func decodesWithFloatMasksThatNeedPadding() throws {
         var fixture = HKASplineAnimationFixture()
         fixture.floatTrackCount = 1

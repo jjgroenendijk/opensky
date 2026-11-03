@@ -21,6 +21,10 @@ public struct HKASplineAnimationFixture: Sendable {
     /// out at `hkaAnimation.m_annotationTracks`. Vanilla puts the footstep tags
     /// here rather than in the behavior file's clip triggers.
     public var annotationTracks: [(name: String, annotations: [(time: Float, text: String)])] = []
+    /// Writes NaN for the static translation.y, as some vanilla paired clips store.
+    public var nonFiniteStaticY = false
+    /// Writes NaN for the translation.x spline's maximum.
+    public var nonFiniteSplineBound = false
 
     private static let objectSize = 176
 
@@ -187,8 +191,8 @@ public struct HKASplineAnimationFixture: Sendable {
         appendSplineHeader(to: &block) // translation
         align(&block, to: 4)
         block.appendFloat32(0) // dynamic x minimum
-        block.appendFloat32(30) // dynamic x maximum
-        block.appendFloat32(5) // static y
+        block.appendFloat32(nonFiniteSplineBound ? .nan : 30) // dynamic x maximum
+        block.appendFloat32(nonFiniteStaticY ? .nan : 5) // static y
         block.appendUInt16(0)
         block.appendUInt16(UInt16.max)
         align(&block, to: 4)

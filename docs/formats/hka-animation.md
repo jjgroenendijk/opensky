@@ -181,6 +181,11 @@ pad to 4
 A value is `minimum + (maximum - minimum) * q / (2^bits - 1)`. Knots must not go down. The
 degree must be 1 to 4, and there must be enough control points.
 
+About 25 vanilla paired kill-move clips, such as `paired_1hmkillmovec.hkx`, store a NaN as a
+static value or a spline bound of one translation track (track 43 or 143 of 201). OpenSky
+reads such a part as its identity, and the rest of the clip plays. [WARNING] This is OpenSky's
+choice; no source says what the game does with the value.
+
 ### 40-bit quaternion
 
 Five little-endian bytes hold three 12-bit values, a 2-bit index of the left-out part, and
