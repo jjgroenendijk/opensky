@@ -332,6 +332,7 @@ are OpenSky's reading of the Creation Kit wiki
   ([Reference](https://ck.uesp.net/wiki/Reference)). The game keeps a weather per region;
   OpenSky runs one, so a region takes the active weather when its `RDWT` list holds it, else
   its most likely weather. Particle systems take the emittance of their reference too.
+  See [region emittance in the game](#region-emittance-in-the-game).
 - Soft effect: the alpha fades in over the soft falloff depth in front of the scene behind
   the shape, so a smoke card shows no hard line where it crosses the ground.
 - Weapon blood: the shape draws only while its weapon is bloody
@@ -346,3 +347,29 @@ as it is; any other source factor is read as `SRC_ALPHA`. An effect shape with n
 texture is skipped, because the static path has no look for it.
 
 An effect block that does not decode keeps the fallback material.
+
+### Region emittance in the game
+
+The emittance regions, such as `FXLightRegionInvertWindowWhiterun`, lie in
+`FXLightWorldSpace`. Each of its 13 vanilla regions lists one weather at 100%, such as
+`FXWthrInvertWindowsWhiterun`. That worldspace is never the player's, so such a region's
+weather is never the active one.
+
+The Windows reference game confirmed the rule on 2026-11-03. The bridge disabled and
+enabled `WhiterunLODlights` at a fixed view of Whiterun, and the two frames were compared
+at the window pixels (`.logs/issue-1501/run8/`):
+
+| Condition | Glow in the frame | `FXWthrInvertWindowsWhiterun` key |
+| --- | --- | --- |
+| 01:00 to 05:00, 23:00, clear | warm yellow | night (0.95, 0.69, 0.22) |
+| 06:00 to 08:00, clear | yellow turns orange, then dims | night to sunrise (0.49, 0.27, 0.06) |
+| 13:00, clear | none | day (0, 0, 0) |
+| 17:00 to 19:00, clear | orange | sunset (0.95, 0.46, 0.21) |
+| 23:00, cloudy, rain, or fog | warm yellow, a little dimmer | night |
+| 23:00, `SkyrimStormRain` | none | night; storm fog (far 10000) likely hides it |
+
+The active weathers' own night `Effect Lighting` colours are blue, for example
+`SkyrimClear` (0.08, 0.37, 0.58), so the glow does not take the active weather. The changes
+fall at the `SkyrimClimate` sunrise (05:30 to 10:00) and sunset (16:00 to 20:30) times.
+Brightness is not settled: the red the glow adds halves from 19:00 to 21:00, although both
+keys have red 0.95, so a later step, perhaps the image space, scales it.
