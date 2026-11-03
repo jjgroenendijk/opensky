@@ -39,9 +39,11 @@ nonisolated public struct RecordFragmentSection: Equatable, Sendable {
 }
 
 nonisolated extension ScriptDataDecoder {
+    private static let recordFragmentOwners: Set<FourCC> = ["PACK", "PERK", "SCEN"]
+
     /// Decodes the SCEN, PACK, or PERK tail. False leaves the reader where it was.
     public mutating func decodeRecordFragmentTail(ownerType: FourCC) -> RecordFragmentSection? {
-        guard ["PACK", "PERK", "SCEN"].contains(ownerType) else { return nil }
+        guard Self.recordFragmentOwners.contains(ownerType) else { return nil }
         let start = reader.offset
         do {
             let section = try decodeRecordFragments(ownerType: ownerType)

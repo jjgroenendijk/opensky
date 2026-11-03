@@ -71,6 +71,8 @@ nonisolated extension ESSExporter {
 
     // MARK: - References
 
+    private static let placedTypes: Set = ["REFR", "ACHR"]
+
     /// A placed reference's change, or nil with a counted reason when the key names
     /// none the save can hold.
     private mutating func reference(_ key: ReferenceKey) -> ESSReferenceChange? {
@@ -85,7 +87,7 @@ nonisolated extension ESSExporter {
             report.update("references") { $0.drop("reference from a plugin not loaded") }
             return nil
         }
-        guard let signature = records.signature(of: form), ["REFR", "ACHR"].contains(signature)
+        guard let signature = records.signature(of: form), Self.placedTypes.contains(signature)
         else {
             report.update("references") { $0.drop("not a placed reference now") }
             return nil
