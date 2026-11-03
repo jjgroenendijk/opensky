@@ -199,9 +199,7 @@ nonisolated public struct RecordIndex: Sendable {
         let localized = file.isLocalized
         for group in file.topGroups {
             guard let type = group.recordType, recordTypes.contains(type) else { continue }
-            for case let .record(record) in skippedRecords.children(of: group)
-                where !record.isDeleted && record.type == type
-            {
+            for record in records(in: group) where !record.isDeleted && record.type == type {
                 do {
                     _ = try record.fields()
                 } catch {
@@ -218,6 +216,21 @@ nonisolated public struct RecordIndex: Sendable {
                 )
                 candidates[canonical, default: []].append(entry)
                 records[canonical] = entry
+            }
+        }
+    }
+
+    /// A top group's records, and the interior cells two block levels down. Cell children
+    /// groups are not entered: their references belong to the cell loader.
+    private mutating func records(in group: ESMGroup) -> [ESMRecord] {
+        skippedRecords.children(of: group).flatMap { child -> [ESMRecord] in
+            switch child {
+            case let .record(record):
+                return [record]
+            case let .group(nested):
+                guard nested.kind == .interiorCellBlock || nested.kind == .interiorCellSubBlock
+                else { return [] }
+                return records(in: nested)
             }
         }
     }
